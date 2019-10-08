@@ -2520,6 +2520,9 @@ EB_EXTERN void av1_encode_pass(
                                         cu_ptr,
                                         &context_ptr->mv_unit,
                                         1,//intrabc
+#if OBMC_FLAG
+                                        SIMPLE_TRANSLATION,
+#endif
                                         context_ptr->cu_origin_x,
                                         context_ptr->cu_origin_y,
                                         blk_geom->bwidth,
@@ -2539,6 +2542,11 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     &context_ptr->mv_unit,
                                     1,// use_intrabc,
+#if OBMC_FLAG
+                                    SIMPLE_TRANSLATION,
+                                    0,
+                                    0,
+#endif
                                     1,
                                     &cu_ptr->interinter_comp,
 #if II_COMP_FLAG
@@ -3011,6 +3019,9 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr,
                                     &context_ptr->mv_unit,
                                     0,// use_intrabc,
+#if OBMC_FLAG
+                                    cu_ptr->prediction_unit_array->motion_mode,
+#endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
@@ -3030,6 +3041,11 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     &context_ptr->mv_unit,
                                     0,//use_intrabc,
+#if OBMC_FLAG
+                                    cu_ptr->prediction_unit_array->motion_mode,
+                                    0,//use_precomputed_obmc,
+                                    0,
+#endif
                                     cu_ptr->compound_idx,
                                     &cu_ptr->interinter_comp,
 #if II_COMP_FLAG

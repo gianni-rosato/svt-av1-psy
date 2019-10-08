@@ -56,7 +56,20 @@ typedef struct {
   MV coord;
   int coord_offset;
 } search_neighbors;
+#if OBMC_FLAG
 
+typedef unsigned int (*aom_obmc_sad_fn_t)(const uint8_t *pred, int pred_stride,
+                                          const int32_t *wsrc,
+                                          const int32_t *msk);
+typedef unsigned int (*aom_obmc_variance_fn_t)(const uint8_t *pred,
+                                               int pred_stride,
+                                               const int32_t *wsrc,
+                                               const int32_t *msk,
+                                               unsigned int *sse);
+typedef unsigned int (*aom_obmc_subpixvariance_fn_t)(
+    const uint8_t *pred, int pred_stride, int xoffset, int yoffset,
+    const int32_t *wsrc, const int32_t *msk, unsigned int *sse);
+#endif
 typedef unsigned int(*aom_sad_fn_t)(const uint8_t *a, int a_stride,
                                     const uint8_t *b, int b_stride);
 
@@ -72,6 +85,12 @@ typedef struct aom_variance_vtable {
     aom_sad_fn_t sdf;
     aom_variance_fn_t vf;
     aom_sad_multi_d_fn_t sdx4df;
+#if OBMC_FLAG
+    aom_obmc_sad_fn_t osdf;
+    aom_obmc_variance_fn_t ovf;
+    aom_obmc_subpixvariance_fn_t osvf;
+
+#endif
 } aom_variance_fn_ptr_t;
 
 void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);

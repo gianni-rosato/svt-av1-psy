@@ -301,10 +301,18 @@ extern "C" {
     uint64_t                            md_exit_th;
     uint64_t                            dist_base_md_stage_0_count_th;
 #endif
+#if OBMC_FLAG
+    DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, int32_t, wsrc_buf[MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, int32_t, mask_buf[MAX_SB_SQUARE]);
+    unsigned int pred_sse[REF_FRAMES];
+#endif
 #if ENHANCE_ATB
     uint8_t                            *above_txfm_context;
     uint8_t                            *left_txfm_context;
 #endif
+
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(

@@ -1496,6 +1496,11 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                                     0,//ref_frame_type,
                                     &mv_unit,
                                     0,//use_intrabc,
+#if OBMC_FLAG
+                                    SIMPLE_TRANSLATION,
+                                    0,
+                                    0,
+#endif
                                     1,//compound_idx not used
                                     NULL,// interinter_comp not used
 #if II_COMP_FLAG
@@ -1526,6 +1531,9 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                                                      &cu_ptr,
                                                      &mv_unit,
                                                      0, //use_intrabc,
+#if OBMC_FLAG
+                                                     SIMPLE_TRANSLATION,
+#endif
                                                      pu_origin_x,
                                                      pu_origin_y,
                                                      bsize,
@@ -1577,6 +1585,11 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                             0,//ref_frame_type,
                             &mv_unit,
                             0,//use_intrabc,
+#if OBMC_FLAG
+                            SIMPLE_TRANSLATION,
+                            0,
+                            0,
+#endif
                             1,//compound_idx not used
                             NULL,// interinter_comp not used
 #if II_COMP_FLAG
@@ -1607,6 +1620,9 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                                              &cu_ptr,
                                              &mv_unit,
                                              0, //use_intrabc,
+#if OBMC_FLAG
+                                             SIMPLE_TRANSLATION,
+#endif
                                              pu_origin_x,
                                              pu_origin_y,
                                              bsize,

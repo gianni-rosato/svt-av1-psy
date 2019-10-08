@@ -1600,8 +1600,12 @@ uint64_t av1_inter_fast_cost(
         switch (last_motion_mode_allowed) {
         case SIMPLE_TRANSLATION: break;
         case OBMC_CAUSAL:
+#if OBMC_FLAG
+            interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->motion_mode_fac_bits1[bsize][motion_mode_rd==OBMC_CAUSAL];
+#else
             assert(motion_mode_rd == SIMPLE_TRANSLATION); // TODO: remove when OBMC added
             interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->motion_mode_fac_bits1[bsize][motion_mode_rd];
+#endif
             break;
         default:
             interModeBitsNum += candidate_ptr->md_rate_estimation_ptr->motion_mode_fac_bits[bsize][motion_mode_rd];

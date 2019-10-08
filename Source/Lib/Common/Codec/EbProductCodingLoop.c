@@ -1584,6 +1584,9 @@ void set_md_stage_counts(
 #if II_COMP_FLAG
         context_ptr->bypass_stage1[CAND_CLASS_4] = EB_FALSE;
 #endif
+#if OBMC_FLAG
+        context_ptr->bypass_stage1[CAND_CLASS_5] = EB_FALSE;
+#endif
     }
     else
         memset(context_ptr->bypass_stage1, EB_TRUE, CAND_CLASS_TOTAL);
@@ -1605,6 +1608,9 @@ void set_md_stage_counts(
 #if II_COMP_FLAG
             context_ptr->bypass_stage2[CAND_CLASS_4] = EB_TRUE;
 #endif
+#if OBMC_FLAG
+            context_ptr->bypass_stage2[CAND_CLASS_5] = EB_TRUE;
+#endif
     }
     else
         memset(context_ptr->bypass_stage2, EB_TRUE, CAND_CLASS_TOTAL);
@@ -1622,6 +1628,14 @@ void set_md_stage_counts(
 
 #if II_COMP_FLAG
         context_ptr->md_stage_1_count[CAND_CLASS_4] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 :6;// INTER_PRED_NFL: (INTER_PRED_NFL >> 1);
+#endif
+#if OBMC_FLAG
+    if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode == 1)
+        context_ptr->md_stage_1_count[CAND_CLASS_5] = 16 ;
+    else if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 3)
+        context_ptr->md_stage_1_count[CAND_CLASS_5] =  (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 4;
+    else
+        context_ptr->md_stage_1_count[CAND_CLASS_5] =   (picture_control_set_ptr->temporal_layer_index == 0 ) ? 12 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8: 4;
 #endif
     if (picture_control_set_ptr->enc_mode >= ENC_M2) {
         context_ptr->md_stage_1_count[CAND_CLASS_1] = context_ptr->md_stage_1_count[CAND_CLASS_1] / 2;
@@ -1643,7 +1657,10 @@ void set_md_stage_counts(
     }
 
 #if II_COMP_FLAG
-    context_ptr->md_stage_2_count[CAND_CLASS_4] = context_ptr->bypass_stage1[CAND_CLASS_4] ? context_ptr->md_stage_1_count[CAND_CLASS_4] : (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12: 4;// 14 : 4;
+    context_ptr->md_stage_2_count[CAND_CLASS_4] =  (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12: 4;// 14 : 4;
+#endif
+#if OBMC_FLAG
+    context_ptr->md_stage_2_count[CAND_CLASS_5] =  (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : 16;
 #endif
     if (picture_control_set_ptr->enc_mode >= ENC_M2) {
         context_ptr->md_stage_2_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 3;
@@ -1672,6 +1689,14 @@ void set_md_stage_counts(
 
 #if II_COMP_FLAG
     context_ptr->md_stage_3_count[CAND_CLASS_4] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 4;// 14 : 4;
+#endif
+#if OBMC_FLAG
+    if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode == 1)
+        context_ptr->md_stage_3_count[CAND_CLASS_5] = 16 ;
+    else if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 3)
+        context_ptr->md_stage_3_count[CAND_CLASS_5] =  (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 4;
+    else
+        context_ptr->md_stage_3_count[CAND_CLASS_5] =   (picture_control_set_ptr->temporal_layer_index == 0 ) ? 12 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8: 4;
 #endif
     if (!context_ptr->combine_class12 && picture_control_set_ptr->parent_pcs_ptr->sc_content_detected && picture_control_set_ptr->enc_mode == ENC_M0) {
 
@@ -5931,6 +5956,9 @@ void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu)
 {
+#if OBMC_FLAG
+    dst_cu->interp_filters = src_cu->interp_filters;
+#endif
     dst_cu->interinter_comp.type = src_cu->interinter_comp.type;
     dst_cu->interinter_comp.mask_type = src_cu->interinter_comp.mask_type;
     dst_cu->interinter_comp.wedge_index = src_cu->interinter_comp.wedge_index;
@@ -6042,6 +6070,9 @@ void move_cu_data_redund(
     CodingUnit *src_cu,
     CodingUnit *dst_cu){
 
+#if OBMC_FLAG
+    dst_cu->interp_filters = src_cu->interp_filters;
+#endif
     dst_cu->interinter_comp.type = src_cu->interinter_comp.type;
     dst_cu->interinter_comp.mask_type = src_cu->interinter_comp.mask_type;
     dst_cu->interinter_comp.wedge_index = src_cu->interinter_comp.wedge_index;
@@ -7659,6 +7690,9 @@ EB_EXTERN EbErrorType mode_decision_sb(
         context_ptr->md_ep_pipe_sb[blk_idx_mds].merge_cost = 0;
         context_ptr->md_ep_pipe_sb[blk_idx_mds].skip_cost = 0;
 
+#if OBMC_FLAG
+        cu_ptr->av1xd->sb_type = blk_geom->bsize;
+#endif
         cu_ptr->mds_idx = blk_idx_mds;
         context_ptr->md_cu_arr_nsq[blk_idx_mds].mdc_split_flag = (uint16_t)leafDataPtr->split_flag;
 

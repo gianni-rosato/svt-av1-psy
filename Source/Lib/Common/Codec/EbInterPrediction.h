@@ -68,6 +68,11 @@ extern "C" {
         uint8_t                                 ref_frame_type,
         MvUnit                               *mv_unit,
         uint8_t                                  use_intrabc,
+#if OBMC_FLAG
+        MotionMode                              motion_mode,
+        uint8_t                                 use_precomputed_obmc,
+        struct ModeDecisionContext              *md_context,
+#endif
         uint8_t                                compound_idx,
     InterInterCompoundData                     *interinter_comp,
 #if II_COMP_FLAG
@@ -179,6 +184,9 @@ extern "C" {
         CodingUnit                           *cu_ptr,
         MvUnit                               *mv_unit,
         uint8_t                                  use_intrabc,
+#if OBMC_FLAG
+        MotionMode                              motion_mode,
+#endif
         uint16_t                                pu_origin_x,
         uint16_t                                pu_origin_y,
         uint8_t                                 bwidth,

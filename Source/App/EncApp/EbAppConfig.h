@@ -239,6 +239,10 @@ typedef struct EbConfig
     EbBool                  enable_warped_motion;
 
     /****************************************
+     * OBMC
+     ****************************************/
+    EbBool                  enable_obmc;
+    /****************************************
      * ME Tools
      ****************************************/
     EbBool                  use_default_me_hme;

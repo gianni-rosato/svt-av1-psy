@@ -14248,6 +14248,9 @@ extern "C" {
 #if II_COMP_FLAG
         uint8_t                              enable_inter_intra;
 #endif
+#if OBMC_FLAG
+        uint8_t                              pic_obmc_mode;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

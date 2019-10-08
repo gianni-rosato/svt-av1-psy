@@ -44,6 +44,11 @@ extern "C" {
 #define FIX_SETTINGS_RESET           1 // Address SEGMENT_RESET mismatch between rtime-m0-test and master: only @ 1st segment
 #define FIX_COMPOUND                 1 // Address COMPOUND mismatch between rtime-m0-test and master: used block size @ the derivation of compound count
 
+#define OBMC_FLAG            1 // OBMC motion mode flag
+#define OBMC_CONVOLVE        1 // to track convolve kernels changes
+
+
+
 #define II_COMP_FLAG 1
 #define PRED_CHANGE                  1 // Change the MRP in 4L Pictures 3, 5 , 7 and 9 use 1 as the reference
 #define PRED_CHANGE_5L               1 // Change the MRP in 5L Pictures 3, 5 , 7 and 9 use 1 as the reference, 11, 13, 15 and 17 use 9 as the reference
@@ -144,7 +149,11 @@ enum {
 #define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #if II_COMP_FLAG
+#if OBMC_FLAG
+#define MAX_NFL                                 105 // Maximum number of candidates MD can support
+#else
 #define MAX_NFL                                  80
+#endif
 #else
 #define MAX_NFL                                   65
 #endif
@@ -476,6 +485,9 @@ typedef enum CAND_CLASS {
 #if II_COMP_FLAG
     CAND_CLASS_4,
 #endif
+#if OBMC_FLAG
+    CAND_CLASS_5,
+#endif
     CAND_CLASS_TOTAL
 } CAND_CLASS;
 
@@ -515,7 +527,16 @@ typedef enum
     SWITCHABLE = SWITCHABLE_FILTERS + 1, /* the last switchable one */
     EXTRA_FILTERS = INTERP_FILTERS_ALL - SWITCHABLE_FILTERS,
 }InterpFilter;
+#if OBMC_FLAG
 
+#define AV1_COMMON Av1Common
+enum {
+  USE_2_TAPS_ORIG = 0,  // This is used in temporal filtering.
+  USE_2_TAPS,
+  USE_4_TAPS,
+  USE_8_TAPS,
+} UENUM1BYTE(SUBPEL_SEARCH_TYPE);
+#endif
 typedef struct InterpFilterParams
 {
     const int16_t *filter_ptr;

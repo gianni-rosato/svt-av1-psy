@@ -1604,6 +1604,45 @@ static INLINE int is_global_mv_block(
             && is_motion_variation_allowed_bsize(bsize);
 }
 
+#if OBMC_FLAG
+MotionMode obmc_motion_mode_allowed(
+    const PictureControlSet         *picture_control_set_ptr,
+    const CodingUnit                *cu_ptr,
+    const BlockSize                 bsize,
+    MvReferenceFrame                rf0,
+    MvReferenceFrame                rf1,
+    PredictionMode                  mode)
+{
+
+    if(!picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode)
+        return SIMPLE_TRANSLATION;
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+
+    if (!frm_hdr->is_motion_mode_switchable)
+        return SIMPLE_TRANSLATION;
+
+    if (frm_hdr->force_integer_mv == 0) {
+        const TransformationType gm_type =
+            picture_control_set_ptr->parent_pcs_ptr->global_motion[rf0].wmtype;
+        if (is_global_mv_block(mode, bsize, gm_type))
+            return SIMPLE_TRANSLATION;
+    }
+
+    if (is_motion_variation_allowed_bsize(bsize) &&
+        is_inter_mode(mode) &&
+        rf1 != INTRA_FRAME &&
+        !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
+    {
+        if (!has_overlappable_candidates(cu_ptr)) // check_num_overlappable_neighbors
+            return SIMPLE_TRANSLATION;
+
+        return OBMC_CAUSAL;
+    }
+    else
+        return SIMPLE_TRANSLATION;
+}
+#endif
 MotionMode motion_mode_allowed(
     const PictureControlSet       *picture_control_set_ptr,
     const CodingUnit              *cu_ptr,
@@ -1666,7 +1705,11 @@ static void write_motion_mode(
     case OBMC_CAUSAL:
         aom_write_symbol(
             ec_writer,
+#if OBMC_FLAG
+            motion_mode == OBMC_CAUSAL,
+#else
             SIMPLE_TRANSLATION, // motion_mode == OBMC_CAUSAL, TODO: support OBMC
+#endif
             frame_context->obmc_cdf[bsize],
             2);
         break;

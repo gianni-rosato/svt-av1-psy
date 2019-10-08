@@ -39,6 +39,10 @@
 #define  INCRMENT_CAND_TOTAL_COUNT(cnt) MULTI_LINE_MACRO_BEGIN cnt++; if(cnt>=MODE_DECISION_CANDIDATE_MAX_COUNT) printf(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n",cnt); MULTI_LINE_MACRO_END
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 
+#if OBMC_FLAG
+#define INT_MAX       2147483647    // maximum (signed) int value
+#endif
+
 #if II_COMP_FLAG
 void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
@@ -81,6 +85,19 @@ int svt_is_interintra_allowed(
 // 3 - Regular uni-pred + Wedge compound Inter Intra + Smooth compound Inter Intra
 
 #define II_COUNT                3
+#endif
+#if OBMC_FLAG
+MotionMode obmc_motion_mode_allowed(
+    const PictureControlSet       *picture_control_set_ptr,
+    const CodingUnit              *cu_ptr,
+    const BlockSize                 bsize,
+    MvReferenceFrame                rf0,
+    MvReferenceFrame                rf1,
+    PredictionMode                  mode);
+
+void precompute_obmc_data(
+    PictureControlSet            *picture_control_set_ptr,
+    ModeDecisionContext          *context_ptr);
 #endif
 //static uint32_t  AntiContouringIntraMode[11] = { EB_INTRA_PLANAR, EB_INTRA_DC, EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL,
 //EB_INTRA_MODE_2, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_18, EB_INTRA_MODE_22, EB_INTRA_MODE_30, EB_INTRA_MODE_34 };
@@ -317,6 +334,11 @@ void inter_intra_search(
         candidate_ptr->ref_frame_type,
         &mv_unit,
         0,//use_intrabc,
+#if OBMC_FLAG
+        SIMPLE_TRANSLATION,
+        0,
+        0,
+#endif
         1,//compound_idx not used
         NULL,// interinter_comp not used
 #if II_COMP_FLAG
@@ -1989,9 +2011,10 @@ void inject_mvp_candidates_II(
             uint8_t inter_type;
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEARESTMV, rf);
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
-            //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
-            //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
-
+#if OBMC_FLAG
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEARESTMV) == OBMC_CAUSAL;
+            tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+#endif
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
             {
 #endif
@@ -2054,10 +2077,12 @@ void inject_mvp_candidates_II(
                         candidateArray[canIdx].use_wedge_interintra = 0;
                     }
                 }
-                //if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
-                //    candidateArray[canTotalCnt].is_interintra_used = 0;
-                //    candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
-                //}
+#if OBMC_FLAG
+                if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
+                    candidateArray[canIdx].is_interintra_used = 0;
+                    candidateArray[canIdx].motion_mode = OBMC_CAUSAL;
+                }
+#endif
             }
 #endif
             INCRMENT_CAND_TOTAL_COUNT(canIdx);
@@ -2097,8 +2122,10 @@ void inject_mvp_candidates_II(
             uint8_t inter_type;
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEARMV, rf);
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
-            //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
-            //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
+#if OBMC_FLAG
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEARMV) == OBMC_CAUSAL;
+            tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
+#endif
 
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
             {
@@ -2162,10 +2189,12 @@ void inject_mvp_candidates_II(
                         candidateArray[canIdx].use_wedge_interintra = 0;
                     }
                 }
-                //if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
-                //    candidateArray[canTotalCnt].is_interintra_used = 0;
-                //    candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
-                //}
+#if OBMC_FLAG
+                if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
+                    candidateArray[canIdx].is_interintra_used = 0;
+                    candidateArray[canIdx].motion_mode = OBMC_CAUSAL;
+                }
+#endif
             }
 #endif
                 INCRMENT_CAND_TOTAL_COUNT(canIdx);
@@ -2844,6 +2873,273 @@ void inject_warped_motion_candidates(
 
 
 
+#if OBMC_FLAG
+
+static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize,
+    uint8_t *src, int width, int height,
+    int stride, int mi_row, int mi_col,
+    int subsampling_x, int subsampling_y) {
+    // Offset the buffer pointer
+    if (subsampling_y && (mi_row & 0x01) && (mi_size_high[bsize] == 1))
+        mi_row -= 1;
+    if (subsampling_x && (mi_col & 0x01) && (mi_size_wide[bsize] == 1))
+        mi_col -= 1;
+
+    const int x = (MI_SIZE * mi_col) >> subsampling_x;
+    const int y = (MI_SIZE * mi_row) >> subsampling_y;
+    dst->buf = src + (y * stride + x);// scaled_buffer_offset(x, y, stride, scale);
+    dst->buf0 = src;
+    dst->width = width;
+    dst->height = height;
+    dst->stride = stride;
+}
+void eb_av1_setup_pred_block(BlockSize sb_type,
+    struct Buf2D dst[MAX_MB_PLANE],
+    const Yv12BufferConfig *src, int mi_row, int mi_col) {
+    int i;
+
+    dst[0].buf = src->y_buffer;
+    dst[0].stride = src->y_stride;
+    dst[1].buf = src->u_buffer;
+    dst[2].buf = src->v_buffer;
+    dst[1].stride = dst[2].stride = src->uv_stride;
+
+    i = 0;
+    setup_pred_plane(dst + i, sb_type, dst[i].buf,
+        i ? src->uv_crop_width : src->y_crop_width,
+        i ? src->uv_crop_height : src->y_crop_height,
+        dst[i].stride, mi_row, mi_col,
+        0, 0);
+}
+
+// Values are now correlated to quantizer.
+static int sad_per_bit16lut_8[QINDEX_RANGE];
+static int sad_per_bit4lut_8[QINDEX_RANGE];
+
+extern aom_variance_fn_ptr_t mefn_ptr[BlockSizeS_ALL];
+
+int av1_find_best_obmc_sub_pixel_tree_up(
+    ModeDecisionContext *context_ptr,IntraBcContext *x, const AV1_COMMON *const cm, int mi_row, int mi_col,
+    MV *bestmv, const MV *ref_mv, int allow_hp, int error_per_bit,
+    const aom_variance_fn_ptr_t *vfp, int forced_stop, int iters_per_step,
+    int *mvjcost, int *mvcost[2], int *distortion, unsigned int *sse1,
+    int is_second, int use_accurate_subpel_search)  ;
+
+int av1_obmc_full_pixel_search(
+    ModeDecisionContext *context_ptr,
+    IntraBcContext *x,
+    MV *mvp_full,
+    int sadpb,
+    const aom_variance_fn_ptr_t *fn_ptr,
+    const MV *ref_mv,
+    MV *dst_mv,
+    int is_second);
+
+static void single_motion_search(
+    PictureControlSet *pcs,
+    ModeDecisionContext *context_ptr,
+    ModeDecisionCandidate        *candidate_ptr,
+    MvReferenceFrame *rf,
+    IntMv  bestPredmv,
+    IntraBcContext  *x,
+    BlockSize bsize,
+    MV*      ref_mv,
+    int ref_idx,
+    int *rate_mv) {
+
+    (void)ref_idx;
+    const Av1Common *const cm = pcs->parent_pcs_ptr->av1_cm;
+    FrameHeader *frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
+
+    x->xd = context_ptr->cu_ptr->av1xd;
+    const int mi_row = -x->xd->mb_to_top_edge / (8 * MI_SIZE);
+    const int mi_col = -x->xd->mb_to_left_edge / (8 * MI_SIZE);
+
+    x->nmv_vec_cost = context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
+    x->mv_cost_stack = context_ptr->md_rate_estimation_ptr->nmvcoststack;
+    // Set up limit values for MV components.
+    // Mv beyond the range do not produce new/different prediction block.
+    const int mi_width = mi_size_wide[bsize];
+    const int mi_height = mi_size_high[bsize];
+    x->mv_limits.row_min =
+        -(((mi_row + mi_height) * MI_SIZE) + AOM_INTERP_EXTEND);
+    x->mv_limits.col_min = -(((mi_col + mi_width) * MI_SIZE) + AOM_INTERP_EXTEND);
+    x->mv_limits.row_max = (cm->mi_rows - mi_row) * MI_SIZE + AOM_INTERP_EXTEND;
+    x->mv_limits.col_max = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
+    //set search paramters
+    x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
+    x->errorperbit = context_ptr->full_lambda >> RD_EPB_SHIFT;
+    x->errorperbit += (x->errorperbit == 0);
+
+
+    int bestsme = INT_MAX;
+    int sadpb = x->sadperbit16;
+    MV mvp_full;
+
+    MvLimits tmp_mv_limits = x->mv_limits;
+
+    // Note: MV limits are modified here. Always restore the original values
+    // after full-pixel motion search.
+    eb_av1_set_mv_search_range(&x->mv_limits, ref_mv);
+
+    mvp_full = bestPredmv.as_mv; // mbmi->mv[0].as_mv;
+
+
+    mvp_full.col >>= 3;
+    mvp_full.row >>= 3;
+
+    x->best_mv.as_int = x->second_best_mv.as_int = INVALID_MV; //D
+
+    switch (candidate_ptr->motion_mode) {
+
+    case OBMC_CAUSAL:
+        bestsme = av1_obmc_full_pixel_search(
+            context_ptr,
+            x,
+            &mvp_full,
+            sadpb,
+            &mefn_ptr[bsize],
+            ref_mv,
+            &(x->best_mv.as_mv),
+            0);
+        break;
+    default: assert(0 && "Invalid motion mode!\n");
+    }
+
+    x->mv_limits = tmp_mv_limits;
+
+    const int use_fractional_mv =
+        bestsme < INT_MAX && frm_hdr->force_integer_mv == 0;
+    if (use_fractional_mv) {
+        int dis; /* TODO: use dis in distortion calculation later. */
+        switch (candidate_ptr->motion_mode) {
+        case OBMC_CAUSAL:
+            av1_find_best_obmc_sub_pixel_tree_up(
+                context_ptr,
+                x,
+                cm,
+                mi_row,
+                mi_col,
+                &x->best_mv.as_mv,
+                ref_mv,
+                frm_hdr->allow_high_precision_mv,
+                x->errorperbit,
+                &mefn_ptr[bsize],
+                0, // mv.subpel_force_stop
+                2, //  mv.subpel_iters_per_step
+                x->nmv_vec_cost,
+                x->mv_cost_stack,
+                &dis,
+                &context_ptr->pred_sse[rf[0]],
+                0,
+                USE_8_TAPS );
+            break;
+        default: assert(0 && "Invalid motion mode!\n");
+        }
+    }
+    *rate_mv = eb_av1_mv_bit_cost(&x->best_mv.as_mv, ref_mv, x->nmv_vec_cost,
+        x->mv_cost_stack, MV_COST_WEIGHT);
+
+}
+
+void obmc_motion_refinement(
+    PictureControlSet          *picture_control_set_ptr,
+    struct ModeDecisionContext *context_ptr,
+    ModeDecisionCandidate    *candidate,
+    uint8_t                   ref_list_idx)
+{
+    IntMv  bestPredmv[2] = { {0}, {0} };
+    IntraBcContext  x_st;
+    IntraBcContext  *x = &x_st;
+
+    MacroBlockD * xd;
+    xd = x->xd = context_ptr->cu_ptr->av1xd;
+    const int mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
+    const int mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
+
+    {
+        uint8_t ref_idx = get_ref_frame_idx(candidate->ref_frame_type);
+        uint8_t list_idx = get_list_idx(candidate->ref_frame_type);
+        EbPictureBufferDesc  *reference_picture = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)->reference_picture;
+        Yv12BufferConfig ref_buf;
+        link_Eb_to_aom_buffer_desc_8bit(
+            reference_picture,
+            &ref_buf);
+
+        struct Buf2D yv12_mb[MAX_MB_PLANE];
+        eb_av1_setup_pred_block(context_ptr->blk_geom->bsize, yv12_mb, &ref_buf, mi_row, mi_col);
+        for (int i = 0; i < 1; ++i)
+            x->xdplane[i].pre[0] = yv12_mb[i];  //ref in ME
+
+        x->plane[0].src.buf = 0;// x->xdplane[0].pre[0];
+        x->plane[0].src.buf0 = 0;
+    }
+
+    IntMv  best_mv ;
+    best_mv.as_int = 0;
+    if (ref_list_idx == 0) {
+        best_mv.as_mv.col = candidate->motion_vector_xl0;// to_inject_mv_x;
+        best_mv.as_mv.row = candidate->motion_vector_yl0; //to_inject_mv_y;
+    }
+    else
+    {
+        best_mv.as_mv.col = candidate->motion_vector_xl1;// to_inject_mv_x;
+        best_mv.as_mv.row = candidate->motion_vector_yl1; //to_inject_mv_y;
+    }
+    int tmp_rate_mv;
+
+    MvReferenceFrame rf[2];
+    rf[0] = candidate->ref_frame_type;
+    rf[1] = -1;
+
+    MV      ref_mv;
+    ref_mv.col = candidate->motion_vector_pred_x[ref_list_idx];
+    ref_mv.row = candidate->motion_vector_pred_y[ref_list_idx];
+
+    single_motion_search(
+        picture_control_set_ptr,
+        context_ptr,
+        candidate,
+        rf,
+        best_mv,
+        x,
+        context_ptr->blk_geom->bsize,
+        &ref_mv,
+        0,
+        &tmp_rate_mv);
+
+    if (ref_list_idx == 0) {
+        candidate->motion_vector_xl0 = x->best_mv.as_mv.col;
+        candidate->motion_vector_yl0 = x->best_mv.as_mv.row;
+    }
+    else {
+        candidate->motion_vector_xl1 = x->best_mv.as_mv.col;
+        candidate->motion_vector_yl1 = x->best_mv.as_mv.row;
+    }
+
+    ChooseBestAv1MvPred(
+        context_ptr,
+        candidate->md_rate_estimation_ptr,
+        context_ptr->cu_ptr,
+        candidate->ref_frame_type,
+        candidate->is_compound,
+        candidate->pred_mode,
+        ref_list_idx == 0 ? candidate->motion_vector_xl0 : candidate->motion_vector_xl1,
+        ref_list_idx == 0 ? candidate->motion_vector_yl0 : candidate->motion_vector_yl1,
+        0, 0,
+        &candidate->drl_index,
+        bestPredmv);
+
+    if (ref_list_idx == 0) {
+        candidate->motion_vector_pred_x[REF_LIST_0] = bestPredmv[0].as_mv.col;
+        candidate->motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
+    }
+    else {
+        candidate->motion_vector_pred_x[REF_LIST_1] = bestPredmv[0].as_mv.col;
+        candidate->motion_vector_pred_y[REF_LIST_1] = bestPredmv[0].as_mv.row;
+    }
+}
+#endif
 
 void inject_new_candidates(
     const SequenceControlSet   *sequence_control_set_ptr,
@@ -2925,9 +3221,10 @@ void inject_new_candidates(
             uint8_t inter_type;
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
-            //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
-            //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
-
+#if OBMC_FLAG
+             uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+             tot_inter_types = is_obmc_allowed && picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 2 ? tot_inter_types+1 : tot_inter_types;
+#endif
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
             {
 #endif
@@ -2998,10 +3295,18 @@ void inject_new_candidates(
                         candidateArray[canTotalCnt].use_wedge_interintra = 0;
                     }
                 }
-                //if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
-                //    candidateArray[canTotalCnt].is_interintra_used = 0;
-                //    candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
-                //}
+ #if OBMC_FLAG
+                if (is_obmc_allowed && inter_type == tot_inter_types-1){
+                        candidateArray[canTotalCnt].is_interintra_used = 0;
+                        candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
+
+                        obmc_motion_refinement(
+                            picture_control_set_ptr,
+                            context_ptr,
+                            &candidateArray[canTotalCnt],
+                            REF_LIST_0);
+                    }
+#endif
             }
 #endif
                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
@@ -3045,9 +3350,10 @@ void inject_new_candidates(
             uint8_t inter_type;
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
-            //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
-            //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
-
+#if OBMC_FLAG
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+            tot_inter_types = is_obmc_allowed  && picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 2 ? tot_inter_types + 1 : tot_inter_types;
+#endif
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
             {
 #endif
@@ -3118,10 +3424,19 @@ void inject_new_candidates(
                         candidateArray[canTotalCnt].use_wedge_interintra = 0;
                     }
                 }
-                //if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
-                //    candidateArray[canTotalCnt].is_interintra_used = 0;
-                //    candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
-                //}
+#if OBMC_FLAG
+                if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
+                    candidateArray[canTotalCnt].is_interintra_used = 0;
+                    candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
+
+                    obmc_motion_refinement(
+                        picture_control_set_ptr,
+                        context_ptr,
+                        &candidateArray[canTotalCnt],
+                        REF_LIST_1);
+                }
+#endif
+
             }
 #endif
                     INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
@@ -3294,7 +3609,18 @@ void inject_new_candidates(
                         int16_t to_inject_mv_y = context_ptr->best_spatial_pred_mv[listIndex][ref_pic_index][1];
                         uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, ref_pic_index);
                         if (context_ptr->injected_mv_count_l0 == 0 || mrp_is_already_injected_mv_l0(context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) == EB_FALSE) {
-
+#if OBMC_FLAG
+                            MvReferenceFrame rf[2];
+                            rf[0] = to_inject_ref_type;
+                            rf[1] = -1;
+                            uint8_t inter_type;
+                            uint8_t is_ii_allowed = 0;// svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+                            uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
+                            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+                            tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+                            for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
+                            {
+#endif
                             candidateArray[canTotalCnt].type = INTER_MODE;
                             candidateArray[canTotalCnt].distortion_ready = 0;
                             candidateArray[canTotalCnt].use_intrabc = 0;
@@ -3335,11 +3661,32 @@ void inject_new_candidates(
 
                             candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_0] = bestPredmv[0].as_mv.col;
                             candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
+#if OBMC_FLAG
+                            if (inter_type == 0) {
+                                candidateArray[canTotalCnt].is_interintra_used = 0;
+                                candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
+                            }
+                            else {
+                                if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
+                                    candidateArray[canTotalCnt].is_interintra_used = 0;
+                                    candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
+
+                                    obmc_motion_refinement(
+                                        picture_control_set_ptr,
+                                        context_ptr,
+                                        &candidateArray[canTotalCnt],
+                                        REF_LIST_0);
+                                }
+                            }
+#endif
                             INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
                             context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_x;
                             context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
                             context_ptr->injected_ref_type_l0_array[context_ptr->injected_mv_count_l0] = to_inject_ref_type;
                             ++context_ptr->injected_mv_count_l0;
+#if OBMC_FLAG
+                        }
+#endif
                         }
                     }
                 }
@@ -3357,7 +3704,18 @@ void inject_new_candidates(
                             int16_t to_inject_mv_y = context_ptr->best_spatial_pred_mv[listIndex][ref_pic_index][1];
                             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, ref_pic_index);
                             if (context_ptr->injected_mv_count_l1 == 0 || mrp_is_already_injected_mv_l1(context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) == EB_FALSE) {
-
+#if OBMC_FLAG
+                                MvReferenceFrame rf[2];
+                                rf[0] = to_inject_ref_type;
+                                rf[1] = -1;
+                                uint8_t inter_type;
+                                uint8_t is_ii_allowed = 0;// svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+                                uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
+                                uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+                                tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
+                                for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
+                                {
+#endif
                                 candidateArray[canTotalCnt].type = INTER_MODE;
                                 candidateArray[canTotalCnt].distortion_ready = 0;
                                 candidateArray[canTotalCnt].use_intrabc = 0;
@@ -3398,11 +3756,32 @@ void inject_new_candidates(
 
                                 candidateArray[canTotalCnt].motion_vector_pred_x[REF_LIST_1] = bestPredmv[0].as_mv.col;
                                 candidateArray[canTotalCnt].motion_vector_pred_y[REF_LIST_1] = bestPredmv[0].as_mv.row;
+#if OBMC_FLAG
+                                if (inter_type == 0) {
+                                    candidateArray[canTotalCnt].is_interintra_used = 0;
+                                    candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
+                                }
+                                else {
+                                    if (is_obmc_allowed && inter_type == tot_inter_types - 1) {
+                                        candidateArray[canTotalCnt].is_interintra_used = 0;
+                                        candidateArray[canTotalCnt].motion_mode = OBMC_CAUSAL;
+
+                                        obmc_motion_refinement(
+                                            picture_control_set_ptr,
+                                            context_ptr,
+                                            &candidateArray[canTotalCnt],
+                                            REF_LIST_1);
+                                    }
+                                }
+#endif
                                 INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
                                 context_ptr->injected_mv_x_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_x;
                                 context_ptr->injected_mv_y_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_y;
                                 context_ptr->injected_ref_type_l1_array[context_ptr->injected_mv_count_l1] = to_inject_ref_type;
                                 ++context_ptr->injected_mv_count_l1;
+#if OBMC_FLAG
+                            }
+#endif
                             }
                         }
                     }
@@ -3577,7 +3956,13 @@ void  inject_inter_candidates(
         context_ptr->blk_geom->bsize,
         mi_row,
         mi_col);
-
+#if OBMC_FLAG
+    uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, context_ptr->blk_geom->bsize, LAST_FRAME, -1, NEWMV) == OBMC_CAUSAL;
+    if (is_obmc_allowed)
+        precompute_obmc_data(
+            picture_control_set_ptr,
+            context_ptr);
+#endif
     /**************
          MVP
     ************* */
@@ -4169,6 +4554,7 @@ void  inject_intra_candidates_ois(
 
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 
+#if !OBMC_FLAG
 static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize,
     uint8_t *src, int width, int height,
     int stride, int mi_row, int mi_col,
@@ -4205,6 +4591,7 @@ void eb_av1_setup_pred_block(BlockSize sb_type,
         dst[i].stride, mi_row, mi_col,
         0, 0);
 }
+#endif
 // Values are now correlated to quantizer.
 static int sad_per_bit16lut_8[QINDEX_RANGE];
 static int sad_per_bit4lut_8[QINDEX_RANGE];
@@ -4844,47 +5231,70 @@ EbErrorType generate_md_stage_0_cand(
         ModeDecisionCandidate * cand_ptr = &context_ptr->fast_candidate_array[cand_i];
 
         if (cand_ptr->type == INTRA_MODE) {
+            // Intra prediction
             cand_ptr->cand_class = CAND_CLASS_0;
             context_ptr->md_stage_0_count[CAND_CLASS_0]++;
         }
-        else if ((cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 0) ||
-            (cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 1 && cand_ptr->interinter_comp.type == COMPOUND_AVERAGE)) {
+#if OBMC_FLAG
+        else {
+            // Inter pred
+            if (cand_ptr->motion_mode == OBMC_CAUSAL) {
+                // OBMC
+                cand_ptr->cand_class = CAND_CLASS_5;
+                context_ptr->md_stage_0_count[CAND_CLASS_5]++;
+            }
+            else if (cand_ptr->is_compound == 0 ||
+                    (cand_ptr->is_compound == 1 && cand_ptr->interinter_comp.type == COMPOUND_AVERAGE)) {
 
+#else
+            else if ((cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 0) ||
+                (cand_ptr->type == INTER_MODE && cand_ptr->is_compound == 1 && cand_ptr->interinter_comp.type == COMPOUND_AVERAGE)) {
+#endif
 #if II_COMP_FLAG
                 if (cand_ptr->is_interintra_used && cand_ptr->is_compound == 0) {
+                    // InterIntra
                     cand_ptr->cand_class = CAND_CLASS_4;
                     context_ptr->md_stage_0_count[CAND_CLASS_4]++;
 
-                }else
+                }
+                else
 #endif
-            if (context_ptr->combine_class12) {
-                cand_ptr->cand_class = CAND_CLASS_1;
-                context_ptr->md_stage_0_count[CAND_CLASS_1]++;
-            }
-            else {
-                if (cand_ptr->is_new_mv) {
+                if (context_ptr->combine_class12) {
                     cand_ptr->cand_class = CAND_CLASS_1;
                     context_ptr->md_stage_0_count[CAND_CLASS_1]++;
                 }
                 else {
+                    if (cand_ptr->is_new_mv) {
+                        // ME pred
+                        cand_ptr->cand_class = CAND_CLASS_1;
+                        context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+                    }
+                    else {
+                        // MV pred
+                        cand_ptr->cand_class = CAND_CLASS_2;
+                        context_ptr->md_stage_0_count[CAND_CLASS_2]++;
+                    }
+                }
+            }
+            else {
+#if !OBMC_FLAG
+                if (context_ptr->combine_class12) {
                     cand_ptr->cand_class = CAND_CLASS_2;
                     context_ptr->md_stage_0_count[CAND_CLASS_2]++;
                 }
-            }
-        }
-        else {
-            if (context_ptr->combine_class12) {
-                cand_ptr->cand_class = CAND_CLASS_2;
-                context_ptr->md_stage_0_count[CAND_CLASS_2]++;
-            }
-            else {
+                else {
+#endif
+                // InterInter
                 cand_ptr->cand_class = CAND_CLASS_3;
                 context_ptr->md_stage_0_count[CAND_CLASS_3]++;
+#if !OBMC_FLAG
+                }
+#endif
             }
+#if OBMC_FLAG
         }
-
+#endif
     }
-
     uint32_t fast_accum = 0;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         fast_accum += context_ptr->md_stage_0_count[cand_class_it];

@@ -209,6 +209,11 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 0. */
     EbBool                   enable_warped_motion;
 
+    /* OBMC
+    *
+    * Default is 1. */
+    EbBool                   enable_obmc;
+
     /* Flag to enable the use of default ME HME parameters.
     *
     * Default is 1. */

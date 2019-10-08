@@ -43,66 +43,11 @@ void av1_modify_neighbor_predictor_for_obmc(ModeInfo_t *mbmi) {
     return;
 }
 
-// HW does not support < 4x4 prediction. To limit the bandwidth requirement, if
-// block-size of current plane is smaller than 8x8, always only blend with the
-// left neighbor(s) (skip blending with the above side).
-#define DISABLE_CHROMA_U8X8_OBMC 0  // 0: one-sided obmc; 1: disable
-
-int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int32_t sub_x, int32_t sub_y, int dir) {
-
-    assert(is_motion_variation_allowed_bsize(bsize));
-
-    const BlockSize bsize_plane =
-        get_plane_block_size(bsize, sub_x, sub_y);
-    switch (bsize_plane) {
-#if DISABLE_CHROMA_U8X8_OBMC
-    case BLOCK_4X4:
-    case BLOCK_8X4:
-    case BLOCK_4X8: return 1; break;
-#else
-    case BLOCK_4X4:
-    case BLOCK_8X4:
-    case BLOCK_4X8: return dir == 0; break;
-#endif
-    default: return 0;
-    }
-}
+int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int32_t sub_x, int32_t sub_y, int dir);
 
 // obmc_mask_N[overlap_position]
-static const uint8_t obmc_mask_1[1] = { 64 };
-static const uint8_t obmc_mask_2[2] = { 45, 64 };
 
-static const uint8_t obmc_mask_4[4] = { 39, 50, 59, 64 };
-
-static const uint8_t obmc_mask_8[8] = { 36, 42, 48, 53, 57, 61, 64, 64 };
-
-static const uint8_t obmc_mask_16[16] = { 34, 37, 40, 43, 46, 49, 52, 54,
-                                          56, 58, 60, 61, 64, 64, 64, 64 };
-
-static const uint8_t obmc_mask_32[32] = { 33, 35, 36, 38, 40, 41, 43, 44,
-                                          45, 47, 48, 50, 51, 52, 53, 55,
-                                          56, 57, 58, 59, 60, 60, 61, 62,
-                                          64, 64, 64, 64, 64, 64, 64, 64 };
-
-static const uint8_t obmc_mask_64[64] = {
-  33, 34, 35, 35, 36, 37, 38, 39, 40, 40, 41, 42, 43, 44, 44, 44,
-  45, 46, 47, 47, 48, 49, 50, 51, 51, 51, 52, 52, 53, 54, 55, 56,
-  56, 56, 57, 57, 58, 58, 59, 60, 60, 60, 60, 60, 61, 62, 62, 62,
-  62, 62, 63, 63, 63, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-};
-
-const uint8_t *av1_get_obmc_mask(int length) {
-    switch (length) {
-    case 1: return obmc_mask_1;
-    case 2: return obmc_mask_2;
-    case 4: return obmc_mask_4;
-    case 8: return obmc_mask_8;
-    case 16: return obmc_mask_16;
-    case 32: return obmc_mask_32;
-    case 64: return obmc_mask_64;
-    default: assert(0); return NULL;
-    }
-}
+const uint8_t *av1_get_obmc_mask(int length);
 
 static INLINE void build_obmc_inter_pred_above(EbDecHandle *dec_handle,
     PartitionInfo_t *pi, BlockSize bsize, int rel_mi_col, uint8_t above_mi_width,

@@ -2067,6 +2067,9 @@ void CopyApiFromApp(
     // Local Warped Motion
     sequence_control_set_ptr->static_config.enable_warped_motion = EB_TRUE;
 
+    // OBMC
+    sequence_control_set_ptr->static_config.enable_obmc = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_obmc;
+
     // ME Tools
     sequence_control_set_ptr->static_config.use_default_me_hme = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->use_default_me_hme;
     sequence_control_set_ptr->static_config.enable_hme_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_hme_flag;
@@ -2576,6 +2579,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
     config_ptr->disable_dlf_flag = EB_FALSE;
     config_ptr->enable_warped_motion = EB_TRUE;
+    config_ptr->enable_obmc = EB_TRUE;
     config_ptr->in_loop_me_flag = EB_TRUE;
     config_ptr->ext_block_flag = EB_FALSE;
     config_ptr->use_default_me_hme = EB_TRUE;

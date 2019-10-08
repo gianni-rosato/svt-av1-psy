@@ -59,6 +59,7 @@
 #define INTRA_REFRESH_TYPE_TOKEN        "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN       "-dlf"
 #define LOCAL_WARPED_ENABLE_TOKEN       "-local-warp"
+#define OBMC_TOKEN                      "-obmc"
 #define USE_DEFAULT_ME_HME_TOKEN        "-use-default-me-hme"
 #define HME_ENABLE_TOKEN                "-hme"
 #define HME_L0_ENABLE_TOKEN             "-hme-l0"
@@ -214,6 +215,7 @@ static void SetCfgUseQpFile                     (const char *value, EbConfig *cf
 static void SetCfgFilmGrain                     (const char *value, EbConfig *cfg) { cfg->film_grain_denoise_strength = strtol(value, NULL, 0); };  //not bool to enable possible algorithm extension in the future
 static void SetDisableDlfFlag                   (const char *value, EbConfig *cfg) {cfg->disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableLocalWarpedMotionFlag      (const char *value, EbConfig *cfg) {cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);};
+static void SetEnableObmcFlag                   (const char *value, EbConfig *cfg) {cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeFlag                    (const char *value, EbConfig *cfg) {cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeLevel0Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetTileRow                          (const char *value, EbConfig *cfg) { cfg->tile_rows = strtoul(value, NULL, 0); };
@@ -343,6 +345,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", SetDisableDlfFlag },
     // LOCAL WARPED MOTION
     { SINGLE_INPUT, LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", SetEnableLocalWarpedMotionFlag },
+    // OBMC
+    { SINGLE_INPUT, OBMC_TOKEN, "Obmc", SetEnableObmcFlag },
     // ME Tools
     { SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", SetCfgUseDefaultMeHme },
     { SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", SetEnableHmeFlag },
@@ -452,6 +456,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->pred_structure                        = 2;
     config_ptr->disable_dlf_flag                     = EB_FALSE;
     config_ptr->enable_warped_motion                 = EB_FALSE;
+    config_ptr->enable_obmc                          = EB_TRUE;
     config_ptr->ext_block_flag                       = EB_FALSE;
     config_ptr->in_loop_me_flag                      = EB_TRUE;
     config_ptr->use_default_me_hme                   = EB_TRUE;
@@ -870,6 +875,11 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
     // Local Warped Motion
     if (config->enable_warped_motion != 0 && config->enable_warped_motion != 1) {
         fprintf(config->error_log_file, "Error instance %u: Invalid warped motion flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
+        return_error = EB_ErrorBadParameter;
+    }
+    // OBMC
+    if (config->enable_obmc != 0 && config->enable_obmc != 1) {
+        fprintf(config->error_log_file, "Error instance %u: Invalid OBMC flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
         return_error = EB_ErrorBadParameter;
     }
 

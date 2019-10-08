@@ -181,7 +181,11 @@ extern "C" {
         UvPredictionMode uv_mode;
         uint8_t use_intrabc;
         // Only for INTER blocks
+#if OBMC_FLAG
+        uint32_t interp_filters;
+#else
         //InterpFilters interp_filters;
+#endif
         MvReferenceFrame ref_frame[2];
         IntMv mv[2];
         PartitionType partition;
@@ -314,6 +318,9 @@ extern "C" {
         TXFM_CONTEXT *left_txfm_context;
         TXFM_CONTEXT left_txfm_context_buffer[MAX_MIB_SIZE];
         struct macroblockd_plane plane[MAX_MB_PLANE];
+#if OBMC_FLAG
+        BlockSize sb_type;
+#endif
     } MacroBlockD;
 
     typedef struct Macroblock
