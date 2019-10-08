@@ -172,77 +172,76 @@ static PredictionStructureConfigEntry three_level_hierarchical_pred_struct[] = {
  *                                                     0  1     2     3  4  5       6
  *
  * Coding Order:
- *  0       5  3  6     2     7  4  8       1       1  1  1     1     1  1  1       9
- *                                                  3  1  4     0     5  2  6
+ *  0       4  3  5     2     7  6  8       1       1  1  1     1     1  1  1       9
+ *                                                  2  1  3     0     5  4  6
  *
  ***********************************************************************************************************/
 PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
-
     {
-        0,                  // GOP Index 0 - Temporal Layer
-        0,                  // GOP Index 0 - Decode Order
-        {8, 0,  0, 0},     // GOP Index 0 - Ref List 0
-        {8, 0,  0, 0}      // GOP Index 0 - Ref List 1
+        0,                      // GOP Index 0 - Temporal Layer
+        0,                      // GOP Index 0 - Decode Order
+        { 8, 0, 0, 0},          // GOP Index 0 - Ref List 0
+        { 8, 0, 0, 0}           // GOP Index 0 - Ref List 1
     },
     {
-        3,                  // GOP Index 1 - Temporal Layer
-        3,                  // GOP Index 1 - Decode Order
+        3,                      // GOP Index 1 - Temporal Layer
+        3,                      // GOP Index 1 - Decode Order
 #if PRED_CHANGE
-        { 1,  3,  5,  8},   // GOP Index 1 - Ref List 0
+        { 1, 3, 5, 8},          // GOP Index 1 - Ref List 0
 #else
-        { 1,  3,  5,  9},   // GOP Index 1 - Ref List 0
+        { 1, 3, 5, 9},          // GOP Index 1 - Ref List 0
 #endif
-        {-1, -3, -7,  0}    // GOP Index 1 - Ref List 1
+        {-1,-3,-7, 0}           // GOP Index 1 - Ref List 1
     },
     {
-        2,                  // GOP Index 2 - Temporal Layer
-        2,                  // GOP Index 2 - Decode Order
-         { 2,  4,  6,  10},   // GOP Index 2 - Ref List 0
-         {-2, -6,  0,   0}    // GOP Index 2 - Ref List 1
+        2,                      // GOP Index 2 - Temporal Layer
+        2,                      // GOP Index 2 - Decode Order
+        { 2, 4, 6, 10},         // GOP Index 2 - Ref List 0
+        {-2,-6, 0,  0}          // GOP Index 2 - Ref List 1
     },
     {
-        3,                  // GOP Index 3 - Temporal Layer
-        4,                  // GOP Index 3 - Decode Order
+        3,                      // GOP Index 3 - Temporal Layer
+        4,                      // GOP Index 3 - Decode Order
 #if PRED_CHANGE_MOD
-        { 1, 3, 2, 5},      // GOP Index 3 - Ref List 0
+        { 1, 3, 2, 5},          // GOP Index 3 - Ref List 0
 #elif PRED_CHANGE
-        { 1, 2, 3, 5},      // GOP Index 3 - Ref List 0
+        { 1, 2, 3, 5},          // GOP Index 3 - Ref List 0
 #else
-       { 1,   3, 5,  7},    //    GOP Index 3 - Ref List 0
+        { 1, 3, 5, 7},          // GOP Index 3 - Ref List 0
 #endif
-       {-1,  -5, 0,  0}     //     GOP Index 3 - Ref List 1
+        {-1, -5, 0, 0}          // GOP Index 3 - Ref List 1
     },
     {
-        1,                  // GOP Index 4 - Temporal Layer
-        1,                  // GOP Index 4 - Decode Order
-        { 4, 8, 12,  0},    // GOP Index 4 - Ref List 0
-        {-4,   0, 0,  0}   // GOP Index 4 - Ref List 1
+        1,                      // GOP Index 4 - Temporal Layer
+        1,                      // GOP Index 4 - Decode Order
+        { 4, 8, 12, 0},         // GOP Index 4 - Ref List 0
+        {-4, 0,  0, 0}          // GOP Index 4 - Ref List 1
     },
     {
-        3,                  // GOP Index 5 - Temporal Layer
-        6,                  // GOP Index 5 - Decode Order
+        3,                      // GOP Index 5 - Temporal Layer
+        6,                      // GOP Index 5 - Decode Order
 #if PRED_CHANGE
-        { 1,   3, 5,  4},    // GOP Index 5 - Ref List 0
+        { 1, 3, 5, 4},          // GOP Index 5 - Ref List 0
 #else
-        { 1,   3, 5,  9},    // GOP Index 5 - Ref List 0
+        { 1, 3, 5, 9},          // GOP Index 5 - Ref List 0
 #endif
-        {-1,  -3, 0,  0}     // GOP Index 5 - Ref List 1
+        {-1, -3, 0, 0}          // GOP Index 5 - Ref List 1
     },
     {
-        2,                  // GOP Index 6 - Temporal Layer
-        5,                  // GOP Index 6 - Decode Order
-        { 2,  4, 6,  10},   // GOP Index 6 - Ref List 0
-        {-2,  0, 0,  0}    // GOP Index 6 - Ref List 1
+        2,                      // GOP Index 6 - Temporal Layer
+        5,                      // GOP Index 6 - Decode Order
+        { 2, 4, 6, 10},         // GOP Index 6 - Ref List 0
+        {-2, 0, 0,  0}          // GOP Index 6 - Ref List 1
     },
     {
-        3,                  // GOP Index 7 - Temporal Layer
-        7,                  // GOP Index 7 - Decode Order
+        3,                      // GOP Index 7 - Temporal Layer
+        7,                      // GOP Index 7 - Decode Order
 #if PRED_CHANGE
-        { 1,  3, 5,  6},     //  GOP Index 7 - Ref List 0
+        { 1, 3, 5, 6},          // GOP Index 7 - Ref List 0
 #else
-        { 1,  3, 5,  7},     //  GOP Index 7 - Ref List 0
+        { 1, 3, 5, 7},          // GOP Index 7 - Ref List 0
 #endif
-        {-1,  0, 0,  0}      // GOP Index 7 - Ref List 1
+        {-1, 0, 0, 0}           // GOP Index 7 - Ref List 1
     }
 };
 
@@ -266,168 +265,168 @@ PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
  *                                                      0  1     2     3  4  5         6
  *
  * Coding Order:
- *  0        9  5  1     3     1  6  1       2       1  7  1     4     1  8  1         1
- *                 0           1     2               3     4           5     6
+ *  0        5  4  6     3     8  7  9       2       1  1  1     1     1  1  1         1
+ *                                                   2  1  3     0     5  4  6
  *
  ***********************************************************************************************************/
 PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
 
     {
-        0,                  // GOP Index 0 - Temporal Layer
-        0,                  // GOP Index 0 - Decode Order
-        {16, 48, 0, 0},      // GOP Index 0 - Ref List 0
-        {16, 32, 0, 0}       // GOP Index 0 - Ref List 1     //we need keep 16 as first entry in List1, this will ensure that for poc=16 there is a valid ref frame in List1.
+        0,                      // GOP Index 0 - Temporal Layer
+        0,                      // GOP Index 0 - Decode Order
+        {16, 48, 0, 0},         // GOP Index 0 - Ref List 0
+        {16, 32, 0, 0}          // GOP Index 0 - Ref List 1     //we need keep 16 as first entry in List1, this will ensure that for poc=16 there is a valid ref frame in List1.
     },
     {
-        4,                  // GOP Index 1 - Temporal Layer
-        4,                  // GOP Index 1 - Decode Order
+        4,                      // GOP Index 1 - Temporal Layer
+        4,                      // GOP Index 1 - Decode Order
 #if PRED_CHANGE_MOD
-       { 1, 9, 8, 17},  // GOP Index 1 - Ref List 0
+        { 1, 9, 8, 17},          // GOP Index 1 - Ref List 0
 #elif PRED_CHANGE_5L
-       { 1, 8, 9, 17},  // GOP Index 1 - Ref List 0
+        { 1, 8, 9, 17},          // GOP Index 1 - Ref List 0
 #else
-       { 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
+        { 1, 5, 9, 17},          // GOP Index 1 - Ref List 0
 #endif
-       { -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
+        { -1, -3, -7, 0}         // GOP Index 1 - Ref List 1
     },
     {
-        3,                  // GOP Index 2 - Temporal Layer
-        3,                  // GOP Index 2 - Decode Order
+        3,                      // GOP Index 2 - Temporal Layer
+        3,                      // GOP Index 2 - Decode Order
 #if PRED_CHANGE_5L
-    { 2, 4, 10, 18},        // GOP Index 2 - Ref List 0
+        { 2, 4, 10, 18},        // GOP Index 2 - Ref List 0
 #else
-    { 2, 4, 6, 10},        // GOP Index 2 - Ref List 0
+        { 2, 4, 6, 10},         // GOP Index 2 - Ref List 0
 #endif
-    { -2, -6, -14,  0 }   // GOP Index 2 - Ref List 1
+        { -2, -6, -14, 0}       // GOP Index 2 - Ref List 1
     },
     {
-        4,                  // GOP Index 3 - Temporal Layer
-        5,                  // GOP Index 3 - Decode Order
+        4,                      // GOP Index 3 - Temporal Layer
+        5,                      // GOP Index 3 - Decode Order
 #if PRED_CHANGE_MOD
-         { 1, 3, 2, 11},     // GOP Index 3 - Ref List 0
+        { 1, 3, 2, 11},         // GOP Index 3 - Ref List 0
 #elif PRED_CHANGE_5L
-         { 1, 2, 3, 11},     // GOP Index 3 - Ref List 0
+        { 1, 2, 3, 11},         // GOP Index 3 - Ref List 0
 #else
-         { 1, 3, 7, 11},     // GOP Index 3 - Ref List 0
+        { 1, 3, 7, 11},         // GOP Index 3 - Ref List 0
 #endif
-         { -1, -5, -13, 0 }   // GOP Index 3 - Ref List 1
+        { -1, -5, -13, 0}       // GOP Index 3 - Ref List 1
     },
     {
-        2,                  // GOP Index 4 - Temporal Layer
-        2,                  // GOP Index 4 - Decode Order
-    {  4,   8,  12,  20 },  // GOP Index 4 - Ref List 0
-    { -4, -12,  0,  0 }     // GOP Index 4 - Ref List 1
+        2,                      // GOP Index 4 - Temporal Layer
+        2,                      // GOP Index 4 - Decode Order
+        {  4, 8, 12, 20},       // GOP Index 4 - Ref List 0
+        { -4, -12, 0, 0}        // GOP Index 4 - Ref List 1
     },
     {
-        4,                  // GOP Index 5 - Temporal Layer
-        7,                  // GOP Index 5 - Decode Order
+        4,                      // GOP Index 5 - Temporal Layer
+        7,                      // GOP Index 5 - Decode Order
 #if PRED_CHANGE_MOD
-    { 1, 5, 4, 13},      // GOP Index 5 - Ref List 0
+        { 1, 5, 4, 13},         // GOP Index 5 - Ref List 0
 #elif PRED_CHANGE_5L
-    { 1, 4, 5, 13},      // GOP Index 5 - Ref List 0
+        { 1, 4, 5, 13},         // GOP Index 5 - Ref List 0
 #else
-    { 1, 5, 9, 13},      // GOP Index 5 - Ref List 0
+        { 1, 5, 9, 13},         // GOP Index 5 - Ref List 0
 #endif
-    { -1, -3, -11, 0 }   // GOP Index 5 - Ref List 1
+        { -1, -3, -11, 0}       // GOP Index 5 - Ref List 1
     },
     {
-        3,                  // GOP Index 6 - Temporal Layer
-        6,                  // GOP Index 6 - Decode Order
+        3,                      // GOP Index 6 - Temporal Layer
+        6,                      // GOP Index 6 - Decode Order
 #if PRED_CHANGE_5L
-        { 2, 4, 6, 14},        // GOP Index 6 - Ref List 0
+        { 2, 4, 6, 14},         // GOP Index 6 - Ref List 0
 #else
-        { 2, 4, 6, 10},        // GOP Index 6 - Ref List 0
+        { 2, 4, 6, 10},         // GOP Index 6 - Ref List 0
 #endif
-        { -2, -10,  0,  0 }    // GOP Index 6 - Ref List 1
+        { -2, -10, 0, 0}        // GOP Index 6 - Ref List 1
     },
     {
-        4,                  // GOP Index 7 - Temporal Layer
-        8,                  // GOP Index 7 - Decode Order
+        4,                      // GOP Index 7 - Temporal Layer
+        8,                      // GOP Index 7 - Decode Order
 #if PRED_CHANGE_MOD
-        { 1, 3, 6, 7},    // GOP Index 7 - Ref List 0
+        { 1, 3, 6, 7},          // GOP Index 7 - Ref List 0
 #elif PRED_CHANGE_5L
-        { 1, 3, 6, 7},    // GOP Index 7 - Ref List 0
+        { 1, 3, 6, 7},          // GOP Index 7 - Ref List 0
 #else
-        { 1, 3, 7, 11},    // GOP Index 7 - Ref List 0
+        { 1, 3, 7, 11},         // GOP Index 7 - Ref List 0
 #endif
-        { -1, -9, 0, 0 }   // GOP Index 7 - Ref List 1
+        { -1, -9, 0, 0}         // GOP Index 7 - Ref List 1
     },
     {
-        1,                  // GOP Index 8 - Temporal Layer
-        1,                  // GOP Index 8 - Decode Order
-        {  8, 16, 24, 0},   // GOP Index 8 - Ref List 0
-        { -8, 0, 0, 0}      // GOP Index 8 - Ref List 1
+        1,                      // GOP Index 8 - Temporal Layer
+        1,                      // GOP Index 8 - Decode Order
+        {  8, 16, 24, 0},       // GOP Index 8 - Ref List 0
+        { -8, 0, 0, 0}          // GOP Index 8 - Ref List 1
     },
     {
-        4,                  // GOP Index 9 - Temporal Layer
-        11,                 // GOP Index 9 - Decode Order
+        4,                      // GOP Index 9 - Temporal Layer
+        11,                     // GOP Index 9 - Decode Order
 #if PRED_CHANGE_MOD
-        { 1, 9, 8, 17},     // GOP Index 9 - Ref List 0
+        { 1, 9, 8, 17},         // GOP Index 9 - Ref List 0
 #elif PRED_CHANGE_5L
-        { 1, 8, 9, 17},     // GOP Index 9 - Ref List 0
+        { 1, 8, 9, 17},         // GOP Index 9 - Ref List 0
 #else
-        { 1, 5, 9, 17},     // GOP Index 9 - Ref List 0
+        { 1, 5, 9, 17},         // GOP Index 9 - Ref List 0
 #endif
-        { -1, -3, -7, 0 }   // GOP Index 9 - Ref List 1
+        { -1, -3, -7, 0}        // GOP Index 9 - Ref List 1
     },
     {
-        3,                  // GOP Index 10 - Temporal Layer
-        10,                 // GOP Index 10 - Decode Order
+        3,                      // GOP Index 10 - Temporal Layer
+        10,                     // GOP Index 10 - Decode Order
 #if PRED_CHANGE_5L
-         { 2, 4, 10, 18},       // GOP Index 10 - Ref List 0
+        { 2, 4, 10, 18},        // GOP Index 10 - Ref List 0
 #else
-         { 2, 4, 6, 10},       // GOP Index 10 - Ref List 0
+        { 2, 4, 6, 10},         // GOP Index 10 - Ref List 0
 #endif
-         { -2, -6,  0,  0 }    // GOP Index 10 - Ref List 1
+        { -2, -6, 0, 0}         // GOP Index 10 - Ref List 1
     },
     {
-        4,                  // GOP Index 11 - Temporal Layer
-        12,                 // GOP Index 11 - Decode Order
+        4,                      // GOP Index 11 - Temporal Layer
+        12,                     // GOP Index 11 - Decode Order
 #if PRED_CHANGE_MOD
-       { 1, 3, 2, 11},    // GOP Index 11 - Ref List 0
+        { 1, 3, 2, 11},         // GOP Index 11 - Ref List 0
 #elif PRED_CHANGE_5L
-       { 1, 2, 3, 11},    // GOP Index 11 - Ref List 0
+        { 1, 2, 3, 11},         // GOP Index 11 - Ref List 0
 #else
-       { 1, 3, 7, 11},    // GOP Index 11 - Ref List 0
+        { 1, 3, 7, 11},         // GOP Index 11 - Ref List 0
 #endif
-       { -1, -5, 0, 0 }   // GOP Index 11 - Ref List 1
+        { -1, -5, 0, 0}         // GOP Index 11 - Ref List 1
     },
     {
-        2,                  // GOP Index 12 - Temporal Layer
-        9,                  // GOP Index 12 - Decode Order
-         { 4, 8, 12, 0},       // GOP Index 12 - Ref List 0
-         { -4,  0, 0,  0 }     // GOP Index 12 - Ref List 1
+        2,                      // GOP Index 12 - Temporal Layer
+        9,                      // GOP Index 12 - Decode Order
+        { 4, 8, 12, 0},         // GOP Index 12 - Ref List 0
+        { -4, 0, 0, 0}          // GOP Index 12 - Ref List 1
     },
     {
-        4,                  // GOP Index 13 - Temporal Layer
-        14,                 // GOP Index 13 - Decode Order
+        4,                      // GOP Index 13 - Temporal Layer
+        14,                     // GOP Index 13 - Decode Order
 #if PRED_CHANGE_MOD
-         { 1, 5, 4, 13},  // GOP Index 13 - Ref List 0
+        { 1, 5, 4, 13},         // GOP Index 13 - Ref List 0
 #elif PRED_CHANGE_5L
-         { 1, 4, 5, 13},  // GOP Index 13 - Ref List 0
+        { 1, 4, 5, 13},         // GOP Index 13 - Ref List 0
 #else
-         { 1, 5, 9, 13},  // GOP Index 13 - Ref List 0
+        { 1, 5, 9, 13},         // GOP Index 13 - Ref List 0
 #endif
-         { -1, -3, 0, 0 }   // GOP Index 13 - Ref List 1
+        { -1, -3, 0, 0}         // GOP Index 13 - Ref List 1
     },
     {
-        3,                  // GOP Index 14 - Temporal Layer
-        13,                 // GOP Index 14 - Decode Order
-        { 2, 4, 6, 14},    // GOP Index 14 - Ref List 0
-        { -2, 0,  0, 0 }   // GOP Index 14 - Ref List 1
+        3,                      // GOP Index 14 - Temporal Layer
+        13,                     // GOP Index 14 - Decode Order
+        { 2, 4, 6, 14},         // GOP Index 14 - Ref List 0
+        { -2, 0, 0, 0}          // GOP Index 14 - Ref List 1
 
     },
     {
-        4,                  // GOP Index 15 - Temporal Layer
-        15,                 // GOP Index 15 - Decode Order
+        4,                      // GOP Index 15 - Temporal Layer
+        15,                     // GOP Index 15 - Decode Order
 #if PRED_CHANGE_MOD
-        { 1, 3, 6, 7},  // GOP Index 15 - Ref List 0
+        { 1, 3, 6, 7},          // GOP Index 15 - Ref List 0
 #elif PRED_CHANGE_5L
-        { 1, 3, 6, 7},  // GOP Index 15 - Ref List 0
+        { 1, 3, 6, 7},          // GOP Index 15 - Ref List 0
 #else
-        { 1, 3, 7, 11},  // GOP Index 15 - Ref List 0
+        { 1, 3, 7, 11},         // GOP Index 15 - Ref List 0
 #endif
-       { -1, 0, 0, 0 }   // GOP Index 15 - Ref List 1
+        { -1, 0, 0, 0}          // GOP Index 15 - Ref List 1
     }
 };
 
@@ -454,8 +453,8 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
  *                                                         0  1     2     3  4  5         6         7  8  9     0     1  2  3       4       5  6  7     8     9  0  1           2
  *
  * Coding Order:
- *  0           1  9  1     5     1  1  2       3       2  1  2     6     2  1  2         2         2  1  2     7     2  1  2       4       2  1  3     8     3  1  3           1
- *              7     8           9  0  0               1  1  2           3  2  4                   5  3  6           7  4  8               9  5  0           1  6  2
+ *  0           6  5  7     4     9  8  1       3       1  1  1     1     1  1  1         2         2  2  2     1     2  2  2       1       2  2  2     2     3  3  3           1
+ *                                      0               3  2  4     1     6  5  7                   1  0  2     9     4  3  5       8       8  7  9     6     1  0  2
  *
  **********************************************************************************************************************************************************************************************************************/
 static PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
