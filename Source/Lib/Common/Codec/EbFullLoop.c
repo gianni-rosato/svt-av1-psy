@@ -1918,7 +1918,11 @@ int32_t av1_quantize_inv_quantize(
 
 
     EbBool is_inter = (pred_mode >= NEARESTMV);
+#if RDOQ_CHROMA
+    EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && !is_intra_bc);
+#else
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
+#endif
     perform_rdoq = perform_rdoq && !picture_control_set_ptr->hbd_mode_decision && !bit_increment;
 
     // Hsan: set to FALSE until adding x86 quantize_fp
@@ -3130,9 +3134,15 @@ void full_loop_r(
                 picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
+#if RDOQ_CHROMA
+                context_ptr->cb_txb_skip_context,
+                context_ptr->cb_dc_sign_context,
+                candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
+#else
                 0,
                 0,
                 0,
+#endif
                 candidate_buffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 
@@ -3215,9 +3225,15 @@ void full_loop_r(
                 picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
+#if RDOQ_CHROMA
+                context_ptr->cr_txb_skip_context,
+                context_ptr->cr_dc_sign_context,
+                candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
+#else
                 0,
                 0,
                 0,
+#endif
                 candidate_buffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 

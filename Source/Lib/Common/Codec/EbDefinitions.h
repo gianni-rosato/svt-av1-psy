@@ -51,7 +51,7 @@ extern "C" {
 
 #define ENHANCE_ATB                       1
 
-
+#define RDOQ_CHROMA                       1
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
