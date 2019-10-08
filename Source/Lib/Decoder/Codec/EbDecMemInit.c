@@ -409,9 +409,9 @@ static EbErrorType init_lf_ctxt(EbDecHandle  *dec_handle_ptr) {
     /*Boundary checking of mi_row & mi_col are not done while populating,
     so more memory is allocated by alligning to sb_size */
     int32_t aligned_width   = ALIGN_POWER_OF_TWO(seq_header->max_frame_width,
-        seq_header->sb_size_log2);
+        MAX_SB_SIZE_LOG2);
     int32_t aligned_height  = ALIGN_POWER_OF_TWO(seq_header->max_frame_height,
-        seq_header->sb_size_log2);
+        MAX_SB_SIZE_LOG2);
     int32_t mi_cols = aligned_width >> MI_SIZE_LOG2;
     int32_t mi_rows = aligned_height >> MI_SIZE_LOG2;
 

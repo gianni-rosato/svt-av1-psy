@@ -1566,7 +1566,11 @@ void read_var_tx_size(EbDecHandle *dec_handle, PartitionInfo_t *pi, SvtReader *r
 
     if (blk_row >= max_blocks_high || blk_col >= max_blocks_wide) return;
 
+#if ENHANCE_ATB
+    if (tx_size == TX_4X4 || depth == MAX_VARTX_DEPTH)
+#else
     if (tx_size == TX_4X4 || depth == MAX_VARTX_DEPTH + 1)
+#endif
         txfm_split = 0;
     else {
         int ctx = get_txfm_split_ctx(pi, parse_ctx, tx_size, blk_row, blk_col);

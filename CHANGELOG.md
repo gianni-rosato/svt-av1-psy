@@ -1,5 +1,11 @@
 # Changelog
 
+## [upcoming]
+
+Decoder
+- Decoder SuperRes support
+- Decoder Reference Frame Scaling support
+
 ## [0.7.0] - 2019-09-26
 
 Encoder
@@ -22,8 +28,6 @@ Decoder
 - Post Processing Filters support
 - Compound Mode (InterInter & InterIntra) Tool support
 - Decoder Film Grain support
-- Decoder SuperRes support
-- Decoder Reference Frame Scaling support
 
 Build and Testing
 - Improve CI

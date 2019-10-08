@@ -76,7 +76,7 @@ void compute_image_size(SeqHeader *seq_header, FrameHeader *frm) {
     frm->mi_cols = 2 * ((frm->frame_size.frame_width + 7) >> 3);
     frm->mi_rows = 2 * ((frm->frame_size.frame_height + 7) >> 3);
     frm->mi_stride = (ALIGN_POWER_OF_TWO(seq_header->max_frame_width,
-        MAX_MIB_SIZE_LOG2)) >> MI_SIZE_LOG2;
+        MAX_SB_SIZE_LOG2)) >> MI_SIZE_LOG2;
 }
 
 /*TODO: Harmonize with encoder function */
