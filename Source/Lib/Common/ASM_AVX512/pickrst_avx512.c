@@ -3149,12 +3149,12 @@ int64_t eb_av1_lowbd_pixel_proj_error_avx512(const uint8_t *src8, int32_t width,
                 const __m256i d_256 = _mm256_loadu_si256((__m256i *)(dat + j));
                 const __m512i s_512 = _mm512_cvtepu8_epi16(s_256);
                 const __m512i d_512 = _mm512_cvtepu8_epi16(d_256);
-                const __m512i flt0_16b = _mm512_permutevar_epi32(
+                const __m512i flt0_16b = _mm512_permutexvar_epi32(
                     idx,
                     _mm512_packs_epi32(
                         _mm512_loadu_si512((__m512i *)(flt0 + j)),
                         _mm512_loadu_si512((__m512i *)(flt0 + j + 16))));
-                const __m512i flt1_16b = _mm512_permutevar_epi32(
+                const __m512i flt1_16b = _mm512_permutexvar_epi32(
                     idx,
                     _mm512_packs_epi32(
                         _mm512_loadu_si512((__m512i *)(flt1 + j)),
@@ -3219,7 +3219,7 @@ int64_t eb_av1_lowbd_pixel_proj_error_avx512(const uint8_t *src8, int32_t width,
                 const __m256i d_256 = _mm256_loadu_si256((__m256i *)(dat + j));
                 const __m512i s_512 = _mm512_cvtepu8_epi16(s_256);
                 const __m512i d_512 = _mm512_cvtepu8_epi16(d_256);
-                const __m512i flt_16b = _mm512_permutevar_epi32(
+                const __m512i flt_16b = _mm512_permutexvar_epi32(
                     idx,
                     _mm512_packs_epi32(
                         _mm512_loadu_si512((__m512i *)(flt + j)),
