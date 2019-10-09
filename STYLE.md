@@ -8,7 +8,7 @@ Tabs vs Spaces\
 
 Be aware that some tools might add tabs when auto aligning the code, please check your commits with a diff tool for tabs.
 
-for multi-line statements, the indentation of the next line depends on the context of the statement and braces around it.\
+For multi-line statements, the indentation of the next line depends on the context of the statement and braces around it.\
 For example, if you have a long assignment, you can choose to either align it to the = of the first line, or (if that leads to less lines of code) just indent 1 level further from the first line's indentation level:
 
 ``` c
