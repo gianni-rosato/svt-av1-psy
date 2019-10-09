@@ -167,13 +167,13 @@ void cdef_seg_search(
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
             if (((fbc & 1) &&
-                (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_128X64)) ||
+                (mbmi->block_mi.sb_type == BLOCK_128X128 || mbmi->block_mi.sb_type == BLOCK_128X64)) ||
                 ((fbr & 1) &&
-                (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_64X128)))
+                (mbmi->block_mi.sb_type == BLOCK_128X128 || mbmi->block_mi.sb_type == BLOCK_64X128)))
                 continue;
-            if (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_128X64 ||
-                mbmi->sb_type == BLOCK_64X128)
-                bs = mbmi->sb_type;
+            if (mbmi->block_mi.sb_type == BLOCK_128X128 || mbmi->block_mi.sb_type == BLOCK_128X64 ||
+                mbmi->block_mi.sb_type == BLOCK_64X128)
+                bs = mbmi->block_mi.sb_type;
 
             if (bs == BLOCK_128X128 || bs == BLOCK_128X64) {
                 nhb = AOMMIN(MI_SIZE_128X128, cm->mi_cols - MI_SIZE_64X64 * fbc);
@@ -337,13 +337,13 @@ void cdef_seg_search16bit(
             const MbModeInfo *mbmi = &mi[0]->mbmi;
 
             if (((fbc & 1) &&
-                (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_128X64)) ||
+                (mbmi->block_mi.sb_type == BLOCK_128X128 || mbmi->block_mi.sb_type == BLOCK_128X64)) ||
                 ((fbr & 1) &&
-                (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_64X128)))
+                (mbmi->block_mi.sb_type == BLOCK_128X128 || mbmi->block_mi.sb_type == BLOCK_64X128)))
                 continue;
-            if (mbmi->sb_type == BLOCK_128X128 || mbmi->sb_type == BLOCK_128X64 ||
-                mbmi->sb_type == BLOCK_64X128)
-                bs = mbmi->sb_type;
+            if (mbmi->block_mi.sb_type == BLOCK_128X128 || mbmi->block_mi.sb_type == BLOCK_128X64 ||
+                mbmi->block_mi.sb_type == BLOCK_64X128)
+                bs = mbmi->block_mi.sb_type;
             if (bs == BLOCK_128X128 || bs == BLOCK_128X64) {
                 nhb = AOMMIN(MI_SIZE_128X128, cm->mi_cols - MI_SIZE_64X64 * fbc);
                 hb_step = 2;

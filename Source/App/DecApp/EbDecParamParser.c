@@ -171,7 +171,6 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
         return EB_ErrorBadParameter;
     }
 
-    cli->bit_depth = configs->max_bit_depth;
     cli->fmt = configs->max_color_format;
 
     if(cli->height != configs->max_picture_height)

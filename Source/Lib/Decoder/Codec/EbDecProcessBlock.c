@@ -17,6 +17,7 @@
 
 #include "EbObuParse.h"
 #include "EbDecParseHelper.h"
+#include "EbCommonUtils.h"
 
 #include "EbDecInverseQuantize.h"
 #include "EbDecProcessFrame.h"
@@ -42,7 +43,7 @@ CflAllowedType store_cfl_required(const EbColorConfig *cc,
                                   const PartitionInfo_t  *xd)
 
 {
-    const ModeInfo_t *mbmi = xd->mi;
+    const BlockModeInfo *mbmi = xd->mi;
 
     if (cc->mono_chrome) return CFL_DISALLOWED;
 
@@ -57,7 +58,7 @@ CflAllowedType store_cfl_required(const EbColorConfig *cc,
 
     // If this block has chroma information, we know whether we're
     // actually going to perform a CfL prediction
-    return (CflAllowedType)(!dec_is_inter_block(mbmi) &&
+    return (CflAllowedType)(!is_inter_block(mbmi) &&
         mbmi->uv_mode == UV_CFL_PRED);
 }
 
@@ -69,7 +70,7 @@ PartitionType get_partition(DecModCtxt *dec_mod_ctxt, FrameHeader *frame_header,
     if (mi_row >= frame_header->mi_rows || mi_col >= frame_header->mi_cols)
         return PARTITION_INVALID;
 
-    ModeInfo_t *mode_info = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
+    BlockModeInfo *mode_info = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
 
     const BlockSize subsize = mode_info->sb_type;
 
@@ -85,9 +86,9 @@ PartitionType get_partition(DecModCtxt *dec_mod_ctxt, FrameHeader *frame_header,
     {
         // In this case, the block might be using an extended partition type.
         /* TODO: Fix the nbr access! */
-        const ModeInfo_t *const mbmi_right = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr,
+        const BlockModeInfo *const mbmi_right = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr,
             mi_row, mi_col + (bwide / 2), sb_info);
-        const ModeInfo_t *const mbmi_below = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr,
+        const BlockModeInfo *const mbmi_below = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr,
             mi_row + (bhigh / 2), mi_col, sb_info);
 
         if (sswide == bwide) {
@@ -154,8 +155,8 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
     int num_planes = av1_num_planes(color_config);
 
-    ModeInfo_t *mode_info = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
-    bool inter_block = dec_is_inter_block(mode_info);
+    BlockModeInfo *mode_info = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
+    bool inter_block = is_inter_block(mode_info);
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);
     assert(mode_info->mi_col == mi_col);
@@ -166,7 +167,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     int sub_x, sub_y, n_coeffs;
     sub_x = color_config->subsampling_x;
     sub_y = color_config->subsampling_y;
-    int is_chroma_reference = dec_is_chroma_reference(mi_row, mi_col, bsize,
+    int32_t is_chroma_ref = is_chroma_reference(mi_row, mi_col, bsize,
         sub_x, sub_y);
 
     /* TODO: Can move to a common init fun for parse & decode */
@@ -175,7 +176,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     part_info.sb_info = sb_info;
     part_info.mi_row = mi_row;
     part_info.mi_col = mi_col;
-    part_info.has_chroma = (int8_t) is_chroma_reference;
+    part_info.has_chroma = (int8_t)is_chroma_ref;
     part_info.pv_cfl_ctxt = &dec_mod_ctxt->cfl_ctx;
 
     /*!< Distance of MB away from frame edges in subpixels (1/8th pixel). */
@@ -318,7 +319,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
         sub_x = (plane > 0) ? color_config->subsampling_x : 0;
         sub_y = (plane > 0) ? color_config->subsampling_y : 0;
 
-        if (!dec_is_chroma_reference(mi_row, mi_col, bsize, sub_x, sub_y))
+        if (!is_chroma_reference(mi_row, mi_col, bsize, sub_x, sub_y))
             continue;
 
         trans_info = (plane == 0) ?

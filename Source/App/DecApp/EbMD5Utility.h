@@ -40,6 +40,6 @@ void md5_final(unsigned char digest[16], MD5Context *context);
 void md5_transform(unsigned int buf[4], unsigned int const in[16]);
 
 void print_md5(unsigned char digest[16]);
-void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5);
+void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5);
 
 #endif

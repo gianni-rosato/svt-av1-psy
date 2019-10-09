@@ -29,9 +29,7 @@
 #include "EbDecHandle.h"
 #include "EbDecParseHelper.h"
 #include "EbDecProcessFrame.h"
-
-
-extern PredictionMode get_uv_mode(UvPredictionMode mode);
+#include "EbCommonUtils.h"
 
 /* Avoid memory corruption by intra pred intrinsic kernel */
 void dec_init_intra_predictors_internal(void) {
@@ -44,37 +42,20 @@ void dec_init_intra_predictors_internal(void) {
 }
 
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
-static int dec_is_smooth(const ModeInfo_t *mbmi, int32_t plane) {
-    if (plane == 0) {
-        const PredictionMode mode = mbmi->mode;
-        return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED ||
-            mode == SMOOTH_H_PRED);
-    }
-    else {
-        // uv_mode is not set for inter blocks, so need to explicitly
-        // detect that case.
-        if (dec_is_inter_block(mbmi)) return 0;
-
-        const UvPredictionMode uv_mode = mbmi->uv_mode;
-        return (uv_mode == UV_SMOOTH_PRED || uv_mode == UV_SMOOTH_V_PRED ||
-            uv_mode == UV_SMOOTH_H_PRED);
-    }
-}
-/*TODO: Remove replication and harmonize with encoder after data str. harmonization */
 int32_t dec_get_filt_type(const PartitionInfo_t *part_info, int32_t plane) {
     int ab_sm, le_sm;
 
     if (plane == 0) {
-        const ModeInfo_t *ab = part_info->above_mbmi;
-        const ModeInfo_t *le = part_info->left_mbmi;
-        ab_sm = ab ? dec_is_smooth(ab, plane) : 0;
-        le_sm = le ? dec_is_smooth(le, plane) : 0;
+        const BlockModeInfo *ab = part_info->above_mbmi;
+        const BlockModeInfo *le = part_info->left_mbmi;
+        ab_sm = ab ? is_smooth(ab, plane) : 0;
+        le_sm = le ? is_smooth(le, plane) : 0;
     }
     else {
-        const ModeInfo_t *ab = part_info->chroma_above_mbmi;
-        const ModeInfo_t *le = part_info->chroma_left_mbmi;
-        ab_sm = ab ? dec_is_smooth(ab, plane) : 0;
-        le_sm = le ? dec_is_smooth(le, plane) : 0;
+        const BlockModeInfo *ab = part_info->chroma_above_mbmi;
+        const BlockModeInfo *le = part_info->chroma_left_mbmi;
+        ab_sm = ab ? is_smooth(ab, plane) : 0;
+        le_sm = le ? is_smooth(le, plane) : 0;
     }
 
     return (ab_sm || le_sm) ? 1 : 0;
@@ -212,7 +193,7 @@ static INLINE CflAllowedType is_cfl_allowed_with_frame_header(const PartitionInf
                                               FrameHeader *fh )
 
 {
-    const ModeInfo_t *mbmi = xd->mi;
+    const BlockModeInfo *mbmi = xd->mi;
     const BlockSize bsize = mbmi->sb_type;
     assert(bsize < BlockSizeS_ALL);
     if (fh->lossless_array[mbmi->segment_id]) {
@@ -241,7 +222,7 @@ void cfl_predict_block(PartitionInfo_t *xd, CflCtx *cfl_ctx, uint8_t *dst,
                        int32_t dst_stride, TxSize tx_size, int32_t plane,
                        EbColorConfig *cc, FrameHeader *fh)
 {
-    ModeInfo_t *mbmi = xd->mi;
+    BlockModeInfo *mbmi = xd->mi;
     CflAllowedType is_cfl_allowed_flag = is_cfl_allowed_with_frame_header(xd, cc, fh);
     assert(is_cfl_allowed_flag == CFL_ALLOWED);
     (void)is_cfl_allowed_flag;
@@ -735,7 +716,7 @@ void svtav1_predict_intra_block(PartitionInfo_t *xd, int32_t plane,
     int32_t sub_x = plane ? cc->subsampling_x : 0;
     int32_t sub_y = plane ? cc->subsampling_y : 0;
 
-    const ModeInfo_t *const mbmi = xd->mi;
+    const BlockModeInfo *const mbmi = xd->mi;
 
     const int txwpx = tx_size_wide[tx_size];
     const int txhpx = tx_size_high[tx_size];

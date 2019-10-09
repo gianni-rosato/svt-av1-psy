@@ -151,7 +151,7 @@ typedef struct ParseCtxt {
     /*!< Offset of first Chroma transform info from strat of SB pointer */
     uint16_t        first_chroma_tu_offset;
     /* TODO: Points to the cur ModeInfo_t in SB. Should be moved out */
-    ModeInfo_t      *cur_mode_info;
+    BlockModeInfo   *cur_mode_info;
     /* TODO: Points to the cur ModeInfo_t in SB. Should be moved out */
     int32_t         cur_mode_info_cnt;
     /* TODO: cur SB row idx. Should be moved out */

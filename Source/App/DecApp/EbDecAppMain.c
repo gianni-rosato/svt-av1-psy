@@ -21,7 +21,8 @@
 #include <fcntl.h>  /* _O_BINARY */
 #endif
 
-int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli) {
+int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli,
+    EbSvtAv1DecConfiguration *config) {
     switch (cli->fmt) {
     case EB_YUV400:
         pic_buffer->cb_stride = INT32_MAX;
@@ -54,6 +55,7 @@ int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli) {
     pic_buffer->cr_ext = NULL;
     pic_buffer->origin_x = 0;
     pic_buffer->origin_y = 0;
+    pic_buffer->bit_depth = config->max_bit_depth;
     return 0;
 }
 
@@ -79,7 +81,7 @@ int read_input_frame(DecInputContext *input, uint8_t **buffer, size_t *bytes_rea
 void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
-    const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
+    const int bytes_per_sample = (img->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
 
     // Write luma plane
     unsigned char *buf = img->luma;
@@ -97,11 +99,11 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
         buf = img->cb;
         stride = img->cb_stride;
         if (img->color_fmt == EB_YUV420) {
-            w /= 2;
-            h /= 2;
+            w = (w + 1) >> 1;
+            h = (h + 1) >> 1;
         }
         else if (img->color_fmt == EB_YUV422) {
-            w /= 2;
+            w = (w + 1) >> 1;
         }
         assert(img->color_fmt <= EB_YUV444);
 
@@ -206,7 +208,7 @@ int32_t main(int32_t argc, char* argv[])
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->luma = (uint8_t*)malloc(size);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb = (uint8_t*)malloc(size >> 2);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cr = (uint8_t*)malloc(size >> 2);
-        if (!init_pic_buffer((EbSvtIOFormat*)recon_buffer->p_buffer, &cli)) {
+        if (!init_pic_buffer((EbSvtIOFormat*)recon_buffer->p_buffer, &cli, config_ptr)) {
             printf("Decoding \n");
             EbAV1StreamInfo *stream_info = (EbAV1StreamInfo*)malloc(sizeof(EbAV1StreamInfo));
             EbAV1FrameInfo *frame_info = (EbAV1FrameInfo*)malloc(sizeof(EbAV1FrameInfo));
@@ -239,7 +241,7 @@ int32_t main(int32_t argc, char* argv[])
                             show_progress(in_frame , dx_time);
 
                         if (enable_md5)
-                            write_md5(recon_buffer, &cli, &md5_ctx);
+                            write_md5(recon_buffer, &md5_ctx);
                         if(cli.outFile != NULL)
                             write_frame(recon_buffer, &cli);
                     }
