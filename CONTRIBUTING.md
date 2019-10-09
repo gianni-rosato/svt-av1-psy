@@ -7,7 +7,7 @@ We welcome community contributions to the SVT-AV1 Encoder. Thank you for your ti
 - Follow the [coding guidelines](STYLE.md)
 
 - Validate that your changes do not break a build
-  - either locally or through travis-ci and appyveyor. Preferably all of them.
+  - either locally or through travis-ci and appveyor. Preferably all of them.
 
 - Perform smoke tests and ensure they pass
 
