@@ -80,7 +80,7 @@ typedef struct EbDecPicBuf {
 typedef struct CurFrameBuf {
     SBInfo          *sb_info;
 
-    ModeInfo_t      *mode_info;
+    BlockModeInfo   *mode_info;
 
     int32_t         *coeff[MAX_MB_PLANE];
 
@@ -233,6 +233,7 @@ typedef struct EbDecHandle {
     EbMemoryMapEntry            *memory_map;
     uint32_t                     memory_map_index;
     uint64_t                     total_lib_memory;
+    struct Av1Common             cm;
 }EbDecHandle;
 
 #ifdef __cplusplus

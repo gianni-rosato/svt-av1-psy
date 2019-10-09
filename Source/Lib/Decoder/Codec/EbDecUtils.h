@@ -47,18 +47,22 @@ static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
     return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
 }
 
-static INLINE int is_interintra_allowed(const ModeInfo_t *mbmi) {
+static INLINE int is_interintra_allowed(const BlockModeInfo *mbmi) {
     return is_interintra_allowed_bsize(mbmi->sb_type) &&
         is_interintra_allowed_mode(mbmi->mode) &&
         is_interintra_allowed_ref(mbmi->ref_frame);
 }
 
 #if COMP_INTERINTRA
-static INLINE int is_interintra_pred(const ModeInfo_t *mbmi) {
+static INLINE int is_interintra_pred(const BlockModeInfo *mbmi) {
     return mbmi->ref_frame[0] > INTRA_FRAME &&
         mbmi->ref_frame[1] == INTRA_FRAME && is_interintra_allowed(mbmi);
 }
 #endif //comp_interintra
+
+static INLINE int has_second_ref(const BlockModeInfo *mbmi) {
+    return mbmi->ref_frame[1] > INTRA_FRAME;
+}
 
 #ifdef __cplusplus
 }

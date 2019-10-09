@@ -65,7 +65,6 @@ typedef struct CLInput{
     struct Rational pixel_aspect_ratio;
     struct Rational framerate;
     EbColorFormat fmt;
-    EbBitDepth bit_depth;
     uint32_t   enable_md5;
     uint32_t  fps_frm;
     uint32_t  fps_summary;

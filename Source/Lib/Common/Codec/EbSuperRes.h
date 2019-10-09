@@ -14,26 +14,19 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef EbDecSuperRes_h
-#define EbDecSuperRes_h
+#ifndef EbSuperRes_h
+#define EbSuperRes_h
 
 #include "EbAv1Structs.h"
-#include "EbDecUtils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void av1_upscale_normative_rows(FrameHeader *frm_hdr, const uint8_t *src,
-    int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
-
-void av1_upscale_normative_and_extend_frame(FrameHeader *frm_hdr,
-    SeqHeader*seq_hdr, EbPictureBufferDesc *src, EbPictureBufferDesc *dst);
-
-void av1_superres_upscale(FrameHeader *frm_hdr, SeqHeader*seq_hdr,
-    EbPictureBufferDesc *recon_picture_src);
+    void av1_tile_set_col(TilesInfo *tile, TilesInfo *tiles_info, int32_t mi_cols,
+        uint32_t *mi_col_start, uint32_t *mi_col_end, int col);
 
 #ifdef __cplusplus
 }
 #endif
-#endif // EbDecSuperRes_h
+#endif // EbSuperRes_h

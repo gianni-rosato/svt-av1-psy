@@ -12,8 +12,6 @@ extern "C" {
 
 #include "EbDecHandle.h"
 
-int av1_superres_scaled(FrameSize *frame_size);
-
 void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle,
                                            int optimized_lr);
 void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle,

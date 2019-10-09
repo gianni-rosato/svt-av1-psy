@@ -24,7 +24,6 @@ extern "C" {
 #endif
 
 void svt_cdef_frame(EbDecHandle *dec_handle);
-void svt_cdef_frame_hbd(EbDecHandle *dec_handle);
 
 #ifdef __cplusplus
 }
