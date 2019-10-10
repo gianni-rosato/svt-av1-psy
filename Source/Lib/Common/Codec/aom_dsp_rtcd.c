@@ -1782,7 +1782,7 @@ void setup_rtcd_internal(EbAsm asm_type)
              ext_eight_sad_calculation_32x32_64x64_avx2);
     SET_AVX2(eb_sad_kernel4x4,
              fast_loop_nx_m_sad_kernel,
-             compute4x_m_sad_avx2_intrin);
+             eb_compute4x_m_sad_avx2_intrin);
     SET_AVX2(sum_residual8bit,
              sum_residual_c,
              sum_residual8bit_avx2_intrin);

@@ -101,15 +101,15 @@ extern "C" {
         },
         // AVX2
         {
-            /*0 4xM  */ Compute4xMSadSub_AVX2_INTRIN,
-            /*1 8xM  */ compute8x_m_sad_avx2_intrin,
-            /*2 16xM */ compute16x_m_sad_avx2_intrin,
+            /*0 4xM  */ eb_compute4x_m_sad_avx2_intrin,
+            /*1 8xM  */ eb_compute8x_m_sad_avx2_intrin,
+            /*2 16xM */ eb_compute16x_m_sad_avx2_intrin,
             /*3 24xM */ fast_loop_nx_m_sad_kernel,
-            /*4 32xM */ compute32x_m_sad_avx2_intrin,
+            /*4 32xM */ eb_compute32x_m_sad_avx2_intrin,
             /*5      */ 0,
             /*6 48xM */ fast_loop_nx_m_sad_kernel,
             /*7      */ 0,
-            /*8 64xM */ compute64x_m_sad_avx2_intrin,
+            /*8 64xM */ eb_compute64x_m_sad_avx2_intrin,
             0,0,0,0,0,0,0,fast_loop_nx_m_sad_kernel
         },
     };
@@ -129,15 +129,15 @@ extern "C" {
         },
         // AVX2
         {
-            /*0 4xM  */ compute4x_m_sad_avx2_intrin,
-            /*1 8xM  */ compute8x_m_sad_avx2_intrin,
-            /*2 16xM */ compute16x_m_sad_avx2_intrin,//compute16x_m_sad_avx2_intrin is slower than the SSE2 version
-            /*3 24xM */ compute24x_m_sad_avx2_intrin,
-            /*4 32xM */ compute32x_m_sad_avx2_intrin,
+            /*0 4xM  */ eb_compute4x_m_sad_avx2_intrin,
+            /*1 8xM  */ eb_compute8x_m_sad_avx2_intrin,
+            /*2 16xM */ eb_compute16x_m_sad_avx2_intrin,//eb_compute16x_m_sad_avx2_intrin is slower than the SSE2 version
+            /*3 24xM */ eb_compute24x_m_sad_avx2_intrin,
+            /*4 32xM */ eb_compute32x_m_sad_avx2_intrin,
             /*5      */ nxm_sad_kernel_void_func,
-            /*6 48xM */ compute48x_m_sad_avx2_intrin,
+            /*6 48xM */ eb_compute48x_m_sad_avx2_intrin,
             /*7      */ nxm_sad_kernel_void_func,
-            /*8 64xM */ compute64x_m_sad_avx2_intrin,
+            /*8 64xM */ eb_compute64x_m_sad_avx2_intrin,
         },
     };
 
