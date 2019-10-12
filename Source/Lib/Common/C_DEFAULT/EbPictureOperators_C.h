@@ -20,6 +20,12 @@ extern "C" {
         uint32_t   area_width,
         uint32_t   area_height);
 
+    void picture_average_kernel_1line_c(
+        EbByte   src0,
+        EbByte   src1,
+        EbByte   dst,
+        uint32_t   areaWidth);
+
     void picture_copy_kernel(
         EbByte   src,
         uint32_t src_stride,

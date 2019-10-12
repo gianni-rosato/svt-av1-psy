@@ -31,6 +31,17 @@ void picture_average_kernel(
     }
 }
 
+void picture_average_kernel_1line_c(
+    EbByte   src0,
+    EbByte   src1,
+    EbByte   dst,
+    uint32_t   areaWidth)
+{
+    uint32_t i;
+    for (i = 0; i < areaWidth; i++)
+        dst[i] = (src0[i] + src1[i] + 1) / 2;
+}
+
 /*********************************
 * Picture Copy Kernel
 *********************************/
