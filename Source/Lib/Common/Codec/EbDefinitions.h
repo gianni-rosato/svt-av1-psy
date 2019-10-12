@@ -62,7 +62,7 @@ extern "C" {
 #define SPEED_OPT                    1 // Speed optimization(s)
 
 #ifndef NON_AVX512_SUPPORT
-//#define NON_AVX512_SUPPORT
+#define NON_AVX512_SUPPORT
 #endif
 
 #define MR_MODE                           0

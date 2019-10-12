@@ -3,8 +3,6 @@
  * SPDX - License - Identifier: BSD - 2 - Clause - Patent
  */
 
-#if 0
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -503,4 +501,3 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 }  // namespace
-#endif
