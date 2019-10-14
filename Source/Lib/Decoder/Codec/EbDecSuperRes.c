@@ -18,7 +18,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "EbSuperRes.h"
 #include "EbCdef.h"
 #include "EbDecRestoration.h"
 #include "EbDecUtils.h"
@@ -26,7 +25,7 @@
 #include "EbInterPrediction.h"
 
 
-void av1_upscale_normative_rows(Av1Common *cm, const uint8_t *src,
+void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
     int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
 
 void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *frm_hdr,
