@@ -484,8 +484,6 @@ void setup_rtcd_internal(EbAsm asm_type)
     //av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
     /*if (flags & HAS_SSE2)*/ eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
-    ResidualKernel = residual_kernel_c;
-    if (flags & HAS_AVX2) ResidualKernel = ResidualKernel_avx2;
 #if II_COMP_FLAG
     aom_blend_a64_mask = aom_blend_a64_mask_c;
     if (flags & HAS_SSE4_1) aom_blend_a64_mask = aom_blend_a64_mask_sse4_1;
@@ -1735,6 +1733,10 @@ void setup_rtcd_internal(EbAsm asm_type)
                     spatial_full_distortion_kernel_c,
                     spatial_full_distortion_kernel_avx2,
                     spatial_full_distortion_kernel_avx512);
+    SET_AVX2_AVX512(residual_kernel8bit,
+                    residual_kernel8bit_c,
+                    residual_kernel8bit_avx2,
+                    residual_kernel8bit_avx512);
     SET_SSE41_AVX2(sad_loop_kernel_sparse,
                    sad_loop_kernel_sparse_c,
                    sad_loop_kernel_sparse_sse4_1_intrin,

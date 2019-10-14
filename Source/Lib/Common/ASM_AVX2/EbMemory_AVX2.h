@@ -100,8 +100,14 @@ static INLINE void storeu_u8_16x2_avx2(const __m256i src,
     storeu_8bit_16x2_avx2(src, dst, sizeof(*dst) * stride);
 }
 
+static INLINE void storeu_s16_8x2_avx2(const __m256i src,
+    int16_t *const dst,
+    const int32_t stride) {
+    storeu_8bit_16x2_avx2(src, dst, sizeof(*dst) * stride);
+}
+
 static INLINE void storeu_u16_8x2_avx2(const __m256i src,
-    ConvBufType *const dst,
+    uint16_t *const dst,
     const int32_t stride) {
     storeu_8bit_16x2_avx2(src, dst,  sizeof(*dst) * stride);
 }

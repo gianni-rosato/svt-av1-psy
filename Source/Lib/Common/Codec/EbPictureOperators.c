@@ -195,7 +195,7 @@ void residual_kernel16bit(
 * Residual Kernel
 Computes the residual data
 *******************************************/
-void residual_kernel_c(
+void residual_kernel8bit_c(
     uint8_t   *input,
     uint32_t   input_stride,
     uint8_t   *pred,

@@ -4867,7 +4867,7 @@ void tx_partitioning_path(
                     tx_candidate_buffer);
 
                 // Y Residual
-                ResidualKernel(
+                residual_kernel8bit(
                     &(input_picture_ptr->buffer_y[input_tu_origin_index]),
                     input_picture_ptr->stride_y,
                     &(tx_candidate_buffer->prediction_ptr->buffer_y[tu_origin_index]),

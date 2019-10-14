@@ -6,7 +6,7 @@
 #include <immintrin.h>  // AVX2
 #include "synonyms.h"
 #include "aom_dsp_rtcd.h"
-#include "EbPictureOperators_AVX2.h"
+#include "EbPictureOperators_Inline_AVX2.h"
 #include "EbRestoration.h"
 #include "EbUtility.h"
 #include "pickrst_avx2.h"

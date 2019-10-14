@@ -192,7 +192,7 @@ void picture_addition_kernel64x64_sse2_intrin(
 }
 
 /******************************************************************************************************
-ResidualKernel
+residual_kernel
 ***********************************************************************************************************/
 void residual_kernel_sub_sampled4x4_sse_intrin(
     uint8_t   *input,

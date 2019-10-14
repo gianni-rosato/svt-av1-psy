@@ -1466,7 +1466,7 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
                 asm_type);
 
             //Y Residual
-            ResidualKernel(
+            residual_kernel8bit(
                 &(input_picture_ptr->buffer_y[input_origin_index]),
                 input_picture_ptr->stride_y,
                 &(context_ptr->candidate_buffer->prediction_ptr->buffer_y[cu_origin_index]),

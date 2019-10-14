@@ -298,7 +298,7 @@ extern "C" {
         uint32_t  area_width,
         uint32_t  area_height);
 
-    void residual_kernel_c(
+    void residual_kernel8bit_c(
         uint8_t  *input,
         uint32_t  input_stride,
         uint8_t  *pred,

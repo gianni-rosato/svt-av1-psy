@@ -78,6 +78,12 @@ SIMD_INLINE void store_u16_2x2_sse2(const __m128i src, uint16_t *const dst,
     *(int32_t *)(dst + stride) = _mm_extract_epi32(src, 1);
 }
 
+SIMD_INLINE void store_s16_4x2_sse2(const __m128i src, int16_t *const dst,
+    const int32_t stride) {
+    _mm_storel_epi64((__m128i *)dst, src);
+    _mm_storeh_epi64((__m128i *)(dst + stride), src);
+}
+
 SIMD_INLINE void store_u16_4x2_sse2(const __m128i src, uint16_t *const dst,
     const int32_t stride) {
     _mm_storel_epi64((__m128i *)dst, src);

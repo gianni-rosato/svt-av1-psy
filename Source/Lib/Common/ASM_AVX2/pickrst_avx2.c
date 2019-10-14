@@ -13,7 +13,7 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 #include "aom_dsp_rtcd.h"
-#include "EbPictureOperators_AVX2.h"
+#include "EbPictureOperators_Inline_AVX2.h"
 #include "EbRestoration.h"
 #include "EbRestorationPick.h"
 #include "EbUtility.h"

@@ -6,13 +6,143 @@
 #include "EbDefinitions.h"
 #include <immintrin.h>
 #include "EbPictureOperators_AVX2.h"
+#include "EbPictureOperators_Inline_AVX2.h"
 #include "EbPictureOperators_SSE2.h"
 #include "EbMemory_AVX2.h"
 
 #ifndef NON_AVX512_SUPPORT
 
+static INLINE void Residual32x2_avx512(const uint8_t *input,
+    const uint32_t input_stride, const uint8_t *pred,
+    const uint32_t pred_stride, int16_t *residual,
+    const uint32_t residual_stride)
+{
+    const __m512i zero = _mm512_setzero_si512();
+    const __m512i idx = _mm512_setr_epi64(0, 4, 1, 5, 2, 6, 3, 7);
+    const __m256i in0 = _mm256_loadu_si256((__m256i *)input);
+    const __m256i in1 = _mm256_loadu_si256((__m256i *)(input + input_stride));
+    const __m256i pr0 = _mm256_loadu_si256((__m256i *)pred);
+    const __m256i pr1 = _mm256_loadu_si256((__m256i *)(pred + pred_stride));
+    const __m512i in2 = _mm512_inserti64x4(_mm512_castsi256_si512(in0), in1, 1);
+    const __m512i pr2 = _mm512_inserti64x4(_mm512_castsi256_si512(pr0), pr1, 1);
+    const __m512i in3 = _mm512_permutexvar_epi64(idx, in2);
+    const __m512i pr3 = _mm512_permutexvar_epi64(idx, pr2);
+    const __m512i in_lo = _mm512_unpacklo_epi8(in3, zero);
+    const __m512i in_hi = _mm512_unpackhi_epi8(in3, zero);
+    const __m512i pr_lo = _mm512_unpacklo_epi8(pr3, zero);
+    const __m512i pr_hi = _mm512_unpackhi_epi8(pr3, zero);
+    const __m512i re_lo = _mm512_sub_epi16(in_lo, pr_lo);
+    const __m512i re_hi = _mm512_sub_epi16(in_hi, pr_hi);
+    _mm512_storeu_si512((__m512i*)(residual + 0 * residual_stride), re_lo);
+    _mm512_storeu_si512((__m512i*)(residual + 1 * residual_stride), re_hi);
+}
+
+SIMD_INLINE void residual_kernel32_avx2(
+    const uint8_t *input, const uint32_t input_stride, const uint8_t *pred,
+    const uint32_t pred_stride, int16_t *residual,
+    const uint32_t residual_stride, const uint32_t area_height)
+{
+    uint32_t y = area_height;
+
+    do {
+        Residual32x2_avx512(input, input_stride, pred, pred_stride, residual,
+            residual_stride);
+        input += 2 * input_stride;
+        pred += 2 * pred_stride;
+        residual += 2 * residual_stride;
+        y -= 2;
+    } while (y);
+}
+
+static INLINE void Residual64_avx512(const uint8_t *const input,
+    const uint8_t *const pred, int16_t *const residual)
+{
+    const __m512i zero = _mm512_setzero_si512();
+    const __m512i idx = _mm512_setr_epi64(0, 4, 1, 5, 2, 6, 3, 7);
+    const __m512i in0 = _mm512_loadu_si512((__m512i *)input);
+    const __m512i pr0 = _mm512_loadu_si512((__m512i *)pred);
+    const __m512i in1 = _mm512_permutexvar_epi64(idx, in0);
+    const __m512i pr1 = _mm512_permutexvar_epi64(idx, pr0);
+    const __m512i in_lo = _mm512_unpacklo_epi8(in1, zero);
+    const __m512i in_hi = _mm512_unpackhi_epi8(in1, zero);
+    const __m512i pr_lo = _mm512_unpacklo_epi8(pr1, zero);
+    const __m512i pr_hi = _mm512_unpackhi_epi8(pr1, zero);
+    const __m512i re_lo = _mm512_sub_epi16(in_lo, pr_lo);
+    const __m512i re_hi = _mm512_sub_epi16(in_hi, pr_hi);
+    _mm512_storeu_si512((__m512i*)(residual + 0 * 32), re_lo);
+    _mm512_storeu_si512((__m512i*)(residual + 1 * 32), re_hi);
+}
+
+SIMD_INLINE void residual_kernel64_avx2(
+    const uint8_t *input, const uint32_t input_stride, const uint8_t *pred,
+    const uint32_t pred_stride, int16_t *residual,
+    const uint32_t residual_stride, const uint32_t area_height)
+{
+    uint32_t y = area_height;
+
+    do {
+        Residual64_avx512(input, pred, residual);
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
+    } while (--y);
+}
+
+SIMD_INLINE void residual_kernel128_avx2(
+    const uint8_t *input, const uint32_t input_stride, const uint8_t *pred,
+    const uint32_t pred_stride, int16_t *residual,
+    const uint32_t residual_stride, const uint32_t area_height)
+{
+    uint32_t y = area_height;
+
+    do {
+        Residual64_avx512(input + 0 * 64, pred + 0 * 64, residual + 0 * 64);
+        Residual64_avx512(input + 1 * 64, pred + 1 * 64, residual + 1 * 64);
+        input += input_stride;
+        pred += pred_stride;
+        residual += residual_stride;
+    } while (--y);
+}
+
+void residual_kernel8bit_avx512(
+    uint8_t   *input,
+    uint32_t   input_stride,
+    uint8_t   *pred,
+    uint32_t   pred_stride,
+    int16_t  *residual,
+    uint32_t   residual_stride,
+    uint32_t   area_width,
+    uint32_t   area_height)
+{
+    switch (area_width) {
+    case 4:
+        residual_kernel4_avx2(input, input_stride, pred, pred_stride, residual, residual_stride, area_height);
+        break;
+
+    case 8:
+        residual_kernel8_avx2(input, input_stride, pred, pred_stride, residual, residual_stride, area_height);
+        break;
+
+    case 16:
+        residual_kernel16_avx2(input, input_stride, pred, pred_stride, residual, residual_stride, area_height);
+        break;
+
+    case 32:
+        residual_kernel32_avx2(input, input_stride, pred, pred_stride, residual, residual_stride, area_height);
+        break;
+
+    case 64:
+        residual_kernel64_avx2(input, input_stride, pred, pred_stride, residual, residual_stride, area_height);
+        break;
+
+    default: // 128
+        residual_kernel128_avx2(input, input_stride, pred, pred_stride, residual, residual_stride, area_height);
+        break;
+    }
+}
+
 static INLINE int32_t Hadd32_AVX512_INTRIN(const __m512i src) {
-    const __m256i src_L = _mm512_extracti64x4_epi64(src, 0);
+    const __m256i src_L = _mm512_castsi512_si256(src);
     const __m256i src_H = _mm512_extracti64x4_epi64(src, 1);
     const __m256i sum = _mm256_add_epi32(src_L, src_H);
 
@@ -316,7 +446,7 @@ uint64_t spatial_full_distortion_kernel_avx512(
                 } while (--h);
             }
 
-            const __m256i sum512_L = _mm512_extracti64x4_epi64(sum512, 0);
+            const __m256i sum512_L = _mm512_castsi512_si256(sum512);
             const __m256i sum512_H = _mm512_extracti64x4_epi64(sum512, 1);
             sum = _mm256_add_epi32(sum, sum512_L);
             sum = _mm256_add_epi32(sum, sum512_H);
