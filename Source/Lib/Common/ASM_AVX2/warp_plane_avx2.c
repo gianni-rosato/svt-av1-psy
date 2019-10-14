@@ -1196,21 +1196,21 @@ int64_t eb_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
     for (i = 0; i < (p_height / 4); i++) {
         row_error = _mm256_set1_epi16(0);
         for (j = 0; j < (p_width / 16); j++) {
-            __m256i ref_1_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i ref_1_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(ref + (j * 16) + (((i * 4) + 0) * ref_stride))));
-            __m256i dst_1_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i dst_1_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(dst + (j * 16) + (((i * 4) + 0) * dst_stride))));
-            __m256i ref_2_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i ref_2_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(ref + (j * 16) + (((i * 4) + 1) * ref_stride))));
-            __m256i dst_2_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i dst_2_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(dst + (j * 16) + (((i * 4) + 1) * dst_stride))));
-            __m256i ref_3_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i ref_3_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(ref + (j * 16) + (((i * 4) + 2) * ref_stride))));
-            __m256i dst_3_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i dst_3_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(dst + (j * 16) + (((i * 4) + 2) * dst_stride))));
-            __m256i ref_4_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i ref_4_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(ref + (j * 16) + (((i * 4) + 3) * ref_stride))));
-            __m256i dst_4_16 = _mm256_cvtepu8_epi16(_mm_load_si128(
+            __m256i dst_4_16 = _mm256_cvtepu8_epi16(_mm_loadu_si128(
                 (__m128i *)(dst + (j * 16) + (((i * 4) + 3) * dst_stride))));
 
             __m256i diff_1 =
