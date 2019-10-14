@@ -50,9 +50,14 @@ int32_t read_y4m_header(EbConfig *cfg){
     }
 
     /* read header parameters */
-    for (tokstart = &(buffer[0]); *tokstart != '\0'; tokstart++) {
-        if (*tokstart == 0x20)
+    tokstart = &(buffer[0]);
+
+    while (*tokstart != '\0') {
+        if (*tokstart == 0x20) {
+            tokstart++;
             continue;
+        }
+
         switch (*tokstart++) {
         case 'W': /* width, required. */
             width = (uint32_t)strtol(tokstart, &tokend, 10);
@@ -204,9 +209,15 @@ int32_t read_y4m_header(EbConfig *cfg){
             }
             break;
         default:
+            /* Unknown section: skip it */
+            while (*tokstart != 0x20 && *tokstart != '\0')
+                tokstart++;
             break;
         }
     }
+
+    /* Check that we did not try to parse further the end of the header string */
+    assert(fresult + strlen(fresult) == tokstart);
 
     /*check if required parameters were read*/
     if(width == 0) {
