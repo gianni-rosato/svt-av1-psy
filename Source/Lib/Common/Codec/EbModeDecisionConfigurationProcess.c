@@ -2040,13 +2040,14 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             md_rate_estimation_array,
             picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
             picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc);
+#if !FIX_ENABLE_CDF_UPDATE
         // Initial Rate Estimatimation of the syntax elements
         if (!md_rate_estimation_array->initialized)
             av1_estimate_syntax_rate(
                 md_rate_estimation_array,
                 picture_control_set_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
                 picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc);
-
+#endif
         // Initial Rate Estimatimation of the Motion vectors
         av1_estimate_mv_rate(
             picture_control_set_ptr,
