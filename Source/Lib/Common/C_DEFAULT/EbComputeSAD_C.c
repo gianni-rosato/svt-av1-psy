@@ -89,12 +89,12 @@ uint32_t sad_16b_kernel(
 }
 
 void sad_loop_kernel_sparse(
-    uint8_t *src,        // input parameter, source samples Ptr
-    uint32_t srcStride,  // input parameter, source stride
-    uint8_t *ref,        // input parameter, reference samples Ptr
-    uint32_t refStride,  // input parameter, reference stride
-    uint32_t height,     // input parameter, block height (M)
-    uint32_t width,      // input parameter, block width (N)
+    uint8_t *src,           // input parameter, source samples Ptr
+    uint32_t srcStride,     // input parameter, source stride
+    uint8_t *ref,           // input parameter, reference samples Ptr
+    uint32_t refStride,     // input parameter, reference stride
+    uint32_t block_height,  // input parameter, block height (M)
+    uint32_t block_width,   // input parameter, block width (N)
     uint64_t *bestSad,
     int16_t *xSearchCenter,
     int16_t *ySearchCenter,
@@ -116,8 +116,8 @@ void sad_loop_kernel_sparse(
                 uint32_t x, y;
                 uint32_t sad = 0;
 
-                for (y = 0; y < height; y++) {
-                    for (x = 0; x < width; x++)
+                for (y = 0; y < block_height; y++) {
+                    for (x = 0; x < block_width; x++)
                         sad +=
                             EB_ABS_DIFF(src[y * srcStride + x],
                                         ref[xSearchIndex + y * refStride + x]);
@@ -143,8 +143,8 @@ void sad_loop_kernel(
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr
     uint32_t  ref_stride,                      // input parameter, reference stride
-    uint32_t  height,                         // input parameter, block height (M)
-    uint32_t  width,                          // input parameter, block width (N)
+    uint32_t  block_height,                   // input parameter, block height (M)
+    uint32_t  block_width,                    // input parameter, block width (N)
     uint64_t *best_sad,
     int16_t *x_search_center,
     int16_t *y_search_center,
@@ -164,9 +164,9 @@ void sad_loop_kernel(
             uint32_t x, y;
             uint32_t sad = 0;
 
-            for (y = 0; y < height; y++)
+            for (y = 0; y < block_height; y++)
             {
-                for (x = 0; x < width; x++)
+                for (x = 0; x < block_width; x++)
                     sad += EB_ABS_DIFF(src[y*src_stride + x], ref[xSearchIndex + y * ref_stride + x]);
             }
 

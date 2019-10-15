@@ -150,8 +150,8 @@ void sad_loop_kernel_sparse_avx2_intrin(
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr
     uint32_t  ref_stride,                      // input parameter, reference stride
-    uint32_t  height,                         // input parameter, block height (M)
-    uint32_t  width,                          // input parameter, block width (N)
+    uint32_t  block_height,                   // input parameter, block height (M)
+    uint32_t  block_width,                    // input parameter, block width (N)
     uint64_t *best_sad,
     int16_t *x_search_center,
     int16_t *y_search_center,
@@ -174,10 +174,10 @@ void sad_loop_kernel_sparse_avx2_intrin(
             s8 = _mm_slli_si128(s8, 2);
     }
 
-    switch (width) {
+    switch (block_width) {
     case 4:
 
-        if (!(height % 4)) {
+        if (!(block_height % 4)) {
             uint32_t srcStrideT = 3 * src_stride;
             uint32_t refStrideT = 3 * ref_stride;
             for (i = 0; i < search_area_height; i++) {
@@ -186,7 +186,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
@@ -210,7 +210,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
@@ -240,7 +240,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_cvtsi32_si128(*(uint32_t *)pSrc);
@@ -263,7 +263,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_cvtsi32_si128(*(uint32_t *)pSrc);
@@ -289,7 +289,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
         break;
 
     case 8:
-        if (!(height % 4)) {
+        if (!(block_height % 4)) {
             uint32_t srcStrideT = 3 * src_stride;
             uint32_t refStrideT = 3 * ref_stride;
             for (i = 0; i < search_area_height; i++) {
@@ -298,7 +298,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)pSrc), _mm_loadl_epi64((__m128i*)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)(pSrc + 2 * src_stride)), _mm_loadl_epi64((__m128i*)(pSrc + srcStrideT))), 0x1);
@@ -324,7 +324,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)pSrc), _mm_loadl_epi64((__m128i*)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)(pSrc + 2 * src_stride)), _mm_loadl_epi64((__m128i*)(pSrc + srcStrideT))), 0x1);
@@ -356,7 +356,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_loadl_epi64((__m128i*)pSrc);
@@ -382,7 +382,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_loadl_epi64((__m128i*)pSrc);
@@ -410,14 +410,14 @@ void sad_loop_kernel_sparse_avx2_intrin(
         break;
 
     case 16:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -443,7 +443,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -468,14 +468,14 @@ void sad_loop_kernel_sparse_avx2_intrin(
                 ref += src_stride_raw;
             }
         }
-        else if (height <= 32) {
+        else if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -515,7 +515,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -562,7 +562,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -610,7 +610,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -665,14 +665,14 @@ void sad_loop_kernel_sparse_avx2_intrin(
         break;
 
     case 24:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -713,7 +713,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -761,7 +761,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -811,7 +811,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -868,14 +868,14 @@ void sad_loop_kernel_sparse_avx2_intrin(
         break;
 
     case 32:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -915,7 +915,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -955,14 +955,14 @@ void sad_loop_kernel_sparse_avx2_intrin(
                 ref += src_stride_raw;
             }
         }
-        else if (height <= 32) {
+        else if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1012,7 +1012,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1074,7 +1074,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1126,7 +1126,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1184,7 +1184,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
         break;
 
     case 48:
-        if (height <= 32) {
+        if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
@@ -1192,7 +1192,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1255,7 +1255,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1329,7 +1329,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1398,7 +1398,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1473,14 +1473,14 @@ void sad_loop_kernel_sparse_avx2_intrin(
         break;
 
     case 64:
-        if (height <= 32) {
+        if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 uint32_t startW = (i & 1) << 3;
                 for (j = startW; j <= search_area_width - 8; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1539,7 +1539,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1610,7 +1610,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = ss7 = ss8 = ss9 = ss10 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1664,7 +1664,7 @@ void sad_loop_kernel_sparse_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = ss7 = ss8 = ss9 = ss10 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -1736,16 +1736,16 @@ void sad_loop_kernel_sparse_avx2_intrin(
 
 /*******************************************************************************
  * Requirement: width   = 4, 8, 16, 24, 32, 48 or 64
- * Requirement: height <= 64
- * Requirement: height % 2 = 0 when width = 4 or 8
+ * Requirement: block_height <= 64
+ * Requirement: block_height % 2 = 0 when width = 4 or 8
 *******************************************************************************/
 void sad_loop_kernel_avx2_intrin(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr
     uint32_t  ref_stride,                      // input parameter, reference stride
-    uint32_t  height,                         // input parameter, block height (M)
-    uint32_t  width,                          // input parameter, block width (N)
+    uint32_t  block_height,                   // input parameter, block height (M)
+    uint32_t  block_width,                    // input parameter, block width (N)
     uint64_t *best_sad,
     int16_t *x_search_center,
     int16_t *y_search_center,
@@ -1768,10 +1768,10 @@ void sad_loop_kernel_avx2_intrin(
             s8 = _mm_slli_si128(s8, 2);
     }
 
-    switch (width) {
+    switch (block_width) {
     case 4:
 
-        if (!(height % 4)) {
+        if (!(block_height % 4)) {
             uint32_t srcStrideT = 3 * src_stride;
             uint32_t refStrideT = 3 * ref_stride;
             for (i = 0; i < search_area_height; i++) {
@@ -1779,7 +1779,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
@@ -1803,7 +1803,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
@@ -1832,7 +1832,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_cvtsi32_si128(*(uint32_t *)pSrc);
@@ -1855,7 +1855,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_cvtsi32_si128(*(uint32_t *)pSrc);
@@ -1881,7 +1881,7 @@ void sad_loop_kernel_avx2_intrin(
         break;
 
     case 8:
-        if (!(height % 4)) {
+        if (!(block_height % 4)) {
             uint32_t srcStrideT = 3 * src_stride;
             uint32_t refStrideT = 3 * ref_stride;
             for (i = 0; i < search_area_height; i++) {
@@ -1889,7 +1889,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)pSrc), _mm_loadl_epi64((__m128i*)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)(pSrc + 2 * src_stride)), _mm_loadl_epi64((__m128i*)(pSrc + srcStrideT))), 0x1);
@@ -1915,7 +1915,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)pSrc), _mm_loadl_epi64((__m128i*)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)(pSrc + 2 * src_stride)), _mm_loadl_epi64((__m128i*)(pSrc + srcStrideT))), 0x1);
@@ -1946,7 +1946,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_loadl_epi64((__m128i*)pSrc);
@@ -1972,7 +1972,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_loadl_epi64((__m128i*)pSrc);
@@ -2000,13 +2000,13 @@ void sad_loop_kernel_avx2_intrin(
         break;
 
     case 16:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -2032,7 +2032,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -2057,13 +2057,13 @@ void sad_loop_kernel_avx2_intrin(
                 ref += src_stride_raw;
             }
         }
-        else if (height <= 32) {
+        else if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -2103,7 +2103,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -2149,7 +2149,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -2197,7 +2197,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -2252,13 +2252,13 @@ void sad_loop_kernel_avx2_intrin(
         break;
 
     case 24:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2299,7 +2299,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2346,7 +2346,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2396,7 +2396,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2453,13 +2453,13 @@ void sad_loop_kernel_avx2_intrin(
         break;
 
     case 32:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2499,7 +2499,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2539,13 +2539,13 @@ void sad_loop_kernel_avx2_intrin(
                 ref += src_stride_raw;
             }
         }
-        else if (height <= 32) {
+        else if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2595,7 +2595,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2656,7 +2656,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2708,7 +2708,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2766,14 +2766,14 @@ void sad_loop_kernel_avx2_intrin(
         break;
 
     case 48:
-        if (height <= 32) {
+        if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2836,7 +2836,7 @@ void sad_loop_kernel_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2909,7 +2909,7 @@ void sad_loop_kernel_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -2978,7 +2978,7 @@ void sad_loop_kernel_avx2_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -3053,13 +3053,13 @@ void sad_loop_kernel_avx2_intrin(
         break;
 
     case 64:
-        if (height <= 32) {
+        if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -3118,7 +3118,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -3188,7 +3188,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = ss7 = ss8 = ss9 = ss10 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -3242,7 +3242,7 @@ void sad_loop_kernel_avx2_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = ss7 = ss8 = ss9 = ss10 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4065,16 +4065,16 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
 
 /*******************************************************************************
 * Requirement: width   = 4, 8, 16, 24, 32, 48 or 64
-* Requirement: height <= 64
-* Requirement: height % 2 = 0 when width = 4 or 8
+* Requirement: block_height <= 64
+* Requirement: block_height % 2 = 0 when width = 4 or 8
 *******************************************************************************/
 void sad_loop_kernel_avx2_hme_l0_intrin(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr
     uint32_t  ref_stride,                      // input parameter, reference stride
-    uint32_t  height,                         // input parameter, block height (M)
-    uint32_t  width,                          // input parameter, block width (N)
+    uint32_t  block_height,                   // input parameter, block height (M)
+    uint32_t  block_width,                    // input parameter, block width (N)
     uint64_t *best_sad,
     int16_t *x_search_center,
     int16_t *y_search_center,
@@ -4091,10 +4091,10 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
     __m128i s0, s1, s2, s3, s4, s5, s6, s7 = _mm_set1_epi32(-1);
     __m256i ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8, ss9, ss10, ss11;
 
-    switch (width) {
+    switch (block_width) {
     case 4:
 
-        if (!(height % 4)) {
+        if (!(block_height % 4)) {
             uint32_t srcStrideT = 3 * src_stride;
             uint32_t refStrideT = 3 * ref_stride;
             for (i = 0; i < search_area_height; i++) {
@@ -4102,7 +4102,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss5 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)pSrc), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_cvtsi32_si128(*(uint32_t *)(pSrc + 2 * src_stride)), _mm_cvtsi32_si128(*(uint32_t *)(pSrc + srcStrideT))), 0x1);
@@ -4130,7 +4130,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_cvtsi32_si128(*(uint32_t *)pSrc);
@@ -4155,7 +4155,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         break;
 
     case 8:
-        if (!(height % 4)) {
+        if (!(block_height % 4)) {
             uint32_t srcStrideT = 3 * src_stride;
             uint32_t refStrideT = 3 * ref_stride;
             for (i = 0; i < search_area_height; i++) {
@@ -4163,7 +4163,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 4) {
+                    for (k = 0; k < block_height; k += 4) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + 2 * ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + ref_stride))), _mm_loadu_si128((__m128i*)(pRef + refStrideT)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)pSrc), _mm_loadl_epi64((__m128i*)(pSrc + src_stride)))), _mm_unpacklo_epi64(_mm_loadl_epi64((__m128i*)(pSrc + 2 * src_stride)), _mm_loadl_epi64((__m128i*)(pSrc + srcStrideT))), 0x1);
@@ -4193,7 +4193,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = _mm_setzero_si128();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         s0 = _mm_loadu_si128((__m128i*)pRef);
                         s1 = _mm_loadu_si128((__m128i*)(pRef + ref_stride));
                         s2 = _mm_loadl_epi64((__m128i*)pSrc);
@@ -4220,14 +4220,14 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         break;
 
     case 16:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 16; j += 16) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
                     ss7 = ss9 = ss10 = ss11 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -4268,13 +4268,13 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         }
-        else if (height <= 32) {
+        else if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -4318,7 +4318,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k += 2) {
+                    for (k = 0; k < block_height; k += 2) {
                         ss0 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pRef)), _mm_loadu_si128((__m128i*)(pRef + ref_stride)), 0x1);
                         ss1 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)(pRef + 8))), _mm_loadu_si128((__m128i*)(pRef + ref_stride + 8)), 0x1);
                         ss2 = _mm256_insertf128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i*)pSrc)), _mm_loadu_si128((__m128i*)(pSrc + src_stride)), 0x1);
@@ -4367,13 +4367,13 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         break;
 
     case 24:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4418,7 +4418,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4469,13 +4469,13 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         break;
 
     case 32:
-        if (height <= 16) {
+        if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4513,13 +4513,13 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         }
-        else if (height <= 32) {
+        else if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4573,7 +4573,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4626,14 +4626,14 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         break;
 
     case 48:
-        if (height <= 32) {
+        if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4700,7 +4700,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4769,13 +4769,13 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
         break;
 
     case 64:
-        if (height <= 32) {
+        if (block_height <= 32) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
@@ -4839,7 +4839,7 @@ void sad_loop_kernel_avx2_hme_l0_intrin(
                     pSrc = src;
                     pRef = ref + j;
                     ss3 = ss4 = ss5 = ss6 = ss7 = ss8 = ss9 = ss10 = _mm256_setzero_si256();
-                    for (k = 0; k < height; k++) {
+                    for (k = 0; k < block_height; k++) {
                         ss0 = _mm256_loadu_si256((__m256i*)pRef);
                         ss1 = _mm256_loadu_si256((__m256i*)(pRef + 8));
                         ss2 = _mm256_loadu_si256((__m256i *)pSrc);
