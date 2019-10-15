@@ -9,119 +9,115 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include <assert.h>
-#include <emmintrin.h>  // SSE2
-#include <smmintrin.h>  /* SSE4.1 */
-#include <immintrin.h>  /* AVX2 */
+#include <immintrin.h> /* AVX2 */
 
 #include "EbDefinitions.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-void eb_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width,
-    const int32_t height, uint8_t *const levels) {
-    const int32_t stride = width + TX_PAD_HOR;
-  const __m256i y_zeros = _mm256_setzero_si256();
+static INLINE __m256i txb_init_levels_avx2(const TranLow *const coeff) {
+    const __m256i idx = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+    const __m256i c0 = yy_loadu_256(coeff + 0 * 8);
+    const __m256i c1 = yy_loadu_256(coeff + 1 * 8);
+    const __m256i c2 = yy_loadu_256(coeff + 2 * 8);
+    const __m256i c3 = yy_loadu_256(coeff + 3 * 8);
+    const __m256i c01 = _mm256_packs_epi32(c0, c1);
+    const __m256i c23 = _mm256_packs_epi32(c2, c3);
+    const __m256i abs01 = _mm256_abs_epi16(c01);
+    const __m256i abs23 = _mm256_abs_epi16(c23);
+    const __m256i res = _mm256_packs_epi16(abs01, abs23);
+    return _mm256_permutevar8x32_epi32(res, idx);
+}
 
-  const int32_t pre_len = sizeof(*levels) * TX_PAD_TOP * stride;
-  uint8_t *pre_buf = levels - TX_PAD_TOP * stride;
-  uint8_t *pre_buf_end = pre_buf + pre_len;
-  do {
-    yy_storeu_256(pre_buf, y_zeros);
-    pre_buf += 32;
-  } while (pre_buf < pre_buf_end);
+void eb_av1_txb_init_levels_avx2(const TranLow *const coeff,
+    const int32_t width, const int32_t height,
+    uint8_t *const levels) {
+    const TranLow *cf = coeff;
+    const __m128i x_zeros = _mm_setzero_si128();
+    const __m256i y_zeros = _mm256_setzero_si256();
+    uint8_t *ls = levels;
+    int32_t i = height;
 
-  const int32_t bottom_len = sizeof(*levels) * (TX_PAD_BOTTOM * stride);
-  uint8_t *bottom_buf_end = levels + (height + TX_PAD_BOTTOM) * stride;
-  uint8_t *bottom_buf = bottom_buf_end - ((bottom_len + 31) & (~31));
+    if (width == 4) {
+        xx_storeu_128(ls - 16, x_zeros);
 
-  do {
-    yy_storeu_256(bottom_buf, y_zeros);
-    bottom_buf += 32;
-  } while (bottom_buf < bottom_buf_end);
+        do {
+            const __m256i idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
+            const __m256i c0 = yy_loadu_256(cf);
+            const __m256i c1 = yy_loadu_256(cf + 8);
+            const __m256i c01 = _mm256_packs_epi32(c0, c1);
+            const __m256i abs01 = _mm256_abs_epi16(c01);
+            const __m256i res_ = _mm256_packs_epi16(abs01, y_zeros);
+            const __m256i res = _mm256_permutevar8x32_epi32(res_, idx);
+            yy_storeu_256(ls, res);
+            cf += 4 * 4;
+            ls += 4 * 8;
+            i -= 4;
+        } while (i);
 
-  int32_t i = 0;
-  uint8_t *ls = levels;
-  const TranLow *cf = coeff;
-  if (width == 4) {
-    do {
-      const __m256i c0 = yy_loadu_256(cf);
-      const __m256i c1 = yy_loadu_256(cf + 8);
-      const __m256i abs01 = _mm256_abs_epi16(_mm256_packs_epi32(c0, c1));
-      const __m256i abs01_8 = _mm256_packs_epi16(abs01, y_zeros);
-      const __m256i res_ = _mm256_shuffle_epi32(abs01_8, 0xd8);
-      const __m256i res = _mm256_permute4x64_epi64(res_, 0xd8);
-      yy_storeu_256(ls, res);
-      ls += 32;
-      cf += 16;
-      i += 4;
-    } while (i < height);
-  } else if (width == 8) {
-    do {
-      const __m256i coeffA = yy_loadu_256(cf);
-      const __m256i coeffB = yy_loadu_256(cf + 8);
-      const __m256i coeffC = yy_loadu_256(cf + 16);
-      const __m256i coeffD = yy_loadu_256(cf + 24);
-      const __m256i coeffAB = _mm256_packs_epi32(coeffA, coeffB);
-      const __m256i coeffCD = _mm256_packs_epi32(coeffC, coeffD);
-      const __m256i absAB = _mm256_abs_epi16(coeffAB);
-      const __m256i absCD = _mm256_abs_epi16(coeffCD);
-      const __m256i absABCD = _mm256_packs_epi16(absAB, absCD);
-      const __m256i res_ = _mm256_permute4x64_epi64(absABCD, 0xd8);
-      const __m256i res = _mm256_shuffle_epi32(res_, 0xd8);
-      const __m128i res0 = _mm256_castsi256_si128(res);
-      const __m128i res1 = _mm256_extracti128_si256(res, 1);
-      xx_storel_64(ls, res0);
-      *(int32_t *)(ls + width) = 0;
-      xx_storel_64(ls + stride, _mm_srli_si128(res0, 8));
-      *(int32_t *)(ls + width + stride) = 0;
-      xx_storel_64(ls + stride * 2, res1);
-      *(int32_t *)(ls + width + stride * 2) = 0;
-      xx_storel_64(ls + stride * 3, _mm_srli_si128(res1, 8));
-      *(int32_t *)(ls + width + stride * 3) = 0;
-      cf += 32;
-      ls += stride << 2;
-      i += 4;
-    } while (i < height);
-  } else if (width == 16) {
-    do {
-      const __m256i coeffA = yy_loadu_256(cf);
-      const __m256i coeffB = yy_loadu_256(cf + 8);
-      const __m256i coeffC = yy_loadu_256(cf + 16);
-      const __m256i coeffD = yy_loadu_256(cf + 24);
-      const __m256i coeffAB = _mm256_packs_epi32(coeffA, coeffB);
-      const __m256i coeffCD = _mm256_packs_epi32(coeffC, coeffD);
-      const __m256i absAB = _mm256_abs_epi16(coeffAB);
-      const __m256i absCD = _mm256_abs_epi16(coeffCD);
-      const __m256i absABCD = _mm256_packs_epi16(absAB, absCD);
-      const __m256i res_ = _mm256_permute4x64_epi64(absABCD, 0xd8);
-      const __m256i res = _mm256_shuffle_epi32(res_, 0xd8);
-      xx_storeu_128(ls, _mm256_castsi256_si128(res));
-      xx_storeu_128(ls + stride, _mm256_extracti128_si256(res, 1));
-      cf += 32;
-      *(int32_t *)(ls + width) = 0;
-      *(int32_t *)(ls + stride + width) = 0;
-      ls += stride << 1;
-      i += 2;
-    } while (i < height);
-  } else {
-    do {
-      const __m256i coeffA = yy_loadu_256(cf);
-      const __m256i coeffB = yy_loadu_256(cf + 8);
-      const __m256i coeffC = yy_loadu_256(cf + 16);
-      const __m256i coeffD = yy_loadu_256(cf + 24);
-      const __m256i coeffAB = _mm256_packs_epi32(coeffA, coeffB);
-      const __m256i coeffCD = _mm256_packs_epi32(coeffC, coeffD);
-      const __m256i absAB = _mm256_abs_epi16(coeffAB);
-      const __m256i absCD = _mm256_abs_epi16(coeffCD);
-      const __m256i absABCD = _mm256_packs_epi16(absAB, absCD);
-      const __m256i res_ = _mm256_permute4x64_epi64(absABCD, 0xd8);
-      const __m256i res = _mm256_shuffle_epi32(res_, 0xd8);
-      yy_storeu_256(ls, res);
-      cf += 32;
-      *(int32_t *)(ls + width) = 0;
-      ls += stride;
-      i += 1;
-    } while (i < height);
-  }
+        yy_storeu_256(ls, y_zeros);
+    }
+    else if (width == 8) {
+        yy_storeu_256(ls - 24, y_zeros);
+
+        do {
+            const __m256i res = txb_init_levels_avx2(cf);
+            const __m128i res0 = _mm256_castsi256_si128(res);
+            const __m128i res1 = _mm256_extracti128_si256(res, 1);
+            xx_storel_64(ls + 0 * 12 + 0, res0);
+            *(int32_t *)(ls + 0 * 12 + 8) = 0;
+            _mm_storeh_epi64((__m128i *)(ls + 1 * 12 + 0), res0);
+            *(int32_t *)(ls + 1 * 12 + 8) = 0;
+            xx_storel_64(ls + 2 * 12 + 0, res1);
+            *(int32_t *)(ls + 2 * 12 + 8) = 0;
+            _mm_storeh_epi64((__m128i *)(ls + 3 * 12 + 0), res1);
+            *(int32_t *)(ls + 3 * 12 + 8) = 0;
+            cf += 4 * 8;
+            ls += 4 * 12;
+            i -= 4;
+        } while (i);
+
+        yy_storeu_256(ls + 0 * 32, y_zeros);
+        xx_storeu_128(ls + 1 * 32, x_zeros);
+    }
+    else if (width == 16) {
+        yy_storeu_256(ls - 40, y_zeros);
+        xx_storel_64(ls - 8, x_zeros);
+
+        do {
+            const __m256i res = txb_init_levels_avx2(cf);
+            const __m128i res0 = _mm256_castsi256_si128(res);
+            const __m128i res1 = _mm256_extracti128_si256(res, 1);
+            xx_storeu_128(ls, res0);
+            *(int32_t *)(ls + 16) = 0;
+            xx_storeu_128(ls + 20, res1);
+            *(int32_t *)(ls + 20 + 16) = 0;
+            cf += 2 * 16;
+            ls += 2 * 20;
+            i -= 2;
+        } while (i);
+
+        yy_storeu_256(ls + 0 * 32, y_zeros);
+        yy_storeu_256(ls + 1 * 32, y_zeros);
+        xx_storeu_128(ls + 2 * 32, x_zeros);
+    }
+    else {
+        yy_storeu_256(ls - 72, y_zeros);
+        yy_storeu_256(ls - 40, y_zeros);
+        xx_storel_64(ls - 8, x_zeros);
+
+        do {
+            const __m256i res = txb_init_levels_avx2(cf);
+            yy_storeu_256(ls, res);
+            *(int32_t *)(ls + 32) = 0;
+            cf += 32;
+            ls += 36;
+        } while (--i);
+
+        yy_storeu_256(ls + 0 * 32, y_zeros);
+        yy_storeu_256(ls + 1 * 32, y_zeros);
+        yy_storeu_256(ls + 2 * 32, y_zeros);
+        yy_storeu_256(ls + 3 * 32, y_zeros);
+        xx_storeu_128(ls + 4 * 32, x_zeros);
+    }
 }

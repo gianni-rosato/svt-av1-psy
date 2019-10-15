@@ -51,18 +51,18 @@ static INLINE void _mm_storeh_epi64(__m128i *const p, const __m128i x) {
 }
 
 static INLINE __m128i load8bit_8x2_sse2(const void *const src,
-    const uint32_t strideInByte) {
+    const ptrdiff_t strideInByte) {
     const __m128i s = _mm_loadl_epi64((__m128i *)src);
     return _mm_loadh_epi64((__m128i *)((uint8_t *)src + strideInByte), s);
 }
 
 static INLINE __m128i load_u8_8x2_sse2(const uint8_t *const src,
-    const uint32_t stride) {
+    const ptrdiff_t stride) {
     return load8bit_8x2_sse2(src, sizeof(*src) * stride);
 }
 
 static INLINE __m128i load_u16_4x2_sse2(const uint16_t *const src,
-    const uint32_t stride) {
+    const ptrdiff_t stride) {
     return load8bit_8x2_sse2(src, sizeof(*src) * stride);
 }
 

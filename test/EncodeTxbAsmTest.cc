@@ -35,6 +35,7 @@
 #include "TxfmCommon.h"
 #include "random.h"
 #include "EncodeTxbRef.h"
+#include "EbTime.h"
 using namespace EncodeTxbAsmTest;
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
@@ -196,18 +197,33 @@ class EncodeTxbInitLevelTest
         aom_clear_system_state();
     }
 
-    void check_txb_init_levels_assembly(TxbInitLevelsFunc test_func,
-                                        int tx_size) {
+    void run_test(const TxbInitLevelsFunc test_func, const int tx_size,
+                  const bool is_speed) {
         const int width = get_txb_wide((TxSize)tx_size);
         const int height = get_txb_high((TxSize)tx_size);
+        const uint64_t num_loop =
+            is_speed ? (50000000000 / (width * height)) : 1;
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
 
         ASSERT_NE(rnd_, nullptr) << "Fail to create SVTRandom";
 
         // prepare data, same input, differente output by default.
         prepare_data(tx_size);
 
-        ref_func_(input_coeff_, width, height, levels_ref_);
-        test_func(input_coeff_, width, height, levels_test_);
+        EbStartTime(&start_time_seconds, &start_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++)
+            ref_func_(input_coeff_, width, height, levels_ref_);
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++)
+            test_func(input_coeff_, width, height, levels_test_);
+
+        EbStartTime(&finish_time_seconds, &finish_time_useconds);
 
         // compare the result
         const int stride = width + TX_PAD_HOR;
@@ -218,6 +234,23 @@ class EncodeTxbInitLevelTest
                     << "[" << r << "," << c << "] " << width << "x" << height;
             }
         }
+
+        if (is_speed) {
+            EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                          start_time_useconds,
+                                          middle_time_seconds,
+                                          middle_time_useconds,
+                                          &time_c);
+            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                          middle_time_useconds,
+                                          finish_time_seconds,
+                                          finish_time_useconds,
+                                          &time_o);
+            printf("eb_av1_txb_init_levels(%2dx%2d): %6.2f\n",
+                   width,
+                   height,
+                   time_c / time_o);
+        }
     }
 
   private:
@@ -226,7 +259,7 @@ class EncodeTxbInitLevelTest
         const int height = get_txb_high((TxSize)tx_size);
 
         // make output different by default
-        memset(levels_buf_test_, 0, sizeof(levels_buf_test_));
+        memset(levels_buf_test_, 111, sizeof(levels_buf_test_));
         memset(levels_buf_ref_, 128, sizeof(levels_buf_test_));
 
         // fill the input buffer with random
@@ -249,15 +282,26 @@ class EncodeTxbInitLevelTest
     const TxbInitLevelsFunc ref_func_;
 };
 
-TEST_P(EncodeTxbInitLevelTest, txb_init_levels_assmbly) {
+TEST_P(EncodeTxbInitLevelTest, txb_init_levels_match) {
     const int loops = 100;
     for (int i = 0; i < loops; ++i) {
-        check_txb_init_levels_assembly(TEST_GET_PARAM(0), TEST_GET_PARAM(1));
+        run_test(TEST_GET_PARAM(0), TEST_GET_PARAM(1), false);
     }
+}
+
+TEST_P(EncodeTxbInitLevelTest, DISABLED_txb_init_levels_speed) {
+    run_test(TEST_GET_PARAM(0), TEST_GET_PARAM(1), true);
 }
 
 INSTANTIATE_TEST_CASE_P(
     Entropy, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&eb_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
+
+#ifndef NON_AVX512_SUPPORT
+INSTANTIATE_TEST_CASE_P(
+    EntropyAVX512, EncodeTxbInitLevelTest,
+    ::testing::Combine(::testing::Values(&eb_av1_txb_init_levels_avx512),
+                       ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
+#endif
 }  // namespace

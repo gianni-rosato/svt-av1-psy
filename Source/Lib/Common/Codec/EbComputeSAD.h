@@ -169,16 +169,6 @@ extern "C" {
         },
     };
 
-    uint32_t combined_averaging_ssd_c(
-        uint8_t   *src,
-        ptrdiff_t  src_stride,
-        uint8_t   *ref1,
-        ptrdiff_t  ref1_stride,
-        uint8_t   *ref2,
-        ptrdiff_t  ref2_stride,
-        uint32_t   height,
-        uint32_t   width);
-
 uint32_t sad_16b_kernel(
     uint16_t  *src,                           // input parameter, source samples Ptr
     uint32_t  src_stride,                     // input parameter, source stride

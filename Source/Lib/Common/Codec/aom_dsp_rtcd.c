@@ -501,8 +501,6 @@ void setup_rtcd_internal(EbAsm asm_type)
     aom_highbd_blend_a64_vmask = aom_highbd_blend_a64_vmask_c;
     if (flags & HAS_SSE4_1) aom_highbd_blend_a64_vmask = aom_highbd_blend_a64_vmask_sse4_1;
 
-    eb_av1_txb_init_levels = eb_av1_txb_init_levels_c;
-    if (flags & HAS_AVX2) eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx2;
     eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_c;
     if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_ssse3;
     if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_avx2;
@@ -1018,14 +1016,17 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_aom_sad8x4x4d = eb_aom_sad8x4x4d_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    eb_aom_sad64x128 = eb_aom_sad64x128_avx512;
-    eb_aom_sad64x16 = eb_aom_sad64x16_avx512;
-    eb_aom_sad64x32 = eb_aom_sad64x32_avx512;
-    eb_aom_sad64x64 = eb_aom_sad64x64_avx512;
-    eb_aom_sad128x128 = eb_aom_sad128x128_avx512;
-    eb_aom_sad128x128x4d = eb_aom_sad128x128x4d_avx512;
-    eb_aom_sad128x64 = eb_aom_sad128x64_avx512;
-    eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx512;
+    if (CanUseIntelAVX512()) {
+        eb_aom_sad64x128 = eb_aom_sad64x128_avx512;
+        eb_aom_sad64x16 = eb_aom_sad64x16_avx512;
+        eb_aom_sad64x32 = eb_aom_sad64x32_avx512;
+        eb_aom_sad64x64 = eb_aom_sad64x64_avx512;
+        eb_aom_sad128x128 = eb_aom_sad128x128_avx512;
+        eb_aom_sad128x128x4d = eb_aom_sad128x128x4d_avx512;
+        eb_aom_sad128x64 = eb_aom_sad128x64_avx512;
+        eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx512;
+        eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx512;
+    }
 #else
     eb_aom_sad64x128 = eb_aom_sad64x128_c;
     if (flags & HAS_AVX2) eb_aom_sad64x128 = eb_aom_sad64x128_avx2;
@@ -1043,6 +1044,8 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_aom_sad128x64 = eb_aom_sad128x64_avx2;
     eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_c;
     if (flags & HAS_AVX2) eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx2;
+    eb_av1_txb_init_levels = eb_av1_txb_init_levels_c;
+    if (flags & HAS_AVX2) eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx2;
 #endif // !NON_AVX512_SUPPORT
 #if OBMC_FLAG
     eb_aom_highbd_blend_a64_vmask = eb_aom_highbd_blend_a64_vmask_c;
@@ -1756,9 +1759,10 @@ void setup_rtcd_internal(EbAsm asm_type)
     SET_SSE41(svt_av1_apply_filtering_highbd,
               svt_av1_apply_filtering_highbd_c,
               svt_av1_highbd_apply_temporal_filter_sse4_1);
-    SET_AVX2(combined_averaging_ssd,
-             combined_averaging_ssd_c,
-             combined_averaging_ssd_avx2);
+    SET_AVX2_AVX512(combined_averaging_ssd,
+                    combined_averaging_ssd_c,
+                    combined_averaging_ssd_avx2,
+                    combined_averaging_ssd_avx512);
     SET_AVX2(ext_sad_calculation_8x8_16x16,
              ext_sad_calculation_8x8_16x16_c,
              ext_sad_calculation_8x8_16x16_avx2_intrin);

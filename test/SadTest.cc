@@ -42,7 +42,7 @@
 #include "EbMeSadCalculation_SSE2.h"
 #include "EbMotionEstimation.h"
 #include "EbMotionEstimationContext.h"
-#include "EbUnitTestUtility.h"
+#include "EbTime.h"
 #include "random.h"
 #include "util.h"
 
@@ -1869,6 +1869,18 @@ INSTANTIATE_TEST_CASE_P(
  * Test cases:
  *
  */
+
+typedef uint32_t (*combined_averaging_ssd_func)(
+    uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride,
+    uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
+
+static const combined_averaging_ssd_func combined_averaging_ssd_func_table[] = {
+    combined_averaging_ssd_avx2,
+#ifndef NON_AVX512_SUPPORT
+    combined_averaging_ssd_avx512
+#endif
+};
+
 class SSDAvgTest : public ::testing::WithParamInterface<TestSadParam>,
                    public SADTestBase {
   public:
@@ -1879,35 +1891,110 @@ class SSDAvgTest : public ::testing::WithParamInterface<TestSadParam>,
 
   protected:
     void check_ssd_loop() {
-        uint32_t sum1_ssd, sum2_ssd;
+        prepare_data();
+
+        const uint32_t sum0_ssd = combined_averaging_ssd_c(src_aligned_,
+                                                           src_stride_,
+                                                           ref1_aligned_,
+                                                           ref1_stride_,
+                                                           ref2_aligned_,
+                                                           ref2_stride_,
+                                                           height_,
+                                                           width_);
+
+        for (int i = 0; i < sizeof(combined_averaging_ssd_func_table) /
+                                sizeof(*combined_averaging_ssd_func_table);
+             i++) {
+            const uint32_t sum1_ssd =
+                combined_averaging_ssd_func_table[i](src_aligned_,
+                                                     src_stride_,
+                                                     ref1_aligned_,
+                                                     ref1_stride_,
+                                                     ref2_aligned_,
+                                                     ref2_stride_,
+                                                     height_,
+                                                     width_);
+
+            EXPECT_EQ(sum0_ssd, sum1_ssd)
+                << "compare sum combined averaging ssd error"
+                << " block dim: [" << width_ << " x " << height_ << "] ";
+        }
+    }
+
+    void check_ssd_speed() {
+        uint32_t sum0_ssd;
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        const uint64_t num_loop = 1000000000 / (width_ * height_);
 
         prepare_data();
 
-        sum1_ssd = combined_averaging_ssd_avx2(src_aligned_,
-                                               src_stride_,
-                                               ref1_aligned_,
-                                               ref1_stride_,
-                                               ref2_aligned_,
-                                               ref2_stride_,
-                                               height_,
-                                               width_);
+        EbStartTime(&start_time_seconds, &start_time_useconds);
 
-        sum2_ssd = combined_averaging_ssd_c(src_aligned_,
-                                            src_stride_,
-                                            ref1_aligned_,
-                                            ref1_stride_,
-                                            ref2_aligned_,
-                                            ref2_stride_,
-                                            height_,
-                                            width_);
-        EXPECT_EQ(sum1_ssd, sum2_ssd)
-            << "compare sum combined averaging ssd error"
-            << " block dim: [" << width_ << " x " << height_ << "] ";
+        for (uint64_t i = 0; i < num_loop; i++) {
+            sum0_ssd = combined_averaging_ssd_c(src_aligned_,
+                                                src_stride_,
+                                                ref1_aligned_,
+                                                ref1_stride_,
+                                                ref2_aligned_,
+                                                ref2_stride_,
+                                                height_,
+                                                width_);
+        }
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+
+        for (int i = 0; i < sizeof(combined_averaging_ssd_func_table) /
+                                sizeof(*combined_averaging_ssd_func_table);
+             i++) {
+            uint32_t sum1_ssd;
+
+            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+            for (uint64_t j = 0; j < num_loop; j++) {
+                sum1_ssd = combined_averaging_ssd_func_table[i](src_aligned_,
+                                                                src_stride_,
+                                                                ref1_aligned_,
+                                                                ref1_stride_,
+                                                                ref2_aligned_,
+                                                                ref2_stride_,
+                                                                height_,
+                                                                width_);
+            }
+
+            EbStartTime(&finish_time_seconds, &finish_time_useconds);
+            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                          middle_time_useconds,
+                                          finish_time_seconds,
+                                          finish_time_useconds,
+                                          &time_o);
+
+            EXPECT_EQ(sum0_ssd, sum1_ssd)
+                << "compare sum combined averaging ssd error"
+                << " block dim: [" << width_ << " x " << height_ << "] ";
+
+            printf("combined_averaging_ssd(%3dx%3d): %6.2f\n",
+                   width_,
+                   height_,
+                   time_c / time_o);
+        }
     }
 };
 
 TEST_P(SSDAvgTest, SSDTest) {
     check_ssd_loop();
+}
+
+TEST_P(SSDAvgTest, DISABLED_SSDSpeedTest) {
+    check_ssd_speed();
 }
 
 INSTANTIATE_TEST_CASE_P(
