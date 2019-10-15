@@ -3565,7 +3565,37 @@ void* picture_decision_kernel(void *input_ptr)
                                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
                                 }
+#if FIX_ALTREF
+                                int actual_past_pics = num_past_pics;
+                                int actual_future_pics = 0;
+                                int pic_i;
+                                //search reord-queue to get the future pictures
+                                for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+                                    int32_t q_index = QUEUE_GET_NEXT_SPOT(picture_control_set_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
+                                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                                        PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
+                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+                                        actual_future_pics++;
+                                    }
+                                    else
+                                        break;
+                                }
 
+                                //search in pre-ass if still short
+                                if (pic_i < num_future_pics) {
+                                    actual_future_pics = 0;
+                                    for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
+                                        for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
+                                            PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
+                                            if (pcs_itr->picture_number == picture_control_set_ptr->picture_number + pic_i_future + 1) {
+                                                picture_control_set_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+                                                actual_future_pics++;
+                                                break; //exist the pre-ass loop, go search the next
+                                            }
+                                        }
+                                    }
+                                }
+#else
                                 int actual_future_pics = 0;
                                 int actual_past_pics = 0;
 
@@ -3602,7 +3632,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 actual_past_pics = actual_future_pics;
                                 actual_past_pics += (altref_nframes + 1) & 0x1;
-
+#endif
                                 int index_center = (uint8_t)(picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes / 2);
                                 int pic_itr;
                                 int ahd;
@@ -3612,7 +3642,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 int ahd_th = (((sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height) * AHD_TH_WEIGHT) / 100);
 
                                 // Accumulative histogram absolute differences between the central and past frame
+#if FIX_ALTREF
+                                for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {
+#else
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center - 1; pic_itr++) {
+#endif
                                     ahd = 0;
                                     for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
                                         for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
