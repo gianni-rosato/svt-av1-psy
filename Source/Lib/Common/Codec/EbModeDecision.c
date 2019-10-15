@@ -2340,6 +2340,9 @@ void inject_new_nearest_new_comb_candidates(
     uint32_t                  canIdx = *candTotCnt;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
     MacroBlockD  *xd = context_ptr->cu_ptr->av1xd;
+#if FIX_NEAREST_NEW
+    IntMv    nearestmv[2], nearmv[2], ref_mv[2];
+#endif
     int inside_tile = 1;
     int umv0tile = (sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0);
     uint32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
@@ -2414,7 +2417,20 @@ void inject_new_nearest_new_comb_candidates(
                     candidateArray[canIdx].ref_frame_index_l1 = ref_idx_1;
                     candidateArray[canIdx].transform_type[0] = DCT_DCT;
                     candidateArray[canIdx].transform_type_uv = DCT_DCT;
-
+#if FIX_NEAREST_NEW
+                    get_av1_mv_pred_drl(
+                        context_ptr,
+                        context_ptr->cu_ptr,
+                        candidateArray[canIdx].ref_frame_type,
+                        candidateArray[canIdx].is_compound,
+                        NEAREST_NEWMV,
+                        0,//not needed drli,
+                        nearestmv,
+                        nearmv,
+                        ref_mv);
+                    candidateArray[canIdx].motion_vector_pred_x[REF_LIST_1] = ref_mv[1].as_mv.col;
+                    candidateArray[canIdx].motion_vector_pred_y[REF_LIST_1] = ref_mv[1].as_mv.row;
+#else
                     IntMv  bestPredmv[2] = { {0}, {0} };
 
                     ChooseBestAv1MvPred(
@@ -2435,7 +2451,7 @@ void inject_new_nearest_new_comb_candidates(
                     candidateArray[canIdx].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
                     candidateArray[canIdx].motion_vector_pred_x[REF_LIST_1] = bestPredmv[1].as_mv.col;
                     candidateArray[canIdx].motion_vector_pred_y[REF_LIST_1] = bestPredmv[1].as_mv.row;
-
+#endif
                     context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
                     context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
                     context_ptr->injected_mv_x_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l1;
@@ -2508,7 +2524,20 @@ void inject_new_nearest_new_comb_candidates(
                     candidateArray[canIdx].ref_frame_index_l1 = ref_idx_1;
                     candidateArray[canIdx].transform_type[0] = DCT_DCT;
                     candidateArray[canIdx].transform_type_uv = DCT_DCT;
-
+#if FIX_NEAREST_NEW
+                    get_av1_mv_pred_drl(
+                        context_ptr,
+                        context_ptr->cu_ptr,
+                        candidateArray[canIdx].ref_frame_type,
+                        candidateArray[canIdx].is_compound,
+                        NEW_NEARESTMV,
+                        0,//not needed drli,
+                        nearestmv,
+                        nearmv,
+                        ref_mv);
+                    candidateArray[canIdx].motion_vector_pred_x[REF_LIST_0] = ref_mv[0].as_mv.col;
+                    candidateArray[canIdx].motion_vector_pred_y[REF_LIST_0] = ref_mv[0].as_mv.row;
+#else
                     IntMv  bestPredmv[2] = { {0}, {0} };
 
                     ChooseBestAv1MvPred(
@@ -2529,7 +2558,7 @@ void inject_new_nearest_new_comb_candidates(
                     candidateArray[canIdx].motion_vector_pred_y[REF_LIST_0] = bestPredmv[0].as_mv.row;
                     candidateArray[canIdx].motion_vector_pred_x[REF_LIST_1] = bestPredmv[1].as_mv.col;
                     candidateArray[canIdx].motion_vector_pred_y[REF_LIST_1] = bestPredmv[1].as_mv.row;
-
+#endif
                     context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l0;
                     context_ptr->injected_mv_y_bipred_l0_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l0;
                     context_ptr->injected_mv_x_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_x_l1;
@@ -4999,7 +5028,22 @@ uint32_t product_full_mode_decision(
             pu_ptr->mv[REF_LIST_1].x = candidate_ptr->motion_vector_xl1;
             pu_ptr->mv[REF_LIST_1].y = candidate_ptr->motion_vector_yl1;
         }
-
+#if FIX_NEAREST_NEW
+        if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_0) {
+            cu_ptr->predmv[0].as_mv.col = candidate_ptr->motion_vector_pred_x[REF_LIST_0];
+            cu_ptr->predmv[0].as_mv.row = candidate_ptr->motion_vector_pred_y[REF_LIST_0];
+        }
+        else if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_1) {
+            cu_ptr->predmv[0].as_mv.col = candidate_ptr->motion_vector_pred_x[REF_LIST_1];
+            cu_ptr->predmv[0].as_mv.row = candidate_ptr->motion_vector_pred_y[REF_LIST_1];
+        }
+        else if (pu_ptr->inter_pred_direction_index == BI_PRED) {
+            cu_ptr->predmv[0].as_mv.col = candidate_ptr->motion_vector_pred_x[REF_LIST_0];
+            cu_ptr->predmv[0].as_mv.row = candidate_ptr->motion_vector_pred_y[REF_LIST_0];
+            cu_ptr->predmv[1].as_mv.col = candidate_ptr->motion_vector_pred_x[REF_LIST_1];
+            cu_ptr->predmv[1].as_mv.row = candidate_ptr->motion_vector_pred_y[REF_LIST_1];
+        }
+#endif
         // The MV prediction indicies are recalcated by the EncDec.
         pu_ptr->mvd[REF_LIST_0].pred_idx = 0;
         pu_ptr->mvd[REF_LIST_1].pred_idx = 0;
