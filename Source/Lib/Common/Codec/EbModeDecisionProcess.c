@@ -448,8 +448,9 @@ void reset_mode_decision(
     // Reset Neighbor Arrays at start of new Segment / Picture
     if (segment_index == 0) {
         reset_mode_decision_neighbor_arrays(picture_control_set_ptr);
+#if !FIX_SETTINGS_RESET
     }
-
+#endif
 #if EIGHT_PEL_PREDICTIVE_ME
     picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv = picture_control_set_ptr->enc_mode == ENC_M0 &&
         (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? 1 : 0;
@@ -477,7 +478,9 @@ void reset_mode_decision(
         && !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME)
         && !frm_hdr->error_resilient_mode;
     frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
-
+#if FIX_SETTINGS_RESET
+    }
+#endif
     return;
 }
 
