@@ -7711,77 +7711,82 @@ EB_EXTERN EbErrorType mode_decision_sb(
             }
         }
         else
-        // Initialize tx_depth
-        cu_ptr->tx_depth = 0;
-        if (blk_geom->quadi > 0 && blk_geom->shape == PART_N) {
-
-            uint32_t blk_mds = context_ptr->blk_geom->sqi_mds;
-            uint64_t parent_depth_cost = 0, current_depth_cost = 0;
-            SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-            uint32_t parent_depth_idx_mds = blk_mds;
-
-            // from a given child index, derive the index of the parent
-            parent_depth_idx_mds = (context_ptr->blk_geom->sqi_mds - (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
-                                    parent_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
-
-            if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128)
-                parent_depth_cost = MAX_MODE_COST;
-            else
-                compute_depth_costs_md_skip(
-                    context_ptr,
-                    sequence_control_set_ptr,
-                    parent_depth_idx_mds,
-                    ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth], &parent_depth_cost, &current_depth_cost);
-
-            if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
-                parent_depth_cost = MAX_MODE_COST;
-
-            // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
-            // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
-            // when md_exit_th=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
-            // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
-#if SPEED_OPT
-            if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* context_ptr->md_exit_th / context_ptr->blk_geom->quadi / 100)) {
-#else
-            if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* MD_EXIT_THSL / context_ptr->blk_geom->quadi / 100)) {
+#if FIX_SKIP_REDUNDANT_BLOCK
+        {
 #endif
-                skip_next_sq = 1;
-                next_non_skip_blk_idx_mds = parent_depth_idx_mds + ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth - 1];
+            // Initialize tx_depth
+            cu_ptr->tx_depth = 0;
+            if (blk_geom->quadi > 0 && blk_geom->shape == PART_N) {
+
+                uint32_t blk_mds = context_ptr->blk_geom->sqi_mds;
+                uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+                SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+                uint32_t parent_depth_idx_mds = blk_mds;
+
+                // from a given child index, derive the index of the parent
+                parent_depth_idx_mds = (context_ptr->blk_geom->sqi_mds - (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
+                    parent_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+
+                if (picture_control_set_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 && sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128)
+                    parent_depth_cost = MAX_MODE_COST;
+                else
+                    compute_depth_costs_md_skip(
+                        context_ptr,
+                        sequence_control_set_ptr,
+                        parent_depth_idx_mds,
+                        ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth], &parent_depth_cost, &current_depth_cost);
+
+                if (!sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[parent_depth_idx_mds])
+                    parent_depth_cost = MAX_MODE_COST;
+
+                // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
+                // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
+                // when md_exit_th=0 the estimated cost for the remaining child is not taken into account and the action will be lossless compared to no exit
+                // MD_EXIT_THSL could be tuned toward a faster encoder but lossy
+#if SPEED_OPT
+                if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* context_ptr->md_exit_th / context_ptr->blk_geom->quadi / 100)) {
+#else
+                if (parent_depth_cost <= current_depth_cost + (current_depth_cost* (4 - context_ptr->blk_geom->quadi)* MD_EXIT_THSL / context_ptr->blk_geom->quadi / 100)) {
+#endif
+                    skip_next_sq = 1;
+                    next_non_skip_blk_idx_mds = parent_depth_idx_mds + ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth - 1];
+                }
+                else {
+                    skip_next_sq = 0;
+                }
+            }
+            // skip until we reach the next block @ the parent block depth
+            if (cu_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
+                skip_next_sq = 0;
+
+            if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[cu_ptr->mds_idx] && !skip_next_nsq && !skip_next_sq) {
+                md_encode_block(
+                    sequence_control_set_ptr,
+                    picture_control_set_ptr,
+                    context_ptr,
+                    input_picture_ptr,
+                    ss_mecontext,
+                    &skip_sub_blocks,
+                    lcuAddr,
+                    bestcandidate_buffers);
+
+            }
+            else if (skip_next_sq) {
+                context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = (MAX_MODE_COST >> 10);
             }
             else {
-                skip_next_sq = 0;
+                // If the block is out of the boundaries, md is not performed.
+                // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
+                // - For non square blocks, since they can not be splitted further the cost is set to a large value (MAX_MODE_COST >> 4) to make sure they are not selected.
+                //   The value is set to MAX_MODE_COST >> 4 to make sure there is not overflow when adding costs.
+                if (context_ptr->blk_geom->shape != PART_N)
+                    context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = (MAX_MODE_COST >> 4);
+                else
+                    context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = 0;
             }
+#if FIX_SKIP_REDUNDANT_BLOCK
         }
-        // skip until we reach the next block @ the parent block depth
-        if (cu_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
-            skip_next_sq = 0;
-
-        if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_geom[lcuAddr].block_is_allowed[cu_ptr->mds_idx] && !skip_next_nsq && !skip_next_sq) {
-            md_encode_block(
-                sequence_control_set_ptr,
-                picture_control_set_ptr,
-                context_ptr,
-                input_picture_ptr,
-                ss_mecontext,
-                &skip_sub_blocks,
-                lcuAddr,
-                bestcandidate_buffers);
-
-        }
-        else if (skip_next_sq) {
-            context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = (MAX_MODE_COST >> 10);
-        }
-        else {
-            // If the block is out of the boundaries, md is not performed.
-            // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
-            // - For non square blocks, since they can not be splitted further the cost is set to a large value (MAX_MODE_COST >> 4) to make sure they are not selected.
-            //   The value is set to MAX_MODE_COST >> 4 to make sure there is not overflow when adding costs.
-            if (context_ptr->blk_geom->shape != PART_N)
-                context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = (MAX_MODE_COST >> 4);
-            else
-                context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost = 0;
-        }
-
+#endif
         skip_next_nsq = 0;
         if (blk_geom->nsi + 1 == blk_geom->totns)
             d1_non_square_block_decision(context_ptr);
