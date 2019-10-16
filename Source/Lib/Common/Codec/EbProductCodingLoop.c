@@ -6776,8 +6776,9 @@ void search_best_independent_uv_mode(
     // Start uv search path
     context_ptr->uv_search_path = EB_TRUE;
     EbAsm   asm_type  = sequence_control_set_ptr->encode_context_ptr->asm_type;
+#if !PAETH_HBD
     uint8_t is_16_bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
-
+#endif
     EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
 
     UvPredictionMode uv_mode;
@@ -6794,8 +6795,11 @@ void search_best_independent_uv_mode(
     candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV] = 0;
 
     uint8_t uv_mode_start = UV_DC_PRED;
+#if PAETH_HBD
+    uint8_t uv_mode_end =  UV_PAETH_PRED;
+#else
     uint8_t uv_mode_end = is_16_bit ? UV_SMOOTH_H_PRED : UV_PAETH_PRED;
-
+#endif
     for (uv_mode = uv_mode_start; uv_mode <= uv_mode_end; uv_mode++) {
         uint8_t uv_angleDeltaCandidateCount = (use_angle_delta && av1_is_directional_mode((PredictionMode)uv_mode)) ? 7 : 1;
         uint8_t uv_angle_delta_shift = 1;
@@ -6902,8 +6906,11 @@ void search_best_independent_uv_mode(
     }
 
     uint8_t intra_mode_start = DC_PRED;
+#if PAETH_HBD
+    uint8_t intra_mode_end =  PAETH_PRED;
+#else
     uint8_t intra_mode_end = is_16_bit ? SMOOTH_H_PRED : PAETH_PRED;
-
+#endif
     // Loop over all intra mode, then over all uv move to derive the best uv mode for a given intra mode in term of rate
     for (uint8_t intra_mode = intra_mode_start; intra_mode <= intra_mode_end; ++intra_mode) {
         uint8_t angleDeltaCandidateCount = (use_angle_delta && av1_is_directional_mode((PredictionMode)intra_mode)) ? 7 : 1;

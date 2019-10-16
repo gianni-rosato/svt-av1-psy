@@ -5087,9 +5087,15 @@ void  inject_intra_candidates(
     (void)sequence_control_set_ptr;
     (void)sb_ptr;
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+#if !PAETH_HBD
     uint8_t                     is16bit = (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
+#endif
     uint8_t                     intra_mode_start = DC_PRED;
+#if PAETH_HBD
+    uint8_t                     intra_mode_end   =  PAETH_PRED;
+#else
     uint8_t                     intra_mode_end   = is16bit ? SMOOTH_H_PRED : PAETH_PRED;
+#endif
     uint8_t                     openLoopIntraCandidate;
     uint32_t                    canTotalCnt = 0;
     uint8_t                     angleDeltaCounter = 0;
@@ -5114,7 +5120,11 @@ void  inject_intra_candidates(
     uint8_t     angle_delta_shift = 1;
     if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 4) {
         if (picture_control_set_ptr->slice_type == I_SLICE) {
+#if PAETH_HBD
+            intra_mode_end =  PAETH_PRED;
+#else
             intra_mode_end = is16bit ? SMOOTH_H_PRED : PAETH_PRED;
+#endif
             angleDeltaCandidateCount = use_angle_delta ? 5 : 1;
             disable_angle_prediction = 0;
             angle_delta_shift = 2;

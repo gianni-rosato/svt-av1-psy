@@ -51,7 +51,11 @@ extern "C" {
 #define FILTER_INTRA_FLAG    1 // Filter intra prediction
 
 
-#define II_COMP_FLAG 1
+#define II_COMP_FLAG                 1 // InterIntra compound
+#define PAETH_HBD                    1 // Enbale Intra PAETH for 10bit
+#define INTER_INTER_HBD              1 // Upgrade InterInter compound 10bit
+#define INTER_INTRA_HBD              1 // Upgrade InterIntra compound 10bit
+
 #define PRED_CHANGE                  1 // Change the MRP in 4L Pictures 3, 5 , 7 and 9 use 1 as the reference
 #define PRED_CHANGE_5L               1 // Change the MRP in 5L Pictures 3, 5 , 7 and 9 use 1 as the reference, 11, 13, 15 and 17 use 9 as the reference
 #define PRED_CHANGE_MOD              1 // Reorder the references for MRP

@@ -1534,6 +1534,20 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
 #if OBMC_FLAG
                                                      SIMPLE_TRANSLATION,
 #endif
+#if INTER_INTER_HBD
+                                                     1,//compound_idx not used
+                                                     NULL,// interinter_comp not used
+#endif
+#if INTER_INTRA_HBD
+                                                     NULL,
+                                                     NULL,
+                                                     NULL,
+                                                     NULL,
+                                                     0,
+                                                     0,
+                                                     0,
+                                                     0,
+#endif
                                                      pu_origin_x,
                                                      pu_origin_y,
                                                      bsize,
@@ -1622,6 +1636,20 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                                              0, //use_intrabc,
 #if OBMC_FLAG
                                              SIMPLE_TRANSLATION,
+#endif
+#if INTER_INTER_HBD
+                                             1,//compound_idx not used
+                                             NULL,// interinter_comp not used
+#endif
+#if INTER_INTRA_HBD
+                                             NULL,
+                                             NULL,
+                                             NULL,
+                                             NULL,
+                                             0,
+                                             0,
+                                             0,
+                                             0,
 #endif
                                              pu_origin_x,
                                              pu_origin_y,

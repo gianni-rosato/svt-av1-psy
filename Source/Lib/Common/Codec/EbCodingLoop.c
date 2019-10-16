@@ -2537,6 +2537,21 @@ EB_EXTERN void av1_encode_pass(
 #if OBMC_FLAG
                                         SIMPLE_TRANSLATION,
 #endif
+#if INTER_INTER_HBD
+                                        1,
+                                        &cu_ptr->interinter_comp,
+#endif
+#if INTER_INTRA_HBD
+                                        &sb_ptr->tile_info,
+                                        ep_luma_recon_neighbor_array,
+                                        ep_cb_recon_neighbor_array ,
+                                        ep_cr_recon_neighbor_array ,
+                                        cu_ptr->is_interintra_used,
+                                        cu_ptr->interintra_mode,
+                                        cu_ptr->use_wedge_interintra,
+                                        cu_ptr->interintra_wedge_index,
+
+#endif
                                         context_ptr->cu_origin_x,
                                         context_ptr->cu_origin_y,
                                         blk_geom->bwidth,
@@ -3042,6 +3057,21 @@ EB_EXTERN void av1_encode_pass(
                                     0,// use_intrabc,
 #if OBMC_FLAG
                                     cu_ptr->prediction_unit_array->motion_mode,
+#endif
+#if INTER_INTER_HBD
+                                    cu_ptr->compound_idx,
+                                    &cu_ptr->interinter_comp,
+#endif
+#if INTER_INTRA_HBD
+                                    &sb_ptr->tile_info,
+                                    ep_luma_recon_neighbor_array,
+                                    ep_cb_recon_neighbor_array ,
+                                    ep_cr_recon_neighbor_array ,
+                                    cu_ptr->is_interintra_used,
+                                    cu_ptr->interintra_mode,
+                                    cu_ptr->use_wedge_interintra,
+                                    cu_ptr->interintra_wedge_index,
+
 #endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
