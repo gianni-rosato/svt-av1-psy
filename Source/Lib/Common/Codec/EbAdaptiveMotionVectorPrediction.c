@@ -1108,23 +1108,21 @@ void setup_ref_mv_list(
                 idx += mi_size_high[candidate_bsize];
             }
 
-            //CHKN I dont think we need the third
-
             // Build up the compound mv predictor
-            IntMv comp_list[3][2];
+            IntMv comp_list[MAX_MV_REF_CANDIDATES][2];
 
             for (int32_t idx = 0; idx < 2; ++idx) {
                 int32_t comp_idx = 0;
-                for (int32_t list_idx = 0; list_idx < ref_id_count[idx]
-                    && comp_idx < 3; ++list_idx, ++comp_idx)
-                    comp_list[comp_idx][idx] = ref_id[idx][list_idx];
-
-                for (int32_t list_idx = 0; list_idx < ref_diff_count[idx]
-                    && comp_idx < 3; ++list_idx, ++comp_idx)
-                    comp_list[comp_idx][idx] = ref_diff[idx][list_idx];
-
-                for (; comp_idx < 3; ++comp_idx)
-                    comp_list[comp_idx][idx] = gm_mv_candidates[idx];
+                for (int32_t list_idx = 0;
+    	             list_idx < ref_id_count[idx] && comp_idx < MAX_MV_REF_CANDIDATES;
+	             ++list_idx, ++comp_idx)
+                  comp_list[comp_idx][idx] = ref_id[idx][list_idx];
+                for (int32_t list_idx = 0;
+    	            list_idx < ref_diff_count[idx] && comp_idx < MAX_MV_REF_CANDIDATES;
+	            ++list_idx, ++comp_idx)
+                  comp_list[comp_idx][idx] = ref_diff[idx][list_idx];
+                for (; comp_idx < MAX_MV_REF_CANDIDATES; ++comp_idx)
+                  comp_list[comp_idx][idx] = gm_mv_candidates[idx];
             }
 
             //CHKN fill the stack, increment the counter
