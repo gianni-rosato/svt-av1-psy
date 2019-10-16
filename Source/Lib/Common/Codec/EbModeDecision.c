@@ -1267,8 +1267,17 @@ void Bipred3x3CandidatesInjection(
     uint32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
     uint32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
     MD_COMP_TYPE cur_type; //BIP 3x3
+#if FIX_COMPOUND
+    BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+    MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
+        (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+        (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
+        picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#else
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #if SPEED_OPT
     if (context_ptr->source_variance < context_ptr->inter_inter_wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
@@ -1941,12 +1950,20 @@ void inject_mvp_candidates_II(
     uint32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
     av1_set_ref_frame(rf, ref_pair);
     MD_COMP_TYPE cur_type; //MVP
+#if FIX_COMPOUND
+    BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+    MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+        (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
+        picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#else
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #if SPEED_OPT
     if (context_ptr->source_variance < context_ptr->inter_inter_wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 #endif
- #if II_COMP_FLAG
+ #if II_COMP_FLAG && !FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
 #endif
     //single ref/list
@@ -2351,7 +2368,15 @@ void inject_new_nearest_new_comb_candidates(
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_pair);
     MD_COMP_TYPE cur_type; //N_NR N_NRST
+#if FIX_COMPOUND
+    BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+    MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+        (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
+        picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#else
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #if SPEED_OPT
     if (context_ptr->source_variance < context_ptr->inter_inter_wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
@@ -2845,14 +2870,24 @@ void inject_new_candidates(
     int umv0tile = (sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0);
     uint32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;
     uint32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
+#if FIX_COMPOUND
+    BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+    MD_COMP_TYPE cur_type; //NN
+    MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
+        (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+        (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
+        picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#else
     MD_COMP_TYPE cur_type; //NN
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #if SPEED_OPT
     if (context_ptr->source_variance < context_ptr->inter_inter_wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 #endif
- #if II_COMP_FLAG
+ #if II_COMP_FLAG && !FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
 #endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index)
@@ -3229,12 +3264,21 @@ void inject_new_candidates(
             IntMv  bestPredmv[2] = { {0}, {0} };
             uint32_t canTotalCnt = (*candidateTotalCnt);
 
+#if FIX_COMPOUND
             BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
             MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
             MD_COMP_TYPE cur_type; //BIP 3x3 MiSize >= BLOCK_8X8 && MiSize <= BLOCK_32X32)
             MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
                 (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
                 picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#else
+            BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+            MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+            MD_COMP_TYPE cur_type; //BIP 3x3 MiSize >= BLOCK_8X8 && MiSize <= BLOCK_32X32)
+            MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+                (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
+                picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#endif
 #if SPEED_OPT
             if (context_ptr->source_variance < context_ptr->inter_inter_wedge_variance_th)
                 tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
@@ -3505,14 +3549,24 @@ void  inject_inter_candidates(
             context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
     }
 
+#if FIX_COMPOUND
+    BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+    MD_COMP_TYPE cur_type; //GG
+    MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
+        (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+        (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
+        picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#else
     MD_COMP_TYPE cur_type; //GG
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #if SPEED_OPT
     if (context_ptr->source_variance < context_ptr->inter_inter_wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 #endif
-#if II_COMP_FLAG
+#if II_COMP_FLAG && !FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
 #endif
     uint32_t mi_row = context_ptr->cu_origin_y >> MI_SIZE_LOG2;

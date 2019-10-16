@@ -42,6 +42,7 @@ extern "C" {
 #define FIX_ENABLE_CDF_UPDATE        1 // Address ENABLE_CDF_UPDATE mismatch between rtime-m0-test and master: removed useless update
 #define FIX_SORTING_METHOD           1 // Address SORTING mismatch between rtime-m0-test and master: used same method
 #define FIX_SETTINGS_RESET           1 // Address SEGMENT_RESET mismatch between rtime-m0-test and master: only @ 1st segment
+#define FIX_COMPOUND                 1 // Address COMPOUND mismatch between rtime-m0-test and master: used block size @ the derivation of compound count
 
 #define II_COMP_FLAG 1
 #define PRED_CHANGE                  1 // Change the MRP in 4L Pictures 3, 5 , 7 and 9 use 1 as the reference

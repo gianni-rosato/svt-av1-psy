@@ -7775,9 +7775,8 @@ EB_EXTERN EbErrorType mode_decision_sb(
                     skip_next_sq = 1;
                     next_non_skip_blk_idx_mds = parent_depth_idx_mds + ns_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth - 1];
                 }
-                else {
+                else
                     skip_next_sq = 0;
-                }
             }
             // skip until we reach the next block @ the parent block depth
             if (cu_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
