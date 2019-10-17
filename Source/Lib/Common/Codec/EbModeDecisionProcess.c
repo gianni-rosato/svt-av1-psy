@@ -30,8 +30,7 @@ static void mode_decision_context_dctor(EbPtr p)
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
 
 #if ENHANCE_ATB
-    EB_FREE_ARRAY(obj->scratch_candidate_buffer->candidate_ptr);
-    EB_FREE_ARRAY(obj->scratch_candidate_buffer);
+    EB_DELETE(obj->scratch_candidate_buffer);
 #endif
 
     EB_DELETE(obj->trans_quant_buffers_ptr);
@@ -139,14 +138,10 @@ EbErrorType mode_decision_context_ctor(
         );
     }
 #if ENHANCE_ATB
-    EB_MALLOC_ARRAY(context_ptr->scratch_candidate_buffer, 1);
-
     EB_NEW(
         context_ptr->scratch_candidate_buffer,
         mode_decision_scratch_candidate_buffer_ctor,
         context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
-
-    EB_MALLOC_ARRAY(context_ptr->scratch_candidate_buffer->candidate_ptr, 1);
 #endif
     context_ptr->md_cu_arr_nsq[0].av1xd = NULL;
     context_ptr->md_cu_arr_nsq[0].neigh_left_recon[0] = NULL;
