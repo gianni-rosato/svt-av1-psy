@@ -3008,7 +3008,7 @@ void  d1_non_square_block_decision(
     {
         tot_cost += context_ptr->md_local_cu_unit[first_blk_idx + blk_it].cost;
         if (context_ptr->blk_geom->sqi_mds != first_blk_idx + blk_it)
-        merge_block_cnt += merge_1D_inter_block(context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
+            merge_block_cnt += merge_1D_inter_block(context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
     }
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         uint64_t split_cost = 0;
