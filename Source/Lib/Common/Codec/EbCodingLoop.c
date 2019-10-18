@@ -1564,7 +1564,11 @@ void perform_intra_coding_loop(
                 mode,
                 pu_ptr->angle_delta[PLANE_TYPE_Y],
                 0,
+#if FILTER_INTRA_FLAG
+                cu_ptr->filter_intra_mode,
+#else
                 FILTER_INTRA_MODES,
+#endif
                 topNeighArray + 1,
                 leftNeighArray + 1,
                 recon_buffer,
@@ -1610,7 +1614,11 @@ void perform_intra_coding_loop(
                 mode,
                 pu_ptr->angle_delta[PLANE_TYPE_Y],
                 0,
+#if FILTER_INTRA_FLAG
+                cu_ptr->filter_intra_mode,
+#else
                 FILTER_INTRA_MODES,
+#endif
                 topNeighArray + 1,
                 leftNeighArray + 1,
                 recon_buffer,
@@ -1661,7 +1669,9 @@ void perform_intra_coding_loop(
             candidate_buffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
             candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
             candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-
+#if FILTER_INTRA_FLAG
+            candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode;
+#endif
             const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
             av1_tu_estimate_coeff_bits(
@@ -1927,7 +1937,9 @@ void perform_intra_coding_loop(
             candidate_buffer->candidate_ptr->transform_type_uv = cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV];
             candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
             candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-
+#if FILTER_INTRA_FLAG
+            candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode; 
+#endif
             const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
             av1_tu_estimate_coeff_bits(
@@ -2624,7 +2636,11 @@ EB_EXTERN void av1_encode_pass(
                                         mode,                                                       //PredictionMode mode,
                                         plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
                                         0,                                                          //int32_t use_palette,
+#if FILTER_INTRA_FLAG
+                                        plane ? FILTER_INTRA_MODES : cu_ptr->filter_intra_mode,
+#else
                                         FILTER_INTRA_MODES,                                         //CHKN FilterIntraMode filter_intra_mode,
+#endif
                                         topNeighArray + 1,
                                         leftNeighArray + 1,
                                         recon_buffer,                                                //uint8_t *dst,
@@ -2754,6 +2770,9 @@ EB_EXTERN void av1_encode_pass(
                                     candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
                                     candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
 
+#if FILTER_INTRA_FLAG
+                                    candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode;
+#endif
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
                                     av1_tu_estimate_coeff_bits(
@@ -3281,7 +3300,9 @@ EB_EXTERN void av1_encode_pass(
                                     // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
                                     candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
                                     candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-
+#if FILTER_INTRA_FLAG
+                                    candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode; 
+#endif
                                     const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
                                     //CHKN add updating eobs[] after CBF decision
@@ -3482,7 +3503,9 @@ EB_EXTERN void av1_encode_pass(
                                 // Rate estimation function uses the values from CandidatePtr. The right values are copied from cu_ptr to CandidatePtr
                                 candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
                                 candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-
+#if FILTER_INTRA_FLAG
+                                candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode; 
+#endif
                                 const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
                                 av1_tu_estimate_coeff_bits(

@@ -13864,6 +13864,9 @@ extern "C" {
         struct MdRateEstimationContext *md_rate_estimation_array;
         int8_t ref_frame_side[REF_FRAMES];
         TPL_MV_REF  *tpl_mvs;
+#if FILTER_INTRA_FLAG
+        uint8_t pic_filter_intra_mode;
+#endif
     } PictureControlSet;
 
     // To optimize based on the max input size

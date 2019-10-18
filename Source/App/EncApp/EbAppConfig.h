@@ -251,6 +251,10 @@ typedef struct EbConfig
      ****************************************/
     EbBool                  enable_obmc;
     /****************************************
+     * Filter intra prediction
+     ****************************************/
+    EbBool                  enable_filter_intra;
+    /****************************************
      * ME Tools
      ****************************************/
     EbBool                  use_default_me_hme;

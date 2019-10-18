@@ -48,6 +48,7 @@ extern "C" {
 #define OBMC_CONVOLVE        1 // to track convolve kernels changes
 
 #define INJECT_NEW_NEAR_NEAR_NEW   1   // Inject NEW_NEAR / NEAR_NEW inter prediction 
+#define FILTER_INTRA_FLAG    1 // Filter intra prediction
 
 
 #define II_COMP_FLAG 1
@@ -158,7 +159,11 @@ enum {
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #if II_COMP_FLAG
 #if OBMC_FLAG
+#if FILTER_INTRA_FLAG
+#define MAX_NFL                                 110 // Maximum number of candidates MD can support
+#else
 #define MAX_NFL                                 105 // Maximum number of candidates MD can support
+#endif
 #else
 #define MAX_NFL                                  80
 #endif
@@ -495,6 +500,9 @@ typedef enum CAND_CLASS {
 #endif
 #if OBMC_FLAG
     CAND_CLASS_5,
+#endif
+#if FILTER_INTRA_FLAG
+    CAND_CLASS_6,
 #endif
     CAND_CLASS_TOTAL
 } CAND_CLASS;
@@ -1164,6 +1172,11 @@ typedef enum ATTRIBUTE_PACKED
     FILTER_INTRA_MODES,
 } FilterIntraMode;
 
+#if FILTER_INTRA_FLAG
+static const PredictionMode fimode_to_intramode[FILTER_INTRA_MODES] = {
+  DC_PRED, V_PRED, H_PRED, D157_PRED, PAETH_PRED
+};
+#endif
 #define DIRECTIONAL_MODES 8
 #define MAX_ANGLE_DELTA 3
 #define ANGLE_STEP 3

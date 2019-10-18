@@ -39,6 +39,9 @@
 #define  INCRMENT_CAND_TOTAL_COUNT(cnt) MULTI_LINE_MACRO_BEGIN cnt++; if(cnt>=MODE_DECISION_CANDIDATE_MAX_COUNT) printf(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n",cnt); MULTI_LINE_MACRO_END
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 
+#if FILTER_INTRA_FLAG
+int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+#endif
 #if OBMC_FLAG
 #define INT_MAX       2147483647    // maximum (signed) int value
 #endif
@@ -5022,6 +5025,9 @@ void  inject_intra_bc_candidates(
         candidateArray[*cand_cnt].ref_mv_index = 0;
         candidateArray[*cand_cnt].pred_mv_weight = 0;
         candidateArray[*cand_cnt].interp_filters = av1_broadcast_interp_filter(BILINEAR);
+#if FILTER_INTRA_FLAG
+        candidateArray[*cand_cnt].filter_intra_mode = FILTER_INTRA_MODES;
+#endif
         INCRMENT_CAND_TOTAL_COUNT( (*cand_cnt) );
     }
 }
@@ -5210,6 +5216,9 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
                         candidateArray[canTotalCnt].distortion_ready = 0;
                         candidateArray[canTotalCnt].use_intrabc = 0;
+#if FILTER_INTRA_FLAG
+                        candidateArray[canTotalCnt].filter_intra_mode = FILTER_INTRA_MODES;
+#endif
                         candidateArray[canTotalCnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)openLoopIntraCandidate);
                         candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = angle_delta;
                         // Search the best independent intra chroma mode
@@ -5267,6 +5276,9 @@ void  inject_intra_candidates(
             candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
             candidateArray[canTotalCnt].distortion_ready = 0;
             candidateArray[canTotalCnt].use_intrabc = 0;
+#if FILTER_INTRA_FLAG
+            candidateArray[canTotalCnt].filter_intra_mode = FILTER_INTRA_MODES;
+#endif
             candidateArray[canTotalCnt].is_directional_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)openLoopIntraCandidate);
             candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = 0;
             // Search the best independent intra chroma mode
@@ -5327,6 +5339,90 @@ void  inject_intra_candidates(
     return;
 }
 
+#if FILTER_INTRA_FLAG
+// END of Function Declarations
+void  inject_filter_intra_candidates(
+    PictureControlSet            *picture_control_set_ptr,
+    ModeDecisionContext          *context_ptr,
+    uint32_t                     *candidateTotalCnt){
+
+    FilterIntraMode             intra_mode_start = FILTER_DC_PRED;
+    FilterIntraMode             intra_mode_end   = FILTER_INTRA_MODES;
+    FilterIntraMode             filter_intra_mode;
+    uint32_t                    canTotalCnt = *candidateTotalCnt;
+    ModeDecisionCandidate      *candidateArray = context_ptr->fast_candidate_array;
+
+    EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+
+    for (filter_intra_mode = intra_mode_start; filter_intra_mode < intra_mode_end ; ++filter_intra_mode) {
+
+            candidateArray[canTotalCnt].type = INTRA_MODE;
+            candidateArray[canTotalCnt].intra_luma_mode = DC_PRED;
+            candidateArray[canTotalCnt].distortion_ready = 0;
+            candidateArray[canTotalCnt].use_intrabc = 0;
+            candidateArray[canTotalCnt].filter_intra_mode = filter_intra_mode;
+            candidateArray[canTotalCnt].is_directional_mode_flag = 0;
+
+            candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = 0;
+
+            // Search the best independent intra chroma mode
+            if (context_ptr->chroma_level == CHROMA_MODE_0) {
+                candidateArray[canTotalCnt].intra_chroma_mode  = disable_cfl_flag ? context_ptr->best_uv_mode[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y]] : UV_CFL_PRED;
+
+                candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ? context_ptr->best_uv_angle[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y]] : 0;
+                candidateArray[canTotalCnt].is_directional_chroma_mode_flag = disable_cfl_flag ? (uint8_t)av1_is_directional_mode((PredictionMode)(context_ptr->best_uv_mode[fimode_to_intramode[filter_intra_mode]][MAX_ANGLE_DELTA + candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y]])) : 0;
+
+            }
+            else {
+                // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
+                const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
+                candidateArray[canTotalCnt].intra_chroma_mode = disable_cfl_flag ? intra_luma_to_chroma[fimode_to_intramode[filter_intra_mode]] :
+                    (context_ptr->chroma_level == CHROMA_MODE_1) ?
+                        UV_CFL_PRED :
+                        UV_DC_PRED;
+
+                candidateArray[canTotalCnt].intra_chroma_mode =  disable_ang_uv && av1_is_directional_mode(candidateArray[canTotalCnt].intra_chroma_mode) ?
+                    UV_DC_PRED : candidateArray[canTotalCnt].intra_chroma_mode;
+
+                candidateArray[canTotalCnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[canTotalCnt].intra_chroma_mode);
+                candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_UV] = 0;
+            }
+
+            candidateArray[canTotalCnt].cfl_alpha_signs = 0;
+            candidateArray[canTotalCnt].cfl_alpha_idx = 0;
+            candidateArray[canTotalCnt].transform_type[0] = DCT_DCT;
+
+            if (candidateArray[canTotalCnt].intra_chroma_mode == UV_CFL_PRED)
+                candidateArray[canTotalCnt].transform_type_uv = DCT_DCT;
+            else
+                candidateArray[canTotalCnt].transform_type_uv =
+                av1_get_tx_type(
+                    context_ptr->blk_geom->bsize,
+                    0,
+                    (PredictionMode)candidateArray[canTotalCnt].intra_luma_mode,
+                    (UvPredictionMode)candidateArray[canTotalCnt].intra_chroma_mode,
+                    PLANE_TYPE_UV,
+                    0,
+                    0,
+                    0,
+                    context_ptr->blk_geom->txsize_uv[0][0],
+                    frm_hdr->reduced_tx_set);
+
+            candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
+            candidateArray[canTotalCnt].pred_mode = DC_PRED;
+            candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
+
+            INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
+    }
+
+    // update the total number of candidates injected
+    (*candidateTotalCnt) = canTotalCnt;
+
+    return;
+}
+#endif
 EbErrorType generate_md_stage_0_cand(
     LargestCodingUnit   *sb_ptr,
     ModeDecisionContext *context_ptr,
@@ -5372,7 +5468,14 @@ EbErrorType generate_md_stage_0_cand(
                 sb_ptr,
                 &canTotalCnt);
     }
+#if FILTER_INTRA_FLAG
+       if (picture_control_set_ptr->pic_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(sequence_control_set_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
+            inject_filter_intra_candidates(
+                picture_control_set_ptr,
+                context_ptr,
+                &canTotalCnt);
 
+#endif
     if (frm_hdr->allow_intrabc)
         inject_intra_bc_candidates(
             picture_control_set_ptr,
@@ -5407,8 +5510,19 @@ EbErrorType generate_md_stage_0_cand(
 
         if (cand_ptr->type == INTRA_MODE) {
             // Intra prediction
+#if FILTER_INTRA_FLAG
+                if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
+                    cand_ptr->cand_class = CAND_CLASS_0;
+                    context_ptr->md_stage_0_count[CAND_CLASS_0]++;
+                }
+                else {
+                    cand_ptr->cand_class = CAND_CLASS_6;
+                    context_ptr->md_stage_0_count[CAND_CLASS_6]++;
+                }
+#else
             cand_ptr->cand_class = CAND_CLASS_0;
             context_ptr->md_stage_0_count[CAND_CLASS_0]++;
+#endif
         }
 #if OBMC_FLAG
         else {
@@ -5605,6 +5719,9 @@ uint32_t product_full_mode_decision(
         pu_ptr->intra_luma_mode = 0x1F;
         if (cu_ptr->prediction_mode_flag == INTRA_MODE)
         {
+#if FILTER_INTRA_FLAG
+            cu_ptr->filter_intra_mode= candidate_ptr->filter_intra_mode;
+#endif
             pu_ptr->intra_luma_mode = candidate_ptr->intra_luma_mode;
 
             pu_ptr->is_directional_mode_flag = candidate_ptr->is_directional_mode_flag;

@@ -1578,6 +1578,9 @@ void set_md_stage_counts(
     // Step 0: derive bypass_stage1 flags
     if (context_ptr->md_staging_mode) {
         context_ptr->bypass_stage1[CAND_CLASS_0] = EB_TRUE;
+#if FILTER_INTRA_FLAG
+        context_ptr->bypass_stage1[CAND_CLASS_6] = EB_TRUE;
+#endif
         context_ptr->bypass_stage1[CAND_CLASS_1] = EB_FALSE;
         context_ptr->bypass_stage1[CAND_CLASS_2] = EB_FALSE;
         context_ptr->bypass_stage1[CAND_CLASS_3] = context_ptr->combine_class12 ? EB_TRUE : EB_FALSE;
@@ -1594,6 +1597,9 @@ void set_md_stage_counts(
     if (context_ptr->md_staging_mode)
     {
         context_ptr->bypass_stage2[CAND_CLASS_0] = EB_FALSE;
+#if FILTER_INTRA_FLAG
+        context_ptr->bypass_stage2[CAND_CLASS_6] = EB_FALSE;
+#endif
 
         if (context_ptr->md_staging_mode == MD_STAGING_MODE_2 || context_ptr->md_staging_mode == MD_STAGING_MODE_3) {
             context_ptr->bypass_stage2[CAND_CLASS_1] = EB_FALSE;
@@ -1616,6 +1622,9 @@ void set_md_stage_counts(
         memset(context_ptr->bypass_stage2, EB_TRUE, CAND_CLASS_TOTAL);
     // Step 2: set md_stage count
     context_ptr->md_stage_1_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? fastCandidateTotalCount : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTRA_NFL : (INTRA_NFL >> 1);
+#if FILTER_INTRA_FLAG
+    context_ptr->md_stage_1_count[CAND_CLASS_6] = 5;
+#endif
     context_ptr->md_stage_1_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTER_NEW_NFL : (INTER_NEW_NFL >> 1);
     context_ptr->md_stage_1_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTER_PRED_NFL : (INTER_PRED_NFL >> 1);
 
@@ -1646,6 +1655,9 @@ void set_md_stage_counts(
     }
 
     context_ptr->md_stage_2_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? fastCandidateTotalCount : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? INTRA_NFL : (INTRA_NFL >> 1);
+#if FILTER_INTRA_FLAG
+    context_ptr->md_stage_2_count[CAND_CLASS_6] =  5;
+#endif
     context_ptr->md_stage_2_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 : 4;
     context_ptr->md_stage_2_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 : 4;
 
@@ -1676,7 +1688,10 @@ void set_md_stage_counts(
         context_ptr->md_stage_3_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? 10 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 1;
     else
         context_ptr->md_stage_3_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? 10 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? ((scs->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 7 : 10) : 4;
-
+#if FILTER_INTRA_FLAG
+    context_ptr->md_stage_3_count[CAND_CLASS_6] = (picture_control_set_ptr->temporal_layer_index == 0) ? 5 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 2;
+    context_ptr->md_stage_3_count[CAND_CLASS_6] = (picture_control_set_ptr->temporal_layer_index == 0) ? 5 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 2;
+#endif
     context_ptr->md_stage_3_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 1;
     context_ptr->md_stage_3_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 1;
 
@@ -2172,7 +2187,11 @@ void md_stage_0(
     // Set MD Staging fast_loop_core settings
 
     context_ptr->md_staging_skip_interpolation_search = (context_ptr->md_staging_mode) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
+#if FILTER_INTRA_FLAG
+    context_ptr->md_staging_skip_inter_chroma_pred = (context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0 && context_ptr->target_class != CAND_CLASS_0 && context_ptr->target_class != CAND_CLASS_6) ? EB_TRUE : EB_FALSE;
+#else
     context_ptr->md_staging_skip_inter_chroma_pred = (context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0 && context_ptr->target_class != CAND_CLASS_0) ? EB_TRUE : EB_FALSE;
+#endif
     context_ptr->md_staging_use_bilinear = (context_ptr->md_staging_mode) ? EB_TRUE : EB_FALSE;
 
     // 1st fast loop: src-to-src
@@ -3573,6 +3592,10 @@ void check_best_indepedant_cfl(
     uint64_t                      *cr_coeff_bits,
     EbAsm                          asm_type) {
 
+#if FILTER_INTRA_FLAG
+    if (candidate_buffer->candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES)
+        assert(candidate_buffer->candidate_ptr->intra_luma_mode == DC_PRED);
+#endif
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     // cfl cost
     uint64_t chromaRate = 0;
@@ -3760,7 +3783,11 @@ EbErrorType av1_intra_luma_prediction(
             mode,                                                                           //PredictionMode mode,
             candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
             0,                                                                              //int32_t use_palette,
+#if FILTER_INTRA_FLAG
+            candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
+#else
             FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
+#endif
             topNeighArray + 1,
             leftNeighArray + 1,
             candidate_buffer_ptr->prediction_ptr,                                              //uint8_t *dst,
@@ -5852,7 +5879,11 @@ void md_stage_2(
     context_ptr->md_staging_skip_full_pred = EB_TRUE;
     context_ptr->md_staging_skip_atb = EB_TRUE;
     context_ptr->md_staging_tx_search = 0;
+#if FILTER_INTRA_FLAG
+    context_ptr->md_staging_skip_full_chroma =  context_ptr->target_class == CAND_CLASS_0 || context_ptr->target_class == CAND_CLASS_6 || context_ptr->md_staging_mode == MD_STAGING_MODE_3;
+#else
     context_ptr->md_staging_skip_full_chroma = context_ptr->target_class == CAND_CLASS_0 || context_ptr->md_staging_mode == MD_STAGING_MODE_3;
+#endif
     context_ptr->md_staging_skip_rdoq = (context_ptr->md_staging_mode == MD_STAGING_MODE_2 || context_ptr->md_staging_mode == MD_STAGING_MODE_3);
 
     for (fullLoopCandidateIndex = 0; fullLoopCandidateIndex < context_ptr->md_stage_2_count[context_ptr->target_class]; ++fullLoopCandidateIndex) {
@@ -5912,7 +5943,11 @@ void md_stage_3(
         // Set MD Staging full_loop_core settings
         context_ptr->md_staging_skip_full_pred = (context_ptr->md_staging_mode == MD_STAGING_MODE_3) ? EB_FALSE: EB_TRUE;
         context_ptr->md_staging_skip_atb = context_ptr->coeff_based_skip_atb;
+#if FILTER_INTRA_FLAG
+        context_ptr->md_staging_tx_search = (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_6)? 2 : 1;
+#else
         context_ptr->md_staging_tx_search = candidate_ptr->cand_class == CAND_CLASS_0 ? 2 : 1;
+#endif
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
 
@@ -6065,6 +6100,9 @@ void move_cu_data(
     dst_cu->part = src_cu->part;
     dst_cu->shape = src_cu->shape;
     dst_cu->mds_idx = src_cu->mds_idx;
+#if FILTER_INTRA_FLAG
+    dst_cu->filter_intra_mode = src_cu->filter_intra_mode;
+#endif
 }
 void move_cu_data_redund(
     CodingUnit *src_cu,
@@ -6086,7 +6124,9 @@ void move_cu_data_redund(
        dst_cu->interintra_wedge_index  = src_cu->interintra_wedge_index      ;//inter_intra wedge index
        dst_cu->ii_wedge_sign           = src_cu->ii_wedge_sign               ;//inter_intra wedge sign=-1
 #endif
-
+#if FILTER_INTRA_FLAG
+    dst_cu->filter_intra_mode = src_cu->filter_intra_mode;
+#endif
     //CHKN TransformUnit_t             transform_unit_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     memcpy(dst_cu->transform_unit_array, src_cu->transform_unit_array, TRANSFORM_UNIT_MAX_COUNT * sizeof(TransformUnit));
 

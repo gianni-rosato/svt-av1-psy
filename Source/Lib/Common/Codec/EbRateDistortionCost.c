@@ -155,13 +155,16 @@ int32_t Av1TransformTypeRateEstimation(
     FRAME_CONTEXT *fc,
     struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
     EbBool                                  is_inter,
+#if !FILTER_INTRA_FLAG
     EbBool                                  useFilterIntraFlag,
+#endif
     TxSize                                  transform_size,
     TxType                                  transform_type,
     EbBool                                  reduced_tx_set_used)
 {
+#if !FILTER_INTRA_FLAG
     uint8_t filterIntraMode = 0; // AMIR to check// NM- hardcoded to zero for the moment until we support different intra filtering modes.
-
+#endif
     //const MbModeInfo *mbmi = &xd->mi[0]->mbmi;
     //const int32_t is_inter = is_inter_block(mbmi);
 
@@ -187,8 +190,13 @@ int32_t Av1TransformTypeRateEstimation(
         else {
             if (ext_tx_set > 0) {
                 PredictionMode intra_dir;
+#if FILTER_INTRA_FLAG
+                if (candidate_buffer_ptr->candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES)
+                    intra_dir = fimode_to_intradir[candidate_buffer_ptr->candidate_ptr->filter_intra_mode];
+#else
                 if (useFilterIntraFlag)
                     intra_dir = fimode_to_intradir[filterIntraMode];
+#endif
                 else
                     intra_dir = candidate_buffer_ptr->candidate_ptr->pred_mode;
                 assert(intra_dir < INTRA_MODES);
@@ -534,7 +542,9 @@ uint64_t eb_av1_cost_coeffs_txb(
             ec_ctx,
             candidate_buffer_ptr,
             candidate_buffer_ptr->candidate_ptr->type == INTER_MODE ? EB_TRUE : EB_FALSE,
+#if !FILTER_INTRA_FLAG
             EB_FALSE, // NM - Hardcoded to false for the moment until we support the intra filtering
+#endif
             transform_size,
             transform_type,
             reducedTransformSetFlag);
@@ -632,6 +642,10 @@ uint64_t eb_av1_cost_coeffs_txb(
 
     return cost;
 }
+#if FILTER_INTRA_FLAG
+ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+ int av1_filter_intra_allowed(uint8_t   enable_filter_intra, BlockSize bsize, uint32_t  mode);
+#endif
 /*static*/ void model_rd_from_sse(
     BlockSize bsize,
     int16_t quantizer,
@@ -722,6 +736,9 @@ uint64_t av1_intra_fast_cost(
     uint64_t intraModeBitsNum = 0;
     uint64_t intraLumaModeBitsNum = 0;
     uint64_t intraLumaAngModeBitsNum = 0;
+#if FILTER_INTRA_FLAG
+    uint64_t intra_filter_mode_bits_num = 0;
+#endif
     uint64_t intraChromaModeBitsNum = 0;
     uint64_t intraChromaAngModeBitsNum = 0;
     uint64_t skipModeRate = 0;
@@ -748,7 +765,14 @@ uint64_t av1_intra_fast_cost(
         assert((intra_mode - V_PRED) >= 0);
         intraLumaAngModeBitsNum = candidate_ptr->md_rate_estimation_ptr->angle_delta_fac_bits[intra_mode - V_PRED][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_Y]];
     }
-
+#if FILTER_INTRA_FLAG
+    if (av1_filter_intra_allowed(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_filter_intra, blk_geom->bsize, intra_mode)) {
+       intra_filter_mode_bits_num = candidate_ptr->md_rate_estimation_ptr->filter_intra_fac_bits[blk_geom->bsize][candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES];
+        if (candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
+            intra_filter_mode_bits_num += candidate_ptr->md_rate_estimation_ptr->filter_intra_mode_fac_bits[candidate_ptr->filter_intra_mode];
+        }
+    }
+#endif
     // NM- Harcoded assuming luma mode is equal to chroma mode
     //if (!cm->seq_params.monochrome &&
     //    is_chroma_reference(mi_row, mi_col, bsize, xd->plane[1].subsampling_x,
@@ -787,7 +811,11 @@ uint64_t av1_intra_fast_cost(
     }
 
     uint32_t isInterRate = picture_control_set_ptr->slice_type != I_SLICE ? candidate_ptr->md_rate_estimation_ptr->intra_inter_fac_bits[cu_ptr->is_inter_ctx][0] : 0;
+#if FILTER_INTRA_FLAG
+    lumaRate = (uint32_t)(intraModeBitsNum + skipModeRate + intraLumaModeBitsNum + intraLumaAngModeBitsNum + isInterRate + intra_filter_mode_bits_num);
+#else
     lumaRate = (uint32_t)(intraModeBitsNum + skipModeRate + intraLumaModeBitsNum + intraLumaAngModeBitsNum + isInterRate);
+#endif
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm))
         lumaRate += candidate_ptr->md_rate_estimation_ptr->intrabc_fac_bits[candidate_ptr->use_intrabc];
 

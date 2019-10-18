@@ -191,6 +191,7 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.disable_dlf_flag = (EbBool)config->disable_dlf_flag;
     callback_data->eb_enc_parameters.enable_warped_motion = (EbBool)config->enable_warped_motion;
     callback_data->eb_enc_parameters.enable_obmc = (EbBool)config->enable_obmc;
+    callback_data->eb_enc_parameters.enable_filter_intra = (EbBool)config->enable_filter_intra;
     callback_data->eb_enc_parameters.use_default_me_hme = (EbBool)config->use_default_me_hme;
     callback_data->eb_enc_parameters.enable_hme_flag = (EbBool)config->enable_hme_flag;
     callback_data->eb_enc_parameters.enable_hme_level0_flag = (EbBool)config->enable_hme_level0_flag;
