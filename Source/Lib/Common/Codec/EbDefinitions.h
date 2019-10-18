@@ -70,6 +70,12 @@ extern "C" {
 #define ENHANCE_ATB                       1
 
 #define RDOQ_CHROMA                       1
+
+
+#define TWO_PASS                          1 // Two pass encoding. For now, the encoder is called two times and data transfered using file.
+                                            // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
+#define TWO_PASS_USE_2NDP_ME_IN_1STP      1 // Add a config parameter to the first pass to use the ME settings of the second pass
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -3258,6 +3264,12 @@ static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
     /*84 */3,
 };
 
+#if TWO_PASS
+typedef struct stat_struct_t
+{
+    uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
+} stat_struct_t;
+#endif
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
 
 /******************************************************************************

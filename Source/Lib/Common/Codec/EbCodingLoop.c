@@ -3644,6 +3644,103 @@ EB_EXTERN void av1_encode_pass(
                             context_ptr->blk_geom->bheight_uv,
                             context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                             is16bit);
+#if TWO_PASS
+                    // Collect the referenced area per 64x64
+                    if (sequence_control_set_ptr->use_output_stat_file) {
+                        if (cu_ptr->prediction_unit_array->ref_frame_index_l0 >= 0) {
+                            eb_block_on_mutex(refObj0->referenced_area_mutex);
+                            {
+                                if (context_ptr->mv_unit.pred_direction == UNI_PRED_LIST_0 || context_ptr->mv_unit.pred_direction == BI_PRED) {
+                                    //List0-Y
+                                    uint16_t origin_x = MAX(0, (int16_t)context_ptr->cu_origin_x + (context_ptr->mv_unit.mv[REF_LIST_0].x >> 3));
+                                    uint16_t origin_y = MAX(0, (int16_t)context_ptr->cu_origin_y + (context_ptr->mv_unit.mv[REF_LIST_0].y >> 3));
+                                    uint16_t sb_origin_x = origin_x / context_ptr->sb_sz * context_ptr->sb_sz;
+                                    uint16_t sb_origin_y = origin_y / context_ptr->sb_sz * context_ptr->sb_sz;
+                                    uint32_t pic_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+                                    uint16_t sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                    uint16_t width, height, weight;
+                                    weight = 1 << (4 - picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index);
+
+                                    width = MIN(sb_origin_x + context_ptr->sb_sz, origin_x + blk_geom->bwidth) - origin_x;
+                                    height = MIN(sb_origin_y + context_ptr->sb_sz, origin_y + blk_geom->bheight) - origin_y;
+                                    refObj0->stat_struct.referenced_area[sb_index] += width * height*weight;
+
+                                    if (origin_x + blk_geom->bwidth > sb_origin_x + context_ptr->sb_sz) {
+                                        sb_origin_x = (origin_x / context_ptr->sb_sz + 1)* context_ptr->sb_sz;
+                                        sb_origin_y = origin_y / context_ptr->sb_sz * context_ptr->sb_sz;
+                                        sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                        width = origin_x + blk_geom->bwidth - MAX(sb_origin_x, origin_x);
+                                        height = MIN(sb_origin_y + context_ptr->sb_sz, origin_y + blk_geom->bheight) - origin_y;
+                                        refObj0->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                    }
+                                    if (origin_y + blk_geom->bheight > sb_origin_y + context_ptr->sb_sz) {
+                                        sb_origin_x = (origin_x / context_ptr->sb_sz)* context_ptr->sb_sz;
+                                        sb_origin_y = (origin_y / context_ptr->sb_sz + 1) * context_ptr->sb_sz;
+                                        sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                        width = MIN(sb_origin_x + context_ptr->sb_sz, origin_x + blk_geom->bwidth) - origin_x;
+                                        height = origin_y + blk_geom->bheight - MAX(sb_origin_y, origin_y);
+                                        refObj0->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                    }
+                                    if (origin_x + blk_geom->bwidth > sb_origin_x + context_ptr->sb_sz &&
+                                        origin_y + blk_geom->bheight > sb_origin_y + context_ptr->sb_sz) {
+                                        sb_origin_x = (origin_x / context_ptr->sb_sz + 1)* context_ptr->sb_sz;
+                                        sb_origin_y = (origin_y / context_ptr->sb_sz + 1) * context_ptr->sb_sz;
+                                        sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                        width = origin_x + blk_geom->bwidth - MAX(sb_origin_x, origin_x);
+                                        height = origin_y + blk_geom->bheight - MAX(sb_origin_y, origin_y);
+                                        refObj0->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                    }
+                                }
+                            }
+                            eb_release_mutex(refObj0->referenced_area_mutex);
+                        }
+
+                        if (cu_ptr->prediction_unit_array->ref_frame_index_l1 >= 0) {
+                            eb_block_on_mutex(refObj1->referenced_area_mutex);
+                            if (context_ptr->mv_unit.pred_direction == UNI_PRED_LIST_1 || context_ptr->mv_unit.pred_direction == BI_PRED) {
+                                //List1-Y
+                                uint16_t origin_x = MAX(0, (int16_t)context_ptr->cu_origin_x + (context_ptr->mv_unit.mv[REF_LIST_1].x >> 3));
+                                uint16_t origin_y = MAX(0, (int16_t)context_ptr->cu_origin_y + (context_ptr->mv_unit.mv[REF_LIST_1].y >> 3));
+                                uint16_t sb_origin_x = origin_x / context_ptr->sb_sz * context_ptr->sb_sz;
+                                uint16_t sb_origin_y = origin_y / context_ptr->sb_sz * context_ptr->sb_sz;
+                                uint32_t pic_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
+                                uint16_t sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                uint16_t width, height, weight;
+                                weight = 1 << (4 - picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index);
+
+                                width = MIN(sb_origin_x + context_ptr->sb_sz, origin_x + blk_geom->bwidth) - origin_x;
+                                height = MIN(sb_origin_y + context_ptr->sb_sz, origin_y + blk_geom->bheight) - origin_y;
+                                refObj1->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                if (origin_x + blk_geom->bwidth > sb_origin_x + context_ptr->sb_sz) {
+                                    sb_origin_x = (origin_x / context_ptr->sb_sz + 1)* context_ptr->sb_sz;
+                                    sb_origin_y = origin_y / context_ptr->sb_sz * context_ptr->sb_sz;
+                                    sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                    width = origin_x + blk_geom->bwidth - MAX(sb_origin_x, origin_x);
+                                    height = MIN(sb_origin_y + context_ptr->sb_sz, origin_y + blk_geom->bheight) - origin_y;
+                                    refObj1->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                }
+                                if (origin_y + blk_geom->bheight > sb_origin_y + context_ptr->sb_sz) {
+                                    sb_origin_x = (origin_x / context_ptr->sb_sz)* context_ptr->sb_sz;
+                                    sb_origin_y = (origin_y / context_ptr->sb_sz + 1) * context_ptr->sb_sz;
+                                    sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                    width = MIN(sb_origin_x + context_ptr->sb_sz, origin_x + blk_geom->bwidth) - origin_x;
+                                    height = origin_y + blk_geom->bheight - MAX(sb_origin_y, origin_y);
+                                    refObj1->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                }
+                                if (origin_x + blk_geom->bwidth > sb_origin_x + context_ptr->sb_sz &&
+                                    origin_y + blk_geom->bheight > sb_origin_y + context_ptr->sb_sz) {
+                                    sb_origin_x = (origin_x / context_ptr->sb_sz + 1)* context_ptr->sb_sz;
+                                    sb_origin_y = (origin_y / context_ptr->sb_sz + 1) * context_ptr->sb_sz;
+                                    sb_index = sb_origin_x / context_ptr->sb_sz + pic_width_in_sb * (sb_origin_y / context_ptr->sb_sz);
+                                    width = origin_x + blk_geom->bwidth - MAX(sb_origin_x, origin_x);
+                                    height = origin_y + blk_geom->bheight - MAX(sb_origin_y, origin_y);
+                                    refObj1->stat_struct.referenced_area[sb_index] += width * height*weight;
+                                }
+                            }
+                            eb_release_mutex(refObj1->referenced_area_mutex);
+                        }
+                    }
+#endif
                 }
                 else {
                     CHECK_REPORT_ERROR_NC(

@@ -13704,6 +13704,9 @@ extern "C" {
 
         uint8_t                               ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
         EB_SLICE                              ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if TWO_PASS
+        uint64_t                            ref_pic_referenced_area_avg_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
         // GOP
         uint64_t                              picture_number;
         uint8_t                               temporal_layer_index;
@@ -14103,6 +14106,9 @@ extern "C" {
 
         // MD
         EbEncMode                             enc_mode;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+        EbEncMode                             snd_pass_enc_mode;
+#endif
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;
         EbSbComplexityStatus                 *complex_sb_array;
         EbCu8x8Mode                           cu8x8_mode;
@@ -14250,6 +14256,12 @@ extern "C" {
 #endif
 #if OBMC_FLAG
         uint8_t                              pic_obmc_mode;
+#endif
+#if TWO_PASS
+        stat_struct_t*                       stat_struct_first_pass_ptr; // pointer to stat_struct in the first pass
+        struct stat_struct_t                 stat_struct; // stat_struct used in the second pass
+        uint64_t                             referenced_area_avg; // average referenced area per frame
+        uint8_t                              referenced_area_has_non_zero;
 #endif
     } PictureParentControlSet;
 

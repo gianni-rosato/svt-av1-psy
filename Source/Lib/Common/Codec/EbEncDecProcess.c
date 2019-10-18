@@ -1126,6 +1126,9 @@ void PadRefAndSetFlags(
 
     // set up the Slice Type
     referenceObject->slice_type = picture_control_set_ptr->parent_pcs_ptr->slice_type;
+#if TWO_PASS
+    referenceObject->referenced_area_avg = picture_control_set_ptr->parent_pcs_ptr->referenced_area_avg;
+#endif
 }
 
 void CopyStatisticsToRefObject(

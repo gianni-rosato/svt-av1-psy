@@ -1388,6 +1388,11 @@ void* initial_rate_control_kernel(void *input_ptr)
                                 ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
                                 1);
                         }
+#if TWO_PASS
+                        picture_control_set_ptr->stat_struct_first_pass_ptr = picture_control_set_ptr->is_used_as_reference_flag ? &((EbReferenceObject*)picture_control_set_ptr->reference_picture_wrapper_ptr->object_ptr)->stat_struct : &picture_control_set_ptr->stat_struct;
+                        if (sequence_control_set_ptr->use_output_stat_file)
+                            memset(picture_control_set_ptr->stat_struct_first_pass_ptr, 0, sizeof(stat_struct_t));
+#endif
                         //OPTION 1:  get the output stream buffer in ressource coordination
                         eb_get_empty_object(
                             sequence_control_set_ptr->encode_context_ptr->stream_output_fifo_ptr,

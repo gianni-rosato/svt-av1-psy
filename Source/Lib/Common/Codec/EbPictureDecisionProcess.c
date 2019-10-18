@@ -777,7 +777,19 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
 
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    uint8_t enc_mode_hme = sequence_control_set_ptr->use_output_stat_file ? picture_control_set_ptr->snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
+    picture_control_set_ptr->enable_hme_flag = enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
 
+    picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+    picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+    picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+
+    picture_control_set_ptr->tf_enable_hme_flag = tf_enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+    picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+    picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+    picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
+#else
     picture_control_set_ptr->enable_hme_flag = enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
 
     picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
@@ -788,6 +800,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
     picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
+#endif
 
         if (sc_content_detected)
             if (picture_control_set_ptr->enc_mode <= ENC_M1)
@@ -3561,7 +3574,11 @@ void* picture_decision_kernel(void *input_ptr)
 
                             if( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
                                 ( (picture_control_set_ptr->idr_flag && picture_control_set_ptr->sc_content_detected == 0) ||
-                                  (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0) ) ) {
+                                  (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0)
+#if TWO_PASS
+                                    || (sequence_control_set_ptr->use_input_stat_file && picture_control_set_ptr->temporal_layer_index == 1 && picture_control_set_ptr->sc_content_detected == 0)
+#endif
+                                    ) ) {
                                 int altref_nframes = picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes;
                                 if (picture_control_set_ptr->idr_flag) {
 
@@ -3766,7 +3783,14 @@ void* picture_decision_kernel(void *input_ptr)
                                     picture_control_set_ptr->tf_segments_total_count = (uint16_t)(picture_control_set_ptr->tf_segments_column_count  * picture_control_set_ptr->tf_segments_row_count);
 
                                     picture_control_set_ptr->temp_filt_seg_acc = 0;
+#if  TWO_PASS
+                                    if (picture_control_set_ptr->temporal_layer_index == 0)
+                                        picture_control_set_ptr->altref_strength = sequence_control_set_ptr->static_config.altref_strength;
+                                    else
+                                        picture_control_set_ptr->altref_strength = 2;
+#else
                                     picture_control_set_ptr->altref_strength = sequence_control_set_ptr->static_config.altref_strength;
+#endif
 
                                     for (seg_idx = 0; seg_idx < picture_control_set_ptr->tf_segments_total_count; ++seg_idx) {
                                         eb_get_empty_object(

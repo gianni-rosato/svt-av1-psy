@@ -12,8 +12,13 @@ extern "C" {
 
 #include "stdint.h"
 #include "EbSvtAv1.h"
-
+#if 1 //TWO_PASS
+#include <stdlib.h>
+#include <stdio.h>
+#endif
 #define TILES    1
+#define TWO_PASS_USE_2NDP_ME_IN_1STP                1
+#define TWO_PASS                                    1
 #define ALT_REF_OVERLAY_APP                         1
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
@@ -39,7 +44,13 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is defined as MAX_ENC_PRESET. */
     uint8_t                  enc_mode;
-
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    /* For two pass encoding, the enc_mod of the second pass is passed in the first pass.
+    * First pass has the option to run with second pass ME settings.
+    *
+    * Default is defined as MAX_ENC_PRESET. */
+    uint8_t                  snd_pass_enc_mode;
+#endif
     // GOP Structure
 
     /* The intra period defines the interval of frames after which you insert an
@@ -180,7 +191,12 @@ typedef struct EbSvtAv1EncConfiguration
     *
     * Default is 0.*/
     EbBool                   use_qp_file;
-
+#if 1 //TWO_PASS
+    /* Input stats file */
+    FILE                    *input_stat_file;
+    /* output stats file */
+    FILE                    *output_stat_file;
+#endif
     /* Enable picture QP scaling between hierarchical levels
     *
     * Default is null.*/

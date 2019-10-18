@@ -2085,7 +2085,11 @@ static double estimate_noise_highbd(const uint16_t *src,
 }
 
 // Adjust filtering parameters: strength and nframes
-static void adjust_filter_strength(double noise_level,
+static void adjust_filter_strength(
+#if TWO_PASS
+                                   PictureParentControlSet *picture_control_set_ptr_central,
+#endif
+                                   double noise_level,
                                    uint8_t *altref_strength,
                                    EbBool is_highbd,
                                    uint32_t encoder_bit_depth) {
@@ -2107,6 +2111,19 @@ static void adjust_filter_strength(double noise_level,
             noiselevel_adj = 0;
         else
             noiselevel_adj = 1;
+#if TWO_PASS
+        if (picture_control_set_ptr_central->sequence_control_set_ptr->use_input_stat_file &&
+            picture_control_set_ptr_central->temporal_layer_index == 0 && picture_control_set_ptr_central->sc_content_detected == 0) {
+            if (noiselevel_adj < 0) {
+                if ((picture_control_set_ptr_central->referenced_area_avg < 20 && picture_control_set_ptr_central->slice_type == 2) ||
+                    (picture_control_set_ptr_central->referenced_area_avg < 30 && picture_control_set_ptr_central->slice_type != 2)) {
+                    noiselevel_adj = CLIP3(-2, 0, noiselevel_adj - 1);
+                }
+                else
+                    noiselevel_adj = 0;
+            }
+        }
+#endif
         adj_strength += noiselevel_adj;
     }
 
@@ -2303,7 +2320,15 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
         }
 
         // adjust filter parameter based on the estimated noise of the picture
+#if TWO_PASS
+        adjust_filter_strength( picture_control_set_ptr_central,
+                                noise_level,
+                                altref_strength_ptr,
+                                is_highbd,
+                                encoder_bit_depth);
+#else
         adjust_filter_strength(noise_level, altref_strength_ptr, is_highbd, encoder_bit_depth);
+#endif
 
         // Pad chroma reference samples - once only per picture
         for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes + picture_control_set_ptr_central->future_altref_nframes + 1); i++) {

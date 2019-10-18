@@ -91,8 +91,11 @@ EbErrorType signal_derivation_pre_analysis_oq(
     uint8_t input_resolution = sequence_control_set_ptr->input_resolution;
 
     // HME Flags updated @ signal_derivation_multi_processes_oq
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    uint8_t  hme_me_level = sequence_control_set_ptr->use_output_stat_file ? picture_control_set_ptr->snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
+#else
     uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
-
+#endif
     // Derive HME Flag
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
         picture_control_set_ptr->enable_hme_flag = enable_hme_flag[0][input_resolution][hme_me_level] || enable_hme_flag[1][input_resolution][hme_me_level];
@@ -529,6 +532,44 @@ static void CopyInputBuffer(
     if (src->p_buffer != NULL)
         copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
 }
+
+#if TWO_PASS
+/******************************************************
+ * Read Stat from File
+ * reads stat_struct_t per frame from the file and stores under picture_control_set_ptr
+ ******************************************************/
+static void read_stat_from_file(
+    PictureParentControlSet  *picture_control_set_ptr,
+    SequenceControlSet       *sequence_control_set_ptr)
+{
+    eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
+
+    int32_t fseek_return_value = fseek(sequence_control_set_ptr->static_config.input_stat_file, (long)picture_control_set_ptr->picture_number * sizeof(stat_struct_t), SEEK_SET);
+
+    if (fseek_return_value != 0) {
+        printf("Error in fseek  returnVal %i\n", (int)fseek_return_value);
+    }
+    size_t fread_return_value = fread(&picture_control_set_ptr->stat_struct,
+        sizeof(stat_struct_t),
+        (size_t)1,
+        sequence_control_set_ptr->static_config.input_stat_file);
+    if (fread_return_value != 0) {
+        printf("Error in freed  returnVal %i\n", (int)fread_return_value);
+    }
+
+    uint64_t referenced_area_avg = 0;
+    uint64_t referenced_area_has_non_zero = 0;
+    for (int sb_addr = 0; sb_addr < sequence_control_set_ptr->sb_total_count; ++sb_addr) {
+        referenced_area_avg += (picture_control_set_ptr->stat_struct.referenced_area[sb_addr] / sequence_control_set_ptr->sb_params_array[sb_addr].width / sequence_control_set_ptr->sb_params_array[sb_addr].height);
+        referenced_area_has_non_zero += picture_control_set_ptr->stat_struct.referenced_area[sb_addr];
+    }
+    referenced_area_avg /= sequence_control_set_ptr->sb_total_count;
+    picture_control_set_ptr->referenced_area_avg = referenced_area_avg;
+    picture_control_set_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
+
+    eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
+}
+#endif
 /***************************************
  * ResourceCoordination Kernel
  ***************************************/
@@ -772,6 +813,12 @@ void* resource_coordination_kernel(void *input_ptr)
             }
             else
                 picture_control_set_ptr->enc_mode = (EbEncMode)sequence_control_set_ptr->static_config.enc_mode;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+            //  If the mode of the second pass is not set from CLI, it is set to enc_mode
+            picture_control_set_ptr->snd_pass_enc_mode =
+                ( sequence_control_set_ptr->use_output_stat_file && sequence_control_set_ptr->static_config.snd_pass_enc_mode != MAX_ENC_PRESET + 1)?
+                (EbEncMode)sequence_control_set_ptr->static_config.snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
+#endif
             aspectRatio = (sequence_control_set_ptr->seq_header.max_frame_width * 10) / sequence_control_set_ptr->seq_header.max_frame_height;
             aspectRatio = (aspectRatio <= ASPECT_RATIO_4_3) ? ASPECT_RATIO_CLASS_0 : (aspectRatio <= ASPECT_RATIO_16_9) ? ASPECT_RATIO_CLASS_1 : ASPECT_RATIO_CLASS_2;
 
@@ -817,7 +864,15 @@ void* resource_coordination_kernel(void *input_ptr)
             else
                 picture_control_set_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             ResetPcsAv1(picture_control_set_ptr);
-
+#if TWO_PASS
+            if (sequence_control_set_ptr->use_input_stat_file)
+                read_stat_from_file(
+                    picture_control_set_ptr,
+                    sequence_control_set_ptr);
+            else {
+                memset(&picture_control_set_ptr->stat_struct, 0, sizeof(stat_struct_t));
+            }
+#endif
             sequence_control_set_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
             // Get Empty Reference Picture Object

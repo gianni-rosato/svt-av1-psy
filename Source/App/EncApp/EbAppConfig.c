@@ -30,6 +30,10 @@
 #define OUTPUT_RECON_TOKEN              "-o"
 #define ERROR_FILE_TOKEN                "-errlog"
 #define QP_FILE_TOKEN                   "-qp-file"
+#if TWO_PASS
+#define INPUT_STAT_FILE_TOKEN           "-input-stat-file"
+#define OUTPUT_STAT_FILE_TOKEN          "-output-stat-file"
+#endif
 #define STAT_FILE_TOKEN                 "-stat-file"
 #define WIDTH_TOKEN                     "-w"
 #define HEIGHT_TOKEN                    "-h"
@@ -46,6 +50,9 @@
 #define ENCODER_COLOR_FORMAT            "-color-format"
 #define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
 #define ENCMODE_TOKEN                   "-enc-mode"
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+#define ENCMODE2P_TOKEN                 "-enc-mode-2p"
+#endif
 #define HIERARCHICAL_LEVELS_TOKEN       "-hierarchical-levels" // no Eval
 #define PRED_STRUCT_TOKEN               "-pred-struct"
 #define INTRA_PERIOD_TOKEN              "-intra-period"
@@ -179,6 +186,21 @@ static void SetCfgQpFile                        (const char *value, EbConfig *cf
     if (cfg->qp_file) { fclose(cfg->qp_file); }
     FOPEN(cfg->qp_file,value, "r");
 };
+#if TWO_PASS
+static void set_input_stat_file(const char *value, EbConfig *cfg)
+{
+    if (cfg->input_stat_file) { fclose(cfg->input_stat_file); }
+    FOPEN(cfg->input_stat_file, value, "rb");
+};
+static void set_output_stat_file(const char *value, EbConfig *cfg)
+{
+    if (cfg->output_stat_file) { fclose(cfg->output_stat_file); }
+    FOPEN(cfg->output_stat_file, value, "wb");
+};
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+static void set_snd_pass_enc_mode(const char *value, EbConfig *cfg) { cfg->snd_pass_enc_mode = (uint8_t)strtoul(value, NULL, 0); };
+#endif
+#endif
 static void SetCfgStatFile(const char *value, EbConfig *cfg)
 {
     if (cfg->stat_file) { fclose(cfg->stat_file); }
@@ -305,6 +327,10 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", SetCfgReconFile },
     { SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", SetCfgQpFile },
     { SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", SetCfgStatFile },
+#if TWO_PASS
+    { SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file },
+    { SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file },
+#endif
 
     // Interlaced Video
     { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "InterlacedVideo" , SetInterlacedVideo },
@@ -317,6 +343,9 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", SetBufferedInput },
     { SINGLE_INPUT, BASE_LAYER_SWITCH_MODE_TOKEN, "BaseLayerSwitchMode", SetBaseLayerSwitchMode },
     { SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", SetencMode},
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    { SINGLE_INPUT, ENCMODE2P_TOKEN, "EncoderMode2p", set_snd_pass_enc_mode},
+#endif
     { SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", SetCfgIntraPeriod },
     { SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", SetCfgIntraRefreshType },
     { SINGLE_INPUT, FRAME_RATE_TOKEN, "FrameRate", SetFrameRate },
@@ -417,6 +446,10 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->error_log_file                         = stderr;
     config_ptr->qp_file                               = NULL;
     config_ptr->stat_file                             = NULL;
+#if TWO_PASS
+    config_ptr->input_stat_file                       = NULL;
+    config_ptr->output_stat_file                      = NULL;
+#endif
 
     config_ptr->frame_rate                            = 30 << 16;
     config_ptr->frame_rate_numerator                   = 0;
@@ -450,6 +483,9 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->enable_adaptive_quantization         = 2;
     config_ptr->base_layer_switch_mode               = 0;
     config_ptr->enc_mode                              = MAX_ENC_PRESET;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    config_ptr->snd_pass_enc_mode                     = MAX_ENC_PRESET + 1;
+#endif
     config_ptr->intra_period                          = -2;
     config_ptr->intra_refresh_type                     = 1;
     config_ptr->hierarchical_levels                   = 4;
@@ -600,6 +636,16 @@ void eb_config_dtor(EbConfig *config_ptr)
         fclose(config_ptr->stat_file);
         config_ptr->stat_file = (FILE *) NULL;
     }
+#if TWO_PASS
+    if (config_ptr->input_stat_file) {
+        fclose(config_ptr->input_stat_file);
+        config_ptr->input_stat_file = (FILE *)NULL;
+    }
+    if (config_ptr->output_stat_file) {
+        fclose(config_ptr->output_stat_file);
+        config_ptr->output_stat_file = (FILE *)NULL;
+    }
+#endif
     return;
 }
 
@@ -835,7 +881,6 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         fprintf(config->error_log_file, "Error instance %u: Could not find QP file, UseQpFile is set to 1\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-
     if (config->separate_fields > 1) {
         fprintf(config->error_log_file, "Error Instance %u: Invalid SeperateFields Input\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;

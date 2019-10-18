@@ -15,7 +15,9 @@
 */
 
 #include <stdlib.h>
-
+#if TWO_PASS
+#include <stdio.h>
+#endif
 #include "EbEntropyCodingProcess.h"
 #include "EbEncDecResults.h"
 #include "EbEntropyCodingResults.h"
@@ -362,7 +364,27 @@ static EbBool UpdateEntropyCodingRows(
 
     return processNextRow;
 }
-
+#if TWO_PASS
+/******************************************************
+ * Write Stat to File
+ * write stat_struct per frame in the first pass
+ ******************************************************/
+void write_stat_to_file(
+    SequenceControlSet    *sequence_control_set_ptr,
+    stat_struct_t          stat_struct,
+    uint64_t               ref_poc)
+{
+    eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
+    int32_t fseek_return_value = fseek(sequence_control_set_ptr->static_config.output_stat_file, (long)ref_poc * sizeof(stat_struct_t), SEEK_SET);
+    if (fseek_return_value != 0)
+        printf("Error in fseek  returnVal %i\n", fseek_return_value);
+    fwrite(&stat_struct,
+        sizeof(stat_struct_t),
+        (size_t)1,
+        sequence_control_set_ptr->static_config.output_stat_file);
+    eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
+}
+#endif
 /******************************************************
  * Entropy Coding Kernel
  ******************************************************/
@@ -484,9 +506,25 @@ void* entropy_coding_kernel(void *input_ptr)
                         picture_control_set_ptr->entropy_coding_pic_done = EB_TRUE;
 
                         encode_slice_finish(picture_control_set_ptr->entropy_coder_ptr);
-
+#if TWO_PASS
+                        // for Non Reference frames
+                        if (sequence_control_set_ptr->use_output_stat_file &&
+                            !picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+                            write_stat_to_file(
+                                sequence_control_set_ptr,
+                                *picture_control_set_ptr->parent_pcs_ptr->stat_struct_first_pass_ptr,
+                                picture_control_set_ptr->parent_pcs_ptr->picture_number);
+#endif
                         // Release the List 0 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list0_count; ++ref_idx) {
+#if TWO_PASS
+                            if (sequence_control_set_ptr->use_output_stat_file &&
+                                picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL && picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]->live_count == 1)
+                                write_stat_to_file(
+                                    sequence_control_set_ptr,
+                                    ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]->object_ptr)->stat_struct,
+                                    ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]->object_ptr)->ref_poc);
+#endif
                             if (picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL) {
 
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx]);
@@ -495,6 +533,15 @@ void* entropy_coding_kernel(void *input_ptr)
 
                         // Release the List 1 Reference Pictures
                         for (ref_idx = 0; ref_idx < picture_control_set_ptr->parent_pcs_ptr->ref_list1_count; ++ref_idx) {
+#if TWO_PASS
+                            if (sequence_control_set_ptr->use_output_stat_file &&
+                                picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL && picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]->live_count == 1)
+                                write_stat_to_file(
+                                    sequence_control_set_ptr,
+                                    ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]->object_ptr)->stat_struct,
+                                    ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]->object_ptr)->ref_poc);
+#endif
+
                             if (picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
                                 eb_release_object(picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx]);
                         }

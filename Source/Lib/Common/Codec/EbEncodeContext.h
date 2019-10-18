@@ -148,6 +148,9 @@ typedef struct EncodeContext
     EbHandle                                          shared_reference_mutex;
 
     uint64_t                                          picture_number_alt; // The picture number overlay includes all the overlay frames
+#if TWO_PASS
+    EbHandle                                          stat_file_mutex;
+#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

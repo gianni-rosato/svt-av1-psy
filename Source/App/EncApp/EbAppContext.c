@@ -160,6 +160,9 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.intra_refresh_type = config->intra_refresh_type;
     callback_data->eb_enc_parameters.base_layer_switch_mode = config->base_layer_switch_mode;
     callback_data->eb_enc_parameters.enc_mode = (EbBool)config->enc_mode;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    callback_data->eb_enc_parameters.snd_pass_enc_mode = (EbBool)config->snd_pass_enc_mode;
+#endif
     callback_data->eb_enc_parameters.frame_rate = config->frame_rate;
     callback_data->eb_enc_parameters.frame_rate_denominator = config->frame_rate_denominator;
     callback_data->eb_enc_parameters.frame_rate_numerator = config->frame_rate_numerator;
@@ -180,6 +183,10 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.enable_adaptive_quantization = (EbBool)config->enable_adaptive_quantization;
     callback_data->eb_enc_parameters.qp = config->qp;
     callback_data->eb_enc_parameters.use_qp_file = (EbBool)config->use_qp_file;
+#if TWO_PASS
+    callback_data->eb_enc_parameters.input_stat_file = config->input_stat_file;
+    callback_data->eb_enc_parameters.output_stat_file = config->output_stat_file;
+#endif
     callback_data->eb_enc_parameters.stat_report = (EbBool)config->stat_report;
     callback_data->eb_enc_parameters.disable_dlf_flag = (EbBool)config->disable_dlf_flag;
     callback_data->eb_enc_parameters.enable_warped_motion = (EbBool)config->enable_warped_motion;

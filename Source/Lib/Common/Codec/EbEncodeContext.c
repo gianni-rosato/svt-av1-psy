@@ -19,6 +19,9 @@ static void encode_context_dctor(EbPtr p)
     EB_DESTROY_MUTEX(obj->rate_table_update_mutex);
     EB_DESTROY_MUTEX(obj->sc_buffer_mutex);
     EB_DESTROY_MUTEX(obj->shared_reference_mutex);
+#if TWO_PASS
+    EB_DESTROY_MUTEX(obj->stat_file_mutex);
+#endif
 
     EB_DELETE(obj->prediction_structure_group_ptr);
     EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue, PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
@@ -133,5 +136,8 @@ EbErrorType encode_context_ctor(
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
 
     EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
+#if TWO_PASS
+    EB_CREATE_MUTEX(encode_context_ptr->stat_file_mutex);
+#endif
     return EB_ErrorNone;
 }

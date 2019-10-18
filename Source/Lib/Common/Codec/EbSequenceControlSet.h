@@ -216,6 +216,11 @@ extern "C" {
         uint8_t                                 over_boundary_block_mode;
         SeqHeader                               seq_header;
         uint8_t                                 compound_mode;
+
+#if TWO_PASS
+        EbBool                                  use_input_stat_file;
+        EbBool                                  use_output_stat_file;
+#endif
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData

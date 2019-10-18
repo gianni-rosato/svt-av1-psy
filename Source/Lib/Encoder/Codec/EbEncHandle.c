@@ -1946,7 +1946,12 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     derive_input_resolution(
         sequence_control_set_ptr,
         sequence_control_set_ptr->seq_header.max_frame_width*sequence_control_set_ptr->seq_header.max_frame_height);
+#if TWO_PASS
+    // In two pass encoding, the first pass uses sb size=64
+    if (sequence_control_set_ptr->static_config.screen_content_mode == 1 || sequence_control_set_ptr->use_output_stat_file)
+#else
     if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
+#endif
         sequence_control_set_ptr->static_config.super_block_size = 64;
     else
         sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M3 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
@@ -2056,11 +2061,19 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.base_layer_switch_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->base_layer_switch_mode;
     sequence_control_set_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->hierarchical_levels;
     sequence_control_set_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enc_mode;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    sequence_control_set_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->snd_pass_enc_mode;
+#endif
     sequence_control_set_ptr->intra_period_length = sequence_control_set_ptr->static_config.intra_period_length;
     sequence_control_set_ptr->intra_refresh_type = sequence_control_set_ptr->static_config.intra_refresh_type;
     sequence_control_set_ptr->max_temporal_layers = sequence_control_set_ptr->static_config.hierarchical_levels;
     sequence_control_set_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->use_qp_file;
-
+#if TWO_PASS
+    sequence_control_set_ptr->static_config.input_stat_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->input_stat_file;
+    sequence_control_set_ptr->static_config.output_stat_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->output_stat_file;
+    sequence_control_set_ptr->use_input_stat_file = sequence_control_set_ptr->static_config.input_stat_file ? 1 : 0;
+    sequence_control_set_ptr->use_output_stat_file = sequence_control_set_ptr->static_config.output_stat_file ? 1 : 0;
+#endif
     // Deblock Filter
     sequence_control_set_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->disable_dlf_flag;
 
@@ -2241,7 +2254,12 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-%d]\n", channelNumber + 1, MAX_ENC_PRESET);
         return_error = EB_ErrorBadParameter;
     }
-
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    if (config->snd_pass_enc_mode > MAX_ENC_PRESET + 1) {
+        SVT_LOG("Error instance %u: Second pass encoder mode must be in the range of [0-%d]\n", channelNumber + 1, MAX_ENC_PRESET + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -2573,6 +2591,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->min_qp_allowed = 10;
     config_ptr->base_layer_switch_mode = 0;
     config_ptr->enc_mode = MAX_ENC_PRESET;
+#if TWO_PASS_USE_2NDP_ME_IN_1STP
+    config_ptr->snd_pass_enc_mode = MAX_ENC_PRESET + 1;
+#endif
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
     config_ptr->hierarchical_levels = 4;
