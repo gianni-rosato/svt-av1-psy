@@ -142,6 +142,10 @@ Use the [Issues](https://github.com/OpenVisualCloud/SVT-AV1/issues) tab on Githu
 
 `#svt` on Freenode. Join via [Freenode Webchat](https://webchat.freenode.net/?channels=svt) or use your favorite IRC client.
 
+## Performance tracker
+
+Performance and raw data files available at http://videocodectracker.dev
+
 ## Notices and Disclaimers
 
 The notices and disclaimers can be found [here](NOTICES.md)
