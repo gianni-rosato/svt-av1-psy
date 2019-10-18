@@ -2171,7 +2171,7 @@ void md_stage_0(
 
     // Set MD Staging fast_loop_core settings
 
-    context_ptr->md_staging_interpolation_search = (context_ptr->md_staging_mode) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
+    context_ptr->md_staging_skip_interpolation_search = (context_ptr->md_staging_mode) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
     context_ptr->md_staging_skip_inter_chroma_pred = (context_ptr->md_staging_mode && context_ptr->md_stage == MD_STAGE_0 && context_ptr->target_class != CAND_CLASS_0) ? EB_TRUE : EB_FALSE;
     context_ptr->md_staging_use_bilinear = (context_ptr->md_staging_mode) ? EB_TRUE : EB_FALSE;
 
@@ -2302,7 +2302,7 @@ void md_stage_1(
     EbAsm                         asm_type) {
 
     // Set MD Staging fast_loop_core settings
-    context_ptr->md_staging_interpolation_search = (context_ptr->md_staging_mode == MD_STAGING_MODE_3) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
+    context_ptr->md_staging_skip_interpolation_search = (context_ptr->md_staging_mode == MD_STAGING_MODE_3) ? EB_TRUE : picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level >= IT_SEARCH_FAST_LOOP_UV_BLIND ? EB_FALSE : EB_TRUE;
     context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
     context_ptr->md_staging_use_bilinear = EB_FALSE;
 
@@ -2486,7 +2486,7 @@ void predictive_me_sub_pel_search(
             candidate_ptr->interp_filters = 0;
 
             // Prediction
-            context_ptr->md_staging_interpolation_search = EB_TRUE;
+            context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
             context_ptr->md_staging_skip_inter_chroma_pred = EB_TRUE;
             ProductPredictionFunTable[INTER_MODE](
                 context_ptr,
@@ -5554,7 +5554,7 @@ void full_loop_core(
         if (candidate_ptr->type != INTRA_MODE) {
             if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level > IT_SEARCH_OFF)
                 if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_FULL_LOOP || context_ptr->md_staging_skip_full_pred == EB_FALSE) {
-                    context_ptr->md_staging_interpolation_search = EB_FALSE;
+                    context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
                     context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
                     ProductPredictionFunTable[candidate_ptr->type](
                         context_ptr,
@@ -7385,7 +7385,7 @@ void md_encode_block(
         if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_INTER_DEPTH) {
             if (candidate_buffer->candidate_ptr->type != INTRA_MODE && candidate_buffer->candidate_ptr->motion_mode == SIMPLE_TRANSLATION) {
 
-                context_ptr->md_staging_interpolation_search = EB_FALSE;
+                context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
                 context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
                 ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
                     context_ptr,

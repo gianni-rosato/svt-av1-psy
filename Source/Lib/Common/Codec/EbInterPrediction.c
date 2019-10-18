@@ -7065,7 +7065,7 @@ EbErrorType inter_pu_prediction_av1(
     {
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
     } else {
-        if (md_context_ptr->md_staging_interpolation_search == EB_FALSE) {
+        if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
             if (md_context_ptr->blk_geom->bwidth > capped_size && md_context_ptr->blk_geom->bheight > capped_size)
                 interpolation_filter_search(
                     picture_control_set_ptr,

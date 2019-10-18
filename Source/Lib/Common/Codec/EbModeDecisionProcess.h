@@ -276,7 +276,7 @@ extern "C" {
 
     // fast_loop_core signals
     EbBool                              md_staging_use_bilinear;
-    EbBool                              md_staging_interpolation_search;
+    EbBool                              md_staging_skip_interpolation_search;
     EbBool                              md_staging_skip_inter_chroma_pred;
 
     // full_loop_core signals
