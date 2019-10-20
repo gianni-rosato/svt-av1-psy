@@ -257,6 +257,12 @@ extern "C" {
     uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
     uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
 
+#if PREDICT_NSQ_SHAPE
+    uint64_t spatial_full_distortion_helper(uint8_t  *input, uint32_t input_offset, uint32_t  input_stride, uint8_t  *recon, uint32_t recon_offset, uint32_t  recon_stride, uint32_t  area_width, uint32_t  area_height, uint8_t  choice);
+    uint64_t spatial_full_distortion_avx2_helper(uint8_t  *input, uint32_t input_offset, uint32_t  input_stride, uint8_t  *recon, uint32_t recon_offset, uint32_t  recon_stride, uint32_t  area_width, uint32_t  area_height, uint8_t  choice);
+    RTCD_EXTERN uint64_t(*spatial_full_distortion)(uint8_t  *input, uint32_t input_offset, uint32_t  input_stride, uint8_t  *recon, uint32_t recon_offset, uint32_t  recon_stride, uint32_t  area_width, uint32_t  area_height, uint8_t  choice);
+#endif
+
     typedef uint64_t(*EbSpatialFullDistType)(
         uint8_t   *input,
         uint32_t   input_offset,
@@ -3030,6 +3036,11 @@ extern "C" {
         if (flags & HAS_AVX2) eb_compute_cdef_dist = compute_cdef_dist_avx2;
         eb_compute_cdef_dist_8bit = compute_cdef_dist_8bit_c;
         if (flags & HAS_AVX2) eb_compute_cdef_dist_8bit = compute_cdef_dist_8bit_avx2;
+
+#if PREDICT_NSQ_SHAPE
+        spatial_full_distortion = spatial_full_distortion_helper;
+        if (flags & HAS_AVX2) spatial_full_distortion = spatial_full_distortion_avx2_helper;
+#endif
 
         eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_c;
         if (flags & HAS_AVX2) eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_avx2;

@@ -24,18 +24,6 @@
 #include "EbCommonUtils.h"
 
 #define UNUSED_FUNC
-static PartitionType from_shape_to_part[] = {
-    PARTITION_NONE,
-    PARTITION_HORZ,
-    PARTITION_VERT,
-    PARTITION_HORZ_A,
-    PARTITION_HORZ_B,
-    PARTITION_VERT_A,
-    PARTITION_VERT_B,
-    PARTITION_HORZ_4,
-    PARTITION_VERT_4,
-    PARTITION_SPLIT
-};
 
 /** ScaleMV
         is used to scale the motion vector in AMVP process.
@@ -67,7 +55,18 @@ static inline void scale_mv(
     return;
 }
 */
-
+static PartitionType from_shape_to_part[] = {
+    PARTITION_NONE,
+    PARTITION_HORZ,
+    PARTITION_VERT,
+    PARTITION_HORZ_A,
+    PARTITION_HORZ_B,
+    PARTITION_VERT_A,
+    PARTITION_VERT_B,
+    PARTITION_HORZ_4,
+    PARTITION_VERT_4,
+    PARTITION_SPLIT
+};
 EbErrorType clip_mv(
     uint32_t                   cu_origin_x,
     uint32_t                   cu_origin_y,

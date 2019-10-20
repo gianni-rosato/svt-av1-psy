@@ -85,7 +85,6 @@ extern "C" {
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
 #define ADP_STATS_PER_LAYER                             0
-#define NSQ_TAB_SIZE                                    6
 #define AOM_INTERP_EXTEND                               4
 #define OPTIMISED_EX_SUBPEL                             1
 
@@ -155,6 +154,23 @@ enum {
 #define ALTREF_MAX_STRENGTH 6
 
 #define PAD_VALUE                                (128+32)
+
+/* Use open-loop data to predict the NSQ partitions. */
+#define PREDICT_NSQ_SHAPE                               1
+#if PREDICT_NSQ_SHAPE
+#define NUMBER_OF_DEPTH                                 6
+#define NUMBER_OF_SHAPES                                10
+#define ADD_SAD_FOR_128X128                             1
+#define ADJUST_NSQ_RANK_BASED_ON_NEIGH                  1
+#define COMBINE_MDC_NSQ_TABLE                           1
+#define ADD_SUPPORT_TO_SKIP_PART_N                      1
+#define ADD_MDC_REFINEMENT_LOOP                         1
+#define ADD_MDC_FULL_COST                               1
+#define NSQ_TAB_SIZE                                    8
+#define MAX_MDC_LEVEL                                   8
+#else
+#define NSQ_TAB_SIZE                                    6
+#endif
 
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT                      1  // Add delta QP support
@@ -591,6 +607,9 @@ typedef enum NsqSearchLevel
     NSQ_SEARCH_LEVEL4,
     NSQ_SEARCH_LEVEL5,
     NSQ_SEARCH_LEVEL6,
+#if PREDICT_NSQ_SHAPE
+    NSQ_SEARCH_LEVEL7,
+#endif
     NSQ_SEARCH_FULL
 } NsqSearchLevel;
 

@@ -819,27 +819,48 @@ EbErrorType signal_derivation_multi_processes_oq(
                     picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-        else
 
-        if (picture_control_set_ptr->enc_mode <= ENC_M2)
+        else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             picture_control_set_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
+
         else if (picture_control_set_ptr->enc_mode <= ENC_M3)
             if (picture_control_set_ptr->slice_type == I_SLICE)
                 picture_control_set_ptr->pic_depth_mode = PIC_ALL_C_DEPTH_MODE;
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-         else if (picture_control_set_ptr->enc_mode <= ENC_M5)
+
+        else if (picture_control_set_ptr->enc_mode <= ENC_M5)
             picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-         else
+
+        else
             if (picture_control_set_ptr->slice_type == I_SLICE)
                 picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
 
+
         if (picture_control_set_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
             assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
 
-    picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+        picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+
+#if PREDICT_NSQ_SHAPE
+    // Depth Level                           Settings
+    // 0                                     pred only
+    // 1                                     pred + 1
+    // 2                                     pred + 2
+    // 3                                     pred + 3
+    // 4                                     pred - 1 + 1
+    // 5                                     pred - 1 + 2
+    // 6                                     pred - 1 + 3
+    // 7                                     All
+    if (MR_MODE || sc_content_detected || sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
+        picture_control_set_ptr->mdc_depth_level = MAX_MDC_LEVEL;
+    else if (picture_control_set_ptr->enc_mode == ENC_M0)
+        picture_control_set_ptr->mdc_depth_level = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? MAX_MDC_LEVEL : 6;
+    else
+        picture_control_set_ptr->mdc_depth_level = MAX_MDC_LEVEL; // Not tuned yet.
+#endif
 
     // NSQ search Level                               Settings
     // NSQ_SEARCH_OFF                                 OFF
@@ -872,14 +893,18 @@ EbErrorType signal_derivation_multi_processes_oq(
                     picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
             else
                     picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
-
+#if PREDICT_NSQ_SHAPE
+        else if (picture_control_set_ptr->mdc_depth_level == (MAX_MDC_LEVEL - 1))
+            picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL7;
+#endif
         else if (picture_control_set_ptr->enc_mode <= ENC_M1)
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
+
         else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             if (picture_control_set_ptr->is_used_as_reference_flag)
                 picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL5;
             else
-                picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL3;
+				picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL3;
         else
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
 
@@ -908,6 +933,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     case NSQ_SEARCH_LEVEL6:
         picture_control_set_ptr->nsq_max_shapes_md = 6;
         break;
+#if PREDICT_NSQ_SHAPE
+    case NSQ_SEARCH_LEVEL7:
+        picture_control_set_ptr->nsq_max_shapes_md = 7;
+        break;
+#endif
     case NSQ_SEARCH_FULL:
         picture_control_set_ptr->nsq_max_shapes_md = 6;
         break;

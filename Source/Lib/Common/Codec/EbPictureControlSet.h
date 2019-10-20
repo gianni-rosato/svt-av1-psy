@@ -13619,6 +13619,24 @@ extern "C" {
         uint32_t          tot_d1_blocks; //how many d1 bloks every parent square would have
         uint8_t           leaf_index;
         EbBool            split_flag;
+#if PREDICT_NSQ_SHAPE
+        //uint8_t           open_loop_ranking;
+        uint8_t           early_split_flag;
+#if COMBINE_MDC_NSQ_TABLE
+        uint8_t           ol_best_nsq_shape1;
+        uint8_t           ol_best_nsq_shape2;
+        uint8_t           ol_best_nsq_shape3;
+        uint8_t           ol_best_nsq_shape4;
+        uint8_t           ol_best_nsq_shape5;
+        uint8_t           ol_best_nsq_shape6;
+        uint8_t           ol_best_nsq_shape7;
+        uint8_t           ol_best_nsq_shape8;
+#endif
+#endif
+#if ADD_MDC_REFINEMENT_LOOP
+        uint8_t           consider_block;
+        uint8_t           refined_split_flag;
+#endif
     } EbMdcLeafData;
 
     typedef struct MdcLcuData
@@ -14141,6 +14159,9 @@ extern "C" {
 #if CONFIG_ENTROPY_STATS
         int32_t                               coef_cdf_category;
 #endif
+#if PREDICT_NSQ_SHAPE
+        uint16_t                              base_qindex;
+#endif
         int32_t                               separate_uv_delta_q;
 
         // Global quant matrix tables
@@ -14163,6 +14184,11 @@ extern "C" {
         uint64_t                              frame_offset;
         uint32_t                              large_scale_tile;
         int32_t                               nb_cdef_strengths;
+#if PREDICT_NSQ_SHAPE
+        ReferenceMode                         reference_mode;
+        int32_t                               delta_q_present_flag;
+        int32_t                               reduced_tx_set_used;
+#endif
 
 #if ADD_DELTA_QP_SUPPORT
         // Resolution of delta quant
@@ -14265,6 +14291,9 @@ extern "C" {
         struct stat_struct_t                 stat_struct; // stat_struct used in the second pass
         uint64_t                             referenced_area_avg; // average referenced area per frame
         uint8_t                              referenced_area_has_non_zero;
+#endif
+#if PREDICT_NSQ_SHAPE
+        uint8_t                                mdc_depth_level;
 #endif
     } PictureParentControlSet;
 

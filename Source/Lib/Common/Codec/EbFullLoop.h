@@ -65,6 +65,21 @@ extern "C" {
         uint64_t                     *y_coeff_bits,
         uint64_t                     *y_full_distortion);
 
+#if ADD_MDC_FULL_COST
+    extern void av1_quantize_b_facade_II(
+        const TranLow           *coeff_ptr,
+        int32_t                 stride,
+        int32_t                 width,
+        int32_t                 height,
+        intptr_t                n_coeffs,
+        const MacroblockPlane   *p,
+        TranLow                 *qcoeff_ptr,
+        TranLow                 *dqcoeff_ptr,
+        uint16_t                *eob_ptr,
+        const ScanOrder         *sc,
+        const QuantParam        *qparam);
+#endif
+
     void product_full_loop_tx_search(
         ModeDecisionCandidateBuffer  *candidate_buffer,
         ModeDecisionContext          *context_ptr,
@@ -106,6 +121,9 @@ extern "C" {
         uint64_t            *curr_depth_cost);
     void  d1_non_square_block_decision(
         ModeDecisionContext               *context_ptr
+#if ADD_SUPPORT_TO_SKIP_PART_N
+        , uint32_t                         d1_block_itr
+#endif
     );
 
     static const uint8_t clip_max3[256] = {

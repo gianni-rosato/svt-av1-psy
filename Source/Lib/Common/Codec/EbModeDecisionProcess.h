@@ -312,7 +312,16 @@ extern "C" {
     uint8_t                            *above_txfm_context;
     uint8_t                            *left_txfm_context;
 #endif
-
+#if COMBINE_MDC_NSQ_TABLE
+    PART best_nsq_sahpe1;
+    PART best_nsq_sahpe2;
+    PART best_nsq_sahpe3;
+    PART best_nsq_sahpe4;
+    PART best_nsq_sahpe5;
+    PART best_nsq_sahpe6;
+    PART best_nsq_sahpe7;
+    PART best_nsq_sahpe8;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
