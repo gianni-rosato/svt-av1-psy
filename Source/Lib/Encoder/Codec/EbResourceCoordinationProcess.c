@@ -550,10 +550,10 @@ static void read_stat_from_file(
         printf("Error in fseek  returnVal %i\n", (int)fseek_return_value);
     }
     size_t fread_return_value = fread(&picture_control_set_ptr->stat_struct,
-        sizeof(stat_struct_t),
         (size_t)1,
+        sizeof(stat_struct_t),
         sequence_control_set_ptr->static_config.input_stat_file);
-    if (fread_return_value != 0) {
+    if (fread_return_value != sizeof(stat_struct_t)) {
         printf("Error in freed  returnVal %i\n", (int)fread_return_value);
     }
 
@@ -865,7 +865,7 @@ void* resource_coordination_kernel(void *input_ptr)
                 picture_control_set_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             ResetPcsAv1(picture_control_set_ptr);
 #if TWO_PASS
-            if (sequence_control_set_ptr->use_input_stat_file)
+            if (sequence_control_set_ptr->use_input_stat_file && !end_of_sequence_flag)
                 read_stat_from_file(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
