@@ -2201,9 +2201,9 @@ static EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control
     // copy buffers
     // Y
     uint32_t height_y = (uint32_t)(picture_control_set_ptr_central->enhanced_picture_ptr->height +
-                                  picture_control_set_ptr_central->enhanced_picture_ptr->origin_y * 2);
+                                  picture_control_set_ptr_central->enhanced_picture_ptr->origin_y + picture_control_set_ptr_central->enhanced_picture_ptr->origin_bot_y);
     uint32_t height_uv = (uint32_t)((picture_control_set_ptr_central->enhanced_picture_ptr->height +
-                                   picture_control_set_ptr_central->enhanced_picture_ptr->origin_y * 2) >> ss_y);
+                                   picture_control_set_ptr_central->enhanced_picture_ptr->origin_y + picture_control_set_ptr_central->enhanced_picture_ptr->origin_bot_y) >> ss_y);
 
     assert(height_y * picture_control_set_ptr_central->enhanced_picture_ptr->stride_y == picture_control_set_ptr_central->enhanced_picture_ptr->luma_size);
     assert(height_uv * picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb == picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);

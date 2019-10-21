@@ -65,6 +65,7 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
             = picture_buffer_desc_ptr->stride_y;
     picture_buffer_desc_ptr->origin_x = pictureBufferDescInitDataPtr->left_padding;
     picture_buffer_desc_ptr->origin_y = pictureBufferDescInitDataPtr->top_padding;
+    picture_buffer_desc_ptr->origin_bot_y = pictureBufferDescInitDataPtr->bot_padding;
 
     picture_buffer_desc_ptr->luma_size = (pictureBufferDescInitDataPtr->max_width +
         pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
