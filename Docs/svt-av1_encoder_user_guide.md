@@ -114,6 +114,9 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **QpFile** | -qp-file | any string | Null | Path to qp file |
 | **StatReport** | -stat-report | [0 - 1] | 0 | When set to 1, calculate and display PSNR values |
 | **StatFile** | -stat-file | any string | Null | Path to statistics file if specified and StatReport is set to 1, per picture statistics are outputted in the file|
+| **EncoderMode2p** | -enc-mode-2p | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed. Passed to encoder's first pass to use the ME settings of the second pass to achieve better bdRate|
+| **InputStatFile** | -input-stat-file | any string | Null | Input stat file for second pass|
+| **OutputStatFile** | -output-stat-file | any string | Null | Output stat file for first pass|
 | **EncoderMode** | -enc-mode | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
 | **EncoderBitDepth** | -bit-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **CompressedTenBitFormat** | -compressed-ten-bit-format | [0 - 1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
