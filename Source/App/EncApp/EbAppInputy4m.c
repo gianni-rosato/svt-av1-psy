@@ -276,7 +276,7 @@ EbBool check_if_y4m(EbConfig *cfg)
     if (len != 1)
         return EB_FALSE;
 
-    if (!cfg->input_file_is_fifo) {
+    if ((cfg->input_file != stdin) && (!cfg->input_file_is_fifo)) {
         fseek(cfg->input_file, 0, SEEK_SET);
     } else {
         memcpy(cfg->y4m_buf, buf, YUV4MPEG2_IND_SIZE);

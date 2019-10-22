@@ -791,7 +791,7 @@ void ReadInputFrames(
                     read_y4m_frame_delimiter(config);
                 uint64_t lumaReadSize = (uint64_t)input_padded_width*input_padded_height << is16bit;
                 ebInputPtr = inputPtr->luma;
-                if (!config->y4m_input && config->processed_frame_count == 0 && config->input_file_is_fifo) {
+                if (!config->y4m_input && config->processed_frame_count == 0 && (config->input_file == stdin || config->input_file_is_fifo)) {
                     /* 9 bytes were already buffered during the the YUV4MPEG2 header probe */
                     memcpy(ebInputPtr, config->y4m_buf, YUV4MPEG2_IND_SIZE);
                     headerPtr->n_filled_len += YUV4MPEG2_IND_SIZE;
@@ -843,7 +843,7 @@ void ReadInputFrames(
         }
 
         if (feof(input_file) != 0) {
-            if (config->input_file_is_fifo) {
+            if ((input_file == stdin) || (config->input_file_is_fifo)) {
                 //for a fifo, we only know this when we reach eof
                 config->frames_to_be_encoded = config->frames_encoded;
                 if (headerPtr->n_filled_len != readSize) {
