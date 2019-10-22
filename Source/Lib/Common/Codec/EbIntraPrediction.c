@@ -29,7 +29,7 @@
 
 void *eb_aom_memset16(void *dest, int32_t val, size_t length);
 
-int32_t is_inter_block(const BlockModeInfo *mbmi);
+int32_t is_inter_block(const MbModeInfo *mbmi);
 
 // Some basic checks on weights for smooth predictor.
 #define sm_weights_sanity_checks(weights_w, weights_h, weights_scale, \
@@ -57,18 +57,18 @@ PARTITION_SPLIT
 #define MIDRANGE_VALUE_8BIT    128
 #define MIDRANGE_VALUE_10BIT   512
 
-int is_smooth(const BlockModeInfo *block_mi, int plane) {
+static int is_smooth(const MbModeInfo *mbmi, int plane) {
     if (plane == 0) {
-        const PredictionMode mode = block_mi->mode;
+        const PredictionMode mode = mbmi->mode;
         return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED ||
             mode == SMOOTH_H_PRED);
     }
     else {
         // uv_mode is not set for inter blocks, so need to explicitly
         // detect that case.
-        if (is_inter_block(block_mi)) return 0;
+        if (is_inter_block(mbmi)) return 0;
 
-        const UvPredictionMode uv_mode = block_mi->uv_mode;
+        const UvPredictionMode uv_mode = mbmi->uv_mode;
         return (uv_mode == UV_SMOOTH_PRED || uv_mode == UV_SMOOTH_V_PRED ||
             uv_mode == UV_SMOOTH_H_PRED);
     }
@@ -80,14 +80,14 @@ static int get_filt_type(const MacroBlockD *xd, int plane) {
     if (plane == 0) {
         const MbModeInfo *ab = xd->above_mbmi;
         const MbModeInfo *le = xd->left_mbmi;
-        ab_sm = ab ? is_smooth(&ab->block_mi, plane) : 0;
-        le_sm = le ? is_smooth(&le->block_mi, plane) : 0;
+        ab_sm = ab ? is_smooth(ab, plane) : 0;
+        le_sm = le ? is_smooth(le, plane) : 0;
     }
     else {
         const MbModeInfo *ab = xd->chroma_above_mbmi;
         const MbModeInfo *le = xd->chroma_left_mbmi;
-        ab_sm = ab ? is_smooth(&ab->block_mi, plane) : 0;
-        le_sm = le ? is_smooth(&le->block_mi, plane) : 0;
+        ab_sm = ab ? is_smooth(ab, plane) : 0;
+        le_sm = le ? is_smooth(le, plane) : 0;
     }
 
     return (ab_sm || le_sm) ? 1 : 0;

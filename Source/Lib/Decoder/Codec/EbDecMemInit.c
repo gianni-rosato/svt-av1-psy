@@ -153,8 +153,8 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
             (num_sb * sizeof(SBInfo)), EB_N_PTR);
 
         /* ModeInfo str allocation at 4x4 level */
-        EB_MALLOC_DEC(BlockModeInfo*, cur_frame_buf->mode_info,
-                    (num_sb * num_mis_in_sb * sizeof(BlockModeInfo)), EB_N_PTR);
+        EB_MALLOC_DEC(ModeInfo_t*, cur_frame_buf->mode_info,
+                    (num_sb * num_mis_in_sb * sizeof(ModeInfo_t)), EB_N_PTR);
 
         /* TransformInfo str allocation at 4x4 level */
         EB_MALLOC_DEC(TransformInfo_t*, cur_frame_buf->trans_info[AOM_PLANE_Y],

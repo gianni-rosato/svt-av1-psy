@@ -154,7 +154,6 @@ typedef struct EbSvtIOFormat            //former EbSvtEncInput
     uint32_t origin_y;
 
     EbColorFormat color_fmt;
-    EbBitDepth bit_depth;
 } EbSvtIOFormat;
 
 typedef struct BitstreamLevel

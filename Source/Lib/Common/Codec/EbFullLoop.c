@@ -19,7 +19,6 @@
 #include "EbTransforms.h"
 #include "EbFullLoop.h"
 #include "EbRateDistortionCost.h"
-#include "EbCommonUtils.h"
 #include "aom_dsp_rtcd.h"
 
 #ifdef __GNUC__
@@ -606,7 +605,7 @@ void eb_av1_quantize_fp_facade(
 
 
 // Hsan: code clean up; from static to extern as now used @ more than 1 file
-
+static const int16_t eb_k_eob_group_start[12] = { 0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513 };
 
 static const int8_t eob_to_pos_small[33] = {
     0, 1, 2,                                        // 0-2
@@ -639,7 +638,24 @@ static INLINE int32_t get_eob_pos_token(const int32_t eob, int32_t *const extra)
 
     return t;
 }
-
+static INLINE int32_t get_txb_bwl(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    assert(tx_size < TX_SIZES_ALL);
+    return tx_size_wide_log2[tx_size];
+}
+static INLINE int32_t get_txb_wide(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    assert(tx_size < TX_SIZES_ALL);
+    return tx_size_wide[tx_size];
+}
+static INLINE int32_t get_txb_high(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    assert(tx_size < TX_SIZES_ALL);
+    return tx_size_high[tx_size];
+}
+static INLINE uint8_t *set_levels(uint8_t *const levels_buf, const int32_t width) {
+    return levels_buf + TX_PAD_TOP * (width + TX_PAD_HOR);
+}
 static INLINE TxSize get_txsize_entropy_ctx(TxSize txsize) {
     return (TxSize)((txsize_sqr_map[txsize] + txsize_sqr_up_map[txsize] + 1) >>
         1);
@@ -647,6 +663,7 @@ static INLINE TxSize get_txsize_entropy_ctx(TxSize txsize) {
 static INLINE PlaneType get_plane_type(int plane) {
     return (plane == 0) ? PLANE_TYPE_Y : PLANE_TYPE_UV;
 }
+static const int16_t eb_k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
     const LvMapCoeffCost *txb_costs, TxType tx_type) {
     int32_t eob_extra;
@@ -1062,6 +1079,19 @@ const int8_t *eb_av1_nz_map_ctx_offset[19] = {
   eb_av1_nz_map_ctx_offset_64x32,  // TX_64x16
 };
 
+#define NZ_MAP_CTX_0 SIG_COEF_CONTEXTS_2D
+#define NZ_MAP_CTX_5 (NZ_MAP_CTX_0 + 5)
+#define NZ_MAP_CTX_10 (NZ_MAP_CTX_0 + 10)
+
+static const int nz_map_ctx_offset_1d[32] = {
+  NZ_MAP_CTX_0,  NZ_MAP_CTX_5,  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+  NZ_MAP_CTX_10, NZ_MAP_CTX_10,
+};
 static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(
     const int stats,
     const int coeff_idx,  // raster order
@@ -1099,6 +1129,10 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(
     return 0;
 }
 
+static INLINE int get_padded_idx(const int idx, const int bwl) {
+    return idx + ((idx >> bwl) << TX_PAD_HOR_LOG2);
+}
+
 static AOM_FORCE_INLINE int get_lower_levels_ctx(const uint8_t *levels,
     int coeff_idx, int bwl,
     TxSize tx_size,
@@ -1120,7 +1154,59 @@ static INLINE int get_lower_levels_ctx_general(int is_last, int scan_idx,
     }
     return get_lower_levels_ctx(levels, coeff_idx, bwl, tx_size, tx_class);
 }
+static INLINE int get_lower_levels_ctx_eob(int bwl, int height, int scan_idx) {
+    if (scan_idx == 0) return 0;
+    if (scan_idx <= (height << bwl) / 8) return 1;
+    if (scan_idx <= (height << bwl) / 4) return 2;
+    return 3;
+}
 
+static INLINE int32_t get_br_ctx(const uint8_t *const levels,
+    const int32_t c,  // raster order
+    const int32_t bwl, const TxType tx_type) {
+    const int32_t row = c >> bwl;
+    const int32_t col = c - (row << bwl);
+    const int32_t stride = (1 << bwl) + TX_PAD_HOR;
+    const TxClass tx_class = tx_type_to_class[tx_type];
+    const int32_t pos = row * stride + col;
+    int32_t mag = levels[pos + 1];
+    mag += levels[pos + stride];
+    switch (tx_class) {
+    case TX_CLASS_2D:
+        mag += levels[pos + stride + 1];
+        mag = AOMMIN((mag + 1) >> 1, 6);
+        if (c == 0) return mag;
+        if ((row < 2) && (col < 2)) return mag + 7;
+        break;
+    case TX_CLASS_HORIZ:
+        mag += levels[pos + 2];
+        mag = AOMMIN((mag + 1) >> 1, 6);
+        if (c == 0) return mag;
+        if (col == 0) return mag + 7;
+        break;
+    case TX_CLASS_VERT:
+        mag += levels[pos + (stride << 1)];
+        mag = AOMMIN((mag + 1) >> 1, 6);
+        if (c == 0) return mag;
+        if (row == 0) return mag + 7;
+        break;
+    default: break;
+    }
+
+    return mag + 14;
+}
+static AOM_FORCE_INLINE int get_br_ctx_eob(const int c,  // raster order
+    const int bwl,
+    const TxClass tx_class) {
+    const int row = c >> bwl;
+    const int col = c - (row << bwl);
+    if (c == 0) return 0;
+    if ((tx_class == TX_CLASS_2D && row < 2 && col < 2) ||
+        (tx_class == TX_CLASS_HORIZ && col == 0) ||
+        (tx_class == TX_CLASS_VERT && row == 0))
+        return 7;
+    return 14;
+}
 static INLINE int32_t get_golomb_cost(int32_t abs_qc) {
     if (abs_qc >= 1 + NUM_BASE_LEVELS + COEFF_BASE_RANGE) {
         const int32_t r = abs_qc - COEFF_BASE_RANGE - NUM_BASE_LEVELS;

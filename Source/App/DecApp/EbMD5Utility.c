@@ -246,10 +246,10 @@ void print_md5(unsigned char digest[16]) {
     for (i = 0; i < 16; ++i) printf("%02x", digest[i]);
 }
 
-void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5) {
+void write_md5(EbBufferHeaderType *recon_buffer, CLInput *cli, MD5Context *md5) {
     EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
 
-    const int bytes_per_sample = (img->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
+    const int bytes_per_sample = (cli->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
     uint32_t y = 0;
     const uint8_t *buf = img->luma;
     uint32_t w = img->width;
@@ -265,11 +265,11 @@ void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5) {
 
     if (img->color_fmt != EB_YUV400) {
         if (img->color_fmt == EB_YUV420) {
-            w = (w + 1) >> 1;
-            h = (h + 1) >> 1;
+            w /= 2;
+            h /= 2;
         }
         else if (img->color_fmt == EB_YUV422) {
-            w = (w + 1) >> 1;
+            w /= 2;
         }
         assert(img->color_fmt <= EB_YUV444);
 

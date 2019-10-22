@@ -2061,15 +2061,15 @@ void av1_copy_frame_mvs(PictureControlSet *picture_control_set_ptr, const Av1Com
             mv->mv.as_int = 0;
 
             for (int idx = 0; idx < 2; ++idx) {
-                MvReferenceFrame ref_frame = mi.block_mi.ref_frame[idx];
+                MvReferenceFrame ref_frame = mi.ref_frame[idx];
                 if (ref_frame > INTRA_FRAME) {
                     int8_t ref_idx = picture_control_set_ptr->ref_frame_side[ref_frame];
                     if (ref_idx) continue;
-                    if ((abs(mi.block_mi.mv[idx].as_mv.row) > REFMVS_LIMIT) ||
-                        (abs(mi.block_mi.mv[idx].as_mv.col) > REFMVS_LIMIT))
+                    if ((abs(mi.mv[idx].as_mv.row) > REFMVS_LIMIT) ||
+                        (abs(mi.mv[idx].as_mv.col) > REFMVS_LIMIT))
                         continue;
                     mv->ref_frame = ref_frame;
-                    mv->mv.as_int = mi.block_mi.mv[idx].as_int;
+                    mv->mv.as_int = mi.mv[idx].as_int;
                 }
             }
             mv++;
@@ -2297,9 +2297,7 @@ EB_EXTERN void av1_encode_pass(
                 picture_control_set_ptr,
                 LPF_PICK_FROM_Q);
 
-            eb_av1_loop_filter_frame_init(
-                &picture_control_set_ptr->parent_pcs_ptr->frm_hdr,
-                &picture_control_set_ptr->parent_pcs_ptr->lf_info, 0, 3);
+            eb_av1_loop_filter_frame_init(picture_control_set_ptr, 0, 3);
         }
     }
 #endif

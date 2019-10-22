@@ -25,7 +25,6 @@
 #include "EbTransforms.h"
 #include "EbEntropyCodingProcess.h"
 #include "EbSegmentation.h"
-#include "EbCommonUtils.h"
 
 #include "aom_dsp_rtcd.h"
 
@@ -40,14 +39,14 @@ int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t *rrow1, int32_t *tile_tl_idx);
 
 static INLINE int has_second_ref(const MbModeInfo *mbmi) {
-    return mbmi->block_mi.ref_frame[1] > INTRA_FRAME;
+    return mbmi->ref_frame[1] > INTRA_FRAME;
 }
 
 static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
-    return has_second_ref(mbmi) && (!((mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME) ^
-        (mbmi->block_mi.ref_frame[1] >= BWDREF_FRAME)));
+    return has_second_ref(mbmi) && (!((mbmi->ref_frame[0] >= BWDREF_FRAME) ^
+        (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
-int32_t is_inter_block(const BlockModeInfo *mbmi);
+int32_t is_inter_block(const MbModeInfo *mbmi);
 #if(CHAR_BIT!=8)
 #undef CHAR_BIT
 #define CHAR_BIT      8         /* number of bits in a char */
@@ -95,14 +94,14 @@ int get_comp_index_context_enc(
     const int offset = (fwd == bck);
     if (above_mi != NULL) {
         if (has_second_ref(above_mi))
-            above_ctx = above_mi->block_mi.compound_idx;
-        else if (above_mi->block_mi.ref_frame[0] == ALTREF_FRAME)
+            above_ctx = above_mi->compound_idx;
+        else if (above_mi->ref_frame[0] == ALTREF_FRAME)
             above_ctx = 1;
     }
     if (left_mi != NULL) {
         if (has_second_ref(left_mi))
-            left_ctx = left_mi->block_mi.compound_idx;
-        else if (left_mi->block_mi.ref_frame[0] == ALTREF_FRAME)
+            left_ctx = left_mi->compound_idx;
+        else if (left_mi->ref_frame[0] == ALTREF_FRAME)
             left_ctx = 1;
     }
     return above_ctx + left_ctx + 3 * offset;
@@ -116,13 +115,13 @@ int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
     if (above_mi) {
         if (has_second_ref(above_mi))
             above_ctx = above_mi->comp_group_idx;
-        else if (above_mi->block_mi.ref_frame[0] == ALTREF_FRAME)
+        else if (above_mi->ref_frame[0] == ALTREF_FRAME)
             above_ctx = 3;
     }
     if (left_mi) {
         if (has_second_ref(left_mi))
             left_ctx = left_mi->comp_group_idx;
-        else if (left_mi->block_mi.ref_frame[0] == ALTREF_FRAME)
+        else if (left_mi->ref_frame[0] == ALTREF_FRAME)
             left_ctx = 3;
     }
     return AOMMIN(5, above_ctx + left_ctx);
@@ -346,6 +345,22 @@ static INLINE void av1TxbInitLevels(
 
 /************************************************************************************************/
 // blockd.h
+
+static INLINE int32_t get_txb_wide(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    assert(tx_size < TX_SIZES_ALL);
+    return tx_size_wide[tx_size];
+}
+static INLINE int32_t get_txb_high(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    assert(tx_size < TX_SIZES_ALL);
+    return tx_size_high[tx_size];
+}
+static INLINE int32_t get_txb_bwl(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    assert(tx_size < TX_SIZES_ALL);
+    return tx_size_wide_log2[tx_size];
+}
 
 static INLINE int16_t GetBrCtx(
     const uint8_t *const levels,
@@ -1226,6 +1241,39 @@ static INLINE int32_t partition_cdf_length(BlockSize bsize) {
         return EXT_PARTITION_TYPES - 2;
     else
         return EXT_PARTITION_TYPES;
+}
+static int32_t cdf_element_prob(const AomCdfProb *const cdf,
+    size_t element) {
+    assert(cdf != NULL);
+    return (element > 0 ? cdf[element - 1] : CDF_PROB_TOP) - cdf[element];
+}
+static void partition_gather_horz_alike(AomCdfProb *out,
+    const AomCdfProb *const in,
+    BlockSize bsize) {
+    out[0] = CDF_PROB_TOP;
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ);
+    out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ_B);
+    out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
+    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_HORZ_4);
+    out[0] = AOM_ICDF(out[0]);
+    out[1] = AOM_ICDF(CDF_PROB_TOP);
+    out[2] = 0;
+}
+static void partition_gather_vert_alike(AomCdfProb *out,
+    const AomCdfProb *const in,
+    BlockSize bsize) {
+    out[0] = CDF_PROB_TOP;
+    out[0] -= cdf_element_prob(in, PARTITION_VERT);
+    out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
+    out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
+    out[0] -= cdf_element_prob(in, PARTITION_VERT_B);
+    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_VERT_4);
+    out[0] = AOM_ICDF(out[0]);
+    out[1] = AOM_ICDF(CDF_PROB_TOP);
+    out[2] = 0;
 }
 static void EncodePartitionAv1(
     SequenceControlSet    *sequence_control_set_ptr,
@@ -2437,6 +2485,10 @@ static INLINE AomCdfProb *av1_get_pred_cdf_comp_bwdref_p1(
     return xd->tile_ctx->comp_bwdref_cdf[pred_context][1];
 }
 
+#define CHECK_BACKWARD_REFS(ref_frame) \
+  (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
+#define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
+
 int av1_get_comp_reference_type_context_new(const MacroBlockD *xd) {
     int pred_context;
     const MbModeInfo *const above_mbmi = xd->above_mbmi;
@@ -2445,8 +2497,8 @@ int av1_get_comp_reference_type_context_new(const MacroBlockD *xd) {
     const int left_in_image = xd->left_available;
 
     if (above_in_image && left_in_image) {  // both edges available
-        const int above_intra = !is_inter_block(&above_mbmi->block_mi);
-        const int left_intra = !is_inter_block(&left_mbmi->block_mi);
+        const int above_intra = !is_inter_block(above_mbmi);
+        const int left_intra = !is_inter_block(left_mbmi);
 
         if (above_intra && left_intra) {  // intra/intra
             pred_context = 2;
@@ -2462,8 +2514,8 @@ int av1_get_comp_reference_type_context_new(const MacroBlockD *xd) {
         else {  // inter/inter
             const int a_sg = !has_second_ref(above_mbmi);
             const int l_sg = !has_second_ref(left_mbmi);
-            const MvReferenceFrame frfa = above_mbmi->block_mi.ref_frame[0];
-            const MvReferenceFrame frfl = left_mbmi->block_mi.ref_frame[0];
+            const MvReferenceFrame frfa = above_mbmi->ref_frame[0];
+            const MvReferenceFrame frfl = left_mbmi->ref_frame[0];
 
             if (a_sg && l_sg) {  // single/single
                 pred_context = 1 + 2 * (!(IS_BACKWARD_REF_FRAME(frfa) ^
@@ -2496,7 +2548,7 @@ int av1_get_comp_reference_type_context_new(const MacroBlockD *xd) {
     else if (above_in_image || left_in_image) {  // one edge available
         const MbModeInfo *edge_mbmi = above_in_image ? above_mbmi : left_mbmi;
 
-        if (!is_inter_block(&edge_mbmi->block_mi)) {  // intra
+        if (!is_inter_block(edge_mbmi)) {  // intra
             pred_context = 2;
         }
         else {                           // inter
@@ -2601,16 +2653,16 @@ int av1_get_reference_mode_context_new(const MacroBlockD *xd) {
     if (has_above && has_left) {  // both edges available
         if (!has_second_ref(above_mbmi) && !has_second_ref(left_mbmi))
             // neither edge uses comp pred (0/1)
-            ctx = IS_BACKWARD_REF_FRAME(above_mbmi->block_mi.ref_frame[0]) ^
-            IS_BACKWARD_REF_FRAME(left_mbmi->block_mi.ref_frame[0]);
+            ctx = IS_BACKWARD_REF_FRAME(above_mbmi->ref_frame[0]) ^
+            IS_BACKWARD_REF_FRAME(left_mbmi->ref_frame[0]);
         else if (!has_second_ref(above_mbmi))
             // one of two edges uses comp pred (2/3)
-            ctx = 2 + (IS_BACKWARD_REF_FRAME(above_mbmi->block_mi.ref_frame[0]) ||
-                !is_inter_block(&above_mbmi->block_mi));
+            ctx = 2 + (IS_BACKWARD_REF_FRAME(above_mbmi->ref_frame[0]) ||
+                !is_inter_block(above_mbmi));
         else if (!has_second_ref(left_mbmi))
             // one of two edges uses comp pred (2/3)
-            ctx = 2 + (IS_BACKWARD_REF_FRAME(left_mbmi->block_mi.ref_frame[0]) ||
-                !is_inter_block(&left_mbmi->block_mi));
+            ctx = 2 + (IS_BACKWARD_REF_FRAME(left_mbmi->ref_frame[0]) ||
+                !is_inter_block(left_mbmi));
         else  // both edges use comp pred (4)
             ctx = 4;
     }
@@ -2619,7 +2671,7 @@ int av1_get_reference_mode_context_new(const MacroBlockD *xd) {
 
         if (!has_second_ref(edge_mbmi))
             // edge does not use comp pred (0/1)
-            ctx = IS_BACKWARD_REF_FRAME(edge_mbmi->block_mi.ref_frame[0]);
+            ctx = IS_BACKWARD_REF_FRAME(edge_mbmi->ref_frame[0]);
         else
             // edge uses comp pred (3)
             ctx = 3;
@@ -2641,17 +2693,17 @@ INLINE void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd) {
     const int left_in_image = xd->left_available;
 
     // Above neighbor
-    if (above_in_image && is_inter_block(&above_mbmi->block_mi)) {
-        ref_counts[above_mbmi->block_mi.ref_frame[0]]++;
+    if (above_in_image && is_inter_block(above_mbmi)) {
+        ref_counts[above_mbmi->ref_frame[0]]++;
         if (has_second_ref(above_mbmi))
-            ref_counts[above_mbmi->block_mi.ref_frame[1]]++;
+            ref_counts[above_mbmi->ref_frame[1]]++;
     }
 
     // Left neighbor
-    if (left_in_image && is_inter_block(&left_mbmi->block_mi)) {
-        ref_counts[left_mbmi->block_mi.ref_frame[0]]++;
+    if (left_in_image && is_inter_block(left_mbmi)) {
+        ref_counts[left_mbmi->ref_frame[0]]++;
         if (has_second_ref(left_mbmi))
-            ref_counts[left_mbmi->block_mi.ref_frame[1]]++;
+            ref_counts[left_mbmi->ref_frame[1]]++;
     }
 }
 
@@ -3049,7 +3101,7 @@ static void write_ref_frames(
         // does the feature use compound prediction or not
         // (if not specified at the frame/segment level)
         if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT) {
-            if (is_comp_ref_allowed(mbmi->block_mi.sb_type))
+            if (is_comp_ref_allowed(mbmi->sb_type))
                 aom_write_symbol(w, is_compound, av1_get_reference_mode_cdf(xd), 2);
         }
         else {
@@ -3065,66 +3117,66 @@ static void write_ref_frames(
                 2);
 
             if (comp_ref_type == UNIDIR_COMP_REFERENCE) {
-                const int bit = mbmi->block_mi.ref_frame[0] == BWDREF_FRAME;
+                const int bit = mbmi->ref_frame[0] == BWDREF_FRAME;
                 WRITE_REF_BIT(bit, uni_comp_ref_p);
 
                 if (!bit) {
-                    assert(mbmi->block_mi.ref_frame[0] == LAST_FRAME);
-                    const int bit1 = mbmi->block_mi.ref_frame[1] == LAST3_FRAME ||
-                        mbmi->block_mi.ref_frame[1] == GOLDEN_FRAME;
+                    assert(mbmi->ref_frame[0] == LAST_FRAME);
+                    const int bit1 = mbmi->ref_frame[1] == LAST3_FRAME ||
+                        mbmi->ref_frame[1] == GOLDEN_FRAME;
                     WRITE_REF_BIT(bit1, uni_comp_ref_p1);
                     if (bit1) {
-                        const int bit2 = mbmi->block_mi.ref_frame[1] == GOLDEN_FRAME;
+                        const int bit2 = mbmi->ref_frame[1] == GOLDEN_FRAME;
                         WRITE_REF_BIT(bit2, uni_comp_ref_p2);
                     }
                 }
                 else
-                    assert(mbmi->block_mi.ref_frame[1] == ALTREF_FRAME);
+                    assert(mbmi->ref_frame[1] == ALTREF_FRAME);
                 return;
             }
 
             assert(comp_ref_type == BIDIR_COMP_REFERENCE);
 
-            const int bit = (mbmi->block_mi.ref_frame[0] == GOLDEN_FRAME ||
-                mbmi->block_mi.ref_frame[0] == LAST3_FRAME);
+            const int bit = (mbmi->ref_frame[0] == GOLDEN_FRAME ||
+                mbmi->ref_frame[0] == LAST3_FRAME);
             WRITE_REF_BIT(bit, comp_ref_p);
 
             if (!bit) {
-                const int bit1 = mbmi->block_mi.ref_frame[0] == LAST2_FRAME;
+                const int bit1 = mbmi->ref_frame[0] == LAST2_FRAME;
                 WRITE_REF_BIT(bit1, comp_ref_p1);
             }
             else {
-                const int bit2 = mbmi->block_mi.ref_frame[0] == GOLDEN_FRAME;
+                const int bit2 = mbmi->ref_frame[0] == GOLDEN_FRAME;
                 WRITE_REF_BIT(bit2, comp_ref_p2);
             }
 
-            const int bit_bwd = mbmi->block_mi.ref_frame[1] == ALTREF_FRAME;
+            const int bit_bwd = mbmi->ref_frame[1] == ALTREF_FRAME;
             WRITE_REF_BIT(bit_bwd, comp_bwdref_p);
 
             if (!bit_bwd)
-                WRITE_REF_BIT(mbmi->block_mi.ref_frame[1] == ALTREF2_FRAME, comp_bwdref_p1);
+                WRITE_REF_BIT(mbmi->ref_frame[1] == ALTREF2_FRAME, comp_bwdref_p1);
         }
         else {
-            const int bit0 = (mbmi->block_mi.ref_frame[0] <= ALTREF_FRAME &&
-                mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME);
+            const int bit0 = (mbmi->ref_frame[0] <= ALTREF_FRAME &&
+                mbmi->ref_frame[0] >= BWDREF_FRAME);
             WRITE_REF_BIT(bit0, single_ref_p1);
 
             if (bit0) {
-                const int bit1 = mbmi->block_mi.ref_frame[0] == ALTREF_FRAME;
+                const int bit1 = mbmi->ref_frame[0] == ALTREF_FRAME;
                 WRITE_REF_BIT(bit1, single_ref_p2);
                 if (!bit1)
-                    WRITE_REF_BIT(mbmi->block_mi.ref_frame[0] == ALTREF2_FRAME, single_ref_p6);
+                    WRITE_REF_BIT(mbmi->ref_frame[0] == ALTREF2_FRAME, single_ref_p6);
             }
             else {
-                const int bit2 = (mbmi->block_mi.ref_frame[0] == LAST3_FRAME ||
-                    mbmi->block_mi.ref_frame[0] == GOLDEN_FRAME);
+                const int bit2 = (mbmi->ref_frame[0] == LAST3_FRAME ||
+                    mbmi->ref_frame[0] == GOLDEN_FRAME);
                 WRITE_REF_BIT(bit2, single_ref_p3);
                 if (!bit2) {
-                    const int bit3 = mbmi->block_mi.ref_frame[0] != LAST_FRAME;
+                    const int bit3 = mbmi->ref_frame[0] != LAST_FRAME;
                     WRITE_REF_BIT(bit3, single_ref_p4);
                 }
                 else {
-                    const int bit4 = mbmi->block_mi.ref_frame[0] != LAST3_FRAME;
+                    const int bit4 = mbmi->ref_frame[0] != LAST3_FRAME;
                     WRITE_REF_BIT(bit4, single_ref_p5);
                 }
             }
@@ -3414,6 +3466,13 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
         //}
         //assert(height_sb == 0);
     }
+}
+
+static int32_t tile_log2(int32_t blk_size, int32_t target) {
+    int32_t k;
+    for (k = 0; (blk_size << k) < target; k++) {
+    }
+    return k;
 }
 
 void eb_av1_get_tile_limits(PictureParentControlSet * pcs_ptr) {
@@ -5215,6 +5274,8 @@ EbErrorType ec_update_neighbors(
     }
     return return_error;
 }
+int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,
+    int32_t subsampling_x, int32_t subsampling_y);
 
 static INLINE int av1_allow_palette(int allow_screen_content_tools,
     BlockSize sb_type) {
@@ -5317,8 +5378,8 @@ static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
 
-int is_intrabc_block(const BlockModeInfo *block_mi) {
-    return block_mi->use_intrabc;
+static INLINE int is_intrabc_block(const MbModeInfo *mbmi) {
+    return mbmi->use_intrabc;
 }
 static INLINE int get_vartx_max_txsize(/*const MbModeInfo *xd,*/ BlockSize bsize,
     int plane) {
@@ -5400,8 +5461,8 @@ static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     TxSize tx_size, int depth, int blk_row,
     int blk_col, FRAME_CONTEXT *ec_ctx, AomWriter *w) {
     //FRAME_CONTEXT *ec_ctx = xd->tile_ctx;
-    const int max_blocks_high = max_block_high(xd, mbmi->block_mi.sb_type, 0);
-    const int max_blocks_wide = max_block_wide(xd, mbmi->block_mi.sb_type, 0);
+    const int max_blocks_high = max_block_high(xd, mbmi->sb_type, 0);
+    const int max_blocks_wide = max_block_wide(xd, mbmi->sb_type, 0);
 
     if (blk_row >= max_blocks_high || blk_col >= max_blocks_wide) return;
 
@@ -5413,8 +5474,8 @@ static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
 
     const int ctx = txfm_partition_context(xd->above_txfm_context + blk_col,
         xd->left_txfm_context + blk_row,
-        mbmi->block_mi.sb_type, tx_size);
-    const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]);
+        mbmi->sb_type, tx_size);
+    const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 
     if (write_txfm_partition) {
         aom_write_symbol(w, 0, ec_ctx->txfm_partition_cdf[ctx], 2);
@@ -5474,6 +5535,28 @@ static INLINE int tx_size_to_depth(TxSize tx_size, BlockSize bsize) {
     return depth;
 }
 
+static INLINE int bsize_to_max_depth(BlockSize bsize) {
+    TxSize tx_size = max_txsize_rect_lookup[bsize];
+    int depth = 0;
+    while (depth < MAX_TX_DEPTH && tx_size != TX_4X4) {
+        depth++;
+        tx_size = sub_tx_size_map[tx_size];
+    }
+    return depth;
+}
+static INLINE int bsize_to_tx_size_cat(BlockSize bsize) {
+    TxSize tx_size = max_txsize_rect_lookup[bsize];
+    assert(tx_size != TX_4X4);
+    int depth = 0;
+    while (tx_size != TX_4X4) {
+        depth++;
+        tx_size = sub_tx_size_map[tx_size];
+        assert(depth < 10);
+    }
+    assert(depth <= MAX_TX_CATS);
+    return depth - 1;
+}
+
 // Returns a context number for the given MB prediction signal
 // The mode info data structure has a one element border above and to the
 // left of the entries corresponding to real blocks.
@@ -5483,7 +5566,7 @@ static INLINE int get_tx_size_context(const MacroBlockD *xd) {
     const MbModeInfo *mbmi = &mi->mbmi;
     const MbModeInfo *const above_mbmi = xd->above_mbmi;
     const MbModeInfo *const left_mbmi = xd->left_mbmi;
-    const TxSize max_tx_size = max_txsize_rect_lookup[mbmi->block_mi.sb_type];
+    const TxSize max_tx_size = max_txsize_rect_lookup[mbmi->sb_type];
     const int max_tx_wide = tx_size_wide[max_tx_size];
     const int max_tx_high = tx_size_high[max_tx_size];
     const int has_above = xd->up_available;
@@ -5493,12 +5576,12 @@ static INLINE int get_tx_size_context(const MacroBlockD *xd) {
     int left = xd->left_txfm_context[0] >= max_tx_high;
 
     if (has_above)
-        if (is_inter_block(&above_mbmi->block_mi))
-            above = block_size_wide[above_mbmi->block_mi.sb_type] >= max_tx_wide;
+        if (is_inter_block(above_mbmi))
+            above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
 
     if (has_left)
-        if (is_inter_block(&left_mbmi->block_mi))
-            left = block_size_high[left_mbmi->block_mi.sb_type] >= max_tx_high;
+        if (is_inter_block(left_mbmi))
+            left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
 
     if (has_above && has_left)
         return (above + left);
@@ -5515,7 +5598,7 @@ static void write_selected_tx_size(
     AomWriter *w) {
     const ModeInfo *const mi = xd->mi[0];
     const MbModeInfo *const mbmi = &mi->mbmi;
-    const BlockSize bsize = mbmi->block_mi.sb_type;
+    const BlockSize bsize = mbmi->sb_type;
 
     if (block_signals_txsize(bsize)) {
         const TxSize tx_size = mbmi->tx_size;
@@ -5525,7 +5608,7 @@ static void write_selected_tx_size(
         const int32_t tx_size_cat = bsize_to_tx_size_cat(bsize);
 
         assert(depth >= 0 && depth <= max_depths);
-        assert(!is_inter_block(&mbmi->block_mi));
+        assert(!is_inter_block(mbmi));
         assert(IMPLIES(is_rect_tx(tx_size), is_rect_tx_allowed(/*xd,*/ mbmi)));
 
         aom_write_symbol(w, depth, ec_ctx->tx_size_cdf[tx_size_cat][tx_size_ctx],
@@ -5541,7 +5624,7 @@ static EbErrorType av1_code_tx_size(
     BlockSize         bsize,
     uint8_t           skip) {
     EbErrorType return_error = EB_ErrorNone;
-    int is_inter_tx = is_inter_block(&mbmi->block_mi) || is_intrabc_block(&mbmi->block_mi);
+    int is_inter_tx = is_inter_block(mbmi) || is_intrabc_block(mbmi);
     //int skip = mbmi->skip;
     //int segment_id = 0;// mbmi->segment_id;
     if (tx_mode == TX_MODE_SELECT && block_signals_txsize(bsize) &&
@@ -5564,7 +5647,7 @@ static EbErrorType av1_code_tx_size(
     }
     else {
         set_txfm_ctxs(mbmi->tx_size, xd->n8_w, xd->n8_h,
-            skip && is_inter_block(&mbmi->block_mi), xd);
+            skip && is_inter_block(mbmi), xd);
     }
 
     return return_error;
@@ -5919,9 +6002,9 @@ static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
 }
 
 static INLINE int is_interintra_allowed(const MbModeInfo *mbmi) {
-  return is_interintra_allowed_bsize(mbmi->block_mi.sb_type) &&
-         is_interintra_allowed_mode(mbmi->block_mi.mode) &&
-         is_interintra_allowed_ref(mbmi->block_mi.ref_frame);
+  return is_interintra_allowed_bsize(mbmi->sb_type) &&
+         is_interintra_allowed_mode(mbmi->mode) &&
+         is_interintra_allowed_ref(mbmi->ref_frame);
 }
 
 int is_interintra_wedge_used(BlockSize sb_type);
@@ -6350,7 +6433,7 @@ assert(bsize < BlockSizeS_ALL);
                     if (cu_ptr->is_interintra_used)
                     {
                         rf[1] = INTRA_FRAME;
-                         mbmi->block_mi.ref_frame[1] = INTRA_FRAME;
+                         mbmi->ref_frame[1] = INTRA_FRAME;
                     }
 
 
@@ -6425,7 +6508,7 @@ assert(bsize < BlockSizeS_ALL);
                     }
                     else {
                         assert(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != SINGLE_REFERENCE &&
-                            is_inter_compound_mode(mbmi->block_mi.mode) &&
+                            is_inter_compound_mode(mbmi->mode) &&
                             cu_ptr->prediction_unit_array[0].motion_mode == SIMPLE_TRANSLATION);
                         assert(masked_compound_used);
                         // compound_diffwtd, wedge

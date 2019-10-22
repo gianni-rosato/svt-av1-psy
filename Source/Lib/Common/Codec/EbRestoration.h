@@ -15,7 +15,6 @@
 #include <math.h>
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
-#include "EbAv1Structs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -384,17 +383,6 @@ extern "C" {
 
         return 1;
     }
-
-    // Returns 1 if a superres upscaled frame is unscaled and 0 otherwise.
-    static INLINE int32_t av1_superres_unscaled(FrameSize *frm_size) {
-        // Note: for some corner cases (e.g. cm->width of 1), there may be no scaling
-        // required even though cm->superres_scale_denominator != SCALE_NUMERATOR.
-        // So, the following check is more accurate.
-        return (frm_size->frame_width == frm_size->superres_upscaled_width);
-    }
-
-    AV1PixelRect whole_frame_rect(FrameSize *frm_size, int32_t sub_x,
-        int32_t sub_y, int32_t is_uv);
 
 #define RDDIV_BITS 7
 #define RD_EPB_SHIFT 6

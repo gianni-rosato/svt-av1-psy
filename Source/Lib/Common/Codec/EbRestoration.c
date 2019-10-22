@@ -15,10 +15,6 @@
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRestoration.h"
-#include "EbSuperRes.h"
-
-void av1_upscale_normative_rows(Av1Common *cm, const uint8_t *src,
-    int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
 
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
     RestTileStartVisitor on_tile,
@@ -145,6 +141,14 @@ void eb_av1_highbd_wiener_convolve_add_src_c(
     const int16_t *filter_y, int32_t y_step_q4, int32_t w, int32_t h,
     const ConvolveParams *conv_params, int32_t bd);
 
+// Returns 1 if a superres upscaled frame is unscaled and 0 otherwise.
+static INLINE int32_t av1_superres_unscaled(const Av1Common *cm) {
+    // Note: for some corner cases (e.g. cm->width of 1), there may be no scaling
+    // required even though cm->superres_scale_denominator != SCALE_NUMERATOR.
+    // So, the following check is more accurate.
+    return (cm->frm_size.frame_width == cm->frm_size.superres_upscaled_width);
+}
+
 void *eb_aom_memalign(size_t align, size_t size);
 void eb_aom_free(void *memblk);
 
@@ -162,18 +166,16 @@ const SgrParamsType eb_sgr_params[SGRPROJ_PARAMS] = {
   { { 2, 0 }, { 56, -1 } },    { { 2, 0 }, { 22, -1 } },
 };
 
-AV1PixelRect whole_frame_rect(FrameSize *frm_size, int32_t sub_x,
-    int32_t sub_y, int32_t is_uv)
-{
+static AV1PixelRect whole_frame_rect(const Av1Common *cm, int32_t is_uv) {
     AV1PixelRect rect;
 
-    int32_t ss_x = is_uv && sub_x;
-    int32_t ss_y = is_uv && sub_y;
+    int32_t ss_x = is_uv && cm->subsampling_x;
+    int32_t ss_y = is_uv && cm->subsampling_y;
 
     rect.top = 0;
-    rect.bottom = ROUND_POWER_OF_TWO(frm_size->frame_height, ss_y);
+    rect.bottom = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
     rect.left = 0;
-    rect.right = ROUND_POWER_OF_TWO(frm_size->superres_upscaled_width, ss_x);
+    rect.right = ROUND_POWER_OF_TWO(cm->frm_size.superres_upscaled_width, ss_x);
     return rect;
 }
 
@@ -195,8 +197,7 @@ EbErrorType eb_av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInf
     // top-left and we can use av1_get_tile_rect(). With CONFIG_MAX_TILE, we have
     // to do the computation ourselves, iterating over the tiles and keeping
     // track of the largest width and height, then upscaling.
-    const AV1PixelRect tile_rect = whole_frame_rect(&cm->frm_size,
-        cm->subsampling_x, cm->subsampling_y, is_uv);
+    const AV1PixelRect tile_rect = whole_frame_rect(cm, is_uv);
     const int32_t max_tile_w = tile_rect.right - tile_rect.left;
     const int32_t max_tile_h = tile_rect.bottom - tile_rect.top;
 
@@ -1366,8 +1367,7 @@ void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
 
     const RestorationInfo *rsi = &cm->rst_info[plane];
 
-    const AV1PixelRect tile_rect = whole_frame_rect(&cm->frm_size,
-        cm->subsampling_x, cm->subsampling_y, is_uv);
+    const AV1PixelRect tile_rect = whole_frame_rect(cm, is_uv);
 
     if (on_tile) on_tile(0, 0, priv);
 
@@ -1458,8 +1458,7 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
 
     const RestorationInfo *rsi = &cm->rst_info[plane];
 
-    const AV1PixelRect tile_rect = whole_frame_rect(&cm->frm_size,
-        cm->subsampling_x, cm->subsampling_y, is_uv);
+    const AV1PixelRect tile_rect = whole_frame_rect(cm, is_uv);
 
     if (on_tile) on_tile(0, 0, priv);  //will set rsc->tile_strip0=0;
 
@@ -1483,8 +1482,7 @@ int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
 
     const int32_t is_uv = plane > 0;
 
-    const AV1PixelRect tile_rect = whole_frame_rect(&cm->frm_size,
-        cm->subsampling_x, cm->subsampling_y, is_uv);
+    const AV1PixelRect tile_rect = whole_frame_rect(cm, is_uv);
     const int32_t tile_w = tile_rect.right - tile_rect.left;
     const int32_t tile_h = tile_rect.bottom - tile_rect.top;
 
@@ -1567,13 +1565,13 @@ void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride,
 }
 
 static void save_deblock_boundary_lines(
-    uint8_t *src_buf, int32_t src_stride, int32_t src_width, int32_t src_height,
-    Av1Common *cm, int32_t plane, int32_t row,
+    const Yv12BufferConfig *frame, const Av1Common *cm, int32_t plane, int32_t row,
     int32_t stripe, int32_t use_highbd, int32_t is_above,
-    RestorationStripeBoundaries *boundaries)
-{
+    RestorationStripeBoundaries *boundaries) {
+    (void)cm;
     const int32_t is_uv = plane > 0;
-    src_stride = src_stride << use_highbd;
+    const uint8_t *src_buf = REAL_PTR(use_highbd, frame->buffers[plane]);
+    const int32_t src_stride = frame->strides[is_uv] << use_highbd;
     const uint8_t *src_rows = src_buf + row * src_stride;
 
     uint8_t *bdry_buf = is_above ? boundaries->stripe_boundary_above
@@ -1588,25 +1586,14 @@ static void save_deblock_boundary_lines(
     // fetching 2 "below" rows we need to fetch one and duplicate it.
     // This is equivalent to clamping the sample locations against the crop border
     const int32_t lines_to_save =
-        AOMMIN(RESTORATION_CTX_VERT, src_height - row);
-
+        AOMMIN(RESTORATION_CTX_VERT, frame->crop_heights[is_uv] - row);
     assert(lines_to_save == 1 || lines_to_save == 2);
 
     int32_t upscaled_width;
     int32_t line_bytes;
 
-    if (!av1_superres_unscaled(&cm->frm_size)) {
-        int32_t sx = is_uv && cm->subsampling_x;
-        upscaled_width = (cm->frm_size.superres_upscaled_width + sx) >> sx;
-        line_bytes = upscaled_width << use_highbd;
-
-        av1_upscale_normative_rows(cm, (src_rows),
-            src_stride >> use_highbd, (bdry_rows),
-            boundaries->stripe_boundary_stride,
-            lines_to_save, sx, cm->bit_depth);
-    }
-    else {
-        upscaled_width = src_width;
+    {
+        upscaled_width = frame->crop_widths[is_uv];
         line_bytes = upscaled_width << use_highbd;
         for (int32_t i = 0; i < lines_to_save; i++) {
             memcpy(bdry_rows + i * bdry_stride, src_rows + i * src_stride,
@@ -1621,13 +1608,13 @@ static void save_deblock_boundary_lines(
         RESTORATION_EXTRA_HORZ, use_highbd);
 }
 
-static void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride,
-    int32_t src_width, Av1Common *cm, int32_t plane, int32_t row,
+static void save_cdef_boundary_lines(const Yv12BufferConfig *frame,
+    const Av1Common *cm, int32_t plane, int32_t row,
     int32_t stripe, int32_t use_highbd, int32_t is_above,
-    RestorationStripeBoundaries *boundaries)
-{
+    RestorationStripeBoundaries *boundaries) {
     const int32_t is_uv = plane > 0;
-    src_stride = src_stride << use_highbd;
+    const uint8_t *src_buf = REAL_PTR(use_highbd, frame->buffers[plane]);
+    const int32_t src_stride = frame->strides[is_uv] << use_highbd;
     const uint8_t *src_rows = src_buf + row * src_stride;
 
     uint8_t *bdry_buf = is_above ? boundaries->stripe_boundary_above
@@ -1635,12 +1622,13 @@ static void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride,
     uint8_t *bdry_start = bdry_buf + (RESTORATION_EXTRA_HORZ << use_highbd);
     const int32_t bdry_stride = boundaries->stripe_boundary_stride << use_highbd;
     uint8_t *bdry_rows = bdry_start + RESTORATION_CTX_VERT * stripe * bdry_stride;
+    const int32_t src_width = frame->crop_widths[is_uv];
 
     // At the point where this function is called, we've already applied
     // superres. So we don't need to extend the lines here, we can just
     // pull directly from the topmost row of the upscaled frame.
     const int32_t ss_x = is_uv && cm->subsampling_x;
-    const int32_t upscaled_width = av1_superres_unscaled(&cm->frm_size)
+    const int32_t upscaled_width = av1_superres_unscaled(cm)
         ? src_width
         : (cm->frm_size.superres_upscaled_width + ss_x) >> ss_x;
     const int32_t line_bytes = upscaled_width << use_highbd;
@@ -1655,10 +1643,9 @@ static void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride,
         RESTORATION_EXTRA_HORZ, use_highbd);
 }
 
-void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride,
-    int32_t src_width, int32_t src_height, int32_t use_highbd, int32_t plane,
-    Av1Common *cm, int32_t after_cdef, RestorationStripeBoundaries *boundaries)
-{
+static void save_tile_row_boundary_lines(const Yv12BufferConfig *frame,
+    int32_t use_highbd, int32_t plane,
+    Av1Common *cm, int32_t after_cdef) {
     const int32_t is_uv = plane > 0;
     const int32_t ss_y = is_uv && cm->subsampling_y;
     const int32_t stripe_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
@@ -1666,9 +1653,10 @@ void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride,
 
     // Get the tile rectangle, with height rounded up to the next multiple of 8
     // luma pixels (only relevant for the bottom tile of the frame)
-    const AV1PixelRect tile_rect = whole_frame_rect(&cm->frm_size, cm->subsampling_x,
-        cm->subsampling_y, is_uv);
+    const AV1PixelRect tile_rect = whole_frame_rect(cm, is_uv);
     const int32_t stripe0 = 0;
+
+    RestorationStripeBoundaries *boundaries = &cm->rst_info[plane].boundaries;
 
     int32_t plane_height = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
 
@@ -1693,13 +1681,12 @@ void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride,
         if (!after_cdef) {
             // Save deblocked context where needed.
             if (use_deblock_above) {
-                save_deblock_boundary_lines(src, src_stride, src_width, src_height,
-                    cm, plane, y0 - RESTORATION_CTX_VERT,
+                save_deblock_boundary_lines(frame, cm, plane, y0 - RESTORATION_CTX_VERT,
                     frame_stripe, use_highbd, 1, boundaries);
             }
             if (use_deblock_below) {
-                save_deblock_boundary_lines(src, src_stride, src_width, src_height,
-                    cm, plane, y1, frame_stripe, use_highbd, 0, boundaries);
+                save_deblock_boundary_lines(frame, cm, plane, y1, frame_stripe,
+                    use_highbd, 0, boundaries);
             }
         }
         else {
@@ -1710,12 +1697,12 @@ void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride,
             // In addition, we need to save copies of the outermost line within
             // the tile, rather than using data from outside the tile.
             if (!use_deblock_above) {
-                save_cdef_boundary_lines(src, src_stride, src_width,
-                    cm, plane, y0, frame_stripe, use_highbd, 1, boundaries);
+                save_cdef_boundary_lines(frame, cm, plane, y0, frame_stripe, use_highbd,
+                    1, boundaries);
             }
             if (!use_deblock_below) {
-                save_cdef_boundary_lines(src, src_stride, src_width,
-                    cm, plane, y1 - 1, frame_stripe, use_highbd, 0, boundaries);
+                save_cdef_boundary_lines(frame, cm, plane, y1 - 1, frame_stripe,
+                    use_highbd, 0, boundaries);
             }
         }
     }
@@ -1728,18 +1715,8 @@ void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
     Av1Common *cm, int32_t after_cdef) {
     const int32_t num_planes = 3;// av1_num_planes(cm);
     const int32_t use_highbd = cm->use_highbitdepth;
-
-    for (int32_t p = 0; p < num_planes; ++p) {
-        const int32_t is_uv = p > 0;
-        int32_t crop_width = frame->crop_widths[is_uv];
-        int32_t crop_height = frame->crop_heights[is_uv];
-        uint8_t *src_buf = REAL_PTR(use_highbd, frame->buffers[p]);
-        int32_t src_stride = frame->strides[is_uv];
-        RestorationStripeBoundaries *boundaries = &cm->rst_info[p].boundaries;
-
-        save_tile_row_boundary_lines(src_buf, src_stride, crop_width, crop_height,
-            use_highbd, p, cm, after_cdef, boundaries);
-    }
+    for (int32_t p = 0; p < num_planes; ++p)
+        save_tile_row_boundary_lines(frame, use_highbd, p, cm, after_cdef);
 }
 
 // Assumes cm->rst_info[p].restoration_unit_size is already initialized

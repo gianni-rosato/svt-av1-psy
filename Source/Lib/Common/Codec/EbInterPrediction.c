@@ -1245,7 +1245,7 @@ void av1_get_convolve_filter_params( uint32_t interp_filters,
     *params_y = av1_get_interp_filter_params_with_block_size(filter_y, h);
 }
 
-int32_t is_inter_block(const BlockModeInfo *mbmi);
+int32_t is_inter_block(const MbModeInfo *mbmi);
 BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
     int32_t subsampling_y);
 
@@ -2747,8 +2747,8 @@ void search_compound_avg_dist(
     MbModeInfo *const mbmi = &context_ptr->cu_ptr->av1xd->mi[0]->mbmi;
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
-    mbmi->block_mi.ref_frame[0] = rf[0];
-    mbmi->block_mi.ref_frame[1] = rf[1];
+    mbmi->ref_frame[0] = rf[0];
+    mbmi->ref_frame[1] = rf[1];
     const int comp_index_ctx = get_comp_index_context_enc(
         picture_control_set_ptr->parent_pcs_ptr,
         picture_control_set_ptr->parent_pcs_ptr->cur_order_hint,
@@ -3017,7 +3017,7 @@ static INLINE void foreach_overlappable_nb_above(
         above_mi_col += mi_step) {
         ModeInfo /*MbModeInfo*/ **above_mi = prev_row_mi + above_mi_col;
         mi_step =
-            AOMMIN(mi_size_wide[above_mi[0]->mbmi.block_mi.sb_type], mi_size_wide[BLOCK_64X64]);
+            AOMMIN(mi_size_wide[above_mi[0]->mbmi.sb_type], mi_size_wide[BLOCK_64X64]);
         // If we're considering a block with width 4, it should be treated as
         // half of a pair of blocks with chroma information in the second. Move
         // above_mi_col back to the start of the pair if needed, set above_mbmi
@@ -3066,7 +3066,7 @@ static INLINE void foreach_overlappable_nb_left(
         left_mi_row += mi_step) {
         ModeInfo **left_mi = prev_col_mi + left_mi_row * xd->mi_stride;
         mi_step =
-            AOMMIN(mi_size_high[left_mi[0]->mbmi.block_mi.sb_type], mi_size_high[BLOCK_64X64]);
+            AOMMIN(mi_size_high[left_mi[0]->mbmi.sb_type], mi_size_high[BLOCK_64X64]);
         if (mi_step == 1) {
             left_mi_row &= ~1;
             left_mi = prev_col_mi + (left_mi_row + 1) * xd->mi_stride;
@@ -3121,12 +3121,12 @@ void av1_setup_build_prediction_by_above_pred(
 
     //use above mbmi  to set up the reference object from where to read
 
-    ctxt->mv_unit.mv[0].x = above_mbmi->block_mi.mv[0].as_mv.col;
-    ctxt->mv_unit.mv[0].y = above_mbmi->block_mi.mv[0].as_mv.row;
+    ctxt->mv_unit.mv[0].x = above_mbmi->mv[0].as_mv.col;
+    ctxt->mv_unit.mv[0].y = above_mbmi->mv[0].as_mv.row;
     ctxt->mv_unit.pred_direction = UNI_PRED_LIST_0;
 
-    uint8_t ref_idx_l0 = get_ref_frame_idx(above_mbmi->block_mi.ref_frame[0]);
-    uint8_t list_idx0  = get_list_idx(above_mbmi->block_mi.ref_frame[0]);
+    uint8_t ref_idx_l0 = get_ref_frame_idx(above_mbmi->ref_frame[0]);
+    uint8_t list_idx0  = get_list_idx(above_mbmi->ref_frame[0]);
 
     if (is16bit)
         ctxt->ref_pic_list0 = ((EbReferenceObject*)ctxt->picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit;
@@ -3146,13 +3146,13 @@ void av1_setup_build_prediction_by_left_pred(MacroBlockD *xd, int rel_mi_row,
     (void)num_planes;
     const int left_mi_row = ctxt->mi_row + rel_mi_row;
 
-    ctxt->mv_unit.mv[0].x = left_mbmi->block_mi.mv[0].as_mv.col;
-    ctxt->mv_unit.mv[0].y = left_mbmi->block_mi.mv[0].as_mv.row;
+    ctxt->mv_unit.mv[0].x = left_mbmi->mv[0].as_mv.col;
+    ctxt->mv_unit.mv[0].y = left_mbmi->mv[0].as_mv.row;
     ctxt->mv_unit.pred_direction = UNI_PRED_LIST_0;
 
 
-    uint8_t ref_idx_l0 = get_ref_frame_idx(left_mbmi->block_mi.ref_frame[0]);
-    uint8_t list_idx0 = get_list_idx(left_mbmi->block_mi.ref_frame[0]);
+    uint8_t ref_idx_l0 = get_ref_frame_idx(left_mbmi->ref_frame[0]);
+    uint8_t list_idx0 = get_list_idx(left_mbmi->ref_frame[0]);
 
     if (is16bit)
         ctxt->ref_pic_list0 = ((EbReferenceObject*)ctxt->picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit;
@@ -3528,7 +3528,7 @@ static INLINE void build_prediction_by_above_pred(
         if(j==0)
             if (is16bit)
                 get_single_prediction_for_obmc_luma_hbd(
-                    above_mbmi->block_mi.interp_filters,
+                    above_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3541,7 +3541,7 @@ static INLINE void build_prediction_by_above_pred(
                     ctxt->dst_origin_y);
             else
                 get_single_prediction_for_obmc_luma(
-                    above_mbmi->block_mi.interp_filters,
+                    above_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3555,7 +3555,7 @@ static INLINE void build_prediction_by_above_pred(
         else
             if (is16bit)
                 get_single_prediction_for_obmc_chroma_hbd(
-                    above_mbmi->block_mi.interp_filters,
+                    above_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3568,7 +3568,7 @@ static INLINE void build_prediction_by_above_pred(
                     ctxt->dst_origin_y);
             else
                 get_single_prediction_for_obmc_chroma(
-                    above_mbmi->block_mi.interp_filters,
+                    above_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3629,7 +3629,7 @@ static INLINE void build_prediction_by_left_pred(
         if (j == 0)
             if (is16bit)
                 get_single_prediction_for_obmc_luma_hbd(
-                    left_mbmi->block_mi.interp_filters,
+                    left_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3642,7 +3642,7 @@ static INLINE void build_prediction_by_left_pred(
                     ctxt->dst_origin_y);
             else
                 get_single_prediction_for_obmc_luma(
-                    left_mbmi->block_mi.interp_filters,
+                    left_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3656,7 +3656,7 @@ static INLINE void build_prediction_by_left_pred(
         else
             if (is16bit)
                 get_single_prediction_for_obmc_chroma_hbd(
-                    left_mbmi->block_mi.interp_filters,
+                    left_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -3669,7 +3669,7 @@ static INLINE void build_prediction_by_left_pred(
                     ctxt->dst_origin_y);
             else
                 get_single_prediction_for_obmc_chroma(
-                    left_mbmi->block_mi.interp_filters,
+                    left_mbmi->interp_filters,
                     xd,
                     &ctxt->mv_unit,
                     mi_x,
@@ -4653,23 +4653,23 @@ EbErrorType av1_inter_prediction(
             av1_set_ref_frame(rf, ref_frame_type);
             for (miY = 0; miY < (blk_geom->bheight >> MI_SIZE_LOG2); miY++) {
                 for (miX = 0; miX < (blk_geom->bwidth >> MI_SIZE_LOG2); miX++) {
-                    miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.use_intrabc = use_intrabc;
-                    miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
+                    miPtr[miX + miY * xd->mi_stride].mbmi.use_intrabc = use_intrabc;
+                    miPtr[miX + miY * xd->mi_stride].mbmi.ref_frame[0] = rf[0];
                     if (mv_unit->pred_direction == UNI_PRED_LIST_0) {
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
                     }
                     else if (mv_unit->pred_direction == UNI_PRED_LIST_1) {
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_1].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                     else {
                         // printf("ERRRRRRR");
 
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                 }
             }
@@ -4707,7 +4707,7 @@ EbErrorType av1_inter_prediction(
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
-                    if (!is_inter_block(&this_mbmi->block_mi)) sub8x8_inter = 0;
+                    if (!is_inter_block(this_mbmi)) sub8x8_inter = 0;
                     //if (is_intrabc_block(this_mbmi)) sub8x8_inter = 0;
                 }
             }
@@ -4747,10 +4747,10 @@ EbErrorType av1_inter_prediction(
                      //    0, plane, xd->tmp_conv_dst, tmp_dst_stride, is_compound, xd->bd);
                     conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCb, BLOCK_SIZE_64, is_compound, EB_8BIT);
                     conv_params.use_jnt_comp_avg = 0;
-                    uint8_t ref_idx = get_ref_frame_idx(this_mbmi->block_mi.ref_frame[0]);
+                    uint8_t ref_idx = get_ref_frame_idx(this_mbmi->ref_frame[0]);
                     assert(ref_idx < REF_LIST_MAX_DEPTH);
-                    EbPictureBufferDesc  *ref_pic = this_mbmi->block_mi.ref_frame[0] ==
-                        LAST_FRAME || this_mbmi->block_mi.ref_frame[0] == LAST2_FRAME || this_mbmi->block_mi.ref_frame[0] == LAST3_FRAME || this_mbmi->block_mi.ref_frame[0] == GOLDEN_FRAME ?
+                    EbPictureBufferDesc  *ref_pic = this_mbmi->ref_frame[0] ==
+                        LAST_FRAME || this_mbmi->ref_frame[0] == LAST2_FRAME || this_mbmi->ref_frame[0] == LAST3_FRAME || this_mbmi->ref_frame[0] == GOLDEN_FRAME ?
                         ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx]->object_ptr)->reference_picture :
                         ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx]->object_ptr)->reference_picture;
                     assert(ref_pic != NULL);
@@ -4761,7 +4761,7 @@ EbErrorType av1_inter_prediction(
                     src_ptr = src_ptr + x + y * ref_pic->stride_cb;
                     dst_ptr = dst_ptr + x + y * prediction_ptr->stride_cb;
 
-                    const MV mv = this_mbmi->block_mi.mv[0].as_mv;
+                    const MV mv = this_mbmi->mv[0].as_mv;
                     mv_q4 = clamp_mv_to_umv_border_sb(cu_ptr->av1xd, &mv, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
                     subpel_x = mv_q4.col & SUBPEL_MASK;
                     subpel_y = mv_q4.row & SUBPEL_MASK;
@@ -5382,23 +5382,23 @@ EbErrorType av1_inter_prediction_hbd(
             av1_set_ref_frame(rf, ref_frame_type);
             for (miY = 0; miY < (blk_geom->bheight >> MI_SIZE_LOG2); miY++) {
                 for (miX = 0; miX < (blk_geom->bwidth >> MI_SIZE_LOG2); miX++) {
-                    miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
-                    miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.use_intrabc = use_intrabc;
+                    miPtr[miX + miY * xd->mi_stride].mbmi.ref_frame[0] = rf[0];
+                    miPtr[miX + miY * xd->mi_stride].mbmi.use_intrabc = use_intrabc;
                     if (mv_unit->pred_direction == UNI_PRED_LIST_0) {
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
                     }
                     else if (mv_unit->pred_direction == UNI_PRED_LIST_1) {
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_1].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                     else {
                         // printf("ERRRRRRR");
 
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
-                        miPtr[miX + miY * xd->mi_stride].mbmi.block_mi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                        miPtr[miX + miY * xd->mi_stride].mbmi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
                     }
                 }
             }
@@ -5435,7 +5435,7 @@ EbErrorType av1_inter_prediction_hbd(
                     ModeInfo *miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
-                    if (!is_inter_block(&this_mbmi->block_mi)) sub8x8_inter = 0;
+                    if (!is_inter_block(this_mbmi)) sub8x8_inter = 0;
                     //if (is_intrabc_block(this_mbmi)) sub8x8_inter = 0;
                 }
             }
@@ -5475,10 +5475,10 @@ EbErrorType av1_inter_prediction_hbd(
                      //    0, plane, xd->tmp_conv_dst, tmp_dst_stride, is_compound, xd->bd);
                     conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCb, BLOCK_SIZE_64, is_compound, bit_depth);
                     conv_params.use_jnt_comp_avg = 0;
-                    uint8_t ref_idx = get_ref_frame_idx(this_mbmi->block_mi.ref_frame[0]);
+                    uint8_t ref_idx = get_ref_frame_idx(this_mbmi->ref_frame[0]);
                     assert(ref_idx < REF_LIST_MAX_DEPTH);
-                    EbPictureBufferDesc  *ref_pic = this_mbmi->block_mi.ref_frame[0] ==
-                        LAST_FRAME || this_mbmi->block_mi.ref_frame[0] == LAST2_FRAME || this_mbmi->block_mi.ref_frame[0] == LAST3_FRAME || this_mbmi->block_mi.ref_frame[0] == GOLDEN_FRAME ?
+                    EbPictureBufferDesc  *ref_pic = this_mbmi->ref_frame[0] ==
+                        LAST_FRAME || this_mbmi->ref_frame[0] == LAST2_FRAME || this_mbmi->ref_frame[0] == LAST3_FRAME || this_mbmi->ref_frame[0] == GOLDEN_FRAME ?
                         ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_0][ref_idx]->object_ptr)->reference_picture16bit :
                         ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][ref_idx]->object_ptr)->reference_picture16bit;
                     src_ptr = (uint16_t*)ref_pic->buffer_cb + (ref_pic->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic->stride_cb;
@@ -5488,7 +5488,7 @@ EbErrorType av1_inter_prediction_hbd(
                     src_ptr = src_ptr + x + y * ref_pic->stride_cb;
                     dst_ptr = dst_ptr + x + y * prediction_ptr->stride_cb;
 
-                    const MV mv = this_mbmi->block_mi.mv[0].as_mv;
+                    const MV mv = this_mbmi->mv[0].as_mv;
                     mv_q4 = clamp_mv_to_umv_border_sb(cu_ptr->av1xd, &mv, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
                     subpel_x = mv_q4.col & SUBPEL_MASK;
                     subpel_y = mv_q4.row & SUBPEL_MASK;

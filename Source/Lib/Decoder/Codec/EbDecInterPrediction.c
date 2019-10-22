@@ -74,7 +74,7 @@ void svt_make_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
     EbDecPicBuf *ref_buf, int32_t pre_x, int32_t pre_y, int32_t bw, int32_t bh,
     ConvolveParams *conv_params, int32_t plane, int32_t do_warp)
 {
-    const BlockModeInfo *mi = part_info->mi;
+    const ModeInfo_t *mi = part_info->mi;
     const int32_t is_intrabc = is_intrabc_block(mi);
 
     const int32_t ss_x = plane ? part_info->subsampling_x : 0;
@@ -250,7 +250,7 @@ void av1_combine_interintra(PartitionInfo_t *part_info, BlockSize bsize,
     int plane, uint8_t *inter_pred, int inter_stride,
     uint8_t *intra_pred, int intra_stride, EbBitDepthEnum bit_depth)
 {
-    BlockModeInfo *mi = part_info->mi;
+    ModeInfo_t *mi = part_info->mi;
     int32_t sub_x = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t sub_y = (plane > 0) ? part_info->subsampling_y : 0;
     const BlockSize plane_bsize = get_plane_block_size(bsize, sub_x, sub_y);
@@ -258,18 +258,18 @@ void av1_combine_interintra(PartitionInfo_t *part_info, BlockSize bsize,
     if (bit_depth > EB_8BIT) {
         /*As per spec we r considering interitra_wedge_sign is always "zero"*/
         /*Check buffers, Aom  2nd time inter_pred buffer plane is plane independent */
-        combine_interintra_highbd(mi->interintra_mode_params.interintra_mode,
-            mi->interintra_mode_params.wedge_interintra,
-            mi->interintra_mode_params.interintra_wedge_index, 0/*interintra_wedgesign*/,
+        combine_interintra_highbd(mi->interintra_mode.interintra_mode,
+            mi->interintra_mode.wedge_interintra,
+            mi->interintra_mode.interintra_wedge_index, 0/*interintra_wedgesign*/,
             bsize, plane_bsize, inter_pred, inter_stride, inter_pred,
             inter_stride, intra_pred, intra_stride, bit_depth);
         return;
     }
 
     /*Check buffers, Aom  2nd time inter_pred buffer plane is plane independent */
-    combine_interintra(mi->interintra_mode_params.interintra_mode,
-        mi->interintra_mode_params.wedge_interintra,
-        mi->interintra_mode_params.interintra_wedge_index, 0/*interintra_wedgesign*/,
+    combine_interintra(mi->interintra_mode.interintra_mode,
+        mi->interintra_mode.wedge_interintra,
+        mi->interintra_mode.interintra_wedge_index, 0/*interintra_wedgesign*/,
         bsize, plane_bsize, inter_pred, inter_stride, inter_pred,
         inter_stride, intra_pred, intra_stride);
 }
@@ -279,14 +279,14 @@ void av1_build_intra_predictors_for_interintra(EbDecHandle *dec_hdl,
     BlockSize bsize, int32_t plane, uint8_t *dst, int dst_stride,
     EbBitDepthEnum bit_depth)
 {
-    BlockModeInfo *mi = part_info->mi;
+    ModeInfo_t *mi = part_info->mi;
     int32_t i, wpx, hpx;
     DecModCtxt *dec_mod_ctxt = (DecModCtxt *)dec_hdl->pv_dec_mod_ctxt;
     int32_t sub_x = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t sub_y = (plane > 0) ? part_info->subsampling_y : 0;
     BlockSize plane_bsize = get_plane_block_size(bsize, sub_x, sub_y);
     PredictionMode mode =
-        interintra_to_intra_mode[mi->interintra_mode_params.interintra_mode];
+        interintra_to_intra_mode[mi->interintra_mode.interintra_mode];
     assert(mi->angle_delta[PLANE_TYPE_Y] == 0);
     assert(mi->angle_delta[PLANE_TYPE_UV] == 0);
     assert(mi->filter_intra_mode_info.use_filter_intra == 0);
@@ -363,7 +363,7 @@ void svtav1_predict_inter_block_plane(
     void *dst, int32_t dst_stride,
     int32_t some_use_intra, int32_t bit_depth)
 {
-    const BlockModeInfo *mi = part_info->mi;
+    const ModeInfo_t *mi = part_info->mi;
     const FrameHeader *cur_frm_hdr = &dec_hdl->frame_header;
     DecModCtxt *dec_mod_ctx = (DecModCtxt*) dec_hdl->pv_dec_mod_ctxt;
     SeqHeader *seq_header = &dec_hdl->seq_header;
@@ -510,7 +510,7 @@ void svtav1_predict_inter_block(
 
         for (i = row_start; i <= row_end; i++) {
             for (j = col_start; j <= col_end; j++) {
-                BlockModeInfo *mode_info = get_cur_mode_info(dec_hdl,
+                ModeInfo_t *mode_info = get_cur_mode_info(dec_hdl,
                     i, j, part_info->sb_info);
                 if (mode_info->ref_frame[0] == INTRA_FRAME)
                     some_use_intra = 1;

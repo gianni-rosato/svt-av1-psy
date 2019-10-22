@@ -14,7 +14,6 @@
 #include <stdint.h>
 #include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
-#include "EbCommonUtils.h"
 
 static INLINE __m128i loadh_epi64(const void *const src, const __m128i s) {
     return _mm_castps_si128(
@@ -452,6 +451,19 @@ static INLINE void get_16n_coeff_contexts_ver(const uint8_t *levels,
         pos_to_offset[1] = pos_to_offset[2];
         levels += TX_PAD_HOR;
     } while (--row);
+}
+
+static INLINE int32_t get_txb_wide(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    return tx_size_wide[tx_size];
+}
+static INLINE int32_t get_txb_high(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    return tx_size_high[tx_size];
+}
+static INLINE int32_t get_txb_bwl(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    return tx_size_wide_log2[tx_size];
 }
 
 void eb_av1_get_nz_map_contexts_sse2(

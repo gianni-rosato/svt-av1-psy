@@ -86,8 +86,9 @@ extern "C" {
     struct AV1LfSyncData;
 
     void eb_av1_loop_filter_init(PictureControlSet *pcs_ptr);
-    void eb_av1_loop_filter_frame_init(FrameHeader *frm_hdr,
-        LoopFilterInfoN *lf_info, int32_t plane_start, int32_t plane_end);
+
+    void eb_av1_loop_filter_frame_init(PictureControlSet *pcs_ptr, int32_t plane_start,
+        int32_t plane_end);
 
     void loop_filter_sb(
         EbPictureBufferDesc *frame_buffer,//reconpicture,
@@ -132,16 +133,6 @@ extern "C" {
         // add lossless as a member here.
         MacroBlockD *xd;
     } LFWorkerData;
-
-    static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
-        return /*is_intrabc_block(mbmi) ||*/ ref_frame_0 > INTRA_FRAME;
-    }
-
-    void update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl);
-
-    uint8_t get_filter_level(FrameHeader* frm_hdr, const LoopFilterInfoN *lfi_n,
-        const int32_t dir_idx, int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
-        PredictionMode pred_mode, MvReferenceFrame ref_frame_0);
 
     void aom_highbd_lpf_horizontal_14_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh, int32_t bd);
 #define aom_highbd_lpf_horizontal_14 aom_highbd_lpf_horizontal_14_sse2

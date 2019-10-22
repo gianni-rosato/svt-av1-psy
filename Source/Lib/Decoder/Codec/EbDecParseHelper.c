@@ -25,7 +25,6 @@
 #include "EbDecParseHelper.h"
 #include "EbDecUtils.h"
 #include "EbTransforms.h"
-#include "EbCommonUtils.h"
 
 int neg_deinterleave(const int diff, int ref, int max) {
     if (!ref) return diff;
@@ -62,12 +61,35 @@ void set_segment_id(EbDecHandle *dec_handle, int mi_offset,
                 y * frm_header->mi_cols + x] = segment_id;
 }
 
+static INLINE int bsize_to_max_depth(BlockSize bsize) {
+    TxSize tx_size = max_txsize_rect_lookup[bsize];
+    int depth = 0;
+    while (depth < MAX_TX_DEPTH && tx_size != TX_4X4) {
+        depth++;
+        tx_size = sub_tx_size_map[tx_size];
+    }
+    return depth;
+}
+
+static INLINE int bsize_to_tx_size_cat(BlockSize bsize) {
+    TxSize tx_size = max_txsize_rect_lookup[bsize];
+    assert(tx_size != TX_4X4);
+    int depth = 0;
+    while (tx_size != TX_4X4) {
+    depth++;
+    tx_size = sub_tx_size_map[tx_size];
+    assert(depth < 10);
+    }
+    assert(depth <= MAX_TX_CATS);
+    return depth - 1;
+}
+
 static INLINE int get_tx_size_context(const PartitionInfo_t *xd,
                                       ParseCtxt *parse_ctxt)
 {
-    const BlockModeInfo *mbmi = xd->mi;
-    const BlockModeInfo *const above_mbmi = xd->above_mbmi;
-    const BlockModeInfo *const left_mbmi = xd->left_mbmi;
+    const ModeInfo_t *mbmi = xd->mi;
+    const ModeInfo_t *const above_mbmi = xd->above_mbmi;
+    const ModeInfo_t *const left_mbmi = xd->left_mbmi;
     const TxSize max_tx_size = max_txsize_rect_lookup[mbmi->sb_type];
     const uint8_t max_tx_wide = tx_size_wide[max_tx_size];
     const uint8_t max_tx_high = tx_size_high[max_tx_size];
@@ -79,11 +101,11 @@ static INLINE int get_tx_size_context(const PartitionInfo_t *xd,
         left_tx_ht[xd->mi_row - parse_ctxt->sb_row_mi] >= max_tx_high;
 
     if (has_above)
-        if (is_inter_block(above_mbmi))
+        if (dec_is_inter_block(above_mbmi))
             above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
 
     if (has_left)
-        if (is_inter_block(left_mbmi))
+        if (dec_is_inter_block(left_mbmi))
             left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
 
     if (has_above && has_left)
@@ -110,7 +132,7 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
     int mi_col = pi->mi_col;
     ParseNbr4x4Ctxt *ngr_ctx = &parse_ctxt->parse_nbr4x4_ctxt;
     BlockSize b_size = bsize;
-    if(is_inter_block(pi->mi))
+    if(dec_is_inter_block(pi->mi))
         b_size = txsize_to_bsize[txSize];
     uint8_t *const above_ctx = ngr_ctx->above_tx_wd + mi_col + blk_col;
     uint8_t *const left_ctx = ngr_ctx->left_tx_ht +
@@ -143,18 +165,18 @@ TxSize read_selected_tx_size(PartitionInfo_t *xd, SvtReader *r,
 }
 
 int get_intra_inter_context(PartitionInfo_t *xd) {
-    const BlockModeInfo *const above_mbmi = xd->above_mbmi;
-    const BlockModeInfo *const left_mbmi = xd->left_mbmi;
+    const ModeInfo_t *const above_mbmi = xd->above_mbmi;
+    const ModeInfo_t *const left_mbmi = xd->left_mbmi;
     const int has_above = xd->up_available;
     const int has_left = xd->left_available;
 
     if (has_above && has_left) {  // both edges available
-        const int above_intra = !is_inter_block(above_mbmi);
-        const int left_intra = !is_inter_block(left_mbmi);
+        const int above_intra = !dec_is_inter_block(above_mbmi);
+        const int left_intra = !dec_is_inter_block(left_mbmi);
         return left_intra && above_intra ? 3 : left_intra || above_intra;
     }
     else if (has_above || has_left) {  // one edge available
-        return 2 * !is_inter_block(has_above ? above_mbmi : left_mbmi);
+        return 2 * !dec_is_inter_block(has_above ? above_mbmi : left_mbmi);
     }
     else
         return 0;
@@ -164,6 +186,17 @@ PredictionMode read_intra_mode(SvtReader *r, AomCdfProb *cdf) {
     return (PredictionMode)svt_read_symbol(r, cdf, INTRA_MODES, ACCT_STR);
 }
 
+/* TODO : Should reuse encode function */
+int dec_is_chroma_reference(int mi_row, int mi_col, BlockSize bsize,
+    int subsampling_x, int subsampling_y)
+{
+    const int bw = mi_size_wide[bsize];
+    const int bh = mi_size_high[bsize];
+    int ref_pos = ((mi_row & 0x01) || !(bh & 0x01) || !subsampling_y) &&
+        ((mi_col & 0x01) || !(bw & 0x01) || !subsampling_x);
+    return ref_pos;
+}
+
 UvPredictionMode read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r,
     CflAllowedType cfl_allowed, PredictionMode y_mode)
 {
@@ -171,6 +204,30 @@ UvPredictionMode read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r,
         svt_read_symbol(r, ec_ctx->uv_mode_cdf[cfl_allowed][y_mode],
             UV_INTRA_MODES - !cfl_allowed, ACCT_STR);
     return uv_mode;
+}
+
+static INLINE void integer_mv_precision(MV *mv) {
+    int mod = (mv->row % 8);
+    if (mod != 0) {
+        mv->row -= mod;
+        if (abs(mod) > 4) {
+            if (mod > 0)
+                mv->row += 8;
+            else
+                mv->row -= 8;
+        }
+    }
+
+    mod = (mv->col % 8);
+    if (mod != 0) {
+        mv->col -= mod;
+        if (abs(mod) > 4) {
+            if (mod > 0)
+                mv->col += 8;
+            else
+                mv->col -= 8;
+        }
+    }
 }
 
 static INLINE int block_center_x(int mi_col, BlockSize bs) {
@@ -190,10 +247,10 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
 
-IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
+IntMvDec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
     BlockSize bsize, int mi_col, int mi_row, int is_integer)
 {
-    IntMv res;
+    IntMvDec res;
 
     if (gm->gm_type == IDENTITY) {
         res.as_int = 0;
@@ -235,27 +292,31 @@ IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
     return res;
 }
 
-static INLINE int has_uni_comp_refs(const BlockModeInfo *mbmi) {
+static INLINE int has_uni_comp_refs(const ModeInfo_t *mbmi) {
   return has_second_ref(mbmi) && (!((mbmi->ref_frame[0] >= BWDREF_FRAME) ^
                                     (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
 
 int get_comp_reference_type_context(const PartitionInfo_t *xd) {
+#define CHECK_BACKWARD_REFS(ref_frame) \
+  (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
+#define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
+
     int pred_context;
-    const BlockModeInfo *const above_mbmi = xd->above_mbmi;
-    const BlockModeInfo *const left_mbmi = xd->left_mbmi;
+    const ModeInfo_t *const above_mbmi = xd->above_mbmi;
+    const ModeInfo_t *const left_mbmi = xd->left_mbmi;
     const int above_in_image = xd->up_available;
     const int left_in_image = xd->left_available;
 
     if (above_in_image && left_in_image) {  // both edges available
-        const int above_intra = !is_inter_block(above_mbmi);
-        const int left_intra = !is_inter_block(left_mbmi);
+        const int above_intra = !dec_is_inter_block(above_mbmi);
+        const int left_intra = !dec_is_inter_block(left_mbmi);
 
         if (above_intra && left_intra) {  // intra/intra
             pred_context = 2;
         }
         else if (above_intra || left_intra) {  // intra/inter
-            const BlockModeInfo *inter_mbmi = above_intra ? left_mbmi : above_mbmi;
+            const ModeInfo_t *inter_mbmi = above_intra ? left_mbmi : above_mbmi;
 
             if (!has_second_ref(inter_mbmi))  // single pred
                 pred_context = 2;
@@ -297,9 +358,9 @@ int get_comp_reference_type_context(const PartitionInfo_t *xd) {
         }
     }
     else if (above_in_image || left_in_image) {  // one edge available
-        const BlockModeInfo *edge_mbmi = above_in_image ? above_mbmi : left_mbmi;
+        const ModeInfo_t *edge_mbmi = above_in_image ? above_mbmi : left_mbmi;
 
-        if (!is_inter_block(edge_mbmi)) {  // intra
+        if (!dec_is_inter_block(edge_mbmi)) {  // intra
             pred_context = 2;
         }
         else {                           // inter

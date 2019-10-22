@@ -32,7 +32,6 @@
 #include "aom_dsp_rtcd.h"
 #include "EbCodingLoop.h"
 
-#include "EbCommonUtils.h"
 #define PREDICTIVE_ME_MAX_MVP_CANIDATES  4
 #define PREDICTIVE_ME_DEVIATION_TH      50
 #define FULL_PEL_REF_WINDOW_WIDTH        7
@@ -3478,6 +3477,29 @@ uint8_t get_skip_tx_search_flag(
     return tx_search_skip_flag;
 }
 
+static INLINE PredictionMode get_uv_mode(UvPredictionMode mode) {
+    assert(mode < UV_INTRA_MODES);
+    static const PredictionMode uv2y[] = {
+        DC_PRED,        // UV_DC_PRED
+        V_PRED,         // UV_V_PRED
+        H_PRED,         // UV_H_PRED
+        D45_PRED,       // UV_D45_PRED
+        D135_PRED,      // UV_D135_PRED
+        D113_PRED,      // UV_D113_PRED
+        D157_PRED,      // UV_D157_PRED
+        D203_PRED,      // UV_D203_PRED
+        D67_PRED,       // UV_D67_PRED
+        SMOOTH_PRED,    // UV_SMOOTH_PRED
+        SMOOTH_V_PRED,  // UV_SMOOTH_V_PRED
+        SMOOTH_H_PRED,  // UV_SMOOTH_H_PRED
+        PAETH_PRED,     // UV_PAETH_PRED
+        DC_PRED,        // UV_CFL_PRED
+        INTRA_INVALID,  // UV_INTRA_MODES
+        INTRA_INVALID,  // UV_MODE_INVALID
+    };
+    return uv2y[mode];
+}
+
 static TxType intra_mode_to_tx_type(const MbModeInfo *mbmi,
     PlaneType plane_type) {
     static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
@@ -3496,7 +3518,7 @@ static TxType intra_mode_to_tx_type(const MbModeInfo *mbmi,
         ADST_ADST,  // PAETH
     };
     const PredictionMode mode =
-        (plane_type == PLANE_TYPE_Y) ? mbmi->block_mi.mode : get_uv_mode(mbmi->block_mi.uv_mode);
+        (plane_type == PLANE_TYPE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
     assert(mode < INTRA_MODES);
     return _intra_mode_to_tx_type[mode];
 }
@@ -3519,8 +3541,8 @@ static INLINE TxType av1_get_tx_type(
     // block_size  sb_type = BLOCK_8X8;
 
     MbModeInfo  mbmi;
-    mbmi.block_mi.mode = pred_mode;
-    mbmi.block_mi.uv_mode = pred_mode_uv;
+    mbmi.mode = pred_mode;
+    mbmi.uv_mode = pred_mode_uv;
 
     // const MbModeInfo *const mbmi = xd->mi[0];
     // const struct MacroblockdPlane *const pd = &xd->plane[plane_type];
@@ -4195,12 +4217,12 @@ static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
 
-static INLINE int is_intrabc_block(const BlockModeInfo *bloc_mi) {
-    return bloc_mi->use_intrabc;
+static INLINE int is_intrabc_block(const MbModeInfo *mbmi) {
+    return mbmi->use_intrabc;
 }
 
-static INLINE int is_inter_block(const BlockModeInfo *bloc_mi) {
-    return is_intrabc_block(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
+static INLINE int is_inter_block(const MbModeInfo *mbmi) {
+    return is_intrabc_block(mbmi) || mbmi->ref_frame[0] > INTRA_FRAME;
 }
 
 static INLINE int get_vartx_max_txsize(/*const MbModeInfo *xd,*/ BlockSize bsize,
@@ -4286,8 +4308,8 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
     TxSize tx_size, int depth, int blk_row,
     int blk_col, MdRateEstimationContext  *md_rate_estimation_ptr) {
     uint64_t bits = 0;
-    const int max_blocks_high = max_block_high(xd, mbmi->block_mi.sb_type, 0);
-    const int max_blocks_wide = max_block_wide(xd, mbmi->block_mi.sb_type, 0);
+    const int max_blocks_high = max_block_high(xd, mbmi->sb_type, 0);
+    const int max_blocks_wide = max_block_wide(xd, mbmi->sb_type, 0);
 
     if (blk_row >= max_blocks_high || blk_col >= max_blocks_wide) return bits;
 
@@ -4301,9 +4323,9 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi,
 
     const int ctx = txfm_partition_context(xd->above_txfm_context + blk_col,
         xd->left_txfm_context + blk_row,
-        mbmi->block_mi.sb_type, tx_size);
+        mbmi->sb_type, tx_size);
 
-    const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]);
+    const int write_txfm_partition = (tx_size == tx_depth_to_tx_size[mbmi->tx_depth][mbmi->sb_type]);
 
     if (write_txfm_partition) {
         bits += md_rate_estimation_ptr->txfm_partition_fac_bits[ctx][0];
@@ -4367,6 +4389,18 @@ static INLINE int tx_size_to_depth(TxSize tx_size, BlockSize bsize) {
     return depth;
 }
 
+static INLINE int bsize_to_tx_size_cat(BlockSize bsize) {
+    TxSize tx_size = max_txsize_rect_lookup[bsize];
+    assert(tx_size != TX_4X4);
+    int depth = 0;
+    while (tx_size != TX_4X4) {
+        depth++;
+        tx_size = sub_tx_size_map[tx_size];
+        assert(depth < 10);
+    }
+    assert(depth <= MAX_TX_CATS);
+    return depth - 1;
+}
 #define BLOCK_SIZES_ALL 22
 
 // Returns a context number for the given MB prediction signal
@@ -4378,7 +4412,7 @@ static INLINE int get_tx_size_context(const MacroBlockD *xd) {
     const MbModeInfo *mbmi = &mi->mbmi;
     const MbModeInfo *const above_mbmi = xd->above_mbmi;
     const MbModeInfo *const left_mbmi = xd->left_mbmi;
-    const TxSize max_tx_size = max_txsize_rect_lookup[mbmi->block_mi.sb_type];
+    const TxSize max_tx_size = max_txsize_rect_lookup[mbmi->sb_type];
     const int max_tx_wide = tx_size_wide[max_tx_size];
     const int max_tx_high = tx_size_high[max_tx_size];
     const int has_above = xd->up_available;
@@ -4388,12 +4422,12 @@ static INLINE int get_tx_size_context(const MacroBlockD *xd) {
     int left = xd->left_txfm_context[0] >= max_tx_high;
 
     if (has_above)
-        if (is_inter_block(&above_mbmi->block_mi))
-            above = block_size_wide[above_mbmi->block_mi.sb_type] >= max_tx_wide;
+        if (is_inter_block(above_mbmi))
+            above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
 
     if (has_left)
-        if (is_inter_block(&left_mbmi->block_mi))
-            left = block_size_high[left_mbmi->block_mi.sb_type] >= max_tx_high;
+        if (is_inter_block(left_mbmi))
+            left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
 
     if (has_above && has_left)
         return (above + left);
@@ -4410,7 +4444,7 @@ static uint64_t cost_selected_tx_size(
     MdRateEstimationContext  *md_rate_estimation_ptr) {
     const ModeInfo *const mi = xd->mi[0];
     const MbModeInfo *const mbmi = &mi->mbmi;
-    const BlockSize bsize = mbmi->block_mi.sb_type;
+    const BlockSize bsize = mbmi->sb_type;
     uint64_t bits = 0;
 
     if (block_signals_txsize(bsize)) {
@@ -4434,7 +4468,7 @@ static uint64_t tx_size_bits(
 
     uint64_t bits = 0;
 
-    int is_inter_tx = is_inter_block(&mbmi->block_mi) || is_intrabc_block(&mbmi->block_mi);
+    int is_inter_tx = is_inter_block(mbmi) || is_intrabc_block(mbmi);
     if (tx_mode == TX_MODE_SELECT && block_signals_txsize(bsize) &&
         !(is_inter_tx && skip) /*&& !xd->lossless[segment_id]*/) {
         if (is_inter_tx) {  // This implies skip flag is 0.
@@ -4455,7 +4489,7 @@ static uint64_t tx_size_bits(
     }
     else {
         set_txfm_ctxs(mbmi->tx_size, xd->n8_w, xd->n8_h,
-            skip && is_inter_block(&mbmi->block_mi), xd);
+            skip && is_inter_block(mbmi), xd);
     }
     return bits;
 }
@@ -4562,9 +4596,9 @@ uint64_t estimate_tx_size_bits(
     xd->left_txfm_context = context_ptr->left_txfm_context;
 
     mbmi->tx_size = blk_geom->txsize[tx_depth][0];
-    mbmi->block_mi.sb_type = blk_geom->bsize;
-    mbmi->block_mi.use_intrabc = candidate_ptr->use_intrabc;
-    mbmi->block_mi.ref_frame[0] = candidate_ptr->ref_frame_type;
+    mbmi->sb_type = blk_geom->bsize;
+    mbmi->use_intrabc = candidate_ptr->use_intrabc;
+    mbmi->ref_frame[0] = candidate_ptr->ref_frame_type;
     mbmi->tx_depth = tx_depth;
 
     uint64_t bits = tx_size_bits(

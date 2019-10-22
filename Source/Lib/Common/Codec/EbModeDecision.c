@@ -21,7 +21,6 @@
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
-#include "EbCommonUtils.h"
 #include "EbSequenceControlSet.h"
 
 #include "EbModeDecision.h"
@@ -4529,6 +4528,28 @@ void  inject_inter_candidates(
 return;
     }
 
+ extern PredictionMode get_uv_mode(UvPredictionMode mode) {
+    assert(mode < UV_INTRA_MODES);
+    static const PredictionMode uv2y[] = {
+        DC_PRED,        // UV_DC_PRED
+        V_PRED,         // UV_V_PRED
+        H_PRED,         // UV_H_PRED
+        D45_PRED,       // UV_D45_PRED
+        D135_PRED,      // UV_D135_PRED
+        D113_PRED,      // UV_D113_PRED
+        D157_PRED,      // UV_D157_PRED
+        D203_PRED,      // UV_D203_PRED
+        D67_PRED,       // UV_D67_PRED
+        SMOOTH_PRED,    // UV_SMOOTH_PRED
+        SMOOTH_V_PRED,  // UV_SMOOTH_V_PRED
+        SMOOTH_H_PRED,  // UV_SMOOTH_H_PRED
+        PAETH_PRED,     // UV_PAETH_PRED
+        DC_PRED,        // UV_CFL_PRED
+        INTRA_INVALID,  // UV_INTRA_MODES
+        INTRA_INVALID,  // UV_MODE_INVALID
+    };
+    return uv2y[mode];
+}
 static TxType intra_mode_to_tx_type(const MbModeInfo *mbmi,
     PlaneType plane_type) {
     static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
@@ -4547,7 +4568,7 @@ static TxType intra_mode_to_tx_type(const MbModeInfo *mbmi,
         ADST_ADST,  // PAETH
     };
     const PredictionMode mode =
-        (plane_type == PLANE_TYPE_Y) ? mbmi->block_mi.mode : get_uv_mode(mbmi->block_mi.uv_mode);
+        (plane_type == PLANE_TYPE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
     assert(mode < INTRA_MODES);
     return _intra_mode_to_tx_type[mode];
 }
@@ -4570,8 +4591,8 @@ static INLINE TxType av1_get_tx_type(
     // BlockSize  sb_type = BLOCK_8X8;
 
     MbModeInfo  mbmi;
-    mbmi.block_mi.mode = pred_mode;
-    mbmi.block_mi.uv_mode = pred_mode_uv;
+    mbmi.mode = pred_mode;
+    mbmi.uv_mode = pred_mode_uv;
 
     // const MbModeInfo *const mbmi = xd->mi[0];
     // const struct MacroblockdPlane *const pd = &xd->plane[plane_type];

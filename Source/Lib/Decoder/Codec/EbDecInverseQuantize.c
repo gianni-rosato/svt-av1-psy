@@ -162,7 +162,7 @@ int get_dqv(const int16_t *dequant, int coeff_idx, const QmVal *iqmatrix) {
     return dqv;
 }
 
-int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, BlockModeInfo *mode,
+int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, ModeInfo_t *mode,
     int32_t *level, int32_t *qcoeffs, TxType tx_type, TxSize tx_size, int plane)
 {
     (void)part;

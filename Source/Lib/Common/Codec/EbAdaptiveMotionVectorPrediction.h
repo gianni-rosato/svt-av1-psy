@@ -111,7 +111,7 @@ extern "C" {
 
     static INLINE int is_neighbor_overlappable(const MbModeInfo *mbmi)
     {
-        return /*is_intrabc_block(mbmi) ||*/ mbmi->block_mi.ref_frame[0] > INTRA_FRAME; // TODO: modify when add intra_bc
+        return /*is_intrabc_block(mbmi) ||*/ mbmi->ref_frame[0] > INTRA_FRAME; // TODO: modify when add intra_bc
     }
 
     static INLINE EbBool has_overlappable_candidates(const CodingUnit *cu_ptr)

@@ -172,134 +172,48 @@ extern "C" {
 
 #define INTER_TX_SIZE_BUF_LEN 16
 #define TXK_TYPE_BUF_LEN 64
-
-    typedef struct FilterIntraModeInfo {
-        /*!< Specifies the type of intra filtering, and can represent any of the following:
-         * FILTER_DC_PRED, FILTER_V_PRED, FILTER_H_PRED, FILTER_D157_PRED, FILTER_PAETH_PRED */
-        FilterIntraMode filter_intra_mode;
-
-        /*!< This bit specifies whether or not intra filtering can be used. */
-        uint8_t use_filter_intra;
-    } FilterIntraModeInfo_t;
-
-    typedef struct InterIntraModeParams {
-        /*!< Specifies the type of intra prediction to be used */
-        InterIntraMode interintra_mode;
-
-        /*!< equal to 1 specifies that wedge blending should be used.
-            * wedge_interintra equal to 0 specifies that intra blending should be used. */
-        uint8_t wedge_interintra;
-
-        /*!< Used to derive the direction and offset of the wedge mask used during blending. */
-        uint8_t interintra_wedge_index;
-
-        /*!< Specifies the sign of the wedge blend. */
-        // int interintra_wedge_sign; Always 0
-    } InterIntraModeParams;
-
-    typedef struct BlockModeInfo {
-        // Common for both INTER and INTRA blocks
-        BlockSize          sb_type;
-        PredictionMode      mode;
-        int8_t              skip;
-
-        PartitionType       partition;
-
-        /*!< 1 indicates that this block will use some default settings and skip mode info.
-            * 0 indicates that the mode info is not skipped. */
-        int8_t              skip_mode;
-
-        /*!< Specifies which segment is associated with the current intra block being decoded. */
-        int8_t segment_id;
-
-        /*!< Equal to 1 specifies that the segment_id is taken from the segmentation map. */
-        int8_t seg_id_predicted;
-
-        /*!< For Lossy mode   : Specifies number of Luma TUs in a block
-             For Lossless mode: Specifies number of Luma TUs for a block of size other than
-                                128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
-        uint8_t         num_luma_tus;
-
-        /*!< Offset of first Luma transform info from strat of SB pointer */
-        uint16_t        first_luma_tu_offset;
-
-        /*!< For Lossy mode   : Specifies number of Chroma TUs in a block
-             For Lossless mode: Specifies number of Chroma TUs for a block of size other than
-                                128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
-        uint8_t         num_chroma_tus;
-
-        /*!< Offset of first Chroma transform info from strat of SB pointer */
-        uint16_t        first_chroma_tu_offset;
-
-        // Only for INTRA blocks
-        UvPredictionMode   uv_mode;
-
-        uint8_t             use_intrabc;
-
-        // Only for INTER blocks
-
-        MvReferenceFrame    ref_frame[2];
-        IntMv               mv[2];
-
-        uint16_t            ref_mv_idx;
-
-        // interinter members
-
-        InterIntraModeParams    interintra_mode_params;
-
-        /*!< Specifies the type of motion compensation to perform. */
-        MotionMode         motion_mode;
-
-        InterIntraMode     is_inter_intra;
-
-        /*!< 0 indicates that a distance based weighted scheme should be used for blending.
-         *   1 indicates that the averaging scheme should be used for blending.*/
-        uint8_t            compound_idx;
-
-        InterInterCompoundData  inter_inter_compound;
-        FilterIntraModeInfo_t  filter_intra_mode_info;
-
-        /*!< Specifies how the motion vector used by inter prediction is obtained when using compound prediction. */
-        uint8_t             compound_mode;
-
-        /*!< Specifies the type of filter used in inter prediction. Values 0..3 are allowed
-        * with the same interpretation as for interpolation_filter. One filter type is specified
-        * for the vertical filter direction and one for the horizontal filter direction.*/
-        uint32_t interp_filters;
-
-        /*!< Index of the alpha Cb and alpha Cr combination */
-        uint8_t cfl_alpha_idx;
-
-        /*!< Contains the sign of the alpha values for U and V packed together into a single syntax element. */
-        uint8_t cfl_alpha_signs;
-
-        /*!< The actual prediction angle is the base angle + (angle_delta * step). */
-        int8_t angle_delta[PLANE_TYPES];
-
-        // Number of base colors for Y (0) and UV (1)
-        uint8_t palette_size[2];
-
-#if MODE_INFO_DBG
-        int32_t mi_row;
-        int32_t mi_col;
-#endif
-    } BlockModeInfo;
-
     typedef struct MbModeInfo
     {
+        // Common for both INTER and INTRA blocks
+        BlockSize sb_type;
+        PredictionMode mode;
+        // Only for INTRA blocks
+        UvPredictionMode uv_mode;
+        uint8_t use_intrabc;
+        // Only for INTER blocks
+#if OBMC_FLAG
+        uint32_t interp_filters;
+#else
+        //InterpFilters interp_filters;
+#endif
+        MvReferenceFrame ref_frame[2];
+        IntMv mv[2];
+        PartitionType partition;
+        /* deringing gain *per-superblock* */
 #if CONFIG_RD_DEBUG
         RD_STATS rd_stats;
         int32_t mi_row;
         int32_t mi_col;
 #endif
         EbWarpedMotionParams wm_params;
+        // Index of the alpha Cb and alpha Cr combination
+        // int32_t cfl_alpha_idx;
+        // Joint sign of alpha Cb and alpha Cr
+        // int32_t cfl_alpha_signs;
+        //int32_t compound_idx;
+        //int32_t comp_group_idx;
+        int32_t compound_idx;
         int32_t comp_group_idx;
-
+        int8_t skip;
         int8_t cdef_strength;
         TxSize tx_size;
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
         uint8_t tx_depth;
-        BlockModeInfo block_mi;
+ #if II_COMP_FLAG
+        INTERINTRA_MODE     interintra_mode;
+        uint8_t             use_wedge_interintra;
+        int32_t             interintra_wedge_index;//inter_intra wedge index
+#endif
     } MbModeInfo;
 
     typedef struct {

@@ -29,10 +29,15 @@ Contains the Decoder Loop Filtering related functions*/
 #include "EbDecLF.h"
 #include "EbDecParseHelper.h"
 
+/*TO check if block is INTER or not*/
+static INLINE int32_t dec_is_inter_block_lf(const LFBlockParamL *lf_block_l) {
+    return /*is_intrabc_block(mbmi) ||*/ lf_block_l->ref_frame_0 > INTRA_FRAME;
+}
+
 /*Population of neighbour block LUMA params for each 4x4 block*/
 void fill_4x4_param_luma(LFBlockParamL* lf_block_l,
     int32_t tu_x, int32_t tu_y, int32_t stride,
-    TxSize tx_size, BlockModeInfo *mode_info)
+    TxSize tx_size, ModeInfo_t *mode_info)
 {
     const int txw = tx_size_wide_unit[tx_size];
     const int txh = tx_size_high_unit[tx_size];
@@ -79,6 +84,60 @@ void fill_4x4_param_uv(LFBlockParamUV* lf_block_uv, int32_t tu_x, int32_t tu_y,
                     lf_block_uv, sizeof(LFBlockParamUV));
             }
         }
+    }
+}
+
+/*Function for calculating the levels for each block*/
+static uint8_t dec_get_filter_level(FrameHeader*frm_hdr,
+    const LoopFilterInfoN *lfi_n,const int32_t dir_idx, int32_t plane,
+    LFBlockParamL* lf_block_l, int32_t *sb_delta_lf)
+{
+    const int32_t segment_id = lf_block_l->segment_id;
+    /*Added to address 4x4 problem*/
+    PredictionMode mode;
+    mode = (lf_block_l->mode == INTRA_MODE_4x4) ? DC_PRED : lf_block_l->mode;
+
+    if (frm_hdr->delta_lf_params.delta_lf_present) {
+        int32_t delta_lf = -1;
+
+        if (frm_hdr->delta_lf_params.delta_lf_multi) {
+            const int32_t delta_lf_idx = delta_lf_id_lut[plane][dir_idx];
+            delta_lf = sb_delta_lf[delta_lf_idx];
+        }
+        else
+            delta_lf = sb_delta_lf[0];
+
+        int32_t base_level;
+        if (plane == 0)
+            base_level = frm_hdr->loop_filter_params.filter_level[dir_idx];
+        else if (plane == 1)
+            base_level = frm_hdr->loop_filter_params.filter_level_u;
+        else
+            base_level = frm_hdr->loop_filter_params.filter_level_v;
+        int32_t lvl_seg = clamp(delta_lf + base_level, 0, MAX_LOOP_FILTER);
+        assert(plane >= 0 && plane <= 2);
+        const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir_idx];
+        if (seg_feature_active(&frm_hdr->segmentation_params, segment_id, seg_lf_feature_id)) {
+            const int32_t data =
+                get_segdata(&frm_hdr->segmentation_params, segment_id, seg_lf_feature_id);
+            lvl_seg = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
+        }
+
+        if (frm_hdr->loop_filter_params.mode_ref_delta_enabled) {
+            const int32_t scale = 1 << (lvl_seg >> 5);
+            lvl_seg += frm_hdr->loop_filter_params.ref_deltas
+                [lf_block_l->ref_frame_0] * scale;
+            if (lf_block_l->ref_frame_0 > INTRA_FRAME)
+                lvl_seg += frm_hdr->loop_filter_params.mode_deltas
+                    [mode_lf_lut[mode]] * scale;
+            lvl_seg = clamp(lvl_seg, 0, MAX_LOOP_FILTER);
+        }
+        return lvl_seg;
+    }
+    else {
+        ASSERT(mode < MB_MODE_COUNT);
+        return lfi_n->lvl[plane][segment_id][dir_idx][lf_block_l->ref_frame_0]
+            [mode_lf_lut[mode]];
     }
 }
 
@@ -146,13 +205,10 @@ static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
         if (!tu_edge) return ts;
         /*prepare outer edge parameters. deblock the edge if it's an edge of a TU*/
         {
-            const uint32_t curr_level = get_filter_level(frm_hdr, lf_info,
-                edge_dir, plane, sb_delta_lf,
-                lf_block_l_cur->segment_id, lf_block_l_cur->mode,
-                lf_block_l_cur->ref_frame_0);
-
+            const uint32_t curr_level = dec_get_filter_level(frm_hdr, lf_info,
+                edge_dir, plane, lf_block_l_cur, sb_delta_lf);
             const int32_t curr_skipped = lf_block_l_cur->skip
-                && is_inter_block_no_intrabc(lf_block_l_cur->ref_frame_0);
+                && dec_is_inter_block_lf(lf_block_l_cur);
 
             uint32_t level = curr_level;
             if (coord) {
@@ -175,13 +231,10 @@ static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
                         lf_block_uv_prev->tx_size_uv);
 
                 const uint32_t pv_lvl =
-                    get_filter_level(frm_hdr, lf_info,
-                        edge_dir, plane, sb_delta_lf_prev,
-                        lf_block_l_prev->segment_id, lf_block_l_prev->mode,
-                        lf_block_l_prev->ref_frame_0);
-
+                    dec_get_filter_level(frm_hdr, lf_info,
+                        edge_dir, plane, lf_block_l_prev, sb_delta_lf_prev);
                 const int32_t pv_skip = lf_block_l_prev->skip &&
-                    is_inter_block_no_intrabc(lf_block_l_prev->ref_frame_0);
+                    dec_is_inter_block_lf(lf_block_l_prev);
                 const BlockSize bsize =
                     get_plane_block_size(lf_block_l_prev->bsize,
                         sub_x, sub_y);
@@ -561,6 +614,113 @@ void dec_loop_filter_sb(
     }
 }
 
+/*To update the LoopFilterInfo paramters*/
+static void dec_update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl) {
+    int32_t lvl;
+
+    // For each possible value for the loop filter fill out limits
+    for (lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++) {
+        // Set loop filter parameters that control sharpness.
+        int32_t block_inside_limit = lvl >> ((sharpness_lvl > 0)
+                                     + (sharpness_lvl > 4));
+
+        if (sharpness_lvl > 0) {
+            if (block_inside_limit > (9 - sharpness_lvl))
+                block_inside_limit = (9 - sharpness_lvl);
+        }
+
+        if (block_inside_limit < 1) block_inside_limit = 1;
+
+        memset(lfi->lfthr[lvl].lim, block_inside_limit, SIMD_WIDTH);
+        memset(lfi->lfthr[lvl].mblim, (2 * (lvl + 2) + block_inside_limit),
+            SIMD_WIDTH);
+    }
+}
+
+/*Update the loop filter for the current frame */
+static void dec_av1_loop_filter_frame_init(FrameHeader *frm_hdr,
+    LoopFilterInfoN *lf_info, int32_t plane_start, int32_t plane_end)
+{
+    int32_t filt_lvl[MAX_MB_PLANE], filt_lvl_r[MAX_MB_PLANE];
+    int32_t plane;
+    int32_t seg_id;
+
+    /*n_shift is the multiplier for lf_deltas
+    the multiplier is 1 for when filter_lvl is between 0 and 31;
+    2 when filter_lvl is between 32 and 63*/
+    struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
+
+    lf->combine_vert_horz_lf = 1;
+
+    /*update sharpness limits*/
+    dec_update_sharpness(lf_info, lf->sharpness_level);
+
+    /*init hev threshold const vectors*/
+    for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
+        memset(lf_info->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
+
+
+    filt_lvl[0] = frm_hdr->loop_filter_params.filter_level[0];
+    filt_lvl[1] = frm_hdr->loop_filter_params.filter_level_u;
+    filt_lvl[2] = frm_hdr->loop_filter_params.filter_level_v;
+
+    filt_lvl_r[0] = frm_hdr->loop_filter_params.filter_level[1];
+    filt_lvl_r[1] = frm_hdr->loop_filter_params.filter_level_u;
+    filt_lvl_r[2] = frm_hdr->loop_filter_params.filter_level_v;
+
+    for (plane = plane_start; plane < plane_end; plane++) {
+        if (plane == 0 && !filt_lvl[0] && !filt_lvl_r[0])
+            break;
+        else if (plane == 1 && !filt_lvl[1])
+            continue;
+        else if (plane == 2 && !filt_lvl[2])
+            continue;
+
+        for (seg_id = 0; seg_id < MAX_SEGMENTS; seg_id++) {
+            for (int32_t dir = 0; dir < 2; ++dir) {
+
+                int32_t lvl_seg = (dir == 0) ? filt_lvl[plane]
+                                  : filt_lvl_r[plane];
+                assert(plane >= 0 && plane <= 2);
+
+                const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir];
+                if (seg_feature_active(&frm_hdr->segmentation_params,
+                    seg_id, seg_lf_feature_id))
+                {
+                    const int32_t data = get_segdata(&frm_hdr->
+                        segmentation_params, seg_id, seg_lf_feature_id);
+                    lvl_seg = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
+                }
+
+                if (!lf->mode_ref_delta_enabled) {
+                    /*we could get rid of this if we assume that deltas are
+                    set to zero when not in use; decoder always uses deltas*/
+                    memset(lf_info->lvl[plane][seg_id][dir], lvl_seg,
+                        sizeof(lf_info->lvl[plane][seg_id][dir]));
+                }
+                else {
+                    int32_t ref, mode;
+                    const int32_t scale = 1 << (lvl_seg >> 5);
+                    const int32_t intra_lvl =
+                        lvl_seg + lf->ref_deltas[INTRA_FRAME] * scale;
+                    lf_info->lvl[plane][seg_id][dir][INTRA_FRAME][0] =
+                        (uint8_t)clamp(intra_lvl, 0, MAX_LOOP_FILTER);
+
+                    for (ref = LAST_FRAME; ref < REF_FRAMES; ++ref) {
+                        for (mode = 0; mode < MAX_MODE_LF_DELTAS; ++mode) {
+                            const int32_t inter_lvl =
+                                lvl_seg + lf->ref_deltas[ref] * scale +
+                                lf->mode_deltas[mode] * scale;
+                            lf_info->lvl[plane][seg_id][dir][ref][mode] =
+                                (uint8_t)clamp(inter_lvl, 0, MAX_LOOP_FILTER);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /*Frame level function to trigger loop filter for each superblock*/
 void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
     EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
@@ -586,12 +746,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
     uint32_t picture_height_in_sb   =
         (seq_header->max_frame_height + sb_size_h- 1) / sb_size_h;
 
-    frm_hdr->loop_filter_params.combine_vert_horz_lf = 1;
-    /*init hev threshold const vectors*/
-    for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
-        memset(lf_info->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
-
-    eb_av1_loop_filter_frame_init(frm_hdr, lf_info, plane_start, plane_end);
+    dec_av1_loop_filter_frame_init(frm_hdr, lf_info, plane_start, plane_end);
 
     /*Loop over a frame : tregger dec_loop_filter_sb for each SB*/
     for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {

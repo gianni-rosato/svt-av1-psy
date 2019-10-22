@@ -125,7 +125,7 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt,
     bool do_memset = true;
     int left_available = (mi_col > (uint32_t)dec_mod_ctxt->cur_tile_info->mi_col_start);
     if (left_available) {
-        BlockModeInfo *left_mode = get_left_mode_info(dec_handle, mi_row, mi_col, sb_info);
+        ModeInfo_t *left_mode = get_left_mode_info(dec_handle, mi_row, mi_col, sb_info);
         if (left_mode->skip && left_mode->sb_type == seq->sb_size) {
             do_memset = false;
         }

@@ -281,14 +281,6 @@ extern "C" {
     static INLINE int32_t is_comp_ref_allowed(BlockSize bsize) {
         return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
     }
-
-    static INLINE int32_t tile_log2(int32_t blk_size, int32_t target) {
-        int32_t k;
-        for (k = 0; (blk_size << k) < target; k++) {
-        }
-        return k;
-}
-
 #ifdef __cplusplus
 }
 #endif

@@ -96,12 +96,46 @@ static const BlockSize Partition_Subsize[10][BlockSizeS_ALL] =
     BLOCK_INVALID, BLOCK_INVALID, BLOCK_INVALID }
 };
 
+/*TODO: Harmonize with encoder structure */
+typedef union  IntMvDec {
+    uint32_t as_int;
+    MV as_mv;
+} IntMvDec; /* facilitates faster equality tests and copies */
+typedef struct CandidateMvDec {
+    IntMvDec this_mv;
+    IntMvDec comp_mv;
+    int32_t weight;
+} CandidateMvDec;
 #define MFMV_STACK_SIZE 3
 typedef struct TemporalMvRef {
     /* Motion Filed MV */
-    IntMv   mf_mv0;
+    IntMvDec   mf_mv0;
     int8_t     ref_frame_offset;
 } TemporalMvRef;
+
+typedef struct FilterIntraModeInfo {
+    /*!< Specifies the type of intra filtering, and can represent any of the following:
+     * FILTER_DC_PRED, FILTER_V_PRED, FILTER_H_PRED, FILTER_D157_PRED, FILTER_PAETH_PRED */
+    FilterIntraMode filter_intra_mode;
+
+    /*!< This bit specifies whether or not intra filtering can be used. */
+    uint8_t use_filter_intra;
+} FilterIntraModeInfo_t;
+
+typedef struct InterIntraModeParams {
+    /*!< Specifies the type of intra prediction to be used */
+    InterIntraMode interintra_mode;
+
+    /*!< equal to 1 specifies that wedge blending should be used.
+        * wedge_interintra equal to 0 specifies that intra blending should be used. */
+    uint8_t wedge_interintra;
+
+    /*!< Used to derive the direction and offset of the wedge mask used during blending. */
+    uint8_t interintra_wedge_index;
+
+    /*!< Specifies the sign of the wedge blend. */
+    // int interintra_wedge_sign; Always 0
+} InterIntraModeParams;
 
 typedef struct TransformInfo {
     /*!< Specifies the transform size to be used for this TU. */
@@ -121,6 +155,94 @@ typedef struct TransformInfo {
 
 } TransformInfo_t;
 
+typedef struct ModeInfo_t {
+    // Common for both INTER and INTRA blocks
+    BlockSize          sb_type;
+    PredictionMode      mode;
+    int8_t              skip;
+
+    PartitionType       partition;
+
+    /*!< 1 indicates that this block will use some default settings and skip mode info.
+        * 0 indicates that the mode info is not skipped. */
+    int8_t              skip_mode;
+
+    /*!< Specifies which segment is associated with the current intra block being decoded. */
+    int8_t segment_id;
+
+    /*!< Equal to 1 specifies that the segment_id is taken from the segmentation map. */
+    int8_t seg_id_predicted;
+
+    /*!< For Lossy mode   : Specifies number of Luma TUs in a block
+         For Lossless mode: Specifies number of Luma TUs for a block of size other than
+                            128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
+    uint8_t         num_luma_tus;
+
+    /*!< Offset of first Luma transform info from strat of SB pointer */
+    uint16_t        first_luma_tu_offset;
+
+    /*!< For Lossy mode   : Specifies number of Chroma TUs in a block
+         For Lossless mode: Specifies number of Chroma TUs for a block of size other than
+                            128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
+    uint8_t         num_chroma_tus;
+
+    /*!< Offset of first Chroma transform info from strat of SB pointer */
+    uint16_t        first_chroma_tu_offset;
+
+    // Only for INTRA blocks
+    UvPredictionMode   uv_mode;
+
+    uint8_t             use_intrabc;
+
+    // Only for INTER blocks
+
+    MvReferenceFrame    ref_frame[2];
+    IntMvDec           mv[2];
+
+    uint16_t            ref_mv_idx;
+
+    // interinter members
+
+    InterIntraModeParams    interintra_mode;
+
+    /*!< Specifies the type of motion compensation to perform. */
+    MotionMode         motion_mode;
+
+    InterIntraMode     is_inter_intra;
+
+    /*!< 0 indicates that a distance based weighted scheme should be used for blending.
+     *   1 indicates that the averaging scheme should be used for blending.*/
+    uint8_t            compound_idx;
+
+    InterInterCompoundData  inter_inter_compound;
+    FilterIntraModeInfo_t  filter_intra_mode_info;
+
+    /*!< Specifies how the motion vector used by inter prediction is obtained when using compound prediction. */
+    uint8_t             compound_mode;
+
+    /*!< Specifies the type of filter used in inter prediction. Values 0..3 are allowed
+    * with the same interpretation as for interpolation_filter. One filter type is specified
+    * for the vertical filter direction and one for the horizontal filter direction.*/
+    uint32_t interp_filters;
+
+    /*!< Index of the alpha Cb and alpha Cr combination */
+    uint8_t cfl_alpha_idx;
+
+    /*!< Contains the sign of the alpha values for U and V packed together into a single syntax element. */
+    uint8_t cfl_alpha_signs;
+
+    /*!< The actual prediction angle is the base angle + (angle_delta * step). */
+    int8_t angle_delta[PLANE_TYPES];
+
+    // Number of base colors for Y (0) and UV (1)
+    uint8_t palette_size[2];
+
+#if MODE_INFO_DBG
+    int32_t mi_row;
+    int32_t mi_col;
+#endif
+} ModeInfo_t;
+
 typedef struct SBInfo {
     int8_t      *sb_cdef_strength; /*!< At 64x64 blk level */
     int32_t     *sb_delta_q; /*!< At SB level */
@@ -130,28 +252,28 @@ typedef struct SBInfo {
 
     int32_t         *sb_coeff[MAX_MB_PLANE];
 
-    BlockModeInfo   *sb_mode_info;
+    ModeInfo_t      *sb_mode_info;
 
 } SBInfo;
 
 typedef struct PartitionInfo {
     /*!< Specifies the vertical location of the block in units of 4x4 luma samples. */
-    uint16_t        mi_row;
+    uint16_t     mi_row;
 
     /*!< Specifies the horizontal location of the block in units of 4x4 luma samples. */
-    uint16_t        mi_col;
+    uint16_t     mi_col;
 
-    BlockModeInfo   *mi;
+    ModeInfo_t  *mi;
 
-    SBInfo          *sb_info;
+    SBInfo      *sb_info;
 
-    BlockModeInfo   *left_mbmi;
+    ModeInfo_t  *left_mbmi;
 
-    BlockModeInfo   *above_mbmi;
+    ModeInfo_t  *above_mbmi;
 
-    BlockModeInfo   *chroma_left_mbmi;
+    ModeInfo_t  *chroma_left_mbmi;
 
-    BlockModeInfo   *chroma_above_mbmi;
+    ModeInfo_t  *chroma_above_mbmi;
 
     /*!< Indicates if the information from the block above cab be used on the luma plane. */
     uint8_t up_available;
@@ -202,7 +324,7 @@ typedef struct PartitionInfo {
     SgrprojInfo sgrproj_info[MAX_MB_PLANE];
 
     /*!< Motion vectors available in the stack */
-    CandidateMv ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
+    CandidateMvDec ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];
 
     /*!< Represents an offset used in derivation of the input index to the cb component scaling function */
     uint16_t cb_offset[MAX_MB_PLANE];

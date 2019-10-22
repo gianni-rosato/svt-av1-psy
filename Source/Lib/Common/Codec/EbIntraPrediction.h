@@ -133,8 +133,6 @@ int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int3
     NEED_BOTTOMLEFT = 1 << 5,
 };
 
-int is_smooth(const BlockModeInfo *mbmi, int plane);
-
 extern const uint8_t extend_modes[INTRA_MODES];
 
 /* TODO: Need to harmonize with fun from EbAdaptiveMotionVectorPrediction.c */

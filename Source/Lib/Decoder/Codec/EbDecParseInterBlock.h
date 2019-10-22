@@ -42,6 +42,16 @@ extern "C" {
 // 32 bit range for efficient load/store operations.
 #define REFMVS_LIMIT ((1 << 12) - 1)
 
+#define MV_BORDER (16 << 3)  // Allow 16 pels in 1/8th pel units
+#define MAX_DIFFWTD_MASK_BITS 1
+#define NELEMENTS(x) (int)(sizeof(x) / sizeof(x[0]))
+#define MAX_OFFSET_WIDTH 64
+#define MAX_OFFSET_HEIGHT 0
+
+/* Harmonize with encoder */
+#define INTRABC_DELAY_PIXELS 256
+#define INTRABC_DELAY_SB64 (INTRABC_DELAY_PIXELS / 64)
+
 static const MV kZeroMv = { 0, 0 };
 
 extern  int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
@@ -51,11 +61,12 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
     int mi_row, int mi_col, SvtReader *r);
 
 void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    MvReferenceFrame ref_frame, CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
-    IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv global_mvs[2],
+    MvReferenceFrame ref_frame, CandidateMvDec ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
+    IntMvDec mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMvDec global_mvs[2],
     int mi_row, int mi_col, int16_t *mode_context, MvCount *mv_cnt);
+void get_mv_projection(MV *output, MV ref, int num, int den);
 void assign_intrabc_mv(EbDecHandle *dec_handle,
-    IntMv ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
+    IntMvDec ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
     PartitionInfo_t *pi, int mi_row, int mi_col, SvtReader *r);
 void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int mi_row, int mi_col, SvtReader *r);

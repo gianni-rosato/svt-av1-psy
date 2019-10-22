@@ -318,7 +318,7 @@ extern "C" {
     }
     static INLINE int is_rect_tx_allowed(/*const MacroBlockD *xd,*/
         const MbModeInfo *mbmi) {
-        return is_rect_tx_allowed_bsize(mbmi->block_mi.sb_type) /*&&
+        return is_rect_tx_allowed_bsize(mbmi->sb_type) /*&&
             !xd->lossless[mbmi->segment_id]*/;
     }
 

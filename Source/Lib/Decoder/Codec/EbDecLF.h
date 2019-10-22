@@ -22,6 +22,16 @@ Contains the Decoder Loop Filtering related functions*/
 
 extern const int32_t mode_lf_lut[];
 
+static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
+  { SEG_LVL_ALT_LF_Y_V, SEG_LVL_ALT_LF_Y_H },
+  { SEG_LVL_ALT_LF_U, SEG_LVL_ALT_LF_U },
+  { SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V }
+};
+
+static const int delta_lf_id_lut[MAX_MB_PLANE][2] = { { 0, 1 },
+                                                      { 2, 2 },
+                                                      { 3, 3 } };
+
 typedef struct LFBlockParamL {
     int8_t              skip;
     /*!< Specifies which segment is associated with the
@@ -46,7 +56,7 @@ typedef struct LFCtxt {
 
 void fill_4x4_param_luma(LFBlockParamL* lf_block_l,
     int32_t tu_x, int32_t tu_y, int32_t stride,
-    TxSize tx_size, BlockModeInfo *mode_info);
+    TxSize tx_size, ModeInfo_t *mode_info);
 
 void fill_4x4_param_uv(LFBlockParamUV* lf_block_uv, int32_t tu_x, int32_t tu_y,
     int32_t stride, TxSize tx_size, int32_t sub_x, int32_t sub_y);

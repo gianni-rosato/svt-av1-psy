@@ -148,12 +148,11 @@ int svt_dec_out_buf(
     uint32_t i, sx = 0, sy = 0;
 
     if (out_img->height != ht || out_img->width != wd ||
-        out_img->color_fmt != recon_picture_buf->color_format ||
-        out_img->bit_depth != (EbBitDepth)recon_picture_buf->bit_depth)
+        out_img->color_fmt != recon_picture_buf->color_format)
     {
         int size = (dec_handle_ptr->seq_header.color_config.bit_depth ==
                     EB_EIGHT_BIT) ? sizeof(uint8_t) : sizeof(uint16_t);
-        int luma_size = size * ht * wd;
+        size = size * ht * wd;
         int chroma_size = -1;
 
         out_img->color_fmt = recon_picture_buf->color_format;
@@ -163,19 +162,19 @@ int svt_dec_out_buf(
                 out_img->cr_stride = INT32_MAX;
                 break;
             case EB_YUV420:
-                out_img->cb_stride = (wd + 1) >> 1;
-                out_img->cr_stride = (wd + 1) >> 1;
-                chroma_size = size * (((wd + 1) >> 1) * ((ht + 1) >> 1));
+                out_img->cb_stride = wd / 2;
+                out_img->cr_stride = wd / 2;
+                chroma_size = size >> 2;
                 break;
             case EB_YUV422:
-                out_img->cb_stride = (wd + 1) >> 1;
-                out_img->cr_stride = (wd + 1) >> 1;
-                chroma_size = size * (((wd + 1) >> 1) * ht);
+                out_img->cb_stride = wd / 2;
+                out_img->cr_stride = wd / 2;
+                chroma_size = size >> 1;
                 break;
             case EB_YUV444:
                 out_img->cb_stride = wd;
                 out_img->cr_stride = wd;
-                chroma_size = size * ht * wd;
+                chroma_size = size;
                 break;
             default:
                 printf("Unsupported colour format. \n");
@@ -185,18 +184,14 @@ int svt_dec_out_buf(
             out_img->y_stride = wd;
             out_img->width = wd;
             out_img->height = ht;
-            if (out_img->bit_depth != (EbBitDepth)recon_picture_buf->bit_depth) {
-                printf("Warning : Output bit depth conversion not supported."
-                    " Output depth set to %d. ", recon_picture_buf->bit_depth);
-                out_img->bit_depth = (EbBitDepth)recon_picture_buf->bit_depth;
-            }
 
             free(out_img->luma);
             if (recon_picture_buf->color_format != EB_YUV400) {
                 free(out_img->cb);
                 free(out_img->cr);
             }
-            out_img->luma = (uint8_t*)malloc(luma_size);
+
+            out_img->luma = (uint8_t*)malloc(size);
             if (recon_picture_buf->color_format != EB_YUV400) {
             out_img->cb = (uint8_t*)malloc(chroma_size);
             out_img->cr = (uint8_t*)malloc(chroma_size);
@@ -235,15 +230,6 @@ int svt_dec_out_buf(
             + (out_img->origin_x >> sx)) << use_high_bit_depth);
     }
 
-    int offset_w = 1, offset_h = 1;
-    if (recon_picture_buf->color_format == EB_YUV444) {
-        offset_w = 0;
-        offset_h = 0;
-    }
-    else if (recon_picture_buf->color_format == EB_YUV422) {
-        offset_h = 0;
-    }
-
     /* Memcpy to dst buffer */
     {
         if (recon_picture_buf->bit_depth == EB_8BIT) {
@@ -264,8 +250,8 @@ int svt_dec_out_buf(
                 src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
-                    memcpy(dst, src, ((wd + offset_w) >> sx));
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(dst, src, wd >> sx);
                     dst += out_img->cb_stride;
                     src += recon_picture_buf->stride_cb;
                 }
@@ -275,8 +261,8 @@ int svt_dec_out_buf(
                 src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
-                    memcpy(dst, src, ((wd + offset_w) >> sx));
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(dst, src, wd >> sx);
                     dst += out_img->cr_stride;
                     src += recon_picture_buf->stride_cr;
                 }
@@ -303,8 +289,8 @@ int svt_dec_out_buf(
                 pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
-                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + offset_w) >> sx));
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
                     pu2_dst += out_img->cb_stride;
                     pu2_src += recon_picture_buf->stride_cb;
                 }
@@ -314,8 +300,8 @@ int svt_dec_out_buf(
                 pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
-                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + offset_w) >> sx));
+                for (i = 0; i < ht >> sy; i++) {
+                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd >> sx);
                     pu2_dst += out_img->cr_stride;
                     pu2_src += recon_picture_buf->stride_cr;
                 }

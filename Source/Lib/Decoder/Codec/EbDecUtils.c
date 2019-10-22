@@ -162,8 +162,8 @@ void pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr) {
             generate_padding16_bit(
                 recon_picture_buf->buffer_cb,
                 recon_picture_buf->stride_cb << 1,
-                ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
-                (frame_size->frame_height + sy) >> sy,
+                frame_size->superres_upscaled_width >> sx << 1,
+                frame_size->frame_height >> sy,
                 recon_picture_buf->origin_x >> sx << 1,
                 recon_picture_buf->origin_y >> sy);
 
@@ -171,8 +171,8 @@ void pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr) {
             generate_padding16_bit(
                 recon_picture_buf->buffer_cr,
                 recon_picture_buf->stride_cr << 1,
-                ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
-                (frame_size->frame_height + sy) >> sy,
+                frame_size->superres_upscaled_width >> sx << 1,
+                frame_size->frame_height >> sy,
                 recon_picture_buf->origin_x >> sx << 1,
                 recon_picture_buf->origin_y >> sy);
         }

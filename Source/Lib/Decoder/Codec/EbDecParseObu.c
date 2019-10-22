@@ -23,14 +23,14 @@
 #include"EbAv1Structs.h"
 #include "EbDecStruct.h"
 #include "EbDecBlock.h"
+
 #include "EbDecHandle.h"
+#include "EbDecSuperRes.h"
 
 #include "EbObuParse.h"
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
-#include "EbRestoration.h"
 #include "EbDecRestoration.h"
-#include "EbSuperRes.h"
 
 #include "EbDecParseObuUtil.h"
 
@@ -50,9 +50,6 @@
 
 int remap_lr_type[4] = {
     RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ };
-
-void av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader*seq_hdr,
-    EbPictureBufferDesc *recon_picture_src);
 
 /* Checks that the remaining bits start with a 1 and ends with 0s.
  * It consumes an additional byte, if already byte aligned before the check. */
@@ -80,6 +77,15 @@ void compute_image_size(SeqHeader *seq_header, FrameHeader *frm) {
     frm->mi_rows = 2 * ((frm->frame_size.frame_height + 7) >> 3);
     frm->mi_stride = (ALIGN_POWER_OF_TWO(seq_header->max_frame_width,
         MAX_SB_SIZE_LOG2)) >> MI_SIZE_LOG2;
+}
+
+/*TODO: Harmonize with encoder function */
+// Find smallest k>=0 such that (blk_size << k) >= target
+static int32_t dec_tile_log2(int32_t blk_size, int32_t target) {
+    int32_t k;
+    for (k = 0; (blk_size << k) < target; k++) {
+    }
+    return k;
 }
 
 // Returns 1 when OBU type is valid, and 0 otherwise.
@@ -671,11 +677,11 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
 
     tile_info->max_tile_width_sb = MAX_TILE_WIDTH >> sb_size;
     tile_info->max_tile_height_sb = (MAX_TILE_AREA / MAX_TILE_WIDTH) >> sb_size;
-    tile_info->min_log2_tile_cols = tile_log2(tile_info->max_tile_width_sb, sb_cols);
-    tile_info->max_log2_tile_cols = tile_log2(1, MIN(sb_cols, MAX_TILE_COLS));
-    tile_info->max_log2_tile_rows = tile_log2(1, MIN(sb_rows, MAX_TILE_ROWS));
+    tile_info->min_log2_tile_cols = dec_tile_log2(tile_info->max_tile_width_sb, sb_cols);
+    tile_info->max_log2_tile_cols = dec_tile_log2(1, MIN(sb_cols, MAX_TILE_COLS));
+    tile_info->max_log2_tile_rows = dec_tile_log2(1, MIN(sb_rows, MAX_TILE_ROWS));
     tile_info->min_log2_tiles = MAX(tile_info->min_log2_tile_cols,
-        tile_log2(max_tile_area_sb, sb_rows * sb_cols));
+        dec_tile_log2(max_tile_area_sb, sb_rows * sb_cols));
     tile_info->uniform_tile_spacing_flag = dec_get_bits(bs, 1);
     PRINT_FRAME("uniform_tile_spacing_flag", tile_info->uniform_tile_spacing_flag);
     if (tile_info->uniform_tile_spacing_flag) {
@@ -735,7 +741,7 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
 
         tile_info->tile_col_start_sb[i] = frame_info->mi_cols;
         tile_info->tile_cols = i;
-        tile_info->tile_cols_log2 = tile_log2(1, tile_info->tile_cols);
+        tile_info->tile_cols_log2 = dec_tile_log2(1, tile_info->tile_cols);
         if (tile_info->min_log2_tiles > 0)
             max_tile_area_sb = (sb_rows * sb_cols) >> (tile_info->min_log2_tiles + 1);
         else
@@ -755,7 +761,7 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
 
         tile_info->tile_row_start_sb[i] = frame_info->mi_rows;
         tile_info->tile_rows = i;
-        tile_info->tile_rows_log2 = tile_log2(1, tile_info->tile_rows);
+        tile_info->tile_rows_log2 = dec_tile_log2(1, tile_info->tile_rows);
     }
 
     // Bitstream conformance
@@ -2441,18 +2447,6 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     header_bytes = (end_position - start_position) / 8;
     obu_header->payload_size -= header_bytes;
 
-    dec_handle_ptr->cm.mi_cols = dec_handle_ptr->frame_header.mi_cols;
-    dec_handle_ptr->cm.mi_rows = dec_handle_ptr->frame_header.mi_rows;
-    dec_handle_ptr->cm.mi_stride = dec_handle_ptr->frame_header.mi_stride;
-    dec_handle_ptr->cm.bit_depth =
-        dec_handle_ptr->seq_header.color_config.bit_depth;
-    dec_handle_ptr->cm.subsampling_x =
-        dec_handle_ptr->seq_header.color_config.subsampling_x;
-    dec_handle_ptr->cm.subsampling_y =
-        dec_handle_ptr->seq_header.color_config.subsampling_y;
-    dec_handle_ptr->cm.frm_size = dec_handle_ptr->frame_header.frame_size;
-    dec_handle_ptr->cm.tiles_info = dec_handle_ptr->frame_header.tiles_info;
-
     for (int tile_num = tg_start; tile_num <= tg_end; tile_num++) {
         tile_row = tile_num / tiles_info->tile_cols;
         tile_col = tile_num % tiles_info->tile_cols;
@@ -2521,7 +2515,7 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
              frame_header->CDEF_params.cdef_y_strength[0] ||
              frame_header->CDEF_params.cdef_uv_strength[0]);
 
-        int32_t do_upscale = !av1_superres_unscaled(&dec_handle_ptr->
+        int32_t do_upscale = av1_superres_scaled(&dec_handle_ptr->
                              frame_header.frame_size);
 
         const int opt_lr = !do_cdef && !do_upscale;
@@ -2537,15 +2531,17 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 0);
 
             /*Calling cdef frame level function*/
-            if (do_cdef)
-                svt_cdef_frame(dec_handle_ptr);
+            if (do_cdef) {
+                if (dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf->bit_depth == EB_8BIT)
+                    svt_cdef_frame(dec_handle_ptr);
+                else
+                    svt_cdef_frame_hbd(dec_handle_ptr);
+            }
 
             if (do_upscale) {
-                av1_superres_upscale(&dec_handle_ptr->cm, &dec_handle_ptr->frame_header,
+                av1_superres_upscale(&dec_handle_ptr->frame_header,
                     &dec_handle_ptr->seq_header,
                     dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf);
-                dec_handle_ptr->cm.frm_size.frame_width =
-                    dec_handle_ptr->frame_header.frame_size.frame_width;
             }
 
             if (do_loop_restoration) {

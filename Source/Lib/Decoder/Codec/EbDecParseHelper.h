@@ -10,6 +10,10 @@
 
 #define ACCT_STR __func__
 
+static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {
+  DC_PRED, V_PRED, H_PRED, D157_PRED, DC_PRED
+};
+
 typedef struct MvCount{
     uint8_t newmv_count;
     uint8_t num_mv_found[MODE_CTX_REF_FRAMES];
@@ -24,10 +28,14 @@ static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
     return seg->feature_data[segment_id][feature_id];
 }
 
+static INLINE int has_second_ref(const ModeInfo_t *mbmi) {
+    return mbmi->ref_frame[1] > INTRA_FRAME;
+}
+
 static INLINE CflAllowedType is_cfl_allowed(PartitionInfo_t *xd,
     EbColorConfig* color_cfg, uint8_t *lossless_array)
 {
-    const BlockModeInfo *mbmi = xd->mi;
+    const ModeInfo_t *mbmi = xd->mi;
     const BlockSize bsize = mbmi->sb_type;
     assert(bsize < BlockSizeS_ALL);
     if (lossless_array[mbmi->segment_id]) {
@@ -43,12 +51,41 @@ static INLINE CflAllowedType is_cfl_allowed(PartitionInfo_t *xd,
         block_size_high[bsize] <= 32);
 }
 
-extern int is_inter_block(const BlockModeInfo *mbmi);
-extern int is_intrabc_block(const BlockModeInfo *mbmi);
+static INLINE int is_intrabc_block(const ModeInfo_t *mbmi) {
+    return mbmi->use_intrabc;
+}
+
+/* TODO : Harmonize with is_inter_block*/
+static INLINE int dec_is_inter_block(const ModeInfo_t *mbmi) {
+    return is_intrabc_block(mbmi) || mbmi->ref_frame[0] > INTRA_FRAME;
+}
 
 static INLINE int allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
     return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
         block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+}
+
+static INLINE uint8_t *set_levels(uint8_t *const levels_buf, const int width) {
+    return levels_buf + TX_PAD_TOP * (width + TX_PAD_HOR);
+}
+
+static INLINE int get_txb_bwl(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    return tx_size_wide_log2[tx_size];
+}
+
+static INLINE int get_padded_idx(const int idx, const int bwl) {
+    return idx + ((idx >> bwl) << TX_PAD_HOR_LOG2);
+}
+
+static INLINE int get_txb_wide(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    return tx_size_wide[tx_size];
+}
+
+static INLINE int get_txb_high(TxSize tx_size) {
+    tx_size = av1_get_adjusted_tx_size(tx_size);
+    return tx_size_high[tx_size];
 }
 
 static INLINE int max_block_wide(PartitionInfo_t *part_info, int plane_bsize, int subx) {
@@ -72,7 +109,7 @@ TxSize read_selected_tx_size(PartitionInfo_t *xd, SvtReader *r,
 PredictionMode read_intra_mode(SvtReader *r, AomCdfProb *cdf);
 UvPredictionMode read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r,
     CflAllowedType cfl_allowed, PredictionMode y_mode);
-IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
+IntMvDec gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp,
     BlockSize bsize, int mi_col, int mi_row, int is_integer);
 
 void set_segment_id(EbDecHandle *dec_handle, int mi_offset,
@@ -82,6 +119,8 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
 
 int neg_deinterleave(const int diff, int ref, int max);
 int get_intra_inter_context(PartitionInfo_t *xd);
+int dec_is_chroma_reference(int mi_row, int mi_col, BlockSize bsize,
+    int subsampling_x, int subsampling_y);
 int get_comp_reference_type_context(const PartitionInfo_t *xd);
 int seg_feature_active(SegmentationParams *seg, int segment_id,
     SEG_LVL_FEATURES feature_id);
