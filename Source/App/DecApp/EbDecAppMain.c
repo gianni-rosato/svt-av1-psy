@@ -22,8 +22,7 @@
 #endif
 
 int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli,
-                    EbSvtAv1DecConfiguration *config)
-{
+    EbSvtAv1DecConfiguration *config) {
     switch (cli->fmt) {
     case EB_YUV400:
         pic_buffer->cb_stride = INT32_MAX;

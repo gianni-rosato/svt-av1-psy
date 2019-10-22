@@ -130,7 +130,30 @@ int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
 int is_masked_compound_type(COMPOUND_TYPE type) {
     return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
 }
-
+int is_interinter_compound_used(COMPOUND_TYPE type,
+    BlockSize sb_type) {
+    const int comp_allowed = is_comp_ref_allowed(sb_type);
+    switch (type) {
+    case COMPOUND_AVERAGE:
+    case COMPOUND_DISTWTD:
+    case COMPOUND_DIFFWTD: return comp_allowed;
+    case COMPOUND_WEDGE:
+        return comp_allowed && wedge_params_lookup[sb_type].bits > 0;
+    default: assert(0); return 0;
+    }
+}
+int is_any_masked_compound_used(BlockSize sb_type) {
+    COMPOUND_TYPE comp_type;
+    int i;
+    if (!is_comp_ref_allowed(sb_type)) return 0;
+    for (i = 0; i < COMPOUND_TYPES; i++) {
+        comp_type = (COMPOUND_TYPE)i;
+        if (is_masked_compound_type(comp_type) &&
+            is_interinter_compound_used(comp_type, sb_type))
+            return 1;
+    }
+    return 0;
+}
 /************************************************
 * CABAC Encoder Constructor
 ************************************************/
@@ -1557,6 +1580,16 @@ static INLINE int is_inter_mode(PredictionMode mode)
     return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
 }
 
+static INLINE int is_global_mv_block(
+    const PredictionMode          mode,
+    const BlockSize               bsize,
+    TransformationType            type)
+{
+    return (mode == GLOBALMV || mode == GLOBAL_GLOBALMV)
+            && type > TRANSLATION
+            && is_motion_variation_allowed_bsize(bsize);
+}
+
 #if OBMC_FLAG
 MotionMode obmc_motion_mode_allowed(
     const PictureControlSet         *picture_control_set_ptr,
@@ -1596,7 +1629,6 @@ MotionMode obmc_motion_mode_allowed(
         return SIMPLE_TRANSLATION;
 }
 #endif
-
 MotionMode motion_mode_allowed(
     const PictureControlSet       *picture_control_set_ptr,
     const CodingUnit              *cu_ptr,
@@ -2047,6 +2079,11 @@ MvJointType av1_get_mv_joint_diff(int32_t diff[2]) {
         return diff[1] == 0 ? MV_JOINT_ZERO : MV_JOINT_HNZVZ;
     else
         return diff[1] == 0 ? MV_JOINT_HZVNZ : MV_JOINT_HNZVNZ;
+}
+
+static INLINE int32_t is_mv_valid(const MV *mv) {
+    return mv->row > MV_LOW && mv->row < MV_UPP && mv->col > MV_LOW &&
+        mv->col < MV_UPP;
 }
 
 void eb_av1_encode_mv(
@@ -3360,9 +3397,8 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
         // Explicit tiles with configurable tile widths and heights
         printf("ERROR[AN]:  NON uniform_tile_spacing_flag not supported yet\n");
         //// columns
-        // int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         //for (i = 0; i < cm->tile_cols; i++) {
-        //    size_sb = (cm->tile_col_start_mi[i + 1] - cm->tile_col_start_mi[i]) >> sb_size_log2;
+        //    size_sb = cm->tile_col_start_sb[i + 1] - cm->tile_col_start_sb[i];
         //    wb_write_uniform(wb, AOMMIN(width_sb, cm->max_tile_width_sb),
         //        size_sb - 1);
         //    width_sb -= size_sb;
@@ -3371,7 +3407,7 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
 
         //// rows
         //for (i = 0; i < cm->tile_rows; i++) {
-        //    size_sb = (cm->tile_row_start_mi[i + 1] - cm->tile_row_start_mi[i]) >> sb_size_log2;
+        //    size_sb = cm->tile_row_start_sb[i + 1] - cm->tile_row_start_sb[i];
         //    wb_write_uniform(wb, AOMMIN(height_sb, cm->max_tile_height_sb),
         //        size_sb - 1);
         //    height_sb -= size_sb;
@@ -3408,7 +3444,6 @@ void eb_av1_calculate_tile_cols(PictureParentControlSet * pcs_ptr) {
     int sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
     int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
     int i;
-    int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
 
     if (cm->tiles_info.uniform_tile_spacing_flag) {
         int start_sb;
@@ -3416,11 +3451,11 @@ void eb_av1_calculate_tile_cols(PictureParentControlSet * pcs_ptr) {
         size_sb >>= cm->log2_tile_cols;
         assert(size_sb > 0);
         for (i = 0, start_sb = 0; start_sb < sb_cols; i++) {
-            cm->tiles_info.tile_col_start_mi[i] = start_sb << sb_size_log2;
+            cm->tiles_info.tile_col_start_sb[i] = start_sb;
             start_sb += size_sb;
         }
         cm->tiles_info.tile_cols = i;
-        cm->tiles_info.tile_col_start_mi[i] = sb_cols << sb_size_log2;
+        cm->tiles_info.tile_col_start_sb[i] = sb_cols;
         cm->tiles_info.min_log2_tile_rows = AOMMAX(cm->tiles_info.min_log2_tiles - cm->log2_tile_cols, 0);
         cm->tiles_info.max_tile_height_sb = sb_rows >> cm->tiles_info.min_log2_tile_rows;
 
@@ -3430,11 +3465,9 @@ void eb_av1_calculate_tile_cols(PictureParentControlSet * pcs_ptr) {
     else {
         int max_tile_area_sb = (sb_rows * sb_cols);
         int widest_tile_sb = 1;
-        int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         cm->log2_tile_cols = tile_log2(1, cm->tiles_info.tile_cols);
         for (i = 0; i < cm->tiles_info.tile_cols; i++) {
-            int size_sb = (cm->tiles_info.tile_col_start_mi[i + 1] -
-                cm->tiles_info.tile_col_start_mi[i]) >> sb_size_log2;
+            int size_sb = cm->tiles_info.tile_col_start_sb[i + 1] - cm->tiles_info.tile_col_start_sb[i];
             widest_tile_sb = AOMMAX(widest_tile_sb, size_sb);
         }
         if (cm->tiles_info.min_log2_tiles)
@@ -3451,18 +3484,17 @@ void eb_av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
     int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
     int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
     int start_sb, size_sb, i;
-    int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
 
     if (cm->tiles_info.uniform_tile_spacing_flag) {
         size_sb = ALIGN_POWER_OF_TWO(sb_rows, cm->log2_tile_rows);
         size_sb >>= cm->log2_tile_rows;
         assert(size_sb > 0);
         for (i = 0, start_sb = 0; start_sb < sb_rows; i++) {
-            cm->tiles_info.tile_row_start_mi[i] = start_sb << sb_size_log2;
+            cm->tiles_info.tile_row_start_sb[i] = start_sb;
             start_sb += size_sb;
         }
         cm->tiles_info.tile_rows = i;
-        cm->tiles_info.tile_row_start_mi[i] = sb_rows << sb_size_log2;
+        cm->tiles_info.tile_row_start_sb[i] = sb_rows;
 
         cm->tile_height = size_sb << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         cm->tile_height = AOMMIN(cm->tile_height, cm->mi_rows);
@@ -3506,16 +3538,15 @@ void eb_av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
         int mi_cols = ALIGN_POWER_OF_TWO(cm->mi_cols, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
         int sb_cols = mi_cols >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         int size_sb, j = 0;
-        int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         cm->tiles_info.uniform_tile_spacing_flag = 0;
         for (i = 0, start_sb = 0; start_sb < sb_cols && i < MAX_TILE_COLS; i++) {
-            cm->tiles_info.tile_col_start_mi[i] = start_sb << sb_size_log2;
+            cm->tiles_info.tile_col_start_sb[i] = start_sb;
             size_sb = tile_widths[j++];
             if (j >= tile_width_count) j = 0;
             start_sb += AOMMIN(size_sb, cm->tiles_info.max_tile_width_sb);
         }
         cm->tiles_info.tile_cols = i;
-        cm->tiles_info.tile_col_start_mi[i] = sb_cols << sb_size_log2;
+        cm->tiles_info.tile_col_start_sb[i] = sb_cols;
     }
     eb_av1_calculate_tile_cols(pcs_ptr);
 
@@ -3528,41 +3559,41 @@ void eb_av1_calculate_tile_rows(PictureParentControlSet * pcs_ptr)
         int mi_rows = ALIGN_POWER_OF_TWO(cm->mi_rows, pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2);
         int sb_rows = mi_rows >> pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         int size_sb, j = 0;
-        int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         for (i = 0, start_sb = 0; start_sb < sb_rows && i < MAX_TILE_ROWS; i++) {
-            cm->tiles_info.tile_row_start_mi[i] = start_sb << sb_size_log2;
+            cm->tiles_info.tile_row_start_sb[i] = start_sb;
             size_sb = tile_heights[j++];
             if (j >= tile_height_count) j = 0;
             start_sb += AOMMIN(size_sb, cm->tiles_info.max_tile_height_sb);
         }
         cm->tiles_info.tile_rows = i;
-        cm->tiles_info.tile_row_start_mi[i] = sb_rows << sb_size_log2;
+        cm->tiles_info.tile_row_start_sb[i] = sb_rows;
     }
     eb_av1_calculate_tile_rows(pcs_ptr);
 }
 
- void eb_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info,
-     int32_t mi_rows, int row)
+ void eb_av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row)
  {
-     assert(row < tiles_info->tile_rows);
-     int mi_row_start = tiles_info->tile_row_start_mi[row];
-     int mi_row_end  = tiles_info->tile_row_start_mi[row + 1];
+     Av1Common *const cm = pcs_ptr->av1_cm;
+
+     assert(row < cm->tiles_info.tile_rows);
+     int mi_row_start = cm->tiles_info.tile_row_start_sb[row]    << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
+     int mi_row_end  = cm->tiles_info.tile_row_start_sb[row + 1] << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
      tile->tile_row = row;
      tile->mi_row_start = mi_row_start;
-     tile->mi_row_end = AOMMIN(mi_row_end, mi_rows);
+     tile->mi_row_end = AOMMIN(mi_row_end, cm->mi_rows);
      tile->tg_horz_boundary = 0;
      assert(tile->mi_row_end > tile->mi_row_start);
  }
 
- void eb_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info,
-     int32_t mi_cols, int col)
- {
-     assert(col < tiles_info->tile_cols);
-     int mi_col_start = tiles_info->tile_col_start_mi[col];
-     int mi_col_end = tiles_info->tile_col_start_mi[col + 1];
+ void eb_av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col) {
+     Av1Common *const cm = pcs_ptr->av1_cm;
+     assert(col < cm->tiles_info.tile_cols);
+     int mi_col_start = cm->tiles_info.tile_col_start_sb[col] << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
+     int mi_col_end = cm->tiles_info.tile_col_start_sb[col + 1]
+         << pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
      tile->tile_col = col;
      tile->mi_col_start = mi_col_start;
-     tile->mi_col_end = AOMMIN(mi_col_end, mi_cols);
+     tile->mi_col_end = AOMMIN(mi_col_end, cm->mi_cols);
      assert(tile->mi_col_end > tile->mi_col_start);
  }
 
@@ -5286,6 +5317,9 @@ static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
 }
 
+int is_intrabc_block(const BlockModeInfo *block_mi) {
+    return block_mi->use_intrabc;
+}
 static INLINE int get_vartx_max_txsize(/*const MbModeInfo *xd,*/ BlockSize bsize,
     int plane) {
     /* if (xd->lossless[xd->mi[0]->segment_id]) return TX_4X4;*/

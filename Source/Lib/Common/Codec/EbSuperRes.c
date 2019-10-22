@@ -14,7 +14,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include "EbEntropyCoding.h"
+#include "EbSuperRes.h"
 #include "EbInterPrediction.h"
 
 #define FILTER_BITS 7
@@ -74,6 +74,17 @@ int32_t get_upscale_convolve_x0(int in_length, int out_length,
         (-((out_length - in_length) << (RS_SCALE_SUBPEL_BITS - 1)) +
             out_length / 2) / out_length + RS_SCALE_EXTRA_OFF - err / 2;
     return (int32_t)((uint32_t)x0 & RS_SCALE_SUBPEL_MASK);
+}
+
+void av1_tile_set_col(TilesInfo *tile, TilesInfo *tiles_info, int32_t mi_cols,
+    uint32_t *mi_col_start, uint32_t *mi_col_end, int col)
+{
+    UNUSED(tile);
+    assert(col < tile->tile_cols);
+    *mi_col_start = tiles_info->tile_col_start_sb[col];
+    *mi_col_end = AOMMIN(tiles_info->tile_col_start_sb[col + 1],
+        mi_cols);
+    assert(*mi_col_end > *mi_col_start);
 }
 
 void av1_convolve_horiz_rs_c(const uint8_t *src, int src_stride, uint8_t *dst,
@@ -256,7 +267,7 @@ void highbd_upscale_normative_rect(
     }
 }
 
-void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
+void av1_upscale_normative_rows(Av1Common *cm, const uint8_t *src,
     int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd)
 {
     int high_bd = bd > 8;
@@ -266,21 +277,23 @@ void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
         cm->frm_size.superres_upscaled_width, sub_x);
     const int superres_denom = cm->frm_size.superres_denominator;
 
-    TileInfo tile_col;
+    TilesInfo tile_col;
+    uint32_t mi_col_start, mi_col_end;
     const int32_t x_step_qn = av1_get_upscale_convolve_step(
         downscaled_plane_width, upscaled_plane_width);
     int32_t x0_qn = get_upscale_convolve_x0(downscaled_plane_width,
         upscaled_plane_width, x_step_qn);
     for (int j = 0; j < cm->tiles_info.tile_cols; j++) {
-        eb_av1_tile_set_col(&tile_col, &cm->tiles_info, cm->mi_cols, j);
+        av1_tile_set_col(&tile_col, &cm->tiles_info, cm->mi_cols,
+            &mi_col_start, &mi_col_end, j);
 
         /*Determine the limits of this tile column in both the source
         and destination images.
         Note: The actual location which we start sampling from is
         (downscaled_x0 - 1 + (x0_qn/2^14)), and this quantity increases
         by exactly dst_width * (x_step_qn/2^14) pixels each iteration.*/
-        const int downscaled_x0 = tile_col. mi_col_start << (MI_SIZE_LOG2 - sub_x);
-        const int downscaled_x1 = tile_col.mi_col_end << (MI_SIZE_LOG2 - sub_x);
+        const int downscaled_x0 = mi_col_start << (MI_SIZE_LOG2 - sub_x);
+        const int downscaled_x1 = mi_col_end << (MI_SIZE_LOG2 - sub_x);
         const int src_width = downscaled_x1 - downscaled_x0;
 
         const int upscaled_x0 = (downscaled_x0*superres_denom) / SCALE_NUMERATOR;

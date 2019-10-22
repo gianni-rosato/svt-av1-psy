@@ -24,8 +24,6 @@
 #include "EbReferenceObject.h"
 #include "EbDeblockingFilter.h"
 
-#include "EbCommonUtils.h"
-
 #define   convertToChromaQp(iQpY)  ( ((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY)-6) : (int32_t)(map_chroma_qp((uint32_t)iQpY))) )
 
 static const int delta_lf_id_lut[MAX_MB_PLANE][2] = { { 0, 1 },
@@ -646,6 +644,11 @@ static int seg_feature_active(SegmentationParams *seg, int segment_id,
 {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }
+static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
+    SEG_LVL_FEATURES feature_id)
+{
+    return seg->feature_data[segment_id][feature_id];
+}
 
 uint8_t get_filter_level(
     FrameHeader* frm_hdr,
@@ -860,6 +863,14 @@ void eb_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
 
 #define INTER_TX_SIZE_BUF_LEN 16
 
+static INLINE TxSize
+av1_get_max_uv_txsize(BlockSize bsize, const struct MacroblockdPlane *pd) {
+    const BlockSize plane_bsize = get_plane_block_size(bsize, pd->subsampling_x, pd->subsampling_y);
+
+    assert(plane_bsize < BlockSizeS_ALL);
+    const TxSize uv_tx = max_txsize_rect_lookup[plane_bsize];
+    return av1_get_adjusted_tx_size(uv_tx);
+}
 //***************************************************************************************************//
 
 static TxSize get_transform_size(const MacroBlockD *const xd,
@@ -877,8 +888,7 @@ static TxSize get_transform_size(const MacroBlockD *const xd,
         ? (is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0])
         ? tx_depth_to_tx_size[0][mbmi->block_mi.sb_type]
         : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]) // use max_tx_size
-        : av1_get_max_uv_txsize(mbmi->block_mi.sb_type,
-            plane_ptr->subsampling_x, plane_ptr->subsampling_y);
+        : av1_get_max_uv_txsize(mbmi->block_mi.sb_type, plane_ptr);
     assert(tx_size < TX_SIZES_ALL);
     if (((plane == COMPONENT_LUMA) &&
         is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0]) &&

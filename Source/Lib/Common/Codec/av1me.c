@@ -23,11 +23,16 @@
 #include "EbModeDecisionProcess.h"
 #endif
 
-#include "EbAdaptiveMotionVectorPrediction.h"
-
 int av1_is_dv_valid(const MV dv,
     const MacroBlockD *xd, int mi_row, int mi_col,
     BlockSize bsize, int mib_size_log2);
+
+void clamp_mv(
+    MV *mv,
+    int32_t min_col,
+    int32_t max_col,
+    int32_t min_row,
+    int32_t max_row);
 
 typedef struct dist_wtd_comp_params {
     int use_dist_wtd_comp_avg;

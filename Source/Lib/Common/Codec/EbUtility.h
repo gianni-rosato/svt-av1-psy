@@ -98,17 +98,6 @@ extern "C" {
         return ss_size_lookup[bsize][subsampling_x][subsampling_y];
     }
 
-    static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_x,
-        int32_t subsampling_y)
-    {
-        const BlockSize plane_bsize =
-            get_plane_block_size(bsize, subsampling_x, subsampling_y);
-        TxSize uv_tx = TX_INVALID;
-        if (plane_bsize < BlockSizeS_ALL)
-            uv_tx = max_txsize_rect_lookup[plane_bsize];
-        return av1_get_adjusted_tx_size(uv_tx);
-    }
-
 #define NOT_USED_VALUE  0
     static const uint32_t parent_depth_offset[2][6] =
     { /*64x64*/ { NOT_USED_VALUE, 832, 208, 52, 8 ,NOT_USED_VALUE},

@@ -1211,6 +1211,7 @@ int get_comp_index_context_enc(
     const MacroBlockD *xd);
 int get_comp_group_idx_context_enc(const MacroBlockD *xd);
 int is_any_masked_compound_used(BlockSize sb_type);
+int is_interinter_compound_used(COMPOUND_TYPE type,BlockSize sb_type);
 uint32_t get_compound_mode_rate(
     uint8_t                 md_pass,
     ModeDecisionCandidate *candidate_ptr,

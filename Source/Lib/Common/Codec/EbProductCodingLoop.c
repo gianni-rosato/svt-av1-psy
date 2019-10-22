@@ -32,6 +32,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbCodingLoop.h"
 
+#include "EbCommonUtils.h"
 #define PREDICTIVE_ME_MAX_MVP_CANIDATES  4
 #define PREDICTIVE_ME_DEVIATION_TH      50
 #define FULL_PEL_REF_WINDOW_WIDTH        7
@@ -3477,6 +3478,29 @@ uint8_t get_skip_tx_search_flag(
     return tx_search_skip_flag;
 }
 
+static TxType intra_mode_to_tx_type(const MbModeInfo *mbmi,
+    PlaneType plane_type) {
+    static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
+        DCT_DCT,    // DC
+        ADST_DCT,   // V
+        DCT_ADST,   // H
+        DCT_DCT,    // D45
+        ADST_ADST,  // D135
+        ADST_DCT,   // D117
+        DCT_ADST,   // D153
+        DCT_ADST,   // D207
+        ADST_DCT,   // D63
+        ADST_ADST,  // SMOOTH
+        ADST_DCT,   // SMOOTH_V
+        DCT_ADST,   // SMOOTH_H
+        ADST_ADST,  // PAETH
+    };
+    const PredictionMode mode =
+        (plane_type == PLANE_TYPE_Y) ? mbmi->block_mi.mode : get_uv_mode(mbmi->block_mi.uv_mode);
+    assert(mode < INTRA_MODES);
+    return _intra_mode_to_tx_type[mode];
+}
+
 static INLINE TxType av1_get_tx_type(
     BlockSize  sb_type,
     int32_t   is_inter,
@@ -3523,7 +3547,7 @@ static INLINE TxType av1_get_tx_type(
         else {
             // In intra mode, uv planes don't share the same prediction mode as y
             // plane, so the tx_type should not be shared
-            tx_type = intra_mode_to_tx_type(&mbmi.block_mi, PLANE_TYPE_UV);
+            tx_type = intra_mode_to_tx_type(&mbmi, PLANE_TYPE_UV);
         }
     }
     ASSERT(tx_type < TX_TYPES);
@@ -4169,6 +4193,10 @@ void tx_type_search(
 
 static INLINE int block_signals_txsize(BlockSize bsize) {
     return bsize > BLOCK_4X4;
+}
+
+static INLINE int is_intrabc_block(const BlockModeInfo *bloc_mi) {
+    return bloc_mi->use_intrabc;
 }
 
 static INLINE int is_inter_block(const BlockModeInfo *bloc_mi) {

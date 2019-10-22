@@ -39,11 +39,6 @@ extern "C" {
 
 #define MAX_TILE_WIDTH (4096)        // Max Tile width in pixels
 #define MAX_TILE_AREA (4096 * 2304)  // Maximum tile area in pixels
-
-#define CHECK_BACKWARD_REFS(ref_frame) \
-  (((ref_frame) >= BWDREF_FRAME) && ((ref_frame) <= ALTREF_FRAME))
-#define IS_BACKWARD_REF_FRAME(ref_frame) CHECK_BACKWARD_REFS(ref_frame)
-
     /**************************************
      * Extern Function Declarations
      **************************************/
@@ -133,72 +128,6 @@ extern "C" {
     static INLINE int32_t get_ref_frame_map_idx(const PictureParentControlSet *pcs_ptr,
         MvReferenceFrame ref_frame) {
         return pcs_ptr->av1_ref_signal.ref_dpb_index[ref_frame - LAST_FRAME];//LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
-    }
-
-    static INLINE int is_intrabc_block(const BlockModeInfo *block_mi) {
-        return block_mi->use_intrabc;
-    }
-
-    static INLINE int bsize_to_max_depth(BlockSize bsize) {
-        TxSize tx_size = max_txsize_rect_lookup[bsize];
-        int depth = 0;
-        while (depth < MAX_TX_DEPTH && tx_size != TX_4X4) {
-            depth++;
-            tx_size = sub_tx_size_map[tx_size];
-        }
-        return depth;
-    }
-
-    static AomCdfProb cdf_element_prob(const AomCdfProb *const cdf, size_t element) {
-        assert(cdf != NULL);
-        return (element > 0 ? cdf[element - 1] : CDF_PROB_TOP) - cdf[element];
-    }
-
-    static INLINE int bsize_to_tx_size_cat(BlockSize bsize) {
-        TxSize tx_size = max_txsize_rect_lookup[bsize];
-        assert(tx_size != TX_4X4);
-        int depth = 0;
-        while (tx_size != TX_4X4) {
-            depth++;
-            tx_size = sub_tx_size_map[tx_size];
-            assert(depth < 10);
-        }
-        assert(depth <= MAX_TX_CATS);
-        return depth - 1;
-    }
-
-    static INLINE void partition_gather_horz_alike(AomCdfProb *out,
-        const AomCdfProb *const in, BlockSize bsize)
-    {
-        out[0] = CDF_PROB_TOP;
-        out[0] -= cdf_element_prob(in, PARTITION_HORZ);
-        out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
-        out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
-        out[0] -= cdf_element_prob(in, PARTITION_HORZ_B);
-        out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
-        if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_HORZ_4);
-        out[0] = AOM_ICDF(out[0]);
-        out[1] = AOM_ICDF(CDF_PROB_TOP);
-        out[2] = 0;
-    }
-
-    static INLINE void partition_gather_vert_alike(AomCdfProb *out,
-        const AomCdfProb *const in, BlockSize bsize)
-    {
-        out[0] = CDF_PROB_TOP;
-        out[0] -= cdf_element_prob(in, PARTITION_VERT);
-        out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
-        out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
-        out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
-        out[0] -= cdf_element_prob(in, PARTITION_VERT_B);
-        if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_VERT_4);
-        out[0] = AOM_ICDF(out[0]);
-        out[1] = AOM_ICDF(CDF_PROB_TOP);
-        out[2] = 0;
-    }
-
-    static INLINE int get_palette_bsize_ctx(BlockSize bsize) {
-        return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
     }
 
     //*******************************************************************************************//
@@ -353,41 +282,13 @@ extern "C" {
         return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
     }
 
-    static INLINE int is_interinter_compound_used(CompoundType type, BlockSize sb_type) {
-        const int comp_allowed = is_comp_ref_allowed(sb_type);
-        switch (type) {
-        case COMPOUND_AVERAGE:
-        case COMPOUND_DISTWTD:
-        case COMPOUND_DIFFWTD: return comp_allowed;
-        case COMPOUND_WEDGE:
-            return comp_allowed && wedge_params_lookup[sb_type].bits > 0;
-        default: assert(0); return 0;
-        }
-    }
-
-    static INLINE int is_any_masked_compound_used(BlockSize sb_type) {
-        CompoundType comp_type;
-        int i;
-        if (!is_comp_ref_allowed(sb_type)) return 0;
-        for (i = 0; i < COMPOUND_TYPES; i++) {
-            comp_type = (CompoundType)i;
-            if (is_masked_compound_type(comp_type) &&
-                is_interinter_compound_used(comp_type, sb_type))
-                return 1;
-        }
-        return 0;
-    }
-
     static INLINE int32_t tile_log2(int32_t blk_size, int32_t target) {
         int32_t k;
         for (k = 0; (blk_size << k) < target; k++) {
         }
         return k;
 }
-    void eb_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info,
-        int32_t mi_cols, int col);
-    void eb_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info,
-        int32_t mi_rows, int row);
+
 #ifdef __cplusplus
 }
 #endif

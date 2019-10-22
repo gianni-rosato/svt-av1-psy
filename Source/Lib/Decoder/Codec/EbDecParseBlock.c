@@ -31,8 +31,7 @@
 
 #include "EbDecParseInterBlock.h"
 #include "EbDecProcessFrame.h"
-#include "EbEntropyCoding.h"
-#include "EbFullLoop.h"
+#include "EbCommonUtils.h"
 
 #if ENABLE_ENTROPY_TRACE
 FILE* temp_fp;
@@ -50,6 +49,99 @@ typedef struct txb_ctx {
     int txb_skip_ctx;
     int dc_sign_ctx;
 } TXB_CTX;
+
+extern const int8_t eb_av1_nz_map_ctx_offset_4x4[16];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x8[64];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x16[256];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x32[1024];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x4[32];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x16[128];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x8[128];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x32[512];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x16[512];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x64[1024];
+extern const int8_t eb_av1_nz_map_ctx_offset_64x32[1024];
+extern const int8_t eb_av1_nz_map_ctx_offset_4x16[64];
+extern const int8_t eb_av1_nz_map_ctx_offset_16x4[64];
+extern const int8_t eb_av1_nz_map_ctx_offset_8x32[256];
+extern const int8_t eb_av1_nz_map_ctx_offset_32x8[256];
+
+static const int8_t *eb_av1_nz_map_ctx_offset[19] = {
+  eb_av1_nz_map_ctx_offset_4x4,    // TX_4x4
+  eb_av1_nz_map_ctx_offset_8x8,    // TX_8x8
+  eb_av1_nz_map_ctx_offset_16x16,  // TX_16x16
+  eb_av1_nz_map_ctx_offset_32x32,  // TX_32x32
+  eb_av1_nz_map_ctx_offset_32x32,  // TX_32x32
+  eb_av1_nz_map_ctx_offset_4x16,   // TX_4x8
+  eb_av1_nz_map_ctx_offset_8x4,    // TX_8x4
+  eb_av1_nz_map_ctx_offset_8x32,   // TX_8x16
+  eb_av1_nz_map_ctx_offset_16x8,   // TX_16x8
+  eb_av1_nz_map_ctx_offset_16x32,  // TX_16x32
+  eb_av1_nz_map_ctx_offset_32x16,  // TX_32x16
+  eb_av1_nz_map_ctx_offset_32x64,  // TX_32x64
+  eb_av1_nz_map_ctx_offset_64x32,  // TX_64x32
+  eb_av1_nz_map_ctx_offset_4x16,   // TX_4x16
+  eb_av1_nz_map_ctx_offset_16x4,   // TX_16x4
+  eb_av1_nz_map_ctx_offset_8x32,   // TX_8x32
+  eb_av1_nz_map_ctx_offset_32x8,   // TX_32x8
+  eb_av1_nz_map_ctx_offset_16x32,  // TX_16x64
+  eb_av1_nz_map_ctx_offset_64x32,  // TX_64x16
+};
+
+static INLINE int get_nz_mag(const uint8_t *const levels,
+    const int bwl, const TxClass tx_class)
+{
+    int mag;
+
+#define CLIP_MAX3(x) x > 3 ? 3 : x
+
+    // Note: AOMMIN(level, 3) is useless for decoder since level < 3.
+    mag = CLIP_MAX3(levels[1]);                         // { 0, 1 }
+    mag += CLIP_MAX3(levels[(1 << bwl) + TX_PAD_HOR]);  // { 1, 0 }
+
+    if (tx_class == TX_CLASS_2D) {
+        mag += CLIP_MAX3(levels[(1 << bwl) + TX_PAD_HOR + 1]);          // { 1, 1 }
+        mag += CLIP_MAX3(levels[2]);                                    // { 0, 2 }
+        mag += CLIP_MAX3(levels[(2 << bwl) + (2 << TX_PAD_HOR_LOG2)]);  // { 2, 0 }
+    }
+    else if (tx_class == TX_CLASS_VERT) {
+        mag += CLIP_MAX3(levels[(2 << bwl) + (2 << TX_PAD_HOR_LOG2)]);  // { 2, 0 }
+        mag += CLIP_MAX3(levels[(3 << bwl) + (3 << TX_PAD_HOR_LOG2)]);  // { 3, 0 }
+        mag += CLIP_MAX3(levels[(4 << bwl) + (4 << TX_PAD_HOR_LOG2)]);  // { 4, 0 }
+    }
+    else {
+        mag += CLIP_MAX3(levels[2]);  // { 0, 2 }
+        mag += CLIP_MAX3(levels[3]);  // { 0, 3 }
+        mag += CLIP_MAX3(levels[4]);  // { 0, 4 }
+    }
+
+    return mag;
+}
+
+static INLINE int get_nz_map_ctx_from_stats(
+    const int stats, const int coeff_idx,  // raster order
+    const int bwl, const TxSize tx_size, const TxClass tx_class)
+{
+    if ((tx_class | coeff_idx) == 0) return 0;
+    int ctx = (stats + 1) >> 1;
+    ctx = AOMMIN(ctx, 4);
+    switch (tx_class)
+    {
+    case TX_CLASS_2D:
+        return ctx + eb_av1_nz_map_ctx_offset[tx_size][coeff_idx];
+    case TX_CLASS_HORIZ: {
+        const int row = coeff_idx >> bwl;
+        const int col = coeff_idx - (row << bwl);
+        return ctx + nz_map_ctx_offset_1d[col];
+    }
+    case TX_CLASS_VERT: {
+        const int row = coeff_idx >> bwl;
+        return ctx + nz_map_ctx_offset_1d[row];
+    }
+    default: break;
+    }
+    return 0;
+}
 
 static INLINE int get_palette_mode_ctx(PartitionInfo_t *pi) {
     BlockModeInfo *above_mi = pi->above_mbmi;
@@ -675,6 +767,28 @@ static INLINE AomCdfProb *get_y_mode_cdf(FRAME_CONTEXT *tile_ctx,
     return tile_ctx->kf_y_cdf[above_ctx][left_ctx];
 }
 
+static INLINE TxType intra_mode_to_tx_type(const BlockModeInfo *mbmi, PlaneType plane_type) {
+    static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
+        DCT_DCT,    // DC
+        ADST_DCT,   // V
+        DCT_ADST,   // H
+        DCT_DCT,    // D45
+        ADST_ADST,  // D135
+        ADST_DCT,   // D117
+        DCT_ADST,   // D153
+        DCT_ADST,   // D207
+        ADST_DCT,   // D63
+        ADST_ADST,  // SMOOTH
+        ADST_DCT,   // SMOOTH_V
+        DCT_ADST,   // SMOOTH_H
+        ADST_ADST,  // PAETH
+    };
+    const PredictionMode mode =
+        (plane_type == PLANE_TYPE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
+    assert(mode < INTRA_MODES);
+    return _intra_mode_to_tx_type[mode];
+}
+
 void intra_frame_mode_info(EbDecHandle *dec_handle, PartitionInfo_t *xd,
     int mi_row, int mi_col, SvtReader *r, int8_t *cdef_strength)
 {
@@ -1262,6 +1376,16 @@ TxSize read_tx_size(EbDecHandle *dec_handle, PartitionInfo_t *xd,
     return tx_size;
 }
 
+static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int subsampling_x,
+    int subsampling_y)
+{
+    const BlockSize plane_bsize =
+        get_plane_block_size(bsize, subsampling_x, subsampling_y);
+    assert(plane_bsize < BlockSizeS_ALL);
+    const TxSize uv_tx = max_txsize_rect_lookup[plane_bsize];
+    return av1_get_adjusted_tx_size(uv_tx);
+}
+
 /* Update Chroma Transform Info for Inter Case! */
 void update_chroma_trans_info(EbDecHandle *dec_handle,
     PartitionInfo_t *part_info, BlockSize bsize)
@@ -1589,6 +1713,17 @@ void read_block_tx_size(EbDecHandle *dec_handle, SvtReader *r,
     }
 }
 
+BlockSize get_plane_residual_size(BlockSize bsize,
+    int subsampling_x, int subsampling_y)
+{
+    if (bsize == BLOCK_INVALID) return BLOCK_INVALID;
+    return ss_size_lookup[bsize][subsampling_x][subsampling_y];
+}
+
+TxSetType get_tx_set(TxSize tx_size, int is_inter, int use_reduced_set) {
+    return get_ext_tx_set_type(tx_size, is_inter, use_reduced_set);
+}
+
 void parse_transform_type(EbDecHandle *dec_handle, PartitionInfo_t *xd,
      TxSize tx_size, SvtReader *r, TransformInfo_t *trans_info)
 {
@@ -1637,6 +1772,10 @@ void parse_transform_type(EbDecHandle *dec_handle, PartitionInfo_t *xd,
                 av1_num_ext_tx_set[tx_set_type], ACCT_STR)];
         }
     }
+}
+
+static INLINE const ScanOrder* get_scan(TxSize tx_size, TxType tx_type) {
+    return &av1_scan_orders[tx_size][tx_type];
 }
 
 TxType compute_tx_type(PlaneType plane_type,
@@ -1740,6 +1879,13 @@ static INLINE int get_lower_levels_ctx_2d(const uint8_t *levels,
 
     const int ctx = AOMMIN((mag + 1) >> 1, 4);
     return ctx + eb_av1_nz_map_ctx_offset[tx_size][coeff_idx];
+}
+static INLINE int get_lower_levels_ctx(const uint8_t *levels,
+    int coeff_idx, int bwl, TxSize tx_size, TxClass tx_class)
+{
+    const int stats =
+        get_nz_mag(levels + get_padded_idx(coeff_idx, bwl), bwl, tx_class);
+    return get_nz_map_ctx_from_stats(stats, coeff_idx, bwl, tx_size, tx_class);
 }
 
 static int read_golomb(SvtReader *r) {
@@ -1874,7 +2020,7 @@ uint16_t parse_coeffs(EbDecHandle *dec_handle, PartitionInfo_t *xd, SvtReader *r
     trans_info->txk_type = compute_tx_type(plane_type, xd,
         tx_size, dec_handle->frame_header.reduced_tx_set,
         lossless_array, trans_buf);
-    const ScanOrder *scan_order = &av1_scan_orders[tx_size][trans_info->txk_type];
+    const ScanOrder *scan_order = get_scan(tx_size, trans_info->txk_type);
     const int16_t *const scan = scan_order->scan;
     const int eob_multi_size = txsize_log2_minus4[tx_size];
 

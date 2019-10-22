@@ -137,6 +137,14 @@ static INLINE void revert_scale_extra_bits(SubpelParams *sp) {
     assert(sp->ys <= SUBPEL_SHIFTS);
 }
 
+//extern INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,int32_t max_row);
+
+static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
+    int32_t max_row) {
+    mv->col = (int16_t)clamp(mv->col, min_col, max_col);
+    mv->row = (int16_t)clamp(mv->row, min_row, max_row);
+}
+
 extern void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
 
@@ -2390,6 +2398,9 @@ static int64_t pick_wedge_fixed_sign(
   return best_rd ;//- RDCOST(x->rdmult, x->wedge_idx_cost[bsize][*best_wedge_index], 0);
 }
 
+
+int is_interinter_compound_used(COMPOUND_TYPE type,
+    BlockSize sb_type);
 static void  pick_interinter_wedge(
     ModeDecisionCandidate                *candidate_ptr,
     PictureControlSet                    *picture_control_set_ptr,

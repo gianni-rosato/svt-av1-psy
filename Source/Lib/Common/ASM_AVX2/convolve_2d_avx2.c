@@ -694,8 +694,10 @@ static void convolve_2d_sr_ver_4tap_avx2(uint8_t *dst, int32_t dst_stride,
                 } while (y);
             }
         }
-        else if (w == 16) {
+        else {
             __m256i s_256[5];
+
+            assert(w == 16);
 
             s_256[0] = _mm256_loadu_si256((__m256i *)(im + 0 * 16));
             s_256[1] = _mm256_loadu_si256((__m256i *)(im + 1 * 16));
@@ -731,43 +733,6 @@ static void convolve_2d_sr_ver_4tap_avx2(uint8_t *dst, int32_t dst_stride,
                     y -= 2;
                 } while (y);
             }
-        }
-        else {
-            /*It's a special condition for OBMC. A/c  to Av1 spec 4-tap won't
-            support for width(w)>16, but for OBMC while predicting above block
-            it reduces size block to Wx(h/2), for example, if above block size
-            is 32x8, we get block size as 32x4 for OBMC.*/
-            int32_t x = 0;
-
-            assert(!(w % 32));
-
-            __m256i s_256[2][4], ss_256[2][4], tt_256[2][4], r0[4], r1[4];
-            do {
-                const int16_t *s = im + x;
-                uint8_t *d = dst + x;
-
-                loadu_unpack_16bit_3rows_avx2(
-                    s, w, s_256[0], ss_256[0], tt_256[0]);
-                loadu_unpack_16bit_3rows_avx2(
-                    s + 16, w, s_256[1], ss_256[1], tt_256[1]);
-
-                y = h;
-                do {
-                    xy_y_convolve_4tap_32x2_avx2(
-                        s, w, s_256[0], ss_256[0], tt_256[0], coeffs_256, r0);
-                    xy_y_convolve_4tap_32x2_avx2(s + 16, w, s_256[1],
-                        ss_256[1], tt_256[1], coeffs_256, r1);
-
-                    xy_y_round_store_32_avx2(r0 + 0, r1 + 0, d);
-                    xy_y_round_store_32_avx2(r0 + 2, r1 + 2, d + dst_stride);
-
-                    s += 2 * w;
-                    d += 2 * dst_stride;
-                    y -= 2;
-                } while (y);
-
-                x += 32;
-            } while (x < w);
         }
     }
 }

@@ -434,24 +434,6 @@ SIMD_INLINE void loadu_unpack_16bit_5rows_avx2(const int16_t *const src,
     tt_256[4] = _mm256_unpackhi_epi16(s_256[3], s_256[4]);
 }
 
-SIMD_INLINE void loadu_unpack_16bit_3rows_avx2(const int16_t *const src,
-    const int32_t stride,
-    __m256i s_256[3],
-    __m256i ss_256[3],
-    __m256i tt_256[3])
-{
-    s_256[0] = _mm256_loadu_si256((__m256i *)(src + 0 * stride));
-    s_256[1] = _mm256_loadu_si256((__m256i *)(src + 1 * stride));
-    s_256[2] = _mm256_loadu_si256((__m256i *)(src + 2 * stride));
-
-    ss_256[0] = _mm256_unpacklo_epi16(s_256[0], s_256[1]);
-    ss_256[2] = _mm256_unpackhi_epi16(s_256[0], s_256[1]);
-
-    tt_256[0] = _mm256_unpacklo_epi16(s_256[1], s_256[2]);
-    tt_256[2] = _mm256_unpackhi_epi16(s_256[1], s_256[2]);
-}
-
-
 static INLINE void convolve_8tap_unapck_avx2(const __m256i s[6],
     __m256i ss[7]) {
     ss[0] = _mm256_unpacklo_epi16(s[0], s[1]);
@@ -1555,25 +1537,6 @@ static INLINE void xy_y_convolve_4tap_16x2_avx2(
     ss_256[1] = _mm256_unpacklo_epi16(s_256[2], s_256[3]);
     ss_256[3] = _mm256_unpackhi_epi16(s_256[2], s_256[3]);
     s_256[2] = _mm256_loadu_si256((__m256i *)(src + 4 * 16));
-    tt_256[1] = _mm256_unpacklo_epi16(s_256[3], s_256[2]);
-    tt_256[3] = _mm256_unpackhi_epi16(s_256[3], s_256[2]);
-    xy_y_convolve_4tap_16_avx2(ss_256, coeffs, r + 0);
-    xy_y_convolve_4tap_16_avx2(tt_256, coeffs, r + 2);
-    ss_256[0] = ss_256[1];
-    ss_256[2] = ss_256[3];
-    tt_256[0] = tt_256[1];
-    tt_256[2] = tt_256[3];
-}
-
-static INLINE void xy_y_convolve_4tap_32x2_avx2(
-    const int16_t *const src, const int32_t stride,
-    __m256i s_256[4], __m256i ss_256[4],
-    __m256i tt_256[4], const __m256i coeffs[2], __m256i r[4])
-{
-    s_256[3] = _mm256_loadu_si256((__m256i *)(src + 3 * stride));
-    ss_256[1] = _mm256_unpacklo_epi16(s_256[2], s_256[3]);
-    ss_256[3] = _mm256_unpackhi_epi16(s_256[2], s_256[3]);
-    s_256[2] = _mm256_loadu_si256((__m256i *)(src + 4 * stride));
     tt_256[1] = _mm256_unpacklo_epi16(s_256[3], s_256[2]);
     tt_256[3] = _mm256_unpackhi_epi16(s_256[3], s_256[2]);
     xy_y_convolve_4tap_16_avx2(ss_256, coeffs, r + 0);

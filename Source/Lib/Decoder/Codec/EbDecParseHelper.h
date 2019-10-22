@@ -18,6 +18,12 @@ typedef struct MvCount{
     uint8_t found_left_match;
 }MvCount;
 
+static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
+    SEG_LVL_FEATURES feature_id)
+{
+    return seg->feature_data[segment_id][feature_id];
+}
+
 static INLINE CflAllowedType is_cfl_allowed(PartitionInfo_t *xd,
     EbColorConfig* color_cfg, uint8_t *lossless_array)
 {
@@ -38,6 +44,7 @@ static INLINE CflAllowedType is_cfl_allowed(PartitionInfo_t *xd,
 }
 
 extern int is_inter_block(const BlockModeInfo *mbmi);
+extern int is_intrabc_block(const BlockModeInfo *mbmi);
 
 static INLINE int allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
     return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&

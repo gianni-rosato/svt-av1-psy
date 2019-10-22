@@ -386,7 +386,7 @@ extern "C" {
     }
 
     // Returns 1 if a superres upscaled frame is unscaled and 0 otherwise.
-    static INLINE int32_t av1_superres_unscaled(const FrameSize *frm_size) {
+    static INLINE int32_t av1_superres_unscaled(FrameSize *frm_size) {
         // Note: for some corner cases (e.g. cm->width of 1), there may be no scaling
         // required even though cm->superres_scale_denominator != SCALE_NUMERATOR.
         // So, the following check is more accurate.

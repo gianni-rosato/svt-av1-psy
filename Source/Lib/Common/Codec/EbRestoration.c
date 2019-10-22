@@ -15,8 +15,9 @@
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRestoration.h"
+#include "EbSuperRes.h"
 
-void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
+void av1_upscale_normative_rows(Av1Common *cm, const uint8_t *src,
     int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
 
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane,
@@ -1567,7 +1568,7 @@ void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride,
 
 static void save_deblock_boundary_lines(
     uint8_t *src_buf, int32_t src_stride, int32_t src_width, int32_t src_height,
-    const Av1Common *cm, int32_t plane, int32_t row,
+    Av1Common *cm, int32_t plane, int32_t row,
     int32_t stripe, int32_t use_highbd, int32_t is_above,
     RestorationStripeBoundaries *boundaries)
 {
@@ -1621,7 +1622,7 @@ static void save_deblock_boundary_lines(
 }
 
 static void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride,
-    int32_t src_width, const Av1Common *cm, int32_t plane, int32_t row,
+    int32_t src_width, Av1Common *cm, int32_t plane, int32_t row,
     int32_t stripe, int32_t use_highbd, int32_t is_above,
     RestorationStripeBoundaries *boundaries)
 {

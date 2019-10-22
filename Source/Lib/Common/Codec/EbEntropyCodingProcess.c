@@ -25,6 +25,8 @@
 #include "EbCabacContextModel.h"
 #define  AV1_MIN_TILE_SIZE_BYTES 1
 void eb_av1_reset_loop_restoration(PictureControlSet     *piCSetPtr);
+void eb_av1_tile_set_col(TileInfo *tile, PictureParentControlSet * pcs_ptr, int col);
+void eb_av1_tile_set_row(TileInfo *tile, PictureParentControlSet * pcs_ptr, int row);
 
 /******************************************************
  * Enc Dec Context Constructor
@@ -571,7 +573,7 @@ void* entropy_coding_kernel(void *input_ptr)
              for (tile_row = 0; tile_row < tile_rows; tile_row++)
              {
                  TileInfo tile_info;
-                 eb_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
+                 eb_av1_tile_set_row(&tile_info, ppcs_ptr, tile_row);
 
                  for (tile_col = 0; tile_col < tile_cols; tile_col++)
                  {
@@ -589,18 +591,13 @@ void* entropy_coding_kernel(void *input_ptr)
                          picture_control_set_ptr,
                          sequence_control_set_ptr);
 
-                     eb_av1_tile_set_col(&tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
+                     eb_av1_tile_set_col(&tile_info, ppcs_ptr, tile_col);
 
                      eb_av1_reset_loop_restoration(picture_control_set_ptr);
-                     int sb_size_log2 = sequence_control_set_ptr->seq_header.sb_size_log2;
 
-                     for ((y_lcu_index = cm->tiles_info.tile_row_start_mi[tile_row] >> sb_size_log2);
-                          (y_lcu_index < (uint32_t)cm->tiles_info.tile_row_start_mi[tile_row + 1] >> sb_size_log2);
-                          y_lcu_index++)
+                     for (y_lcu_index = cm->tiles_info.tile_row_start_sb[tile_row]; y_lcu_index < (uint32_t)cm->tiles_info.tile_row_start_sb[tile_row + 1]; ++y_lcu_index)
                      {
-                         for (x_lcu_index = (cm->tiles_info.tile_col_start_mi[tile_col] >> sb_size_log2);
-                              x_lcu_index < ((uint32_t)cm->tiles_info.tile_col_start_mi[tile_col + 1] >> sb_size_log2);
-                              x_lcu_index++)
+                         for (x_lcu_index = cm->tiles_info.tile_col_start_sb[tile_col]; x_lcu_index < (uint32_t)cm->tiles_info.tile_col_start_sb[tile_col + 1]; ++x_lcu_index)
                          {
                              int sb_index = (uint16_t)(x_lcu_index + y_lcu_index * picture_width_in_sb);
                              sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];

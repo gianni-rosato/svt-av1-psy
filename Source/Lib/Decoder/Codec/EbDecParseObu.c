@@ -30,6 +30,7 @@
 #include "EbDecPicMgr.h"
 #include "EbRestoration.h"
 #include "EbDecRestoration.h"
+#include "EbSuperRes.h"
 
 #include "EbDecParseObuUtil.h"
 
@@ -139,8 +140,8 @@ void read_decoder_model_info(bitstrm_t *bs, DecoderModelInfo   *model_info)
     PRINT("buffer_delay_length_minus_1", model_info->buffer_delay_length_minus_1);
     model_info->num_units_in_decoding_tick = dec_get_bits(bs, 32);
     PRINT("num_units_in_decoding_tick", model_info->num_units_in_decoding_tick);
-    model_info->buffer_removal_time_length_minus_1 = dec_get_bits(bs, 5);
-    PRINT("buffer_removal_time_length_minus_1", model_info->buffer_removal_time_length_minus_1);
+    model_info->buffer_delay_length_minus_1 = dec_get_bits(bs, 5);
+    PRINT("buffer_delay_length_minus_1", model_info->buffer_delay_length_minus_1);
     model_info->frame_presentation_time_length_minus_1 = dec_get_bits(bs, 5);
     PRINT("frame_presentation_time_length_minus_1",
         model_info->frame_presentation_time_length_minus_1);
@@ -691,10 +692,10 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
         assert(tile_width_sb <= tile_info->max_tile_width_sb); // Bitstream conformance
         i = 0;
         for (start_sb = 0; start_sb < sb_cols; start_sb += tile_width_sb) {
-            tile_info->tile_col_start_mi[i] = start_sb << sb_shift;
+            tile_info->tile_col_start_sb[i] = start_sb << sb_shift;
             i += 1;
         }
-        tile_info->tile_col_start_mi[i] = frame_info->mi_cols;
+        tile_info->tile_col_start_sb[i] = frame_info->mi_cols;
         tile_info->tile_cols = i;
 
         tile_info->min_log2_tile_rows = MAX(tile_info->min_log2_tiles -
@@ -712,17 +713,17 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
         assert(tile_height_sb <= tile_info->max_tile_height_sb); // Bitstream conformance
         i = 0;
         for (start_sb = 0; start_sb < sb_rows; start_sb += tile_height_sb) {
-            tile_info->tile_row_start_mi[i] = start_sb << sb_shift;
+            tile_info->tile_row_start_sb[i] = start_sb << sb_shift;
             i += 1;
         }
-        tile_info->tile_row_start_mi[i] = frame_info->mi_rows;
+        tile_info->tile_row_start_sb[i] = frame_info->mi_rows;
         tile_info->tile_rows = i;
     }
     else {
         int widest_tile_sb = 0;
         start_sb = 0;
         for (i = 0; start_sb < sb_cols; i++) {
-            tile_info->tile_col_start_mi[i] = start_sb << sb_shift;
+            tile_info->tile_col_start_sb[i] = start_sb << sb_shift;
             max_width = MIN(sb_cols - start_sb, tile_info->max_tile_width_sb);
             width_in_sbs_minus_1 = dec_get_bits_ns(bs, max_width);
             PRINT("width_in_sbs_minus_1", width_in_sbs_minus_1)
@@ -732,7 +733,7 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
         }
         assert(start_sb == sb_cols); // Bitstream conformance
 
-        tile_info->tile_col_start_mi[i] = frame_info->mi_cols;
+        tile_info->tile_col_start_sb[i] = frame_info->mi_cols;
         tile_info->tile_cols = i;
         tile_info->tile_cols_log2 = tile_log2(1, tile_info->tile_cols);
         if (tile_info->min_log2_tiles > 0)
@@ -743,7 +744,7 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
 
         start_sb = 0;
         for (i = 0; start_sb < sb_rows; i++) {
-            tile_info->tile_row_start_mi[i] = start_sb << sb_shift;
+            tile_info->tile_row_start_sb[i] = start_sb << sb_shift;
             max_height = MIN(sb_rows - start_sb, tile_info->max_tile_height_sb);
             height_in_sbs_minus_1 = dec_get_bits_ns(bs, max_height);
             PRINT("height_in_sbs_minus_1", height_in_sbs_minus_1)
@@ -752,7 +753,7 @@ void read_tile_info(bitstrm_t *bs, TilesInfo *tile_info, SeqHeader *seq_header,
         }
         assert(start_sb == sb_rows); // Bitstream conformance
 
-        tile_info->tile_row_start_mi[i] = frame_info->mi_rows;
+        tile_info->tile_row_start_sb[i] = frame_info->mi_rows;
         tile_info->tile_rows = i;
         tile_info->tile_rows_log2 = tile_log2(1, tile_info->tile_rows);
     }
@@ -1382,23 +1383,11 @@ void read_skip_mode_params(bitstrm_t *bs, FrameHeader *frame_info, int FrameIsIn
     PRINT_FRAME("skip_mode_present", frame_info->skip_mode_params.skip_mode_flag);
 }
 
-void load_grain_params(EbDecHandle *dec_handle_ptr,
-    aom_film_grain_t *grain_params,
-    int film_grain_params_ref_idx)
-{
-    EbDecPicBuf *ref_buf = dec_handle_ptr->
-        ref_frame_map[film_grain_params_ref_idx];
-    assert(ref_buf != NULL);
-    *grain_params = ref_buf->film_grain_params;
-}
-
 // Read film grain parameters
-void read_film_grain_params(EbDecHandle * dec_handle,
-    bitstrm_t *bs, aom_film_grain_t *grain_params)
+void read_film_grain_params(bitstrm_t *bs, aom_film_grain_t *grain_params,
+    SeqHeader *seq_header, FrameHeader *frame_info)
 {
-    SeqHeader *seq_header = &dec_handle->seq_header;
-    FrameHeader *frame_info = &dec_handle->frame_header;
-    int film_grain_params_ref_idx, temp_grain_seed, i, numPosLuma, numPosChroma;
+    int /*film_grain_params_ref_idx,*/ temp_grain_seed, i, numPosLuma, numPosChroma;
 
     if (!seq_header->film_grain_params_present || (!frame_info->show_frame &&
         !frame_info->showable_frame)) {
@@ -1421,11 +1410,11 @@ void read_film_grain_params(EbDecHandle * dec_handle,
         grain_params->update_parameters = 1;
     PRINT_FRAME("update_parameters", grain_params->update_parameters);
     if (!grain_params->update_parameters) {
-        film_grain_params_ref_idx = dec_get_bits(bs, 3);
-        PRINT_FRAME("film_grain_params_ref_idx", film_grain_params_ref_idx);
+        /*film_grain_params_ref_idx = */dec_get_bits(bs, 3);
+        /*PRINT_FRAME("film_grain_params_ref_idx", film_grain_params_ref_idx);*/
         temp_grain_seed = grain_params->random_seed;
-        load_grain_params( dec_handle, grain_params,
-                           film_grain_params_ref_idx);
+        // TODO: Handle while implementing Inter
+        // load_grain_params( film_grain_params_ref_idx );
         grain_params->random_seed = temp_grain_seed;
         return;
     }
@@ -1666,27 +1655,17 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                     return; // EB_Corrupt_Frame;
             }
 
+            //frame_type = RefFrameType[ frame_to_show_map_idx ]
+            if (frame_info->frame_type == KEY_FRAME)
+                frame_info->refresh_frame_flags = allFrames;
+            if (seq_header->film_grain_params_present)
+                // TODO: Handle while implementing Inter
+                // load_grain_params(frame_to_show_map_idx);
+                assert(0);
+
             dec_handle_ptr->cur_pic_buf[0] = dec_handle_ptr->
                 ref_frame_map[frame_to_show_map_idx];
-            frame_info->frame_type = dec_handle_ptr->cur_pic_buf[0]->frame_type;
-
-            if (frame_info->frame_type == KEY_FRAME) {
-                frame_info->refresh_frame_flags = allFrames;
-                frame_info->showable_frame = 0;
-            }
-
-            if (seq_header->film_grain_params_present)
-                load_grain_params(dec_handle_ptr,
-                    &frame_info->film_grain_params, frame_to_show_map_idx);
-
             generate_next_ref_frame_map(dec_handle_ptr);
-
-            frame_info->show_frame = 1;
-            dec_handle_ptr->cur_pic_buf[0]->film_grain_params =
-                dec_handle_ptr->frame_header.film_grain_params;
-            dec_handle_ptr->show_existing_frame = frame_info->show_existing_frame;
-            dec_handle_ptr->show_frame = frame_info->show_frame;
-            dec_handle_ptr->showable_frame = frame_info->showable_frame;
             return;
         }
 
@@ -1881,7 +1860,9 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 gold_frame_idx = dec_get_bits(bs, 3);
                 PRINT_FRAME("last_frame_idx", last_frame_idx);
                 PRINT_FRAME("gold_frame_idx", gold_frame_idx);
-                svt_set_frame_refs(dec_handle_ptr, last_frame_idx, gold_frame_idx);
+                (void)last_frame_idx;
+                (void)gold_frame_idx;
+                assert(0); //svt_set_frame_refs();
             }
         }
 
@@ -2053,11 +2034,9 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     PRINT_FRAME("allow_warped_motion", frame_info->allow_warped_motion);
     PRINT_FRAME("reduced_tx_set", frame_info->reduced_tx_set);
     read_global_motion_params(bs, dec_handle_ptr, frame_info, FrameIsIntra);
+    read_film_grain_params(bs, &frame_info->film_grain_params, seq_header, frame_info);
 
-    read_film_grain_params(dec_handle_ptr, bs, &frame_info->film_grain_params);
-
-    dec_handle_ptr->cur_pic_buf[0]->film_grain_params = 
-                            dec_handle_ptr->frame_header.film_grain_params;
+    dec_handle_ptr->cur_pic_buf[0]->film_grain_params = dec_handle_ptr->frame_header.film_grain_params;
 
     dec_handle_ptr->show_existing_frame = frame_info->show_existing_frame;
     dec_handle_ptr->show_frame          = frame_info->show_frame;
@@ -2216,8 +2195,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     EbColorConfig *color_config = &dec_handle_ptr->seq_header.color_config;
     int num_planes = av1_num_planes(color_config);
 
-    clear_above_context(dec_handle_ptr, tile_info->tile_col_start_mi[tile_col],
-                        tile_info->tile_col_start_mi[tile_col + 1], 0 /*TODO: For MultiThread*/);
+    clear_above_context(dec_handle_ptr, tile_info->tile_col_start_sb[tile_col],
+                        tile_info->tile_col_start_sb[tile_col + 1], 0 /*TODO: For MultiThread*/);
     clear_loop_filter_delta(dec_handle_ptr);
 
     /* Init ParseCtxt */
@@ -2235,8 +2214,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     // to-do access to wiener info that is currently part of PartitionInfo_t
     //clear_loop_restoration(num_planes, part_info);
 
-    for (uint32_t mi_row = tile_info->tile_row_start_mi[tile_row];
-         mi_row < tile_info->tile_row_start_mi[tile_row + 1];
+    for (uint32_t mi_row = tile_info->tile_row_start_sb[tile_row];
+         mi_row < tile_info->tile_row_start_sb[tile_row + 1];
          mi_row += dec_handle_ptr->seq_header.sb_mi_size)
     {
         int32_t sb_row = (mi_row << 2) >> dec_handle_ptr->seq_header.sb_size_log2;
@@ -2247,8 +2226,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         /*add tile level cfl init */
         cfl_init(&((DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt)->cfl_ctx, color_config);
 
-        for (uint32_t mi_col = tile_info->tile_col_start_mi[tile_col];
-            mi_col < tile_info->tile_col_start_mi[tile_col + 1];
+        for (uint32_t mi_col = tile_info->tile_col_start_sb[tile_col];
+            mi_col < tile_info->tile_col_start_sb[tile_col + 1];
             mi_col += dec_handle_ptr->seq_header.sb_mi_size)
 
         {
@@ -2266,11 +2245,11 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                     (sb_row * master_frame_buf->sb_cols) + sb_col;
 #if !FRAME_MI_MAP
             SBInfo  *left_sb_info = NULL;
-            if(mi_col != tile_info->tile_col_start_mi[tile_col])
+            if(mi_col != tile_info->tile_col_start_sb[tile_col])
                 left_sb_info  = frame_buf->sb_info +
                     (sb_row * master_frame_buf->sb_cols) + sb_col - 1;
             SBInfo  *above_sb_info = NULL;
-            if (mi_row != tile_info->tile_row_start_mi[tile_row])
+            if (mi_row != tile_info->tile_row_start_sb[tile_row])
                 above_sb_info = frame_buf->sb_info +
                     ((sb_row-1) * master_frame_buf->sb_cols) + sb_col;
 #else
@@ -2401,9 +2380,9 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header,
     /* tile_set_row */
     assert(tile_row < tiles_info->tile_rows);
     cur_tile_info->tile_row     = tile_row;
-    cur_tile_info->mi_row_start = tiles_info->tile_row_start_mi[tile_row];
+    cur_tile_info->mi_row_start = tiles_info->tile_row_start_sb[tile_row];
     cur_tile_info->mi_row_end   = AOMMIN(tiles_info->
-        tile_row_start_mi[tile_row+1], frame_header->mi_rows);
+                        tile_row_start_sb[tile_row+1], frame_header->mi_rows);
 
     assert(cur_tile_info->mi_row_end > cur_tile_info->mi_row_start);
 
@@ -2411,9 +2390,9 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header,
     assert(tile_col < tiles_info->tile_cols);
 
     cur_tile_info->tile_col = tile_col;
-    cur_tile_info->mi_col_start = tiles_info->tile_col_start_mi[tile_col];
+    cur_tile_info->mi_col_start = tiles_info->tile_col_start_sb[tile_col];
     cur_tile_info->mi_col_end = AOMMIN(tiles_info->
-        tile_col_start_mi[tile_col + 1], frame_header->mi_cols);
+                        tile_col_start_sb[tile_col + 1], frame_header->mi_cols);
 
     assert(cur_tile_info->mi_col_end > cur_tile_info->mi_col_start);
 }
@@ -2659,22 +2638,13 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
             break;
 
         case OBU_SEQUENCE_HEADER:
-        {
             PRINT_NAME("**************OBU_SEQUENCE_HEADER*******************")
-            BlockSize prev_sb_size = dec_handle_ptr->seq_header.sb_size;
-            uint16_t prev_max_frame_width = dec_handle_ptr->seq_header.max_frame_width;
-            uint16_t prev_max_frame_height = dec_handle_ptr->seq_header.max_frame_height;
-
                 status = read_sequence_header_obu(&bs, &dec_handle_ptr->seq_header);
             if (status != EB_ErrorNone)
                 return status;
             dec_handle_ptr->seq_header_done = 1;
-            if (prev_sb_size != dec_handle_ptr->seq_header.sb_size ||
-                prev_max_frame_width != dec_handle_ptr->seq_header.max_frame_width ||
-                prev_max_frame_height != dec_handle_ptr->seq_header.max_frame_height)
-                dec_handle_ptr->mem_init_done = 0;
             break;
-        }
+
         case OBU_FRAME_HEADER:
         case OBU_REDUNDANT_FRAME_HEADER:
         case OBU_FRAME:

@@ -235,6 +235,15 @@ int svt_dec_out_buf(
             + (out_img->origin_x >> sx)) << use_high_bit_depth);
     }
 
+    int offset_w = 1, offset_h = 1;
+    if (recon_picture_buf->color_format == EB_YUV444) {
+        offset_w = 0;
+        offset_h = 0;
+    }
+    else if (recon_picture_buf->color_format == EB_YUV422) {
+        offset_h = 0;
+    }
+
     /* Memcpy to dst buffer */
     {
         if (recon_picture_buf->bit_depth == EB_8BIT) {
@@ -255,8 +264,8 @@ int svt_dec_out_buf(
                 src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(dst, src, ((wd + sx) >> sx));
+                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
+                    memcpy(dst, src, ((wd + offset_w) >> sx));
                     dst += out_img->cb_stride;
                     src += recon_picture_buf->stride_cb;
                 }
@@ -266,8 +275,8 @@ int svt_dec_out_buf(
                 src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(dst, src, ((wd + sx) >> sx));
+                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
+                    memcpy(dst, src, ((wd + offset_w) >> sx));
                     dst += out_img->cr_stride;
                     src += recon_picture_buf->stride_cr;
                 }
@@ -294,8 +303,8 @@ int svt_dec_out_buf(
                 pu2_src = (uint16_t *)recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
+                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
+                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + offset_w) >> sx));
                     pu2_dst += out_img->cb_stride;
                     pu2_src += recon_picture_buf->stride_cb;
                 }
@@ -305,8 +314,8 @@ int svt_dec_out_buf(
                 pu2_src = (uint16_t *)recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy)* recon_picture_buf->stride_cr);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
+                for (i = 0; i < ((ht + offset_h) >> sy); i++) {
+                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + offset_w) >> sx));
                     pu2_dst += out_img->cr_stride;
                     pu2_src += recon_picture_buf->stride_cr;
                 }
@@ -530,7 +539,6 @@ EB_API EbErrorType eb_svt_decode_frame(
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
     uint8_t *data_start = (uint8_t *)data;
     uint8_t *data_end = (uint8_t *)data + data_size;
-    dec_handle_ptr->seen_frame_header = 0;
 
     while (data_start < data_end)
     {

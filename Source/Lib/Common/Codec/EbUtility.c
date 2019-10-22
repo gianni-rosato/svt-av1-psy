@@ -632,7 +632,15 @@ uint32_t search_matching_from_mds(
 
     return matched;
 }
-
+static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_x,
+    int32_t subsampling_y) {
+    const BlockSize plane_bsize =
+        get_plane_block_size(bsize, subsampling_x, subsampling_y);
+    TxSize uv_tx = TX_INVALID;
+    if (plane_bsize < BlockSizeS_ALL)
+        uv_tx = max_txsize_rect_lookup[plane_bsize];
+    return av1_get_adjusted_tx_size(uv_tx);
+}
 static INLINE TxSize av1_get_tx_size(
     BlockSize  sb_type,
     int32_t plane/*, const MacroBlockD *xd*/) {
