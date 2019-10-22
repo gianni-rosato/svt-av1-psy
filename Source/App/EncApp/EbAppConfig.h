@@ -252,6 +252,12 @@ typedef struct EbConfig
     EbBool                  enable_global_motion;
 
     /****************************************
+     * Restoration filtering
+    ****************************************/
+    int                     enable_restoration_filtering;
+
+    /****************************************
+
      * OBMC
      ****************************************/
     EbBool                  enable_obmc;

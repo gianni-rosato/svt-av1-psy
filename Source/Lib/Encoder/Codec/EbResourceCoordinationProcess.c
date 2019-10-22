@@ -113,8 +113,15 @@ EbErrorType signal_derivation_pre_analysis_oq(
     picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level1_flag[1][input_resolution][hme_me_level];
     picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[0][input_resolution][hme_me_level] || tf_enable_hme_level2_flag[1][input_resolution][hme_me_level];
 
-    if (picture_control_set_ptr->enc_mode >= ENC_M8)
-        sequence_control_set_ptr->seq_header.enable_restoration = 0;
+    if (sequence_control_set_ptr->static_config.enable_restoration_filtering == DEFAULT) {
+        if (picture_control_set_ptr->enc_mode >= ENC_M8)
+            sequence_control_set_ptr->seq_header.enable_restoration = 0;
+        else
+            sequence_control_set_ptr->seq_header.enable_restoration = 1;
+    }
+    else
+        sequence_control_set_ptr->seq_header.enable_restoration = (uint8_t)sequence_control_set_ptr->static_config.enable_restoration_filtering;
+
     sequence_control_set_ptr->cdf_mode = (picture_control_set_ptr->enc_mode <= ENC_M6) ? 0 : 1;
     return return_error;
 }

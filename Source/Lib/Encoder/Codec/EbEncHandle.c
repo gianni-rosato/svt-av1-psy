@@ -2118,6 +2118,9 @@ void CopyApiFromApp(
     // Global motion
     sequence_control_set_ptr->static_config.enable_global_motion = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_global_motion;
 
+    // Restoration filtering
+    sequence_control_set_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_restoration_filtering;
+
     // OBMC
     sequence_control_set_ptr->static_config.enable_obmc = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_obmc;
 
@@ -2614,6 +2617,12 @@ static EbErrorType VerifySettings(
         return_error = EB_ErrorBadParameter;
     }
 
+    // Restoration Filtering
+    if (config->enable_restoration_filtering != 0 && config->enable_restoration_filtering != 1 && config->enable_restoration_filtering != -1) {
+      SVT_LOG("Error instance %u: Invalid restoration flag [0 - 1, -1 for auto], your input: %d\n", channelNumber + 1, config->enable_restoration_filtering);
+      return_error = EB_ErrorBadParameter;
+    }
+
     // mdc refinement
     if (config->olpd_refinement < (int32_t)(-1) || config->olpd_refinement > 1) {
         SVT_LOG("Error instance %u: Invalid OLPD Refinement Mode [0 .. 1], your input: %i\n", channelNumber + 1, config->olpd_refinement);
@@ -2673,6 +2682,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->disable_dlf_flag = EB_FALSE;
     config_ptr->enable_warped_motion = EB_TRUE;
     config_ptr->enable_global_motion = EB_TRUE;
+    config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_obmc = EB_TRUE;
     config_ptr->enable_rdoq = DEFAULT;
     config_ptr->enable_filter_intra = EB_TRUE;
