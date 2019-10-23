@@ -186,3 +186,23 @@ void eb_aom_ifft2x2_float_c(const float *input, float *temp, float *output) {
     eb_aom_ifft_2d_gen(input, temp, output, 2, eb_aom_fft1d_2_float, eb_aom_fft1d_2_float,
         eb_aom_ifft1d_2_float, simple_transpose, 1);
 }
+
+void eb_aom_ifft4x4_float_c(const float* input, float* temp, float* output) {
+    eb_aom_ifft_2d_gen(input, temp, output, 4, eb_aom_fft1d_4_float, eb_aom_fft1d_4_float,
+        eb_aom_ifft1d_4_float, simple_transpose, 1);
+}
+
+void eb_aom_ifft8x8_float_c(const float* input, float* temp, float* output) {
+    eb_aom_ifft_2d_gen(input, temp, output, 8, eb_aom_fft1d_8_float, eb_aom_fft1d_8_float,
+        eb_aom_ifft1d_8_float, simple_transpose, 1);
+}
+
+void eb_aom_ifft16x16_float_c(const float* input, float* temp, float* output) {
+    eb_aom_ifft_2d_gen(input, temp, output, 16, eb_aom_fft1d_16_float,
+        eb_aom_fft1d_16_float, eb_aom_ifft1d_16_float, simple_transpose, 1);
+}
+
+void eb_aom_ifft32x32_float_c(const float* input, float* temp, float* output) {
+    eb_aom_ifft_2d_gen(input, temp, output, 32, eb_aom_fft1d_32_float,
+        eb_aom_fft1d_32_float, eb_aom_ifft1d_32_float, simple_transpose, 1);
+}

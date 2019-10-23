@@ -2092,18 +2092,22 @@ extern "C" {
     unsigned int eb_aom_variance128x128_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
     RTCD_EXTERN unsigned int(*eb_aom_variance128x128)(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 
+    void eb_aom_ifft16x16_float_c(const float *input, float *temp, float *output);
     void eb_aom_ifft16x16_float_avx2(const float *input, float *temp, float *output);
     RTCD_EXTERN void(*eb_aom_ifft16x16_float)(const float *input, float *temp, float *output);
 
     void eb_aom_ifft2x2_float_c(const float *input, float *temp, float *output);
     RTCD_EXTERN void(*eb_aom_ifft2x2_float)(const float *input, float *temp, float *output);
 
+    void eb_aom_ifft32x32_float_c(const float *input, float *temp, float *output);
     void eb_aom_ifft32x32_float_avx2(const float *input, float *temp, float *output);
     RTCD_EXTERN void(*eb_aom_ifft32x32_float)(const float *input, float *temp, float *output);
 
+    void eb_aom_ifft4x4_float_c(const float *input, float *temp, float *output);
     void eb_aom_ifft4x4_float_sse2(const float *input, float *temp, float *output);
     RTCD_EXTERN void(*eb_aom_ifft4x4_float)(const float *input, float *temp, float *output);
 
+    void eb_aom_ifft8x8_float_c(const float *input, float *temp, float *output);
     void eb_aom_ifft8x8_float_avx2(const float *input, float *temp, float *output);
     RTCD_EXTERN void(*eb_aom_ifft8x8_float)(const float *input, float *temp, float *output);
 
@@ -4517,11 +4521,16 @@ extern "C" {
         eb_aom_fft8x8_float = eb_aom_fft8x8_float_c;
         if (flags & HAS_AVX2) eb_aom_fft8x8_float = eb_aom_fft8x8_float_avx2;
 
-        /*if (flags & HAS_AVX2)*/ eb_aom_ifft16x16_float = eb_aom_ifft16x16_float_avx2;
-        /*if (flags & HAS_AVX2)*/ eb_aom_ifft32x32_float = eb_aom_ifft32x32_float_avx2;
-        /*if (flags & HAS_AVX2)*/ eb_aom_ifft8x8_float = eb_aom_ifft8x8_float_avx2;
+		
+        eb_aom_ifft16x16_float = eb_aom_ifft16x16_float_c;
+        if (flags & HAS_AVX2) eb_aom_ifft16x16_float = eb_aom_ifft16x16_float_avx2;
+        eb_aom_ifft32x32_float = eb_aom_ifft32x32_float_c;
+        if (flags & HAS_AVX2) eb_aom_ifft32x32_float = eb_aom_ifft32x32_float_avx2;
+        eb_aom_ifft8x8_float = eb_aom_ifft8x8_float_c;
+        if (flags & HAS_AVX2) eb_aom_ifft8x8_float = eb_aom_ifft8x8_float_avx2;
         eb_aom_ifft2x2_float = eb_aom_ifft2x2_float_c;
-        /*if (flags & HAS_SSE2)*/ eb_aom_ifft4x4_float = eb_aom_ifft4x4_float_sse2;
+        eb_aom_ifft4x4_float = eb_aom_ifft4x4_float_c;
+        if (flags & HAS_SSE2) eb_aom_ifft4x4_float = eb_aom_ifft4x4_float_sse2;
         av1_get_gradient_hist = av1_get_gradient_hist_c;
         if (flags & HAS_AVX2) av1_get_gradient_hist = av1_get_gradient_hist_avx2;
     }
