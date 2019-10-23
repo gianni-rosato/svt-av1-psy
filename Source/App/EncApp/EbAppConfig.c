@@ -66,6 +66,22 @@
 #define INTRA_REFRESH_TYPE_TOKEN        "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN       "-dlf"
 #define RESTORATION_ENABLE_TOKEN        "-restoration-filtering"
+#define CLASS_12_TOKEN                  "-class-12"
+#define EDGE_SKIP_ANGLE_INTRA_TOKEN     "-intra-edge-skp"
+#define INTER_INTRA_COMPOUND_TOKEN      "-interintra-comp"
+#define FRAC_SEARCH_64_TOKEN            "-frac-search-64"
+#define MFMV_ENABLE_TOKEN               "-mfmv"
+#define REDUNDANT_BLK_TOKEN             "-redundant-blk"
+#define TRELLIS_ENABLE_TOKEN            "-trellis"
+#define SPATIAL_SSE_FL_TOKEN            "-spatial-sse-fl"
+#define SUBPEL_TOKEN                    "-subpel"
+#define OVR_BNDRY_BLK_TOKEN             "-over-bndry-blk"
+#define NEW_NEAREST_COMB_INJECT_TOKEN   "-new-nrst-near-comb"
+#define NX4_4XN_MV_INJECT_TOKEN         "-nx4-4xn-mv-inject"
+#define PRUNE_UNIPRED_ME_TOKEN          "-prune-unipred-me"
+#define PRUNE_REF_REC_PART_TOKEN        "-prune-ref-rec-part"
+#define NSQ_TABLE_TOKEN                 "-nsq-table-use"
+#define FRAME_END_CDF_UPDATE_TOKEN      "-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_TOKEN       "-local-warp"
 #define GLOBAL_MOTION_ENABLE_TOKEN      "-global-motion"
 #define OBMC_TOKEN                      "-obmc"
@@ -251,6 +267,22 @@ static void SetDisableDlfFlag                   (const char *value, EbConfig *cf
 static void SetEnableLocalWarpedMotionFlag      (const char *value, EbConfig *cfg) {cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableGlobalMotionFlag           (const char *value, EbConfig *cfg) {cfg->enable_global_motion = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableRestorationFilterFlag      (const char *value, EbConfig *cfg) {cfg->enable_restoration_filtering = strtol(value, NULL, 0);};
+static void SetClass12Flag                      (const char *value, EbConfig *cfg) {cfg->combine_class_12 = strtol(value, NULL, 0);};
+static void SetEdgeSkipAngleIntraFlag           (const char *value, EbConfig *cfg) {cfg->edge_skp_angle_intra = strtol(value, NULL, 0);};
+static void SetInterIntraCompoundFlag           (const char *value, EbConfig *cfg) {cfg->inter_intra_compound = strtol(value, NULL, 0);};
+static void SetFractionalSearch64Flag           (const char *value, EbConfig *cfg) {cfg->fract_search_64 = strtol(value, NULL, 0);};
+static void SetEnableMfmvFlag                   (const char *value, EbConfig *cfg) {cfg->enable_mfmv = strtol(value, NULL, 0);};
+static void SetEnableRedundantBlkFlag           (const char *value, EbConfig *cfg) {cfg->enable_redundant_blk = strtol(value, NULL, 0);};
+static void SetEnableTrellisFlag                (const char *value, EbConfig *cfg) {cfg->enable_trellis = strtol(value, NULL, 0);};
+static void SetSpatialSseFlFlag                 (const char *value, EbConfig *cfg) {cfg->spatial_sse_fl = strtol(value, NULL, 0);};
+static void SetEnableSubpelFlag                 (const char *value, EbConfig *cfg) {cfg->enable_subpel = strtol(value, NULL, 0);};
+static void SetOverBndryBlkFlag                 (const char *value, EbConfig *cfg) {cfg->over_bndry_blk = strtol(value, NULL, 0);};
+static void SetNewNearestCombInjectFlag         (const char *value, EbConfig *cfg) {cfg->new_nearest_comb_inject = strtol(value, NULL, 0);};
+static void SetNx4_4xnParentMvInjectFlag        (const char *value, EbConfig *cfg) {cfg->nx4_4xn_parent_mv_inject = strtol(value, NULL, 0);};
+static void SetPruneUnipredMeFlag               (const char *value, EbConfig *cfg) {cfg->prune_unipred_me = strtol(value, NULL, 0);};
+static void SetPruneRefRecPartFlag              (const char *value, EbConfig *cfg) {cfg->prune_ref_rec_part = strtol(value, NULL, 0);};
+static void SetNsqTableFlag                     (const char *value, EbConfig *cfg) {cfg->nsq_table = strtol(value, NULL, 0);};
+static void SetFrameEndCdfUpdateFlag            (const char *value, EbConfig *cfg) {cfg->frame_end_cdf_update = strtol(value, NULL, 0);};
 static void SetEnableObmcFlag                   (const char *value, EbConfig *cfg) {cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableRdoqFlag                   (const char *value, EbConfig *cfg) {cfg->enable_rdoq = strtol(value, NULL, 0);};
 static void SetEnableFilterIntraFlag            (const char *value, EbConfig *cfg) {cfg->enable_filter_intra = (EbBool)strtoul(value, NULL, 0);};
@@ -258,7 +290,6 @@ static void SetEnableHmeFlag                    (const char *value, EbConfig *cf
 static void SetEnableHmeLevel0Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetTileRow                          (const char *value, EbConfig *cfg) { cfg->tile_rows = strtoul(value, NULL, 0); };
 static void SetTileCol                          (const char *value, EbConfig *cfg) { cfg->tile_columns = strtoul(value, NULL, 0); };
-
 static void SetSceneChangeDetection             (const char *value, EbConfig *cfg) {cfg->scene_change_detection = strtoul(value, NULL, 0);};
 static void SetLookAheadDistance                (const char *value, EbConfig *cfg) {cfg->look_ahead_distance = strtoul(value, NULL, 0);};
 static void SetRateControlMode                  (const char *value, EbConfig *cfg) {cfg->rate_control_mode = strtoul(value, NULL, 0);};
@@ -451,10 +482,33 @@ config_entry_t config_entry[] = {
     // RESTORATION
     { SINGLE_INPUT, RESTORATION_ENABLE_TOKEN, "RestorationFilter", SetEnableRestorationFilterFlag },
 
+    { SINGLE_INPUT, MFMV_ENABLE_TOKEN             , "Mfmv", SetEnableMfmvFlag           },
+    { SINGLE_INPUT, REDUNDANT_BLK_TOKEN           , "RedundantBlock", SetEnableRedundantBlkFlag   },
+    { SINGLE_INPUT, TRELLIS_ENABLE_TOKEN          , "Trellis", SetEnableTrellisFlag        },
+    { SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN          , "SpatialSSEfl", SetSpatialSseFlFlag         },
+    { SINGLE_INPUT, SUBPEL_TOKEN                  , "Subpel", SetEnableSubpelFlag         },
+    { SINGLE_INPUT, OVR_BNDRY_BLK_TOKEN           , "OverBoundryBlock", SetOverBndryBlkFlag         },
+    { SINGLE_INPUT, NEW_NEAREST_COMB_INJECT_TOKEN , "NewNearestCombInjection", SetNewNearestCombInjectFlag },
+    { SINGLE_INPUT, NX4_4XN_MV_INJECT_TOKEN       , "nx4ParentMvInjection", SetNx4_4xnParentMvInjectFlag},
+    { SINGLE_INPUT, PRUNE_UNIPRED_ME_TOKEN        , "PruneUnipredMe", SetPruneUnipredMeFlag       },
+    { SINGLE_INPUT, PRUNE_REF_REC_PART_TOKEN      , "PruneRefRecPart", SetPruneRefRecPartFlag      },
+    { SINGLE_INPUT, NSQ_TABLE_TOKEN               , "NsqTable", SetNsqTableFlag             },
+    { SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN    , "FrameEndCdfUpdate", SetFrameEndCdfUpdateFlag    },
+
     // LOCAL WARPED MOTION
     { SINGLE_INPUT, LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", SetEnableLocalWarpedMotionFlag },
     // GLOBAL MOTION
     { SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", SetEnableGlobalMotionFlag },
+
+    // CLASS 12
+    { SINGLE_INPUT, CLASS_12_TOKEN, "CombineClass12", SetClass12Flag },
+    // EDGE SKIP ANGLE INTRA
+    { SINGLE_INPUT, EDGE_SKIP_ANGLE_INTRA_TOKEN, "EdgeSkipAngleIntra", SetEdgeSkipAngleIntraFlag },
+    // INTER INTRA COMPOUND
+    { SINGLE_INPUT, INTER_INTRA_COMPOUND_TOKEN, "InterIntraCompound", SetInterIntraCompoundFlag },
+    // FRACTIONAL SEARCH 64x64
+    { SINGLE_INPUT, FRAC_SEARCH_64_TOKEN, "FractionalSearch64", SetFractionalSearch64Flag },
+
     // OBMC
     { SINGLE_INPUT, OBMC_TOKEN, "Obmc", SetEnableObmcFlag },
     // RDOQ
@@ -560,6 +614,22 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->pred_structure                        = 2;
     config_ptr->enable_global_motion                 = EB_TRUE;
     config_ptr->enable_restoration_filtering         = DEFAULT;
+    config_ptr->combine_class_12                     = DEFAULT;
+    config_ptr->edge_skp_angle_intra                 = DEFAULT;
+    config_ptr->inter_intra_compound                 = DEFAULT;
+    config_ptr->fract_search_64                      = DEFAULT;
+    config_ptr->enable_mfmv                          = DEFAULT;
+    config_ptr->enable_redundant_blk                 = DEFAULT;
+    config_ptr->enable_trellis                       = DEFAULT;
+    config_ptr->spatial_sse_fl                       = DEFAULT;
+    config_ptr->enable_subpel                        = DEFAULT;
+    config_ptr->over_bndry_blk                       = DEFAULT;
+    config_ptr->new_nearest_comb_inject              = DEFAULT;
+    config_ptr->nx4_4xn_parent_mv_inject             = DEFAULT;
+    config_ptr->prune_unipred_me                     = DEFAULT;
+    config_ptr->prune_ref_rec_part                   = DEFAULT;
+    config_ptr->nsq_table                            = DEFAULT;
+    config_ptr->frame_end_cdf_update                 = DEFAULT;
     config_ptr->enable_obmc                          = EB_TRUE;
     config_ptr->enable_rdoq                          = DEFAULT;
     config_ptr->enable_filter_intra                  = EB_TRUE;
