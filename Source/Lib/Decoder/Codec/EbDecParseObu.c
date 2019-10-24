@@ -2056,7 +2056,7 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
     read_film_grain_params(dec_handle_ptr, bs, &frame_info->film_grain_params);
 
-    dec_handle_ptr->cur_pic_buf[0]->film_grain_params = 
+    dec_handle_ptr->cur_pic_buf[0]->film_grain_params =
                             dec_handle_ptr->frame_header.film_grain_params;
 
     dec_handle_ptr->show_existing_frame = frame_info->show_existing_frame;

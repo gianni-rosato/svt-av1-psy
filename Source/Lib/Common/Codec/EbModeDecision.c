@@ -47,6 +47,12 @@ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 #define INT_MAX       2147483647    // maximum (signed) int value
 #endif
 
+static EB_AV1_INTER_PREDICTION_FUNC_PTR   av1_inter_prediction_function_table[2] =
+{
+    av1_inter_prediction,
+    av1_inter_prediction_hbd
+};
+
 #if II_COMP_FLAG
 void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
@@ -307,31 +313,8 @@ void inter_intra_search(
 
     pred_desc.buffer_y = tmp_buf;
 
-    //int64_t skip_sse_sb = INT64_MAX;
-    //int32_t skip_txfm_sb = 0;
-    //int32_t rs = 0;
-    //int64_t rd = INT64_MAX;
-
-
-    //interpolation_filter_search(
-    //                picture_control_set_ptr,
-    //                &pred_desc, //output,
-    //                context_ptr,
-    //                candidate_buffer_ptr,
-    //                mv_unit,
-    //                ref_pic_list0,
-    //                ref_pic_list1,
-    //                sequence_control_set_ptr->encode_context_ptr->asm_type,
-    //                &rd,
-    //                &rs,
-    //                &skip_txfm_sb,
-    //                &skip_sse_sb);
-
-
-
-
     //we call the regular inter prediction path here(no compound)
-    av1_inter_prediction(
+    av1_inter_prediction_function_table[context_ptr->hbd_mode_decision](
         picture_control_set_ptr,
         0,//ASSUMPTION: fixed interpolation filter.
         context_ptr->cu_ptr,
@@ -365,7 +348,7 @@ void inter_intra_search(
         0,          //output origin_x,
         0,          //output origin_y,
         0, //do chroma
-        picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->encode_context_ptr->asm_type);
+        (uint8_t)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth);
 
     assert(is_interintra_wedge_used(context_ptr->blk_geom->bsize));//if not I need to add nowedge path!!
 
@@ -2750,14 +2733,14 @@ void inject_new_nearest_new_comb_candidates(
                    inj_mv = context_ptr->injected_mv_count_bipred == 0 || mrp_is_already_injected_mv_bipred(context_ptr, to_inject_mv_x_l0, to_inject_mv_y_l0, to_inject_mv_x_l1, to_inject_mv_y_l1, ref_pair) == EB_FALSE;
 
                    if (inj_mv) {
-                       
+
                        context_ptr->variance_ready = 0 ;
                        for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types ; cur_type++){
                            // If two predictors are very similar, skip wedge compound mode search
                            if (context_ptr->variance_ready)
                                if (context_ptr->prediction_mse < 8 || (!have_newmv_in_inter_mode(NEAR_NEWMV) && context_ptr->prediction_mse  < 64))
                                    continue;
-                           
+
                            candidateArray[canIdx].type = INTER_MODE;
                            candidateArray[canIdx].inter_mode = NEAR_NEWMV;
                            candidateArray[canIdx].pred_mode = NEAR_NEWMV;
@@ -2802,7 +2785,7 @@ void inject_new_nearest_new_comb_candidates(
                                context_ptr,
                                &candidateArray[canIdx],
                                cur_type);
-                           
+
                            INCRMENT_CAND_TOTAL_COUNT(canIdx);
                         }
                    }

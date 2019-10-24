@@ -61,41 +61,117 @@ extern "C" {
         const ScaleFactors *sf, int32_t w, int32_t h, ConvolveParams *conv_params,
         InterpFilters interp_filters, int32_t is_intrabc, int32_t bd);
 
-    EbErrorType av1_inter_prediction(
-        PictureControlSet                    *picture_control_set_ptr,
-        uint32_t                                interp_filters,
-        CodingUnit                           *cu_ptr,
-        uint8_t                                 ref_frame_type,
-        MvUnit                               *mv_unit,
-        uint8_t                                  use_intrabc,
+typedef EbErrorType(*EB_AV1_INTER_PREDICTION_FUNC_PTR)(
+    PictureControlSet              *picture_control_set_ptr,
+    uint32_t                        interp_filters,
+    CodingUnit                     *cu_ptr,
+    uint8_t                         ref_frame_type,
+    MvUnit                         *mv_unit,
+    uint8_t                         use_intrabc,
 #if OBMC_FLAG
-        MotionMode                              motion_mode,
-        uint8_t                                 use_precomputed_obmc,
-        struct ModeDecisionContext              *md_context,
+    MotionMode                      motion_mode,
+    uint8_t                         use_precomputed_obmc,
+    struct ModeDecisionContext     *md_context,
 #endif
-        uint8_t                                compound_idx,
-    InterInterCompoundData                     *interinter_comp,
+    uint8_t                         compound_idx,
+    InterInterCompoundData         *interinter_comp,
 #if II_COMP_FLAG
-        TileInfo                                * tile,
-        NeighborArrayUnit                       *luma_recon_neighbor_array,
-        NeighborArrayUnit                       *cb_recon_neighbor_array ,
-        NeighborArrayUnit                       *cr_recon_neighbor_array ,
-        uint8_t                                 is_interintra_used ,
-        INTERINTRA_MODE                         interintra_mode,
-        uint8_t                                 use_wedge_interintra,
-        int32_t                                 interintra_wedge_index,
+    TileInfo                       * tile,
+    NeighborArrayUnit              *luma_recon_neighbor_array,
+    NeighborArrayUnit              *cb_recon_neighbor_array ,
+    NeighborArrayUnit              *cr_recon_neighbor_array ,
+    uint8_t                         is_interintra_used ,
+    INTERINTRA_MODE                 interintra_mode,
+    uint8_t                         use_wedge_interintra,
+    int32_t                         interintra_wedge_index,
 #endif
-        uint16_t                                pu_origin_x,
-        uint16_t                                pu_origin_y,
-        uint8_t                                 bwidth,
-        uint8_t                                 bheight,
-        EbPictureBufferDesc                  *ref_pic_list0,
-        EbPictureBufferDesc                  *ref_pic_list1,
-        EbPictureBufferDesc                  *prediction_ptr,
-        uint16_t                                dst_origin_x,
-        uint16_t                                dst_origin_y,
-        EbBool                                  perform_chroma,
-        EbAsm                                   asm_type);
+    uint16_t                        pu_origin_x,
+    uint16_t                        pu_origin_y,
+    uint8_t                         bwidth,
+    uint8_t                         bheight,
+    EbPictureBufferDesc             *ref_pic_list0,
+    EbPictureBufferDesc             *ref_pic_list1,
+    EbPictureBufferDesc             *prediction_ptr,
+    uint16_t                        dst_origin_x,
+    uint16_t                        dst_origin_y,
+    EbBool                          perform_chroma,
+    uint8_t                         bit_depth);
+
+
+
+    EbErrorType av1_inter_prediction(
+    PictureControlSet              *picture_control_set_ptr,
+    uint32_t                        interp_filters,
+    CodingUnit                     *cu_ptr,
+    uint8_t                         ref_frame_type,
+    MvUnit                         *mv_unit,
+    uint8_t                         use_intrabc,
+#if OBMC_FLAG
+    MotionMode                      motion_mode,
+    uint8_t                         use_precomputed_obmc,
+    struct ModeDecisionContext     *md_context,
+#endif
+    uint8_t                         compound_idx,
+    InterInterCompoundData         *interinter_comp,
+#if II_COMP_FLAG
+    TileInfo                       * tile,
+    NeighborArrayUnit              *luma_recon_neighbor_array,
+    NeighborArrayUnit              *cb_recon_neighbor_array ,
+    NeighborArrayUnit              *cr_recon_neighbor_array ,
+    uint8_t                         is_interintra_used ,
+    INTERINTRA_MODE                 interintra_mode,
+    uint8_t                         use_wedge_interintra,
+    int32_t                         interintra_wedge_index,
+#endif
+    uint16_t                        pu_origin_x,
+    uint16_t                        pu_origin_y,
+    uint8_t                         bwidth,
+    uint8_t                         bheight,
+    EbPictureBufferDesc             *ref_pic_list0,
+    EbPictureBufferDesc             *ref_pic_list1,
+    EbPictureBufferDesc             *prediction_ptr,
+    uint16_t                        dst_origin_x,
+    uint16_t                        dst_origin_y,
+    EbBool                          perform_chroma,
+    uint8_t                         bit_depth);
+
+
+EbErrorType av1_inter_prediction_hbd(
+    PictureControlSet              *picture_control_set_ptr,
+    uint32_t                        interp_filters,
+    CodingUnit                     *cu_ptr,
+    uint8_t                         ref_frame_type,
+    MvUnit                         *mv_unit,
+    uint8_t                         use_intrabc,
+#if OBMC_FLAG
+    MotionMode                      motion_mode,
+    uint8_t                         use_precomputed_obmc,
+    struct ModeDecisionContext     *md_context,
+#endif
+    uint8_t                         compound_idx,
+    InterInterCompoundData         *interinter_comp,
+#if II_COMP_FLAG
+    TileInfo                       * tile,
+    NeighborArrayUnit              *luma_recon_neighbor_array,
+    NeighborArrayUnit              *cb_recon_neighbor_array ,
+    NeighborArrayUnit              *cr_recon_neighbor_array ,
+    uint8_t                         is_interintra_used ,
+    INTERINTRA_MODE                 interintra_mode,
+    uint8_t                         use_wedge_interintra,
+    int32_t                         interintra_wedge_index,
+#endif
+    uint16_t                        pu_origin_x,
+    uint16_t                        pu_origin_y,
+    uint8_t                         bwidth,
+    uint8_t                         bheight,
+    EbPictureBufferDesc             *ref_pic_list0,
+    EbPictureBufferDesc             *ref_pic_list1,
+    EbPictureBufferDesc             *prediction_ptr,
+    uint16_t                        dst_origin_x,
+    uint16_t                        dst_origin_y,
+    EbBool                          perform_chroma,
+    uint8_t                         bit_depth);
+
     void search_compound_diff_wedge(
         PictureControlSet                    *picture_control_set_ptr,
         struct ModeDecisionContext                  *context_ptr,
@@ -178,40 +254,6 @@ extern "C" {
         ModeDecisionCandidateBuffer          *candidate_buffer_ptr,
         EbAsm                                   asm_type);
 
-    EbErrorType av1_inter_prediction_hbd(
-        PictureControlSet                    *picture_control_set_ptr,
-        uint8_t                                 ref_frame_type,
-        CodingUnit                           *cu_ptr,
-        MvUnit                               *mv_unit,
-        uint8_t                                  use_intrabc,
-#if OBMC_FLAG
-        MotionMode                              motion_mode,
-#endif
-#if INTER_INTER_HBD
-        uint8_t                         compound_idx,
-        InterInterCompoundData          *interinter_comp,
-#endif
-#if INTER_INTRA_HBD
-    TileInfo                        * tile,
-    NeighborArrayUnit               *luma_recon_neighbor_array,
-    NeighborArrayUnit               *cb_recon_neighbor_array ,
-    NeighborArrayUnit               *cr_recon_neighbor_array ,
-    uint8_t                         is_interintra_used ,
-    INTERINTRA_MODE                 interintra_mode,
-    uint8_t                         use_wedge_interintra,
-    int32_t                         interintra_wedge_index,
-#endif
-        uint16_t                                pu_origin_x,
-        uint16_t                                pu_origin_y,
-        uint8_t                                 bwidth,
-        uint8_t                                 bheight,
-        EbPictureBufferDesc                  *ref_pic_list0,
-        EbPictureBufferDesc                  *ref_pic_list1,
-        EbPictureBufferDesc                  *prediction_ptr,
-        uint16_t                                dst_origin_x,
-        uint16_t                                dst_origin_y,
-        uint8_t                                 bit_depth,
-        EbAsm                                   asm_type);
 
     EbErrorType choose_mvp_idx_v2(
         ModeDecisionCandidate               *candidate_ptr,

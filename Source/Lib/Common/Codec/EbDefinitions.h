@@ -47,7 +47,7 @@ extern "C" {
 #define OBMC_FLAG            1 // OBMC motion mode flag
 #define OBMC_CONVOLVE        1 // to track convolve kernels changes
 
-#define INJECT_NEW_NEAR_NEAR_NEW   1   // Inject NEW_NEAR / NEAR_NEW inter prediction 
+#define INJECT_NEW_NEAR_NEAR_NEW   1   // Inject NEW_NEAR / NEAR_NEW inter prediction
 #define FILTER_INTRA_FLAG    1 // Filter intra prediction
 
 
