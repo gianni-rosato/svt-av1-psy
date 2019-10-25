@@ -1505,18 +1505,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     }
     else
 #endif
-    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-            context_ptr->bipred3x3_injection = 1;
+    if (sequence_control_set_ptr->static_config.bipred_3x3_inject == DEFAULT)
+        if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+            if (picture_control_set_ptr->enc_mode <= ENC_M1)
+                context_ptr->bipred3x3_injection = 1;
+            else
+                context_ptr->bipred3x3_injection = 0;
         else
-            context_ptr->bipred3x3_injection = 0;
+            if (picture_control_set_ptr->enc_mode <= ENC_M1)
+                context_ptr->bipred3x3_injection = 1;
+            else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+                context_ptr->bipred3x3_injection = 2;
+            else
+                context_ptr->bipred3x3_injection = 0;
     else
-    if (picture_control_set_ptr->enc_mode <= ENC_M1)
-        context_ptr->bipred3x3_injection = 1;
-    else if (picture_control_set_ptr->enc_mode <= ENC_M4)
-        context_ptr->bipred3x3_injection = 2;
-    else
-        context_ptr->bipred3x3_injection = 0;
+        context_ptr->bipred3x3_injection = sequence_control_set_ptr->static_config.bipred_3x3_inject;
 
     // Level                Settings
     // 0                    Level 0: OFF
@@ -1525,28 +1528,32 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 3                    Level 3: 7x5 full-pel search +  (H + V + D only ~ the best) sub-pel refinement = up to 6 half-pel + up to 6  quarter-pel = up to 12 positions + pred_me_distortion to pa_me_distortion deviation on
     // 4                    Level 4: 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation on
     // 5                    Level 5: 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation off
-    if (picture_control_set_ptr->slice_type != I_SLICE)
+    if (picture_control_set_ptr->slice_type != I_SLICE) {
 #if MULTI_PASS_PD // Shut predictive if 1st pass
         if (context_ptr->pd_pass == PD_PASS_0)
             context_ptr->predictive_me_level = 0;
         else if (context_ptr->pd_pass == PD_PASS_1)
             context_ptr->predictive_me_level = 2;
-        else
-#endif
-#if M0_OPT
-        if (picture_control_set_ptr->enc_mode <= ENC_M0)
-            context_ptr->predictive_me_level = picture_control_set_ptr->parent_pcs_ptr->sc_content_detected ? 2 : 5;
-        else if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-            context_ptr->predictive_me_level = 4;
-        else if (picture_control_set_ptr->enc_mode <= ENC_M4)
-            context_ptr->predictive_me_level = 2;
-        else
-            context_ptr->predictive_me_level = 0;
     else
+#endif
+        if (sequence_control_set_ptr->static_config.pred_me == DEFAULT) {
+#if M0_OPT
+            if (picture_control_set_ptr->enc_mode <= ENC_M0)
+                context_ptr->predictive_me_level = picture_control_set_ptr->parent_pcs_ptr->sc_content_detected ? 2 : 5;
+            else if (picture_control_set_ptr->enc_mode <= ENC_M1)
+#else
+            if (picture_control_set_ptr->enc_mode <= ENC_M1)
+#endif
+                context_ptr->predictive_me_level = 4;
+            else if (picture_control_set_ptr->enc_mode <= ENC_M4)
+                context_ptr->predictive_me_level = 2;
+            else
+                context_ptr->predictive_me_level = 0;
+        } else
+            context_ptr->predictive_me_level = sequence_control_set_ptr->static_config.pred_me;
+    } else
         context_ptr->predictive_me_level = 0;
+
 
     // Derive md_staging_mode
     //

@@ -86,6 +86,9 @@
 #define GLOBAL_MOTION_ENABLE_TOKEN      "-global-motion"
 #define OBMC_TOKEN                      "-obmc"
 #define RDOQ_TOKEN                      "-rdoq"
+#define PRED_ME_TOKEN                   "-pred-me"
+#define BIPRED_3x3_TOKEN                "-bipred-3x3"
+#define COMPOUND_LEVEL_TOKEN            "-compound"
 #define FILTER_INTRA_TOKEN              "-filter-intra"
 #define USE_DEFAULT_ME_HME_TOKEN        "-use-default-me-hme"
 #define HME_ENABLE_TOKEN                "-hme"
@@ -285,6 +288,9 @@ static void SetNsqTableFlag                     (const char *value, EbConfig *cf
 static void SetFrameEndCdfUpdateFlag            (const char *value, EbConfig *cfg) {cfg->frame_end_cdf_update = strtol(value, NULL, 0);};
 static void SetEnableObmcFlag                   (const char *value, EbConfig *cfg) {cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableRdoqFlag                   (const char *value, EbConfig *cfg) {cfg->enable_rdoq = strtol(value, NULL, 0);};
+static void SetPredictiveMeFlag                 (const char *value, EbConfig *cfg) {cfg->pred_me = strtol(value, NULL, 0); };
+static void SetBipred3x3injectFlag              (const char *value, EbConfig *cfg) {cfg->bipred_3x3_inject = strtol(value, NULL, 0); };
+static void SetCompoundLevelFlag                (const char *value, EbConfig *cfg) {cfg->compound_level = strtol(value, NULL, 0); };
 static void SetEnableFilterIntraFlag            (const char *value, EbConfig *cfg) {cfg->enable_filter_intra = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeFlag                    (const char *value, EbConfig *cfg) {cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableHmeLevel0Flag              (const char *value, EbConfig *cfg) {cfg->enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);};
@@ -516,6 +522,14 @@ config_entry_t config_entry[] = {
 
     // Filter Intra
     { SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", SetEnableFilterIntraFlag },
+
+    // PREDICTIVE ME
+    { SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", SetPredictiveMeFlag },
+    // BIPRED 3x3 INJECTION
+    { SINGLE_INPUT, BIPRED_3x3_TOKEN, "Bipred3x3", SetBipred3x3injectFlag },
+    // COMPOUND MODE
+    { SINGLE_INPUT, COMPOUND_LEVEL_TOKEN, "CompoundLevel", SetCompoundLevelFlag },
+
     // ME Tools
     { SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", SetCfgUseDefaultMeHme },
     { SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", SetEnableHmeFlag },
@@ -632,6 +646,9 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->frame_end_cdf_update                 = DEFAULT;
     config_ptr->enable_obmc                          = EB_TRUE;
     config_ptr->enable_rdoq                          = DEFAULT;
+    config_ptr->pred_me                              = DEFAULT;
+    config_ptr->bipred_3x3_inject                    = DEFAULT;
+    config_ptr->compound_level                       = DEFAULT;
     config_ptr->enable_filter_intra                  = EB_TRUE;
     config_ptr->in_loop_me_flag                      = EB_TRUE;
     config_ptr->use_default_me_hme                   = EB_TRUE;

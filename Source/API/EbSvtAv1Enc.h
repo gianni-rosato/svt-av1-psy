@@ -306,6 +306,21 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is -1. */
     int                   frame_end_cdf_update;
 
+    /* Predictive Me
+    *
+    * Default is -1. */
+    int                   pred_me;
+
+    /* Bipred 3x3 Injection
+    *
+    * Default is -1. */
+    int                   bipred_3x3_inject;
+
+    /* Compound Mode
+    *
+    * Default is -1. */
+    int                   compound_level;
+
     /* OBMC
     *
     * Default is 1. */

@@ -210,6 +210,9 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.frame_end_cdf_update = config->frame_end_cdf_update;
     callback_data->eb_enc_parameters.enable_obmc = (EbBool)config->enable_obmc;
     callback_data->eb_enc_parameters.enable_rdoq = config->enable_rdoq;
+    callback_data->eb_enc_parameters.pred_me = config->pred_me;
+    callback_data->eb_enc_parameters.bipred_3x3_inject = config->bipred_3x3_inject;
+    callback_data->eb_enc_parameters.compound_level = config->compound_level;
     callback_data->eb_enc_parameters.enable_filter_intra = (EbBool)config->enable_filter_intra;
     callback_data->eb_enc_parameters.use_default_me_hme = (EbBool)config->use_default_me_hme;
     callback_data->eb_enc_parameters.enable_hme_flag = (EbBool)config->enable_hme_flag;

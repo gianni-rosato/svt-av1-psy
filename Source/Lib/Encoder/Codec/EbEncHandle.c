@@ -2167,6 +2167,13 @@ void CopyApiFromApp(
     // RDOQ
     sequence_control_set_ptr->static_config.enable_rdoq = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_rdoq;
 
+    // Predictive ME
+    sequence_control_set_ptr->static_config.pred_me  = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->pred_me;
+    // BiPred 3x3 injection
+    sequence_control_set_ptr->static_config.bipred_3x3_inject = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->bipred_3x3_inject;
+    // Compound mode
+    sequence_control_set_ptr->static_config.compound_level = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->compound_level;
+
     // Filter intra prediction
     sequence_control_set_ptr->static_config.enable_filter_intra = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_filter_intra;
 
@@ -2663,6 +2670,21 @@ static EbErrorType VerifySettings(
       return_error = EB_ErrorBadParameter;
     }
 
+    if (config->pred_me > 5 || config->pred_me < -1) {
+      SVT_LOG("Error instance %u: Invalid predictive me level [0-5, -1 for auto], your input: %d\n", channelNumber + 1, config->pred_me);
+      return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->bipred_3x3_inject > 2 || config->bipred_3x3_inject < -1) {
+      SVT_LOG("Error instance %u: Invalid bipred_3x3_inject mode [0-2, -1 for auto], your input: %d\n", channelNumber + 1, config->bipred_3x3_inject);
+      return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->compound_level > 2 || config->compound_level < -1) {
+      SVT_LOG("Error instance %u: Invalid compound level [0-2, -1 for auto], your input: %d\n", channelNumber + 1, config->compound_level);
+      return_error = EB_ErrorBadParameter;
+    }
+
     if (config->combine_class_12 != 0 && config->combine_class_12 != 1 && config->combine_class_12 != -1) {
       SVT_LOG("Error instance %u: Invalid combine MD Class1&2 flag [0/1 or -1 for auto], your input: %d\n", channelNumber + 1, config->combine_class_12);
       return_error = EB_ErrorBadParameter;
@@ -2821,6 +2843,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->enable_obmc = EB_TRUE;
     config_ptr->enable_rdoq = DEFAULT;
+    config_ptr->pred_me = DEFAULT;
+    config_ptr->bipred_3x3_inject = DEFAULT;
+    config_ptr->compound_level = DEFAULT;
     config_ptr->enable_filter_intra = EB_TRUE;
     config_ptr->in_loop_me_flag = EB_TRUE;
     config_ptr->ext_block_flag = EB_FALSE;
