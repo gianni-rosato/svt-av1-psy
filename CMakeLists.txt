@@ -84,8 +84,7 @@ set(flags_to_test
     -Wformat
     -Wformat-security
     -fPIE
-    -fPIC
-    -D_FORTIFY_SOURCE=2)
+    -fPIC)
 if(MSVC)
     list(APPEND flags_to_test /MP)
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
@@ -103,7 +102,7 @@ else()
     if(MINGW)
         list(APPEND flags_to_test -mxsave)
     else()
-        list(APPEND flags_to_test -fstack-protector-strong)
+        list(APPEND flags_to_test -fstack-protector-strong -D_FORTIFY_SOURCE=2)
     endif()
 endif()
 set(release_flags_to_test)
