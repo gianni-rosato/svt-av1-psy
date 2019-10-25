@@ -270,6 +270,11 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is 0. */
     EbBool                   enable_hbd_mode_decision;
 
+    /* Palette Mode
+    *
+    * Default is -1. */
+    int32_t                   enable_palette;
+
     /* Enable the use of Constrained Intra, which yields sending two picture
      * parameter sets in the elementary streams .
      *

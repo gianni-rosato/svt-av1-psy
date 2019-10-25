@@ -209,7 +209,10 @@ void picture_control_set_dctor(EbPtr p)
     EB_FREE_ARRAY(obj->md_rate_estimation_array);
     EB_FREE_ARRAY(obj->ec_ctx_array);
     EB_FREE_ARRAY(obj->rate_est_array);
-
+#if  PAL_SUP
+    if(obj->tile_tok[0][0])
+       EB_FREE_ARRAY(obj->tile_tok[0][0]);
+#endif
     EB_FREE_ARRAY(obj->mdc_sb_array);
     EB_FREE_ARRAY(obj->qp_array);
     EB_DESTROY_MUTEX(obj->entropy_coding_mutex);
@@ -218,6 +221,24 @@ void picture_control_set_dctor(EbPtr p)
     EB_DESTROY_MUTEX(obj->rest_search_mutex);
 
 }
+#if PAL_SUP
+// Token buffer is only used for palette tokens.
+static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols,
+    int sb_size_log2,
+    const int num_planes) {
+    // Calculate the maximum number of max superblocks in the image.
+    const int shift = sb_size_log2 - 4;
+    const int sb_size = 1 << sb_size_log2;
+    const int sb_size_square = sb_size * sb_size;
+    const int sb_rows = ALIGN_POWER_OF_TWO(mb_rows, shift) >> shift;
+    const int sb_cols = ALIGN_POWER_OF_TWO(mb_cols, shift) >> shift;
+
+    // One palette token for each pixel. There can be palettes on two planes.
+    const int sb_palette_toks = AOMMIN(2, num_planes) * sb_size_square;
+
+    return sb_rows * sb_cols * sb_palette_toks;
+}
+#endif
 
 typedef struct InitData {
     NeighborArrayUnit **na_unit_dbl_ptr;
@@ -414,6 +435,19 @@ EbErrorType picture_control_set_ctor(
     EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
     EB_MALLOC_ARRAY(object_ptr->rate_est_array, all_sb);
 
+#if PAL_SUP
+    if (initDataPtr->cfg_palette){
+        uint32_t mi_cols = initDataPtr->picture_width >> MI_SIZE_LOG2;
+        uint32_t mi_rows = initDataPtr->picture_height >> MI_SIZE_LOG2;
+        uint32_t mb_cols = (mi_cols + 2) >> 2;
+        uint32_t mb_rows = (mi_rows + 2) >> 2;
+        unsigned int tokens =
+            get_token_alloc(mb_rows, mb_cols, MAX_SB_SIZE_LOG2, 2);
+        EB_CALLOC_ARRAY(object_ptr->tile_tok[0][0], tokens);
+    }
+    else
+        object_ptr->tile_tok[0][0] = NULL;
+#endif
     // Mode Decision Control config
     EB_MALLOC_ARRAY(object_ptr->mdc_sb_array, object_ptr->sb_total_count);
     object_ptr->qp_array_stride = (uint16_t)((initDataPtr->picture_width + MIN_BLOCK_SIZE - 1) / MIN_BLOCK_SIZE);

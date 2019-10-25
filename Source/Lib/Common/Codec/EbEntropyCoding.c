@@ -34,6 +34,10 @@
 #define S8  8*8
 #define S4  4*4
 
+#if PAL_SUP
+int svt_av1_allow_palette(int allow_palette,
+    BlockSize sb_type);
+#endif
 int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
@@ -1323,9 +1327,17 @@ static void EncodeSkipCoeffAv1(
 int av1_filter_intra_allowed(
  uint8_t   enable_filter_intra,
  BlockSize bsize,
+#if PAL_SUP
+ uint8_t palette_size,
+#endif
  uint32_t  mode)
  {
   return  mode == DC_PRED &&
+#if PAL_SUP
+      palette_size == 0 &&
+#else
+       //  mbmi->palette_mode_info.palette_size[0] == 0 &&
+#endif
          av1_filter_intra_allowed_bsize(enable_filter_intra,bsize);
 }
 #endif
@@ -5180,6 +5192,7 @@ EbErrorType ec_update_neighbors(
     return return_error;
 }
 
+#if !PAL_SUP
 static INLINE int av1_allow_palette(int allow_screen_content_tools,
     BlockSize sb_type) {
     return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
@@ -5189,7 +5202,133 @@ static INLINE int av1_allow_palette(int allow_screen_content_tools,
 static INLINE int av1_get_palette_bsize_ctx(BlockSize bsize) {
     return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
 }
+#else
+int av1_allow_palette(int allow_screen_content_tools,
+    BlockSize sb_type) {
+    return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
+        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+}
+int av1_get_palette_bsize_ctx(BlockSize bsize) {
+    return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
+}
+void av1_tokenize_color_map(FRAME_CONTEXT *frameContext,CodingUnit*cu_ptr, int plane,
+    TOKENEXTRA **t, BlockSize bsize, TxSize tx_size,
+    COLOR_MAP_TYPE type, int allow_update_cdf);
+void av1_get_block_dimensions(BlockSize bsize, int plane,
+    const MacroBlockD *xd, int *width,
+    int *height,
+    int *rows_within_bounds,
+    int *cols_within_bounds);
+int eb_get_palette_cache(const MacroBlockD *const xd, int plane,
+    uint16_t *cache);
+int av1_index_color_cache(const uint16_t *color_cache, int n_cache,
+    const uint16_t *colors, int n_colors,
+    uint8_t *cache_color_found, int *out_cache_colors);
+
+int av1_get_palette_mode_ctx(const MacroBlockD *xd) {
+    const MbModeInfo *const above_mi = xd->above_mbmi;
+    const MbModeInfo *const left_mi = xd->left_mbmi;
+    int ctx = 0;
+    if (above_mi) ctx += (above_mi->palette_mode_info.palette_size[0] > 0);
+    if (left_mi) ctx += (left_mi->palette_mode_info.palette_size[0] > 0);
+    return ctx;
+}
+// Transmit color values with delta encoding. Write the first value as
+// literal, and the deltas between each value and the previous one. "min_val" is
+// the smallest possible value of the deltas.
+static AOM_INLINE void delta_encode_palette_colors(const int *colors, int num,
+    int bit_depth, int min_val,
+    AomWriter *w) {
+    if (num <= 0) return;
+    assert(colors[0] < (1 << bit_depth));
+    aom_write_literal(w, colors[0], bit_depth);
+    if (num == 1) return;
+    int max_delta = 0;
+    int deltas[PALETTE_MAX_SIZE];
+    memset(deltas, 0, sizeof(deltas));
+    for (int i = 1; i < num; ++i) {
+        assert(colors[i] < (1 << bit_depth));
+        const int delta = colors[i] - colors[i - 1];
+        deltas[i - 1] = delta;
+        assert(delta >= min_val);
+        if (delta > max_delta) max_delta = delta;
+    }
+    const int min_bits = bit_depth - 3;
+    int bits = AOMMAX(av1_ceil_log2(max_delta + 1 - min_val), min_bits);
+    assert(bits <= bit_depth);
+    int range = (1 << bit_depth) - colors[0] - min_val;
+    aom_write_literal(w, bits - min_bits, 2);
+    for (int i = 0; i < num - 1; ++i) {
+        aom_write_literal(w, deltas[i] - min_val, bits);
+        range -= deltas[i];
+        bits = AOMMIN(bits, av1_ceil_log2(range));
+    }
+}
+
+static INLINE int get_unsigned_bits(unsigned int num_values) {
+    return num_values > 0 ? get_msb(num_values) + 1 : 0;
+}
+static INLINE void write_uniform(AomWriter *w, int n, int v) {
+    const int l = get_unsigned_bits(n);
+    const int m = (1 << l) - n;
+    if (l == 0) return;
+    if (v < m) {
+        aom_write_literal(w, v, l - 1);
+    }
+    else {
+        aom_write_literal(w, m + ((v - m) >> 1), l - 1);
+        aom_write_literal(w, (v - m) & 1, 1);
+    }
+}
+int write_uniform_cost(int n, int v) {
+    const int l = get_unsigned_bits(n);
+    const int m = (1 << l) - n;
+    if (l == 0) return 0;
+    if (v < m)
+        return av1_cost_literal(l - 1);
+    else
+        return av1_cost_literal(l);
+}
+// Transmit luma palette color values. First signal if each color in the color
+// cache is used. Those colors that are not in the cache are transmitted with
+// delta encoding.
+static AOM_INLINE void write_palette_colors_y(
+    const MacroBlockD *const xd, const PaletteModeInfo *const pmi,
+    int bit_depth, AomWriter *w) {
+    const int n = pmi->palette_size[0];
+    uint16_t color_cache[2 * PALETTE_MAX_SIZE];
+    const int n_cache = eb_get_palette_cache(xd, 0, color_cache);
+    int out_cache_colors[PALETTE_MAX_SIZE];
+    uint8_t cache_color_found[2 * PALETTE_MAX_SIZE];
+    const int n_out_cache =
+        av1_index_color_cache(color_cache, n_cache, pmi->palette_colors, n,
+            cache_color_found, out_cache_colors);
+    int n_in_cache = 0;
+    for (int i = 0; i < n_cache && n_in_cache < n; ++i) {
+        const int found = cache_color_found[i];
+        aom_write_bit(w, found);
+        n_in_cache += found;
+    }
+    assert(n_in_cache + n_out_cache == n);
+    delta_encode_palette_colors(out_cache_colors, n_out_cache, bit_depth, 1, w);
+}
+static inline void pack_map_tokens(AomWriter *w, const TOKENEXTRA **tp,
+    int n, int num) {
+    const TOKENEXTRA *p = *tp;
+    write_uniform(w, n, p->token);  // The first color index.
+    ++p;
+    --num;
+    for (int i = 0; i < num; ++i) {
+        aom_write_symbol(w, p->token, p->color_map_cdf, n);
+        ++p;
+    }
+    *tp = p;
+}
+#endif
 static void write_palette_mode_info(
+#if PAL_SUP
+    PictureParentControlSet     *ppcs,
+#endif
     FRAME_CONTEXT           *ec_ctx,
     CodingUnit            *cu_ptr,
     BlockSize bsize,
@@ -5200,6 +5339,26 @@ static void write_palette_mode_info(
     uint32_t intra_chroma_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
 
     const int num_planes = 3;// av1_num_planes(cm);
+
+#if PAL_SUP
+    const PaletteModeInfo *const pmi = &cu_ptr->palette_info.pmi;
+    const int bsize_ctx = av1_get_palette_bsize_ctx(bsize);
+    assert(bsize_ctx >= 0);
+    if (intra_luma_mode == DC_PRED) {
+        const int n =  pmi->palette_size[0];
+        const int palette_y_mode_ctx = av1_get_palette_mode_ctx(cu_ptr->av1xd);
+        aom_write_symbol(
+            w, n > 0,
+            ec_ctx->palette_y_mode_cdf[bsize_ctx][palette_y_mode_ctx], 2);
+        if (n > 0) {
+            aom_write_symbol(w, n - PALETTE_MIN_SIZE,
+                ec_ctx->palette_y_size_cdf[bsize_ctx],
+                PALETTE_SIZES);
+            write_palette_colors_y(cu_ptr->av1xd, pmi, ppcs->sequence_control_set_ptr->static_config.encoder_bit_depth, w);
+        }
+    }
+
+#else
     //const BLOCK_SIZE bsize = mbmi->sb_type;
     //assert(av1_allow_palette(cm->allow_screen_content_tools, bsize));
    // const PALETTE_MODE_INFO *const pmi = &mbmi->palette_mode_info;
@@ -5218,13 +5377,18 @@ static void write_palette_mode_info(
             //write_palette_colors_y(xd, pmi, cm->seq_params.bit_depth, w);
         }
     }
-
+#endif
     const int uv_dc_pred =
         num_planes > 1 && intra_chroma_mode == UV_DC_PRED &&
         is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
     if (uv_dc_pred) {
         const int n = 0;// pmi->palette_size[1];
+#if PAL_SUP
+        assert(pmi->palette_size[1] == 0);//remove when chroma is on
+        const int palette_uv_mode_ctx =  (pmi->palette_size[0] > 0);
+#else
         const int palette_uv_mode_ctx = 0;// (pmi->palette_size[0] > 0);
+#endif
         aom_write_symbol(w, n > 0,
             ec_ctx->palette_uv_mode_cdf[palette_uv_mode_ctx], 2);
         if (n > 0) {
@@ -6038,6 +6202,9 @@ assert(bsize < BlockSizeS_ALL);
 
             if (cu_ptr->av1xd->use_intrabc == 0 && av1_allow_palette(frm_hdr->allow_screen_content_tools, blk_geom->bsize))
                 write_palette_mode_info(
+#if PAL_SUP
+                    picture_control_set_ptr->parent_pcs_ptr,
+#endif
                     frameContext,
                     cu_ptr,
                     blk_geom->bsize,
@@ -6046,7 +6213,11 @@ assert(bsize < BlockSizeS_ALL);
                     ec_writer);
 
 #if FILTER_INTRA_FLAG
+#if PAL_SUP
+    if (cu_ptr->av1xd->use_intrabc == 0 && av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra, bsize,cu_ptr->palette_info.pmi.palette_size[0], intra_luma_mode)) {
+#else
             if (cu_ptr->av1xd->use_intrabc == 0 &&  av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra,bsize, intra_luma_mode)) {
+#endif
                 aom_write_symbol(ec_writer, cu_ptr->filter_intra_mode != FILTER_INTRA_MODES,
                     frameContext->filter_intra_cdfs[bsize], 2);
                 if (cu_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
@@ -6054,6 +6225,31 @@ assert(bsize < BlockSizeS_ALL);
                         FILTER_INTRA_MODES);
                 }
             }
+#endif
+#if PAL_SUP
+        if(cu_ptr->av1xd->use_intrabc == 0)
+        {
+            assert(cu_ptr->palette_info.pmi.palette_size[1] == 0);
+            TOKENEXTRA *tok = context_ptr->tok;
+            for (int plane = 0; plane < 2; ++plane) {
+                const uint8_t palette_size_plane =
+                    cu_ptr->palette_info.pmi.palette_size[plane];
+                if (palette_size_plane > 0) {
+                    const MbModeInfo *const mbmi = &cu_ptr->av1xd->mi[0]->mbmi;
+                    av1_tokenize_color_map(frameContext, cu_ptr, plane, &tok, bsize, mbmi->tx_size,
+                        PALETTE_MAP, 0); //NO CDF update in entropy, the update will take place in arithmetic encode
+
+                    assert(cu_ptr->av1xd->use_intrabc == 0);
+                    assert(av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, blk_geom->bsize));
+                    int rows, cols;
+                    av1_get_block_dimensions(blk_geom->bsize, plane, cu_ptr->av1xd, NULL, NULL, &rows,
+                        &cols);
+                    pack_map_tokens(ec_writer, (const TOKENEXTRA **)(&context_ptr->tok), palette_size_plane, rows * cols);
+                    //advance the pointer
+                    context_ptr->tok = tok;
+                }
+            }
+        }
 #endif
             if (frm_hdr->tx_mode == TX_MODE_SELECT) {
                 code_tx_size(
@@ -6191,8 +6387,23 @@ assert(bsize < BlockSizeS_ALL);
                         intra_luma_mode,
                         intra_chroma_mode,
                         blk_geom->bwidth <= 32 && blk_geom->bheight <= 32);
+#if PAL_SUP
+                if ( av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, blk_geom->bsize))
+                    write_palette_mode_info(
+                        picture_control_set_ptr->parent_pcs_ptr,
+                        frameContext,
+                        cu_ptr,
+                        blk_geom->bsize,
+                        blkOriginY >> MI_SIZE_LOG2,
+                        blkOriginX >> MI_SIZE_LOG2,
+                        ec_writer);
+#endif
 #if FILTER_INTRA_FLAG
+#if PAL_SUP
+    if ( av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra, bsize, cu_ptr->palette_info.pmi.palette_size[0], intra_luma_mode)) {
+#else
                 if (av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra,bsize, intra_luma_mode)) {
+#endif
                     aom_write_symbol(ec_writer, cu_ptr->filter_intra_mode != FILTER_INTRA_MODES,
                        frameContext->filter_intra_cdfs[bsize], 2);
                     if (cu_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
@@ -6426,6 +6637,29 @@ assert(bsize < BlockSizeS_ALL);
                     blkOriginY
                 );
             }
+#if PAL_SUP
+            {
+                assert(cu_ptr->palette_info.pmi.palette_size[1] == 0);
+                TOKENEXTRA *tok = context_ptr->tok;
+                for (int plane = 0; plane < 2 ; ++plane) {
+                    const uint8_t palette_size_plane =
+                        cu_ptr->palette_info.pmi.palette_size[plane];
+                    if (palette_size_plane > 0) {
+                        const MbModeInfo *const mbmi = &cu_ptr->av1xd->mi[0]->mbmi;
+                        av1_tokenize_color_map(frameContext, cu_ptr, plane, &tok, bsize, mbmi->tx_size,
+                            PALETTE_MAP, 0); //NO CDF update in entropy, the update will take place in arithmetic encode
+                        assert(cu_ptr->av1xd->use_intrabc == 0);
+                        assert(av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, blk_geom->bsize));
+                        int rows, cols;
+                        av1_get_block_dimensions(blk_geom->bsize, plane, cu_ptr->av1xd, NULL, NULL, &rows,
+                            &cols);
+                        pack_map_tokens(ec_writer, (const TOKENEXTRA **)(&context_ptr->tok), palette_size_plane, rows * cols);
+                        //advance the pointer
+                        context_ptr->tok = tok;
+                    }
+                }
+            }
+#endif
             if (frm_hdr->tx_mode == TX_MODE_SELECT) {
                 code_tx_size(
                     picture_control_set_ptr,
@@ -6472,6 +6706,13 @@ assert(bsize < BlockSizeS_ALL);
         bsize,
         coeff_ptr);
 
+#if PAL_SUP
+    if (svt_av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->palette_mode, blk_geom->bsize)) {
+        assert(cu_ptr->palette_info.color_idx_map != NULL && "free palette:Null");     
+        free(cu_ptr->palette_info.color_idx_map);
+        cu_ptr->palette_info.color_idx_map = NULL;
+    }
+#endif
     return return_error;
 }
 /**********************************************

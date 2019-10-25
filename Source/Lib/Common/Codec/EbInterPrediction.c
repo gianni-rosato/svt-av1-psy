@@ -2980,6 +2980,9 @@ void search_compound_avg_dist(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
+#if PAL_SUP
+     PaletteInfo  *palette_info,
+#endif
     FilterIntraMode filter_intra_mode,
     uint8_t* topNeighArray,
     uint8_t* leftNeighArray,
@@ -3006,6 +3009,9 @@ extern void eb_av1_predict_intra_block_16bit(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
+#if PAL_SUP
+    PaletteInfo  *palette_info,
+#endif
     FilterIntraMode filter_intra_mode,
     uint16_t* topNeighArray,
     uint16_t* leftNeighArray,
@@ -5287,6 +5293,9 @@ EbErrorType av1_inter_prediction(
                 interintra_to_intra_mode[interintra_mode],          //PredictionMode mode,
                 0,
                 0,                                                  //int32_t use_palette,
+#if PAL_SUP
+                NULL, //inter-intra
+#endif
                 FILTER_INTRA_MODES,                                 // FilterIntraMode filter_intra_mode,
                 topNeighArray + 1,
                 leftNeighArray + 1,
@@ -6060,6 +6069,9 @@ EbErrorType av1_inter_prediction_hbd(
                 interintra_to_intra_mode[interintra_mode],          //PredictionMode mode,
                 0,
                 0,                                                  //int32_t use_palette,
+#if PAL_SUP
+                NULL,
+#endif
                 FILTER_INTRA_MODES,                                 // FilterIntraMode filter_intra_mode,
                 topNeighArray + 1,
                 leftNeighArray + 1,

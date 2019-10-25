@@ -4588,6 +4588,10 @@ void  inject_intra_candidates_ois(
         if (av1_is_directional_mode((PredictionMode)intra_mode)) {
             int32_t angle_delta = ois_blk_ptr[can_total_cnt].angle_delta ;
             candidate_array[can_total_cnt].type = INTRA_MODE;
+#if PAL_SUP
+            candidate_array[can_total_cnt].palette_info.pmi.palette_size[0] = 0;
+            candidate_array[can_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             candidate_array[can_total_cnt].intra_luma_mode = intra_mode;
             candidate_array[can_total_cnt].distortion_ready =  1;
             candidate_array[can_total_cnt].me_distortion = ois_blk_ptr[can_total_cnt].distortion;
@@ -4626,6 +4630,10 @@ void  inject_intra_candidates_ois(
         }
         else {
             candidate_array[can_total_cnt].type = INTRA_MODE;
+#if PAL_SUP
+            candidate_array[can_total_cnt].palette_info.pmi.palette_size[0] = 0;
+            candidate_array[can_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             candidate_array[can_total_cnt].intra_luma_mode = intra_mode;
             candidate_array[can_total_cnt].distortion_ready =  1;
             candidate_array[can_total_cnt].me_distortion = ois_blk_ptr[can_total_cnt].distortion;
@@ -4931,6 +4939,10 @@ void  inject_intra_bc_candidates(
 
     for (dv_i = 0; dv_i < num_dv_cand; dv_i++)
     {
+#if PAL_SUP
+        candidateArray[*cand_cnt].palette_info.pmi.palette_size[0] = 0;
+        candidateArray[*cand_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
         candidateArray[*cand_cnt].type = INTRA_MODE;
         candidateArray[*cand_cnt].intra_luma_mode = DC_PRED;
         candidateArray[*cand_cnt].distortion_ready = 0;
@@ -5162,6 +5174,10 @@ void  inject_intra_candidates(
                     int32_t  p_angle = mode_to_angle_map[(PredictionMode)openLoopIntraCandidate] + angle_delta * ANGLE_STEP;
                     if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
                         candidateArray[canTotalCnt].type = INTRA_MODE;
+#if PAL_SUP
+                        candidateArray[canTotalCnt].palette_info.pmi.palette_size[0] = 0;
+                        candidateArray[canTotalCnt].palette_info.pmi.palette_size[1] = 0;
+#endif
                         candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
                         candidateArray[canTotalCnt].distortion_ready = 0;
                         candidateArray[canTotalCnt].use_intrabc = 0;
@@ -5222,6 +5238,10 @@ void  inject_intra_candidates(
         }
         else {
             candidateArray[canTotalCnt].type = INTRA_MODE;
+#if PAL_SUP
+            candidateArray[canTotalCnt].palette_info.pmi.palette_size[0] = 0;
+            candidateArray[canTotalCnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             candidateArray[canTotalCnt].intra_luma_mode = openLoopIntraCandidate;
             candidateArray[canTotalCnt].distortion_ready = 0;
             candidateArray[canTotalCnt].use_intrabc = 0;
@@ -5314,6 +5334,11 @@ void  inject_filter_intra_candidates(
             candidateArray[canTotalCnt].filter_intra_mode = filter_intra_mode;
             candidateArray[canTotalCnt].is_directional_mode_flag = 0;
 
+#if PAL_SUP
+            candidateArray[canTotalCnt].palette_info.pmi.palette_size[0] = 0;
+            candidateArray[canTotalCnt].palette_info.pmi.palette_size[1] = 0;
+#endif
+
             candidateArray[canTotalCnt].angle_delta[PLANE_TYPE_Y] = 0;
 
             // Search the best independent intra chroma mode
@@ -5368,6 +5393,119 @@ void  inject_filter_intra_candidates(
 
     // update the total number of candidates injected
     (*candidateTotalCnt) = canTotalCnt;
+
+    return;
+}
+#endif
+#if PAL_SUP
+int svt_av1_allow_palette(int allow_palette,
+    BlockSize sb_type) {
+    assert(sb_type < BlockSizeS_ALL);
+    return allow_palette && block_size_wide[sb_type] <= 64 &&
+        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+}
+void  search_palette_luma(
+    PictureControlSet            *picture_control_set_ptr,
+    ModeDecisionContext          *context_ptr,
+    PaletteInfo                 *palette_cand,
+    uint32_t                     *tot_palette_cands);
+
+void  inject_palette_candidates(
+    PictureControlSet            *picture_control_set_ptr,
+    ModeDecisionContext          *context_ptr,
+    uint32_t                       *candidate_total_cnt) {
+
+
+
+    uint32_t                  can_total_cnt = *candidate_total_cnt;
+    ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
+    EbBool                    disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
+    uint32_t cand_i;
+    uint32_t tot_palette_cands = 0;
+    PaletteInfo    *palette_cand_array = context_ptr->palette_cand_array;
+
+    search_palette_luma(
+        picture_control_set_ptr,
+        context_ptr,
+        palette_cand_array,
+        &tot_palette_cands);
+
+    for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
+
+        palette_cand_array[cand_i].pmi.palette_size[1] = 0;
+        memcpy(candidateArray[can_total_cnt].palette_info.color_idx_map, palette_cand_array[cand_i].color_idx_map, 64 * 64);
+        memcpy(&candidateArray[can_total_cnt].palette_info.pmi, &palette_cand_array[cand_i].pmi, sizeof(PaletteModeInfo));
+        assert(palette_cand_array[cand_i].pmi.palette_size[0] < 9);
+        //to re check these fields
+        candidateArray[can_total_cnt].type = INTRA_MODE;
+        candidateArray[can_total_cnt].intra_luma_mode = DC_PRED;
+        candidateArray[can_total_cnt].distortion_ready = 0;
+        candidateArray[can_total_cnt].use_intrabc = 0;
+
+        candidateArray[can_total_cnt].filter_intra_mode = FILTER_INTRA_MODES;
+
+        candidateArray[can_total_cnt].is_directional_mode_flag = 0;
+
+        candidateArray[can_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
+
+        // Search the best independent intra chroma mode
+        if (context_ptr->chroma_level == CHROMA_MODE_0) {
+            candidateArray[can_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                context_ptr->best_uv_mode[DC_PRED][MAX_ANGLE_DELTA + candidateArray[can_total_cnt].angle_delta[PLANE_TYPE_Y]] :
+                UV_CFL_PRED;
+
+            candidateArray[can_total_cnt].angle_delta[PLANE_TYPE_UV] = disable_cfl_flag ?
+                context_ptr->best_uv_angle[candidateArray[can_total_cnt].intra_luma_mode][MAX_ANGLE_DELTA + candidateArray[can_total_cnt].angle_delta[PLANE_TYPE_Y]] : 0;
+            candidateArray[can_total_cnt].is_directional_chroma_mode_flag = disable_cfl_flag ?
+                (uint8_t)av1_is_directional_mode((PredictionMode)(context_ptr->best_uv_mode[candidateArray[can_total_cnt].intra_luma_mode][MAX_ANGLE_DELTA + candidateArray[can_total_cnt].angle_delta[PLANE_TYPE_Y]])) : 0;
+
+        }
+        else {
+            // Hsan/Omar: why the restriction below ? (i.e. disable_ang_uv)
+            const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
+            candidateArray[can_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+                intra_luma_to_chroma[DC_PRED] :
+                (context_ptr->chroma_level == CHROMA_MODE_1) ?
+                UV_CFL_PRED :
+                UV_DC_PRED;
+
+            candidateArray[can_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(candidateArray[can_total_cnt].intra_chroma_mode) ?
+                UV_DC_PRED : candidateArray[can_total_cnt].intra_chroma_mode;
+
+            candidateArray[can_total_cnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)candidateArray[can_total_cnt].intra_chroma_mode);
+            candidateArray[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+
+        }
+
+        candidateArray[can_total_cnt].cfl_alpha_signs = 0;
+        candidateArray[can_total_cnt].cfl_alpha_idx = 0;
+        candidateArray[can_total_cnt].transform_type[0] = DCT_DCT;
+
+        if (candidateArray[can_total_cnt].intra_chroma_mode == UV_CFL_PRED)
+            candidateArray[can_total_cnt].transform_type_uv = DCT_DCT;
+        else
+            candidateArray[can_total_cnt].transform_type_uv =
+
+            av1_get_tx_type(
+                context_ptr->blk_geom->bsize,
+                0,
+                (PredictionMode)candidateArray[can_total_cnt].intra_luma_mode,
+                (UvPredictionMode)candidateArray[can_total_cnt].intra_chroma_mode,
+                PLANE_TYPE_UV,
+                0,
+                0,
+                0,
+                context_ptr->blk_geom->txsize_uv[0][0],
+                picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
+
+        candidateArray[can_total_cnt].ref_frame_type = INTRA_FRAME;
+        candidateArray[can_total_cnt].pred_mode = (PredictionMode)DC_PRED;
+        candidateArray[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+        INCRMENT_CAND_TOTAL_COUNT(can_total_cnt);
+    }
+
+    // update the total number of candidates injected
+    (*candidate_total_cnt) = can_total_cnt;
 
     return;
 }
@@ -5434,6 +5572,24 @@ EbErrorType generate_md_stage_0_cand(
             &canTotalCnt
         );
 
+#if PAL_SUP
+    //can be removed later if need be
+    for (uint16_t i = 0; i < canTotalCnt; i++) {
+        assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] == 0);
+        assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
+    }
+    if (svt_av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize)) {
+        inject_palette_candidates(
+            picture_control_set_ptr,
+            context_ptr,
+            &canTotalCnt);
+    }
+    for (uint16_t i = 0; i < canTotalCnt; i++) {
+        assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] < 9);
+        assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
+    }
+#endif
+
     // Track the total number of fast intra candidates
     context_ptr->fast_candidate_intra_count = canTotalCnt;
 
@@ -5461,8 +5617,18 @@ EbErrorType generate_md_stage_0_cand(
             // Intra prediction
 #if FILTER_INTRA_FLAG
                 if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
+#if PAL_CLASS
+                  if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#endif
                     cand_ptr->cand_class = CAND_CLASS_0;
                     context_ptr->md_stage_0_count[CAND_CLASS_0]++;
+#if PAL_CLASS
+                  }
+                  else {
+                     cand_ptr->cand_class = CAND_CLASS_7;
+                     context_ptr->md_stage_0_count[CAND_CLASS_7]++;
+                  }
+#endif
                 }
                 else {
                     cand_ptr->cand_class = CAND_CLASS_6;
@@ -5684,6 +5850,17 @@ uint32_t product_full_mode_decision(
             pu_ptr->angle_delta[PLANE_TYPE_UV] = candidate_ptr->angle_delta[PLANE_TYPE_UV];
         }
 
+#if PAL_SUP
+        if (cu_ptr->prediction_mode_flag == INTRA_MODE)
+        { 
+            memcpy(&cu_ptr->palette_info.pmi, &candidate_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
+            if(svt_av1_allow_palette(context_ptr->sb_ptr->picture_control_set_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
+               memcpy(cu_ptr->palette_info.color_idx_map, candidate_ptr->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
+        }
+        else {
+            cu_ptr->palette_info.pmi.palette_size[0] = cu_ptr->palette_info.pmi.palette_size[1] = 0;
+        }
+#endif
         // Inter Prediction
         pu_ptr->inter_pred_direction_index = candidate_ptr->prediction_direction[0];
         pu_ptr->merge_flag = candidate_ptr->merge_flag;

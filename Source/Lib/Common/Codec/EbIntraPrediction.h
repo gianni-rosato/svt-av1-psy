@@ -547,6 +547,9 @@ void eb_av1_predict_intra_block(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
+#if PAL_SUP
+    PaletteInfo  *palette_info,
+#endif
     FilterIntraMode filter_intra_mode,
     uint8_t* topNeighArray,
     uint8_t* leftNeighArray,
@@ -573,6 +576,9 @@ void eb_av1_predict_intra_block_16bit(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
+#if PAL_SUP
+    PaletteInfo  *palette_info,
+#endif
     FilterIntraMode filter_intra_mode,
     uint16_t* topNeighArray,
     uint16_t* leftNeighArray,

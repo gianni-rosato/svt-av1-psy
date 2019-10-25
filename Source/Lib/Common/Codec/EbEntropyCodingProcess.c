@@ -458,6 +458,10 @@ void* entropy_coding_kernel(void *input_ptr)
                     context_ptr->sb_origin_y = sb_origin_y;
                     if (sb_index == 0)
                         eb_av1_reset_loop_restoration(picture_control_set_ptr);
+#if PAL_SUP
+                    if (sb_index == 0)
+                        context_ptr->tok = picture_control_set_ptr->tile_tok[0][0];
+#endif
                     sb_ptr->total_bits = 0;
                     uint32_t prev_pos = sb_index ? picture_control_set_ptr->entropy_coder_ptr->ec_writer.ec.offs : 0;//residual_bc.pos
                     EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;
@@ -588,6 +592,9 @@ void* entropy_coding_kernel(void *input_ptr)
                          context_ptr,
                          picture_control_set_ptr,
                          sequence_control_set_ptr);
+#if PAL_SUP
+                     context_ptr->tok = picture_control_set_ptr->tile_tok[0][0];
+#endif
 
                      eb_av1_tile_set_col(&tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
 

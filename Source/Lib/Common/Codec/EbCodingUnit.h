@@ -300,6 +300,9 @@ extern "C" {
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
         uint8_t tx_depth;
         BlockModeInfo block_mi;
+#if PAL_SUP
+        PaletteModeInfo palette_mode_info;
+#endif
     } MbModeInfo;
 
     typedef struct {
@@ -514,6 +517,9 @@ extern "C" {
 #endif
 #if FILTER_INTRA_FLAG
        uint8_t                      filter_intra_mode;
+#endif
+#if PAL_SUP
+       PaletteInfo                          palette_info;
 #endif
     } CodingUnit;
 

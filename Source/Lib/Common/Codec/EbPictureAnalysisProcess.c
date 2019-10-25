@@ -4634,6 +4634,28 @@ void DownsampleDecimationInputPicture(
         sixteenth_decimated_picture_ptr->origin_y);
 
 }
+#if PAL_SUP
+int av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols,
+    int bit_depth, int *val_count) {
+    assert(bit_depth <= 12);
+    const int max_pix_val = 1 << bit_depth;
+   // const uint16_t *src = CONVERT_TO_SHORTPTR(src8);
+    memset(val_count, 0, max_pix_val * sizeof(val_count[0]));
+    for (int r = 0; r < rows; ++r) {
+        for (int c = 0; c < cols; ++c) {
+            const int this_val = src[r * stride + c];
+            assert(this_val < max_pix_val);
+            if (this_val >= max_pix_val) return 0;
+            ++val_count[this_val];
+        }
+    }
+    int n = 0;
+    for (int i = 0; i < max_pix_val; ++i) {
+        if (val_count[i]) ++n;
+    }
+    return n;
+}
+#endif
 int eb_av1_count_colors(const uint8_t *src, int stride, int rows, int cols,
     int *val_count) {
     const int max_pix_val = 1 << 8;

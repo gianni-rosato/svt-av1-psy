@@ -13885,6 +13885,9 @@ extern "C" {
 #if FILTER_INTRA_FLAG
         uint8_t pic_filter_intra_mode;
 #endif
+#if PAL_SUP
+        TOKENEXTRA *tile_tok[64][64];
+#endif
     } PictureControlSet;
 
     // To optimize based on the max input size
@@ -14244,6 +14247,9 @@ extern "C" {
         uint8_t                               tx_search_reduced_set;
         uint8_t                               interpolation_search_level;
         uint8_t                               nsq_search_level;
+#if PAL_SUP
+        uint8_t                               palette_mode;
+#endif
         uint8_t                               nsq_max_shapes_md; // max number of shapes to be tested in MD
         uint8_t                              sc_content_detected;
         uint8_t                              ibc_mode;
@@ -14308,6 +14314,9 @@ extern "C" {
         EbBitDepthEnum                     bit_depth;
         EbColorFormat                      color_format;
         uint32_t                           sb_sz;
+#if PAL_SUP
+        uint8_t                            cfg_palette;
+#endif
         uint32_t                           sb_size_pix;   //since we still have lot of code assuming 64x64 LCU, we add a new paramter supporting both128x128 and 64x64,
                                                           //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
         uint32_t                           max_depth;

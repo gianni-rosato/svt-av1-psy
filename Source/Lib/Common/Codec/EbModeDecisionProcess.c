@@ -12,7 +12,17 @@
 static void mode_decision_context_dctor(EbPtr p)
 {
     ModeDecisionContext* obj = (ModeDecisionContext*)p;
-
+#if PAL_SUP
+    for (int cd = 0; cd < MAX_PAL_CAND; cd++)
+        if (obj->palette_cand_array[cd].color_idx_map)
+            EB_FREE_ARRAY(obj->palette_cand_array[cd].color_idx_map);
+    for (uint32_t candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
+        if (obj->fast_candidate_ptr_array[candidateIndex]->palette_info.color_idx_map)
+            EB_FREE_ARRAY(obj->fast_candidate_ptr_array[candidateIndex]->palette_info.color_idx_map);
+    for (uint32_t codedLeafIndex = 0; codedLeafIndex < BLOCK_MAX_COUNT_SB_128; ++codedLeafIndex)
+        if (obj->md_cu_arr_nsq[codedLeafIndex].palette_info.color_idx_map)
+            EB_FREE_ARRAY(obj->md_cu_arr_nsq[codedLeafIndex].palette_info.color_idx_map);
+#endif
     EB_FREE_ARRAY(obj->ref_best_ref_sq_table);
     EB_FREE_ARRAY(obj->ref_best_cost_sq_table);
 #if ENHANCE_ATB
@@ -72,7 +82,11 @@ EbErrorType mode_decision_context_ctor(
     EbColorFormat         color_format,
     EbFifo                *mode_decision_configuration_input_fifo_ptr,
     EbFifo                *mode_decision_output_fifo_ptr,
-    EbBool                 enable_hbd_mode_decision )
+    EbBool                 enable_hbd_mode_decision
+#if PAL_SUP
+    ,uint8_t                 cfg_palette
+#endif
+)
 {
     uint32_t bufferIndex;
     uint32_t candidateIndex;
@@ -112,8 +126,21 @@ EbErrorType mode_decision_context_ctor(
     for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex) {
         context_ptr->fast_candidate_ptr_array[candidateIndex] = &context_ptr->fast_candidate_array[candidateIndex];
         context_ptr->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = context_ptr->md_rate_estimation_ptr;
+#if PAL_SUP
+        if (cfg_palette)
+            EB_MALLOC_ARRAY(context_ptr->fast_candidate_ptr_array[candidateIndex]->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
+        else
+            context_ptr->fast_candidate_ptr_array[candidateIndex]->palette_info.color_idx_map = NULL;
+#endif
     }
 
+#if PAL_SUP
+    for (int cd = 0; cd < MAX_PAL_CAND; cd++)
+        if (cfg_palette)
+            EB_MALLOC_ARRAY(context_ptr->palette_cand_array[cd].color_idx_map, MAX_PALETTE_SQUARE);
+        else
+            context_ptr->palette_cand_array[cd].color_idx_map = NULL;
+#endif
     // Transform and Quantization Buffers
     EB_NEW(
         context_ptr->trans_quant_buffers_ptr,
@@ -180,7 +207,12 @@ EbErrorType mode_decision_context_ctor(
                 context_ptr->md_cu_arr_nsq[codedLeafIndex].neigh_top_recon[i] = context_ptr->md_cu_arr_nsq[0].neigh_top_recon[0] + offset;
             }
         }
-
+#if PAL_SUP
+        if (cfg_palette)
+            EB_MALLOC_ARRAY(context_ptr->md_cu_arr_nsq[codedLeafIndex].palette_info.color_idx_map, MAX_PALETTE_SQUARE);
+        else
+            context_ptr->md_cu_arr_nsq[codedLeafIndex].palette_info.color_idx_map = NULL;
+#endif
 #if NO_ENCDEC //SB128_TODO to upgrade
         {
             EbPictureBufferDescInitData initData;

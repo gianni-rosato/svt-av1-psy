@@ -40,9 +40,7 @@ typedef struct {
 #define COLOR_MAP_STRIDE 128 // worst case
 
 // Negative values are invalid
-static const int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH +
-1] = { -1, -1, 0, -1, -1,
-       4,  3,  2, 1 };
+extern int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1];
 
 static uint16_t compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
     { 0, 1, 1, 1, 1 },

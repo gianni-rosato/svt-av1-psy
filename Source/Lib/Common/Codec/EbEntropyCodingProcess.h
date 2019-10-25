@@ -71,6 +71,9 @@ typedef struct EntropyCodingContext
     EbBool                            is16bit; //enable 10 bit encode in CL
     int32_t                           coded_area_sb;
     int32_t                           coded_area_sb_uv;
+#if PAL_SUP
+    TOKENEXTRA *tok;
+#endif
 } EntropyCodingContext;
 
 /**************************************

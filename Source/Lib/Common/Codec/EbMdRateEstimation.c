@@ -100,7 +100,9 @@ void av1_estimate_syntax_rate___partial(
 }
 #if FILTER_INTRA_FLAG
 int av1_filter_intra_allowed_bsize(  uint8_t enable_filter_intra,  BlockSize bs);
+#if !PAL_SUP
 int av1_filter_intra_allowed(uint8_t   enable_filter_intra, BlockSize bsize, uint32_t  mode);
+#endif
 #endif
 /*************************************************************
 * av1_estimate_syntax_rate()

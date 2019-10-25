@@ -1426,6 +1426,10 @@ void update_av1_mi_map(
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.wedge_interintra      = cu_ptr->use_wedge_interintra;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_wedge_index                         = cu_ptr->interintra_wedge_index;//in
 #endif
+
+#if PAL_SUP
+            memcpy( &miPtr[miX + miY * mi_stride].mbmi.palette_mode_info  , &cu_ptr->palette_info.pmi,sizeof(PaletteModeInfo));
+#endif
             //needed for CDEF
             miPtr[miX + miY * mi_stride].mbmi.block_mi.skip = cu_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
         }
@@ -1507,6 +1511,9 @@ void update_mi_map(
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_mode          = cu_ptr->interintra_mode;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.wedge_interintra         = cu_ptr->use_wedge_interintra;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_wedge_index   = cu_ptr->interintra_wedge_index;//in
+#endif
+#if PAL_SUP
+            memcpy(&miPtr[miX + miY * mi_stride].mbmi.palette_mode_info, &cu_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
 #endif
         }
     }

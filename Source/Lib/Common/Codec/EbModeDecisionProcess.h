@@ -52,6 +52,12 @@ extern "C" {
         uint16_t                    y_count_non_zero_coeffs[4];// Store nonzero CoeffNum, per TU. If one TU, stored in 0, otherwise 4 tus stored in 0 to 3
     } MdEncPassCuData;
 
+#if PAL_SUP
+    typedef struct {
+        uint8_t best_palette_color_map[MAX_PALETTE_SQUARE];
+        int kmeans_data_buf[2 * MAX_PALETTE_SQUARE];
+    } PALETTE_BUFFER;
+#endif
     typedef struct MdCodingUnit
     {
         unsigned                    tested_cu_flag                  : 1;   //tells whether this CU is tested in MD.
@@ -148,7 +154,10 @@ extern "C" {
         PredictionUnit               *pu_ptr;
         const PredictionUnitStats    *pu_stats;
         MvUnit                        mv_unit;
-
+#if PAL_SUP
+        PALETTE_BUFFER            palette_buffer;
+        PaletteInfo              palette_cand_array[MAX_PAL_CAND];
+#endif
         // Entropy Coder
         EntropyCoder                 *coeff_est_entropy_coder_ptr;
         MdEncPassCuData               *md_ep_pipe_sb;
@@ -369,7 +378,11 @@ extern "C" {
         EbColorFormat              color_format,
         EbFifo                    *mode_decision_configuration_input_fifo_ptr,
         EbFifo                    *mode_decision_output_fifo_ptr,
-        EbBool                     enable_hbd_mode_decision);
+        EbBool                     enable_hbd_mode_decision
+#if PAL_SUP
+        ,uint8_t                 cfg_palette
+#endif
+    );
 
     extern void reset_mode_decision_neighbor_arrays(
         PictureControlSet *picture_control_set_ptr);

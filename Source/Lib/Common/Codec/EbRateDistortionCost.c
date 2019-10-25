@@ -33,6 +33,24 @@ int eb_av1_get_pred_context_uni_comp_ref_p1(const MacroBlockD *xd);
 int eb_av1_get_pred_context_uni_comp_ref_p2(const MacroBlockD *xd);
 int av1_get_comp_reference_type_context_new(const MacroBlockD *xd);
 
+#if PAL_SUP
+int av1_get_palette_bsize_ctx(BlockSize bsize);
+int av1_get_palette_mode_ctx(const MacroBlockD *xd);
+int write_uniform_cost(int n, int v);
+int eb_get_palette_cache(const MacroBlockD *const xd, int plane,uint16_t *cache);
+int av1_palette_color_cost_y(const PaletteModeInfo *const pmi,
+    uint16_t *color_cache, int n_cache,
+    int bit_depth);
+int av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext  *rate_table, CodingUnit*cu_ptr, int plane, BlockSize bsize,
+     COLOR_MAP_TYPE type);
+void av1_get_block_dimensions(BlockSize bsize, int plane,
+    const MacroBlockD *xd, int *width,
+    int *height,
+    int *rows_within_bounds,
+    int *cols_within_bounds);
+int av1_allow_palette(int allow_screen_content_tools,
+    BlockSize sb_type);
+#endif
 BlockSize GetBlockSize(uint8_t cu_size) {
     return (cu_size == 64 ? BLOCK_64X64 : cu_size == 32 ? BLOCK_32X32 : cu_size == 16 ? BLOCK_16X16 : cu_size == 8 ? BLOCK_8X8 : BLOCK_4X4);
 }
@@ -579,7 +597,15 @@ uint64_t eb_av1_cost_coeffs_txb(
 }
 #if FILTER_INTRA_FLAG
  int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
+#if PAL_SUP
+ int av1_filter_intra_allowed(
+     uint8_t   enable_filter_intra,
+     BlockSize bsize,
+     uint8_t   palette_size,
+     uint32_t  mode);
+#else
  int av1_filter_intra_allowed(uint8_t   enable_filter_intra, BlockSize bsize, uint32_t  mode);
+#endif
 #endif
 /*static*/ void model_rd_from_sse(
     BlockSize bsize,
@@ -700,8 +726,38 @@ uint64_t av1_intra_fast_cost(
         assert((intra_mode - V_PRED) >= 0);
         intraLumaAngModeBitsNum = candidate_ptr->md_rate_estimation_ptr->angle_delta_fac_bits[intra_mode - V_PRED][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_Y]];
     }
+#if PAL_SUP
+    if (av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, blk_geom->bsize) && intra_mode == DC_PRED) {
+        const int use_palette = candidate_ptr->palette_info.pmi.palette_size[0] > 0;
+        const int bsize_ctx = av1_get_palette_bsize_ctx(blk_geom->bsize);
+        const int mode_ctx = av1_get_palette_mode_ctx(cu_ptr->av1xd);
+        intraLumaModeBitsNum += candidate_ptr->md_rate_estimation_ptr->palette_ymode_fac_bits[bsize_ctx][mode_ctx][use_palette];
+        if (use_palette) {
+            const uint8_t *const color_map = candidate_ptr->palette_info.color_idx_map;
+            int block_width, block_height, rows, cols;
+            av1_get_block_dimensions(blk_geom->bsize, 0, cu_ptr->av1xd, &block_width, &block_height, &rows,
+                &cols);
+            const int plt_size = candidate_ptr->palette_info.pmi.palette_size[0];
+            int palette_mode_cost =
+                candidate_ptr->md_rate_estimation_ptr->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
+                write_uniform_cost(plt_size, color_map[0]);
+            uint16_t color_cache[2 * PALETTE_MAX_SIZE];
+            const int n_cache = eb_get_palette_cache(cu_ptr->av1xd, 0, color_cache);
+            palette_mode_cost +=
+                av1_palette_color_cost_y(&candidate_ptr->palette_info.pmi, color_cache,
+                    n_cache, EB_8BIT);
+            palette_mode_cost +=
+                av1_cost_color_map(&candidate_ptr->palette_info, candidate_ptr->md_rate_estimation_ptr, cu_ptr, 0, blk_geom->bsize, PALETTE_MAP);
+            intraLumaModeBitsNum += palette_mode_cost;
+        }
+    }
+#endif
 #if FILTER_INTRA_FLAG
+#if PAL_SUP
+    if (av1_filter_intra_allowed(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_filter_intra, blk_geom->bsize, candidate_ptr->palette_info.pmi.palette_size[0], intra_mode)) {
+#else
     if (av1_filter_intra_allowed(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_filter_intra, blk_geom->bsize, intra_mode)) {
+#endif
        intra_filter_mode_bits_num = candidate_ptr->md_rate_estimation_ptr->filter_intra_fac_bits[blk_geom->bsize][candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES];
         if (candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
             intra_filter_mode_bits_num += candidate_ptr->md_rate_estimation_ptr->filter_intra_mode_fac_bits[candidate_ptr->filter_intra_mode];
@@ -717,6 +773,14 @@ uint64_t av1_intra_fast_cost(
             if (blk_geom->bsize >= BLOCK_8X8 && candidate_ptr->is_directional_chroma_mode_flag) {
                 intraChromaAngModeBitsNum = candidate_ptr->md_rate_estimation_ptr->angle_delta_fac_bits[chroma_mode - V_PRED][MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]];
             }
+#if PAL_SUP
+            if (av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, blk_geom->bsize) && chroma_mode == UV_DC_PRED) {
+                const PaletteModeInfo *pmi = &candidate_ptr->palette_info.pmi;
+                const int use_palette = pmi->palette_size[1] > 0;
+                intraChromaAngModeBitsNum +=
+                    candidate_ptr->md_rate_estimation_ptr->palette_uv_mode_fac_bits[pmi->palette_size[0] > 0][use_palette];
+            }
+#endif
         }
     }
 

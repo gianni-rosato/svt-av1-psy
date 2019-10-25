@@ -96,6 +96,9 @@ EbErrorType enc_dec_context_ctor(
     EbFifo                *packetization_output_fifo_ptr,
     EbFifo                *feedback_fifo_ptr,
     EbFifo                *picture_demux_fifo_ptr,
+#if PAL_SUP
+    uint8_t                 cfg_palette,
+#endif
     EbBool                  is16bit,
     EbColorFormat           color_format,
     EbBool                  enable_hbd_mode_decision,
@@ -189,11 +192,17 @@ EbErrorType enc_dec_context_ctor(
     }
 
     // Mode Decision Context
+ #if PAL_SUP
+    EB_NEW(
+        context_ptr->md_context,
+        mode_decision_context_ctor,
+        color_format, 0, 0, enable_hbd_mode_decision , cfg_palette );
+#else
     EB_NEW(
         context_ptr->md_context,
         mode_decision_context_ctor,
         color_format, 0, 0, enable_hbd_mode_decision);
-
+#endif
     if (enable_hbd_mode_decision)
         context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
 
@@ -1554,10 +1563,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     return return_error;
 }
-
+#if! PAL_SUP
 void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu);
+#endif
 
 void av1_estimate_syntax_rate___partial(
     MdRateEstimationContext        *md_rate_estimation_array,
