@@ -1013,6 +1013,10 @@ static void Av1EncodeLoop16bit(
 
         if (cu_ptr->prediction_mode_flag == INTRA_MODE && cu_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
             EbPictureBufferDesc *reconSamples = predSamples16bit;
+#if ATB_10_BIT
+
+            uint32_t reconLumaOffset = (reconSamples->origin_y + round_origin_y) * reconSamples->stride_y + (reconSamples->origin_x + round_origin_x);
+#else
             uint32_t reconLumaOffset = (reconSamples->origin_y + origin_y)            * reconSamples->stride_y + (reconSamples->origin_x + origin_x);
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
                 uint16_t     *predBuffer = ((uint16_t*)predSamples16bit->buffer_y) + pred_luma_offset;
@@ -1028,6 +1032,7 @@ static void Av1EncodeLoop16bit(
             }
             if (context_ptr->blk_geom->has_uv) {
                 reconLumaOffset = (reconSamples->origin_y + round_origin_y)            * reconSamples->stride_y + (reconSamples->origin_x + round_origin_x);
+#endif
             // Down sample Luma
             cfl_luma_subsampling_420_hbd_c(
                 ((uint16_t*)reconSamples->buffer_y) + reconLumaOffset,
@@ -1075,7 +1080,9 @@ static void Av1EncodeLoop16bit(
                 10,
                 context_ptr->blk_geom->tx_width_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr]);
+#if !ATB_10_BIT
         }
+#endif
         }
 
         if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK || component_mask == PICTURE_BUFFER_DESC_CHROMA_MASK) {
@@ -1355,8 +1362,9 @@ static void Av1EncodeGenerateRecon16bit(
     // Luma
     //**********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
+#if !ATB_10_BIT
         if (cu_ptr->prediction_mode_flag != INTRA_MODE || cu_ptr->prediction_unit_array->intra_chroma_mode != UV_CFL_PRED)
-
+#endif
         {
             pred_luma_offset = (predSamples->origin_y + origin_y)* predSamples->stride_y + (predSamples->origin_x + origin_x);
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
@@ -1564,8 +1572,13 @@ void perform_intra_coding_loop(
                 ED_STAGE,
                 context_ptr->blk_geom,
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm,
+#if ATB_10_BIT
+                context_ptr->blk_geom->bwidth,
+                context_ptr->blk_geom->bheight,
+#else
                 context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
+#endif
                 tx_size,
                 mode,
                 pu_ptr->angle_delta[PLANE_TYPE_Y],
@@ -1578,8 +1591,13 @@ void perform_intra_coding_loop(
                 topNeighArray + 1,
                 leftNeighArray + 1,
                 recon_buffer,
+#if ATB_10_BIT
+                context_ptr->blk_geom->tx_boff_x[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
+                context_ptr->blk_geom->tx_boff_y[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
+#else
                 0,
                 0,
+#endif
                 0,
                 context_ptr->blk_geom->bsize,
                 txb_origin_x,
@@ -1820,8 +1838,13 @@ void perform_intra_coding_loop(
                     ED_STAGE,
                     context_ptr->blk_geom,
                     picture_control_set_ptr->parent_pcs_ptr->av1_cm,
+#if ATB_10_BIT
+                    plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->bwidth,
+                    plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->bheight,
+#else
                     plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                     plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
+#endif
                     tx_size,
                     mode,
                     plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
@@ -1830,9 +1853,14 @@ void perform_intra_coding_loop(
                     topNeighArray + 1,
                     leftNeighArray + 1,
                     recon_buffer,
+#if ATB_10_BIT
+                    plane ? 0 : context_ptr->blk_geom->tx_boff_x[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
+                    plane ? 0 : context_ptr->blk_geom->tx_boff_y[cu_ptr->tx_depth][context_ptr->txb_itr] >> 2,
+#else
                     //int32_t dst_stride,
                     0,
                     0,
+#endif
                     plane,
                     context_ptr->blk_geom->bsize,
                     txb_origin_x,
@@ -2383,7 +2411,11 @@ EB_EXTERN void av1_encode_pass(
                     // Partition Loop
                     context_ptr->txb_itr = 0;
                     // Transform partitioning path (INTRA Luma/Chroma)
+#if ATB_10_BIT
+                    if ( cu_ptr->av1xd->use_intrabc == 0) {
+#else
                     if (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT && cu_ptr->av1xd->use_intrabc == 0) {
+#endif
                         // Set the PU Loop Variables
                         pu_ptr = cu_ptr->prediction_unit_array;
                         // Generate Intra Luma Neighbor Modes
@@ -2482,8 +2514,9 @@ EB_EXTERN void av1_encode_pass(
                                    &context_ptr->md_context->cr_txb_skip_context,
                                    &context_ptr->md_context->cr_dc_sign_context);
                            }
-
+#if !ATB_10_BIT
                             if (cu_ptr->av1xd->use_intrabc)
+#endif
                             {
                                 MvReferenceFrame ref_frame = INTRA_FRAME;
                                 generate_av1_mvp_table(
@@ -2567,6 +2600,7 @@ EB_EXTERN void av1_encode_pass(
                                     EB_TRUE,
                                     (uint8_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
                             }
+#if !ATB_10_BIT
                             else
                             {
                                 if (is16bit) {
@@ -2716,7 +2750,7 @@ EB_EXTERN void av1_encode_pass(
                                 }
                                 }
                             }
-
+#endif
                             // Encode Transform Unit -INTRA-
                             {
                                 uint16_t             cb_qp = cu_ptr->qp;

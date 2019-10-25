@@ -1489,7 +1489,7 @@ void forward_considered_blocks(
             d1_blocks_accumlated = 0;
             for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++)
                 d1_blocks_accumlated += resultsPtr->leaf_data_array[blk_index + d1_block_idx].consider_block ? 1 : 0;
-            
+
             for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
                 if (resultsPtr->leaf_data_array[blk_index].consider_block) {
                     resultsPtr->leaf_data_array[resultsPtr->leaf_count].tot_d1_blocks = d1_blocks_accumlated;

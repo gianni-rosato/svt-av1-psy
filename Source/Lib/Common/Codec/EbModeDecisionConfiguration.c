@@ -666,7 +666,7 @@ uint32_t mdc_d2_inter_depth_block_decision(
                 results_ptr[parent_depth_idx_mds].early_split_flag = context_ptr->local_cu_array[parent_depth_idx_mds].early_split_flag;
                 last_cu_index = parent_depth_idx_mds;
             }
-            else 
+            else
                 context_ptr->local_cu_array[parent_depth_idx_mds].early_cost = current_depth_cost;
 
             //setup next parent inter depth
@@ -1456,9 +1456,9 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
             context_ptr->mdc_cu_ptr->compoud_reference_type_context = 0;
             av1_zero(context_ptr->mdc_cu_ptr->av1xd->neighbors_ref_counts);
             uint16_t txb_count = context_ptr->blk_geom->txb_count[0];
-            for (uint16_t txb_itr = 0; txb_itr < txb_count; txb_itr++) 
+            for (uint16_t txb_itr = 0; txb_itr < txb_count; txb_itr++)
                 context_ptr->candidate_buffer->candidate_ptr->transform_type[txb_itr] = DCT_DCT;
-            
+
             mdc_inter_pu_prediction_av1(
                 context_ptr,
                 picture_control_set_ptr,
