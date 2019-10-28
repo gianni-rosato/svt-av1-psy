@@ -1591,15 +1591,10 @@ void set_md_stage_counts(
     context_ptr->md_stage_1_count[CAND_CLASS_4] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 14 : 6;
 #endif
 #if OBMC_FLAG
-    if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode == 1)
-        context_ptr->md_stage_1_count[CAND_CLASS_5] = 16;
-    else if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 3)
-        context_ptr->md_stage_1_count[CAND_CLASS_5] = (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 4;
-    else
-        context_ptr->md_stage_1_count[CAND_CLASS_5] = (picture_control_set_ptr->temporal_layer_index == 0) ? 12 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 8 : 4;
+    context_ptr->md_stage_1_count[CAND_CLASS_5] = 16;
 #endif
 #if FILTER_INTRA_FLAG
-    context_ptr->md_stage_1_count[CAND_CLASS_6] = 5;
+    context_ptr->md_stage_1_count[CAND_CLASS_6] = (picture_control_set_ptr->temporal_layer_index == 0) ? 10 : 5;
 #endif
     if (context_ptr->combine_class12) {
         context_ptr->md_stage_1_count[CAND_CLASS_1] = context_ptr->md_stage_1_count[CAND_CLASS_1] * 2;
@@ -1613,7 +1608,6 @@ void set_md_stage_counts(
 
     context_ptr->md_stage_2_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? 10 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? ((scs->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 7 : 10) : 4;
 #if FILTER_INTRA_FLAG
-    context_ptr->md_stage_2_count[CAND_CLASS_6] = (picture_control_set_ptr->temporal_layer_index == 0) ? 5 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 2;
     context_ptr->md_stage_2_count[CAND_CLASS_6] = (picture_control_set_ptr->temporal_layer_index == 0) ? 5 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 3 : 2;
 #endif
 #if REMOVE_MD_STAGE_1
@@ -1630,7 +1624,7 @@ void set_md_stage_counts(
 #endif
 #if OBMC_FLAG
     if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode == 1)
-        context_ptr->md_stage_2_count[CAND_CLASS_5] = 16;
+        context_ptr->md_stage_2_count[CAND_CLASS_5] = 14;
     else if (picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 3)
         context_ptr->md_stage_2_count[CAND_CLASS_5] = (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 4;
     else
