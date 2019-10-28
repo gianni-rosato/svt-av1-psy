@@ -63,6 +63,8 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
 -g, --gen, gen=*        Set CMake generator
 -i, --install, install  Install build [Default release]
 -j, --jobs, jobs=*      Set number of jobs for make/CMake [$jobs]
+    --no-enc, no-enc    Don't build the encoder app and libs
+    --no-dec, no-dec    Don't build the decoder app and libs
 -p, --prefix, prefix=*  Set installation prefix
     --release, release  Build release
 -s, --target_system,    Set CMake target system
@@ -237,6 +239,8 @@ parse_options() {
         generator=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
         install) build_install=true && shift ;;
         jobs=*) jobs="${1#*=}" && shift ;;
+        no-enc) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_ENC=OFF" && shift ;;
+        no-dec) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_DEC=OFF" && shift ;;
         prefix=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_PREFIX=${1#*=}" && shift ;;
         release) build_release=true && shift ;;
         target_system=*)
@@ -283,6 +287,8 @@ else
             gen) parse_options generator="$2" && shift 2 ;;
             install) parse_options install && shift ;;
             jobs) parse_options jobs="$2" && shift 2 ;;
+            no-enc) parse_options no-enc && shift ;;
+            no-dec) parse_options no-dec && shift ;;
             prefix) parse_options prefix="$2" && shift 2 ;;
             release) parse_options release && shift ;;
             shared) parse_options build_shared && shift ;;
@@ -329,6 +335,8 @@ else
             install) parse_options install && shift ;;
             jobs=*) parse_options jobs="${1#*=}" && shift ;;
             prefix=*) parse_options prefix="${1#*=}" && shift ;;
+            no-enc) parse_options no-enc && shift ;;
+            no-dec) parse_options no-dec && shift ;;
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
             shared) parse_options build_shared && shift ;;
             static) parse_options build_static && shift ;;
