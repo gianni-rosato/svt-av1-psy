@@ -1414,7 +1414,8 @@ void  Av1GenerateRpsInfo(
     PictureParentControlSet       *picture_control_set_ptr,
     EncodeContext                 *encode_context_ptr,
     PictureDecisionContext        *context_ptr,
-    uint32_t                           pictureIndex
+    uint32_t                           pictureIndex,
+    uint32_t                           mini_gop_index
 )
 {
     (void)encode_context_ptr;
@@ -1441,6 +1442,7 @@ void  Av1GenerateRpsInfo(
     {
 
         uint8_t gop_i;
+        EbBool is_trailing_frames = EB_FALSE;
 
         if (frm_hdr->frame_type == KEY_FRAME)
         {
@@ -1476,6 +1478,12 @@ void  Av1GenerateRpsInfo(
         //                 4                        12
         //
         //base0:0                   base1:8                          base2:16
+        if (picture_control_set_ptr->pred_struct_ptr->pred_type == EB_PRED_LOW_DELAY_P &&
+                (context_ptr->mini_gop_length[mini_gop_index] < 8) &&
+                picture_control_set_ptr->sequence_control_set_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS ) {
+            is_trailing_frames = EB_TRUE;
+        }
+
 
         const uint8_t  base0_idx = context_ptr->lay0_toggle == 0 ? 1 : context_ptr->lay0_toggle == 1 ? 2 : 0;   //the oldest L0 picture in the DPB
         const uint8_t  base1_idx = context_ptr->lay0_toggle == 0 ? 2 : context_ptr->lay0_toggle == 1 ? 0 : 1;   //the middle L0 picture in the DPB
@@ -1595,7 +1603,10 @@ void  Av1GenerateRpsInfo(
 
             av1Rps->refresh_frame_mask = 1 << (LAY2_OFF + context_ptr->lay2_toggle);
             //toggle 3->4
-            context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;
+            if (!is_trailing_frames || (context_ptr->mini_gop_length[mini_gop_index] >= 7 && is_trailing_frames)) {
+                //For trailing frames, Only toggle it if we are sure we have 2 layer 2 frames in trailing frames
+                context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;
+            }
 
             break;
 
@@ -1788,7 +1799,7 @@ void  Av1GenerateRpsInfo(
             if (picture_control_set_ptr->slice_type == I_SLICE)
             {
                 //3 cases for I slice:  1:Key Frame treated above.  2: broken MiniGop due to sc or intra refresh  3: complete miniGop due to sc or intra refresh
-                if (context_ptr->mini_gop_length[0] < picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
+                if (context_ptr->mini_gop_length[mini_gop_index] < picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
                 {
                     //Scene Change that breaks the mini gop and switch to LDP (if I scene change happens to be aligned with a complete miniGop, then we do not break the pred structure)
                     frm_hdr->show_frame = EB_TRUE;
@@ -1840,7 +1851,7 @@ void  Av1GenerateRpsInfo(
         //mini GOP toggling since last Key Frame.
         //a regular I keeps the toggling process and does not reset the toggle.  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
         //whoever needs a miniGOP Level toggling, this is the time
-        if (pictureIndex == context_ptr->mini_gop_end_index[0] && !picture_control_set_ptr->is_overlay) {
+        if (pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index] % 8 && !picture_control_set_ptr->is_overlay) {
             //Layer0 toggle 0->1->2
             context_ptr->lay0_toggle = circ_inc(3, 1, context_ptr->lay0_toggle);
             //Layer1 toggle 3->4
@@ -3449,7 +3460,8 @@ void* picture_decision_kernel(void *input_ptr)
                                     picture_control_set_ptr,
                                     encode_context_ptr,
                                     context_ptr,
-                                    pictureIndex - context_ptr->mini_gop_start_index[mini_gop_index]);
+                                    pictureIndex - context_ptr->mini_gop_start_index[mini_gop_index],
+                                    mini_gop_index);
                                 picture_control_set_ptr->allow_comp_inter_inter = 0;
                                 picture_control_set_ptr->is_skip_mode_allowed = 0;
 
