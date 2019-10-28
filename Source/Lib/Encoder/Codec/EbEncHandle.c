@@ -60,7 +60,6 @@
 #include <unistd.h>
 #endif
 
-#define RTCD_C
 #include "aom_dsp_rtcd.h"
 
  /**************************************

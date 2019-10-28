@@ -6,14 +6,12 @@
 /******************************************************************************
  * @file TestEnv.c
  *
- * @brief Environment setup for unit test, since C++ compiler is not friendly
- * with macro "RTCD_C" opened, we have to separate it in a C file
+ * @brief Environment setup for unit test
  *
  * @author Cidana-Edmond
  *
  ******************************************************************************/
 
-#define RTCD_C
 #include "aom_dsp_rtcd.h"
 
 /** setup_test_env is a util for unit test setup environment without create a
