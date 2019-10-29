@@ -19,3 +19,4 @@ test/vectors/
 test/docs/
 !Build/linux/build.sh
 !Build/windows/build.bat
+.DS_Store
