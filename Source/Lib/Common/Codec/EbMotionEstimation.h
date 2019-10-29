@@ -1480,7 +1480,7 @@ void interpolate_search_region_AVC_chroma(
 
     static const uint8_t sub_position_type[16] = { 0, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2 };
 
-    extern uint32_t compute8x4_sad_kernel(
+    extern uint32_t compute8x4_sad_kernel_c(
         uint8_t  *src,                            // input parameter, source samples Ptr
         uint32_t  src_stride,                      // input parameter, source stride
         uint8_t  *ref,                            // input parameter, reference samples Ptr
@@ -1488,7 +1488,7 @@ void interpolate_search_region_AVC_chroma(
     /*******************************************
     * GetEightHorizontalSearchPointResults_8x8_16x16_PU
     *******************************************/
-    extern void get_eight_horizontal_search_point_results_8x8_16x16_pu(
+    extern void get_eight_horizontal_search_point_results_8x8_16x16_pu_c(
         uint8_t   *src,
         uint32_t   src_stride,
         uint8_t   *ref,
@@ -1506,7 +1506,7 @@ void interpolate_search_region_AVC_chroma(
     and check if there is improvement, if yes keep
     the best SAD+MV
     *******************************************/
-    extern void get_eight_horizontal_search_point_results_32x32_64x64_pu(
+    extern void get_eight_horizontal_search_point_results_32x32_64x64_pu_c(
         uint16_t  *p_sad16x16,
         uint32_t  *p_best_sad32x32,
         uint32_t  *p_best_sad64x64,
@@ -1519,7 +1519,7 @@ void interpolate_search_region_AVC_chroma(
     and check if there is improvment, if yes keep
     the best SAD+MV
     *******************************************/
-    extern void sad_calculation_8x8_16x16(
+    extern void sad_calculation_8x8_16x16_c(
         uint8_t   *src,
         uint32_t   src_stride,
         uint8_t   *ref,
@@ -1537,13 +1537,70 @@ void interpolate_search_region_AVC_chroma(
     and check if there is improvment, if yes keep
     the best SAD+MV
     *******************************************/
-    extern void sad_calculation_32x32_64x64(
+    extern void sad_calculation_32x32_64x64_c(
         uint32_t  *p_sad16x16,
         uint32_t  *p_best_sad32x32,
         uint32_t  *p_best_sad64x64,
         uint32_t  *p_best_mv32x32,
         uint32_t  *p_best_mv64x64,
         uint32_t   mv);
+
+    extern void ext_all_sad_calculation_8x8_16x16_c(
+        uint8_t *src,
+        uint32_t src_stride,
+        uint8_t *ref,
+        uint32_t ref_stride,
+        uint32_t mv,
+        uint32_t *p_best_sad8x8,
+        uint32_t *p_best_sad16x16,
+        uint32_t *p_best_mv8x8,
+        uint32_t *p_best_mv16x16,
+        uint32_t p_eight_sad16x16[16][8],
+        uint32_t p_eight_sad8x8[64][8]);
+
+    /****************************************************
+    Calcualte SAD for Rect H, V and H4, V4 partitions
+    and update its Motion info if the result SAD is better
+    ****************************************************/
+    extern void ext_eigth_sad_calculation_nsq_c(
+        uint32_t p_sad8x8[64][8],
+        uint32_t p_sad16x16[16][8],
+        uint32_t p_sad32x32[4][8],
+        uint32_t *p_best_sad64x32,
+        uint32_t *p_best_mv64x32,
+        uint32_t *p_best_sad32x16,
+        uint32_t *p_best_mv32x16,
+        uint32_t *p_best_sad16x8,
+        uint32_t *p_best_mv16x8,
+        uint32_t *p_best_sad32x64,
+        uint32_t *p_best_mv32x64,
+        uint32_t *p_best_sad16x32,
+        uint32_t *p_best_mv16x32,
+        uint32_t *p_best_sad8x16,
+        uint32_t *p_best_mv8x16,
+        uint32_t *p_best_sad32x8,
+        uint32_t *p_best_mv32x8,
+        uint32_t *p_best_sad8x32,
+        uint32_t *p_best_mv8x32,
+        uint32_t *p_best_sad64x16,
+        uint32_t *p_best_mv64x16,
+        uint32_t *p_best_sad16x64,
+        uint32_t *p_best_mv16x64,
+        uint32_t mv);
+
+    /*******************************************
+    Calcualte SAD for 32x32,64x64 from 16x16
+    and check if there is improvment, if yes keep
+    the best SAD+MV
+    *******************************************/
+    extern void ext_eight_sad_calculation_32x32_64x64_c(
+        uint32_t p_sad16x16[16][8],
+        uint32_t *p_best_sad32x32,
+        uint32_t *p_best_sad64x64,
+        uint32_t *p_best_mv32x32,
+        uint32_t *p_best_mv64x64,
+        uint32_t mv,
+        uint32_t p_sad32x32[4][8]);
 
     // Nader - to be replaced by loock-up table
     /*******************************************

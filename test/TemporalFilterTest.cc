@@ -34,14 +34,6 @@ void svt_av1_highbd_apply_temporal_filter_sse4_1(
     int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk,
     uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
     uint32_t *v_accum, uint16_t *v_count);
-void svt_av1_apply_filtering_c(
-    const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
-    int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src,
-    int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre,
-    int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-    int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk,
-    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
-    uint32_t *v_accum, uint16_t *v_count);
 }
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random

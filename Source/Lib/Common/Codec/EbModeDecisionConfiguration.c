@@ -1022,8 +1022,7 @@ void mdc_full_loop(
                 y_count_non_zero_coeffs[txb_itr],
                 0,
                 0,
-                COMPONENT_LUMA,
-                asm_type);
+                COMPONENT_LUMA);
 
             tu_full_distortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             tu_full_distortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -1772,3 +1771,4 @@ EbErrorType early_mode_decision_lcu(
 
     return return_error;
 }
+

@@ -71,116 +71,6 @@ static const uint32_t index_16x16_from_subindexes[4][4] = { {0, 1, 4, 5}, {2, 3,
 
 extern aom_variance_fn_ptr_t mefn_ptr[BlockSizeS_ALL];
 
-typedef void(*TempFilteringType)(const uint8_t *y_src,
-                                 int y_src_stride,
-                                 const uint8_t *y_pre,
-                                 int y_pre_stride,
-                                 const uint8_t *u_src,
-                                 const uint8_t *v_src,
-                                 int uv_src_stride,
-                                 const uint8_t *u_pre,
-                                 const uint8_t *v_pre,
-                                 int uv_pre_stride,
-                                 unsigned int block_width,
-                                 unsigned int block_height,
-                                 int ss_x,
-                                 int ss_y,
-                                 int strength,
-                                 const int *blk_fw,
-                                 int use_whole_blk,
-                                 uint32_t *y_accum,
-                                 uint16_t *y_count,
-                                 uint32_t *u_accum,
-                                 uint16_t *u_count,
-                                 uint32_t *v_accum,
-                                 uint16_t *v_count);
-
-typedef void(*TempFilteringHighbdType)(const uint16_t *y_src,
-                                       int y_src_stride,
-                                       const uint16_t *y_pre,
-                                       int y_pre_stride,
-                                       const uint16_t *u_src,
-                                       const uint16_t *v_src,
-                                       int uv_src_stride,
-                                       const uint16_t *u_pre,
-                                       const uint16_t *v_pre,
-                                       int uv_pre_stride,
-                                       unsigned int block_width,
-                                       unsigned int block_height,
-                                       int ss_x,
-                                       int ss_y,
-                                       int strength,
-                                       const int *blk_fw,
-                                       int use_whole_blk,
-                                       uint32_t *y_accum,
-                                       uint16_t *y_count,
-                                       uint32_t *u_accum,
-                                       uint16_t *u_count,
-                                       uint32_t *v_accum,
-                                       uint16_t *v_count);
-
-void svt_av1_apply_filtering_c(const uint8_t *y_src,
-                               int y_src_stride,
-                               const uint8_t *y_pre,
-                               int y_pre_stride,
-                               const uint8_t *u_src,
-                               const uint8_t *v_src,
-                               int uv_src_stride,
-                               const uint8_t *u_pre,
-                               const uint8_t *v_pre,
-                               int uv_pre_stride,
-                               unsigned int block_width,
-                               unsigned int block_height,
-                               int ss_x,
-                               int ss_y,
-                               int strength,
-                               const int *blk_fw,
-                               int use_whole_blk,
-                               uint32_t *y_accum,
-                               uint16_t *y_count,
-                               uint32_t *u_accum,
-                               uint16_t *u_count,
-                               uint32_t *v_accum,
-                               uint16_t *v_count);
-
-void svt_av1_apply_filtering_highbd_c(const uint16_t *y_src,
-                                      int y_src_stride,
-                                      const uint16_t *y_pre,
-                                      int y_pre_stride,
-                                      const uint16_t *u_src,
-                                      const uint16_t *v_src,
-                                      int uv_src_stride,
-                                      const uint16_t *u_pre,
-                                      const uint16_t *v_pre,
-                                      int uv_pre_stride,
-                                      unsigned int block_width,
-                                      unsigned int block_height,
-                                      int ss_x,
-                                      int ss_y,
-                                      int strength,
-                                      const int *blk_fw,
-                                      int use_whole_blk,
-                                      uint32_t *y_accum,
-                                      uint16_t *y_count,
-                                      uint32_t *u_accum,
-                                      uint16_t *u_count,
-                                      uint32_t *v_accum,
-                                      uint16_t *v_count);
-
-static TempFilteringType FUNC_TABLE apply_temp_filtering_32x32_func_ptr_array[ASM_TYPE_TOTAL] = {
-        // NON_SIMD
-        svt_av1_apply_filtering_c,
-        // SSE4
-        svt_av1_apply_temporal_filter_sse4_1
-};
-
-static TempFilteringHighbdType FUNC_TABLE apply_temp_filtering_highbd_32x32_func_ptr_array[ASM_TYPE_TOTAL] = {
-        // NON_SIMD
-        svt_av1_apply_filtering_highbd_c,
-        // SSE4
-        svt_av1_highbd_apply_temporal_filter_sse4_1
-};
-
 #if DEBUG_TF
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
@@ -1150,8 +1040,7 @@ static void apply_filtering_block(int block_row,
                                   uint32_t ss_y, // chroma sub-sampling in y
                                   int altref_strength,
                                   const int *blk_fw,
-                                  EbBool is_highbd,
-                                  EbAsm asm_type) {
+                                  EbBool is_highbd) {
 
     int blk_h = BH >> 1; int blk_w = BW >> 1; // fixed 32x32 blocks for now
 
@@ -1198,10 +1087,8 @@ static void apply_filtering_block(int block_row,
         pred_ptr[C_U] = pred[C_U] + offset_block_buffer_U;
         pred_ptr[C_V] = pred[C_V] + offset_block_buffer_V;
 
-        TempFilteringType apply_32x32_temp_filter_fn = apply_temp_filtering_32x32_func_ptr_array[asm_type];
-
         // Apply the temporal filtering strategy
-        apply_32x32_temp_filter_fn(src_ptr[C_Y],
+        svt_av1_apply_filtering(src_ptr[C_Y],
                                    stride[C_Y],
                                    pred_ptr[C_Y],
                                    stride_pred[C_Y],
@@ -1233,10 +1120,8 @@ static void apply_filtering_block(int block_row,
         pred_ptr_16bit[C_U] = pred_16bit[C_U] + offset_block_buffer_U;
         pred_ptr_16bit[C_V] = pred_16bit[C_V] + offset_block_buffer_V;
 
-        TempFilteringHighbdType apply_32x32_temp_filter_fn = apply_temp_filtering_highbd_32x32_func_ptr_array[asm_type];
-
         // Apply the temporal filtering strategy
-        apply_32x32_temp_filter_fn(src_ptr_16bit[C_Y],
+        svt_av1_apply_filtering_highbd(src_ptr_16bit[C_Y],
                                  stride[C_Y],
                                  pred_ptr_16bit[C_Y],
                                  stride_pred[C_Y],
@@ -1927,8 +1812,7 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                                   ss_y, // chroma sub-sampling in y
                                                   altref_strength,
                                                   blk_fw,
-                                                  is_highbd,
-                                                  asm_type);
+                                                  is_highbd);
                         }
                     }
                 }

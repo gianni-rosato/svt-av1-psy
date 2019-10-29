@@ -1450,7 +1450,7 @@ void fast_loop_core(
     // Y
     if (use_ssd) {
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-            full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+            full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
         candidate_buffer->candidate_ptr->luma_fast_distortion = (uint32_t)(lumaFastDistortion = spatial_full_dist_type_fun(
             input_picture_ptr->buffer_y,
@@ -1487,7 +1487,7 @@ void fast_loop_core(
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1 && context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE) {
         if (use_ssd) {
             EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
             chromaFastDistortion = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_cb,
@@ -2570,7 +2570,7 @@ void predictive_me_full_pel_search(
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvx >> 3) + refinement_pos_x) + (context_ptr->cu_origin_y + (mvy >> 3) + ref_pic->origin_y + refinement_pos_y) * ref_pic->stride_y;
             if (use_ssd) {
                 EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 distortion = (uint32_t) spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
@@ -2698,7 +2698,7 @@ void predictive_me_sub_pel_search(
             // Distortion
             if (use_ssd) {
                 EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
-                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 distortion = (uint32_t) spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
@@ -2809,7 +2809,7 @@ void predictive_me_search(
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (me_mv_x >> 3)) + (context_ptr->cu_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
             if (use_ssd) {
                 EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 pa_me_distortion = (uint32_t) spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
@@ -2887,7 +2887,7 @@ void predictive_me_search(
                    uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvp_x_array[mvp_index] >> 3)) + (context_ptr->cu_origin_y + (mvp_y_array[mvp_index] >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
                     if (use_ssd) {
                         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                            full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                            full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                         mvp_distortion = (uint32_t) spatial_full_dist_type_fun(
                             input_picture_ptr->buffer_y,
@@ -4284,7 +4284,7 @@ void tx_type_search(
                 asm_type);
 
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-            full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+            full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
         tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
             input_picture_ptr->buffer_y,
@@ -5197,7 +5197,7 @@ void perform_intra_tx_partitioning(
                         asm_type);
 
                 EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                        full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                        full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
@@ -5338,7 +5338,7 @@ void perform_intra_tx_partitioning(
                     asm_type);
 
             EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
             tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_y,
@@ -5585,7 +5585,7 @@ void perform_intra_tx_partitioning(
                     asm_type);
 
             EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
-                full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
             tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_y,
@@ -8551,43 +8551,6 @@ EB_EXTERN EbErrorType mode_decision_sb(
     return return_error;
 }
 
-/*******************************************
-* Compute4x4SAD_Default
-*   Unoptimized 4x4 SAD
-*******************************************/
-uint32_t Compute4x4SAD_Kernel(
-    const uint8_t  *src,                       // input parameter, source samples Ptr
-    uint32_t  src_stride,                      // input parameter, source stride
-    const uint8_t  *ref,                       // input parameter, reference samples Ptr
-    uint32_t  ref_stride,                      // input parameter, reference stride
-    uint32_t  height,                         // input parameter, block height (M)
-    uint32_t  width)                          // input parameter, block width (N)
-{
-    uint32_t rowNumberInBlock4x4;
-    uint32_t sadBlock4x4 = 0;
-
-    for (rowNumberInBlock4x4 = 0; rowNumberInBlock4x4 < 4; ++rowNumberInBlock4x4) {
-        sadBlock4x4 += EB_ABS_DIFF(src[0x00], ref[0x00]);
-        sadBlock4x4 += EB_ABS_DIFF(src[0x01], ref[0x01]);
-        sadBlock4x4 += EB_ABS_DIFF(src[0x02], ref[0x02]);
-        sadBlock4x4 += EB_ABS_DIFF(src[0x03], ref[0x03]);
-
-        src += src_stride;
-        ref += ref_stride;
-    }
-    (void)height;
-    (void)width;
-    return sadBlock4x4;
-}
-
-static EbSadKernelNxMType FUNC_TABLE compute4x4SAD_funcPtrArray[ASM_TYPE_TOTAL] =// [C_DEFAULT/ASM]
-{
-    // C_DEFAULT
-    Compute4x4SAD_Kernel,
-    // SSE2
-    compute4x_m_sad_avx2_intrin,
-};
-
 static uint32_t tab4x4[256] = {
     0, 1, 4, 5, 16, 17, 20, 21, 64, 65, 68, 69, 80, 81, 84, 85,
     2, 3, 6, 7, 18, 19, 22, 23, 66, 67, 70, 71, 82, 83, 86, 87,
@@ -9260,8 +9223,7 @@ static void in_loop_me_get_search_point_results_block(
     uint32_t                   ref_index,
     int32_t                   x_search_index,                  // input parameter, search region position in the horizontal direction, used to derive xMV
     int32_t                   y_search_index,                  // input parameter, search region position in the vertical direction, used to derive yMV
-    uint32_t                   number_of_sb_quad,
-    EbAsm                   asm_type)
+    uint32_t                   number_of_sb_quad)
 {
     uint8_t  *src_ptr = context_ptr->sb_buffer;
 
@@ -9381,7 +9343,7 @@ static void in_loop_me_get_search_point_results_block(
                                             uint32_t block_4x4_addr_ref = ref_index + ((block_4x4_addr_y * ref_luma_stride) + block_4x4_addr_x);
 
                                             //4x4
-                                            dist_4x4[block_4x4_index] = compute4x4SAD_funcPtrArray[asm_type](
+                                            dist_4x4[block_4x4_index] = eb_sad_kernel4x4(
                                                 src_ptr + block_4x4_addr_src,
                                                 src_stride,
                                                 ref_ptr + block_4x4_addr_ref,
@@ -9533,8 +9495,7 @@ static void in_loop_me_fullpel_search_sblock(
     int16_t                     y_search_area_origin,
     uint32_t                   search_area_width,
     uint32_t                   search_area_height,
-    uint32_t                   number_of_sb_quad,
-    EbAsm                   asm_type)
+    uint32_t                   number_of_sb_quad)
 {
     uint32_t x_search_index, y_search_index;
 
@@ -9546,8 +9507,7 @@ static void in_loop_me_fullpel_search_sblock(
                 x_search_index + y_search_index * context_ptr->interpolated_full_stride[list_index][0],
                 (int32_t)x_search_index + x_search_area_origin,
                 (int32_t)y_search_index + y_search_area_origin,
-                number_of_sb_quad,
-                asm_type);
+                number_of_sb_quad);
         }
     }
 }
@@ -11878,8 +11838,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
                 MAX_TATAL_SEARCH_AREA_WIDTH,
                 search_area_width + context_ptr->sb_side + ME_FILTER_TAP,
                 search_area_height + context_ptr->sb_side + ME_FILTER_TAP,
-                EB_FALSE,
-                asm_type);
+                EB_FALSE);
 
             context_ptr->integer_buffer_ptr[listIndex][0] = &(searchAreaBuffer[0]);
             context_ptr->interpolated_full_stride[listIndex][0] = MAX_TATAL_SEARCH_AREA_WIDTH;
@@ -11895,7 +11854,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
         searchRegionIndex = xTopLeftSearchRegion + yTopLeftSearchRegion * refPicPtr->stride_y;
 
         //849 * 4 + 5 block are supported
-        initialize_buffer32bits_func_ptr_array[(uint32_t)asm_type](context_ptr->p_sb_best_sad[listIndex][refPicIndex], (MAX_SS_ME_PU_COUNT / 4), 1, MAX_SAD_VALUE);
+        initialize_buffer_32bits(context_ptr->p_sb_best_sad[listIndex][refPicIndex], (MAX_SS_ME_PU_COUNT / 4), 1, MAX_SAD_VALUE);
 
         context_ptr->p_best_sad4x4 = &(context_ptr->p_sb_best_sad[listIndex][refPicIndex][0]);
         context_ptr->p_best_mv4x4 = &(context_ptr->p_sb_best_mv[listIndex][refPicIndex][0]);
@@ -11972,8 +11931,7 @@ EB_EXTERN EbErrorType in_loop_motion_estimation_sblock(
             y_search_area_origin,
             search_area_width,
             search_area_height,
-            number_of_sb_quad,
-            asm_type);
+            number_of_sb_quad);
 
         if (context_ptr->use_subpel_flag == 1) {
             // Move to the top left of the search region

@@ -16,6 +16,8 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
+#ifndef EbTemporalFiltering_h
+#define EbTemporalFiltering_h
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -60,7 +62,65 @@
 #define OD_DIVU_DMAX (1024)
 #define AHD_TH_WEIGHT 50
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int svt_av1_init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
                                     PictureParentControlSet *picture_control_set_ptr_central,
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t segment_index);
+
+void svt_av1_apply_filtering_c(const uint8_t *y_src,
+                            int y_src_stride,
+                            const uint8_t *y_pre,
+                            int y_pre_stride,
+                            const uint8_t *u_src,
+                            const uint8_t *v_src,
+                            int uv_src_stride,
+                            const uint8_t *u_pre,
+                            const uint8_t *v_pre,
+                            int uv_pre_stride,
+                            unsigned int block_width,
+                            unsigned int block_height,
+                            int ss_x,
+                            int ss_y,
+                            int strength,
+                            const int *blk_fw,
+                            int use_whole_blk,
+                            uint32_t *y_accum,
+                            uint16_t *y_count,
+                            uint32_t *u_accum,
+                            uint16_t *u_count,
+                            uint32_t *v_accum,
+                            uint16_t *v_count);
+
+void svt_av1_apply_filtering_highbd_c(const uint16_t *y_src,
+                            int y_src_stride,
+                            const uint16_t *y_pre,
+                            int y_pre_stride,
+                            const uint16_t *u_src,
+                            const uint16_t *v_src,
+                            int uv_src_stride,
+                            const uint16_t *u_pre,
+                            const uint16_t *v_pre,
+                            int uv_pre_stride,
+                            unsigned int block_width,
+                            unsigned int block_height,
+                            int ss_x,
+                            int ss_y,
+                            int strength,
+                            const int *blk_fw,
+                            int use_whole_blk,
+                            uint32_t *y_accum,
+                            uint16_t *y_count,
+                            uint32_t *u_accum,
+                            uint16_t *u_count,
+                            uint32_t *v_accum,
+                            uint16_t *v_count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif //EbTemporalFiltering_h
+

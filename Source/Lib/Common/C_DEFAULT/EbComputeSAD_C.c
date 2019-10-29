@@ -88,7 +88,7 @@ uint32_t sad_16b_kernel(
     return sad;
 }
 
-void sad_loop_kernel_sparse(
+void sad_loop_kernel_sparse_c(
     uint8_t *src,           // input parameter, source samples Ptr
     uint32_t srcStride,     // input parameter, source stride
     uint8_t *ref,           // input parameter, reference samples Ptr
@@ -138,7 +138,7 @@ void sad_loop_kernel_sparse(
     return;
 }
 
-void sad_loop_kernel(
+void sad_loop_kernel_c(
     uint8_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     uint8_t  *ref,                            // input parameter, reference samples Ptr

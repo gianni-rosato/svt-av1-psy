@@ -351,7 +351,7 @@ class ResidualSumTest : public ::testing::Test,
 
         sum_block1 =
             sum_residual8bit_avx2_intrin(residual_, size_, residual_stride_);
-        sum_block2 = sum_residual(residual_, size_, residual_stride_);
+        sum_block2 = sum_residual_c(residual_, size_, residual_stride_);
 
         EXPECT_EQ(sum_block1, sum_block2)
             << "compare sum residual result error";

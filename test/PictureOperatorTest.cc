@@ -142,7 +142,7 @@ class PictureOperatorTest : public ::testing::Test,
                                            tst_stride_,
                                            pu_width_,
                                            pu_height_);
-        picture_average_kernel(tst1_aligned_,
+        picture_average_kernel_c(tst1_aligned_,
                                tst_stride_,
                                tst2_aligned_,
                                tst_stride_,

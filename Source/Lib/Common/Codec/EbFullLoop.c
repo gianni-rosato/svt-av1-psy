@@ -1618,7 +1618,7 @@ void product_full_loop(
 
             EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
                 full_distortion_kernel16_bits :
-                spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                spatial_full_distortion_kernel;
 
             tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_y,
@@ -1662,8 +1662,7 @@ void product_full_loop(
                 y_count_non_zero_coeffs[txb_itr],
                 0,
                 0,
-                COMPONENT_LUMA,
-                asm_type);
+                COMPONENT_LUMA);
 
             tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
             tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -1939,7 +1938,7 @@ void product_full_loop_tx_search(
                 uint32_t input_tu_origin_index = (context_ptr->sb_origin_x + txb_origin_x + input_picture_ptr->origin_x) + ((context_ptr->sb_origin_y + txb_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y);
 
                 EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
-                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_y,
@@ -1983,8 +1982,7 @@ void product_full_loop_tx_search(
                     yCountNonZeroCoeffsTemp,
                     0,
                     0,
-                    COMPONENT_LUMA,
-                    asm_type);
+                    COMPONENT_LUMA);
 
                 tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
                 tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -2178,8 +2176,7 @@ void encode_pass_tx_search(
             yCountNonZeroCoeffsTemp,
             0,
             0,
-            COMPONENT_LUMA,
-            asm_type);
+            COMPONENT_LUMA);
 
         tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
         tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -2374,8 +2371,7 @@ void encode_pass_tx_search_hbd(
             yCountNonZeroCoeffsTemp,
             0,
             0,
-            COMPONENT_LUMA,
-            asm_type);
+            COMPONENT_LUMA);
 
         tuFullDistortion[0][DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
         tuFullDistortion[0][DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
@@ -2816,7 +2812,7 @@ void cu_full_distortion_fast_tu_mode_r(
                 uint32_t tu_uv_origin_index = (((txb_origin_x >> 3) << 3) + (((txb_origin_y >> 3) << 3) * candidate_buffer->residual_quant_coeff_ptr->stride_cb)) >> 1;
 
                 EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
-                    full_distortion_kernel16_bits : spatial_full_distortion_kernel_func_ptr_array[asm_type];
+                    full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 tuFullDistortion[1][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                     input_picture_ptr->buffer_cb,
@@ -2885,8 +2881,7 @@ void cu_full_distortion_fast_tu_mode_r(
                 countNonZeroCoeffsAll[0],
                 countNonZeroCoeffsAll[1],
                 countNonZeroCoeffsAll[2],
-                component_type,
-                asm_type);
+                component_type);
             TxSize    txSize = context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr];
             chromaShift = (MAX_TX_SCALE - av1_get_tx_scale(txSize)) * 2;
             tuFullDistortion[1][DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(tuFullDistortion[1][DIST_CALC_RESIDUAL], chromaShift);

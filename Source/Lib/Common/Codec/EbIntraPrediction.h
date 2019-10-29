@@ -302,19 +302,6 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
         uint16_t          dy,              //output parameter, pointer to the prediction
         uint16_t          bd);
 
-    static EB_INTRA_NOANG_TYPE FUNC_TABLE IntraSmoothH_Av1_funcPtrArray[ASM_TYPE_TOTAL] = {
-        // NON_AVX2
-        ebav1_smooth_h_predictor,
-        // AVX2
-        ebav1_smooth_h_predictor,
-    };
-    static EB_INTRA_NOANG_TYPE FUNC_TABLE IntraSmoothV_Av1_funcPtrArray[ASM_TYPE_TOTAL] = {
-        // NON_AVX2
-        ebav1_smooth_v_predictor,
-        // AVX2
-        ebav1_smooth_v_predictor,
-    };
-
 typedef struct CflCtx {
         // Q3 reconstructed luma pixels (only Q2 is required, but Q3 is used to avoid
         // shifts)

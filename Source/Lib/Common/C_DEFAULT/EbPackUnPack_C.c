@@ -41,7 +41,7 @@ void eb_enc_msb_pack2_d(
 * pack 8 and 2 bit 2D data into 10 bit data
 2bit data storage : 4 2bit-pixels in one byte
 ************************************************/
-void compressed_packmsb(
+void compressed_packmsb_c(
     uint8_t     *in8_bit_buffer,
     uint32_t     in8_stride,
     uint8_t     *inn_bit_buffer,
@@ -143,7 +143,7 @@ void eb_enc_msb_un_pack2_d(
         }
     }
 }
-void un_pack8_bit_data(
+void un_pack8_bit_data_c(
     uint16_t      *in16_bit_buffer,
     uint32_t       in_stride,
     uint8_t       *out8_bit_buffer,
@@ -165,7 +165,7 @@ void un_pack8_bit_data(
         }
     }
 }
-void unpack_avg(
+void unpack_avg_c(
     uint16_t *ref16_l0,
     uint32_t  ref_l0_stride,
     uint16_t *ref16_l1,
@@ -189,7 +189,7 @@ void unpack_avg(
     }
 }
 
-void unpack_avg_safe_sub(
+void unpack_avg_safe_sub_c(
     uint16_t *ref16_l0,
     uint32_t  ref_l0_stride,
     uint16_t *ref16_l1,

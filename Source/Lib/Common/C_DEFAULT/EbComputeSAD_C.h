@@ -28,7 +28,7 @@ extern "C" {
         uint32_t  height,
         uint32_t  width);
 
-    void sad_loop_kernel_sparse(
+    void sad_loop_kernel_sparse_c(
         uint8_t *src,           // input parameter, source samples Ptr
         uint32_t srcStride,     // input parameter, source stride
         uint8_t *ref,           // input parameter, reference samples Ptr
@@ -41,7 +41,7 @@ extern "C" {
         uint32_t src_stride_raw,  // input parameter, source stride (no line skipping)
         int16_t search_area_width, int16_t search_area_height);
 
-    void sad_loop_kernel(
+    void sad_loop_kernel_c(
         uint8_t  *src,                  // input parameter, source samples Ptr
         uint32_t  src_stride,           // input parameter, source stride
         uint8_t  *ref,                  // input parameter, reference samples Ptr

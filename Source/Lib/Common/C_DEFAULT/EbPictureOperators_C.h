@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-    void picture_average_kernel(
+    void picture_average_kernel_c(
         EbByte   src0,
         uint32_t   src0_stride,
         EbByte   src1,

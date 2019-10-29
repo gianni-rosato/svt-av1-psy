@@ -7479,8 +7479,7 @@ void UnPackReferenceLumaBlock(
     uint32_t                 pu_width,
     uint32_t                 pu_height,
     EbPictureBufferDesc *dst,
-    EbBool                sub_pred,
-    EbAsm                 asm_type)
+    EbBool                sub_pred)
 {
     pu_width += 4;
     pu_height += 4;
@@ -7495,8 +7494,7 @@ void UnPackReferenceLumaBlock(
         dst->stride_y << sub_pred,
         pu_width,
         pu_height >> sub_pred,
-        sub_pred,
-        asm_type
+        sub_pred
     );
 }
 

@@ -16,6 +16,21 @@
 
 #define RTCD_C
 #include "aom_dsp_rtcd.h"
+#include "EbComputeSAD_C.h"
+#include "EbComputeSAD_SSE4_1.h"
+#include "EbComputeSAD_AVX2.h"
+#include "EbPictureAnalysisProcess.h"
+#include "EbTemporalFiltering.h"
+#include "EbTemporalFiltering_sse4.h"
+#include "EbComputeSAD.h"
+#include "EbMotionEstimation.h"
+#include "EbMeSadCalculation_SSE2.h"
+#include "EbPictureOperators.h"
+#include "EbPackUnPack_C.h"
+#include "EbPackUnPack_SSE2.h"
+#include "EbPackUnPack_AVX2.h"
+#include "EbMcp_SSE2.h"
+
 
  /**************************************
  * Instruction Set Support
@@ -122,9 +137,51 @@ int32_t CanUseIntelAVX512()
     return 1;
 }
 
+#ifndef NON_AVX512_SUPPORT
+#define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
+do { ptr = c;\
+    if (((uintptr_t)NULL != (uintptr_t)mmx) && (flags & HAS_MMX)) ptr = mmx; \
+    if (((uintptr_t)NULL != (uintptr_t)sse) && (flags & HAS_SSE)) ptr = sse; \
+    if (((uintptr_t)NULL != (uintptr_t)sse2) && (flags & HAS_SSE2)) ptr = sse2; \
+    if (((uintptr_t)NULL != (uintptr_t)sse3) && (flags & HAS_SSE3)) ptr = sse3; \
+    if (((uintptr_t)NULL != (uintptr_t)ssse3) && (flags & HAS_SSSE3)) ptr = ssse3; \
+    if (((uintptr_t)NULL != (uintptr_t)sse4_1) && (flags & HAS_SSE4_1)) ptr = sse4_1; \
+    if (((uintptr_t)NULL != (uintptr_t)sse4_2) && (flags & HAS_SSE4_2)) ptr = sse4_2; \
+    if (((uintptr_t)NULL != (uintptr_t)avx) && (flags & HAS_AVX)) ptr = avx; \
+    if (((uintptr_t)NULL != (uintptr_t)avx2) && (flags & HAS_AVX2)) ptr = avx2; \
+    if (((uintptr_t)NULL != (uintptr_t)avx512) && use_avx512) ptr = avx512; \
+} while(0)
+#else
+#define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
+do { ptr = c;\
+    if (((uintptr_t)NULL != (uintptr_t)mmx) && (flags & HAS_MMX)) ptr = mmx; \
+    if (((uintptr_t)NULL != (uintptr_t)sse) && (flags & HAS_SSE)) ptr = sse; \
+    if (((uintptr_t)NULL != (uintptr_t)sse2) && (flags & HAS_SSE2)) ptr = sse2; \
+    if (((uintptr_t)NULL != (uintptr_t)sse3) && (flags & HAS_SSE3)) ptr = sse3; \
+    if (((uintptr_t)NULL != (uintptr_t)ssse3) && (flags & HAS_SSSE3)) ptr = ssse3; \
+    if (((uintptr_t)NULL != (uintptr_t)sse4_1) && (flags & HAS_SSE4_1)) ptr = sse4_1; \
+    if (((uintptr_t)NULL != (uintptr_t)sse4_2) && (flags & HAS_SSE4_2)) ptr = sse4_2; \
+    if (((uintptr_t)NULL != (uintptr_t)avx) && (flags & HAS_AVX)) ptr = avx; \
+    if (((uintptr_t)NULL != (uintptr_t)avx2) && (flags & HAS_AVX2)) ptr = avx2; \
+} while(0)
+#endif
+
+#define SET_SSE2(ptr, c, sse2) SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, 0)
+#define SET_SSE2_AVX2(ptr, c, sse2, avx2) SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, 0)
+#define SET_SSE41(ptr, c, sse4_1) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, 0, 0)
+#define SET_SSE41(ptr, c, sse4_1) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, 0, 0)
+#define SET_SSE41_AVX2(ptr, c, sse4_1, avx2) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, 0)
+#define SET_SSE41_AVX2_AVX512(ptr, c, sse4_1, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, avx512)
+#define SET_AVX2(ptr, c, avx2) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, 0)
+#define SET_AVX2_AVX512(ptr, c, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, avx512)
+
+
 void setup_rtcd_internal(EbAsm asm_type)
 {
     int32_t flags = HAS_MMX | HAS_SSE | HAS_SSE2 | HAS_SSE3 | HAS_SSSE3 | HAS_SSE4_1 | HAS_SSE4_2 | HAS_AVX;
+#ifndef NON_AVX512_SUPPORT
+    int32_t use_avx512 = CanUseIntelAVX512();
+#endif
 
     if (asm_type == ASM_AVX2)
         flags |= HAS_AVX2;
@@ -190,8 +247,6 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (CanUseIntelAVX512()) {
         eb_av1_compute_stats = eb_av1_compute_stats_avx512;
         eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
-        spatial_full_distortion_kernel_func_ptr_array[ASM_AVX2] = spatial_full_distortion_kernel_avx512;
-        nxm_sad_loop_kernel_func_ptr_array[ASM_AVX2] = sad_loop_kernel_avx512_intrin;
     }
 #endif
 
@@ -1667,5 +1722,113 @@ void setup_rtcd_internal(EbAsm asm_type)
     av1_get_gradient_hist = av1_get_gradient_hist_c;
     if (flags & HAS_AVX2) av1_get_gradient_hist = av1_get_gradient_hist_avx2;
 
+    SET_AVX2_AVX512(spatial_full_distortion_kernel,
+                    spatial_full_distortion_kernel_c,
+                    spatial_full_distortion_kernel_avx2,
+                    spatial_full_distortion_kernel_avx512);
+    SET_SSE41_AVX2(sad_loop_kernel_sparse,
+                   sad_loop_kernel_sparse_c,
+                   sad_loop_kernel_sparse_sse4_1_intrin,
+                   sad_loop_kernel_sparse_avx2_intrin);
+    SET_SSE41_AVX2_AVX512(sad_loop_kernel,
+                          sad_loop_kernel_c,
+                          sad_loop_kernel_sse4_1_intrin,
+                          sad_loop_kernel_avx2_intrin,
+                          sad_loop_kernel_avx512_intrin);
+    SET_AVX2(noise_extract_luma_weak,
+             noise_extract_luma_weak_c,
+             noise_extract_luma_weak_avx2_intrin);
+    SET_AVX2(noise_extract_luma_weak_lcu,
+             noise_extract_luma_weak_lcu_c,
+             noise_extract_luma_weak_lcu_avx2_intrin);
+    SET_AVX2(noise_extract_luma_strong,
+             noise_extract_luma_strong_c,
+             noise_extract_luma_strong_avx2_intrin);
+    SET_AVX2(noise_extract_chroma_strong,
+             noise_extract_chroma_strong_c,
+             noise_extract_chroma_strong_avx2_intrin);
+    SET_AVX2(noise_extract_chroma_weak,
+             noise_extract_chroma_weak_c,
+             noise_extract_chroma_weak_avx2_intrin);
+    SET_SSE41(svt_av1_apply_filtering,
+              svt_av1_apply_filtering_c,
+              svt_av1_apply_temporal_filter_sse4_1);
+    SET_SSE41(svt_av1_apply_filtering_highbd,
+              svt_av1_apply_filtering_highbd_c,
+              svt_av1_highbd_apply_temporal_filter_sse4_1);
+    SET_AVX2(combined_averaging_ssd,
+             combined_averaging_ssd_c,
+             combined_averaging_ssd_avx2);
+    SET_AVX2(ext_sad_calculation_8x8_16x16,
+             ext_sad_calculation_8x8_16x16_c,
+             ext_sad_calculation_8x8_16x16_avx2_intrin);
+    SET_SSE41(ext_sad_calculation_32x32_64x64,
+              ext_sad_calculation_32x32_64x64_c,
+              ext_sad_calculation_32x32_64x64_sse4_intrin);
+    SET_SSE2(sad_calculation_8x8_16x16,
+             sad_calculation_8x8_16x16_c,
+             sad_calculation_8x8_16x16_sse2_intrin);
+    SET_SSE2(sad_calculation_32x32_64x64,
+             sad_calculation_32x32_64x64_c,
+             sad_calculation_32x32_64x64_sse2_intrin);
+    SET_AVX2(ext_all_sad_calculation_8x8_16x16,
+             ext_all_sad_calculation_8x8_16x16_c,
+             ext_all_sad_calculation_8x8_16x16_avx2);
+    SET_AVX2(ext_eigth_sad_calculation_nsq,
+             ext_eigth_sad_calculation_nsq_c,
+             ext_eigth_sad_calculation_nsq_avx2);
+    SET_AVX2(ext_eight_sad_calculation_32x32_64x64,
+             ext_eight_sad_calculation_32x32_64x64_c,
+             ext_eight_sad_calculation_32x32_64x64_avx2);
+    SET_AVX2(eb_sad_kernel4x4,
+             fast_loop_nx_m_sad_kernel,
+             compute4x_m_sad_avx2_intrin);
+    SET_AVX2(sum_residual8bit,
+             sum_residual_c,
+             sum_residual8bit_avx2_intrin);
+    SET_AVX2(full_distortion_kernel_cbf_zero32_bits,
+             full_distortion_kernel_cbf_zero32_bits_c,
+             full_distortion_kernel_cbf_zero32_bits_avx2);
+    SET_AVX2(full_distortion_kernel32_bits,
+             full_distortion_kernel32_bits_c,
+             full_distortion_kernel32_bits_avx2);
+    SET_AVX2(compressed_packmsb,
+             compressed_packmsb_c,
+             compressed_packmsb_avx2_intrin);
+    SET_AVX2(c_pack,
+             c_pack_c,
+             c_pack_avx2_intrin);
+    SET_SSE2_AVX2(unpack_avg,
+                  unpack_avg_c,
+                  unpack_avg_sse2_intrin,
+                  unpack_avg_avx2_intrin);
+    SET_AVX2(unpack_avg_safe_sub,
+             unpack_avg_safe_sub_c,
+             unpack_avg_safe_sub_avx2_intrin);
+    SET_AVX2(un_pack8_bit_data,
+             un_pack8_bit_data_c,
+             eb_enc_un_pack8_bit_data_avx2_intrin);
+    SET_SSE2(picture_average_kernel,
+             picture_average_kernel_c,
+             picture_average_kernel_sse2_intrin);
+    SET_SSE2(picture_average_kernel1_line,
+             picture_average_kernel1_line_sse2_intrin, //Add C
+             picture_average_kernel1_line_sse2_intrin);
+    SET_SSE41_AVX2(get_eight_horizontal_search_point_results_8x8_16x16_pu,
+                   get_eight_horizontal_search_point_results_8x8_16x16_pu_c,
+                   get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin,
+                   get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin);
+    SET_SSE41_AVX2(get_eight_horizontal_search_point_results_32x32_64x64_pu,
+                   get_eight_horizontal_search_point_results_32x32_64x64_pu_c,
+                   get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,
+                   get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin);
+    SET_SSE2(initialize_buffer_32bits,
+             initialize_buffer_32bits_sse2_intrin, //Add C
+             initialize_buffer_32bits_sse2_intrin);
+    SET_SSE41(compute8x8_satd_u8,
+              compute8x8_satd_u8_sse4, //Add C
+              compute8x8_satd_u8_sse4);
+
 }
+
 
