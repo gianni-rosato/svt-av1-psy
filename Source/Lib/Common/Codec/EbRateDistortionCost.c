@@ -2092,10 +2092,8 @@ EbErrorType av1_tu_estimate_coeff_bits(
     TxSize                              txsize_uv,
     TxType                              tx_type,
     TxType                              tx_type_uv,
-    COMPONENT_TYPE                      component_type,
-    EbAsm                               asm_type)
+    COMPONENT_TYPE                      component_type)
 {
-    (void)asm_type;
     (void)entropy_coder_ptr;
     EbErrorType return_error = EB_ErrorNone;
 

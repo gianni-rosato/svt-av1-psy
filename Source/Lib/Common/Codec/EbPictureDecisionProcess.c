@@ -2846,8 +2846,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
         picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
         paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
-        sb_total_count,
-        sequence_control_set_ptr->encode_context_ptr->asm_type);
+        sb_total_count);
 
     picture_control_set_ptr->sc_content_detected = picture_control_set_ptr->alt_ref_ppcs_ptr->sc_content_detected;
 }

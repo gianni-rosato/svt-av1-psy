@@ -439,8 +439,7 @@ extern "C" {
         ModeDecisionContext           *context_ptr,
         EbPictureBufferDesc           *input_picture_ptr,
         uint32_t                         inputCbOriginIndex,
-        uint32_t                         cuChromaOriginIndex,
-        EbAsm                            asm_type);
+        uint32_t                         cuChromaOriginIndex);
 
 #ifdef __cplusplus
 }

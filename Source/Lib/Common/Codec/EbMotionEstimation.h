@@ -33,8 +33,7 @@ void uni_pred_averaging(
         uint32_t              refBufferFullList0Stride,
         uint8_t               *firstRefTempDst,
         uint8_t               **comp_blk_ptr,
-        uint32_t              *comp_blk_ptr_stride,
-        EbAsm                 asm_type);
+        uint32_t              *comp_blk_ptr_stride);
 
 void interpolate_search_region_AVC_chroma(
         MeContext               *context_ptr,
@@ -57,12 +56,6 @@ void interpolate_search_region_AVC_chroma(
         MeContext                 *context_ptr,
         EbPictureBufferDesc       *input_ptr);
 
-    extern EbErrorType OpenLoopIntraCandidateSearchLcu(
-        PictureParentControlSet   *picture_control_set_ptr,
-        uint32_t                       sb_index,
-        MotionEstimationContext_t   *context_ptr,
-        EbPictureBufferDesc       *input_ptr,
-        EbAsm                       asm_type);
     extern void decimation_2d(
         uint8_t                   *input_samples,
         uint32_t                   input_stride,

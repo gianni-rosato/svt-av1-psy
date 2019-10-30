@@ -178,8 +178,7 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
     extern EbErrorType eb_av1_intra_prediction_cl(
         struct ModeDecisionContext           *context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
-        ModeDecisionCandidateBuffer           *candidate_buffer_ptr,
-        EbAsm                                  asm_type);
+        ModeDecisionCandidateBuffer           *candidate_buffer_ptr);
 
     extern EbErrorType intra_open_loop_reference_samples_ctor(
         IntraReferenceSamplesOpenLoop *context_ptr);
@@ -217,13 +216,6 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
         uint8_t         *dst,              //output parameter, pointer to the prediction
         const uint32_t   prediction_buffer_stride,     //input parameter, denotes the stride for the prediction ptr
         const EbBool  skip);                       //skip half rows
-    typedef uint32_t(*EB_NEIGHBOR_DC_INTRA_TYPE)(
-        MotionEstimationContext_t       *context_ptr,
-        EbPictureBufferDesc           *input_ptr,
-        uint32_t                           src_origin_x,
-        uint32_t                           src_origin_y,
-        uint32_t                           block_size,
-        EbAsm                              asm_type);
     typedef void(*EB_INTRA_NOANG_16bit_TYPE)(
         const uint32_t   size,
         uint16_t         *ref_samples,

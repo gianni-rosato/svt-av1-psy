@@ -153,8 +153,7 @@ extern "C" {
     typedef EbErrorType(*EbPredictionFunc)(
         struct ModeDecisionContext           *context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
-        struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr,
-        EbAsm                                   asm_type);
+        struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr);
     typedef uint64_t(*EbFastCostFunc)(
         CodingUnit                           *cu_ptr,
         struct ModeDecisionCandidate         *candidate_buffer,

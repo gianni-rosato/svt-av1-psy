@@ -52,8 +52,7 @@ extern "C" {
         COMPONENT_TYPE                  component_type,
         uint64_t                         *cb_coeff_bits,
         uint64_t                         *cr_coeff_bits,
-        EbBool                           is_full_loop,
-        EbAsm                            asm_type);
+        EbBool                           is_full_loop);
 
     void product_full_loop(
         ModeDecisionCandidateBuffer  *candidate_buffer,

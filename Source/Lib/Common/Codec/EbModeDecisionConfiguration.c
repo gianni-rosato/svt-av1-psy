@@ -890,13 +890,11 @@ void mdc_full_loop(
     uint32_t                          tu_origin_index;
     uint64_t                          y_full_cost;
     SequenceControlSet                *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-    EbAsm                             asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint64_t                          y_tu_coeff_bits;
     uint64_t                          tu_full_distortion[3][DIST_CALC_TOTAL];
     context_ptr->three_quad_energy = 0;
     uint32_t  txb_1d_offset = 0;
     uint32_t txb_itr = 0;
-    assert(asm_type >= 0 && asm_type < ASM_TYPE_TOTAL);
     uint8_t  tx_depth = candidate_buffer->candidate_ptr->tx_depth;
     uint16_t txb_count = context_ptr->blk_geom->txb_count[tx_depth];
     for (txb_itr = 0; txb_itr < txb_count; txb_itr++) {
@@ -918,7 +916,6 @@ void mdc_full_loop(
             context_ptr->transform_inner_array_ptr,
             0,
             candidate_buffer->candidate_ptr->transform_type[txb_itr],
-            asm_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
 
@@ -973,8 +970,7 @@ void mdc_full_loop(
                     0,
                     0,
                     PICTURE_BUFFER_DESC_Y_FLAG,
-                    0,
-                    asm_type);
+                    0);
 
             }
 
@@ -1069,8 +1065,7 @@ void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 EbErrorType mdc_inter_pu_prediction_av1(
     ModeDecisionConfigurationContext     *context_ptr,
     PictureControlSet                    *picture_control_set_ptr,
-    ModeDecisionCandidateBuffer          *candidate_buffer_ptr,
-    EbAsm                                 asm_type)
+    ModeDecisionCandidateBuffer          *candidate_buffer_ptr)
 {
     EbErrorType           return_error = EB_ErrorNone;
     EbPictureBufferDesc  *ref_pic_list0;
@@ -1143,8 +1138,8 @@ EbErrorType mdc_inter_pu_prediction_av1(
         candidate_buffer_ptr->prediction_ptr,
         context_ptr->blk_geom->origin_x,
         context_ptr->blk_geom->origin_y,
-        0,
-        asm_type); // No chroma
+        0, // No chroma
+        0); //bit_depth 0
 
     return return_error;
 }
@@ -1241,7 +1236,6 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
         const uint32_t       input_origin_index = (context_ptr->cu_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y + (context_ptr->cu_origin_x + input_picture_ptr->origin_x);
         const uint32_t       cu_origin_index = blk_geom->origin_x + blk_geom->origin_y * SB_STRIDE_Y;
         context_ptr->candidate_buffer->candidate_ptr = &context_ptr->fast_candidate_array[0];
-        EbAsm asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
         cu_ptr->best_d1_blk = blk_idx_mds;
 #endif
         if (picture_control_set_ptr->slice_type != I_SLICE) {
@@ -1462,8 +1456,7 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
             mdc_inter_pu_prediction_av1(
                 context_ptr,
                 picture_control_set_ptr,
-                context_ptr->candidate_buffer,
-                asm_type);
+                context_ptr->candidate_buffer);
 
             //Y Residual
             residual_kernel8bit(

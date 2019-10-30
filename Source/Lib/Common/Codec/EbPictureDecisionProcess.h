@@ -86,8 +86,7 @@ void GatheringPictureStatistics(
         EbPictureBufferDesc           *input_picture_ptr,
         EbPictureBufferDesc           *input_padded_picture_ptr,
         EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-        uint32_t                      sb_total_count,
-        EbAsm                         asm_type);
+        uint32_t                      sb_total_count);
 
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
                       EbPictureBufferDesc* outputPicturePtr);

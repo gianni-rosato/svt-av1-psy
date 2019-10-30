@@ -510,10 +510,8 @@ uint64_t ComputeVariance64x64(
     SequenceControlSet        *sequence_control_set_ptr,
     EbPictureBufferDesc       *input_padded_picture_ptr,         // input parameter, Input Padded Picture
     uint32_t                       inputLumaOriginIndex,          // input parameter, SB index, used to point to source/reference samples
-    uint64_t                        *variance32x32,
-    EbAsm                         asm_type)
+    uint64_t                        *variance32x32)
 {
-    (void)asm_type;
     uint32_t blockIndex;
 
     uint64_t mean_of8x8_blocks[64];
@@ -1461,8 +1459,7 @@ EbErrorType ComputeChromaBlockMean(
     EbPictureBufferDesc       *input_padded_picture_ptr,         // input parameter, Input Padded Picture
     uint32_t                       lcuCodingOrder,                // input parameter, SB address
     uint32_t                       inputCbOriginIndex,            // input parameter, SB index, used to point to source/reference samples
-    uint32_t                       inputCrOriginIndex,            // input parameter, SB index, used to point to source/reference samples
-    EbAsm                         asm_type)
+    uint32_t                       inputCrOriginIndex)            // input parameter, SB index, used to point to source/reference samples
 {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -1575,7 +1572,6 @@ EbErrorType ComputeChromaBlockMean(
         crMeanOf16x16Blocks[15] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[crBlockIndex]), input_padded_picture_ptr->stride_cr, 8, 8);
     }
     else {
-        (void)(asm_type);
         const uint16_t stride_cb = input_padded_picture_ptr->stride_cb;
         const uint16_t stride_cr = input_padded_picture_ptr->stride_cr;
 
@@ -1751,10 +1747,8 @@ EbErrorType ComputeBlockMeanComputeVariance(
     PictureParentControlSet   *picture_control_set_ptr,          // input parameter, Picture Control Set Ptr
     EbPictureBufferDesc       *input_padded_picture_ptr,         // input parameter, Input Padded Picture
     uint32_t                       sb_index,                // input parameter, SB address
-    uint32_t                       inputLumaOriginIndex,          // input parameter, SB index, used to point to source/reference samples
-    EbAsm                         asm_type)
+    uint32_t                       inputLumaOriginIndex)          // input parameter, SB index, used to point to source/reference samples
 {
-    (void)asm_type;
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t blockIndex;
@@ -2605,8 +2599,7 @@ EbErrorType DetectInputPictureNoise(
     EbPictureBufferDesc       *input_picture_ptr,
     EbPictureBufferDesc       *noise_picture_ptr,
     EbPictureBufferDesc       *denoised_picture_ptr,
-    uint32_t                     picture_width_in_sb,
-    EbAsm                        asm_type)
+    uint32_t                     picture_width_in_sb)
 {
     EbErrorType                 return_error = EB_ErrorNone;
     uint32_t                    lcuCodingOrder;
@@ -2658,8 +2651,7 @@ EbErrorType DetectInputPictureNoise(
                 sequence_control_set_ptr,
                 noise_picture_ptr,
                 noiseOriginIndex,
-                noiseBlkVar32x32,
-                asm_type);
+                noiseBlkVar32x32);
 
             uint64_t noiseBlkVarTh;
             uint64_t denBlkVarTh = FLAT_MAX_VAR;
@@ -2671,8 +2663,7 @@ EbErrorType DetectInputPictureNoise(
                 sequence_control_set_ptr,
                 denoised_picture_ptr,
                 inputLumaOriginIndex,
-                denoiseBlkVar32x32,
-                asm_type) >> 16;
+                denoiseBlkVar32x32) >> 16;
 
             if (denBlkVar < denBlkVarTh && noiseBlkVar > noiseBlkVarTh)
                 picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
@@ -2758,8 +2749,8 @@ EbErrorType FullSampleDenoise(
     PictureParentControlSet   *picture_control_set_ptr,
     uint32_t                     sb_total_count,
     EbBool                       denoise_flag,
-    uint32_t                     picture_width_in_sb,
-    EbAsm                        asm_type){
+    uint32_t                     picture_width_in_sb)
+{
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t                     lcuCodingOrder;
@@ -2780,8 +2771,7 @@ EbErrorType FullSampleDenoise(
         input_picture_ptr,
         noise_picture_ptr,
         denoised_picture_ptr,
-        picture_width_in_sb,
-        asm_type);
+        picture_width_in_sb);
 
     if (denoise_flag == EB_TRUE)
     {
@@ -2805,8 +2795,7 @@ EbErrorType SubSampleFilterNoise(
     EbPictureBufferDesc       *input_picture_ptr,
     EbPictureBufferDesc       *noise_picture_ptr,
     EbPictureBufferDesc       *denoised_picture_ptr,
-    uint32_t                         picture_width_in_sb,
-    EbAsm                         asm_type)
+    uint32_t                         picture_width_in_sb)
 {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -2923,14 +2912,12 @@ EbErrorType SubSampleFilterNoise(
                     sequence_control_set_ptr,
                     noise_picture_ptr,
                     noiseOriginIndex,
-                    noiseBlkVar32x32,
-                    asm_type);
+                    noiseBlkVar32x32);
                 uint64_t denBlkVar = ComputeVariance64x64(
                     sequence_control_set_ptr,
                     denoised_picture_ptr,
                     inputLumaOriginIndex,
-                    denoiseBlkVar32x32,
-                    asm_type) >> 16;
+                    denoiseBlkVar32x32) >> 16;
 
                 uint64_t noiseBlkVarTh;
                 uint64_t denBlkVarTh = FLAT_MAX_VAR;
@@ -3222,8 +3209,7 @@ EbErrorType QuarterSampleDenoise(
     EbPictureBufferDesc        *quarter_decimated_picture_ptr,
     uint32_t                       sb_total_count,
     EbBool                      denoise_flag,
-    uint32_t                         picture_width_in_sb,
-    EbAsm                         asm_type)
+    uint32_t                         picture_width_in_sb)
 {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -3265,8 +3251,7 @@ EbErrorType QuarterSampleDenoise(
                 input_picture_ptr,
                 noise_picture_ptr,
                 denoised_picture_ptr,
-                picture_width_in_sb,
-                asm_type);
+                picture_width_in_sb);
         }
     }
 
@@ -3280,8 +3265,7 @@ EbErrorType SubSampleDenoise(
     EbPictureBufferDesc        *sixteenth_decimated_picture_ptr,
     uint32_t                       sb_total_count,
     EbBool                      denoise_flag,
-    uint32_t                         picture_width_in_sb,
-    EbAsm                         asm_type)
+    uint32_t                         picture_width_in_sb)
 {
     EbErrorType return_error = EB_ErrorNone;
 
@@ -3324,8 +3308,7 @@ EbErrorType SubSampleDenoise(
                 input_picture_ptr,
                 noise_picture_ptr,
                 denoised_picture_ptr,
-                picture_width_in_sb,
-                asm_type);
+                picture_width_in_sb);
         }
     }
 
@@ -3752,8 +3735,7 @@ void ComputePictureSpatialStatistics(
     PictureParentControlSet       *picture_control_set_ptr,
     EbPictureBufferDesc           *input_picture_ptr,
     EbPictureBufferDesc           *input_padded_picture_ptr,
-    uint32_t                           sb_total_count,
-    EbAsm                           asm_type)
+    uint32_t                           sb_total_count)
 {
     uint32_t sb_index;
     uint32_t sb_origin_x;        // to avoid using child PCS
@@ -3782,8 +3764,7 @@ void ComputePictureSpatialStatistics(
             picture_control_set_ptr,
             input_padded_picture_ptr,
             sb_index,
-            inputLumaOriginIndex,
-            asm_type);
+            inputLumaOriginIndex);
 
         if (sb_params->is_complete_sb) {
             ComputeChromaBlockMean(
@@ -3792,8 +3773,7 @@ void ComputePictureSpatialStatistics(
                 input_picture_ptr,
                 sb_index,
                 inputCbOriginIndex,
-                inputCrOriginIndex,
-                asm_type);
+                inputCrOriginIndex);
         }
         else {
             ZeroOutChromaBlockMean(
@@ -3829,15 +3809,13 @@ void CalculateInputAverageIntensity(
     EbPictureBufferDesc           *input_picture_ptr,
     uint64_t                           sumAverageIntensityTotalRegionsLuma,
     uint64_t                           sumAverageIntensityTotalRegionsCb,
-    uint64_t                           sumAverageIntensityTotalRegionsCr,
-    EbAsm                           asm_type)
+    uint64_t                           sumAverageIntensityTotalRegionsCr)
 {
     if (sequence_control_set_ptr->scd_mode == SCD_MODE_0) {
         uint16_t blockIndexInWidth;
         uint16_t blockIndexInHeight;
         uint64_t mean = 0;
 
-        (void)(asm_type);
         const uint16_t stride_y = input_picture_ptr->stride_y;
         // Loop over 8x8 blocks and calculates the mean value
         if (sequence_control_set_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
@@ -3877,8 +3855,7 @@ void GatheringPictureStatistics(
     EbPictureBufferDesc           *input_picture_ptr,
     EbPictureBufferDesc           *input_padded_picture_ptr,
     EbPictureBufferDesc            *sixteenth_decimated_picture_ptr,
-    uint32_t                           sb_total_count,
-    EbAsm                           asm_type)
+    uint32_t                           sb_total_count)
 {
     uint64_t                          sumAverageIntensityTotalRegionsLuma = 0;
     uint64_t                          sumAverageIntensityTotalRegionsCb = 0;
@@ -3909,16 +3886,14 @@ void GatheringPictureStatistics(
         input_picture_ptr,
         sumAverageIntensityTotalRegionsLuma,
         sumAverageIntensityTotalRegionsCb,
-        sumAverageIntensityTotalRegionsCr,
-        asm_type);
+        sumAverageIntensityTotalRegionsCr);
 
     ComputePictureSpatialStatistics(
         sequence_control_set_ptr,
         picture_control_set_ptr,
         input_picture_ptr,
         input_padded_picture_ptr,
-        sb_total_count,
-        asm_type);
+        sb_total_count);
 
     return;
 }
@@ -4269,7 +4244,6 @@ void* picture_analysis_kernel(void *input_ptr)
     uint32_t                        picture_width_in_sb;
     uint32_t                        pictureHeighInLcu;
     uint32_t                        sb_total_count;
-    EbAsm                           asm_type;
 
     for (;;) {
         // Get Input Full Object
@@ -4292,8 +4266,6 @@ void* picture_analysis_kernel(void *input_ptr)
             picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             sb_total_count = picture_width_in_sb * pictureHeighInLcu;
-
-            asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
 
             // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
             SetPictureParametersForStatisticsGathering(
@@ -4343,8 +4315,7 @@ void* picture_analysis_kernel(void *input_ptr)
                 picture_control_set_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                 input_padded_picture_ptr,
                 (EbPictureBufferDesc*)paReferenceObject->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
-                sb_total_count,
-                asm_type);
+                sb_total_count);
 
             if (sequence_control_set_ptr->static_config.screen_content_mode == 2){ // auto detect
                 is_screen_content(

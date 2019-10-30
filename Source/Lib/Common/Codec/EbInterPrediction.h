@@ -251,8 +251,7 @@ EbErrorType av1_inter_prediction_hbd(
     EbErrorType inter_pu_prediction_av1(
         struct ModeDecisionContext           *md_context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
-        ModeDecisionCandidateBuffer          *candidate_buffer_ptr,
-        EbAsm                                   asm_type);
+        ModeDecisionCandidateBuffer          *candidate_buffer_ptr);
 
 
     EbErrorType choose_mvp_idx_v2(
@@ -281,8 +280,7 @@ EbErrorType av1_inter_prediction_hbd(
         uint16_t                                dst_origin_y,
         EbWarpedMotionParams                   *wm_params,
         uint8_t                                 bit_depth,
-        EbBool                                  perform_chroma,
-        EbAsm                                   asm_type);
+        EbBool                                  perform_chroma);
 
     extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/2][/*subY*/2][/*bi*/2];
     extern aom_convolve_fn_t convolve[/*subX*/2][/*subY*/2][/*bi*/2];

@@ -69,7 +69,6 @@ typedef void(*EB_AV1_ENCODE_LOOP_FUNC_PTR)(
     EbPictureBufferDesc *transform16bit,          // no basis/offset
     EbPictureBufferDesc *inverse_quant_buffer,
     int16_t                *transformScratchBuffer,
-    EbAsm                 asm_type,
     uint32_t                  *count_non_zero_coeffs,
     uint32_t                 component_mask,
     uint32_t                 dZoffset,
@@ -84,8 +83,7 @@ typedef void(*EB_AV1_GENERATE_RECON_FUNC_PTR)(
     EbPictureBufferDesc *residual16bit,    // no basis/offset
     int16_t                *transformScratchBuffer,
     uint32_t                 component_mask,
-    uint16_t                *eob,
-    EbAsm                 asm_type);
+    uint16_t                *eob);
 
 
 /*******************************************
@@ -421,7 +419,6 @@ void encode_pass_tx_search(
     EbPictureBufferDesc          *transform16bit,
     EbPictureBufferDesc          *inverse_quant_buffer,
     int16_t                        *transformScratchBuffer,
-    EbAsm                          asm_type,
     uint32_t                       *count_non_zero_coeffs,
     uint32_t                       component_mask,
     uint32_t                       dZoffset,
@@ -459,7 +456,6 @@ static void Av1EncodeLoop(
     EbPictureBufferDesc *transform16bit,          // no basis/offset
     EbPictureBufferDesc *inverse_quant_buffer,
     int16_t                *transformScratchBuffer,
-    EbAsm                 asm_type,
     uint32_t                  *count_non_zero_coeffs,
     uint32_t                 component_mask,
     uint32_t                 dZoffset,
@@ -527,7 +523,6 @@ static void Av1EncodeLoop(
                     transform16bit,
                     inverse_quant_buffer,
                     transformScratchBuffer,
-                    asm_type,
                     count_non_zero_coeffs,
                     component_mask,
                     dZoffset,
@@ -545,7 +540,6 @@ static void Av1EncodeLoop(
             transformScratchBuffer,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
-            asm_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
 
@@ -565,7 +559,6 @@ static void Av1EncodeLoop(
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
             &eob[0],
-            asm_type,
             &(count_non_zero_coeffs[0]),
             COMPONENT_LUMA,
             BIT_INCREMENT_8BIT,
@@ -658,8 +651,7 @@ static void Av1EncodeLoop(
                     context_ptr->md_context,
                     input_samples,
                     input_cb_offset,
-                    scratch_cb_offset,
-                    asm_type);
+                    scratch_cb_offset);
 
                 // Output(s)
                 if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
@@ -740,7 +732,6 @@ static void Av1EncodeLoop(
             transformScratchBuffer,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
-            asm_type,
             PLANE_TYPE_UV,
             DEFAULT_SHAPE);
 
@@ -760,7 +751,6 @@ static void Av1EncodeLoop(
             context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             &eob[1],
-            asm_type,
             &(count_non_zero_coeffs[1]),
             COMPONENT_CHROMA_CB,
             BIT_INCREMENT_8BIT,
@@ -792,7 +782,6 @@ static void Av1EncodeLoop(
             transformScratchBuffer,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
-            asm_type,
             PLANE_TYPE_UV,
             DEFAULT_SHAPE);
         cu_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
@@ -808,7 +797,6 @@ static void Av1EncodeLoop(
             context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
             &eob[2],
-            asm_type,
             &(count_non_zero_coeffs[2]),
             COMPONENT_CHROMA_CR,
             BIT_INCREMENT_8BIT,
@@ -841,7 +829,6 @@ void encode_pass_tx_search_hbd(
     EbPictureBufferDesc          *transform16bit,
     EbPictureBufferDesc          *inverse_quant_buffer,
     int16_t                        *transformScratchBuffer,
-    EbAsm                          asm_type,
     uint32_t                       *count_non_zero_coeffs,
     uint32_t                       component_mask,
     uint32_t                       dZoffset,
@@ -879,7 +866,6 @@ static void Av1EncodeLoop16bit(
     EbPictureBufferDesc *transform16bit,      // no basis/offset
     EbPictureBufferDesc *inverse_quant_buffer,
     int16_t                *transformScratchBuffer,
-    EbAsm                 asm_type,
     uint32_t                  *count_non_zero_coeffs,
     uint32_t                 component_mask,
     uint32_t                 dZoffset,
@@ -944,7 +930,6 @@ static void Av1EncodeLoop16bit(
                         transform16bit,
                         inverse_quant_buffer,
                         transformScratchBuffer,
-                        asm_type,
                         count_non_zero_coeffs,
                         component_mask,
                         dZoffset,
@@ -962,7 +947,6 @@ static void Av1EncodeLoop16bit(
                 transformScratchBuffer,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
-                asm_type,
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
 
@@ -981,7 +965,6 @@ static void Av1EncodeLoop16bit(
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize[cu_ptr->tx_depth][context_ptr->txb_itr],
                 &eob[0],
-                asm_type,
                 &(count_non_zero_coeffs[0]),
                 COMPONENT_LUMA,
                 BIT_INCREMENT_10BIT,
@@ -1119,7 +1102,6 @@ static void Av1EncodeLoop16bit(
                 transformScratchBuffer,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
-                asm_type,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
             int32_t seg_qp = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled ?
@@ -1138,7 +1120,6 @@ static void Av1EncodeLoop16bit(
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 &eob[1],
-                asm_type,
                 &(count_non_zero_coeffs[1]),
                 COMPONENT_CHROMA_CB,
                 BIT_INCREMENT_10BIT,
@@ -1170,7 +1151,6 @@ static void Av1EncodeLoop16bit(
                 transformScratchBuffer,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
-                asm_type,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
 
@@ -1187,7 +1167,6 @@ static void Av1EncodeLoop16bit(
                 context_ptr->blk_geom->tx_height_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 &eob[2],
-                asm_type,
                 &(count_non_zero_coeffs[2]),
                 COMPONENT_CHROMA_CR,
                 BIT_INCREMENT_10BIT,
@@ -1239,8 +1218,7 @@ static void Av1EncodeGenerateRecon(
     EbPictureBufferDesc *residual16bit,    // no basis/offset
     int16_t               *transformScratchBuffer,
     uint32_t               component_mask,
-    uint16_t              *eob,
-    EbAsm                  asm_type)
+    uint16_t              *eob)
 {
     uint32_t               pred_luma_offset;
     uint32_t               predChromaOffset;
@@ -1257,7 +1235,6 @@ static void Av1EncodeGenerateRecon(
         {
             pred_luma_offset = (predSamples->origin_y + origin_y)             * predSamples->stride_y + (predSamples->origin_x + origin_x);
             if (txb_ptr->y_has_coeff == EB_TRUE && cu_ptr->skip_flag == EB_FALSE) {
-                (void)asm_type;
                 (void)transformScratchBuffer;
                 uint8_t     *predBuffer = predSamples->buffer_y + pred_luma_offset;
                 av1_inv_transform_recon8bit(
@@ -1347,8 +1324,7 @@ static void Av1EncodeGenerateRecon16bit(
     EbPictureBufferDesc   *residual16bit,    // no basis/offset
     int16_t               *transformScratchBuffer,
     uint32_t               component_mask,
-    uint16_t              *eob,
-    EbAsm                  asm_type)
+    uint16_t              *eob)
 {
     uint32_t pred_luma_offset;
     uint32_t predChromaOffset;
@@ -1356,7 +1332,6 @@ static void Av1EncodeGenerateRecon16bit(
     CodingUnit          *cu_ptr = context_ptr->cu_ptr;
     TransformUnit       *txb_ptr = &cu_ptr->transform_unit_array[context_ptr->txb_itr];
 
-    (void)asm_type;
     (void)transformScratchBuffer;
     //**********************************
     // Luma
@@ -1496,7 +1471,6 @@ void move_cu_data(
     CodingUnit *dst_cu);
 
 void perform_intra_coding_loop(
-    SequenceControlSet *sequence_control_set_ptr,
     PictureControlSet  *picture_control_set_ptr,
     LargestCodingUnit  *sb_ptr,
     uint32_t            tbAddr,
@@ -1504,7 +1478,6 @@ void perform_intra_coding_loop(
     PredictionUnit     *pu_ptr,
     EncDecContext      *context_ptr,
     uint32_t            dZoffset) {
-    EbAsm                   asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     EbBool                  is16bit = context_ptr->is16bit;
 
     EbPictureBufferDesc    *recon_buffer = is16bit ? picture_control_set_ptr->recon_picture16bit_ptr : picture_control_set_ptr->recon_picture_ptr;
@@ -1687,7 +1660,6 @@ void perform_intra_coding_loop(
             transform_buffer,
             inverse_quant_buffer,
             transform_inner_array_ptr,
-            asm_type,
             count_non_zero_coeffs,
             PICTURE_BUFFER_DESC_LUMA_MASK,
             cu_ptr->delta_qp > 0 ? 0 : dZoffset,
@@ -1732,8 +1704,7 @@ void perform_intra_coding_loop(
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
                 candidate_buffer->candidate_ptr->transform_type_uv,
-                COMPONENT_LUMA,
-                asm_type);
+                COMPONENT_LUMA);
         }
 
         Av1EncodeGenerateReconFunctionPtr[is16bit](
@@ -1744,8 +1715,7 @@ void perform_intra_coding_loop(
             inverse_quant_buffer,
             transform_inner_array_ptr,
             PICTURE_BUFFER_DESC_LUMA_MASK,
-            eobs[context_ptr->txb_itr],
-            asm_type);
+            eobs[context_ptr->txb_itr]);
 
         // Update Recon Samples-INTRA-
         EncodePassUpdateReconSampleNeighborArrays(
@@ -1975,7 +1945,6 @@ void perform_intra_coding_loop(
             transform_buffer,
             inverse_quant_buffer,
             transform_inner_array_ptr,
-            asm_type,
             count_non_zero_coeffs,
             PICTURE_BUFFER_DESC_CHROMA_MASK,
             cu_ptr->delta_qp > 0 ? 0 : dZoffset,
@@ -2020,8 +1989,7 @@ void perform_intra_coding_loop(
                 context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                 candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr],
                 candidate_buffer->candidate_ptr->transform_type_uv,
-                COMPONENT_CHROMA,
-                asm_type);
+                COMPONENT_CHROMA);
         }
 
         Av1EncodeGenerateReconFunctionPtr[is16bit](
@@ -2032,8 +2000,7 @@ void perform_intra_coding_loop(
             inverse_quant_buffer,
             transform_inner_array_ptr,
             PICTURE_BUFFER_DESC_CHROMA_MASK,
-            eobs[context_ptr->txb_itr],
-            asm_type);
+            eobs[context_ptr->txb_itr]);
 
         // Update Recon Samples-INTRA-
         EncodePassUpdateReconSampleNeighborArrays(
@@ -2179,7 +2146,6 @@ EB_EXTERN void av1_encode_pass(
     uint32_t                  y_has_coeff;
     uint32_t                  u_has_coeff;
     uint32_t                  v_has_coeff;
-    EbAsm                     asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint64_t                  y_coeff_bits;
     uint64_t                  cb_coeff_bits;
     uint64_t                  cr_coeff_bits;
@@ -2461,7 +2427,6 @@ EB_EXTERN void av1_encode_pass(
                             ep_mode_type_neighbor_array);
 
                         perform_intra_coding_loop(
-                            sequence_control_set_ptr,
                             picture_control_set_ptr,
                             sb_ptr,
                             tbAddr,
@@ -2811,7 +2776,6 @@ EB_EXTERN void av1_encode_pass(
                                     transform_buffer,
                                     inverse_quant_buffer,
                                     transform_inner_array_ptr,
-                                    asm_type,
                                     count_non_zero_coeffs,
                                     blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                                     cu_ptr->delta_qp > 0 ? 0 : dZoffset,
@@ -2855,8 +2819,7 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
-                                        context_ptr->blk_geom->has_uv ? COMPONENT_ALL : COMPONENT_LUMA,
-                                        asm_type);
+                                        context_ptr->blk_geom->has_uv ? COMPONENT_ALL : COMPONENT_LUMA);
                                 }
                                 //intra mode
                                 Av1EncodeGenerateReconFunctionPtr[is16bit](
@@ -2867,8 +2830,7 @@ EB_EXTERN void av1_encode_pass(
                                     inverse_quant_buffer,
                                     transform_inner_array_ptr,
                                     blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
-                                    eobs[context_ptr->txb_itr],
-                                    asm_type);
+                                    eobs[context_ptr->txb_itr]);
                             }
 
                             // Update the Intra-specific Neighbor Arrays
@@ -3084,8 +3046,7 @@ EB_EXTERN void av1_encode_pass(
                                 context_ptr->cu_origin_y,
                                 &cu_ptr->prediction_unit_array[0].wm_params,
                                 (uint8_t) sequence_control_set_ptr->static_config.encoder_bit_depth,
-                                EB_TRUE,
-                                asm_type);
+                                EB_TRUE);
                         }
 
                         if (doMC &&
@@ -3226,7 +3187,6 @@ EB_EXTERN void av1_encode_pass(
                                     transform_buffer,
                                     inverse_quant_buffer,
                                     transform_inner_array_ptr,
-                                    asm_type,
                                     count_non_zero_coeffs,
                                     context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                                     cu_ptr->delta_qp > 0 ? 0 : dZoffset,
@@ -3298,8 +3258,7 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
-                                        context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
-                                        asm_type);
+                                        context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA);
                                 }
 
                                 // CBF Tu decision
@@ -3386,8 +3345,7 @@ EB_EXTERN void av1_encode_pass(
                                         context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                         cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
-                                        context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
-                                        asm_type);
+                                        context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA);
                                 }
                             }
                             context_ptr->coded_area_sb += blk_geom->tx_width[cu_ptr->tx_depth][tuIt] * blk_geom->tx_height[cu_ptr->tx_depth][tuIt];
@@ -3537,7 +3495,6 @@ EB_EXTERN void av1_encode_pass(
                                 transform_buffer,
                                 inverse_quant_buffer,
                                 transform_inner_array_ptr,
-                                asm_type,
                                 count_non_zero_coeffs,
                                 context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                                 cu_ptr->delta_qp > 0 ? 0 : dZoffset,
@@ -3579,8 +3536,7 @@ EB_EXTERN void av1_encode_pass(
                                     context_ptr->blk_geom->txsize_uv[cu_ptr->tx_depth][context_ptr->txb_itr],
                                     cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_Y],
                                     cu_ptr->transform_unit_array[context_ptr->txb_itr].transform_type[PLANE_TYPE_UV],
-                                    context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA,
-                                    asm_type);
+                                    context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL : COMPONENT_LUMA);
                             }
                         }
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
@@ -3605,8 +3561,8 @@ EB_EXTERN void av1_encode_pass(
                                 inverse_quant_buffer,
                                 transform_inner_array_ptr,
                                 context_ptr->blk_geom->has_uv && uv_pass ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
-                                eobs[context_ptr->txb_itr],
-                                asm_type);
+                                eobs[context_ptr->txb_itr]);
+
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
                             y_has_coeff |= cu_ptr->transform_unit_array[context_ptr->txb_itr].y_has_coeff;
                             u_has_coeff |= cu_ptr->transform_unit_array[context_ptr->txb_itr].u_has_coeff;

@@ -4773,7 +4773,6 @@ EbErrorType av1_estimate_transform(
     int16_t              *transform_inner_array_ptr,
     uint32_t              bit_increment,
     TxType                transform_type,
-    EbAsm                 asm_type,
     PlaneType            component_type,
     EB_TRANS_COEFF_SHAPE  trans_coeff_shape)
 
@@ -4781,7 +4780,6 @@ EbErrorType av1_estimate_transform(
     (void)trans_coeff_shape;
     EbErrorType return_error = EB_ErrorNone;
 
-    (void)asm_type;
     (void)transform_inner_array_ptr;
     (void)coeff_stride;
     (void)component_type;
@@ -7752,14 +7750,12 @@ EbErrorType av1_estimate_inv_transform(
     uint32_t      bit_increment,
     TxType        transform_type,
     uint32_t      eob,
-    EbAsm         asm_type,
     uint32_t      partial_frequency_n2_flag)
 {
     EbErrorType return_error = EB_ErrorNone;
 
     // Nader inverse tranform
     (void)transform_inner_array_ptr;
-    (void)asm_type;
     (void)partial_frequency_n2_flag;
 
     //TxSetType  transformSetType = transform_type == DCT_DCT ? EXT_TX_SET_DCTONLY : /*ADST_ADST*/ EXT_TX_SET_DTT4_IDTX ; // NM - Set to zero for the moment

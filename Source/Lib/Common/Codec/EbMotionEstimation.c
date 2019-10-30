@@ -3074,9 +3074,9 @@ static void open_loop_me_get_search_point_results_block(
                                  // point to reference samples
     int32_t xSearchIndex,  // input parameter, search region position in the
                            // horizontal direction, used to derive xMV
-    int32_t ySearchIndex,  // input parameter, search region position in the
+    int32_t ySearchIndex)  // input parameter, search region position in the
                            // vertical direction, used to derive yMV
-    EbAsm asm_type) {
+{
     const EbBool sub_sad = (context_ptr->me_search_method == SUB_SAD_SEARCH);
     uint8_t *src_ptr = context_ptr->sb_src_ptr;
 
@@ -3130,8 +3130,7 @@ static void open_loop_me_get_search_point_results_block(
     uint32_t *p_best_mv64x16 = context_ptr->p_best_mv64x16;
     uint32_t *p_best_mv16x64 = context_ptr->p_best_mv16x64;
 
-    // TODO: blockIndex searchPositionIndex could be removed  + Connect asm_type
-    (void)asm_type;
+    // TODO: blockIndex searchPositionIndex could be removed
 
     const uint32_t src_stride = context_ptr->sb_src_stride;
     srcNext16x16Offset = src_stride << 4;
@@ -3446,9 +3445,9 @@ static void GetSearchPointResults(
                                  // point to reference samples
     int32_t xSearchIndex,  // input parameter, search region position in the
                            // horizontal direction, used to derive xMV
-    int32_t ySearchIndex,  // input parameter, search region position in the
+    int32_t ySearchIndex)  // input parameter, search region position in the
                            // vertical direction, used to derive yMV
-    EbAsm asm_type) {
+{
     const EbBool sub_sad = (context_ptr->me_search_method == SUB_SAD_SEARCH);
     uint8_t *src_ptr = context_ptr->sb_src_ptr;
 
@@ -3485,8 +3484,7 @@ static void GetSearchPointResults(
     uint32_t *p_best_mv64x64 = context_ptr->p_best_mv64x64;
     uint32_t *p_sad16x16 = context_ptr->p_sad16x16;
 
-    // TODO: blockIndex searchPositionIndex could be removed  + Connect asm_type
-    (void)asm_type;
+    // TODO: blockIndex searchPositionIndex could be removed
 
     const uint32_t src_stride = context_ptr->sb_src_stride;
     srcNext16x16Offset = src_stride << 4;
@@ -4067,7 +4065,8 @@ static void FullPelSearch_LCU(MeContext *context_ptr, uint32_t listIndex,
                               int16_t x_search_area_origin,
                               int16_t y_search_area_origin,
                               uint32_t search_area_width,
-                              uint32_t search_area_height, EbAsm asm_type) {
+                              uint32_t search_area_height)
+{
     uint32_t xSearchIndex, ySearchIndex;
 
     uint32_t searchAreaWidthRest8 = search_area_width & 7;
@@ -4101,8 +4100,7 @@ static void FullPelSearch_LCU(MeContext *context_ptr, uint32_t listIndex,
                         context_ptr->interpolated_full_stride[listIndex]
                                                              [ref_pic_index],
                 (int32_t)xSearchIndex + x_search_area_origin,
-                (int32_t)ySearchIndex + y_search_area_origin,
-                asm_type);
+                (int32_t)ySearchIndex + y_search_area_origin);
         }
     }
 }
@@ -5672,7 +5670,8 @@ static void open_loop_me_fullpel_search_sblock(
     MeContext *context_ptr, uint32_t listIndex,
     uint32_t ref_pic_index,
     int16_t x_search_area_origin, int16_t y_search_area_origin,
-    uint32_t search_area_width, uint32_t search_area_height, EbAsm asm_type) {
+    uint32_t search_area_width, uint32_t search_area_height)
+{
     uint32_t xSearchIndex, ySearchIndex;
     uint32_t searchAreaWidthRest8 = search_area_width & 7;
     uint32_t searchAreaWidthMult8 = search_area_width - searchAreaWidthRest8;
@@ -5706,8 +5705,7 @@ static void open_loop_me_fullpel_search_sblock(
                         context_ptr->interpolated_full_stride[listIndex]
                                                              [ref_pic_index],
                 (int32_t)xSearchIndex + x_search_area_origin,
-                (int32_t)ySearchIndex + y_search_area_origin,
-                asm_type);
+                (int32_t)ySearchIndex + y_search_area_origin);
         }
     }
 }
@@ -10692,8 +10690,9 @@ void HmeOneQuadrantLevel0(
     int16_t *yLevel0SearchCenter,  // output parameter, Level0 yMV at
                                    // (searchRegionNumberInWidth,
                                    // searchRegionNumberInHeight)
-    uint32_t searchAreaMultiplierX, uint32_t searchAreaMultiplierY,
-    EbAsm asm_type) {
+    uint32_t searchAreaMultiplierX,
+    uint32_t searchAreaMultiplierY)
+{
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -10705,7 +10704,6 @@ void HmeOneQuadrantLevel0(
     int16_t padWidth;
     int16_t padHeight;
 
-    (void)asm_type;
     (void)picture_control_set_ptr;
     // Round up x_HME_L0 to be a multiple of 16
     int16_t search_area_width =
@@ -10910,8 +10908,9 @@ void HmeLevel0(
     int16_t *yLevel0SearchCenter,         // output parameter, Level0 yMV at
                                           // (searchRegionNumberInWidth,
                                           // searchRegionNumberInHeight)
-    uint32_t searchAreaMultiplierX, uint32_t searchAreaMultiplierY,
-    EbAsm asm_type) {
+    uint32_t searchAreaMultiplierX,
+    uint32_t searchAreaMultiplierY)
+{
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -10924,7 +10923,6 @@ void HmeLevel0(
     int16_t padHeight;
 
     // Adjust SR size based on the searchAreaShift
-    (void)asm_type;
     (void)picture_control_set_ptr;
     // Round up x_HME_L0 to be a multiple of 16
     int16_t search_area_width =
@@ -11504,9 +11502,8 @@ static void SelectBuffer(
     uint32_t refHalfStride,  //[IN]
     uint32_t refBufferFullStride,
     uint8_t **dst_ptr,       //[OUT]
-    uint32_t *DstPtrStride,  //[OUT]
-    EbAsm asm_type) {
-    (void)asm_type;
+    uint32_t *DstPtrStride)  //[OUT]
+{
     (void)pu_width;
     (void)pu_height;
 
@@ -11663,9 +11660,8 @@ static void select_buffer(
     uint32_t refHalfStride,  //[IN]
     uint32_t refBufferFullStride,
     uint8_t **dst_ptr,       //[OUT]
-    uint32_t *DstPtrStride,  //[OUT]
-    EbAsm asm_type) {
-    (void)asm_type;
+    uint32_t *DstPtrStride)  //[OUT]
+{
     (void)pu_width;
     (void)pu_height;
 
@@ -11846,7 +11842,8 @@ void uni_pred_averaging(uint32_t pu_index, EbBool chroma, uint8_t firstFracPos,
                         uint32_t refBufferStride,
                         uint32_t refBufferFullList0Stride,
                         uint8_t *firstRefTempDst, uint8_t **comp_blk_ptr,
-                        uint32_t *comp_blk_ptr_stride, EbAsm asm_type) {
+                        uint32_t *comp_blk_ptr_stride)
+{
     // Buffer Selection and quater-pel compensation on the fly
     if (sub_position_type[firstFracPos] != 2) {
         select_buffer(pu_index,
@@ -11861,8 +11858,7 @@ void uni_pred_averaging(uint32_t pu_index, EbBool chroma, uint8_t firstFracPos,
                       refBufferStride,
                       refBufferFullList0Stride,
                       comp_blk_ptr,
-                      comp_blk_ptr_stride,
-                      asm_type);
+                      comp_blk_ptr_stride);
     } else {
         quarter_pel_compensation(pu_index,
                                  chroma,
@@ -11903,7 +11899,8 @@ uint32_t BiPredAverging(
     uint8_t *firstRefPosJ, uint8_t *secondRefInteger, uint8_t *secondRefPosB,
     uint8_t *secondRefPosH, uint8_t *secondRefPosJ, uint32_t refBufferStride,
     uint32_t refBufferFullList0Stride, uint32_t refBufferFullList1Stride,
-    uint8_t *firstRefTempDst, uint8_t *secondRefTempDst, EbAsm asm_type) {
+    uint8_t *firstRefTempDst, uint8_t *secondRefTempDst)
+{
     uint8_t *ptrList0, *ptrList1;
     uint32_t ptrList0Stride, ptrList1Stride;
 
@@ -11920,8 +11917,7 @@ uint32_t BiPredAverging(
                      refBufferStride,
                      refBufferFullList0Stride,
                      &ptrList0,
-                     &ptrList0Stride,
-                     asm_type);
+                     &ptrList0Stride);
     } else {
         QuarterPelCompensation(pu_index,
                                firstFracPos,
@@ -11952,8 +11948,7 @@ uint32_t BiPredAverging(
                      refBufferStride,
                      refBufferFullList1Stride,
                      &ptrList1,
-                     &ptrList1Stride,
-                     asm_type);
+                     &ptrList1Stride);
     } else {
         // uni-prediction List1 luma
         // doing the luma interpolation
@@ -12012,7 +12007,8 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
                                      uint8_t first_list_ref_pic_idx,
                                      uint32_t firstRefMv, uint32_t secondList,
                                      uint8_t second_list_ref_pic_idx,
-                                     uint32_t secondRefMv, EbAsm asm_type) {
+                                     uint32_t secondRefMv)
+{
     EbErrorType return_error = EB_ErrorNone;
 
     int16_t firstRefPosX;
@@ -12188,8 +12184,7 @@ EbErrorType BiPredictionCompensation(MeContext *context_ptr, uint32_t pu_index,
             context_ptr
                 ->interpolated_full_stride[secondList][second_list_ref_pic_idx],
             &(context_ptr->one_d_intermediate_results_buf0[0]),
-            &(context_ptr->one_d_intermediate_results_buf1[0]),
-            asm_type);
+            &(context_ptr->one_d_intermediate_results_buf1[0]));
 
     return return_error;
 }
@@ -12220,7 +12215,7 @@ EbErrorType BiPredictionSearch(
     SequenceControlSet *sequence_control_set_ptr,
     MeContext *context_ptr, uint32_t pu_index, uint8_t candidateIndex,
     uint32_t activeRefPicFirstLisNum, uint32_t activeRefPicSecondLisNum,
-    uint8_t *total_me_candidate_index, EbAsm asm_type,
+    uint8_t *total_me_candidate_index,
     uint8_t ref_type_table[7],
     PictureParentControlSet *picture_control_set_ptr) {
     EbErrorType return_error = EB_ErrorNone;
@@ -12290,8 +12285,7 @@ EbErrorType BiPredictionSearch(
                     REFERENCE_PIC_LIST_1,
                     secondListRefPictdx,
                     context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_1]
-                                             [secondListRefPictdx][nIndex],
-                    asm_type);
+                                             [secondListRefPictdx][nIndex]);
 
                 candidateIndex++;
                      }
@@ -12321,8 +12315,7 @@ EbErrorType BiPredictionSearch(
                 REFERENCE_PIC_LIST_0,
                 firstListRefPictdx,
                 context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_0]
-                                         [firstListRefPictdx][nIndex],
-                asm_type);
+                                         [firstListRefPictdx][nIndex]);
 
             candidateIndex++;
             }
@@ -12347,8 +12340,7 @@ EbErrorType BiPredictionSearch(
                 REFERENCE_PIC_LIST_1,
                 secondListRefPictdx,
                 context_ptr->p_sb_best_mv[REFERENCE_PIC_LIST_1]
-                                         [secondListRefPictdx][nIndex],
-                asm_type);
+                                         [secondListRefPictdx][nIndex]);
 
             candidateIndex++;
             }
@@ -13643,7 +13635,6 @@ EbErrorType motion_estimate_lcu(
     uint64_t ref0Poc = 0;
     uint64_t ref1Poc = 0;
 
-    EbAsm asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
     uint64_t i;
 
     int16_t hmeLevel1SearchAreaInWidth;
@@ -13827,8 +13818,7 @@ EbErrorType motion_estimate_lcu(
                                     [picture_control_set_ptr
                                          ->hierarchical_levels]
                                     [picture_control_set_ptr
-                                         ->temporal_layer_index],
-                                asm_type);
+                                         ->temporal_layer_index]);
                         } else {
                             searchRegionNumberInHeight = 0;
                             searchRegionNumberInWidth = 0;
@@ -13871,8 +13861,7 @@ EbErrorType motion_estimate_lcu(
                                                 [picture_control_set_ptr
                                                      ->hierarchical_levels]
                                                 [picture_control_set_ptr
-                                                     ->temporal_layer_index],
-                                            asm_type);
+                                                     ->temporal_layer_index]);
 
                                         searchRegionNumberInWidth++;
                                     }
@@ -14572,8 +14561,7 @@ EbErrorType motion_estimate_lcu(
                                                            x_search_area_origin,
                                                            y_search_area_origin,
                                                            search_area_width,
-                                                           search_area_height,
-                                                           asm_type);
+                                                           search_area_height);
                         context_ptr->full_quarter_pel_refinement = 0;
 
                         if (context_ptr->half_pel_mode ==
@@ -14766,8 +14754,7 @@ EbErrorType motion_estimate_lcu(
                                           x_search_area_origin,
                                           y_search_area_origin,
                                           search_area_width,
-                                          search_area_height,
-                                          asm_type);
+                                          search_area_height);
                     }
                 }
 
@@ -15068,7 +15055,6 @@ if (context_ptr->me_alt_ref == EB_FALSE) {
                     picture_control_set_ptr->ref_list0_count,
                     picture_control_set_ptr->ref_list1_count,
                     &total_me_candidate_index,
-                    asm_type,
                     ref_type_table,
                     picture_control_set_ptr);
             }
@@ -15193,8 +15179,8 @@ uint64_t SixteenthDecimatedSearch(MeContext *context_ptr, int16_t origin_x,
                                   uint32_t sb_height,
                                   EbPictureBufferDesc *sixteenthRefPicPtr,
                                   int16_t search_area_width,
-                                  int16_t search_area_height, EbAsm asm_type) {
-    (void)asm_type;
+                                  int16_t search_area_height)
+{
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;

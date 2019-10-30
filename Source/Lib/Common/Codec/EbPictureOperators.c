@@ -66,10 +66,8 @@ EbErrorType picture_copy(
     uint32_t                   chroma_area_width,
     uint32_t                   chroma_area_height,
     uint32_t                   component_mask,
-    EbBool                     hbd,
-    EbAsm                      asm_type)
+    EbBool                     hbd)
 {
-    UNUSED(asm_type);
     EbErrorType return_error = EB_ErrorNone;
 
     if (hbd) {

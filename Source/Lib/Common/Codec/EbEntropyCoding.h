@@ -87,8 +87,7 @@ extern "C" {
         TxSize                               txsize_uv,
         TxType                               tx_type,
         TxType                               tx_type_uv,
-        COMPONENT_TYPE                       component_type,
-        EbAsm                                asm_type);
+        COMPONENT_TYPE                       component_type);
 
     extern EbErrorType copy_rbsp_bitstream_to_payload(
         Bitstream *bitstream_ptr,
