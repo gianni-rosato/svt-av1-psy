@@ -33,6 +33,7 @@
 #include "EbAvcStyleMcp_SSSE3.h"
 #include "EbComputeMean_SSE2.h"
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
+#include "EbComputeMean.h"
 
 
  /**************************************
@@ -1750,6 +1751,10 @@ void setup_rtcd_internal(EbAsm asm_type)
                           sad_loop_kernel_sse4_1_intrin,
                           sad_loop_kernel_avx2_intrin,
                           sad_loop_kernel_avx512_intrin);
+    SET_SSE41_AVX2(sad_loop_kernel_hme_l0,
+                   sad_loop_kernel_c,
+                   sad_loop_kernel_sse4_1_hme_l0_intrin,
+                   sad_loop_kernel_avx2_hme_l0_intrin);
     SET_AVX2(noise_extract_luma_weak,
              noise_extract_luma_weak_c,
              noise_extract_luma_weak_avx2_intrin);
@@ -1873,6 +1878,10 @@ void setup_rtcd_internal(EbAsm asm_type)
     SET_SSE2(picture_addition,
              picture_addition_sse2, //Add C
              picture_addition_sse2);
+    SET_SSE2_AVX2(compute_interm_var_four8x8,
+             compute_interm_var_four8x8_c,
+             compute_interm_var_four8x8_helper_sse2,
+             compute_interm_var_four8x8_avx2_intrin);
 
 }
 

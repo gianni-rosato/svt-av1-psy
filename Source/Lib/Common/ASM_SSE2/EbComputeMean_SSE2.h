@@ -31,6 +31,12 @@ extern "C" {
         uint32_t   input_area_width,     // input parameter, input area width
         uint32_t   input_area_height);   // input parameter, input area height
 
+    void compute_interm_var_four8x8_helper_sse2(
+        uint8_t * input_samples,
+        uint16_t   input_stride,
+        uint64_t * mean_of8x8_blocks,           // mean of four  8x8
+        uint64_t * mean_of_squared8x8_blocks);  // meanSquared
+
 #ifdef __cplusplus
 }
 #endif

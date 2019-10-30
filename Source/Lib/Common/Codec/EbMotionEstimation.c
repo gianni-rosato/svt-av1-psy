@@ -10705,6 +10705,7 @@ void HmeOneQuadrantLevel0(
     int16_t padWidth;
     int16_t padHeight;
 
+    (void)asm_type;
     (void)picture_control_set_ptr;
     // Round up x_HME_L0 to be a multiple of 16
     int16_t search_area_width =
@@ -10818,31 +10819,11 @@ void HmeOneQuadrantLevel0(
             search_area_width,
             search_area_height);
     } else {
-        if (((search_area_width & 15) == 0) && (asm_type == ASM_AVX2)) {
-            sad_loop_kernel_avx2_hme_l0_intrin(
-                &context_ptr->sixteenth_sb_buffer[0],
-                context_ptr->sixteenth_sb_buffer_stride,
-                &sixteenthRefPicPtr->buffer_y[searchRegionIndex],
-                (context_ptr->hme_search_method == FULL_SAD_SEARCH)
-                    ? sixteenthRefPicPtr->stride_y
-                    : sixteenthRefPicPtr->stride_y * 2,
-                (context_ptr->hme_search_method == FULL_SAD_SEARCH)
-                    ? sb_height
-                    : sb_height >> 1,
-                sb_width,
-                // results
-                level0BestSad,
-                xLevel0SearchCenter,
-                yLevel0SearchCenter,
-                // range
-                sixteenthRefPicPtr->stride_y,
-                search_area_width,
-                search_area_height);
-        } else if ((search_area_width & 15) == 0) {
+        if ((search_area_width & 15) == 0) {
             // Only width equals 16 (LCU equals 64) is updated
             // other width sizes work with the old code as the one
             // in"sad_loop_kernel_sse4_1_intrin"
-            sad_loop_kernel_sse4_1_hme_l0_intrin(
+            sad_loop_kernel_hme_l0(
                 &context_ptr->sixteenth_sb_buffer[0],
                 context_ptr->sixteenth_sb_buffer_stride,
                 &sixteenthRefPicPtr->buffer_y[searchRegionIndex],
@@ -10943,7 +10924,7 @@ void HmeLevel0(
     int16_t padHeight;
 
     // Adjust SR size based on the searchAreaShift
-
+    (void)asm_type;
     (void)picture_control_set_ptr;
     // Round up x_HME_L0 to be a multiple of 16
     int16_t search_area_width =
@@ -11066,31 +11047,11 @@ void HmeLevel0(
                         yTopLeftSearchRegion * sixteenthRefPicPtr->stride_y;
 
     if (((sb_width & 7) == 0) || (sb_width == 4)) {
-        if (((search_area_width & 15) == 0) && (asm_type == ASM_AVX2)) {
-            sad_loop_kernel_avx2_hme_l0_intrin(
-                &context_ptr->sixteenth_sb_buffer[0],
-                context_ptr->sixteenth_sb_buffer_stride,
-                &sixteenthRefPicPtr->buffer_y[searchRegionIndex],
-                (context_ptr->hme_search_method == FULL_SAD_SEARCH)
-                    ? sixteenthRefPicPtr->stride_y
-                    : sixteenthRefPicPtr->stride_y * 2,
-                (context_ptr->hme_search_method == FULL_SAD_SEARCH)
-                    ? sb_height
-                    : sb_height >> 1,
-                sb_width,
-                // results
-                level0BestSad,
-                xLevel0SearchCenter,
-                yLevel0SearchCenter,
-                // range
-                sixteenthRefPicPtr->stride_y,
-                search_area_width,
-                search_area_height);
-        } else if ((search_area_width & 15) == 0) {
+        if ((search_area_width & 15) == 0) {
             // Only width equals 16 (LCU equals 64) is updated
             // other width sizes work with the old code as the one
             // in"sad_loop_kernel_sse4_1_intrin"
-            sad_loop_kernel_sse4_1_hme_l0_intrin(
+            sad_loop_kernel_hme_l0(
                 &context_ptr->sixteenth_sb_buffer[0],
                 context_ptr->sixteenth_sb_buffer_stride,
                 &sixteenthRefPicPtr->buffer_y[searchRegionIndex],
@@ -15233,6 +15194,7 @@ uint64_t SixteenthDecimatedSearch(MeContext *context_ptr, int16_t origin_x,
                                   EbPictureBufferDesc *sixteenthRefPicPtr,
                                   int16_t search_area_width,
                                   int16_t search_area_height, EbAsm asm_type) {
+    (void)asm_type;
     int16_t xTopLeftSearchRegion;
     int16_t yTopLeftSearchRegion;
     uint32_t searchRegionIndex;
@@ -15316,27 +15278,11 @@ uint64_t SixteenthDecimatedSearch(MeContext *context_ptr, int16_t origin_x,
     searchRegionIndex = xTopLeftSearchRegion +
                         yTopLeftSearchRegion * sixteenthRefPicPtr->stride_y;
 
-    if (((search_area_width & 15) == 0) && (asm_type == ASM_AVX2)) {
-        sad_loop_kernel_avx2_hme_l0_intrin(
-            &context_ptr->sixteenth_sb_buffer[0],
-            context_ptr->sixteenth_sb_buffer_stride * 2,
-            &sixteenthRefPicPtr->buffer_y[searchRegionIndex],
-            sixteenthRefPicPtr->stride_y * 2,
-            sb_height >> 1,
-            sb_width,
-            // results
-            &best_sad,
-            &x_search_center,
-            &y_search_center,
-            // range
-            sixteenthRefPicPtr->stride_y,
-            search_area_width,
-            search_area_height);
-    } else if ((search_area_width & 15) == 0) {
+    if ((search_area_width & 15) == 0) {
         // Only width equals 16 (LCU equals 64) is updated
         // other width sizes work with the old code as the one
         // in"sad_loop_kernel_sse4_1_intrin"
-        sad_loop_kernel_sse4_1_hme_l0_intrin(
+        sad_loop_kernel_hme_l0(
             &context_ptr->sixteenth_sb_buffer[0],
             context_ptr->sixteenth_sb_buffer_stride * 2,
             &sixteenthRefPicPtr->buffer_y[searchRegionIndex],

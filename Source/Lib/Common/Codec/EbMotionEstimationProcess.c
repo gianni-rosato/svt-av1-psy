@@ -650,8 +650,6 @@ EbErrorType ComputeDecimatedZzSad(
     uint32_t                         yLcuEndIndex) {
     EbErrorType return_error = EB_ErrorNone;
 
-    EbAsm asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
-
     PictureParentControlSet    *previous_picture_control_set_wrapper_ptr = ((PictureParentControlSet*)picture_control_set_ptr->previous_picture_control_set_wrapper_ptr->object_ptr);
     EbPictureBufferDesc        *previousInputPictureFull = previous_picture_control_set_wrapper_ptr->enhanced_picture_ptr;
 
@@ -708,7 +706,6 @@ EbErrorType ComputeDecimatedZzSad(
                     context_ptr->me_context_ptr->sixteenth_sb_buffer_stride,
                     4);
 
-                if (asm_type >= ASM_NON_AVX2 && asm_type < ASM_TYPE_TOTAL)
                     // ZZ SAD between 1/16 current & 1/16 collocated
                     decimatedLcuCollocatedSad = nxm_sad_kernel(
                         &(sixteenth_decimated_picture_ptr->buffer_y[blkDisplacementDecimated]),
