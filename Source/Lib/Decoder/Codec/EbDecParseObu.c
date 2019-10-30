@@ -476,8 +476,6 @@ EbErrorType read_obu_header(bitstrm_t *bs, ObuHeader   *header)
     PRINT("obu_extension_flag", header->obu_extension_flag);
     header->obu_has_size_field = dec_get_bits(bs, 1);
     PRINT("obu_has_size_field", header->obu_has_size_field);
-    if (!header->obu_has_size_field)
-        return EB_Corrupt_Frame;
 
     if (dec_get_bits(bs, 1) != 0) {
         // obu_reserved_1bit must be set to 0
@@ -519,7 +517,7 @@ EbErrorType read_obu_size(bitstrm_t *bs, size_t bytes_available,
 }
 
 /** Reads OBU header and size */
-EbErrorType open_bistream_unit(bitstrm_t *bs, ObuHeader *header, size_t size,
+EbErrorType read_obu_header_size(bitstrm_t *bs, ObuHeader *header, size_t size,
     size_t *const length_size)
 {
     EbErrorType status;
@@ -528,9 +526,11 @@ EbErrorType open_bistream_unit(bitstrm_t *bs, ObuHeader *header, size_t size,
     if (status != EB_ErrorNone)
         return status;
 
+    if (header->obu_has_size_field) {
     status = read_obu_size(bs, size, &header->payload_size, length_size);
     if (status != EB_ErrorNone)
         return status;
+    }
 
     return EB_ErrorNone;
 }
@@ -2607,7 +2607,8 @@ EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, unsigned char *data, unsigne
 }
 
 // Decode all OBUs in a Frame
-EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, size_t data_size)
+EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data,
+    size_t data_size, int is_annexb)
 {
     bitstrm_t bs;
     EbErrorType status = EB_ErrorNone;
@@ -2639,8 +2640,23 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
 
         dec_bits_init(&bs, *data, data_size);
 
-        status = open_bistream_unit(&bs, &obu_header, data_size, &length_size);
+        if (is_annexb) {
+            // read the size of OBU
+            status = read_obu_size(&bs, data_size, &obu_header.payload_size,
+                &length_size);
+            if (status != EB_ErrorNone)
+                return status;
+
+            *data += length_size;
+            data_size -= length_size;
+            length_size = 0;
+        }
+
+        status = read_obu_header_size(&bs, &obu_header, data_size, &length_size);
         if (status != EB_ErrorNone) return status;
+
+        if (is_annexb)
+            obu_header.payload_size -= obu_header.size;
 
         payload_size = obu_header.payload_size;
 
@@ -2758,7 +2774,7 @@ EB_API EbErrorType eb_get_sequence_info(
         ObuHeader ou;
         memset(&ou, 0, sizeof(ou));
         size_t length_size = 0;
-        status = open_bistream_unit(&bs, &ou, frame_sz, &length_size);
+        status = read_obu_header_size(&bs, &ou, frame_sz, &length_size);
         if (status != EB_ErrorNone)
             return status;
 

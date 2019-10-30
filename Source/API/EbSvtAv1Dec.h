@@ -203,7 +203,8 @@ typedef struct EbSvtAv1DecConfiguration
     EB_API EbErrorType eb_svt_decode_frame(
         EbComponentType     *svt_dec_component,
         const uint8_t       *data,
-        const size_t         data_size);
+        const size_t         data_size,
+        int                  is_annexb);
 
     /*!\brief STEP 5-alt-2: Decodes a temporal unit (TU). Decoding a TU
      * may result in several output pictures generated if output_all_layers

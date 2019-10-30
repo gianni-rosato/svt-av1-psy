@@ -151,7 +151,7 @@ int32_t main(int32_t argc, char* argv[])
     cli.fps_summary = 0;
 
     DecInputContext input = { NULL, NULL };
-    ObuDecInputContext obu_ctx = { NULL, 0, 0, 0 };
+    ObuDecInputContext obu_ctx = { NULL, 0, 0, 0, 0 };
     input.cli_ctx = &cli;
     input.obu_ctx = &obu_ctx;
 
@@ -230,7 +230,8 @@ int32_t main(int32_t argc, char* argv[])
 
                     dec_timer_start(&timer);
 
-                    return_error |= eb_svt_decode_frame(p_handle, buf, bytes_in_buffer);
+                    return_error |= eb_svt_decode_frame(p_handle, buf,
+                        bytes_in_buffer, obu_ctx.is_annexb);
 
                     dec_timer_mark(&timer);
                     dx_time += dec_timer_elapsed(&timer);

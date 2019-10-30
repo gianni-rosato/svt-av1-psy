@@ -195,7 +195,8 @@ void parse_super_block(EbDecHandle *dec_handle, uint32_t blk_row,
 void svt_setup_motion_field(EbDecHandle *dec_handle);
 
 EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, uint8_t *data, uint32_t data_size);
-EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, size_t data_size);
+EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data,
+    size_t data_size, int is_annexb);
 
 static INLINE int allow_intrabc(const EbDecHandle *dec_handle) {
     return  (dec_handle->frame_header.frame_type == KEY_FRAME

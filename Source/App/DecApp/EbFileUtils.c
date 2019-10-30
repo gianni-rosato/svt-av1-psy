@@ -423,6 +423,13 @@ int file_is_obu(CLInput *cli, ObuDecInputContext *obu_ctx) {
         }
         obu_ctx->bytes_buffered += payload_bytes;
     }
+
+    /* This is because to avoid to many conditions while reading
+    frame by frame information in TU's */
+    if (is_annexb) {
+        rewind(f);
+        obu_ctx->bytes_buffered = 0;
+    }
     return 1;
 }
 
@@ -526,16 +533,19 @@ int obudec_read_temporal_unit(DecInputContext *input,
         return 0;
     }
 
-    size_t tu_size;
+    size_t tu_size = 0, fr_size = 0;
     size_t obu_size = 0;
     size_t length_of_temporal_unit_size = 0;
-    uint8_t tuheader[OBU_MAX_LENGTH_FIELD_SIZE] = { 0 };
+    size_t length_of_frame_unit_size = 0;
+    uint8_t frheader[OBU_MAX_LENGTH_FIELD_SIZE] = { 0 };
 
     if (obu_ctx->is_annexb) {
         uint64_t size = 0;
 
-        if (obu_ctx->bytes_buffered == 0) {
-            if (obudec_read_leb128(f, &tuheader[0], &length_of_temporal_unit_size,
+        assert(obu_ctx->bytes_buffered == 0);
+
+        if (!obu_ctx->rem_tu_size) {
+            if (obudec_read_leb128(f, &frheader[0], &length_of_temporal_unit_size,
                 &size) != 0) {
                 fprintf(stderr, "obudec: Failure reading temporal unit header\n");
                 return 0;
@@ -543,14 +553,8 @@ int obudec_read_temporal_unit(DecInputContext *input,
             if (size == 0 && feof(f)) {
                 return 0;
             }
-        }
-        else {
-            // temporal unit size was already stored in buffer
-            if (uleb_decode(obu_ctx->buffer, obu_ctx->bytes_buffered, &size,
-                &length_of_temporal_unit_size) != 0) {
-                fprintf(stderr, "obudec: Failure reading temporal unit header\n");
-                return 0;
-            }
+            /*Stores only tu size ie excluding tu header*/
+            obu_ctx->rem_tu_size = size;
         }
 
         if (size > UINT32_MAX || size + length_of_temporal_unit_size > UINT32_MAX) {
@@ -558,8 +562,17 @@ int obudec_read_temporal_unit(DecInputContext *input,
             return 0;
         }
 
-        size += length_of_temporal_unit_size;
-        tu_size = (size_t)size;
+        if (obudec_read_leb128(f, &frheader[0], &length_of_frame_unit_size,
+            &size) != 0) {
+            fprintf(stderr, "obudec: Failure reading frame header\n");
+            return 0;
+    }
+        if (size == 0 && feof(f)) {
+            return 0;
+        }
+
+        fr_size = (size_t)size;
+        tu_size = fr_size;
     }
     else {
         while (1) {
@@ -604,24 +617,11 @@ int obudec_read_temporal_unit(DecInputContext *input,
     }
     else {
         if (!feof(f)) {
-            size_t data_size;
-            size_t offset;
-            if (!obu_ctx->bytes_buffered) {
-                data_size = tu_size - length_of_temporal_unit_size;
-                memcpy(*buffer, &tuheader[0], length_of_temporal_unit_size);
-                offset = length_of_temporal_unit_size;
-            }
-            else {
-                memcpy(*buffer, obu_ctx->buffer, obu_ctx->bytes_buffered);
-                offset = obu_ctx->bytes_buffered;
-                data_size = tu_size - obu_ctx->bytes_buffered;
-                obu_ctx->bytes_buffered = 0;
-            }
-
-            if (fread(*buffer + offset, 1, data_size, f) != data_size) {
+            if (fread(*buffer, 1, fr_size, f) != fr_size) {
                 fprintf(stderr, "obudec: Failed to read full temporal unit\n");
                 return 0;
             }
+            obu_ctx->rem_tu_size -= (fr_size + length_of_frame_unit_size);
         }
     }
     return 1;
