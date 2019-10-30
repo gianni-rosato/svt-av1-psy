@@ -95,17 +95,6 @@ extern "C" {
         EncDecContext         *context_ptr);
 #endif
 
-void pack2d_src(
-    uint8_t     *in8_bit_buffer,
-    uint32_t     in8_stride,
-    uint8_t     *inn_bit_buffer,
-    uint32_t     inn_stride,
-    uint16_t    *out16_bit_buffer,
-    uint32_t     out_stride,
-    uint32_t     width,
-    uint32_t     height,
-    EbAsm     asm_type);
-
 void Store16bitInputSrc(
     EbPictureBufferDesc     *input_sample16bit_buffer,
     PictureControlSet       *picture_control_set_ptr,

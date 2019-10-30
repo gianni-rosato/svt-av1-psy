@@ -233,6 +233,17 @@ extern "C" {
         uint32_t   recon_stride,
         uint32_t   area_width,
         uint32_t   area_height);
+
+    void picture_addition_sse2(
+        uint8_t  *pred_ptr,
+        uint32_t  pred_stride,
+        int16_t *residual_ptr,
+        uint32_t  residual_stride,
+        uint8_t  *recon_ptr,
+        uint32_t  recon_stride,
+        uint32_t  width,
+        uint32_t  height);
+
 #ifdef __cplusplus
 }
 #endif

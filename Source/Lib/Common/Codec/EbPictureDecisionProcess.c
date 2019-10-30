@@ -2811,8 +2811,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pi
     PicturePreProcessingOperations(
         picture_control_set_ptr,
         sequence_control_set_ptr,
-        sb_total_count,
-        sequence_control_set_ptr->encode_context_ptr->asm_type);
+        sb_total_count);
     if (input_picture_ptr->color_format >= EB_YUV422) {
         // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
         //       Reuse the Y, only add cb/cr in the newly created buffer desc

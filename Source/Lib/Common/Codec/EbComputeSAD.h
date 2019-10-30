@@ -10,164 +10,12 @@
 #include "aom_dsp_rtcd.h"
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeSAD_C.h"
-#include "EbComputeSAD_SSE2.h"
 #include "EbComputeSAD_SSE4_1.h"
 #include "EbComputeSAD_AVX2.h"
 #include "EbUtility.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    /***************************************
-    * Function Ptr Types
-    ***************************************/
-    typedef uint32_t(*EbSadKernelNxMType)(
-        const uint8_t  *src,
-        uint32_t  src_stride,
-        const uint8_t  *ref,
-        uint32_t  ref_stride,
-        uint32_t  height,
-        uint32_t  width);
-
-    static uint32_t nxm_sad_kernel_void_func(
-            const uint8_t  *src,
-            uint32_t  src_stride,
-            const uint8_t  *ref,
-            uint32_t  ref_stride,
-            uint32_t  height,
-            uint32_t  width) {
-        (void)src;
-        (void)src_stride;
-        (void)ref;
-        (void)ref_stride;
-        (void)height;
-        (void)width;
-        return 0;
-    }
-
-    static uint32_t nxm_sad_avg_kernel_void_func(
-            uint8_t  *src,
-            uint32_t  src_stride,
-            uint8_t  *ref1,
-            uint32_t  ref1_stride,
-            uint8_t  *ref2,
-            uint32_t  ref2_stride,
-            uint32_t  height,
-            uint32_t  width) {
-        (void)src;
-        (void)src_stride;
-        (void)ref1;
-        (void)ref1_stride;
-        (void)ref2;
-        (void)ref2_stride;
-        (void)height;
-        (void)width;
-        return 0;
-    }
-
-    typedef uint32_t(*EbSadAvgKernelNxMType)(
-        uint8_t  *src,
-        uint32_t  src_stride,
-        uint8_t  *ref1,
-        uint32_t  ref1_stride,
-        uint8_t  *ref2,
-        uint32_t  ref2_stride,
-        uint32_t  height,
-        uint32_t  width);
-
-    typedef uint32_t(*EB_COMPUTE8X8SAD_TYPE)(
-        uint8_t  *src,                            // input parameter, source samples Ptr
-        uint32_t  src_stride,                      // input parameter, source stride
-        uint8_t  *ref,                            // input parameter, reference samples Ptr
-        uint32_t  ref_stride);                     // input parameter, reference stride
-
-    /***************************************
-    * Function Tables
-    ***************************************/
-    static EbSadKernelNxMType FUNC_TABLE nxm_sad_kernel_sub_sampled_func_ptr_array[ASM_TYPE_TOTAL][17] =   // [asm_type][SAD - block height]
-    {
-        // NON_AVX2
-        {
-            /*0 4xM  */ fast_loop_nx_m_sad_kernel,
-            /*1 8xM  */ fast_loop_nx_m_sad_kernel,
-            /*2 16xM */ fast_loop_nx_m_sad_kernel,
-            /*3 24xM */ fast_loop_nx_m_sad_kernel,
-            /*4 32xM */ fast_loop_nx_m_sad_kernel,
-            /*5      */ 0,
-            /*6 48xM */ fast_loop_nx_m_sad_kernel,
-            /*7      */ 0,
-            /*8 64xM */ fast_loop_nx_m_sad_kernel,
-            0,0,0,0,0,0,0,fast_loop_nx_m_sad_kernel
-        },
-        // AVX2
-        {
-            /*0 4xM  */ eb_compute4x_m_sad_avx2_intrin,
-            /*1 8xM  */ eb_compute8x_m_sad_avx2_intrin,
-            /*2 16xM */ eb_compute16x_m_sad_avx2_intrin,
-            /*3 24xM */ fast_loop_nx_m_sad_kernel,
-            /*4 32xM */ eb_compute32x_m_sad_avx2_intrin,
-            /*5      */ 0,
-            /*6 48xM */ fast_loop_nx_m_sad_kernel,
-            /*7      */ 0,
-            /*8 64xM */ eb_compute64x_m_sad_avx2_intrin,
-            0,0,0,0,0,0,0,fast_loop_nx_m_sad_kernel
-        },
-    };
-    static EbSadKernelNxMType FUNC_TABLE nxm_sad_kernel_func_ptr_array[ASM_TYPE_TOTAL][9] =   // [asm_type][SAD - block height]
-    {
-        // NON_AVX2
-        {
-            /*0 4xM  */ fast_loop_nx_m_sad_kernel,
-            /*1 8xM  */ fast_loop_nx_m_sad_kernel,
-            /*2 16xM */ fast_loop_nx_m_sad_kernel,
-            /*3 24xM */ fast_loop_nx_m_sad_kernel,
-            /*4 32xM */ fast_loop_nx_m_sad_kernel,
-            /*5      */ fast_loop_nx_m_sad_kernel,  // size not supported in asm
-            /*6 48xM */ fast_loop_nx_m_sad_kernel,
-            /*7      */ fast_loop_nx_m_sad_kernel,  // size not supported in asm
-            /*8 64xM */ fast_loop_nx_m_sad_kernel
-        },
-        // AVX2
-        {
-            /*0 4xM  */ eb_compute4x_m_sad_avx2_intrin,
-            /*1 8xM  */ eb_compute8x_m_sad_avx2_intrin,
-            /*2 16xM */ eb_compute16x_m_sad_avx2_intrin,//eb_compute16x_m_sad_avx2_intrin is slower than the SSE2 version
-            /*3 24xM */ eb_compute24x_m_sad_avx2_intrin,
-            /*4 32xM */ eb_compute32x_m_sad_avx2_intrin,
-            /*5      */ nxm_sad_kernel_void_func,
-            /*6 48xM */ eb_compute48x_m_sad_avx2_intrin,
-            /*7      */ nxm_sad_kernel_void_func,
-            /*8 64xM */ eb_compute64x_m_sad_avx2_intrin,
-        },
-    };
-
-    static EbSadAvgKernelNxMType FUNC_TABLE nxm_sad_averaging_kernel_func_ptr_array[ASM_TYPE_TOTAL][9] =   // [asm_type][SAD - block height]
-    {
-        // NON_AVX2
-        {
-            /*0 4xM  */     combined_averaging_sad,
-            /*1 8xM  */     combined_averaging_sad,
-            /*2 16xM */     combined_averaging_sad,
-            /*3 24xM */     combined_averaging_sad,
-            /*4 32xM */     combined_averaging_sad,
-            /*5      */     nxm_sad_avg_kernel_void_func,
-            /*6 48xM */     combined_averaging_sad,
-            /*7      */     nxm_sad_avg_kernel_void_func,
-            /*8 64xM */     combined_averaging_sad
-        },
-        // AVX2
-        {
-            /*0 4xM  */     combined_averaging4x_msad_sse2_intrin,
-            /*1 8xM  */     combined_averaging8x_msad_avx2_intrin,
-            /*2 16xM */     combined_averaging16x_msad_avx2_intrin,
-            /*3 24xM */     combined_averaging24x_msad_avx2_intrin,
-            /*4 32xM */     combined_averaging32x_msad_avx2_intrin,
-            /*5      */     nxm_sad_avg_kernel_void_func,
-            /*6 48xM */     combined_averaging48x_msad_avx2_intrin,
-            /*7      */     nxm_sad_avg_kernel_void_func,
-            /*8 64xM */     combined_averaging64x_msad_avx2_intrin
-        },
-    };
 
 uint32_t sad_16b_kernel(
     uint16_t  *src,                           // input parameter, source samples Ptr
@@ -176,6 +24,7 @@ uint32_t sad_16b_kernel(
     uint32_t  ref_stride,                     // input parameter, reference stride
     uint32_t  height,                         // input parameter, block height (M)
     uint32_t  width);                         // input parameter, block width (N)
+
 
 #ifdef __cplusplus
 }

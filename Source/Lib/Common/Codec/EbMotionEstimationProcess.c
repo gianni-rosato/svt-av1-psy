@@ -51,8 +51,7 @@ EbErrorType CheckZeroZeroCenter(
     uint32_t                       sb_width,
     uint32_t                       sb_height,
     int16_t                       *x_search_center,
-    int16_t                       *y_search_center,
-    EbAsm                       asm_type);
+    int16_t                       *y_search_center);
 
 /************************************************
  * Set ME/HME Params from Config
@@ -711,7 +710,7 @@ EbErrorType ComputeDecimatedZzSad(
 
                 if (asm_type >= ASM_NON_AVX2 && asm_type < ASM_TYPE_TOTAL)
                     // ZZ SAD between 1/16 current & 1/16 collocated
-                    decimatedLcuCollocatedSad = nxm_sad_kernel_func_ptr_array[asm_type][2](
+                    decimatedLcuCollocatedSad = nxm_sad_kernel(
                         &(sixteenth_decimated_picture_ptr->buffer_y[blkDisplacementDecimated]),
                         sixteenth_decimated_picture_ptr->stride_y,
                         context_ptr->me_context_ptr->sixteenth_sb_buffer,
@@ -788,7 +787,6 @@ void* motion_estimation_kernel(void *input_ptr)
 
     uint32_t                      intra_sad_interval_index;
 
-    EbAsm                      asm_type;
     for (;;) {
         // Get Input Full Object
         eb_get_full_object(
@@ -812,7 +810,6 @@ void* motion_estimation_kernel(void *input_ptr)
 
         input_picture_ptr = picture_control_set_ptr->enhanced_picture_ptr;
 
-        asm_type = sequence_control_set_ptr->encode_context_ptr->asm_type;
         context_ptr->me_context_ptr->me_alt_ref = inputResultsPtr->task_type == 1 ? EB_TRUE : EB_FALSE;
 
         // Lambda Assignement
@@ -942,8 +939,7 @@ void* motion_estimation_kernel(void *input_ptr)
                             picture_control_set_ptr,
                             sb_index,
                             context_ptr,
-                            input_picture_ptr,
-                            asm_type);
+                            input_picture_ptr);
                     }
                 }
             }

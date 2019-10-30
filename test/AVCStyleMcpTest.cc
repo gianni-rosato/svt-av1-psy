@@ -151,7 +151,7 @@ typedef std::tuple<SearchArea, TestPattern> TestSearchRegionParam;
  *  Results from assembly and c functions are equal.
  *
  * Test coverage:
- *  All functions inside avc_style_uni_pred_luma_if_function_ptr_array
+ *  All functions inside avc_style_luma_interpolation_filter_helper_ssse3
  *
  * Test cases:
  *  PU Size: Width {4, 8, 16, 24, 32, 48, 64} x height{ 4, 8, 16, 24, 32, 48,

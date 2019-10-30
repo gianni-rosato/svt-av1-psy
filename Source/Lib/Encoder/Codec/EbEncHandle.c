@@ -3072,8 +3072,7 @@ static EbErrorType CopyFrameBuffer(
             input_picture_ptr->buffer_bit_inc_y + lumaBufferOffset,
             input_picture_ptr->stride_bit_inc_y,
             lumaWidth,
-            lumaHeight,
-            config->asm_type);
+            lumaHeight);
 
         un_pack2d(
             (uint16_t*)(inputPtr->cb + chromaOffset),
@@ -3083,8 +3082,7 @@ static EbErrorType CopyFrameBuffer(
             input_picture_ptr->buffer_bit_inc_cb + chromaBufferOffset,
             input_picture_ptr->stride_bit_inc_cb,
             chromaWidth,
-            (lumaHeight >> 1),
-            config->asm_type);
+            (lumaHeight >> 1));
 
         un_pack2d(
             (uint16_t*)(inputPtr->cr + chromaOffset),
@@ -3094,8 +3092,7 @@ static EbErrorType CopyFrameBuffer(
             input_picture_ptr->buffer_bit_inc_cr + chromaBufferOffset,
             input_picture_ptr->stride_bit_inc_cr,
             chromaWidth,
-            (lumaHeight >> 1),
-            config->asm_type);
+            (lumaHeight >> 1));
     }
     return return_error;
 }

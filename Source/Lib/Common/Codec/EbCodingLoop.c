@@ -2292,8 +2292,7 @@ EB_EXTERN void av1_encode_pass(
                 (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_y,
                 context_ptr->input_sample16bit_buffer->stride_y,
                 sb_width,
-                sb_height,
-                asm_type);
+                sb_height);
 
             pack2d_src(
                 inputPicture->buffer_cb + input_cb_offset,
@@ -2303,8 +2302,7 @@ EB_EXTERN void av1_encode_pass(
                 (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cb,
                 context_ptr->input_sample16bit_buffer->stride_cb,
                 sb_width >> 1,
-                sb_height >> 1,
-                asm_type);
+                sb_height >> 1);
 
             pack2d_src(
                 inputPicture->buffer_cr + input_cr_offset,
@@ -2314,8 +2312,7 @@ EB_EXTERN void av1_encode_pass(
                 (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cr,
                 context_ptr->input_sample16bit_buffer->stride_cr,
                 sb_width >> 1,
-                sb_height >> 1,
-                asm_type);
+                sb_height >> 1);
         }
 
         if (picture_control_set_ptr->hbd_mode_decision == 0)

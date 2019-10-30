@@ -342,8 +342,8 @@ class SADTestBase : public ::testing::Test {
 
 /**
  * @brief Unit test for SAD sub smaple functions include:
- *  - nxm_sad_kernel_sub_sampled_func_ptr_array
- *  - nxm_sad_kernel_sub_sampled_func_ptr_array
+ *  - nxm_sad_kernel_helper_c
+ *  - nxm_sad_kernel_sub_sampled_helper_avx2
  *
  * Test strategy:
  *  This test case combine different width{4-64} x height{4-64} and different
@@ -356,8 +356,8 @@ class SADTestBase : public ::testing::Test {
  * equal.
  *
  * Test coverage:
- *  All functions inside nxm_sad_kernel_sub_sampled_func_ptr_array and
- * nxm_sad_kernel_sub_sampled_func_ptr_array.
+ *  All functions inside nxm_sad_kernel_helper_c and
+ * nxm_sad_kernel_sub_sampled_helper_avx2.
  *
  * Test cases:
  *  Width {4, 8, 16, 24, 32, 48, 64} x height{ 4, 8, 16, 24, 32, 48, 64)
@@ -374,11 +374,6 @@ class SADTestSubSample : public ::testing::WithParamInterface<TestSadParam>,
 
   protected:
     void check_sad() {
-        EbSadKernelNxMType non_avx2_func =
-            nxm_sad_kernel_sub_sampled_func_ptr_array[ASM_NON_AVX2]
-                                                     [width_ >> 3];
-        EbSadKernelNxMType avx2_func =
-            nxm_sad_kernel_sub_sampled_func_ptr_array[ASM_AVX2][width_ >> 3];
 
         uint32_t ref_sad = 0;
         uint32_t non_avx2_sad = 0;
@@ -387,34 +382,25 @@ class SADTestSubSample : public ::testing::WithParamInterface<TestSadParam>,
         prepare_data();
 
         ref_sad = reference_sad();
-        if (non_avx2_func != nullptr)
-            non_avx2_sad = non_avx2_func(src_aligned_,
+        non_avx2_sad = nxm_sad_kernel_helper_c(
+                                         src_aligned_,
                                          src_stride_,
                                          ref1_aligned_,
                                          ref1_stride_,
                                          height_,
                                          width_);
-        if (avx2_func != nullptr)
-            avx2_sad = avx2_func(src_aligned_,
+
+        avx2_sad = nxm_sad_kernel_sub_sampled_helper_avx2(
+                                 src_aligned_,
                                  src_stride_,
                                  ref1_aligned_,
                                  ref1_stride_,
                                  height_,
                                  width_);
 
-        if (non_avx2_func != nullptr) {
-            EXPECT_EQ(ref_sad, non_avx2_sad)
-                << "compare ref and non_avx2 error";
-        }
+        EXPECT_EQ(non_avx2_sad, avx2_sad)
+            << "compare non_avx2 and non_avx2 error";
 
-        if (avx2_func != nullptr) {
-            EXPECT_EQ(ref_sad, avx2_sad) << "compare ref and avx2 error";
-        }
-
-        if (non_avx2_func != nullptr && avx2_func != nullptr) {
-            EXPECT_EQ(non_avx2_sad, avx2_sad)
-                << "compare non_avx2 and non_avx2 error";
-        }
     }
 };
 
@@ -428,8 +414,8 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
 /**
  * @brief Unit test for SAD functions include:
- *  - nxm_sad_kernel_func_ptr_array
- *  - nxm_sad_kernel_func_ptr_array
+ *  - nxm_sad_kernel_helper_c
+ *  - nxm_sad_kernel_helper_avx2
  *
  * Test strategy:
  *  This test case combine different wight{4-64} x height{4-64}, different test
@@ -443,8 +429,8 @@ INSTANTIATE_TEST_CASE_P(
  *  equal.
  *
  * Test coverage:
- *  All functions inside nxm_sad_kernel_func_ptr_array and
- *  nxm_sad_kernel_func_ptr_array.
+ *  All functions inside nxm_sad_kernel_helper_c and
+ *  nxm_sad_kernel_helper_avx2.
  *
  * Test cases:
  *  Width {4, 8, 16, 24, 32, 48, 64} x height{ 4, 8, 16, 24, 32, 48, 64)
@@ -461,11 +447,6 @@ class SADTest : public ::testing::WithParamInterface<TestSadParam>,
 
   protected:
     void check_sad() {
-        EbSadKernelNxMType non_avx2_func =
-            nxm_sad_kernel_func_ptr_array[ASM_NON_AVX2][width_ >> 3];
-        EbSadKernelNxMType avx2_func =
-            nxm_sad_kernel_func_ptr_array[ASM_AVX2][width_ >> 3];
-
         uint32_t ref_sad = 0;
         uint32_t non_avx2_sad = 0;
         uint32_t avx2_sad = 0;
@@ -473,32 +454,23 @@ class SADTest : public ::testing::WithParamInterface<TestSadParam>,
         prepare_data();
 
         ref_sad = reference_sad();
-        if (non_avx2_func != nullptr)
-            non_avx2_sad = non_avx2_func(src_aligned_,
-                                         src_stride_,
-                                         ref1_aligned_,
-                                         ref1_stride_,
-                                         height_,
-                                         width_);
-        if (avx2_func != nullptr)
-            avx2_sad = avx2_func(src_aligned_,
-                                 src_stride_,
-                                 ref1_aligned_,
-                                 ref1_stride_,
-                                 height_,
-                                 width_);
+       
+        non_avx2_sad = nxm_sad_kernel_helper_c(src_aligned_,
+                                        src_stride_,
+                                        ref1_aligned_,
+                                        ref1_stride_,
+                                        height_,
+                                        width_);
+    
+        avx2_sad = nxm_sad_kernel_helper_avx2(src_aligned_,
+                                        src_stride_,
+                                        ref1_aligned_,
+                                        ref1_stride_,
+                                        height_,
+                                        width_);
 
-        if (non_avx2_func != nullptr) {
-            EXPECT_EQ(ref_sad, non_avx2_sad)
-                << "compare ref and non_avx2 error";
-        }
-        if (avx2_func != nullptr) {
-            EXPECT_EQ(ref_sad, avx2_sad) << "compare ref and avx2 error";
-        }
-        if (non_avx2_func != nullptr && avx2_func != nullptr) {
-            EXPECT_EQ(non_avx2_sad, avx2_sad)
+        EXPECT_EQ(non_avx2_sad, avx2_sad)
                 << "compare non_avx2 and non_avx2 error";
-        }
     }
 };
 
@@ -512,8 +484,8 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
 /**
  * @brief Unit test for SAD Avg functions include:
- *  - nxm_sad_averaging_kernel_func_ptr_array
- *  - nxm_sad_averaging_kernel_func_ptr_array
+ *  - nxm_sad_avg_kernel_helper_c
+ *  - nxm_sad_avg_kernel_helper_avx2
  *
  * Test strategy:
  *  This test case combine different width{4-64} x height{4-64} and different
@@ -525,8 +497,8 @@ INSTANTIATE_TEST_CASE_P(
  * equal.
  *
  * Test coverage:
- *  All functions inside nxm_sad_averaging_kernel_func_ptr_array and
- * nxm_sad_averaging_kernel_func_ptr_array.
+ *  All functions inside nxm_sad_avg_kernel_helper_c and
+ * nxm_sad_avg_kernel_helper_avx2.
  *
  * Test cases:
  *  Width {4, 8, 16, 24, 32, 48, 64} x height {4, 8, 16, 24, 32, 48, 64)
@@ -543,11 +515,6 @@ class SADAvgTest : public ::testing::WithParamInterface<TestSadParam>,
 
   protected:
     void check_sad_avg() {
-        EbSadAvgKernelNxMType non_avx2_func =
-            nxm_sad_averaging_kernel_func_ptr_array[ASM_NON_AVX2][width_ >> 3];
-        EbSadAvgKernelNxMType avx2_func =
-            nxm_sad_averaging_kernel_func_ptr_array[ASM_AVX2][width_ >> 3];
-
         uint32_t ref_sad = 0;
         uint32_t non_avx2_sad = 0;
         uint32_t avx2_sad = 0;
@@ -555,17 +522,16 @@ class SADAvgTest : public ::testing::WithParamInterface<TestSadParam>,
         prepare_data();
 
         ref_sad = reference_sad_avg();
-        if (non_avx2_func != nullptr)
-            non_avx2_sad = non_avx2_func(src_aligned_,
-                                         src_stride_,
-                                         ref1_aligned_,
-                                         ref1_stride_,
-                                         ref2_aligned_,
-                                         ref2_stride_,
-                                         height_,
-                                         width_);
-        if (avx2_func != nullptr)
-            avx2_sad = avx2_func(src_aligned_,
+        non_avx2_sad = nxm_sad_avg_kernel_helper_c(src_aligned_,
+                                        src_stride_,
+                                        ref1_aligned_,
+                                        ref1_stride_,
+                                        ref2_aligned_,
+                                        ref2_stride_,
+                                        height_,
+                                        width_);
+
+        avx2_sad = nxm_sad_avg_kernel_helper_avx2(src_aligned_,
                                  src_stride_,
                                  ref1_aligned_,
                                  ref1_stride_,
@@ -574,17 +540,9 @@ class SADAvgTest : public ::testing::WithParamInterface<TestSadParam>,
                                  height_,
                                  width_);
 
-        if (non_avx2_func != nullptr) {
-            EXPECT_EQ(ref_sad, non_avx2_sad)
-                << "compare ref and non_avx2 error";
-        }
-        if (avx2_func != nullptr) {
-            EXPECT_EQ(ref_sad, avx2_sad) << "compare ref and avx2 error";
-        }
-        if (non_avx2_func != nullptr && avx2_func != nullptr) {
-            EXPECT_EQ(non_avx2_sad, avx2_sad)
+        EXPECT_EQ(non_avx2_sad, avx2_sad)
                 << "compare non_avx2 and non_avx2 error";
-        }
+
     }
 };
 

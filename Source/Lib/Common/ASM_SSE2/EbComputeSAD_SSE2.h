@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-    extern uint32_t combined_averaging4x_msad_sse2_intrin(
+    extern uint32_t combined_averaging_4xm_sad_sse2_intrin(
         uint8_t  *src,
         uint32_t  src_stride,
         uint8_t  *ref1,

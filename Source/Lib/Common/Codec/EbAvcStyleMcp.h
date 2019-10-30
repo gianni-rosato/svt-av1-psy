@@ -5,14 +5,8 @@
 
 #ifndef EBAVCSTYLEMCP_H
 #define EBAVCSTYLEMCP_H
-
-#include "EbAvcStyleMcp_SSE2.h"
-#include "EbAvcStyleMcp_SSSE3.h"
-
 #include "EbPictureOperators.h"
-
 #include "EbMcp.h"
-
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 #include "EbPictureControlSet.h"
@@ -37,8 +31,7 @@ extern "C" {
         EbByte                ref_list0_temp_dst,
         EbByte                ref_list1_temp_dst,
         EbByte                first_pass_if_temp_dst,
-        EbBool                sub_sample_pred_flag,
-        EbAsm                 asm_type);
+        EbBool                sub_sample_pred_flag);
 
     void estimate_uni_pred_interpolation_avc_luma(
         EbPictureBufferDesc *ref_pic,
@@ -51,8 +44,7 @@ extern "C" {
         uint32_t                 dst_chroma_index,
         uint32_t                 component_mask,
         EbByte                temp_buf,
-        EbBool                sub_sample_pred_flag,
-        EbAsm                 asm_type);
+        EbBool                sub_sample_pred_flag);
 
     void estimate_bi_pred_interpolation_unpacked_avc_style(
         EbPictureBufferDesc *ref_pic_list0,
@@ -70,8 +62,7 @@ extern "C" {
         EbByte                ref_list0_temp_dst,
         EbByte                ref_list1_temp_dst,
         EbByte                first_pass_if_temp_dst,
-        EbBool                sub_sample_pred_flag,
-        EbAsm                 asm_type);
+        EbBool                sub_sample_pred_flag);
 
     void estimate_uni_pred_interpolation_unpacked_avc_style(
         EbPictureBufferDesc *ref_pic,
@@ -84,8 +75,7 @@ extern "C" {
         uint32_t                 dst_chroma_index,
         uint32_t                 component_mask,
         EbByte                temp_buf,
-        EbBool                sub_sample_pred_flag,
-        EbAsm                 asm_type);
+        EbBool                sub_sample_pred_flag);
 
     void estimate_uni_pred_interpolation_avc_chroma_ref10_bit(
         EbPictureBufferDesc *ref_frame_pic_list0,
@@ -163,8 +153,8 @@ extern "C" {
         uint32_t                 component_mask,
         EbByte                temp_buf,
         EbBool                sub_sample_pred_flag,
-        EbBool                subSamplePredFlagChroma,
-        EbAsm                 asm_type);
+        EbBool                subSamplePredFlagChroma);
+
     void bi_pred_i_free_ref8_bit(
         EbPictureBufferDesc *ref_pic_list0,
         EbPictureBufferDesc *ref_pic_list1,
@@ -182,31 +172,7 @@ extern "C" {
         EbByte                ref_list1_temp_dst,
         EbByte                first_pass_if_temp_dst,
         EbBool                sub_sample_pred_flag,
-        EbBool                subSamplePredFlagChroma,
-        EbAsm                 asm_type);
-
-    typedef void(*AvcStyleInterpolationFilterNew)(
-        EbByte               ref_pic,
-        uint32_t                src_stride,
-        EbByte               dst,
-        uint32_t                dst_stride,
-        uint32_t                pu_width,
-        uint32_t                pu_height,
-        EbByte               temp_buf,
-        EbBool               skip,
-        uint32_t                frac_pos);
-
-    typedef void(*AvcStyleChromaInterpolationFilterNew)(
-        EbByte               ref_pic,
-        uint32_t                src_stride,
-        EbByte               dst,
-        uint32_t                dst_stride,
-        uint32_t                pu_width,
-        uint32_t                pu_height,
-        EbByte               temp_buf,
-        EbBool               skip,
-        uint32_t                frac_pos_x,
-        uint32_t                frac_pos_y);
+        EbBool                subSamplePredFlagChroma);
 
     void avc_style_copy(EbByte refPic, uint32_t srcStride, EbByte dst,
                     uint32_t dstStride, uint32_t puWidth, uint32_t puHeight,
@@ -257,49 +223,6 @@ extern "C" {
         EbByte dst, uint32_t dst_stride,
         uint32_t pu_width, uint32_t pu_height,
         EbByte temp_buf, uint32_t frac_pos);
-    /***************************************
-    * Function Tables
-    ***************************************/
-    static const AvcStyleInterpolationFilterNew FUNC_TABLE avc_style_uni_pred_luma_if_function_ptr_array[ASM_TYPE_TOTAL][16] = {
-        // NON_AVX2
-        {
-            avc_style_copy_sse2,                                    //A
-            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //a
-            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //b
-            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //c
-            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //d
-            avc_style_luma_interpolation_filter_pose_ssse3,             //e
-            avc_style_luma_interpolation_filter_posf_ssse3,             //f
-            avc_style_luma_interpolation_filter_posg_ssse3,             //g
-            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //h
-            avc_style_luma_interpolation_filter_posi_ssse3,             //i
-            avc_style_luma_interpolation_filter_posj_ssse3,             //j
-            avc_style_luma_interpolation_filter_posk_ssse3,             //k
-            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //n
-            avc_style_luma_interpolation_filter_posp_ssse3,             //p
-            avc_style_luma_interpolation_filter_posq_ssse3,             //q
-            avc_style_luma_interpolation_filter_posr_ssse3,             //r
-        },
-        // AVX2
-        {
-            avc_style_copy_sse2,                                    //A
-            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //a
-            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //b
-            avc_style_luma_interpolation_filter_horizontal_ssse3_intrin,       //c
-            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //d
-            avc_style_luma_interpolation_filter_pose_ssse3,             //e
-            avc_style_luma_interpolation_filter_posf_ssse3,             //f
-            avc_style_luma_interpolation_filter_posg_ssse3,             //g
-            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //h
-            avc_style_luma_interpolation_filter_posi_ssse3,             //i
-            avc_style_luma_interpolation_filter_posj_ssse3,             //j
-            avc_style_luma_interpolation_filter_posk_ssse3,             //k
-            avc_style_luma_interpolation_filter_vertical_ssse3_intrin,         //n
-            avc_style_luma_interpolation_filter_posp_ssse3,             //p
-            avc_style_luma_interpolation_filter_posq_ssse3,             //q
-            avc_style_luma_interpolation_filter_posr_ssse3,             //r
-        },
-    };
 
 #ifdef __cplusplus
 }

@@ -45,7 +45,7 @@ Note: moved from picture operators.
 keep this function here for profiling
 issues.
 *******************************************/
-uint32_t fast_loop_nx_m_sad_kernel(
+uint32_t fast_loop_nxm_sad_kernel(
     const uint8_t  *src,                       // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     const uint8_t  *ref,                       // input parameter, reference samples Ptr
@@ -294,3 +294,62 @@ sadMxN(16, 64);
 sadMxNx4D(16, 64);
 sadMxN(64, 16);
 sadMxNx4D(64, 16);
+
+uint32_t nxm_sad_kernel_helper_c(
+    const uint8_t  *src,
+    uint32_t  src_stride,
+    const uint8_t  *ref,
+    uint32_t  ref_stride,
+    uint32_t  height,
+    uint32_t  width)
+{
+    uint32_t nxm_sad = 0;
+
+    switch (width) {
+    case 4:
+    case 8:
+    case 16:
+    case 24:
+    case 32:
+    case 48:
+    case 64:
+    case 128:
+        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width); break;
+    default:
+        assert(0);
+    }
+
+    return nxm_sad;
+};
+
+uint32_t nxm_sad_avg_kernel_helper_c(
+    uint8_t  *src,
+    uint32_t  src_stride,
+    uint8_t  *ref1,
+    uint32_t  ref1_stride,
+    uint8_t  *ref2,
+    uint32_t  ref2_stride,
+    uint32_t  height,
+    uint32_t  width)
+{
+
+    uint32_t nxm_sad_avg = 0;
+
+    switch (width) {
+    case 4:
+    case 8:
+    case 16:
+    case 24:
+    case 32:
+    case 48:
+    case 64:
+        nxm_sad_avg = combined_averaging_sad(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 40:
+    case 56:
+        break; //void_func();
+    default:
+        assert(0);
+    }
+
+    return nxm_sad_avg;
+}

@@ -8,8 +8,10 @@
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
+#include "EbComputeSAD_SSE2.h"
 
-uint32_t combined_averaging8x_msad_avx2_intrin(
+
+uint32_t combined_averaging_8xm_sad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
@@ -56,7 +58,7 @@ static INLINE __m256i CombinedAveragingSad16x2_AVX2(const uint8_t *const src,
     return _mm256_add_epi32(sum, sad);
 }
 
-uint32_t combined_averaging16x_msad_avx2_intrin(
+uint32_t combined_averaging_16xm_sad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
@@ -98,7 +100,7 @@ static INLINE __m256i CombinedAveragingSad24_AVX2(const uint8_t *const src,
     return _mm256_add_epi32(sum, sad);
 }
 
-uint32_t combined_averaging24x_msad_avx2_intrin(
+uint32_t combined_averaging_24xm_sad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
@@ -142,7 +144,7 @@ static INLINE __m256i CombinedAveragingSad32_AVX2(const uint8_t *const src,
     return _mm256_add_epi32(sum, sad);
 }
 
-uint32_t combined_averaging32x_msad_avx2_intrin(
+uint32_t combined_averaging_32xm_sad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
@@ -175,7 +177,7 @@ uint32_t combined_averaging32x_msad_avx2_intrin(
     return _mm_cvtsi128_si32(sad);
 }
 
-uint32_t combined_averaging48x_msad_avx2_intrin(
+uint32_t combined_averaging_48xm_sad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
@@ -211,7 +213,7 @@ uint32_t combined_averaging48x_msad_avx2_intrin(
     return _mm_cvtsi128_si32(sad);
 }
 
-uint32_t combined_averaging64x_msad_avx2_intrin(
+uint32_t combined_averaging_64xm_sad_avx2_intrin(
     uint8_t  *src,
     uint32_t  src_stride,
     uint8_t  *ref1,
@@ -486,4 +488,42 @@ uint32_t combined_averaging_ssd_avx2(uint8_t *src, ptrdiff_t src_stride,
     sum_128 = _mm_add_epi32(sum_128, _mm_srli_si128(sum_128, 8));
     sum_128 = _mm_add_epi32(sum_128, _mm_srli_si128(sum_128, 4));
     return _mm_cvtsi128_si32(sum_128);
+}
+
+uint32_t nxm_sad_avg_kernel_helper_avx2(
+    uint8_t  *src,
+    uint32_t  src_stride,
+    uint8_t  *ref1,
+    uint32_t  ref1_stride,
+    uint8_t  *ref2,
+    uint32_t  ref2_stride,
+    uint32_t  height,
+    uint32_t  width)
+{
+
+    uint32_t nxm_sad_avg = 0;
+
+    switch (width) {
+    case 4:
+        nxm_sad_avg = combined_averaging_4xm_sad_sse2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 8:
+        nxm_sad_avg = combined_averaging_8xm_sad_avx2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 16:
+        nxm_sad_avg = combined_averaging_16xm_sad_avx2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 24:
+        nxm_sad_avg = combined_averaging_24xm_sad_avx2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 32:
+        nxm_sad_avg = combined_averaging_32xm_sad_avx2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 48:
+        nxm_sad_avg = combined_averaging_48xm_sad_avx2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 64:
+        nxm_sad_avg = combined_averaging_64xm_sad_avx2_intrin(src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width); break;
+    case 40:
+    case 56:
+        break; //void_func();
+    default:
+        assert(0);
+    }
+
+    return nxm_sad_avg;
 }

@@ -1102,8 +1102,7 @@ void PadRefAndSetFlags(
             refPicPtr->buffer_bit_inc_y,
             refPicPtr->stride_bit_inc_y,
             refPic16BitPtr->width  + (refPicPtr->origin_x << 1),
-            refPic16BitPtr->height + (refPicPtr->origin_y << 1),
-            sequence_control_set_ptr->static_config.asm_type);
+            refPic16BitPtr->height + (refPicPtr->origin_y << 1));
 
         un_pack2d(
             (uint16_t*)refPic16BitPtr->buffer_cb,
@@ -1113,8 +1112,7 @@ void PadRefAndSetFlags(
             refPicPtr->buffer_bit_inc_cb,
             refPicPtr->stride_bit_inc_cb,
             (refPic16BitPtr->width + (refPicPtr->origin_x << 1)) >> 1,
-            (refPic16BitPtr->height + (refPicPtr->origin_y << 1)) >> 1,
-            sequence_control_set_ptr->static_config.asm_type);
+            (refPic16BitPtr->height + (refPicPtr->origin_y << 1)) >> 1);
 
         un_pack2d(
             (uint16_t*)refPic16BitPtr->buffer_cr,
@@ -1124,8 +1122,7 @@ void PadRefAndSetFlags(
             refPicPtr->buffer_bit_inc_cr,
             refPicPtr->stride_bit_inc_cr,
             (refPic16BitPtr->width + (refPicPtr->origin_x << 1)) >> 1,
-            (refPic16BitPtr->height + (refPicPtr->origin_y << 1)) >> 1,
-            sequence_control_set_ptr->static_config.asm_type);
+            (refPic16BitPtr->height + (refPicPtr->origin_y << 1)) >> 1);
     }
     // set up the ref POC
     referenceObject->ref_poc = picture_control_set_ptr->parent_pcs_ptr->picture_number;

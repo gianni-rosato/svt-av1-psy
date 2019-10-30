@@ -9,6 +9,7 @@
 #include "EbDefinitions.h"
 #include "immintrin.h"
 #include "EbMemory_AVX2.h"
+#include "EbComputeSAD.h"
 
 #define UPDATE_BEST(s, k, offset) \
   temSum1 = _mm_extract_epi32(s, k); \
@@ -6469,3 +6470,76 @@ void ext_eight_sad_calculation_32x32_64x64_avx2(
         p_best_mv64x64[0] = computed_idx[si_e];
     }
 }
+
+
+uint32_t nxm_sad_kernel_sub_sampled_helper_avx2(
+    const uint8_t  *src,
+    uint32_t  src_stride,
+    const uint8_t  *ref,
+    uint32_t  ref_stride,
+    uint32_t  height,
+    uint32_t  width)
+{
+    uint32_t nxm_sad = 0;
+
+    switch (width) {
+    case 4:
+        nxm_sad = eb_compute4x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 8:
+        nxm_sad = eb_compute8x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 16:
+        nxm_sad = eb_compute16x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 24:
+        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width); break;
+    case 32:
+        nxm_sad = eb_compute32x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 48:
+        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width); break;
+    case 64:
+        nxm_sad = eb_compute64x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 128:
+        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width); break;
+    default:
+        assert(0);
+    }
+
+    return nxm_sad;
+};
+
+uint32_t nxm_sad_kernel_helper_avx2(
+    const uint8_t  *src,
+    uint32_t  src_stride,
+    const uint8_t  *ref,
+    uint32_t  ref_stride,
+    uint32_t  height,
+    uint32_t  width)
+{
+
+    uint32_t nxm_sad = 0;
+
+    switch (width) {
+    case 4:
+        nxm_sad = eb_compute4x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 8:
+        nxm_sad = eb_compute8x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 16:
+        nxm_sad = eb_compute16x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 24:
+        nxm_sad = eb_compute24x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 32:
+        nxm_sad = eb_compute32x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 48:
+        nxm_sad = eb_compute48x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 64:
+        nxm_sad = eb_compute64x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width); break;
+    case 40:
+    case 52:
+        break; //void_func();
+    default:
+        assert(0);
+    }
+
+    return nxm_sad;
+}
+
+

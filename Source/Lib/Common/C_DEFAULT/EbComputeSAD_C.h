@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-    uint32_t fast_loop_nx_m_sad_kernel(
+    uint32_t fast_loop_nxm_sad_kernel(
         const uint8_t  *src,            // input parameter, source samples Ptr
         uint32_t  src_stride,           // input parameter, source stride
         const uint8_t  *ref,            // input parameter, reference samples Ptr
@@ -54,6 +54,24 @@ extern "C" {
         uint32_t  src_stride_raw,       // input parameter, source stride (no line skipping)
         int16_t   search_area_width,
         int16_t   search_area_height);
+
+    uint32_t nxm_sad_kernel_helper_c(
+        const uint8_t  *src,
+        uint32_t  src_stride,
+        const uint8_t  *ref,
+        uint32_t  ref_stride,
+        uint32_t  height,
+        uint32_t  width);
+
+    uint32_t nxm_sad_avg_kernel_helper_c(
+        uint8_t  *src,
+        uint32_t  src_stride,
+        uint8_t  *ref1,
+        uint32_t  ref1_stride,
+        uint8_t  *ref2,
+        uint32_t  ref2_stride,
+        uint32_t  height,
+        uint32_t  width);
 
 #ifdef __cplusplus
 }

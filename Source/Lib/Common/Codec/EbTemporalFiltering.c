@@ -150,8 +150,8 @@ static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr,
                             uint16_t *buffer_16bit[3],
                             uint32_t ss_x,
                             uint32_t ss_y,
-                            EbBool include_padding,
-                            EbAsm asm_type){
+                            EbBool include_padding)
+{
 
     uint32_t input_y_offset = 0;
     uint32_t input_bit_inc_y_offset = 0;
@@ -181,8 +181,7 @@ static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr,
                buffer_16bit[C_Y],
                pic_ptr->stride_y,
                width,
-               height,
-               asm_type);
+               height);
 
     pack2d_src(pic_ptr->buffer_cb + input_cb_offset,
                pic_ptr->stride_cb,
@@ -191,8 +190,7 @@ static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr,
                buffer_16bit[C_U],
                pic_ptr->stride_cb,
                width >> ss_x,
-               height >> ss_y,
-               asm_type);
+               height >> ss_y);
 
     pack2d_src(pic_ptr->buffer_cr + input_cr_offset,
                pic_ptr->stride_cr,
@@ -201,8 +199,7 @@ static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr,
                buffer_16bit[C_V],
                pic_ptr->stride_cr,
                width >> ss_x,
-               height >> ss_y,
-               asm_type);
+               height >> ss_y);
 
 }
 
@@ -210,8 +207,8 @@ static void unpack_highbd_pic(uint16_t *buffer_highbd[3],
                               EbPictureBufferDesc *pic_ptr,
                               uint32_t ss_x,
                               uint32_t ss_y,
-                              EbBool include_padding,
-                              EbAsm asm_type){
+                              EbBool include_padding)
+{
 
     uint32_t input_y_offset = 0;
     uint32_t input_bit_inc_y_offset = 0;
@@ -241,8 +238,7 @@ static void unpack_highbd_pic(uint16_t *buffer_highbd[3],
               pic_ptr->buffer_bit_inc_y + input_bit_inc_y_offset,
               pic_ptr->stride_bit_inc_y,
               width,
-              height,
-              asm_type);
+              height);
 
     un_pack2d(buffer_highbd[C_U],
               pic_ptr->stride_cb,
@@ -251,8 +247,7 @@ static void unpack_highbd_pic(uint16_t *buffer_highbd[3],
               pic_ptr->buffer_bit_inc_cb + input_bit_inc_cb_offset,
               pic_ptr->stride_bit_inc_cb,
               width >> ss_x,
-              height >> ss_y,
-              asm_type);
+              height >> ss_y);
 
     un_pack2d(buffer_highbd[C_V],
               pic_ptr->stride_cr,
@@ -261,8 +256,7 @@ static void unpack_highbd_pic(uint16_t *buffer_highbd[3],
               pic_ptr->buffer_bit_inc_cr + input_bit_inc_cr_offset,
               pic_ptr->stride_bit_inc_cr,
               width >> ss_x,
-              height >> ss_y,
-              asm_type);
+              height >> ss_y);
 }
 
 void generate_padding_pic(EbPictureBufferDesc *pic_ptr,
@@ -1252,8 +1246,7 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                                 uint32_t ss_x,
                                 uint32_t ss_y,
                                 const int* use_16x16_subblocks,
-                                int encoder_bit_depth,
-                                EbAsm asm_type)
+                                int encoder_bit_depth)
 {
     const InterpFilters interp_filters =
         av1_make_interp_filters(MULTITAP_SHARP, MULTITAP_SHARP);
@@ -1313,8 +1306,7 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                    (uint16_t*)reference_ptr.buffer_y,
                    reference_ptr.stride_y,
                    reference_ptr.stride_y,
-                   height_y,
-                   asm_type);
+                   height_y);
 
         pack2d_src(pic_ptr_ref->buffer_cb,
                    reference_ptr.stride_cb,
@@ -1323,8 +1315,7 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                    (uint16_t*)reference_ptr.buffer_cb,
                    reference_ptr.stride_cb,
                    reference_ptr.stride_cb,
-                   height_y >> ss_y,
-                   asm_type);
+                   height_y >> ss_y);
 
         pack2d_src(pic_ptr_ref->buffer_cr,
                    reference_ptr.stride_cr,
@@ -1333,8 +1324,7 @@ static void tf_inter_prediction(PictureParentControlSet *picture_control_set_ptr
                    (uint16_t*)reference_ptr.buffer_cr,
                    reference_ptr.stride_cr,
                    reference_ptr.stride_cr,
-                   height_y >> ss_y,
-                   asm_type);
+                   height_y >> ss_y);
     }
 
     for (uint32_t idx_32x32 = 0; idx_32x32 < 4; idx_32x32++) {
@@ -1593,8 +1583,6 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
     PictureParentControlSet *picture_control_set_ptr_central = list_picture_control_set_ptr[index_center];
     EbPictureBufferDesc *input_picture_ptr_central = list_input_picture_ptr[index_center];
 
-    EbAsm asm_type = picture_control_set_ptr_central->sequence_control_set_ptr->encode_context_ptr->asm_type;
-
     int encoder_bit_depth = (int)picture_control_set_ptr_central->sequence_control_set_ptr->static_config.encoder_bit_depth;
 
     // chroma subsampling
@@ -1742,8 +1730,7 @@ static EbErrorType produce_temporally_filtered_pic(PictureParentControlSet **lis
                                         ss_x,
                                         ss_y,
                                         use_16x16_subblocks,
-                                        encoder_bit_depth,
-                                        asm_type);
+                                        encoder_bit_depth);
 
                     // Retrieve distortion (variance) on 32x32 and 16x16 sub-blocks
                     if(!is_highbd)
@@ -2125,8 +2112,6 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
     uint32_t encoder_bit_depth = picture_control_set_ptr_central->sequence_control_set_ptr->static_config.encoder_bit_depth;
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
 
-    EbAsm asm_type = picture_control_set_ptr_central->sequence_control_set_ptr->encode_context_ptr->asm_type;
-
     // chroma subsampling
     uint32_t ss_x = picture_control_set_ptr_central->sequence_control_set_ptr->subsampling_x;
     uint32_t ss_y = picture_control_set_ptr_central->sequence_control_set_ptr->subsampling_y;
@@ -2144,7 +2129,7 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
             EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V], central_picture_ptr->chroma_size);
 
             // pack byte buffers to 16 bit buffer
-            pack_highbd_pic(central_picture_ptr, picture_control_set_ptr_central->altref_buffer_highbd, ss_x, ss_y, EB_TRUE, asm_type);
+            pack_highbd_pic(central_picture_ptr, picture_control_set_ptr_central->altref_buffer_highbd, ss_x, ss_y, EB_TRUE);
         }
 
         // Estimate source noise level
@@ -2266,8 +2251,7 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
                               central_picture_ptr,
                               ss_x,
                               ss_y,
-                              EB_TRUE,
-                              asm_type);
+                              EB_TRUE);
 
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y]);
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U]);

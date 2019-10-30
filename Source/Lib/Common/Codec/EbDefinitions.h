@@ -2091,14 +2091,6 @@ typedef enum EbBitFieldMasks
 #define LAST_BWD_FRAME     8
 #define LAST_ALT_FRAME    16
 
-//----------------------
-// Used to hide GCC warnings for unused function tables
-#ifdef __GNUC__
-#define FUNC_TABLE __attribute__ ((unused))
-#else
-#define FUNC_TABLE
-#endif
-
 #define MAX_NUM_TOKENS          200
 
 #define LAD_DISABLE                       0

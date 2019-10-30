@@ -177,6 +177,22 @@ extern "C" {
         uint32_t  mv,
         uint32_t  p_sad32x32[4][8]);
 
+    uint32_t nxm_sad_kernel_sub_sampled_helper_avx2(
+        const uint8_t  *src,
+        uint32_t  src_stride,
+        const uint8_t  *ref,
+        uint32_t  ref_stride,
+        uint32_t  height,
+        uint32_t  width);
+
+    uint32_t nxm_sad_kernel_helper_avx2(
+        const uint8_t  *src,
+        uint32_t  src_stride,
+        const uint8_t  *ref,
+        uint32_t  ref_stride,
+        uint32_t  height,
+        uint32_t  width);
+
 #ifdef __cplusplus
 }
 #endif

@@ -454,7 +454,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         init_data();
 
         eb_aom_denoise_and_model_run(
-            &noise_model, &in_pic_, &output_film_grain, 0, ASM_NON_AVX2);
+            &noise_model, &in_pic_, &output_film_grain, 0);
     }
 
   protected:
