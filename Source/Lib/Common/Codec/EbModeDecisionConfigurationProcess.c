@@ -677,6 +677,11 @@ static void mode_decision_configuration_context_dctor(EbPtr p)
     EB_FREE_ARRAY(obj->mdc_ref_mv_stack);
     EB_FREE_ARRAY(obj->mdc_cu_ptr->av1xd);
     EB_FREE_ARRAY(obj->mdc_cu_ptr);
+    EB_DELETE(obj->candidate_buffer);
+    EB_FREE_ARRAY(obj->fast_candidate_array);
+    EB_FREE_ARRAY(obj->fast_candidate_ptr_array);
+    EB_DELETE(obj->trans_quant_buffers_ptr);
+    EB_FREE(obj->transform_inner_array_ptr);
 }
 /******************************************************
  * Mode Decision Configuration Context Constructor
