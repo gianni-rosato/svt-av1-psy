@@ -1944,6 +1944,14 @@ void  Av1GenerateRpsInfo(
 
             av1Rps->refresh_frame_mask = 1 << context_ptr->lay0_toggle;
 
+            if (encode_context_ptr->previous_mini_gop_length != 16) {
+                //Jing: Consider the trailing frame cases for M0
+                av1Rps->ref_dpb_index[LAST2] = base1_idx;
+                av1Rps->ref_dpb_index[ALT] = base1_idx;
+
+                av1Rps->ref_poc_array[LAST2] = av1Rps->ref_poc_array[LAST];
+                av1Rps->ref_poc_array[ALT] = av1Rps->ref_poc_array[LAST];
+            }
             break;
 
         case 1:
@@ -3227,6 +3235,10 @@ void* picture_decision_kernel(void *input_ptr)
                                 context_ptr,
                                 encode_context_ptr);
                         }
+
+                        encode_context_ptr->previous_mini_gop_length = (picture_control_set_ptr->picture_number == 0) ?
+                            (1 << sequence_control_set_ptr->static_config.hierarchical_levels) :
+                            encode_context_ptr->previous_mini_gop_length;
                     }
 
                     GenerateMiniGopRps(
@@ -4075,6 +4087,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
                             }
                         }
+                        encode_context_ptr->previous_mini_gop_length = context_ptr->mini_gop_length[mini_gop_index];
                     } // End MINI GOPs loop
                 }
 
