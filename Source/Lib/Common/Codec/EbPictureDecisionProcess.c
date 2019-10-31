@@ -1422,6 +1422,7 @@ void  Av1GenerateRpsInfo(
     Av1RpsNode *av1Rps = &picture_control_set_ptr->av1_ref_signal;
     FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
 
+    PredictionStructureEntry *predPositionPtr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
     //set Frame Type
     if (picture_control_set_ptr->slice_type == I_SLICE)
         frm_hdr->frame_type = picture_control_set_ptr->idr_flag ? KEY_FRAME : INTRA_ONLY_FRAME;
@@ -1773,6 +1774,22 @@ void  Av1GenerateRpsInfo(
             break;
         }
 
+
+        // Jing: Check for reference number, remove invalid dependancy
+        if (predPositionPtr->ref_list0.reference_list_count < 4) {
+            av1Rps->ref_dpb_index[GOLD] = av1Rps->ref_dpb_index[LAST];
+            av1Rps->ref_poc_array[GOLD] = av1Rps->ref_poc_array[LAST];
+        }
+        if (predPositionPtr->ref_list0.reference_list_count < 3) {
+            av1Rps->ref_dpb_index[LAST3] = av1Rps->ref_dpb_index[LAST];
+            av1Rps->ref_poc_array[LAST3] = av1Rps->ref_poc_array[LAST];
+        }
+        if (predPositionPtr->ref_list0.reference_list_count < 2) {
+            av1Rps->ref_dpb_index[LAST2] = av1Rps->ref_dpb_index[LAST];
+            av1Rps->ref_poc_array[LAST2] = av1Rps->ref_poc_array[LAST];
+        }
+        ////////////////
+
         {
             int tmp = av1Rps->ref_dpb_index[ALT];
             av1Rps->ref_dpb_index[ALT] = av1Rps->ref_dpb_index[ALT2];
@@ -1944,14 +1961,6 @@ void  Av1GenerateRpsInfo(
 
             av1Rps->refresh_frame_mask = 1 << context_ptr->lay0_toggle;
 
-            if (encode_context_ptr->previous_mini_gop_length != 16) {
-                //Jing: Consider the trailing frame cases for M0
-                av1Rps->ref_dpb_index[LAST2] = base1_idx;
-                av1Rps->ref_dpb_index[ALT] = base1_idx;
-
-                av1Rps->ref_poc_array[LAST2] = av1Rps->ref_poc_array[LAST];
-                av1Rps->ref_poc_array[ALT] = av1Rps->ref_poc_array[LAST];
-            }
             break;
 
         case 1:
@@ -2496,6 +2505,29 @@ void  Av1GenerateRpsInfo(
             break;
         }
 
+
+        // Jing: Check for reference number, remove invalid dependancy
+        if (predPositionPtr->ref_list0.reference_list_count < 4) {
+            av1Rps->ref_dpb_index[GOLD] = av1Rps->ref_dpb_index[LAST];
+            av1Rps->ref_poc_array[GOLD] = av1Rps->ref_poc_array[LAST];
+        }
+        if (predPositionPtr->ref_list0.reference_list_count < 3) {
+            av1Rps->ref_dpb_index[LAST3] = av1Rps->ref_dpb_index[LAST];
+            av1Rps->ref_poc_array[LAST3] = av1Rps->ref_poc_array[LAST];
+        }
+        if (predPositionPtr->ref_list0.reference_list_count < 2) {
+            av1Rps->ref_dpb_index[LAST2] = av1Rps->ref_dpb_index[LAST];
+            av1Rps->ref_poc_array[LAST2] = av1Rps->ref_poc_array[LAST];
+        }
+
+        //Only for layer0 in five layer case
+        if (predPositionPtr->ref_list1.reference_list_count < 2) {
+            av1Rps->ref_dpb_index[ALT] = av1Rps->ref_dpb_index[BWD];
+            av1Rps->ref_dpb_index[ALT2] = av1Rps->ref_dpb_index[BWD];
+            av1Rps->ref_poc_array[ALT] = av1Rps->ref_poc_array[BWD];
+            av1Rps->ref_poc_array[ALT2] = av1Rps->ref_poc_array[BWD];
+        }
+        ////////////////
         {
             int tmp = av1Rps->ref_dpb_index[ALT];
             av1Rps->ref_dpb_index[ALT] = av1Rps->ref_dpb_index[ALT2];
@@ -3235,10 +3267,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 context_ptr,
                                 encode_context_ptr);
                         }
-
-                        encode_context_ptr->previous_mini_gop_length = (picture_control_set_ptr->picture_number == 0) ?
-                            (uint32_t)(1 << sequence_control_set_ptr->static_config.hierarchical_levels) :
-                            encode_context_ptr->previous_mini_gop_length;
                     }
 
                     GenerateMiniGopRps(
@@ -4087,7 +4115,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
                             }
                         }
-                        encode_context_ptr->previous_mini_gop_length = context_ptr->mini_gop_length[mini_gop_index];
                     } // End MINI GOPs loop
                 }
 
