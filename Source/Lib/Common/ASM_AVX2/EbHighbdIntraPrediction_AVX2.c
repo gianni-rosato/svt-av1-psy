@@ -189,7 +189,7 @@ static INLINE void dc_common_predictor_16xh_kernel(uint16_t *dst,
     const ptrdiff_t stride, const int32_t h, const __m256i dc)
 {
     for (int32_t i = 0; i < h; i++) {
-        _mm256_store_si256((__m256i *)dst, dc);
+        _mm256_storeu_si256((__m256i *)dst, dc);
         dst += stride;
     }
 }
@@ -198,8 +198,8 @@ static INLINE void dc_common_predictor_32xh_kernel(uint16_t *dst,
     const ptrdiff_t stride, const int32_t h, const __m256i dc)
 {
     for (int32_t i = 0; i < h; i++) {
-        _mm256_store_si256((__m256i *)(dst + 0x00), dc);
-        _mm256_store_si256((__m256i *)(dst + 0x10), dc);
+        _mm256_storeu_si256((__m256i *)(dst + 0x00), dc);
+        _mm256_storeu_si256((__m256i *)(dst + 0x10), dc);
         dst += stride;
     }
 }
@@ -208,10 +208,10 @@ static INLINE void dc_common_predictor_64xh_kernel(uint16_t *dst,
     const ptrdiff_t stride, const int32_t h, const __m256i dc)
 {
     for (int32_t i = 0; i < h; i++) {
-        _mm256_store_si256((__m256i *)(dst + 0x00), dc);
-        _mm256_store_si256((__m256i *)(dst + 0x10), dc);
-        _mm256_store_si256((__m256i *)(dst + 0x20), dc);
-        _mm256_store_si256((__m256i *)(dst + 0x30), dc);
+        _mm256_storeu_si256((__m256i *)(dst + 0x00), dc);
+        _mm256_storeu_si256((__m256i *)(dst + 0x10), dc);
+        _mm256_storeu_si256((__m256i *)(dst + 0x20), dc);
+        _mm256_storeu_si256((__m256i *)(dst + 0x30), dc);
         dst += stride;
     }
 }
@@ -835,7 +835,7 @@ static INLINE void h_pred_16(uint16_t **const dst, const ptrdiff_t stride,
     // Broadcast the 16-bit left pixel to 256-bit register.
     const __m256i row = _mm256_broadcastw_epi16(left);
 
-    _mm256_store_si256((__m256i *)(*dst + 0x00), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), row);
     *dst += stride;
 }
 
@@ -901,8 +901,8 @@ static INLINE void h_pred_32(uint16_t **const dst, const ptrdiff_t stride,
     // Broadcast the 16-bit left pixel to 256-bit register.
     const __m256i row = _mm256_broadcastw_epi16(left);
 
-    _mm256_store_si256((__m256i *)(*dst + 0x00), row);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), row);
     *dst += stride;
 }
 
@@ -959,10 +959,10 @@ static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride,
     // Broadcast the 16-bit left pixel to 256-bit register.
     const __m256i row = _mm256_broadcastw_epi16(left);
 
-    _mm256_store_si256((__m256i *)(*dst + 0x00), row);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), row);
-    _mm256_store_si256((__m256i *)(*dst + 0x20), row);
-    _mm256_store_si256((__m256i *)(*dst + 0x30), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x20), row);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x30), row);
     *dst += stride;
 }
 
@@ -1031,7 +1031,7 @@ void eb_aom_highbd_h_predictor_64x64_avx2(uint16_t *dst, ptrdiff_t stride,
 static INLINE void v_pred_16(uint16_t **const dst, const ptrdiff_t stride,
     const __m256i above0)
 {
-    _mm256_store_si256((__m256i *)(*dst + 0x00), above0);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), above0);
     *dst += stride;
 }
 
@@ -1144,8 +1144,8 @@ void eb_aom_highbd_v_predictor_16x64_avx2(uint16_t *dst, ptrdiff_t stride,
 static INLINE void v_pred_32(uint16_t **const dst, const ptrdiff_t stride,
     const __m256i above0, const __m256i above1)
 {
-    _mm256_store_si256((__m256i *)(*dst + 0x00), above0);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), above1);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), above0);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), above1);
     *dst += stride;
 }
 
@@ -1238,10 +1238,10 @@ static INLINE void v_pred_64(uint16_t **const dst, const ptrdiff_t stride,
     const __m256i above0, const __m256i above1, const __m256i above2,
     const __m256i above3)
 {
-    _mm256_store_si256((__m256i *)(*dst + 0x00), above0);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), above1);
-    _mm256_store_si256((__m256i *)(*dst + 0x20), above2);
-    _mm256_store_si256((__m256i *)(*dst + 0x30), above3);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), above0);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), above1);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x20), above2);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x30), above3);
     *dst += stride;
 }
 
@@ -1665,7 +1665,7 @@ static INLINE void smooth_pred_16(const __m256i *const weights_w,
     const __m256i lr, uint16_t **const dst, const ptrdiff_t stride)
 {
     const __m256i d = smooth_pred_kernel(weights_w, weights_h, rep, ab, lr);
-    _mm256_store_si256((__m256i *)*dst, d);
+    _mm256_storeu_si256((__m256i *)*dst, d);
     *dst += stride;
 }
 
@@ -1808,11 +1808,11 @@ static INLINE void smooth_pred_32(const __m256i *const weights_w,
 
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     d = smooth_pred_kernel(weights_w + 0, weights_h, rep, ab + 0, lr);
-    _mm256_store_si256((__m256i *)(*dst + 0x00), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), d);
 
     // 16 17 18 19 20 21 22 23  24 25 26 27 28 29 30 31
     d = smooth_pred_kernel(weights_w + 2, weights_h, rep, ab + 2, lr);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), d);
     *dst += stride;
 }
 
@@ -1952,19 +1952,19 @@ static INLINE void smooth_pred_64(const __m256i *const weights_w,
 
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     d = smooth_pred_kernel(weights_w + 0, weights_h, rep, ab + 0, lr);
-    _mm256_store_si256((__m256i *)(*dst + 0x00), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), d);
 
     // 16 17 18 19 20 21 22 23  24 25 26 27 28 29 30 31
     d = smooth_pred_kernel(weights_w + 2, weights_h, rep, ab + 2, lr);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), d);
 
     // 32 33 34 35 36 37 38 39  40 41 42 43 44 45 46 47
     d = smooth_pred_kernel(weights_w + 4, weights_h, rep, ab + 4, lr);
-    _mm256_store_si256((__m256i *)(*dst + 0x20), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x20), d);
 
     // 48 49 50 51 52 53 54 55  56 57 58 59 60 61 62 63
     d = smooth_pred_kernel(weights_w + 6, weights_h, rep, ab + 6, lr);
-    _mm256_store_si256((__m256i *)(*dst + 0x30), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x30), d);
     *dst += stride;
 }
 
@@ -2175,7 +2175,7 @@ static INLINE void smooth_h_pred_16(const __m256i *const weights,
     const __m256i t = _mm256_shuffle_epi8(*lr, rep); // 0 0 0 0  0 0 0 0
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     const __m256i d = smooth_h_pred_kernel(weights, t);
-    _mm256_store_si256((__m256i *)*dst, d);
+    _mm256_storeu_si256((__m256i *)*dst, d);
     *dst += stride;
     *lr = _mm256_srli_si256(*lr, 4); // 1 2 3 x  1 2 3 x
 }
@@ -2279,11 +2279,11 @@ static INLINE void smooth_h_pred_32(const __m256i *const weights,
 
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     d = smooth_h_pred_kernel(weights + 0, t);
-    _mm256_store_si256((__m256i *)(*dst + 0x00), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), d);
 
     // 16 17 18 19 20 21 22 23  24 25 26 27 28 29 30 31
     d = smooth_h_pred_kernel(weights + 2, t);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), d);
     *dst += stride;
     *lr = _mm256_srli_si256(*lr, 4); // 1 2 3 x  1 2 3 x
 }
@@ -2362,19 +2362,19 @@ static INLINE void smooth_h_pred_64(const __m256i *const weights,
 
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     d = smooth_h_pred_kernel(weights + 0, t);
-    _mm256_store_si256((__m256i *)(*dst + 0x00), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), d);
 
     // 16 17 18 19 20 21 22 23  24 25 26 27 28 29 30 31
     d = smooth_h_pred_kernel(weights + 2, t);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), d);
 
     // 32 33 34 35 36 37 38 39  40 41 42 43 44 45 46 47
     d = smooth_h_pred_kernel(weights + 4, t);
-    _mm256_store_si256((__m256i *)(*dst + 0x20), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x20), d);
 
     // 48 49 50 51 52 53 54 55  56 57 58 59 60 61 62 63
     d = smooth_h_pred_kernel(weights + 6, t);
-    _mm256_store_si256((__m256i *)(*dst + 0x30), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x30), d);
     *dst += stride;
     *lr = _mm256_srli_si256(*lr, 4); // 1 2 3 x  1 2 3 x
 }
@@ -2585,7 +2585,7 @@ static INLINE void smooth_v_pred_16(const __m256i weights, const __m256i rep,
     const __m256i *const ab, uint16_t **const dst, const ptrdiff_t stride)
 {
     const __m256i d = smooth_v_pred_kernel(weights, rep, ab);
-    _mm256_store_si256((__m256i *)*dst, d);
+    _mm256_storeu_si256((__m256i *)*dst, d);
     *dst += stride;
 }
 
@@ -2699,11 +2699,11 @@ static INLINE void smooth_v_pred_32(const __m256i weights, const __m256i rep,
 
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     d = smooth_v_pred_kernel(weights, rep, ab + 0);
-    _mm256_store_si256((__m256i *)(*dst + 0x00), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), d);
 
     // 16 17 18 19 20 21 22 23  24 25 26 27 28 29 30 31
     d = smooth_v_pred_kernel(weights, rep, ab + 2);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), d);
     *dst += stride;
 }
 
@@ -2807,19 +2807,19 @@ static INLINE void smooth_v_pred_64(const __m256i weights, const __m256i rep,
 
     //  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
     d = smooth_v_pred_kernel(weights, rep, ab + 0);
-    _mm256_store_si256((__m256i *)(*dst + 0x00), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x00), d);
 
     // 16 17 18 19 20 21 22 23  24 25 26 27 28 29 30 31
     d = smooth_v_pred_kernel(weights, rep, ab + 2);
-    _mm256_store_si256((__m256i *)(*dst + 0x10), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x10), d);
 
     // 32 33 34 35 36 37 38 39  40 41 42 43 44 45 46 47
     d = smooth_v_pred_kernel(weights, rep, ab + 4);
-    _mm256_store_si256((__m256i *)(*dst + 0x20), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x20), d);
 
     // 48 49 50 51 52 53 54 55  56 57 58 59 60 61 62 63
     d = smooth_v_pred_kernel(weights, rep, ab + 6);
-    _mm256_store_si256((__m256i *)(*dst + 0x30), d);
+    _mm256_storeu_si256((__m256i *)(*dst + 0x30), d);
     *dst += stride;
 }
 

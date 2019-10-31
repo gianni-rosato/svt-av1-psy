@@ -97,13 +97,13 @@ void eb_av1_highbd_jnt_convolve_2d_copy_avx2(
                         _mm256_packus_epi32(round_result_lo, round_result_hi);
                     const __m256i res_clip = _mm256_min_epi16(res_16b, clip_pixel_to_bd);
 
-                    _mm256_store_si256((__m256i *)(&dst0[i * dst_stride0 + j]), res_clip);
+                    _mm256_storeu_si256((__m256i *)(&dst0[i * dst_stride0 + j]), res_clip);
                 }
                 else {
                     const __m256i res_unsigned_16b =
                         _mm256_adds_epu16(res, offset_const_16b);
 
-                    _mm256_store_si256((__m256i *)(&dst[i * dst_stride + j]),
+                    _mm256_storeu_si256((__m256i *)(&dst[i * dst_stride + j]),
                         res_unsigned_16b);
                 }
             }

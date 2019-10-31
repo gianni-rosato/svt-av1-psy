@@ -527,9 +527,9 @@ EbErrorType read_obu_header_size(bitstrm_t *bs, ObuHeader *header, size_t size,
         return status;
 
     if (header->obu_has_size_field) {
-    status = read_obu_size(bs, size, &header->payload_size, length_size);
-    if (status != EB_ErrorNone)
-        return status;
+        status = read_obu_size(bs, size, &header->payload_size, length_size);
+        if (status != EB_ErrorNone)
+            return status;
     }
 
     return EB_ErrorNone;
@@ -2608,7 +2608,7 @@ EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, unsigned char *data, unsigne
 
 // Decode all OBUs in a Frame
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data,
-    size_t data_size, int is_annexb)
+    size_t data_size, uint32_t is_annexb)
 {
     bitstrm_t bs;
     EbErrorType status = EB_ErrorNone;

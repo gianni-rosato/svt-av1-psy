@@ -60,7 +60,7 @@ void dec_init_intra_predictors_internal(void);
 extern void av1_init_wedge_masks(void);
 
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
-                                uint8_t **data, size_t data_size, int is_annexb);
+                                uint8_t **data, size_t data_size, uint32_t is_annexb);
 
 void SwitchToRealTime(){
 #ifndef _WIN32
@@ -521,7 +521,7 @@ EB_API EbErrorType eb_svt_decode_frame(
     EbComponentType     *svt_dec_component,
     const uint8_t       *data,
     const size_t         data_size,
-    int                  is_annexb)
+    uint32_t             is_annexb)
 {
     EbErrorType return_error = EB_ErrorNone;
     if (svt_dec_component == NULL)

@@ -146,7 +146,7 @@ static int valid_obu_type(int obu_type) {
 
 // Parses OBU header and stores values in 'header'.
 static int read_obu_header(ReadBitBuffer *rb,
-    int is_annexb, ObuHeader *header)
+    uint32_t is_annexb, ObuHeader *header)
 {
     if (!rb || !header) return -1;
 
@@ -194,7 +194,7 @@ static int read_obu_header(ReadBitBuffer *rb,
 
 int svt_read_obu_header(uint8_t *buffer, size_t buffer_length,
     size_t *consumed, ObuHeader *header,
-    int is_annexb)
+    uint32_t is_annexb)
 {
     if (buffer_length < 1 || !consumed || !header) return -1;
 
@@ -211,7 +211,7 @@ int svt_read_obu_header(uint8_t *buffer, size_t buffer_length,
 // success, and non-zero on failure. When end of file is reached, the return
 // value is 0 and the 'bytes_read' value is set to 0.
 static int obudec_read_obu_header(FILE *f, size_t buffer_capacity,
-    int is_annexb, uint8_t *obu_data,
+    uint32_t is_annexb, uint8_t *obu_data,
     ObuHeader *obu_header, size_t *bytes_read)
 {
     if (!f || buffer_capacity < (OBU_HEADER_SIZE + OBU_EXTENSION_SIZE) ||
@@ -245,7 +245,7 @@ static int obudec_read_obu_header(FILE *f, size_t buffer_capacity,
 }
 
 static int obudec_read_obu_header_and_size(FILE *f, size_t buffer_capacity,
-    int is_annexb, uint8_t *buffer,
+    uint32_t is_annexb, uint8_t *buffer,
     size_t *bytes_read,
     size_t *payload_length,
     ObuHeader *obu_header)
@@ -334,7 +334,7 @@ int file_is_obu(CLInput *cli, ObuDecInputContext *obu_ctx) {
     if (!obu_ctx || !cli) return 0;
 
     uint8_t detect_buf[OBU_DETECTION_SIZE] = { 0 };
-    const int is_annexb = obu_ctx->is_annexb;
+    const uint32_t is_annexb = obu_ctx->is_annexb;
     FILE *f = cli->inFile;
     size_t payload_length = 0;
     ObuHeader obu_header;
@@ -463,7 +463,7 @@ static int obudec_grow_buffer(size_t growth_amount, uint8_t **obu_buffer,
 static int obudec_read_one_obu(FILE *f, uint8_t **obu_buffer,
     size_t obu_bytes_buffered,
     size_t *obu_buffer_capacity, size_t *obu_length,
-    ObuHeader *obu_header, int is_annexb)
+    ObuHeader *obu_header, uint32_t is_annexb)
 {
     if (!f || !(*obu_buffer) || !obu_buffer_capacity || !obu_length ||
         !obu_header) {
@@ -566,7 +566,7 @@ int obudec_read_temporal_unit(DecInputContext *input,
             &size) != 0) {
             fprintf(stderr, "obudec: Failure reading frame header\n");
             return 0;
-    }
+        }
         if (size == 0 && feof(f)) {
             return 0;
         }
