@@ -3237,7 +3237,7 @@ void* picture_decision_kernel(void *input_ptr)
                         }
 
                         encode_context_ptr->previous_mini_gop_length = (picture_control_set_ptr->picture_number == 0) ?
-                            (1 << sequence_control_set_ptr->static_config.hierarchical_levels) :
+                            (uint32_t)(1 << sequence_control_set_ptr->static_config.hierarchical_levels) :
                             encode_context_ptr->previous_mini_gop_length;
                     }
 
