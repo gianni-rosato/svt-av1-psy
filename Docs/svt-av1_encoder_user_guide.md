@@ -130,6 +130,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HierarchicalLevels** | -hierarchical-levels | [3 – 4] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 4 == > 15B Pyramid) |
 | **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes auto. |
 | **IntraRefreshType** | -irefresh-type | [1 – 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
+| **TargetBitRate** | -tbr | [1 - 4294967295] | 7000000 | Target bitrate in bits per second when RateControlMode is set to 1, 2, or 3 |
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
 | **RateControlMode** | -rc | [0 - 3] | 0 | 0 = CQP , 1 = ABR , 2 = ABR , 3 = CVBR |
 | **AdaptiveQuantization** | -adaptive-quantization | [0 - 2] | 0 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
