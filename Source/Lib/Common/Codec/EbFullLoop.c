@@ -2198,7 +2198,9 @@ void encode_pass_tx_search(
         EntropyCoder  *coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
         candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-
+#if FILTER_INTRA_FLAG
+        candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode;
+#endif
         const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
         av1_tu_estimate_coeff_bits(
@@ -2393,7 +2395,9 @@ void encode_pass_tx_search_hbd(
         EntropyCoder  *coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
         candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-
+#if FILTER_INTRA_FLAG
+        candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode;
+#endif
         const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
         av1_tu_estimate_coeff_bits(
