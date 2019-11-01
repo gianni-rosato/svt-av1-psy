@@ -87,6 +87,7 @@ extern "C" {
 #define REMOVE_MD_STAGE_1                 1 // Simplified MD Staging; removed md_stage_1
 #define NON_KF_INTRA_TF_FIX               1 // Fix temporal filtering for non-key Intra frames
 
+#define TWO_PASS_IMPROVEMENT              1 // Tune 2 pass for better Luma by adjusting the reference area and the actions
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -3314,6 +3315,9 @@ typedef struct stat_struct_t
 {
     uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
 } stat_struct_t;
+#if TWO_PASS_IMPROVEMENT
+#define TWO_PASS_IR_THRSHLD 40
+#endif
 #endif
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
 

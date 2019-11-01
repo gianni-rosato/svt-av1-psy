@@ -563,6 +563,11 @@ static void read_stat_from_file(
         referenced_area_has_non_zero += picture_control_set_ptr->stat_struct.referenced_area[sb_addr];
     }
     referenced_area_avg /= sequence_control_set_ptr->sb_total_count;
+#if TWO_PASS_IMPROVEMENT
+    // adjust the reference area based on the intra refresh
+    if (sequence_control_set_ptr->intra_period_length && sequence_control_set_ptr->intra_period_length < TWO_PASS_IR_THRSHLD)
+        referenced_area_avg = referenced_area_avg * (sequence_control_set_ptr->intra_period_length + 1) / TWO_PASS_IR_THRSHLD;
+#endif
     picture_control_set_ptr->referenced_area_avg = referenced_area_avg;
     picture_control_set_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
 

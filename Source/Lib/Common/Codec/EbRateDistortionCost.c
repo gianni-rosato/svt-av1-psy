@@ -1907,6 +1907,15 @@ uint64_t av1_inter_fast_cost(
                 rate += rate * FIRST_PASS_COST_PENALTY / 100;
                 totalDistortion += totalDistortion * FIRST_PASS_COST_PENALTY / 100;
             }
+#if TWO_PASS_IMPROVEMENT
+            EbReferenceObject  *refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+            if (picture_control_set_ptr->slice_type == B_SLICE &&
+                (candidate_ptr->is_compound || ref_type[0] == BWDREF_FRAME) &&
+                (refObjL1->slice_type == I_SLICE && refObjL1->ref_poc > picture_control_set_ptr->picture_number)) {
+                rate += rate * 2;
+                totalDistortion += totalDistortion * 2;
+            }
+#endif
         }
 #endif
         if (candidate_ptr->merge_flag) {
@@ -1932,6 +1941,15 @@ uint64_t av1_inter_fast_cost(
                 rate += rate * FIRST_PASS_COST_PENALTY / 100;
                 totalDistortion += totalDistortion * FIRST_PASS_COST_PENALTY / 100;
             }
+#if TWO_PASS_IMPROVEMENT
+            EbReferenceObject  *refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+            if (picture_control_set_ptr->slice_type == B_SLICE &&
+                (candidate_ptr->is_compound || ref_type[0] == BWDREF_FRAME) &&
+                (refObjL1->slice_type == I_SLICE && refObjL1->ref_poc > picture_control_set_ptr->picture_number)) {
+                rate += rate * 2;
+                totalDistortion += totalDistortion * 2;
+            }
+#endif
         }
 #endif
         // Assign fast cost
@@ -2193,6 +2211,15 @@ EbErrorType Av1FullCost(
             rate += rate * FIRST_PASS_COST_PENALTY / 100;
             totalDistortion += totalDistortion * FIRST_PASS_COST_PENALTY / 100;
         }
+#if TWO_PASS_IMPROVEMENT
+        EbReferenceObject  *refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+        if (picture_control_set_ptr->slice_type == B_SLICE &&
+            (candidate_buffer_ptr->candidate_ptr->is_compound || ref_type[0] == BWDREF_FRAME) &&
+            (refObjL1->slice_type == I_SLICE && refObjL1->ref_poc > picture_control_set_ptr->picture_number)) {
+            rate += rate * 2;
+            totalDistortion += totalDistortion * 2;
+        }
+#endif
     }
 #endif
     // Assign full cost
@@ -2358,6 +2385,15 @@ EbErrorType  Av1MergeSkipFullCost(
             skip_cost += skip_cost * FIRST_PASS_COST_PENALTY / 100;
             merge_cost += merge_cost * FIRST_PASS_COST_PENALTY / 100;
         }
+#if TWO_PASS_IMPROVEMENT
+        EbReferenceObject  *refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+        if (picture_control_set_ptr->slice_type == B_SLICE &&
+            (candidate_buffer_ptr->candidate_ptr->is_compound || ref_type[0] == BWDREF_FRAME)
+            && refObjL1->slice_type == I_SLICE && refObjL1->ref_poc > picture_control_set_ptr->picture_number) {
+            skip_cost += skip_cost * 2;
+            merge_cost += merge_cost * 2;
+        }
+#endif
     }
 #endif
     // Assigne full cost
