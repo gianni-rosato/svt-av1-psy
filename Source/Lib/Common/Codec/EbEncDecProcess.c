@@ -101,7 +101,7 @@ EbErrorType enc_dec_context_ctor(
 #endif
     EbBool                  is16bit,
     EbColorFormat           color_format,
-    EbBool                  enable_hbd_mode_decision,
+    uint8_t                 enable_hbd_mode_decision,
     uint32_t                max_input_luma_width,
     uint32_t                max_input_luma_height)
 {
@@ -278,7 +278,7 @@ static void ResetEncDec(
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index,
-        picture_control_set_ptr->hbd_mode_decision);
+        context_ptr->md_context->hbd_mode_decision);
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
     if (context_ptr->is_md_rate_estimation_ptr_owner) {
         EB_FREE(context_ptr->md_rate_estimation_ptr);
@@ -317,7 +317,7 @@ static void EncDecConfigureLcu(
         &context_ptr->full_chroma_lambda,
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         context_ptr->qp_index,
-        picture_control_set_ptr->hbd_mode_decision);
+        context_ptr->md_context->hbd_mode_decision);
 
     return;
 }

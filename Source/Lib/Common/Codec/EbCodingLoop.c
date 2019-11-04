@@ -2281,7 +2281,7 @@ EB_EXTERN void av1_encode_pass(
                 sb_height >> 1);
         }
 
-        if (picture_control_set_ptr->hbd_mode_decision == 0)
+        if (context_ptr->md_context->hbd_mode_decision == 0)
             Store16bitInputSrc(context_ptr->input_sample16bit_buffer, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
     }
 

@@ -138,7 +138,7 @@ extern "C" {
 #endif
         EbBool                   is16bit,
         EbColorFormat            color_format,
-        EbBool                   enable_hbd_mode_decision,
+        uint8_t                  enable_hbd_mode_decision,
         uint32_t                 max_input_luma_width,
         uint32_t                 max_input_luma_height);
 

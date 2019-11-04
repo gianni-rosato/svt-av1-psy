@@ -316,7 +316,7 @@ void inter_intra_search(
     pred_desc.buffer_y = tmp_buf;
 
     //we call the regular inter prediction path here(no compound)
-    av1_inter_prediction_function_table[context_ptr->hbd_mode_decision](
+    av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
         picture_control_set_ptr,
         0,//ASSUMPTION: fixed interpolation filter.
         context_ptr->cu_ptr,
@@ -6067,7 +6067,7 @@ uint32_t product_full_mode_decision(
 
 #if PAL_SUP
         if (cu_ptr->prediction_mode_flag == INTRA_MODE)
-        { 
+        {
             memcpy(&cu_ptr->palette_info.pmi, &candidate_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
             if(svt_av1_allow_palette(context_ptr->sb_ptr->picture_control_set_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
                memcpy(cu_ptr->palette_info.color_idx_map, candidate_ptr->palette_info.color_idx_map, MAX_PALETTE_SQUARE);

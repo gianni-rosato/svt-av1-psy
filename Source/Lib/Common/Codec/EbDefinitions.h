@@ -32,6 +32,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define HBD_CLEAN_UP                 1
+
+#define IFS_8BIT_MD                  1
+
 
 /* Note: shutting the macro PAL_SUP will not give SS as pcs->palette_mode = 0
    rate estimation is changed for I frame + enabled sc for P (rate estimation
@@ -2171,7 +2175,17 @@ typedef enum EbBitDepthEnum
     EB_16BIT = 16,
     EB_32BIT = 32
 } EbBitDepthEnum;
+#if HBD_CLEAN_UP
+/** The MD_BIT_DEPTH_MODE type is used to describe the bitdepth of MD path.
+*/
 
+typedef enum MD_BIT_DEPTH_MODE
+{
+    EB_8_BIT_MD     = 0,    // 8bit mode decision
+    EB_10_BIT_MD    = 1,    // 10bit mode decision
+    EB_DUAL_BIT_MD  = 2     // Auto: 8bit & 10bit mode decision
+} MD_BIT_DEPTH_MODE;
+#endif
 /** The EB_GOP type is used to describe the hierarchical coding structure of
 Groups of Pictures (GOP) units.
 */

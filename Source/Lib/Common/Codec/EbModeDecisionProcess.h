@@ -178,7 +178,7 @@ extern "C" {
         uint16_t                        pu_height;
         EbPfMode                        pf_md_mode;
         EbBool                          cu_use_ref_src_flag;
-        EbBool                          hbd_mode_decision;
+        uint8_t                         hbd_mode_decision;
         uint16_t                        qp_index;
         uint64_t                        three_quad_energy;
 #if ENHANCE_ATB
@@ -378,7 +378,7 @@ extern "C" {
         EbColorFormat              color_format,
         EbFifo                    *mode_decision_configuration_input_fifo_ptr,
         EbFifo                    *mode_decision_output_fifo_ptr,
-        EbBool                     enable_hbd_mode_decision
+        uint8_t                    enable_hbd_mode_decision
 #if PAL_SUP
         ,uint8_t                 cfg_palette
 #endif

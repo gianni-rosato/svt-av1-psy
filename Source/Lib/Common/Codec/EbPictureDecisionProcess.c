@@ -854,6 +854,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                     pred - 1 + 2
     // 6                                     pred - 1 + 3
     // 7                                     All
+
     if (MR_MODE || sc_content_detected || sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
         picture_control_set_ptr->mdc_depth_level = MAX_MDC_LEVEL;
     else if (picture_control_set_ptr->enc_mode == ENC_M0)
@@ -1295,7 +1296,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0                                     OFF
         // 1                                     ON
             picture_control_set_ptr->enable_inter_intra = picture_control_set_ptr->slice_type != I_SLICE ? sequence_control_set_ptr->seq_header.enable_interintra_compound : 0;
-
 #endif
         // Set compound mode      Settings
         // 0                 OFF: No compond mode search : AVG only
@@ -1306,7 +1306,6 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->enc_mode <= ENC_M1 ? 2 : 1;
         else
             picture_control_set_ptr->compound_mode = 0;
-
 
         // set compound_types_to_try
         if (picture_control_set_ptr->compound_mode)
@@ -3689,7 +3688,7 @@ void* picture_decision_kernel(void *input_ptr)
                             if( sequence_control_set_ptr->enable_altrefs == EB_TRUE &&
 #if NON_KF_INTRA_TF_FIX
                                 ((picture_control_set_ptr->slice_type == I_SLICE && picture_control_set_ptr->sc_content_detected == 0) ||
-#else  
+#else
                                 ( (picture_control_set_ptr->idr_flag && picture_control_set_ptr->sc_content_detected == 0) ||
 #endif
                                   (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0)

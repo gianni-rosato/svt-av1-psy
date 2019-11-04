@@ -168,17 +168,28 @@ void picture_control_set_dctor(EbPtr p)
         EB_DELETE(obj->md_mode_type_neighbor_array[depth]);
         EB_DELETE(obj->md_leaf_depth_neighbor_array[depth]);
         EB_DELETE(obj->mdleaf_partition_neighbor_array[depth]);
+
+#if !HBD_CLEAN_UP // md_luma_recon_neighbor_array16bit md_tx_depth_1_luma_recon_neighbor_array16bit
         if (obj->hbd_mode_decision) {
+#else
+        if (obj->hbd_mode_decision > EB_8_BIT_MD){
+#endif
             EB_DELETE(obj->md_luma_recon_neighbor_array16bit[depth]);
             EB_DELETE(obj->md_tx_depth_1_luma_recon_neighbor_array16bit[depth]);
             EB_DELETE(obj->md_cb_recon_neighbor_array16bit[depth]);
             EB_DELETE(obj->md_cr_recon_neighbor_array16bit[depth]);
-        } else {
+        }
+#if HBD_CLEAN_UP
+        if (obj->hbd_mode_decision != EB_10_BIT_MD){
+#else
+         else {
+#endif
             EB_DELETE(obj->md_luma_recon_neighbor_array[depth]);
             EB_DELETE(obj->md_tx_depth_1_luma_recon_neighbor_array[depth]);
             EB_DELETE(obj->md_cb_recon_neighbor_array[depth]);
             EB_DELETE(obj->md_cr_recon_neighbor_array[depth]);
         }
+
         EB_DELETE(obj->md_skip_coeff_neighbor_array[depth]);
         EB_DELETE(obj->md_luma_dc_sign_level_coeff_neighbor_array[depth]);
         EB_DELETE(obj->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth]);
@@ -605,9 +616,13 @@ EbErrorType picture_control_set_ctor(
         return_error = create_neighbor_array_units(data, DIM(data));
         if (return_error == EB_ErrorInsufficientResources)
             return EB_ErrorInsufficientResources;
-
+#if HBD_CLEAN_UP //md_luma_recon_neighbor_array
+        if (initDataPtr->hbd_mode_decision != EB_10_BIT_MD) {
+#else
         if (!initDataPtr->hbd_mode_decision) {
+#endif
             InitData data[] = {
+
                 {
                     &object_ptr->md_luma_recon_neighbor_array[depth],
                     MAX_PICTURE_WIDTH_SIZE,
@@ -644,11 +659,18 @@ EbErrorType picture_control_set_ctor(
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                     NEIGHBOR_ARRAY_UNIT_FULL_MASK,
                 }
+
             };
             return_error = create_neighbor_array_units(data, DIM(data));
             if (return_error == EB_ErrorInsufficientResources)
                 return EB_ErrorInsufficientResources;
-        } else {
+        }
+#if HBD_CLEAN_UP
+
+        if (initDataPtr->hbd_mode_decision > EB_8_BIT_MD) {
+#else
+         else {
+#endif
             InitData data[] = {
                 {
                     &object_ptr->md_luma_recon_neighbor_array16bit[depth],

@@ -13796,7 +13796,8 @@ extern "C" {
         NeighborArrayUnit                  *md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-        EbBool                             hbd_mode_decision;
+
+        uint8_t                             hbd_mode_decision;
         NeighborArrayUnit                  *md_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_tx_depth_1_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
         NeighborArrayUnit                  *md_cb_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -14331,7 +14332,7 @@ extern "C" {
         uint16_t                           enc_dec_segment_row;
         EbEncMode                          enc_mode;
         uint8_t                            speed_control;
-        EbBool                             hbd_mode_decision;
+        uint8_t                            hbd_mode_decision;
         uint16_t                           film_grain_noise_level;
         EbBool                             ext_block_flag;
         EbBool                             in_loop_me_flag;

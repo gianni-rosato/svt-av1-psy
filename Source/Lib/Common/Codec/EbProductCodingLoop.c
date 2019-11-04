@@ -1197,18 +1197,18 @@ void AV1PerformInverseTransformReconLuma(
                     candidate_buffer->prediction_ptr->buffer_y,
                     tu_origin_index,
                     candidate_buffer->prediction_ptr->stride_y,
-                    picture_control_set_ptr->hbd_mode_decision ? (uint8_t *)context_ptr->cfl_temp_luma_recon16bit : context_ptr->cfl_temp_luma_recon,
+                    context_ptr->hbd_mode_decision ? (uint8_t *)context_ptr->cfl_temp_luma_recon16bit : context_ptr->cfl_temp_luma_recon,
                     recLumaOffset,
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[txb_itr],
                     PLANE_TYPE_Y,
                     (uint32_t)candidate_buffer->candidate_ptr->eob[0][txb_itr]);
             else {
-                if (picture_control_set_ptr->hbd_mode_decision) {
+                if (context_ptr->hbd_mode_decision) {
                     pic_copy_kernel_16bit(
                         ((uint16_t *) candidate_buffer->prediction_ptr->buffer_y) + tu_origin_index,
                         candidate_buffer->prediction_ptr->stride_y,
@@ -1278,7 +1278,7 @@ void AV1PerformInverseTransformRecon(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[txb_itr],
                     PLANE_TYPE_Y,
@@ -1296,7 +1296,7 @@ void AV1PerformInverseTransformRecon(
                     0,//chromaTuSize,
                     0,//chromaTuSize,
                     PICTURE_BUFFER_DESC_Y_FLAG,
-                    picture_control_set_ptr->hbd_mode_decision);
+                    context_ptr->hbd_mode_decision);
 
             //CHROMA
             uint8_t tx_depth = candidate_buffer->candidate_ptr->tx_depth;
@@ -1318,7 +1318,7 @@ void AV1PerformInverseTransformRecon(
                         candidate_buffer->recon_ptr->stride_cb,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cb,
                         txb_1d_offset_uv,
-                        picture_control_set_ptr->hbd_mode_decision,
+                        context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
                         PLANE_TYPE_UV,
@@ -1336,7 +1336,7 @@ void AV1PerformInverseTransformRecon(
                         chroma_tu_width,
                         chroma_tu_height,
                         PICTURE_BUFFER_DESC_Cb_FLAG,
-                        picture_control_set_ptr->hbd_mode_decision);
+                        context_ptr->hbd_mode_decision);
 
 
             if (context_ptr->blk_geom->has_uv && txb_ptr->v_has_coeff)
@@ -1349,7 +1349,7 @@ void AV1PerformInverseTransformRecon(
                         candidate_buffer->recon_ptr->stride_cr,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cr,
                         txb_1d_offset_uv,
-                        picture_control_set_ptr->hbd_mode_decision,
+                        context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
                         PLANE_TYPE_UV,
@@ -1367,7 +1367,7 @@ void AV1PerformInverseTransformRecon(
                         chroma_tu_width,
                         chroma_tu_height,
                         PICTURE_BUFFER_DESC_Cr_FLAG,
-                        picture_control_set_ptr->hbd_mode_decision);
+                        context_ptr->hbd_mode_decision);
 
                 if (context_ptr->blk_geom->has_uv)
                     txb_1d_offset_uv += context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr];
@@ -2762,7 +2762,7 @@ void predictive_me_sub_pel_search(
 
             // Distortion
             if (use_ssd) {
-                EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
                     full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 distortion = (uint32_t) spatial_full_dist_type_fun(
@@ -3944,7 +3944,7 @@ EbErrorType av1_intra_luma_prediction(
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[md_context_ptr->tx_depth][md_context_ptr->txb_itr];
 
     PredictionMode mode;
-    if (!picture_control_set_ptr->hbd_mode_decision) {
+    if (!md_context_ptr->hbd_mode_decision) {
         uint8_t topNeighArray[64 * 2 + 1];
         uint8_t leftNeighArray[64 * 2 + 1];
 
@@ -4270,7 +4270,7 @@ void tx_type_search(
             context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
             context_ptr->transform_inner_array_ptr,
-            picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+            context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
             tx_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
@@ -4290,7 +4290,7 @@ void tx_type_search(
             &candidate_buffer->candidate_ptr->eob[0][context_ptr->txb_itr],
             &y_count_non_zero_coeffs,
             COMPONENT_LUMA,
-            picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+            context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
             tx_type,
             candidate_buffer,
             context_ptr->luma_txb_skip_context,
@@ -4317,7 +4317,7 @@ void tx_type_search(
                 candidate_buffer->recon_ptr->stride_y,
                 (int32_t*)candidate_buffer->recon_coeff_ptr->buffer_y,
                 context_ptr->txb_1d_offset,
-                picture_control_set_ptr->hbd_mode_decision,
+                context_ptr->hbd_mode_decision,
                 context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
                 tx_type,
                 PLANE_TYPE_Y,
@@ -4335,7 +4335,7 @@ void tx_type_search(
                 0,
                 0,
                 PICTURE_BUFFER_DESC_Y_FLAG,
-                picture_control_set_ptr->hbd_mode_decision);
+                context_ptr->hbd_mode_decision);
 
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
             full_distortion_kernel16_bits : spatial_full_distortion_kernel;
@@ -5787,7 +5787,7 @@ void full_loop_core(
                     (int16_t*)candidate_buffer->residual_ptr->buffer_y,
                     cuOriginIndex,
                     candidate_buffer->residual_ptr->stride_y,
-                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->bwidth,
                     context_ptr->blk_geom->bheight);
 
@@ -5820,7 +5820,7 @@ void full_loop_core(
                 (int16_t*)candidate_buffer->residual_ptr->buffer_y,
                 cuOriginIndex,
                 candidate_buffer->residual_ptr->stride_y,
-                picture_control_set_ptr->hbd_mode_decision,
+                context_ptr->hbd_mode_decision,
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight);
 
@@ -5897,7 +5897,7 @@ void full_loop_core(
                     (int16_t*)candidate_buffer->residual_ptr->buffer_cb,
                     cuChromaOriginIndex,
                     candidate_buffer->residual_ptr->stride_cb,
-                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->bwidth_uv,
                     context_ptr->blk_geom->bheight_uv);
 
@@ -5912,7 +5912,7 @@ void full_loop_core(
                     (int16_t*)candidate_buffer->residual_ptr->buffer_cr,
                     cuChromaOriginIndex,
                     candidate_buffer->residual_ptr->stride_cr,
-                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->bwidth_uv,
                     context_ptr->blk_geom->bheight_uv);
             }
@@ -6184,13 +6184,13 @@ void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu)
 {
-#if PAL_SUP  
+#if PAL_SUP
         memcpy(&dst_cu->palette_info.pmi, &src_cu->palette_info.pmi, sizeof(PaletteModeInfo));
         if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize)){
-            dst_cu->palette_info.color_idx_map = (uint8_t *)malloc(MAX_PALETTE_SQUARE);          
+            dst_cu->palette_info.color_idx_map = (uint8_t *)malloc(MAX_PALETTE_SQUARE);
             assert(dst_cu->palette_info.color_idx_map != NULL && "palette:Not-Enough-Memory");
             if(dst_cu->palette_info.color_idx_map != NULL)
-                 memcpy(dst_cu->palette_info.color_idx_map, src_cu->palette_info.color_idx_map, MAX_PALETTE_SQUARE);   
+                 memcpy(dst_cu->palette_info.color_idx_map, src_cu->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
             else
                 printf("ERROR palette:Not-Enough-Memory\n");
         }
@@ -6315,16 +6315,16 @@ void move_cu_data_redund(
 #endif
     CodingUnit *src_cu,
     CodingUnit *dst_cu){
-
+#if PAL_SUP
     dst_cu->segment_id = src_cu->segment_id;
     dst_cu->seg_id_predicted = src_cu->seg_id_predicted;
     dst_cu->ref_qp = src_cu->ref_qp;
     dst_cu->org_delta_qp = src_cu->org_delta_qp;
-#if PAL_SUP 
+
     memcpy(&dst_cu->palette_info.pmi, &src_cu->palette_info.pmi, sizeof(PaletteModeInfo));
     if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
         memcpy(dst_cu->palette_info.color_idx_map, src_cu->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
-  
+
 #endif
 #if OBMC_FLAG
     dst_cu->interp_filters = src_cu->interp_filters;
@@ -7395,7 +7395,7 @@ void search_best_independent_uv_mode(
                 (int16_t*)candidate_buffer->residual_ptr->buffer_cb,
                 cuChromaOriginIndex,
                 candidate_buffer->residual_ptr->stride_cb,
-                picture_control_set_ptr->hbd_mode_decision,
+                context_ptr->hbd_mode_decision,
                 context_ptr->blk_geom->bwidth_uv,
                 context_ptr->blk_geom->bheight_uv);
 
@@ -7410,7 +7410,7 @@ void search_best_independent_uv_mode(
                 (int16_t*)candidate_buffer->residual_ptr->buffer_cr,
                 cuChromaOriginIndex,
                 candidate_buffer->residual_ptr->stride_cr,
-                picture_control_set_ptr->hbd_mode_decision,
+                context_ptr->hbd_mode_decision,
                 context_ptr->blk_geom->bwidth_uv,
                 context_ptr->blk_geom->bheight_uv);
 
@@ -8047,7 +8047,7 @@ void md_encode_block(
             // Store the luma data for 4x* and *x4 blocks to be used for CFL
             EbPictureBufferDesc  *recon_ptr = candidate_buffer->recon_ptr;
             uint32_t rec_luma_offset = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * recon_ptr->stride_y;
-            if (picture_control_set_ptr->hbd_mode_decision) {
+            if (context_ptr->hbd_mode_decision) {
                for (uint32_t j = 0; j < context_ptr->blk_geom->bheight; ++j)
                     memcpy(context_ptr->cfl_temp_luma_recon16bit + rec_luma_offset + j* recon_ptr->stride_y, ((uint16_t *)recon_ptr->buffer_y) + (rec_luma_offset + j * recon_ptr->stride_y), sizeof(uint16_t) * context_ptr->blk_geom->bwidth);
             } else {
@@ -8448,7 +8448,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
             CodingUnit *src_cu = &context_ptr->md_cu_arr_nsq[redundant_blk_mds];
             CodingUnit *dst_cu = cu_ptr;
 #if PAL_SUP
-         
+
             move_cu_data_redund(picture_control_set_ptr, context_ptr,src_cu, dst_cu);
 #else
             move_cu_data_redund(src_cu, dst_cu);

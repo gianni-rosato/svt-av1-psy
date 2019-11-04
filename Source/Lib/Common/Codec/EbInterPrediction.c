@@ -2715,7 +2715,7 @@ void search_compound_diff_wedge(
         pred_desc.buffer_y = context_ptr->pred0;
 
         //we call the regular inter prediction path here(no compound)
-        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision](
+        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             0,//fixed interpolation filter for compound search
             context_ptr->cu_ptr,
@@ -2756,7 +2756,7 @@ void search_compound_diff_wedge(
         pred_desc.buffer_y = context_ptr->pred1;
 
         //we call the regular inter prediction path here(no compound)
-        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision](
+        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             0,//fixed interpolation filter for compound search
             context_ptr->cu_ptr,
@@ -2965,7 +2965,7 @@ void search_compound_avg_dist(
             ref_pic_list1 = (EbPictureBufferDesc*)EB_NULL;
 
 
-        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision](
+        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             0,//fixed interpolation filter for compound search
             context_ptr->cu_ptr,
@@ -7014,7 +7014,7 @@ extern void model_rd_for_sb(
     uint64_t dist_sum = 0;
     uint64_t total_sse = 0;
 
-    EbPictureBufferDesc *input_picture_ptr = md_context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_picture_ptr = bit_depth > 8 ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     const uint32_t input_offset = (md_context_ptr->cu_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y + (md_context_ptr->cu_origin_x + input_picture_ptr->origin_x);
     const uint32_t input_chroma_offset = ((md_context_ptr->cu_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_cb + (md_context_ptr->cu_origin_x + input_picture_ptr->origin_x)) / 2;
     const uint32_t prediction_offset = prediction_ptr->origin_x + md_context_ptr->blk_geom->origin_x + (prediction_ptr->origin_y + md_context_ptr->blk_geom->origin_y) * prediction_ptr->stride_y;
@@ -7143,6 +7143,7 @@ void interpolation_filter_search(
     MvUnit mv_unit,
     EbPictureBufferDesc  *ref_pic_list0,
     EbPictureBufferDesc  *ref_pic_list1,
+    uint8_t hbd_mode_decision,
     uint8_t bit_depth)
 {
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
@@ -7174,7 +7175,7 @@ void interpolation_filter_search(
         md_context_ptr
     );
 
-    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision](
+    av1_inter_prediction_function_table[hbd_mode_decision](
         picture_control_set_ptr,
         candidate_buffer_ptr->candidate_ptr->interp_filters,
         md_context_ptr->cu_ptr,
@@ -7208,7 +7209,11 @@ void interpolation_filter_search(
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
         use_uv,
+#if IFS_8BIT_MD
+        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth);
+#endif
 
     model_rd_for_sb(
         picture_control_set_ptr,
@@ -7218,7 +7223,7 @@ void interpolation_filter_search(
         num_planes - 1,
         &tmp_rate,
         &tmp_dist,
-        bit_depth);
+        hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     rd = RDCOST(full_lambda_8b, switchable_rate + tmp_rate, tmp_dist);
 
@@ -7249,7 +7254,7 @@ void interpolation_filter_search(
                         md_context_ptr
                     );
 
-                    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision](
+                    av1_inter_prediction_function_table[hbd_mode_decision](
                         picture_control_set_ptr,
                         candidate_buffer_ptr->candidate_ptr->interp_filters,
                         md_context_ptr->cu_ptr,
@@ -7283,7 +7288,11 @@ void interpolation_filter_search(
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
                         use_uv,
+#if IFS_8BIT_MD
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth);
+#endif
 
                     model_rd_for_sb(
                         picture_control_set_ptr,
@@ -7293,7 +7302,7 @@ void interpolation_filter_search(
                         num_planes - 1,
                         &tmp_rate,
                         &tmp_dist,
-                        bit_depth);
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
                     tmp_rd = RDCOST(full_lambda_8b, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
@@ -7318,7 +7327,7 @@ void interpolation_filter_search(
                         md_context_ptr
                     );
 
-                    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision](
+                    av1_inter_prediction_function_table[hbd_mode_decision](
                         picture_control_set_ptr,
                         candidate_buffer_ptr->candidate_ptr->interp_filters,
                         md_context_ptr->cu_ptr,
@@ -7352,7 +7361,11 @@ void interpolation_filter_search(
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
                         use_uv,
+#if IFS_8BIT_MD
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth);
+#endif
 
                     model_rd_for_sb(
                         picture_control_set_ptr,
@@ -7362,7 +7375,7 @@ void interpolation_filter_search(
                         num_planes - 1,
                         &tmp_rate,
                         &tmp_dist,
-                        bit_depth);
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
                     tmp_rd = RDCOST(full_lambda_8b, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
@@ -7390,7 +7403,7 @@ void interpolation_filter_search(
                         md_context_ptr
                     );
 
-                    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision](
+                    av1_inter_prediction_function_table[hbd_mode_decision](
                         picture_control_set_ptr,
                         candidate_buffer_ptr->candidate_ptr->interp_filters,
                         md_context_ptr->cu_ptr,
@@ -7424,7 +7437,11 @@ void interpolation_filter_search(
                         md_context_ptr->blk_geom->origin_x,
                         md_context_ptr->blk_geom->origin_y,
                         use_uv,
+#if IFS_8BIT_MD
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                         (uint8_t)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth);
+#endif
 
                     model_rd_for_sb(
                         picture_control_set_ptr,
@@ -7434,7 +7451,7 @@ void interpolation_filter_search(
                         num_planes - 1,
                         &tmp_rate,
                         &tmp_dist,
-                        bit_depth);
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
                     tmp_rd = RDCOST(full_lambda_8b, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
@@ -7482,7 +7499,7 @@ EbErrorType inter_pu_prediction_av1(
         else
             ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
 
-        av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision](
+        av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
             md_context_ptr->cu_ptr,
@@ -7591,14 +7608,27 @@ EbErrorType inter_pu_prediction_av1(
         return return_error;
     }
 
+
     if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_OFF)
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
     else {
+
         if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
             uint16_t capped_size = md_context_ptr->interpolation_filter_search_blk_size == 0 ? 4 :
                                    md_context_ptr->interpolation_filter_search_blk_size == 1 ? 8 : 16 ;
 
             if (md_context_ptr->blk_geom->bwidth > capped_size && md_context_ptr->blk_geom->bheight > capped_size)
+#if IFS_8BIT_MD
+            {
+                if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD) {
+
+                    if (ref_idx_l0 >= 0)
+                        ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
+
+                    if (ref_idx_l1 >= 0)
+                        ref_pic_list1 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
+                }
+#endif
                 interpolation_filter_search(
                     picture_control_set_ptr,
                     candidate_buffer_ptr->prediction_ptr_temp,
@@ -7607,7 +7637,18 @@ EbErrorType inter_pu_prediction_av1(
                     mv_unit,
                     ref_pic_list0,
                     ref_pic_list1,
+                    md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: md_context_ptr->hbd_mode_decision,
                     bit_depth);
+#if IFS_8BIT_MD
+                if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD) {
+                    if (ref_idx_l0 >= 0)
+                        ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit;
+
+                    if (ref_idx_l1 >= 0)
+                        ref_pic_list1 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture16bit;
+                }
+            }
+#endif
         }
     }
 
@@ -7627,7 +7668,7 @@ EbErrorType inter_pu_prediction_av1(
 
     }
 
-    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision](
+    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision > EB_8_BIT_MD](
         picture_control_set_ptr,
         candidate_buffer_ptr->candidate_ptr->interp_filters,
         md_context_ptr->cu_ptr,

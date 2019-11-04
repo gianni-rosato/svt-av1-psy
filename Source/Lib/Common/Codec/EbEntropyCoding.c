@@ -6705,7 +6705,7 @@ assert(bsize < BlockSizeS_ALL);
 
 #if PAL_SUP
     if (svt_av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->palette_mode, blk_geom->bsize)) {
-        assert(cu_ptr->palette_info.color_idx_map != NULL && "free palette:Null");     
+        assert(cu_ptr->palette_info.color_idx_map != NULL && "free palette:Null");
         free(cu_ptr->palette_info.color_idx_map);
         cu_ptr->palette_info.color_idx_map = NULL;
     }

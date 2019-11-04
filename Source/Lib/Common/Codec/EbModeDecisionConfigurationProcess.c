@@ -2129,6 +2129,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         picture_control_set_ptr->pic_filter_intra_mode = picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->temporal_layer_index == 0 ? 1 : 0;
     else
         picture_control_set_ptr->pic_filter_intra_mode = 0;
+
 #endif
     return return_error;
 }

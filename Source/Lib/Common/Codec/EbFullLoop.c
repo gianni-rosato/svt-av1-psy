@@ -1392,6 +1392,7 @@ int32_t av1_quantize_inv_quantize(
 #else
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
 #endif
+
     perform_rdoq = perform_rdoq && !picture_control_set_ptr->hbd_mode_decision && !bit_increment;
 
     // Hsan: set to FALSE until adding x86 quantize_fp
@@ -1543,7 +1544,7 @@ void product_full_loop(
             context_ptr->blk_geom->txsize[tx_depth][txb_itr],
             &context_ptr->three_quad_energy,
             context_ptr->transform_inner_array_ptr,
-            picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+            context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
             candidate_buffer->candidate_ptr->transform_type[txb_itr],
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
@@ -1565,7 +1566,7 @@ void product_full_loop(
             &candidate_buffer->candidate_ptr->eob[0][txb_itr],
             &(y_count_non_zero_coeffs[txb_itr]),
             COMPONENT_LUMA,
-            picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+            context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
             candidate_buffer->candidate_ptr->transform_type[txb_itr],
             candidate_buffer,
             context_ptr->luma_txb_skip_context,
@@ -1588,7 +1589,7 @@ void product_full_loop(
                     candidate_buffer->recon_ptr->stride_y,
                     (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                     txb_1d_offset,
-                    picture_control_set_ptr->hbd_mode_decision,
+                    context_ptr->hbd_mode_decision,
                     context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                     candidate_buffer->candidate_ptr->transform_type[txb_itr],
                     PLANE_TYPE_Y,
@@ -1606,10 +1607,10 @@ void product_full_loop(
                     0,
                     0,
                     PICTURE_BUFFER_DESC_Y_FLAG,
-                    picture_control_set_ptr->hbd_mode_decision);
+                    context_ptr->hbd_mode_decision);
             }
 
-            EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
+            EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
                 full_distortion_kernel16_bits :
                 spatial_full_distortion_kernel;
 
@@ -1853,7 +1854,7 @@ void product_full_loop_tx_search(
                 context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
                 context_ptr->transform_inner_array_ptr,
-                picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 tx_type,
                 PLANE_TYPE_Y,
                 context_ptr->pf_md_mode);
@@ -1876,7 +1877,7 @@ void product_full_loop_tx_search(
                 &candidate_buffer->candidate_ptr->eob[0][txb_itr],
                 &yCountNonZeroCoeffsTemp,
                 COMPONENT_LUMA,
-                picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 tx_type,
                 candidate_buffer,
                 context_ptr->luma_txb_skip_context,
@@ -1901,7 +1902,7 @@ void product_full_loop_tx_search(
                         candidate_buffer->recon_ptr->stride_y,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_y,
                         tu_origin_index,
-                        picture_control_set_ptr->hbd_mode_decision,
+                        context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize[tx_depth][txb_itr],
                         tx_type,
                         PLANE_TYPE_Y,
@@ -1919,13 +1920,13 @@ void product_full_loop_tx_search(
                         0,
                         0,
                         PICTURE_BUFFER_DESC_Y_FLAG,
-                        picture_control_set_ptr->hbd_mode_decision);
+                        context_ptr->hbd_mode_decision);
 
-                EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr->hbd_mode_decision ?
+                EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision ?
                     picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
                 uint32_t input_tu_origin_index = (context_ptr->sb_origin_x + txb_origin_x + input_picture_ptr->origin_x) + ((context_ptr->sb_origin_y + txb_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y);
 
-                EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
                     full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 tuFullDistortion[0][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
@@ -2556,7 +2557,7 @@ void full_loop_r(
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
                 context_ptr->transform_inner_array_ptr,
-                picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -2578,7 +2579,7 @@ void full_loop_r(
                 &candidate_buffer->candidate_ptr->eob[1][txb_itr],
                 &(cb_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CB,
-                picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
 #if RDOQ_CHROMA
@@ -2606,7 +2607,7 @@ void full_loop_r(
                         candidate_buffer->recon_ptr->stride_cb,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cb,
                         txb_1d_offset,
-                        picture_control_set_ptr->hbd_mode_decision,
+                        context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
                         PLANE_TYPE_UV,
@@ -2624,7 +2625,7 @@ void full_loop_r(
                         context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                         context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
                         PICTURE_BUFFER_DESC_Cb_FLAG,
-                        picture_control_set_ptr->hbd_mode_decision);
+                        context_ptr->hbd_mode_decision);
             }
         }
 
@@ -2644,7 +2645,7 @@ void full_loop_r(
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
                 context_ptr->transform_inner_array_ptr,
-                picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -2666,7 +2667,7 @@ void full_loop_r(
                 &candidate_buffer->candidate_ptr->eob[2][txb_itr],
                 &(cr_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CR,
-                picture_control_set_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
 #if RDOQ_CHROMA
@@ -2694,7 +2695,7 @@ void full_loop_r(
                         candidate_buffer->recon_ptr->stride_cr,
                         (int32_t*) candidate_buffer->recon_coeff_ptr->buffer_cr,
                         txb_1d_offset,
-                        picture_control_set_ptr->hbd_mode_decision,
+                        context_ptr->hbd_mode_decision,
                         context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                         candidate_buffer->candidate_ptr->transform_type_uv,
                         PLANE_TYPE_UV,
@@ -2712,7 +2713,7 @@ void full_loop_r(
                         context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
                         context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
                         PICTURE_BUFFER_DESC_Cr_FLAG,
-                        picture_control_set_ptr->hbd_mode_decision);
+                        context_ptr->hbd_mode_decision);
             }
         }
 
@@ -2786,7 +2787,7 @@ void cu_full_distortion_fast_tu_mode_r(
                 uint32_t input_chroma_tu_origin_index = (((context_ptr->sb_origin_y + ((txb_origin_y >> 3) << 3)) >> 1) + (input_picture_ptr->origin_y >> 1)) * input_picture_ptr->stride_cb + (((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1) + (input_picture_ptr->origin_x >> 1));
                 uint32_t tu_uv_origin_index = (((txb_origin_x >> 3) << 3) + (((txb_origin_y >> 3) << 3) * candidate_buffer->residual_quant_coeff_ptr->stride_cb)) >> 1;
 
-                EbSpatialFullDistType spatial_full_dist_type_fun = picture_control_set_ptr->hbd_mode_decision ?
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
                     full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 tuFullDistortion[1][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(

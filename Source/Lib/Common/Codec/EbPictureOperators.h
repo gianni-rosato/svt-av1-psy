@@ -264,7 +264,7 @@ extern "C" {
         uint32_t                   chroma_area_width,
         uint32_t                   chroma_area_height,
         uint32_t                   component_mask,
-        EbBool                     hbd);
+        uint8_t                    hbd);
 
 #ifdef __cplusplus
 }

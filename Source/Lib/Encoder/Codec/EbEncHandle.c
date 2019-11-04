@@ -2664,7 +2664,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->hme_level2_search_area_in_width_array[1] = 1;
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
-    config_ptr->enable_hbd_mode_decision = EB_TRUE;
+    config_ptr->enable_hbd_mode_decision = 1;
     config_ptr->constrained_intra = EB_FALSE;
     config_ptr->enable_palette = -1;
     // Bitstream options
