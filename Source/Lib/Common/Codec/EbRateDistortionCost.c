@@ -1568,7 +1568,28 @@ void two_pass_cost_update(
     ModeDecisionCandidate *candidate_ptr,
     uint32_t              *rate,
     uint64_t              *distortion) {
-    
+
+    MvReferenceFrame ref_type[2];
+    av1_set_ref_frame(ref_type, candidate_ptr->ref_frame_type);
+    if ((candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME || ref_type[1] != BWDREF_FRAME)) ||
+        (!candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME && ref_type[0] != BWDREF_FRAME))) {
+        *rate += (*rate) * FIRST_PASS_COST_PENALTY / 100;
+        *distortion += (*distortion) * FIRST_PASS_COST_PENALTY / 100;
+    }
+    EbReferenceObject  *refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+    if (picture_control_set_ptr->slice_type == B_SLICE &&
+        (candidate_ptr->is_compound || ref_type[0] == BWDREF_FRAME) &&
+        (refObjL1->slice_type == I_SLICE && refObjL1->ref_poc > picture_control_set_ptr->picture_number)) {
+        *rate += (*rate * 2);
+        *distortion += (*distortion) * 2;
+    }
+}
+void two_pass_cost_update_64bit(
+    PictureControlSet     *picture_control_set_ptr,
+    ModeDecisionCandidate *candidate_ptr,
+    uint64_t              *rate,
+    uint64_t              *distortion) {
+
     MvReferenceFrame ref_type[2];
     av1_set_ref_frame(ref_type, candidate_ptr->ref_frame_type);
     if ((candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME || ref_type[1] != BWDREF_FRAME)) ||
@@ -2229,7 +2250,7 @@ EbErrorType Av1FullCost(
 #if TWO_PASS
     if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->use_output_stat_file && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
 #if TWO_PASS_IMPROVEMENT
-        two_pass_cost_update(
+        two_pass_cost_update_64bit(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr,
             &rate,
