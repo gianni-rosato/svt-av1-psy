@@ -373,13 +373,10 @@ typedef struct EbSvtAv1EncConfiguration
      * Default is 0. */
     uint32_t                 level;
 
-    /* Assembly instruction set used by encoder.
-    *
-    * 0 = non-AVX2, C only.
-    * 1 = up to AVX512, auto-select highest assembly instruction set supported.
-    *
-    * Default is 1. */
-    uint32_t                 asm_type;
+    /* CPU FLAGS to limit assembly instruction set used by encoder.
+    * Default is CPU_FLAGS_ALL. */
+    CPU_FLAGS            use_cpu_flags;
+
     // Application Specific parameters
 
     /* ID assigned to each channel when multiple instances are running within the

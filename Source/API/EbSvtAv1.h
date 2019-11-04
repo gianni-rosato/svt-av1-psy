@@ -271,6 +271,29 @@ typedef struct EbTimingInfo {
 
 } EbTimingInfo;
 
+/**
+CPU FLAGS
+*/
+typedef uint64_t CPU_FLAGS;
+#define CPU_FLAGS_MMX        (1 << 0)
+#define CPU_FLAGS_SSE        (1 << 1)
+#define CPU_FLAGS_SSE2       (1 << 2)
+#define CPU_FLAGS_SSE3       (1 << 3)
+#define CPU_FLAGS_SSSE3      (1 << 4)
+#define CPU_FLAGS_SSE4_1     (1 << 5)
+#define CPU_FLAGS_SSE4_2     (1 << 6)
+#define CPU_FLAGS_AVX        (1 << 7)
+#define CPU_FLAGS_AVX2       (1 << 8)
+#define CPU_FLAGS_AVX512F    (1 << 9)
+#define CPU_FLAGS_AVX512CD   (1 << 10)
+#define CPU_FLAGS_AVX512DQ   (1 << 11)
+#define CPU_FLAGS_AVX512ER   (1 << 12)
+#define CPU_FLAGS_AVX512PF   (1 << 13)
+#define CPU_FLAGS_AVX512BW   (1 << 14)
+#define CPU_FLAGS_AVX512VL   (1 << 15)
+#define CPU_FLAGS_ALL        (( CPU_FLAGS_AVX512VL << 1 ) - 1)
+#define CPU_FLAGS_INVALID    (1ULL << (sizeof(CPU_FLAGS) * 8ULL - 1ULL))
+
 
 #ifdef __cplusplus
 }

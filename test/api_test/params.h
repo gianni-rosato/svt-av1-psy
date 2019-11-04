@@ -829,15 +829,29 @@ static const vector<uint32_t> invalid_level = {
  * 1 = up to AVX512, auto-select highest assembly instruction set supported.
  *
  * Default is 1. */
-static const vector<uint32_t> default_asm_type = {
-    1,
+static const vector<CPU_FLAGS> default_use_cpu_flags = {
+    CPU_FLAGS_ALL,
 };
-static const vector<uint32_t> valid_asm_type = {
-    0,
-    1,
+static const vector<CPU_FLAGS> valid_use_cpu_flags = {
+    CPU_FLAGS_MMX,
+    CPU_FLAGS_SSE,
+    CPU_FLAGS_SSE2,
+    CPU_FLAGS_SSE3,
+    CPU_FLAGS_SSSE3,
+    CPU_FLAGS_SSE4_1,
+    CPU_FLAGS_SSE4_2,
+    CPU_FLAGS_AVX,
+    CPU_FLAGS_AVX2,
+    CPU_FLAGS_AVX512F,
+    CPU_FLAGS_AVX512CD,
+    CPU_FLAGS_AVX512DQ,
+    CPU_FLAGS_AVX512ER,
+    CPU_FLAGS_AVX512PF,
+    CPU_FLAGS_AVX512BW,
+    CPU_FLAGS_AVX512VL,
 };
-static const vector<uint32_t> invalid_asm_type = {
-    2,
+static const vector<CPU_FLAGS> invalid_use_cpu_flags = {
+    CPU_FLAGS_INVALID
 };
 
 // Application Specific parameters

@@ -37,6 +37,27 @@
 #include "EbMeSadCalculation.h"
 #include "EbAvcStyleMcp.h"
 
+/*
+ * DSP deprecated flags
+ */
+#define HAS_MMX CPU_FLAGS_MMX
+#define HAS_SSE CPU_FLAGS_SSE
+#define HAS_SSE2 CPU_FLAGS_SSE2
+#define HAS_SSE3 CPU_FLAGS_SSE3
+#define HAS_SSSE3 CPU_FLAGS_SSSE3
+#define HAS_SSE4_1 CPU_FLAGS_SSE4_1
+#define HAS_SSE4_2 CPU_FLAGS_SSE4_2
+#define HAS_AVX CPU_FLAGS_AVX
+#define HAS_AVX2 CPU_FLAGS_AVX2
+#define HAS_AVX512F CPU_FLAGS_AVX512F
+#define HAS_AVX512CD CPU_FLAGS_AVX512CD
+#define HAS_AVX512DQ CPU_FLAGS_AVX512DQ
+#define HAS_AVX512ER CPU_FLAGS_AVX512ER
+#define HAS_AVX512PF CPU_FLAGS_AVX512PF
+#define HAS_AVX512BW CPU_FLAGS_AVX512BW
+#define HAS_AVX512VL CPU_FLAGS_AVX512VL
+
+
  /**************************************
  * Instruction Set Support
  **************************************/
@@ -70,7 +91,7 @@ static INLINE int32_t CheckXcr0Ymm()
     return ((xcr0 & 6) == 6); /* checking if xmm and ymm state are enabled in XCR0 */
 }
 
-int32_t Check4thGenIntelCoreFeatures()
+static int32_t Check4thGenIntelCoreFeatures()
 {
     int32_t abcd[4];
     int32_t fma_movbe_osxsave_mask = ((1 << 12) | (1 << 22) | (1 << 27));
@@ -111,7 +132,7 @@ static INLINE int CheckXcr0Zmm()
     return ((xcr0 & zmm_ymm_xmm) == zmm_ymm_xmm); /* check if xmm, ymm and zmm state are enabled in XCR0 */
 }
 
-int32_t CanUseIntelAVX512()
+static int32_t CanUseIntelAVX512()
 {
     int abcd[4];
 
@@ -142,6 +163,37 @@ int32_t CanUseIntelAVX512()
     return 1;
 }
 
+CPU_FLAGS get_cpu_flags() {
+    CPU_FLAGS flags = 0;
+
+    /* To detail tests CPU features, requires more accurate implementation.
+        Documentation help:
+        https://docs.microsoft.com/en-us/cpp/intrinsics/cpuid-cpuidex?redirectedfrom=MSDN&view=vs-2019
+    */
+
+    if (Check4thGenIntelCoreFeatures()) {
+        flags |= CPU_FLAGS_MMX | CPU_FLAGS_SSE | CPU_FLAGS_SSE2
+              | CPU_FLAGS_SSE3 | CPU_FLAGS_SSSE3 | CPU_FLAGS_SSE4_1
+              | CPU_FLAGS_SSE4_2 | CPU_FLAGS_AVX | CPU_FLAGS_AVX2;
+    }
+
+    if (CanUseIntelAVX512()) {
+        flags |= CPU_FLAGS_AVX512F | CPU_FLAGS_AVX512DQ | CPU_FLAGS_AVX512CD
+              | CPU_FLAGS_AVX512BW | CPU_FLAGS_AVX512VL;
+    }
+
+    return flags;
+}
+
+CPU_FLAGS get_cpu_flags_to_use() {
+    CPU_FLAGS flags = get_cpu_flags();
+#ifdef NON_AVX512_SUPPORT
+    /* Remove AVX512 flags. */
+    flags &= (CPU_FLAGS_AVX512F - 1);
+#endif
+    return flags;
+}
+
 #ifndef NON_AVX512_SUPPORT
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
 do { ptr = c;\
@@ -154,7 +206,7 @@ do { ptr = c;\
     if (((uintptr_t)NULL != (uintptr_t)sse4_2) && (flags & HAS_SSE4_2)) ptr = sse4_2; \
     if (((uintptr_t)NULL != (uintptr_t)avx) && (flags & HAS_AVX)) ptr = avx; \
     if (((uintptr_t)NULL != (uintptr_t)avx2) && (flags & HAS_AVX2)) ptr = avx2; \
-    if (((uintptr_t)NULL != (uintptr_t)avx512) && use_avx512) ptr = avx512; \
+    if (((uintptr_t)NULL != (uintptr_t)avx512) && (flags & HAS_AVX512F)) ptr = avx512; \
 } while(0)
 #else
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
@@ -182,17 +234,11 @@ do { ptr = c;\
 #define SET_AVX2_AVX512(ptr, c, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, avx512)
 
 
-void setup_rtcd_internal(EbAsm asm_type)
+void setup_rtcd_internal(CPU_FLAGS flags)
 {
-    int32_t flags = HAS_MMX | HAS_SSE | HAS_SSE2 | HAS_SSE3 | HAS_SSSE3 | HAS_SSE4_1 | HAS_SSE4_2 | HAS_AVX;
-#ifndef NON_AVX512_SUPPORT
-    int32_t use_avx512 = CanUseIntelAVX512();
-#endif
-
-    if (asm_type == ASM_AVX2)
-        flags |= HAS_AVX2;
-    //if (asm_type == ASM_NON_AVX2)
-    //    flags = ~HAS_AVX2;
+    /** Should be done during library initialization,
+        but for safe limiting cpu flags again. */
+    flags &= get_cpu_flags_to_use();
 
     //to use C: flags=0
 
@@ -263,7 +309,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx2;
     eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx2; // It has no c version, and is only called in parent avx2 function, so it's safe to initialize to avx2 version.
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
         eb_av1_compute_stats = eb_av1_compute_stats_avx512;
         eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
@@ -369,7 +415,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_16x4 = eb_av1_inv_txfm2d_add_16x4_sse4_1;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_avx512;
         eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_avx512;
         eb_av1_inv_txfm2d_add_64x64 = eb_av1_inv_txfm2d_add_64x64_avx512;
@@ -460,7 +506,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_8x8 = eb_aom_highbd_smooth_v_predictor_8x8_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_smooth_v_predictor_32x8 = aom_highbd_smooth_v_predictor_32x8_avx512;
         eb_aom_highbd_smooth_v_predictor_32x16 = aom_highbd_smooth_v_predictor_32x16_avx512;
         eb_aom_highbd_smooth_v_predictor_32x32 = aom_highbd_smooth_v_predictor_32x32_avx512;
@@ -1041,7 +1087,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     eb_av1_txb_init_levels = eb_av1_txb_init_levels_c;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_sad64x128 = eb_aom_sad64x128_avx512;
         eb_aom_sad64x16 = eb_aom_sad64x16_avx512;
         eb_aom_sad64x32 = eb_aom_sad64x32_avx512;
@@ -1292,7 +1338,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     eb_av1_fwd_txfm2d_32x32 = Av1TransformTwoD_32x32_c;
     eb_av1_fwd_txfm2d_16x16 = Av1TransformTwoD_16x16_c;
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_av1_fwd_txfm2d_64x64 = av1_fwd_txfm2d_64x64_avx512;
         eb_av1_fwd_txfm2d_32x32 = av1_fwd_txfm2d_32x32_avx512;
         eb_av1_fwd_txfm2d_16x16 = av1_fwd_txfm2d_16x16_avx512;
@@ -1365,7 +1411,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_v_predictor_32x8 = aom_highbd_v_predictor_32x8_avx512;
         eb_aom_highbd_v_predictor_32x16 = aom_highbd_v_predictor_32x16_avx512;
         eb_aom_highbd_v_predictor_32x32 = aom_highbd_v_predictor_32x32_avx512;
@@ -1419,7 +1465,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_8x8 = eb_aom_highbd_smooth_predictor_8x8_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_smooth_predictor_32x8 = aom_highbd_smooth_predictor_32x8_avx512;
         eb_aom_highbd_smooth_predictor_32x16 = aom_highbd_smooth_predictor_32x16_avx512;
         eb_aom_highbd_smooth_predictor_32x32 = aom_highbd_smooth_predictor_32x32_avx512;
@@ -1473,7 +1519,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_8x8 = eb_aom_highbd_smooth_h_predictor_8x8_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_smooth_h_predictor_32x8 = aom_highbd_smooth_h_predictor_32x8_avx512;
         eb_aom_highbd_smooth_h_predictor_32x16 = aom_highbd_smooth_h_predictor_32x16_avx512;
         eb_aom_highbd_smooth_h_predictor_32x32 = aom_highbd_smooth_h_predictor_32x32_avx512;
@@ -1568,7 +1614,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_8x8 = eb_aom_highbd_dc_left_predictor_8x8_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_dc_left_predictor_32x8 = aom_highbd_dc_left_predictor_32x8_avx512;
         eb_aom_highbd_dc_left_predictor_32x16 = aom_highbd_dc_left_predictor_32x16_avx512;
         eb_aom_highbd_dc_left_predictor_32x32 = aom_highbd_dc_left_predictor_32x32_avx512;
@@ -1621,7 +1667,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x32 = eb_aom_highbd_dc_predictor_8x32_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_dc_predictor_32x8 = aom_highbd_dc_predictor_32x8_avx512;
         eb_aom_highbd_dc_predictor_32x16 = aom_highbd_dc_predictor_32x16_avx512;
         eb_aom_highbd_dc_predictor_32x32 = aom_highbd_dc_predictor_32x32_avx512;
@@ -1673,7 +1719,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_dc_top_predictor_32x8 = aom_highbd_dc_top_predictor_32x8_avx512;
         eb_aom_highbd_dc_top_predictor_32x16 = aom_highbd_dc_top_predictor_32x16_avx512;
         eb_aom_highbd_dc_top_predictor_32x32 = aom_highbd_dc_top_predictor_32x32_avx512;
@@ -1726,7 +1772,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_sse2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (CanUseIntelAVX512()) {
+    if (flags & HAS_AVX512F) {
         eb_aom_highbd_h_predictor_32x16 = aom_highbd_h_predictor_32x16_avx512;
         eb_aom_highbd_h_predictor_32x32 = aom_highbd_h_predictor_32x32_avx512;
         eb_aom_highbd_h_predictor_32x64 = aom_highbd_h_predictor_32x64_avx512;

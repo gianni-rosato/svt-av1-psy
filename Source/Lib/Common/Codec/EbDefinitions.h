@@ -2389,15 +2389,6 @@ static const uint8_t QP_OFFSET_WEIGHT[3][4] = { // [Slice Type][QP Offset Weight
     { 9, 8, 7, 6 },
     { 10, 9, 8, 7 }
 };
-/** Assembly Types
-*/
-typedef enum EbAsm
-{
-    ASM_NON_AVX2,
-    ASM_AVX2,
-    ASM_TYPE_TOTAL,
-    ASM_TYPE_INVALID = ~0
-} EbAsm;
 
 #if PAL_SUP
 #define  MAX_PAL_CAND   14

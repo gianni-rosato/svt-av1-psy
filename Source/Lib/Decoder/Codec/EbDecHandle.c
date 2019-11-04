@@ -73,27 +73,6 @@ void SwitchToRealTime(){
 #endif
 }
 
-static int32_t can_use_intel_core_4th_gen_features()
-{
-    static int32_t the_4th_gen_features_available = -1;
-    /* test is performed once */
-    if (the_4th_gen_features_available < 0)
-        the_4th_gen_features_available = Check4thGenIntelCoreFeatures();
-    return the_4th_gen_features_available;
-}
-
-static EbAsm get_cpu_asm_type()
-{
-    EbAsm asm_type = ASM_NON_AVX2;
-
-    if (can_use_intel_core_4th_gen_features() == 1)
-        asm_type = ASM_AVX2;
-    else
-        // Need to change to support lower CPU Technologies
-        asm_type = ASM_NON_AVX2;
-    return asm_type;
-}
-
 /***********************************
 * Decoder Library Handle Constructor
 ************************************/
@@ -361,7 +340,6 @@ EbErrorType eb_svt_dec_set_default_parameter(
     config_ptr->max_picture_height = 0;
     config_ptr->max_bit_depth = EB_EIGHT_BIT;
     config_ptr->max_color_format = EB_YUV420;
-    config_ptr->asm_type = 0;
     config_ptr->threads = 1;
 
     // Application Specific parameters
@@ -477,6 +455,7 @@ EB_API EbErrorType eb_init_decoder(
         return EB_ErrorBadParameter;
 
     EbDecHandle     *dec_handle_ptr = (EbDecHandle   *)svt_dec_component->p_component_private;
+    CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
 
     dec_handle_ptr->dec_cnt = -1;
     dec_handle_ptr->num_frms_prll   = 1;
@@ -490,8 +469,7 @@ EB_API EbErrorType eb_init_decoder(
     dec_handle_ptr->show_frame          = 0;
     dec_handle_ptr->showable_frame      = 0;
 
-    dec_handle_ptr->dec_config.asm_type = get_cpu_asm_type();
-    setup_rtcd_internal(dec_handle_ptr->dec_config.asm_type);
+    setup_rtcd_internal(cpu_flags);
     asmSetConvolveAsmTable();
 
     init_intra_dc_predictors_c_internal();

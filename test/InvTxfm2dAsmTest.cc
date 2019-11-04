@@ -214,10 +214,10 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         aom_clear_system_state();
     }
 
-    void run_sqr_txfm_match_test(const TxSize tx_size, int asm_type) {
+    void run_sqr_txfm_match_test(const TxSize tx_size, int is_asm_kernel) {
         const int width = tx_size_wide[tx_size];
         const int height = tx_size_high[tx_size];
-        InvSqrTxfmFuncPair pair = (asm_type == 0)
+        InvSqrTxfmFuncPair pair = (is_asm_kernel == 0)
                                       ? inv_txfm_c_avx2_func_pairs[tx_size]
                                       : inv_txfm_c_sse4_1_func_pairs[tx_size];
         if (pair.ref_func == nullptr || pair.test_func == nullptr)
@@ -252,7 +252,8 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                  output_test_,
                                  height * stride_ * sizeof(output_test_[0])))
                     << "loop: " << k << " tx_type: " << tx_type
-                    << " tx_size: " << tx_size << " asm_type: " << asm_type;
+                    << " tx_size: " << tx_size
+                    << " is_asm_kernel: " << is_asm_kernel;
             }
         }
     }
@@ -644,11 +645,10 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 };
 
 TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
-    for (int asm_type = 0; asm_type < 2; ++asm_type) {
-        for (int i = TX_4X4; i <= TX_64X64; i++) {
-            const TxSize tx_size = static_cast<TxSize>(i);
-            run_sqr_txfm_match_test(tx_size, asm_type);
-        }
+    for (int i = TX_4X4; i <= TX_64X64; i++) {
+        const TxSize tx_size = static_cast<TxSize>(i);
+        run_sqr_txfm_match_test(tx_size, 0);
+        run_sqr_txfm_match_test(tx_size, 1);
     }
 }
 

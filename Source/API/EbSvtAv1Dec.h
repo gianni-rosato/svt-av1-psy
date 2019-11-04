@@ -103,13 +103,6 @@ typedef struct EbSvtAv1DecConfiguration
 
     EbColorFormat           max_color_format;
 
-    /* Assembly instruction set used by encoder.
-    *
-    * 0 = non-AVX2, C only.
-    * 1 = up to AVX512, auto-select highest assembly instruction set supported.
-    *
-    * Default is 1. */
-    uint32_t                 asm_type;
     // Application Specific parameters
 
     /* Number of threads used by decoder.

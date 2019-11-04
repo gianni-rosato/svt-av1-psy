@@ -313,7 +313,36 @@ static void SetInjectorFrameRate                (const char *value, EbConfig *cf
         cfg->injector_frame_rate = cfg->injector_frame_rate << 16;
 }
 static void SetLatencyMode                      (const char *value, EbConfig *cfg)  {cfg->latency_mode               = (uint8_t)strtol(value, NULL, 0);};
-static void SetAsmType                          (const char *value, EbConfig *cfg)  {cfg->asm_type                   = (uint32_t)strtoul(value, NULL, 0);};
+static void SetAsmType                          (const char *value, EbConfig *cfg)  {
+    const struct {
+        char *name;
+        CPU_FLAGS flags;
+    } param_maps[] ={
+        {"c",       0},                             {"0",  0},
+        {"mmx",     (CPU_FLAGS_MMX << 1) - 1},      {"1",  (CPU_FLAGS_MMX << 1) - 1},
+        {"sse",     (CPU_FLAGS_SSE << 1) - 1},      {"2",  (CPU_FLAGS_SSE << 1) - 1},
+        {"sse2",    (CPU_FLAGS_SSE2 << 1) - 1},     {"3",  (CPU_FLAGS_SSE2 << 1) - 1},
+        {"sse3",    (CPU_FLAGS_SSE3 << 1) - 1},     {"4",  (CPU_FLAGS_SSE3 << 1) - 1},
+        {"ssse3",   (CPU_FLAGS_SSSE3 << 1) - 1},    {"5",  (CPU_FLAGS_SSSE3 << 1) - 1},
+        {"sse4_1",  (CPU_FLAGS_SSE4_1 << 1) - 1},   {"6",  (CPU_FLAGS_SSE4_1 << 1) - 1},
+        {"sse4_2",  (CPU_FLAGS_SSE4_2 << 1) - 1},   {"7",  (CPU_FLAGS_SSE4_2 << 1) - 1},
+        {"avx",     (CPU_FLAGS_AVX << 1) - 1},      {"8",  (CPU_FLAGS_AVX << 1) - 1},
+        {"avx2",    (CPU_FLAGS_AVX2 << 1) - 1},     {"9",  (CPU_FLAGS_AVX2 << 1) - 1},
+        {"avx512",  (CPU_FLAGS_AVX512VL << 1) - 1}, {"10", (CPU_FLAGS_AVX512VL << 1) - 1},
+        {"max",     CPU_FLAGS_ALL},                 {"11", CPU_FLAGS_ALL},
+    };
+    const uint32_t para_map_size = sizeof(param_maps) / sizeof(param_maps[0]);
+    uint32_t i;
+
+    for (i = 0; i < para_map_size; ++i) {
+        if (EB_STRCMP(value, param_maps[i].name) == 0) {
+            cfg->cpu_flags_limit = param_maps[i].flags;
+            return;
+        }
+    }
+
+    cfg->cpu_flags_limit = CPU_FLAGS_INVALID;
+};
 static void SetLogicalProcessors                (const char *value, EbConfig *cfg)  {cfg->logical_processors         = (uint32_t)strtoul(value, NULL, 0);};
 static void SetTargetSocket                     (const char *value, EbConfig *cfg)  {cfg->target_socket              = (int32_t)strtol(value, NULL, 0);};
 static void SetUnrestrictedMotionVector         (const char *value, EbConfig *cfg)  {cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);};
@@ -468,7 +497,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, LATENCY_MODE, "LatencyMode", SetLatencyMode },
     { SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", SetCfgFilmGrain },
     // Asm Type
-    { SINGLE_INPUT, ASM_TYPE_TOKEN, "AsmType", SetAsmType },
+    { SINGLE_INPUT, ASM_TYPE_TOKEN, "Asm", SetAsmType },
     // HME
     { ARRAY_INPUT,HME_LEVEL0_WIDTH, "HmeLevel0SearchAreaInWidth", SetHmeLevel0SearchAreaInWidthArray },
     { ARRAY_INPUT,HME_LEVEL0_HEIGHT, "HmeLevel0SearchAreaInHeight", SetHmeLevel0SearchAreaInHeightArray },
@@ -556,7 +585,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->injector_frame_rate                    = 60 << 16;
 
     // ASM Type
-    config_ptr->asm_type                              = 1;
+    config_ptr->cpu_flags_limit                         = CPU_FLAGS_ALL;
 
     config_ptr->target_socket                         = -1;
 

@@ -39,21 +39,6 @@
 #define UNLIKELY(v) (v)
 #endif
 
-
-/*
- * DSP
- */
-
-#define HAS_MMX 0x01
-#define HAS_SSE 0x02
-#define HAS_SSE2 0x04
-#define HAS_SSE3 0x08
-#define HAS_SSSE3 0x10
-#define HAS_SSE4_1 0x20
-#define HAS_AVX 0x40
-#define HAS_AVX2 0x80
-#define HAS_SSE4_2 0x100
-
  /**************************************
  * Instruction Set Support
  **************************************/
@@ -68,9 +53,9 @@ extern "C" {
 #endif
 
     // Helper Functions
-    int32_t Check4thGenIntelCoreFeatures();
-    int32_t CanUseIntelAVX512();
-    void setup_rtcd_internal(EbAsm asm_type);
+    CPU_FLAGS get_cpu_flags();
+    CPU_FLAGS get_cpu_flags_to_use();
+    void setup_rtcd_internal(CPU_FLAGS flags);
 
     //to not include convolve.h, just forward declare what's needed.
     struct ConvolveParams;

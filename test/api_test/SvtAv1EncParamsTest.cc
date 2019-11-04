@@ -374,9 +374,9 @@ PARAM_TEST(EncParamTierTest);
 DEFINE_PARAM_TEST_CLASS(EncParamLevelTest, level);
 PARAM_TEST(EncParamLevelTest);
 
-/** Test case for asm_type*/
-DEFINE_PARAM_TEST_CLASS(EncParamAsmTypeTest, asm_type);
-PARAM_TEST(EncParamAsmTypeTest);
+/** Test case for use_cpu_flags*/
+DEFINE_PARAM_TEST_CLASS(EncParamOplLevelTest, use_cpu_flags);
+PARAM_TEST(EncParamOplLevelTest);
 
 /** Test case for channel_id*/
 DEFINE_PARAM_TEST_CLASS(EncParamChIdTest, channel_id);
