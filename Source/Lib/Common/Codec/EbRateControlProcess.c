@@ -3686,8 +3686,9 @@ static int adaptive_qindex_calc_two_pass(
     int                        qindex) {
 
     SequenceControlSet        *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
+#if !TWO_PASS_IMPROVEMENT
     const Av1Common  *const cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
-
+#endif
     const int cq_level = qindex;
     int active_best_quality = 0;
     int active_worst_quality = qindex;
