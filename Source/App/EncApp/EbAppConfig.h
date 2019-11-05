@@ -366,6 +366,10 @@ typedef struct EbConfig
     uint8_t                 altref_nframes;
     EbBool                  enable_overlays;
     // --- end: ALTREF_FILTERING_SUPPORT
+
+    // square cost weighting for deciding if a/b shapes could be skipped
+    uint32_t                 sq_weight;
+
 } EbConfig;
 
 extern void eb_config_ctor(EbConfig *config_ptr);

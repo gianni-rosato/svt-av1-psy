@@ -2205,6 +2205,8 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.altref_nframes = pComponentParameterStructure->altref_nframes;
     sequence_control_set_ptr->static_config.enable_overlays = pComponentParameterStructure->enable_overlays;
 
+    sequence_control_set_ptr->static_config.sq_weight = pComponentParameterStructure->sq_weight;
+
     return;
 }
 
@@ -2673,6 +2675,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->altref_nframes = 7;
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_FALSE;
+
+    config_ptr->sq_weight = 100;
 
     return return_error;
 }

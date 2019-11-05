@@ -242,6 +242,8 @@ EbErrorType CopyConfigurationParameters(
         callback_data->eb_enc_parameters.hme_level2_search_area_in_height_array[hmeRegionIndex] = config->hme_level2_search_area_in_height_array[hmeRegionIndex];
     }
 
+    callback_data->eb_enc_parameters.sq_weight = config->sq_weight;
+
     return return_error;
 }
 

@@ -904,7 +904,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (picture_control_set_ptr->is_used_as_reference_flag)
                 picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL5;
             else
-				picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL3;
+                picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL3;
         else
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
 

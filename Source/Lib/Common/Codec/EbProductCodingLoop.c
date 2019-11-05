@@ -7538,7 +7538,7 @@ void md_encode_block(
         picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE &&
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) ? EB_TRUE : EB_FALSE;
-		
+
     is_nsq_table_used = picture_control_set_ptr->parent_pcs_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0 ? EB_FALSE : is_nsq_table_used;
 #if ADJUST_NSQ_RANK_BASED_ON_NEIGH
     if (is_nsq_table_used) {
@@ -7568,7 +7568,7 @@ void md_encode_block(
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) ? EB_TRUE : EB_FALSE;
 
-	is_nsq_table_used = picture_control_set_ptr->enc_mode == ENC_M0 ?  EB_FALSE : is_nsq_table_used;
+    is_nsq_table_used = picture_control_set_ptr->enc_mode == ENC_M0 ?  EB_FALSE : is_nsq_table_used;
     if (is_nsq_table_used) {
         if (context_ptr->blk_geom->shape == PART_N) {
             order_nsq_table(
@@ -8116,6 +8116,65 @@ void md_encode_block(
     }
 }
 
+#if LESS_RECTANGULAR_CHECK_LEVEL
+void update_skip_next_nsq_for_a_b_shapes(
+    ModeDecisionContext *context_ptr,
+    uint64_t *sq_cost, uint64_t *h_cost,
+    uint64_t *v_cost, int *skip_next_nsq) {
+
+    switch (context_ptr->blk_geom->d1i)
+    {
+
+    // NS
+    case 0:
+        *sq_cost = context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost;
+        *h_cost = 0;
+        *v_cost = 0;
+        break;
+
+    // H
+    case 1:
+        *h_cost = context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost;
+        break;
+    case 2:
+        *h_cost += context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost;
+        break;
+
+    // V
+    case 3:
+        *v_cost = context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost;
+        break;
+    case 4:
+        *v_cost += context_ptr->md_local_cu_unit[context_ptr->cu_ptr->mds_idx].cost;
+        *skip_next_nsq = (*h_cost > ((*sq_cost * context_ptr->sq_weight) / 100)) ? 1 : *skip_next_nsq;
+        break;
+
+    // HA
+    case 5:
+    case 6:
+    case 7:
+
+    // HB
+    case 8:
+    case 9:
+        *skip_next_nsq = (*h_cost > ((*sq_cost * context_ptr->sq_weight) / 100)) ? 1 : *skip_next_nsq;
+        break;
+    case 10:
+
+    // VA
+    case 11:
+    case 12:
+    case 13:
+
+    // VB
+    case 14:
+    case 15:
+        *skip_next_nsq = (*v_cost > ((*sq_cost * context_ptr->sq_weight) / 100)) ? 1 : *skip_next_nsq;
+        break;
+    }
+}
+#endif
+
 EB_EXTERN EbErrorType mode_decision_sb(
     SequenceControlSet                *sequence_control_set_ptr,
     PictureControlSet                 *picture_control_set_ptr,
@@ -8233,6 +8292,12 @@ EB_EXTERN EbErrorType mode_decision_sb(
 
     //CU Loop
     cuIdx = 0;  //index over mdc array
+
+#if LESS_RECTANGULAR_CHECK_LEVEL
+    uint64_t sq_cost = 0;
+    uint64_t h_cost;
+    uint64_t v_cost;
+#endif
 
     uint32_t blk_idx_mds = 0;
     uint32_t  d1_blocks_accumlated = 0;
@@ -8477,6 +8542,11 @@ EB_EXTERN EbErrorType mode_decision_sb(
 #endif
                 skip_next_nsq = 1;
         }
+
+#if LESS_RECTANGULAR_CHECK_LEVEL
+        if (context_ptr->sq_weight != (uint32_t)~0 && blk_geom->bsize > BLOCK_8X8)
+            update_skip_next_nsq_for_a_b_shapes(context_ptr, &sq_cost, &h_cost, &v_cost, &skip_next_nsq);
+#endif
 
         if (blk_geom->shape != PART_N) {
             if (blk_geom->nsi + 1 < blk_geom->totns)

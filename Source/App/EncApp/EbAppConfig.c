@@ -107,6 +107,8 @@
 #define TILE_ROW_TOKEN                   "-tile-rows"
 #define TILE_COL_TOKEN                   "-tile-columns"
 
+#define SQ_WEIGHT_TOKEN                 "-sqw"
+
 #define SCENE_CHANGE_DETECTION_TOKEN    "-scd"
 #define INJECTOR_TOKEN                  "-inj"  // no Eval
 #define INJECTOR_FRAMERATE_TOKEN        "-inj-frm-rt" // no Eval
@@ -303,6 +305,11 @@ static void SetLogicalProcessors                (const char *value, EbConfig *cf
 static void SetTargetSocket                     (const char *value, EbConfig *cfg)  {cfg->target_socket              = (int32_t)strtol(value, NULL, 0);};
 static void SetUnrestrictedMotionVector         (const char *value, EbConfig *cfg)  {cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);};
 
+static void SetSquareWeight                     (const char *value, EbConfig *cfg)  {cfg->sq_weight                  = (uint64_t)strtoul(value, NULL, 0);
+        if (cfg->sq_weight == 0)
+            cfg->sq_weight = (uint32_t)~0;
+}
+
 enum cfg_type{
     SINGLE_INPUT,   // Configuration parameters that have only 1 value input
     ARRAY_INPUT     // Configuration parameters that have multiple values as input
@@ -433,6 +440,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, ALTREF_NFRAMES, "AltRefNframes", SetAltRefNFrames },
     { SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", SetEnableOverlays },
     // --- end: ALTREF_FILTERING_SUPPORT
+
+    { SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", SetSquareWeight },
 
     // Termination
     {SINGLE_INPUT,NULL,  NULL,                                NULL}
@@ -596,6 +605,8 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->altref_nframes                       = 7;
     config_ptr->enable_overlays                      = EB_FALSE;
     // --- end: ALTREF_FILTERING_SUPPORT
+
+    config_ptr->sq_weight                            = 100;
 
     return;
 }

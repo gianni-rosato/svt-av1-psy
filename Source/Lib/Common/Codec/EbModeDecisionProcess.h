@@ -335,6 +335,11 @@ extern "C" {
     PART best_nsq_sahpe7;
     PART best_nsq_sahpe8;
 #endif
+
+#if LESS_RECTANGULAR_CHECK_LEVEL
+    // square cost weighting for deciding if a/b shapes could be skipped
+    uint32_t sq_weight;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
