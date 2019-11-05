@@ -31,7 +31,7 @@ void picture_average_kernel_c(
     }
 }
 
-void picture_average_kernel_1line_c(
+void picture_average_kernel1_line_c(
     EbByte   src0,
     EbByte   src1,
     EbByte   dst,

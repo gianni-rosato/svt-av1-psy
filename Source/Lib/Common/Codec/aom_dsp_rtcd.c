@@ -1833,7 +1833,7 @@ void setup_rtcd_internal(EbAsm asm_type)
              picture_average_kernel_c,
              picture_average_kernel_sse2_intrin);
     SET_SSE2(picture_average_kernel1_line,
-             picture_average_kernel1_line_sse2_intrin, //Add C
+             picture_average_kernel1_line_c,
              picture_average_kernel1_line_sse2_intrin);
     SET_SSE41_AVX2(get_eight_horizontal_search_point_results_8x8_16x16_pu,
                    get_eight_horizontal_search_point_results_8x8_16x16_pu_c,

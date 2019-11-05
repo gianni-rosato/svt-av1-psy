@@ -166,7 +166,7 @@ class PictureOperatorTest : public ::testing::Test,
 
         picture_average_kernel1_line_sse2_intrin(
             tst1_aligned_, tst2_aligned_, dst1_aligned_, pu_width_);
-        picture_average_kernel_1line_c(
+        picture_average_kernel1_line_c(
             tst1_aligned_, tst2_aligned_, dst2_aligned_, pu_width_);
 
         fail_pixel_count = 0;
