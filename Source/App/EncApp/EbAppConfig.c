@@ -133,6 +133,7 @@
 
 #define SQ_WEIGHT_TOKEN                 "-sqw"
 #define ENABLE_AMP_TOKEN                "-enable-amp"
+#define CHROMA_MODE_TOKEN               "-chroma-mode"
 
 #define SCENE_CHANGE_DETECTION_TOKEN    "-scd"
 #define INJECTOR_TOKEN                  "-inj"  // no Eval
@@ -286,6 +287,7 @@ static void SetPruneUnipredMeFlag               (const char *value, EbConfig *cf
 static void SetPruneRefRecPartFlag              (const char *value, EbConfig *cfg) {cfg->prune_ref_rec_part = strtol(value, NULL, 0);};
 static void SetNsqTableFlag                     (const char *value, EbConfig *cfg) {cfg->nsq_table = strtol(value, NULL, 0);};
 static void SetFrameEndCdfUpdateFlag            (const char *value, EbConfig *cfg) {cfg->frame_end_cdf_update = strtol(value, NULL, 0);};
+static void SetChromaMode                       (const char *value, EbConfig *cfg) {cfg->set_chroma_mode = strtol(value, NULL, 0);};
 static void SetEnableObmcFlag                   (const char *value, EbConfig *cfg) {cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);};
 static void SetEnableRdoqFlag                   (const char *value, EbConfig *cfg) {cfg->enable_rdoq = strtol(value, NULL, 0);};
 static void SetPredictiveMeFlag                 (const char *value, EbConfig *cfg) {cfg->pred_me = strtol(value, NULL, 0); };
@@ -501,6 +503,9 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, NSQ_TABLE_TOKEN               , "NsqTable", SetNsqTableFlag             },
     { SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN    , "FrameEndCdfUpdate", SetFrameEndCdfUpdateFlag    },
 
+    // CHROMA
+    { SINGLE_INPUT, CHROMA_MODE_TOKEN, "ChromaMode", SetChromaMode },
+
     // LOCAL WARPED MOTION
     { SINGLE_INPUT, LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", SetEnableLocalWarpedMotionFlag },
     // GLOBAL MOTION
@@ -644,6 +649,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->prune_ref_rec_part                   = DEFAULT;
     config_ptr->nsq_table                            = DEFAULT;
     config_ptr->frame_end_cdf_update                 = DEFAULT;
+    config_ptr->set_chroma_mode                      = DEFAULT;
     config_ptr->enable_obmc                          = EB_TRUE;
     config_ptr->enable_rdoq                          = DEFAULT;
     config_ptr->pred_me                              = DEFAULT;
@@ -1053,8 +1059,6 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         fprintf(config->error_log_file, "Error instance %u: Invalid HBD mode decision flag [0 - 2], your input: %d\n", channelNumber + 1, config->target_socket);
         return_error = EB_ErrorBadParameter;
     }
-
-
 
     return return_error;
 }
