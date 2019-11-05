@@ -12,7 +12,7 @@
 
 #ifndef NON_AVX512_SUPPORT
 
-static INLINE void Residual32x2_avx512(const uint8_t *input,
+static INLINE void residual32x2_avx512(const uint8_t *input,
     const uint32_t input_stride, const uint8_t *pred,
     const uint32_t pred_stride, int16_t *residual,
     const uint32_t residual_stride)
@@ -45,7 +45,7 @@ SIMD_INLINE void residual_kernel32_avx2(
     uint32_t y = area_height;
 
     do {
-        Residual32x2_avx512(input, input_stride, pred, pred_stride, residual,
+        residual32x2_avx512(input, input_stride, pred, pred_stride, residual,
             residual_stride);
         input += 2 * input_stride;
         pred += 2 * pred_stride;
@@ -54,7 +54,7 @@ SIMD_INLINE void residual_kernel32_avx2(
     } while (y);
 }
 
-static INLINE void Residual64_avx512(const uint8_t *const input,
+static INLINE void residual64_avx512(const uint8_t *const input,
     const uint8_t *const pred, int16_t *const residual)
 {
     const __m512i zero = _mm512_setzero_si512();
@@ -81,7 +81,7 @@ SIMD_INLINE void residual_kernel64_avx2(
     uint32_t y = area_height;
 
     do {
-        Residual64_avx512(input, pred, residual);
+        residual64_avx512(input, pred, residual);
         input += input_stride;
         pred += pred_stride;
         residual += residual_stride;
@@ -96,8 +96,8 @@ SIMD_INLINE void residual_kernel128_avx2(
     uint32_t y = area_height;
 
     do {
-        Residual64_avx512(input + 0 * 64, pred + 0 * 64, residual + 0 * 64);
-        Residual64_avx512(input + 1 * 64, pred + 1 * 64, residual + 1 * 64);
+        residual64_avx512(input + 0 * 64, pred + 0 * 64, residual + 0 * 64);
+        residual64_avx512(input + 1 * 64, pred + 1 * 64, residual + 1 * 64);
         input += input_stride;
         pred += pred_stride;
         residual += residual_stride;

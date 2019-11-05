@@ -1916,7 +1916,7 @@ void full_distortion_kernel_cbf_zero32_bits_avx2(
     (void)recon_coeff_stride;
 }
 
-static INLINE void Residual32_avx2(const uint8_t *const input,
+static INLINE void residual32_avx2(const uint8_t *const input,
     const uint8_t *const pred, int16_t *const residual)
 {
     const __m256i zero = _mm256_setzero_si256();
@@ -1942,7 +1942,7 @@ SIMD_INLINE void residual_kernel32_avx2(
     uint32_t y = area_height;
 
     do {
-        Residual32_avx2(input, pred, residual);
+        residual32_avx2(input, pred, residual);
         input += input_stride;
         pred += pred_stride;
         residual += residual_stride;
@@ -1957,8 +1957,8 @@ SIMD_INLINE void residual_kernel64_avx2(
     uint32_t y = area_height;
 
     do {
-        Residual32_avx2(input + 0 * 32, pred + 0 * 32, residual + 0 * 32);
-        Residual32_avx2(input + 1 * 32, pred + 1 * 32, residual + 1 * 32);
+        residual32_avx2(input + 0 * 32, pred + 0 * 32, residual + 0 * 32);
+        residual32_avx2(input + 1 * 32, pred + 1 * 32, residual + 1 * 32);
         input += input_stride;
         pred += pred_stride;
         residual += residual_stride;
@@ -1973,10 +1973,10 @@ SIMD_INLINE void residual_kernel128_avx2(
     uint32_t y = area_height;
 
     do {
-        Residual32_avx2(input + 0 * 32, pred + 0 * 32, residual + 0 * 32);
-        Residual32_avx2(input + 1 * 32, pred + 1 * 32, residual + 1 * 32);
-        Residual32_avx2(input + 2 * 32, pred + 2 * 32, residual + 2 * 32);
-        Residual32_avx2(input + 3 * 32, pred + 3 * 32, residual + 3 * 32);
+        residual32_avx2(input + 0 * 32, pred + 0 * 32, residual + 0 * 32);
+        residual32_avx2(input + 1 * 32, pred + 1 * 32, residual + 1 * 32);
+        residual32_avx2(input + 2 * 32, pred + 2 * 32, residual + 2 * 32);
+        residual32_avx2(input + 3 * 32, pred + 3 * 32, residual + 3 * 32);
         input += input_stride;
         pred += pred_stride;
         residual += residual_stride;
