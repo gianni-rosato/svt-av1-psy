@@ -487,6 +487,9 @@ typedef struct EbSvtAv1EncConfiguration
     uint64_t                 md_stage_2_class_prune_th;
     uint64_t                 md_stage_2_cand_prune_th;
 
+    // signal for automax_partition; on by default
+    uint8_t                     enable_auto_max_partition;
+
 } EbSvtAv1EncConfiguration;
 
     /* STEP 1: Call the library to construct a Component Handle.

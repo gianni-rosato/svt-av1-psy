@@ -1592,6 +1592,4 @@ void finish_cdef_search(
     free(mse[1]);
     free(sb_index);
     free(selected_strength);
-
 }
-

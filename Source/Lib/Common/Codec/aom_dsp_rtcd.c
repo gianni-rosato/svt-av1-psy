@@ -1962,6 +1962,10 @@ void setup_rtcd_internal(EbAsm asm_type)
              av1_compute_cross_correlation_c,
              av1_compute_cross_correlation_avx2);
 
+#if AUTO_MAX_PARTITION
+    av1_nn_predict = av1_nn_predict_c;
+    if (flags & HAS_SSE3) av1_nn_predict = av1_nn_predict_sse3;
+#endif
 }
 
 

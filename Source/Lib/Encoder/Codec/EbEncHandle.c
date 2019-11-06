@@ -2237,6 +2237,7 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.enable_overlays = pComponentParameterStructure->enable_overlays;
 
     sequence_control_set_ptr->static_config.sq_weight = pComponentParameterStructure->sq_weight;
+    sequence_control_set_ptr->static_config.enable_auto_max_partition = pComponentParameterStructure->enable_auto_max_partition;
 
     sequence_control_set_ptr->static_config.md_stage_1_cand_prune_th = pComponentParameterStructure->md_stage_1_cand_prune_th;
     sequence_control_set_ptr->static_config.md_stage_1_class_prune_th = pComponentParameterStructure->md_stage_1_class_prune_th;
@@ -2742,7 +2743,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->md_stage_2_cand_prune_th = 15;
     config_ptr->md_stage_2_class_prune_th = 25;
 
-    return return_error;
+    config_ptr->enable_auto_max_partition = 1;    return return_error;
 }
 //#define DEBUG_BUFFERS
 static void print_lib_params(

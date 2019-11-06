@@ -361,6 +361,11 @@ extern "C" {
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
 #endif
+
+#if AUTO_MAX_PARTITION
+    // signal for enabling shortcut to skip search depths
+    uint8_t enable_auto_max_partition;
+#endif
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(

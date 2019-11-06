@@ -389,6 +389,9 @@ typedef struct EbConfig
     uint64_t                 md_stage_2_class_prune_th;
     uint64_t                 md_stage_2_cand_prune_th;
 
+    // signal for enabling shortcut to skip search depths
+    uint8_t                 enable_auto_max_partition;
+
 } EbConfig;
 
 extern void eb_config_ctor(EbConfig *config_ptr);

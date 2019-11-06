@@ -309,11 +309,11 @@ class RansacTest : public ::testing::TestWithParam<TransformationType> {
     }
 
     /* clang-format off */
-	/* affine transform
-	 * | x |   | m0  m1  m2 |   | x*m0 + y*m1 + m2 |
-	 * | y | X | m3  m4  m5 | = | x*m3 + y*m4 + m5 |
-	 * | 1 |   |  0   0   1 |   |         1        |
-	 */
+    /* affine transform
+     * | x |   | m0  m1  m2 |   | x*m0 + y*m1 + m2 |
+     * | y | X | m3  m4  m5 | = | x*m3 + y*m4 + m5 |
+     * | 1 |   |  0   0   1 |   |         1        |
+     */
     /* clang-format on */
     static Point affine(const Point &pt, AffineMat mat) {
         Point dst;

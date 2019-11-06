@@ -51,6 +51,8 @@ extern "C" {
 #define PAL_CLASS   1
 #endif
 
+#define AUTO_MAX_PARTITION           1 // Shortcut to skip search depths depending on motion estimation info and statistics
+
 #define LESS_RECTANGULAR_CHECK_LEVEL 1 // Shortcut to skip a/b shapes depending on SQ/H/V shape costs
 
 #define INTER_INTRA_CLASS_PRUNING    1

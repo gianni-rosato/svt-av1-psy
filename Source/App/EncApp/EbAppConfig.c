@@ -112,6 +112,7 @@
 #define TILE_COL_TOKEN                   "-tile-columns"
 
 #define SQ_WEIGHT_TOKEN                 "-sqw"
+#define ENABLE_AMP_TOKEN                "-enable-amp"
 
 #define SCENE_CHANGE_DETECTION_TOKEN    "-scd"
 #define INJECTOR_TOKEN                  "-inj"  // no Eval
@@ -343,6 +344,8 @@ static void SetMDS2_PRUNE_S_TH(const char *value, EbConfig *cfg) {
         cfg->md_stage_2_cand_prune_th = (uint64_t)~0;
 }
 
+static void set_enable_auto_max_partition           (const char *value, EbConfig *cfg) { cfg->enable_auto_max_partition = (uint8_t)strtol(value, NULL, 0); };
+
 enum cfg_type{
     SINGLE_INPUT,   // Configuration parameters that have only 1 value input
     ARRAY_INPUT     // Configuration parameters that have multiple values as input
@@ -481,6 +484,7 @@ config_entry_t config_entry[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
 
     { SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", SetSquareWeight },
+    { SINGLE_INPUT, ENABLE_AMP_TOKEN, "AutomaxPartition", set_enable_auto_max_partition },
 
     { SINGLE_INPUT, MDS1_PRUNE_C_TH, "MDStage1PruneClassThreshold", SetMDS1_PRUNE_C_TH },
     { SINGLE_INPUT, MDS1_PRUNE_S_TH, "MDStage1PruneCandThreshold", SetMDS1_PRUNE_S_TH },
@@ -565,6 +569,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     // --- end: ALTREF_FILTERING_SUPPORT
 
     config_ptr->sq_weight                            = 100;
+    config_ptr->enable_auto_max_partition             = 1;
 
     config_ptr->md_stage_1_cand_prune_th                = 75;
     config_ptr->md_stage_1_class_prune_th                = 100;

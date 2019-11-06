@@ -13677,6 +13677,15 @@ extern "C" {
         int interval;
     } MeshPattern;
 
+#if AUTO_MAX_PARTITION
+    enum {
+        NOT_IN_USE,
+        DIRECT_PRED,
+        RELAXED_PRED,
+        ADAPT_PRED
+    } UENUM1BYTE(MAX_PART_PRED_MODE);
+#endif
+
     typedef struct SpeedFeatures
     {
         // TODO(jingning): combine the related motion search speed features
@@ -13695,6 +13704,13 @@ extern "C" {
 
         // Pattern to be used for any exhaustive mesh searches.
         MeshPattern mesh_patterns[MAX_MESH_STEP];
+
+#if AUTO_MAX_PARTITION
+        // Sets min and max square partition levels for this superblock based on
+        // motion vector and prediction error distribution produced from 16x16
+        // simple motion search
+        MAX_PART_PRED_MODE auto_max_partition_based_on_simple_motion;
+#endif
     } SpeedFeatures;
 
     typedef struct PictureControlSet
