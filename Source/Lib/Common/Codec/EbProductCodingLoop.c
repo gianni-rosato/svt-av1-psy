@@ -6305,6 +6305,10 @@ void move_cu_data_redund(
     CodingUnit *src_cu,
     CodingUnit *dst_cu){
 
+    dst_cu->segment_id = src_cu->segment_id;
+    dst_cu->seg_id_predicted = src_cu->seg_id_predicted;
+    dst_cu->ref_qp = src_cu->ref_qp;
+    dst_cu->org_delta_qp = src_cu->org_delta_qp;
 #if PAL_SUP 
     memcpy(&dst_cu->palette_info.pmi, &src_cu->palette_info.pmi, sizeof(PaletteModeInfo));
     if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
@@ -7162,6 +7166,8 @@ void  order_nsq_table(
     context_ptr->nsq_table[3] = PART_HB;
     context_ptr->nsq_table[4] = PART_VA;
     context_ptr->nsq_table[5] = PART_VB;
+    context_ptr->nsq_table[6] = PART_H4;
+    context_ptr->nsq_table[7] = PART_V4;
 
     if (isCompoundEnabled == 0) me_part_1 = me_part_0;
 
@@ -7807,7 +7813,9 @@ void md_encode_block(
                 // Distortion-based NIC proning to CLASS_1, CLASS_2, CLASS_3
                 if (cand_class_it == CAND_CLASS_1 || cand_class_it == CAND_CLASS_2 || cand_class_it == CAND_CLASS_3) {
                     uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
-                    if (*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr) < *(context_ptr->candidate_buffer_ptr_array[context_ptr->cand_buff_indices[CAND_CLASS_0][0]]->fast_cost_ptr)) {
+                    assert(context_ptr->md_stage_0_count[CAND_CLASS_0] > 0);
+                    if (context_ptr->md_stage_0_count[CAND_CLASS_0] > 0 && *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr) <
+                        *(context_ptr->candidate_buffer_ptr_array[context_ptr->cand_buff_indices[CAND_CLASS_0][0]]->fast_cost_ptr)) {
                         uint32_t fast1_cand_count = 1;
                         while (fast1_cand_count < context_ptr->md_stage_1_count[cand_class_it] && ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[fast1_cand_count]]->fast_cost_ptr) - *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr)) * 100) / (*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr))) < context_ptr->dist_base_md_stage_0_count_th)) {
                             fast1_cand_count++;
@@ -8454,21 +8462,13 @@ EB_EXTERN EbErrorType mode_decision_sb(
             }
 
             memcpy(&context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx], &context_ptr->md_ep_pipe_sb[redundant_blk_mds], sizeof(MdEncPassCuData));
-#if ADD_SUPPORT_TO_SKIP_PART_N
-            if (d1_block_itr == 0) {
-                uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
-                context_ptr->parent_sq_type[sq_index] = src_cu->prediction_mode_flag;
-                context_ptr->parent_sq_has_coeff[sq_index] = src_cu->block_has_coeff;
-                context_ptr->parent_sq_pred_mode[sq_index] = src_cu->pred_mode;
-            }
-#else
+
             if (context_ptr->blk_geom->shape == PART_N) {
                 uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
                 context_ptr->parent_sq_type[sq_index] = src_cu->prediction_mode_flag;
                 context_ptr->parent_sq_has_coeff[sq_index] = src_cu->block_has_coeff;
                 context_ptr->parent_sq_pred_mode[sq_index] = src_cu->pred_mode;
             }
-#endif
         }
         else
 #if FIX_SKIP_REDUNDANT_BLOCK
@@ -8622,7 +8622,10 @@ EB_EXTERN EbErrorType mode_decision_sb(
             d1_block_itr = 0;
             d1_first_block = 1;
 #endif
-            context_ptr->coeff_based_skip_atb = picture_control_set_ptr->parent_pcs_ptr->coeff_based_skip_atb && context_ptr->md_cu_arr_nsq[lastCuIndex_mds].block_has_coeff == 0 ? 1 : 0;
+            context_ptr->coeff_based_skip_atb = picture_control_set_ptr->parent_pcs_ptr->coeff_based_skip_atb &&
+                context_ptr->md_local_cu_unit[lastCuIndex_mds].avail_blk_flag &&
+                context_ptr->md_cu_arr_nsq[lastCuIndex_mds].block_has_coeff == 0 ? 1 : 0;
+
             if (context_ptr->md_cu_arr_nsq[lastCuIndex_mds].split_flag == EB_FALSE)
             {
                 md_update_all_neighbour_arrays_multiple(

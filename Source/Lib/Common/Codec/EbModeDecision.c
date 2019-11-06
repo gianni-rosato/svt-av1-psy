@@ -4086,8 +4086,9 @@ void  inject_inter_candidates(
 
     if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
-        inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
-            context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
+        if (context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
+            inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
+                context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
     }
 
 #if FIX_COMPOUND
@@ -5533,8 +5534,9 @@ EbErrorType generate_md_stage_0_cand(
     if (slice_type != I_SLICE) {
         if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
             picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
-            inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
-                context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_intra_candidate : 0;
+            if (context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
+                inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
+                    context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_intra_candidate : 0;
         }
 }
     //----------------------
