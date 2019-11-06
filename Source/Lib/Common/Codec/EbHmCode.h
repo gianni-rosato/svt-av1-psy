@@ -17,6 +17,11 @@ extern "C" {
         uint8_t  *src,
         uint64_t *dc_value,
         uint32_t  src_stride);
+
+    uint64_t compute8x8_satd_u8_c(
+        uint8_t* src,
+        uint64_t* dcValue,
+        uint32_t  srcStride);
 #ifdef __cplusplus
 }
 #endif

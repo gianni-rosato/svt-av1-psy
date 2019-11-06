@@ -34,7 +34,7 @@
 #include "EbComputeMean_SSE2.h"
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeMean.h"
-
+#include "EbHmCode.h"
 
  /**************************************
  * Instruction Set Support
@@ -1847,7 +1847,7 @@ void setup_rtcd_internal(EbAsm asm_type)
              initialize_buffer_32bits_sse2_intrin, //Add C
              initialize_buffer_32bits_sse2_intrin);
     SET_SSE41(compute8x8_satd_u8,
-              compute8x8_satd_u8_sse4, //Add C
+              compute8x8_satd_u8_c,
               compute8x8_satd_u8_sse4);
     SET_AVX2(nxm_sad_kernel_sub_sampled,
              nxm_sad_kernel_helper_c,

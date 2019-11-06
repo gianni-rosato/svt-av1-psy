@@ -205,3 +205,83 @@ uint64_t compute4x4_satd_u8(
     *dc_value += d[0];
     return satdBlock4x4;
 }
+
+uint64_t compute8x8_satd_u8_c(
+    uint8_t* src,       // input parameter, diff samples Ptr
+    uint64_t* dcValue,
+    uint32_t  srcStride)
+{
+    uint64_t satdBlock8x8 = 0;
+    int16_t m1[8][8], m2[8][8], m3[8][8];
+    uint32_t i, j;
+
+    // Horizontal
+    for (j = 0; j < 8; j++) {
+        m2[j][0] = src[j * srcStride] + src[j * srcStride + 4];
+        m2[j][1] = src[j * srcStride + 1] + src[j * srcStride + 5];
+        m2[j][2] = src[j * srcStride + 2] + src[j * srcStride + 6];
+        m2[j][3] = src[j * srcStride + 3] + src[j * srcStride + 7];
+        m2[j][4] = src[j * srcStride] - src[j * srcStride + 4];
+        m2[j][5] = src[j * srcStride + 1] - src[j * srcStride + 5];
+        m2[j][6] = src[j * srcStride + 2] - src[j * srcStride + 6];
+        m2[j][7] = src[j * srcStride + 3] - src[j * srcStride + 7];
+
+        m1[j][0] = m2[j][0] + m2[j][2];
+        m1[j][1] = m2[j][1] + m2[j][3];
+        m1[j][2] = m2[j][0] - m2[j][2];
+        m1[j][3] = m2[j][1] - m2[j][3];
+        m1[j][4] = m2[j][4] + m2[j][6];
+        m1[j][5] = m2[j][5] + m2[j][7];
+        m1[j][6] = m2[j][4] - m2[j][6];
+        m1[j][7] = m2[j][5] - m2[j][7];
+
+        m2[j][0] = m1[j][0] + m1[j][1];
+        m2[j][1] = m1[j][0] - m1[j][1];
+        m2[j][2] = m1[j][2] + m1[j][3];
+        m2[j][3] = m1[j][2] - m1[j][3];
+        m2[j][4] = m1[j][4] + m1[j][5];
+        m2[j][5] = m1[j][4] - m1[j][5];
+        m2[j][6] = m1[j][6] + m1[j][7];
+        m2[j][7] = m1[j][6] - m1[j][7];
+    }
+
+    // Vertical
+    for (i = 0; i < 8; i++) {
+        m3[0][i] = m2[0][i] + m2[4][i];
+        m3[1][i] = m2[1][i] + m2[5][i];
+        m3[2][i] = m2[2][i] + m2[6][i];
+        m3[3][i] = m2[3][i] + m2[7][i];
+        m3[4][i] = m2[0][i] - m2[4][i];
+        m3[5][i] = m2[1][i] - m2[5][i];
+        m3[6][i] = m2[2][i] - m2[6][i];
+        m3[7][i] = m2[3][i] - m2[7][i];
+
+        m1[0][i] = m3[0][i] + m3[2][i];
+        m1[1][i] = m3[1][i] + m3[3][i];
+        m1[2][i] = m3[0][i] - m3[2][i];
+        m1[3][i] = m3[1][i] - m3[3][i];
+        m1[4][i] = m3[4][i] + m3[6][i];
+        m1[5][i] = m3[5][i] + m3[7][i];
+        m1[6][i] = m3[4][i] - m3[6][i];
+        m1[7][i] = m3[5][i] - m3[7][i];
+
+        m2[0][i] = m1[0][i] + m1[1][i];
+        m2[1][i] = m1[0][i] - m1[1][i];
+        m2[2][i] = m1[2][i] + m1[3][i];
+        m2[3][i] = m1[2][i] - m1[3][i];
+        m2[4][i] = m1[4][i] + m1[5][i];
+        m2[5][i] = m1[4][i] - m1[5][i];
+        m2[6][i] = m1[6][i] + m1[7][i];
+        m2[7][i] = m1[6][i] - m1[7][i];
+    }
+
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            satdBlock8x8 += (uint64_t)ABS(m2[i][j]);
+        }
+    }
+
+    satdBlock8x8 = ((satdBlock8x8 + 2) >> 2);
+    *dcValue += m2[0][0];
+    return satdBlock8x8;
+}
