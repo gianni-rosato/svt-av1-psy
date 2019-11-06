@@ -3316,7 +3316,9 @@ typedef struct stat_struct_t
     uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
 } stat_struct_t;
 #if TWO_PASS_IMPROVEMENT
-#define TWO_PASS_IR_THRSHLD 40
+#define TWO_PASS_IR_THRSHLD 40  // Intra refresh threshold used to reduce the reference area.
+                                // If the periodic Intra refresh is less than the threshold,
+                                // the referenced area is normalized
 #endif
 #endif
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode

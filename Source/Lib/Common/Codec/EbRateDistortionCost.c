@@ -1561,8 +1561,8 @@ uint64_t mdc_av1_inter_fast_cost(
 #endif
 #if TWO_PASS_IMPROVEMENT
 /* two_pass_cost_update
- * This function add some biases for distortion and rate. 
- * The function is used in the first pass only and for the porpuse of data collection */
+ * This function adds some biases for distortion and rate. 
+ * The function is used in the first pass only and for the purpose of data collection */
 void two_pass_cost_update(
     PictureControlSet     *picture_control_set_ptr,
     ModeDecisionCandidate *candidate_ptr,
