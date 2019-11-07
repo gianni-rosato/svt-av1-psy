@@ -26,8 +26,6 @@
 /************************************************
  * Defines
  ************************************************/
-#define DYNAMIC_WINDOW_TH   50
-
 #define  LAY0_OFF  0
 #define  LAY1_OFF  3
 #define  LAY2_OFF  5
@@ -3727,18 +3725,22 @@ void* picture_decision_kernel(void *input_ptr)
                                     int pic_itr, ahd;
                                     uint32_t regionInPictureWidthIndex;
                                     uint32_t regionInPictureHeightIndex;
+                                    int32_t center_histogram[HISTOGRAM_NUMBER_OF_BINS] = { 0 };
+                                    int32_t altref_histogram[HISTOGRAM_NUMBER_OF_BINS] = { 0 };
 
-                                    int ahd_th = (((sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height) * DYNAMIC_WINDOW_TH) / 100);
+                                    int ahd_th = (((sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height) * AHD_TH_WEIGHT) / 100);
 
                                     // Accumulative histogram absolute differences between the central and future frame
                                     for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
                                         ahd = 0;
-                                        for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
-                                            for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
-                                                for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
-                                                    ahd += ABS((int32_t)picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin] - (int32_t)picture_control_set_ptr->temp_filt_pcs_list[pic_itr]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin]);
+                                        for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                            for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
+                                                for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
+                                                    center_histogram[bin] += picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
+                                                    altref_histogram[bin] += picture_control_set_ptr->temp_filt_pcs_list[pic_itr]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
                                                 }
                                             }
+                                            ahd += ABS(center_histogram[bin] - altref_histogram[bin]);
                                         }
 
                                         if (ahd < ahd_th)
@@ -3839,18 +3841,22 @@ void* picture_decision_kernel(void *input_ptr)
                                 int ahd_th = (((sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height) * AHD_TH_WEIGHT) / 100);
 
                                 // Accumulative histogram absolute differences between the central and past frame
+                                int32_t center_histogram[HISTOGRAM_NUMBER_OF_BINS] = { 0 };
+                                int32_t altref_histogram[HISTOGRAM_NUMBER_OF_BINS] = { 0 };
 #if FIX_ALTREF
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {
 #else
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center - 1; pic_itr++) {
 #endif
                                     ahd = 0;
-                                    for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
-                                        for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
-                                            for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
-                                                ahd += ABS((int32_t)picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin] - (int32_t)picture_control_set_ptr->temp_filt_pcs_list[pic_itr]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin]);
+                                    for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                        for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
+                                            for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
+                                                center_histogram[bin] = picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
+                                                altref_histogram[bin] = picture_control_set_ptr->temp_filt_pcs_list[pic_itr]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
                                             }
                                         }
+                                        ahd += ABS(center_histogram[bin] - altref_histogram[bin]);
                                     }
 
                                     if (ahd < ahd_th)
@@ -3858,16 +3864,19 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 picture_control_set_ptr->past_altref_nframes = actual_past_pics = index_center - pic_itr;
 
-
                                 // Accumulative histogram absolute differences between the central and past frame
+                                memset(center_histogram, 0, HISTOGRAM_NUMBER_OF_BINS * sizeof(int32_t));
+                                memset(altref_histogram, 0, HISTOGRAM_NUMBER_OF_BINS * sizeof(int32_t));
                                 for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
                                     ahd = 0;
-                                    for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
-                                        for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
-                                            for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
-                                                ahd += ABS((int32_t)picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin] - (int32_t)picture_control_set_ptr->temp_filt_pcs_list[pic_itr]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin]);
+                                    for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                        for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
+                                            for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
+                                                center_histogram[bin] = picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
+                                                altref_histogram[bin] = picture_control_set_ptr->temp_filt_pcs_list[pic_itr]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
                                             }
                                         }
+                                        ahd += ABS(center_histogram[bin] - altref_histogram[bin]);
                                     }
 
                                     if (ahd < ahd_th)

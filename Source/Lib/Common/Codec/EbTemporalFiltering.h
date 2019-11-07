@@ -60,7 +60,7 @@
 #define THRES_DIFF_HIGH 12000
 
 #define OD_DIVU_DMAX (1024)
-#define AHD_TH_WEIGHT 50
+#define AHD_TH_WEIGHT 20
 
 #ifdef __cplusplus
 extern "C" {
