@@ -34,9 +34,10 @@
 #include "aom_dsp_rtcd.h"
 #include "TxfmCommon.h"
 #include "random.h"
-#include "EncodeTxbRef.h"
 #include "EbTime.h"
-using namespace EncodeTxbAsmTest;
+#include "EncodeTxbRef_C.h"
+
+
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
 
@@ -65,7 +66,7 @@ class EncodeTxbTest : public ::testing::TestWithParam<GetNzMapContextParam> {
     EncodeTxbTest()
         : level_rnd_(0, INT8_MAX),
           coeff_rnd_(0, UINT8_MAX),
-          ref_func_(&av1_get_nz_map_contexts_c) {
+          ref_func_(&eb_av1_get_nz_map_contexts_c) {
     }
 
     virtual ~EncodeTxbTest() {

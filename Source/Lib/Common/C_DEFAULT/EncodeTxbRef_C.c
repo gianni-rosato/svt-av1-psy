@@ -8,9 +8,9 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#include <stdint.h>
-#include "EbCabacContextModel.h"
-namespace EncodeTxbAsmTest {
+
+#include "EncodeTxbRef_C.h"
+#include "EbCommonUtils.h"
 const int8_t av1_nz_map_ctx_offset_4x4[16] = {
     0,
     1,
@@ -358,7 +358,7 @@ const int8_t av1_nz_map_ctx_offset_32x8[256] = {
     21, 21, 21, 21, 21, 21, 21, 21, 21,
 };
 
-const int8_t *av1_nz_map_ctx_offset[19] = {
+const int8_t* av1_nz_map_ctx_offset[19] = {
     av1_nz_map_ctx_offset_4x4,    // TX_4x4
     av1_nz_map_ctx_offset_8x8,    // TX_8x8
     av1_nz_map_ctx_offset_16x16,  // TX_16x16
@@ -380,11 +380,6 @@ const int8_t *av1_nz_map_ctx_offset[19] = {
     av1_nz_map_ctx_offset_64x32,  // TX_64x16
 };
 
-// reference implementation
-static INLINE int get_padded_idx(const int idx, const int bwl) {
-    return idx + ((idx >> bwl) << TX_PAD_HOR_LOG2);
-}
-
 static const uint8_t clip_max3[256] = {
     0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -396,10 +391,10 @@ static const uint8_t clip_max3[256] = {
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
 
-static AOM_FORCE_INLINE int get_nz_mag(const uint8_t *const levels,
-                                       const int bwl, const TxClass tx_class) {
+static AOM_FORCE_INLINE int get_nz_mag(const uint8_t* const levels,
+    const int bwl, const TxClass tx_class) {
     int mag;
 
     // Note: AOMMIN(level, 3) is useless for decoder since level < 3.
@@ -411,14 +406,16 @@ static AOM_FORCE_INLINE int get_nz_mag(const uint8_t *const levels,
         mag += clip_max3[levels[2]];                            // { 0, 2 }
         mag +=
             clip_max3[levels[(2 << bwl) + (2 << TX_PAD_HOR_LOG2)]];  // { 2, 0 }
-    } else if (tx_class == TX_CLASS_VERT) {
+    }
+    else if (tx_class == TX_CLASS_VERT) {
         mag +=
             clip_max3[levels[(2 << bwl) + (2 << TX_PAD_HOR_LOG2)]];  // { 2, 0 }
         mag +=
             clip_max3[levels[(3 << bwl) + (3 << TX_PAD_HOR_LOG2)]];  // { 3, 0 }
         mag +=
             clip_max3[levels[(4 << bwl) + (4 << TX_PAD_HOR_LOG2)]];  // { 4, 0 }
-    } else {
+    }
+    else {
         mag += clip_max3[levels[2]];  // { 0, 2 }
         mag += clip_max3[levels[3]];  // { 0, 3 }
         mag += clip_max3[levels[4]];  // { 0, 4 }
@@ -480,11 +477,11 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(
     return 0;
 }
 
-static INLINE int get_nz_map_ctx(const uint8_t *const levels,
-                                 const int coeff_idx, const int bwl,
-                                 const int height, const int scan_idx,
-                                 const int is_eob, const TxSize tx_size,
-                                 const TxClass tx_class) {
+static INLINE int get_nz_map_ctx(const uint8_t* const levels,
+    const int coeff_idx, const int bwl,
+    const int height, const int scan_idx,
+    const int is_eob, const TxSize tx_size,
+    const TxClass tx_class) {
     if (is_eob) {
         if (scan_idx == 0)
             return 0;
@@ -499,12 +496,12 @@ static INLINE int get_nz_map_ctx(const uint8_t *const levels,
     return get_nz_map_ctx_from_stats(stats, coeff_idx, bwl, tx_size, tx_class);
 }
 
-static INLINE void av1_get_nz_map_contexts_c(const uint8_t *const levels,
-                                             const int16_t *const scan,
-                                             const uint16_t eob,
-                                             const TxSize tx_size,
-                                             const TxClass tx_class,
-                                             int8_t *const coeff_contexts) {
+void eb_av1_get_nz_map_contexts_c(const uint8_t* const levels,
+    const int16_t* const scan,
+    const uint16_t eob,
+    const TxSize tx_size,
+    const TxClass tx_class,
+    int8_t* const coeff_contexts) {
     const int bwl = get_txb_bwl(tx_size);
     const int height = get_txb_high(tx_size);
     for (int i = 0; i < eob; ++i) {
@@ -513,4 +510,3 @@ static INLINE void av1_get_nz_map_contexts_c(const uint8_t *const levels,
             levels, pos, bwl, height, i, i == eob - 1, tx_size, tx_class);
     }
 }
-}  // namespace EncodeTxbAsmTest

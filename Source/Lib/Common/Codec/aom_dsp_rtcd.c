@@ -486,8 +486,8 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_avx2;
     eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_c;
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
-    //av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
-    /*if (flags & HAS_SSE2)*/ eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
+    eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
+    if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
 #if II_COMP_FLAG
     aom_blend_a64_mask = aom_blend_a64_mask_c;
