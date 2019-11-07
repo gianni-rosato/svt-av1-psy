@@ -59,7 +59,7 @@ class Compute8x8SatdTest : public ::testing::Test {
         switch (pattern) {
         case MAX: {
             memset(_src_, mask, _height_ * _stride_ * sizeof(uint8_t));
-            for (int i = 0; i < _dcSize_; i++) {
+            for (uint32_t i = 0; i < _dcSize_; i++) {
                 _dcValue1_[i] = _dcValue2_[i] = mask;
             }
             break;
@@ -71,11 +71,11 @@ class Compute8x8SatdTest : public ::testing::Test {
             break;
         }
         case RANDOM: {
-            for (int i = 0; i < _height_ * _stride_; i++) {
+            for (uint32_t i = 0; i < _height_ * _stride_; i++) {
                 _src_[i] = rnd.random();
             }
 
-            for (int i = 0; i < _dcSize_; i++) {
+            for (uint32_t i = 0; i < _dcSize_; i++) {
                 _dcValue1_[i] = _dcValue2_[i] = rnd.random();
             }
 

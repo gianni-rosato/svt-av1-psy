@@ -39,7 +39,7 @@
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
 #include "EbComputeSAD.h"
-#include "EbMeSadCalculation_SSE2.h"
+#include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"
 #include "EbMotionEstimationContext.h"
 #include "EbTime.h"
@@ -1959,4 +1959,54 @@ INSTANTIATE_TEST_CASE_P(
     SSDAvg, SSDAvgTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
+
+using InitializeBuffer_param_t = ::testing::tuple<uint32_t, uint32_t>;
+#define MAX_BUFFER_SIZE 100  // const value to simplify
+class InitializeBuffer32
+    : public ::testing::TestWithParam<InitializeBuffer_param_t> {
+  public:
+    InitializeBuffer32()
+        : count128(TEST_GET_PARAM(0)),
+          count32(TEST_GET_PARAM(1)),
+          rnd_(0, (1 << 30) - 1) {
+        value = rnd_.random();
+        _ref_ = (uint32_t *)eb_aom_memalign(32, MAX_BUFFER_SIZE);
+        _test_ = (uint32_t *)eb_aom_memalign(32, MAX_BUFFER_SIZE);
+        memset(_ref_, 0, MAX_BUFFER_SIZE);
+        memset(_test_, 0, MAX_BUFFER_SIZE);
+    }
+
+    ~InitializeBuffer32() {
+        if (_ref_)
+            eb_aom_free(_ref_);
+        if (_test_)
+            eb_aom_free(_test_);
+    }
+
+  protected:
+    void checkWithSize() {
+        initialize_buffer_32bits_c(_ref_, count128, count32, value);
+        initialize_buffer_32bits_sse2_intrin(_test_, count128, count32, value);
+
+        int cmpResult = memcmp(_ref_, _test_, MAX_BUFFER_SIZE);
+        EXPECT_EQ(cmpResult, 0);
+    }
+
+  private:
+    uint32_t *_ref_;
+    uint32_t *_test_;
+    uint32_t count128;
+    uint32_t count32;
+    uint32_t value;
+    SVTRandom rnd_;
+};
+
+TEST_P(InitializeBuffer32, InitializeBuffer) {
+    checkWithSize();
+}
+
+INSTANTIATE_TEST_CASE_P(InitializeBuffer32, InitializeBuffer32,
+                        ::testing::Combine(::testing::Values(2, 3, 4),
+                                           ::testing::Values(1, 2, 3)));
+
 }  // namespace

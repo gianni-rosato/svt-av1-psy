@@ -24,7 +24,6 @@
 #include "EbTemporalFiltering_sse4.h"
 #include "EbComputeSAD.h"
 #include "EbMotionEstimation.h"
-#include "EbMeSadCalculation_SSE2.h"
 #include "EbPictureOperators.h"
 #include "EbPackUnPack_C.h"
 #include "EbPackUnPack_SSE2.h"
@@ -35,6 +34,7 @@
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeMean.h"
 #include "EbHmCode.h"
+#include "EbMeSadCalculation.h"
 
  /**************************************
  * Instruction Set Support
@@ -1844,7 +1844,7 @@ void setup_rtcd_internal(EbAsm asm_type)
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin);
     SET_SSE2(initialize_buffer_32bits,
-             initialize_buffer_32bits_sse2_intrin, //Add C
+             initialize_buffer_32bits_c,
              initialize_buffer_32bits_sse2_intrin);
     SET_SSE41(compute8x8_satd_u8,
               compute8x8_satd_u8_c,

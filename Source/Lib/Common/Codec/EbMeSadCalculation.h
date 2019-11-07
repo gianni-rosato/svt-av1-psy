@@ -14,6 +14,11 @@
 extern "C" {
 #endif
 
+    void initialize_buffer_32bits_c(
+        uint32_t*       pointer,
+        uint32_t        count128,
+        uint32_t        count32,
+        uint32_t        value);
 #ifdef __cplusplus
 }
 #endif
