@@ -30,6 +30,16 @@ extern "C" {
 #define EB_BUFFERFLAG_ERROR_MASK \
     0xFFFFFFF0 // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
 
+// super-res modes
+typedef enum {
+    SUPERRES_NONE,     // No frame superres allowed.
+    SUPERRES_FIXED,    // All frames are coded at the specified scale, and super-resolved.
+    SUPERRES_RANDOM,   // All frames are coded at a random scale, and super-resolved.
+    SUPERRES_QTHRESH,  // Superres scale for a frame is determined based on q_index.
+    SUPERRES_AUTO,     // Automatically select superres for appropriate frames.
+    SUPERRES_MODES
+} SUPERRES_MODE;
+
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -568,6 +578,12 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t altref_strength;
     uint8_t altref_nframes;
     EbBool  enable_overlays;
+
+    // super-resolution parameters
+    uint8_t superres_mode;
+    uint8_t superres_denom;
+    uint8_t superres_kf_denom;
+    uint8_t superres_qthres;
 
     uint32_t sq_weight;
 

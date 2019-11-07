@@ -193,6 +193,12 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.altref_nframes  = config->altref_nframes;
     callback_data->eb_enc_parameters.enable_overlays = (EbBool)config->enable_overlays;
     // --- end: ALTREF_FILTERING_SUPPORT
+    // --- start: SUPER-RESOLUTION SUPPORT
+    callback_data->eb_enc_parameters.superres_mode = config->superres_mode;
+    callback_data->eb_enc_parameters.superres_denom = config->superres_denom;
+    callback_data->eb_enc_parameters.superres_kf_denom = config->superres_kf_denom;
+    callback_data->eb_enc_parameters.superres_qthres = config->superres_qthres;
+    // --- end: SUPER-RESOLUTION SUPPORT
 
     for (hme_region_index = 0;
          hme_region_index < callback_data->eb_enc_parameters.number_hme_search_region_in_width;

@@ -1069,6 +1069,20 @@ static const vector<EbBool> default_enable_overlays = {EB_FALSE};
 static const vector<EbBool> valid_enable_overlays = {EB_FALSE, EB_TRUE};
 static const vector<EbBool> invalid_enable_overlays = {/*none*/};
 
+/* Variables to control the super-resolution tool
+ */
+static const vector<EbBool> default_superres_mode = {0};
+static const vector<EbBool> valid_superres_mode = {0, 1, 2};
+static const vector<EbBool> invalid_superres_mode = {3};
+
+static const vector<uint8_t> default_superres_denom = {8};
+static const vector<uint8_t> valid_superres_denom = {8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const vector<uint8_t> invalid_superres_denom = {7};
+
+static const vector<uint8_t> default_superres_kf_denom = {8};
+static const vector<uint8_t> valid_superres_kf_denom = {8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const vector<uint8_t> invalid_superres_kf_denom = {7};
+
 }  // namespace svt_av1_test_params
 
 /** @} */  // end of svt_av1_test_params

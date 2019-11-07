@@ -120,6 +120,7 @@ enum {
 #define ALTREF_MAX_NFRAMES 10
 #define ALTREF_MAX_STRENGTH 6
 #define PAD_VALUE (128 + 32)
+#define PAD_VALUE_SCALED (128+128+32)
 #define NSQ_TAB_SIZE 8
 #define NUMBER_OF_DEPTH 6
 #define NUMBER_OF_SHAPES 10
@@ -2391,6 +2392,9 @@ void(*error_handler)(
 
 #define MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE       ((MAX_PICTURE_WIDTH_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) * \
                                                 ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
+// super-resolution definitions
+#define MIN_SUPERRES_DENOM                          8
+#define MAX_SUPERRES_DENOM                          16
 
 //***Prediction Structure***
 #define REF_LIST_MAX_DEPTH                          4 // NM - To be specified

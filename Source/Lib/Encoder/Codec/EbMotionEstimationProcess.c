@@ -491,8 +491,7 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
 /***************************************************************************************************
 * ZZ Decimated SAD Computation
 ***************************************************************************************************/
-EbErrorType compute_decimated_zz_sad(MotionEstimationContext_t *context_ptr,
-                                     SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+EbErrorType compute_decimated_zz_sad(MotionEstimationContext_t *context_ptr, PictureParentControlSet *pcs_ptr,
                                      EbPictureBufferDesc *sixteenth_decimated_picture_ptr,
                                      uint32_t x_sb_start_index, uint32_t x_sb_end_index,
                                      uint32_t y_sb_start_index, uint32_t y_sb_end_index) {
@@ -524,8 +523,8 @@ EbErrorType compute_decimated_zz_sad(MotionEstimationContext_t *context_ptr,
 
     for (y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index; ++y_sb_index) {
         for (x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index; ++x_sb_index) {
-            sb_index            = x_sb_index + y_sb_index * scs_ptr->pic_width_in_sb;
-            SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
+            sb_index            = x_sb_index + y_sb_index * pcs_ptr->picture_sb_width;
+            SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
 
             sb_width  = sb_params->width;
             sb_height = sb_params->height;
@@ -663,7 +662,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 : (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr;
         input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
 
-        input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+        input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
 
         context_ptr->me_context_ptr->me_alt_ref =
             in_results_ptr->task_type == 1 ? EB_TRUE : EB_FALSE;
@@ -710,9 +709,9 @@ void *motion_estimation_kernel(void *input_ptr) {
             // Segments
             segment_index = in_results_ptr->segment_index;
             pic_width_in_sb =
-                (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+                (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
             picture_height_in_sb =
-                (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+                (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
             SEGMENT_CONVERT_IDX_TO_XY(
                 segment_index, x_segment_index, y_segment_index, pcs_ptr->me_segments_column_count);
             x_sb_start_index = SEGMENT_START_IDX(
@@ -733,12 +732,12 @@ void *motion_estimation_kernel(void *input_ptr) {
                         sb_origin_y = y_sb_index * scs_ptr->sb_sz;
 
                         sb_width =
-                            (scs_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64
-                                ? scs_ptr->seq_header.max_frame_width - sb_origin_x
+                            (pcs_ptr->aligned_width - sb_origin_x) < BLOCK_SIZE_64
+                                ? pcs_ptr->aligned_width - sb_origin_x
                                 : BLOCK_SIZE_64;
                         sb_height =
-                            (scs_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64
-                                ? scs_ptr->seq_header.max_frame_height - sb_origin_y
+                            (pcs_ptr->aligned_height - sb_origin_y) < BLOCK_SIZE_64
+                                ? pcs_ptr->aligned_height  - sb_origin_y
                                 : BLOCK_SIZE_64;
 
                         // Load the SB from the input to the intermediate SB buffer
@@ -860,7 +859,6 @@ void *motion_estimation_kernel(void *input_ptr) {
                     if (pcs_ptr->picture_number > 0) {
                         compute_decimated_zz_sad(
                             context_ptr,
-                            scs_ptr,
                             pcs_ptr,
                             (EbPictureBufferDesc *)pa_ref_obj_
                                 ->sixteenth_decimated_picture_ptr, // Hsan: always use decimated for ZZ SAD derivation until studying the trade offs and regenerating the activity threshold
@@ -885,12 +883,12 @@ void *motion_estimation_kernel(void *input_ptr) {
                             sb_origin_x = x_sb_index * scs_ptr->sb_sz;
                             sb_origin_y = y_sb_index * scs_ptr->sb_sz;
                             sb_width =
-                                (scs_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64
-                                    ? scs_ptr->seq_header.max_frame_width - sb_origin_x
+                                (pcs_ptr->aligned_width - sb_origin_x) < BLOCK_SIZE_64
+                                    ? pcs_ptr->aligned_width - sb_origin_x
                                     : BLOCK_SIZE_64;
                             sb_height =
-                                (scs_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64
-                                    ? scs_ptr->seq_header.max_frame_height - sb_origin_y
+                                (pcs_ptr->aligned_height - sb_origin_y) < BLOCK_SIZE_64
+                                    ? pcs_ptr->aligned_height - sb_origin_y
                                     : BLOCK_SIZE_64;
 
                             sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
@@ -951,12 +949,12 @@ void *motion_estimation_kernel(void *input_ptr) {
                             sb_origin_x = x_sb_index * scs_ptr->sb_sz;
                             sb_origin_y = y_sb_index * scs_ptr->sb_sz;
                             sb_width =
-                                (scs_ptr->seq_header.max_frame_width - sb_origin_x) < BLOCK_SIZE_64
-                                    ? scs_ptr->seq_header.max_frame_width - sb_origin_x
+                                (pcs_ptr->aligned_width - sb_origin_x) < BLOCK_SIZE_64
+                                    ? pcs_ptr->aligned_width - sb_origin_x
                                     : BLOCK_SIZE_64;
                             sb_height =
-                                (scs_ptr->seq_header.max_frame_height - sb_origin_y) < BLOCK_SIZE_64
-                                    ? scs_ptr->seq_header.max_frame_height - sb_origin_y
+                                (pcs_ptr->aligned_height - sb_origin_y) < BLOCK_SIZE_64
+                                    ? pcs_ptr->aligned_height - sb_origin_y
                                     : BLOCK_SIZE_64;
 
                             sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);

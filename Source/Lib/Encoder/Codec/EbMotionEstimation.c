@@ -11165,10 +11165,8 @@ EbErrorType motion_estimate_sb(
     int16_t  y_top_left_search_region;
     uint32_t search_region_index;
 
-    int16_t picture_width = (int16_t)((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)
-                                ->seq_header.max_frame_width;
-    int16_t picture_height = (int16_t)((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)
-                                 ->seq_header.max_frame_height;
+    int16_t picture_width = pcs_ptr->aligned_width;
+    int16_t picture_height = pcs_ptr->aligned_height;
     uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
                             ? input_ptr->width - sb_origin_x
                             : BLOCK_SIZE_64;
@@ -11768,8 +11766,8 @@ EbErrorType motion_estimate_sb(
             y_search_area_origin = y_search_center - (search_area_height >> 1);
 
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
-                int tile_start_x = scs_ptr->sb_params_array[sb_index].tile_start_x;
-                int tile_end_x   = scs_ptr->sb_params_array[sb_index].tile_end_x;
+                int tile_start_x = pcs_ptr->sb_params_array[sb_index].tile_start_x;
+                int tile_end_x   = pcs_ptr->sb_params_array[sb_index].tile_end_x;
 
                 // Correct the left edge of the Search Area if it is not on the
                 // reference Picture
@@ -11837,8 +11835,8 @@ EbErrorType motion_estimate_sb(
             }
 
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
-                int tile_start_y = scs_ptr->sb_params_array[sb_index].tile_start_y;
-                int tile_end_y   = scs_ptr->sb_params_array[sb_index].tile_end_y;
+                int tile_start_y = pcs_ptr->sb_params_array[sb_index].tile_start_y;
+                int tile_end_y   = pcs_ptr->sb_params_array[sb_index].tile_end_y;
 
                 // Correct the top edge of the Search Area if it is not on the
                 // reference Picture
@@ -12526,12 +12524,11 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
                                       MotionEstimationContext_t *context_ptr,
                                       EbPictureBufferDesc *      input_ptr) {
     EbErrorType         return_error = EB_ErrorNone;
-    SequenceControlSet *scs_ptr      = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
     uint32_t      blk_origin_x;
     uint32_t      blk_origin_y;
     uint32_t      pa_blk_index       = 0;
-    SbParams *    sb_params          = &scs_ptr->sb_params_array[sb_index];
+    SbParams *    sb_params          = &pcs_ptr->sb_params_array[sb_index];
     OisSbResults *ois_sb_results_ptr = pcs_ptr->ois_sb_results[sb_index];
     uint8_t *     above_row;
     uint8_t *     left_col;

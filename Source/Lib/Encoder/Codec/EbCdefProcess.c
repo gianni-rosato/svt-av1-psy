@@ -90,8 +90,8 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     Av1Common *                     cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
     uint32_t                        x_seg_idx;
     uint32_t                        y_seg_idx;
-    uint32_t picture_width_in_b64  = (scs_ptr->seq_header.max_frame_width + 64 - 1) / 64;
-    uint32_t picture_height_in_b64 = (scs_ptr->seq_header.max_frame_height + 64 - 1) / 64;
+    uint32_t picture_width_in_b64  = (pcs_ptr->parent_pcs_ptr->aligned_width + 64 - 1) / 64;
+    uint32_t picture_height_in_b64 = (pcs_ptr->parent_pcs_ptr->aligned_height + 64 - 1) / 64;
     SEGMENT_CONVERT_IDX_TO_XY(
         segment_index, x_seg_idx, y_seg_idx, pcs_ptr->cdef_segments_column_count);
     uint32_t x_b64_start_idx =
@@ -303,8 +303,8 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     Av1Common *                     cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
     uint32_t                        x_seg_idx;
     uint32_t                        y_seg_idx;
-    uint32_t picture_width_in_b64  = (scs_ptr->seq_header.max_frame_width + 64 - 1) / 64;
-    uint32_t picture_height_in_b64 = (scs_ptr->seq_header.max_frame_height + 64 - 1) / 64;
+    uint32_t picture_width_in_b64  = (pcs_ptr->parent_pcs_ptr->aligned_width + 64 - 1) / 64;
+    uint32_t picture_height_in_b64 = (pcs_ptr->parent_pcs_ptr->aligned_height + 64 - 1) / 64;
     SEGMENT_CONVERT_IDX_TO_XY(
         segment_index, x_seg_idx, y_seg_idx, pcs_ptr->cdef_segments_column_count);
     uint32_t x_b64_start_idx =

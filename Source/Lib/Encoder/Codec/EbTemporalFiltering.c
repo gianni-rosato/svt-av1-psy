@@ -34,6 +34,7 @@
 #include "EbObject.h"
 #include "EbInterPrediction.h"
 #include "EbComputeVariance_C.h"
+#include "EbLog.h"
 
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
@@ -87,7 +88,6 @@ static const uint32_t index_16x16_from_subindexes[4][4] = {
 
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 
-#if DEBUG_TF
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
                       uint16_t width, uint16_t height, uint16_t stride_y, uint16_t stride_u,
@@ -110,12 +110,12 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
             pic_point = pic_point + stride_y;
         }
         pic_point = buffer_u + ((origin_y >> ss_y) * stride_u) + (origin_x >> ss_x);
-        for (h = 0; h<height> > ss_y; h++) {
+        for (h = 0; h<(height>>ss_y); h++) {
             fwrite(pic_point, 1, (size_t)width >> ss_x, fid);
             pic_point = pic_point + stride_u;
         }
         pic_point = buffer_v + ((origin_y >> ss_y) * stride_v) + (origin_x >> ss_x);
-        for (h = 0; h<height> > ss_y; h++) {
+        for (h = 0; h<(height>>ss_y); h++) {
             fwrite(pic_point, 1, (size_t)width >> ss_x, fid);
             pic_point = pic_point + stride_v;
         }
@@ -145,22 +145,21 @@ void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffe
             pic_point = pic_point + stride_y;
         }
         pic_point = buffer_u + ((origin_y >> ss_y) * stride_u) + (origin_x >> ss_x);
-        for (h = 0; h<height> > ss_y; h++) {
+        for (h = 0; h<(height>>ss_y); h++) {
             fwrite(pic_point, 2, (size_t)width >> ss_x, fid);
 
             pic_point = pic_point + stride_u;
         }
         pic_point = buffer_v + ((origin_y >> ss_y) * stride_v) + (origin_x >> ss_x);
-        for (h = 0; h<height> > ss_y; h++) {
+        for (h = 0; h<(height>>ss_y); h++) {
             fwrite(pic_point, 2, (size_t)width >> ss_x, fid);
             pic_point = pic_point + stride_v;
         }
         fclose(fid);
     }
 }
-#endif
 
-static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
                             uint32_t ss_y, EbBool include_padding) {
     uint32_t input_y_offset          = 0;
     uint32_t input_bit_inc_y_offset  = 0;
@@ -216,7 +215,7 @@ static void pack_highbd_pic(EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit
                height >> ss_y);
 }
 
-static void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
+void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
                               uint32_t ss_x, uint32_t ss_y, EbBool include_padding) {
     uint32_t input_y_offset          = 0;
     uint32_t input_bit_inc_y_offset  = 0;

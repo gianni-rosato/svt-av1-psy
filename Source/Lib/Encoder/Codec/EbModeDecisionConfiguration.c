@@ -248,13 +248,12 @@ EbErrorType mdc_refinement(
 }
 
 void refinement_prediction_loop(
-    SequenceControlSet                   *scs_ptr,
     PictureControlSet                    *pcs_ptr,
     uint32_t                              sb_index,
     ModeDecisionConfigurationContext     *context_ptr)
 {
     MdcpLocalBlkStruct    *local_blk_array         = context_ptr->local_blk_array;
-    SbParams               *sb_params            = &scs_ptr->sb_params_array[sb_index];
+    SbParams              *sb_params      = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
     uint32_t                  blk_index             = 0;
     while (blk_index < CU_MAX_COUNT)
     {
@@ -312,7 +311,7 @@ void forward_blk_to_mode_decision(
     uint32_t                  blk_class = DO_NOT_ADD_CU_CONTINUE_SPLIT;
     EbBool                 split_flag = EB_TRUE;
     MdcSbData           *results_ptr = &pcs_ptr->mdc_sb_array[sb_index];
-    SbParams            *sb_params = &scs_ptr->sb_params_array[sb_index];
+    SbParams            *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
     MdcpLocalBlkStruct  *local_blk_array = context_ptr->local_blk_array;
     EB_SLICE                slice_type = pcs_ptr->slice_type;
 
@@ -589,7 +588,7 @@ void prediction_partition_loop(
     MdcpLocalBlkStruct *local_blk_array = context_ptr->local_blk_array;
     MdcpLocalBlkStruct   *blk_ptr;
 
-    SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
+    SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
     uint32_t      raster_scan_blk_index;
     uint32_t      blk_index = 0;
     uint32_t      start_index = 0;
@@ -755,7 +754,6 @@ EbErrorType early_mode_decision_sb(
     );
 
     refinement_prediction_loop(
-        scs_ptr,
         pcs_ptr,
         sb_index,
         context_ptr);

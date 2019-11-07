@@ -444,6 +444,14 @@ typedef struct EbConfig {
     EbBool  enable_overlays;
     // --- end: ALTREF_FILTERING_SUPPORT
 
+    /****************************************
+     * Super-resolution related Parameters
+     ****************************************/
+    SUPERRES_MODE           superres_mode;
+    uint8_t                 superres_denom;
+    uint8_t                 superres_kf_denom;
+    uint8_t                 superres_qthres;
+
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
 

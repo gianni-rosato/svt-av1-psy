@@ -654,6 +654,9 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     EbBool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
+    const uint32_t ss_x = scs_ptr->subsampling_x;
+    const uint32_t ss_y = scs_ptr->subsampling_y;
+
     if (!is_16bit) {
         EbPictureBufferDesc *recon_ptr;
 
@@ -665,7 +668,7 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
             recon_ptr = pcs_ptr->recon_picture_ptr;
 
         EbPictureBufferDesc *input_picture_ptr =
-            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         uint64_t sse_total[3] = {0};
         uint32_t column_index;
@@ -697,9 +700,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
         residual_distortion = 0;
 
-        while (row_index < scs_ptr->seq_header.max_frame_height) {
+        while (row_index < input_picture_ptr->height) {
             column_index = 0;
-            while (column_index < scs_ptr->seq_header.max_frame_width) {
+            while (column_index < input_picture_ptr->width) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -720,9 +723,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
         residual_distortion = 0;
         row_index           = 0;
-        while (row_index < scs_ptr->chroma_height) {
+        while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
             column_index = 0;
-            while (column_index < scs_ptr->chroma_width) {
+            while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -743,9 +746,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         residual_distortion = 0;
         row_index           = 0;
 
-        while (row_index < scs_ptr->chroma_height) {
+        while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
             column_index = 0;
-            while (column_index < scs_ptr->chroma_width) {
+            while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -776,7 +779,7 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         else
             recon_ptr = pcs_ptr->recon_picture16bit_ptr;
         EbPictureBufferDesc *input_picture_ptr =
-            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+            (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         uint64_t  sse_total[3] = {0};
         uint32_t  column_index;
@@ -787,14 +790,14 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         uint16_t *recon_coeff_buffer;
 
         if (scs_ptr->static_config.ten_bit_format == 1) {
-            const uint32_t luma_width        = scs_ptr->seq_header.max_frame_width;
-            const uint32_t luma_height       = scs_ptr->seq_header.max_frame_height;
-            const uint32_t chroma_width      = scs_ptr->chroma_width;
+            const uint32_t luma_width        = input_picture_ptr->width;
+            const uint32_t luma_height       = input_picture_ptr->height;
+            const uint32_t chroma_width      = input_picture_ptr->width >> ss_x;
             const uint32_t pic_width_in_sb   = (luma_width + 64 - 1) / 64;
             const uint32_t pic_height_in_sb  = (luma_height + 64 - 1) / 64;
             const uint32_t luma_2bit_width   = luma_width / 4;
-            const uint32_t chroma_height     = luma_height / 2;
-            const uint32_t chroma_2bit_width = luma_width / 8;
+            const uint32_t chroma_height     = input_picture_ptr->height >> ss_y;
+            const uint32_t chroma_2bit_width = chroma_width / 4;
             uint32_t       sb_num_in_height, sb_num_in_width;
 
             EbByte input_buffer_org =
@@ -1038,9 +1041,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
             residual_distortion = 0;
 
-            while (row_index < scs_ptr->seq_header.max_frame_height) {
+            while (row_index < input_picture_ptr->height) {
                 column_index = 0;
-                while (column_index < scs_ptr->seq_header.max_frame_width) {
+                while (column_index < input_picture_ptr->width) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
@@ -1070,9 +1073,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
             residual_distortion = 0;
             row_index           = 0;
-            while (row_index < scs_ptr->chroma_height) {
+            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
                 column_index = 0;
-                while (column_index < scs_ptr->chroma_width) {
+                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
@@ -1102,9 +1105,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
             residual_distortion = 0;
             row_index           = 0;
 
-            while (row_index < scs_ptr->chroma_height) {
+            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
                 column_index = 0;
-                while (column_index < scs_ptr->chroma_width) {
+                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
@@ -1238,7 +1241,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     pcs_ptr->intra_coded_area =
         (100 * pcs_ptr->intra_coded_area) /
-        (scs_ptr->seq_header.max_frame_width * scs_ptr->seq_header.max_frame_height);
+        (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
     if (pcs_ptr->slice_type == I_SLICE) pcs_ptr->intra_coded_area = 0;
 
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
@@ -2125,7 +2128,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         uint8_t is_blk_allowed =
             pcs_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
         //init consider block flag
-        if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
             tot_d1_blocks = blk_geom->sq_size == 128
                                 ? 17
                                 : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
@@ -2323,7 +2326,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
         // derive split_flag
         split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
 
-        if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
+        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
                     int8_t s_depth = 0;
@@ -2605,7 +2608,7 @@ void *enc_dec_kernel(void *input_ptr) {
         sb_sz              = (uint8_t)scs_ptr->sb_size_pix;
         sb_size_log2       = (uint8_t)Log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
-        pic_width_in_sb    = (scs_ptr->seq_header.max_frame_width + sb_sz - 1) >> sb_size_log2;
+        pic_width_in_sb    = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
 #if TILES_PARALLEL
         tile_group_width_in_sb =
             pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
@@ -2704,7 +2707,7 @@ void *enc_dec_kernel(void *input_ptr) {
                     sb_ptr          = pcs_ptr->sb_ptr_array[sb_index];
                     sb_origin_x     = x_sb_index << sb_size_log2;
                     sb_origin_y     = y_sb_index << sb_size_log2;
-                    last_sb_flag    = (sb_index == scs_ptr->sb_tot_cnt - 1) ? EB_TRUE : EB_FALSE;
+                    last_sb_flag    = (sb_index == pcs_ptr->sb_total_count_pix - 1) ? EB_TRUE : EB_FALSE;
                     end_of_row_flag = (x_sb_index == pic_width_in_sb - 1) ? EB_TRUE : EB_FALSE;
                     sb_row_index_start =
                         (x_sb_index == pic_width_in_sb - 1 && sb_row_index_count == 0)
@@ -2776,7 +2779,7 @@ void *enc_dec_kernel(void *input_ptr) {
                          pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_1 ||
                          pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_2 ||
                          pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_3) &&
-                        scs_ptr->sb_geom[sb_index].is_complete_sb) {
+                        pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].is_complete_sb) {
                         // Save a clean copy of the neighbor arrays
                         copy_neighbour_arrays(pcs_ptr,
                                               context_ptr->md_context,
@@ -2920,7 +2923,7 @@ void *enc_dec_kernel(void *input_ptr) {
         pcs_ptr->intra_coded_area += (uint32_t)context_ptr->tot_intra_coded_area;
 #if TILES_PARALLEL
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
-        last_sb_flag = (scs_ptr->sb_tot_cnt == pcs_ptr->enc_dec_coded_sb_count);
+        last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
 #endif
         eb_release_mutex(pcs_ptr->intra_mutex);
 
@@ -2961,7 +2964,7 @@ void *enc_dec_kernel(void *input_ptr) {
             //CHKN these are not needed for DLF
             enc_dec_results_ptr->completed_sb_row_index_start = 0;
             enc_dec_results_ptr->completed_sb_row_count =
-                ((scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
+                ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
             // Post EncDec Results
             eb_post_full_object(enc_dec_results_wrapper_ptr);
         }

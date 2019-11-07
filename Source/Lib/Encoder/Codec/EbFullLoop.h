@@ -52,7 +52,9 @@ extern uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, 
 
 // compute the cost of curr depth, and the depth above
 extern void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr,
-                                        SequenceControlSet *scs_ptr, uint32_t above_depth_mds,
+                                        SequenceControlSet *scs_ptr,
+                                        PictureParentControlSet *pcs_ptr,
+                                        uint32_t above_depth_mds,
                                         uint32_t step, uint64_t *above_depth_cost,
                                         uint64_t *curr_depth_cost);
 uint64_t    d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t d1_block_itr);

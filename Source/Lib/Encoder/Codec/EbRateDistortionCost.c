@@ -2522,7 +2522,7 @@ EbErrorType av1_txb_calc_cost_luma(
 *   @param md_rate_estimation_ptr(input)
 *       md_rate_estimation_ptr is pointer to MD rate Estimation Tables
 **********************************************************************************/
-EbErrorType av1_split_flag_rate(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
+EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                 BlkStruct *blk_ptr, uint32_t leaf_index,
                                 PartitionType partitionType, uint64_t *split_rate, uint64_t lambda,
                                 MdRateEstimationContext *md_rate_estimation_ptr,
@@ -2546,8 +2546,8 @@ EbErrorType av1_split_flag_rate(SequenceControlSet *scs_ptr, ModeDecisionContext
 
     if (is_partition_point) {
         const int32_t hbs      = (mi_size_wide[bsize] << 2) >> 1;
-        const int32_t has_rows = (blk_origin_y + hbs) < scs_ptr->seq_header.max_frame_height;
-        const int32_t has_cols = (blk_origin_x + hbs) < scs_ptr->seq_header.max_frame_width;
+        const int32_t has_rows = (blk_origin_y + hbs) < pcs_ptr->aligned_height;
+        const int32_t has_cols = (blk_origin_x + hbs) < pcs_ptr->aligned_width;
 
         uint32_t context_index = 0;
 

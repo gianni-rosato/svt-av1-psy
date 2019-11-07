@@ -232,7 +232,7 @@ extern EbErrorType eb_sequence_control_set_instance_ctor(
 
 extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr);
 
-extern EbErrorType derive_input_resolution(SequenceControlSet *scs_ptr, uint32_t input_size);
+extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, uint32_t input_size);
 
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
 

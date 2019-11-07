@@ -2510,8 +2510,8 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
     input_picture_ptr               = pcs_ptr->enhanced_picture_ptr;
     pa_ref_obj_               = (EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
     input_padded_picture_ptr        = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
-    pic_width_in_sb = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-    pic_height_in_sb   = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+    pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+    pic_height_in_sb   = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
     sb_total_count      = pic_width_in_sb * pic_height_in_sb;
 
     // Pad pictures to multiple min cu size
@@ -3241,8 +3241,8 @@ void* picture_decision_kernel(void *input_ptr)
                                     }
                                 }
 
-                                pcs_ptr->av1_cm->mi_cols = pcs_ptr->scs_ptr->seq_header.max_frame_width >> MI_SIZE_LOG2;
-                                pcs_ptr->av1_cm->mi_rows = pcs_ptr->scs_ptr->seq_header.max_frame_height >> MI_SIZE_LOG2;
+                                pcs_ptr->av1_cm->mi_cols = pcs_ptr->aligned_width >> MI_SIZE_LOG2;
+                                pcs_ptr->av1_cm->mi_rows = pcs_ptr->aligned_height >> MI_SIZE_LOG2;
 
                                 //Jing: For low delay b/P case, don't alter the bias
                                 memset(pcs_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
@@ -3442,7 +3442,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
                                     int pic_itr, ahd;
 
-                                    int ahd_th = (((scs_ptr->seq_header.max_frame_width * scs_ptr->seq_header.max_frame_height) * AHD_TH_WEIGHT) / 100);
+                                    int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
 
                                     // Accumulative histogram absolute differences between the central and future frame
                                     for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
@@ -3503,7 +3503,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 int pic_itr;
                                 int ahd;
 
-                                int ahd_th = (((scs_ptr->seq_header.max_frame_width * scs_ptr->seq_header.max_frame_height) * AHD_TH_WEIGHT) / 100);
+                                int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
 
                                 // Accumulative histogram absolute differences between the central and past frame
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {

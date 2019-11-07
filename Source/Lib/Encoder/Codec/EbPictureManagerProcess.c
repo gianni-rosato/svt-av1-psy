@@ -52,15 +52,17 @@ extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
  ************************************************/
 #define POC_CIRCULAR_ADD(base, offset) (((base) + (offset)))
 
+void largest_coding_unit_dctor(EbPtr p);
+
 /************************************************
   * Configure Picture edges
   ************************************************/
 static void configure_picture_edges(SequenceControlSet *scs_ptr, PictureControlSet *ppsPtr) {
     // Tiles Initialisation
     const uint16_t pic_width_in_sb =
-        (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
+        (ppsPtr->parent_pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
     const uint16_t picture_height_in_sb =
-        (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
+        (ppsPtr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix;
     unsigned x_sb_index, y_sb_index, sb_index;
 
     // SB-loops
@@ -105,6 +107,26 @@ EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
 
     return EB_ErrorNone;
 }
+
+void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr){
+    dst_ptr->width = src_ptr->width;
+    dst_ptr->height = src_ptr->height;
+    dst_ptr->max_width = src_ptr->max_width;
+    dst_ptr->max_height = src_ptr->max_height;
+    dst_ptr->stride_y = src_ptr->stride_y;
+    dst_ptr->stride_cb = src_ptr->stride_cb;
+    dst_ptr->stride_cr = src_ptr->stride_cr;
+    dst_ptr->origin_x = src_ptr->origin_x;
+    dst_ptr->origin_bot_y = src_ptr->origin_bot_y;
+    dst_ptr->origin_y = src_ptr->origin_y;
+    dst_ptr->stride_bit_inc_y = src_ptr->stride_bit_inc_y;
+    dst_ptr->stride_bit_inc_cb = src_ptr->stride_bit_inc_cb;
+    dst_ptr->stride_bit_inc_cr = src_ptr->stride_bit_inc_cr;
+    dst_ptr->luma_size = src_ptr->luma_size;
+    dst_ptr->chroma_size = src_ptr->chroma_size;
+}
+
+void set_tile_info(PictureParentControlSet *pcs_ptr);
 
 /***************************************************************************************************
  * Picture Manager Kernel
@@ -819,22 +841,28 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->parent_pcs_ptr->sad_me         = 0;
                         child_pcs_ptr->parent_pcs_ptr->quantized_coeff_num_bits = 0;
                         child_pcs_ptr->enc_mode = entry_pcs_ptr->enc_mode;
+                        child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
+
 #if TILES_PARALLEL
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
 #endif
 
                         //3.make all  init for ChildPCS
-                        pic_width_in_sb = (uint8_t)((entry_scs_ptr->seq_header.max_frame_width +
+                        pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +
                                                      entry_scs_ptr->sb_size_pix - 1) /
                                                     entry_scs_ptr->sb_size_pix);
                         picture_height_in_sb =
-                            (uint8_t)((entry_scs_ptr->seq_header.max_frame_height +
+                            (uint8_t)((entry_pcs_ptr->aligned_height +
                                        entry_scs_ptr->sb_size_pix - 1) /
                                       entry_scs_ptr->sb_size_pix);
+
 #if TILES_PARALLEL
+                        set_tile_info(entry_pcs_ptr);
+
                         int      sb_size_log2    = entry_scs_ptr->seq_header.sb_size_log2;
-                        uint32_t encDecSegColCnt = entry_scs_ptr->enc_dec_segment_col_count_array
-                                                       [entry_pcs_ptr->temporal_layer_index];
+                        uint32_t encDecSegColCnt = (scs_ptr->static_config.super_block_size == 128) ?
+                                                 ((entry_pcs_ptr->aligned_width + 64) / 128) :
+                                                 ((entry_pcs_ptr->aligned_width + 32) / 64);
                         uint32_t encDecSegRowCnt = entry_scs_ptr->enc_dec_segment_row_count_array
                                                        [entry_pcs_ptr->temporal_layer_index];
 
@@ -956,11 +984,74 @@ void *picture_manager_kernel(void *input_ptr) {
                             }
                         }
 
+                        child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
+
+                        if(entry_pcs_ptr->frame_superres_enabled){
+                            // Modify sb_prt_array in child pcs
+                            uint16_t    sb_index;
+                            uint16_t    sb_origin_x = 0;
+                            uint16_t    sb_origin_y = 0;
+                            for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count_pix; ++sb_index) {
+                                largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
+                                largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
+                                                         (uint8_t)scs_ptr->sb_size_pix,
+                                                         (uint16_t)(sb_origin_x * scs_ptr->sb_size_pix),
+                                                         (uint16_t)(sb_origin_y * scs_ptr->sb_size_pix),
+                                                         (uint16_t)sb_index,
+                                                         child_pcs_ptr);
+                                // Increment the Order in coding order (Raster Scan Order)
+                                sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
+                                sb_origin_x = (sb_origin_x == pic_width_in_sb - 1) ? 0 : sb_origin_x + 1;
+                            }
+                        }
+
+                        // Update pcs_ptr->mi_stride
+                        child_pcs_ptr->mi_stride = pic_width_in_sb * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
+                        assert(child_pcs_ptr->mi_stride == entry_pcs_ptr->av1_cm->mi_stride);
+
+                        // copy buffer info from the downsampled picture to the input frame 16 bit buffer
+                        if(entry_pcs_ptr->frame_superres_enabled && scs_ptr->static_config.encoder_bit_depth > EB_8BIT){
+                            copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr, child_pcs_ptr->input_frame16bit);
+                        }
+
 #else
+                        child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
+
+                        if(entry_pcs_ptr->frame_superres_enabled){
+                            // Modify sb_prt_array in child pcs
+                            uint16_t    sb_index;
+                            uint16_t    sb_origin_x = 0;
+                            uint16_t    sb_origin_y = 0;
+                            for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count_pix; ++sb_index) {
+                                largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
+                                largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
+                                                         (uint8_t)scs_ptr->sb_size_pix,
+                                                         (uint16_t)(sb_origin_x * scs_ptr->sb_size_pix),
+                                                         (uint16_t)(sb_origin_y * scs_ptr->sb_size_pix),
+                                                         (uint16_t)sb_index,
+                                                         child_pcs_ptr);
+                                // Increment the Order in coding order (Raster Scan Order)
+                                sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
+                                sb_origin_x = (sb_origin_x == pic_width_in_sb - 1) ? 0 : sb_origin_x + 1;
+                            }
+                        }
+
+                        // Update pcs_ptr->mi_stride
+                        child_pcs_ptr->mi_stride = pic_width_in_sb * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
+                        assert(child_pcs_ptr->mi_stride == entry_pcs_ptr->av1_cm->mi_stride);
+
+                        // copy buffer info from the downsampled picture to the input frame 16 bit buffer
+                        if(entry_pcs_ptr->frame_superres_enabled && scs_ptr->static_config.encoder_bit_depth > EB_8BIT){
+                            copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr, child_pcs_ptr->input_frame16bit);
+                        }
+
+                        uint32_t enc_dec_seg_w = (scs_ptr->static_config.super_block_size == 128) ?
+                                                 ((entry_pcs_ptr->aligned_width + 64) / 128) :
+                                                 ((entry_pcs_ptr->aligned_width + 32) / 64);
+
                         // EncDec Segments
                         enc_dec_segments_init(child_pcs_ptr->enc_dec_segment_ctrl,
-                                              entry_scs_ptr->enc_dec_segment_col_count_array
-                                                  [entry_pcs_ptr->temporal_layer_index],
+                                              enc_dec_seg_w,
                                               entry_scs_ptr->enc_dec_segment_row_count_array
                                                   [entry_pcs_ptr->temporal_layer_index],
                                               pic_width_in_sb,

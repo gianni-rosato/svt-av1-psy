@@ -11,6 +11,7 @@
 #include "EbMotionEstimationContext.h"
 #include "EbUtility.h"
 #include "EbReferenceObject.h"
+#include "EbResize.h"
 
 /**************************************
  * Context
@@ -868,6 +869,16 @@ void *initial_rate_control_kernel(void *input_ptr) {
             me_based_global_motion_detection(pcs_ptr);
             // Release Pa Ref pictures when not needed
             release_pa_reference_objects(scs_ptr, pcs_ptr);
+
+            //****************************************************
+            // Picture resizing for super-res tool
+            //****************************************************
+
+            // Scale picture if super-res is used
+            if(scs_ptr->static_config.superres_mode > SUPERRES_NONE){
+                init_resize_picture(pcs_ptr->scs_ptr,
+                                    pcs_ptr);
+            }
 
             //****************************************************
             // Input Motion Analysis Results into Reordering Queue

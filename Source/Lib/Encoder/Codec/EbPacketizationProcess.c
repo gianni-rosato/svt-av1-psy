@@ -127,7 +127,7 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 
         for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
             sb_ptr        = pcs_ptr->sb_ptr_array[sb_index];
-            sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+            sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
             if (sb_params_ptr->is_complete_sb) {
                 if (pcs_ptr->slice_type == I_SLICE) {

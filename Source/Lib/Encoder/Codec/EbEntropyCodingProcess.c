@@ -553,7 +553,7 @@ void *entropy_coding_kernel(void *input_ptr) {
 
         sb_size_log2       = (uint8_t)Log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
-        pic_width_in_sb    = (scs_ptr->seq_header.max_frame_width + sb_sz - 1) >> sb_size_log2;
+        pic_width_in_sb    = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
 #if TILES_PARALLEL
         uint16_t         tile_idx = rest_results_ptr->tile_index;
         Av1Common *const cm       = pcs_ptr->parent_pcs_ptr->av1_cm;

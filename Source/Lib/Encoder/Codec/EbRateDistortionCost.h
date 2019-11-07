@@ -102,7 +102,7 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
 #define RDCOST(RM, R, D) \
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))
 
-extern EbErrorType av1_split_flag_rate(SequenceControlSet * scs_ptr,
+extern EbErrorType av1_split_flag_rate(PictureParentControlSet * pcs_ptr,
                                        ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                        uint32_t leaf_index, PartitionType partitionType,
                                        uint64_t *split_rate, uint64_t lambda,

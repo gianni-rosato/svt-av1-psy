@@ -526,7 +526,7 @@ void high_level_rc_input_picture_vbr(PictureParentControlSet *pcs_ptr, SequenceC
         pcs_ptr->bits_per_sw_per_layer[temporal_layer_index] = 0;
     pcs_ptr->total_bits_per_gop = 0;
 
-    area_in_pixel = scs_ptr->seq_header.max_frame_width * scs_ptr->seq_header.max_frame_height;
+    area_in_pixel = pcs_ptr->aligned_width * pcs_ptr->aligned_height;
     ;
 
     eb_block_on_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
@@ -1061,7 +1061,7 @@ void frame_level_rc_input_picture_vbr(PictureControlSet *pcs_ptr, SequenceContro
     uint32_t  area_in_sbs;
 
     picture_area_in_pixel =
-        scs_ptr->seq_header.max_frame_height * scs_ptr->seq_header.max_frame_width;
+            pcs_ptr->parent_pcs_ptr->aligned_height * pcs_ptr->parent_pcs_ptr->aligned_width;
 
     if (rate_control_layer_ptr->first_frame == 1) {
         rate_control_layer_ptr->first_frame                    = 0;
@@ -1084,7 +1084,7 @@ void frame_level_rc_input_picture_vbr(PictureControlSet *pcs_ptr, SequenceContro
     area_in_pixel = 0;
 
     for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-        sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+        sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
         if (sb_params_ptr->is_complete_sb) {
             // add the area of one SB (64x64=4096) to the area of the tile
@@ -1261,7 +1261,7 @@ void frame_level_rc_input_picture_vbr(PictureControlSet *pcs_ptr, SequenceContro
         } else {
             // SB Loop
             for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+                sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb)
                     pcs_ptr->parent_pcs_ptr->sad_me +=
@@ -1338,7 +1338,7 @@ void frame_level_rc_input_picture_vbr(PictureControlSet *pcs_ptr, SequenceContro
 
             // SB Loop
             for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+                sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb)
                     pcs_ptr->parent_pcs_ptr->sad_me +=
@@ -2160,7 +2160,7 @@ void high_level_rc_input_picture_cvbr(PictureParentControlSet *pcs_ptr, Sequence
         pcs_ptr->bits_per_sw_per_layer[temporal_layer_index] = 0;
     pcs_ptr->total_bits_per_gop = 0;
 
-    area_in_pixel = scs_ptr->seq_header.max_frame_width * scs_ptr->seq_header.max_frame_height;
+    area_in_pixel = pcs_ptr->aligned_width * pcs_ptr->aligned_height;
     ;
 
     eb_block_on_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
@@ -2702,7 +2702,7 @@ void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceContr
     uint32_t  area_in_sbs;
 
     picture_area_in_pixel =
-        scs_ptr->seq_header.max_frame_height * scs_ptr->seq_header.max_frame_width;
+            pcs_ptr->parent_pcs_ptr->aligned_height * pcs_ptr->parent_pcs_ptr->aligned_width;
 
     if (rate_control_layer_ptr->first_frame == 1) {
         rate_control_layer_ptr->first_frame                    = 0;
@@ -2725,7 +2725,7 @@ void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceContr
     area_in_pixel = 0;
 
     for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-        sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+        sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
         if (sb_params_ptr->is_complete_sb) {
             // add the area of one SB (64x64=4096) to the area of the tile
@@ -2803,7 +2803,7 @@ void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceContr
         } else {
             // SB Loop
             for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+                sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb)
                     pcs_ptr->parent_pcs_ptr->sad_me +=
@@ -3065,7 +3065,7 @@ void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceContr
 
             // SB Loop
             for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                sb_params_ptr = &scs_ptr->sb_params_array[sb_index];
+                sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
                 if (sb_params_ptr->is_complete_sb)
                     pcs_ptr->parent_pcs_ptr->sad_me +=
@@ -4727,9 +4727,9 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
 
         uint32_t me_sb_size = scs_ptr->sb_sz;
         uint32_t me_pic_width_in_sb =
-            (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / me_sb_size;
+            (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_pic_height_in_sb =
-            (scs_ptr->seq_header.max_frame_height + me_sb_size - 1) / me_sb_size;
+            (pcs_ptr->parent_pcs_ptr->aligned_height + me_sb_size - 1) / me_sb_size;
 
         int *arfgf_low_motion_minq;
         int *arfgf_high_motion_minq;
@@ -4746,7 +4746,7 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
                                   2) /
                                      2;
 
-        for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
+        for (sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
             sb_ptr            = pcs_ptr->sb_ptr_array[sb_addr];
             int      delta_qp = 0;
             uint16_t variance_sb;
@@ -4776,17 +4776,17 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
 
                 referenced_area_sb =
                     (pcs_ptr->parent_pcs_ptr->stat_struct.referenced_area[me_sb_addr_0] /
-                         scs_ptr->sb_params_array[me_sb_addr_0].width /
-                         scs_ptr->sb_params_array[me_sb_addr_0].height +
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_0].width /
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_0].height +
                      pcs_ptr->parent_pcs_ptr->stat_struct.referenced_area[me_sb_addr_1] /
-                         scs_ptr->sb_params_array[me_sb_addr_1].width /
-                         scs_ptr->sb_params_array[me_sb_addr_1].height +
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_1].width /
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_1].height +
                      pcs_ptr->parent_pcs_ptr->stat_struct.referenced_area[me_sb_addr_2] /
-                         scs_ptr->sb_params_array[me_sb_addr_2].width /
-                         scs_ptr->sb_params_array[me_sb_addr_2].height +
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_2].width /
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_2].height +
                      pcs_ptr->parent_pcs_ptr->stat_struct.referenced_area[me_sb_addr_3] /
-                         scs_ptr->sb_params_array[me_sb_addr_3].width /
-                         scs_ptr->sb_params_array[me_sb_addr_3].height +
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_3].width /
+                         pcs_ptr->parent_pcs_ptr->sb_params_array[me_sb_addr_3].height +
                      2) >>
                     2;
                 me_distortion = (pcs_ptr->parent_pcs_ptr->rc_me_distortion[me_sb_addr_0] +
@@ -4798,8 +4798,8 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
             } else {
                 variance_sb = pcs_ptr->parent_pcs_ptr->variance[sb_addr][ME_TIER_ZERO_PU_64x64];
                 referenced_area_sb = pcs_ptr->parent_pcs_ptr->stat_struct.referenced_area[sb_addr] /
-                                     scs_ptr->sb_params_array[sb_addr].width /
-                                     scs_ptr->sb_params_array[sb_addr].height;
+                                     pcs_ptr->parent_pcs_ptr->sb_params_array[sb_addr].width /
+                                     pcs_ptr->parent_pcs_ptr->sb_params_array[sb_addr].height;
                 me_distortion = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr] >> 8;
             }
             delta_qp = 0;
@@ -4843,7 +4843,7 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
             pcs_ptr->parent_pcs_ptr->average_qp += sb_ptr->qp;
         }
     } else {
-        for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
+        for (sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
             sb_ptr           = pcs_ptr->sb_ptr_array[sb_addr];
             sb_ptr->qp       = (uint8_t)pcs_ptr->picture_qp;
             sb_ptr->delta_qp = 0;
@@ -4875,9 +4875,9 @@ static void sb_qp_derivation(PictureControlSet *pcs_ptr) {
         double   q_val, picture_q_val;
         uint32_t me_sb_size = scs_ptr->sb_sz;
         uint32_t me_pic_width_in_sb =
-            (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / me_sb_size;
+            (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / me_sb_size;
         uint32_t me_pic_height_in_sb =
-            (scs_ptr->seq_header.max_frame_height + me_sb_size - 1) / me_sb_size;
+            (pcs_ptr->parent_pcs_ptr->aligned_height + me_sb_size - 1) / me_sb_size;
         int max_qp_scaling_avg_comp =
             MAX(1,
                 pcs_ptr->parent_pcs_ptr->non_moving_index_min_distance +
@@ -4892,10 +4892,10 @@ static void sb_qp_derivation(PictureControlSet *pcs_ptr) {
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
         picture_q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
-        for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
+        for (sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
             sb_ptr              = pcs_ptr->sb_ptr_array[sb_addr];
             int       delta_qp  = 0;
-            SbParams *sb_params = &scs_ptr->sb_params_array[sb_addr];
+            SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_addr];
             uint8_t   non_moving_index_sb;
             uint16_t  variance_sb;
             if (scs_ptr->seq_header.sb_size == BLOCK_128X128) {
@@ -4961,7 +4961,7 @@ static void sb_qp_derivation(PictureControlSet *pcs_ptr) {
             pcs_ptr->parent_pcs_ptr->average_qp += sb_ptr->qp;
         }
     } else {
-        for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
+        for (sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
             sb_ptr           = pcs_ptr->sb_ptr_array[sb_addr];
             sb_ptr->qp       = (uint8_t)pcs_ptr->picture_qp;
             sb_ptr->delta_qp = 0;
@@ -5226,7 +5226,7 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
                 SuperBlock *sb_ptr;
                 pcs_ptr->parent_pcs_ptr->average_qp = 0;
-                for (int sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
+                for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
                     sb_ptr           = pcs_ptr->sb_ptr_array[sb_addr];
                     sb_ptr->qp       = (uint8_t)pcs_ptr->picture_qp;
                     sb_ptr->delta_qp = 0;
