@@ -3733,9 +3733,9 @@ void* picture_decision_kernel(void *input_ptr)
                                     // Accumulative histogram absolute differences between the central and future frame
                                     for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
                                         ahd = 0;
-                                        center_histogram = 0;
-                                        altref_histogram = 0;
                                         for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                            center_histogram = 0;
+                                            altref_histogram = 0;
                                             for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
                                                 for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
                                                     center_histogram += picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
@@ -3851,9 +3851,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center - 1; pic_itr++) {
 #endif
                                     ahd = 0;
-                                    center_histogram = 0;
-                                    altref_histogram = 0;
                                     for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                        center_histogram = 0;
+                                        altref_histogram = 0;
                                         for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
                                             for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
                                                 center_histogram += picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
@@ -3871,9 +3871,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 // Accumulative histogram absolute differences between the central and past frame
                                 for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
                                     ahd = 0;
-                                    center_histogram = 0;
-                                    altref_histogram = 0;
                                     for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                        center_histogram = 0;
+                                        altref_histogram = 0;
                                         for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
                                             for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
                                                 center_histogram += picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
