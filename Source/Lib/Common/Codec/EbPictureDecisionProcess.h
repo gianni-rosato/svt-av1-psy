@@ -91,4 +91,10 @@ void GatheringPictureStatistics(
 void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
                       EbPictureBufferDesc* outputPicturePtr);
 
+uint32_t inline compute_luma_frequency_sad_between_center_and_target_frame(
+    uint32_t ahd_threshold,
+    uint32_t target_frame_index,
+    PictureParentControlSet *picture_control_set_ptr,
+    SequenceControlSet *sequence_control_set_ptr);
+
 #endif // EbPictureDecision_h
