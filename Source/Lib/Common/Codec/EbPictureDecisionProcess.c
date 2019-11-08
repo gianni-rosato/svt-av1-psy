@@ -2922,9 +2922,8 @@ void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_p
  }
 
 /***************************************************************************************************
- * Helper function. Compare nearby consecutive frames with respect to a center 
- * frame. Return the summation of absolute difference between luma value frequency
- * for one target luma value.
+ * Helper function. Compare two frames: a center frame and a target frame. Return the summation of  
+ * absolute difference between frequency in luma values.
 ***************************************************************************************************/
 
 uint32_t inline compute_luma_frequency_sad_between_center_and_target_frame(
