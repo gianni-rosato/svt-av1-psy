@@ -763,7 +763,12 @@ int32_t mdc_av1_quantize_inv_quantize(
     MacroblockPlane candidate_plane;
     const QmVal *qMatrix = picture_control_set_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal *iqMatrix = picture_control_set_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
+#if ADD_DELTA_QP_SUPPORT && MDC_ADAPTIVE_LEVEL
+    //NM - Assuming 1 segment.
+    uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present ? quantizer_to_qindex[qp] : picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#else
     uint32_t qIndex = picture_control_set_ptr->parent_pcs_ptr->delta_q_present_flag ? quantizer_to_qindex[qp] : picture_control_set_ptr->parent_pcs_ptr->base_qindex;
+#endif
     if (component_type == COMPONENT_LUMA) {
         candidate_plane.quant_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.y_quant[qIndex];
         candidate_plane.quant_fp_QTX = picture_control_set_ptr->parent_pcs_ptr->quantsMd.y_quant_fp[qIndex];
@@ -1139,7 +1144,11 @@ EbErrorType mdc_inter_pu_prediction_av1(
         context_ptr->blk_geom->origin_x,
         context_ptr->blk_geom->origin_y,
         0, // No chroma
+#if MDC_ADAPTIVE_LEVEL
+        8); //bit_depth 0
+#else
         0); //bit_depth 0
+#endif
 
     return return_error;
 }
@@ -1175,7 +1184,7 @@ uint64_t mdc_av1_full_cost(
     return full_cost;
 }
 #endif
-EB_EXTERN EbErrorType nsq_prediction_shape(
+EB_EXTERN EbErrorType open_loop_partitioning_sb(
     SequenceControlSet                *sequence_control_set_ptr,
     PictureControlSet                 *picture_control_set_ptr,
     ModeDecisionConfigurationContext  *context_ptr,
@@ -1208,6 +1217,11 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
     context_ptr->coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
 #endif
     uint64_t tot_me_sb;
+#if MDC_ADAPTIVE_LEVEL
+    LargestCodingUnit  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+    uint64_t depth_cost[NUMBER_OF_DEPTH] = { 0 };
+    uint8_t depth_table[NUMBER_OF_DEPTH] = { 0, 1, 2 , 3 ,4 ,5 };
+#endif
     do {
         EbMdcLeafData * leaf_data_ptr = &mdc_result_tb_ptr->leaf_data_array[cuIdx];
         blk_idx_mds = leaf_data_array[cuIdx].mds_idx;
@@ -1539,6 +1553,9 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
                     }
                 }
             }
+#if MDC_ADAPTIVE_LEVEL
+            depth_cost[get_depth(context_ptr->blk_geom->sq_size)] += nsq_cost[nsq_shape_table[0]];
+#endif
             // Assign ranking # to each block
             for (leaf_idx = start_idx; leaf_idx < end_idx; leaf_idx++) {
                 EbMdcLeafData * current_depth_leaf_data = &mdc_result_tb_ptr->leaf_data_array[leaf_idx];
@@ -1571,6 +1588,27 @@ EB_EXTERN EbErrorType nsq_prediction_shape(
         }
         cuIdx++;
     } while (cuIdx < leaf_count);// End of CU loop
+#if MDC_ADAPTIVE_LEVEL
+    if (sequence_control_set_ptr->seq_header.sb_size == BLOCK_64X64)
+        depth_cost[0] = MAX_CU_COST;
+    //Sorting
+    {
+        uint32_t i, j, index;
+        for (i = 0; i < NUMBER_OF_DEPTH - 1; ++i) {
+            for (j = i + 1; j < NUMBER_OF_DEPTH; ++j) {
+                if (depth_cost[depth_table[j]] < depth_cost[depth_table[i]]) {
+                    index = depth_table[i];
+                    depth_table[i] = depth_table[j];
+                    depth_table[j] = index;
+                }
+            }
+        }
+    }
+    for (uint8_t depth_idx = 0; depth_idx < NUMBER_OF_DEPTH; depth_idx++) {
+        sb_ptr->depth_ranking[depth_idx] = find_depth_index(depth_idx, depth_table);
+        sb_ptr->depth_cost[depth_idx] = depth_cost[depth_idx];
+    }
+#endif
     return return_error;
 }
 #endif

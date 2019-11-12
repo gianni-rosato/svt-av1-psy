@@ -304,6 +304,7 @@ typedef struct EbConfig
     int32_t                  enable_palette;
     int32_t                  tile_columns;
     int32_t                  tile_rows;
+    int32_t                  olpd_refinement;   // Open Loop Partitioning Decision Refinement
 
     /****************************************
      * Rate Control

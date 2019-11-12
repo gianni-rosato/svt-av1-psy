@@ -841,6 +841,29 @@ EbErrorType signal_derivation_multi_processes_oq(
             assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
 
         picture_control_set_ptr->max_number_of_pus_per_sb = (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) ? MAX_ME_PU_COUNT : SQUARE_PU_COUNT;
+#if MDC_ADAPTIVE_LEVEL
+        // Adaptive Ol  Level                    Settings
+        // 0                                     OFF
+        // 1                                     ON 
+        //NM : Please note that the open_loop_partitioning is operational only when 
+        // pic_depth_mode is set to PIC_ALL_DEPTH_MODE or PIC_ALL_C_DEPTH_MODE when 
+        // the motion information information for NSQ is generated.
+        if (sequence_control_set_ptr->static_config.olpd_refinement == -1) { //auto mode; if not set by cfg
+            if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+                if (MR_MODE || sc_content_detected || sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
+                    picture_control_set_ptr->enable_adaptive_ol_partitioning = 0;
+                else if (picture_control_set_ptr->enc_mode <= ENC_M0)
+                    picture_control_set_ptr->enable_adaptive_ol_partitioning = 1;
+                else
+                    picture_control_set_ptr->enable_adaptive_ol_partitioning = 0;
+            }
+            else
+                picture_control_set_ptr->enable_adaptive_ol_partitioning = 0;
+        }
+        else {
+            picture_control_set_ptr->enable_adaptive_ol_partitioning = sequence_control_set_ptr->static_config.olpd_refinement;
+        }
+#else
 
 #if PREDICT_NSQ_SHAPE
     // Depth Level                           Settings
@@ -859,6 +882,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         picture_control_set_ptr->mdc_depth_level = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? MAX_MDC_LEVEL : 6;
     else
         picture_control_set_ptr->mdc_depth_level = MAX_MDC_LEVEL; // Not tuned yet.
+
+#endif
 #endif
 
     // NSQ search Level                               Settings
@@ -892,7 +917,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                     picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
             else
                     picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_OFF;
-#if PREDICT_NSQ_SHAPE
+#if PREDICT_NSQ_SHAPE && !MDC_ADAPTIVE_LEVEL
         else if (picture_control_set_ptr->mdc_depth_level == (MAX_MDC_LEVEL - 1))
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL7;
 #endif

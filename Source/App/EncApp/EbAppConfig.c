@@ -97,6 +97,7 @@
 // --- end: ALTREF_FILTERING_SUPPORT
 #define HBD_MD_ENABLE_TOKEN             "-hbd-md"
 #define PALETTE_TOKEN                   "-palette"
+#define OLPD_REFINEMENT_TOKEN           "-olpd-refinement"
 #define CONSTRAINED_INTRA_ENABLE_TOKEN  "-constrd-intra"
 #define HDR_INPUT_TOKEN                 "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN       "-rc"
@@ -286,6 +287,7 @@ static void SetEnableOverlays                   (const char *value, EbConfig *cf
 // --- end: ALTREF_FILTERING_SUPPORT
 static void SetEnableHBDModeDecision            (const char *value, EbConfig *cfg) {cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);};
 static void SetEnablePalette                    (const char *value, EbConfig *cfg) { cfg->enable_palette = (int32_t)strtoul(value, NULL, 0); };
+static void SetEnableOlpdRefinement              (const char *value, EbConfig *cfg) { cfg->olpd_refinement = (int32_t)strtoul(value, NULL, 0); };
 static void SetEnableConstrainedIntra           (const char *value, EbConfig *cfg) {cfg->constrained_intra                                             = (EbBool)strtoul(value, NULL, 0);};
 static void SetHighDynamicRangeInput            (const char *value, EbConfig *cfg) {cfg->high_dynamic_range_input            = strtol(value,  NULL, 0);};
 static void SetProfile                          (const char *value, EbConfig *cfg) {cfg->profile                          = strtol(value,  NULL, 0);};
@@ -437,6 +439,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", SetScreenContentMode},
     { SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", SetEnableHBDModeDecision },
     { SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", SetEnablePalette },
+    { SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", SetEnableOlpdRefinement },
     { SINGLE_INPUT, CONSTRAINED_INTRA_ENABLE_TOKEN, "ConstrainedIntra", SetEnableConstrainedIntra},
     // Thread Management
     { SINGLE_INPUT, THREAD_MGMNT, "logicalProcessors", SetLogicalProcessors },
@@ -539,6 +542,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->screen_content_mode                  = 2;
     config_ptr->enable_hbd_mode_decision             = 1;
     config_ptr->enable_palette                       = -1;
+    config_ptr->olpd_refinement                      = -1;
     config_ptr->injector_frame_rate                    = 60 << 16;
 
     // ASM Type

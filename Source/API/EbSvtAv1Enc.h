@@ -284,6 +284,11 @@ typedef struct EbSvtAv1EncConfiguration
     * Default is -1. */
     int32_t                   enable_palette;
 
+    /* Open Loop Partitioning Decision refinement
+    *
+    * Default is -1. */
+    int32_t                   olpd_refinement;
+
     /* Enable the use of Constrained Intra, which yields sending two picture
      * parameter sets in the elementary streams .
      *

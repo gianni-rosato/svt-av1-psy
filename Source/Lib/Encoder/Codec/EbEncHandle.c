@@ -2147,6 +2147,7 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->encoder_bit_depth > 8 ? ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_hbd_mode_decision : 0;
     sequence_control_set_ptr->static_config.constrained_intra = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->constrained_intra;
     sequence_control_set_ptr->static_config.enable_palette = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_palette;
+    sequence_control_set_ptr->static_config.olpd_refinement = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->olpd_refinement;
     // Adaptive Loop Filter
     sequence_control_set_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->tile_rows;
     sequence_control_set_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->tile_columns;
@@ -2589,6 +2590,15 @@ static EbErrorType VerifySettings(
         SVT_LOG( "Error instance %u: Invalid Palette Mode [0 .. 6], your input: %i\n", channelNumber + 1, config->enable_palette);
         return_error = EB_ErrorBadParameter;
     }
+    // mdc refinement
+    if (config->olpd_refinement < (int32_t)(-1) || config->olpd_refinement > 1) {
+        SVT_LOG("Error instance %u: Invalid OLPD Refinement Mode [0 .. 1], your input: %i\n", channelNumber + 1, config->olpd_refinement);
+        return_error = EB_ErrorBadParameter;
+    }
+    else if (config->olpd_refinement == 1 && config->enc_mode >= ENC_M1) {
+        SVT_LOG("Error instance %u: Invalid OLPD Refinement mode for M%d [0], your input: %i\n", channelNumber + 1, config->enc_mode, config->olpd_refinement);
+        return_error = EB_ErrorBadParameter;
+    }
 
     return return_error;
 }
@@ -2669,6 +2679,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_hbd_mode_decision = 1;
     config_ptr->constrained_intra = EB_FALSE;
     config_ptr->enable_palette = -1;
+    config_ptr->olpd_refinement = -1;
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;

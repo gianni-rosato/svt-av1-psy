@@ -14303,8 +14303,11 @@ extern "C" {
         uint64_t                             referenced_area_avg; // average referenced area per frame
         uint8_t                              referenced_area_has_non_zero;
 #endif
-#if PREDICT_NSQ_SHAPE
+#if PREDICT_NSQ_SHAPE && !MDC_ADAPTIVE_LEVEL
         uint8_t                                mdc_depth_level;
+#endif
+#if MDC_ADAPTIVE_LEVEL
+        uint8_t                                enable_adaptive_ol_partitioning;
 #endif
     } PictureParentControlSet;
 
