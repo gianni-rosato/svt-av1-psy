@@ -2926,7 +2926,7 @@ void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_p
  * absolute difference between the two frames from a histogram of luma values
 ***************************************************************************************************/
 
-__inline uint32_t compute_luma_sad_between_center_and_target_frame(
+static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
     int target_frame_index,
     PictureParentControlSet *picture_control_set_ptr,
     SequenceControlSet *sequence_control_set_ptr) {
