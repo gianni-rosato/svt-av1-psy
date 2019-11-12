@@ -2927,12 +2927,12 @@ void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_p
 ***************************************************************************************************/
 
 __inline uint32_t compute_luma_sad_between_center_and_target_frame(
-    uint32_t target_frame_index,
+    int target_frame_index,
     PictureParentControlSet *picture_control_set_ptr,
     SequenceControlSet *sequence_control_set_ptr) {
 
-    int32_t center_sum = 0, altref_sum = 0, ahd = 0;
-    uint32_t index_center = 0;
+    int32_t center_sum = 0, altref_sum = 0;
+    uint32_t index_center = 0, ahd = 0;
 
     for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
         center_sum = 0, altref_sum = 0;
