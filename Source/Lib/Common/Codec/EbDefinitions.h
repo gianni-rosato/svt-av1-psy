@@ -48,6 +48,12 @@ extern "C" {
 
 #define LESS_RECTANGULAR_CHECK_LEVEL 1 // Shortcut to skip a/b shapes depending on SQ/H/V shape costs
 
+#define STAGE_1_COUNT_PRUNING_TH_S   1
+#define TUNED_TH_S                   1
+#define STAGE_1_COUNT_PRUNING_TH_C   1
+#define STAGE_2_COUNT_PRUNING_TH_S   1
+#define STAGE_2_COUNT_PRUNING_TH_C   1
+
 #define FIX_ALTREF                   1 // Address ALTREF mismatch between rtime-m0-test and master: fixed actual_future_pics derivation, shut padding of the central frame, fixed end past frame index prior to window shrinking
 #define FIX_NEAREST_NEW              1 // Address NEAREST_NEW mismatch between rtime-m0-test and master: fixed injection and fixed settings
 #define FIX_ESTIMATE_INTRA           1 // Address ESTIMATE_INTRA mismatch between rtime-m0-test and master: fixed settings
