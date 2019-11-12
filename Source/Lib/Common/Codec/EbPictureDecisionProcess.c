@@ -2922,23 +2922,22 @@ void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_p
  }
 
 /***************************************************************************************************
- * Helper function. Compare two frames: a center frame and a target frame. Return the summation of  
- * absolute difference between frequency in luma values.
+ * Helper function. Compare two frames: center frame and target frame. Return the summation of  
+ * absolute difference between the two frames from a histogram of luma values
 ***************************************************************************************************/
 
-uint32_t inline compute_luma_frequency_sad_between_center_and_target_frame(
-    uint32_t ahd_threshold,
+uint32_t inline compute_luma_sad_between_center_and_target_frame(
     uint32_t target_frame_index,
     PictureParentControlSet *picture_control_set_ptr,
     SequenceControlSet *sequence_control_set_ptr) {
 
     int32_t center_sum = 0, altref_sum = 0, ahd = 0;
-    uint32_t index_center = 0, regionInPictureWidthIndex = 0, regionInPictureHeightIndex = 0;
+    uint32_t index_center = 0;
 
     for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
         center_sum = 0, altref_sum = 0;
-        for (regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
-            for (regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
+        for (uint32_t regionInPictureWidthIndex = 0; regionInPictureWidthIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_width; regionInPictureWidthIndex++) {
+            for (uint32_t regionInPictureHeightIndex = 0; regionInPictureHeightIndex < sequence_control_set_ptr->picture_analysis_number_of_regions_per_height; regionInPictureHeightIndex++) {
                 center_sum += picture_control_set_ptr->temp_filt_pcs_list[index_center]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
                 altref_sum += picture_control_set_ptr->temp_filt_pcs_list[target_frame_index]->picture_histogram[regionInPictureWidthIndex][regionInPictureHeightIndex][0][bin];
             }
@@ -3756,7 +3755,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                     // Accumulative histogram absolute differences between the central and future frame
                                     for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
-                                        ahd = compute_luma_frequency_sad_between_center_and_target_frame(ahd_th, pic_itr, picture_control_set_ptr, sequence_control_set_ptr); 
+                                        ahd = compute_luma_sad_between_center_and_target_frame(pic_itr, picture_control_set_ptr, sequence_control_set_ptr);
                                         if (ahd < ahd_th)
                                             break;
                                     }
@@ -3858,7 +3857,7 @@ void* picture_decision_kernel(void *input_ptr)
 #else
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center - 1; pic_itr++) {
 #endif
-                                    ahd = compute_luma_frequency_sad_between_center_and_target_frame(ahd_th, pic_itr, picture_control_set_ptr, sequence_control_set_ptr);
+                                    ahd = compute_luma_sad_between_center_and_target_frame(pic_itr, picture_control_set_ptr, sequence_control_set_ptr);
 
                                     if (ahd < ahd_th)
                                         break;
@@ -3867,7 +3866,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 // Accumulative histogram absolute differences between the central and past frame
                                 for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
-                                    ahd = compute_luma_frequency_sad_between_center_and_target_frame(ahd_th, pic_itr, picture_control_set_ptr, sequence_control_set_ptr);
+                                    ahd = compute_luma_sad_between_center_and_target_frame(pic_itr, picture_control_set_ptr, sequence_control_set_ptr);
                                     if (ahd < ahd_th)
                                         break;
                                 }
