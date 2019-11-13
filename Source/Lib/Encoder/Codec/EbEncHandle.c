@@ -2106,6 +2106,9 @@ void CopyApiFromApp(
     // OBMC
     sequence_control_set_ptr->static_config.enable_obmc = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_obmc;
 
+    // RDOQ
+    sequence_control_set_ptr->static_config.enable_rdoq = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_rdoq;
+
     // Filter intra prediction
     sequence_control_set_ptr->static_config.enable_filter_intra = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enable_filter_intra;
 
@@ -2585,11 +2588,19 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u: invalid altref-nframes, should be in the range [0 - %d] \n", channelNumber + 1, ALTREF_MAX_NFRAMES);
         return_error = EB_ErrorBadParameter;
     }
+
     // palette
     if (config->enable_palette < (int32_t)(-1) || config->enable_palette >6) {
         SVT_LOG( "Error instance %u: Invalid Palette Mode [0 .. 6], your input: %i\n", channelNumber + 1, config->enable_palette);
         return_error = EB_ErrorBadParameter;
     }
+
+    // RDOQ
+    if (config->enable_rdoq != (int8_t)0 && config->enable_rdoq != (int8_t)1 && config->enable_rdoq != (int8_t)-1) {
+        SVT_LOG( "Error instance %u: Invalid RDOQ parameter [-1, 0, 1], your input: %i\n", channelNumber + 1, config->enable_rdoq);
+        return_error = EB_ErrorBadParameter;
+    }
+
     // mdc refinement
     if (config->olpd_refinement < (int32_t)(-1) || config->olpd_refinement > 1) {
         SVT_LOG("Error instance %u: Invalid OLPD Refinement Mode [0 .. 1], your input: %i\n", channelNumber + 1, config->olpd_refinement);
@@ -2650,6 +2661,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_warped_motion = EB_TRUE;
     config_ptr->enable_global_motion = EB_TRUE;
     config_ptr->enable_obmc = EB_TRUE;
+    config_ptr->enable_rdoq = AUTO_MODE;
     config_ptr->enable_filter_intra = EB_TRUE;
     config_ptr->in_loop_me_flag = EB_TRUE;
     config_ptr->ext_block_flag = EB_FALSE;

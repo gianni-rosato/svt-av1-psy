@@ -412,6 +412,9 @@ void setup_rtcd_internal(EbAsm asm_type)
     eb_av1_quantize_fp_64x64 = eb_av1_quantize_fp_64x64_c;
     if (flags & HAS_AVX2) eb_av1_quantize_fp_64x64 = eb_av1_quantize_fp_64x64_avx2;
 
+    eb_av1_highbd_quantize_fp = eb_av1_highbd_quantize_fp_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_quantize_fp = eb_av1_highbd_quantize_fp_avx2;
+
     highbd_variance64 = highbd_variance64_c;
     if (flags & HAS_AVX2) highbd_variance64 = highbd_variance64_avx2;
 

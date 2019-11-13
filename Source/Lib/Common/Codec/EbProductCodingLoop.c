@@ -6017,6 +6017,7 @@ void md_stage_2(
 #else
     context_ptr->md_staging_skip_full_chroma = context_ptr->target_class == CAND_CLASS_0 || context_ptr->md_staging_mode == MD_STAGING_MODE_3;
 #endif
+
 #if REMOVE_MD_STAGE_1
     context_ptr->md_staging_skip_rdoq = EB_TRUE;
     for (fullLoopCandidateIndex = 0; fullLoopCandidateIndex < context_ptr->md_stage_1_count[context_ptr->target_class]; ++fullLoopCandidateIndex) {
