@@ -47,6 +47,8 @@
 #define CONFIG_MAX_DECODE_PROFILE 2
 #define INT_MAX       2147483647    // maximum (signed) int value
 
+void dec_init_intra_predictors_12b_internal(void);
+
 int remap_lr_type[4] = {
     RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ };
 
@@ -2684,6 +2686,8 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data,
                 status = read_sequence_header_obu(&bs, &dec_handle_ptr->seq_header);
             if (status != EB_ErrorNone)
                 return status;
+            if (dec_handle_ptr->seq_header.color_config.bit_depth == EB_TWELVE_BIT)
+                dec_init_intra_predictors_12b_internal();
             dec_handle_ptr->seq_header_done = 1;
             if (prev_sb_size != dec_handle_ptr->seq_header.sb_size ||
                 prev_max_frame_width != dec_handle_ptr->seq_header.max_frame_width ||

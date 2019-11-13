@@ -41,6 +41,11 @@ void dec_init_intra_predictors_internal(void) {
     dc_pred[1][1][TX_8X8] = eb_aom_dc_predictor_8x8_c;
 }
 
+/* Avoid 12-bit output mismatch by intra pred intrinsic kernel */
+void dec_init_intra_predictors_12b_internal(void) {
+    eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_c;
+}
+
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
 int32_t dec_get_filt_type(const PartitionInfo_t *part_info, int32_t plane) {
     int ab_sm, le_sm;
