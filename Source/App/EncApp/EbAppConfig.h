@@ -375,6 +375,12 @@ typedef struct EbConfig
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t                 sq_weight;
 
+    // inter/intra class pruning costs before MD stage 1/2
+    uint64_t                 md_stage_1_count_th_c;
+    uint64_t                 md_stage_1_count_th_s;
+    uint64_t                 md_stage_2_count_th_c;
+    uint64_t                 md_stage_2_count_th_s;
+
 } EbConfig;
 
 extern void eb_config_ctor(EbConfig *config_ptr);

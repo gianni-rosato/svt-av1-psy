@@ -471,6 +471,12 @@ typedef struct EbSvtAv1EncConfiguration
     EbBool                   enable_overlays;
 
     uint32_t                     sq_weight;
+
+    uint64_t                 md_stage_1_count_th_c;
+    uint64_t                 md_stage_1_count_th_s;
+    uint64_t                 md_stage_2_count_th_c;
+    uint64_t                 md_stage_2_count_th_s;
+
 } EbSvtAv1EncConfiguration;
 
     /* STEP 1: Call the library to construct a Component Handle.

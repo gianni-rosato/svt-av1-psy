@@ -134,6 +134,11 @@
 #define BUFFER_FILE_MAX_ARG_COUNT   320
 #define BUFFER_FILE_MAX_VAR_LEN     128
 
+#define MDS1_PRUNE_C_TH             "-mds1p-c-th"
+#define MDS1_PRUNE_S_TH             "-mds1p-s-th"
+#define MDS2_PRUNE_C_TH             "-mds2p-c-th"
+#define MDS2_PRUNE_S_TH             "-mds2p-s-th"
+
 /**********************************
  * Set Cfg Functions
  **********************************/
@@ -314,6 +319,27 @@ static void SetSquareWeight                     (const char *value, EbConfig *cf
             cfg->sq_weight = (uint32_t)~0;
 }
 
+static void SetMDS1_PRUNE_C_TH(const char *value, EbConfig *cfg) {
+    cfg->md_stage_1_count_th_c = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_1_count_th_c == 0)
+        cfg->md_stage_1_count_th_c = (uint64_t)~0;
+}
+static void SetMDS1_PRUNE_S_TH(const char *value, EbConfig *cfg) {
+    cfg->md_stage_1_count_th_s = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_1_count_th_s == 0)
+        cfg->md_stage_1_count_th_s = (uint64_t)~0;
+}
+static void SetMDS2_PRUNE_C_TH(const char *value, EbConfig *cfg) {
+    cfg->md_stage_2_count_th_c = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_2_count_th_c == 0)
+        cfg->md_stage_2_count_th_c = (uint64_t)~0;
+}
+static void SetMDS2_PRUNE_S_TH(const char *value, EbConfig *cfg) {
+    cfg->md_stage_2_count_th_s = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_2_count_th_s == 0)
+        cfg->md_stage_2_count_th_s = (uint64_t)~0;
+}
+
 enum cfg_type{
     SINGLE_INPUT,   // Configuration parameters that have only 1 value input
     ARRAY_INPUT     // Configuration parameters that have multiple values as input
@@ -449,6 +475,14 @@ config_entry_t config_entry[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
 
     { SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", SetSquareWeight },
+
+    { SINGLE_INPUT, MDS1_PRUNE_C_TH, "MDStage1PruneCThreshold", SetMDS1_PRUNE_C_TH },
+    { SINGLE_INPUT, MDS1_PRUNE_S_TH, "MDStage1PruneSThreshold", SetMDS1_PRUNE_S_TH },
+    { SINGLE_INPUT, MDS2_PRUNE_C_TH, "MDStage2PruneCThreshold", SetMDS2_PRUNE_C_TH },
+    { SINGLE_INPUT, MDS2_PRUNE_S_TH, "MDStage2PruneSThreshold", SetMDS2_PRUNE_S_TH },
+
+
+
 
     // Termination
     {SINGLE_INPUT,NULL,  NULL,                                NULL}
@@ -616,6 +650,11 @@ void eb_config_ctor(EbConfig *config_ptr)
     // --- end: ALTREF_FILTERING_SUPPORT
 
     config_ptr->sq_weight                            = 100;
+
+    config_ptr->md_stage_1_count_th_s                = 75;
+    config_ptr->md_stage_1_count_th_c                = 100;
+    config_ptr->md_stage_2_count_th_s                = 15;
+    config_ptr->md_stage_2_count_th_c                = 25;
 
     return;
 }

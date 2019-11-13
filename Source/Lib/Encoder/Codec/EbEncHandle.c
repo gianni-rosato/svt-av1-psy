@@ -2231,6 +2231,11 @@ void CopyApiFromApp(
 
     sequence_control_set_ptr->static_config.sq_weight = pComponentParameterStructure->sq_weight;
 
+    sequence_control_set_ptr->static_config.md_stage_1_count_th_s = pComponentParameterStructure->md_stage_1_count_th_s;
+    sequence_control_set_ptr->static_config.md_stage_1_count_th_c = pComponentParameterStructure->md_stage_1_count_th_c;
+    sequence_control_set_ptr->static_config.md_stage_2_count_th_s = pComponentParameterStructure->md_stage_2_count_th_s;
+    sequence_control_set_ptr->static_config.md_stage_2_count_th_c = pComponentParameterStructure->md_stage_2_count_th_c;
+
     return;
 }
 
@@ -2707,6 +2712,11 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_overlays = EB_FALSE;
 
     config_ptr->sq_weight = 100;
+
+    config_ptr->md_stage_1_count_th_s = 75;
+    config_ptr->md_stage_1_count_th_c = 100;
+    config_ptr->md_stage_2_count_th_s = 15;
+    config_ptr->md_stage_2_count_th_c = 25;
 
     return return_error;
 }
