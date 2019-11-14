@@ -158,9 +158,9 @@ class ExtractFilterTest : public ::testing::Test {
         for (uint32_t sb_y = 0; sb_y < height_; sb_y += 64) {
             for (uint32_t sb_x = 0; sb_x < width_; sb_x += 64) {
                 noise_extract_luma_weak_c(
-                    &in_pic_, &denoised_pic_ref_, &noise_pic_ref_, 0, 0);
+                    &in_pic_, &denoised_pic_ref_, &noise_pic_ref_, sb_y, sb_x);
                 noise_extract_luma_weak_avx2_intrin(
-                    &in_pic_, &denoised_pic_tst_, &noise_pic_tst_, 0, 0);
+                    &in_pic_, &denoised_pic_tst_, &noise_pic_tst_, sb_y, sb_x);
 
                 EbBool ret =
                     check_pic_content(&denoised_pic_ref_, &denoised_pic_tst_);
@@ -213,9 +213,10 @@ class ExtractFilterTest : public ::testing::Test {
 
         for (uint32_t sb_y = 0; sb_y < height_; sb_y += 64) {
             for (uint32_t sb_x = 0; sb_x < width_; sb_x += 64) {
-                noise_extract_luma_strong_c(&in_pic_, &denoised_pic_ref_, 0, 0);
+                noise_extract_luma_strong_c(
+                    &in_pic_, &denoised_pic_ref_, sb_y, sb_x);
                 noise_extract_luma_strong_avx2_intrin(
-                    &in_pic_, &denoised_pic_tst_, 0, 0);
+                    &in_pic_, &denoised_pic_tst_, sb_y, sb_x);
 
                 EbBool ret =
                     check_pic_content(&denoised_pic_ref_, &denoised_pic_tst_);
@@ -240,9 +241,10 @@ class ExtractFilterTest : public ::testing::Test {
 
         for (uint32_t sb_y = 0; sb_y < height_; sb_y += 64) {
             for (uint32_t sb_x = 0; sb_x < width_; sb_x += 64) {
-                noise_extract_chroma_weak_c(&in_pic_, &denoised_pic_ref_, 0, 0);
-                noise_extract_chroma_weak_avx2_intrin(
-                    &in_pic_, &denoised_pic_tst_, 0, 0);
+                noise_extract_chroma_weak_c(&in_pic_, &denoised_pic_ref_,
+                    sb_y >> subsampling_y_, sb_x >> subsampling_x_);
+                noise_extract_chroma_weak_avx2_intrin(&in_pic_, &denoised_pic_tst_,
+                    sb_y >> subsampling_y_, sb_x >> subsampling_x_);
 
                 EbBool ret =
                     check_pic_content(&denoised_pic_ref_, &denoised_pic_tst_);
@@ -266,10 +268,10 @@ class ExtractFilterTest : public ::testing::Test {
 
         for (uint32_t sb_y = 0; sb_y < height_; sb_y += 64) {
             for (uint32_t sb_x = 0; sb_x < width_; sb_x += 64) {
-                noise_extract_chroma_strong_c(
-                    &in_pic_, &denoised_pic_ref_, 0, 0);
-                noise_extract_chroma_strong_avx2_intrin(
-                    &in_pic_, &denoised_pic_tst_, 0, 0);
+                noise_extract_chroma_strong_c(&in_pic_, &denoised_pic_ref_,
+                    sb_y >> subsampling_y_, sb_x >> subsampling_x_);
+                noise_extract_chroma_strong_avx2_intrin(&in_pic_, &denoised_pic_tst_,
+                    sb_y >> subsampling_y_, sb_x >> subsampling_x_);
 
                 EbBool ret =
                     check_pic_content(&denoised_pic_ref_, &denoised_pic_tst_);

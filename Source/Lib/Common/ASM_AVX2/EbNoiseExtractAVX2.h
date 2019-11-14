@@ -82,6 +82,39 @@ extern "C" {
         __m256i  bottom_next,
         uint8_t *ptr_denoised);
 
+    void luma_weak_filter_128_avx2_intrin(
+        __m128i                        top,
+        __m128i                        curr,
+        __m128i                        bottom,
+        __m128i                        curr_prev,
+        __m128i                        curr_next,
+        uint8_t* ptr_denoised,
+        uint8_t* ptr_noise);
+
+    void chroma_strong_128_avx2_intrin(
+        __m128i                        top,
+        __m128i                        curr,
+        __m128i                        bottom,
+        __m128i                        curr_prev,
+        __m128i                        curr_next,
+        __m128i                        top_prev,
+        __m128i                        top_next,
+        __m128i                        bottom_prev,
+        __m128i                        bottom_next,
+        uint8_t* ptr_denoised);
+
+    void chroma_weak_luma_strong_filter_128_avx2_intrin(
+        __m128i                        top,
+        __m128i                        curr,
+        __m128i                        bottom,
+        __m128i                        curr_prev,
+        __m128i                        curr_next,
+        __m128i                        top_prev,
+        __m128i                        top_next,
+        __m128i                        bottom_prev,
+        __m128i                        bottom_next,
+        uint8_t* ptr_denoised);
+
 #ifdef __cplusplus
 }
 #endif

@@ -66,6 +66,48 @@ inline void luma_weak_filter_avx2_intrin(
 
     _mm256_storeu_si256((__m256i *)(ptr_noise), _mm256_subs_epu8(curr, filterFirstHalf));
 }
+inline void luma_weak_filter_128_avx2_intrin(
+    __m128i                        top,
+    __m128i                        curr,
+    __m128i                        bottom,
+    __m128i                        curr_prev,
+    __m128i                        curr_next,
+    uint8_t                       *ptr_denoised,
+    uint8_t                       *ptr_noise
+)
+{
+    __m128i topFirstHalf, bottomFirstHalf,
+        filterFirstHalf, filterSecondHalf,
+        currNextFirstHalf, currNextSecondHalf,
+        weights, currLeftMidFirstHalfWeight,
+        currLeftMidFirstHalflo, currLeftMidFirstHalfhi;
+
+    currLeftMidFirstHalflo = _mm_unpacklo_epi8(curr_prev, curr);
+    weights = _mm_loadu_si128((__m128i*)filterType);
+    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalflo, weights);
+    currNextFirstHalf = _mm_unpacklo_epi8(curr_next, _mm_setzero_si128());
+    currLeftMidFirstHalflo = _mm_add_epi16(currNextFirstHalf, currLeftMidFirstHalfWeight);
+
+    currLeftMidFirstHalfhi = _mm_unpackhi_epi8(curr_prev, curr);
+    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalfhi, weights);
+    currNextSecondHalf = _mm_unpackhi_epi8(curr_next, _mm_setzero_si128());
+    currLeftMidFirstHalfhi = _mm_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
+
+    topFirstHalf = _mm_unpacklo_epi8(top, _mm_setzero_si128());
+    bottomFirstHalf = _mm_unpacklo_epi8(bottom, _mm_setzero_si128());
+    filterFirstHalf = _mm_adds_epi16(_mm_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalflo);
+    filterFirstHalf = _mm_srli_epi16(filterFirstHalf, 3);
+
+    topFirstHalf = _mm_unpackhi_epi8(top, _mm_setzero_si128());
+    bottomFirstHalf = _mm_unpackhi_epi8(bottom, _mm_setzero_si128());
+    filterSecondHalf = _mm_adds_epi16(_mm_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalfhi);
+    filterSecondHalf = _mm_srli_epi16(filterSecondHalf, 3);
+
+    filterFirstHalf = _mm_packus_epi16(filterFirstHalf, filterSecondHalf);
+    _mm_storel_epi64((__m128i*)(ptr_denoised), filterFirstHalf);
+
+    _mm_storel_epi64((__m128i*)(ptr_noise), _mm_subs_epu8(curr, filterFirstHalf));
+}
 inline void chroma_weak_luma_strong_filter_avx2_intrin(
     __m256i                        top,
     __m256i                        curr,
@@ -148,6 +190,75 @@ inline void chroma_weak_luma_strong_filter_avx2_intrin(
     _mm256_storeu_si256((__m256i *)(ptr_denoised), filterFirstHalf);
 }
 
+inline void chroma_weak_luma_strong_filter_128_avx2_intrin(
+    __m128i                        top,
+    __m128i                        curr,
+    __m128i                        bottom,
+    __m128i                        curr_prev,
+    __m128i                        curr_next,
+    __m128i                        top_prev,
+    __m128i                        top_next,
+    __m128i                        bottom_prev,
+    __m128i                        bottom_next,
+    uint8_t                       *ptr_denoised
+)
+{
+    __m128i filterFirstHalf, filterSecondHalf,
+        currNextFirstHalf, currNextSecondHalf,
+        weights, currLeftMidFirstHalfWeight,
+        currLeftMidFirstHalflo, currLeftMidFirstHalfhi,
+        topLeftMidFirstHalflo, topLeftMidFirstHalfWeight, topNextFirstHalf,
+        topLeftMidFirstHalfhi, topNextSecondHalf,
+        bottomLeftMidFirstHalflo, bottomLeftMidFirstHalfWeight,
+        bottomNextFirstHalf, bottomLeftMidFirstHalfhi, bottomNextSecondHalf;
+
+    //  Curr
+    currLeftMidFirstHalflo = _mm_unpacklo_epi8(curr_prev, curr);
+    weights = _mm_loadu_si128((__m128i*)WeakChromafilter[0]);
+    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalflo, weights);
+    currNextFirstHalf = _mm_unpacklo_epi8(curr_next, _mm_setzero_si128());
+    currNextFirstHalf = _mm_slli_epi16(currNextFirstHalf, 1);
+    currLeftMidFirstHalflo = _mm_add_epi16(currNextFirstHalf, currLeftMidFirstHalfWeight);
+
+    currLeftMidFirstHalfhi = _mm_unpackhi_epi8(curr_prev, curr);
+    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalfhi, weights);
+    currNextSecondHalf = _mm_unpackhi_epi8(curr_next, _mm_setzero_si128());
+    currNextSecondHalf = _mm_slli_epi16(currNextSecondHalf, 1);
+    currLeftMidFirstHalfhi = _mm_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
+
+    // Top
+    topLeftMidFirstHalflo = _mm_unpacklo_epi8(top_prev, top);
+    weights = _mm_loadu_si128((__m128i*)WeakChromafilter[1]);
+    topLeftMidFirstHalfWeight = _mm_maddubs_epi16(topLeftMidFirstHalflo, weights);
+    topNextFirstHalf = _mm_unpacklo_epi8(top_next, _mm_setzero_si128());
+    topLeftMidFirstHalflo = _mm_add_epi16(topNextFirstHalf, topLeftMidFirstHalfWeight);
+
+    topLeftMidFirstHalfhi = _mm_unpackhi_epi8(top_prev, top);
+    topLeftMidFirstHalfWeight = _mm_maddubs_epi16(topLeftMidFirstHalfhi, weights);
+    topNextSecondHalf = _mm_unpackhi_epi8(top_next, _mm_setzero_si128());
+    topLeftMidFirstHalfhi = _mm_add_epi16(topNextSecondHalf, topLeftMidFirstHalfWeight);
+
+    // Bottom
+    bottomLeftMidFirstHalflo = _mm_unpacklo_epi8(bottom_prev, bottom);
+    weights = _mm_loadu_si128((__m128i*)WeakChromafilter[1]);
+    bottomLeftMidFirstHalfWeight = _mm_maddubs_epi16(bottomLeftMidFirstHalflo, weights);
+    bottomNextFirstHalf = _mm_unpacklo_epi8(bottom_next, _mm_setzero_si128());
+    bottomLeftMidFirstHalflo = _mm_add_epi16(bottomNextFirstHalf, bottomLeftMidFirstHalfWeight);
+
+    bottomLeftMidFirstHalfhi = _mm_unpackhi_epi8(bottom_prev, bottom);
+    bottomLeftMidFirstHalfWeight = _mm_maddubs_epi16(bottomLeftMidFirstHalfhi, weights);
+    bottomNextSecondHalf = _mm_unpackhi_epi8(bottom_next, _mm_setzero_si128());
+    bottomLeftMidFirstHalfhi = _mm_add_epi16(bottomNextSecondHalf, bottomLeftMidFirstHalfWeight);
+
+    filterFirstHalf = _mm_adds_epi16(_mm_adds_epi16(bottomLeftMidFirstHalflo, topLeftMidFirstHalflo), currLeftMidFirstHalflo);
+    filterFirstHalf = _mm_srli_epi16(filterFirstHalf, 4);
+    filterSecondHalf = _mm_adds_epi16(_mm_adds_epi16(bottomLeftMidFirstHalfhi, topLeftMidFirstHalfhi), currLeftMidFirstHalfhi);
+    filterSecondHalf = _mm_srli_epi16(filterSecondHalf, 4);
+
+    filterFirstHalf = _mm_packus_epi16(filterFirstHalf, filterSecondHalf);
+    _mm_storel_epi64((__m128i*)(ptr_denoised), filterFirstHalf);
+}
+
 inline void chroma_strong_avx2_intrin(
     __m256i                        top,
     __m256i                        curr,
@@ -226,6 +337,62 @@ inline void chroma_strong_avx2_intrin(
     currLeftMidFirstHalflo = _mm256_insertf128_si256(currLeftMidFirstHalflo, _mm_packus_epi16(_mm256_extracti128_si256(currLeftMidFirstHalfhi, 0), _mm256_extracti128_si256(currLeftMidFirstHalfhi, 1)), 1);
     _mm256_storeu_si256((__m256i *)(ptr_denoised), currLeftMidFirstHalflo);
 }
+
+inline void chroma_strong_128_avx2_intrin(
+    __m128i                        top,
+    __m128i                        curr,
+    __m128i                        bottom,
+    __m128i                        curr_prev,
+    __m128i                        curr_next,
+    __m128i                        top_prev,
+    __m128i                        top_next,
+    __m128i                        bottom_prev,
+    __m128i                        bottom_next,
+    uint8_t                       *ptr_denoised
+)
+{
+    __m128i   currLeftMidFirstHalflo, currLeftMidFirstHalfhi, topLeftMidFirstHalflo, topLeftMidFirstHalfhi,
+              bottomLeftMidFirstHalflo, bottomLeftMidFirstHalfhi;
+
+    currLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(curr, _mm_setzero_si128()),
+        _mm_unpacklo_epi8(curr_prev, _mm_setzero_si128()));
+    currLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(curr_next, _mm_setzero_si128()), currLeftMidFirstHalflo);
+
+    currLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(curr, _mm_setzero_si128()),
+        _mm_unpackhi_epi8(curr_prev, _mm_setzero_si128()));
+    currLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(curr_next, _mm_setzero_si128()), currLeftMidFirstHalfhi);
+
+    topLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(top, _mm_setzero_si128()),
+        _mm_unpacklo_epi8(top_prev, _mm_setzero_si128()));
+    topLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(top_next, _mm_setzero_si128()), topLeftMidFirstHalflo);
+
+    topLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(top, _mm_setzero_si128()),
+        _mm_unpackhi_epi8(top_prev, _mm_setzero_si128()));
+    topLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(top_next, _mm_setzero_si128()), topLeftMidFirstHalfhi);
+
+    bottomLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(bottom, _mm_setzero_si128()),
+        _mm_unpacklo_epi8(bottom_prev, _mm_setzero_si128()));
+    bottomLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(bottom_next, _mm_setzero_si128()), bottomLeftMidFirstHalflo);
+
+    bottomLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(bottom, _mm_setzero_si128()),
+        _mm_unpackhi_epi8(bottom_prev, _mm_setzero_si128()));
+    bottomLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(bottom_next, _mm_setzero_si128()), bottomLeftMidFirstHalfhi);
+
+    currLeftMidFirstHalflo = _mm_add_epi16(_mm_add_epi16(currLeftMidFirstHalflo, topLeftMidFirstHalflo), bottomLeftMidFirstHalflo);
+    currLeftMidFirstHalfhi = _mm_add_epi16(_mm_add_epi16(currLeftMidFirstHalfhi, topLeftMidFirstHalfhi), bottomLeftMidFirstHalfhi);
+
+    topLeftMidFirstHalflo = _mm_unpacklo_epi16(currLeftMidFirstHalflo, _mm_setzero_si128());
+    topLeftMidFirstHalflo = _mm_mullo_epi32(topLeftMidFirstHalflo, _mm_set1_epi32(7282));
+    topLeftMidFirstHalflo = _mm_srli_epi32(topLeftMidFirstHalflo, 16);
+    bottomLeftMidFirstHalflo = _mm_unpackhi_epi16(currLeftMidFirstHalflo, _mm_setzero_si128());
+    bottomLeftMidFirstHalflo = _mm_mullo_epi32(bottomLeftMidFirstHalflo, _mm_set1_epi32(7282));
+    bottomLeftMidFirstHalflo = _mm_srli_epi32(bottomLeftMidFirstHalflo, 16);
+    currLeftMidFirstHalflo = _mm_packus_epi32(topLeftMidFirstHalflo, bottomLeftMidFirstHalflo);
+
+    currLeftMidFirstHalflo = _mm_packus_epi16(currLeftMidFirstHalflo, currLeftMidFirstHalflo);
+
+    _mm_storel_epi64((__m128i*)(ptr_denoised), currLeftMidFirstHalflo);
+}
 /*******************************************
 * noise_extract_luma_weak
 *  weak filter Luma and store noise.
@@ -254,7 +421,9 @@ void noise_extract_luma_weak_avx2_intrin(
 
     __m256i top, curr, bottom, curr_prev, curr_next,
         secondtop, secondcurr, secondbottom, secondcurrPrev, secondcurrNext;
-    (void)sb_origin_x;
+    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128,
+        secondtop_128, secondcurr_128, secondbottom_128, secondcurrPrev_128, secondcurrNext_128;
+    uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
 
     //Luma
     {
@@ -282,7 +451,7 @@ void noise_extract_luma_weak_avx2_intrin(
 
         top = curr = secondtop = secondcurr = _mm256_setzero_si256();
 
-        for (kk = 0; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
+        for (kk = idx; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
         {
             for (jj = 0; jj < sb_height; jj++)
             {
@@ -349,6 +518,76 @@ void noise_extract_luma_weak_avx2_intrin(
                 curr = bottom;
                 secondtop = secondcurr;
                 secondcurr = secondbottom;
+            }
+        }
+
+        for (; kk + 16 <= picWidth; kk += 16)
+        {
+            for (jj = 0; jj < sb_height; jj++)
+            {
+                if (sb_origin_y == 0)
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
+                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
+                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in));
+                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
+                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk + 8), secondtop_128);
+                        _mm_storel_epi64((__m128i*)(ptr_noise + kk), _mm_setzero_si128());
+                        _mm_storel_epi64((__m128i*)(ptr_noise + kk + 8), _mm_setzero_si128());
+                    }
+                    curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
+                    curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
+                    secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) - 1 + ((1 + jj) * stride_in)));
+                    secondcurrNext_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + 1 + ((1 + jj) * stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
+                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
+                    ptrNoiseInterm = ptr_noise + kk + ((1 + jj) * strideOut);
+                }
+                else
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
+                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
+                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in - stride_in));
+                    }
+                    curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                    curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                    secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) - 1 + ((1 + jj) * stride_in - stride_in)));
+                    secondcurrNext_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + 1 + ((1 + jj) * stride_in - stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
+                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in - stride_in));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
+                    ptrNoiseInterm = ptr_noise + kk + jj * strideOut;
+                }
+
+                luma_weak_filter_128_avx2_intrin(
+                    top_128,
+                    curr_128,
+                    bottom_128,
+                    curr_prev_128,
+                    curr_next_128,
+                    ptrDenoisedInterm,
+                    ptrNoiseInterm);
+
+                luma_weak_filter_128_avx2_intrin(
+                    secondtop_128,
+                    secondcurr_128,
+                    secondbottom_128,
+                    secondcurrPrev_128,
+                    secondcurrNext_128,
+                    ptrDenoisedInterm + 8,
+                    ptrNoiseInterm + 8);
+
+                top_128 = curr_128;
+                curr_128 = bottom_128;
+                secondtop_128 = secondcurr_128;
+                secondcurr_128 = secondbottom_128;
             }
         }
 
@@ -524,7 +763,12 @@ void noise_extract_luma_strong_avx2_intrin(
     uint32_t strideOut;
     __m256i top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
         secondtop, secondcurr, secondcurrPrev, secondcurrNext, secondbottom, secondtopPrev, secondtopNext, secondbottomPrev, secondbottomNext;
-    (void)sb_origin_x;
+
+    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128, bottom_prev_128, bottom_next_128,
+        secondtop_128, secondcurr_128, secondcurrPrev_128, secondcurrNext_128, secondbottom_128, secondtopPrev_128, secondtopNext_128,
+        secondbottomPrev_128, secondbottomNext_128;
+
+    uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
     //Luma
     {
         picHeight = input_picture_ptr->height;
@@ -542,7 +786,7 @@ void noise_extract_luma_strong_avx2_intrin(
         ptrDenoisedInterm = ptr_denoised;
 
         top = curr = secondtop = secondcurr = top_next = top_prev = curr_next = curr_prev = secondcurrPrev = secondcurrNext = secondtopPrev = secondtopNext = _mm256_setzero_si256();
-        for (kk = 0; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
+        for (kk = idx; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
         {
             for (jj = 0; jj < sb_height; jj++)
             {
@@ -652,6 +896,116 @@ void noise_extract_luma_strong_avx2_intrin(
             }
         }
 
+        for (; kk + 16 <= picWidth; kk += 16)
+        {
+            for (jj = 0; jj < sb_height; jj++)
+            {
+                if (sb_origin_y == 0)
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
+                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in));
+
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
+                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in));
+
+                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
+                        secondtopPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((jj)*stride_in)));
+
+                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
+                        secondtopNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((jj)*stride_in)));
+
+                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
+                        secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((1 + jj) * stride_in)));
+
+                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
+                        secondcurrNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((1 + jj) * stride_in)));
+
+                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
+                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk + 8), secondtop_128);
+                    }
+                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in)));
+                    secondbottomPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((2 + jj) * stride_in)));
+
+                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in)));
+                    secondbottomNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((2 + jj) * stride_in)));
+
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
+                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
+                }
+                else
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
+                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
+                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in - stride_in));
+                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
+                        secondtopPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((jj)*stride_in) - stride_in));
+
+                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
+                        secondtopNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((jj)*stride_in) - stride_in));
+
+                       curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                       secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((1 + jj) * stride_in - stride_in)));
+
+                       curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                       secondcurrNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((1 + jj) * stride_in - stride_in)));
+                    }
+                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    secondbottomPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((2 + jj) * stride_in - stride_in)));
+
+                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    secondbottomNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((2 + jj) * stride_in - stride_in)));
+
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
+                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in - stride_in));
+
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
+                }
+
+                chroma_weak_luma_strong_filter_128_avx2_intrin(
+                    top_128,
+                    curr_128,
+                    bottom_128,
+                    curr_prev_128,
+                    curr_next_128,
+                    top_prev_128,
+                    top_next_128,
+                    bottom_prev_128,
+                    bottom_next_128,
+                    ptrDenoisedInterm);
+
+                 chroma_weak_luma_strong_filter_128_avx2_intrin(
+                    secondtop_128,
+                    secondcurr_128,
+                    secondbottom_128,
+                    secondcurrPrev_128,
+                    secondcurrNext_128,
+                    secondtopPrev_128,
+                    secondtopNext_128,
+                    secondbottomPrev_128,
+                    secondbottomNext_128,
+                    ptrDenoisedInterm + 8);
+
+                top_128 = curr_128;
+                curr_128 = bottom_128;
+                top_prev_128 = curr_prev_128;
+                top_next_128 = curr_next_128;
+                curr_prev_128 = bottom_prev_128;
+                curr_next_128 = bottom_next_128;
+                secondtop_128 = secondcurr_128;
+                secondcurr_128 = secondbottom_128;
+                secondtopPrev_128 = secondcurrPrev_128;
+                secondtopNext_128 = secondcurrNext_128;
+                secondcurrPrev_128 = secondbottomPrev_128;
+                secondcurrNext_128 = secondbottomNext_128;
+            }
+        }
+
         sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
@@ -687,7 +1041,11 @@ void noise_extract_chroma_strong_avx2_intrin(
     uint32_t strideOut, strideOutCr;
     __m256i top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
         topCr, currCr, bottomCr, currPrevCr, currNextCr, topPrevCr, topNextCr, bottomPrevCr, bottomNextCr;
-    (void)sb_origin_x;
+
+    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128,
+        bottom_prev_128, bottom_next_128, topCr_128, currCr_128, bottomCr_128, currPrevCr_128,
+        currNextCr_128, topPrevCr_128, topNextCr_128, bottomPrevCr_128, bottomNextCr_128;
+    uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
     {
         picHeight = input_picture_ptr->height / 2;
         picWidth = input_picture_ptr->width / 2;
@@ -719,7 +1077,7 @@ void noise_extract_chroma_strong_avx2_intrin(
 
         top = curr = top_next = top_prev = curr_next = curr_prev = topCr = currCr = topNextCr = topPrevCr = currNextCr = currPrevCr = _mm256_setzero_si256();
 
-        for (kk = 0; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
+        for (kk = idx; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
         {
             for (jj = 0; jj < sb_height; jj++)
             {
@@ -817,10 +1175,108 @@ void noise_extract_chroma_strong_avx2_intrin(
             }
         }
 
+        for (; kk + 8 <= picWidth; kk += 8)
+        {
+            for (jj = 0; jj < sb_height; jj++)
+            {
+                if (sb_origin_y == 0)
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
+                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
+                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
+                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
+                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
+                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr));
+                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr));
+                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr)));
+                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr)));
+                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr)));
+                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr)));
+                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
+                        _mm_storel_epi64((__m128i*)(ptrDenoisedCr + kk), topCr_128);
+                    }
+                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
+                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr)));
+                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr)));
+                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
+                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr);
+                }
+                else
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
+                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
+                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
+                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr - strideInCr));
+                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr - strideInCr));
+                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr) - strideInCr));
+                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr) - strideInCr));
+                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
+                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
+                    }
+                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
+                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
+                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
+                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr - strideInCr));
+                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr - strideOutCr);
+                }
+
+                chroma_strong_128_avx2_intrin(
+                    top_128,
+                    curr_128,
+                    bottom_128,
+                    curr_prev_128,
+                    curr_next_128,
+                    top_prev_128,
+                    top_next_128,
+                    bottom_prev_128,
+                    bottom_next_128,
+                    ptrDenoisedInterm);
+
+                chroma_strong_128_avx2_intrin(
+                    topCr_128,
+                    currCr_128,
+                    bottomCr_128,
+                    currPrevCr_128,
+                    currNextCr_128,
+                    topPrevCr_128,
+                    topNextCr_128,
+                    bottomPrevCr_128,
+                    bottomNextCr_128,
+                    ptrDenoisedIntermCr);
+
+                top_128 = curr_128;
+                curr_128 = bottom_128;
+                top_prev_128 = curr_prev_128;
+                top_next_128 = curr_next_128;
+                curr_prev_128 = bottom_prev_128;
+                curr_next_128 = bottom_next_128;
+                topCr_128 = currCr_128;
+                currCr_128 = bottomCr_128;
+                topPrevCr_128 = currPrevCr_128;
+                topNextCr_128 = currNextCr_128;
+                currPrevCr_128 = bottomPrevCr_128;
+                currNextCr_128 = bottomNextCr_128;
+            }
+        }
+
         sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
-            for (ii = 0; ii < picWidth; ii++) {
+            for (ii = idx; ii < picWidth; ii++) {
                 if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)) {
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptrDenoisedCr[ii + jj * strideOut] = ptrInCr[ii + jj * stride_in];
@@ -855,7 +1311,11 @@ void noise_extract_chroma_weak_avx2_intrin(
 
     __m256i top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
         topCr, currCr, bottomCr, currPrevCr, currNextCr, topPrevCr, topNextCr, bottomPrevCr, bottomNextCr;
-    (void)sb_origin_x;
+
+    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128,
+        bottom_prev_128, bottom_next_128, topCr_128, currCr_128, bottomCr_128, currPrevCr_128,
+        currNextCr_128, topPrevCr_128, topNextCr_128, bottomPrevCr_128, bottomNextCr_128;
+    uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
     ////gaussian matrix(Chroma)
     //a = (1 * p[0] + 2 * p[1] + 1 * p[2] +
     //    2 * p[0 + stride] + 4 * p[1 + stride] + 2 * p[2 + stride] +
@@ -887,7 +1347,7 @@ void noise_extract_chroma_weak_avx2_intrin(
         ptrDenoisedIntermCr = ptrDenoisedCr;
 
         top = curr = top_next = top_prev = curr_next = curr_prev = topCr = currCr = topNextCr = topPrevCr = currNextCr = currPrevCr = _mm256_setzero_si256();
-        for (kk = 0; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
+        for (kk = idx; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
         {
             for (jj = 0; jj < sb_height; jj++)
             {
@@ -985,9 +1445,107 @@ void noise_extract_chroma_weak_avx2_intrin(
             }
         }
 
+        for (; kk + 8 <= picWidth; kk += 8)
+        {
+            for (jj = 0; jj < sb_height; jj++)
+            {
+                if (sb_origin_y == 0)
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
+                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
+                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
+                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
+                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
+                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
+                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr));
+                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr));
+                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr)));
+                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr)));
+                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr)));
+                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr)));
+                        _mm_storel_epi64((__m128i*)(ptrDenoisedCr + kk), topCr_128);
+                    }
+                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
+                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr)));
+                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr)));
+                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr));
+                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr);
+                }
+                else
+                {
+                    if (jj == 0)
+                    {
+                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
+                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
+                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
+                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr - strideInCr));
+                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr - strideInCr));
+                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr) - strideInCr));
+                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr) - strideInCr));
+                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
+                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
+                    }
+                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
+                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
+                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
+                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
+                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr - strideInCr));
+                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr - strideOutCr);
+                }
+
+                chroma_weak_luma_strong_filter_128_avx2_intrin(
+                    top_128,
+                    curr_128,
+                    bottom_128,
+                    curr_prev_128,
+                    curr_next_128,
+                    top_prev_128,
+                    top_next_128,
+                    bottom_prev_128,
+                    bottom_next_128,
+                    ptrDenoisedInterm);
+
+                chroma_weak_luma_strong_filter_128_avx2_intrin(
+                    topCr_128,
+                    currCr_128,
+                    bottomCr_128,
+                    currPrevCr_128,
+                    currNextCr_128,
+                    topPrevCr_128,
+                    topNextCr_128,
+                    bottomPrevCr_128,
+                    bottomNextCr_128,
+                    ptrDenoisedIntermCr);
+
+                top_128 = curr_128;
+                curr_128 = bottom_128;
+                top_prev_128 = curr_prev_128;
+                top_next_128 = curr_next_128;
+                curr_prev_128 = bottom_prev_128;
+                curr_next_128 = bottom_next_128;
+                topCr_128 = currCr_128;
+                currCr_128 = bottomCr_128;
+                topPrevCr_128 = currPrevCr_128;
+                topNextCr_128 = currNextCr_128;
+                currPrevCr_128 = bottomPrevCr_128;
+                currNextCr_128 = bottomNextCr_128;
+            }
+        }
+
         sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
         for (jj = 0; jj < sb_height; jj++) {
-            for (ii = 0; ii < picWidth; ii++) {
+            for (ii = idx; ii < picWidth; ii++) {
                 if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)) {
                     ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
                     ptrDenoisedCr[ii + jj * strideOut] = ptrInCr[ii + jj * strideInCr];
