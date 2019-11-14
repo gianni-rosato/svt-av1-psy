@@ -321,19 +321,15 @@ extern "C" {
     unsigned int                        source_variance; // input block variance
     unsigned int                        inter_inter_wedge_variance_th;
     uint64_t                            md_exit_th;
-#if STAGE_1_COUNT_PRUNING_TH_S
+#if INTER_INTRA_CLASS_PRUNING
     uint64_t                            md_stage_1_count_th_s; // THs (for candidate removal per class) 
+    uint64_t                            md_stage_1_count_th_c; // THc (for class removal)
 #else
     uint64_t                            dist_base_md_stage_0_count_th;
 #endif
-#if STAGE_1_COUNT_PRUNING_TH_C
-    uint64_t                            md_stage_1_count_th_c; // THc (for class removal)
 #endif
-#endif
-#if STAGE_2_COUNT_PRUNING_TH_S
+#if INTER_INTRA_CLASS_PRUNING
     uint64_t                            md_stage_2_count_th_s; // THs (for candidate removal per class) 
-#endif
-#if STAGE_2_COUNT_PRUNING_TH_C
     uint64_t                            md_stage_2_count_th_c; // THc (for class removal)
 #endif
 #if OBMC_FLAG
