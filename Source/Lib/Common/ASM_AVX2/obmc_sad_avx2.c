@@ -33,12 +33,6 @@
 
 // Loads and stores to do away with the tedium of casting the address
 // to the right type.
-static INLINE __m128i xx_loadl_32(const void *a) {
-  int val;
-  memcpy(&val, a, sizeof(val));
-  return _mm_cvtsi32_si128(val);
-}
-
 static INLINE int32_t xx_hsum_epi32_si32(__m128i v_d) {
   v_d = _mm_hadd_epi32(v_d, v_d);
   v_d = _mm_hadd_epi32(v_d, v_d);

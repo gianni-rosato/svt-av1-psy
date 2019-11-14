@@ -234,6 +234,9 @@ typedef struct EbDecHandle {
     uint32_t                     memory_map_index;
     uint64_t                     total_lib_memory;
     struct Av1Common             cm;
+
+    // Loop filter frame level flag
+    uint8_t              is_lf_enabled;
 }EbDecHandle;
 
 #ifdef __cplusplus

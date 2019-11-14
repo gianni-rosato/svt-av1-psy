@@ -32,13 +32,6 @@ static const uint8_t g_blend_a64_mask_shuffle[32] = {
 // Common kernels
 //////////////////////////////////////////////////////////////////////////////
 
-// convolve_av2.c TODO: Harmonize
-static INLINE __m128i xx_loadl_32(const void *a) {
-    int val;
-    memcpy(&val, a, sizeof(val));
-    return _mm_cvtsi32_si128(val);
-}
-
 static INLINE __m128i blend_4(const uint8_t *src0, const uint8_t *src1,
     const __m128i *v_m0_w, const __m128i *v_m1_w)
 {

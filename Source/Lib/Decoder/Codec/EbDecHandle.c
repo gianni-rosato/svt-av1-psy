@@ -56,7 +56,6 @@ void asmSetConvolveAsmTable(void);
 void init_intra_dc_predictors_c_internal(void);
 void asmSetConvolveHbdAsmTable(void);
 void init_intra_predictors_internal(void);
-void dec_init_intra_predictors_internal(void);
 extern void av1_init_wedge_masks(void);
 
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
@@ -500,7 +499,6 @@ EB_API EbErrorType eb_init_decoder(
     asmSetConvolveHbdAsmTable();
 
     init_intra_predictors_internal();
-    dec_init_intra_predictors_internal();
 
     av1_init_wedge_masks();
 

@@ -824,8 +824,9 @@ void read_quantization_params(bitstrm_t *bs, QuantizationParams *quant_params,
     uint8_t diff_uv_delta;
     quant_params->base_q_idx = dec_get_bits(bs, 8);
     PRINT_FRAME("base_q_idx", quant_params->base_q_idx);
-    quant_params->delta_q_y_dc = read_delta_q(bs);
-    PRINT_FRAME("delta_q_y_dc", quant_params->delta_q_y_dc);
+    quant_params->delta_q_dc[AOM_PLANE_Y] = read_delta_q(bs);
+    PRINT_FRAME("delta_q_y_dc", quant_params->delta_q_dc[0]);
+    quant_params->delta_q_ac[AOM_PLANE_Y] = 0;
     if (num_planes > 1)
     {
         if (color_info->separate_uv_delta_q) {
@@ -834,45 +835,45 @@ void read_quantization_params(bitstrm_t *bs, QuantizationParams *quant_params,
         }
         else
             diff_uv_delta = 0;
-        quant_params->delta_q_u_dc = read_delta_q(bs);
-        quant_params->delta_q_u_ac = read_delta_q(bs);
+        quant_params->delta_q_dc[AOM_PLANE_U] = read_delta_q(bs); //U Plane
+        quant_params->delta_q_ac[AOM_PLANE_U] = read_delta_q(bs); //U Plane
         if (diff_uv_delta) {
-            quant_params->delta_q_v_dc = read_delta_q(bs);
-            quant_params->delta_q_v_ac = read_delta_q(bs);
+            quant_params->delta_q_dc[AOM_PLANE_V] = read_delta_q(bs); //V Plane
+            quant_params->delta_q_ac[AOM_PLANE_V] = read_delta_q(bs); //V Plane
         }
         else {
-            quant_params->delta_q_v_dc = quant_params->delta_q_u_dc;
-            quant_params->delta_q_v_ac = quant_params->delta_q_u_ac;
+            quant_params->delta_q_dc[AOM_PLANE_V] = quant_params->delta_q_dc[AOM_PLANE_U];
+            quant_params->delta_q_ac[AOM_PLANE_V] = quant_params->delta_q_ac[AOM_PLANE_U];
         }
     }
     else {
-        quant_params->delta_q_u_dc = 0;
-        quant_params->delta_q_u_ac = 0;
-        quant_params->delta_q_v_dc = 0;
-        quant_params->delta_q_v_ac = 0;
+        quant_params->delta_q_dc[AOM_PLANE_U] = 0;
+        quant_params->delta_q_ac[AOM_PLANE_U] = 0;
+        quant_params->delta_q_dc[AOM_PLANE_V] = 0;
+        quant_params->delta_q_ac[AOM_PLANE_V] = 0;
     }
-    PRINT_FRAME("u_dc_delta_q", quant_params->delta_q_u_dc);
-    PRINT_FRAME("u_ac_delta_q", quant_params->delta_q_u_ac);
-    PRINT_FRAME("v_dc_delta_q", quant_params->delta_q_v_dc);
-    PRINT_FRAME("v_ac_delta_q", quant_params->delta_q_v_ac);
+    PRINT_FRAME("u_dc_delta_q", quant_params->delta_q_dc[AOM_PLANE_U]);
+    PRINT_FRAME("u_ac_delta_q", quant_params->delta_q_ac[AOM_PLANE_U]);
+    PRINT_FRAME("v_dc_delta_q", quant_params->delta_q_dc[AOM_PLANE_V]);
+    PRINT_FRAME("v_ac_delta_q", quant_params->delta_q_ac[AOM_PLANE_V]);
     quant_params->using_qmatrix = dec_get_bits(bs, 1);
     PRINT_FRAME("using_qmatrix", quant_params->using_qmatrix);
     if (quant_params->using_qmatrix) {
-        quant_params->qm_y = dec_get_bits(bs, 4);
-        quant_params->qm_u = dec_get_bits(bs, 4);
+        quant_params->qm[AOM_PLANE_Y] = dec_get_bits(bs, 4);
+        quant_params->qm[AOM_PLANE_U] = dec_get_bits(bs, 4);
         if (!color_info->separate_uv_delta_q)
-            quant_params->qm_v = quant_params->qm_u;
+            quant_params->qm[AOM_PLANE_V] = quant_params->qm[AOM_PLANE_U];
         else
-            quant_params->qm_v = dec_get_bits(bs, 4);
+            quant_params->qm[AOM_PLANE_V] = dec_get_bits(bs, 4);
     }
     else {
-        quant_params->qm_y = 0;
-        quant_params->qm_u = 0;
-        quant_params->qm_v = 0;
+        quant_params->qm[AOM_PLANE_Y] = 0;
+        quant_params->qm[AOM_PLANE_U] = 0;
+        quant_params->qm[AOM_PLANE_V] = 0;
     }
-    PRINT_FRAME("qm_y", quant_params->qm_y);
-    PRINT_FRAME("qm_u", quant_params->qm_u);
-    PRINT_FRAME("qm_v", quant_params->qm_v);
+    PRINT_FRAME("qm_y", quant_params->qm[AOM_PLANE_Y]);
+    PRINT_FRAME("qm_u", quant_params->qm[AOM_PLANE_U]);
+    PRINT_FRAME("qm_v", quant_params->qm[AOM_PLANE_V]);
 }
 
 static INLINE void segfeatures_copy(SegmentationParams *dst,
@@ -2006,11 +2007,11 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         int qindex = get_qindex(&frame_info->segmentation_params, i,
             frame_info->quantization_params.base_q_idx);
         frame_info->lossless_array[i] = qindex == 0 &&
-            frame_info->quantization_params.delta_q_y_dc == 0 &&
-            frame_info->quantization_params.delta_q_u_ac == 0 &&
-            frame_info->quantization_params.delta_q_u_dc == 0 &&
-            frame_info->quantization_params.delta_q_v_ac == 0 &&
-            frame_info->quantization_params.delta_q_v_dc == 0;
+            frame_info->quantization_params.delta_q_dc[AOM_PLANE_Y] == 0 &&
+            frame_info->quantization_params.delta_q_ac[AOM_PLANE_U] == 0 &&
+            frame_info->quantization_params.delta_q_dc[AOM_PLANE_U] == 0 &&
+            frame_info->quantization_params.delta_q_ac[AOM_PLANE_V] == 0 &&
+            frame_info->quantization_params.delta_q_dc[AOM_PLANE_V] == 0;
         if (!frame_info->lossless_array[i])
             frame_info->coded_lossless = 0;
         if (frame_info->quantization_params.using_qmatrix) {
@@ -2021,11 +2022,11 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             }
             else {
                 frame_info->segmentation_params.seg_qm_level[0][i]
-                    = frame_info->quantization_params.qm_y;
+                    = frame_info->quantization_params.qm[AOM_PLANE_Y];
                 frame_info->segmentation_params.seg_qm_level[1][i]
-                    = frame_info->quantization_params.qm_u;
+                    = frame_info->quantization_params.qm[AOM_PLANE_U];
                 frame_info->segmentation_params.seg_qm_level[2][i]
-                    = frame_info->quantization_params.qm_v;
+                    = frame_info->quantization_params.qm[AOM_PLANE_V];
             }
         }
     }
@@ -2104,8 +2105,8 @@ EbErrorType read_frame_header_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
     return status;
 }
 
-void clear_above_context(EbDecHandle *dec_handle_ptr, int mi_col_start,
-                         int mi_col_end, const int tile_row)
+void clear_above_context(EbDecHandle *dec_handle_ptr, uint32_t mi_col_start,
+                         uint32_t mi_col_end, const int tile_row)
 {
     assert(0 == tile_row);
 
@@ -2114,32 +2115,28 @@ void clear_above_context(EbDecHandle *dec_handle_ptr, int mi_col_start,
 
     int num_planes  = av1_num_planes(&seq_params->color_config);
     const int width = mi_col_end - mi_col_start;
-
     const int offset_y  = mi_col_start;
-    const int width_y   = width;
+    int width_y   = width;
+
+    if ((mi_col_end + 1) >> 1 == dec_handle_ptr->frame_header.mi_cols >> 1)
+        width_y = parse_ctxt->parse_nbr4x4_ctxt.num_mi_col - mi_col_start;
 
     const int offset_uv = offset_y >> seq_params->color_config.subsampling_x;
     const int width_uv  = width_y >> seq_params->color_config.subsampling_x;
 
     int8_t num4_64x64 = mi_size_wide[BLOCK_64X64];
 
-    ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_level_ctx[0][tile_row]) +
-        offset_y, width_y);
-    ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_dc_ctx[0][tile_row]) +
+    ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_ctx[0][tile_row]) +
         offset_y, width_y);
     ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_palette_colors[0][tile_row]),
         num4_64x64 * PALETTE_MAX_SIZE);
 
     if (num_planes > 1) {
-        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_level_ctx[1][tile_row]) +
-            offset_uv, width_uv);
-        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_dc_ctx[1][tile_row]) +
+        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_ctx[1][tile_row]) +
             offset_uv, width_uv);
         ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_palette_colors[1][tile_row]),
             num4_64x64 * PALETTE_MAX_SIZE);
-        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_level_ctx[2][tile_row]) +
-            offset_uv, width_uv);
-        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_dc_ctx[2][tile_row]) +
+        ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_ctx[2][tile_row]) +
             offset_uv, width_uv);
         ZERO_ARRAY((&parse_ctxt->parse_nbr4x4_ctxt.above_palette_colors[2][tile_row]),
             num4_64x64 * PALETTE_MAX_SIZE);
@@ -2169,10 +2166,8 @@ void clear_left_context(EbDecHandle *dec_handle_ptr)
     int32_t num_4x4_neigh_sb = seq_params->sb_mi_size;
 
     /* TODO :  after Optimizing the allocation for Chroma fix here also */
-    for (int i = 0; i < num_planes; i++) {
-        ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_level_ctx[i], blk_cnt);
-        ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_dc_ctx[i], blk_cnt);
-    }
+    for (int i = 0; i < num_planes; i++)
+        ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_ctx[i], blk_cnt);
 
     ZERO_ARRAY(parse_ctxt->parse_nbr4x4_ctxt.left_seg_pred_ctx, blk_cnt);
 
@@ -2323,8 +2318,8 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
             clear_cdef(sb_info->sb_cdef_strength, cdef_factor);
 
-            parse_ctx->first_luma_tu_offset = 0;
-            parse_ctx->first_chroma_tu_offset = 0;
+            parse_ctx->first_tu_offset[AOM_PLANE_Y] = 0;
+            parse_ctx->first_tu_offset[AOM_PLANE_U] = 0;
             parse_ctx->cur_mode_info = sb_info->sb_mode_info;
             parse_ctx->cur_mode_info_cnt = 0;
             parse_ctx->sb_row_mi = mi_row;
@@ -2336,8 +2331,6 @@ EbErrorType parse_tile(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
             parse_ctx->left_sb_info = left_sb_info;
             parse_ctx->above_sb_info= above_sb_info;
 #endif
-            parse_ctx->prev_blk_has_chroma = 1; //default at start of frame / tile
-
             /* Init DecModCtxt */
             DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
 #if !FRAME_MI_MAP
@@ -2475,6 +2468,10 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
         dec_handle_ptr->seq_header.color_config.subsampling_y;
     dec_handle_ptr->cm.frm_size = dec_handle_ptr->frame_header.frame_size;
     dec_handle_ptr->cm.tiles_info = dec_handle_ptr->frame_header.tiles_info;
+    dec_handle_ptr->is_lf_enabled =
+        (!dec_handle_ptr->frame_header.allow_intrabc &&
+        (dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
+        dec_handle_ptr->frame_header.loop_filter_params.filter_level[1]));
 
     for (int tile_num = tg_start; tile_num <= tg_end; tile_num++) {
         tile_row = tile_num / tiles_info->tile_cols;
@@ -2573,18 +2570,12 @@ EbErrorType read_tile_group_obu(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
 
             if (do_loop_restoration) {
                 dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 1);
-
-                /* Padded bits are required for filtering pixel around frame boundary */
-                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
-                        &dec_handle_ptr->frame_header);
                 dec_av1_loop_restoration_filter_frame(dec_handle_ptr, opt_lr);
             }
         }
         else {
             if (do_loop_restoration) {
                 /* Padded bits are required for filtering pixel around frame boundary */
-                pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
-                        &dec_handle_ptr->frame_header);
                 dec_av1_loop_restoration_filter_frame(dec_handle_ptr, opt_lr);
             }
         }
@@ -2683,7 +2674,7 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data,
             uint16_t prev_max_frame_width = dec_handle_ptr->seq_header.max_frame_width;
             uint16_t prev_max_frame_height = dec_handle_ptr->seq_header.max_frame_height;
 
-                status = read_sequence_header_obu(&bs, &dec_handle_ptr->seq_header);
+            status = read_sequence_header_obu(&bs, &dec_handle_ptr->seq_header);
             if (status != EB_ErrorNone)
                 return status;
             if (dec_handle_ptr->seq_header.color_config.bit_depth == EB_TWELVE_BIT)

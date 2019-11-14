@@ -1201,7 +1201,7 @@ typedef enum ATTRIBUTE_PACKED
     INTERINTRA_MODES
 } InterIntraMode;
 
-typedef enum
+typedef enum ATTRIBUTE_PACKED
 {
     COMPOUND_AVERAGE,
     COMPOUND_DISTWTD,

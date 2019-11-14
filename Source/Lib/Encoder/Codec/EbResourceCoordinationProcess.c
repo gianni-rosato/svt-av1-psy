@@ -300,18 +300,19 @@ void ResetPcsAv1(
 #endif
 
     frm_hdr->quantization_params.base_q_idx = 31;
-    frm_hdr->quantization_params.delta_q_y_dc = 0;
-    frm_hdr->quantization_params.delta_q_u_dc = 0;
-    frm_hdr->quantization_params.delta_q_v_dc = 0;
-    frm_hdr->quantization_params.delta_q_u_ac = 0;
-    frm_hdr->quantization_params.delta_q_v_ac = 0;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] = 0;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] = 0;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] = 0;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] = 0;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
 
     picture_control_set_ptr->separate_uv_delta_q = 0;
     // Encoder
     frm_hdr->quantization_params.using_qmatrix = 0;
-    frm_hdr->quantization_params.qm_y = 5;
-    frm_hdr->quantization_params.qm_u = 5;
-    frm_hdr->quantization_params.qm_v = 5;
+    frm_hdr->quantization_params.qm[AOM_PLANE_Y] = 5;
+    frm_hdr->quantization_params.qm[AOM_PLANE_U] = 5;
+    frm_hdr->quantization_params.qm[AOM_PLANE_V] = 5;
     frm_hdr->is_motion_mode_switchable = 0;
     // Flag signaling how frame contexts should be updated at the end of
     // a frame decode

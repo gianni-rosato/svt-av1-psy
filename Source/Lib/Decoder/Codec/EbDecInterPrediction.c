@@ -272,7 +272,6 @@ void av1_build_intra_predictors_for_interintra(EbDecHandle *dec_hdl,
     EbBitDepthEnum bit_depth)
 {
     BlockModeInfo *mi = part_info->mi;
-    int32_t i, wpx, hpx;
     DecModCtxt *dec_mod_ctxt = (DecModCtxt *)dec_hdl->pv_dec_mod_ctxt;
     int32_t sub_x = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t sub_y = (plane > 0) ? part_info->subsampling_y : 0;
@@ -285,43 +284,26 @@ void av1_build_intra_predictors_for_interintra(EbDecHandle *dec_hdl,
     assert(mi->use_intrabc == 0);
     assert(mi->palette_size[plane != 0] == 0);
 
-    wpx = AOMMIN(part_info->wpx[plane], (64 >> sub_x));
-    hpx = AOMMIN(part_info->hpx[plane], (64 >> sub_y));
 
-    void *pv_topNeighArray = (void *)dec_mod_ctxt->topNeighArray;;
-    void *pv_leftNeighArray = (void *)dec_mod_ctxt->leftNeighArray;
+    void *pv_topNeighArray, *pv_leftNeighArray;
 
     if (bit_depth == EB_8BIT) {
         EbByte  buf = (EbByte)pv_blk_recon_buf;
-        uint8_t *pu1_topNeighArray = (uint8_t *)dec_mod_ctxt->topNeighArray;
-        uint8_t *pu1_leftNeighArray = (uint8_t *)dec_mod_ctxt->leftNeighArray;
 
-        memcpy(pu1_topNeighArray + 1, (buf - recon_stride),
-            wpx * 2 * sizeof(uint8_t));
-
-        for (i = 0; i < hpx * 2; i++)
-            pu1_leftNeighArray[i + 1] = buf[-1 + i * recon_stride];
-
-        pu1_topNeighArray[0] = pu1_leftNeighArray[0] = buf[-1 - recon_stride];
+        pv_topNeighArray = (void*)(buf - recon_stride);
+        pv_leftNeighArray = (void*)(buf - 1);
     }
     else {//16bit
         uint16_t *buf = (uint16_t *)pv_blk_recon_buf;
-        uint16_t *pu2_topNeighArray = (uint16_t *)dec_mod_ctxt->topNeighArray;
-        uint16_t *pu2_leftNeighArray = (uint16_t *)dec_mod_ctxt->leftNeighArray;
-
-        memcpy(pu2_topNeighArray + 1, (buf - recon_stride),
-            wpx * 2 * sizeof(uint16_t));
-
-        for (i = 0; i < hpx * 2; i++)
-            pu2_leftNeighArray[i + 1] = buf[-1 + i * recon_stride];
-
-        pu2_topNeighArray[0] = pu2_leftNeighArray[0] = buf[-1 - recon_stride];
+        pv_topNeighArray = (void*)(buf - recon_stride);
+        pv_leftNeighArray = (void*)(buf - 1);
     }
+
     /*Calling Intra prediction */
     svtav1_predict_intra_block(part_info, plane,
         max_txsize_rect_lookup[plane_bsize], dec_mod_ctxt->cur_tile_info,
-        (void *)dst, dst_stride, pv_topNeighArray, pv_leftNeighArray,
-        &dec_hdl->seq_header, mode, 0, 0, bit_depth);
+        (void *)dst,  dst_stride, pv_topNeighArray, pv_leftNeighArray,
+        recon_stride, &dec_hdl->seq_header, mode, 0, 0, bit_depth);
 }
 
 /* Build interintra_predictors */

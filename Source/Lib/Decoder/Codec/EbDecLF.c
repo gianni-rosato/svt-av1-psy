@@ -29,6 +29,44 @@ Contains the Decoder Loop Filtering related functions*/
 #include "EbDecLF.h"
 #include "EbDecParseHelper.h"
 
+#define FILTER_LEN 4
+
+/*Filter_length is mapped to int indx for the filter tap arrays*/
+/*4-> 0   6-> 1   8-> 2   14->3 */
+static int8_t filter_map[15] = { -1, -1, -1, -1, 0,-1, 1, -1, 2, -1,
+                                -1, -1, -1, -1, 3 };
+
+svt_lbd_filter_tap_fn_t lbd_vert_filter_tap[FILTER_LEN];
+svt_hbd_filter_tap_fn_t hbd_vert_filter_tap[FILTER_LEN];
+svt_lbd_filter_tap_fn_t lbd_horz_filter_tap[FILTER_LEN];
+svt_hbd_filter_tap_fn_t hbd_horz_filter_tap[FILTER_LEN];
+
+void set_lbd_lf_filter_tap_functions(void)
+{
+    lbd_horz_filter_tap[0] = aom_lpf_horizontal_4;
+    lbd_horz_filter_tap[1] = aom_lpf_horizontal_6;
+    lbd_horz_filter_tap[2] = aom_lpf_horizontal_8;
+    lbd_horz_filter_tap[3] = aom_lpf_horizontal_14;
+
+    lbd_vert_filter_tap[0] = aom_lpf_vertical_4;
+    lbd_vert_filter_tap[1] = aom_lpf_vertical_6;
+    lbd_vert_filter_tap[2] = aom_lpf_vertical_8;
+    lbd_vert_filter_tap[3] = aom_lpf_vertical_14;
+}
+
+void set_hbd_lf_filter_tap_functions(void)
+{
+    hbd_horz_filter_tap[0] = aom_highbd_lpf_horizontal_4;
+    hbd_horz_filter_tap[1] = aom_highbd_lpf_horizontal_6;
+    hbd_horz_filter_tap[2] = aom_highbd_lpf_horizontal_8;
+    hbd_horz_filter_tap[3] = aom_highbd_lpf_horizontal_14;
+
+    hbd_vert_filter_tap[0] = aom_highbd_lpf_vertical_4;
+    hbd_vert_filter_tap[1] = aom_highbd_lpf_vertical_6;
+    hbd_vert_filter_tap[2] = aom_highbd_lpf_vertical_8;
+    hbd_vert_filter_tap[3] = aom_highbd_lpf_vertical_14;
+}
+
 /*Population of neighbour block LUMA params for each 4x4 block*/
 void fill_4x4_param_luma(LFBlockParamL* lf_block_l,
     int32_t tu_x, int32_t tu_y, int32_t stride,
@@ -83,7 +121,7 @@ void fill_4x4_param_uv(LFBlockParamUV* lf_block_uv, int32_t tu_x, int32_t tu_y,
 }
 
 /*Function to get transform size*/
-static TxSize dec_get_transform_size(const EDGE_DIR edge_dir, TxSize tx_size) {
+static INLINE TxSize dec_get_transform_size(const EDGE_DIR edge_dir, TxSize tx_size) {
     /*since in case of chrominance or non-square transorm need to convert
     transform size into transform size in particular direction.
     for vertical edge, filter direction is horizontal, for horizontal
@@ -95,7 +133,7 @@ static TxSize dec_get_transform_size(const EDGE_DIR edge_dir, TxSize tx_size) {
 
 /*Return TxSize from get_transform_size(), so it is plane and direction
  awared*/
-static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
+static INLINE TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
     EbPictureBufferDesc *recon_picture_buf, FrameHeader *frm_hdr,
     EbColorConfig *color_config, LFCtxt *lf_ctxt, LoopFilterInfoN *lf_info,
     const EDGE_DIR edge_dir, const uint32_t x,
@@ -229,7 +267,7 @@ static TxSize dec_set_lpf_parameters(AV1_DEBLOCKING_PARAMETERS *const params,
 
 /*It applies Vertical Loop Filtering in a superblock*/
 void dec_av1_filter_block_plane_vert(
-    FrameHeader *frm_hdr,EbColorConfig *color_config,
+    FrameHeader *frm_hdr, EbColorConfig *color_config,
     EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
     LoopFilterInfoN *lf_info, const int32_t plane, BlockSize sb_size,
     const uint32_t mi_row, const uint32_t mi_col, int32_t *sb_delta_lf)
@@ -252,7 +290,7 @@ void dec_av1_filter_block_plane_vert(
 
     for (int32_t y = 0; y < y_range; y += row_step) {
         uint8_t *p = (uint8_t*)blk_recon_buf +
-                     ((y * MI_SIZE * recon_stride) << is16bit);
+            ((y * MI_SIZE * recon_stride) << is16bit);
 
         for (int32_t x = 0; x < x_range;) {
             /*inner loop always filter vertical edges in a MI block. If MI size
@@ -260,20 +298,20 @@ void dec_av1_filter_block_plane_vert(
             If 4x4 trasnform is used, it will then filter the internal edge
              aligned with a 4x4 block*/
             const uint32_t curr_luma_x = mi_col * MI_SIZE +
-                                        ((x << sub_x) * MI_SIZE);
+                ((x << sub_x) * MI_SIZE);
             const uint32_t curr_luma_y = mi_row * MI_SIZE +
-                                        ((y << sub_y )* MI_SIZE);
+                ((y << sub_y)* MI_SIZE);
             uint32_t advance_units;
             TxSize tx_size;
             AV1_DEBLOCKING_PARAMETERS params;
             memset(&params, 0, sizeof(params));
 
             /* For VERT_EDGE edge and x_range is for SB scan */
-            sb_delta_lf_left = x==0 ? sb_delta_lf-FRAME_LF_COUNT: sb_delta_lf;
+            sb_delta_lf_left = x == 0 ? sb_delta_lf - FRAME_LF_COUNT : sb_delta_lf;
 
             tx_size =
                 dec_set_lpf_parameters(&params, recon_picture_buf,
-                    frm_hdr,color_config, lf_ctxt, lf_info, VERT_EDGE,
+                    frm_hdr, color_config, lf_ctxt, lf_info, VERT_EDGE,
                     curr_luma_x, curr_luma_y, plane,
                     sb_delta_lf, sb_delta_lf_left);
 
@@ -282,82 +320,25 @@ void dec_av1_filter_block_plane_vert(
                 tx_size = TX_4X4;
             }
 
-            switch (params.filter_length) {
-                /*apply 4-tap filtering*/
-            case 4:
+            int8_t filter_idx = filter_map[params.filter_length];
+
+            if (filter_idx != -1) {
                 if (is16bit)
-                    aom_highbd_lpf_vertical_4(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
+                    hbd_vert_filter_tap[filter_idx](
+                        (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
                         recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
                         recon_picture_buf->bit_depth);
                 else
-                    aom_lpf_vertical_4(
-                        p,
+                    lbd_vert_filter_tap[filter_idx](p,
                         recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
-                break;
-            case 6:  /* apply 6-tap filter for chroma plane only*/
-                assert(plane != 0);
-                if (is16bit)
-                    aom_highbd_lpf_vertical_6(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr,
-                        recon_picture_buf->bit_depth);
-                else
-                    aom_lpf_vertical_6(
-                        p,
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr);
-                break;
-                /*apply 8-tap filtering*/
-            case 8:
-                if (is16bit)
-                    aom_highbd_lpf_vertical_8(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr,
-                        recon_picture_buf->bit_depth);
-                else
-                    aom_lpf_vertical_8(
-                        p,
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr);
-                break;
-                /*apply 14-tap filtering*/
-            case 14:
-                if (is16bit)
-                    aom_highbd_lpf_vertical_14(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr,
-                        recon_picture_buf->bit_depth);
-                else
-                    aom_lpf_vertical_14(
-                        p,
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr);
-                break;
-                /*no filtering*/
-            default: break;
             }
+
             /*advance the destination pointer*/
             assert(tx_size < TX_SIZES_ALL);
             advance_units = tx_size_wide_unit[tx_size];
@@ -369,8 +350,8 @@ void dec_av1_filter_block_plane_vert(
 
 /*It applies Horizonatal Loop Filtering in a superblock*/
 void dec_av1_filter_block_plane_horz(
-    FrameHeader *frm_hdr,EbColorConfig *color_config,
-    EbPictureBufferDesc *recon_picture_buf,LFCtxt *lf_ctxt,
+    FrameHeader *frm_hdr, EbColorConfig *color_config,
+    EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
     LoopFilterInfoN *lf_info, const int32_t plane, BlockSize sb_size,
     const uint32_t mi_row, const uint32_t mi_col, int32_t *sb_delta_lf)
 {
@@ -407,96 +388,38 @@ void dec_av1_filter_block_plane_horz(
             memset(&params, 0, sizeof(params));
 
             /* For HORZ_EDGE edge and y_range is for SB scan */
-            sb_delta_lf_above = y==0 ? sb_delta_lf - lf_ctxt->delta_lf_stride :
-                                       sb_delta_lf;
+            sb_delta_lf_above = y == 0 ? sb_delta_lf - lf_ctxt->delta_lf_stride :
+                sb_delta_lf;
 
             tx_size = dec_set_lpf_parameters(&params, recon_picture_buf, frm_hdr,
-                    color_config, lf_ctxt, lf_info, HORZ_EDGE,
-                    curr_luma_x,  curr_luma_y, plane,
-                    sb_delta_lf, sb_delta_lf_above);
+                color_config, lf_ctxt, lf_info, HORZ_EDGE,
+                curr_luma_x, curr_luma_y, plane,
+                sb_delta_lf, sb_delta_lf_above);
 
             if (tx_size == TX_INVALID) {
                 params.filter_length = 0;
                 tx_size = TX_4X4;
             }
 
-            switch (params.filter_length) {
-                /*apply 4-tap filtering*/
-            case 4:
+            int filter_idx = filter_map[params.filter_length];
+
+            if (filter_idx != -1) {
                 if (is16bit)
-                    aom_highbd_lpf_horizontal_4(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
+                    hbd_horz_filter_tap[filter_idx](
+                        (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
                         recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr,
                         recon_picture_buf->bit_depth);
                 else
-                    aom_lpf_horizontal_4(
-                        p,
+                    lbd_horz_filter_tap[filter_idx](p,
                         recon_stride,
                         params.mblim,
                         params.lim,
                         params.hev_thr);
-                break;
-                /*apply 6-tap filtering*/
-            case 6:
-                assert(plane != 0);
-                if (is16bit)
-                    aom_highbd_lpf_horizontal_6(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr,
-                        recon_picture_buf->bit_depth);
-                else
-                    aom_lpf_horizontal_6(
-                        p,
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr);
-                break;
-                /*apply 8-tap filtering*/
-            case 8:
-                if (is16bit)
-                    aom_highbd_lpf_horizontal_8(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr,
-                        recon_picture_buf->bit_depth);
-                else
-                    aom_lpf_horizontal_8(
-                        p,
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr);
-                break;
-                /*apply 14-tap filtering*/
-            case 14:
-                if (is16bit)
-                    aom_highbd_lpf_horizontal_14(
-                    (uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr,
-                        recon_picture_buf->bit_depth);
-                else
-                    aom_lpf_horizontal_14(
-                        p,
-                        recon_stride,
-                        params.mblim,
-                        params.lim,
-                        params.hev_thr);
-                break;
-                /* no filtering */
-            default: break;
             }
+
             /*advance the destination pointer*/
             assert(tx_size < TX_SIZES_ALL);
             advance_units = tx_size_high_unit[tx_size];
@@ -592,6 +515,9 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
         memset(lf_info->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
 
     eb_av1_loop_filter_frame_init(frm_hdr, lf_info, plane_start, plane_end);
+
+    set_lbd_lf_filter_tap_functions();
+    set_hbd_lf_filter_tap_functions();
 
     /*Loop over a frame : tregger dec_loop_filter_sb for each SB*/
     for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {

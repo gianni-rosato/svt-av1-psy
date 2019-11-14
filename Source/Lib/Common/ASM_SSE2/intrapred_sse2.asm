@@ -118,8 +118,8 @@ cglobal dc_predictor_8x8, 4, 5, 3, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
-  movdqu                  m0, [aboveq]
-  movdqu                  m2, [leftq]
+  movq                  m0, [aboveq]
+  movq                  m2, [leftq]
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
   psadbw                m0, m1
@@ -129,15 +129,15 @@ cglobal dc_predictor_8x8, 4, 5, 3, dst, stride, above, left, goffset
   psraw                 m0, 4
   punpcklbw             m0, m0
   pshuflw               m0, m0, 0x0
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   lea                 dstq, [dstq+strideq*4]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
 
   RESTORE_GOT
   RET
@@ -147,7 +147,7 @@ cglobal dc_top_predictor_8x8, 3, 5, 2, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
-  movdqu                  m0, [aboveq]
+  movq                  m0, [aboveq]
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
   psadbw                m0, m1
@@ -155,15 +155,15 @@ cglobal dc_top_predictor_8x8, 3, 5, 2, dst, stride, above, left, goffset
   psraw                 m0, 3
   punpcklbw             m0, m0
   pshuflw               m0, m0, 0x0
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   lea                 dstq, [dstq+strideq*4]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
 
   RESTORE_GOT
   RET
@@ -174,7 +174,7 @@ cglobal dc_left_predictor_8x8, 2, 5, 2, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
-  movdqu                  m0, [leftq]
+  movq                  m0, [leftq]
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
   psadbw                m0, m1
@@ -182,15 +182,15 @@ cglobal dc_left_predictor_8x8, 2, 5, 2, dst, stride, above, left, goffset
   psraw                 m0, 3
   punpcklbw             m0, m0
   pshuflw               m0, m0, 0x0
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   lea                 dstq, [dstq+strideq*4]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
 
   RESTORE_GOT
   RET
@@ -215,16 +215,16 @@ cglobal dc_128_predictor_8x8, 2, 5, 1, dst, stride, above, left, goffset
 
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
-  movdqu    m0,        [GLOBAL(dc_128)]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    m0,        [GLOBAL(dc_128)]
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   lea                 dstq, [dstq+strideq*4]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   RESTORE_GOT
   RET
 
@@ -488,18 +488,18 @@ cglobal v_predictor_4x4, 3, 3, 1, dst, stride, above
 
 INIT_XMM sse2
 cglobal v_predictor_8x8, 3, 3, 1, dst, stride, above
-  movdqu                  m0, [aboveq]
+  movq                  m0, [aboveq]
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   lea                 dstq, [dstq+strideq*4]
-  movdqu    [dstq          ], m0
-  movdqu    [dstq+strideq  ], m0
-  movdqu    [dstq+strideq*2], m0
-  movdqu    [dstq+stride3q ], m0
+  movq    [dstq          ], m0
+  movq    [dstq+strideq  ], m0
+  movq    [dstq+strideq*2], m0
+  movq    [dstq+stride3q ], m0
   RET
 
 INIT_XMM sse2
@@ -561,17 +561,17 @@ cglobal h_predictor_8x8, 2, 5, 3, dst, stride, line, left
   mov                lineq, -2
   DEFINE_ARGS  dst, stride, line, left, stride3
   lea             stride3q, [strideq*3]
-  movdqu                  m0, [leftq    ]
+  movq                  m0, [leftq    ]
   punpcklbw             m0, m0              ; l1 l1 l2 l2 ... l8 l8
 .loop:
   pshuflw               m1, m0, 0x0         ; l1 l1 l1 l1 l1 l1 l1 l1
   pshuflw               m2, m0, 0x55        ; l2 l2 l2 l2 l2 l2 l2 l2
-  movdqu      [dstq        ], m1
-  movdqu      [dstq+strideq], m2
+  movq      [dstq        ], m1
+  movq      [dstq+strideq], m2
   pshuflw               m1, m0, 0xaa
   pshuflw               m2, m0, 0xff
-  movdqu    [dstq+strideq*2], m1
-  movdqu    [dstq+stride3q ], m2
+  movq    [dstq+strideq*2], m1
+  movq    [dstq+stride3q ], m2
   pshufd                m0, m0, 0xe         ; [63:0] l5 l5 l6 l6 l7 l7 l8 l8
   inc                lineq
   lea                 dstq, [dstq+strideq*4]

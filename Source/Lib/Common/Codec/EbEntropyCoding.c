@@ -3324,26 +3324,28 @@ static void encode_quantization(const PictureParentControlSet *const pcs_ptr,
 
     const FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.base_q_idx, QINDEX_BITS);
-    write_delta_q(wb, frm_hdr->quantization_params.delta_q_y_dc);
+    write_delta_q(wb, frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y]);
     if (num_planes > 1) {
-        int32_t diff_uv_delta = (frm_hdr->quantization_params.delta_q_u_dc != frm_hdr->quantization_params.delta_q_v_dc) ||
-            (frm_hdr->quantization_params.delta_q_u_ac != frm_hdr->quantization_params.delta_q_v_ac);
+        int32_t diff_uv_delta = (frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] !=
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V]) ||
+            (frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] !=
+                frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V]);
         if (pcs_ptr->separate_uv_delta_q) eb_aom_wb_write_bit(wb, diff_uv_delta);
-        write_delta_q(wb, frm_hdr->quantization_params.delta_q_u_dc);
-        write_delta_q(wb, frm_hdr->quantization_params.delta_q_u_ac);
+        write_delta_q(wb, frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U]);
+        write_delta_q(wb, frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U]);
         if (diff_uv_delta) {
-            write_delta_q(wb, frm_hdr->quantization_params.delta_q_v_dc);
-            write_delta_q(wb, frm_hdr->quantization_params.delta_q_v_ac);
+            write_delta_q(wb, frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V]);
+            write_delta_q(wb, frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V]);
         }
     }
     eb_aom_wb_write_bit(wb, frm_hdr->quantization_params.using_qmatrix);
     if (frm_hdr->quantization_params.using_qmatrix) {
-        eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.qm_y, QM_LEVEL_BITS);
-        eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.qm_u, QM_LEVEL_BITS);
+        eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.qm[AOM_PLANE_Y], QM_LEVEL_BITS);
+        eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.qm[AOM_PLANE_U], QM_LEVEL_BITS);
         if (!pcs_ptr->separate_uv_delta_q)
-            assert(frm_hdr->quantization_params.qm_u == frm_hdr->quantization_params.qm_v);
+            assert(frm_hdr->quantization_params.qm[AOM_PLANE_U] == frm_hdr->quantization_params.qm[AOM_PLANE_V]);
         else
-            eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.qm_v, QM_LEVEL_BITS);
+            eb_aom_wb_write_literal(wb, frm_hdr->quantization_params.qm[AOM_PLANE_V], QM_LEVEL_BITS);
     }
 }
 

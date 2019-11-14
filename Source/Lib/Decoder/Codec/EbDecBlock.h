@@ -168,9 +168,6 @@ typedef struct PartitionInfo {
     /*!< Indicates if the information from the block to the left can be used on the chroma plane. */
     uint8_t chroma_left_available;
 
-    /*!< Specifies whether chroma information is coded for this block. */
-    int8_t has_chroma;
-
     /*!< Distance of MB away from frame edges in subpixels (1/8th pixel).  */
     int32_t mb_to_left_edge;
 
@@ -226,6 +223,10 @@ typedef struct PartitionInfo {
     /* pointers to reference frame scale factors */
     const struct ScaleFactors *block_ref_sf[2];
     const struct ScaleFactors *sf_identity;
+
+    int8_t *cdef_strength;
+
+    int32_t is_chroma_ref;
 } PartitionInfo_t;
 
 #endif //EbDecBlock_h

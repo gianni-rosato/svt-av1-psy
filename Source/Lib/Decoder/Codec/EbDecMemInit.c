@@ -341,6 +341,7 @@ static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
     ParseNbr4x4Ctxt *neigh_ctx = &parse_ctx->parse_nbr4x4_ctxt;
 
     num_mi_col = sb_cols * num_4x4_neigh_sb;
+    neigh_ctx->num_mi_col = num_mi_col;
     num_mi_row = num_4x4_neigh_sb;
     //num_mi_frame = sb_cols * sb_rows * num_4x4_neigh_sb;
 
@@ -353,11 +354,8 @@ static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
     EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_part_ht, num_mi_row * sizeof(uint8_t), EB_N_PTR);
     /* TODO : Optimize the size for Chroma */
     for (int i = 0; i < num_planes; i++) {
-        EB_MALLOC_DEC(uint8_t*, neigh_ctx->above_dc_ctx[i], num_mi_col * sizeof(uint8_t), EB_N_PTR);
-        EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_dc_ctx[i], num_mi_row * sizeof(uint8_t), EB_N_PTR);
-
-        EB_MALLOC_DEC(uint8_t*, neigh_ctx->above_level_ctx[i], num_mi_col * sizeof(uint8_t), EB_N_PTR);
-        EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_level_ctx[i], num_mi_row * sizeof(uint8_t), EB_N_PTR);
+        EB_MALLOC_DEC(int8_t*, neigh_ctx->left_ctx[i], num_mi_row * sizeof(int8_t), EB_N_PTR);
+        EB_MALLOC_DEC(int8_t*, neigh_ctx->above_ctx[i], num_mi_col * sizeof(int8_t), EB_N_PTR);
 
         EB_MALLOC_DEC(uint16_t*, neigh_ctx->above_palette_colors[i],
             num4_64x64 * PALETTE_MAX_SIZE *sizeof(uint16_t), EB_N_PTR);
@@ -442,7 +440,7 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     EB_MALLOC_DEC(RestorationLineBuffers *, lr_ctxt->rlbs,
                   sizeof(RestorationLineBuffers), EB_N_PTR)
     EB_MALLOC_DEC(int32_t *, lr_ctxt->rst_tmpbuf,
-                  RESTORATION_TMPBUF_SIZE * sizeof(int32_t), EB_N_PTR)
+                  RESTORATION_TMPBUF_SIZE, EB_N_PTR)
 
     int frame_width = dec_handle_ptr->seq_header.max_frame_width;
     int frame_height = dec_handle_ptr->seq_header.max_frame_height;

@@ -441,20 +441,30 @@ void eb_av1_set_quantizer(
     picture_control_set_ptr->max_qmlevel = 9;
 
     frm_hdr->quantization_params.base_q_idx = AOMMAX(frm_hdr->delta_q_params.delta_q_present, q);
-    frm_hdr->quantization_params.delta_q_y_dc = 0;
-    frm_hdr->quantization_params.delta_q_u_dc = 0;
-    frm_hdr->quantization_params.delta_q_u_ac = 0;
-    frm_hdr->quantization_params.delta_q_v_dc = 0;
-    frm_hdr->quantization_params.delta_q_v_ac = 0;
-    frm_hdr->quantization_params.qm_y = aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx, picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
-    frm_hdr->quantization_params.qm_u = aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx + frm_hdr->quantization_params.delta_q_u_ac,
-        picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] = 0;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] = 0;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] = 0;
+    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] = 0;
+    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
+    frm_hdr->quantization_params.qm[AOM_PLANE_Y] = aom_get_qmlevel(frm_hdr->
+        quantization_params.base_q_idx, picture_control_set_ptr->min_qmlevel,
+        picture_control_set_ptr->max_qmlevel);
+    frm_hdr->quantization_params.qm[AOM_PLANE_U] = aom_get_qmlevel(frm_hdr->
+        quantization_params.base_q_idx +
+        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+        picture_control_set_ptr->min_qmlevel,
+        picture_control_set_ptr->max_qmlevel);
 
     if (!picture_control_set_ptr->separate_uv_delta_q)
-        frm_hdr->quantization_params.qm_v = frm_hdr->quantization_params.qm_u;
+        frm_hdr->quantization_params.qm[AOM_PLANE_V] =
+                                frm_hdr->quantization_params.qm[AOM_PLANE_U];
     else
-        frm_hdr->quantization_params.qm_v = aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx + frm_hdr->quantization_params.delta_q_v_ac,
-            picture_control_set_ptr->min_qmlevel, picture_control_set_ptr->max_qmlevel);
+        frm_hdr->quantization_params.qm[AOM_PLANE_V] = aom_get_qmlevel(frm_hdr->
+            quantization_params.base_q_idx +
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
+            picture_control_set_ptr->min_qmlevel,
+            picture_control_set_ptr->max_qmlevel);
 }
 
 void eb_av1_build_quantizer(
@@ -3061,11 +3071,11 @@ void* mode_decision_configuration_kernel(void *input_ptr)
             frm_hdr->quantization_params.base_q_idx);
         eb_av1_build_quantizer(
             (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth,
-            frm_hdr->quantization_params.delta_q_y_dc,
-            frm_hdr->quantization_params.delta_q_u_dc,
-            frm_hdr->quantization_params.delta_q_u_ac,
-            frm_hdr->quantization_params.delta_q_v_dc,
-            frm_hdr->quantization_params.delta_q_v_ac,
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
             quants,
             dequants);
 
@@ -3073,11 +3083,11 @@ void* mode_decision_configuration_kernel(void *input_ptr)
         Dequants *const dequantsMd = &picture_control_set_ptr->parent_pcs_ptr->deqMd;
         eb_av1_build_quantizer(
             picture_control_set_ptr->hbd_mode_decision ? AOM_BITS_10 : AOM_BITS_8,
-            frm_hdr->quantization_params.delta_q_y_dc,
-            frm_hdr->quantization_params.delta_q_u_dc,
-            frm_hdr->quantization_params.delta_q_u_ac,
-            frm_hdr->quantization_params.delta_q_v_dc,
-            frm_hdr->quantization_params.delta_q_v_ac,
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
             quantsMd,
             dequantsMd);
 

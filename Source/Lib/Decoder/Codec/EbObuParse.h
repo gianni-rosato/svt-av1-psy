@@ -86,20 +86,17 @@ typedef struct ParseNbr4x4Ctxt {
      to the current super block row. */
     uint8_t *left_part_ht;
 
-    /* Buffer holding the sign of the DC coefficients of the previous 4x4 block row. */
-    uint8_t *above_dc_ctx[MAX_MB_PLANE];
+    /* Buffer holding the sign of the DC coefficients and the cumulative
+       sum of the coefficient levels of the previous 4x4 block row. */
+    int8_t *above_ctx[MAX_MB_PLANE];
 
-    /* Buffer holding the sign of the DC coefficients of the left 4x4 blocks
-     corresponding to the current super block row. */
-    uint8_t *left_dc_ctx[MAX_MB_PLANE];
+    /* Buffer holding the sign of the DC coefficients and the cumulative
+       sum of the coefficient levels of the left 4x4 blocks
+       corresponding to the current super block row. */
+    int8_t *left_ctx[MAX_MB_PLANE];
 
-    /* Buffer holding the cumulative sum of the coefficient levels of the
-     previous 4x4 block row. */
-    uint8_t *above_level_ctx[MAX_MB_PLANE];
-
-    /* Buffer holding the cumulative sum of the coefficient levels of the
-     left 4x4 blocks corresponding to the current super block row. */
-    uint8_t *left_level_ctx[MAX_MB_PLANE];
+    /* Number of mi columns with respect to the aligned width. */
+    uint32_t num_mi_col;
 
     /* Buffer holding the seg_id_predicted of the previous 4x4 block row. */
     uint8_t *left_seg_pred_ctx;
@@ -119,7 +116,7 @@ typedef struct ParseNbr4x4Ctxt {
     int32_t cur_q_ind;
 
     /* Place holder for palette color information */
-    uint16_t palette_colors[MAX_MB_PLANE * PALETTE_MAX_SIZE];
+    uint16_t palette_colors[MAX_MB_PLANE][PALETTE_MAX_SIZE];
 
     int8_t *above_comp_grp_idx;
 
@@ -146,10 +143,8 @@ typedef struct ParseCtxt {
     TileInfo        cur_tile_info;
 
     /* Stored here for current block and should be updated to next block modeinfo */
-    /*!< Offset of first Luma transform info from strat of SB pointer */
-    uint16_t        first_luma_tu_offset;
-    /*!< Offset of first Chroma transform info from strat of SB pointer */
-    uint16_t        first_chroma_tu_offset;
+    /*!< Offset of first transform info from strat of SB pointer for each plane */
+    uint16_t        first_tu_offset[MAX_MB_PLANE - 1];
     /* TODO: Points to the cur ModeInfo_t in SB. Should be moved out */
     BlockModeInfo   *cur_mode_info;
     /* TODO: Points to the cur ModeInfo_t in SB. Should be moved out */
@@ -172,10 +167,6 @@ typedef struct ParseCtxt {
     SBInfo  *left_sb_info;
     SBInfo  *above_sb_info;
 #endif
-    /*!< Chroma mode indo state acroos sub 8x8 blocks
-     * if Prev block does not have chroma info then this state is remembered in this variable to be used in next block
-    */
-    int32_t  prev_blk_has_chroma;
 
     TransformInfo_t *inter_trans_chroma;
 

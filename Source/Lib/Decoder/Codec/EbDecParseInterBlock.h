@@ -48,17 +48,17 @@ extern  int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
-    int mi_row, int mi_col, SvtReader *r);
+    SvtReader *r);
 
 void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     MvReferenceFrame ref_frame, CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
     IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv global_mvs[2],
-    int mi_row, int mi_col, int16_t *mode_context, MvCount *mv_cnt);
+    int16_t *mode_context, MvCount *mv_cnt);
 void assign_intrabc_mv(EbDecHandle *dec_handle,
     IntMv ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
-    PartitionInfo_t *pi, int mi_row, int mi_col, SvtReader *r);
+    PartitionInfo_t *pi, SvtReader *r);
 void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    int mi_row, int mi_col, SvtReader *r);
+    SvtReader *r);
 #ifdef __cplusplus
 }
 #endif

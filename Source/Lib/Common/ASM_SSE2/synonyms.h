@@ -24,6 +24,11 @@
   * Intrinsics prefixed with yy_ operate on or return 256bit YMM registers.
   */
 
+static INLINE __m128i xx_loadl_32(const void *a) {
+    int val;
+    memcpy(&val, a, sizeof(val));
+    return _mm_cvtsi32_si128(val);
+}
 static INLINE __m128i xx_loadl_64(const void *a) {
     return _mm_loadl_epi64((const __m128i *)a);
 }

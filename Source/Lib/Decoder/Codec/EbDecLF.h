@@ -22,6 +22,14 @@ Contains the Decoder Loop Filtering related functions*/
 
 extern const int32_t mode_lf_lut[];
 
+typedef void(*svt_lbd_filter_tap_fn_t)(uint8_t *s,
+    int32_t pitch, const uint8_t *blimit,
+    const uint8_t *limit, const uint8_t *thresh);
+
+typedef void(*svt_hbd_filter_tap_fn_t)(uint16_t *s,
+    int32_t pitch, const uint8_t *blimit,
+    const uint8_t *limit, const uint8_t *thresh, int32_t bd);
+
 typedef struct LFBlockParamL {
     int8_t              skip;
     /*!< Specifies which segment is associated with the
@@ -55,5 +63,7 @@ void dec_av1_loop_filter_frame(
     EbDecHandle *dec_handle_ptr,
     EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
     int32_t plane_start, int32_t plane_end);
+
+
 
 #endif  // EbDecLF_h

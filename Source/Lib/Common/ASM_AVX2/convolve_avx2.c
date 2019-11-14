@@ -1541,11 +1541,6 @@ void eb_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride,
 
 // Loads and stores to do away with the tedium of casting the address
 // to the right type.
-static INLINE __m128i xx_loadl_32(const void *a) {
-    int val;
-    memcpy(&val, a, sizeof(val));
-    return _mm_cvtsi32_si128(val);
-}
 static INLINE __m128i xx_load_128(const void *a) {
     return _mm_load_si128((const __m128i *)a);
 }

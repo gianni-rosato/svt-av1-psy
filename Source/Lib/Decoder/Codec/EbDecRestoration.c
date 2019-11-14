@@ -23,10 +23,154 @@
 #include "EbRestoration.h"
 #include "EbDecRestoration.h"
 
+#define LR_PAD_SIDE 3
+#define LR_PAD_MAX  (LR_PAD_SIDE << 1)
+
 void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride,
     int32_t src_width, int32_t src_height, int32_t use_highbd, int32_t plane,
     Av1Common *cm, int32_t after_cdef, RestorationStripeBoundaries *boundaries);
 
+void lr_generate_padding(
+    EbByte  src_pic,                    //output paramter, pointer to the source picture(0,0).
+    uint32_t   src_stride,              //input paramter, the stride of the source picture to be padded.
+    uint32_t   original_src_width,      //input paramter, the width of the source picture which excludes the padding.
+    uint32_t   original_src_height)     //input paramter, the heigth of the source picture which excludes the padding.
+{
+    uint32_t   verticalIdx;
+    EbByte  tempSrcPic0;
+    EbByte  tempSrcPic1;
+    EbByte  tempSrcPic2;
+    EbByte  tempSrcPic3;
+
+    tempSrcPic0 = src_pic;
+    for (verticalIdx = original_src_height; verticalIdx > 0; --verticalIdx)
+    {
+        // horizontal padding
+        EB_MEMSET(tempSrcPic0 - LR_PAD_SIDE, *tempSrcPic0, LR_PAD_SIDE);
+        EB_MEMSET(tempSrcPic0 + original_src_width, *(tempSrcPic0 + original_src_width - 1), LR_PAD_SIDE);
+        tempSrcPic0 += src_stride;
+    }
+
+    // vertical padding
+    tempSrcPic0 = src_pic - LR_PAD_SIDE;
+    tempSrcPic1 = src_pic + (original_src_height - 1) * src_stride - LR_PAD_SIDE;
+    tempSrcPic2 = tempSrcPic0;
+    tempSrcPic3 = tempSrcPic1;
+
+    for (verticalIdx = LR_PAD_SIDE; verticalIdx > 0; --verticalIdx)
+    {
+        // top part data copy
+        tempSrcPic2 -= src_stride;
+        EB_MEMCPY(tempSrcPic2, tempSrcPic0, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
+        // bottom part data copy
+        tempSrcPic3 += src_stride;
+        EB_MEMCPY(tempSrcPic3, tempSrcPic1, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
+    }
+    return;
+}
+
+void lr_generate_padding16_bit(
+    EbByte  src_pic,                       //output paramter, pointer to the source picture to be padded.
+    uint32_t   src_stride,                 //input paramter, the stride of the source picture to be padded.
+    uint32_t   original_src_width,         //input paramter, the width of the source picture which excludes the padding.
+    uint32_t   original_src_height)        //input paramter, the height of the source picture which excludes the padding.
+{
+    uint32_t   verticalIdx;
+    EbByte  tempSrcPic0;
+    EbByte  tempSrcPic1;
+    EbByte  tempSrcPic2;
+    EbByte  tempSrcPic3;
+    uint8_t use_highbd = 1;
+
+    tempSrcPic0 = src_pic;
+    for (verticalIdx = original_src_height; verticalIdx > 0; --verticalIdx)
+    {
+        // horizontal padding
+        memset16bit((uint16_t*)(tempSrcPic0 - (LR_PAD_SIDE << use_highbd)), ((uint16_t*)(tempSrcPic0))[0], LR_PAD_SIDE);
+        memset16bit((uint16_t*)(tempSrcPic0 + original_src_width),
+            ((uint16_t*)(tempSrcPic0 + original_src_width - 2/*1*/))[0], LR_PAD_SIDE);
+        tempSrcPic0 += src_stride;
+    }
+
+    // vertical padding
+    tempSrcPic0 = src_pic - (LR_PAD_SIDE << use_highbd);
+    tempSrcPic1 = src_pic + (original_src_height - 1) * src_stride - (LR_PAD_SIDE << use_highbd);
+    tempSrcPic2 = tempSrcPic0;
+    tempSrcPic3 = tempSrcPic1;
+    for (verticalIdx = LR_PAD_SIDE; verticalIdx > 0; --verticalIdx)
+    {
+        // top part data copy
+        tempSrcPic2 -= src_stride;
+        EB_MEMCPY(tempSrcPic2, tempSrcPic0, sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
+        // bottom part data copy
+        tempSrcPic3 += src_stride;
+        EB_MEMCPY(tempSrcPic3, tempSrcPic1, sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
+    }
+
+    return;
+}
+
+void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr, EbColorConfig *color_cfg) {
+
+    FrameSize *frame_size = &frame_hdr->frame_size;
+    uint8_t sx = color_cfg->subsampling_x;
+    uint8_t sy = color_cfg->subsampling_y;
+
+    if (recon_picture_buf->bit_depth == EB_8BIT) {
+        // Y samples
+        lr_generate_padding(
+            recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
+            recon_picture_buf->stride_y * recon_picture_buf->origin_y,
+            recon_picture_buf->stride_y,
+            frame_size->superres_upscaled_width,
+            frame_size->frame_height);
+
+        if (recon_picture_buf->color_format != EB_YUV400) {
+            // Cb samples
+            lr_generate_padding(
+                recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
+                recon_picture_buf->stride_cb * (recon_picture_buf->origin_y >> sy),
+                recon_picture_buf->stride_cb,
+                (frame_size->superres_upscaled_width + sx) >> sx,
+                (frame_size->frame_height + sy) >> sy);
+
+            // Cr samples
+            lr_generate_padding(
+                recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
+                recon_picture_buf->stride_cr * (recon_picture_buf->origin_y >> sy),
+                recon_picture_buf->stride_cr,
+                (frame_size->superres_upscaled_width + sx) >> sx,
+                (frame_size->frame_height + sy) >> sy);
+        }
+    }
+    else {
+        // Y samples
+        lr_generate_padding16_bit(
+            recon_picture_buf->buffer_y + (recon_picture_buf->origin_x << 1) +
+            (recon_picture_buf->stride_y << 1) * recon_picture_buf->origin_y,
+            recon_picture_buf->stride_y << 1,
+            frame_size->superres_upscaled_width << 1,
+            frame_size->frame_height);
+
+        if (recon_picture_buf->color_format != EB_YUV400) {
+            // Cb samples
+            lr_generate_padding16_bit(
+                recon_picture_buf->buffer_cb + ((recon_picture_buf->origin_x >> sx) << 1) +
+                (recon_picture_buf->stride_cb << 1) * (recon_picture_buf->origin_y >> sy),
+                recon_picture_buf->stride_cb << 1,
+                ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
+                (frame_size->frame_height + sy) >> sy);
+
+            // Cr samples
+            lr_generate_padding16_bit(
+                recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx << 1) +
+                (recon_picture_buf->stride_cr << 1) * (recon_picture_buf->origin_y >> sy),
+                recon_picture_buf->stride_cr << 1,
+                ((frame_size->superres_upscaled_width + sx) >> sx) << 1,
+                (frame_size->frame_height + sy) >> sy);
+        }
+    }
+}
 void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimized_lr)
 {
     assert(!dec_handle->frame_header.all_lossless);
@@ -39,7 +183,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
     AV1PixelRect tile_rect;
     EbPictureBufferDesc *cur_pic_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     RestorationUnitInfo *lr_unit;
-
+    lr_pad_pic(cur_pic_buf, frame_header, &dec_handle->seq_header.color_config);
     lr_ctxt->lr_unit[AOM_PLANE_Y] = frame_buf->lr_unit[AOM_PLANE_Y];
     lr_ctxt->lr_unit[AOM_PLANE_U] = frame_buf->lr_unit[AOM_PLANE_U];
     lr_ctxt->lr_unit[AOM_PLANE_V] = frame_buf->lr_unit[AOM_PLANE_V];
