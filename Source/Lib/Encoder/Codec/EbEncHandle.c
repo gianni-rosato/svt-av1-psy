@@ -1846,16 +1846,13 @@ EB_API EbErrorType eb_deinit_handle(
         return_error = eb_av1_enc_component_de_init(svt_enc_component);
 
         free(svt_enc_component);
+#if  defined(__linux__)
+        EB_FREE(lp_group);
+#endif
         eb_decrease_component_count();
     }
     else
         return_error = EB_ErrorInvalidComponent;
-
-    #if  defined(__linux__)
-        if(lp_group != NULL) {
-            EB_FREE(lp_group);
-        }
-    #endif
     return return_error;
 }
 
