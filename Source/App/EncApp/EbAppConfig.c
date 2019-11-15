@@ -158,8 +158,6 @@ static void SetCfgInputFile(const char *filename, EbConfig *cfg)
         FOPEN(cfg->input_file, filename, "rb");
 
     if (cfg->input_file == NULL) {
-        cfg->y4m_input = EB_FALSE;
-        cfg->input_file_is_fifo = EB_FALSE;
         return;
     }
 
@@ -490,49 +488,21 @@ config_entry_t config_entry[] = {
  **********************************/
 void eb_config_ctor(EbConfig *config_ptr)
 {
-    config_ptr->config_file                           = NULL;
-    config_ptr->input_file                            = NULL;
-    config_ptr->bitstream_file                        = NULL;
-    config_ptr->recon_file                            = NULL;
+    memset(config_ptr, 0, sizeof(*config_ptr));
     config_ptr->error_log_file                         = stderr;
-    config_ptr->qp_file                               = NULL;
-    config_ptr->stat_file                             = NULL;
-#if TWO_PASS
-    config_ptr->input_stat_file                       = NULL;
-    config_ptr->output_stat_file                      = NULL;
-#endif
-
     config_ptr->frame_rate                            = 30 << 16;
-    config_ptr->frame_rate_numerator                   = 0;
-    config_ptr->frame_rate_denominator                 = 0;
     config_ptr->encoder_bit_depth                      = 8;
     config_ptr->encoder_color_format                   = 1; //EB_YUV420
-    config_ptr->compressed_ten_bit_format               = 0;
-    config_ptr->source_width                          = 0;
-    config_ptr->source_height                         = 0;
-    config_ptr->input_padded_width                     = 0;
-    config_ptr->input_padded_height                    = 0;
-    config_ptr->frames_to_be_encoded                 = 0;
     config_ptr->buffered_input                        = -1;
-    config_ptr->sequence_buffer                       = 0;
-    config_ptr->latency_mode                          = 0;
 
-    // Interlaced Video
-    config_ptr->interlaced_video                      = EB_FALSE;
-    config_ptr->separate_fields                       = EB_FALSE;
     config_ptr->qp                                   = 50;
     config_ptr->use_qp_file                          = EB_FALSE;
-    config_ptr->stat_report                          = 0;
-
-    config_ptr->scene_change_detection               = 0;
-    config_ptr->rate_control_mode                      = 0;
     config_ptr->look_ahead_distance                  = (uint32_t)~0;
     config_ptr->target_bit_rate                        = 7000000;
     config_ptr->max_qp_allowed                       = 63;
     config_ptr->min_qp_allowed                       = 10;
 
     config_ptr->enable_adaptive_quantization         = 2;
-    config_ptr->base_layer_switch_mode               = 0;
     config_ptr->enc_mode                              = MAX_ENC_PRESET;
 #if TWO_PASS_USE_2NDP_ME_IN_1STP
     config_ptr->snd_pass_enc_mode                     = MAX_ENC_PRESET + 1;
@@ -541,30 +511,19 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->intra_refresh_type                     = 1;
     config_ptr->hierarchical_levels                   = 4;
     config_ptr->pred_structure                        = 2;
-    config_ptr->disable_dlf_flag                     = EB_FALSE;
-    config_ptr->enable_warped_motion                 = EB_FALSE;
     config_ptr->enable_global_motion                 = EB_TRUE;
     config_ptr->enable_obmc                          = EB_TRUE;
     config_ptr->enable_filter_intra                  = EB_TRUE;
-    config_ptr->ext_block_flag                       = EB_FALSE;
     config_ptr->in_loop_me_flag                      = EB_TRUE;
     config_ptr->use_default_me_hme                   = EB_TRUE;
     config_ptr->enable_hme_flag                        = EB_TRUE;
     config_ptr->enable_hme_level0_flag                  = EB_TRUE;
-    config_ptr->enable_hme_level1_flag                  = EB_FALSE;
-    config_ptr->enable_hme_level2_flag                  = EB_FALSE;
     config_ptr->search_area_width                      = 16;
     config_ptr->search_area_height                     = 7;
     config_ptr->number_hme_search_region_in_width         = 2;
     config_ptr->number_hme_search_region_in_height        = 2;
     config_ptr->hme_level0_total_search_area_width        = 64;
     config_ptr->hme_level0_total_search_area_height       = 25;
-    config_ptr->hme_level0_column_index                 = 0;
-    config_ptr->hme_level0_row_index                    = 0;
-    config_ptr->hme_level1_column_index                 = 0;
-    config_ptr->hme_level1_row_index                    = 0;
-    config_ptr->hme_level2_column_index                 = 0;
-    config_ptr->hme_level2_row_index                    = 0;
     config_ptr->hme_level0_search_area_in_width_array[0]   = 32;
     config_ptr->hme_level0_search_area_in_width_array[1]   = 32;
     config_ptr->hme_level0_search_area_in_height_array[0]  = 12;
@@ -580,70 +539,19 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->screen_content_mode                  = 2;
     config_ptr->enable_hbd_mode_decision             = 1;
     config_ptr->enable_palette                       = -1;
-    config_ptr->constrained_intra                    = 0;
-    config_ptr->film_grain_denoise_strength          = 0;
-
-    // Thresholds
-    config_ptr->high_dynamic_range_input             = 0;
-
-    // Annex A parameters
-    config_ptr->profile                              = 0;
-    config_ptr->tier                                 = 0;
-    config_ptr->level                                = 0;
-
-    // Latency
-    config_ptr->injector                             = 0;
     config_ptr->injector_frame_rate                    = 60 << 16;
-    config_ptr->speed_control_flag                     = 0;
-
-    // Testing
-    config_ptr->eos_flag                                = 0;
-
-    // Computational Performance Parameters
-    config_ptr->performance_context.lib_start_time[0] = 0;
-    config_ptr->performance_context.lib_start_time[1] = 0;
-
-    config_ptr->performance_context.encode_start_time[0] = 0;
-    config_ptr->performance_context.encode_start_time[1] = 0;
-
-    config_ptr->performance_context.total_execution_time = 0;
-    config_ptr->performance_context.total_encode_time    = 0;
-
-    config_ptr->performance_context.frame_count         = 0;
-    config_ptr->performance_context.average_speed       = 0;
-    config_ptr->performance_context.starts_time         = 0;
-    config_ptr->performance_context.startu_time         = 0;
-    config_ptr->performance_context.max_latency         = 0;
-    config_ptr->performance_context.total_latency       = 0;
-    config_ptr->performance_context.byte_count          = 0;
-    config_ptr->performance_context.sum_luma_psnr       = 0;
-    config_ptr->performance_context.sum_cr_psnr         = 0;
-    config_ptr->performance_context.sum_cb_psnr         = 0;
-    config_ptr->performance_context.sum_luma_sse        = 0;
-    config_ptr->performance_context.sum_cr_sse          = 0;
-    config_ptr->performance_context.sum_cb_sse          = 0;
-    config_ptr->performance_context.sum_qp              = 0;
 
     // ASM Type
     config_ptr->asm_type                              = 1;
 
-    config_ptr->stop_encoder                          = 0;
-    config_ptr->logical_processors                    = 0;
     config_ptr->target_socket                         = -1;
-    config_ptr->processed_frame_count                  = 0;
-    config_ptr->processed_byte_count                   = 0;
-    config_ptr->tile_rows                            = 0;
-    config_ptr->tile_columns                         = 0;
-    config_ptr->unrestricted_motion_vector           = EB_TRUE;
 
-    config_ptr->byte_count_since_ivf                 = 0;
-    config_ptr->ivf_count                            = 0;
+    config_ptr->unrestricted_motion_vector           = EB_TRUE;
 
     // --- start: ALTREF_FILTERING_SUPPORT
     config_ptr->enable_altrefs                       = EB_TRUE;
     config_ptr->altref_strength                      = 5;
     config_ptr->altref_nframes                       = 7;
-    config_ptr->enable_overlays                      = EB_FALSE;
     // --- end: ALTREF_FILTERING_SUPPORT
 
     config_ptr->sq_weight                            = 100;
