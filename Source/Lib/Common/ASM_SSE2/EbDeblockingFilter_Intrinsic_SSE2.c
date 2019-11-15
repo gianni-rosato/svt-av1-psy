@@ -1096,27 +1096,27 @@ void aom_lpf_horizontal_8_dual_sse2(uint8_t *s, int32_t p, const uint8_t *_blimi
     DECLARE_ALIGNED(16, uint8_t, flat_oq1[16]);
     DECLARE_ALIGNED(16, uint8_t, flat_oq0[16]);
     const __m128i zero = _mm_setzero_si128();
-    const __m128i blimit =
-        _mm_unpacklo_epi64(_mm_load_si128((const __m128i *)_blimit0),
-            _mm_load_si128((const __m128i *)_blimit1));
-    const __m128i limit =
-        _mm_unpacklo_epi64(_mm_load_si128((const __m128i *)_limit0),
-            _mm_load_si128((const __m128i *)_limit1));
-    const __m128i thresh =
-        _mm_unpacklo_epi64(_mm_load_si128((const __m128i *)_thresh0),
-            _mm_load_si128((const __m128i *)_thresh1));
+    const __m128i blimit = _mm_setr_epi8(
+        *_blimit0, *_blimit0, *_blimit0,*_blimit0,
+        *_blimit1, *_blimit1, *_blimit1, *_blimit1, 0, 0, 0, 0, 0, 0, 0, 0);
+    const __m128i limit = _mm_setr_epi8(
+        *_limit0, *_limit0, *_limit0, *_limit0,
+        *_limit1, *_limit1, *_limit1, *_limit1, 0, 0, 0, 0, 0, 0, 0, 0);
+    const __m128i thresh = _mm_setr_epi8(
+        *_thresh0, *_thresh0, *_thresh0, *_thresh0,
+        *_thresh1, *_thresh1, *_thresh1, *_thresh1, 0, 0, 0, 0, 0, 0, 0, 0);
 
     __m128i mask, hev, flat;
     __m128i p3, p2, p1, p0, q0, q1, q2, q3;
 
-    p3 = _mm_loadu_si128((__m128i *)(s - 4 * p));
-    p2 = _mm_loadu_si128((__m128i *)(s - 3 * p));
-    p1 = _mm_loadu_si128((__m128i *)(s - 2 * p));
-    p0 = _mm_loadu_si128((__m128i *)(s - 1 * p));
-    q0 = _mm_loadu_si128((__m128i *)(s - 0 * p));
-    q1 = _mm_loadu_si128((__m128i *)(s + 1 * p));
-    q2 = _mm_loadu_si128((__m128i *)(s + 2 * p));
-    q3 = _mm_loadu_si128((__m128i *)(s + 3 * p));
+    p3 = _mm_loadl_epi64((__m128i *)(s - 4 * p));
+    p2 = _mm_loadl_epi64((__m128i *)(s - 3 * p));
+    p1 = _mm_loadl_epi64((__m128i *)(s - 2 * p));
+    p0 = _mm_loadl_epi64((__m128i *)(s - 1 * p));
+    q0 = _mm_loadl_epi64((__m128i *)(s - 0 * p));
+    q1 = _mm_loadl_epi64((__m128i *)(s + 1 * p));
+    q2 = _mm_loadl_epi64((__m128i *)(s + 2 * p));
+    q3 = _mm_loadl_epi64((__m128i *)(s + 3 * p));
     {
         const __m128i abs_p1p0 =
             _mm_or_si128(_mm_subs_epu8(p1, p0), _mm_subs_epu8(p0, p1));
@@ -1234,13 +1234,13 @@ void aom_lpf_horizontal_8_dual_sse2(uint8_t *s, int32_t p, const uint8_t *_blimi
         const __m128i t7f = _mm_set1_epi8(0x7f);
 
         const __m128i ps1 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s - 2 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s - 2 * p)), t80);
         const __m128i ps0 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s - 1 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s - 1 * p)), t80);
         const __m128i qs0 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s + 0 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s + 0 * p)), t80);
         const __m128i qs1 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s + 1 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s + 1 * p)), t80);
         __m128i filt;
         __m128i work_a;
         __m128i filter1, filter2;
@@ -1281,47 +1281,47 @@ void aom_lpf_horizontal_8_dual_sse2(uint8_t *s, int32_t p, const uint8_t *_blimi
         filt = _mm_andnot_si128(hev, filt);
 
         work_a = _mm_xor_si128(_mm_subs_epi8(qs0, filter1), t80);
-        q0 = _mm_load_si128((__m128i *)flat_oq0);
+        q0 = _mm_loadl_epi64((__m128i *)flat_oq0);
         work_a = _mm_andnot_si128(flat, work_a);
         q0 = _mm_and_si128(flat, q0);
         q0 = _mm_or_si128(work_a, q0);
 
         work_a = _mm_xor_si128(_mm_subs_epi8(qs1, filt), t80);
-        q1 = _mm_load_si128((__m128i *)flat_oq1);
+        q1 = _mm_loadl_epi64((__m128i *)flat_oq1);
         work_a = _mm_andnot_si128(flat, work_a);
         q1 = _mm_and_si128(flat, q1);
         q1 = _mm_or_si128(work_a, q1);
 
-        work_a = _mm_loadu_si128((__m128i *)(s + 2 * p));
-        q2 = _mm_load_si128((__m128i *)flat_oq2);
+        work_a = _mm_loadl_epi64((__m128i *)(s + 2 * p));
+        q2 = _mm_loadl_epi64((__m128i *)flat_oq2);
         work_a = _mm_andnot_si128(flat, work_a);
         q2 = _mm_and_si128(flat, q2);
         q2 = _mm_or_si128(work_a, q2);
 
         work_a = _mm_xor_si128(_mm_adds_epi8(ps0, filter2), t80);
-        p0 = _mm_load_si128((__m128i *)flat_op0);
+        p0 = _mm_loadl_epi64((__m128i *)flat_op0);
         work_a = _mm_andnot_si128(flat, work_a);
         p0 = _mm_and_si128(flat, p0);
         p0 = _mm_or_si128(work_a, p0);
 
         work_a = _mm_xor_si128(_mm_adds_epi8(ps1, filt), t80);
-        p1 = _mm_load_si128((__m128i *)flat_op1);
+        p1 = _mm_loadl_epi64((__m128i *)flat_op1);
         work_a = _mm_andnot_si128(flat, work_a);
         p1 = _mm_and_si128(flat, p1);
         p1 = _mm_or_si128(work_a, p1);
 
-        work_a = _mm_loadu_si128((__m128i *)(s - 3 * p));
-        p2 = _mm_load_si128((__m128i *)flat_op2);
+        work_a = _mm_loadl_epi64((__m128i *)(s - 3 * p));
+        p2 = _mm_loadl_epi64((__m128i *)flat_op2);
         work_a = _mm_andnot_si128(flat, work_a);
         p2 = _mm_and_si128(flat, p2);
         p2 = _mm_or_si128(work_a, p2);
 
-        _mm_storeu_si128((__m128i *)(s - 3 * p), p2);
-        _mm_storeu_si128((__m128i *)(s - 2 * p), p1);
-        _mm_storeu_si128((__m128i *)(s - 1 * p), p0);
-        _mm_storeu_si128((__m128i *)(s + 0 * p), q0);
-        _mm_storeu_si128((__m128i *)(s + 1 * p), q1);
-        _mm_storeu_si128((__m128i *)(s + 2 * p), q2);
+        _mm_storel_epi64((__m128i *)(s - 3 * p), p2);
+        _mm_storel_epi64((__m128i *)(s - 2 * p), p1);
+        _mm_storel_epi64((__m128i *)(s - 1 * p), p0);
+        _mm_storel_epi64((__m128i *)(s + 0 * p), q0);
+        _mm_storel_epi64((__m128i *)(s + 1 * p), q1);
+        _mm_storel_epi64((__m128i *)(s + 2 * p), q2);
     }
 }
 
@@ -1332,22 +1332,23 @@ void aom_lpf_horizontal_4_dual_sse2(uint8_t *s, int32_t p,
     const uint8_t *_blimit1,
     const uint8_t *_limit1,
     const uint8_t *_thresh1) {
-    const __m128i blimit =
-        _mm_unpacklo_epi64(_mm_load_si128((const __m128i *)_blimit0),
-            _mm_load_si128((const __m128i *)_blimit1));
-    const __m128i limit =
-        _mm_unpacklo_epi64(_mm_load_si128((const __m128i *)_limit0),
-            _mm_load_si128((const __m128i *)_limit1));
-    const __m128i thresh =
-        _mm_unpacklo_epi64(_mm_load_si128((const __m128i *)_thresh0),
-            _mm_load_si128((const __m128i *)_thresh1));
     const __m128i zero = _mm_setzero_si128();
+    const __m128i blimit = _mm_setr_epi8(
+        *_blimit0, *_blimit0, *_blimit0, *_blimit0,
+        *_blimit1, *_blimit1, *_blimit1, *_blimit1, 0, 0, 0, 0, 0, 0, 0, 0);
+    const __m128i limit = _mm_setr_epi8(
+        *_limit0, *_limit0, *_limit0, *_limit0,
+        *_limit1, *_limit1, *_limit1, *_limit1, 0, 0, 0, 0, 0, 0, 0, 0);
+    const __m128i thresh = _mm_setr_epi8(
+        *_thresh0, *_thresh0, *_thresh0, *_thresh0,
+        *_thresh1, *_thresh1, *_thresh1, *_thresh1, 0, 0, 0, 0, 0, 0, 0, 0);
+
     __m128i p1, p0, q0, q1;
     __m128i mask, hev, flat;
-    p1 = _mm_loadu_si128((__m128i *)(s - 2 * p));
-    p0 = _mm_loadu_si128((__m128i *)(s - 1 * p));
-    q0 = _mm_loadu_si128((__m128i *)(s - 0 * p));
-    q1 = _mm_loadu_si128((__m128i *)(s + 1 * p));
+    p1 = _mm_loadl_epi64((__m128i *)(s - 2 * p));
+    p0 = _mm_loadl_epi64((__m128i *)(s - 1 * p));
+    q0 = _mm_loadl_epi64((__m128i *)(s - 0 * p));
+    q1 = _mm_loadl_epi64((__m128i *)(s + 1 * p));
     // filter_mask and hev_mask
     {
         const __m128i abs_p1p0 =
@@ -1385,13 +1386,13 @@ void aom_lpf_horizontal_4_dual_sse2(uint8_t *s, int32_t p,
         const __m128i t7f = _mm_set1_epi8(0x7f);
 
         const __m128i ps1 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s - 2 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s - 2 * p)), t80);
         const __m128i ps0 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s - 1 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s - 1 * p)), t80);
         const __m128i qs0 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s + 0 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s + 0 * p)), t80);
         const __m128i qs1 =
-            _mm_xor_si128(_mm_loadu_si128((__m128i *)(s + 1 * p)), t80);
+            _mm_xor_si128(_mm_loadl_epi64((__m128i *)(s + 1 * p)), t80);
         __m128i filt;
         __m128i work_a;
         __m128i filter1, filter2;
@@ -1436,10 +1437,10 @@ void aom_lpf_horizontal_4_dual_sse2(uint8_t *s, int32_t p,
         p0 = _mm_xor_si128(_mm_adds_epi8(ps0, filter2), t80);
         p1 = _mm_xor_si128(_mm_adds_epi8(ps1, filt), t80);
 
-        _mm_storeu_si128((__m128i *)(s - 2 * p), p1);
-        _mm_storeu_si128((__m128i *)(s - 1 * p), p0);
-        _mm_storeu_si128((__m128i *)(s + 0 * p), q0);
-        _mm_storeu_si128((__m128i *)(s + 1 * p), q1);
+        _mm_storel_epi64((__m128i *)(s - 2 * p), p1);
+        _mm_storel_epi64((__m128i *)(s - 1 * p), p0);
+        _mm_storel_epi64((__m128i *)(s + 0 * p), q0);
+        _mm_storel_epi64((__m128i *)(s + 1 * p), q1);
     }
 }
 
