@@ -185,10 +185,10 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **UnrestrictedMotionVector** | -umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set -umv 0 |
 | **PaletteMode** | -palette | [0 - 6] | -1 | Enable Palette mode (-1: Auto Mode(ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
 | **SquareWeight** | -sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
-| **MDStage1PruneCThreshold** | -mds1p-c-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
-| **MDStage1PruneSThreshold** | -mds1p-s-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |
-| **MDStage2PruneCThreshold** | -mds2p-c-th | 0 for off and any whole number percentage | 25 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 2 |
-| **MDStage2PruneSThreshold** | -mds2p-s-th | 0 for off and any whole number percentage | 15 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 2 |
+| **MDStage1PruneClassThreshold** | -mds1p-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
+| **MDStage1PruneCandThreshold** | -mds1p-cand-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |
+| **MDStage2PruneClassThreshold** | -mds2p-class-th | 0 for off and any whole number percentage | 25 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 2 |
+| **MDStage2PruneCandThreshold** | -mds2p-cand-th | 0 for off and any whole number percentage | 15 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 2 |
 ## Appendix A Encoder Parameters
 
 ### 1. Thread management parameters

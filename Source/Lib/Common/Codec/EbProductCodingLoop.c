@@ -7575,13 +7575,13 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
             uint64_t class_best_cost = *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->fast_cost_ptr);
 
             // inter class pruning
-            if ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) > context_ptr->md_stage_1_count_th_c){
+            if ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) > context_ptr->md_stage_1_class_prune_th){
                 context_ptr->md_stage_1_count[cand_class_it] = 0;
                 continue;
             }
             // intra class pruning
             uint32_t cand_count = 1;
-            while (cand_count < context_ptr->md_stage_1_count[cand_class_it] && ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]->fast_cost_ptr) - class_best_cost) * 100) / class_best_cost) < context_ptr->md_stage_1_count_th_s)) {
+            while (cand_count < context_ptr->md_stage_1_count[cand_class_it] && ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]->fast_cost_ptr) - class_best_cost) * 100) / class_best_cost) < context_ptr->md_stage_1_cand_prune_th)) {
                 cand_count++;
             }
             context_ptr->md_stage_1_count[cand_class_it] = cand_count;
@@ -7598,14 +7598,14 @@ void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_
             uint64_t class_best_cost = *(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[0]]->full_cost_ptr);
 
             // inter class pruning
-            if ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) > context_ptr->md_stage_2_count_th_c) {
+            if ((((class_best_cost - best_md_stage_cost) * 100) / best_md_stage_cost) > context_ptr->md_stage_2_class_prune_th) {
                 context_ptr->md_stage_2_count[cand_class_it] = 0;
                 continue;
             }
 
             // intra class pruning
             uint32_t cand_count = 1;
-            while (cand_count < context_ptr->md_stage_2_count[cand_class_it] && ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]->full_cost_ptr) - class_best_cost) * 100) / class_best_cost) < context_ptr->md_stage_2_count_th_s)) {
+            while (cand_count < context_ptr->md_stage_2_count[cand_class_it] && ((((*(context_ptr->candidate_buffer_ptr_array[cand_buff_indices[cand_count]]->full_cost_ptr) - class_best_cost) * 100) / class_best_cost) < context_ptr->md_stage_2_cand_prune_th)) {
                 cand_count++;
             }
             context_ptr->md_stage_2_count[cand_class_it] = cand_count;

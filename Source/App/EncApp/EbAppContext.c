@@ -246,10 +246,10 @@ EbErrorType CopyConfigurationParameters(
 
     callback_data->eb_enc_parameters.sq_weight = config->sq_weight;
 
-    callback_data->eb_enc_parameters.md_stage_1_count_th_s = config->md_stage_1_count_th_s;
-    callback_data->eb_enc_parameters.md_stage_1_count_th_c = config->md_stage_1_count_th_c;
-    callback_data->eb_enc_parameters.md_stage_2_count_th_s = config->md_stage_2_count_th_s;
-    callback_data->eb_enc_parameters.md_stage_2_count_th_c = config->md_stage_2_count_th_c;
+    callback_data->eb_enc_parameters.md_stage_1_cand_prune_th = config->md_stage_1_cand_prune_th;
+    callback_data->eb_enc_parameters.md_stage_1_class_prune_th = config->md_stage_1_class_prune_th;
+    callback_data->eb_enc_parameters.md_stage_2_cand_prune_th = config->md_stage_2_cand_prune_th;
+    callback_data->eb_enc_parameters.md_stage_2_class_prune_th = config->md_stage_2_class_prune_th;
 
     return return_error;
 }

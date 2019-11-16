@@ -472,10 +472,10 @@ typedef struct EbSvtAv1EncConfiguration
 
     uint32_t                     sq_weight;
 
-    uint64_t                 md_stage_1_count_th_c;
-    uint64_t                 md_stage_1_count_th_s;
-    uint64_t                 md_stage_2_count_th_c;
-    uint64_t                 md_stage_2_count_th_s;
+    uint64_t                 md_stage_1_class_prune_th;
+    uint64_t                 md_stage_1_cand_prune_th;
+    uint64_t                 md_stage_2_class_prune_th;
+    uint64_t                 md_stage_2_cand_prune_th;
 
 } EbSvtAv1EncConfiguration;
 

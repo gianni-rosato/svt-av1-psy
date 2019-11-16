@@ -1561,11 +1561,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // TH_S (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than TH_S
     if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0 || sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-        context_ptr->md_stage_1_count_th_s = (uint64_t)~0;
+        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
     else if (picture_control_set_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_1_count_th_s = sequence_control_set_ptr->static_config.md_stage_1_count_th_s;
+        context_ptr->md_stage_1_cand_prune_th = sequence_control_set_ptr->static_config.md_stage_1_cand_prune_th;
     else
-        context_ptr->md_stage_1_count_th_s = (uint64_t)~0;
+        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
 #else
     if (MR_MODE)
         context_ptr->dist_base_md_stage_0_count_th = (uint64_t)~0;
@@ -1579,33 +1579,33 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // TH_C (for class removal)
     // Remove class if deviation to the best higher than TH_C
     if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0 || sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-        context_ptr->md_stage_1_count_th_c = (uint64_t)~0;
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
     else if (picture_control_set_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_1_count_th_c = sequence_control_set_ptr->static_config.md_stage_1_count_th_c;
+        context_ptr->md_stage_1_class_prune_th = sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
     else
-        context_ptr->md_stage_1_count_th_c = (uint64_t)~0;
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
 
     // TH_S (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than TH_S
     if (MR_MODE || picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-        context_ptr->md_stage_2_count_th_s = (uint64_t)~0;
+        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
     else if (picture_control_set_ptr->enc_mode <= ENC_M0)
-        context_ptr->md_stage_2_count_th_s = sequence_control_set_ptr->static_config.md_stage_2_count_th_s;
+        context_ptr->md_stage_2_cand_prune_th = sequence_control_set_ptr->static_config.md_stage_2_cand_prune_th;
     else if (picture_control_set_ptr->enc_mode <= ENC_M2)
-        context_ptr->md_stage_2_count_th_s = sequence_control_set_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 15 : 12;
+        context_ptr->md_stage_2_cand_prune_th = sequence_control_set_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 15 : 12;
     else if (picture_control_set_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_2_count_th_s = sequence_control_set_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 5 : 3;
+        context_ptr->md_stage_2_cand_prune_th = sequence_control_set_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 5 : 3;
     else
-        context_ptr->md_stage_2_count_th_s = (uint64_t)~0;
+        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
     
     // TH_C (for class removal)
     // Remove class if deviation to the best is higher than TH_C
     if (MR_MODE || picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-        context_ptr->md_stage_2_count_th_c = (uint64_t)~0;
+        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
     else if (picture_control_set_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_2_count_th_c = sequence_control_set_ptr->static_config.md_stage_2_count_th_c;
+        context_ptr->md_stage_2_class_prune_th = sequence_control_set_ptr->static_config.md_stage_2_class_prune_th;
     else // to be tested for m5-m8
-        context_ptr->md_stage_2_count_th_c = (uint64_t)~0;
+        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
 
 #endif
 

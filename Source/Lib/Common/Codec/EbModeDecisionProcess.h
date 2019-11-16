@@ -322,15 +322,15 @@ extern "C" {
     unsigned int                        inter_inter_wedge_variance_th;
     uint64_t                            md_exit_th;
 #if INTER_INTRA_CLASS_PRUNING
-    uint64_t                            md_stage_1_count_th_s; // THs (for candidate removal per class) 
-    uint64_t                            md_stage_1_count_th_c; // THc (for class removal)
+    uint64_t                            md_stage_1_cand_prune_th;
+    uint64_t                            md_stage_1_class_prune_th;
 #else
     uint64_t                            dist_base_md_stage_0_count_th;
 #endif
 #endif
 #if INTER_INTRA_CLASS_PRUNING
-    uint64_t                            md_stage_2_count_th_s; // THs (for candidate removal per class) 
-    uint64_t                            md_stage_2_count_th_c; // THc (for class removal)
+    uint64_t                            md_stage_2_cand_prune_th;
+    uint64_t                            md_stage_2_class_prune_th;
 #endif
 #if OBMC_FLAG
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
