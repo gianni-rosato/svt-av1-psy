@@ -2978,7 +2978,8 @@ void  d1_non_square_block_decision(
     {
         tot_cost += context_ptr->md_local_cu_unit[first_blk_idx + blk_it].cost;
         if (context_ptr->blk_geom->sqi_mds != first_blk_idx + blk_it)
-            merge_block_cnt += merge_1D_inter_block(context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
+            if (context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
+                merge_block_cnt += merge_1D_inter_block(context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
     }
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         uint64_t split_cost = 0;
@@ -3069,53 +3070,57 @@ void   compute_depth_costs(
     else
         *above_depth_cost = MAX_MODE_COST;
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
-        if (context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds].mdc_split_flag == 0)
-            av1_split_flag_rate(
-                sequence_control_set_ptr,
-                context_ptr,
-                &context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds],
-                0,
-                PARTITION_NONE,
-                &curr_non_split_rate_blk0,
-                context_ptr->full_lambda,
-                context_ptr->md_rate_estimation_ptr,
-                sequence_control_set_ptr->max_sb_depth);
+        if (context_ptr->md_local_cu_unit[curr_depth_blk0_mds].tested_cu_flag)
+            if (context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds].mdc_split_flag == 0)
+                av1_split_flag_rate(
+                    sequence_control_set_ptr,
+                    context_ptr,
+                    &context_ptr->md_cu_arr_nsq[curr_depth_blk0_mds],
+                    0,
+                    PARTITION_NONE,
+                    &curr_non_split_rate_blk0,
+                    context_ptr->full_lambda,
+                    context_ptr->md_rate_estimation_ptr,
+                    sequence_control_set_ptr->max_sb_depth);
 
-        if (context_ptr->md_cu_arr_nsq[curr_depth_blk1_mds].mdc_split_flag == 0)
-            av1_split_flag_rate(
-                sequence_control_set_ptr,
-                context_ptr,
-                &context_ptr->md_cu_arr_nsq[curr_depth_blk1_mds],
-                0,
-                PARTITION_NONE,
-                &curr_non_split_rate_blk1,
-                context_ptr->full_lambda,
-                context_ptr->md_rate_estimation_ptr,
-                sequence_control_set_ptr->max_sb_depth);
+        if (context_ptr->md_local_cu_unit[curr_depth_blk1_mds].tested_cu_flag)
+            if (context_ptr->md_cu_arr_nsq[curr_depth_blk1_mds].mdc_split_flag == 0)
+                av1_split_flag_rate(
+                    sequence_control_set_ptr,
+                    context_ptr,
+                    &context_ptr->md_cu_arr_nsq[curr_depth_blk1_mds],
+                    0,
+                    PARTITION_NONE,
+                    &curr_non_split_rate_blk1,
+                    context_ptr->full_lambda,
+                    context_ptr->md_rate_estimation_ptr,
+                    sequence_control_set_ptr->max_sb_depth);
 
-        if (context_ptr->md_cu_arr_nsq[curr_depth_blk2_mds].mdc_split_flag == 0)
-            av1_split_flag_rate(
-                sequence_control_set_ptr,
-                context_ptr,
-                &context_ptr->md_cu_arr_nsq[curr_depth_blk2_mds],
-                0,
-                PARTITION_NONE,
-                &curr_non_split_rate_blk2,
-                context_ptr->full_lambda,
-                context_ptr->md_rate_estimation_ptr,
-                sequence_control_set_ptr->max_sb_depth);
+        if (context_ptr->md_local_cu_unit[curr_depth_blk2_mds].tested_cu_flag)
+            if (context_ptr->md_cu_arr_nsq[curr_depth_blk2_mds].mdc_split_flag == 0)
+                av1_split_flag_rate(
+                    sequence_control_set_ptr,
+                    context_ptr,
+                    &context_ptr->md_cu_arr_nsq[curr_depth_blk2_mds],
+                    0,
+                    PARTITION_NONE,
+                    &curr_non_split_rate_blk2,
+                    context_ptr->full_lambda,
+                    context_ptr->md_rate_estimation_ptr,
+                    sequence_control_set_ptr->max_sb_depth);
 
-        if (context_ptr->md_cu_arr_nsq[curr_depth_blk3_mds].mdc_split_flag == 0)
-            av1_split_flag_rate(
-                sequence_control_set_ptr,
-                context_ptr,
-                &context_ptr->md_cu_arr_nsq[curr_depth_blk3_mds],
-                0,
-                PARTITION_NONE,
-                &curr_non_split_rate_blk3,
-                context_ptr->full_lambda,
-                context_ptr->md_rate_estimation_ptr,
-                sequence_control_set_ptr->max_sb_depth);
+        if (context_ptr->md_local_cu_unit[curr_depth_blk3_mds].tested_cu_flag)
+            if (context_ptr->md_cu_arr_nsq[curr_depth_blk3_mds].mdc_split_flag == 0)
+                av1_split_flag_rate(
+                    sequence_control_set_ptr,
+                    context_ptr,
+                    &context_ptr->md_cu_arr_nsq[curr_depth_blk3_mds],
+                    0,
+                    PARTITION_NONE,
+                    &curr_non_split_rate_blk3,
+                    context_ptr->full_lambda,
+                    context_ptr->md_rate_estimation_ptr,
+                    sequence_control_set_ptr->max_sb_depth);
     }
     //curr_non_split_rate_344 = splitflag_mdc_344 || 4x4 ? 0 : compute;
 
@@ -3207,17 +3212,18 @@ void   compute_depth_costs_md_skip(
         uint32_t curr_depth_cur_blk_mds = context_ptr->blk_geom->sqi_mds - i * step;
         uint64_t       curr_non_split_rate_blk = 0;
         if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
-            if (context_ptr->md_cu_arr_nsq[curr_depth_cur_blk_mds].mdc_split_flag == 0)
-                av1_split_flag_rate(
-                    sequence_control_set_ptr,
-                    context_ptr,
-                    &context_ptr->md_cu_arr_nsq[curr_depth_cur_blk_mds],
-                    0,
-                    PARTITION_NONE,
-                    &curr_non_split_rate_blk,
-                    context_ptr->full_lambda,
-                    context_ptr->md_rate_estimation_ptr,
-                    sequence_control_set_ptr->max_sb_depth);
+            if (context_ptr->md_local_cu_unit[curr_depth_cur_blk_mds].tested_cu_flag)
+                if (context_ptr->md_cu_arr_nsq[curr_depth_cur_blk_mds].mdc_split_flag == 0)
+                    av1_split_flag_rate(
+                        sequence_control_set_ptr,
+                        context_ptr,
+                        &context_ptr->md_cu_arr_nsq[curr_depth_cur_blk_mds],
+                        0,
+                        PARTITION_NONE,
+                        &curr_non_split_rate_blk,
+                        context_ptr->full_lambda,
+                        context_ptr->md_rate_estimation_ptr,
+                        sequence_control_set_ptr->max_sb_depth);
         }
         *curr_depth_cost +=
             context_ptr->md_local_cu_unit[curr_depth_cur_blk_mds].cost + curr_non_split_rate_blk;

@@ -4674,7 +4674,7 @@ static uint64_t tx_size_bits(
     return bits;
 }
 
-static INLINE void set_mi_row_col(
+void set_mi_row_col(
     PictureControlSet       *picture_control_set_ptr,
     MacroBlockD             *xd,
     TileInfo *              tile,
@@ -4684,46 +4684,7 @@ static INLINE void set_mi_row_col(
     int                     bw,
     uint32_t                mi_stride,
     int                     mi_rows,
-    int                     mi_cols) {
-    xd->mb_to_top_edge = -((mi_row * MI_SIZE) * 8);
-    xd->mb_to_bottom_edge = ((mi_rows - bh - mi_row) * MI_SIZE) * 8;
-    xd->mb_to_left_edge = -((mi_col * MI_SIZE) * 8);
-    xd->mb_to_right_edge = ((mi_cols - bw - mi_col) * MI_SIZE) * 8;
-
-    xd->mi_stride = mi_stride;
-    tile->mi_row_start = 0;
-    tile->mi_col_start = 0;
-
-    // Are edges available for intra prediction?
-    xd->up_available = (mi_row > tile->mi_row_start);
-    xd->left_available = (mi_col > tile->mi_col_start);
-    const int32_t offset = mi_row * mi_stride + mi_col;
-    xd->mi = picture_control_set_ptr->mi_grid_base + offset;
-
-    if (xd->up_available)
-        xd->above_mbmi = &xd->mi[-xd->mi_stride]->mbmi;
-    else
-        xd->above_mbmi = NULL;
-
-    if (xd->left_available)
-        xd->left_mbmi = &xd->mi[-1]->mbmi;
-    else
-        xd->left_mbmi = NULL;
-
-    xd->n8_h = bh;
-    xd->n8_w = bw;
-    xd->is_sec_rect = 0;
-    if (xd->n8_w < xd->n8_h) {
-        // Only mark is_sec_rect as 1 for the last block.
-        // For PARTITION_VERT_4, it would be (0, 0, 0, 1);
-        // For other partitions, it would be (0, 1).
-        if (!((mi_col + xd->n8_w) & (xd->n8_h - 1))) xd->is_sec_rect = 1;
-    }
-
-    if (xd->n8_w > xd->n8_h)
-        if (mi_row & (xd->n8_w - 1)) xd->is_sec_rect = 1;
-}
-
+    int                     mi_cols);
 
 uint64_t estimate_tx_size_bits(
     PictureControlSet       *pcsPtr,
@@ -7728,6 +7689,11 @@ void md_encode_block(
         context_ptr->source_variance = eb_av1_get_sby_perpixel_variance(fn_ptr, (input_picture_ptr->buffer_y + inputOriginIndex), input_picture_ptr->stride_y, context_ptr->blk_geom->bsize);
 #endif
 
+        cu_ptr->av1xd->tile.mi_col_start = context_ptr->sb_ptr->tile_info.mi_col_start;
+        cu_ptr->av1xd->tile.mi_col_end = context_ptr->sb_ptr->tile_info.mi_col_end;
+        cu_ptr->av1xd->tile.mi_row_start = context_ptr->sb_ptr->tile_info.mi_row_start;
+        cu_ptr->av1xd->tile.mi_row_end = context_ptr->sb_ptr->tile_info.mi_row_end;
+
         ProductCodingLoopInitFastLoop(
             context_ptr,
             context_ptr->skip_coeff_neighbor_array,
@@ -8146,7 +8112,7 @@ void md_encode_block(
             cu_ptr,
             context_ptr->blk_geom);
 
-        if (!context_ptr->blk_geom->has_uv && candidate_buffer->candidate_ptr->type == INTRA_MODE && candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+        if (!context_ptr->blk_geom->has_uv) {
             // Store the luma data for 4x* and *x4 blocks to be used for CFL
             EbPictureBufferDesc  *recon_ptr = candidate_buffer->recon_ptr;
             uint32_t rec_luma_offset = context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * recon_ptr->stride_y;

@@ -5692,7 +5692,7 @@ static EbErrorType av1_code_tx_size(
     return return_error;
 }
 
-static INLINE void set_mi_row_col(
+void set_mi_row_col(
     PictureControlSet       *picture_control_set_ptr,
     MacroBlockD             *xd,
     TileInfo *              tile,
@@ -5709,10 +5709,6 @@ static INLINE void set_mi_row_col(
     xd->mb_to_right_edge = ((mi_cols - bw - mi_col) * MI_SIZE) * 8;
 
     xd->mi_stride = mi_stride;
-
-    // NM: To be updated when tile is supported.
-    tile->mi_row_start = 0;
-    tile->mi_col_start = 0;
 
     // Are edges available for intra prediction?
     xd->up_available = (mi_row > tile->mi_row_start);
@@ -6089,6 +6085,10 @@ assert(bsize < BlockSizeS_ALL);
     cu_ptr->av1xd->mi = picture_control_set_ptr->parent_pcs_ptr->av1_cm->pcs_ptr->mi_grid_base + offset;
     ModeInfo *mi_ptr = *cu_ptr->av1xd->mi;
 
+    cu_ptr->av1xd->tile.mi_col_start = tb_ptr->tile_info.mi_col_start;
+    cu_ptr->av1xd->tile.mi_col_end = tb_ptr->tile_info.mi_col_end;
+    cu_ptr->av1xd->tile.mi_row_start = tb_ptr->tile_info.mi_row_start;
+    cu_ptr->av1xd->tile.mi_row_end = tb_ptr->tile_info.mi_row_end;
     cu_ptr->av1xd->up_available = (mi_row > tb_ptr->tile_info.mi_row_start);
     cu_ptr->av1xd->left_available = (mi_col > tb_ptr->tile_info.mi_col_start);
     if (cu_ptr->av1xd->up_available)
