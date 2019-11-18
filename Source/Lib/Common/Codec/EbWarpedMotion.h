@@ -144,23 +144,6 @@ void eb_av1_warp_plane(
     int             subsampling_y,
     ConvolveParams *conv_params);
 
-void av1_warp_plane_hbd(
-    EbWarpedMotionParams *wm,
-    int             bd,
-    const uint16_t *ref,
-    int             width,
-    int             height,
-    int             stride,
-    uint16_t       *pred,
-    int             p_col,
-    int             p_row,
-    int             p_width,
-    int             p_height,
-    int             p_stride,
-    int             subsampling_x,
-    int             subsampling_y,
-    ConvolveParams *conv_params);
-
 EbBool eb_find_projection(
     int        np,
     int       *pts1,

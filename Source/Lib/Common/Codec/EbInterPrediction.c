@@ -6418,41 +6418,23 @@ static void plane_warped_motion_prediction(
     if (!is_compound) {
         ConvolveParams conv_params = get_conv_params_no_round(0, 0, 0, NULL, 128, is_compound, bit_depth);
 
-        if (!is16bit)
-            eb_av1_warp_plane(
-                wm_params_l0,
-                (int) is16bit,
-                bit_depth,
-                src_ptr_l0,
-                (int) buf_width,
-                (int) buf_height,
-                src_stride,
-                dst_ptr,
-                pu_origin_x,
-                pu_origin_y,
-                bwidth,
-                bheight,
-                dst_stride,
-                ss_x,
-                ss_y,
-                &conv_params);
-        else
-            av1_warp_plane_hbd(
-                wm_params_l0,
-                bit_depth,
-                (uint16_t *)src_ptr_l0,
-                (int) buf_width,
-                (int) buf_height,
-                src_stride,
-                (uint16_t *)dst_ptr,
-                pu_origin_x,
-                pu_origin_y,
-                bwidth,
-                bheight,
-                dst_stride,
-                ss_x,
-                ss_y,
-                &conv_params);
+        eb_av1_warp_plane(
+            wm_params_l0,
+            (int) is16bit,
+            bit_depth,
+            src_ptr_l0,
+            (int) buf_width,
+            (int) buf_height,
+            src_stride,
+            dst_ptr,
+            pu_origin_x,
+            pu_origin_y,
+            bwidth,
+            bheight,
+            dst_stride,
+            ss_x,
+            ss_y,
+            &conv_params);
     } else {
         DECLARE_ALIGNED(32, uint16_t, tmp_dstY[128 * 128]);//move this to context if stack does not hold.
 
@@ -6469,41 +6451,23 @@ static void plane_warped_motion_prediction(
         conv_params.use_jnt_comp_avg = conv_params.use_dist_wtd_comp_avg;
 
         conv_params.do_average = 0;
-        if (!is16bit)
-            eb_av1_warp_plane(
-                wm_params_l0,
-                (int) is16bit,
-                bit_depth,
-                src_ptr_l0,
-                (int) buf_width,
-                (int) buf_height,
-                src_stride,
-                dst_ptr,
-                pu_origin_x,
-                pu_origin_y,
-                bwidth,
-                bheight,
-                dst_stride,
-                ss_x,
-                ss_y,
-                &conv_params);
-        else
-            av1_warp_plane_hbd(
-                wm_params_l0,
-                bit_depth,
-                (uint16_t *)src_ptr_l0,
-                (int) buf_width,
-                (int) buf_height,
-                src_stride,
-                (uint16_t *)dst_ptr,
-                pu_origin_x,
-                pu_origin_y,
-                bwidth,
-                bheight,
-                dst_stride,
-                ss_x,
-                ss_y,
-                &conv_params);
+        eb_av1_warp_plane(
+            wm_params_l0,
+            (int) is16bit,
+            bit_depth,
+            src_ptr_l0,
+            (int) buf_width,
+            (int) buf_height,
+            src_stride,
+            dst_ptr,
+            pu_origin_x,
+            pu_origin_y,
+            bwidth,
+            bheight,
+            dst_stride,
+            ss_x,
+            ss_y,
+            &conv_params);
 
         if (is_masked_compound_type(interinter_comp->type)) {
             av1_make_masked_warp_inter_predictor(
@@ -6526,41 +6490,23 @@ static void plane_warped_motion_prediction(
             );
         } else {
             conv_params.do_average = 1;
-            if (!is16bit)
-                eb_av1_warp_plane(
-                    wm_params_l1,
-                    (int) is16bit,
-                    bit_depth,
-                    src_ptr_l1,
-                    (int) buf_width,
-                    (int) buf_height,
-                    src_stride,
-                    dst_ptr,
-                    pu_origin_x,
-                    pu_origin_y,
-                    bwidth,
-                    bheight,
-                    dst_stride,
-                    ss_x,
-                    ss_y,
-                    &conv_params);
-            else
-                av1_warp_plane_hbd(
-                    wm_params_l1,
-                    bit_depth,
-                    (uint16_t *)src_ptr_l1,
-                    (int) buf_width,
-                    (int) buf_height,
-                    src_stride,
-                    (uint16_t *)dst_ptr,
-                    pu_origin_x,
-                    pu_origin_y,
-                    bwidth,
-                    bheight,
-                    dst_stride,
-                    ss_x,
-                    ss_y,
-                    &conv_params);
+            eb_av1_warp_plane(
+                wm_params_l1,
+                (int) is16bit,
+                bit_depth,
+                src_ptr_l1,
+                (int) buf_width,
+                (int) buf_height,
+                src_stride,
+                dst_ptr,
+                pu_origin_x,
+                pu_origin_y,
+                bwidth,
+                bheight,
+                dst_stride,
+                ss_x,
+                ss_y,
+                &conv_params);
         }
     }
 }

@@ -167,21 +167,13 @@ void svt_make_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
 
         wm_params = (mi->motion_mode == WARPED_CAUSAL) ? wm_local : wm_global;
 
-        if (highbd)
-            eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
-                highbd, bit_depth, CONVERT_TO_BYTEPTR(src),
-                ref_buf->ps_pic_buf->width >> ss_x,
-                ref_buf->ps_pic_buf->height >> ss_y,
-                src_stride, CONVERT_TO_BYTEPTR(dst_mod),
-                pre_x, pre_y, bw, bh, dst_stride,
-                ss_x, ss_y, conv_params);
-        else
-            eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
-                highbd, bit_depth,
-                src, ref_buf->ps_pic_buf->width >> ss_x,
-                ref_buf->ps_pic_buf->height >> ss_y,
-                src_stride, dst_mod, pre_x, pre_y, bw, bh, dst_stride,
-                ss_x, ss_y, conv_params);
+        eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
+            highbd, bit_depth, src,
+            ref_buf->ps_pic_buf->width >> ss_x,
+            ref_buf->ps_pic_buf->height >> ss_y,
+            src_stride, dst_mod,
+            pre_x, pre_y, bw, bh, dst_stride,
+            ss_x, ss_y, conv_params);
     }
     else if (highbd) {
         uint16_t *src16 = (uint16_t *)src_mod;
