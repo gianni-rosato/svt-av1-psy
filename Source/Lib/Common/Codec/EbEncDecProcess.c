@@ -1255,8 +1255,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if GLOBAL_WARPED_MOTION
     if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE)
     {
-        if (picture_control_set_ptr->enc_mode == ENC_M0
-            && sequence_control_set_ptr->encoder_bit_depth == EB_8BIT)
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
             context_ptr->global_mv_injection = 1;
         else
             context_ptr->global_mv_injection = 0;
