@@ -454,14 +454,14 @@ class SADTest : public ::testing::WithParamInterface<TestSadParam>,
         prepare_data();
 
         ref_sad = reference_sad();
-       
+
         non_avx2_sad = nxm_sad_kernel_helper_c(src_aligned_,
                                         src_stride_,
                                         ref1_aligned_,
                                         ref1_stride_,
                                         height_,
                                         width_);
-    
+
         avx2_sad = nxm_sad_kernel_helper_avx2(src_aligned_,
                                         src_stride_,
                                         ref1_aligned_,
@@ -1032,15 +1032,30 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
     }
 
     void check_get_eight_32_64() {
+        /******************************/
+        const int32_t max = (1 << 30) - 1;
+        SVTRandom rnd1(0, max);
+        /******************************/
+
         for (int i = 0; i < 10000; i++) {
-            uint32_t best_sad32x32[4], best_sad32x32_1[4];
-            uint32_t best_mv32x32_1[4] = {
-                0x00010002, 0x0003FFF4, 0xFFF70008, 0xFFF9FFF1};
-            uint32_t best_sad64x64_1 = UINT_MAX, best_mv64x64_1 = 0x0078FF94;
-            const uint32_t mv = 0xFF8300DB;
+            uint32_t best_sad32x32[4];
+            uint32_t best_sad32x32_1[4], best_sad32x32_2[4];
+            uint32_t best_mv32x32_1[4], best_mv32x32_2[4];
+            uint32_t best_sad64x64_1, best_mv64x64_1;
+            uint32_t best_sad64x64_2, best_mv64x64_2;
+            uint32_t mv;
 
             prepare_sad_data_16b(best_sad32x32);
             memcpy(best_sad32x32_1, best_sad32x32, sizeof(best_sad32x32));
+            /****************************/
+            best_mv32x32_1[0] = best_mv32x32_2[0] = rnd1.random();
+            best_mv32x32_1[1] = best_mv32x32_2[1] = rnd1.random();
+            best_mv32x32_1[2] = best_mv32x32_2[2] = rnd1.random();
+            best_mv32x32_1[3] = best_mv32x32_2[3] = rnd1.random();
+            best_sad64x64_1 = best_sad64x64_2 = rnd1.random();
+            best_mv64x64_1 = best_mv64x64_2 = rnd1.random();
+            mv = rnd1.random();
+            /****************************/
 
             get_eight_horizontal_search_point_results_32x32_64x64_pu_c(
                 *sad16x16_16b,
@@ -1053,13 +1068,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
             for (int j = 0; j < sizeof(get_eight_sad_32_64_func_table) /
                                     sizeof(*get_eight_sad_32_64_func_table);
                  j++) {
-                uint32_t best_sad32x32_2[4];
-                uint32_t best_mv32x32_2[4] = {
-                    0x00010002, 0x0003FFF4, 0xFFF70008, 0xFFF9FFF1};
-                uint32_t best_sad64x64_2 = UINT_MAX,
-                         best_mv64x64_2 = 0x0078FF94;
-
                 memcpy(best_sad32x32_2, best_sad32x32, sizeof(best_sad32x32));
+
                 get_eight_sad_32_64_func_table[j](*sad16x16_16b,
                                                   best_sad32x32_2,
                                                   &best_sad64x64_2,

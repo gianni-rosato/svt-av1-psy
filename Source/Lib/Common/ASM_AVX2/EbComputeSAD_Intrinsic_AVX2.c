@@ -4045,10 +4045,18 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
         s5 = _mm_loadu_si128((__m128i*)p_best_mv32x32);
         // Remove the MV's that are being replaced
         s5 = _mm_andnot_si128(s4, s5);
-        // Set s3 to the base MV
-        s3 = _mm_set1_epi32(mv);
+
+        //Set mvx to s0 and mvy to s1
+        s0 = _mm_set1_epi32(mv & 0xFFFF);
+        s1 = _mm_set1_epi32(mv & 0xFFFF0000);
+
         // Add candidate MV's to base MV
-        s3 = _mm_sub_epi32(s3, s2);
+        s3 = _mm_sub_epi32(s0, s2);
+        // Limit to int16_t
+        s3 = _mm_and_si128(s3, _mm_set1_epi32(0xFFFF));
+        //mvy | mvx
+        s3 = _mm_or_si128(s3, s1);
+
         // Remove non-candidate's
         s3 = _mm_and_si128(s3, s4);
         // Combine remaining candidates with remaining best MVs
