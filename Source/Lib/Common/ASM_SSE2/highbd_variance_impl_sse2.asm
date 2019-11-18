@@ -318,3 +318,88 @@ sym(aom_highbd_calc8x8var_sse2):
     UNSHADOW_ARGS
     pop         rbp
     ret
+
+
+;uint32_t aom_highbd_calc4x4var_sse2
+;(
+;    uint8_t   *  src_ptr,
+;    int32_t             source_stride,
+;    uint8_t   *  ref_ptr,
+;    int32_t             recon_stride,
+;    uint32_t    *  SSE,
+;    int32_t             *  Sum
+;)
+global sym(aom_highbd_calc4x4var_sse2) PRIVATE
+sym(aom_highbd_calc4x4var_sse2):
+    push        rbp
+    mov         rbp, rsp
+    SHADOW_ARGS_TO_STACK 6
+    SAVE_XMM 7
+    push rsi
+    push rdi
+    ; end prolog
+
+        mov         rsi,            arg(0) ;[src_ptr]
+        mov         rdi,            arg(2) ;[ref_ptr]
+
+        movsxd      rax,            DWORD PTR arg(1) ;[source_stride]
+        movsxd      rdx,            DWORD PTR arg(3) ;[recon_stride]
+        add         rax,            rax ; source stride in bytes
+        add         rdx,            rdx ; recon stride in bytes
+
+        movq        xmm1,           [rsi]
+        movq        xmm2,           [rdi]
+
+        pcmpeqw     xmm4,           xmm4
+        pxor        xmm7,           xmm7
+        pxor        xmm0,           xmm0     ; clear xmm0 for unpack
+        pxor        xmm6,           xmm6     ; clear xmm6 for accumulating sse
+        pxor        xmm5,           xmm5
+        psubw       xmm7,           xmm4
+
+        psubw       xmm1,           xmm2
+        movq        xmm3,           [rsi+rax]
+        paddw       xmm5,           xmm1
+        pmaddwd     xmm1,           xmm1
+        movq        xmm2,           [rdi+rdx]
+        paddd       xmm6,           xmm1
+
+        lea         rsi,            [rsi + 2*rax]
+        lea         rdi,            [rdi + 2*rdx]
+
+        psubw       xmm3,           xmm2
+        movq        xmm1,           [rsi]
+        paddw       xmm5,           xmm3
+        pmaddwd     xmm3,           xmm3
+        movq        xmm2,           [rdi]
+        paddd       xmm6,           xmm3
+
+        psubw       xmm1,           xmm2
+        movq        xmm3,           [rsi+rax]
+        paddw       xmm5,           xmm1
+        pmaddwd     xmm1,           xmm1
+        movq        xmm2,           [rdi+rdx]
+        paddd       xmm6,           xmm1
+
+        psubw       xmm3,           xmm2
+        paddw       xmm5,           xmm3
+        pmaddwd     xmm3,           xmm3
+        pmaddwd     xmm5,           xmm7
+
+        paddd       xmm6,           xmm3
+        phaddd      xmm6,           xmm0
+        phaddd      xmm5,           xmm0
+
+        mov         rdi,            arg(4)   ; [SSE]
+        mov         rax,            arg(5)   ; [Sum]
+
+        movd DWORD PTR [rdi],       xmm6
+        movd DWORD PTR [rax],       xmm5
+
+    ; begin epilog
+    pop rdi
+    pop rsi
+    RESTORE_XMM
+    UNSHADOW_ARGS
+    pop         rbp
+    ret

@@ -19,6 +19,10 @@ extern "C" {
         const uint16_t *ref, int32_t ref_stride,
         uint32_t *sse, int32_t *sum);
 
+    uint32_t aom_highbd_calc4x4var_sse2(const uint16_t *src, int32_t src_stride,
+        const uint16_t *ref, int32_t ref_stride,
+        uint32_t *sse, int32_t *sum);
+
     uint32_t aom_highbd_calc8x8var_sse2(const uint16_t *src, int32_t src_stride,
         const uint16_t *ref, int32_t ref_stride,
         uint32_t *sse, int32_t *sum);
@@ -183,7 +187,7 @@ VAR_FN(16, 16, 16, 8);
 VAR_FN(16, 8, 8, 7);
 VAR_FN(8, 16, 8, 7);
 VAR_FN(8, 8, 8, 6);
-VAR_FN(16, 4, 16, 6);
+VAR_FN(16, 4, 4, 6);
 VAR_FN(8, 32, 8, 8);
 VAR_FN(32, 8, 8, 8);
 VAR_FN(16, 64, 16, 10);
