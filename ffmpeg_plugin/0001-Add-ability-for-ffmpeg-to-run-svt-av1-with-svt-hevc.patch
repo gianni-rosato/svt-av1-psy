@@ -1,27 +1,27 @@
-From 2119881b3c3c4e2386ac6acb28ef906d7a16c190 Mon Sep 17 00:00:00 2001
+From 6c6b0bccb7899c4637f8d05b4aae279d7661b715 Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH] Add ability for ffmpeg to run svt-av1 with svt-hevc
-Cc: zhong.li@intel.com
 
 Change-Id: I37ee5414fdd99e0b3f112a6e5ede166f3e48d819
 Signed-off-by: Daryl Seah <daryl.seah@intel.com>
 Signed-off-by: Jing SUN <jing.a.sun@intel.com>
 Signed-off-by: ZhiZhen Tang <zhizhen.tang@intel.com>
 Signed-off-by: Zhong Li <zhong.li@intel.com>
+Signed-off-by: Xu Guangxin <guangxin.xu@intel.com>
 ---
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 515 ++++++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 521 insertions(+)
+ libavcodec/libsvt_av1.c | 528 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 534 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index 2f61c82..87e6696 100755
+index d654be5d72..7aa44c3d10 100755
 --- a/configure
 +++ b/configure
-@@ -263,6 +263,7 @@ External library support:
+@@ -266,6 +266,7 @@ External library support:
    --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
    --enable-libssh          enable SFTP protocol via libssh [no]
    --enable-libsvthevc      enable HEVC encoding via svt [no]
@@ -29,7 +29,7 @@ index 2f61c82..87e6696 100755
    --enable-libtensorflow   enable TensorFlow as a DNN module backend
                             for DNN based filters like sr [no]
    --enable-libtesseract    enable Tesseract, needed for ocr filter [no]
-@@ -1745,6 +1746,7 @@ EXTERNAL_LIBRARY_LIST="
+@@ -1797,6 +1798,7 @@ EXTERNAL_LIBRARY_LIST="
      libsrt
      libssh
      libsvthevc
@@ -37,7 +37,7 @@ index 2f61c82..87e6696 100755
      libtensorflow
      libtesseract
      libtheora
-@@ -3128,6 +3130,7 @@ libspeex_decoder_deps="libspeex"
+@@ -3217,6 +3219,7 @@ libspeex_decoder_deps="libspeex"
  libspeex_encoder_deps="libspeex"
  libspeex_encoder_select="audio_frame_queue"
  libsvt_hevc_encoder_deps="libsvthevc"
@@ -45,7 +45,7 @@ index 2f61c82..87e6696 100755
  libtheora_encoder_deps="libtheora"
  libtwolame_encoder_deps="libtwolame"
  libvo_amrwbenc_encoder_deps="libvo_amrwbenc"
-@@ -6139,6 +6142,7 @@ enabled libssh            && require_pkg_config libssh libssh libssh/sftp.h sftp
+@@ -6311,6 +6314,7 @@ enabled libssh            && require_pkg_config libssh libssh libssh/sftp.h sftp
  enabled libspeex          && require_pkg_config libspeex speex speex/speex.h speex_decoder_init
  enabled libsrt            && require_pkg_config libsrt "srt >= 1.3.0" srt/srt.h srt_socket
  enabled libsvthevc        && require_pkg_config libsvthevc SvtHevcEnc EbApi.h EbInitHandle
@@ -54,10 +54,10 @@ index 2f61c82..87e6696 100755
  enabled libtesseract      && require_pkg_config libtesseract tesseract tesseract/capi.h TessBaseAPICreate
  enabled libtheora         && require libtheora theora/theoraenc.h th_info_init -ltheoraenc -ltheoradec -logg
 diff --git a/libavcodec/Makefile b/libavcodec/Makefile
-index 728503b..a524f34 100644
+index 309dd77d3d..0fe1ded6fc 100644
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -982,6 +982,7 @@ OBJS-$(CONFIG_LIBSHINE_ENCODER)           += libshine.o
+@@ -998,6 +998,7 @@ OBJS-$(CONFIG_LIBSHINE_ENCODER)           += libshine.o
  OBJS-$(CONFIG_LIBSPEEX_DECODER)           += libspeexdec.o
  OBJS-$(CONFIG_LIBSPEEX_ENCODER)           += libspeexenc.o
  OBJS-$(CONFIG_LIBSVT_HEVC_ENCODER)        += libsvt_hevc.o
@@ -66,10 +66,10 @@ index 728503b..a524f34 100644
  OBJS-$(CONFIG_LIBTWOLAME_ENCODER)         += libtwolame.o
  OBJS-$(CONFIG_LIBVO_AMRWBENC_ENCODER)     += libvo-amrwbenc.o
 diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
-index 5739d53..98f0c99 100644
+index a8ef8fb3b1..99a6a0b326 100644
 --- a/libavcodec/allcodecs.c
 +++ b/libavcodec/allcodecs.c
-@@ -698,6 +698,7 @@ extern AVCodec ff_libshine_encoder;
+@@ -710,6 +710,7 @@ extern AVCodec ff_libshine_encoder;
  extern AVCodec ff_libspeex_encoder;
  extern AVCodec ff_libspeex_decoder;
  extern AVCodec ff_libsvt_hevc_encoder;
@@ -79,10 +79,10 @@ index 5739d53..98f0c99 100644
  extern AVCodec ff_libvo_amrwbenc_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000..1523542
+index 0000000000..4984816830
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,515 @@
+@@ -0,0 +1,528 @@
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
 +*
@@ -132,6 +132,8 @@ index 0000000..1523542
 +
 +    EbBufferHeaderType         *in_buf;
 +    int                         raw_size;
++
++    AVBufferPool* pool;
 +
 +    EOS_STATUS eos_flag;
 +
@@ -203,6 +205,7 @@ index 0000000..1523542
 +        av_freep(&in_data);
 +        av_freep(&svt_enc->in_buf);
 +    }
++    av_buffer_pool_uninit(&svt_enc->pool);
 +}
 +
 +static int alloc_buffer(EbSvtAv1EncConfiguration *config, SvtContext *svt_enc)
@@ -223,13 +226,17 @@ index 0000000..1523542
 +    if (!svt_enc->in_buf)
 +        return AVERROR(ENOMEM);
 +
-+    in_data  = av_mallocz(sizeof(*in_data));
-+    if (!in_data)
++    svt_enc->in_buf->p_buffer  = (unsigned char *)av_mallocz(sizeof(*in_data));
++    if (!svt_enc->in_buf->p_buffer)
 +        return AVERROR(ENOMEM);
-+    svt_enc->in_buf->p_buffer  = (unsigned char *)in_data;
 +
 +    svt_enc->in_buf->size        = sizeof(*svt_enc->in_buf);
 +    svt_enc->in_buf->p_app_private  = NULL;
++
++    svt_enc->pool = av_buffer_pool_init(svt_enc->raw_size, NULL);
++    if (!svt_enc->pool) {
++        return AVERROR(ENOMEM);
++    }
 +
 +    return 0;
 +
@@ -433,17 +440,23 @@ index 0000000..1523542
 +    EbBufferHeaderType *headerPtr;
 +    EbErrorType svt_ret;
 +    int ret = 0, pict_type;
++    AVBufferRef* ref;
 +
 +    if (svt_enc->eos_flag == EOS_RECEIVED)
 +        return AVERROR_EOF;
 +
-+    if ((ret = ff_alloc_packet2(avctx, pkt, svt_enc->raw_size, 0)) < 0) {
-+        av_log(avctx, AV_LOG_ERROR, "Failed to allocate output packet.\n");
-+        return ret;
-+    }
 +    svt_ret = eb_svt_get_packet(svt_enc->svt_handle, &headerPtr, svt_enc->eos_flag);
 +    if (svt_ret == EB_NoErrorEmptyQueue)
 +        return AVERROR(EAGAIN);
++
++    ref = av_buffer_pool_get(svt_enc->pool);
++    if (!ref) {
++        av_log(avctx, AV_LOG_ERROR, "Failed to allocate output packet.\n");
++        eb_svt_release_out_buffer(&headerPtr);
++        return AVERROR(ENOMEM);
++    }
++    pkt->buf = ref;
++    pkt->data = ref->data;
 +
 +    memcpy(pkt->data, headerPtr->p_buffer, headerPtr->n_filled_len);
 +    pkt->size = headerPtr->n_filled_len;
@@ -598,6 +611,6 @@ index 0000000..1523542
 +    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
 +    .wrapper_name   = "libsvt_av1",
 +};
---
-2.7.4
+-- 
+2.17.1
 
