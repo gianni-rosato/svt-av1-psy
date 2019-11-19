@@ -1789,7 +1789,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                 }
             }
 
-            if (leftover) {
+            if (leftover && j < search_area_width ) {
                 pSrc = src;
                 pRef = ref + j;
                 s3 = _mm_setzero_si128();
@@ -1845,7 +1845,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                 }
             }
 
-            if (leftover) {
+            if (leftover && j < search_area_width ) {
                 pSrc = src;
                 pRef = ref + j;
                 s3 = s4 = _mm_setzero_si128();
@@ -1904,7 +1904,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -1974,7 +1974,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2067,7 +2067,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2171,7 +2171,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2272,7 +2272,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2392,7 +2392,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2544,7 +2544,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2743,7 +2743,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2920,7 +2920,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s9 = s10 = _mm_setzero_si128();
@@ -3114,7 +3114,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -3312,7 +3312,7 @@ void sad_loop_kernel_sparse_sse4_1_intrin(
                     }
                 }
 
-                if (leftover) {
+                if (leftover && j < search_area_width ) {
                     pSrc = src;
                     pRef = ref + j;
                     s9 = s10 = _mm_setzero_si128();
