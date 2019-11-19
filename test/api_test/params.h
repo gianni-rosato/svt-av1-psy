@@ -591,6 +591,21 @@ static const vector<uint32_t> invalid_search_area_height = {
 };
 
 // MD Parameters
+/* Palette Mode
+ *-1:Auto Mode(ON at level6 when SC is detected)
+ * 0:OFF
+ * 1:Slow    NIC=7/4/4
+ * 2:        NIC=7/2/2
+ * 3:        NIC=7/2/2 + No K means for non ref
+ * 4:        NIC=4/2/1
+ * 5:        NIC=4/2/1 + No K means for Inter frame
+ * 6:Fastest NIC=4/2/1 + No K means for non base + step for non base for
+ * most dominant
+ * Default is -1. */
+static const vector<int32_t> default_enable_palette = {-1};
+static const vector<int32_t> valid_enable_palette = {-1, 0, 1, 2, 3, 4, 5, 6};
+static const vector<int32_t> invalid_enable_palette = {-2, 7};
+
 /* Enable the use of Constrained Intra, which yields sending two picture
  * parameter sets in the elementary streams .
  *

@@ -321,6 +321,10 @@ PARAM_TEST(EncParamSearchAreaWidthTest);
 DEFINE_PARAM_TEST_CLASS(EncParamSearchAreaHeightTest, search_area_height);
 PARAM_TEST(EncParamSearchAreaHeightTest);
 
+/** Test case for enable_palette*/
+DEFINE_PARAM_TEST_CLASS(EncParamEnablePaletteTest, enable_palette);
+PARAM_TEST(EncParamEnablePaletteTest);
+
 /** Test case for constrained_intra*/
 DEFINE_PARAM_TEST_CLASS(EncParamConstrainedIntraTest, constrained_intra);
 PARAM_TEST(EncParamConstrainedIntraTest);
