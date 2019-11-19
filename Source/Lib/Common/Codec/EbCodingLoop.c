@@ -31,7 +31,7 @@
 #include "EbIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
 #include "EbCodingLoop.h"
-
+#include "EbComputeSAD.h"
 void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
 

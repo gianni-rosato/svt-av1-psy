@@ -460,7 +460,6 @@ extern "C" {
         unsigned                    prediction_mode_flag    : 2;
         unsigned                    block_has_coeff         : 1;
         unsigned                    split_flag_context      : 2;
-
 #if !ADD_DELTA_QP_SUPPORT
         unsigned                    qp                      : 6;
         signed                      delta_qp                : 8; // can be signed 8bits

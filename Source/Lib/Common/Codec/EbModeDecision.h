@@ -81,7 +81,6 @@ extern "C" {
         uint64_t                               chroma_distortion_inter_depth;
         uint32_t                               luma_fast_distortion;
         uint32_t                               full_distortion;
-
         EbPtr                                 prediction_context_ptr;
         PictureControlSet                   *picture_control_set_ptr;
         EbPredDirection                        prediction_direction[MAX_NUM_OF_PU_PER_CU]; // 2 bits // Hsan: does not seem to be used why not removed ?

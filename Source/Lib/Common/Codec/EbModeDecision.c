@@ -215,7 +215,14 @@ static int64_t pick_interintra_wedge(
     const int bh = block_size_high[bsize];
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);  // src - pred1
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);     // pred1 - pred0
+#if INTERINTRA_HBD //CCODE
+    if (context_ptr->hbd_mode_decision)
+    {
+        aom_highbd_subtract_block(bh, bw, residual1, bw,  src_buf, src_stride, p1, bw, EB_10BIT);
+        aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw,  p0, bw, EB_10BIT);
 
+    }else
+#endif
     {
         aom_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw);
         aom_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw);
@@ -265,13 +272,21 @@ void inter_intra_search(
     ModeDecisionContext          *context_ptr,
     ModeDecisionCandidate        *candidate_ptr)
 {
-    DECLARE_ALIGNED(16, uint8_t, tmp_buf[ MAX_INTERINTRA_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, tmp_buf[ 2* MAX_INTERINTRA_SB_SQUARE]);
+#if !II_COMP_FLAG
     DECLARE_ALIGNED(16, uint8_t, intrapred[ MAX_INTERINTRA_SB_SQUARE]);
-
-    DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[MAX_INTERINTRA_SB_SQUARE]);
+#endif
+    DECLARE_ALIGNED(16, uint8_t, ii_pred_buf[2*MAX_INTERINTRA_SB_SQUARE]);
     //get inter pred for ref0
+#if INTERINTRA_HBD
+    EbPictureBufferDesc   *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit :  picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+#else
     EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    uint8_t               *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
+#endif
+    uint16_t *src_buf_hbd = (uint16_t*)src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
+    uint8_t *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
+
+    uint8_t bit_depth = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;
 
     uint32_t  bwidth = context_ptr->blk_geom->bwidth;
     uint32_t  bheight = context_ptr->blk_geom->bheight;
@@ -302,6 +317,25 @@ void inter_intra_search(
         list_idx1 = get_list_idx(rf[1]);
     assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST);
     assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
+//
+#if INTERINTRA_HBD
+
+
+
+    if (ref_idx_l0 >= 0)
+        ref_pic_list0 = context_ptr->hbd_mode_decision ?
+                        ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit :
+                        ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
+    else
+        ref_pic_list0 = (EbPictureBufferDesc*)EB_NULL;
+
+    if (ref_idx_l1 >= 0)
+        ref_pic_list1 = context_ptr->hbd_mode_decision ?
+                        ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture16bit :
+                        ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
+    else
+        ref_pic_list1 = (EbPictureBufferDesc*)EB_NULL;
+#else
     if (ref_idx_l0 >= 0)
         ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
     else
@@ -310,7 +344,7 @@ void inter_intra_search(
         ref_pic_list1 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
     else
         ref_pic_list1 = (EbPictureBufferDesc*)EB_NULL;
-
+#endif
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
 
     pred_desc.buffer_y = tmp_buf;
@@ -350,7 +384,7 @@ void inter_intra_search(
         0,          //output origin_x,
         0,          //output origin_y,
         0, //do chroma
-        (uint8_t)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth);
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     assert(is_interintra_wedge_used(context_ptr->blk_geom->bsize));//if not I need to add nowedge path!!
 
@@ -362,11 +396,12 @@ void inter_intra_search(
 
 
     INTERINTRA_MODE best_interintra_mode = INTERINTRA_MODES;
+#if !II_COMP_FLAG
     EbPictureBufferDesc  inra_pred_desc;
     inra_pred_desc.origin_x = inra_pred_desc.origin_y = 0;
     inra_pred_desc.stride_y = bwidth;
     inra_pred_desc.buffer_y = intrapred;
-
+#endif
     int8_t enable_smooth_interintra =1;
       //if (cpi->oxcf.enable_smooth_interintra &&
       //!cpi->sf.disable_smooth_interintra) {
@@ -395,6 +430,20 @@ void inter_intra_search(
 #endif
 
                 //av1_combine_interintra(xd, bsize, 0, tmp_buf, bw, intrapred, bw);
+#if INTERINTRA_HBD
+                if (context_ptr->hbd_mode_decision)
+                    combine_interintra_highbd(
+                        interintra_mode,//mode,
+                        0,//use_wedge_interintra,
+                        0,//candidate_ptr->interintra_wedge_index,
+                        0,//int wedge_sign,
+                        context_ptr->blk_geom->bsize,
+                        context_ptr->blk_geom->bsize,// plane_bsize,
+                         ii_pred_buf, bwidth, /*uint8_t *comppred, int compstride,*/
+                        tmp_buf, bwidth,  /*const uint8_t *interpred, int interstride,*/
+                        context_ptr->intrapred_buf[j], bwidth /*const uint8_t *intrapred,   int intrastride*/,bit_depth);
+                else
+#endif
                 combine_interintra(
                     interintra_mode,//mode,
                     0,//use_wedge_interintra,
@@ -409,10 +458,22 @@ void inter_intra_search(
                 //model_rd_sb_fn[MODELRD_TYPE_INTERINTRA](
                 //    cpi, bsize, x, xd, 0, 0, mi_row, mi_col, &rate_sum, &dist_sum,
                 //    &tmp_skip_txfm_sb, &tmp_skip_sse_sb, NULL, NULL, NULL);
+
+#if INTERINTRA_HBD
+
+                if (context_ptr->hbd_mode_decision) {
+
+                    model_rd_for_sb_with_curvfit(picture_control_set_ptr, context_ptr, context_ptr->blk_geom->bsize, bwidth, bheight,
+                        (uint8_t*)src_buf_hbd, src_pic->stride_y, ii_pred_buf, bwidth,
+                        0, 0, 0, 0, &rate_sum, &dist_sum, NULL, NULL, NULL, NULL, NULL);
+                }else
+#endif
+                {
+
                 model_rd_for_sb_with_curvfit(picture_control_set_ptr, context_ptr, context_ptr->blk_geom->bsize, bwidth, bheight,
                     src_buf, src_pic->stride_y, ii_pred_buf, bwidth,
                     0, 0, 0, 0, &rate_sum, &dist_sum, NULL, NULL, NULL, NULL, NULL);
-
+                }
                 // rd = RDCOST(x->rdmult, tmp_rate_mv + rate_sum + rmode, dist_sum);
                 rd = RDCOST(context_ptr->full_lambda, tmp_rate_mv + rate_sum + rmode, dist_sum);
 
@@ -438,7 +499,7 @@ void inter_intra_search(
                 intrapred,
 #endif
                 tmp_buf,
-                src_buf,
+                context_ptr->hbd_mode_decision ? (uint8_t*) src_buf_hbd : src_buf,
                 src_pic->stride_y,
                 &candidate_ptr->interintra_wedge_index
             );
@@ -452,75 +513,7 @@ void inter_intra_search(
         }
     }
     // Enable wedge search if source variance and edge strength are above the thresholds.
-    int enable_wedge_interintra_search = 0;
-    if (enable_wedge_interintra_search)
-    {
-        if (best_interintra_mode == INTERINTRA_MODES) {//Optimization TBD: search only for the first MV mode per ref
 
-            INTERINTRA_MODE   interintra_mode = II_SMOOTH_PRED;
-            intra_luma_prediction_for_interintra(
-                context_ptr,
-                picture_control_set_ptr,
-                interintra_mode,
-                &inra_pred_desc);
-
-            candidate_ptr->ii_wedge_sign = 0;
-
-            pick_interintra_wedge(
-                candidate_ptr,
-                picture_control_set_ptr,
-                context_ptr,
-                context_ptr->blk_geom->bsize,
-                intrapred,
-                tmp_buf,
-                src_buf,
-                src_pic->stride_y,
-                &candidate_ptr->interintra_wedge_index
-                );
-
-            int j = 0;
-            for (j = 0; j < INTERINTRA_MODES; ++j) {
-
-                interintra_mode = (INTERINTRA_MODE)j;
-
-                const int bsize_group = size_group_lookup[context_ptr->blk_geom->bsize];
-                rmode  = candidate_ptr->md_rate_estimation_ptr->inter_intra_mode_fac_bits[bsize_group][interintra_mode];
-
-                intra_luma_prediction_for_interintra(
-                    context_ptr,
-                    picture_control_set_ptr,
-                    interintra_mode,
-                    &inra_pred_desc);
-
-                combine_interintra(
-                    interintra_mode,//mode,
-                    1,//use_wedge_interintra,
-                    candidate_ptr->interintra_wedge_index,
-                    0,//int wedge_sign,
-                    context_ptr->blk_geom->bsize,
-                    context_ptr->blk_geom->bsize,// plane_bsize,
-                    ii_pred_buf, bwidth, /*uint8_t *comppred, int compstride,*/
-                    tmp_buf, bwidth,  /*const uint8_t *interpred, int interstride,*/
-                    intrapred, bwidth /*const uint8_t *intrapred,   int intrastride*/);
-
-
-                model_rd_for_sb_with_curvfit(picture_control_set_ptr, context_ptr, context_ptr->blk_geom->bsize, bwidth, bheight,
-                    src_buf, src_pic->stride_y, ii_pred_buf, bwidth,
-                   0, 0, 0, 0, &rate_sum,  &dist_sum, NULL, NULL, NULL, NULL, NULL);
-
-                rd = RDCOST(context_ptr->full_lambda, tmp_rate_mv + rate_sum + rmode, dist_sum);
-                if (rd < best_interintra_rd) {
-                    best_interintra_mode = interintra_mode;
-
-                    //CHKN added this as fix from lib-aom
-                    best_interintra_rd = rd;
-                }
-            }
-
-            candidate_ptr->interintra_mode      = best_interintra_mode;
-            candidate_ptr->use_wedge_interintra =1 ;
-        }
-    }
 
 
 }
@@ -6128,6 +6121,7 @@ uint32_t product_full_mode_decision(
     cu_ptr->ii_wedge_sign               = candidate_ptr->ii_wedge_sign;
 
 #endif
+
     // Set the PU level variables
     cu_ptr->interp_filters = candidate_ptr->interp_filters;
     {

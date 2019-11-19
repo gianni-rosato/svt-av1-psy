@@ -36,6 +36,10 @@ extern "C" {
 
 #define IFS_8BIT_MD                  1
 
+#define COMP_HBD                     1
+#define INTERINTRA_HBD               1
+#define ATB_HBD                      1
+#define ATB_FIX                      1
 
 /* Note: shutting the macro PAL_SUP will not give SS as pcs->palette_mode = 0
    rate estimation is changed for I frame + enabled sc for P (rate estimation

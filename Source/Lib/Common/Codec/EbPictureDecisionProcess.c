@@ -855,7 +855,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         // the motion information information for NSQ is generated.
         if (sequence_control_set_ptr->static_config.olpd_refinement == -1) { //auto mode; if not set by cfg
             if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
-                if (MR_MODE || sc_content_detected || sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
+                if (MR_MODE || sc_content_detected)
                     picture_control_set_ptr->enable_adaptive_ol_partitioning = 0;
                 else if (picture_control_set_ptr->enc_mode <= ENC_M0)
                     picture_control_set_ptr->enable_adaptive_ol_partitioning = 1;
@@ -880,8 +880,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                     pred - 1 + 2
     // 6                                     pred - 1 + 3
     // 7                                     All
-
-    if (MR_MODE || sc_content_detected || sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
+    if (MR_MODE || sc_content_detected)
         picture_control_set_ptr->mdc_depth_level = MAX_MDC_LEVEL;
     else if (picture_control_set_ptr->enc_mode == ENC_M0)
         picture_control_set_ptr->mdc_depth_level = (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? MAX_MDC_LEVEL : 6;
@@ -1058,8 +1057,6 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->palette_mode = sequence_control_set_ptr->static_config.enable_palette;
     else
         picture_control_set_ptr->palette_mode = 0;
-
-
 
     assert(picture_control_set_ptr->palette_mode<7);
 #endif
@@ -1286,7 +1283,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
 #if ATB_10_BIT
+#if ATB_HBD
+        if (picture_control_set_ptr->enc_mode <= ENC_M1 && !picture_control_set_ptr->sc_content_detected)
+#else
         if (picture_control_set_ptr->enc_mode <= ENC_M1 &&  !sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
+#endif
 #else
         if (picture_control_set_ptr->enc_mode <= ENC_M1 && sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
 #endif

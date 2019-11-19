@@ -208,13 +208,25 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
     av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_c;
     if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_avx2;
+#if COMP_HBD
+     av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_c;
+     if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_avx2;
+#endif
     av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
     if (flags & HAS_AVX2) av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_avx2;
     aom_subtract_block = aom_subtract_block_c;
     if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
     aom_sse = aom_sse_c;
+#if COMP_HBD
+    aom_highbd_subtract_block = aom_highbd_subtract_block_c;
+    if (flags & HAS_AVX2) aom_highbd_subtract_block = aom_highbd_subtract_block_sse2;
+#endif
     if (flags & HAS_AVX2) aom_sse = aom_sse_avx2;
     av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_c;
+#if COMP_HBD
+     aom_highbd_sse = aom_highbd_sse_c;
+     if (flags & HAS_AVX2) aom_highbd_sse = aom_highbd_sse_avx2;
+#endif
     if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_avx2;
     aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_c;
     if (flags & HAS_AVX2) aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_avx2;
@@ -489,7 +501,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_avx2;
     eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_c;
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
-    eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
+    eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
     if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
 #if II_COMP_FLAG
@@ -1850,7 +1862,7 @@ void setup_rtcd_internal(EbAsm asm_type)
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin);
     SET_SSE2(initialize_buffer_32bits,
-             initialize_buffer_32bits_c,
+             initialize_buffer_32bits_sse2_intrin,
              initialize_buffer_32bits_sse2_intrin);
     SET_SSE41(compute8x8_satd_u8,
               compute8x8_satd_u8_c,

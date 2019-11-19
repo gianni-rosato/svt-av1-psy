@@ -2029,6 +2029,29 @@ void av1_make_masked_warp_inter_predictor(
 }
 
 
+#if COMP_HBD
+void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff,
+                                 ptrdiff_t diff_stride, const uint8_t *src8,
+                                 ptrdiff_t src_stride, const uint8_t *pred8,
+                                 ptrdiff_t pred_stride, int bd) {
+  int r, c;
+  uint16_t *src = (uint16_t*)(src8);
+  uint16_t *pred = (uint16_t*)(pred8);
+  (void)bd;
+
+  for (r = 0; r < rows; r++) {
+    for (c = 0; c < cols; c++) {
+      diff[c] = src[c] - pred[c];
+    }
+
+    diff += diff_stride;
+    pred += pred_stride;
+    src += src_stride;
+  }
+}
+
+
+#endif
 void aom_subtract_block_c(int rows, int cols, int16_t *diff,
     ptrdiff_t diff_stride, const uint8_t *src,
     ptrdiff_t src_stride, const uint8_t *pred,
@@ -2058,6 +2081,88 @@ static void diffwtd_mask(uint8_t *mask, int which_inverse, int mask_base,
     }
 }
 
+#if COMP_HBD
+static AOM_FORCE_INLINE void diffwtd_mask_highbd(
+    uint8_t *mask, int which_inverse, int mask_base, const uint16_t *src0,
+    int src0_stride, const uint16_t *src1, int src1_stride, int h, int w,
+    const unsigned int bd) {
+  assert(bd >= 8);
+  if (bd == 8) {
+    if (which_inverse) {
+      for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+          int diff = abs((int)src0[j] - (int)src1[j]) / DIFF_FACTOR;
+          unsigned int m = negative_to_zero(mask_base + diff);
+          m = AOMMIN(m, AOM_BLEND_A64_MAX_ALPHA);
+          mask[j] = AOM_BLEND_A64_MAX_ALPHA - m;
+        }
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += w;
+      }
+    } else {
+      for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+          int diff = abs((int)src0[j] - (int)src1[j]) / DIFF_FACTOR;
+          unsigned int m = negative_to_zero(mask_base + diff);
+          m = AOMMIN(m, AOM_BLEND_A64_MAX_ALPHA);
+          mask[j] = m;
+        }
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += w;
+      }
+    }
+  } else {
+    const unsigned int bd_shift = bd - 8;
+    if (which_inverse) {
+      for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+          int diff =
+              (abs((int)src0[j] - (int)src1[j]) >> bd_shift) / DIFF_FACTOR;
+          unsigned int m = negative_to_zero(mask_base + diff);
+          m = AOMMIN(m, AOM_BLEND_A64_MAX_ALPHA);
+          mask[j] = AOM_BLEND_A64_MAX_ALPHA - m;
+        }
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += w;
+      }
+    } else {
+      for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+          int diff =
+              (abs((int)src0[j] - (int)src1[j]) >> bd_shift) / DIFF_FACTOR;
+          unsigned int m = negative_to_zero(mask_base + diff);
+          m = AOMMIN(m, AOM_BLEND_A64_MAX_ALPHA);
+          mask[j] = m;
+        }
+        src0 += src0_stride;
+        src1 += src1_stride;
+        mask += w;
+      }
+    }
+  }
+}
+void av1_build_compound_diffwtd_mask_highbd_c(
+    uint8_t *mask, DIFFWTD_MASK_TYPE mask_type, const uint8_t *src0,
+    int src0_stride, const uint8_t *src1, int src1_stride, int h, int w,
+    int bd) {
+
+  switch (mask_type) {
+    case DIFFWTD_38:
+      diffwtd_mask_highbd(mask, 0, 38, (uint16_t*)src0, src0_stride,
+                           (uint16_t*)src1, src1_stride, h, w, bd);
+      break;
+    case DIFFWTD_38_INV:
+      diffwtd_mask_highbd(mask, 1, 38,  (uint16_t*)src0, src0_stride,
+                           (uint16_t*)src1, src1_stride, h, w, bd);
+      break;
+    default: assert(0);
+  }
+}
+
+#endif
 void av1_build_compound_diffwtd_mask_c(uint8_t *mask,
     DIFFWTD_MASK_TYPE mask_type,
     const uint8_t *src0, int src0_stride,
@@ -2394,9 +2499,11 @@ static void pick_wedge(
     int8_t *const best_wedge_index)
 {
 
+#if COMP_HBD
+    EbPictureBufferDesc  *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+#else
     EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    uint8_t               *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
-
+#endif
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
     const int N = bw * bh;
@@ -2412,8 +2519,17 @@ static void pick_wedge(
     const int bd_round = 0;
     DECLARE_ALIGNED(32, int16_t, residual0[MAX_SB_SQUARE]);  // src - pred0
 
+#if COMP_HBD //CCODE
+    if (context_ptr->hbd_mode_decision) {
+        uint16_t *src_buf_hbd = (uint16_t*)src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
+        aom_highbd_subtract_block(bh, bw, residual0, bw, (uint8_t*)src_buf_hbd/*src->buf*/, src_pic->stride_y/*src->stride*/, (uint8_t*)p0, bw, EB_10BIT);
+    }
+    else
+#endif
+         {
+    uint8_t *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
     aom_subtract_block(bh, bw, residual0, bw, src_buf/*src->buf*/, src_pic->stride_y/*src->stride*/, p0, bw);
-
+    }
     int64_t sign_limit = ((int64_t)aom_sum_squares_i16(residual0, N) -
         (int64_t)aom_sum_squares_i16(residual1, N)) *
         (1 << WEDGE_WEIGHT_BITS) / 2;
@@ -2482,7 +2598,11 @@ static int8_t estimate_wedge_sign(
     (void)f_index;
 
     const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[bsize];
+#if COMP_HBD // TO BE FIXED
+    EbPictureBufferDesc  *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+#else
     EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+#endif
     uint8_t               *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
 
     fn_ptr->vf(src_buf, src_pic->stride_y, pred0, stride0, &esq[0][0]);
@@ -2532,7 +2652,7 @@ static int64_t pick_wedge_fixed_sign(
   const uint8_t *mask;
   uint64_t sse;
   //const int hbd = 0;// is_cur_buf_hbd(xd);
-  const int bd_round = 0;//hbd ? (xd->bd - 8) * 2 : 0;
+  const int bd_round =  0;
   for (wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
     mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
     sse = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
@@ -2613,16 +2733,23 @@ static void  pick_interinter_seg(
     DECLARE_ALIGNED(16, uint8_t, seg_mask1[2 * MAX_SB_SQUARE]);
     uint8_t *tmp_mask[2] = { seg_mask0, seg_mask1 };
 
+    const int bd_round = 0;
     // try each mask type and its inverse
     for (cur_mask_type = 0; cur_mask_type < DIFFWTD_MASK_TYPES; cur_mask_type++) {
 
         // build mask and inverse
+#if COMP_HBD //CCODE
+        if (context_ptr->hbd_mode_decision)
+            av1_build_compound_diffwtd_mask_highbd(tmp_mask[cur_mask_type], cur_mask_type,
+                 p0, bw, p1, bw, bh, bw, EB_10BIT);
+        else
+#endif
         av1_build_compound_diffwtd_mask(tmp_mask[cur_mask_type], cur_mask_type,
             p0, bw, p1, bw, bh, bw);
         // compute rd for mask
         uint64_t sse = av1_wedge_sse_from_residuals(residual1, diff10, tmp_mask[cur_mask_type], N);
 
-        sse = ROUND_POWER_OF_TWO(sse, 0 );
+        sse = ROUND_POWER_OF_TWO(sse, bd_round );
 
         model_rd_with_curvfit(picture_control_set_ptr, bsize,  sse, N, &rate, &dist, context_ptr->full_lambda);
 
@@ -2667,8 +2794,11 @@ void search_compound_diff_wedge(
 
     //if (*calc_pred_masked_compound)
     {
+#if COMP_HBD
+        EbPictureBufferDesc  *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+#else
         EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-        uint8_t               *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
+#endif
 
         uint32_t  bwidth = context_ptr->blk_geom->bwidth;
         uint32_t  bheight = context_ptr->blk_geom->bheight;
@@ -2676,7 +2806,6 @@ void search_compound_diff_wedge(
         pred_desc.origin_x = pred_desc.origin_y = 0;
         pred_desc.stride_y = bwidth;
 
-        SequenceControlSet* sequence_control_set_ptr = ((SequenceControlSet*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr));
         EbPictureBufferDesc  *ref_pic_list0;
         EbPictureBufferDesc  *ref_pic_list1 = NULL;
         Mv mv_0;
@@ -2700,6 +2829,21 @@ void search_compound_diff_wedge(
             list_idx1 = get_list_idx(rf[1]);
         assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST);
         assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
+#if COMP_HBD
+        if (ref_idx_l0 >= 0)
+            ref_pic_list0 = context_ptr->hbd_mode_decision ?
+                            ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit :
+                            ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
+        else
+            ref_pic_list0 = (EbPictureBufferDesc*)EB_NULL;
+
+        if (ref_idx_l1 >= 0)
+            ref_pic_list1 = context_ptr->hbd_mode_decision ?
+                            ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture16bit :
+                            ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
+        else
+            ref_pic_list1 = (EbPictureBufferDesc*)EB_NULL;
+#else
         if (ref_idx_l0 >= 0)
             ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
         else
@@ -2708,7 +2852,7 @@ void search_compound_diff_wedge(
             ref_pic_list1 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
         else
             ref_pic_list1 = (EbPictureBufferDesc*)EB_NULL;
-
+#endif
         //CHKN get seperate prediction of each ref(Luma only)
         //ref0 prediction
         mv_unit.pred_direction = UNI_PRED_LIST_0;
@@ -2749,7 +2893,7 @@ void search_compound_diff_wedge(
             0,          //output origin_x,
             0,          //output origin_y,
             0,//do chroma
-            (uint8_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
+             context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
         //ref1 prediction
         mv_unit.pred_direction = UNI_PRED_LIST_1;
@@ -2790,10 +2934,21 @@ void search_compound_diff_wedge(
             0,          //output origin_x,
             0,          //output origin_y,
             0,//do chroma
-            (uint8_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
+            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
+#if COMP_HBD //CCODE
+        if (context_ptr->hbd_mode_decision) {
+            uint16_t *src_buf_hbd = (uint16_t*)src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
+            aom_highbd_subtract_block(bheight, bwidth, context_ptr->residual1, bwidth,(uint8_t*)  src_buf_hbd, src_pic->stride_y, (uint8_t*) context_ptr->pred1, bwidth,EB_10BIT);
+            aom_highbd_subtract_block(bheight, bwidth, context_ptr->diff10, bwidth, (uint8_t*) context_ptr->pred1, bwidth, (uint8_t*) context_ptr->pred0, bwidth,EB_10BIT);
+        }
+        else
+#endif
+             {
+        uint8_t *src_buf = src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
         aom_subtract_block(bheight, bwidth, context_ptr->residual1, bwidth, src_buf, src_pic->stride_y, context_ptr->pred1, bwidth);
         aom_subtract_block(bheight, bwidth, context_ptr->diff10, bwidth, context_ptr->pred1, bwidth, context_ptr->pred0, bwidth);
+        }
 
         //*calc_pred_masked_compound = 0;
         if (picture_control_set_ptr->parent_pcs_ptr->wedge_mode == 1 || picture_control_set_ptr->parent_pcs_ptr->wedge_mode == 3)
@@ -2820,6 +2975,27 @@ void search_compound_diff_wedge(
         context_ptr->diff10);
 }
 
+#if COMP_HBD
+//
+int64_t aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8,
+                         int b_stride, int width, int height) {
+  int y, x;
+  int64_t sse = 0;
+  uint16_t *a =(uint16_t*)a8; //CONVERT_TO_SHORTPTR(a8);
+  uint16_t *b =(uint16_t*)b8; //CONVERT_TO_SHORTPTR(b8);
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
+      const int32_t diff = (int32_t)(a[x]) - (int32_t)(b[x]);
+      sse += diff * diff;
+    }
+
+    a += a_stride;
+    b += b_stride;
+  }
+  return sse;
+}
+
+#endif
 int64_t aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b,
     int b_stride, int width, int height) {
     int y, x;
@@ -2854,6 +3030,7 @@ static void model_rd_for_sb_with_curvfit(
     // Note our transform coeffs are 8 times an orthogonal transform.
     // Hence quantizer step is also 8 times. To get effective quantizer
     // we need to divide by 8 before sending to modeling function.
+    const int bd_round = 0;
 
     int64_t rate_sum = 0;
     int64_t dist_sum = 0;
@@ -2865,9 +3042,14 @@ static void model_rd_for_sb_with_curvfit(
             get_plane_block_size(bsize, subsampling, subsampling);
         int64_t dist, sse;
         int rate;
-        const int shift = 0;
+#if COMP_HBD //CCODE
+       if (context_ptr->hbd_mode_decision) // CCODE
+            sse = aom_highbd_sse(src_buf, src_stride, pred_buf, pred_stride, bw, bh);
+        else
+#endif
         sse = aom_sse(src_buf, src_stride, pred_buf, pred_stride, bw, bh);
-        sse = ROUND_POWER_OF_TWO(sse, shift * 2);
+
+        sse = ROUND_POWER_OF_TWO(sse, bd_round);
         model_rd_with_curvfit(picture_control_set_ptr , plane_bsize, sse, bw * bh, &rate, &dist, context_ptr->full_lambda);
 
         total_sse += sse;
@@ -2930,7 +3112,6 @@ void search_compound_avg_dist(
         pred_desc.stride_y = bwidth;
         pred_desc.buffer_y = context_ptr->pred0;
 
-        SequenceControlSet* sequence_control_set_ptr = ((SequenceControlSet*)(picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr));
         EbPictureBufferDesc  *ref_pic_list0;
         EbPictureBufferDesc  *ref_pic_list1 = NULL;
         Mv mv_0;
@@ -2999,7 +3180,7 @@ void search_compound_avg_dist(
             0,          //output origin_x,
             0,          //output origin_y,
             0,//do chroma
-            (uint8_t)sequence_control_set_ptr->static_config.encoder_bit_depth);
+             context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
         int32_t est_rate;
         int64_t est_dist;
@@ -7479,7 +7660,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
             md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
-            sequence_control_set_ptr->static_config.encoder_bit_depth);
+            md_context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
         return return_error;
     }
@@ -7648,7 +7829,7 @@ EbErrorType inter_pu_prediction_av1(
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
         md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
-        sequence_control_set_ptr->static_config.encoder_bit_depth);
+        md_context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     return return_error;
 }
