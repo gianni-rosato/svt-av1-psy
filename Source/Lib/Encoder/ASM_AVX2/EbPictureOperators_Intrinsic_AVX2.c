@@ -11,6 +11,7 @@
 #include "EbPictureOperators_SSE2.h"
 #include "EbMemory_AVX2.h"
 #include "synonyms.h"
+#include "EbLog.h"
 
 #define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
@@ -1151,7 +1152,7 @@ int32_t  sum_residual8bit_avx2_intrin(
         return sumBlock;
     }
     else {
-        printf("\n add the rest \n");
+        SVT_LOG("\n add the rest \n");
         return 0;
     }
 }
@@ -1285,7 +1286,7 @@ void memset16bit_block_avx2_intrin(
     }
 
     else
-        printf("\n add the rest \n");
+        SVT_LOG("\n add the rest \n");
 }
 
 void unpack_avg_safe_sub_avx2_intrin(

@@ -44,7 +44,7 @@ int32_t read_y4m_header(EbConfig *cfg){
 
     /* print header */
     if(PRINT_HEADER) {
-        printf("y4m header:");
+        fprintf(stderr, "y4m header:");
         fputs(buffer, stdout);
     }
 
@@ -61,13 +61,13 @@ int32_t read_y4m_header(EbConfig *cfg){
         case 'W': /* width, required. */
             width = (uint32_t)strtol(tokstart, &tokend, 10);
             if(PRINT_HEADER)
-                printf("width = %d\n", width);
+                fprintf(stderr, "width = %d\n", width);
             tokstart = tokend;
             break;
         case 'H': /* height, required. */
             height = (uint32_t)strtol(tokstart, &tokend, 10);
             if(PRINT_HEADER)
-                printf("height = %d\n", height);
+                fprintf(stderr, "height = %d\n", height);
             tokstart = tokend;
             break;
         case 'I': /* scan type, not required, default: 'p' */
@@ -87,7 +87,7 @@ int32_t read_y4m_header(EbConfig *cfg){
                 return EB_ErrorBadParameter;
             }
             if(PRINT_HEADER)
-                printf("scan_type = %c\n", scan_type);
+                fprintf(stderr, "scan_type = %c\n", scan_type);
             break;
         case 'C': /* color space, not required: default "420" */
             tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, 0x20);
@@ -180,7 +180,7 @@ int32_t read_y4m_header(EbConfig *cfg){
                 return EB_ErrorBadParameter;
             }
             if(PRINT_HEADER)
-                printf("chroma = %s, bitdepth = %d\n", chroma, bitdepth);
+                fprintf(stderr, "chroma = %s, bitdepth = %d\n", chroma, bitdepth);
             break;
         case 'F': /* frame rate, required */
             tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, ':');
@@ -189,8 +189,8 @@ int32_t read_y4m_header(EbConfig *cfg){
             tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, 0x20);
             fr_d = (uint32_t) strtol(format_str, (char **)NULL, 10);
             if(PRINT_HEADER) {
-                printf("framerate_n = %d\n", fr_n);
-                printf("framerate_d = %d\n", fr_d);
+                fprintf(stderr, "framerate_n = %d\n", fr_n);
+                fprintf(stderr, "framerate_d = %d\n", fr_d);
             }
             break;
         case 'A': /* aspect ratio, not required */
@@ -200,8 +200,8 @@ int32_t read_y4m_header(EbConfig *cfg){
             tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, 0x20);
             aspect_d = (uint32_t) strtol(format_str, (char **)NULL, 10);
             if(PRINT_HEADER) {
-                printf("aspect_n = %d\n", aspect_n);
-                printf("aspect_d = %d\n", aspect_d);
+                fprintf(stderr, "aspect_n = %d\n", aspect_n);
+                fprintf(stderr, "aspect_d = %d\n", aspect_d);
             }
             break;
         default:

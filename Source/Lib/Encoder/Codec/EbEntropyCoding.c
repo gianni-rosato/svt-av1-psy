@@ -27,6 +27,7 @@
 #include "EbSegmentation.h"
 #include "EbCommonUtils.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
+#include "EbLog.h"
 
 #include "aom_dsp_rtcd.h"
 
@@ -2051,7 +2052,7 @@ void eb_av1_encode_mv(
     NmvContext *mvctx,
     int32_t usehp) {
     if (is_mv_valid(mv) == 0)
-        printf("Corrupted MV\n");
+        SVT_LOG("Corrupted MV\n");
 
     int32_t diff[2] = { mv->row - ref->row, mv->col - ref->col };
     const MvJointType j = av1_get_mv_joint_diff(diff);
@@ -2146,7 +2147,7 @@ int32_t eb_av1_get_pred_context_switchable_interp(
     }
     else
         filter_type_ctx += SWITCHABLE_FILTERS;
-    //  printf("\t %d\t %d\t %d",filter_type_ctx,left_type ,above_type);
+    //  SVT_LOG("\t %d\t %d\t %d",filter_type_ctx,left_type ,above_type);
 
     return filter_type_ctx;
 }
@@ -2218,7 +2219,7 @@ void write_mb_interp_filter(
     if (cm->interp_filter == SWITCHABLE) {
         int32_t dir;
         for (dir = 0; dir < 2; ++dir) {
-            // printf("\nP:%d\tX: %d\tY:%d\t %d",(pcs_ptr)->picture_number,blkOriginX,blkOriginY ,((ec_writer)->ec).rng);
+            // SVT_LOG("\nP:%d\tX: %d\tY:%d\t %d",(pcs_ptr)->picture_number,blkOriginX,blkOriginY ,((ec_writer)->ec).rng);
             const int32_t ctx = eb_av1_get_pred_context_switchable_interp(
                 ref_frame_type_neighbor_array,
                 rf0,
@@ -2753,7 +2754,7 @@ void av1_collect_neighbors_ref_counts(
             ref_counts[topRfType[1]]++;
             break;
         default:
-            printf("ERROR[AN]: Invalid Pred Direction\n");
+            SVT_LOG("ERROR[AN]: Invalid Pred Direction\n");
             break;
         }
     }
@@ -2776,7 +2777,7 @@ void av1_collect_neighbors_ref_counts(
             ref_counts[leftRfType[1]]++;
             break;
         default:
-            printf("ERROR[AN]: Invalid Pred Direction\n");
+            SVT_LOG("ERROR[AN]: Invalid Pred Direction\n");
             break;
         }
     }
@@ -3089,7 +3090,7 @@ static void encode_restoration_mode(PictureParentControlSet *pcs_ptr,
     struct AomWriteBitBuffer *wb) {
     Av1Common* cm = pcs_ptr->av1_cm;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
-    //printf("ERROR[AN]: encode_restoration_mode might not work. Double check the reference code\n");
+    //SVT_LOG("ERROR[AN]: encode_restoration_mode might not work. Double check the reference code\n");
     assert(!frm_hdr->all_lossless);
     // move out side of the function
     //if (!cm->seq_params.enable_restoration) return;
@@ -3105,11 +3106,11 @@ static void encode_restoration_mode(PictureParentControlSet *pcs_ptr,
         RestorationInfo *rsi = &pcs_ptr->av1_cm->rst_info[p];
 
         //if (p==0)
-        //   printf("POC:%i Luma restType:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
+        //   SVT_LOG("POC:%i Luma restType:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
         //if (p == 1)
-        //    printf("POC:%i Cb restType:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
+        //    SVT_LOG("POC:%i Cb restType:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
         //if (p == 2)
-        //    printf("POC:%i Cr restType:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
+        //    SVT_LOG("POC:%i Cr restType:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
 
         if (rsi->frame_restoration_type != RESTORE_NONE) {
             all_none = 0;
@@ -3229,7 +3230,7 @@ static void encode_loopfilter(PictureParentControlSet *pcs_ptr, struct AomWriteB
     // ref frame (if they are enabled).
     eb_aom_wb_write_bit(wb, lf->mode_ref_delta_enabled);
     if (lf->mode_ref_delta_enabled) {
-        printf("ERROR[AN]: Loop Filter is not supported yet \n");
+        SVT_LOG("ERROR[AN]: Loop Filter is not supported yet \n");
         /* eb_aom_wb_write_bit(wb, lf->mode_ref_delta_update);
         if (lf->mode_ref_delta_update) {
         const int32_t prime_idx = pcs_ptr->primary_ref_frame;
@@ -3351,7 +3352,7 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
     }
     else {
         // Explicit tiles with configurable tile widths and heights
-        printf("ERROR[AN]:  NON uniform_tile_spacing_flag not supported yet\n");
+        SVT_LOG("ERROR[AN]:  NON uniform_tile_spacing_flag not supported yet\n");
         //// columns
         // int sb_size_log2 = pcs_ptr->sequence_control_set_ptr->seq_header.sb_size_log2;
         //for (i = 0; i < cm->tile_cols; i++) {
@@ -3610,7 +3611,7 @@ static void write_frame_size(PictureParentControlSet *pcs_ptr,
     //    eb_aom_wb_write_literal(wb, coded_height, num_bits_height);
     //}
     if (scs_ptr->seq_header.enable_superres) {
-        printf("ERROR[AN]: enable_superres not supported yet\n");
+        SVT_LOG("ERROR[AN]: enable_superres not supported yet\n");
         //write_superres_scale(cm, wb);
     }
 
@@ -3629,7 +3630,7 @@ static void write_bitdepth(SequenceControlSet *scs_ptr/*Av1Common *const cm*/,
     // Profile   2: [0] for 8 bit, [10] 10-bit, [11] - 12-bit
     eb_aom_wb_write_bit(wb, scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 0 : 1);
     if (scs_ptr->static_config.profile == PROFILE_2 && scs_ptr->static_config.encoder_bit_depth != EB_8BIT) {
-        printf("ERROR[AN]: Profile 2 Not supported\n");
+        SVT_LOG("ERROR[AN]: Profile 2 Not supported\n");
         eb_aom_wb_write_bit(wb, scs_ptr->static_config.encoder_bit_depth == EB_10BIT ? 0 : 1);
     }
 }
@@ -3656,7 +3657,7 @@ static void write_color_config(
         //eb_aom_wb_write_literal(wb, cm->matrix_coefficients, 8);
     }
     if (is_monochrome) {
-        printf("ERROR[AN]: is_monochrome not supported yet\n");
+        SVT_LOG("ERROR[AN]: is_monochrome not supported yet\n");
         return;
     }
     if (0/*cm->color_primaries == EB_CICP_CP_BT_709 &&
@@ -4047,7 +4048,7 @@ static void WriteGlobalMotion(
         }
         */
         /*
-        printf("Frame %d/%d: Enc Ref %d: %d %d %d %d\n",
+        SVT_LOG("Frame %d/%d: Enc Ref %d: %d %d %d %d\n",
         cm->current_video_frame, cm->show_frame, frame,
         cm->global_motion[frame].wmmat[0],
         cm->global_motion[frame].wmmat[1], cm->global_motion[frame].wmmat[2],
@@ -4186,7 +4187,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     if (!scs_ptr->seq_header.reduced_still_picture_header) {
         if (showExisting) {
-            //printf("ERROR[AN]: show_existing_frame not supported yet\n");
+            //SVT_LOG("ERROR[AN]: show_existing_frame not supported yet\n");
             //RefCntBuffer *const frame_bufs = cm->buffer_pool->frame_bufs;
             //const int32_t frame_to_show = cm->ref_frame_map[cpi->show_existing_frame];
 
@@ -4200,7 +4201,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
             eb_aom_wb_write_bit(wb, 1);  // show_existing_frame
             eb_aom_wb_write_literal(wb, frm_hdr->show_existing_frame, 3);
             if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
-                printf("ERROR[AN]: frame_id_numbers_present_flag not supported yet\n");
+                SVT_LOG("ERROR[AN]: frame_id_numbers_present_flag not supported yet\n");
                 /*int32_t frame_id_len = cm->seq_params.frame_id_length;
                 int32_t display_frame_id = cm->ref_frame_id[cpi->show_existing_frame];
                 eb_aom_wb_write_literal(wb, display_frame_id, frame_id_len);*/
@@ -4361,7 +4362,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                         REF_FRAMES_LOG2);
 
                 if (scs_ptr->seq_header.frame_id_numbers_present_flag) {
-                    printf("ERROR[AN]: frame_id_numbers_present_flag not supported yet\n");
+                    SVT_LOG("ERROR[AN]: frame_id_numbers_present_flag not supported yet\n");
                     //int32_t i = get_ref_frame_map_idx(cpi, ref_frame);
                     //int32_t frame_id_len = cm->seq_params.frame_id_length;
                     //int32_t diff_len = cm->seq_params.delta_frame_id_length;
@@ -4378,7 +4379,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
             }
 
             if (!frm_hdr->error_resilient_mode && frame_size_override_flag) {
-                printf("ERROR[AN]: frame_size_override_flag not supported yet\n");
+                SVT_LOG("ERROR[AN]: frame_size_override_flag not supported yet\n");
                 //write_frame_size_with_refs(pcs_ptr, wb);
             }
             else
@@ -4441,7 +4442,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                     pcs_ptr->prev_delta_lf[lf_id] = 0;
             }
 #else
-            printf("ERROR[AN]: delta_q_present_flag not supported yet\n");
+            SVT_LOG("ERROR[AN]: delta_q_present_flag not supported yet\n");
 #endif
             //                eb_aom_wb_write_literal(wb, OD_ILOG_NZ(frm_hdr->delta_q_params.delta_q_res) - 1, 2);
             //                xd->prev_qindex = frm_hdr->quantization_params.base_q_idx;
@@ -4461,7 +4462,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
         }
     }
     if (frm_hdr->all_lossless) {
-        printf("ERROR[AN]: all_lossless\n");
+        SVT_LOG("ERROR[AN]: all_lossless\n");
         //assert(av1_superres_unscaled(pcs_ptr));
     }
     else {
@@ -4494,7 +4495,7 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     eb_aom_wb_write_bit(wb, frm_hdr->reduced_tx_set);
 
     if (!frame_is_intra_only(pcs_ptr)) {
-        //  printf("ERROR[AN]: Global motion not supported yet\n");
+        //  SVT_LOG("ERROR[AN]: Global motion not supported yet\n");
         WriteGlobalMotion(pcs_ptr, wb);
     }
     if (scs_ptr->seq_header.film_grain_params_present && (frm_hdr->show_frame || frm_hdr->showable_frame))
@@ -4579,7 +4580,7 @@ static uint32_t WriteSequenceHeaderObu(
     eb_aom_wb_write_bit(&wb, scs_ptr->seq_header.reduced_still_picture_header);
 
     if (scs_ptr->seq_header.reduced_still_picture_header) {
-        printf("ERROR[AN]: reduced_still_picture_hdr not supported\n");
+        SVT_LOG("ERROR[AN]: reduced_still_picture_hdr not supported\n");
         //write_bitstream_level(cm->seq_params.level[0], &wb);
     }
     else {
@@ -4587,7 +4588,7 @@ static uint32_t WriteSequenceHeaderObu(
 
         if (scs_ptr->seq_header.timing_info.timing_info_present) {
             // timing_info
-            printf("ERROR[AN]: timing_info_present not supported\n");
+            SVT_LOG("ERROR[AN]: timing_info_present not supported\n");
             /*write_timing_info_header(cm, &wb);
             eb_aom_wb_write_bit(&wb, cm->decoder_model_info_present_flag);
             if (cm->decoder_model_info_present_flag) write_decoder_model_info(cm, &wb);*/
@@ -4606,14 +4607,14 @@ static uint32_t WriteSequenceHeaderObu(
             if (scs_ptr->level[i].major > 3)
                 eb_aom_wb_write_bit(&wb, scs_ptr->seq_header.operating_point[i].seq_tier);
             if (scs_ptr->seq_header.decoder_model_info_present_flag) {
-                printf("ERROR[AN]: decoder_model_info_present_flag not supported\n");
+                SVT_LOG("ERROR[AN]: decoder_model_info_present_flag not supported\n");
                 //eb_aom_wb_write_bit(&wb,
                 //    cm->op_params[i].decoder_model_param_present_flag);
                 //if (cm->op_params[i].decoder_model_param_present_flag)
                 //    write_dec_model_op_parameters(cm, &wb, i);
             }
             if (scs_ptr->seq_header.initial_display_delay_present_flag) {
-                printf("ERROR[AN]: display_model_info_present_flag not supported\n");
+                SVT_LOG("ERROR[AN]: display_model_info_present_flag not supported\n");
                 //eb_aom_wb_write_bit(&wb,
                 //    cm->op_params[i].display_model_param_present_flag);
                 //if (cm->op_params[i].display_model_param_present_flag) {
@@ -4977,13 +4978,13 @@ static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, F
         switch (unit_rtype) {
         case RESTORE_WIENER:
             write_wiener_filter(wiener_win, &rui->wiener_info, wiener_info, w);
-            //printf("POC:%i plane:%i v:%i %i %i  h:%i %i %i\n", piCSetPtr->picture_number, plane, rui->wiener_info.vfilter[0], rui->wiener_info.vfilter[1], rui->wiener_info.vfilter[2], rui->wiener_info.hfilter[0], rui->wiener_info.hfilter[1], rui->wiener_info.hfilter[2]);
+            //SVT_LOG("POC:%i plane:%i v:%i %i %i  h:%i %i %i\n", piCSetPtr->picture_number, plane, rui->wiener_info.vfilter[0], rui->wiener_info.vfilter[1], rui->wiener_info.vfilter[2], rui->wiener_info.hfilter[0], rui->wiener_info.hfilter[1], rui->wiener_info.hfilter[2]);
             break;
         case RESTORE_SGRPROJ:
             write_sgrproj_filter(&rui->sgrproj_info, sgrproj_info, w);
-            //printf("POC:%i plane:%i ep:%i xqd_0:%i  xqd_1:%i\n", piCSetPtr->picture_number, plane, rui->sgrproj_info.ep, rui->sgrproj_info.xqd[0], rui->sgrproj_info.xqd[1]);
+            //SVT_LOG("POC:%i plane:%i ep:%i xqd_0:%i  xqd_1:%i\n", piCSetPtr->picture_number, plane, rui->sgrproj_info.ep, rui->sgrproj_info.xqd[0], rui->sgrproj_info.xqd[1]);
             break;
-        default: assert(unit_rtype == RESTORE_NONE);// printf("POC:%i plane:%i OFF\n", piCSetPtr->picture_number, plane);
+        default: assert(unit_rtype == RESTORE_NONE);// SVT_LOG("POC:%i plane:%i OFF\n", piCSetPtr->picture_number, plane);
             break;
         }
     }
@@ -4995,10 +4996,10 @@ static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, F
 #endif
         if (unit_rtype != RESTORE_NONE) {
             write_wiener_filter(wiener_win, &rui->wiener_info, wiener_info, w);
-            //printf("POC:%i plane:%i v:%i %i %i  h:%i %i %i\n", piCSetPtr->picture_number, plane, rui->wiener_info.vfilter[0], rui->wiener_info.vfilter[1], rui->wiener_info.vfilter[2], rui->wiener_info.hfilter[0], rui->wiener_info.hfilter[1], rui->wiener_info.hfilter[2]);
+            //SVT_LOG("POC:%i plane:%i v:%i %i %i  h:%i %i %i\n", piCSetPtr->picture_number, plane, rui->wiener_info.vfilter[0], rui->wiener_info.vfilter[1], rui->wiener_info.vfilter[2], rui->wiener_info.hfilter[0], rui->wiener_info.hfilter[1], rui->wiener_info.hfilter[2]);
         }
         //else
-            //printf("POC:%i plane:%i OFF\n", piCSetPtr->picture_number, plane);
+            //SVT_LOG("POC:%i plane:%i OFF\n", piCSetPtr->picture_number, plane);
     }
     else if (frame_rtype == RESTORE_SGRPROJ) {
         aom_write_symbol(w, unit_rtype != RESTORE_NONE,
@@ -5008,10 +5009,10 @@ static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, F
 #endif
         if (unit_rtype != RESTORE_NONE) {
             write_sgrproj_filter(&rui->sgrproj_info, sgrproj_info, w);
-            //printf("POC:%i plane:%i ep:%i xqd_0:%i  xqd_1:%i\n", piCSetPtr->picture_number, plane, rui->sgrproj_info.ep, rui->sgrproj_info.xqd[0], rui->sgrproj_info.xqd[1]);
+            //SVT_LOG("POC:%i plane:%i ep:%i xqd_0:%i  xqd_1:%i\n", piCSetPtr->picture_number, plane, rui->sgrproj_info.ep, rui->sgrproj_info.xqd[0], rui->sgrproj_info.xqd[1]);
         }
         //else
-        //    printf("POC:%i plane:%i OFF\n", piCSetPtr->picture_number, plane);
+        //    SVT_LOG("POC:%i plane:%i OFF\n", piCSetPtr->picture_number, plane);
     }
 }
 
@@ -5967,7 +5968,7 @@ void write_inter_segment_id(PictureControlSet *picture_control_set_ptr,
                 write_segment_id(picture_control_set_ptr, frameContext, ecWriter, blockGeom->bsize, blkOriginX,
                                  blkOriginY, cu_ptr, 1);
                 if (segmentationParams->segmentation_temporal_update){
-                    printf("ERROR: Temporal update is not supported yet! \n");
+                    SVT_LOG("ERROR: Temporal update is not supported yet! \n");
                     assert(0);
 //                    cu_ptr->seg_id_predicted = 0;
                 }
@@ -5976,7 +5977,7 @@ void write_inter_segment_id(PictureControlSet *picture_control_set_ptr,
         }
 
         if (segmentationParams->segmentation_temporal_update) {
-            printf("ERROR: Temporal update is not supported yet! \n");
+            SVT_LOG("ERROR: Temporal update is not supported yet! \n");
             assert(0);
 //            const int pred_flag = cu_ptr->seg_id_predicted;
 //            aom_cdf_prob *pred_cdf = av1_get_pred_cdf_seg_id(picture_control_set_ptr, frameContext, cu_ptr, blkOriginX, blkOriginY);
@@ -6130,7 +6131,7 @@ assert(bsize < BlockSizeS_ALL);
                     reduced_delta_qindex,
                     ec_writer);
                 /*if (picture_control_set_ptr->picture_number == 0){
-                printf("%d\t%d\t%d\t%d\n",
+                SVT_LOG("%d\t%d\t%d\t%d\n",
                 blkOriginX,
                 blkOriginY,
                 current_q_index,
@@ -6273,7 +6274,7 @@ assert(bsize < BlockSizeS_ALL);
                 skip_flag_neighbor_array);
         }
         if (!picture_control_set_ptr->parent_pcs_ptr->skip_mode_flag && cu_ptr->skip_flag)
-            printf("ERROR[AN]: SKIP not supported\n");
+            SVT_LOG("ERROR[AN]: SKIP not supported\n");
         if (!cu_ptr->skip_flag) {
             //const int32_t skip = write_skip(cm, xd, mbmi->segment_id, mi, w);
             EncodeSkipCoeffAv1(

@@ -2311,7 +2311,7 @@ EB_EXTERN void av1_encode_pass(
                 cu_ptr->block_has_coeff = 0;
 
                 // if(picture_control_set_ptr->picture_number==4 && context_ptr->cu_origin_x==0 && context_ptr->cu_origin_y==0)
-                //     printf("CHEDD");
+                //     SVT_LOG("CHEDD");
                 uint32_t  coded_area_org = context_ptr->coded_area_sb;
                 uint32_t  coded_area_org_uv = context_ptr->coded_area_sb_uv;
 

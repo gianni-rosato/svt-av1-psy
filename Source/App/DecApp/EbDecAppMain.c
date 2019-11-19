@@ -46,7 +46,7 @@ int init_pic_buffer(EbSvtIOFormat *pic_buffer, CLInput *cli,
         pic_buffer->y_stride = cli->width;
         break;
     default:
-        printf("Unsupported colour format. \n");
+        fprintf(stderr, "Unsupported colour format. \n");
         return 0;
     }
     pic_buffer->width = cli->width;
@@ -74,7 +74,7 @@ int read_input_frame(DecInputContext *input, uint8_t **buffer, size_t *bytes_rea
             buffer_size);
         break;
     default:
-        printf("Unsupported bitstream type. \n");
+        fprintf(stderr, "Unsupported bitstream type. \n");
         return 0;
     }
 }
@@ -125,7 +125,7 @@ void write_frame(EbBufferHeaderType *recon_buffer, CLInput *cli) {
 }
 
 static void show_progress(int in_frame, uint64_t dx_time) {
-    printf("\n%d frames decoded in %" PRId64 " us (%.2f fps)\r",
+    fprintf(stderr, "\n%d frames decoded in %" PRId64 " us (%.2f fps)\r",
         in_frame, dx_time,
         (double)in_frame * 1000000.0 / (double)dx_time);
 }
@@ -170,8 +170,8 @@ int32_t main(int32_t argc, char* argv[])
     size_t bytes_in_buffer = 0, buffer_size = 0;
 
     // Print Decoder Info
-    printf("-------------------------------------\n");
-    printf("SVT-AV1 Decoder\n");
+    fprintf(stderr, "-------------------------------------\n");
+    fprintf(stderr, "SVT-AV1 Decoder\n");
 
     // Initialize config
     if (!config_ptr)
@@ -210,7 +210,7 @@ int32_t main(int32_t argc, char* argv[])
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb = (uint8_t*)malloc(size >> 2);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cr = (uint8_t*)malloc(size >> 2);
         if (!init_pic_buffer((EbSvtIOFormat*)recon_buffer->p_buffer, &cli, config_ptr)) {
-            printf("Decoding \n");
+            fprintf(stderr, "Decoding \n");
             EbAV1StreamInfo *stream_info = (EbAV1StreamInfo*)malloc(sizeof(EbAV1StreamInfo));
             EbAV1FrameInfo *frame_info = (EbAV1FrameInfo*)malloc(sizeof(EbAV1FrameInfo));
 
@@ -252,7 +252,7 @@ int32_t main(int32_t argc, char* argv[])
             }
             if (fps_summary || fps_frm) {
                 show_progress(in_frame, dx_time);
-                printf("\n");
+                fprintf(stderr, "\n");
             }
 
             if (enable_md5) {
@@ -273,7 +273,7 @@ int32_t main(int32_t argc, char* argv[])
         free(buf);
     }
     else
-        printf("Error in configuration. \n");
+        fprintf(stderr, "Error in configuration. \n");
     return_error |= eb_dec_deinit_handle(p_handle);
 
 fail:

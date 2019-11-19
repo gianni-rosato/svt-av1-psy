@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "grainSynthesis.h"
+#include "EbLog.h"
 
   // Samples with Gaussian distribution in the range of [-2048, 2047] (12 bits)
   // with zero mean and standard deviation of about 512.
@@ -561,7 +562,7 @@ static void generate_chroma_grain_blocks(
                     wsum_cr = wsum_cr + params->ar_coeffs_cr[pos] * av_luma;
                 }
                 else {
-                    printf(
+                    SVT_LOG(
                         "Grain synthesis: prediction between two chroma components is "
                         "not supported!");
                     exit(1);

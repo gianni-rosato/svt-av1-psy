@@ -35,6 +35,8 @@
 #include "../../Encoder/Codec/EbEntropyCoding.h"
 #include "../../Encoder/Codec/EbFullLoop.h"
 
+#include "EbLog.h"
+
 #if ENABLE_ENTROPY_TRACE
 FILE* temp_fp;
 int enable_dump;
@@ -1860,7 +1862,7 @@ static INLINE int read_golomb(SvtReader *r) {
         i = svt_read_bit(r, ACCT_STR);
         ++length;
         if (length > 20) {
-            printf("Invalid length in read_golomb");
+            SVT_LOG("Invalid length in read_golomb");
             break;
         }
     }

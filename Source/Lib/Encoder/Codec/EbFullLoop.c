@@ -185,7 +185,7 @@ void eb_quantize_b_helper_c(
             const int32_t coeff = coeff_ptr[rc] * wt;
 
             ////if (mapRc != NewTab[rc])
-            //printf("%d\n", coeff);
+            //SVT_LOG("%d\n", coeff);
 
             if (coeff < (zbins[rc != 0] * (1 << AOM_QM_BITS)) &&
                 coeff >(nzbins[rc != 0] * (1 << AOM_QM_BITS)))

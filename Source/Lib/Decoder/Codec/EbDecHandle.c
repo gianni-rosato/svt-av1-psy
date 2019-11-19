@@ -20,6 +20,7 @@
 #include "EbDecPicMgr.h"
 #include "grainSynthesis.h"
 
+
 #ifndef _WIN32
 #include <pthread.h>
 #include <errno.h>
@@ -32,6 +33,8 @@
 #endif
 
 #include "../../Encoder/Codec/aom_dsp_rtcd.h"
+
+#include "EbLog.h"
 
 /**************************************
 * Globals
@@ -172,7 +175,7 @@ int svt_dec_out_buf(
                 chroma_size = size * ht * wd;
                 break;
             default:
-                printf("Unsupported colour format. \n");
+                SVT_LOG("Unsupported colour format. \n");
                 return 0;
             }
 
@@ -180,7 +183,7 @@ int svt_dec_out_buf(
             out_img->width = wd;
             out_img->height = ht;
             if (out_img->bit_depth != (EbBitDepth)recon_picture_buf->bit_depth) {
-                printf("Warning : Output bit depth conversion not supported."
+                SVT_LOG("Warning : Output bit depth conversion not supported."
                     " Output depth set to %d. ", recon_picture_buf->bit_depth);
                 out_img->bit_depth = (EbBitDepth)recon_picture_buf->bit_depth;
             }
@@ -380,20 +383,20 @@ static EbErrorType init_svt_av1_decoder_handle(
     EbErrorType       return_error = EB_ErrorNone;
     EbComponentType  *svt_dec_component = (EbComponentType*)hComponent;
 
-    printf("SVT [version]:\tSVT-AV1 Decoder Lib v%d.%d.%d\n",
+    SVT_LOG("SVT [version]:\tSVT-AV1 Decoder Lib v%d.%d.%d\n",
         SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
 #if ( defined( _MSC_VER ) && (_MSC_VER < 1910) )
-    printf("SVT [build]  : Visual Studio 2013");
+    SVT_LOG("SVT [build]  : Visual Studio 2013");
 #elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
-    printf("SVT [build]  :\tVisual Studio 2017");
+    SVT_LOG("SVT [build]  :\tVisual Studio 2017");
 #elif defined(__GNUC__)
-    printf("SVT [build]  :\tGCC %d.%d.%d\t", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+    SVT_LOG("SVT [build]  :\tGCC %d.%d.%d\t", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else
-    printf("SVT [build]  :\tunknown compiler");
+    SVT_LOG("SVT [build]  :\tunknown compiler");
 #endif
-    printf(" %u bit\n", (unsigned) sizeof(void*) * 8);
-    printf("LIB Build date: %s %s\n", __DATE__, __TIME__);
-    printf("-------------------------------------------\n");
+    SVT_LOG(" %u bit\n", (unsigned) sizeof(void*) * 8);
+    SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
+    SVT_LOG("-------------------------------------------\n");
 
     SwitchToRealTime();
 
@@ -420,6 +423,8 @@ EB_API EbErrorType eb_dec_init_handle(
 
     if (p_handle == NULL)
         return EB_ErrorBadParameter;
+
+    svt_log_init();
 
     *p_handle = (EbComponentType*) malloc(sizeof(EbComponentType));
 
@@ -533,7 +538,7 @@ EB_API EbErrorType eb_svt_decode_frame(
     {
         /*TODO : Remove or move. For Test purpose only */
         dec_handle_ptr->dec_cnt++;
-        //printf("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
+        //SVT_LOG("\n SVT-AV1 Dec : Decoding Pic #%d", dec_handle_ptr->dec_cnt);
 
         uint64_t frame_size = 0;
         frame_size = data_end - data_start;
@@ -553,7 +558,7 @@ EB_API EbErrorType eb_svt_decode_frame(
             ++data;
         }
 
-        /*printf("\nDecoding Pic #%d  frm_w : %d    frm_h : %d
+        /*SVT_LOG("\nDecoding Pic #%d  frm_w : %d    frm_h : %d
             frm_typ : %d", dec_handle_ptr->dec_cnt,
             dec_handle_ptr->frame_header.frame_size.frame_width,
             dec_handle_ptr->frame_header.frame_size.frame_height,

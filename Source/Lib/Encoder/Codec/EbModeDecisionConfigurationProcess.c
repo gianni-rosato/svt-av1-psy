@@ -29,6 +29,7 @@
 #include "av1me.h"
 #include "EbCommonUtils.h"
 #include "EbQMatrices.h"
+#include "EbLog.h"
 
 #define MAX_MESH_SPEED 5  // Max speed setting for mesh motion method
 static MeshPattern
@@ -663,7 +664,7 @@ void set_reference_sg_ep(
         cm->sg_ref_frame_ep[1] = 0;
         break;
     default:
-        printf("SG: Not supported picture type");
+        SVT_LOG("SG: Not supported picture type");
         break;
     }
 }
@@ -696,7 +697,7 @@ void set_reference_cdef_strength(
         picture_control_set_ptr->parent_pcs_ptr->cdf_ref_frame_strenght = strength;
         break;
     default:
-        printf("CDEF: Not supported picture type");
+        SVT_LOG("CDEF: Not supported picture type");
         break;
     }
 }
@@ -1338,7 +1339,7 @@ uint8_t update_mdc_level(
     else if (s_depth == 0 && e_depth == 3)
         adjusted_depth_level = 3; // Pred + 3
     else
-        printf("Error: unvalid s_depth && e_depth");
+        SVT_LOG("Error: unvalid s_depth && e_depth");
 
     switch (adjusted_depth_level) {
     case 0:
@@ -1390,7 +1391,7 @@ uint8_t update_mdc_level(
         depth_refinement_mode = Predm3p1;
         break;
     default:
-        printf("Not supported refined mdc_depth_level");
+        SVT_LOG("Not supported refined mdc_depth_level");
         break;
     }
     return depth_refinement_mode;
@@ -1448,7 +1449,7 @@ void init_considered_block(
         depth_refinement_mode = AllD;
         break;
     default:
-        printf("not supported mdc_depth_level");
+        SVT_LOG("not supported mdc_depth_level");
         break;
     }
 #endif
@@ -1962,7 +1963,7 @@ void init_considered_block(
                     }
                     break;
                 default:
-                    printf("Error! invalid mdc_refinement_mode\n");
+                    SVT_LOG("Error! invalid mdc_refinement_mode\n");
                     break;
                 }
             }
@@ -2295,7 +2296,7 @@ void derive_search_method(
         else if (picture_control_set_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] == SB_PRED_OPEN_LOOP_DEPTH_MODE)
             sequence_control_set_ptr->pred1_nfl_count[picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index]  ++;
         else
-            SVT_LOG("error");
+            SVT_ERROR("error");
     }
 #endif
 }
@@ -2550,7 +2551,7 @@ void set_target_budget_oq(
         budget_per_sb = (((context_ptr->sb_average_score - MEDIUM_SB_SCORE) * (U_150 - U_125)) / (HIGH_SB_SCORE - MEDIUM_SB_SCORE)) + U_125;
     budget_per_sb = CLIP3(SB_PRED_OPEN_LOOP_COST, U_150, budget_per_sb + budget_per_sb_boost[context_ptr->adp_level] + luminosity_change_boost);
 
-    //printf("picture_number = %d\tsb_average_score = %d\n", picture_control_set_ptr->picture_number, budget_per_sb);
+    //SVT_LOG("picture_number = %d\tsb_average_score = %d\n", picture_control_set_ptr->picture_number, budget_per_sb);
     budget = sequence_control_set_ptr->sb_tot_cnt * budget_per_sb;
 
     context_ptr->budget = budget;

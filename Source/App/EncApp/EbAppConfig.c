@@ -929,11 +929,11 @@ static int32_t ReadConfigFile(
             if (resultSize == configFileSize) {
                 ParseConfigFile(config, configFileBuffer, configFileSize);
             } else {
-                printf("Error channel %u: File Read Failed\n",instance_idx+1);
+                fprintf(stderr, "Error channel %u: File Read Failed\n",instance_idx+1);
                 return_error = -1;
             }
         } else {
-            printf("Error channel %u: Memory Allocation Failed\n",instance_idx+1);
+            fprintf(stderr, "Error channel %u: Memory Allocation Failed\n",instance_idx+1);
             return_error = -1;
         }
 
@@ -941,7 +941,7 @@ static int32_t ReadConfigFile(
         fclose(config->config_file);
         config->config_file = (FILE*) NULL;
     } else {
-        printf("Error channel %u: Couldn't open Config File: %s\n", instance_idx+1,configPath);
+        fprintf(stderr, "Error channel %u: Couldn't open Config File: %s\n", instance_idx+1,configPath);
         return_error = -1;
     }
 
@@ -1057,10 +1057,10 @@ uint32_t get_help(
     if (FindToken(argc, argv, HELP_TOKEN, config_string) == 0) {
         int32_t token_index = -1;
 
-        printf("\n%-25s\t%-25s\t%s\n\n" ,"TOKEN", "DESCRIPTION", "INPUT TYPE");
-        printf("%-25s\t%-25s\t%s\n" ,"-nch", "NumberOfChannels", "Single input");
+        fprintf(stderr, "\n%-25s\t%-25s\t%s\n\n" ,"TOKEN", "DESCRIPTION", "INPUT TYPE");
+        fprintf(stderr, "%-25s\t%-25s\t%s\n" ,"-nch", "NumberOfChannels", "Single input");
         while (config_entry[++token_index].token != NULL)
-            printf("%-25s\t%-25s\t%s\n", config_entry[token_index].token, config_entry[token_index].name, config_entry[token_index].type ? "Array input": "Single input");
+            fprintf(stderr, "%-25s\t%-25s\t%s\n", config_entry[token_index].token, config_entry[token_index].name, config_entry[token_index].type ? "Array input": "Single input");
         return 1;
     }
     else
@@ -1080,7 +1080,7 @@ uint32_t get_number_of_channels(
         // Set the input file
         channelNumber = strtol(config_string,  NULL, 0);
         if ((channelNumber > (uint32_t) MAX_CHANNEL_NUMBER) || channelNumber == 0){
-            printf("Error: The number of channels has to be within the range [1,%u]\n",(uint32_t) MAX_CHANNEL_NUMBER);
+            fprintf(stderr, "Error: The number of channels has to be within the range [1,%u]\n",(uint32_t) MAX_CHANNEL_NUMBER);
             return 0;
         }else{
             return channelNumber;
@@ -1192,7 +1192,7 @@ EbErrorType read_command_line(
     }
     else {
         if (FindToken(argc, argv, CONFIG_FILE_TOKEN, config_string) == 0) {
-            printf("Error: Config File Token Not Found\n");
+            fprintf(stderr, "Error: Config File Token Not Found\n");
             return EB_ErrorBadParameter;
         }
         else
@@ -1230,7 +1230,7 @@ EbErrorType read_command_line(
         if ((configs[index])->y4m_input == EB_TRUE){
             ret_y4m = read_y4m_header(configs[index]);
             if(ret_y4m == EB_ErrorBadParameter){
-                printf("Error found when reading the y4m file parameters.\n");
+                fprintf(stderr, "Error found when reading the y4m file parameters.\n");
                 return EB_ErrorBadParameter;
             }
         }
@@ -1401,10 +1401,10 @@ EbErrorType read_command_line(
     // Print message for unprocessed tokens
     if (cmd_token_cnt > 0) {
         int32_t cmd_copy_index;
-        printf("Unprocessed tokens: ");
+        fprintf(stderr, "Unprocessed tokens: ");
         for (cmd_copy_index = 0; cmd_copy_index < cmd_token_cnt; ++cmd_copy_index)
-            printf(" %s ", cmd_copy[cmd_copy_index]);
-        printf("\n\n");
+            fprintf(stderr, " %s ", cmd_copy[cmd_copy_index]);
+        fprintf(stderr, "\n\n");
         return_error = EB_ErrorBadParameter;
     }
 

@@ -355,9 +355,9 @@ uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
         uint32_t tell;
         /* Don't count the 1 bit we lose to raw bits as overhead. */
         tell = eb_od_ec_enc_tell(enc) - 1;
-        fprintf(stderr, "overhead: %f%%\n",
+        SVT_ERROR("overhead: %f%%\n",
             100 * (tell - enc->entropy) / enc->entropy);
-        fprintf(stderr, "efficiency: %f bits/symbol\n",
+        SVT_ERROR("efficiency: %f bits/symbol\n",
             (double)tell / enc->nb_symbols);
     }
 #endif

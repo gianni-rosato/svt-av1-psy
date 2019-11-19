@@ -2078,7 +2078,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
     read_ref_frames(parse_ctxt, pi);
    /* if ((pi->mi->ref_frame[0] >= BWDREF_FRAME && pi->mi->ref_frame[0] <= ALTREF_FRAME) ||
         (pi->mi->ref_frame[1] >= BWDREF_FRAME && pi->mi->ref_frame[1] <= ALTREF_FRAME)) {
-        printf("ALTREF found - frame : %d\n", dec_handle->dec_cnt);
+        SVT_LOG("ALTREF found - frame : %d\n", dec_handle->dec_cnt);
         exit(0);
     }*/
     const int is_compound = has_second_ref(mbmi);
@@ -2090,11 +2090,11 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
 
 #if EXTRA_DUMP
     if (enable_dump) {
-        printf("\n mi_row: %d mi_col: %d\n", pi->mi_row, pi->mi_col);
+        SVT_LOG("\n mi_row: %d mi_col: %d\n", pi->mi_row, pi->mi_col);
         /*for (int i = 0; i < MODE_CTX_REF_FRAMES; i++)
             for (int j = 0; j < MAX_REF_MV_STACK_SIZE; j++)
-                printf("ref_mv_stack[%d][%d]=%d\t", i, j, pi->ref_mv_stack[i][j].this_mv.as_int);
-        printf("\n");*/
+                SVT_LOG("ref_mv_stack[%d][%d]=%d\t", i, j, pi->ref_mv_stack[i][j].this_mv.as_int);
+        SVT_LOG("\n");*/
         fflush(stdout);
     }
 #endif
@@ -2197,7 +2197,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
 
 #if EXTRA_DUMP
     if (enable_dump) {
-        printf("\n mode %d MV %d %d \n", mbmi->mode, mbmi->mv[0].as_mv.row, mbmi->mv[0].as_mv.col);
+        SVT_LOG("\n mode %d MV %d %d \n", mbmi->mode, mbmi->mv[0].as_mv.row, mbmi->mv[0].as_mv.col);
         fflush(stdout);
     }
 #endif

@@ -32,7 +32,7 @@ static void set_num_thread(const char *value, EbSvtAv1DecConfiguration *cfg) { c
 static void set_num_pframes(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->num_p_frames = strtoul(value, NULL, 0);
     if (cfg->num_p_frames != 1) {
-        printf("Warning : Multi frame parallelism not supported. Setting parallel frames to 1. \n");
+        fprintf(stderr, "Warning : Multi frame parallelism not supported. Setting parallel frames to 1. \n");
         cfg->num_p_frames = 1;
     }
 };
@@ -98,7 +98,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                 config_strings[cmd_token_cnt] = argv[++token_index];
         }
         else {
-            printf(" Invalid CLI: %s \n", argv[token_index]);
+            fprintf(stderr, " Invalid CLI: %s \n", argv[token_index]);
             return EB_ErrorBadParameter;
         }
     }
@@ -111,7 +111,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                 FILE * fin = NULL;
                 FOPEN(fin, config_strings[token_index], "rb");
                 if (!fin) {
-                    printf("Invalid input file \n");
+                    fprintf(stderr, "Invalid input file \n");
                     return EB_ErrorBadParameter;
                 }
                 else {
@@ -123,7 +123,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                 FILE * fout = NULL;
                 FOPEN(fout, config_strings[token_index], "wb");
                 if (!fout) {
-                    printf("Invalid output file \n");
+                    fprintf(stderr, "Invalid output file \n");
                     return EB_ErrorBadParameter;
                 }
                 else {
@@ -151,7 +151,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                     if (EB_STRCMP(cmd_copy[token_index], config_entry[temp_ind].token) == 0) {
                         if (config_strings[token_index] == NULL) {
                             if (config_entry[temp_ind].valueRequired == 1) {
-                                printf("Invalid CLI option: %s \n", cmd_copy[token_index]);
+                                fprintf(stderr, "Invalid CLI option: %s \n", cmd_copy[token_index]);
                                 return EB_ErrorBadParameter;
                             }
                             else
@@ -163,7 +163,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
                     temp_ind++;
                 }
                 if (!cli_read) {
-                    printf("Invalid CLI option: %s \n", cmd_copy[token_index]);
+                    fprintf(stderr, "Invalid CLI option: %s \n", cmd_copy[token_index]);
                     return EB_ErrorBadParameter;
                 }
             }
@@ -174,7 +174,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
     }
 
     if (!cli->inFile) {
-        printf("Input file not specified. \n");
+        fprintf(stderr, "Input file not specified. \n");
         showHelp();
         return EB_ErrorBadParameter;
     }
@@ -195,7 +195,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[],
     else if (file_is_obu(cli, obu_ctx))
         cli->inFileType = FILE_TYPE_OBU;
     else {
-        printf("Unsupported input file format. \n");
+        fprintf(stderr, "Unsupported input file format. \n");
         return EB_ErrorBadParameter;
     }
     return EB_ErrorNone;

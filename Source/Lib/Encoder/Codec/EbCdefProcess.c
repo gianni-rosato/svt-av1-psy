@@ -262,7 +262,7 @@ void cdef_seg_search(
                 }
 
                 //if (pPcs->picture_number == 15)
-                //    printf(" bs:%i count:%i  mse:%I64i\n", bs, cdef_count,picture_control_set_ptr->mse_seg[0][fbr*nhfb + fbc][4]);
+                //    SVT_LOG(" bs:%i count:%i  mse:%I64i\n", bs, cdef_count,picture_control_set_ptr->mse_seg[0][fbr*nhfb + fbc][4]);
             }
         }
     }
@@ -491,7 +491,7 @@ void* cdef_kernel(void *input_ptr)
         picture_control_set_ptr->tot_seg_searched_cdef++;
         if (picture_control_set_ptr->tot_seg_searched_cdef == picture_control_set_ptr->cdef_segments_total_count)
         {
-           // printf("    CDEF all seg here  %i\n", picture_control_set_ptr->picture_number);
+           // SVT_LOG("    CDEF all seg here  %i\n", picture_control_set_ptr->picture_number);
         if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode) {
                 finish_cdef_search(
                     0,

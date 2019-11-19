@@ -49,6 +49,8 @@
 #include "EbDlfProcess.h"
 #include "EbRateControlResults.h"
 
+#include "EbLog.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -591,7 +593,7 @@ EbErrorType load_default_buffer_configuration_settings(
     }
 
     sequence_control_set_ptr->total_process_init_count += 6; // single processes count
-    printf("Number of logical cores available: %u\nNumber of PPCS %u\n", core_count, sequence_control_set_ptr->picture_control_set_pool_init_count);
+    SVT_LOG("Number of logical cores available: %u\nNumber of PPCS %u\n", core_count, sequence_control_set_ptr->picture_control_set_pool_init_count);
 
     /******************************************************************
     * Platform detection, limit cpu flags to hardware available CPU
@@ -599,8 +601,8 @@ EbErrorType load_default_buffer_configuration_settings(
     const CPU_FLAGS cpu_flags = get_cpu_flags();
     const CPU_FLAGS cpu_flags_to_use = get_cpu_flags_to_use();
     sequence_control_set_ptr->static_config.use_cpu_flags &= cpu_flags_to_use;
-    printf("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
-    printf("[asm level selected : up to %s]\n", get_asm_level_name_str(sequence_control_set_ptr->static_config.use_cpu_flags));
+    SVT_LOG("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
+    SVT_LOG("[asm level selected : up to %s]\n", get_asm_level_name_str(sequence_control_set_ptr->static_config.use_cpu_flags));
 
     return return_error;
 }
@@ -1706,6 +1708,7 @@ EB_API EbErrorType eb_init_handle(
     EbErrorType           return_error = EB_ErrorNone;
     if(p_handle == NULL)
          return EB_ErrorBadParameter;
+    svt_log_init();
 
     #if defined(__linux__)
         if(lp_group == NULL) {
@@ -3472,19 +3475,19 @@ EbErrorType init_svt_av1_encoder_handle(
     EbComponentType  *svt_enc_component = (EbComponentType*)hComponent;
     EbEncHandle      *handle;
 
-    printf("SVT [version]:\tSVT-AV1 Encoder Lib v%d.%d.%d\n", SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
+    SVT_LOG("SVT [version]:\tSVT-AV1 Encoder Lib v%d.%d.%d\n", SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
 #if ( defined( _MSC_VER ) && (_MSC_VER < 1910) )
-    printf("SVT [build]  : Visual Studio 2013");
+    SVT_LOG("SVT [build]  : Visual Studio 2013");
 #elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
-    printf("SVT [build]  :\tVisual Studio 2017");
+    SVT_LOG("SVT [build]  :\tVisual Studio 2017");
 #elif defined(__GNUC__)
-    printf("SVT [build]  :\tGCC %s\t", __VERSION__);
+    SVT_LOG("SVT [build]  :\tGCC %s\t", __VERSION__);
 #else
-    printf("SVT [build]  :\tunknown compiler");
+    SVT_LOG("SVT [build]  :\tunknown compiler");
 #endif
-    printf(" %u bit\n", (unsigned) sizeof(void*) * 8);
-    printf("LIB Build date: %s %s\n", __DATE__, __TIME__);
-    printf("-------------------------------------------\n");
+    SVT_LOG(" %u bit\n", (unsigned) sizeof(void*) * 8);
+    SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
+    SVT_LOG("-------------------------------------------\n");
 
     SwitchToRealTime();
 

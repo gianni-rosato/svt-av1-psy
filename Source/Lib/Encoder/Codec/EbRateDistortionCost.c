@@ -21,6 +21,7 @@
 #include "EbRateDistortionCost.h"
 #include "EbCommonUtils.h"
 #include "aom_dsp_rtcd.h"
+#include "EbLog.h"
 
 #include <assert.h>
 #if TWO_PASS
@@ -903,7 +904,7 @@ uint64_t EstimateRefFramesNumBits(
                     2);*/
 
                 if (comp_ref_type == UNIDIR_COMP_REFERENCE) {
-                    //printf("ERROR[AN]: UNIDIR_COMP_REFERENCE not supported\n");
+                    //SVT_LOG("ERROR[AN]: UNIDIR_COMP_REFERENCE not supported\n");
                     const int bit = mbmi->block_mi.ref_frame[0] == BWDREF_FRAME;
 
                     const int pred_context = eb_av1_get_pred_context_uni_comp_ref_p(cu_ptr->av1xd);
@@ -1068,7 +1069,7 @@ uint64_t EstimateRefFramesNumBits(
             refRateB = candidate_ptr->md_rate_estimation_ptr->comp_ref_type_fac_bits[context][comp_ref_type];
 
             if (comp_ref_type == UNIDIR_COMP_REFERENCE) {
-                printf("ERROR[AN]: UNIDIR_COMP_REFERENCE not supported\n");
+                SVT_LOG("ERROR[AN]: UNIDIR_COMP_REFERENCE not supported\n");
                 //const int32_t bit = mbmi->block_mi.ref_frame[0] == BWDREF_FRAME;
                 //WRITE_REF_BIT(bit, uni_comp_ref_p);
 
@@ -2018,7 +2019,7 @@ uint64_t av1_inter_fast_cost(
         chromaSad = chroma_distortion << AV1_COST_PRECISION;
         totalDistortion = lumaSad + chromaSad;
         if (blk_geom->has_uv == 0 && chromaSad != 0)
-            printf("av1_inter_fast_cost: Chroma error");
+            SVT_LOG("av1_inter_fast_cost: Chroma error");
         rate = lumaRate + chromaRate;
         if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->use_output_stat_file) {
             two_pass_cost_update(
@@ -2640,7 +2641,7 @@ void coding_loop_context_generation(
         contextIndex = 0;
     cu_ptr->is_inter_ctx = contextIndex;
     //  if(cu_ptr->is_inter_ctx!=0) //
-    //      printf("ctx:%i \n",cu_ptr->is_inter_ctx);
+    //      SVT_LOG("ctx:%i \n",cu_ptr->is_inter_ctx);
 
       //   Top Intra Mode Neighbor Array instead of a Full
       // Skip Flag Context

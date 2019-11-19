@@ -38,7 +38,7 @@
 #include "EbDecLF.h"
 
 #include "EbDecCdef.h"
-
+#include "EbLog.h"
 
 void dec_av1_loop_filter_frame_mt(
     EbDecHandle *dec_handle_ptr,
@@ -1778,7 +1778,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr){
         master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     if(dec_handle_ptr->seq_header.color_config.bit_depth != EB_EIGHT_BIT) {
-        printf("Warning : Multi thread supported only for 8 bit depth."
+        SVT_LOG("Warning : Multi thread supported only for 8 bit depth."
             "Falling back to single thread. \n");
        dec_handle_ptr->dec_config.threads = 1;
        return;
@@ -1802,7 +1802,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr){
         dec_mt_frame_data->prev_frame_info.prev_max_frame_height !=
         dec_handle_ptr->frame_header.frame_size.frame_height)
     {
-        printf("Warning : Multi thread not supported for change in frame resoulution."
+        SVT_LOG("Warning : Multi thread not supported for change in frame resoulution."
             "Falling back to single thread. \n");
         dec_handle_ptr->dec_config.threads = 1;
         return;
@@ -1810,7 +1810,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr){
 
     if (dec_mt_frame_data->prev_frame_info.prev_sb_size !=
         dec_handle_ptr->seq_header.sb_size) {
-        printf("Warning : Multi thread not supported for change in SB size."
+        SVT_LOG("Warning : Multi thread not supported for change in SB size."
             "Falling back to single thread. \n");
         dec_handle_ptr->dec_config.threads = 1;
         return;
@@ -1819,7 +1819,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr){
     if (dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_cols != tiles_info.tile_cols ||
         dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_rows != tiles_info.tile_rows)
     {
-        printf("Warning : Multi thread not supported for change in number of tiles."
+        SVT_LOG("Warning : Multi thread not supported for change in number of tiles."
             "Falling back to single thread. \n");
         dec_handle_ptr->dec_config.threads = 1;
         return;
@@ -1829,7 +1829,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr){
         if (dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_col_start_mi[i] !=
             tiles_info.tile_col_start_mi[i])
         {
-            printf("Warning : Multi thread not supported for change in tile sizes."
+            SVT_LOG("Warning : Multi thread not supported for change in tile sizes."
                 "Falling back to single thread. \n");
             dec_handle_ptr->dec_config.threads = 1;
             return;
@@ -1840,7 +1840,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr){
         if (dec_mt_frame_data->prev_frame_info.prev_tiles_info.tile_row_start_mi[i] !=
             tiles_info.tile_row_start_mi[i])
         {
-            printf("Warning : Multi thread not supported for change in tile sizes."
+            SVT_LOG("Warning : Multi thread not supported for change in tile sizes."
                 "Falling back to single thread. \n");
             dec_handle_ptr->dec_config.threads = 1;
             return;
@@ -2168,7 +2168,7 @@ void read_uncompressed_header(bitstrm_t *bs, EbDecHandle *dec_handle_ptr,
                 frame_info->frame_size.frame_height);
 
             if ((!av1_is_valid_scale(ref_scale_factors))) {
-                printf("\n Reference frame has invalid dimensions \n");
+                SVT_LOG("\n Reference frame has invalid dimensions \n");
                 assert(0);
             }
         }

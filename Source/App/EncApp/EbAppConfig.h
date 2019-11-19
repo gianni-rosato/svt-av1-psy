@@ -93,7 +93,7 @@ extern    uint32_t                   app_malloc_count;
     pointer = (type)malloc(n_elements); \
     if (pointer == (type)EB_NULL){ \
         return_type = EB_ErrorInsufficientResources; \
-        printf("Malloc has failed due to insuffucient resources"); \
+        fprintf(stderr, "Malloc has failed due to insuffucient resources"); \
         return; \
             } \
                 else { \
@@ -108,14 +108,14 @@ extern    uint32_t                   app_malloc_count;
         } \
     if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
         return_type = EB_ErrorInsufficientResources; \
-        printf("Malloc has failed due to insuffucient resources"); \
+        fprintf(stderr, "Malloc has failed due to insuffucient resources"); \
         return; \
                 } \
     app_malloc_count++;
 
 #define EB_APP_MEMORY() \
-    printf("Total Number of Mallocs in App: %d\n", app_malloc_count); \
-    printf("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
+    fprintf(stderr, "Total Number of Mallocs in App: %d\n", app_malloc_count); \
+    fprintf(stderr, "Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 
 #define MAX_CHANNEL_NUMBER      6
 #define MAX_NUM_TOKENS          200

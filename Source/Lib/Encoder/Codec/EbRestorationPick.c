@@ -19,6 +19,7 @@
 #include "EbRestorationPick.h"
 
 #include "EbRestProcess.h"
+#include "EbLog.h"
 
 void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane,
     RestTileStartVisitor on_tile,
@@ -1508,7 +1509,7 @@ static int64_t finer_tile_search_wiener(const RestSearchCtxt *rsc,
 
     WienerInfo *plane_wiener = &rui->wiener_info;
 
-    // printf("err  pre = %"PRId64"\n", err);
+    // SVT_LOG("err  pre = %"PRId64"\n", err);
     const int32_t start_step = 4;
     for (int32_t s = start_step; s >= 1; s >>= 1) {
         for (int32_t p = plane_off; p < WIENER_HALFWIN; ++p) {
@@ -1598,7 +1599,7 @@ static int64_t finer_tile_search_wiener(const RestSearchCtxt *rsc,
             } while (1);
         }
     }
-    // printf("err post = %"PRId64"\n", err);
+    // SVT_LOG("err post = %"PRId64"\n", err);
 #endif  // USE_WIENER_REFINEMENT_SEARCH
     return err;
 }
@@ -1618,7 +1619,7 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *rsc,
 
     WienerInfo *plane_wiener = &rui->wiener_info;
 
-    // printf("err  pre = %"PRId64"\n", err);
+    // SVT_LOG("err  pre = %"PRId64"\n", err);
     const int32_t start_step = 4;
     for (int32_t s = start_step; s >= 1; s >>= 1) {
         for (int32_t p = plane_off; p < WIENER_HALFWIN; ++p) {
@@ -1708,7 +1709,7 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *rsc,
             } while (1);
         }
     }
-    // printf("err post = %"PRId64"\n", err);
+    // SVT_LOG("err post = %"PRId64"\n", err);
 #endif  // USE_WIENER_REFINEMENT_SEARCH
     return err;
 }
@@ -2088,7 +2089,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits,
     }
 
     if (!wiener_decompose_sep_sym(wiener_win, M, H, vfilterd, hfilterd)) {
-        printf("CHKN never get here\n");
+        SVT_LOG("CHKN never get here\n");
         rusi->best_rtype[RESTORE_WIENER - 1] = RESTORE_NONE;
         rusi->sse[RESTORE_WIENER] = INT64_MAX;
         return;

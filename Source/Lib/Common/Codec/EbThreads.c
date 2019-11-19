@@ -15,6 +15,7 @@
  ****************************************/
 #include <stdlib.h>
 #include "EbThreads.h"
+#include "EbLog.h"
  /****************************************
   * Win32 Includes
   ****************************************/
@@ -35,7 +36,7 @@ void printfTime(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    printf("  [%i ms]\t", ((int32_t)clock()));
+    SVT_LOG("  [%i ms]\t", ((int32_t)clock()));
     vprintf(fmt, args);
     va_end(args);
 }
@@ -198,7 +199,7 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
     sprintf(name, "/sem_%05d_%03d", getpid(), semaphore_id());
     sem_t *s = sem_open(name, O_CREAT | O_EXCL, 0644, initial_count);
     if (s == SEM_FAILED) {
-        fprintf(stderr, "errno: %d\n", errno);
+        SVT_ERROR("errno: %d\n", errno);
         return NULL;
     }
     sem_unlink(name);

@@ -26,6 +26,7 @@
 #include "EbDecUtils.h"
 #include "EbDecInterPrediction.h"
 #include "../../Encoder/Codec/aom_dsp_rtcd.h"
+#include "EbLog.h"
 
 //This function is present in encoder also, but encoder structures & decoder structures are different.
 static INLINE int dec_is_neighbor_overlappable(const BlockModeInfo *mbmi){
@@ -198,7 +199,7 @@ static INLINE void dec_build_prediction_by_above_pred(DecModCtxt *dec_mod_ctx,
         backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
-            printf("\n Reference frame has invalid dimensions \n");
+            SVT_LOG("\n Reference frame has invalid dimensions \n");
             assert(0);
         }
     }
@@ -343,7 +344,7 @@ static INLINE void dec_build_prediction_by_left_pred(DecModCtxt *dec_mod_ctx,
         backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
-            printf("\n Reference frame has invalid dimensions \n");
+            SVT_LOG("\n Reference frame has invalid dimensions \n");
             assert(0);
         }
     }

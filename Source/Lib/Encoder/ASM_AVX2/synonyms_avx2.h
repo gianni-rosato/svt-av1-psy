@@ -27,7 +27,7 @@
 static INLINE __m256i yy_load_256(const void *const a) {
 #ifdef EB_TEST_SIMD_ALIGN
     if ((intptr_t)a % 32)
-        printf("\n yy_load_256() NOT 32-byte aligned!!!\n");
+        SVT_LOG("\n yy_load_256() NOT 32-byte aligned!!!\n");
 #endif
     return _mm256_load_si256((const __m256i *)a);
 }
@@ -39,7 +39,7 @@ static INLINE __m256i yy_loadu_256(const void *const a) {
 static INLINE void yy_store_256(void *const a, const __m256i v) {
 #ifdef EB_TEST_SIMD_ALIGN
     if ((intptr_t)a % 32)
-        printf("\n yy_store_256() NOT 32-byte aligned!!!\n");
+        SVT_LOG("\n yy_store_256() NOT 32-byte aligned!!!\n");
 #endif
     _mm256_store_si256((__m256i *)a, v);
 }

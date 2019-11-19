@@ -34,6 +34,7 @@
 #include "aom_dsp_rtcd.h"
 #include "partition_model_weights.h"
 #include "ml.h"
+#include "EbLog.h"
 
 EbErrorType generate_md_stage_0_cand(
     SuperBlock          *sb_ptr,
@@ -1099,8 +1100,8 @@ void picture_addition_kernel(
     uint32_t          row_index = 0;
     //    const int32_t    maxValue = 0xFF;
 
-        //printf("\n");
-        //printf("Reconstruction---------------------------------------------------\n");
+        //SVT_LOG("\n");
+        //SVT_LOG("Reconstruction---------------------------------------------------\n");
 
     while (row_index < height) {
         columnIndex = 0;
@@ -1109,19 +1110,19 @@ void picture_addition_kernel(
             uint16_t rec = (uint16_t)pred_ptr[columnIndex];
             recon_ptr[columnIndex] = (uint8_t)highbd_clip_pixel_add(rec, (TranLow)residual_ptr[columnIndex], bd);
 
-            //printf("%d\t", recon_ptr[columnIndex]);
+            //SVT_LOG("%d\t", recon_ptr[columnIndex]);
             ++columnIndex;
         }
 
-        //printf("\n");
+        //SVT_LOG("\n");
         residual_ptr += residual_stride;
         pred_ptr += pred_stride;
         recon_ptr += recon_stride;
         ++row_index;
     }
-    //printf("-----------------------------------------------------------------\n");
-    //printf("\n");
-    //printf("\n");
+    //SVT_LOG("-----------------------------------------------------------------\n");
+    //SVT_LOG("\n");
+    //SVT_LOG("\n");
     return;
 }
 
@@ -1140,8 +1141,8 @@ void picture_addition_kernel16_bit(
     uint32_t          row_index = 0;
     //    const int32_t    maxValue = 0xFF;
 
-        //printf("\n");
-        //printf("Reconstruction---------------------------------------------------\n");
+        //SVT_LOG("\n");
+        //SVT_LOG("Reconstruction---------------------------------------------------\n");
 
     while (row_index < height) {
         columnIndex = 0;
@@ -1150,19 +1151,19 @@ void picture_addition_kernel16_bit(
             uint16_t rec = (uint16_t)pred_ptr[columnIndex];
             recon_ptr[columnIndex] = highbd_clip_pixel_add(rec, (TranLow)residual_ptr[columnIndex], bd);
 
-            //printf("%d\t", recon_ptr[columnIndex]);
+            //SVT_LOG("%d\t", recon_ptr[columnIndex]);
             ++columnIndex;
         }
 
-        //printf("\n");
+        //SVT_LOG("\n");
         residual_ptr += residual_stride;
         pred_ptr += pred_stride;
         recon_ptr += recon_stride;
         ++row_index;
     }
-    //    printf("-----------------------------------------------------------------\n");
-    //    printf("\n");
-    //    printf("\n");
+    //    SVT_LOG("-----------------------------------------------------------------\n");
+    //    SVT_LOG("\n");
+    //    SVT_LOG("\n");
     return;
 }
 
@@ -5224,7 +5225,7 @@ void move_cu_data(
             if(dst_cu->palette_info.color_idx_map != NULL)
                  memcpy(dst_cu->palette_info.color_idx_map, src_cu->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
             else
-                printf("ERROR palette:Not-Enough-Memory\n");
+                SVT_LOG("ERROR palette:Not-Enough-Memory\n");
         }
 #endif
 #if OBMC_FLAG
@@ -5823,7 +5824,7 @@ uint8_t get_part_side(
         break;
     default:
         return 255;
-        printf("error: non supported partition!!\n");
+        SVT_LOG("error: non supported partition!!\n");
         break;
     }
 }
@@ -5852,7 +5853,7 @@ PART get_partition_shape(
         else if (left_size < height)
             part = PART_H;
         else
-            printf("error: unsupported left_size\n");
+            SVT_LOG("error: unsupported left_size\n");
     }
     else if (left_size > height) {
         if (above_size == width)
@@ -5862,7 +5863,7 @@ PART get_partition_shape(
         else if (above_size < width)
             part = PART_V;
         else
-            printf("error: unsupported above_size\n");
+            SVT_LOG("error: unsupported above_size\n");
     }
     else if (above_size < width) {
         if (left_size == height)
@@ -5870,7 +5871,7 @@ PART get_partition_shape(
         else if (left_size < height)
             part = PART_S;
         else
-            printf("error: unsupported left_size\n");
+            SVT_LOG("error: unsupported left_size\n");
     }
     else if (left_size < height) {
         if (above_size == width)
@@ -5878,22 +5879,22 @@ PART get_partition_shape(
         else if (above_size < width)
             part = PART_S;
         else
-            printf("error: unsupported above_size\n");
+            SVT_LOG("error: unsupported above_size\n");
     }
     else if (above_size == width) {
         if (left_size < height)
             part = PART_HB;
         else
-            printf("error: unsupported left_size\n");
+            SVT_LOG("error: unsupported left_size\n");
     }
     else if (left_size == height) {
         if (above_size == width)
             part = PART_HB;
         else
-            printf("error: unsupported above_size\n");
+            SVT_LOG("error: unsupported above_size\n");
     }
     else
-        printf("error: unsupported above_size && left_size\n");
+        SVT_LOG("error: unsupported above_size && left_size\n");
     return part;
 };
 

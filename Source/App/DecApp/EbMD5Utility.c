@@ -242,8 +242,8 @@ void md5_transform(unsigned int buf[4],
 void print_md5(unsigned char digest[16]) {
     int i;
 
-    printf("\n");
-    for (i = 0; i < 16; ++i) printf("%02x", digest[i]);
+    fprintf(stderr, "\n");
+    for (i = 0; i < 16; ++i) fprintf(stderr, "%02x", digest[i]);
 }
 
 void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5) {

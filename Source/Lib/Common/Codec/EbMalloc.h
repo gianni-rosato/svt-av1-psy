@@ -35,7 +35,7 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
 #define EB_NO_THROW_ADD_MEM(p, size, type) \
     do { \
         if (!p) { \
-            fprintf(stderr,"allocate memory failed, at %s, L%d\n", __FILE__, __LINE__); \
+            fprintf(stderr, "allocate memory failed, at %s, L%d\n", __FILE__, __LINE__); \
         } else { \
             EB_ADD_MEM_ENTRY(p, type, size); \
         } \

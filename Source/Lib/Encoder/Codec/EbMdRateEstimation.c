@@ -413,20 +413,20 @@ void av1_estimate_coefficients_rate(
                 int32_t prev_cost = 0;
                 int32_t i, j;
                 av1_get_syntax_rate_from_cdf(br_rate, fc->coeff_br_cdf[tx_size][plane][ctx], NULL);
-                // printf("br_rate: ");
+                // SVT_LOG("br_rate: ");
                 // for(j = 0; j < BR_CDF_SIZE; j++)
-                //  printf("%4d ", br_rate[j]);
-                // printf("\n");
+                //  SVT_LOG("%4d ", br_rate[j]);
+                // SVT_LOG("\n");
                 for (i = 0; i < COEFF_BASE_RANGE; i += BR_CDF_SIZE - 1) {
                     for (j = 0; j < BR_CDF_SIZE - 1; j++)
                         pcost->lps_cost[ctx][i + j] = prev_cost + br_rate[j];
                     prev_cost += br_rate[j];
                 }
                 pcost->lps_cost[ctx][i] = prev_cost;
-                // printf("lps_cost: %d %d %2d : ", tx_size, plane, ctx);
+                // SVT_LOG("lps_cost: %d %d %2d : ", tx_size, plane, ctx);
                 // for (i = 0; i <= COEFF_BASE_RANGE; i++)
-                //  printf("%5d ", pcost->lps_cost[ctx][i]);
-                // printf("\n");
+                //  SVT_LOG("%5d ", pcost->lps_cost[ctx][i]);
+                // SVT_LOG("\n");
             }
             for (int ctx = 0; ctx < LEVEL_CONTEXTS; ++ctx) {
                 pcost->lps_cost[ctx][0 + COEFF_BASE_RANGE + 1] =

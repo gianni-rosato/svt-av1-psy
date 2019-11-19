@@ -881,7 +881,7 @@ void SendQpOnTheFly(
             tmpQp = GetNextQpFromQpFile(config);
 
             if (tmpQp == (int32_t)EB_ErrorInsufficientResources) {
-                printf("Malloc has failed due to insuffucient resources");
+                fprintf(stderr, "Malloc has failed due to insuffucient resources");
                 return;
             }
 
@@ -896,7 +896,7 @@ void SendQpOnTheFly(
 
         if (tmpQp == -1) {
             config->use_qp_file = EB_FALSE;
-            printf("\nWarning: QP File did not contain any valid QPs");
+            fprintf(stderr, "\nWarning: QP File did not contain any valid QPs");
         }
 
         qpPtr = CLIP3(0, 51, tmpQp);
@@ -1169,7 +1169,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
         stream_status = eb_svt_get_packet(componentHandle, &headerPtr, pic_send_done);
 
         if (stream_status == EB_ErrorMax) {
-            printf("\n");
+            fprintf(stderr, "\n");
             LogErrorOutput(
                 config->error_log_file,
                 headerPtr->flags);
@@ -1278,7 +1278,7 @@ AppExitConditionType ProcessOutputStreamBuffer(
 #else
             //++frame_count;
             if (!(headerPtr->flags & EB_BUFFERFLAG_IS_ALT_REF))
-                printf("\b\b\b\b\b\b\b\b\b%9d", ++frame_count);
+                fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", ++frame_count);
 #endif
 
             //++frame_count;
@@ -1291,8 +1291,8 @@ AppExitConditionType ProcessOutputStreamBuffer(
 
             if (!(frame_count % SPEED_MEASUREMENT_INTERVAL)) {
                 {
-                    printf("\n");
-                    printf("Average System Encoding Speed:        %.2f\n", (double)(frame_count) / config->performance_context.total_encode_time);
+                    fprintf(stderr, "\n");
+                    fprintf(stderr, "Average System Encoding Speed:        %.2f\n", (double)(frame_count) / config->performance_context.total_encode_time);
                 }
             }
         }
@@ -1312,7 +1312,7 @@ AppExitConditionType ProcessOutputReconBuffer(
     recon_status = eb_svt_get_recon(componentHandle, headerPtr);
 
     if (recon_status == EB_ErrorMax) {
-        printf("\n");
+        fprintf(stderr, "\n");
         LogErrorOutput(
             config->error_log_file,
             headerPtr->flags);
@@ -1326,7 +1326,7 @@ AppExitConditionType ProcessOutputReconBuffer(
             fseekReturnVal = fseeko(config->recon_file, headerPtr->n_filled_len, SEEK_CUR);
 
             if (fseekReturnVal != 0) {
-                printf("Error in fseeko  returnVal %i\n", fseekReturnVal);
+                fprintf(stderr, "Error in fseeko  returnVal %i\n", fseekReturnVal);
                 return APP_ExitConditionError;
             }
             frameNum = frameNum - 1;

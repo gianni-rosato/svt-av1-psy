@@ -969,7 +969,7 @@ void UpdateMotionFieldUniformityOverTime(
     uint32_t                                inputQueueIndex;
     uint32_t                              NoFramesToCheck;
     uint32_t                                framesToCheckIndex;
-    //printf("To update POC %d\tframesInSw = %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->frames_in_sw);
+    //SVT_LOG("To update POC %d\tframesInSw = %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->frames_in_sw);
 
     //Check conditions for statinary edge over time
     StationaryEdgeOverUpdateOverTimeLcuPart2(
@@ -1064,7 +1064,7 @@ void GetHistogramQueueData(
         sizeof(uint16_t) * NUMBER_OF_INTRA_SAD_INTERVALS);
 
     eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
-    //printf("Test1 POC: %d\t POC: %d\t LifeCount: %d\n", histogramQueueEntryPtr->picture_number, picture_control_set_ptr->picture_number,  histogramQueueEntryPtr->life_count);
+    //SVT_LOG("Test1 POC: %d\t POC: %d\t LifeCount: %d\n", histogramQueueEntryPtr->picture_number, picture_control_set_ptr->picture_number,  histogramQueueEntryPtr->life_count);
 
     return;
 }

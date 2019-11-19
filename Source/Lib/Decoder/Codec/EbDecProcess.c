@@ -27,6 +27,7 @@
 #include "EbTime.h"
 
 #include "EbDecInverseQuantize.h"
+#include "EbLog.h"
 
 #include <stdlib.h>
 
@@ -428,7 +429,7 @@ void recon_tile_job_post(DecMTFrameData  *dec_mt_frame_data, uint32_t    node_in
     DecMTNode *recon_context_ptr =
         (DecMTNode*)recon_results_wrapper_ptr->object_ptr;
     recon_context_ptr->node_index = node_index;
-    //printf("\nPost dec job in queue Thread id : %d Tile id : %d \n",
+    //SVT_LOG("\nPost dec job in queue Thread id : %d Tile id : %d \n",
     //    th_cnt, recon_context_ptr->node_index);
     // Post Recon Tile Job
     eb_post_full_object(recon_results_wrapper_ptr);
@@ -466,7 +467,7 @@ void parse_frame_tiles(EbDecHandle     *dec_handle_ptr, int th_cnt) {
             if (EB_ErrorNone !=
                 parse_tile_job(dec_handle_ptr, context_ptr->node_index))
             {
-                printf("\nParse Issue for Tile %d", context_ptr->node_index);
+                SVT_LOG("\nParse Issue for Tile %d", context_ptr->node_index);
                 break;
             }
 
@@ -531,7 +532,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
             if (EB_ErrorNone !=
                 decode_tile_job(dec_handle_ptr, context_ptr->node_index, dec_mod_ctxt))
             {
-                printf("\nDecode Issue for Tile %d", context_ptr->node_index);
+                SVT_LOG("\nDecode Issue for Tile %d", context_ptr->node_index);
                 break;
             }
             eb_release_object(recon_results_wrapper_ptr);
@@ -593,7 +594,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
                 if (EB_ErrorNone !=
                     decode_tile_job(dec_handle_ptr, next_tile_idx, dec_mod_ctxt))
                 {
-                    printf("\nDecode Issue for Tile %d", next_tile_idx);
+                    SVT_LOG("\nDecode Issue for Tile %d", next_tile_idx);
                     break;
                 }
 
@@ -1037,11 +1038,11 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle
         if (NULL != lr_results_wrapper_ptr) {
             context_ptr = (DecMTNode*)lr_results_wrapper_ptr->object_ptr;
 
-            printf("\nLR Row id : %d", context_ptr->node_index);
+            SVT_LOG("\nLR Row id : %d", context_ptr->node_index);
 
             //Sleep(1);
 
-            printf("\nLR Row id : %d done \n", context_ptr->node_index);
+            SVT_LOG("\nLR Row id : %d done \n", context_ptr->node_index);
 
             /* Update LR done map */
             dec_mt_frame_data->lr_row_map[context_ptr->node_index] = 1;
@@ -1103,11 +1104,11 @@ void dec_pad_frame_mt(EbDecHandle *dec_handle
         if (NULL != pad_results_wrapper_ptr) {
             context_ptr = (DecMTNode*)pad_results_wrapper_ptr->object_ptr;
 
-            printf("\nPad Row id : %d", context_ptr->node_index);
+            SVT_LOG("\nPad Row id : %d", context_ptr->node_index);
 
             //Sleep(1);
 
-            printf("\nPad Row id : %d done \n", context_ptr->node_index);
+            SVT_LOG("\nPad Row id : %d done \n", context_ptr->node_index);
 
             // Release Parse Results
             eb_release_object(pad_results_wrapper_ptr);

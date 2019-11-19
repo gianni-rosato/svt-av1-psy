@@ -15,6 +15,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbRestoration.h"
 #include "EbUtility.h"
+#include "EbLog.h"
 
 void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
     int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
@@ -1254,7 +1255,7 @@ void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
         cm->subsampling_x, cm->subsampling_y,
         cm->use_highbitdepth, AOM_BORDER_IN_PIXELS,
         cm->byte_alignment, NULL, NULL, NULL) < 0)
-        printf("Failed to allocate restoration dst buffer\n");
+        SVT_LOG("Failed to allocate restoration dst buffer\n");
 
     RestorationLineBuffers rlbs;
     const int32_t bit_depth = cm->bit_depth;

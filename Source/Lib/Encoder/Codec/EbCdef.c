@@ -17,6 +17,7 @@
 #include "EbCdef.h"
 #include "stdint.h"
 #include "aom_dsp_rtcd.h"
+#include "EbLog.h"
 
 extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
@@ -535,7 +536,7 @@ void eb_av1_cdef_frame(
             if (pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc] == NULL ||
                 pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]->mbmi.cdef_strength == -1) {
                 cdef_left = 0;
-                printf("\n\n\nCDEF ERROR: Skipping Current FB\n\n\n");
+                SVT_LOG("\n\n\nCDEF ERROR: Skipping Current FB\n\n\n");
                 continue;
             }
 
@@ -835,7 +836,7 @@ void av1_cdef_frame16bit(
             if (pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc] == NULL ||
                 pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]->mbmi.cdef_strength == -1) {
                 cdef_left = 0;
-                printf("\n\n\nCDEF ERROR: Skipping Current FB\n\n\n");
+                SVT_LOG("\n\n\nCDEF ERROR: Skipping Current FB\n\n\n");
                 continue;
             }
 

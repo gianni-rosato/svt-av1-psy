@@ -2995,7 +2995,7 @@ EbErrorType SubSampleFilterNoise(
 
                 if (denBlkVar<denBlkVarTh && noiseBlkVar> noiseBlkVarTh) {
                     picture_control_set_ptr->sb_flat_noise_array[lcuCodingOrder] = 1;
-                    //printf("POC %i (%i,%i) denBlkVar: %i  noiseBlkVar :%i\n", picture_control_set_ptr->picture_number,sb_origin_x,sb_origin_y, denBlkVar, noiseBlkVar);
+                    //SVT_LOG("POC %i (%i,%i) denBlkVar: %i  noiseBlkVar :%i\n", picture_control_set_ptr->picture_number,sb_origin_x,sb_origin_y, denBlkVar, noiseBlkVar);
                     newTotFN++;
                 }
                 else

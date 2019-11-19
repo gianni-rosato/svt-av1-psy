@@ -25,7 +25,7 @@
 #include "EbTemporalFiltering.h"
 #include "EbObject.h"
 #include "EbUtility.h"
-
+#include "EbLog.h"
 
 /************************************************
  * Defines
@@ -452,27 +452,27 @@ EbBool SceneTransitionDetector(
 
                 if (aidFuturePast < FLASH_TH && aidFuturePresent >= FLASH_TH && aidPresentPast >= FLASH_TH) {
                     isFlash = EB_TRUE;
-                    //printf ("\nFlash in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
+                    //SVT_LOG ("\nFlash in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
                 }
                 else if (aidFuturePresent < FADE_TH && aidPresentPast < FADE_TH) {
                     isFade = EB_TRUE;
-                    //printf ("\nFlash in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
+                    //SVT_LOG ("\nFlash in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
                 }
                 else {
                     is_scene_change = EB_TRUE;
-                    //printf ("\nScene Change in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
+                    //SVT_LOG ("\nScene Change in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
                 }
             }
             else if (gradualChange) {
                 aidFuturePast = (uint8_t)ABS((int16_t)futurePictureControlSetPtr->average_intensity_per_region[regionInPictureWidthIndex][regionInPictureHeightIndex][0] - (int16_t)previousPictureControlSetPtr->average_intensity_per_region[regionInPictureWidthIndex][regionInPictureHeightIndex][0]);
                 if (aidFuturePast < FLASH_TH) {
                     // proper action to be signalled
-                    //printf ("\nLight Flash in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
+                    //SVT_LOG ("\nLight Flash in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
                     ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] = (3 * ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] + ahd) / 4;
                 }
                 else {
                     // proper action to be signalled
-                    //printf ("\nLight Scene Change / fade detected in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
+                    //SVT_LOG ("\nLight Scene Change / fade detected in frame# %i , %i\n", currentPictureControlSetPtr->picture_number,aidFuturePast);
                     ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] = (3 * ahd_running_avg[regionInPictureWidthIndex][regionInPictureHeightIndex] + ahd) / 4;
                 }
             }
@@ -1104,7 +1104,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         picture_control_set_ptr->nsq_max_shapes_md = 6;
         break;
     default:
-        printf("nsq_search_level is not supported\n");
+        SVT_LOG("nsq_search_level is not supported\n");
         break;
     }
 
@@ -1591,7 +1591,7 @@ static void set_all_ref_frame_type(SequenceControlSet *sequence_control_set_ptr,
     MvReferenceFrame rf[2];
     *tot_ref_frames = 0;
 
-    //printf("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
+    //SVT_LOG("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
 
     //single ref - List0
     for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {
@@ -1706,7 +1706,7 @@ static EbBool set_frame_display_params(
             }
         } else {
             if (context_ptr->mini_gop_length[0] != picture_control_set_ptr->pred_struct_ptr->pred_struct_period) {
-                printf("Error in GOP indexing3\n");
+                SVT_LOG("Error in GOP indexing3\n");
             }
             // Handle B frame of Random Access out
             return EB_FALSE;
@@ -1872,7 +1872,7 @@ static void  Av1GenerateRpsInfo(
             break;
 
         default:
-            printf("Error: unexpected picture mini Gop number\n");
+            SVT_LOG("Error: unexpected picture mini Gop number\n");
             break;
         }
 
@@ -1889,7 +1889,7 @@ static void  Av1GenerateRpsInfo(
                 if (picture_index == 0)
                     frm_hdr->show_existing_frame = base2_idx;
                 else
-                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+                    SVT_LOG("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
             }
         }
 
@@ -2036,7 +2036,7 @@ static void  Av1GenerateRpsInfo(
                     av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
                 }
                 else
-                    printf("Error in GOp indexing\n");
+                    SVT_LOG("Error in GOp indexing\n");
             }
 
             if (picture_index == 0 )
@@ -2046,7 +2046,7 @@ static void  Av1GenerateRpsInfo(
             break;
 
         default:
-            printf("Error: unexpected picture mini Gop number\n");
+            SVT_LOG("Error: unexpected picture mini Gop number\n");
             break;
         }
 
@@ -2065,7 +2065,7 @@ static void  Av1GenerateRpsInfo(
                 else if (picture_index == 2)
                     frm_hdr->show_existing_frame = base2_idx;
                 else
-                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+                    SVT_LOG("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
             }
         }
 
@@ -2349,7 +2349,7 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else
-                printf("Error in GOp indexing\n");
+                SVT_LOG("Error in GOp indexing\n");
             if (picture_index == 0)
                 av1_rps->refresh_frame_mask = 1 << (lay3_idx);
             else
@@ -2357,7 +2357,7 @@ static void  Av1GenerateRpsInfo(
             break;
 
         default:
-            printf("Error: unexpected picture mini Gop number\n");
+            SVT_LOG("Error: unexpected picture mini Gop number\n");
             break;
         }
 
@@ -2381,7 +2381,7 @@ static void  Av1GenerateRpsInfo(
                 else if (picture_index == 6)
                     frm_hdr->show_existing_frame = base2_idx;
                 else
-                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+                    SVT_LOG("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
             }
         }
 
@@ -2639,7 +2639,7 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else
-                printf("Error in GOp indexing\n");
+                SVT_LOG("Error in GOp indexing\n");
             av1_rps->refresh_frame_mask = 1 << (lay3_idx);
             break;
 
@@ -2826,7 +2826,7 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else
-                printf("Error in GOp indexing\n");
+                SVT_LOG("Error in GOp indexing\n");
             if (picture_index == 0 || picture_index == 8)
                 av1_rps->refresh_frame_mask = 1 << (lay4_idx);
             else
@@ -2834,7 +2834,7 @@ static void  Av1GenerateRpsInfo(
             break;
 
         default:
-            printf("Error: unexpected picture mini Gop number\n");
+            SVT_LOG("Error: unexpected picture mini Gop number\n");
             break;
         }
 
@@ -2867,7 +2867,7 @@ static void  Av1GenerateRpsInfo(
                 else if (picture_index == 14)
                     frm_hdr->show_existing_frame = base2_idx;
                 else
-                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+                    SVT_LOG("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
             }
         }
 
@@ -2888,7 +2888,7 @@ static void  Av1GenerateRpsInfo(
             context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
         }
     } else {
-        printf("Error: Not supported GOP structure!");
+        SVT_LOG("Error: Not supported GOP structure!");
         exit(0);
     }
 }
@@ -3848,7 +3848,7 @@ void* picture_decision_kernel(void *input_ptr)
                                             break;
                                     }
                                     picture_control_set_ptr->future_altref_nframes = pic_itr - index_center;
-                                    //printf("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
+                                    //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
                                 }
                                 else
                                 {
@@ -3918,7 +3918,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         break;
                                 }
                                 picture_control_set_ptr->future_altref_nframes = pic_itr - index_center;
-                                //printf("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
+                                //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", picture_control_set_ptr->picture_number, picture_control_set_ptr->past_altref_nframes, picture_control_set_ptr->future_altref_nframes);
 
                                 // adjust the temporal filtering pcs buffer to remove unused past pictures
                                 if(actual_past_pics != num_past_pics) {
@@ -4105,7 +4105,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                             picture_control_set_ptr->is_skip_mode_allowed = frm_hdr->skip_mode_params.skip_mode_allowed;
                             picture_control_set_ptr->skip_mode_flag = picture_control_set_ptr->is_skip_mode_allowed;
-                            //printf("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",picture_control_set_ptr->picture_number, picture_control_set_ptr->skip_mode_info.skip_mode_allowed, picture_control_set_ptr->skip_mode_info.ref_frame_idx_0, picture_control_set_ptr->skip_mode_info.ref_frame_idx_1);
+                            //SVT_LOG("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",picture_control_set_ptr->picture_number, picture_control_set_ptr->skip_mode_info.skip_mode_allowed, picture_control_set_ptr->skip_mode_info.ref_frame_idx_0, picture_control_set_ptr->skip_mode_info.ref_frame_idx_1);
 
                             {
                                 picture_control_set_ptr->intensity_transition_flag = EB_FALSE;

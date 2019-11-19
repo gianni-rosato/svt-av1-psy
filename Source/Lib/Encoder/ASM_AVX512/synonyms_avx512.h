@@ -26,7 +26,7 @@
 static INLINE __m512i zz_load_512(const void *const a) {
 #ifdef EB_TEST_SIMD_ALIGN
     if ((intptr_t)a % 64)
-        printf("\n zz_load_512() NOT 64-byte aligned!!!\n");
+        SVT_LOG("\n zz_load_512() NOT 64-byte aligned!!!\n");
 #endif
     return _mm512_load_si512((const __m512i *)a);
 }
@@ -38,7 +38,7 @@ static INLINE __m512i zz_loadu_512(const void *const a) {
 static INLINE void zz_store_512(void *const a, const __m512i v) {
 #ifdef EB_TEST_SIMD_ALIGN
     if ((intptr_t)a % 64)
-        printf("\n zz_store_512() NOT 64-byte aligned!!!\n");
+        SVT_LOG("\n zz_store_512() NOT 64-byte aligned!!!\n");
 #endif
     _mm512_store_si512((__m512i *)a, v);
 }

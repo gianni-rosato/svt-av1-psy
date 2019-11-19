@@ -18,6 +18,7 @@
 #include "EbTime.h"
 #include "EbEntropyCoding.h"
 #include "EbObject.h"
+#include "EbLog.h"
 
 typedef struct ResourceCoordinationContext
 {
@@ -598,14 +599,14 @@ static void read_stat_from_file(
     int32_t fseek_return_value = fseek(sequence_control_set_ptr->static_config.input_stat_file, (long)picture_control_set_ptr->picture_number * sizeof(stat_struct_t), SEEK_SET);
 
     if (fseek_return_value != 0) {
-        printf("Error in fseek  returnVal %i\n", (int)fseek_return_value);
+        SVT_LOG("Error in fseek  returnVal %i\n", (int)fseek_return_value);
     }
     size_t fread_return_value = fread(&picture_control_set_ptr->stat_struct,
         (size_t)1,
         sizeof(stat_struct_t),
         sequence_control_set_ptr->static_config.input_stat_file);
     if (fread_return_value != sizeof(stat_struct_t)) {
-        printf("Error in freed  returnVal %i\n", (int)fread_return_value);
+        SVT_LOG("Error in freed  returnVal %i\n", (int)fread_return_value);
     }
 
     uint64_t referenced_area_avg = 0;

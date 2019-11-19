@@ -13,6 +13,8 @@
 #include "aom_dsp_rtcd.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 #endif
+
+#include "EbLog.h"
 /********************************************
  * Constants
  ********************************************/

@@ -25,6 +25,7 @@
 #include "EbSequenceControlSet.h"
 #include "EbReferenceObject.h"
 #include "EbCommonUtils.h"
+#include "EbLog.h"
 
 #define   convertToChromaQp(iQpY)  ( ((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY)-6) : (int32_t)(map_chroma_qp((uint32_t)iQpY))) )
 
@@ -544,7 +545,7 @@ uint8_t get_filter_level(
     PredictionMode mode; // Added to address 4x4 problem
     mode = (pred_mode == INTRA_MODE_4x4) ? DC_PRED : pred_mode;
     if (frm_hdr->delta_lf_params.delta_lf_present) {
-        printf("ERROR[AN]: delta_lf_present not supported yet\n");
+        SVT_LOG("ERROR[AN]: delta_lf_present not supported yet\n");
         int32_t delta_lf = -1;
         if (frm_hdr->delta_lf_params.delta_lf_multi) {
             const int32_t delta_lf_idx = delta_lf_id_lut[plane][dir_idx];

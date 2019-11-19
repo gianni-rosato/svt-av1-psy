@@ -104,8 +104,8 @@ int32_t main(int32_t argc, char* argv[])
     uint32_t                instanceCount=0;
     EbAppContext         *appCallbacks[MAX_CHANNEL_NUMBER];   // Instances App callback data
     signal(SIGINT, EventHandler);
-    printf("-------------------------------------------\n");
-    printf("SVT-AV1 Encoder\n");
+    fprintf(stderr, "-------------------------------------------\n");
+    fprintf(stderr, "SVT-AV1 Encoder\n");
     if (!get_help(argc, argv)) {
         // Get num_channels
         num_channels = get_number_of_channels(argc, argv);
@@ -189,7 +189,7 @@ int32_t main(int32_t argc, char* argv[])
                     EB_APP_MEMORY();
 #endif
                 }
-                printf("Encoding          ");
+                fprintf(stderr, "Encoding          ");
                 fflush(stdout);
 
                 while (exitCondition == APP_ExitConditionNone) {
@@ -264,10 +264,10 @@ int32_t main(int32_t argc, char* argv[])
                                 }
                             }
 
-                            printf("\nSUMMARY --------------------------------- Channel %u  --------------------------------\n", instanceCount + 1);
+                            fprintf(stderr, "\nSUMMARY --------------------------------- Channel %u  --------------------------------\n", instanceCount + 1);
                             {
-                                printf("Total Frames\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
-                                printf("%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
+                                fprintf(stderr, "Total Frames\t\tFrame Rate\t\tByte Count\t\tBitrate\n");
+                                fprintf(stderr, "%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
                                     (int32_t)frame_count,
                                     (double)frame_rate,
                                     (double)configs[instanceCount]->performance_context.byte_count,
@@ -275,9 +275,9 @@ int32_t main(int32_t argc, char* argv[])
                             }
 
                             if (configs[instanceCount]->stat_report) {
-                                printf("\n\t\t\t\tAverage PSNR (using per-frame PSNR)\t\t\t|\t\tOverall PSNR (using per-frame MSE)\n");
-                                printf("Average QP\t\tY-PSNR\t\t\tU-PSNR\t\t\tV-PSNR\t\t|\tY-PSNR\t\t\tU-PSNR\t\t\tV-PSNR\t\n");
-                                printf("%11.2f\t\t%4.2f dB\t\t%4.2f dB\t\t%4.2f dB\t|\t%4.2f dB\t\t%4.2f dB\t\t%4.2f dB\n",
+                                fprintf(stderr, "\n\t\t\t\tAverage PSNR (using per-frame PSNR)\t\t\t|\t\tOverall PSNR (using per-frame MSE)\n");
+                                fprintf(stderr, "Average QP\t\tY-PSNR\t\t\tU-PSNR\t\t\tV-PSNR\t\t|\tY-PSNR\t\t\tU-PSNR\t\t\tV-PSNR\t\n");
+                                fprintf(stderr, "%11.2f\t\t%4.2f dB\t\t%4.2f dB\t\t%4.2f dB\t|\t%4.2f dB\t\t%4.2f dB\t\t%4.2f dB\n",
                                     (float)configs[instanceCount]->performance_context.sum_qp / frame_count,
                                     (float)configs[instanceCount]->performance_context.sum_luma_psnr / frame_count,
                                     (float)configs[instanceCount]->performance_context.sum_cb_psnr / frame_count,
@@ -291,13 +291,13 @@ int32_t main(int32_t argc, char* argv[])
                         }
                     }
                 }
-                printf("\n");
+                fprintf(stderr, "\n");
                 fflush(stdout);
             }
             for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
                 if (exitConditions[instanceCount] == APP_ExitConditionFinished && return_errors[instanceCount] == EB_ErrorNone) {
                     if (configs[instanceCount]->stop_encoder == EB_FALSE) {
-                            printf("\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax Latency:\t\t%u ms\n",
+                            fprintf(stderr, "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax Latency:\t\t%u ms\n",
                                 (uint32_t)(instanceCount + 1),
                                 configs[instanceCount]->performance_context.average_speed,
                                 configs[instanceCount]->performance_context.total_encode_time * 1000,
@@ -306,12 +306,12 @@ int32_t main(int32_t argc, char* argv[])
                                 (uint32_t)(configs[instanceCount]->performance_context.max_latency));
                     }
                     else
-                        printf("\nChannel %u Encoding Interrupted\n", (uint32_t)(instanceCount + 1));
+                        fprintf(stderr, "\nChannel %u Encoding Interrupted\n", (uint32_t)(instanceCount + 1));
                 }
                 else if (return_errors[instanceCount] == EB_ErrorInsufficientResources)
-                    printf("Could not allocate enough memory for channel %u\n", instanceCount + 1);
+                    fprintf(stderr, "Could not allocate enough memory for channel %u\n", instanceCount + 1);
                 else
-                    printf("Error encoding at channel %u! Check error log file for more details ... \n", instanceCount + 1);
+                    fprintf(stderr, "Error encoding at channel %u! Check error log file for more details ... \n", instanceCount + 1);
             }
             // DeInit Encoder
             for (instanceCount = num_channels; instanceCount > 0; --instanceCount) {
@@ -320,8 +320,8 @@ int32_t main(int32_t argc, char* argv[])
             }
         }
         else {
-            printf("Error in configuration, could not begin encoding! ... \n");
-            printf("Run %s -help for a list of options\n", argv[0]);
+            fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
+            fprintf(stderr, "Run %s -help for a list of options\n", argv[0]);
         }
         // Destruct the App memory variables
         for (instanceCount = 0; instanceCount < num_channels; ++instanceCount) {
@@ -332,7 +332,7 @@ int32_t main(int32_t argc, char* argv[])
                 free(appCallbacks[instanceCount]);
         }
 
-        printf("Encoder finished\n");
+        fprintf(stderr, "Encoder finished\n");
     }
 
     return (return_error == 0) ? 0 : 1;

@@ -19,6 +19,7 @@
 #include "EbDefinitions.h"
 #include "noise_util.h"
 #include "aom_dsp_rtcd.h"
+#include "EbLog.h"
 
 void *eb_aom_memalign(size_t align, size_t size);
 void eb_aom_free(void *memblk);
@@ -66,7 +67,7 @@ struct aom_noise_tx_t *eb_aom_noise_tx_malloc(int32_t block_size) {
         break;
     default:
         free(noise_tx);
-        fprintf(stderr, "Unsupported block size %d\n", block_size);
+        SVT_ERROR("Unsupported block size %d\n", block_size);
         return NULL;
     }
     noise_tx->block_size = block_size;

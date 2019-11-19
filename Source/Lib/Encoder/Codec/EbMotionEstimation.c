@@ -23,6 +23,8 @@
 #include "EbIntraPrediction.h"
 #include "EbLambdaRateTables.h"
 
+#include "EbLog.h"
+
 #define OIS_TH_COUNT 4
 
 int32_t OisPointTh[3][MAX_TEMPORAL_LAYERS][OIS_TH_COUNT] = {
@@ -13460,7 +13462,7 @@ static void hme_mv_center_check(EbPictureBufferDesc *ref_pic_ptr,
     }
 
     else
-        SVT_LOG("error no center selected");
+        SVT_ERROR("no center selected");
     *xsc = search_center_x;
     *ysc = search_center_y;
 }

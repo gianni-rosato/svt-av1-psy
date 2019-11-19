@@ -16,10 +16,10 @@
 #define HEADER_DUMP 0
 
 #if HEADER_DUMP
-#define PRINT_NL printf("\n");
-#define PRINT(name, val) printf("\n%s :\t%X", name, val);
-#define PRINT_NAME(name) printf("\n%s :\t", name);
-#define PRINT_FRAME(name, val) printf("\n%s :\t%X", name, val);
+#define PRINT_NL SVT_LOG("\n");
+#define PRINT(name, val) SVT_LOG("\n%s :\t%X", name, val);
+#define PRINT_NAME(name) SVT_LOG("\n%s :\t", name);
+#define PRINT_FRAME(name, val) SVT_LOG("\n%s :\t%X", name, val);
 #else
 #define PRINT_NL
 #define PRINT(name, val)

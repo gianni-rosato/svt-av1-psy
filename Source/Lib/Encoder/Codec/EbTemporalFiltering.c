@@ -84,7 +84,7 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
     FOPEN(fid, filename, "wb");
 
     if (!fid){
-        printf("Unable to open file %s to write.\n", "temp_picture.yuv");
+        SVT_LOG("Unable to open file %s to write.\n", "temp_picture.yuv");
     }else{
         // the source picture saved in the enchanced_picture_ptr contains a border in x and y dimensions
         pic_point = buffer_y + (origin_y*stride_y) + origin_x;
@@ -120,7 +120,7 @@ void save_YUV_to_file_highbd(char *filename, uint16_t* buffer_y, uint16_t* buffe
     FOPEN(fid, filename, "wb");
 
     if (!fid){
-        printf("Unable to open file %s to write.\n", "temp_picture.yuv");
+        SVT_LOG("Unable to open file %s to write.\n", "temp_picture.yuv");
     }else{
         // the source picture saved in the enchanced_picture_ptr contains a border in x and y dimensions
         pic_point = buffer_y + (origin_y*stride_y) + origin_x;
@@ -1967,7 +1967,7 @@ static void adjust_filter_strength(
         strength = strength + 2 * (encoder_bit_depth - 8);
 
 #if DEBUG_TF
-    printf("[DEBUG] noise level: %g, strength = %d, adj_strength = %d\n", noise_level, *altref_strength, strength);
+    SVT_LOG("[DEBUG] noise level: %g, strength = %d, adj_strength = %d\n", noise_level, *altref_strength, strength);
 #endif
 
     *altref_strength = (uint8_t)strength;

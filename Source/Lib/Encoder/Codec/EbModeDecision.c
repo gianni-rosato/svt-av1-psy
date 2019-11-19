@@ -35,7 +35,8 @@
 #include "EbRateDistortionCost.h"
 #endif
 #include "aom_dsp_rtcd.h"
-#define  INCRMENT_CAND_TOTAL_COUNT(cnt) MULTI_LINE_MACRO_BEGIN cnt++; if(cnt>=MODE_DECISION_CANDIDATE_MAX_COUNT) printf(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n",cnt); MULTI_LINE_MACRO_END
+#include "EbLog.h"
+#define  INCRMENT_CAND_TOTAL_COUNT(cnt) MULTI_LINE_MACRO_BEGIN cnt++; if(cnt>=MODE_DECISION_CANDIDATE_MAX_COUNT) SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n",cnt); MULTI_LINE_MACRO_END
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
@@ -592,7 +593,7 @@ void determine_compound_mode(
         candidatePtr->interinter_comp.wedge_sign = candidatePtr->interinter_comp.wedge_sign;
     }
     else {
-        printf("ERROR: not used comp type\n");
+        SVT_LOG("ERROR: not used comp type\n");
     }
 }
 
@@ -4587,7 +4588,7 @@ static INLINE int mv_check_bounds(const MvLimits *mv_limits, const MV *mv) {
 void assert_release(int statement)
 {
     if (statement == 0)
-        printf("ASSERT_ERRRR\n");
+        SVT_LOG("ASSERT_ERRRR\n");
 }
 
 void  intra_bc_search(
@@ -5684,7 +5685,7 @@ uint32_t product_full_mode_decision(
         cu_ptr->comp_group_idx = candidate_ptr->comp_group_idx;
         if (cu_ptr->interinter_comp.type == COMPOUND_AVERAGE){
             if (cu_ptr->comp_group_idx != 0 || cu_ptr->compound_idx != 1)
-                printf("Error: Compound combination not allowed\n");
+                SVT_LOG("Error: Compound combination not allowed\n");
         }
     }
 #if II_COMP_FLAG

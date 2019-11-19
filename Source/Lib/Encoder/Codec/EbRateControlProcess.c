@@ -29,6 +29,7 @@
 #include "EbRateControlTasks.h"
 
 #include "EbSegmentation.h"
+#include "EbLog.h"
 
 static const uint32_t  rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] =
 {
@@ -1095,7 +1096,7 @@ void frame_level_rc_input_picture_vbr(
             uint32_t         selected_ref_qp;
 
             if (sequence_control_set_ptr->static_config.look_ahead_distance == 0)
-                printf("ERROR: LAD=0 is not supported\n");
+                SVT_LOG("ERROR: LAD=0 is not supported\n");
             else {
                 selected_ref_qp = picture_control_set_ptr->parent_pcs_ptr->best_pred_qp;
                 picture_control_set_ptr->picture_qp = (uint8_t)selected_ref_qp;
@@ -1178,7 +1179,7 @@ void frame_level_rc_input_picture_vbr(
             uint32_t         selected_ref_qp;
 
             if (sequence_control_set_ptr->static_config.look_ahead_distance == 0)
-                printf("ERROR: LAD=0 is not supported\n");
+                SVT_LOG("ERROR: LAD=0 is not supported\n");
             else {
                 selected_ref_qp = picture_control_set_ptr->parent_pcs_ptr->best_pred_qp;
                 picture_control_set_ptr->picture_qp = (uint8_t)selected_ref_qp;
@@ -2338,7 +2339,7 @@ void frame_level_rc_input_picture_cvbr(
             uint32_t         selected_ref_qp;
 
             if (sequence_control_set_ptr->static_config.look_ahead_distance == 0)
-                printf("ERROR: LAD=0 is not supported\n");
+                SVT_LOG("ERROR: LAD=0 is not supported\n");
             else {
                 selected_ref_qp = picture_control_set_ptr->parent_pcs_ptr->best_pred_qp;
                 picture_control_set_ptr->picture_qp = (uint8_t)selected_ref_qp;
@@ -2538,7 +2539,7 @@ void frame_level_rc_input_picture_cvbr(
             uint32_t         selected_ref_qp;
 
             if (sequence_control_set_ptr->static_config.look_ahead_distance == 0)
-                printf("ERROR: LAD=0 is not supported\n");
+                SVT_LOG("ERROR: LAD=0 is not supported\n");
             else {
                 selected_ref_qp = picture_control_set_ptr->parent_pcs_ptr->best_pred_qp;
                 picture_control_set_ptr->picture_qp = (uint8_t)selected_ref_qp;

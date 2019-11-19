@@ -15,7 +15,7 @@
 #endif
 
 #include "EbUtility.h"
-
+#include "EbLog.h"
 /********************************************************************************************
 * faster memcopy for <= 64B blocks, great w/ inlining and size known at compile time (or w/ PGO)
 * THIS NEEDS TO STAY IN A HEADER FOR BEST PERFORMANCE
@@ -213,7 +213,7 @@ const CodedUnitStats* get_coded_unit_stats(const uint32_t cuIdx)
 {
     //ASSERT(cuIdx < CU_MAX_COUNT && "get_coded_unit_stats: Out-of-range CU Idx\n");
     if (cuIdx == 255)
-        printf("Invalid CuIndex\n");
+        SVT_LOG("Invalid CuIndex\n");
 
     return &coded_unit_stats_array[cuIdx];
 }
@@ -397,7 +397,7 @@ uint32_t search_matching_from_dps(
     }
 
     if (matched == 0xFFFF)
-        printf(" \n\n PROBLEM\n\n ");
+        SVT_LOG(" \n\n PROBLEM\n\n ");
 
     return matched;
 }
@@ -427,7 +427,7 @@ uint32_t search_matching_from_mds(
     }
 
     if (matched == 0xFFFF)
-        printf(" \n\n PROBLEM\n\n ");
+        SVT_LOG(" \n\n PROBLEM\n\n ");
 
     return matched;
 }
@@ -554,7 +554,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                     blk_geom_mds[*idx_mds].tx_org_y[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].origin_y;
                 }
                 /*if (blk_geom_mds[*idx_mds].bsize == BLOCK_16X8)
-                    printf("");*/
+                    SVT_LOG("");*/
                 blk_geom_mds[*idx_mds].tx_boff_x[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].tx_org_x[tx_depth][txb_itr] - blk_geom_mds[*idx_mds].origin_x;
                 blk_geom_mds[*idx_mds].tx_boff_y[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].tx_org_y[tx_depth][txb_itr] - blk_geom_mds[*idx_mds].origin_y;
                 blk_geom_mds[*idx_mds].tx_width[tx_depth][txb_itr] = tx_size_wide[blk_geom_mds[*idx_mds].txsize[tx_depth][txb_itr]];
@@ -700,7 +700,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
 
                     blk_geom_mds[*idx_mds].tx_org_x[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].origin_x + tbx;
                     blk_geom_mds[*idx_mds].tx_org_y[tx_depth][txb_itr] = blk_geom_mds[*idx_mds].origin_y + tby;
-                    //printf("");
+                    //SVT_LOG("");
                 }
                 else if (blk_geom_mds[*idx_mds].bsize == BLOCK_8X16)
                 {
@@ -939,7 +939,7 @@ void finish_depth_scan_all_blks()
         if (do_print)
         {
             fprintf(fp, "\n\n\n");
-            printf("\n\n\n");
+            SVT_LOG("\n\n\n");
         }
 
         for (sq_it_y = 0; sq_it_y < tot_num_sq; sq_it_y++)
@@ -949,7 +949,7 @@ void finish_depth_scan_all_blks()
                 for (uint32_t i = 0; i < sq_size / min_size; i++)
                 {
                     fprintf(fp, "\n ");
-                    printf("\n ");
+                    SVT_LOG("\n ");
                 }
             }
 
@@ -974,12 +974,12 @@ void finish_depth_scan_all_blks()
                         if (do_print && part_it == 0)
                         {
                             fprintf(fp, "%i", blk_geom_dps[depth_scan_idx].blkidx_mds);
-                            printf("%i", blk_geom_dps[depth_scan_idx].blkidx_mds);
+                            SVT_LOG("%i", blk_geom_dps[depth_scan_idx].blkidx_mds);
 
                             for (uint32_t i = 0; i < sq_size / min_size; i++)
                             {
                                 fprintf(fp, ",");
-                                printf(",");
+                                SVT_LOG(",");
                             }
                         }
                         depth_scan_idx++;
@@ -1073,7 +1073,7 @@ void build_blk_geom(int32_t use_128x128)
     //(0)compute total number of blocks using the information provided
     max_num_active_blocks = count_total_num_of_active_blks();
     if (max_num_active_blocks != max_block_count)
-        printf(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
+        SVT_LOG(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
 
     //(1) Construct depth scan blk_geom_dps
     depth_scan_all_blks();

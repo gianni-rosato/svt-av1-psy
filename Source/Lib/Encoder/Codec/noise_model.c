@@ -16,6 +16,7 @@
 #include "noise_model.h"
 #include "noise_util.h"
 #include "mathutils.h"
+#include "EbLog.h"
 
 #define kLowPolyNumParams 3
 
@@ -135,7 +136,7 @@ static int32_t equation_system_init(aom_equation_system_t *eqns, int32_t n) {
     eqns->x = (double *)malloc(sizeof(*eqns->x) * n);
     eqns->n = n;
     if (!eqns->A || !eqns->b || !eqns->x) {
-        fprintf(stderr, "Failed to allocate system of equations of size %d\n", n);
+        SVT_ERROR("Failed to allocate system of equations of size %d\n", n);
         free(eqns->A);
         free(eqns->b);
         free(eqns->x);
@@ -152,7 +153,7 @@ static int32_t equation_system_solve(aom_equation_system_t *eqns) {
     double *A = (double *)malloc(sizeof(*A) * n * n);
     int32_t ret = 0;
     if (A == NULL || b == NULL) {
-        fprintf(stderr, "Unable to allocate temp values of size %dx%d\n", n, n);
+        SVT_ERROR("Unable to allocate temp values of size %dx%d\n", n, n);
         free(b);
         free(A);
         return 0;
@@ -222,7 +223,7 @@ static int32_t num_coeffs(const aom_noise_model_params_t params) {
 static int32_t noise_state_init(aom_noise_state_t *state, int32_t n, int32_t bit_depth) {
     const int32_t kNumBins = 20;
     if (!equation_system_init(&state->eqns, n)) {
-        fprintf(stderr, "Failed initialization noise state with size %d\n", n);
+        SVT_ERROR("Failed initialization noise state with size %d\n", n);
         return 0;
     }
     state->ar_gain = 1.0;
@@ -317,7 +318,7 @@ int32_t eb_aom_noise_strength_solver_solve(aom_noise_strength_solver_t *solver) 
     double *old_A = solver->eqns.A;
     double *A = (double *)malloc(sizeof(*A) * n * n);
     if (!A) {
-        fprintf(stderr, "Unable to allocate copy of A\n");
+        SVT_ERROR("Unable to allocate copy of A\n");
         return 0;
     }
     memcpy(A, old_A, sizeof(*A) * n * n);
@@ -399,7 +400,7 @@ int32_t eb_aom_noise_strength_solver_fit_piecewise(
     // different bit-depths.
     const double kTolerance = solver->max_intensity * 0.00625 / 255.0;
     if (!eb_aom_noise_strength_lut_init(lut, solver->num_bins)) {
-        fprintf(stderr, "Failed to init lut\n");
+        SVT_ERROR("Failed to init lut\n");
         return 0;
     }
     for (int32_t i = 0; i < solver->num_bins; ++i) {
@@ -447,7 +448,7 @@ int32_t eb_aom_flat_block_finder_init(aom_flat_block_finder_t *block_finder,
     double *A = 0;
     int32_t x = 0, y = 0, i = 0, j = 0;
     if (!equation_system_init(&eqns, kLowPolyNumParams)) {
-        fprintf(stderr, "Failed to init equation system for block_size=%d\n",
+        SVT_ERROR("Failed to init equation system for block_size=%d\n",
             block_size);
         return 0;
     }
@@ -456,7 +457,7 @@ int32_t eb_aom_flat_block_finder_init(aom_flat_block_finder_t *block_finder,
         sizeof(*AtA_inv));
     A = (double *)malloc(kLowPolyNumParams * n * sizeof(*A));
     if (AtA_inv == NULL || A == NULL) {
-        fprintf(stderr, "Failed to alloc A or AtA_inv for block_size=%d\n",
+        SVT_ERROR("Failed to alloc A or AtA_inv for block_size=%d\n",
             block_size);
         free(AtA_inv);
         free(A);
@@ -587,7 +588,7 @@ int32_t eb_aom_flat_block_finder_run(const aom_flat_block_finder_t *block_finder
     index_and_score_t *scores = (index_and_score_t *)malloc(
         num_blocks_w * num_blocks_h * sizeof(*scores));
     if (plane == NULL || block == NULL || scores == NULL) {
-        fprintf(stderr, "Failed to allocate memory for block of size %d\n", n);
+        SVT_ERROR("Failed to allocate memory for block of size %d\n", n);
         free(plane);
         free(block);
         free(scores);
@@ -595,7 +596,7 @@ int32_t eb_aom_flat_block_finder_run(const aom_flat_block_finder_t *block_finder
     }
 
 #ifdef NOISE_MODEL_LOG_SCORE
-    fprintf(stderr, "score = [");
+    SVT_ERROR("score = [");
 #endif
     for (by = 0; by < num_blocks_h; ++by) {
         for (bx = 0; bx < num_blocks_w; ++bx) {
@@ -658,18 +659,18 @@ int32_t eb_aom_flat_block_finder_run(const aom_flat_block_finder_t *block_finder
                 scores[by * num_blocks_w + bx].score = var > kVarThreshold ? score : 0;
                 scores[by * num_blocks_w + bx].index = by * num_blocks_w + bx;
 #ifdef NOISE_MODEL_LOG_SCORE
-                fprintf(stderr, "%g %g %g %g %g %d ", score, var, ratio, trace, norm,
+                SVT_ERROR("%g %g %g %g %g %d ", score, var, ratio, trace, norm,
                     is_flat);
 #endif
                 num_flat += is_flat;
             }
         }
 #ifdef NOISE_MODEL_LOG_SCORE
-        fprintf(stderr, "\n");
+        SVT_ERROR("\n");
 #endif
     }
 #ifdef NOISE_MODEL_LOG_SCORE
-    fprintf(stderr, "];\n");
+    SVT_ERROR("];\n");
 #endif
     // Find the top-scored blocks (most likely to be flat) and set the flat blocks
     // be the union of the thresholded results and the top 10th percentile of the
@@ -698,11 +699,11 @@ int32_t eb_aom_noise_model_init(aom_noise_model_t *model,
 
     memset(model, 0, sizeof(*model));
     if (params.lag < 1) {
-        fprintf(stderr, "Invalid noise param: lag = %d must be >= 1\n", params.lag);
+        SVT_ERROR("Invalid noise param: lag = %d must be >= 1\n", params.lag);
         return 0;
     }
     if (params.lag > kMaxLag) {
-        fprintf(stderr, "Invalid noise param: lag = %d must be <= %d\n", params.lag,
+        SVT_ERROR("Invalid noise param: lag = %d must be <= %d\n", params.lag,
             kMaxLag);
         return 0;
     }
@@ -710,12 +711,12 @@ int32_t eb_aom_noise_model_init(aom_noise_model_t *model,
     memcpy(&model->params, &params, sizeof(params));
     for (c = 0; c < 3; ++c) {
         if (!noise_state_init(&model->combined_state[c], n + (c > 0), bit_depth)) {
-            fprintf(stderr, "Failed to allocate noise state for channel %d\n", c);
+            SVT_ERROR("Failed to allocate noise state for channel %d\n", c);
             eb_aom_noise_model_free(model);
             return 0;
         }
         if (!noise_state_init(&model->latest_state[c], n + (c > 0), bit_depth)) {
-            fprintf(stderr, "Failed to allocate noise state for channel %d\n", c);
+            SVT_ERROR("Failed to allocate noise state for channel %d\n", c);
             eb_aom_noise_model_free(model);
             return 0;
         }
@@ -740,7 +741,7 @@ int32_t eb_aom_noise_model_init(aom_noise_model_t *model,
                 ++i;
                 break;
             default:
-                fprintf(stderr, "Invalid shape\n");
+                SVT_ERROR("Invalid shape\n");
                 eb_aom_noise_model_free(model);
                 return 0;
             }
@@ -817,7 +818,7 @@ static int32_t add_block_observations(
     const int32_t n = noise_model->latest_state[c].eqns.n;
 
     if (!buffer) {
-        fprintf(stderr, "Unable to allocate buffer of size %d\n", num_coords + 1);
+        SVT_ERROR("Unable to allocate buffer of size %d\n", num_coords + 1);
         return 0;
     }
     for (int32_t by = 0; by < num_blocks_h; ++by) {
@@ -1020,12 +1021,12 @@ aom_noise_status_t eb_aom_noise_model_update(
     int32_t i = 0, channel = 0;
 
     if (block_size <= 1) {
-        fprintf(stderr, "BlockSize = %d must be > 1\n", block_size);
+        SVT_ERROR("BlockSize = %d must be > 1\n", block_size);
         return AOM_NOISE_STATUS_INVALID_ARGUMENT;
     }
 
     if (block_size < noise_model->params.lag * 2 + 1) {
-        fprintf(stderr, "BlockSize = %d must be >= %d\n", block_size,
+        SVT_ERROR("BlockSize = %d must be >= %d\n", block_size,
             noise_model->params.lag * 2 + 1);
         return AOM_NOISE_STATUS_INVALID_ARGUMENT;
     }
@@ -1044,7 +1045,7 @@ aom_noise_status_t eb_aom_noise_model_update(
     }
 
     if (num_blocks <= 1) {
-        fprintf(stderr, "Not enough flat blocks to update noise estimate\n");
+        SVT_ERROR("Not enough flat blocks to update noise estimate\n");
         return AOM_NOISE_STATUS_INSUFFICIENT_FLAT_BLOCKS;
     }
 
@@ -1059,7 +1060,7 @@ aom_noise_status_t eb_aom_noise_model_update(
             denoised[channel], w, h, stride[channel], sub,
             alt_data, alt_denoised, stride[0], flat_blocks,
             block_size, num_blocks_w, num_blocks_h)) {
-            fprintf(stderr, "Adding block observation failed\n");
+            SVT_ERROR("Adding block observation failed\n");
             return AOM_NOISE_STATUS_INTERNAL_ERROR;
         }
 
@@ -1070,7 +1071,7 @@ aom_noise_status_t eb_aom_noise_model_update(
                     &noise_model->latest_state[channel].eqns);
             }
             else {
-                fprintf(stderr, "Solving latest noise equation system failed %d!\n",
+                SVT_ERROR("Solving latest noise equation system failed %d!\n",
                     channel);
                 return AOM_NOISE_STATUS_INTERNAL_ERROR;
             }
@@ -1083,7 +1084,7 @@ aom_noise_status_t eb_aom_noise_model_update(
 
         if (!eb_aom_noise_strength_solver_solve(
             &noise_model->latest_state[channel].strength_solver)) {
-            fprintf(stderr, "Solving latest noise strength failed!\n");
+            SVT_ERROR("Solving latest noise strength failed!\n");
             return AOM_NOISE_STATUS_INTERNAL_ERROR;
         }
 
@@ -1106,7 +1107,7 @@ aom_noise_status_t eb_aom_noise_model_update(
                     &noise_model->combined_state[channel].eqns);
             }
             else {
-                fprintf(stderr, "Solving combined noise equation system failed %d!\n",
+                SVT_ERROR("Solving combined noise equation system failed %d!\n",
                     channel);
                 return AOM_NOISE_STATUS_INTERNAL_ERROR;
             }
@@ -1118,7 +1119,7 @@ aom_noise_status_t eb_aom_noise_model_update(
 
         if (!eb_aom_noise_strength_solver_solve(
             &noise_model->combined_state[channel].strength_solver)) {
-            fprintf(stderr, "Solving combined noise strength failed!\n");
+            SVT_ERROR("Solving combined noise strength failed!\n");
             return AOM_NOISE_STATUS_INTERNAL_ERROR;
         }
     }
@@ -1144,7 +1145,7 @@ void eb_aom_noise_model_save_latest(aom_noise_model_t *noise_model) {
 int32_t eb_aom_noise_model_get_grain_parameters(aom_noise_model_t *const noise_model,
     aom_film_grain_t *film_grain) {
     if (noise_model->params.lag > 3) {
-        fprintf(stderr, "params.lag = %d > 3\n", noise_model->params.lag);
+        SVT_ERROR("params.lag = %d > 3\n", noise_model->params.lag);
         return 0;
     }
     uint16_t random_seed = film_grain->random_seed;
@@ -1358,7 +1359,7 @@ int32_t eb_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised
     aom_flat_block_finder_t block_finder_chroma;
     const float kBlockNormalization = (float)((1 << bit_depth) - 1);
     if (chroma_sub[0] != chroma_sub[1]) {
-        fprintf(stderr,
+        SVT_ERROR(
             "eb_aom_wiener_denoise_2d doesn't handle different chroma "
             "subsampling");
         return 0;
@@ -1558,7 +1559,7 @@ static int32_t denoise_and_model_realloc_if_necessary(struct aom_denoise_and_mod
     eb_aom_flat_block_finder_free(&ctx->flat_block_finder);
     if (!eb_aom_flat_block_finder_init(&ctx->flat_block_finder, ctx->block_size,
         ctx->bit_depth, use_highbd)) {
-        fprintf(stderr, "Unable to init flat block finder\n");
+        SVT_ERROR("Unable to init flat block finder\n");
         return 0;
     }
 
@@ -1566,7 +1567,7 @@ static int32_t denoise_and_model_realloc_if_necessary(struct aom_denoise_and_mod
                                               ctx->bit_depth, use_highbd };
     //  eb_aom_noise_model_free(&ctx->noise_model);
     if (!eb_aom_noise_model_init(&ctx->noise_model, params)) {
-        fprintf(stderr, "Unable to init noise model\n");
+        SVT_ERROR("Unable to init noise model\n");
         return 0;
     }
 
@@ -1675,7 +1676,7 @@ int32_t eb_aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
     int32_t strides[3] = { sd->stride_y, sd->stride_cb, sd->stride_cr };
 
     if (!denoise_and_model_realloc_if_necessary(ctx, sd, use_highbd)) {
-        fprintf(stderr, "Unable to realloc buffers\n");
+        SVT_ERROR("Unable to realloc buffers\n");
         return 0;
     }
 
@@ -1702,7 +1703,7 @@ int32_t eb_aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
     if (!eb_aom_wiener_denoise_2d(data, ctx->denoised, sd->width, sd->height,
         strides, chroma_sub_log2, ctx->noise_psd,
         block_size, ctx->bit_depth, use_highbd)) {
-        fprintf(stderr, "Unable to denoise image\n");
+        SVT_ERROR("Unable to denoise image\n");
         return 0;
     }
 
@@ -1720,7 +1721,7 @@ int32_t eb_aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
     film_grain->apply_grain = 0;
     if (have_noise_estimate) {
         if (!eb_aom_noise_model_get_grain_parameters(&ctx->noise_model, film_grain)) {
-            fprintf(stderr, "Unable to get grain parameters.\n");
+            SVT_ERROR("Unable to get grain parameters.\n");
             return 0;
         }
         film_grain->apply_grain = 1;

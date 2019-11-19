@@ -2442,7 +2442,7 @@ API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
     do { \
         if (!pointer) return return_type; \
         if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
-            printf("Malloc has failed due to insuffucient resources"); \
+            SVT_LOG("Malloc has failed due to insuffucient resources"); \
             release(pointer); \
             return return_type; \
         } \
@@ -2495,15 +2495,15 @@ API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
 
 
 #define EB_MEMORY() \
-printf("Total Number of Mallocs in Library: %d\n", lib_malloc_count); \
-printf("Total Number of Threads in Library: %d\n", lib_thread_count); \
-printf("Total Number of Semaphore in Library: %d\n", lib_semaphore_count); \
-printf("Total Number of Mutex in Library: %d\n", lib_mutex_count); \
-printf("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
+SVT_LOG("Total Number of Mallocs in Library: %d\n", lib_malloc_count); \
+SVT_LOG("Total Number of Threads in Library: %d\n", lib_thread_count); \
+SVT_LOG("Total Number of Semaphore in Library: %d\n", lib_semaphore_count); \
+SVT_LOG("Total Number of Mutex in Library: %d\n", lib_mutex_count); \
+SVT_LOG("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
 
 #define EB_APP_MEMORY() \
-printf("Total Number of Mallocs in App: %d\n", app_malloc_count); \
-printf("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
+SVT_LOG("Total Number of Mallocs in App: %d\n", app_malloc_count); \
+SVT_LOG("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 
 #define RSIZE_MAX_MEM      ( 256UL << 20 )     /* 256MB */
 
@@ -2538,19 +2538,6 @@ memset(dst, val, count)
             EbPtr handle,
             uint32_t errorCode);
     } EbCallback;
-
-    // DEBUG MACROS
-#define LIB_PRINTF_ENABLE                1
-
-#if LIB_PRINTF_ENABLE
-#define SVT_LOG printf
-#else
-#ifdef _MSC_VER
-#define SVT_LOG(s, ...) printf("")
-#else
-#define SVT_LOG(s, ...) printf("",##__VA_ARGS__)
-#endif
-#endif
 
 // Common Macros
 #define UNUSED(x) (void)(x)

@@ -168,7 +168,7 @@ static INLINE int aom_daala_read(DaalaReader_t *r, int prob) {
   const int frame_idx = bitstream_queue_get_frame_read();
   bitstream_queue_pop(&ref_bit, ref_cdf, &ref_nsymbs);
   if (ref_nsymbs != 2) {
-      fprintf(stderr,
+      SVT_ERROR(
           "\n *** [bit] nsymbs error, frame_idx_r %d nsymbs %d ref_nsymbs "
           "%d queue_r %d\n",
           frame_idx, 2, ref_nsymbs, queue_r);
@@ -176,15 +176,15 @@ static INLINE int aom_daala_read(DaalaReader_t *r, int prob) {
       }
   if ((ref_nsymbs != 2) || (ref_cdf[0] != (AomCdfProb)p) ||
       (ref_cdf[1] != 32767)) {
-      fprintf(stderr,
+      SVT_ERROR(
           "\n *** [bit] cdf error, frame_idx_r %d cdf {%d, %d} ref_cdf {%d",
           frame_idx, p, 32767, ref_cdf[0]);
-      for (i = 1; i < ref_nsymbs; ++i) fprintf(stderr, ", %d", ref_cdf[i]);
-      fprintf(stderr, "} queue_r %d\n", queue_r);
+      for (i = 1; i < ref_nsymbs; ++i) SVT_ERROR(", %d", ref_cdf[i]);
+      SVT_ERROR("} queue_r %d\n", queue_r);
       assert(0);
       }
   if (bit != ref_bit) {
-      fprintf(stderr,
+      SVT_ERROR(
           "\n *** [bit] symb error, frame_idx_r %d symb %d ref_symb %d "
           "queue_r %d\n",
           frame_idx, bit, ref_bit, queue_r);
@@ -202,8 +202,8 @@ static INLINE int aom_daala_read(DaalaReader_t *r, int prob) {
   }
 #else
   if (enable_dump) {
-      printf("\n *** p %d \t", p);
-      printf("symb : %d \t", bit);
+      SVT_LOG("\n *** p %d \t", p);
+      SVT_LOG("symb : %d \t", bit);
       fflush(stdout);
   }
 #endif
@@ -226,7 +226,7 @@ static INLINE int daala_read_symbol(DaalaReader_t *r, const AomCdfProb *cdf,
   const int frame_idx = bitstream_queue_get_frame_read();
   bitstream_queue_pop(&ref_symb, ref_cdf, &ref_nsymbs);
   if (nsymbs != ref_nsymbs) {
-      fprintf(stderr,
+      SVT_ERROR(
           "\n *** nsymbs error, frame_idx_r %d nsymbs %d ref_nsymbs %d "
           "queue_r %d\n",
           frame_idx, nsymbs, ref_nsymbs, queue_r);
@@ -238,12 +238,12 @@ static INLINE int daala_read_symbol(DaalaReader_t *r, const AomCdfProb *cdf,
           if (cdf[i] != ref_cdf[i]) cdf_error = 1;
       }
   if (cdf_error) {
-      fprintf(stderr, "\n *** cdf error, frame_idx_r %d cdf {%d", frame_idx,
+      SVT_ERROR("\n *** cdf error, frame_idx_r %d cdf {%d", frame_idx,
           cdf[0]);
-      for (i = 1; i < nsymbs; ++i) fprintf(stderr, ", %d", cdf[i]);
-      fprintf(stderr, "} ref_cdf {%d", ref_cdf[0]);
-      for (i = 1; i < ref_nsymbs; ++i) fprintf(stderr, ", %d", ref_cdf[i]);
-      fprintf(stderr, "} queue_r %d\n", queue_r);
+      for (i = 1; i < nsymbs; ++i) SVT_ERROR(", %d", cdf[i]);
+      SVT_ERROR("} ref_cdf {%d", ref_cdf[0]);
+      for (i = 1; i < ref_nsymbs; ++i) SVT_ERROR(", %d", ref_cdf[i]);
+      SVT_ERROR("} queue_r %d\n", queue_r);
       assert(0);
       }
   if (symb != ref_symb) {
@@ -266,9 +266,9 @@ static INLINE int daala_read_symbol(DaalaReader_t *r, const AomCdfProb *cdf,
   }
 #else
   if (enable_dump) {
-      printf("\n *** nsymbs %d \t", nsymbs);
-      for (int i = 0; i < nsymbs; ++i) printf("cdf[%d] : %d \t", i, cdf[i]);
-      printf("symb : %d \t", symb);
+      SVT_LOG("\n *** nsymbs %d \t", nsymbs);
+      for (int i = 0; i < nsymbs; ++i) SVT_LOG("cdf[%d] : %d \t", i, cdf[i]);
+      SVT_LOG("symb : %d \t", symb);
       fflush(stdout);
   }
 #endif

@@ -25,6 +25,7 @@
 #include "EbEntropyCodingResults.h"
 #include "EbRateControlTasks.h"
 #include "EbCabacContextModel.h"
+#include "EbLog.h"
 #define  AV1_MIN_TILE_SIZE_BYTES 1
 void eb_av1_reset_loop_restoration(PictureControlSet     *piCSetPtr);
 
@@ -394,7 +395,7 @@ void write_stat_to_file(
     eb_block_on_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
     int32_t fseek_return_value = fseek(sequence_control_set_ptr->static_config.output_stat_file, (long)ref_poc * sizeof(stat_struct_t), SEEK_SET);
     if (fseek_return_value != 0)
-        printf("Error in fseek  returnVal %i\n", fseek_return_value);
+        SVT_LOG("Error in fseek  returnVal %i\n", fseek_return_value);
     fwrite(&stat_struct,
         sizeof(stat_struct_t),
         (size_t)1,

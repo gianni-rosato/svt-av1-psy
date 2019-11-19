@@ -183,7 +183,7 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
       correspondences[num_correspondences].ry =
           ref_corners[2 * best_match_j + 1];
 
-      /*printf("corresp: %d %d - %d %d\n",
+      /*SVT_LOG("corresp: %d %d - %d %d\n",
              correspondences[num_correspondences].x,
              correspondences[num_correspondences].y,
              correspondences[num_correspondences].rx,
