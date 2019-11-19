@@ -78,23 +78,6 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
 }
 
 
-static unsigned char *av1_downconvert_frame(EbPictureBufferDesc *input_pic) {
-    int i, j;
-    uint16_t *orig_buf = (uint16_t *)input_pic->buffer_y;
-    uint8_t *buf_8bit = malloc(input_pic->stride_y * input_pic->height);
-    if (buf_8bit == NULL)
-        return NULL;
-
-    for (i = 0; i < input_pic->height; ++i) {
-        for (j = 0; j < input_pic->width; ++j) {
-            buf_8bit[i * input_pic->stride_y + j] =
-                orig_buf[i * input_pic->stride_y + j] >> (input_pic->bit_depth - 8);
-        }
-    }
-    return buf_8bit;
-}
-
-
 void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
                            EbWarpedMotionParams *bestWarpedMotion, int allow_high_precision_mv)
 {
@@ -113,17 +96,10 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
         0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0
     };
     // clang-format on
+
     int frm_corners[2 * MAX_CORNERS];
-    unsigned char *frm_buffer = input_pic->bit_depth > EB_8BIT ?
-                av1_downconvert_frame(input_pic)
-                : input_pic->buffer_y + input_pic->origin_x + input_pic->origin_y * input_pic->stride_y;
-    if (frm_buffer == NULL)
-        return;
-    unsigned char *ref_buffer = ref_pic->bit_depth > EB_8BIT ?
-                av1_downconvert_frame(ref_pic)
-                : ref_pic->buffer_y + ref_pic->origin_x + ref_pic->origin_y * ref_pic->stride_y;
-    if (ref_buffer == NULL)
-        return;
+    unsigned char *frm_buffer = input_pic->buffer_y + input_pic->origin_x + input_pic->origin_y * input_pic->stride_y;
+    unsigned char *ref_buffer = ref_pic->buffer_y + ref_pic->origin_x + ref_pic->origin_y * ref_pic->stride_y;
 
     EbWarpedMotionParams global_motion = default_warp_params;
 
@@ -218,11 +194,6 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
     }
 
     *bestWarpedMotion = global_motion;
-
-    if (input_pic->bit_depth > EB_8BIT)
-        free(frm_buffer);
-    if (ref_pic->bit_depth > EB_8BIT)
-        free(ref_buffer);
 
     for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) {
         free(params_by_motion[m].inliers);
