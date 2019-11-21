@@ -19,6 +19,7 @@
 #if TWO_PASS
 #include <stdio.h>
 #endif
+#include "EbEncHandle.h"
 #include "EbEntropyCodingProcess.h"
 #include "EbEncDecResults.h"
 #include "EbEntropyCodingResults.h"
@@ -27,22 +28,39 @@
 #define  AV1_MIN_TILE_SIZE_BYTES 1
 void eb_av1_reset_loop_restoration(PictureControlSet     *piCSetPtr);
 
+
+static void rest_context_dctor(EbPtr p)
+{
+    EbThreadContext* thread_context_ptr = (EbThreadContext*)p;
+    EntropyCodingContext *obj = (EntropyCodingContext*)thread_context_ptr->priv;
+    EB_FREE_ARRAY(obj);
+}
+
+
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
 EbErrorType entropy_coding_context_ctor(
-    EntropyCodingContext  *context_ptr,
-    EbFifo                *enc_dec_input_fifo_ptr,
-    EbFifo                *packetization_output_fifo_ptr,
-    EbFifo                *rate_control_output_fifo_ptr,
-    EbBool                  is16bit)
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index,
+    int                 rate_control_index)
 {
-    context_ptr->is16bit = is16bit;
+    EntropyCodingContext  *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = rest_context_dctor;
+
+
+    context_ptr->is16bit = (EbBool)(enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->enc_dec_input_fifo_ptr = enc_dec_input_fifo_ptr;
-    context_ptr->entropy_coding_output_fifo_ptr = packetization_output_fifo_ptr;
-    context_ptr->rate_control_output_fifo_ptr = rate_control_output_fifo_ptr;
+    context_ptr->enc_dec_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->rest_results_resource_ptr, index);
+    context_ptr->entropy_coding_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->entropy_coding_results_resource_ptr, index);
+    context_ptr->rate_control_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
 
     return EB_ErrorNone;
 }
@@ -390,7 +408,8 @@ void write_stat_to_file(
 void* entropy_coding_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    EntropyCodingContext                  *context_ptr = (EntropyCodingContext*)input_ptr;
+    EbThreadContext                       *thread_context_ptr = (EbThreadContext*)input_ptr;
+    EntropyCodingContext                  *context_ptr = (EntropyCodingContext*)thread_context_ptr->priv;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
 

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "EbEncHandle.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
@@ -18,6 +19,17 @@
 #include "EbRateControlTasks.h"
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbEntropyCoding.h"
+
+/***************************************
+ * Context
+ ***************************************/
+typedef struct PictureManagerContext
+{
+    EbDctor  dctor;
+    EbFifo  *picture_input_fifo_ptr;
+    EbFifo  *picture_manager_output_fifo_ptr;
+    EbFifo  *picture_control_set_fifo_ptr;
+} PictureManagerContext;
 
 void set_tile_info(PictureParentControlSet * pcs_ptr);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
@@ -56,18 +68,32 @@ void write_stat_to_file(
     stat_struct_t          stat_struct,
     uint64_t               ref_poc);
 #endif
+
+static void picture_manager_context_dctor(EbPtr p)
+{
+    EbThreadContext   *thread_context_ptr = (EbThreadContext*)p;
+    PictureManagerContext* obj = (PictureManagerContext*)thread_context_ptr->priv;
+    EB_FREE_ARRAY(obj);
+}
 /************************************************
  * Picture Manager Context Constructor
  ************************************************/
 EbErrorType picture_manager_context_ctor(
-    PictureManagerContext  *context_ptr,
-    EbFifo                 *picture_input_fifo_ptr,
-    EbFifo                 *picture_manager_output_fifo_ptr,
-    EbFifo                **picture_control_set_fifo_ptr_array)
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int rate_control_index)
 {
-    context_ptr->picture_input_fifo_ptr = picture_input_fifo_ptr;
-    context_ptr->picture_manager_output_fifo_ptr = picture_manager_output_fifo_ptr;
-    context_ptr->picture_control_set_fifo_ptr_array = picture_control_set_fifo_ptr_array;
+    PictureManagerContext  *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = picture_manager_context_dctor;
+
+    context_ptr->picture_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, 0);
+    context_ptr->picture_manager_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
+    context_ptr->picture_control_set_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_control_set_pool_ptr_array[0], 0); //The Child PCS Pool here
 
     return EB_ErrorNone;
 }
@@ -95,7 +121,8 @@ EbErrorType picture_manager_context_ctor(
  ***************************************************************************************************/
 void* picture_manager_kernel(void *input_ptr)
 {
-    PictureManagerContext         *context_ptr = (PictureManagerContext*)input_ptr;
+    EbThreadContext               *thread_context_ptr = (EbThreadContext*)input_ptr;
+    PictureManagerContext         *context_ptr = (PictureManagerContext*)thread_context_ptr->priv;
 
     EbObjectWrapper               *ChildPictureControlSetWrapperPtr;
     PictureControlSet             *ChildPictureControlSetPtr;
@@ -635,7 +662,7 @@ void* picture_manager_kernel(void *input_ptr)
                     if (availabilityFlag == EB_TRUE) {
                         // Get New  Empty Child PCS from PCS Pool
                         eb_get_empty_object(
-                            context_ptr->picture_control_set_fifo_ptr_array[0],
+                            context_ptr->picture_control_set_fifo_ptr,
                             &ChildPictureControlSetWrapperPtr);
 
                         // Child PCS is released by Packetization

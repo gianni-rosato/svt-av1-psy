@@ -199,8 +199,7 @@ void EbMuxingQueueDctor(EbPtr p)
 static EbErrorType EbMuxingQueueCtor(
     EbMuxingQueue        *queue_ptr,
     uint32_t              object_total_count,
-    uint32_t              process_total_count,
-    EbFifo         ***processFifoPtrArrayPtr)
+    uint32_t              process_total_count)
 {
     uint32_t processIndex;
     EbErrorType     return_error = EB_ErrorNone;
@@ -234,8 +233,6 @@ static EbErrorType EbMuxingQueueCtor(
             (EbObjectWrapper *)EB_NULL,
             queue_ptr);
     }
-
-    *processFifoPtrArrayPtr = queue_ptr->process_fifo_ptr_array;
 
     return return_error;
 }
@@ -349,6 +346,15 @@ static EbErrorType EbMuxingQueueObjectPushFront(
 
     return return_error;
 }
+
+static EbFifo* eb_muxing_queue_get_fifo(
+    EbMuxingQueue        *queue_ptr,
+    uint32_t index)
+{
+    assert(queue_ptr->process_fifo_ptr_array && (queue_ptr->process_total_count > index));
+    return queue_ptr->process_fifo_ptr_array[index];
+}
+
 
 /*********************************************************************
  * eb_object_release_enable
@@ -494,11 +500,6 @@ static void eb_system_resource_dctor(EbPtr p)
  *   object_total_count
  *     Number of objects to be managed by the SystemResource.
  *
- *   full_fifo_enabled
- *     Bool that describes if the SystemResource is to have an output
- *     fifo.  An outputFifo is not used by certain objects (e.g.
- *     SequenceControlSet).
- *
  *   object_ctor
  *     Function pointer to the constructor of the object managed by
  *     SystemResource referenced by resource_ptr. No object level
@@ -517,9 +518,6 @@ EbErrorType eb_system_resource_ctor(
     uint32_t               object_total_count,
     uint32_t               producer_process_total_count,
     uint32_t               consumer_process_total_count,
-    EbFifo          ***producer_fifo_ptr_array_ptr,
-    EbFifo          ***consumer_fifo_ptr_array_ptr,
-    EbBool              full_fifo_enabled,
     EbCreator           object_creator,
     EbPtr               object_init_data_ptr,
     EbDctor             object_destroyer)
@@ -544,8 +542,7 @@ EbErrorType eb_system_resource_ctor(
         resource_ptr->empty_queue,
         EbMuxingQueueCtor,
         resource_ptr->object_total_count,
-        producer_process_total_count,
-        producer_fifo_ptr_array_ptr);
+        producer_process_total_count);
     // Fill the Empty Fifo with every ObjectWrapper
     for (wrapperIndex = 0; wrapperIndex < resource_ptr->object_total_count; ++wrapperIndex) {
         EbMuxingQueueObjectPushBack(
@@ -554,23 +551,30 @@ EbErrorType eb_system_resource_ctor(
     }
 
     // Initialize the Full Queue
-    if (full_fifo_enabled == EB_TRUE) {
+    if (consumer_process_total_count) {
         EB_NEW(
             resource_ptr->full_queue,
             EbMuxingQueueCtor,
             resource_ptr->object_total_count,
-            consumer_process_total_count,
-            consumer_fifo_ptr_array_ptr);
-        if (return_error == EB_ErrorInsufficientResources)
-            return EB_ErrorInsufficientResources;
+            consumer_process_total_count);
     }
     else {
         resource_ptr->full_queue = (EbMuxingQueue *)EB_NULL;
-        consumer_fifo_ptr_array_ptr = (EbFifo ***)EB_NULL;
     }
 
     return return_error;
 }
+
+EbFifo* eb_system_resource_get_producer_fifo(const EbSystemResource *resource_ptr, uint32_t index)
+{
+    return eb_muxing_queue_get_fifo(resource_ptr->empty_queue, index);
+}
+
+EbFifo* eb_system_resource_get_consumer_fifo(const EbSystemResource *resource_ptr, uint32_t index)
+{
+    return eb_muxing_queue_get_fifo(resource_ptr->full_queue, index);
+}
+
 
 /*********************************************************************
  * EbSystemResourceReleaseProcess

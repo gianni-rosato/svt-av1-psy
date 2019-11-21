@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 
+#include "EbEncHandle.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbModeDecisionConfigurationProcess.h"
@@ -706,7 +707,8 @@ void set_reference_cdef_strength(
 
 static void mode_decision_configuration_context_dctor(EbPtr p)
 {
-    ModeDecisionConfigurationContext *obj = (ModeDecisionConfigurationContext*)p;
+    EbThreadContext* thread_context_ptr = (EbThreadContext*)p;
+    ModeDecisionConfigurationContext *obj = (ModeDecisionConfigurationContext*)thread_context_ptr->priv;
 
     if (obj->is_md_rate_estimation_ptr_owner)
         EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
@@ -723,17 +725,33 @@ static void mode_decision_configuration_context_dctor(EbPtr p)
     EB_DELETE(obj->trans_quant_buffers_ptr);
     EB_FREE(obj->transform_inner_array_ptr);
 #endif
+    EB_FREE_ARRAY(obj);
 }
 /******************************************************
  * Mode Decision Configuration Context Constructor
  ******************************************************/
 EbErrorType mode_decision_configuration_context_ctor(
-    ModeDecisionConfigurationContext  *context_ptr,
-    EbFifo                            *rate_control_input_fifo_ptr,
-    EbFifo                            *mode_decision_configuration_output_fifo_ptr,
-    uint16_t                                 sb_total_count)
-
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int input_index,
+    int output_index)
 {
+    const SequenceControlSet* sequence_control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+    uint32_t sb_total_count = ((sequence_control_set_ptr->max_input_luma_width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) *
+                ((sequence_control_set_ptr->max_input_luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64);
+
+    ModeDecisionConfigurationContext  *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = mode_decision_configuration_context_dctor;
+
+    // Input/Output System Resource Manager FIFOs
+    context_ptr->rate_control_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->rate_control_results_resource_ptr, input_index);
+    context_ptr->mode_decision_configuration_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_tasks_resource_ptr, output_index);
+
+    {
 #if ADD_MDC_FULL_COST
     EbErrorType return_error = EB_ErrorNone;
     EB_MALLOC(context_ptr->candidate_buffer, sizeof(ModeDecisionCandidateBuffer));
@@ -767,10 +785,8 @@ EbErrorType mode_decision_configuration_context_ctor(
     EB_MALLOC(context_ptr->transform_inner_array_ptr, 3152); //refer to EbInvTransform_SSE2.as. case 32x32
     // MD rate Estimation tables
 #endif
-    context_ptr->dctor = mode_decision_configuration_context_dctor;
-    // Input/Output System Resource Manager FIFOs
-    context_ptr->rate_control_input_fifo_ptr = rate_control_input_fifo_ptr;
-    context_ptr->mode_decision_configuration_output_fifo_ptr = mode_decision_configuration_output_fifo_ptr;
+    }
+
     // Rate estimation
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
@@ -3026,7 +3042,8 @@ void av1_setup_motion_field(
 void* mode_decision_configuration_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    ModeDecisionConfigurationContext         *context_ptr = (ModeDecisionConfigurationContext*)input_ptr;
+    EbThreadContext                          *thread_context_ptr = (EbThreadContext*)input_ptr;
+    ModeDecisionConfigurationContext         *context_ptr = (ModeDecisionConfigurationContext*)thread_context_ptr->priv;
     PictureControlSet                        *picture_control_set_ptr;
     SequenceControlSet                       *sequence_control_set_ptr;
     FrameHeader                              *frm_hdr;

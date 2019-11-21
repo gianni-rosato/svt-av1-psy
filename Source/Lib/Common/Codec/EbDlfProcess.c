@@ -16,6 +16,7 @@
 */
 
 #include <stdlib.h>
+#include "EbEncHandle.h"
 #include "EbDlfProcess.h"
 #include "EbEncDecResults.h"
 #include "EbReferenceObject.h"
@@ -28,35 +29,42 @@ void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, 
 
 static void dlf_context_dctor(EbPtr p)
 {
-    DlfContext *obj = (DlfContext*)p;
+    EbThreadContext* thread_context_ptr = (EbThreadContext*)p;
+    DlfContext *obj = (DlfContext*)thread_context_ptr->priv;
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+    EB_FREE_ARRAY(obj);
 }
 /******************************************************
  * Dlf Context Constructor
  ******************************************************/
 EbErrorType dlf_context_ctor(
-    DlfContext            *context_ptr,
-    EbFifo                *dlf_input_fifo_ptr,
-    EbFifo                *dlf_output_fifo_ptr ,
-    EbBool                  is16bit,
-    EbColorFormat           color_format,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height
-   )
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index)
 {
     EbErrorType return_error = EB_ErrorNone;
-    context_ptr->dctor = dlf_context_dctor;
+    const SequenceControlSet* sequence_control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+    EbBool is16bit = (EbBool)(sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    EbColorFormat color_format = sequence_control_set_ptr->static_config.encoder_color_format;
+
+    DlfContext           *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = dlf_context_dctor;
+
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->dlf_input_fifo_ptr = dlf_input_fifo_ptr;
-    context_ptr->dlf_output_fifo_ptr = dlf_output_fifo_ptr;
+    context_ptr->dlf_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->enc_dec_results_resource_ptr, index);
+    context_ptr->dlf_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->dlf_results_resource_ptr, index);
 
     context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
     context_ptr->temp_lf_recon_picture_ptr = (EbPictureBufferDesc *)EB_NULL;
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
-    temp_lf_recon_desc_init_data.max_width = (uint16_t)max_input_luma_width;
-    temp_lf_recon_desc_init_data.max_height = (uint16_t)max_input_luma_height;
+    temp_lf_recon_desc_init_data.max_width = (uint16_t)sequence_control_set_ptr->max_input_luma_width;
+    temp_lf_recon_desc_init_data.max_height = (uint16_t)sequence_control_set_ptr->max_input_luma_height;
     temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
     temp_lf_recon_desc_init_data.left_padding = PAD_VALUE;
@@ -91,7 +99,8 @@ EbErrorType dlf_context_ctor(
 void* dlf_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    DlfContext                            *context_ptr = (DlfContext*)input_ptr;
+    EbThreadContext                       *thread_context_ptr = (EbThreadContext*)input_ptr;
+    DlfContext                            *context_ptr = (DlfContext*)thread_context_ptr->priv;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
 

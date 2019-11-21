@@ -17,7 +17,6 @@
  **************************************/
 typedef struct DlfContext
 {
-    EbDctor              dctor;
     EbFifo              *dlf_input_fifo_ptr;
     EbFifo              *dlf_output_fifo_ptr;
     EbPictureBufferDesc *temp_lf_recon_picture_ptr;
@@ -28,14 +27,9 @@ typedef struct DlfContext
  * Extern Function Declarations
  **************************************/
 extern EbErrorType dlf_context_ctor(
-    DlfContext                   *context_ptr,
-    EbFifo                       *dlf_input_fifo_ptr,
-    EbFifo                       *dlf_output_fifo_ptr,
-    EbBool                  is16bit,
-    EbColorFormat           color_format,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height
-   );
+    EbThreadContext   *thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr,
+    int               index);
 
 extern void* dlf_kernel(void *input_ptr);
 

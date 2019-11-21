@@ -18,35 +18,15 @@
 #define EbSourceBasedOperations_h
 
 #include "EbDefinitions.h"
-#include "EbSystemResourceManager.h"
 #include "EbNoiseExtractAVX2.h"
-#include "EbObject.h"
-/**************************************
- * Context
- **************************************/
-
-typedef struct SourceBasedOperationsContext
-{
-    EbDctor  dctor;
-    EbFifo  *initial_rate_control_results_input_fifo_ptr;
-    EbFifo  *picture_demux_results_output_fifo_ptr;
-    // local zz cost array
-    uint32_t    sb_high_contrast_count;
-    uint32_t    complete_sb_count;
-    uint32_t    sb_cmplx_contrast_count;
-    uint8_t    *y_mean_ptr;
-    uint8_t    *cr_mean_ptr;
-    uint8_t    *cb_mean_ptr;
-} SourceBasedOperationsContext;
 
 /***************************************
  * Extern Function Declaration
  ***************************************/
-extern EbErrorType source_based_operations_context_ctor(
-    SourceBasedOperationsContext  *context_ptr,
-    EbFifo                        *initial_rate_control_results_input_fifo_ptr,
-    EbFifo                        *picture_demux_results_output_fifo_ptr,
-    SequenceControlSet            *sequence_control_set_ptr);
+EbErrorType source_based_operations_context_ctor(
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int index);
 
 extern void* source_based_operations_kernel(void *input_ptr);
 

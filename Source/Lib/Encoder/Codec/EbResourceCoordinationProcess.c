@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "EbEncHandle.h"
+#include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureBufferDesc.h"
@@ -15,40 +17,87 @@
 #include "EbTransforms.h"
 #include "EbTime.h"
 #include "EbEntropyCoding.h"
+#include "EbObject.h"
+
+typedef struct ResourceCoordinationContext
+{
+    EbFifo                                *input_buffer_fifo_ptr;
+    EbFifo                                *resource_coordination_results_output_fifo_ptr;
+    EbFifo                               **picture_control_set_fifo_ptr_array;
+    EbSequenceControlSetInstance         **sequence_control_set_instance_array;
+    EbObjectWrapper                      **sequenceControlSetActiveArray;
+    EbFifo                                *sequence_control_set_empty_fifo_ptr;
+    EbCallback                           **app_callback_ptr_array;
+
+    // Compute Segments
+    uint32_t                               compute_segments_total_count_array;
+    uint32_t                               encode_instances_total_count;
+
+    // Picture Number Array
+    uint64_t                              *picture_number_array;
+
+    uint64_t                               average_enc_mod;
+    uint8_t                                prev_enc_mod;
+    int8_t                                 prev_enc_mode_delta;
+    uint8_t                                prev_change_cond;
+
+    int64_t                                previous_mode_change_buffer;
+    int64_t                                previous_mode_change_frame_in;
+    int64_t                                previous_buffer_check1;
+    int64_t                                previous_frame_in_check1;
+    int64_t                                previous_frame_in_check2;
+    int64_t                                previous_frame_in_check3;
+
+    uint64_t                               cur_speed; // speed x 1000
+    uint64_t                               prevs_time_seconds;
+    uint64_t                               prevs_timeu_seconds;
+    int64_t                                prev_frame_out;
+
+    uint64_t                               first_in_pic_arrived_time_seconds;
+    uint64_t                               first_in_pic_arrived_timeu_seconds;
+    EbBool                                 start_flag;
+} ResourceCoordinationContext;
 
 void set_tile_info(PictureParentControlSet * pcs_ptr);
 void resource_coordination_context_dctor(EbPtr p)
 {
-    ResourceCoordinationContext *obj = (ResourceCoordinationContext*)p;
+    EbThreadContext* thread_contxt_ptr = (EbThreadContext*)p;
+    if (thread_contxt_ptr->priv) {
+        ResourceCoordinationContext *obj = (ResourceCoordinationContext*)thread_contxt_ptr->priv;
 
-    EB_FREE_ARRAY(obj->sequenceControlSetActiveArray);
-    EB_FREE_ARRAY(obj->picture_number_array);
+        EB_FREE_ARRAY(obj->sequenceControlSetActiveArray);
+        EB_FREE_ARRAY(obj->picture_number_array);
+        EB_FREE_ARRAY(obj->picture_control_set_fifo_ptr_array);
+        EB_FREE_ARRAY(obj);
+    }
 }
 
 /************************************************
  * Resource Coordination Context Constructor
  ************************************************/
 EbErrorType resource_coordination_context_ctor(
-    ResourceCoordinationContext *context_ptr,
-    EbFifo                        *inputBufferFifoPtr,
-    EbFifo                        *resource_coordination_results_output_fifo_ptr,
-    EbFifo                        **picture_control_set_fifo_ptr_array,
-    EbSequenceControlSetInstance  **sequence_control_set_instance_array,
-    EbFifo                         *sequence_control_set_empty_fifo_ptr,
-    EbCallback                    **app_callback_ptr_array,
-    uint32_t                       compute_segments_total_count_array,
-    uint32_t                        encode_instances_total_count){
+    EbThreadContext *thread_contxt_ptr,
+    EbEncHandle* enc_handle_ptr) {
 
-    context_ptr->dctor = resource_coordination_context_dctor;
+    ResourceCoordinationContext* context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_contxt_ptr->priv = context_ptr;
+    thread_contxt_ptr->dctor = resource_coordination_context_dctor;
 
-    context_ptr->input_buffer_fifo_ptr = inputBufferFifoPtr;
-    context_ptr->resource_coordination_results_output_fifo_ptr = resource_coordination_results_output_fifo_ptr;
-    context_ptr->picture_control_set_fifo_ptr_array = picture_control_set_fifo_ptr_array;
-    context_ptr->sequence_control_set_instance_array = sequence_control_set_instance_array;
-    context_ptr->sequence_control_set_empty_fifo_ptr = sequence_control_set_empty_fifo_ptr;
-    context_ptr->app_callback_ptr_array = app_callback_ptr_array;
-    context_ptr->compute_segments_total_count_array = compute_segments_total_count_array;
-    context_ptr->encode_instances_total_count = encode_instances_total_count;
+    EB_MALLOC_ARRAY(context_ptr->picture_control_set_fifo_ptr_array, enc_handle_ptr->encode_instance_total_count);
+    for (uint32_t i = 0; i < enc_handle_ptr->encode_instance_total_count; i++) {
+        //ResourceCoordination works with ParentPCS
+        context_ptr->picture_control_set_fifo_ptr_array[i] =
+            eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_parent_control_set_pool_ptr_array[i], 0);
+    }
+
+    context_ptr->input_buffer_fifo_ptr = eb_system_resource_get_consumer_fifo(enc_handle_ptr->input_buffer_resource_ptr, 0);
+    context_ptr->resource_coordination_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(enc_handle_ptr->resource_coordination_results_resource_ptr, 0);
+    context_ptr->sequence_control_set_instance_array = enc_handle_ptr->sequence_control_set_instance_array;
+    context_ptr->sequence_control_set_empty_fifo_ptr = eb_system_resource_get_producer_fifo(enc_handle_ptr->sequence_control_set_pool_ptr, 0);
+    context_ptr->app_callback_ptr_array = enc_handle_ptr->app_callback_ptr_array;
+    context_ptr->compute_segments_total_count_array = enc_handle_ptr->compute_segments_total_count_array;
+    context_ptr->encode_instances_total_count = enc_handle_ptr->encode_instance_total_count;
 
     // Allocate SequenceControlSetActiveArray
     EB_CALLOC_ARRAY(context_ptr->sequenceControlSetActiveArray, context_ptr->encode_instances_total_count);
@@ -579,7 +628,8 @@ static void read_stat_from_file(
  ***************************************/
 void* resource_coordination_kernel(void *input_ptr)
 {
-    ResourceCoordinationContext   *context_ptr = (ResourceCoordinationContext*)input_ptr;
+    EbThreadContext *enc_contxt_ptr = (EbThreadContext *)input_ptr;
+    ResourceCoordinationContext   *context_ptr = (ResourceCoordinationContext*)enc_contxt_ptr->priv;
 
     EbObjectWrapper               *picture_control_set_wrapper_ptr;
 

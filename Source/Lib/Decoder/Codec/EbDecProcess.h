@@ -82,8 +82,8 @@ typedef struct DecMTLFFrameInfo {
     // System Resource Managers
     EbSystemResource    *lf_resource_ptr;
     /* EbFifo at Frame Row level */
-    EbFifo              **lf_row_producer_fifo_ptr;
-    EbFifo              **lf_row_consumer_fifo_ptr;
+    EbFifo              *lf_row_producer_fifo_ptr;
+    EbFifo              *lf_row_consumer_fifo_ptr;
 
     /* Array to store SBs completed in every SB row of LF stage.
        Used for top sync */
@@ -142,15 +142,15 @@ typedef struct DecMTFrameData {
     // System Resource Managers
     EbSystemResource    *parse_tile_resource_ptr;
     /* EbFifo at Tile level : Parse Stage */
-    EbFifo              **parse_tile_producer_fifo_ptr;
-    EbFifo              **parse_tile_consumer_fifo_ptr;
+    EbFifo              *parse_tile_producer_fifo_ptr;
+    EbFifo              *parse_tile_consumer_fifo_ptr;
 
     // System Resource Managers
     EbSystemResource    *recon_tile_resource_ptr;
 
     /* EbFifo at Tile level : Recon Stage */
-    EbFifo              **recon_tile_producer_fifo_ptr;
-    EbFifo              **recon_tile_consumer_fifo_ptr;
+    EbFifo              *recon_tile_producer_fifo_ptr;
+    EbFifo              *recon_tile_consumer_fifo_ptr;
 
     /* To prevent more than 1 thread from mod. recon_row_started simult. */
     EbHandle                recon_mutex;
@@ -171,8 +171,8 @@ typedef struct DecMTFrameData {
     // System Resource Managers
     EbSystemResource        *cdef_resource_ptr;
     /* EbFifo at Frame Row level */
-    EbFifo                  **cdef_row_producer_fifo_ptr;
-    EbFifo                  **cdef_row_consumer_fifo_ptr;
+    EbFifo                  *cdef_row_producer_fifo_ptr;
+    EbFifo                  *cdef_row_consumer_fifo_ptr;
     /* Array to store 64x64s completed in every 64x64 row of CDEF stage.
        Used for top-right sync */
     uint32_t                *cdef_completed_in_row;
@@ -191,8 +191,8 @@ typedef struct DecMTFrameData {
     // System Resource Managers
     EbSystemResource        *lr_resource_ptr;
     /* EbFifo at Frame Row level */
-    EbFifo                  **lr_row_producer_fifo_ptr;
-    EbFifo                  **lr_row_consumer_fifo_ptr;
+    EbFifo                  *lr_row_producer_fifo_ptr;
+    EbFifo                  *lr_row_consumer_fifo_ptr;
     /* Array to store SBs completed in every SB row of LR stage.
        Used for top sync */
     int32_t                 *sb_lr_completed_in_row;
@@ -206,8 +206,8 @@ typedef struct DecMTFrameData {
     // System Resource Managers
     EbSystemResource        *pad_resource_ptr;
     /* EbFifo at Frame Row level */
-    EbFifo                  **pad_row_producer_fifo_ptr;
-    EbFifo                  **pad_row_consumer_fifo_ptr;
+    EbFifo                  *pad_row_producer_fifo_ptr;
+    EbFifo                  *pad_row_consumer_fifo_ptr;
 #endif
     /* EbFifo at Frame Row level : Pad Stage */
     EbFifo                  *pad_fifo_ptr;

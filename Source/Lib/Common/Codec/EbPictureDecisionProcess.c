@@ -14,6 +14,7 @@
 
 #include "EbPictureDecisionProcess.h"
 #include "EbDefinitions.h"
+#include "EbEncHandle.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureAnalysisProcess.h"
@@ -22,6 +23,9 @@
 #include "EbReferenceObject.h"
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbTemporalFiltering.h"
+#include "EbObject.h"
+#include "EbUtility.h"
+
 
 /************************************************
  * Defines
@@ -36,6 +40,48 @@ extern PredictionStructureConfigEntry two_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
+
+/**************************************
+ * Context
+ **************************************/
+typedef struct PictureDecisionContext
+{
+    EbDctor      dctor;
+    EbFifo       *picture_analysis_results_input_fifo_ptr;
+    EbFifo       *picture_decision_results_output_fifo_ptr;
+
+    uint64_t      last_solid_color_frame_poc;
+
+    EbBool        reset_running_avg;
+
+    uint32_t    **ahd_running_avg_cb;
+    uint32_t    **ahd_running_avg_cr;
+    uint32_t    **ahd_running_avg;
+    EbBool        is_scene_change_detected;
+
+    // Dynamic GOP
+    uint32_t      totalRegionActivityCost[MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
+
+    uint32_t      total_number_of_mini_gops;
+
+    uint32_t      mini_gop_start_index[MINI_GOP_WINDOW_MAX_COUNT];
+    uint32_t      mini_gop_end_index[MINI_GOP_WINDOW_MAX_COUNT];
+    uint32_t      mini_gop_length[MINI_GOP_WINDOW_MAX_COUNT];
+    uint32_t      mini_gop_intra_count[MINI_GOP_WINDOW_MAX_COUNT];
+    uint32_t      mini_gop_idr_count[MINI_GOP_WINDOW_MAX_COUNT];
+    uint32_t      mini_gop_hierarchical_levels[MINI_GOP_WINDOW_MAX_COUNT];
+    EbBool        mini_gop_activity_array[MINI_GOP_MAX_COUNT];
+    uint32_t      mini_gop_region_activity_cost_array[MINI_GOP_MAX_COUNT][MAX_NUMBER_OF_REGIONS_IN_WIDTH][MAX_NUMBER_OF_REGIONS_IN_HEIGHT];
+
+    uint32_t      mini_gop_group_faded_in_pictures_count[MINI_GOP_MAX_COUNT];
+    uint32_t      mini_gop_group_faded_out_pictures_count[MINI_GOP_MAX_COUNT];
+    uint8_t       lay0_toggle; //3 way toggle 0->1->2
+    uint8_t       lay1_toggle; //2 way toggle 0->1
+    uint8_t       lay2_toggle; //2 way toggle 0->1
+    EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+    uint8_t       last_i_picture_sc_detection;
+    uint64_t      key_poc;
+} PictureDecisionContext;
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
 {
@@ -235,27 +281,33 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #endif
 void picture_decision_context_dctor(EbPtr p)
 {
-    PictureDecisionContext* obj = (PictureDecisionContext*)p;
+    EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
+    PictureDecisionContext* obj = (PictureDecisionContext*)thread_context_ptr->priv;
 
     EB_FREE_2D(obj->ahd_running_avg);
     EB_FREE_2D(obj->ahd_running_avg_cr);
     EB_FREE_2D(obj->ahd_running_avg_cb);
+    EB_FREE_ARRAY(obj);
 }
 
  /************************************************
   * Picture Analysis Context Constructor
   ************************************************/
 EbErrorType picture_decision_context_ctor(
-    PictureDecisionContext *context_ptr,
-    EbFifo *picture_analysis_results_input_fifo_ptr,
-    EbFifo *picture_decision_results_output_fifo_ptr)
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr)
 {
     uint32_t arrayRow, arrowColumn;
 
-    context_ptr->dctor = picture_decision_context_dctor;
+    PictureDecisionContext *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = picture_decision_context_dctor;
 
-    context_ptr->picture_analysis_results_input_fifo_ptr = picture_analysis_results_input_fifo_ptr;
-    context_ptr->picture_decision_results_output_fifo_ptr = picture_decision_results_output_fifo_ptr;
+    context_ptr->picture_analysis_results_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->picture_analysis_results_resource_ptr, 0);
+    context_ptr->picture_decision_results_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_decision_results_resource_ptr, 0);
 
     EB_MALLOC_2D(context_ptr->ahd_running_avg_cb,  MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
     EB_MALLOC_2D(context_ptr->ahd_running_avg_cr, MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
@@ -3053,7 +3105,8 @@ static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
  ***************************************************************************************************/
 void* picture_decision_kernel(void *input_ptr)
 {
-    PictureDecisionContext        *context_ptr = (PictureDecisionContext*)input_ptr;
+    EbThreadContext               *thread_context_ptr = (EbThreadContext*)input_ptr;
+    PictureDecisionContext        *context_ptr = (PictureDecisionContext*)thread_context_ptr->priv;
 
     PictureParentControlSet       *picture_control_set_ptr;
     FrameHeader                   *frm_hdr;

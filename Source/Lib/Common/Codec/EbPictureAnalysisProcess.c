@@ -9,6 +9,7 @@
 
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
+#include "EbEncHandle.h"
 #include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
@@ -36,53 +37,84 @@
 #define SAMPLE_THRESHOLD_PRECENT_BORDER_LINE      15
 #define SAMPLE_THRESHOLD_PRECENT_TWO_BORDER_LINES 10
 
+/**************************************
+ * Context
+ **************************************/
+typedef struct PictureAnalysisContext
+{
+    EB_ALIGN(64) uint8_t       local_cache[64];
+    EbFifo                     *resource_coordination_results_input_fifo_ptr;
+    EbFifo                     *picture_analysis_results_output_fifo_ptr;
+    EbPictureBufferDesc        *denoised_picture_ptr;
+    EbPictureBufferDesc        *noise_picture_ptr;
+    double                     pic_noise_variance_float;
+} PictureAnalysisContext;
+
+
 static void picture_analysis_context_dctor(EbPtr p)
 {
-    PictureAnalysisContext *obj = (PictureAnalysisContext*)p;
+    EbThreadContext *thread_context_ptr = (EbThreadContext*)p;
+    PictureAnalysisContext *obj = (PictureAnalysisContext*)thread_context_ptr->priv;
     EB_DELETE(obj->noise_picture_ptr);
     EB_DELETE(obj->denoised_picture_ptr);
+    EB_FREE_ARRAY(obj);
 }
 /************************************************
 * Picture Analysis Context Constructor
 ************************************************/
 EbErrorType picture_analysis_context_ctor(
-    PictureAnalysisContext *context_ptr,
-    EbPictureBufferDescInitData * input_picture_buffer_desc_init_data,
-    EbBool                         denoise_flag,
-    EbFifo *resource_coordination_results_input_fifo_ptr,
-    EbFifo *picture_analysis_results_output_fifo_ptr)
+    EbThreadContext   *thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr,
+    int index)
 {
-    context_ptr->resource_coordination_results_input_fifo_ptr = resource_coordination_results_input_fifo_ptr;
-    context_ptr->picture_analysis_results_output_fifo_ptr = picture_analysis_results_output_fifo_ptr;
+    EbBool denoise_flag = EB_TRUE;
 
-    context_ptr->dctor = picture_analysis_context_dctor;
+    PictureAnalysisContext *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = picture_analysis_context_dctor;
+
+    context_ptr->resource_coordination_results_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->resource_coordination_results_resource_ptr, index);
+    context_ptr->picture_analysis_results_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_analysis_results_resource_ptr, index);
+
 
     if (denoise_flag == EB_TRUE) {
+        EbPictureBufferDescInitData  desc;
+        const SequenceControlSet* sequence_control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+
+        memset(&desc, 0, sizeof(desc));
+        desc.color_format = sequence_control_set_ptr->static_config.encoder_color_format;
+        desc.max_width = sequence_control_set_ptr->max_input_luma_width;
+        desc.max_height = sequence_control_set_ptr->max_input_luma_height;
+        desc.bit_depth = EB_8BIT;
+        desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
         //denoised
         // If 420/422, re-use luma for chroma
         // If 444, re-use luma for Cr
-        if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
-            input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+        if (desc.color_format != EB_YUV444) {
+            desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
         } else
-            input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
+            desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
         EB_NEW(
             context_ptr->denoised_picture_ptr,
             eb_picture_buffer_desc_ctor,
-            (EbPtr)input_picture_buffer_desc_init_data);
+            (EbPtr)&desc);
 
-        if (input_picture_buffer_desc_init_data->color_format != EB_YUV444) {
+        if (desc.color_format != EB_YUV444) {
             context_ptr->denoised_picture_ptr->buffer_cb = context_ptr->denoised_picture_ptr->buffer_y;
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y + context_ptr->denoised_picture_ptr->chroma_size;
         } else
             context_ptr->denoised_picture_ptr->buffer_cr = context_ptr->denoised_picture_ptr->buffer_y;
         // noise
-        input_picture_buffer_desc_init_data->max_height = BLOCK_SIZE_64;
-        input_picture_buffer_desc_init_data->buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+        desc.max_height = BLOCK_SIZE_64;
+        desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
 
         EB_NEW(
             context_ptr->noise_picture_ptr,
             eb_picture_buffer_desc_ctor,
-            (EbPtr)input_picture_buffer_desc_init_data);
+            (EbPtr)&desc);
     }
     return EB_ErrorNone;
 }
@@ -4261,7 +4293,8 @@ void DownsampleFilteringInputPicture(
  ************************************************/
 void* picture_analysis_kernel(void *input_ptr)
 {
-    PictureAnalysisContext        *context_ptr = (PictureAnalysisContext*)input_ptr;
+    EbThreadContext               *thread_context_ptr = (EbThreadContext*)input_ptr;
+    PictureAnalysisContext        *context_ptr = (PictureAnalysisContext*)thread_context_ptr->priv;
     PictureParentControlSet       *picture_control_set_ptr;
     SequenceControlSet            *sequence_control_set_ptr;
 

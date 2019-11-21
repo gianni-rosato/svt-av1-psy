@@ -17,12 +17,36 @@
 
 #include <stdlib.h>
 
+#include "EbEncHandle.h"
 #include "EbRestProcess.h"
 #include "EbEncDecResults.h"
 #include "EbThreads.h"
 #include "EbPictureDemuxResults.h"
+#include "EbPsnr.h"
 #include "EbReferenceObject.h"
 #include "EbPictureControlSet.h"
+
+/**************************************
+ * Rest Context
+ **************************************/
+typedef struct RestContext
+{
+    EbDctor                       dctor;
+    EbFifo                       *rest_input_fifo_ptr;
+    EbFifo                       *rest_output_fifo_ptr;
+    EbFifo                       *picture_demux_fifo_ptr;
+
+    EbPictureBufferDesc          *trial_frame_rst;
+
+    EbPictureBufferDesc          *temp_lf_recon_picture_ptr;
+    EbPictureBufferDesc          *temp_lf_recon_picture16bit_ptr;
+
+    EbPictureBufferDesc           *org_rec_frame; // while doing the filtering recon gets updated uisng setup/restore processing_stripe_bounadaries
+                                                    // many threads doing the above will result in race condition.
+                                                    // each thread will hence have his own copy of recon to work on.
+                                                    // later we can have a search version that does not need the exact right recon
+    int32_t *rst_tmpbuf;
+} RestContext;
 
 void recon_output(
     PictureControlSet    *picture_control_set_ptr,
@@ -46,7 +70,7 @@ void generate_padding(
     uint32_t            padding_width,
     uint32_t            padding_height);
 void restoration_seg_search(
-    RestContext          *context_ptr,
+    int32_t                 *rst_tmpbuf,
     Yv12BufferConfig       *org_fts,
     const Yv12BufferConfig *src,
     Yv12BufferConfig       *trial_frame_rst,
@@ -56,42 +80,49 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm);
 
 static void rest_context_dctor(EbPtr p)
 {
-    RestContext *obj = (RestContext*)p;
+    EbThreadContext* thread_context_ptr = (EbThreadContext*)p;
+    RestContext *obj = (RestContext*)thread_context_ptr->priv;
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
     EB_DELETE(obj->trial_frame_rst);
     EB_DELETE(obj->org_rec_frame);
     EB_FREE_ALIGNED(obj->rst_tmpbuf);
+    EB_FREE_ARRAY(obj);
 }
 
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
 EbErrorType rest_context_ctor(
-    RestContext           *context_ptr,
-    EbFifo                *rest_input_fifo_ptr,
-    EbFifo                *rest_output_fifo_ptr ,
-    EbFifo                *picture_demux_fifo_ptr,
-    EbBool                  is16bit,
-    EbColorFormat           color_format,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height
-   )
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index,
+    int                 demux_index)
 {
+    const SequenceControlSet* sequence_control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+    const EbSvtAv1EncConfiguration* config = &sequence_control_set_ptr->static_config;
+    EbBool is16bit = (EbBool)(config->encoder_bit_depth > EB_8BIT);
+    EbColorFormat color_format = config->encoder_color_format;
 
-    context_ptr->dctor = rest_context_dctor;
+    RestContext *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = rest_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->rest_input_fifo_ptr = rest_input_fifo_ptr;
-    context_ptr->rest_output_fifo_ptr = rest_output_fifo_ptr;
-    context_ptr->picture_demux_fifo_ptr = picture_demux_fifo_ptr;
+    context_ptr->rest_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->cdef_results_resource_ptr, index);
+    context_ptr->rest_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->rest_results_resource_ptr, index);
+    context_ptr->picture_demux_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
     {
         EbPictureBufferDescInitData initData;
 
         initData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-        initData.max_width = (uint16_t)max_input_luma_width;
-        initData.max_height = (uint16_t)max_input_luma_height;
+        initData.max_width = (uint16_t)sequence_control_set_ptr->max_input_luma_width;
+        initData.max_height = (uint16_t)sequence_control_set_ptr->max_input_luma_height;
         initData.bit_depth = is16bit ? EB_16BIT : EB_8BIT;
         initData.color_format = color_format;
         initData.left_padding = AOM_BORDER_IN_PIXELS;
@@ -114,8 +145,8 @@ EbErrorType rest_context_ctor(
     }
 
     EbPictureBufferDescInitData tempLfReconDescInitData;
-    tempLfReconDescInitData.max_width = (uint16_t)max_input_luma_width;
-    tempLfReconDescInitData.max_height = (uint16_t)max_input_luma_height;
+    tempLfReconDescInitData.max_width = (uint16_t)sequence_control_set_ptr->max_input_luma_width;
+    tempLfReconDescInitData.max_height = (uint16_t)sequence_control_set_ptr->max_input_luma_height;
     tempLfReconDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
     tempLfReconDescInitData.left_padding = PAD_VALUE;
@@ -203,7 +234,8 @@ void   get_own_recon(
 void* rest_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    RestContext                            *context_ptr = (RestContext*)input_ptr;
+    EbThreadContext                       *thread_context_ptr = (EbThreadContext*)input_ptr;
+    RestContext                           *context_ptr = (RestContext*)thread_context_ptr->priv;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
     FrameHeader                           *frm_hdr;
@@ -253,7 +285,7 @@ void* rest_kernel(void *input_ptr)
                 &org_fts);
 
             restoration_seg_search(
-                context_ptr,
+                context_ptr->rst_tmpbuf,
                 &org_fts,
                 &cpi_source,
                 &trial_frame_rst,

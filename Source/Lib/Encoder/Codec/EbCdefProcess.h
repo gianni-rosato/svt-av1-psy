@@ -8,27 +8,14 @@
 
 #include "EbSystemResourceManager.h"
 #include "EbObject.h"
-/**************************************
- * Cdef Context
- **************************************/
-typedef struct CdefContext_s
-{
-    EbDctor                       dctor;
-    EbFifo                       *cdef_input_fifo_ptr;
-    EbFifo                       *cdef_output_fifo_ptr;
-} CdefContext_t;
 
 /**************************************
  * Extern Function Declarations
  **************************************/
 extern EbErrorType cdef_context_ctor(
-    CdefContext_t           *context_ptr,
-    EbFifo                       *cdef_input_fifo_ptr,
-    EbFifo                       *cdef_output_fifo_ptr,
-    EbBool                  is16bit,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height
-   );
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index);
 
 extern void* cdef_kernel(void *input_ptr);
 

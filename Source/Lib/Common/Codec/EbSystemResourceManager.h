@@ -200,11 +200,6 @@ extern "C" {
      *   object_total_count
      *     Number of objects to be managed by the SystemResource.
      *
-     *   full_fifo_enabled
-     *     Bool that describes if the SystemResource is to have an output
-     *     fifo.  An outputFifo is not used by certain objects (e.g.
-     *     SequenceControlSet).
-     *
      *   object_ctor
      *     Function pointer to the constructor of the object managed by
      *     SystemResource referenced by resource_ptr. No object level
@@ -220,12 +215,33 @@ extern "C" {
         uint32_t            object_total_count,
         uint32_t            producer_process_total_count,
         uint32_t            consumer_process_total_count,
-        EbFifo         ***producer_fifo_ptr_array_ptr,
-        EbFifo         ***consumer_fifo_ptr_array_ptr,
-        EbBool              full_fifo_enabled,
         EbCreator             object_ctor,
         EbPtr               object_init_data_ptr,
         EbDctor             object_destroyer);
+
+    /*********************************************************************
+     * eb_system_resource_get_producer_fifo
+     *   get producer fifo
+     *
+     *   resource_ptr
+     *     pointer to SystemResource
+     *
+     *   index
+     *     index to the producer fifo
+     */
+    EbFifo* eb_system_resource_get_producer_fifo(const EbSystemResource *resource_ptr, uint32_t index);
+
+    /*********************************************************************
+     * eb_system_resource_get_consumer_fifo
+     *   get producer fifo
+     *
+     *   resource_ptr
+     *     pointer to SystemResource
+     *
+     *   index
+     *     index to the consumer fifo
+     */
+    EbFifo* eb_system_resource_get_consumer_fifo(const EbSystemResource *resource_ptr, uint32_t index);
 
     /*********************************************************************
      * EbSystemResourceGetEmptyObject

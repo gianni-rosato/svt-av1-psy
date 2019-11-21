@@ -98,12 +98,12 @@ EbErrorType DecSystemResourceInit(EbDecHandle *dec_handle_ptr,
         num_tiles, /* object_total_count */
         1, /* producer procs cnt : 1 Q per cnt is created inside, so kept 1*/
         1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
-        &dec_mt_frame_data->parse_tile_producer_fifo_ptr, /* producer_fifo */
-        &dec_mt_frame_data->parse_tile_consumer_fifo_ptr, /* consumer_fifo */
-        EB_TRUE, /* Full Queue*/
         DecDummyCreator,
         &node_idx,
         NULL);
+
+    dec_mt_frame_data->parse_tile_producer_fifo_ptr = eb_system_resource_get_producer_fifo(dec_mt_frame_data->parse_tile_resource_ptr, 0); /* producer_fifo */
+    dec_mt_frame_data->parse_tile_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(dec_mt_frame_data->parse_tile_resource_ptr, 0); /* consumer_fifo */
 
     /* Recon queue */
     EB_NEW(dec_mt_frame_data->recon_tile_resource_ptr,
@@ -111,12 +111,12 @@ EbErrorType DecSystemResourceInit(EbDecHandle *dec_handle_ptr,
         num_tiles, /* object_total_count */
         1, /* producer procs cnt : 1 Q per cnt is created inside, so kept 1*/
         1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
-        &dec_mt_frame_data->recon_tile_producer_fifo_ptr, /* producer_fifo */
-        &dec_mt_frame_data->recon_tile_consumer_fifo_ptr, /* consumer_fifo */
-        EB_TRUE, /* Full Queue*/
         DecDummyCreator,
         &node_idx,
         NULL);
+
+    dec_mt_frame_data->recon_tile_producer_fifo_ptr = eb_system_resource_get_producer_fifo(dec_mt_frame_data->recon_tile_resource_ptr, 0);
+    dec_mt_frame_data->recon_tile_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(dec_mt_frame_data->recon_tile_resource_ptr, 0);
 
     int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
     uint32_t picture_height_in_sb =
@@ -128,12 +128,12 @@ EbErrorType DecSystemResourceInit(EbDecHandle *dec_handle_ptr,
         picture_height_in_sb, /* object_total_count */
         1, /* producer procs cnt : 1 Q per cnt is created inside, so kept 1*/
         1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
-        &dec_mt_frame_data->lf_frame_info.lf_row_producer_fifo_ptr, /* producer_fifo */
-        &dec_mt_frame_data->lf_frame_info.lf_row_consumer_fifo_ptr, /* consumer_fifo */
-        EB_TRUE, /* Full Queue*/
         DecDummyCreator,
         &node_idx,
         NULL);
+
+    dec_mt_frame_data->lf_frame_info.lf_row_producer_fifo_ptr = eb_system_resource_get_producer_fifo(dec_mt_frame_data->lf_frame_info.lf_resource_ptr, 0);
+    dec_mt_frame_data->lf_frame_info.lf_row_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(dec_mt_frame_data->lf_frame_info.lf_resource_ptr, 0);
 
     /* CDEF queue */
     EB_NEW(dec_mt_frame_data->cdef_resource_ptr,
@@ -141,12 +141,12 @@ EbErrorType DecSystemResourceInit(EbDecHandle *dec_handle_ptr,
         picture_height_in_sb, /* object_total_count */
         1, /* producer procs cnt : 1 Q per cnt is created inside, so kept 1*/
         1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
-        &dec_mt_frame_data->cdef_row_producer_fifo_ptr, /* producer_fifo */
-        &dec_mt_frame_data->cdef_row_consumer_fifo_ptr, /* consumer_fifo */
-        EB_TRUE, /* Full Queue*/
         DecDummyCreator,
         &node_idx,
         NULL);
+    dec_mt_frame_data->cdef_row_producer_fifo_ptr = eb_system_resource_get_producer_fifo(dec_mt_frame_data->cdef_resource_ptr, 0);
+    dec_mt_frame_data->cdef_row_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(dec_mt_frame_data->cdef_resource_ptr, 0);
+
 #if LR_PAD_MT
     /* LR queue */
     EB_NEW(dec_mt_frame_data->cdef_resource_ptr,
@@ -154,12 +154,12 @@ EbErrorType DecSystemResourceInit(EbDecHandle *dec_handle_ptr,
         picture_height_in_sb, /* object_total_count */
         1, /* producer procs cnt : 1 Q per cnt is created inside, so kept 1*/
         1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
-        &dec_mt_frame_data->lr_row_producer_fifo_ptr, /* producer_fifo */
-        &dec_mt_frame_data->lr_row_consumer_fifo_ptr, /* consumer_fifo */
-        EB_TRUE, /* Full Queue*/
         DecDummyCreator,
         &node_idx,
         NULL);
+
+    dec_mt_frame_data->lr_row_producer_fifo_ptr = eb_system_resource_get_producer_fifo(dec_mt_frame_data->cdef_resource_ptr, 0);
+    dec_mt_frame_data->lr_row_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(dec_mt_frame_data->cdef_resource_ptr, 0);
 
     /* Pad queue */
     EB_NEW(dec_mt_frame_data->cdef_resource_ptr,
@@ -167,12 +167,11 @@ EbErrorType DecSystemResourceInit(EbDecHandle *dec_handle_ptr,
         picture_height_in_sb, /* object_total_count */
         1, /* producer procs cnt : 1 Q per cnt is created inside, so kept 1*/
         1, /* consumer prcos cnt : 1 Q per cnt is created inside, so kept 1*/
-        &dec_mt_frame_data->pad_row_producer_fifo_ptr, /* producer_fifo */
-        &dec_mt_frame_data->pad_row_consumer_fifo_ptr, /* consumer_fifo */
-        EB_TRUE, /* Full Queue*/
         DecDummyCreator,
         &node_idx,
         NULL);
+    dec_mt_frame_data->pad_row_producer_fifo_ptr = eb_system_resource_get_producer_fifo(dec_mt_frame_data->cdef_resource_ptr, 0);
+    dec_mt_frame_data->pad_row_consumer_fifo_ptr = eb_system_resource_get_consumer_fifo(dec_mt_frame_data->cdef_resource_ptr, 0);
 #endif
     /************************************
     * Contexts
@@ -386,7 +385,7 @@ void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr,
         picture_height_in_sb * tiles_info->tile_cols * sizeof(uint32_t));
     for (uint32_t tile_num = tg_start; tile_num <= tg_end; tile_num++) {
         // Get Empty Parse Tile Job
-        eb_get_empty_object(dec_mt_frame_data->parse_tile_producer_fifo_ptr[0],
+        eb_get_empty_object(dec_mt_frame_data->parse_tile_producer_fifo_ptr,
                             &parse_results_wrapper_ptr);
 
         DecMTNode *context_ptr = (DecMTNode*)parse_results_wrapper_ptr->object_ptr;
@@ -423,7 +422,7 @@ void recon_tile_job_post(DecMTFrameData  *dec_mt_frame_data, uint32_t    node_in
 {
     EbObjectWrapper *recon_results_wrapper_ptr;
     // Get Empty Recon Tile Job
-    eb_get_empty_object(dec_mt_frame_data->recon_tile_producer_fifo_ptr[0],
+    eb_get_empty_object(dec_mt_frame_data->recon_tile_producer_fifo_ptr,
         &recon_results_wrapper_ptr);
 
     DecMTNode *recon_context_ptr =
@@ -454,7 +453,7 @@ void parse_frame_tiles(EbDecHandle     *dec_handle_ptr, int th_cnt) {
 
     while (1) {
         eb_dec_get_full_object_non_blocking(dec_mt_frame_data->
-            parse_tile_consumer_fifo_ptr[0],
+            parse_tile_consumer_fifo_ptr,
             &parse_results_wrapper_ptr);
 
         if (NULL != parse_results_wrapper_ptr) {
@@ -515,7 +514,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
         DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
 
         eb_dec_get_full_object_non_blocking(dec_mt_frame_data->
-            recon_tile_consumer_fifo_ptr[0],
+            recon_tile_consumer_fifo_ptr,
             &recon_results_wrapper_ptr);
 
         if (thread_ctxt != NULL) {
@@ -630,7 +629,7 @@ void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr)
 
     for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
         // Get Empty LF Frame Row Job
-        eb_get_empty_object(lf_frame_info->lf_row_producer_fifo_ptr[0],
+        eb_get_empty_object(lf_frame_info->lf_row_producer_fifo_ptr,
             &lf_results_wrapper_ptr);
 
         DecMTNode *context_ptr = (DecMTNode*)lf_results_wrapper_ptr->object_ptr;
@@ -763,7 +762,7 @@ void dec_av1_loop_filter_frame_mt(
 
     while (1) {
         eb_dec_get_full_object_non_blocking(dec_mt_frame_data->lf_frame_info.
-            lf_row_consumer_fifo_ptr[0], &lf_results_wrapper_ptr);
+            lf_row_consumer_fifo_ptr, &lf_results_wrapper_ptr);
 
         if (NULL != lf_results_wrapper_ptr) {
             context_ptr = (DecMTNode*)lf_results_wrapper_ptr->object_ptr;
@@ -839,7 +838,7 @@ void svt_av1_queue_cdef_jobs(EbDecHandle *dec_handle_ptr) {
 
     for (uint32_t sb_fbr = 0; sb_fbr < picture_height_in_sb; ++sb_fbr) {
         // Get Empty LF Frame Row Job
-        eb_get_empty_object(dec_mt_frame_data->cdef_row_producer_fifo_ptr[0],
+        eb_get_empty_object(dec_mt_frame_data->cdef_row_producer_fifo_ptr,
             &cdef_results_wrapper_ptr);
 
         DecMTNode *context_ptr = (DecMTNode*)cdef_results_wrapper_ptr->object_ptr;
@@ -911,7 +910,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr) {
 
     while (1) {
         eb_dec_get_full_object_non_blocking(dec_mt_frame_data->
-            cdef_row_consumer_fifo_ptr[0], &cdef_results_wrapper_ptr);
+            cdef_row_consumer_fifo_ptr, &cdef_results_wrapper_ptr);
 
         if (NULL != cdef_results_wrapper_ptr) {
             context_ptr = (DecMTNode*)cdef_results_wrapper_ptr->object_ptr;
@@ -1001,7 +1000,7 @@ void svt_av1_queue_lr_jobs(EbDecHandle *dec_handle_ptr)
 
     for (uint32_t y_index = 0; y_index < picture_height_in_sb; ++y_index) {
         // Get Empty LR Frame Row Job
-        eb_get_empty_object(dec_mt_frame_data->lr_row_producer_fifo_ptr[0],
+        eb_get_empty_object(dec_mt_frame_data->lr_row_producer_fifo_ptr,
             &lr_results_wrapper_ptr);
 
         DecMTNode *context_ptr = (DecMTNode*)lr_results_wrapper_ptr->object_ptr;
@@ -1033,7 +1032,7 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle
 
     while (1) {
         eb_dec_get_full_object_non_blocking(dec_mt_frame_data->
-            lr_row_consumer_fifo_ptr[0], &lr_results_wrapper_ptr);
+            lr_row_consumer_fifo_ptr, &lr_results_wrapper_ptr);
 
         if (NULL != lr_results_wrapper_ptr) {
             context_ptr = (DecMTNode*)lr_results_wrapper_ptr->object_ptr;
@@ -1067,7 +1066,7 @@ void svt_av1_queue_pad_jobs(EbDecHandle *dec_handle_ptr)
 
     for (uint32_t y_index = 0; y_index < picture_height_in_sb; ++y_index) {
         // Get Empty Pad Frame Row Job
-        eb_get_empty_object(dec_mt_frame_data->pad_row_producer_fifo_ptr[0],
+        eb_get_empty_object(dec_mt_frame_data->pad_row_producer_fifo_ptr,
             &pad_results_wrapper_ptr);
 
         DecMTNode *context_ptr = (DecMTNode*)pad_results_wrapper_ptr->object_ptr;
@@ -1099,7 +1098,7 @@ void dec_pad_frame_mt(EbDecHandle *dec_handle
 
     while (1) {
         eb_dec_get_full_object_non_blocking(dec_mt_frame_data->
-            pad_row_consumer_fifo_ptr[0], &pad_results_wrapper_ptr);
+            pad_row_consumer_fifo_ptr, &pad_results_wrapper_ptr);
 
         if (NULL != pad_results_wrapper_ptr) {
             context_ptr = (DecMTNode*)pad_results_wrapper_ptr->object_ptr;

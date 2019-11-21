@@ -43,7 +43,6 @@ extern "C" {
 
     typedef struct ModeDecisionConfigurationContext
     {
-        EbDctor                              dctor;
         EbFifo                              *rate_control_input_fifo_ptr;
         EbFifo                              *mode_decision_configuration_output_fifo_ptr;
 
@@ -119,11 +118,11 @@ extern "C" {
     /**************************************
      * Extern Function Declarations
      **************************************/
-    extern EbErrorType mode_decision_configuration_context_ctor(
-        ModeDecisionConfigurationContext  *context_ptr,
-        EbFifo                            *rate_control_input_fifo_ptr,
-        EbFifo                            *mode_decision_configuration_output_fifo_ptr,
-        uint16_t                           sb_total_count);
+    EbErrorType mode_decision_configuration_context_ctor(
+        EbThreadContext   *thread_context_ptr,
+        const EbEncHandle *enc_handle_ptr,
+        int input_index,
+        int output_index);
 
     extern void* mode_decision_configuration_kernel(void *input_ptr);
 #ifdef __cplusplus

@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
+#include "EbEncHandle.h"
 #include "EbCdefProcess.h"
 #include "EbEncDecResults.h"
 #include "EbThreads.h"
@@ -55,23 +56,42 @@ void eb_av1_cdef_frame(
     PictureControlSet            *pCs);
 void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
 
+/**************************************
+ * Cdef Context
+ **************************************/
+typedef struct CdefContext
+{
+    EbFifo                       *cdef_input_fifo_ptr;
+    EbFifo                       *cdef_output_fifo_ptr;
+} CdefContext;
+
+
+static void cdef_context_dctor(EbPtr p)
+{
+    EbThreadContext *thread_context_ptr = (EbThreadContext*)p;
+    CdefContext     *obj = (CdefContext*)thread_context_ptr->priv;
+    EB_FREE_ARRAY(obj);
+}
+
 /******************************************************
  * Cdef Context Constructor
  ******************************************************/
 EbErrorType cdef_context_ctor(
-    CdefContext_t           *context_ptr,
-    EbFifo                *cdef_input_fifo_ptr,
-    EbFifo                *cdef_output_fifo_ptr ,
-    EbBool                  is16bit,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height){
-    (void)is16bit;
-    (void)max_input_luma_width;
-    (void)max_input_luma_height;
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index)
+{
+    CdefContext           *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = cdef_context_dctor;
+
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->cdef_input_fifo_ptr = cdef_input_fifo_ptr;
-    context_ptr->cdef_output_fifo_ptr = cdef_output_fifo_ptr;
+    context_ptr->cdef_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->dlf_results_resource_ptr, index);
+    context_ptr->cdef_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->cdef_results_resource_ptr, index);
 
     return EB_ErrorNone;
 }
@@ -419,7 +439,8 @@ void cdef_seg_search16bit(
 void* cdef_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    CdefContext_t                            *context_ptr = (CdefContext_t*)input_ptr;
+    EbThreadContext                       *thread_context_ptr = (EbThreadContext*)input_ptr;
+    CdefContext                           *context_ptr = (CdefContext*)thread_context_ptr->priv;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
 

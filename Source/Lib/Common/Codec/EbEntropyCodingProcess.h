@@ -77,11 +77,10 @@ typedef struct EntropyCodingContext
  * Extern Function Declarations
  **************************************/
 extern EbErrorType entropy_coding_context_ctor(
-    EntropyCodingContext  *context_ptr,
-    EbFifo                *enc_dec_input_fifo_ptr,
-    EbFifo                *packetization_output_fifo_ptr,
-    EbFifo                *rate_control_output_fifo_ptr,
-    EbBool                   is16bit);
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index,
+    int                 rate_control_index);
 
 extern void* entropy_coding_kernel(void *input_ptr);
 

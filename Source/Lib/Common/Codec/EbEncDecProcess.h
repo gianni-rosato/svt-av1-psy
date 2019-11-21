@@ -42,7 +42,6 @@ extern "C" {
      **************************************/
     typedef struct EncDecContext
     {
-        EbDctor                              dctor;
         EbFifo                              *mode_decision_input_fifo_ptr;
         EbFifo                              *enc_dec_output_fifo_ptr;
         EbFifo                              *enc_dec_feedback_fifo_ptr;
@@ -123,19 +122,11 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
     extern EbErrorType enc_dec_context_ctor(
-        EncDecContext         *context_ptr,
-        EbFifo                *mode_decision_configuration_input_fifo_ptr,
-        EbFifo                *packetization_output_fifo_ptr,
-        EbFifo                *feedback_fifo_ptr,
-        EbFifo                *picture_demux_fifo_ptr,
-#if PAL_SUP
-        uint8_t                 cfg_palette,
-#endif
-        EbBool                   is16bit,
-        EbColorFormat            color_format,
-        uint8_t                  enable_hbd_mode_decision,
-        uint32_t                 max_input_luma_width,
-        uint32_t                 max_input_luma_height);
+        EbThreadContext     *thread_context_ptr,
+        const EbEncHandle   *enc_handle_ptr,
+        int                 index,
+        int                 tasks_index,
+        int                 demux_index);
 
     extern void* enc_dec_kernel(void *input_ptr);
 

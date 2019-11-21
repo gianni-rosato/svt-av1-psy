@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 
+#include "EbEncHandle.h"
 #include "EbEncDecTasks.h"
 #include "EbEncDecResults.h"
 #include "EbCodingLoop.h"
@@ -52,7 +53,8 @@ void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm
 
 static void enc_dec_context_dctor(EbPtr p)
 {
-    EncDecContext* obj = (EncDecContext*)p;
+    EbThreadContext* thread_context_ptr = (EbThreadContext*)p;
+    EncDecContext* obj = (EncDecContext*)thread_context_ptr->priv;
     EB_DELETE(obj->md_context);
     EB_DELETE(obj->residual_buffer);
     EB_DELETE(obj->transform_buffer);
@@ -61,38 +63,41 @@ static void enc_dec_context_dctor(EbPtr p)
     if (obj->is_md_rate_estimation_ptr_owner)
         EB_FREE(obj->md_rate_estimation_ptr);
     EB_FREE_ARRAY(obj->transform_inner_array_ptr);
+    EB_FREE_ARRAY(obj);
 }
 
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
 EbErrorType enc_dec_context_ctor(
-    EncDecContext         *context_ptr,
-    EbFifo                *mode_decision_configuration_input_fifo_ptr,
-    EbFifo                *packetization_output_fifo_ptr,
-    EbFifo                *feedback_fifo_ptr,
-    EbFifo                *picture_demux_fifo_ptr,
-#if PAL_SUP
-    uint8_t                 cfg_palette,
-#endif
-    EbBool                  is16bit,
-    EbColorFormat           color_format,
-    uint8_t                 enable_hbd_mode_decision,
-    uint32_t                max_input_luma_width,
-    uint32_t                max_input_luma_height)
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 index,
+    int                 tasks_index,
+    int                 demux_index)
 {
-    (void)max_input_luma_width;
-    (void)max_input_luma_height;
+    const EbSvtAv1EncConfiguration* static_config = &enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config;
+    EbBool is16bit = (EbBool)(static_config->encoder_bit_depth > EB_8BIT);
+    EbColorFormat color_format = static_config->encoder_color_format;
+    uint8_t enable_hbd_mode_decision = static_config->enable_hbd_mode_decision;
 
-    context_ptr->dctor = enc_dec_context_dctor;
+    EncDecContext         *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = enc_dec_context_dctor;
+
     context_ptr->is16bit = is16bit;
     context_ptr->color_format = color_format;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->mode_decision_input_fifo_ptr = mode_decision_configuration_input_fifo_ptr;
-    context_ptr->enc_dec_output_fifo_ptr = packetization_output_fifo_ptr;
-    context_ptr->enc_dec_feedback_fifo_ptr = feedback_fifo_ptr;
-    context_ptr->picture_demux_output_fifo_ptr = picture_demux_fifo_ptr;
+    context_ptr->mode_decision_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->enc_dec_tasks_resource_ptr, index);
+    context_ptr->enc_dec_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_results_resource_ptr, index);
+    context_ptr->enc_dec_feedback_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_tasks_resource_ptr, tasks_index);
+    context_ptr->picture_demux_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
     // Trasform Scratch Memory
     EB_MALLOC_ARRAY(context_ptr->transform_inner_array_ptr, 3152); //refer to EbInvTransform_SSE2.as. case 32x32
@@ -168,11 +173,11 @@ EbErrorType enc_dec_context_ctor(
     }
 
     // Mode Decision Context
- #if PAL_SUP
+#if PAL_SUP
     EB_NEW(
         context_ptr->md_context,
         mode_decision_context_ctor,
-        color_format, 0, 0, enable_hbd_mode_decision , cfg_palette );
+        color_format, 0, 0, enable_hbd_mode_decision , static_config->screen_content_mode );
 #else
     EB_NEW(
         context_ptr->md_context,
@@ -2661,7 +2666,8 @@ static void perform_pred_depth_refinement(
 void* enc_dec_kernel(void *input_ptr)
 {
     // Context & SCS & PCS
-    EncDecContext                         *context_ptr = (EncDecContext*)input_ptr;
+    EbThreadContext                       *thread_context_ptr = (EbThreadContext*)input_ptr;
+    EncDecContext                         *context_ptr = (EncDecContext*)thread_context_ptr->priv;
     PictureControlSet                     *picture_control_set_ptr;
     SequenceControlSet                    *sequence_control_set_ptr;
 

@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 
+#include "EbEncHandle.h"
 #include "EbPacketizationProcess.h"
 #include "EbEntropyCodingResults.h"
 #include "EbSequenceControlSet.h"
@@ -16,6 +17,30 @@
 #include "EbModeDecisionProcess.h"
 #include "EbPictureDemuxResults.h"
 #define DETAILED_FRAME_OUTPUT 0
+
+/**************************************
+ * Type Declarations
+ **************************************/
+typedef struct EbPPSConfig
+{
+    uint8_t pps_id;
+    uint8_t constrained_flag;
+} EbPPSConfig;
+
+/**************************************
+ * Context
+ **************************************/
+typedef struct PacketizationContext
+{
+    EbDctor      dctor;
+    EbFifo      *entropy_coding_input_fifo_ptr;
+    EbFifo      *rate_control_tasks_output_fifo_ptr;
+    EbPPSConfig *pps_config;
+    EbFifo      *picture_manager_input_fifo_ptr;   // to picture-manager
+    uint64_t   dpb_disp_order[8], dpb_dec_order[8];
+    uint64_t   tot_shown_frames;
+    uint64_t   disp_order_continuity_count;
+} PacketizationContext;
 
 static EbBool is_passthrough_data(EbLinkedListNode* data_node)
 {
@@ -34,21 +59,30 @@ static EbLinkedListNode* extract_passthrough_data(EbLinkedListNode** ll_ptr_ptr)
 
 static void packetization_context_dctor(EbPtr p)
 {
-    PacketizationContext *obj = (PacketizationContext*)p;
+    EbThreadContext     *thread_context_ptr = (EbThreadContext *)p;
+    PacketizationContext *obj = (PacketizationContext*)thread_context_ptr->priv;
     EB_FREE_ARRAY(obj->pps_config);
+    EB_FREE_ARRAY(obj);
 }
 
 EbErrorType packetization_context_ctor(
-    PacketizationContext  *context_ptr,
-    EbFifo                *entropy_coding_input_fifo_ptr,
-    EbFifo                *rate_control_tasks_output_fifo_ptr,
-    EbFifo              *picture_manager_input_fifo_ptr
-)
+    EbThreadContext     *thread_context_ptr,
+    const EbEncHandle   *enc_handle_ptr,
+    int                 rate_control_index,
+    int                 demux_index)
 {
+    PacketizationContext  *context_ptr;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = packetization_context_dctor;
+
     context_ptr->dctor = packetization_context_dctor;
-    context_ptr->entropy_coding_input_fifo_ptr = entropy_coding_input_fifo_ptr;
-    context_ptr->rate_control_tasks_output_fifo_ptr = rate_control_tasks_output_fifo_ptr;
-    context_ptr->picture_manager_input_fifo_ptr = picture_manager_input_fifo_ptr;
+    context_ptr->entropy_coding_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->entropy_coding_results_resource_ptr, 0);
+    context_ptr->rate_control_tasks_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
+    context_ptr->picture_manager_input_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
     EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
 
     return EB_ErrorNone;
@@ -232,7 +266,8 @@ void update_rc_rate_tables(
 void* packetization_kernel(void *input_ptr)
 {
     // Context
-    PacketizationContext         *context_ptr = (PacketizationContext*)input_ptr;
+    EbThreadContext              *thread_context_ptr = (EbThreadContext*)input_ptr;
+    PacketizationContext         *context_ptr = (PacketizationContext*)thread_context_ptr->priv;
 
     PictureControlSet            *picture_control_set_ptr;
 

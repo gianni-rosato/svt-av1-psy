@@ -12,25 +12,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    /***************************************
-     * Context
-     ***************************************/
-    typedef struct PictureManagerContext
-    {
-        EbDctor  dctor;
-        EbFifo  *picture_input_fifo_ptr;
-        EbFifo  *picture_manager_output_fifo_ptr;
-        EbFifo **picture_control_set_fifo_ptr_array;
-    } PictureManagerContext;
 
     /***************************************
      * Extern Function Declaration
      ***************************************/
-    extern EbErrorType picture_manager_context_ctor(
-        PictureManagerContext  *context_ptr,
-        EbFifo                 *pictureInputFifoPtr,
-        EbFifo                 *picture_manager_output_fifo_ptr,
-        EbFifo                **picture_control_set_fifo_ptr_array);
+    EbErrorType picture_manager_context_ctor(
+        EbThreadContext     *thread_context_ptr,
+        const EbEncHandle   *enc_handle_ptr,
+        int rate_control_index);
 
     extern void* picture_manager_kernel(void *input_ptr);
 

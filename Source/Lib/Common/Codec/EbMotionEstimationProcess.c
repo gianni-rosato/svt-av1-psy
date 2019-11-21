@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 
+#include "EbEncHandle.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbPictureDecisionResults.h"
@@ -473,33 +474,40 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
 
 void motion_estimation_context_dctor(EbPtr p)
 {
-    MotionEstimationContext_t* obj = (MotionEstimationContext_t*)p;
+    EbThreadContext   *thread_context_ptr = (EbThreadContext*)p;
+    MotionEstimationContext_t* obj = (MotionEstimationContext_t*)thread_context_ptr->priv;
     EB_DELETE(obj->me_context_ptr);
+    EB_FREE_ARRAY(obj);
 }
 
 /************************************************
  * Motion Analysis Context Constructor
  ************************************************/
 EbErrorType motion_estimation_context_ctor(
-    MotionEstimationContext_t    *context_ptr,
-    EbFifo                       *picture_decision_results_input_fifo_ptr,
-    EbFifo                       *motion_estimation_results_output_fifo_ptr,
-    uint16_t                      max_input_luma_width,
-    uint16_t                      max_input_luma_height,
-    uint8_t                       nsq_present,
-    uint8_t                       mrp_mode) {
+    EbThreadContext   *thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr,
+    int index)
+{
+    MotionEstimationContext_t   *context_ptr;
+    const SequenceControlSet    *sequence_control_set_ptr;
 
-    context_ptr->dctor = motion_estimation_context_dctor;
+    EB_CALLOC_ARRAY(context_ptr, 1);
+    thread_context_ptr->priv = context_ptr;
+    thread_context_ptr->dctor = motion_estimation_context_dctor;
 
-    context_ptr->picture_decision_results_input_fifo_ptr = picture_decision_results_input_fifo_ptr;
-    context_ptr->motion_estimation_results_output_fifo_ptr = motion_estimation_results_output_fifo_ptr;
+    sequence_control_set_ptr = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr;
+
+    context_ptr->picture_decision_results_input_fifo_ptr =
+        eb_system_resource_get_consumer_fifo(enc_handle_ptr->picture_decision_results_resource_ptr, index);
+    context_ptr->motion_estimation_results_output_fifo_ptr =
+        eb_system_resource_get_producer_fifo(enc_handle_ptr->motion_estimation_results_resource_ptr, index);
     EB_NEW(
         context_ptr->me_context_ptr,
         me_context_ctor,
-        max_input_luma_width,
-        max_input_luma_height,
-        nsq_present,
-        mrp_mode);
+        sequence_control_set_ptr->max_input_luma_width,
+        sequence_control_set_ptr->max_input_luma_height,
+        sequence_control_set_ptr->nsq_present,
+        sequence_control_set_ptr->mrp_mode);
     return EB_ErrorNone;
 }
 
@@ -609,7 +617,8 @@ EbErrorType ComputeDecimatedZzSad(
  ************************************************/
 void* motion_estimation_kernel(void *input_ptr)
 {
-    MotionEstimationContext_t   *context_ptr = (MotionEstimationContext_t*)input_ptr;
+    EbThreadContext             *thread_context_ptr = (EbThreadContext*)input_ptr;
+    MotionEstimationContext_t   *context_ptr = (MotionEstimationContext_t*)thread_context_ptr->priv;
 
     PictureParentControlSet   *picture_control_set_ptr;
     SequenceControlSet        *sequence_control_set_ptr;

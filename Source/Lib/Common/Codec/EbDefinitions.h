@@ -4036,6 +4036,8 @@ memset(dst, val, count)
         83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
         84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
     };
+typedef struct _EbEncHandle EbEncHandle;
+typedef struct _EbThreadContext EbThreadContext;
 #ifdef __cplusplus
 }
 #endif

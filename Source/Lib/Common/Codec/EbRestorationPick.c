@@ -2216,7 +2216,7 @@ static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype
 }
 
 void restoration_seg_search(
-    RestContext          *context_ptr,
+    int32_t                *rst_tmpbuf,
     Yv12BufferConfig       *org_fts,
     const Yv12BufferConfig *src,
     Yv12BufferConfig       *trial_frame_rst ,
@@ -2244,7 +2244,7 @@ void restoration_seg_search(
 
         init_rsc_seg(org_fts,src, cm, x, plane, rusi, trial_frame_rst, &rsc);
 
-        rsc_p->tmpbuf = context_ptr->rst_tmpbuf;
+        rsc_p->tmpbuf = rst_tmpbuf;
 
         const int32_t highbd = rsc.cm->use_highbitdepth;
         eb_extend_frame(rsc.dgd_buffer, rsc.plane_width, rsc.plane_height,
