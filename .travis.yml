@@ -1,19 +1,32 @@
 # Environment variables
 language: c
-cache:
-  ccache: true
-  pip: true
+cache: ccache
+os: linux
 dist: bionic
 osx_image: xcode11.2
 env: build_type=release
+git:
+  depth: 5
+  quiet: true
+  submodules: false
 addons:
   apt:
     sources:
-    packages: cmake yasm valgrind libgstreamer-plugins-base1.0-dev libgstreamer1.0-dev
+      - sourceline: "ppa:ubuntu-toolchain-r/test"
+      - sourceline: "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main"
+        key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
+    packages:
+      - cmake
+      - yasm
+      - valgrind
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer1.0-dev
+      - python3-pip
   homebrew:
     packages:
       - yasm
       - ccache
+      - python
 notifications:
   webhooks: https://coveralls.io/webhook
 
@@ -21,62 +34,55 @@ notifications:
 stages:
   - name: style
   - name: test
+  - name: coveralls+valgrind
+    if: type != pull_request
   - name: unittest
-  - name: coveralls
-    if: type != pull_request
-  - name: valgrind
-    if: type != pull_request
 
 # Default scripts
 before_install:
   - "sudo chown -R travis: $HOME/.ccache"
+  - |
+    if [ "$(uname -s)" == "Darwin" ]; then
+      sysctl -n machdep.cpu.brand_string
+      sysctl machdep.cpu.features
+      sysctl machdep.cpu.leaf7_features
+    elif [ -f "/proc/cpuinfo" ]; then
+      grep -Ei " sse*| ssse*| avx|model name" /proc/cpuinfo  | sort -u
+    fi
   - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig PATH="/usr/local/opt/ccache/libexec:$PATH"
   - cd $TRAVIS_BUILD_DIR
   - wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
   - tar xf video.tar.gz
   - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
-  - if [ $CC = "/usr/bin/gcc-8" ]; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt-get install -qq gcc-8 g++-8; fi
-  - if [ $CC = "/usr/bin/gcc-9" ]; then sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y; sudo apt-get install -qq gcc-9 g++-9; fi
-  - if [ "$CC" != "clang" -a "$CC" != "gcc" ]; then sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CC##*/} || true; fi
-  - if [ "$CXX" != "clang++" -a "$CXX" != "g++" ]; then sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CXX##*/} || true; fi
+  - |
+    case "$CC" in
+    gcc-7) sudo apt-get install -qq gcc-7 g++-7 ;;
+    gcc-8) sudo apt-get install -qq gcc-8 g++-8 ;;
+    gcc-9) sudo apt-get install -qq gcc-9 g++-9 ;;
+    clang-6.0) sudo apt-get install -qq clang-6.0 ;;
+    clang-10) sudo apt-get install -qq clang-10 ;;
+    esac
+    if [ "$TRAVIS_OS_NAME" != "osx" ]; then
+      test -f "/usr/lib/ccache/${CC##*/}" || sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CC##*/}
+      test -f "/usr/lib/ccache/${CXX##*/}" || sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CXX##*/}
+    fi
 install:
-  - pip install --user cpp-coveralls
-  - export PATH=/Users/travis/Library/Python/2.7/bin:${PATH}
   - |
     if [ "$TRAVIS_OS_NAME" != "osx" ]; then
       export CFLAGS="-Werror"
       if [ "$CC" = "clang" ]; then export CFLAGS+=" -Wno-error=array-bounds"; fi
     fi
-  #- if [ $TRAVIS_OS_NAME = osx ]; then brew install --HEAD valgrind; fi
-base_script: &base_script |
-  cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
-  cmake $TRAVIS_BUILD_DIR -G"${generator:-Unix Makefiles}" -DCMAKE_BUILD_TYPE=${build_type:-Release} ${CMAKE_EFLAGS[@]}
-  cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
-  sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
-coveralls_script: &coveralls_script |
-  SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
-  git clone https://github.com/FFmpeg/FFmpeg ffmpeg --depth=1 --branch release/4.2 && cd ffmpeg &&
-  git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch &&
-  ffmpegconfig=(--disable-everything --enable-{libsvtav1,encoder={libaom_av1,libsvt_av1,rawvideo},decoder={h264,rawvideo,yuv4,libaom_av1},muxer={fifo,matroska,ivf,mp4,rawvideo,webm,yuv4mpegpipe},demuxer={h264,ivf,matroska,mpegts,rawvideo,yuv4mpegpipe},parser={av1,h264,mpeg4video},bsf={av1_metadata,h264_metadata},protocol={data,file,pipe,unix},filter={fifo,fps,libvmaf,psnr,ssim,vmafmotion}})
-  sudo chown -R travis: $HOME/.ccache
-  CFLAGS=""
-  if ! ./configure ${ffmpegconfig[@]}; then cat ffbuild/config.log; fi &&
-  make -s -j$(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) >/dev/null &&
-  sudo make install && cd $TRAVIS_BUILD_DIR &&
-  ffmpeg -i akiyo_cif.y4m -vframes 150 -c:v libsvt_av1 test.mp4 &&
-  ffmpeg -i bus_cif.y4m -nostdin -f rawvideo -pix_fmt yuv420p - | SvtAv1EncApp -i stdin -w 352 -h 288 -fps 30 -n 150 -b test2.ivf
-after_coveralls_script: &after_coveralls_script |
-  if [ $CC = "clang" ] && [ $TRAVIS_OS_NAME = linux ]; then
-    GCOV_FILE=llvm-cov GCOV_OPTIONS='gcov -pl'
-  else
-    GCOV_FILE=gcov GCOV_OPTIONS='\-lp'
-  fi
-  coveralls --root $TRAVIS_BUILD_DIR -i Source -E ".*gtest.*" -E ".*CMakeFiles.*" -E ".*third_party.*" -E ".*test/FilmGrainTest.cc" -E ".*ffmpeg.*" --gcov $GCOV_FILE --gcov-options "$GCOV_OPTIONS"
 script:
-  - *base_script
-  - SvtAv1EncApp -enc-mode 8 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 150 -b test1.ivf
+  - &base_script |
+    cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
+    cmake $TRAVIS_BUILD_DIR -G"${generator:-Unix Makefiles}" -DCMAKE_BUILD_TYPE=${build_type:-Release} ${CMAKE_EFLAGS}
+    cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
+    sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
+  - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150 -b test1.ivf
 before_cache:
   - "sudo chown -R travis: $HOME/.ccache"
+  - ccache -c
+  - ccache -s
 
 # Build matrix
 matrix:
@@ -84,7 +90,8 @@ matrix:
   allow_failures:
     - name: Binary Identical?
     - name: Valgrind
-    - env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
+    - name: Coveralls Linux+gcc
+    - name: Coveralls osx+clang
     - name: Unit Tests Linux+gcc
     - name: Unit Tests osx+clang
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
@@ -96,21 +103,24 @@ matrix:
       before_install: skip
       install: skip
       script:
-        - git remote rm upstream 2> /dev/null || true
-        - git remote add upstream https://github.com/OpenVisualCloud/SVT-AV1.git
-        - git fetch -q upstream master
-        - git grep -InP --heading "\t" -- . ':!third_party/**/*' && false || true
-        - git grep -InP --heading "\r" -- . ':!third_party/**/*' && false || true
-        - git grep -InP --heading " $" -- . ':!third_party/**/*' && false || true
         - |
-          for file in $(git ls-tree --name-only -r HEAD |
+          echo "Checking for tabs"
+          ! git grep -InP --heading "\t" -- . ':!third_party/**/*'
+          echo "Checking for carriage returns"
+          ! git grep -InP --heading "\r" -- . ':!third_party/**/*'
+          echo "Checking for trailing spaces"
+          ! git grep -InP --heading " $" -- . ':!third_party/**/*';
+        - git fetch -q https://github.com/OpenVisualCloud/SVT-AV1.git master
+        - |
+          for file in $(git diff --name-only FETCH_HEAD |
             grep -vE "third_party/|test/e2e_test/test_vector_list.txt|test/vectors/smoking_test.cfg|test/vectors/video_src.cfg|.png"); do
             if [ -n "$(tail -c1 "$file")" ]; then
               echo "No newline at end of $file"
               false
             fi
           done
-          for i in $(git rev-list HEAD ^upstream/master); do
+        - |
+          for i in $(git rev-list HEAD ^FETCH_HEAD); do
             echo "Checking commit message of $i"
             msg="$(git log --format=%B -n 1 $i)"
             if [ -n "$(sed -n 2p <<<"$msg")" ]; then
@@ -125,18 +135,23 @@ matrix:
     # GCC & Clang builds
     - name: Linux GCC 7 build
       stage: test
+      env: build_type=release CC=gcc-7 CXX=g++-7
     - name: Linux GCC 8 build
-      env: build_type=release CC=/usr/bin/gcc-8 CXX=/usr/bin/g++-8
+      env: build_type=release CC=gcc-8 CXX=g++-8
     - name: Linux GCC 9 build
-      env: build_type=release CC=/usr/bin/gcc-9 CXX=/usr/bin/g++-9
-    - name: Linux Clang build
+      env: build_type=release CC=gcc-9 CXX=g++-9
+    - name: Linux Clang 6 build
       compiler: clang
+      env: build_type=release CC=clang-6.0 CXX=clang++-6.0
+    - name: Linux Clang 10 build
+      compiler: clang
+      env: build_type=release CC=clang-10 CXX=clang++-10
     - name: macOS Clang build
       os: osx
       compiler: clang
     # FFmpeg interation build
     - name: FFmpeg patch
-      env: build_type=release
+      env: build_type=release CMAKE_EFLAGS="-DBUILD_SHARED_LIBS=OFF"
       script:
         # Build and install SVT-AV1
         - *base_script
@@ -152,15 +167,14 @@ matrix:
     - name: GStreamer patch
       env: build_type=release
       script:
-      # Build and install SVT-AV1
-      - *base_script
-      # Build GST-SVT-AV1 plugin
-      - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
-      - "sudo chown -R travis: $HOME/.ccache"
-      - CFLAGS=""
-      - cmake .
-      - make --quiet -j$(nproc)
-      - sudo make install
+        # Build and install SVT-AV1
+        - *base_script
+        # Build GST-SVT-AV1 plugin
+        - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
+        - "sudo chown -R travis: $HOME/.ccache"
+        - CFLAGS="" cmake .
+        - make --quiet -j$(nproc)
+        - sudo make install
     # Tests if .ivf files are identical on binary level
     - name: Binary Identical?
       script:
@@ -169,10 +183,10 @@ matrix:
         - cd $HOME
         - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-pr-m8.ivf
         - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-pr-m0.ivf
-        - rm -rf $TRAVIS_BUILD_DIR
-        - git clone --depth 1 https://github.com/OpenVisualCloud/SVT-AV1.git $TRAVIS_BUILD_DIR
         - cd $TRAVIS_BUILD_DIR
-        - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
+        - git fetch https://github.com/OpenVisualCloud/SVT-AV1.git master
+        - git checkout FETCH_HEAD
+        - rm -rf $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}/*
         - *base_script
         - cd $HOME
         - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-master-m8.ivf
@@ -182,12 +196,31 @@ matrix:
 
     # Coveralls on Linux and macOS
     - name: Coveralls Linux+gcc
-      stage: Coveralls
+      stage: coveralls+valgrind
       env: COVERALLS_PARALLEL=true build_type=debug CMAKE_EFLAGS="-DCOVERAGE=ON"
       script:
         - *base_script
-        - *coveralls_script
-      after_script: *after_coveralls_script
+        - &coveralls_script |
+          pip3 install --user cpp-coveralls
+          export PATH=/Users/travis/Library/Python/3.7/bin:${PATH}
+          SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150 -b test1.ivf
+          git clone https://github.com/FFmpeg/FFmpeg ffmpeg --depth=1 --branch release/4.2 && cd ffmpeg &&
+          git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch &&
+          ffmpegconfig=(--disable-everything --enable-{libsvtav1,encoder={libaom_av1,libsvt_av1,rawvideo},decoder={h264,rawvideo,yuv4,libaom_av1},muxer={fifo,matroska,ivf,mp4,rawvideo,webm,yuv4mpegpipe},demuxer={h264,ivf,matroska,mpegts,rawvideo,yuv4mpegpipe},parser={av1,h264,mpeg4video},bsf={av1_metadata,h264_metadata},protocol={data,file,pipe,unix},filter={fifo,fps,libvmaf,psnr,ssim,vmafmotion}})
+          sudo chown -R travis: $HOME/.ccache
+          export CFLAGS=""
+          if ! ./configure ${ffmpegconfig[@]}; then cat ffbuild/config.log; fi &&
+          make -s -j$(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) >/dev/null &&
+          sudo make install && cd $TRAVIS_BUILD_DIR &&
+          ffmpeg -i akiyo_cif.y4m -vframes 150 -c:v libsvt_av1 test.mp4 &&
+          ffmpeg -i bus_cif.y4m -nostdin -f rawvideo -pix_fmt yuv420p - | SvtAv1EncApp -i stdin -w 352 -h 288 -fps 30 -n 150 -b test2.ivf
+      after_script: &after_coveralls_script |
+        if [ $CC = "clang" ] && [ $TRAVIS_OS_NAME = linux ]; then
+          GCOV_FILE=llvm-cov GCOV_OPTIONS='gcov -pl'
+        else
+          GCOV_FILE=gcov GCOV_OPTIONS='\-lp'
+        fi
+        coveralls --root $TRAVIS_BUILD_DIR -i Source -E ".*gtest.*" -E ".*CMakeFiles.*" -E ".*third_party.*" -E ".*test/FilmGrainTest.cc" -E ".*ffmpeg.*" --gcov $GCOV_FILE --gcov-options "$GCOV_OPTIONS"
     - name: Coveralls osx+clang
       os: osx
       compiler: clang
@@ -211,21 +244,17 @@ matrix:
       env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
-        - cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
-        - make TestVectors
-        - cd $TRAVIS_BUILD_DIR
-        - SvtAv1UnitTests
-        - SvtAv1ApiTests
-        - SvtAv1E2ETests
+        - &unittests |
+          cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
+          make TestVectors
+          cd $TRAVIS_BUILD_DIR
+          SvtAv1UnitTests
+          SvtAv1ApiTests
+          SvtAv1E2ETests
     - name: Unit Tests osx+clang
       os: osx
       compiler: clang
       env: build_type=release CMAKE_EFLAGS="-DBUILD_TESTING=ON" SVT_AV1_TEST_VECTOR_PATH=$TRAVIS_BUILD_DIR/test/vectors/
       script:
         - *base_script
-        - cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
-        - make TestVectors
-        - cd $TRAVIS_BUILD_DIR
-        - SvtAv1UnitTests
-        - SvtAv1ApiTests
-        - SvtAv1E2ETests
+        - *unittests
