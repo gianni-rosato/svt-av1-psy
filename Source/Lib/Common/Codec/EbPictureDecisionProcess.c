@@ -904,7 +904,12 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_FULL;
         else if (sc_content_detected)
             if (picture_control_set_ptr->enc_mode <= ENC_M1)
+#if M0_OPT
+                picture_control_set_ptr->nsq_search_level = (picture_control_set_ptr->is_used_as_reference_flag) ?
+                NSQ_SEARCH_LEVEL6 : NSQ_SEARCH_LEVEL3;
+#else
                 picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
+#endif
             else if (picture_control_set_ptr->enc_mode <= ENC_M2)
                 if (picture_control_set_ptr->temporal_layer_index == 0)
                     picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
@@ -1062,9 +1067,13 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     if (!picture_control_set_ptr->sequence_control_set_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
     if (sc_content_detected)
+#if M0_OPT
+        if (picture_control_set_ptr->enc_mode <= ENC_M1)
+#else
         if (picture_control_set_ptr->enc_mode == ENC_M0)
             picture_control_set_ptr->loop_filter_mode = 3;
         else if (picture_control_set_ptr->enc_mode == ENC_M1)
+#endif
             picture_control_set_ptr->loop_filter_mode = picture_control_set_ptr->is_used_as_reference_flag ? 3 : 0;
         else
             picture_control_set_ptr->loop_filter_mode = 0;
@@ -1094,7 +1103,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                 picture_control_set_ptr->cdef_filter_mode = 0;
         else
         if (picture_control_set_ptr->enc_mode <= ENC_M7)
+#if M0_OPT
+            picture_control_set_ptr->cdef_filter_mode = (picture_control_set_ptr->enc_mode <= ENC_M0) ? 5 : 4;
+#else
             picture_control_set_ptr->cdef_filter_mode = 4;
+#endif
         else
             picture_control_set_ptr->cdef_filter_mode = 2;
     }
@@ -1227,9 +1240,14 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->intra_pred_mode = 4;
     else {
     if (sc_content_detected)
+#if M0_OPT
+
+        if (picture_control_set_ptr->enc_mode <= ENC_M2)
+#else
         if (picture_control_set_ptr->enc_mode == ENC_M0)
             picture_control_set_ptr->intra_pred_mode = 0;
         else if (picture_control_set_ptr->enc_mode <= ENC_M2)
+#endif
             if (picture_control_set_ptr->temporal_layer_index == 0)
                 picture_control_set_ptr->intra_pred_mode = 1;
             else
@@ -1349,7 +1367,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->frame_end_cdf_update_mode = 1;
         else
             picture_control_set_ptr->frame_end_cdf_update_mode = 0;
+#if M0_OPT
+        if (picture_control_set_ptr->sc_content_detected || picture_control_set_ptr->enc_mode >= ENC_M4)
+#else
         if (picture_control_set_ptr->sc_content_detected || picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->enc_mode >= ENC_M4)
+#endif
             picture_control_set_ptr->prune_unipred_at_me = 0;
         else
             picture_control_set_ptr->prune_unipred_at_me = 1;

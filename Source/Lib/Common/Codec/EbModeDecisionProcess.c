@@ -575,7 +575,11 @@ void reset_mode_decision(
     if (sequence_control_set_ptr->static_config.enable_obmc) {
         if (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
             picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =
+#if M0_OPT
+            picture_control_set_ptr->slice_type != I_SLICE ? 2 : 0;
+#else
             picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->slice_type != I_SLICE ? 2 : 0;
+#endif
         else
             picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
 

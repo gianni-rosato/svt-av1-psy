@@ -37,6 +37,10 @@
 #define FULL_PEL_REF_WINDOW_HEIGHT       5
 #define HALF_PEL_REF_WINDOW              3
 #define QUARTER_PEL_REF_WINDOW           3
+#if M0_OPT
+#define FULL_PEL_REF_WINDOW_WIDTH_EXTENDED        15
+#define FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED       15
+#endif
 #if EIGHT_PEL_PREDICTIVE_ME
 #define EIGHT_PEL_REF_WINDOW          3
 #endif
@@ -2815,7 +2819,10 @@ void predictive_me_search(
     uint32_t                      cuOriginIndex) {
 
     const SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-
+#if M0_OPT
+    int16_t full_pel_ref_window_width_th = (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->enc_mode == ENC_M0) ? FULL_PEL_REF_WINDOW_WIDTH_EXTENDED : FULL_PEL_REF_WINDOW_WIDTH;
+    int16_t full_pel_ref_window_height_th = (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->enc_mode == ENC_M0) ? FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED : FULL_PEL_REF_WINDOW_HEIGHT;
+#endif
     EbBool use_ssd = EB_TRUE;
 
     // Reset valid_refined_mv
@@ -3005,10 +3012,18 @@ void predictive_me_search(
                     ref_idx,
                     best_mvp_x,
                     best_mvp_y,
+#if M0_OPT
+                    - (full_pel_ref_window_width_th >> 1),
+                    +(full_pel_ref_window_width_th >> 1),
+                    -(full_pel_ref_window_height_th >> 1),
+                    +(full_pel_ref_window_height_th >> 1),
+
+#else
                     -(FULL_PEL_REF_WINDOW_WIDTH >> 1),
                     +(FULL_PEL_REF_WINDOW_WIDTH >> 1),
                     -(FULL_PEL_REF_WINDOW_HEIGHT >> 1),
                     +(FULL_PEL_REF_WINDOW_HEIGHT >> 1),
+#endif
                     8,
                     &best_search_mvx,
                     &best_search_mvy,
