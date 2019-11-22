@@ -232,11 +232,10 @@ matrix:
 
     # Valgrind on Linux and macOS
     - name: Valgrind
-      stage: valgrind
       env: build_type=debug
       script:
         - *base_script
-        - valgrind -- SvtAv1EncApp -enc-mode 2 -w 720 -h 486 -fps 60 -i akiyo_cif.y4m -n 20 -b test1.ivf
+        - travis_wait 60 valgrind -- SvtAv1EncApp -enc-mode 4 -i akiyo_cif.y4m -n 20 -b test1.ivf
 
     # Unittests on Linux and macOS
     - name: Unit Tests Linux+gcc
