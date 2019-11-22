@@ -101,7 +101,7 @@ extern "C" {
 #define TWO_PASS_USE_2NDP_ME_IN_1STP      1 // Add a config parameter to the first pass to use the ME settings of the second pass
 
 #define REMOVE_MD_STAGE_1                 1 // Simplified MD Staging; removed md_stage_1
-#define NON_KF_INTRA_TF_FIX               1 // Fix temporal filtering for non-key Intra frames
+#define NON_KF_INTRA_TF_FIX               0 // Fix temporal filtering for non-key Intra frames
 
 #define TWO_PASS_IMPROVEMENT              1 // Tune 2 pass for better Luma by adjusting the reference area and the actions
 //FOR DEBUGGING - Do not remove
