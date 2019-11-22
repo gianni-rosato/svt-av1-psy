@@ -89,6 +89,8 @@ extern "C" {
 #define WARP_UPDATE                       1 // Modified Warp settings: ON for MR mode. ON for ref frames in M0
 #define EIGTH_PEL_MV                      1
 #define EIGHT_PEL_PREDICTIVE_ME           1
+#define EIGHT_PEL_FIX                     1 // Improve the 8th pel performance by shutting it based on the qindex and bug fixes
+#define HIGH_PRECISION_MV_QTHRESH         150
 #define COMP_INTERINTRA                   1 // InterIntra mode support
 
 #define ENHANCE_ATB                       1

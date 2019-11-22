@@ -2583,7 +2583,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         picture_control_set_ptr->pic_filter_intra_mode = picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->temporal_layer_index == 0 ? 1 : 0;
     else
         picture_control_set_ptr->pic_filter_intra_mode = 0;
-
+#endif
+#if EIGHT_PEL_FIX
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+    frm_hdr->allow_high_precision_mv =
+        picture_control_set_ptr->enc_mode == ENC_M0 && frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
+        (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? 1 : 0;
 #endif
     return return_error;
 }
