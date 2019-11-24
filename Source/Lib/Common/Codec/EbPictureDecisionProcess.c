@@ -849,9 +849,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MDC_ADAPTIVE_LEVEL
         // Adaptive Ol  Level                    Settings
         // 0                                     OFF
-        // 1                                     ON 
-        //NM : Please note that the open_loop_partitioning is operational only when 
-        // pic_depth_mode is set to PIC_ALL_DEPTH_MODE or PIC_ALL_C_DEPTH_MODE when 
+        // 1                                     ON
+        //NM : Please note that the open_loop_partitioning is operational only when
+        // pic_depth_mode is set to PIC_ALL_DEPTH_MODE or PIC_ALL_C_DEPTH_MODE when
         // the motion information information for NSQ is generated.
         if (sequence_control_set_ptr->static_config.olpd_refinement == -1) { //auto mode; if not set by cfg
             if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
@@ -2952,7 +2952,7 @@ void initialize_overlay_frame(PictureParentControlSet     *picture_control_set_p
  }
 
 /***************************************************************************************************
- * Helper function. Compare two frames: center frame and target frame. Return the summation of  
+ * Helper function. Compare two frames: center frame and target frame. Return the summation of
  * absolute difference between the two frames from a histogram of luma values
 ***************************************************************************************************/
 

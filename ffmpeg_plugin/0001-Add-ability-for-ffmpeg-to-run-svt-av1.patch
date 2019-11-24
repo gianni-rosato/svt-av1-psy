@@ -611,6 +611,5 @@ index 0000000000..4984816830
 +    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
 +    .wrapper_name   = "libsvt_av1",
 +};
--- 
+--
 2.17.1
-

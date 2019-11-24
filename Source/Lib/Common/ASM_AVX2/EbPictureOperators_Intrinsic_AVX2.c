@@ -1073,9 +1073,9 @@ int32_t  sum_residual8bit_avx2_intrin(
         sumBlock = _mm_cvtsi128_si32(sum);
 
         return sumBlock;
-    } 
+    }
 
-    else if (size == 64) {//AVX2 
+    else if (size == 64) {//AVX2
         // no more than 11 bit valid residual data is fine, when valid residual data is over 11bit,  the following code need to be rewritten.
         int16_t* inPtrTemp = in_ptr;
         __m256i sum4, sum5, sum6, sum7;
@@ -1086,14 +1086,14 @@ int32_t  sum_residual8bit_avx2_intrin(
         sum0 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp)), _mm256_loadu_si256((__m256i*)(inPtrTemp + 16)));
         sum1 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + 32)), _mm256_loadu_si256((__m256i*)(inPtrTemp + 48)));
         sum2 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in)), _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 16)));
-        sum3 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 32)), _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 48)));  
-                                        
-        inPtrTemp += 2 * stride_in;                                 
-                                                                       
+        sum3 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 32)), _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 48)));
+
+        inPtrTemp += 2 * stride_in;
+
         sum4 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp)), _mm256_loadu_si256((__m256i*)(inPtrTemp + 16)));
         sum5 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + 32)),  _mm256_loadu_si256((__m256i*)(inPtrTemp  + 48)));
         sum6 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in)), _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 16)));
-        sum7 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 32)), _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 48)));                                        
+        sum7 = _mm256_add_epi16(_mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 32)), _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 48)));
 
         inPtrTemp += 2 * stride_in;
 
@@ -1107,9 +1107,9 @@ int32_t  sum_residual8bit_avx2_intrin(
             sum1 = _mm256_add_epi16(sum1, _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 16)));
             sum2 = _mm256_add_epi16(sum2, _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 32)));
             sum3 = _mm256_add_epi16(sum3, _mm256_loadu_si256((__m256i*)(inPtrTemp + stride_in + 48)));
-            
+
             inPtrTemp += 2 * stride_in;
-            
+
             sum4 = _mm256_add_epi16(sum4, _mm256_loadu_si256((__m256i*)(inPtrTemp)));
             sum5 = _mm256_add_epi16(sum5, _mm256_loadu_si256((__m256i*)(inPtrTemp + 16)));
             sum6 = _mm256_add_epi16(sum6, _mm256_loadu_si256((__m256i*)(inPtrTemp + 32)));
@@ -1127,7 +1127,7 @@ int32_t  sum_residual8bit_avx2_intrin(
         sum1 = _mm256_madd_epi16(sum1, ones);
         sum2 = _mm256_madd_epi16(sum2, ones);
         sum3 = _mm256_madd_epi16(sum3, ones);
-        
+
         sum4 = _mm256_madd_epi16(sum4, ones);
         sum5 = _mm256_madd_epi16(sum5, ones);
         sum6 = _mm256_madd_epi16(sum6, ones);
@@ -1137,7 +1137,7 @@ int32_t  sum_residual8bit_avx2_intrin(
         sum2 = _mm256_add_epi32(sum2, sum3);
         sum4 = _mm256_add_epi32(sum4, sum5);
         sum6 = _mm256_add_epi32(sum6, sum7);
-        
+
         sum0 = _mm256_add_epi32(sum0, sum2);
         sum4 = _mm256_add_epi32(sum4, sum6);
         sum0 = _mm256_hadd_epi32(sum0, zeros);

@@ -7544,7 +7544,7 @@ unsigned int eb_av1_get_sby_perpixel_variance(const aom_variance_fn_ptr_t *fn_pt
 #if INTER_INTRA_CLASS_PRUNING
 
 void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
-    
+
     for (CAND_CLASS cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         if (context_ptr->md_stage_0_count[cand_class_it] > 0 && context_ptr->md_stage_1_count[cand_class_it] > 0) {
             uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
@@ -7567,7 +7567,7 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
 }
 
 void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost) {
-    
+
     for (CAND_CLASS cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         if (context_ptr->md_stage_1_count[cand_class_it] > 0 && context_ptr->md_stage_2_count[cand_class_it] > 0 && context_ptr->bypass_md_stage_1[cand_class_it] == EB_FALSE) {
             uint32_t *cand_buff_indices = context_ptr->cand_buff_indices[cand_class_it];
