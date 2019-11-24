@@ -1,10 +1,40 @@
 # Changelog
 
-## [upcoming]
+## [0.7.5] - 2019-11-24
+
+Encoder
+- RDOQ for 10-bit
+- Inter Intra Class pruning at MD-Staging
+- Global Motion Vector support for 8-bit and 10-bit
+- Interpolation Filter Search support for 10-bit
+- Palette Prediction support
+- 2-pass encoding support
+- ATB 10-bit support at the encode pass
+- Simplified MD Staging [only 3 stages]
+- Inter-Inter and Inter-Intra Compound for 10-bit
+- Intra Paeth for 10-bit
+- Filter Intra Prediction
+- New-Near and Near-New support
+- OBMC Support for 8-bit and 10-bit
+- RDOQ Chroma
+- ATB Support for Inter Blocks
+- Temporal Filtering for 10-bit
+- Eight-pel support in predictive ME
+- MCTS Tiles support
+- Added AVX512 Optimizations
+- Added AVX2 Optimizations
 
 Decoder
-- Decoder SuperRes support
-- Decoder Reference Frame Scaling support
+- SuperRes support
+- Reference Frame Scaling support
+- 12-bit support
+- Annex B support
+
+Build and Testing
+- Bug fixes
+- Improve CI
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
 
 ## [0.7.0] - 2019-09-26
 

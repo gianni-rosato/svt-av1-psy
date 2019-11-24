@@ -7,7 +7,7 @@
 # Shared Decoder Version
 set(DEC_VERSION_MAJOR 0)
 set(DEC_VERSION_MINOR 7)
-set(DEC_VERSION_PATCH 0)
+set(DEC_VERSION_PATCH 5)
 set(DEC_VERSION ${DEC_VERSION_MAJOR}.${DEC_VERSION_MINOR}.${DEC_VERSION_PATCH})
 
 # Include Decoder Subdirectories
