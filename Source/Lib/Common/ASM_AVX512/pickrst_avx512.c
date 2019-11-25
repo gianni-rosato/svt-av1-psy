@@ -10,6 +10,7 @@
 #include "EbRestoration.h"
 #include "EbUtility.h"
 #include "pickrst_avx2.h"
+#include "synonyms_avx512.h"
 #include "transpose_sse2.h"
 #include "transpose_avx2.h"
 
@@ -220,7 +221,7 @@ static INLINE void sub_avg_block_avx512(const uint8_t *src,
             const __m256i s = _mm256_loadu_si256((__m256i *)(src + j));
             const __m512i ss = _mm512_cvtepu8_epi16(s);
             const __m512i d = _mm512_sub_epi16(ss, a);
-            _mm512_store_si512((__m512i *)(dst + j), d);
+            zz_store_512(dst + j, d);
             j += 32;
         } while (j < width);
 
@@ -242,7 +243,7 @@ static INLINE void sub_avg_block_highbd_avx512(const uint16_t *src,
         do {
             const __m512i s = _mm512_loadu_si512((__m512i *)(src + j));
             const __m512i d = _mm512_sub_epi16(s, a);
-            _mm512_store_si512((__m512i *)(dst + j), d);
+            zz_store_512(dst + j, d);
             j += 32;
         } while (j < width);
 
@@ -437,8 +438,8 @@ static INLINE void stats_left_win3_avx512(const __m512i src, const int16_t *d,
 {
     __m512i dgds[WIENER_WIN_3TAP - 1];
 
-    dgds[0] = _mm512_load_si512((__m512i *)(d + 1 * d_stride));
-    dgds[1] = _mm512_load_si512((__m512i *)(d + 2 * d_stride));
+    dgds[0] = zz_load_512(d + 1 * d_stride);
+    dgds[1] = zz_load_512(d + 2 * d_stride);
 
     madd_avx512(src, dgds[0], &sum[0]);
     madd_avx512(src, dgds[1], &sum[1]);
@@ -449,10 +450,10 @@ static INLINE void stats_left_win5_avx512(const __m512i src, const int16_t *d,
 {
     __m512i dgds[WIENER_WIN_CHROMA - 1];
 
-    dgds[0] = _mm512_load_si512((__m512i *)(d + 1 * d_stride));
-    dgds[1] = _mm512_load_si512((__m512i *)(d + 2 * d_stride));
-    dgds[2] = _mm512_load_si512((__m512i *)(d + 3 * d_stride));
-    dgds[3] = _mm512_load_si512((__m512i *)(d + 4 * d_stride));
+    dgds[0] = zz_load_512(d + 1 * d_stride);
+    dgds[1] = zz_load_512(d + 2 * d_stride);
+    dgds[2] = zz_load_512(d + 3 * d_stride);
+    dgds[3] = zz_load_512(d + 4 * d_stride);
 
     madd_avx512(src, dgds[0], &sum[0]);
     madd_avx512(src, dgds[1], &sum[1]);
@@ -465,12 +466,12 @@ static INLINE void stats_left_win7_avx512(const __m512i src, const int16_t *d,
 {
     __m512i dgds[WIENER_WIN - 1];
 
-    dgds[0] = _mm512_load_si512((__m512i *)(d + 1 * d_stride));
-    dgds[1] = _mm512_load_si512((__m512i *)(d + 2 * d_stride));
-    dgds[2] = _mm512_load_si512((__m512i *)(d + 3 * d_stride));
-    dgds[3] = _mm512_load_si512((__m512i *)(d + 4 * d_stride));
-    dgds[4] = _mm512_load_si512((__m512i *)(d + 5 * d_stride));
-    dgds[5] = _mm512_load_si512((__m512i *)(d + 6 * d_stride));
+    dgds[0] = zz_load_512(d + 1 * d_stride);
+    dgds[1] = zz_load_512(d + 2 * d_stride);
+    dgds[2] = zz_load_512(d + 3 * d_stride);
+    dgds[3] = zz_load_512(d + 4 * d_stride);
+    dgds[4] = zz_load_512(d + 5 * d_stride);
+    dgds[5] = zz_load_512(d + 6 * d_stride);
 
     madd_avx512(src, dgds[0], &sum[0]);
     madd_avx512(src, dgds[1], &sum[1]);
@@ -1087,15 +1088,15 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d,
             do {
                 x = 0;
                 do {
-                    const __m512i src = _mm512_load_si512((__m512i *)(sT + x));
-                    const __m512i dgd = _mm512_load_si512((__m512i *)(dT + x));
+                    const __m512i src = zz_load_512(sT + x);
+                    const __m512i dgd = zz_load_512(dT + x);
                     stats_top_win3_avx512(src, dgd, dT + j + x, d_stride, sumM, sumH);
                     x += 32;
                 } while (x < w32);
 
                 if (w32 != width) {
-                    const __m512i src = _mm512_load_si512((__m512i *)(sT + w32));
-                    const __m512i dgd = _mm512_load_si512((__m512i *)(dT + w32));
+                    const __m512i src = zz_load_512(sT + w32);
+                    const __m512i dgd = zz_load_512(dT + w32);
                     const __m512i srcMask = _mm512_and_si512(src, mask);
                     const __m512i dgdMask = _mm512_and_si512(dgd, mask);
                     stats_top_win3_avx512(srcMask, dgdMask, dT + j + w32, d_stride, sumM, sumH);
@@ -1165,15 +1166,15 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d,
                 do {
                     x = 0;
                     do {
-                        const __m512i src = _mm512_load_si512((__m512i *)(sT + x));
-                        const __m512i dgd = _mm512_load_si512((__m512i *)(dT + x));
+                        const __m512i src = zz_load_512(sT + x);
+                        const __m512i dgd = zz_load_512(dT + x);
                         stats_top_win3_avx512(src, dgd, dT + j + x, d_stride, rowM, rowH);
                         x += 32;
                     } while (x < w32);
 
                     if (w32 != width) {
-                        const __m512i src = _mm512_load_si512((__m512i *)(sT + w32));
-                        const __m512i dgd = _mm512_load_si512((__m512i *)(dT + w32));
+                        const __m512i src = zz_load_512(sT + w32);
+                        const __m512i dgd = zz_load_512(dT + w32);
                         const __m512i srcMask = _mm512_and_si512(src, mask);
                         const __m512i dgdMask = _mm512_and_si512(dgd, mask);
                         stats_top_win3_avx512(srcMask, dgdMask, dT + j + w32, d_stride, rowM, rowH);
@@ -1638,15 +1639,15 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d,
             do {
                 x = 0;
                 do {
-                    const __m512i src = _mm512_load_si512((__m512i *)(sT + x));
-                    const __m512i dgd = _mm512_load_si512((__m512i *)(dT + x));
+                    const __m512i src = zz_load_512(sT + x);
+                    const __m512i dgd = zz_load_512(dT + x);
                     stats_top_win5_avx512(src, dgd, dT + j + x, d_stride, sumM, sumH);
                     x += 32;
                 } while (x < w32);
 
                 if (w32 != width) {
-                    const __m512i src = _mm512_load_si512((__m512i *)(sT + w32));
-                    const __m512i dgd = _mm512_load_si512((__m512i *)(dT + w32));
+                    const __m512i src = zz_load_512(sT + w32);
+                    const __m512i dgd = zz_load_512(dT + w32);
                     const __m512i srcMask = _mm512_and_si512(src, mask);
                     const __m512i dgdMask = _mm512_and_si512(dgd, mask);
                     stats_top_win5_avx512(srcMask, dgdMask, dT + j + w32, d_stride, sumM, sumH);
@@ -1719,15 +1720,15 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d,
                 do {
                     x = 0;
                     do {
-                        const __m512i src = _mm512_load_si512((__m512i *)(sT + x));
-                        const __m512i dgd = _mm512_load_si512((__m512i *)(dT + x));
+                        const __m512i src = zz_load_512(sT + x);
+                        const __m512i dgd = zz_load_512(dT + x);
                         stats_top_win5_avx512(src, dgd, dT + j + x, d_stride, rowM, rowH);
                         x += 32;
                     } while (x < w32);
 
                     if (w32 != width) {
-                        const __m512i src = _mm512_load_si512((__m512i *)(sT + w32));
-                        const __m512i dgd = _mm512_load_si512((__m512i *)(dT + w32));
+                        const __m512i src = zz_load_512(sT + w32);
+                        const __m512i dgd = zz_load_512(dT + w32);
                         const __m512i srcMask = _mm512_and_si512(src, mask);
                         const __m512i dgdMask = _mm512_and_si512(dgd, mask);
                         stats_top_win5_avx512(srcMask, dgdMask, dT + j + w32, d_stride, rowM, rowH);
@@ -2268,15 +2269,15 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d,
             do {
                 x = 0;
                 do {
-                    const __m512i src = _mm512_load_si512((__m512i *)(sT + x));
-                    const __m512i dgd = _mm512_load_si512((__m512i *)(dT + x));
+                    const __m512i src = zz_load_512(sT + x);
+                    const __m512i dgd = zz_load_512(dT + x);
                     stats_top_win7_avx512(src, dgd, dT + j + x, d_stride, sumM, sumH);
                     x += 32;
                 } while (x < w32);
 
                 if (w32 != width) {
-                    const __m512i src = _mm512_load_si512((__m512i *)(sT + w32));
-                    const __m512i dgd = _mm512_load_si512((__m512i *)(dT + w32));
+                    const __m512i src = zz_load_512(sT + w32);
+                    const __m512i dgd = zz_load_512(dT + w32);
                     const __m512i srcMask = _mm512_and_si512(src, mask);
                     const __m512i dgdMask = _mm512_and_si512(dgd, mask);
                     stats_top_win7_avx512(srcMask, dgdMask, dT + j + w32, d_stride, sumM, sumH);
@@ -2356,15 +2357,15 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d,
                 do {
                     x = 0;
                     do {
-                        const __m512i src = _mm512_load_si512((__m512i *)(sT + x));
-                        const __m512i dgd = _mm512_load_si512((__m512i *)(dT + x));
+                        const __m512i src = zz_load_512(sT + x);
+                        const __m512i dgd = zz_load_512(dT + x);
                         stats_top_win7_avx512(src, dgd, dT + j + x, d_stride, rowM, rowH);
                         x += 32;
                     } while (x < w32);
 
                     if (w32 != width) {
-                        const __m512i src = _mm512_load_si512((__m512i *)(sT + w32));
-                        const __m512i dgd = _mm512_load_si512((__m512i *)(dT + w32));
+                        const __m512i src = zz_load_512(sT + w32);
+                        const __m512i dgd = zz_load_512(dT + w32);
                         const __m512i srcMask = _mm512_and_si512(src, mask);
                         const __m512i dgdMask = _mm512_and_si512(dgd, mask);
                         stats_top_win7_avx512(srcMask, dgdMask, dT + j + w32, d_stride, rowM, rowH);

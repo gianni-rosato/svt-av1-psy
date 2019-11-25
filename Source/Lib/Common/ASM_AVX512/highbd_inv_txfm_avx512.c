@@ -8,6 +8,7 @@
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
+#include "synonyms_avx512.h"
 
 #ifndef NON_AVX512_SUPPORT
 
@@ -709,7 +710,7 @@ static INLINE void highbd_clamp_epi32_avx512(__m512i *x, int32_t bd) {
 static void load_buffer_16x16_avx512(const int32_t *coeff, __m512i *in) {
     int32_t i;
     for (i = 0; i < 16; ++i) {
-        in[i] = _mm512_load_si512((const __m512i *)coeff);
+        in[i] = zz_load_512(coeff);
         coeff += 16;
     }
 }

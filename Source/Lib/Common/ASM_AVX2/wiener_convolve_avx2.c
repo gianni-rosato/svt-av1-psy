@@ -66,10 +66,10 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t *src, ptrdiff_t src_strid
 
     assert(conv_params->round_0 > 0);
 
-    filt[0] = _mm256_load_si256((__m256i const *)filt1_global_avx2);
-    filt[1] = _mm256_load_si256((__m256i const *)filt2_global_avx2);
-    filt[2] = _mm256_load_si256((__m256i const *)filt3_global_avx2);
-    filt[3] = _mm256_load_si256((__m256i const *)filt4_global_avx2);
+    filt[0] = _mm256_load_si256((__m256i const *)filt1_global_avx);
+    filt[1] = _mm256_load_si256((__m256i const *)filt2_global_avx);
+    filt[2] = _mm256_load_si256((__m256i const *)filt3_global_avx);
+    filt[3] = _mm256_load_si256((__m256i const *)filt4_global_avx);
 
     filt_center = _mm256_load_si256((__m256i const *)filt_center_global_avx2);
 

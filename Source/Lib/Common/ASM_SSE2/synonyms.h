@@ -15,6 +15,8 @@
 #include <immintrin.h>
 #include "EbDefinitions.h"
 
+//#define EB_TEST_SIMD_ALIGN
+
  /**
   * Various reusable shorthands for x86 SIMD intrinsics.
   *
@@ -48,6 +50,12 @@ static INLINE __m128i _mm_loadh_epi64(const void *const p, const __m128i s) {
 
 static INLINE void _mm_storeh_epi64(__m128i *const p, const __m128i x) {
     _mm_storeh_pd((double *)p, _mm_castsi128_pd(x));
+}
+
+static INLINE __m128i load_u8_2x2_sse2(const uint8_t *const src,
+    const uint32_t stride) {
+    const __m128i s = _mm_cvtsi32_si128(*(int16_t *)src);
+    return _mm_insert_epi16(s, *(int16_t *)(src + stride), 1);
 }
 
 static INLINE __m128i load8bit_8x2_sse2(const void *const src,

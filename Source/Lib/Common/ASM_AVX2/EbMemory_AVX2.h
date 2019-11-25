@@ -40,9 +40,9 @@ static INLINE __m256i load_u8_4x4_avx2(const uint8_t *const src,
 
 static INLINE __m256i load_u8_8x2_avx2(const uint8_t *const src,
     const ptrdiff_t stride) {
-    const __m128i s0 = _mm_loadl_epi64((__m128i *)src);
-    const __m128i s1 = _mm_loadl_epi64((__m128i *)(src + stride));
-    return _mm256_setr_m128i(s0, s1);
+    const __m128i src0 = _mm_loadl_epi64((__m128i *)(src + 0 * stride));
+    const __m128i src1 = _mm_loadl_epi64((__m128i *)(src + 1 * stride));
+    return _mm256_setr_m128i(src0, src1);
 }
 
 static INLINE __m256i load_u8_8x4_avx2(const uint8_t *const src,

@@ -8,6 +8,7 @@
 #include "EbCdef.h"
 #include "EbDefinitions.h"
 #include "EbMemory_AVX2.h"
+#include "synonyms_avx512.h"
 
 #ifndef NON_AVX512_SUPPORT
 
@@ -48,12 +49,11 @@ uint64_t search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
             for (k = start; k < end_gi; k += 8) {
                 const __m512i mse1 =
                     _mm512_loadu_si512((const __m512i *)&mse[1][i][k]);
-                const __m512i tot =
-                    _mm512_load_si512((const __m512i *)&tot_mse[j][k]);
+                const __m512i tot = zz_load_512(&tot_mse[j][k]);
                 const __m512i curr = _mm512_add_epi64(mse0, mse1);
                 const __m512i best = _mm512_min_epu64(best_mse_, curr);
                 const __m512i d = _mm512_add_epi64(tot, best);
-                _mm512_store_si512((__m512i *)&tot_mse[j][k], d);
+                zz_store_512(&tot_mse[j][k], d);
             }
         }
     }

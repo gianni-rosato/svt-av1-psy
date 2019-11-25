@@ -18,67 +18,6 @@
 #include "EbMemory_AVX2.h"
 #include "synonyms.h"
 
-static INLINE __m128i sr_x_round_sse2(const __m128i src) {
-    const __m128i round = _mm_set1_epi16(34);
-    const __m128i dst = _mm_add_epi16(src, round);
-    return _mm_srai_epi16(dst, 6);
-}
-
-static INLINE __m256i sr_x_round_avx2(const __m256i src) {
-    const __m256i round = _mm256_set1_epi16(34);
-    const __m256i dst = _mm256_add_epi16(src, round);
-    return _mm256_srai_epi16(dst, 6);
-}
-
-static INLINE __m128i sr_y_round_sse2(const __m128i src) {
-    const __m128i round = _mm_set1_epi16(32);
-    const __m128i dst = _mm_add_epi16(src, round);
-    return _mm_srai_epi16(dst, FILTER_BITS - 1);
-}
-
-static INLINE void sr_x_round_store_8x2_avx2(const __m256i res,
-    uint8_t *const dst,
-    const int32_t dst_stride) {
-    const __m256i r = sr_x_round_avx2(res);
-    pack_store_8x2_avx2(r, dst, dst_stride);
-}
-
-static INLINE void sr_x_round_store_16x2_avx2(const __m256i res[2],
-    uint8_t *const dst,
-    const int32_t dst_stride) {
-    __m256i r[2];
-
-    r[0] = sr_x_round_avx2(res[0]);
-    r[1] = sr_x_round_avx2(res[1]);
-    pack_store_16x2_avx2(r[0], r[1], dst, dst_stride);
-}
-
-static INLINE void sr_x_round_store_32_avx2(const __m256i res[2],
-    uint8_t *const dst) {
-    __m256i r[2];
-
-    r[0] = sr_x_round_avx2(res[0]);
-    r[1] = sr_x_round_avx2(res[1]);
-    convolve_store_32_avx2(r[0], r[1], dst);
-}
-
-static INLINE void sr_y_round_store_8x2_avx2(const __m256i res,
-    uint8_t *const dst,
-    const int32_t dst_stride) {
-    const __m256i r = sr_y_round_avx2(res);
-    pack_store_8x2_avx2(r, dst, dst_stride);
-}
-
-static INLINE void sr_y_round_store_16x2_avx2(const __m256i res[2],
-    uint8_t *const dst,
-    const int32_t dst_stride) {
-    __m256i r[2];
-
-    r[0] = sr_y_round_avx2(res[0]);
-    r[1] = sr_y_round_avx2(res[1]);
-    pack_store_16x2_avx2(r[0], r[1], dst, dst_stride);
-}
-
 static INLINE void sr_y_round_store_32_avx2(const __m256i res[2],
     uint8_t *const dst) {
     __m256i r[2];
@@ -88,7 +27,7 @@ static INLINE void sr_y_round_store_32_avx2(const __m256i res[2],
     convolve_store_32_avx2(r[0], r[1], dst);
 }
 
-static INLINE void sr_y_round_store_32x2_avx2(const __m256i res[2],
+static INLINE void sr_y_round_store_32x2_avx2(const __m256i res[4],
     uint8_t *const dst,
     const int32_t dst_stride) {
     sr_y_round_store_32_avx2(res, dst);
@@ -101,14 +40,6 @@ static INLINE void sr_y_2tap_32_avx2(const uint8_t *const src,
     __m256i r[2];
     y_convolve_2tap_32_avx2(src, coeffs, s0, s1, r);
     sr_y_round_store_32_avx2(r, dst);
-}
-
-static INLINE void sr_y_2tap_32_avg_avx2(const uint8_t *const src,
-    const __m256i s0, __m256i *const s1,
-    uint8_t *const dst) {
-    *s1 = _mm256_loadu_si256((__m256i *)src);
-    const __m256i d = _mm256_avg_epu8(s0, *s1);
-    _mm256_storeu_si256((__m256i *)dst, d);
 }
 
 void eb_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride,
@@ -1205,31 +1136,22 @@ static INLINE void sr_x_2tap_32_avx2(const uint8_t *const src,
     sr_x_round_store_32_avx2(r, dst);
 }
 
-static INLINE void sr_x_2tap_32_avg_avx2(const uint8_t *const src,
-    uint8_t *const dst) {
-    const __m256i s0 = _mm256_loadu_si256((__m256i *)src);
-    const __m256i s1 = _mm256_loadu_si256((__m256i *)(src + 1));
-    const __m256i d = _mm256_avg_epu8(s0, s1);
-    _mm256_storeu_si256((__m256i *)dst, d);
-}
-
 static INLINE void sr_x_6tap_32_avx2(const uint8_t *const src,
     const __m256i coeffs[3],
-    const __m256i *const filt,
+    const __m256i filt[3],
     uint8_t *const dst) {
     __m256i r[2];
 
-    x_convolve_6tap_16x2_avx2(src, 16, coeffs, filt, r);
+    x_convolve_6tap_32_avx2(src, coeffs, filt, r);
     sr_x_round_store_32_avx2(r, dst);
 }
 
 SIMD_INLINE void sr_x_8tap_32_avx2(const uint8_t *const src,
     const __m256i coeffs[4],
-    const __m256i *const filt,
-    uint8_t *const dst) {
+    const __m256i filt[4], uint8_t *const dst) {
     __m256i r[2];
 
-    x_convolve_8tap_16x2_avx2(src, 16, coeffs, filt, r);
+    x_convolve_8tap_32_avx2(src, coeffs, filt, r);
     sr_x_round_store_32_avx2(r, dst);
 }
 
@@ -1486,9 +1408,9 @@ void eb_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride,
     else {
         __m256i filt_256[4];
 
-        filt_256[0] = _mm256_load_si256((__m256i const *)filt1_global_avx2);
-        filt_256[1] = _mm256_load_si256((__m256i const *)filt2_global_avx2);
-        filt_256[2] = _mm256_load_si256((__m256i const *)filt3_global_avx2);
+        filt_256[0] = _mm256_load_si256((__m256i const *)filt1_global_avx);
+        filt_256[1] = _mm256_load_si256((__m256i const *)filt2_global_avx);
+        filt_256[2] = _mm256_load_si256((__m256i const *)filt3_global_avx);
 
         if (is_convolve_6tap(filter_params_x->filter_ptr)) {
             // horz_filt as 6 tap
@@ -1555,7 +1477,7 @@ void eb_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride,
             // horz_filt as 8 tap
             const uint8_t *src_ptr = src - 3;
 
-            filt_256[3] = _mm256_load_si256((__m256i const *)filt4_global_avx2);
+            filt_256[3] = _mm256_load_si256((__m256i const *)filt4_global_avx);
 
             prepare_half_coeffs_8tap_avx2(
                 filter_params_x, subpel_x_q4, coeffs_256);

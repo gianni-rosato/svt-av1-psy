@@ -8,6 +8,7 @@
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
 #include "EbIntraPrediction_AVX2.h"
+#include "synonyms_avx512.h"
 
 #ifndef NON_AVX512_SUPPORT
 #define FOUR 4U
@@ -750,8 +751,8 @@ static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride,
     // Broadcast the 16-bit left pixel to 256-bit register.
     const __m512i row = _mm512_broadcastw_epi16(left);
 
-    _mm512_store_si512((__m256i *)(*dst + 0x00), row);
-    _mm512_store_si512((__m256i *)(*dst + 0x20), row);
+    zz_store_512(*dst + 0x00, row);
+    zz_store_512(*dst + 0x20, row);
 
     *dst += stride;
 }
