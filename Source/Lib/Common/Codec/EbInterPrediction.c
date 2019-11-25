@@ -5875,7 +5875,7 @@ EbErrorType av1_inter_prediction_hbd(
     }
 
     if (mv_unit->pred_direction == UNI_PRED_LIST_1 || mv_unit->pred_direction == BI_PRED) {
-        //List0-Y
+        //List1-Y
         mv.col = mv_unit->mv[REF_LIST_1].x;
         mv.row = mv_unit->mv[REF_LIST_1].y;
 
@@ -5947,7 +5947,7 @@ EbErrorType av1_inter_prediction_hbd(
                 bit_depth);
 
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
-            //List0-Cb
+            //List1-Cb
             src_ptr = (uint16_t*)ref_pic_list1->buffer_cb + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cb;
             dst_ptr = (uint16_t*)prediction_ptr->buffer_cb + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cb;
             src_stride = ref_pic_list1->stride_cb;
@@ -6010,7 +6010,7 @@ EbErrorType av1_inter_prediction_hbd(
                     &conv_params,
                     bit_depth);
 
-            //List0-Cr
+            //List1-Cr
             src_ptr = (uint16_t*)ref_pic_list1->buffer_cr + (ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cr;
             dst_ptr = (uint16_t*)prediction_ptr->buffer_cr + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cr;
             src_stride = ref_pic_list1->stride_cr;
