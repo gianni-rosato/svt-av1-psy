@@ -193,6 +193,14 @@ extern "C" {
         uint32_t  height,
         uint32_t  width);
 
+    uint32_t  sad_16bit_kernel_avx2(
+        uint16_t  *src,
+        uint32_t  src_stride,
+        uint16_t  *ref,
+        uint32_t  ref_stride,
+        uint32_t  height,
+        uint32_t  width);
+
 #ifdef __cplusplus
 }
 #endif

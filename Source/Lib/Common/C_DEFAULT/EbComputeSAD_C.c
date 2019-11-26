@@ -67,7 +67,7 @@ uint32_t fast_loop_nxm_sad_kernel(
     return sad;
 }
 
-uint32_t sad_16b_kernel(
+uint32_t sad_16b_kernel_c(
     uint16_t  *src,                            // input parameter, source samples Ptr
     uint32_t  src_stride,                      // input parameter, source stride
     uint16_t  *ref,                            // input parameter, reference samples Ptr

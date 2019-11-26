@@ -2018,5 +2018,230 @@ TEST_P(InitializeBuffer32, InitializeBuffer) {
 INSTANTIATE_TEST_CASE_P(InitializeBuffer32, InitializeBuffer32,
                         ::testing::Combine(::testing::Values(2, 3, 4),
                                            ::testing::Values(1, 2, 3)));
+/**
+ * @Brief Base class for SAD test. SADTestBaseSad16Bit handle test vector in memory,
+ * provide SAD and SAD avg reference function
+ */
+class SADTestBase16bit : public ::testing::Test {
+  public:
+    SADTestBase16bit(const int width, const int height, TestPattern test_pattern) {
+        width_ = width;
+        height_ = height;
+        src_stride_ = MAX_SB_SIZE;
+        ref_stride_ = MAX_SB_SIZE / 2;
+        test_pattern_ = test_pattern;
+        src_ = nullptr;
+        ref_ = nullptr;
+    }
+
+    void SetUp() override {
+        src_ = (uint16_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE * sizeof(*src_));
+        ref_ = (uint16_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE * sizeof(*ref_));
+        ASSERT_NE(src_, nullptr);
+        ASSERT_NE(ref_, nullptr);
+    }
+
+    void TearDown() override {
+        if (src_)
+            eb_aom_free(src_);
+        if (ref_)
+            eb_aom_free(ref_);
+    }
+
+    void prepare_data() {
+        const int32_t mask = (1 << 16) - 1;
+        SVTRandom rnd(0, mask);
+        switch (test_pattern_) {
+        case REF_MAX: {
+            for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+                src_[i] = 0;
+
+            for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+                ref_[i] = mask;
+
+            break;
+        }
+        case SRC_MAX: {
+            for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+                src_[i] = mask;
+
+            for (int i = 0; i < MAX_SB_SIZE; i++)
+                ref_[i] = 0;
+
+            break;
+        }
+        case RANDOM: {
+            for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+                src_[i] = rnd.random();
+
+            for (int i = 0; i < MAX_BLOCK_SIZE; ++i) {
+                ref_[i] = rnd.random();
+            }
+            break;
+        };
+        case UNALIGN: {
+            for (int i = 0; i < MAX_BLOCK_SIZE; i++)
+                src_[i] = rnd.random();
+
+            for (int i = 0; i < MAX_BLOCK_SIZE; ++i) {
+                ref_[i] = rnd.random();
+            }
+            ref_stride_ -= 1;
+            break;
+        }
+        default: break;
+        }
+    }
+
+  protected:
+    uint32_t width_, height_;
+    uint32_t src_stride_;
+    uint32_t ref_stride_;
+    TestPattern test_pattern_;
+    SADPattern test_sad_pattern_;
+    uint16_t *src_;
+    uint16_t *ref_;
+};
+
+/**
+ * @brief Unit test for SAD sub smaple functions include:
+ *  - sad_16b_kernel_c
+ *  - sad_16bit_kernel_avx2
+ *
+ * Test strategy:
+ *  This test case combine different width{4-64} x height{4-64} and different
+ * test pattern(REF_MAX, SRC_MAX, RANDOM, UNALIGN). Check the result by compare
+ *  result from reference function, non_avx2 function and avx2 function.
+ *
+ *
+ * Expect result:
+ *  Results from reference functon, non_avx2 function and avx2 funtion are
+ * equal.
+ *
+ * Test coverage:
+ *  All functions inside sad_16b_kernel_c and
+ * sad_16bit_kernel_avx2.
+ *
+ * Test cases:
+ *  Width {4, 8, 16, 24, 32, 48, 64, 128} x height{ 4, 8, 16, 24, 32, 48, 64, 128)
+ *  Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
+ *
+ */
+class SADTestSubSample16bit
+    : public ::testing::WithParamInterface<TestSadParam>,
+                         public SADTestBase16bit {
+  public:
+    SADTestSubSample16bit()
+        : SADTestBase16bit(std::get<0>(TEST_GET_PARAM(1)),
+                      std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0)) {
+    }
+
+  protected:
+    void check_sad() {
+        uint32_t repeat = 1;
+        if (test_pattern_ == RANDOM) {
+            repeat = 30;
+        }
+
+        for (uint32_t i = 0; i < repeat; ++i) {
+            uint32_t sad_c = 0;
+            uint32_t sad_avx2 = 0;
+
+            prepare_data();
+
+            sad_c = sad_16b_kernel_c(
+                src_, src_stride_, ref_, ref_stride_, height_, width_);
+
+            sad_avx2 = sad_16bit_kernel_avx2(
+                src_, src_stride_, ref_, ref_stride_, height_, width_);
+
+            EXPECT_EQ(sad_c, sad_avx2)
+                << "compare sad_16b_kernel_c and sad_16bit_kernel_avx2 error, repeat: " << i;
+        }
+
+    }
+
+void RunSpeedTest() {
+        uint32_t sad_c = 0;
+        uint32_t sad_avx2 = 0;
+
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        prepare_data();
+
+        for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
+            const uint32_t area_height = area_width;
+            const int num_loops = 1000000000 / (area_width * area_height);
+            EbStartTime(&start_time_seconds, &start_time_useconds);
+
+            for (int i = 0; i < num_loops; ++i) {
+                sad_c = sad_16b_kernel_c(
+                    src_, src_stride_, ref_, ref_stride_, height_, width_);
+            }
+
+            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+            for (int i = 0; i < num_loops; ++i) {
+                sad_avx2 = sad_16bit_kernel_avx2(
+                    src_, src_stride_, ref_, ref_stride_, height_, width_);
+            }
+            EbStartTime(&finish_time_seconds, &finish_time_useconds);
+
+            EXPECT_EQ(sad_c, sad_avx2) << area_width << "x" << area_height;
+
+            EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                          start_time_useconds,
+                                          middle_time_seconds,
+                                          middle_time_useconds,
+                                          &time_c);
+            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                          middle_time_useconds,
+                                          finish_time_seconds,
+                                          finish_time_useconds,
+                                          &time_o);
+            printf("Average Nanoseconds per Function Call\n");
+            printf("    sad_16b_kernel_c  (%dx%d) : %6.2f\n",
+                   area_width,
+                   area_height,
+                   1000000 * time_c / num_loops);
+            printf(
+                "    sad_16bit_kernel_avx2(%dx%d) : %6.2f   "
+                "(Comparison: %5.2fx)\n",
+                area_width,
+                area_height,
+                1000000 * time_o / num_loops,
+                time_c / time_o);
+        }
+    }
+};
+
+BlkSize TEST_BLOCK_SAD_SIZES[] = {
+    BlkSize(64, 64),  BlkSize(64, 32), BlkSize(32, 64),  BlkSize(32, 32),
+    BlkSize(32, 16),  BlkSize(16, 32), BlkSize(16, 16),  BlkSize(16, 8),
+    BlkSize(8, 16),   BlkSize(8, 8),   BlkSize(8, 4),    BlkSize(4, 4),
+    BlkSize(4, 8),    BlkSize(4, 16),  BlkSize(16, 4),   BlkSize(8, 32),
+    BlkSize(32, 8),   BlkSize(16, 64), BlkSize(16, 128), BlkSize(128, 128),
+    BlkSize(64, 16),  BlkSize(24, 24), BlkSize(24, 16),  BlkSize(16, 24),
+    BlkSize(24, 8),   BlkSize(8, 24),  BlkSize(64, 24),  BlkSize(48, 24),
+    BlkSize(32, 24),  BlkSize(24, 32), BlkSize(48, 48),  BlkSize(48, 16),
+    BlkSize(48, 32),  BlkSize(16, 48), BlkSize(32, 48),  BlkSize(48, 64),
+    BlkSize(64, 48),  BlkSize(64, 48), BlkSize(128, 64), BlkSize(64, 128),
+    BlkSize(128, 128)};
+
+TEST_P(SADTestSubSample16bit, SADTestSubSample16bit) {
+    check_sad();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SAD, SADTestSubSample16bit,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SAD_SIZES)));
+
+TEST_P(SADTestSubSample16bit, DISABLED_Speed) {
+    RunSpeedTest();
+}
 
 }  // namespace

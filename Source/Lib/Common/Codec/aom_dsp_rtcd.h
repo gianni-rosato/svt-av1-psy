@@ -2922,6 +2922,7 @@ extern "C" {
     RTCD_EXTERN void(*un_pack2d_16_bit_src_mul4)(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer, uint32_t out8_stride, uint32_t outn_stride, uint32_t width, uint32_t height);
     RTCD_EXTERN void(*picture_addition)(uint8_t *pred_ptr, uint32_t  pred_stride, int16_t *residual_ptr, uint32_t residual_stride, uint8_t *recon_ptr, uint32_t recon_stride, uint32_t width, uint32_t height);
     RTCD_EXTERN void(*compute_interm_var_four8x8)(uint8_t *input_samples, uint16_t input_stride, uint64_t *mean_of8x8_blocks, uint64_t *mean_of_squared8x8_blocks);
+    RTCD_EXTERN uint32_t(*sad_16b_kernel)(uint16_t *src, uint32_t src_stride, uint16_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width);
 
     /* Moved to aom_dsp_rtcd.c file:
     static void setup_rtcd_internal(EbAsm asm_type)

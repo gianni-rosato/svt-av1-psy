@@ -1885,6 +1885,9 @@ void setup_rtcd_internal(EbAsm asm_type)
              compute_interm_var_four8x8_c,
              compute_interm_var_four8x8_helper_sse2,
              compute_interm_var_four8x8_avx2_intrin);
+    SET_AVX2(sad_16b_kernel,
+             sad_16b_kernel_c,
+             sad_16bit_kernel_avx2);
 
 }
 

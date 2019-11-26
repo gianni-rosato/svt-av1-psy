@@ -3349,13 +3349,22 @@ uint32_t eb_compute4x_m_sad_avx2_intrin(
     return compute4x_m_sad_avx2(src, src_stride, ref, ref_stride, height);
 }
 
-static INLINE uint32_t sad_final_avx2(const __m256i sad) {
+static INLINE uint32_t sad_final_4_val_avx2(const __m256i sad) {
     const __m128i sad_lo = _mm256_castsi256_si128(sad);
     const __m128i sad_hi = _mm256_extracti128_si256(sad, 1);
     const __m128i sum = _mm_add_epi32(sad_lo, sad_hi);
     const __m128i sum_hi = _mm_srli_si128(sum, 8);
     const __m128i d = _mm_add_epi32(sum, sum_hi);
     return (uint32_t)_mm_cvtsi128_si32(d);
+}
+
+static INLINE uint32_t sad_final_8_val_avx2(const __m256i sad) {
+    const __m128i sad_lo = _mm256_castsi256_si128(sad);
+    const __m128i sad_hi = _mm256_extracti128_si256(sad, 1);
+    const __m128i sum = _mm_add_epi32(sad_lo, sad_hi);
+    const __m128i sum_hi = _mm_srli_si128(sum, 8);
+    const __m128i d = _mm_add_epi32(sum, sum_hi);
+    return (uint32_t)_mm_cvtsi128_si32(d) + _mm_extract_epi32(d, 1);
 }
 
 /*******************************************************************************
@@ -3380,7 +3389,7 @@ SIMD_INLINE uint32_t compute8x_m_sad_avx2(
         y -= 4;
     } while (y);
 
-    return sad_final_avx2(sad);
+    return sad_final_4_val_avx2(sad);
 }
 
 uint32_t eb_compute8x_m_sad_avx2_intrin(
@@ -3437,7 +3446,7 @@ SIMD_INLINE uint32_t compute16x_m_sad_avx2(
         y -= 4;
     } while (y);
 
-    return sad_final_avx2(sad);
+    return sad_final_4_val_avx2(sad);
 }
 
 uint32_t eb_compute16x_m_sad_avx2_intrin(
@@ -3505,7 +3514,7 @@ static INLINE uint32_t compute32x_m_sad_avx2(
         y -= 2;
     } while (y);
 
-    return sad_final_avx2(sad);
+    return sad_final_4_val_avx2(sad);
 }
 
 uint32_t eb_compute32x_m_sad_avx2_intrin(
@@ -3545,7 +3554,7 @@ uint32_t eb_compute48x_m_sad_avx2_intrin(
         y -= 2;
     } while (y);
 
-    return sad_final_avx2(sad);
+    return sad_final_4_val_avx2(sad);
 }
 
 /*******************************************************************************
@@ -3571,7 +3580,7 @@ SIMD_INLINE uint32_t compute64x_m_sad_avx2(
         y -= 2;
     } while (y);
 
-    return sad_final_avx2(sad);
+    return sad_final_4_val_avx2(sad);
 }
 
 SIMD_INLINE uint32_t compute128x_m_sad_avx2(
@@ -3593,7 +3602,7 @@ SIMD_INLINE uint32_t compute128x_m_sad_avx2(
         ref += ref_stride;
     } while (--y);
 
-    return sad_final_avx2(sad);
+    return sad_final_4_val_avx2(sad);
 }
 
 uint32_t eb_compute64x_m_sad_avx2_intrin(
@@ -6550,4 +6559,150 @@ uint32_t nxm_sad_kernel_helper_avx2(
     return nxm_sad;
 }
 
+static INLINE uint32_t sad_kernel_4xm_16bit_avx2(
+    uint16_t  *src,                            // input parameter, source samples Ptr
+    uint32_t  src_stride,                      // input parameter, source stride
+    uint16_t  *ref,                            // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                      // input parameter, reference stride
+    uint32_t  height,                          // input parameter, block height (M)
+    uint32_t  width)
+{
+    (void)width;
+    uint32_t y;
+    __m256i _sad = _mm256_setzero_si256();
+    const __m256i zero = _mm256_setzero_si256();
+    assert(((height & 3) == 0) && (width == 4));
+
+    for (y = 0; y < height; y += 4) {
+        __m128i src01, src23, ref01, ref23;
+        src01 = _mm_loadl_epi64((const __m128i *)src);
+        src01 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(src01),
+            (double *)(const __m128i *) (src + src_stride)));
+        src23 = _mm_loadl_epi64((__m128i *)(const __m128i *) (src + 2 * src_stride));
+        src23 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(src23),
+            (double *)(const __m128i *) (src + 3 *src_stride)));
+        const __m256i src0 = _mm256_setr_m128i(src01, src23);
+
+        ref01 = _mm_loadl_epi64((const __m128i *)ref);
+        ref01 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(ref01),
+            (double *)(const __m128i *) (ref + ref_stride)));
+        ref23 = _mm_loadl_epi64((__m128i *)(const __m128i *) (ref + 2 * ref_stride));
+        ref23 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(ref23),
+            (double *)(const __m128i *) (ref + 3 * ref_stride)));
+        const __m256i ref0 = _mm256_setr_m128i(ref01, ref23);
+
+
+        const __m256i min = _mm256_min_epu16(src0, ref0);
+        const __m256i max = _mm256_max_epu16(src0, ref0);
+        const __m256i sad_tmp = _mm256_subs_epu16(max, min);
+
+        const __m256i diff_L = _mm256_unpacklo_epi16(sad_tmp, zero);
+        const __m256i diff_H = _mm256_unpackhi_epi16(sad_tmp, zero);
+
+        const __m256i diff = _mm256_add_epi32(diff_L, diff_H);
+        _sad = _mm256_add_epi32(_sad, diff);
+
+        src += 4 * src_stride;
+        ref += 4 * ref_stride;
+    }
+
+    return sad_final_8_val_avx2(_sad);
+}
+
+static INLINE uint32_t sad_kernel_8xm_16bit_avx2(
+    uint16_t  *src,                            // input parameter, source samples Ptr
+    uint32_t  src_stride,                      // input parameter, source stride
+    uint16_t  *ref,                            // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                      // input parameter, reference stride
+    uint32_t  height,                          // input parameter, block height (M)
+    uint32_t  width)
+{
+    (void)width;
+    uint32_t y;
+    __m256i _sad = _mm256_setzero_si256();
+    const __m256i zero = _mm256_setzero_si256();
+    assert(((height & 1) == 0) && (width == 8));
+
+    for (y = 0; y < height; y+=2) {
+        const __m256i src0 = _mm256_set_m128i(_mm_loadu_si128((const __m128i *)
+            (src + src_stride)), _mm_loadu_si128((const __m128i *)src));
+        const __m256i ref0 = _mm256_set_m128i(_mm_loadu_si128((const __m128i *)
+            (ref + ref_stride)), _mm_loadu_si128((const __m128i *)ref));
+
+        const __m256i min = _mm256_min_epu16(src0, ref0);
+        const __m256i max = _mm256_max_epu16(src0, ref0);
+        const __m256i sad_tmp = _mm256_subs_epu16(max, min);
+
+        const __m256i diff_L = _mm256_unpacklo_epi16(sad_tmp, zero);
+        const __m256i diff_H = _mm256_unpackhi_epi16(sad_tmp, zero);
+
+        const __m256i diff = _mm256_add_epi32(diff_L, diff_H);
+        _sad = _mm256_add_epi32(_sad, diff);
+
+        src += 2*src_stride;
+        ref += 2*ref_stride;
+    }
+
+    return sad_final_8_val_avx2(_sad);
+}
+
+static INLINE uint32_t sad_kernel_16xm_16bit_avx2(
+    uint16_t  *src,                            // input parameter, source samples Ptr
+    uint32_t  src_stride,                      // input parameter, source stride
+    uint16_t  *ref,                            // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                      // input parameter, reference stride
+    uint32_t  height,                         // input parameter, block height (M)
+    uint32_t  width)
+{
+    uint32_t x, y;
+    __m256i _sad = _mm256_setzero_si256();
+    const __m256i zero = _mm256_setzero_si256();
+    uint32_t mul_16 = width >> 4;
+
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < mul_16; ++x) {
+            const __m256i src0 = _mm256_loadu_si256((const __m256i *)(src + x * 16));
+            const __m256i ref0 = _mm256_loadu_si256((const __m256i *)(ref + x * 16));
+            const __m256i min = _mm256_min_epu16(src0, ref0);
+            const __m256i max = _mm256_max_epu16(src0, ref0);
+            const __m256i sad_tmp = _mm256_subs_epu16(max, min);
+            const __m256i diff_L = _mm256_unpacklo_epi16(sad_tmp, zero);
+            const __m256i diff_H = _mm256_unpackhi_epi16(sad_tmp, zero);
+            const __m256i diff = _mm256_add_epi32(diff_L, diff_H);
+            _sad = _mm256_add_epi32(_sad, diff);
+        }
+        src += src_stride;
+        ref += ref_stride;
+    }
+
+    return sad_final_8_val_avx2(_sad);
+}
+
+uint32_t  sad_16bit_kernel_avx2(
+    uint16_t  *src,                            // input parameter, source samples Ptr
+    uint32_t  src_stride,                      // input parameter, source stride
+    uint16_t  *ref,                            // input parameter, reference samples Ptr
+    uint32_t  ref_stride,                      // input parameter, reference stride
+    uint32_t  height,                         // input parameter, block height (M)
+    uint32_t  width)                          // input parameter, block width (N))
+{
+    uint32_t sad = 0;
+    uint32_t width_offset = width & (~15);
+
+    if (width_offset) {
+        sad += sad_kernel_16xm_16bit_avx2(src, src_stride,
+            ref, ref_stride,height, width);
+    }
+    if ((width - width_offset) > 4) {
+        sad += sad_kernel_8xm_16bit_avx2(src + width_offset, src_stride,
+            ref + width_offset, ref_stride, height, 8);
+        width_offset += 8;
+    }
+    if (width - width_offset) {
+        assert((width - width_offset) == 4);
+        sad += sad_kernel_4xm_16bit_avx2(src + width_offset, src_stride,
+            ref + width_offset, ref_stride, height, 4);
+    }
+    return sad;
+}
 

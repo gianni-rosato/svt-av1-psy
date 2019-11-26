@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-uint32_t sad_16b_kernel(
+uint32_t sad_16b_kernel_c(
     uint16_t  *src,                           // input parameter, source samples Ptr
     uint32_t  src_stride,                     // input parameter, source stride
     uint16_t  *ref,                           // input parameter, reference samples Ptr
