@@ -357,7 +357,7 @@ void full_distortion_kernel32_bits_c(
     distortion_result[DIST_CALC_PREDICTION] = predictionDistortion;
 }
 
-uint64_t full_distortion_kernel16_bits(
+uint64_t full_distortion_kernel16_bits_c(
     uint8_t  *input,
     uint32_t  input_offset,
     uint32_t  input_stride,

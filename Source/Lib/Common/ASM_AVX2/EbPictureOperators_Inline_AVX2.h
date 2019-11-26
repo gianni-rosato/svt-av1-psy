@@ -121,6 +121,41 @@ extern "C" {
         *sum = _mm256_add_epi32(*sum, dist);
     }
 
+    static INLINE void FullDistortionKernel4_AVX2_INTRIN(
+        const uint16_t* const input, const uint16_t* const recon,
+        __m256i* const sum)
+    {
+        __m128i in = _mm_loadl_epi64((__m128i*)input);
+        __m128i re = _mm_loadl_epi64((__m128i*)recon);
+        __m128i max = _mm_max_epu16(in, re);
+        __m128i min = _mm_min_epu16(in, re);
+        __m128i diff = _mm_sub_epi16(max, min);
+        diff = _mm_unpacklo_epi16(diff, _mm_setzero_si128());
+        diff = _mm_mullo_epi32(diff, diff);
+
+        *sum = _mm256_add_epi64(*sum, _mm256_cvtepu32_epi64(diff));
+    }
+
+    static INLINE void FullDistortionKernel16_AVX2_INTRIN(
+        __m256i in, __m256i re, __m256i* const sum)
+    {
+        __m256i max = _mm256_max_epu16(in, re);
+        __m256i min = _mm256_min_epu16(in, re);
+        __m256i diff = _mm256_sub_epi16(max, min);
+        __m256i diff_L = _mm256_unpacklo_epi16(diff, _mm256_setzero_si256());
+        __m256i diff_H = _mm256_unpackhi_epi16(diff, _mm256_setzero_si256());
+        __m256i mul_L = _mm256_mullo_epi32(diff_L, diff_L);
+        __m256i mul_H = _mm256_mullo_epi32(diff_H, diff_H);
+
+        __m256i sum_1 = _mm256_add_epi64(_mm256_unpackhi_epi32(mul_H, _mm256_setzero_si256()),
+            _mm256_unpacklo_epi32(mul_H, _mm256_setzero_si256()));
+        __m256i sum_2 = _mm256_add_epi64(_mm256_unpackhi_epi32(mul_L, _mm256_setzero_si256()),
+            _mm256_unpacklo_epi32(mul_L, _mm256_setzero_si256()));
+        *sum = _mm256_add_epi64(*sum, sum_1);
+        *sum = _mm256_add_epi64(*sum, sum_2);
+
+    }
+
     static INLINE void SpatialFullDistortionKernel32Leftover_AVX2_INTRIN(
         const uint8_t *const input, const uint8_t *const recon, __m256i *const sum0,
         __m256i *const sum1)

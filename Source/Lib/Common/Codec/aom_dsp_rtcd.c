@@ -1741,6 +1741,9 @@ void setup_rtcd_internal(EbAsm asm_type)
                     spatial_full_distortion_kernel_c,
                     spatial_full_distortion_kernel_avx2,
                     spatial_full_distortion_kernel_avx512);
+    SET_AVX2(full_distortion_kernel16_bits,
+             full_distortion_kernel16_bits_c,
+             full_distortion_kernel16_bits_avx2);
     SET_AVX2_AVX512(residual_kernel8bit,
                     residual_kernel8bit_c,
                     residual_kernel8bit_avx2,

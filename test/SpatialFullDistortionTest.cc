@@ -16,15 +16,18 @@
 #undef _GNU_SOURCE  // defined in EbThreads.h
 #endif
 
+#include "random.h"
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 #include "EbPictureOperators_AVX2.h"
 #include "EbPictureOperators_AVX512.h"
 #include "EbPictureOperators_C.h"
+#include "EbPictureOperators.h"
 #include "EbUnitTestUtility.h"
 #include "util.h"
 
 namespace {
+    using svt_av1_test_tool::SVTRandom;
 
 typedef uint64_t (*SpatialFullDistortionKernelFunc)(
     uint8_t *input, uint32_t input_offset, uint32_t input_stride,
@@ -499,5 +502,172 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::Values(spatial_full_distortion_kernel_avx2)));
 #endif
+
+class FullDistortionKernel16BitsFuncTest
+    : public SpatialFullDistortionFuncTestBase,
+      public ::testing::WithParamInterface<SpatialKernelTestParam> {
+    void SetUp() override {
+        input_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        recon_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        input_test_size_ = MAX_SB_SIZE * input_stride_ * 2;
+        recon_test_size_ = MAX_SB_SIZE * recon_stride_ * 2;
+        input_ = reinterpret_cast<uint8_t *>(
+            malloc(sizeof(*input_) * input_test_size_));
+        recon_ = reinterpret_cast<uint8_t *>(
+            malloc(sizeof(*recon_) * recon_test_size_));
+    }
+
+    void init_data() {
+        const uint16_t mask = (1 << 16) - 1;
+        uint16_t *input_16bit = (uint16_t *)input_;
+        uint16_t *recon_16bit = (uint16_t *)recon_;
+        SVTRandom rnd = SVTRandom(0, mask);
+
+        switch (test_pattern_) {
+        case VAL_MIN: {
+            for (int i = 0; i < (input_test_size_ / 2); i++)
+                input_16bit[i] = 0;
+            for (int i = 0; i < (recon_test_size_ / 2); i++)
+                recon_16bit[i] = mask;
+            break;
+        }
+        case VAL_MAX: {
+            for (int i = 0; i < (input_test_size_ / 2); i++)
+                input_16bit[i] = mask;
+            for (int i = 0; i < (recon_test_size_ / 2); i++)
+                recon_16bit[i] = 0;
+            break;
+        }
+        case VAL_RANDOM: {
+            for (int i = 0; i < (input_test_size_ / 2); i++)
+                input_16bit[i] = rnd.random();
+            for (int i = 0; i < (recon_test_size_ / 2); i++)
+                recon_16bit[i] = rnd.random();
+            break;
+        }
+        default: break;
+        }
+    }
+
+  public:
+    FullDistortionKernel16BitsFuncTest() {
+        area_width_ = std::get<0>(TEST_GET_PARAM(0));
+        area_height_ = std::get<1>(TEST_GET_PARAM(0));
+        test_func_ = TEST_GET_PARAM(2);
+        test_pattern_ = TEST_GET_PARAM(1);
+    }
+
+    ~FullDistortionKernel16BitsFuncTest() {
+    }
+
+  protected:
+    void RunCheckOutput();
+    void RunSpeedTest();
+    SpatialFullDistortionKernelFunc test_func_;
+};
+
+void FullDistortionKernel16BitsFuncTest::RunCheckOutput() {
+    for (int i = 0; i < 10; i++) {
+        init_data();
+        const uint64_t dist_test = test_func_(input_,
+                                              0,
+                                              input_stride_,
+                                              recon_,
+                                              0,
+                                              recon_stride_,
+                                              area_width_,
+                                              area_height_);
+        const uint64_t dist_c = full_distortion_kernel16_bits_c(input_,
+                                                                0,
+                                                                input_stride_,
+                                                                recon_,
+                                                                0,
+                                                                recon_stride_,
+                                                                area_width_,
+                                                                area_height_);
+
+        EXPECT_EQ(dist_test, dist_c)
+            << "Compare Full distortion kernel 16 bits result error";
+    }
+}
+
+void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
+    uint64_t dist_org, dist_opt;
+    double time_c, time_o;
+    uint64_t start_time_seconds, start_time_useconds;
+    uint64_t middle_time_seconds, middle_time_useconds;
+    uint64_t finish_time_seconds, finish_time_useconds;
+    init_data();
+
+    for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
+        const uint32_t area_height = area_width;
+        const int num_loops = 1000000000 / (area_width * area_height);
+        EbStartTime(&start_time_seconds, &start_time_useconds);
+
+        for (int i = 0; i < num_loops; ++i) {
+            dist_org = full_distortion_kernel16_bits_c(input_,
+                                                       0,
+                                                       input_stride_,
+                                                       recon_,
+                                                       0,
+                                                       recon_stride_,
+                                                       area_width,
+                                                       area_height);
+        }
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+        for (int i = 0; i < num_loops; ++i) {
+            dist_opt = test_func_(input_,
+                                  0,
+                                  input_stride_,
+                                  recon_,
+                                  0,
+                                  recon_stride_,
+                                  area_width,
+                                  area_height);
+        }
+        EbStartTime(&finish_time_seconds, &finish_time_useconds);
+
+        EXPECT_EQ(dist_org, dist_opt) << area_width << "x" << area_height;
+
+        EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                      middle_time_useconds,
+                                      finish_time_seconds,
+                                      finish_time_useconds,
+                                      &time_o);
+        printf("Average Nanoseconds per Function Call\n");
+        printf("    full_distortion_kernel16_bits_c  (%dx%d) : %6.2f\n",
+               area_width,
+               area_height,
+               1000000 * time_c / num_loops);
+        printf(
+               "    full_distortion_kernel16_bits_opt(%dx%d) : %6.2f   "
+               "(Comparison: %5.2fx)\n",
+               area_width,
+               area_height,
+               1000000 * time_o / num_loops,
+               time_c / time_o);
+    }
+}
+
+TEST_P(FullDistortionKernel16BitsFuncTest, FullDistortionKernel16FuncTest) {
+    RunCheckOutput();
+}
+
+TEST_P(FullDistortionKernel16BitsFuncTest, DISABLED_Speed) {
+    RunSpeedTest();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    FullDistortionKernel16FuncTest, FullDistortionKernel16BitsFuncTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
+                       ::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::Values(full_distortion_kernel16_bits_avx2)));
 
 }  // namespace

@@ -172,6 +172,10 @@ extern "C" {
     uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
     RTCD_EXTERN uint64_t(*spatial_full_distortion_kernel)(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
 
+    uint64_t full_distortion_kernel16_bits_c(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint64_t full_distortion_kernel16_bits_avx2(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN uint64_t(*full_distortion_kernel16_bits)(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+
 #if PREDICT_NSQ_SHAPE
     uint64_t spatial_full_distortion_helper(uint8_t  *input, uint32_t input_offset, uint32_t  input_stride, uint8_t  *recon, uint32_t recon_offset, uint32_t  recon_stride, uint32_t  area_width, uint32_t  area_height, uint8_t  choice);
     uint64_t spatial_full_distortion_avx2_helper(uint8_t  *input, uint32_t input_offset, uint32_t  input_stride, uint8_t  *recon, uint32_t recon_offset, uint32_t  recon_stride, uint32_t  area_width, uint32_t  area_height, uint8_t  choice);
