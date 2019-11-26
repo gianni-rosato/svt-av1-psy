@@ -29,6 +29,18 @@ void global_motion_estimation(PictureParentControlSet *picture_control_set_ptr,
                               MeContext *context_ptr,
                               EbPictureBufferDesc *input_picture_ptr)
 {
+#if GM_OPT
+    // Get downsampled pictures with a downsampling factor of 2 in each dimension
+    EbPaReferenceObject *pa_reference_object;
+    EbPictureBufferDesc *quarter_ref_pic_ptr;
+    EbPictureBufferDesc *quarter_picture_ptr;
+    EbPictureBufferDesc *ref_picture_ptr;
+    SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet *)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
+    pa_reference_object = (EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+    quarter_picture_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
+        (EbPictureBufferDesc*)pa_reference_object->quarter_filtered_picture_ptr :
+        (EbPictureBufferDesc*)pa_reference_object->quarter_decimated_picture_ptr;
+#endif
     uint32_t numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE)
         ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
@@ -59,8 +71,22 @@ void global_motion_estimation(PictureParentControlSet *picture_control_set_ptr,
                 referenceObject = (EbPaReferenceObject *)picture_control_set_ptr
                         ->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr;
 
-
+#if GM_OPT
+            // Set the source and the reference picture to be used by the global motion search
+            // based on the input search mode
+            if (picture_control_set_ptr->gm_level == GM_DOWN) {
+                quarter_ref_pic_ptr = (sequence_control_set_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ?
+                    (EbPictureBufferDesc*)referenceObject->quarter_filtered_picture_ptr :
+                    (EbPictureBufferDesc*)referenceObject->quarter_decimated_picture_ptr;
+                ref_picture_ptr = quarter_ref_pic_ptr;
+                input_picture_ptr = quarter_picture_ptr;
+            }
+            else {
+                ref_picture_ptr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
+            }
+#else
             EbPictureBufferDesc *ref_picture_ptr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
+#endif
 
             compute_global_motion(input_picture_ptr, ref_picture_ptr,
                 &picture_control_set_ptr->global_motion_estimation[listIndex][ref_pic_index],

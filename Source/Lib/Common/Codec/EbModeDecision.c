@@ -4152,6 +4152,9 @@ void  inject_inter_candidates(
     uint32_t                   canTotalCnt = *candidateTotalCnt;
     ModeDecisionCandidate    *candidateArray = context_ptr->fast_candidate_array;
     EbBool isCompoundEnabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
+#if GM_OPT
+    uint8_t inj_mv = 1;
+#endif
     int inside_tile = 1;
     MacroBlockD  *xd = context_ptr->cu_ptr->av1xd;
     int umv0tile = (sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0);
@@ -4310,6 +4313,9 @@ void  inject_inter_candidates(
 
     if (context_ptr->global_mv_injection) {
 #if GLOBAL_WARPED_MOTION
+#if GM_OPT
+        if (picture_control_set_ptr->parent_pcs_ptr->gm_level <= GM_DOWN) {
+#endif
         for (unsigned list_ref_index_l0 = 0; list_ref_index_l0 < 1; ++list_ref_index_l0)
         for (unsigned list_ref_index_l1 = 0; list_ref_index_l1 < 1; ++list_ref_index_l1) {
 
@@ -4517,7 +4523,11 @@ void  inject_inter_candidates(
                 }
             }
         }
-#else
+#endif
+#if GM_OPT && GLOBAL_WARPED_MOTION || !GLOBAL_WARPED_MOTION
+#if GM_OPT && GLOBAL_WARPED_MOTION
+    }else{
+#endif
         /**************
          GLOBALMV L0
         ************* */
@@ -4692,6 +4702,9 @@ void  inject_inter_candidates(
                 }
             }
         }
+#if GM_OPT && GLOBAL_WARPED_MOTION
+    }
+#endif
 #endif
     }
 

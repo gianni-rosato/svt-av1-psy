@@ -367,14 +367,30 @@ void SetGlobalMotionField(
     //Update MV
 #if GLOBAL_WARPED_MOTION
     PictureParentControlSet *parent_pcs_ptr = picture_control_set_ptr->parent_pcs_ptr;
-
+#if GM_OPT
+    if (parent_pcs_ptr->gm_level <= GM_DOWN) {
+#endif
     if (parent_pcs_ptr->is_global_motion[get_list_idx(LAST_FRAME)][get_ref_frame_idx(LAST_FRAME)])
         parent_pcs_ptr->global_motion[LAST_FRAME]
             = parent_pcs_ptr->global_motion_estimation[get_list_idx(LAST_FRAME)][get_ref_frame_idx(LAST_FRAME)];
     if (parent_pcs_ptr->is_global_motion[get_list_idx(BWDREF_FRAME)][get_ref_frame_idx(BWDREF_FRAME)])
         parent_pcs_ptr->global_motion[BWDREF_FRAME]
             = parent_pcs_ptr->global_motion_estimation[get_list_idx(BWDREF_FRAME)][get_ref_frame_idx(BWDREF_FRAME)];
-#else
+#if GM_OPT
+    // Upscale the translation parameters by 2, because the search is done on a down-sampled
+    // version of the source picture (with a down-sampling factor of 2 in each dimension).
+    if (parent_pcs_ptr->gm_level == GM_DOWN) {
+        parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] *= 2;
+        parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] *= 2;
+        parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] *= 2;
+        parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] *= 2;
+    }
+#endif
+#endif
+#if GM_OPT && GLOBAL_WARPED_MOTION || !GLOBAL_WARPED_MOTION
+#if GM_OPT && GLOBAL_WARPED_MOTION
+    }else {
+#endif
     if (picture_control_set_ptr->parent_pcs_ptr->is_pan && picture_control_set_ptr->parent_pcs_ptr->is_tilt) {
         picture_control_set_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmtype = TRANSLATION;
         picture_control_set_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] = ((picture_control_set_ptr->parent_pcs_ptr->panMvx + picture_control_set_ptr->parent_pcs_ptr->tiltMvx) / 2) << 1 << GM_TRANS_ONLY_PREC_DIFF;
@@ -399,7 +415,9 @@ void SetGlobalMotionField(
     picture_control_set_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] = 0 - picture_control_set_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0];
     picture_control_set_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] = (int32_t)clamp(picture_control_set_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1], GM_TRANS_MIN*GM_TRANS_DECODE_FACTOR, GM_TRANS_MAX*GM_TRANS_DECODE_FACTOR);
     picture_control_set_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] = (int32_t)clamp(picture_control_set_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0], GM_TRANS_MIN*GM_TRANS_DECODE_FACTOR, GM_TRANS_MAX*GM_TRANS_DECODE_FACTOR);
-
+#if GM_OPT && GLOBAL_WARPED_MOTION
+    }
+#endif
     //convert_to_trans_prec(
     //    picture_control_set_ptr->parent_pcs_ptr->allow_high_precision_mv,
     //    picture_control_set_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0]) *GM_TRANS_ONLY_DECODE_FACTOR;

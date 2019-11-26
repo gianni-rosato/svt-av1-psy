@@ -1381,6 +1381,14 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->frm_hdr.use_ref_frame_mvs = 0;
         else
             picture_control_set_ptr->frm_hdr.use_ref_frame_mvs = sequence_control_set_ptr->mfmv_enabled;
+
+#if GM_OPT
+        // Global motion level                        Settings
+        // GM_FULL                                    Exhaustive search mode.
+        // GM_DOWN                                    Downsampled resolution with a downsampling factor of 2 in each dimension
+        // GM_TRAN_ONLY                               Translation only using ME MV.
+        picture_control_set_ptr->gm_level = GM_FULL;
+#endif
     return return_error;
 }
 

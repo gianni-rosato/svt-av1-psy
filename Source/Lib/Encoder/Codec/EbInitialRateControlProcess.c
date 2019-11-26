@@ -220,6 +220,9 @@ void DetectGlobalMotion(
     PictureParentControlSet    *picture_control_set_ptr)
 {
 #if GLOBAL_WARPED_MOTION
+#if GM_OPT
+    if (picture_control_set_ptr->gm_level <= GM_DOWN) {
+#endif
     uint32_t numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE)
         ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
@@ -244,7 +247,12 @@ void DetectGlobalMotion(
                 picture_control_set_ptr->is_global_motion[listIndex][ref_pic_index] = EB_TRUE;
         }
     }
-#else
+#endif
+#if GM_OPT && GLOBAL_WARPED_MOTION || !GLOBAL_WARPED_MOTION
+#if GM_OPT && GLOBAL_WARPED_MOTION
+    }
+    else {
+#endif
     uint32_t    sb_count;
     uint32_t    picture_width_in_sb = (picture_control_set_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
     uint32_t    sb_origin_x;
@@ -369,6 +377,9 @@ void DetectGlobalMotion(
             picture_control_set_ptr->tiltMvy = (int16_t)(yTiltMvSum / totalTiltLcus);
         }
     }
+#if GM_OPT && GLOBAL_WARPED_MOTION
+    }
+#endif
 #endif
 }
 

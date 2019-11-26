@@ -872,11 +872,17 @@ void* motion_estimation_kernel(void *input_ptr)
             // Global motion estimation
             // Compute only for the first fragment.
             // TODO: create an other kernel ?
+#if GM_OPT
+        if (picture_control_set_ptr->gm_level == GM_FULL || picture_control_set_ptr->gm_level == GM_DOWN) {
+#endif
             if (context_ptr->me_context_ptr->compute_global_motion
                 && inputResultsPtr->segment_index == 0)
                 global_motion_estimation(picture_control_set_ptr,
                                          context_ptr->me_context_ptr,
                                          input_picture_ptr);
+#if GM_OPT
+        }
+#endif
 #endif
 
             // Segments

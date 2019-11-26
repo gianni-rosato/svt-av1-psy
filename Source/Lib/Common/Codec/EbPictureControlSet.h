@@ -14309,6 +14309,9 @@ extern "C" {
 #if MDC_ADAPTIVE_LEVEL
         uint8_t                                enable_adaptive_ol_partitioning;
 #endif
+#if GM_OPT
+        uint8_t                                gm_level;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData
