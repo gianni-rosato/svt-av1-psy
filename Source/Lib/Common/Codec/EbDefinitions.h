@@ -92,6 +92,7 @@ extern "C" {
 #define MR_MODE                           0
 
 #define WARP_UPDATE                       1 // Modified Warp settings: ON for MR mode. ON for ref frames in M0
+#define UPDATE_CDEF                       1 // Update bit cost estimation for CDEF filter
 #define EIGTH_PEL_MV                      1
 #define EIGHT_PEL_PREDICTIVE_ME           1
 #define EIGHT_PEL_FIX                     1 // Improve the 8th pel performance by shutting it based on the qindex and bug fixes
