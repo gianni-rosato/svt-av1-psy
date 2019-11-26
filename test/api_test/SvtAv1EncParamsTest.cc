@@ -297,6 +297,10 @@ PARAM_TEST(EncParamFilmGrainDenoiseStrTest);
 DEFINE_PARAM_TEST_CLASS(EncParamEnableWarpedMotionTest, enable_warped_motion);
 PARAM_TEST(EncParamEnableWarpedMotionTest);
 
+/** Test case for enable_global_motion*/
+DEFINE_PARAM_TEST_CLASS(EncParamEnableGlobalMotionTest, enable_global_motion);
+PARAM_TEST(EncParamEnableGlobalMotionTest);
+
 /** Test case for use_default_me_hme*/
 DEFINE_PARAM_TEST_CLASS(EncParamUseDefaultMeHmeTest, use_default_me_hme);
 PARAM_TEST(EncParamUseDefaultMeHmeTest);

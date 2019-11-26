@@ -507,6 +507,20 @@ static const vector<EbBool> invalid_enable_warped_motion = {
     // none
 };
 
+/* Global motion
+ *
+ * Default is 1. */
+static const vector<EbBool> default_enable_global_motion = {
+    EB_TRUE,
+};
+static const vector<EbBool> valid_enable_global_motion = {
+    EB_FALSE,
+    EB_TRUE,
+};
+static const vector<EbBool> invalid_enable_global_motion = {
+    // none
+};
+
 /* Flag to enable the use of default ME HME parameters.
  *
  * Default is 1. */
