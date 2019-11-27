@@ -140,7 +140,7 @@ Use the [Issues](https://github.com/OpenVisualCloud/SVT-AV1/issues) tab on Githu
 
 ## IRC
 
-`#svt` on Freenode. Join via [Freenode Webchat](https://webchat.freenode.net/?channels=svt) or use your favorite IRC client.
+`#svt` on Freenode. Join via [Freenode Webchat](https://webchat.freenode.net/?channels=svt) or use your favorite IRC client. A [public log](https://freenode.logbot.info/svt) is available.
 
 ## Performance tracker
 
