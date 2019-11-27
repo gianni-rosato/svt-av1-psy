@@ -1884,73 +1884,6 @@ void av1_make_masked_inter_predictor(
         blk_geom->bsize, bheight, bwidth, conv_params, bitdepth);
 
 }
-#if INTER_INTER_HBD
-void av1_make_masked_inter_predictor_hbd(
-    uint16_t                  *src_ptr,
-    uint32_t                   src_stride,
-    uint16_t                  *dst_ptr,
-    uint32_t                   dst_stride,
-    const BlockGeom           *blk_geom,
-    uint8_t                    bwidth,
-    uint8_t                    bheight,
-    InterpFilterParams        *filter_params_x,
-    InterpFilterParams        *filter_params_y,
-    int32_t                    subpel_x,
-    int32_t                    subpel_y,
-    ConvolveParams            *conv_params,
-    InterInterCompoundData    *comp_data,
-    uint8_t                    bitdepth,
-    uint8_t                    plane
-)
-{
-    //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
-    //use regular path to generate a prediction for ref1 into  a temporary buffer,
-    //then  blend that temporary buffer with that from  the first reference.
-
-    DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
-
-#define INTER_PRED_BYTES_PER_PIXEL 2
-    DECLARE_ALIGNED(32, uint8_t,
-    tmp_buf[INTER_PRED_BYTES_PER_PIXEL * MAX_SB_SQUARE]);
-#undef INTER_PRED_BYTES_PER_PIXEL
-    //uint8_t *tmp_dst =  tmp_buf;
-    const int tmp_buf_stride = MAX_SB_SIZE;
-
-    CONV_BUF_TYPE *org_dst = conv_params->dst;//save the ref0 prediction pointer
-    int org_dst_stride = conv_params->dst_stride;
-    CONV_BUF_TYPE *tmp_buf16 = (CONV_BUF_TYPE *)tmp_buf;
-    conv_params->dst = tmp_buf16;
-    conv_params->dst_stride = tmp_buf_stride;
-    assert(conv_params->do_average == 0);
-
-    convolveHbd[subpel_x != 0][subpel_y != 0][1](
-        src_ptr,
-        src_stride,
-        dst_ptr,
-        dst_stride,
-        bwidth,
-        bheight,
-        filter_params_x,
-        filter_params_y,
-        subpel_x,
-        subpel_y,
-        conv_params,
-        EB_10BIT);
-
-    if (!plane && comp_data->type == COMPOUND_DIFFWTD) {
-        //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is the output computed from the two preds org_dst and tmp_buf16
-        //for WEDGE the mask is fixed from the table based on wedge_sign/index
-        av1_build_compound_diffwtd_mask_d16(
-            seg_mask, comp_data->mask_type, org_dst, org_dst_stride,
-            tmp_buf16, tmp_buf_stride, bheight, bwidth, conv_params, bitdepth);
-    }
-
-    build_masked_compound_no_round((uint8_t *)dst_ptr, dst_stride, org_dst, org_dst_stride,
-        tmp_buf16, tmp_buf_stride, comp_data, seg_mask,
-        blk_geom->bsize, bheight, bwidth, conv_params, bitdepth);
-
-}
-#endif
 
 void av1_make_masked_warp_inter_predictor(
     uint8_t                   *src_ptr,
@@ -6089,14 +6022,13 @@ EbErrorType av1_inter_prediction_hbd(
         conv_params.use_jnt_comp_avg =  conv_params.use_dist_wtd_comp_avg;
 #endif
 
-
 #if INTER_INTER_HBD
         if (is_compound && is_masked_compound_type(interinter_comp->type)) {
             conv_params.do_average = 0;
-            av1_make_masked_inter_predictor_hbd(
-                src_ptr,
+            av1_make_masked_inter_predictor(
+                (uint8_t *)src_ptr,
                 src_stride,
-                dst_ptr,
+                (uint8_t *)dst_ptr,
                 dst_stride,
                 blk_geom,
                 bwidth,
@@ -6157,10 +6089,10 @@ EbErrorType av1_inter_prediction_hbd(
 #if INTER_INTER_HBD
             if (is_compound && is_masked_compound_type(interinter_comp->type)) {
                 conv_params.do_average = 0;
-                av1_make_masked_inter_predictor_hbd(
-                    src_ptr,
+                av1_make_masked_inter_predictor(
+                    (uint8_t *)src_ptr,
                     src_stride,
-                    dst_ptr,
+                    (uint8_t *)dst_ptr,
                     dst_stride,
                     blk_geom,
                     blk_geom->bwidth_uv,
@@ -6218,10 +6150,10 @@ EbErrorType av1_inter_prediction_hbd(
 
             if (is_compound && is_masked_compound_type(interinter_comp->type)) {
                 conv_params.do_average = 0;
-                av1_make_masked_inter_predictor_hbd(
-                    src_ptr,
+                av1_make_masked_inter_predictor(
+                    (uint8_t *)src_ptr,
                     src_stride,
-                    dst_ptr,
+                    (uint8_t *)dst_ptr,
                     dst_stride,
                     blk_geom,
                     blk_geom->bwidth_uv,
