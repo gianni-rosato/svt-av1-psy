@@ -4179,16 +4179,12 @@ static void build_prediction_by_left_preds(
 
 struct obmc_inter_pred_ctxt {
     uint8_t **adjacent;
-    uint16_t **adjacent_hbd;
     int *adjacent_stride;
     uint8_t *final_dst_ptr_y;
-    uint16_t *final_dst_ptr_y_hbd;
     uint16_t final_dst_stride_y;
     uint8_t *final_dst_ptr_u;
-    uint16_t *final_dst_ptr_u_hbd;
     uint16_t final_dst_stride_u;
     uint8_t *final_dst_ptr_v;
-    uint16_t *final_dst_ptr_v_hbd;
     uint16_t final_dst_stride_v;
     EbBool   perform_chroma;
 };
@@ -4279,51 +4275,6 @@ void eb_aom_highbd_blend_a64_vmask_c(uint16_t *dst, uint32_t dst_stride,
   }
 }
 
-static INLINE void build_obmc_inter_pred_above_hbd(
-    uint8_t is16bit ,MacroBlockD *xd, int rel_mi_col,
-    uint8_t above_mi_width,
-    MbModeInfo *above_mi,
-    void *fun_ctxt,
-    const int num_planes)
-{
-    (void)above_mi;
-    (void)is16bit;
-    (void)num_planes;
-    struct obmc_inter_pred_ctxt *ctxt = (struct obmc_inter_pred_ctxt *)fun_ctxt;
-    const BlockSize bsize = xd->sb_type;
-
-
-    const int overlap =
-        AOMMIN(block_size_high[bsize], block_size_high[BLOCK_64X64]) >> 1;
-
-    int32_t tot_planes = (ctxt->perform_chroma ? 3 : 1);
-
-    for (int plane = 0; plane < tot_planes; ++plane)
-    {
-        int subsampling_x = plane > 0 ? 1 : 0;
-        int subsampling_y = plane > 0 ? 1 : 0;
-
-        const int bw = (above_mi_width * MI_SIZE) >> subsampling_x;
-        const int bh = overlap >> subsampling_y;
-        const int plane_col = (rel_mi_col * MI_SIZE) >> subsampling_x;
-
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
-
-
-        const int dst_stride = plane == 0 ? ctxt->final_dst_stride_y : plane == 1 ? ctxt->final_dst_stride_u : ctxt->final_dst_stride_v;
-        uint16_t *const dst = plane == 0 ? &ctxt->final_dst_ptr_y_hbd[plane_col] : plane == 1 ? &ctxt->final_dst_ptr_u_hbd[plane_col] : &ctxt->final_dst_ptr_v_hbd[plane_col];
-
-        const int tmp_stride = ctxt->adjacent_stride[plane];
-        const uint16_t *const tmp = &ctxt->adjacent_hbd[plane][plane_col];
-        const uint8_t *const mask = av1_get_obmc_mask(bh);
-
-            eb_aom_highbd_blend_a64_vmask(dst, dst_stride, dst, dst_stride, tmp,
-                tmp_stride, mask, bw, bh, 10);
-
-    }
-}
-
-
 static INLINE void build_obmc_inter_pred_above(
     uint8_t is16bit ,
     MacroBlockD *xd,
@@ -4334,7 +4285,6 @@ static INLINE void build_obmc_inter_pred_above(
     const int num_planes)
 {
     (void)above_mi;
-    (void)is16bit;
     (void)num_planes;
     struct obmc_inter_pred_ctxt *ctxt = (struct obmc_inter_pred_ctxt *)fun_ctxt;
     const BlockSize bsize = xd->sb_type;
@@ -4352,62 +4302,28 @@ static INLINE void build_obmc_inter_pred_above(
         const int bw = (above_mi_width * MI_SIZE) >> subsampling_x;
         const int bh = overlap >> subsampling_y;
         const int plane_col = (rel_mi_col * MI_SIZE) >> subsampling_x;
+        const int plane_col_pos = plane_col << is16bit;
 
         if (av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
 
-
-        const int dst_stride = plane == 0 ? ctxt->final_dst_stride_y : plane == 1 ? ctxt->final_dst_stride_u : ctxt->final_dst_stride_v;
-        uint8_t *const dst = plane == 0 ? &ctxt->final_dst_ptr_y[plane_col] : plane == 1 ? &ctxt->final_dst_ptr_u[plane_col] : &ctxt->final_dst_ptr_v[plane_col];
+        const int dst_stride = plane == 0 ? ctxt->final_dst_stride_y :
+                                            plane == 1 ? ctxt->final_dst_stride_u :
+                                                         ctxt->final_dst_stride_v;
+        uint8_t *const dst = plane == 0 ? &ctxt->final_dst_ptr_y[plane_col_pos] :
+                                          plane == 1 ? &ctxt->final_dst_ptr_u[plane_col_pos] :
+                                                       &ctxt->final_dst_ptr_v[plane_col_pos];
 
         const int tmp_stride = ctxt->adjacent_stride[plane];
-        const uint8_t *const tmp = &ctxt->adjacent[plane][plane_col];
+        const uint8_t *const tmp = &ctxt->adjacent[plane][plane_col_pos];
         const uint8_t *const mask = av1_get_obmc_mask(bh);
 
-        aom_blend_a64_vmask(dst, dst_stride, dst, dst_stride, tmp, tmp_stride,
-            mask, bw, bh);
-    }
-}
-
-static INLINE void build_obmc_inter_pred_left_hbd(
-    uint8_t         is16bit ,
-    MacroBlockD     *xd,
-    int             rel_mi_row,
-    uint8_t         left_mi_height,
-    MbModeInfo      *left_mi,
-    void            *fun_ctxt,
-    const int       num_planes)
-{
-    (void)left_mi;
-    (void)is16bit;
-    (void)num_planes;
-    struct obmc_inter_pred_ctxt *ctxt = (struct obmc_inter_pred_ctxt *)fun_ctxt;
-    const BlockSize bsize = xd->sb_type;
-    const int overlap =  AOMMIN(block_size_wide[bsize], block_size_wide[BLOCK_64X64]) >> 1;
-
-    int32_t tot_planes = (ctxt->perform_chroma ? 3 : 1);
-
-    for (int plane = 0; plane < tot_planes ; ++plane)
-    {
-        int subsampling_x = plane > 0 ? 1 : 0;
-        int subsampling_y = plane > 0 ? 1 : 0;
-
-        //const struct macroblockd_plane *pd = &xd->plane[plane];
-        const int bw = overlap >> subsampling_x;
-        const int bh = (left_mi_height * MI_SIZE) >> subsampling_y;
-        const int plane_row = (rel_mi_row * MI_SIZE) >> subsampling_y;
-
-        if (av1_skip_u4x4_pred_in_obmc(bsize,1,subsampling_x, subsampling_y)) continue;
-
-        const int dst_stride = plane == 0  ? ctxt->final_dst_stride_y                       : plane == 1 ? ctxt->final_dst_stride_u : ctxt->final_dst_stride_v;
-        uint16_t *const dst   = plane == 0  ? &ctxt->final_dst_ptr_y_hbd[plane_row * dst_stride] : plane == 1 ? &ctxt->final_dst_ptr_u_hbd[plane_row * dst_stride] : &ctxt->final_dst_ptr_v_hbd[plane_row * dst_stride];
-        const int tmp_stride = ctxt->adjacent_stride[plane];
-        const uint16_t *const tmp = &ctxt->adjacent_hbd[plane][plane_row * tmp_stride];
-        const uint8_t *const mask = av1_get_obmc_mask(bw);
-
-
-            eb_aom_highbd_blend_a64_hmask(dst, dst_stride, dst, dst_stride, tmp,
-                tmp_stride, mask, bw, bh, 10);
-
+        if (is16bit)
+            eb_aom_highbd_blend_a64_vmask(
+                (uint16_t *)dst, dst_stride, (uint16_t *)dst, dst_stride,
+                (uint16_t *)tmp, tmp_stride, mask, bw, bh, 10);
+        else
+            aom_blend_a64_vmask(dst, dst_stride, dst, dst_stride,
+                tmp, tmp_stride, mask, bw, bh);
     }
 }
 
@@ -4421,7 +4337,6 @@ static INLINE void build_obmc_inter_pred_left(
     const int       num_planes)
 {
     (void)left_mi;
-    (void)is16bit;
     (void)num_planes;
     struct obmc_inter_pred_ctxt *ctxt = (struct obmc_inter_pred_ctxt *)fun_ctxt;
     const BlockSize bsize = xd->sb_type;
@@ -4434,103 +4349,35 @@ static INLINE void build_obmc_inter_pred_left(
         int subsampling_x = plane > 0 ? 1 : 0;
         int subsampling_y = plane > 0 ? 1 : 0;
 
-        //const struct macroblockd_plane *pd = &xd->plane[plane];
         const int bw = overlap >> subsampling_x;
         const int bh = (left_mi_height * MI_SIZE) >> subsampling_y;
         const int plane_row = (rel_mi_row * MI_SIZE) >> subsampling_y;
+        const int plane_row_pos = plane_row << is16bit;
 
         if (av1_skip_u4x4_pred_in_obmc(bsize,1,subsampling_x, subsampling_y)) continue;
 
-        const int dst_stride = plane == 0  ? ctxt->final_dst_stride_y                       : plane == 1 ? ctxt->final_dst_stride_u : ctxt->final_dst_stride_v;
-        uint8_t *const dst   = plane == 0  ? &ctxt->final_dst_ptr_y[plane_row * dst_stride] : plane == 1 ? &ctxt->final_dst_ptr_u[plane_row * dst_stride] : &ctxt->final_dst_ptr_v[plane_row * dst_stride];
+        const int dst_stride = plane == 0  ? ctxt->final_dst_stride_y :
+                                             plane == 1 ? ctxt->final_dst_stride_u :
+                                                          ctxt->final_dst_stride_v;
+        uint8_t *const dst = plane == 0 ? &ctxt->final_dst_ptr_y[plane_row_pos * dst_stride] :
+                                          plane == 1 ? &ctxt->final_dst_ptr_u[plane_row_pos * dst_stride] :
+                                                       &ctxt->final_dst_ptr_v[plane_row_pos * dst_stride];
+
         const int tmp_stride = ctxt->adjacent_stride[plane];
-        const uint8_t *const tmp = &ctxt->adjacent[plane][plane_row * tmp_stride];
+        const uint8_t *const tmp = &ctxt->adjacent[plane][plane_row_pos * tmp_stride];
         const uint8_t *const mask = av1_get_obmc_mask(bw);
 
-
-            aom_blend_a64_hmask(dst, dst_stride, dst, dst_stride, tmp, tmp_stride,
-                mask, bw, bh);
+        if (is16bit)
+            eb_aom_highbd_blend_a64_hmask(
+                (uint16_t *)dst, dst_stride, (uint16_t *)dst, dst_stride,
+                (uint16_t *)tmp, tmp_stride, mask, bw, bh, 10);
+        else
+            aom_blend_a64_hmask(
+                dst, dst_stride, dst, dst_stride,
+                tmp, tmp_stride, mask, bw, bh);
     }
 }
 
-
-// This function combines motion compensated predictions that are generated by
-// top/left neighboring blocks' inter predictors with the regular inter
-// prediction. We assume the original prediction (bmc) is stored in
-// xd->plane[].dst.buf
-void av1_build_obmc_inter_prediction_hbd(
-    uint16_t     *final_dst_ptr_y,
-    uint16_t     final_dst_stride_y,
-    uint16_t     *final_dst_ptr_u,
-    uint16_t     final_dst_stride_u,
-    uint16_t     *final_dst_ptr_v,
-    uint16_t     final_dst_stride_v,
-    EbBool      perform_chroma,
-    BlockSize   bsize,
-    PictureControlSet  *picture_control_set_ptr,
-    MacroBlockD    *xd,
-    int          mi_row,
-    int          mi_col,
-    uint16_t     *above[MAX_MB_PLANE],
-    int          above_stride[MAX_MB_PLANE],
-    uint16_t     *left[MAX_MB_PLANE],
-    int        left_stride[MAX_MB_PLANE])
-{
-    uint8_t is16bit = 1;
-    // handle above row
-    struct obmc_inter_pred_ctxt ctxt_above ;
-
-    ctxt_above.adjacent =(uint8_t**)above;
-    ctxt_above.adjacent_hbd = above;
-    ctxt_above.adjacent_stride = above_stride;
-
-    ctxt_above.final_dst_ptr_y = (uint8_t*)final_dst_ptr_y;
-    ctxt_above.final_dst_ptr_y_hbd = final_dst_ptr_y;
-    ctxt_above.final_dst_stride_y = final_dst_stride_y;
-    ctxt_above.final_dst_ptr_u = (uint8_t*)final_dst_ptr_u;
-    ctxt_above.final_dst_ptr_u_hbd = final_dst_ptr_u;
-    ctxt_above.final_dst_stride_u = final_dst_stride_u;
-    ctxt_above.final_dst_ptr_v = (uint8_t*)final_dst_ptr_v;
-    ctxt_above.final_dst_ptr_v_hbd = final_dst_ptr_v;
-    ctxt_above.final_dst_stride_v = final_dst_stride_v;
-    ctxt_above.perform_chroma =  perform_chroma;
-
-    foreach_overlappable_nb_above(
-        is16bit,
-        picture_control_set_ptr->parent_pcs_ptr->av1_cm,
-        xd,
-        mi_col,
-        max_neighbor_obmc[mi_size_wide_log2[bsize]],
-        build_obmc_inter_pred_above_hbd,
-        &ctxt_above);
-
-    // handle left column
-    struct obmc_inter_pred_ctxt ctxt_left ;
-
-    ctxt_left.adjacent = (uint8_t**)left;
-    ctxt_left.adjacent_hbd = left;
-    ctxt_left.adjacent_stride = left_stride;
-
-    ctxt_left.final_dst_ptr_y = (uint8_t*)final_dst_ptr_y;
-    ctxt_left.final_dst_ptr_y_hbd = final_dst_ptr_y;
-    ctxt_left.final_dst_stride_y = final_dst_stride_y;
-    ctxt_left.final_dst_ptr_u = (uint8_t*)final_dst_ptr_u;
-    ctxt_left.final_dst_ptr_u_hbd = final_dst_ptr_u;
-    ctxt_left.final_dst_stride_u = final_dst_stride_u;
-    ctxt_left.final_dst_ptr_v = (uint8_t*)final_dst_ptr_v;
-    ctxt_left.final_dst_ptr_v_hbd = final_dst_ptr_v;
-    ctxt_left.final_dst_stride_v = final_dst_stride_v;
-    ctxt_left.perform_chroma =  perform_chroma;
-
-    foreach_overlappable_nb_left(
-        is16bit,
-        picture_control_set_ptr->parent_pcs_ptr->av1_cm,
-        xd,
-        mi_row,
-        max_neighbor_obmc[mi_size_high_log2[bsize]],
-        build_obmc_inter_pred_left_hbd,
-        &ctxt_left);
-}
 
 // This function combines motion compensated predictions that are generated by
 // top/left neighboring blocks' inter predictors with the regular inter
@@ -4552,24 +4399,20 @@ void av1_build_obmc_inter_prediction(
     uint8_t     *above[MAX_MB_PLANE],
     int          above_stride[MAX_MB_PLANE],
     uint8_t     *left[MAX_MB_PLANE],
-    int        left_stride[MAX_MB_PLANE])
+    int        left_stride[MAX_MB_PLANE],
+    uint8_t     is16bit)
 {
-    uint8_t is16bit = 0;
     // handle above row
     struct obmc_inter_pred_ctxt ctxt_above ;
 
     ctxt_above.adjacent = above;
-    ctxt_above.adjacent_hbd = (uint16_t**)above;
     ctxt_above.adjacent_stride = above_stride;
 
     ctxt_above.final_dst_ptr_y = final_dst_ptr_y;
-    ctxt_above.final_dst_ptr_y_hbd = (uint16_t*)final_dst_ptr_y;
     ctxt_above.final_dst_stride_y = final_dst_stride_y;
     ctxt_above.final_dst_ptr_u = final_dst_ptr_u;
-    ctxt_above.final_dst_ptr_u_hbd = (uint16_t*)final_dst_ptr_u;
     ctxt_above.final_dst_stride_u = final_dst_stride_u;
     ctxt_above.final_dst_ptr_v = final_dst_ptr_v;
-    ctxt_above.final_dst_ptr_v_hbd = (uint16_t*)final_dst_ptr_v;
     ctxt_above.final_dst_stride_v = final_dst_stride_v;
     ctxt_above.perform_chroma =  perform_chroma;
 
@@ -4586,17 +4429,13 @@ void av1_build_obmc_inter_prediction(
     struct obmc_inter_pred_ctxt ctxt_left;
 
     ctxt_left.adjacent = left;
-    ctxt_left.adjacent_hbd = (uint16_t**)left;
     ctxt_left.adjacent_stride = left_stride;
 
     ctxt_left.final_dst_ptr_y = final_dst_ptr_y;
-    ctxt_left.final_dst_ptr_y_hbd = (uint16_t*)final_dst_ptr_y;
     ctxt_left.final_dst_stride_y = final_dst_stride_y;
     ctxt_left.final_dst_ptr_u = final_dst_ptr_u;
-    ctxt_left.final_dst_ptr_u_hbd = (uint16_t*)final_dst_ptr_u;
     ctxt_left.final_dst_stride_u = final_dst_stride_u;
     ctxt_left.final_dst_ptr_v = final_dst_ptr_v;
-    ctxt_left.final_dst_ptr_v_hbd = (uint16_t*)final_dst_ptr_v;
     ctxt_left.final_dst_stride_v = final_dst_stride_v;
     ctxt_left.perform_chroma =  perform_chroma;
 
@@ -5611,7 +5450,8 @@ EbErrorType av1_inter_prediction(
             dst_buf1,
             dst_stride1,
             dst_buf2,
-            dst_stride2);
+            dst_stride2,
+            0); // is16bit
     }
 #endif
     return return_error;
@@ -6359,12 +6199,12 @@ EbErrorType av1_inter_prediction_hbd(
         uint16_t * final_dst_ptr_v =  (uint16_t*)prediction_ptr->buffer_cr + (prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 + (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 * prediction_ptr->stride_cr;
         uint16_t  final_dst_stride_v = prediction_ptr->stride_cr;
 
-        av1_build_obmc_inter_prediction_hbd(
-            final_dst_ptr_y,
+        av1_build_obmc_inter_prediction(
+            (uint8_t *)final_dst_ptr_y,
             final_dst_stride_y,
-            final_dst_ptr_u,
+            (uint8_t *)final_dst_ptr_u,
             final_dst_stride_u,
-            final_dst_ptr_v,
+            (uint8_t *)final_dst_ptr_v,
             final_dst_stride_v,
             perform_chroma,
             blk_geom->bsize,
@@ -6372,10 +6212,11 @@ EbErrorType av1_inter_prediction_hbd(
             cu_ptr->av1xd,
             mi_row,
             mi_col,
-            dst_buf1,
+            (uint8_t **)dst_buf1,
             dst_stride1,
-            dst_buf2,
-            dst_stride2);
+            (uint8_t **)dst_buf2,
+            dst_stride2,
+            1); // is16bit
 
     }
 #endif
