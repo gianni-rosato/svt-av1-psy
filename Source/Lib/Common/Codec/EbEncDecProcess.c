@@ -24,23 +24,12 @@
 #include "EbUtility.h"
 #include "grainSynthesis.h"
 
-void eb_av1_cdef_search(
-    EncDecContext                *context_ptr,
-    SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet            *picture_control_set_ptr
-);
-
 void eb_av1_cdef_frame(
     EncDecContext                *context_ptr,
     SequenceControlSet           *sequence_control_set_ptr,
     PictureControlSet            *pCs
 );
 
-void av1_cdef_search16bit(
-    EncDecContext                *context_ptr,
-    SequenceControlSet           *sequence_control_set_ptr,
-    PictureControlSet            *picture_control_set_ptr
-);
 void av1_cdef_frame16bit(
     uint8_t is16bit,
     SequenceControlSet           *sequence_control_set_ptr,

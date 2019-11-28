@@ -532,6 +532,11 @@ static INLINE uint16_t clip_pixel_highbd(int32_t val, int32_t bd) {
 static INLINE unsigned int negative_to_zero(int value) {
     return value & ~(value >> (sizeof(value) * 8 - 1));
 }
+
+static INLINE int av1_num_planes(EbColorConfig   *color_info) {
+    return color_info->mono_chrome ? 1 : MAX_MB_PLANE;
+}
+
 //*********************************************************************************************************************//
 // enums.h
 /*!\brief Decorator indicating that given struct/union/enum is packed */

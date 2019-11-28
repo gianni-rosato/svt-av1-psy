@@ -21,14 +21,12 @@ extern "C" {
 #define CDEF_PRI_STRENGTHS 16
 #define CDEF_SEC_STRENGTHS 4
 
-#define _CDEF_BLOCK_H (1)
-
 #define CDEF_BLOCKSIZE 64
 #define CDEF_BLOCKSIZE_LOG2 6
 #define CDEF_NBLOCKS ((1 << MAX_SB_SIZE_LOG2) / 8)
 #define CDEF_SB_SHIFT (MAX_SB_SIZE_LOG2 - CDEF_BLOCKSIZE_LOG2)
 
-    /* We need to buffer three vertical lines. */
+/* We need to buffer three vertical lines. */
 #define CDEF_VBORDER (3)
 /* We only need to buffer three horizontal pixels too, but let's align to
 16 bytes (8 x 16 bits) to make vectorization easier. */
@@ -54,6 +52,7 @@ extern "C" {
         int32_t dir, int32_t pri_damping,
         int32_t sec_damping, int32_t bsize,
         int32_t coeff_shift);
+
     void copy_cdef_16bit_to_16bit(uint16_t *dst, int32_t dstride, uint16_t *src,
         cdef_list *dlist, int32_t cdef_count, int32_t bsize);
 
@@ -67,22 +66,16 @@ extern "C" {
     int32_t get_cdef_gi_step(
         int8_t   cdef_filter_mode);
 
-    //int32_t eb_sb_all_skip(const Av1Common *const cm, int32_t mi_row, int32_t mi_col);
-    //int32_t eb_sb_compute_cdef_list(const Av1Common *const cm, int32_t mi_row, int32_t mi_col,
-    //                         cdef_list *dlist, BlockSize bsize);
-
-    //void eb_av1_cdef_frame(Yv12BufferConfig *frame, Av1Common *cm, MacroBlockD *xd);
-    //
-    //void eb_av1_cdef_search(Yv12BufferConfig *frame, const Yv12BufferConfig *ref,
-    //                     Av1Common *cm, MacroBlockD *xd, int32_t fast);
-
     void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h,
         uint16_t x);
+
     void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src,
         int32_t src_voffset, int32_t src_hoffset,
         int32_t sstride, int32_t vsize, int32_t hsize);
+
     void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src,
         int32_t sstride, int32_t v, int32_t h);
+
     void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src,
         int32_t src_voffset, int32_t src_hoffset, int32_t sstride,
         int32_t vsize, int32_t hsize);
