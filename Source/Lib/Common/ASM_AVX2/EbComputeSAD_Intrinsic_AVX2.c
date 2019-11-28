@@ -3921,32 +3921,18 @@ void get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin(
         const uint32_t min_val = _mm_cvtsi128_si32(min_val2);
 
         if (min_val < *p_best_sad64x64) {
-            const __m128i mask0 = _mm_cmpgt_epi32(sad_0, sad_1);
-            const __m128i mask1 = _mm_cmpgt_epi32(min_val0, min_val0_hi);
-            const __m128i mask2 = _mm_cmpgt_epi32(min_val1, min_val1_hi);
-            __m128i offset0, offset1;
+            uint32_t sad_val[8];
+            _mm256_storeu_si256((__m256i *)sad_val, sum[0]);
 
-            offset0 = _mm_setr_epi32(0 * 4, 1 * 4, 2 * 4, 3 * 4);
-            offset1 = _mm_setr_epi32(4 * 4, 5 * 4, 6 * 4, 7 * 4);
-            offset0 = _mm_andnot_si128(mask0, offset0);
-            offset1 = _mm_and_si128(mask0, offset1);
-            offset0 = _mm_or_si128(offset0, offset1);
-
-            offset1 = _mm_srli_si128(offset0, 8);
-            offset0 = _mm_andnot_si128(mask1, offset0);
-            offset1 = _mm_and_si128(mask1, offset1);
-            offset0 = _mm_or_si128(offset0, offset1);
-
-            offset1 = _mm_srli_si128(offset0, 4);
-            offset0 = _mm_andnot_si128(mask2, offset0);
-            offset1 = _mm_and_si128(mask2, offset1);
-            offset0 = _mm_or_si128(offset0, offset1);
-
-            const uint32_t bestMV64x64 = _mm_cvtsi128_si32(offset0);
-            const int16_t xMv = _MVXT(mv) + (int16_t)bestMV64x64;
-            const int16_t yMv = _MVYT(mv);
-            *p_best_sad64x64 = min_val;
-            *p_best_mv64x64 = ((uint16_t)yMv << 16) | ((uint16_t)xMv);
+            for (int i = 0; i < 8; ++i) {
+                if (min_val == sad_val[i]) {
+                    const int16_t xMv = _MVXT(mv) + (int16_t)i * 4;
+                    const int16_t yMv = _MVYT(mv);
+                    *p_best_sad64x64 = min_val;
+                    *p_best_mv64x64 = ((uint16_t)yMv << 16) | ((uint16_t)xMv);
+                    break;
+                }
+            }
         }
 
         // XY
