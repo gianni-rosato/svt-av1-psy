@@ -285,7 +285,7 @@ class ResidualKernelTest
                                          residual_stride_,
                                          area_width_,
                                          area_height_);
-        residual_kernel16bit(input16bit_,
+        residual_kernel16bit_c(input16bit_,
                              input_stride_,
                              pred16bit_,
                              pred_stride_,

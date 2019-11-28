@@ -194,7 +194,7 @@ extern "C" {
         uint32_t  area_width,
         uint32_t  area_height);
 
-    void residual_kernel16bit(
+    void residual_kernel16bit_c(
         uint16_t *input,
         uint32_t  input_stride,
         uint16_t *pred,
