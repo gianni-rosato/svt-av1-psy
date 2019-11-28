@@ -118,7 +118,11 @@ extern "C" {
         uint32_t             step,
         uint64_t            *above_depth_cost,
         uint64_t            *curr_depth_cost);
+#if MULTI_PASS_PD
+    uint64_t d1_non_square_block_decision(
+#else
     void  d1_non_square_block_decision(
+#endif
         ModeDecisionContext               *context_ptr
 #if ADD_SUPPORT_TO_SKIP_PART_N
         , uint32_t                         d1_block_itr

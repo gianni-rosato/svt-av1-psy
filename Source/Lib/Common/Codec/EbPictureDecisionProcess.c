@@ -228,9 +228,10 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 
 #define WTH 64
 #define OTH 64
+#if !MULTI_PASS_PD
 #define FC_SKIP_TX_SR_TH025                     125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010                     110 // Fast cost skip tx search threshold.
-
+#endif
 void picture_decision_context_dctor(EbPtr p)
 {
     PictureDecisionContext* obj = (PictureDecisionContext*)p;
@@ -767,11 +768,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     PictureParentControlSet   *picture_control_set_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
-    //  MDC Partitioning Method              Settings
-    //  PIC_ALL_DEPTH_MODE                   ALL sq and nsq: SB size -> 4x4
-    //  PIC_ALL_C_DEPTH_MODE                 ALL sq and nsq: SB size -> 4x4  (No 4xN ; Nx4)
-    //  PIC_SQ_DEPTH_MODE                    ONLY sq: SB size -> 4x4
-    //  PIC_SQ_NON4_DEPTH_MODE               ONLY sq: SB size -> 8x8  (No 4x4)
 
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
 
@@ -817,9 +813,22 @@ EbErrorType signal_derivation_multi_processes_oq(
                     picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
+#if MULTI_PASS_PD
+        else if (MR_MODE)
+            picture_control_set_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
+        else if (picture_control_set_ptr->enc_mode == ENC_M0)
+            // Use a single-stage PD if I_SLICE
+            picture_control_set_ptr->pic_depth_mode = (picture_control_set_ptr->slice_type == I_SLICE) ? PIC_ALL_DEPTH_MODE : PIC_MULTI_PASS_PD_MODE_1;
+        else if (picture_control_set_ptr->enc_mode <= ENC_M2)
+            // Use a single-stage PD if I_SLICE
+            picture_control_set_ptr->pic_depth_mode = (picture_control_set_ptr->slice_type == I_SLICE) ? PIC_ALL_DEPTH_MODE : PIC_MULTI_PASS_PD_MODE_2;
+#endif
 
+// These are the default settings to use
+#if !MULTI_PASS_PD
         else if (picture_control_set_ptr->enc_mode <= ENC_M2)
             picture_control_set_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
+#endif
 
         //Jing: TODO:
         //In M3, sb_sz may be 128x128, and init_sq_non4_block only works for 64x64 sb size
@@ -890,6 +899,10 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 
+#if MULTI_PASS_PD && MDC_ADAPTIVE_LEVEL
+    picture_control_set_ptr->enable_adaptive_ol_partitioning = 0;
+#endif
+
     // NSQ search Level                               Settings
     // NSQ_SEARCH_OFF                                 OFF
     // NSQ_SEARCH_LEVEL1                              Allow only NSQ Inter-NEAREST/NEAR/GLOBAL if parent SQ has no coeff + reordering nsq_table number and testing only 1 NSQ SHAPE
@@ -902,6 +915,15 @@ EbErrorType signal_derivation_multi_processes_oq(
 
         if (MR_MODE)
             picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_FULL;
+#if MULTI_PASS_PD
+        else if (picture_control_set_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_0 ||
+                 picture_control_set_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_1 ||
+                 picture_control_set_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_2 ||
+                 picture_control_set_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_3 ){
+
+            picture_control_set_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
+        }
+#endif
         else if (sc_content_detected)
             if (picture_control_set_ptr->enc_mode <= ENC_M1)
 #if M0_OPT
@@ -983,6 +1005,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (picture_control_set_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) picture_control_set_ptr->pic_depth_mode = PIC_SQ_DEPTH_MODE;
     if (picture_control_set_ptr->pic_depth_mode > PIC_SQ_DEPTH_MODE)
         assert(picture_control_set_ptr->nsq_search_level == NSQ_SEARCH_OFF);
+#if !MULTI_PASS_PD
     // Interpolation search Level                     Settings
     // 0                                              OFF
     // 1                                              Interpolation search at inter-depth
@@ -1008,7 +1031,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
         else
             picture_control_set_ptr->interpolation_search_level = IT_SEARCH_OFF;
-
+#endif
     // Loop filter Level                            Settings
     // 0                                            OFF
     // 1                                            CU-BASED
@@ -1154,7 +1177,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         cm->wn_filter_mode = 2;
     else
         cm->wn_filter_mode = 0;
-
+#if !MULTI_PASS_PD
     // Tx_search Level                                Settings
     // 0                                              OFF
     // 1                                              Tx search at encdec
@@ -1218,7 +1241,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->tx_search_reduced_set = 1;
     else
         picture_control_set_ptr->tx_search_reduced_set = 1;
-
+#endif
     // Intra prediction modes                       Settings
     // 0                                            FULL
     // 1                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
@@ -1353,13 +1376,13 @@ EbErrorType signal_derivation_multi_processes_oq(
             picture_control_set_ptr->enc_mode <= ENC_M1 ? 2 : 1;
         else
             picture_control_set_ptr->compound_mode = 0;
-
+ #if !MULTI_PASS_PD
         // set compound_types_to_try
         if (picture_control_set_ptr->compound_mode)
             picture_control_set_ptr->compound_types_to_try = picture_control_set_ptr->compound_mode == 1 ? MD_COMP_DIFF0 : MD_COMP_WEDGE;
         else
             picture_control_set_ptr->compound_types_to_try = MD_COMP_AVG;
-
+#endif
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON

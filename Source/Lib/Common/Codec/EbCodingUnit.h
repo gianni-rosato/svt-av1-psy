@@ -585,6 +585,8 @@ extern "C" {
         EbPictureBufferDesc          *quantized_coeff;
 #if MDC_ADAPTIVE_LEVEL
         uint8_t                       depth_ranking[NUMBER_OF_DEPTH];
+#endif
+#if MDC_ADAPTIVE_LEVEL || MULTI_PASS_PD
         uint64_t                      depth_cost[NUMBER_OF_DEPTH];
 #endif
         TileInfo tile_info;

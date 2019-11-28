@@ -547,6 +547,7 @@ void reset_mode_decision(
 #endif
 #endif
 #endif
+#if !MULTI_PASS_PD
     EbBool enable_wm;
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         enable_wm = EB_FALSE;
@@ -594,6 +595,7 @@ void reset_mode_decision(
     frm_hdr->is_motion_mode_switchable =
         frm_hdr->is_motion_mode_switchable || picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode;
 
+#endif
 #endif
 #if FIX_SETTINGS_RESET
     }

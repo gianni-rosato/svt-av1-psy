@@ -32,6 +32,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MULTI_PASS_PD                1 // Multi-Pass Partitioning Depth (Multi-Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure. As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
+
 #define HBD_CLEAN_UP                 1
 
 #define IFS_8BIT_MD                  1
@@ -196,7 +199,11 @@ enum {
 #define PAD_VALUE                                (128+32)
 
 /* Use open-loop data to predict the NSQ partitions. */
+#if MULTI_PASS_PD
+#define PREDICT_NSQ_SHAPE                               0 // to set to 0
+#else
 #define PREDICT_NSQ_SHAPE                               1
+#endif
 #if PREDICT_NSQ_SHAPE
 #define NUMBER_OF_DEPTH                                 6
 #define NUMBER_OF_SHAPES                                10
@@ -210,7 +217,13 @@ enum {
 #define MAX_MDC_LEVEL                                   8
 #define MDC_ADAPTIVE_LEVEL                              1
 #else
+#if MULTI_PASS_PD
+#define NSQ_TAB_SIZE                                    8
+#define NUMBER_OF_DEPTH                                 6
+#define NUMBER_OF_SHAPES                                10
+#else
 #define NSQ_TAB_SIZE                                    6
+#endif
 #endif
 
 #define AUTO_MODE                                 -1
@@ -558,6 +571,15 @@ static INLINE int av1_num_planes(EbColorConfig   *color_info) {
 #endif
 #endif /* ATTRIBUTE_PACKED */
 
+#if MULTI_PASS_PD
+typedef enum PD_PASS {
+    PD_PASS_0,
+    PD_PASS_1,
+    PD_PASS_2,
+    PD_PASS_TOTAL,
+} PD_PASS;
+#endif
+
 typedef enum CAND_CLASS {
     CAND_CLASS_0,
     CAND_CLASS_1,
@@ -646,11 +668,17 @@ typedef enum TxSearchLevel
 
 typedef enum InterpolationSearchLevel
 {
+#if MULTI_PASS_PD
+    IT_SEARCH_OFF,
+    IT_SEARCH_FAST_LOOP_UV_BLIND,
+    IT_SEARCH_FAST_LOOP,
+#else
     IT_SEARCH_OFF,
     IT_SEARCH_INTER_DEPTH,
     IT_SEARCH_FULL_LOOP,
     IT_SEARCH_FAST_LOOP_UV_BLIND,
     IT_SEARCH_FAST_LOOP,
+#endif
 } InterpolationSearchLevel;
 
 typedef enum NsqSearchLevel
@@ -3002,16 +3030,35 @@ typedef enum EbCu8x8Mode
     CU_8x8_MODE_1 = 1   // Perform OIS and only Full_Search for CU_8x8
 } EbCu8x8Mode;
 
+
+#if MULTI_PASS_PD
+// Multi-Pass Partitioning Depth(Multi - Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure
+// As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
+typedef enum EbPictureDepthMode
+{
+    PIC_MULTI_PASS_PD_MODE_0    = 0, // Multi-Pass PD Mode 0: PD0 | PD0_REFINEMENT
+    PIC_MULTI_PASS_PD_MODE_1    = 1, // Multi-Pass PD Mode 1: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ only
+    PIC_MULTI_PASS_PD_MODE_2    = 2, // Multi-Pass PD Mode 2: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ and SQ coeff info
+    PIC_MULTI_PASS_PD_MODE_3    = 3, // Multi-Pass PD Mode 3: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ and both SQ and NSQ coeff info
+    PIC_ALL_DEPTH_MODE          = 4, // ALL sq and nsq:  SB size -> 4x4
+    PIC_ALL_C_DEPTH_MODE        = 5, // ALL sq and nsq with control :  SB size -> 4x4
+    PIC_SQ_DEPTH_MODE           = 6, // ALL sq:  SB size -> 4x4
+    PIC_SQ_NON4_DEPTH_MODE      = 7, // SQ:  SB size -> 8x8
+    PIC_OPEN_LOOP_DEPTH_MODE    = 8, // Early Inter Depth Decision:  SB size -> 8x8
+    PIC_SB_SWITCH_DEPTH_MODE    = 9  // Adaptive Depth Partitioning
+
+} EbPictureDepthMode;
+#else
 typedef enum EbPictureDepthMode
 {
     PIC_ALL_DEPTH_MODE          = 0, // ALL sq and nsq:  SB size -> 4x4
     PIC_ALL_C_DEPTH_MODE        = 1, // ALL sq and nsq with control :  SB size -> 4x4
     PIC_SQ_DEPTH_MODE           = 2, // ALL sq:  SB size -> 4x4
     PIC_SQ_NON4_DEPTH_MODE      = 3, // SQ:  SB size -> 8x8
-    PIC_OPEN_LOOP_DEPTH_MODE = 4, // Early Inter Depth Decision:  SB size -> 8x8
-    PIC_SB_SWITCH_DEPTH_MODE = 5  // Adaptive Depth Partitioning
+    PIC_OPEN_LOOP_DEPTH_MODE    = 4, // Early Inter Depth Decision:  SB size -> 8x8
+    PIC_SB_SWITCH_DEPTH_MODE    = 5  // Adaptive Depth Partitioning
 } EbPictureDepthMode;
-
+#endif
 #define EB_SB_DEPTH_MODE              uint8_t
 #define SB_SQ_BLOCKS_DEPTH_MODE             1
 #define SB_SQ_NON4_BLOCKS_DEPTH_MODE        2

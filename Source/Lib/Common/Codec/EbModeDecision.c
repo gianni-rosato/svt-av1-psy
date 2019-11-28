@@ -99,6 +99,49 @@ int svt_is_interintra_allowed(
 #define II_COUNT                3
 #endif
 #if OBMC_FLAG
+#if MULTI_PASS_PD
+static INLINE int is_inter_mode(PredictionMode mode)
+{
+    return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
+}
+MotionMode obmc_motion_mode_allowed(
+    const PictureControlSet    *picture_control_set_ptr,
+    struct ModeDecisionContext *context_ptr,
+    const BlockSize             bsize,
+    MvReferenceFrame            rf0,
+    MvReferenceFrame            rf1,
+    PredictionMode              mode)
+{
+
+    if (!context_ptr->md_pic_obmc_mode)
+        return SIMPLE_TRANSLATION;
+
+    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
+
+    if (!frm_hdr->is_motion_mode_switchable)
+        return SIMPLE_TRANSLATION;
+
+    if (frm_hdr->force_integer_mv == 0) {
+        const TransformationType gm_type =
+            picture_control_set_ptr->parent_pcs_ptr->global_motion[rf0].wmtype;
+        if (is_global_mv_block(mode, bsize, gm_type))
+            return SIMPLE_TRANSLATION;
+    }
+
+    if (is_motion_variation_allowed_bsize(bsize) &&
+        is_inter_mode(mode) &&
+        rf1 != INTRA_FRAME &&
+        !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
+    {
+        if (!has_overlappable_candidates(context_ptr->cu_ptr)) // check_num_overlappable_neighbors
+            return SIMPLE_TRANSLATION;
+
+        return OBMC_CAUSAL;
+    }
+    else
+        return SIMPLE_TRANSLATION;
+}
+#else
 MotionMode obmc_motion_mode_allowed(
     const PictureControlSet       *picture_control_set_ptr,
     const CodingUnit              *cu_ptr,
@@ -106,7 +149,7 @@ MotionMode obmc_motion_mode_allowed(
     MvReferenceFrame                rf0,
     MvReferenceFrame                rf1,
     PredictionMode                  mode);
-
+#endif
 void precompute_obmc_data(
     PictureControlSet            *picture_control_set_ptr,
     ModeDecisionContext          *context_ptr);
@@ -987,7 +1030,10 @@ void Unipred3x3CandidatesInjection(
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t inter_direction = me_block_results_ptr->direction;
         const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
-
+#if MULTI_PASS_PD
+        if (list0_ref_index > context_ptr->md_max_ref_count - 1)
+            continue;
+#endif
         if (inter_direction == 0) {
     for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex)
     {
@@ -1137,6 +1183,10 @@ void Unipred3x3CandidatesInjection(
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t inter_direction = me_block_results_ptr->direction;
         const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
+#if MULTI_PASS_PD
+        if (list1_ref_index > context_ptr->md_max_ref_count - 1)
+            continue;
+#endif
         if (inter_direction == 1) {
     for (bipredIndex = 0; bipredIndex < BIPRED_3x3_REFINMENT_POSITIONS; ++bipredIndex)
     {
@@ -1306,12 +1356,22 @@ void Bipred3x3CandidatesInjection(
     uint32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
     MD_COMP_TYPE cur_type; //BIP 3x3
 #if FIX_COMPOUND
-    BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+    BlockSize bsize = context_ptr->blk_geom->bsize;
+#if MULTI_PASS_PD
+    MD_COMP_TYPE tot_comp_types =
+        (picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 || context_ptr->compound_types_to_try == MD_COMP_AVG) ?
+            MD_COMP_AVG :
+            (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ?
+                context_ptr->compound_types_to_try :
+                    context_ptr->compound_types_to_try == MD_COMP_WEDGE ? MD_COMP_DIFF0 :
+                    context_ptr->compound_types_to_try;
+#else
     MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
-    MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
-        (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
+    MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG:
+    (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
         (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #else
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
@@ -1332,6 +1392,11 @@ void Bipred3x3CandidatesInjection(
             const uint8_t inter_direction = me_block_results_ptr->direction;
             const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
             const uint8_t list1_ref_index = me_block_results_ptr->ref_idx_l1;
+
+#if MULTI_PASS_PD
+            if (list0_ref_index > context_ptr->md_max_ref_count - 1 || list1_ref_index > context_ptr->md_max_ref_count - 1)
+                continue;
+#endif
 
             if (inter_direction == 2) {
        // (Best_L0, 8 Best_L1 neighbors)
@@ -2027,10 +2092,18 @@ void inject_mvp_candidates_II(
     MD_COMP_TYPE cur_type; //MVP
 #if FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+
+#if MULTI_PASS_PD
+    MD_COMP_TYPE tot_comp_types =
+            (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? context_ptr->compound_types_to_try :
+                context_ptr->compound_types_to_try == MD_COMP_WEDGE ? MD_COMP_DIFF0 :
+                context_ptr->compound_types_to_try;
+#else
     MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
     MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
         (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#endif
 #else
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
 #endif
@@ -2047,7 +2120,10 @@ void inject_mvp_candidates_II(
         MvReferenceFrame frame_type = rf[0];
         uint8_t list_idx = get_list_idx(rf[0]);
         uint8_t ref_idx = get_ref_frame_idx(rf[0]);
-
+#if MULTI_PASS_PD
+        if (ref_idx > context_ptr->md_max_ref_count - 1)
+            return;
+#endif
         //NEAREST
         int16_t to_inject_mv_x = context_ptr->cu_ptr->ref_mvs[frame_type][0].as_mv.col;
         int16_t to_inject_mv_y = context_ptr->cu_ptr->ref_mvs[frame_type][0].as_mv.row;
@@ -2062,10 +2138,18 @@ void inject_mvp_candidates_II(
         if (inj_mv) {
 #if II_COMP_FLAG // NEARESTMV
             uint8_t inter_type;
+#if MULTI_PASS_PD
+            uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEARESTMV, rf);
+#else
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEARESTMV, rf);
+#endif
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
 #if OBMC_FLAG
+#if MULTI_PASS_PD
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, bsize, rf[0], rf[1], NEARESTMV) == OBMC_CAUSAL;
+#else
             uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEARESTMV) == OBMC_CAUSAL;
+#endif
             tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
 #endif
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
@@ -2173,10 +2257,18 @@ void inject_mvp_candidates_II(
             if (inj_mv) {
 #if II_COMP_FLAG // NEARMV
             uint8_t inter_type;
+#if MULTI_PASS_PD
+            uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEARMV, rf);
+#else
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEARMV, rf);
+#endif
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
 #if OBMC_FLAG
+#if MULTI_PASS_PD
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, bsize, rf[0], rf[1], NEARMV) == OBMC_CAUSAL;
+#else
             uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEARMV) == OBMC_CAUSAL;
+#endif
             tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
 #endif
 
@@ -2261,7 +2353,10 @@ void inject_mvp_candidates_II(
     {
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
-
+#if MULTI_PASS_PD
+        if (ref_idx_0 > context_ptr->md_max_ref_count - 1 || ref_idx_1 > context_ptr->md_max_ref_count - 1)
+            return;
+#endif
         {
             //NEAREST_NEAREST
             int16_t to_inject_mv_x_l0 = context_ptr->md_local_cu_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
@@ -2455,10 +2550,19 @@ void inject_new_nearest_new_comb_candidates(
     MD_COMP_TYPE cur_type; //N_NR N_NRST
 #if FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
+#if MULTI_PASS_PD
+    MD_COMP_TYPE tot_comp_types =
+        (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ?
+            context_ptr->compound_types_to_try :
+            context_ptr->compound_types_to_try == MD_COMP_WEDGE ?
+                MD_COMP_DIFF0 :
+                context_ptr->compound_types_to_try;
+#else
     MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
     MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
         (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#endif
 #else
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
 #endif
@@ -2470,6 +2574,12 @@ void inject_new_nearest_new_comb_candidates(
     {
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
+
+
+#if MULTI_PASS_PD
+        if (ref_idx_0 > context_ptr->md_max_ref_count - 1 || ref_idx_1 > context_ptr->md_max_ref_count - 1)
+            return;
+#endif
 
         if (rf[1] != NONE_FRAME)
         {
@@ -3022,6 +3132,12 @@ void inject_warped_motion_candidates(
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t inter_direction = me_block_results_ptr->direction;
         const uint8_t list0_ref_index = me_block_results_ptr->ref_idx_l0;
+
+#if MULTI_PASS_PD
+        if (list0_ref_index > context_ptr->md_max_ref_count - 1)
+            continue;
+#endif
+
         if (inter_direction == 0) {
     for (int i=0; i<9; i++){
 
@@ -3412,12 +3528,23 @@ void inject_new_candidates(
     uint32_t mi_col = context_ptr->cu_origin_x >> MI_SIZE_LOG2;
 #if FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
-    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
     MD_COMP_TYPE cur_type; //NN
+#if MULTI_PASS_PD
+    MD_COMP_TYPE tot_comp_types =
+        (picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 || context_ptr->compound_types_to_try == MD_COMP_AVG) ?
+            MD_COMP_AVG :
+            (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ?
+                context_ptr->compound_types_to_try :
+                context_ptr->compound_types_to_try == MD_COMP_WEDGE ?
+                     MD_COMP_DIFF0 :
+                     context_ptr->compound_types_to_try;
+#else
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
         (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
         (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #else
     MD_COMP_TYPE cur_type; //NN
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
@@ -3441,7 +3568,10 @@ void inject_new_candidates(
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
-
+#if MULTI_PASS_PD
+            if (list0_ref_index > context_ptr->md_max_ref_count - 1)
+                continue;
+#endif
             int16_t to_inject_mv_x = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].x_mv << 1;
             int16_t to_inject_mv_y = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].y_mv << 1;
             uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
@@ -3463,11 +3593,20 @@ void inject_new_candidates(
              rf[1] = -1;
 
             uint8_t inter_type;
+#if MULTI_PASS_PD
+            uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEWMV, rf);
+#else
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+#endif
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
 #if OBMC_FLAG
+#if MULTI_PASS_PD
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+            tot_inter_types = is_obmc_allowed && context_ptr->md_pic_obmc_mode <= 2 ? tot_inter_types + 1 : tot_inter_types;
+#else
              uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
-             tot_inter_types = is_obmc_allowed && picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 2 ? tot_inter_types+1 : tot_inter_types;
+             tot_inter_types = is_obmc_allowed && picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 2 ? tot_inter_types + 1 : tot_inter_types;
+#endif
 #endif
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
             {
@@ -3562,7 +3701,10 @@ void inject_new_candidates(
                 context_ptr->injected_mv_y_l0_array[context_ptr->injected_mv_count_l0] = to_inject_mv_y;
                 context_ptr->injected_ref_type_l0_array[context_ptr->injected_mv_count_l0] = to_inject_ref_type;
                 ++context_ptr->injected_mv_count_l0;
-
+#if MULTI_PASS_PD // Test 1 inter only if 1st pass
+                if (context_ptr->best_me_cand_only_flag)
+                    break;
+#endif
             }
 
             }
@@ -3572,6 +3714,10 @@ void inject_new_candidates(
                NEWMV L1
            ************* */
             if (inter_direction == 1) {
+#if MULTI_PASS_PD
+                if (list1_ref_index > context_ptr->md_max_ref_count - 1)
+                    continue;
+#endif
                 int16_t to_inject_mv_x = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].x_mv << 1;
                 int16_t to_inject_mv_y = use_close_loop_me ? inloop_me_context->inloop_me_mv[1][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][((sequence_control_set_ptr->mrp_mode == 0) ? 4 : 2) + list1_ref_index].y_mv << 1;
                 uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
@@ -3592,10 +3738,18 @@ void inject_new_candidates(
              rf[1] = -1;
 
             uint8_t inter_type;
+#if MULTI_PASS_PD
+            uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEWMV, rf);
+#else
             uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+#endif
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
 #if OBMC_FLAG
+#if MULTI_PASS_PD
+            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+#else
             uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+#endif
             tot_inter_types = is_obmc_allowed  && picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode <= 2 ? tot_inter_types + 1 : tot_inter_types;
 #endif
             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
@@ -3692,6 +3846,10 @@ void inject_new_candidates(
                     context_ptr->injected_mv_y_l1_array[context_ptr->injected_mv_count_l1] = to_inject_mv_y;
                     context_ptr->injected_ref_type_l1_array[context_ptr->injected_mv_count_l1] = to_inject_ref_type;
                     ++context_ptr->injected_mv_count_l1;
+#if MULTI_PASS_PD // Test 1 inter only if 1st pass
+                    if (context_ptr->best_me_cand_only_flag)
+                        break;
+#endif
                 }
 
                 }
@@ -3699,7 +3857,10 @@ void inject_new_candidates(
                NEW_NEWMV
             ************* */
             if (allow_bipred) {
-
+#if MULTI_PASS_PD
+                if (list0_ref_index > context_ptr->md_max_ref_count - 1 || list1_ref_index > context_ptr->md_max_ref_count - 1)
+                    continue;
+#endif
                 if (inter_direction == 2) {
                     int16_t to_inject_mv_x_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][0] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].x_mv << 1;
                     int16_t to_inject_mv_y_l0 = use_close_loop_me ? inloop_me_context->inloop_me_mv[0][0][close_loop_me_index][1] << 1 : me_results->me_mv_array[me_block_offset][list0_ref_index].y_mv << 1;
@@ -3801,6 +3962,10 @@ void inject_new_candidates(
                         context_ptr->injected_mv_y_bipred_l1_array[context_ptr->injected_mv_count_bipred] = to_inject_mv_y_l1;
                         context_ptr->injected_ref_type_bipred_array[context_ptr->injected_mv_count_bipred] = to_inject_ref_type;
                         ++context_ptr->injected_mv_count_bipred;
+#if MULTI_PASS_PD // Test 1 inter only if 1st pass
+                        if (context_ptr->best_me_cand_only_flag)
+                            break;
+#endif
                         }
                     }
 
@@ -3825,11 +3990,20 @@ void inject_new_candidates(
 
 #if FIX_COMPOUND
             BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
-            MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+
             MD_COMP_TYPE cur_type; //BIP 3x3 MiSize >= BLOCK_8X8 && MiSize <= BLOCK_32X32)
+#if MULTI_PASS_PD
+            MD_COMP_TYPE tot_comp_types =
+                (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ?
+                    context_ptr->compound_types_to_try :
+                        context_ptr->compound_types_to_try == MD_COMP_WEDGE ? MD_COMP_DIFF0 :
+                        context_ptr->compound_types_to_try;
+#else
+            MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
             MD_COMP_TYPE tot_comp_types = (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
                 (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
                 picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;//MD_COMP_DIST;// MD_COMP_AVG;//
+#endif
 #else
             BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
             MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
@@ -3860,7 +4034,11 @@ void inject_new_candidates(
                             uint8_t inter_type;
                             uint8_t is_ii_allowed = 0;// svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
                             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
+#if MULTI_PASS_PD
+                            uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+#else
                             uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+#endif
                             tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                             for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
                             {
@@ -3955,7 +4133,11 @@ void inject_new_candidates(
                                 uint8_t inter_type;
                                 uint8_t is_ii_allowed = 0;// svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
                                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
+#if MULTI_PASS_PD
+                                uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+#else
                                 uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
+#endif
                                 tot_inter_types = is_obmc_allowed ? tot_inter_types + 1 : tot_inter_types;
                                 for (inter_type = 0; inter_type < tot_inter_types; inter_type++)
                                 {
@@ -4167,9 +4349,12 @@ void  inject_inter_candidates(
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
     uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
     uint8_t inject_newmv_candidate = 1;
-
+#if MULTI_PASS_PD // Shut coef-based inter skip if 1st pass
+    if (context_ptr->coeff_based_nsq_cand_reduction) {
+#else
     if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
         picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
+#endif
         if (context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
             inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                 context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
@@ -4177,12 +4362,28 @@ void  inject_inter_candidates(
 
 #if FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
-    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#if MULTI_PASS_PD
+
+#else
+
+#endif
     MD_COMP_TYPE cur_type; //GG
+#if MULTI_PASS_PD
+    MD_COMP_TYPE tot_comp_types =
+        (picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 || context_ptr->compound_types_to_try == MD_COMP_AVG) ?
+            MD_COMP_AVG :
+            (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ?
+            context_ptr->compound_types_to_try :
+            context_ptr->compound_types_to_try == MD_COMP_WEDGE ?
+                MD_COMP_DIFF0 :
+                context_ptr->compound_types_to_try;
+#else
+    MD_COMP_TYPE compound_types_to_try = picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
         (bsize >= BLOCK_8X8 && bsize <= BLOCK_32X32) ? compound_types_to_try :
         (compound_types_to_try == MD_COMP_WEDGE) ? MD_COMP_DIFF0 :
         picture_control_set_ptr->parent_pcs_ptr->compound_types_to_try;
+#endif
 #else
     MD_COMP_TYPE cur_type; //GG
     MD_COMP_TYPE tot_comp_types = picture_control_set_ptr->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_AVG :
@@ -4204,7 +4405,11 @@ void  inject_inter_candidates(
         mi_row,
         mi_col);
 #if OBMC_FLAG
+#if MULTI_PASS_PD
+    uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr, context_ptr->blk_geom->bsize, LAST_FRAME, -1, NEWMV) == OBMC_CAUSAL;
+#else
     uint8_t is_obmc_allowed = obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, context_ptr->blk_geom->bsize, LAST_FRAME, -1, NEWMV) == OBMC_CAUSAL;
+#endif
     if (is_obmc_allowed)
         precompute_obmc_data(
             picture_control_set_ptr,
@@ -4215,6 +4420,9 @@ void  inject_inter_candidates(
     ************* */
 
     uint32_t refIt;
+#if MULTI_PASS_PD
+    if (context_ptr->new_nearest_injection)
+#endif
     //all of ref pairs: (1)single-ref List0  (2)single-ref List1  (3)compound Bi-Dir List0-List1  (4)compound Uni-Dir List0-List0  (5)compound Uni-Dir List1-List1
     for (refIt = 0; refIt < picture_control_set_ptr->parent_pcs_ptr->tot_ref_frame_types; ++refIt) {
         MvReferenceFrame ref_frame_pair = picture_control_set_ptr->parent_pcs_ptr->ref_frame_type_arr[refIt];
@@ -4352,7 +4560,11 @@ void  inject_inter_candidates(
                  rf[1] = -1;
 
                 uint8_t inter_type;
+#if MULTI_PASS_PD
+                uint8_t is_ii_allowed = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, GLOBALMV, rf);
+#else
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra, bsize, GLOBALMV, rf);
+#endif
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                 //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(picture_control_set_ptr, context_ptr->cu_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
                 //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
@@ -5392,7 +5604,11 @@ void  inject_intra_candidates(
 #endif
     uint8_t                     intra_mode_start = DC_PRED;
 #if PAETH_HBD
+#if MULTI_PASS_PD
+    uint8_t                     intra_mode_end = context_ptr->dc_cand_only_flag ? DC_PRED : PAETH_PRED;
+#else
     uint8_t                     intra_mode_end   =  PAETH_PRED;
+#endif
 #else
     uint8_t                     intra_mode_end   = is16bit ? SMOOTH_H_PRED : PAETH_PRED;
 #endif
@@ -5418,6 +5634,16 @@ void  inject_intra_candidates(
         angle_estimation(src_buf, src_pic->stride_y, rows, cols, /*context_ptr->blk_geom->bsize,*/directional_mode_skip_mask);
     }
     uint8_t     angle_delta_shift = 1;
+
+#if MULTI_PASS_PD
+    if (context_ptr->disable_angle_z2_intra_flag) {
+        disable_angle_prediction = 1;
+        angleDeltaCandidateCount = 1;
+        angle_delta_shift = 1;
+        disable_z2_prediction = 1;
+    }
+    else
+#endif
     if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode == 4) {
         if (picture_control_set_ptr->slice_type == I_SLICE) {
 #if PAETH_HBD
@@ -5836,8 +6062,12 @@ EbErrorType generate_md_stage_0_cand(
     uint8_t inject_inter_candidate = 1;
 
     if (slice_type != I_SLICE) {
+#if MULTI_PASS_PD // Shut coef-based inter skip if 1st pass
+        if (context_ptr->coeff_based_nsq_cand_reduction) {
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->nsq_search_level >= NSQ_SEARCH_LEVEL1 &&
             picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
+#endif
             if (context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
                 inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                     context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_intra_candidate : 0;
@@ -5846,7 +6076,11 @@ EbErrorType generate_md_stage_0_cand(
     //----------------------
     // Intra
     if (context_ptr->blk_geom->sq_size < 128) {
+#if MULTI_PASS_PD
+        if (!context_ptr->dc_cand_only_flag && picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
+#endif
             inject_intra_candidates_ois(
                 picture_control_set_ptr,
                 context_ptr,
@@ -5862,7 +6096,11 @@ EbErrorType generate_md_stage_0_cand(
                 &canTotalCnt);
     }
 #if FILTER_INTRA_FLAG
+#if MULTI_PASS_PD
+       if (context_ptr->md_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(sequence_control_set_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
+#else
        if (picture_control_set_ptr->pic_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(sequence_control_set_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
+#endif
             inject_filter_intra_candidates(
                 picture_control_set_ptr,
                 context_ptr,

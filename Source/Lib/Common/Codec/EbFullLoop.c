@@ -1616,10 +1616,13 @@ int32_t av1_quantize_inv_quantize(
         && picture_control_set_ptr->hbd_mode_decision==0 )
         perform_rdoq = EB_FALSE;
 
+#if MULTI_PASS_PD
+    if (perform_rdoq && md_context->rdoq_quantize_fp && !is_inter) {
+#else
     // Hsan: set to FALSE until adding x86 quantize_fp
     EbBool perform_quantize_fp = picture_control_set_ptr->enc_mode == ENC_M0 ? EB_TRUE: EB_FALSE;
-
     if (perform_rdoq && perform_quantize_fp && !is_inter) {
+#endif
         if (bit_increment) {
             eb_av1_highbd_quantize_fp_facade(
                 (TranLow*)coeff,
@@ -2019,11 +2022,19 @@ void product_full_loop_tx_search(
     int32_t allowed_tx_mask[TX_TYPES] = { 0 };  // 1: allow; 0: skip.
     int32_t allowed_tx_num = 0;
     TxType uv_tx_type = DCT_DCT;
+#if MULTI_PASS_PD
+    if (context_ptr->tx_search_reduced_set == 2)
+#else
     if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
+#endif
         txk_end = 2;
 
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
+#if MULTI_PASS_PD
+        if (context_ptr->tx_search_reduced_set == 2)
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
+#endif
             tx_type_index = (tx_type_index  == 1) ? IDTX : tx_type_index;
         tx_type = (TxType)tx_type_index;
         allowed_tx_mask[tx_type] = 1;
@@ -2042,13 +2053,21 @@ void product_full_loop_tx_search(
         allowed_tx_mask[plane ? uv_tx_type : DCT_DCT] = 1;
     TxType best_tx_type = DCT_DCT;
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
+#if MULTI_PASS_PD
+        if (context_ptr->tx_search_reduced_set == 2)
+            tx_type_index = (tx_type_index == 1) ? IDTX : tx_type_index;
+        tx_type = (TxType)tx_type_index;
+        if (!allowed_tx_mask[tx_type]) continue;
+        if (context_ptr->tx_search_reduced_set)
+            if (!allowed_tx_set_a[txSize][tx_type]) continue;
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
             tx_type_index = (tx_type_index  == 1) ? IDTX : tx_type_index;
         tx_type = (TxType)tx_type_index;
         if (!allowed_tx_mask[tx_type]) continue;
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
-
+#endif
         context_ptr->three_quad_energy = 0;
         uint32_t txb_itr = 0;
         uint16_t txb_count = context_ptr->blk_geom->txb_count[tx_depth];
@@ -2314,6 +2333,17 @@ void encode_pass_tx_search(
         get_ext_tx_set_type(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
 
     TxType best_tx_type = DCT_DCT;
+#if MULTI_PASS_PD
+    if (context_ptr->md_context->tx_search_reduced_set == 2)
+        txk_end = 2;
+    for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
+        if (context_ptr->md_context->tx_search_reduced_set == 2)
+            tx_type_index = (tx_type_index == 1) ? IDTX : tx_type_index;
+        tx_type = (TxType)tx_type_index;
+
+        if (context_ptr->md_context->tx_search_reduced_set)
+            if (!allowed_tx_set_a[txSize][tx_type]) continue;
+#else
     if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set == 2)
         txk_end = 2;
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
@@ -2323,7 +2353,7 @@ void encode_pass_tx_search(
 
         if(picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
-
+#endif
         const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
         // eset == 0 should correspond to a set with only DCT_DCT and there
         // is no need to send the tx_type
@@ -2514,8 +2544,11 @@ void encode_pass_tx_search_hbd(
 
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
         tx_type = (TxType)tx_type_index;
-        ////if (!allowed_tx_mask[tx_type]) continue;
+#if MULTI_PASS_PD
+        if (context_ptr->md_context->tx_search_reduced_set)
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->tx_search_reduced_set)
+#endif
             if (!allowed_tx_set_a[txSize][tx_type]) continue;
 
         const int32_t eset = get_ext_tx_set(txSize, is_inter, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
@@ -3196,7 +3229,11 @@ EbBool merge_1D_inter_block(
     }
     return merge_blocks;
 }
+#if MULTI_PASS_PD
+uint64_t d1_non_square_block_decision(
+#else
 void  d1_non_square_block_decision(
+#endif
     ModeDecisionContext               *context_ptr
 #if ADD_SUPPORT_TO_SKIP_PART_N
     , uint32_t                         d1_block_itr
@@ -3244,6 +3281,9 @@ void  d1_non_square_block_decision(
         context_ptr->md_cu_arr_nsq[context_ptr->blk_geom->sqi_mds].part = from_shape_to_part[context_ptr->blk_geom->shape];
         context_ptr->md_cu_arr_nsq[context_ptr->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
     }
+#if MULTI_PASS_PD
+    return tot_cost;
+#endif
 }
 
 /// compute the cost of curr depth, and the depth above

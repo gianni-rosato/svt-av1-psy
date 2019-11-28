@@ -706,11 +706,13 @@ static void mode_decision_configuration_context_dctor(EbPtr p)
     EB_FREE_ARRAY(obj->mdc_ref_mv_stack);
     EB_FREE_ARRAY(obj->mdc_cu_ptr->av1xd);
     EB_FREE_ARRAY(obj->mdc_cu_ptr);
+#if ADD_MDC_FULL_COST
     EB_DELETE(obj->candidate_buffer);
     EB_FREE_ARRAY(obj->fast_candidate_array);
     EB_FREE_ARRAY(obj->fast_candidate_ptr_array);
     EB_DELETE(obj->trans_quant_buffers_ptr);
     EB_FREE(obj->transform_inner_array_ptr);
+#endif
 }
 /******************************************************
  * Mode Decision Configuration Context Constructor
@@ -2608,6 +2610,56 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         picture_control_set_ptr->enc_mode == ENC_M0 && frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
         (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? 1 : 0;
 #endif
+#if MULTI_PASS_PD
+    EbBool enable_wm;
+    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+        enable_wm = EB_FALSE;
+    else
+#if WARP_UPDATE
+        enable_wm = (MR_MODE ||
+        (picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M0 && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ||
+            (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0)) ? EB_TRUE : EB_FALSE;
+#else
+        enable_wm = (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) || MR_MODE ? EB_TRUE : EB_FALSE;
+#endif
+#if !FIX_WM_SETTINGS
+    enable_wm = picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index > 0 ? EB_FALSE : enable_wm;
+#endif
+    frm_hdr->allow_warped_motion = enable_wm
+        && !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME)
+        && !frm_hdr->error_resilient_mode;
+    frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
+#if OBMC_FLAG
+    // OBMC Level                                   Settings
+    // 0                                            OFF
+    // 1                                            OBMC @(MVP, PME and ME) + 16 NICs
+    // 2                                            OBMC @(MVP, PME and ME) + Opt NICs
+    // 3                                            OBMC @(MVP, PME ) + Opt NICs
+    // 4                                            OBMC @(MVP, PME ) + Opt2 NICs
+    if (sequence_control_set_ptr->static_config.enable_obmc) {
+        if (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
+            picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =
+#if M0_OPT
+            picture_control_set_ptr->slice_type != I_SLICE ? 2 : 0;
+#else
+            picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->slice_type != I_SLICE ? 2 : 0;
+#endif
+        else
+            picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
+
+#if MR_MODE
+        picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =
+            picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->slice_type != I_SLICE ? 1 : 0;
+#endif
+    }
+    else
+        picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
+
+    frm_hdr->is_motion_mode_switchable =
+        frm_hdr->is_motion_mode_switchable || picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode;
+
+#endif
+#endif
     return return_error;
 }
 
@@ -3123,8 +3175,15 @@ void* mode_decision_configuration_kernel(void *input_ptr)
                 }
             }
         }
-
+#if MULTI_PASS_PD
+        else  if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_DEPTH_MODE       ||
+                  picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_0 ||
+                  picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_1 ||
+                  picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_2 ||
+                  picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_3 ){
+#else
         else  if (picture_control_set_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_DEPTH_MODE) {
+#endif
             forward_all_blocks_to_md(
                 sequence_control_set_ptr,
                 picture_control_set_ptr);

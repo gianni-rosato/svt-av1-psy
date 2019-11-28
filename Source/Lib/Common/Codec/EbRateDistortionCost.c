@@ -631,6 +631,10 @@ uint64_t av1_intra_fast_cost(
     const BlockGeom         *blk_geom,
     uint32_t                 miRow,
     uint32_t                 miCol,
+#if MULTI_PASS_PD
+    uint8_t                  enable_inter_intra,
+    EbBool                   full_cost_shut_fast_rate_flag,
+#endif
     uint8_t                 md_pass,
     uint32_t                 left_neighbor_mode,
     uint32_t                 top_neighbor_mode)
@@ -643,7 +647,9 @@ uint64_t av1_intra_fast_cost(
     UNUSED(left_neighbor_mode);
     UNUSED(top_neighbor_mode);
     UNUSED(md_pass);
-
+#if MULTI_PASS_PD
+    UNUSED(enable_inter_intra);
+#endif
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm) && candidate_ptr->use_intrabc) {
         uint64_t lumaSad = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
@@ -796,8 +802,13 @@ uint64_t av1_intra_fast_cost(
     chromaRate = (uint32_t)(intraChromaModeBitsNum + intraChromaAngModeBitsNum);
 
     // Keep the Fast Luma and Chroma rate for future use
+#if MULTI_PASS_PD
+    candidate_ptr->fast_luma_rate = (full_cost_shut_fast_rate_flag) ? 0 : lumaRate;
+    candidate_ptr->fast_chroma_rate = (full_cost_shut_fast_rate_flag) ? 0 : chromaRate;
+#else
     candidate_ptr->fast_luma_rate = lumaRate;
     candidate_ptr->fast_chroma_rate = chromaRate;
+#endif
     if (use_ssd) {
         int32_t current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
@@ -1683,7 +1694,11 @@ uint64_t av1_inter_fast_cost(
     const BlockGeom         *blk_geom,
     uint32_t                 miRow,
     uint32_t                 miCol,
-    uint8_t                 md_pass,
+#if MULTI_PASS_PD
+    uint8_t                  enable_inter_intra,
+    EbBool                   full_cost_shut_fast_rate_flag,
+#endif
+    uint8_t                  md_pass,
     uint32_t                 left_neighbor_mode,
     uint32_t                 top_neighbor_mode)
 
@@ -1893,7 +1908,11 @@ uint64_t av1_inter_fast_cost(
         // inter intra mode rate
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != COMPOUND_REFERENCE &&
             picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_interintra_compound &&
+#if MULTI_PASS_PD
+            svt_is_interintra_allowed(enable_inter_intra, blk_geom->bsize, candidate_ptr->inter_mode, rf)) {
+#else
             svt_is_interintra_allowed(picture_control_set_ptr->parent_pcs_ptr->enable_inter_intra,blk_geom->bsize, candidate_ptr->inter_mode, rf)) {
+#endif
             const int interintra = candidate_ptr->is_interintra_used;
             const int bsize_group = size_group_lookup[blk_geom->bsize];
 
@@ -1978,9 +1997,13 @@ uint64_t av1_inter_fast_cost(
     //chromaRate = intraChromaModeBitsNum + intraChromaAngModeBitsNum;
 
     // Keep the Fast Luma and Chroma rate for future use
+#if MULTI_PASS_PD
+    candidate_ptr->fast_luma_rate   = (full_cost_shut_fast_rate_flag) ? 0 : lumaRate;
+    candidate_ptr->fast_chroma_rate = (full_cost_shut_fast_rate_flag)  ? 0 : chromaRate;
+#else
     candidate_ptr->fast_luma_rate = lumaRate;
     candidate_ptr->fast_chroma_rate = chromaRate;
-
+#endif
     if (use_ssd) {
         int32_t current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;

@@ -29,6 +29,22 @@ extern "C" {
 #define DEPTH_TWO_STEP    5
 #define DEPTH_THREE_STEP  1
 
+#if MULTI_PASS_PD
+#define PREDICTIVE_ME_MAX_MVP_CANIDATES  4
+#define PREDICTIVE_ME_DEVIATION_TH      50
+#define FULL_PEL_REF_WINDOW_WIDTH        7
+#define FULL_PEL_REF_WINDOW_HEIGHT       5
+#define HALF_PEL_REF_WINDOW              3
+#define QUARTER_PEL_REF_WINDOW           3
+#if M0_OPT
+#define FULL_PEL_REF_WINDOW_WIDTH_EXTENDED  15
+#define FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED 15
+#endif
+#if EIGHT_PEL_PREDICTIVE_ME
+#define EIGHT_PEL_REF_WINDOW 3
+#endif
+#endif
+
      /**************************************
       * Macros
       **************************************/
@@ -239,6 +255,9 @@ extern "C" {
         uint8_t                         full_loop_escape;
         uint8_t                         global_mv_injection;
         uint8_t                         nx4_4xn_parent_mv_injection;
+#if MULTI_PASS_PD
+        uint8_t                         new_nearest_injection;
+#endif
         uint8_t                         new_nearest_near_comb_injection;
         uint8_t                         warped_motion_injection;
         uint8_t                         unipred3x3_injection;
@@ -264,6 +283,9 @@ extern "C" {
 #if REMOVE_MD_STAGE_1
     uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
     uint8_t                             md_staging_mode;
+#if MULTI_PASS_PD
+    uint8_t                             md_staging_count_level;
+#endif
     uint8_t                             bypass_md_stage_1[CAND_CLASS_TOTAL];
 
     uint32_t                            md_stage_0_count[CAND_CLASS_TOTAL];
@@ -365,6 +387,31 @@ extern "C" {
 #if AUTO_MAX_PARTITION
     // signal for enabling shortcut to skip search depths
     uint8_t enable_auto_max_partition;
+#endif
+
+#if MULTI_PASS_PD
+    MD_COMP_TYPE compound_types_to_try;
+    uint8_t best_me_cand_only_flag;
+    uint8_t dc_cand_only_flag;
+    EbBool disable_angle_z2_intra_flag;
+    uint8_t full_cost_shut_fast_rate_flag;
+    EbBool coeff_based_nsq_cand_reduction;
+    uint8_t tx_search_level;
+    uint64_t tx_weight;
+    uint8_t tx_search_reduced_set;
+    uint8_t interpolation_search_level;
+    EbBool rdoq_quantize_fp;
+    uint8_t md_atb_mode;
+    uint8_t md_pic_obmc_mode;
+    uint8_t md_enable_inter_intra;
+    uint8_t md_filter_intra_mode;
+    uint8_t md_max_ref_count;
+    EbBool md_skip_mvp_generation;
+    int16_t full_pel_ref_window_width_th;
+    int16_t full_pel_ref_window_height_th;
+
+    // Signal to control initial and final pass PD setting(s)
+    PD_PASS pd_pass;
 #endif
     } ModeDecisionContext;
 
