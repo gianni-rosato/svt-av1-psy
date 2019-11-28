@@ -2426,6 +2426,10 @@ uint64_t spatial_full_distortion_kernel_avx2(
     return Hadd32_AVX2_INTRIN(sum);
 }
 
+/************************************************
+ * Support for params *input and *recon up to 15bit values
+ * This assumption allow to use faster _mm256_madd_epi16() instruction
+ ************************************************/
 uint64_t full_distortion_kernel16_bits_avx2(
     uint8_t* input,
     uint32_t   input_offset,
@@ -2438,9 +2442,9 @@ uint64_t full_distortion_kernel16_bits_avx2(
 {
     const uint32_t leftover = area_width & 15;
     uint32_t w,h;
+    __m256i sum32 = _mm256_setzero_si256();
     __m256i sum64 = _mm256_setzero_si256();
     __m256i in, re;
-    __m128i sum_L, sum_H, s;
     uint16_t* input_16bit = (uint16_t*)input;
     uint16_t* recon_16bit = (uint16_t*)recon;
     input_16bit += input_offset;
@@ -2453,27 +2457,34 @@ uint64_t full_distortion_kernel16_bits_avx2(
 
         if (leftover == 4) {
             do {
-                FullDistortionKernel4_AVX2_INTRIN(inp, rec, &sum64);
+                FullDistortionKernel4_AVX2_INTRIN(inp, rec, &sum32);
                 inp += input_stride;
                 rec += recon_stride;
+                Sum32To64(&sum32, &sum64);
             } while (--h);
         }
         else if (leftover == 8) {
             do {
-                in = _mm256_set_m128i(_mm_loadu_si128((__m128i*)inp), _mm_loadu_si128((__m128i*)(inp + input_stride)));
-                re = _mm256_set_m128i(_mm_loadu_si128((__m128i*)rec), _mm_loadu_si128((__m128i*)(rec + recon_stride)));
-                FullDistortionKernel16_AVX2_INTRIN(in, re, &sum64);
+                in = _mm256_set_m128i(_mm_loadu_si128((__m128i*)inp),
+                                      _mm_loadu_si128((__m128i*)(inp + input_stride)));
+                re = _mm256_set_m128i(_mm_loadu_si128((__m128i*)rec),
+                                      _mm_loadu_si128((__m128i*)(rec + recon_stride)));
+                FullDistortionKernel16_AVX2_INTRIN(in, re, &sum32);
                 inp += 2 * input_stride;
                 rec += 2 * recon_stride;
+                Sum32To64(&sum32, &sum64);
             } while (h-=2);
         }
         else { //leftover == 12
             do {
-                in = _mm256_set_m128i(_mm_loadu_si128((__m128i*)inp), _mm_loadl_epi64((__m128i*)(inp + 8)));
-                re = _mm256_set_m128i(_mm_loadu_si128((__m128i*)rec), _mm_loadl_epi64((__m128i*)(rec + 8)));
-                FullDistortionKernel16_AVX2_INTRIN(in, re, &sum64);
+                in = _mm256_set_m128i(_mm_loadu_si128((__m128i*)inp),
+                                      _mm_loadl_epi64((__m128i*)(inp + 8)));
+                re = _mm256_set_m128i(_mm_loadu_si128((__m128i*)rec),
+                                      _mm_loadl_epi64((__m128i*)(rec + 8)));
+                FullDistortionKernel16_AVX2_INTRIN(in, re, &sum32);
                 inp += input_stride;
                 rec += recon_stride;
+                Sum32To64(&sum32, &sum64);
             } while (--h);
         }
     }
@@ -2484,19 +2495,46 @@ uint64_t full_distortion_kernel16_bits_avx2(
         const uint16_t* inp = input_16bit;
         const uint16_t* rec = recon_16bit;
 
-        for (h = 0; h < area_height; h++) {
-            for (w = 0; w < area_width; w += 16) {
-                in = _mm256_loadu_si256((__m256i*)(inp+w));
-                re = _mm256_loadu_si256((__m256i*)(rec+w));
-                FullDistortionKernel16_AVX2_INTRIN(in, re, &sum64);
+        if (area_width == 16) {
+            for (h = 0; h < area_height; h+=2) {
+                FullDistortionKernel16_AVX2_INTRIN(
+                    _mm256_loadu_si256((__m256i*)inp),
+                    _mm256_loadu_si256((__m256i*)rec), &sum32);
+                FullDistortionKernel16_AVX2_INTRIN(
+                    _mm256_loadu_si256((__m256i*)(inp + input_stride)),
+                    _mm256_loadu_si256((__m256i*)(rec + recon_stride)), &sum32);
+                inp += 2 * input_stride;
+                rec += 2 * recon_stride;
+                Sum32To64(&sum32, &sum64);
             }
-            inp += input_stride;
-            rec += recon_stride;
+        }
+        else if (area_width == 32) {
+            for (h = 0; h < area_height; h++) {
+                FullDistortionKernel16_AVX2_INTRIN(
+                    _mm256_loadu_si256((__m256i*)inp),
+                    _mm256_loadu_si256((__m256i*)rec), &sum32);
+                FullDistortionKernel16_AVX2_INTRIN(
+                    _mm256_loadu_si256((__m256i*)(inp + 16)),
+                    _mm256_loadu_si256((__m256i*)(rec + 16)), &sum32);
+                inp += input_stride;
+                rec += recon_stride;
+                Sum32To64(&sum32, &sum64);
+            }
+        }
+        else{
+            for (h = 0; h < area_height; h++) {
+                for (w = 0; w < area_width; w += 16) {
+                    FullDistortionKernel16_AVX2_INTRIN(
+                        _mm256_loadu_si256((__m256i*)(inp+w)),
+                        _mm256_loadu_si256((__m256i*)(rec+w)), &sum32);
+                    Sum32To64(&sum32, &sum64);
+                }
+                inp += input_stride;
+                rec += recon_stride;
+            }
         }
     }
-    sum_L = _mm256_extracti128_si256(sum64, 0);
-    sum_H = _mm256_extracti128_si256(sum64, 1);
-    s = _mm_add_epi64(sum_L, sum_H);
 
+    __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum64), _mm256_extracti128_si256(sum64, 1));
     return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
 }
