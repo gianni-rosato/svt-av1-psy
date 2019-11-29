@@ -1433,6 +1433,9 @@ uint64_t compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const ui
 
 void finish_cdef_search(
     EncDecContext       *context_ptr,
+#if !UPDATE_CDEF
+    SequenceControlSet           *sequence_control_set_ptr,
+#endif
     PictureControlSet   *picture_control_set_ptr,
     int32_t             selected_strength_cnt[64])
 {
