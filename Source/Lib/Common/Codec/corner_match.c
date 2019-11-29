@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
-
+#include "aom_dsp_rtcd.h"
 #include "corner_match.h"
 
 #define SEARCH_SZ 9
@@ -97,7 +97,7 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref,
                                   correspondences[i].rx + x,
                                   correspondences[i].ry + y, width, height))
           continue;
-        match_ncc = av1_compute_cross_correlation_c(
+        match_ncc = av1_compute_cross_correlation(
             frm, frm_stride, correspondences[i].x, correspondences[i].y, ref,
             ref_stride, correspondences[i].rx + x, correspondences[i].ry + y);
         if (match_ncc > best_match_ncc) {
@@ -123,7 +123,7 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref,
                 correspondences[i].x + x, correspondences[i].y + y,
                 correspondences[i].rx, correspondences[i].ry, width, height))
           continue;
-        match_ncc = av1_compute_cross_correlation_c(
+        match_ncc = av1_compute_cross_correlation(
             ref, ref_stride, correspondences[i].rx, correspondences[i].ry, frm,
             frm_stride, correspondences[i].x + x, correspondences[i].y + y);
         if (match_ncc > best_match_ncc) {
@@ -162,7 +162,7 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
                                 ref_corners[2 * j], ref_corners[2 * j + 1],
                                 width, height))
         continue;
-      match_ncc = av1_compute_cross_correlation_c(
+      match_ncc = av1_compute_cross_correlation(
           frm, frm_stride, frm_corners[2 * i], frm_corners[2 * i + 1], ref,
           ref_stride, ref_corners[2 * j], ref_corners[2 * j + 1]);
       if (match_ncc > best_match_ncc) {

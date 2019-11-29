@@ -1945,6 +1945,9 @@ void setup_rtcd_internal(EbAsm asm_type)
     SET_SSE41(eb_av1_highbd_warp_affine,
         eb_av1_highbd_warp_affine_c,
         eb_av1_highbd_warp_affine_sse4_1);
+    SET_AVX2(av1_compute_cross_correlation,
+             av1_compute_cross_correlation_c,
+             av1_compute_cross_correlation_avx2);
 
 }
 
