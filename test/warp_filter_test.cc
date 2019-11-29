@@ -32,6 +32,7 @@ INSTANTIATE_TEST_CASE_P(
 TEST_P(AV1HighbdWarpFilterTest, CheckOutput) {
     RunCheckOutput(std::get<4>(TEST_GET_PARAM(0)));
 }
+
 TEST_P(AV1HighbdWarpFilterTest, DISABLED_Speed) {
     RunSpeedTest(std::get<4>(TEST_GET_PARAM(0)));
 }
@@ -40,4 +41,7 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, AV1WarpFilterTest,
     libaom_test::AV1WarpFilter::BuildParams(eb_av1_warp_affine_avx2));
 
+INSTANTIATE_TEST_CASE_P(SSE4_1, AV1HighbdWarpFilterTest,
+                        libaom_test::AV1HighbdWarpFilter::BuildParams(
+                            eb_av1_highbd_warp_affine_sse4_1));
 }  // namespace

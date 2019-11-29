@@ -1942,6 +1942,9 @@ void setup_rtcd_internal(EbAsm asm_type)
     SET_AVX2(sad_16b_kernel,
              sad_16b_kernel_c,
              sad_16bit_kernel_avx2);
+    SET_SSE41(eb_av1_highbd_warp_affine,
+        eb_av1_highbd_warp_affine_c,
+        eb_av1_highbd_warp_affine_sse4_1);
 
 }
 

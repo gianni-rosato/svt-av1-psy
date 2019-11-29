@@ -522,7 +522,7 @@ static void highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref
 
   const uint16_t *const ref = (uint16_t *)ref8;
   uint16_t *pred = (uint16_t *)pred8;
-  eb_av1_highbd_warp_affine_c(mat, ref, width, height, stride, pred, p_col, p_row,
+  eb_av1_highbd_warp_affine(mat, ref, width, height, stride, pred, p_col, p_row,
                          p_width, p_height, p_stride, subsampling_x,
                          subsampling_y, bd, conv_params, alpha, beta, gamma,
                          delta);
