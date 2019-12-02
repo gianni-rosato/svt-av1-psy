@@ -6149,9 +6149,6 @@ static uint32_t mds_idx_16x16[64] = {
 
 };
 
-static EbAv1InterPredictionFuncPtr av1_inter_prediction_function_table[2] = {
-    av1_inter_prediction, av1_inter_prediction_hbd};
-
 void av1_get_max_min_partition_features(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                         ModeDecisionContext *context_ptr, float *features,
                                         EbPictureBufferDesc *input_picture_ptr,
@@ -6250,7 +6247,7 @@ void av1_get_max_min_partition_features(SequenceControlSet *scs_ptr, PictureCont
                 mv_unit.mv->x = me_results->me_mv_array[me_block_offset][list0_ref_index].x_mv << 1;
                 mv_unit.mv->y = me_results->me_mv_array[me_block_offset][list0_ref_index].y_mv << 1;
 
-                av1_inter_prediction_function_table[is_highbd](
+                av1_inter_prediction(
                     NULL, //pcs_ptr,
                     (uint32_t)interp_filters,
                     &blk_ptr,
