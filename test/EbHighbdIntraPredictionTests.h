@@ -156,5 +156,67 @@ static aom_highbd_v_predictor_func aom_highbd_v_pred_funcptr_array_naive[7] = {
                             eb_aom_highbd_v_predictor_64x16_c,
                             eb_aom_highbd_v_predictor_64x32_c,
                             eb_aom_highbd_v_predictor_64x64_c };
+
+
+typedef void(*aom_highbd_smooth_predictor_func)(uint16_t *dst, ptrdiff_t stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+
+static aom_highbd_smooth_predictor_func aom_smooth_predictor_funcptr_array_opt[7] = {
+                            aom_highbd_smooth_predictor_32x8_avx512,
+                            aom_highbd_smooth_predictor_32x16_avx512,
+                            aom_highbd_smooth_predictor_32x32_avx512,
+                            aom_highbd_smooth_predictor_32x64_avx512,
+                            aom_highbd_smooth_predictor_64x16_avx512,
+                            aom_highbd_smooth_predictor_64x32_avx512,
+                            aom_highbd_smooth_predictor_64x64_avx512 };
+
+static aom_highbd_smooth_predictor_func aom_smooth_predictor_funcptr_array_base[7] = {
+                            eb_aom_highbd_smooth_predictor_32x8_avx2,
+                            eb_aom_highbd_smooth_predictor_32x16_avx2,
+                            eb_aom_highbd_smooth_predictor_32x32_avx2,
+                            eb_aom_highbd_smooth_predictor_32x64_avx2,
+                            eb_aom_highbd_smooth_predictor_64x16_avx2,
+                            eb_aom_highbd_smooth_predictor_64x32_avx2,
+                            eb_aom_highbd_smooth_predictor_64x64_avx2 };
+
+typedef void(*aom_highbd_smooth_v_predictor_func)(uint16_t *dst, ptrdiff_t stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+
+static aom_highbd_smooth_v_predictor_func aom_highbd_smooth_v_predictor_funcptr_array_opt[7] = {
+                            aom_highbd_smooth_v_predictor_32x8_avx512,
+                            aom_highbd_smooth_v_predictor_32x16_avx512,
+                            aom_highbd_smooth_v_predictor_32x32_avx512,
+                            aom_highbd_smooth_v_predictor_32x64_avx512,
+                            aom_highbd_smooth_v_predictor_64x16_avx512,
+                            aom_highbd_smooth_v_predictor_64x32_avx512,
+                            aom_highbd_smooth_v_predictor_64x64_avx512 };
+
+static aom_highbd_smooth_v_predictor_func aom_highbd_smooth_v_predictor_funcptr_array_base[7] = {
+                            eb_aom_highbd_smooth_v_predictor_32x8_avx2,
+                            eb_aom_highbd_smooth_v_predictor_32x16_avx2,
+                            eb_aom_highbd_smooth_v_predictor_32x32_avx2,
+                            eb_aom_highbd_smooth_v_predictor_32x64_avx2,
+                            eb_aom_highbd_smooth_v_predictor_64x16_avx2,
+                            eb_aom_highbd_smooth_v_predictor_64x32_avx2,
+                            eb_aom_highbd_smooth_v_predictor_64x64_avx2 };
+
+typedef void(*aom_highbd_smooth_h_predictor_func)(uint16_t *dst, ptrdiff_t stride, const uint16_t *above, const uint16_t *left, int32_t bd);
+
+static aom_highbd_smooth_h_predictor_func aom_highbd_smooth_h_predictor_funcptr_array_opt[7] = {
+                            aom_highbd_smooth_h_predictor_32x8_avx512,
+                            aom_highbd_smooth_h_predictor_32x16_avx512,
+                            aom_highbd_smooth_h_predictor_32x32_avx512,
+                            aom_highbd_smooth_h_predictor_32x64_avx512,
+                            aom_highbd_smooth_h_predictor_64x16_avx512,
+                            aom_highbd_smooth_h_predictor_64x32_avx512,
+                            aom_highbd_smooth_h_predictor_64x64_avx512 };
+
+static aom_highbd_smooth_h_predictor_func aom_highbd_smooth_h_predictor_funcptr_array_base[7] = {
+                            eb_aom_highbd_smooth_h_predictor_32x8_avx2,
+                            eb_aom_highbd_smooth_h_predictor_32x16_avx2,
+                            eb_aom_highbd_smooth_h_predictor_32x32_avx2,
+                            eb_aom_highbd_smooth_h_predictor_32x64_avx2,
+                            eb_aom_highbd_smooth_h_predictor_64x16_avx2,
+                            eb_aom_highbd_smooth_h_predictor_64x32_avx2,
+                            eb_aom_highbd_smooth_h_predictor_64x64_avx2 };
+
 #endif
 #endif

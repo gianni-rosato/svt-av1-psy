@@ -7,8 +7,177 @@
 #include "EbHighbdIntraPrediction_SSE2.h"
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
+#include "EbIntraPrediction_AVX2.h"
 
 #ifndef NON_AVX512_SUPPORT
+#define FOUR 4U
+
+EB_ALIGN(32) static const uint16_t sm_weights_32[64] = {
+    255, 1, 240, 16, 225, 31, 210, 46,      //  0  1  2  3
+    145, 111, 133, 123, 122, 134, 111, 145, //  8  9 10 11
+    66, 190, 59, 197, 52, 204, 45, 211,     // 16 17 18 19
+    21, 235, 17, 239, 14, 242, 12, 244,     // 24 25 26 27
+    196, 60, 182, 74, 169, 87, 157, 99,     //  4  5  6  7
+    101, 155, 92, 164, 83, 173, 74, 182,    // 12 13 14 15
+    39, 217, 34, 222, 29, 227, 25, 231,     // 20 21 22 23
+    10, 246, 9, 247, 8, 248, 8, 248         // 28 29 30 31
+};
+
+// bs = 8
+EB_ALIGN(32) static const uint16_t sm_weights_d_8[64] = {
+    255, 1, 197, 59, 146, 110, 105, 151, //  0  1  2  3
+    255, 1, 197, 59, 146, 110, 105, 151, //  0  1  2  3
+    255, 1, 197, 59, 146, 110, 105, 151, //  0  1  2  3
+    255, 1, 197, 59, 146, 110, 105, 151, //  0  1  2  3
+    73, 183, 50, 206, 37, 219, 32, 224,  //  4  5  6  7
+    73, 183, 50, 206, 37, 219, 32, 224,  //  4  5  6  7
+    73, 183, 50, 206, 37, 219, 32, 224,  //  4  5  6  7
+    73, 183, 50, 206, 37, 219, 32, 224   //  4  5  6  7
+};
+
+//bs = 16
+EB_ALIGN(32) static const uint16_t sm_weights_d_16[128] = {
+    255, 1, 225, 31, 196, 60, 170, 86,     //  0  1  2  3
+    255, 1, 225, 31, 196, 60, 170, 86,     //  0  1  2  3
+    255, 1, 225, 31, 196, 60, 170, 86,     //  0  1  2  3
+    255, 1, 225, 31, 196, 60, 170, 86,     //  0  1  2  3
+    145, 111, 123, 133, 102, 154, 84, 172, //  4  5  6  7
+    145, 111, 123, 133, 102, 154, 84, 172, //  4  5  6  7
+    145, 111, 123, 133, 102, 154, 84, 172, //  4  5  6  7
+    145, 111, 123, 133, 102, 154, 84, 172, //  4  5  6  7
+    68, 188, 54, 202, 43, 213, 33, 223,    //  8  9 10 11
+    68, 188, 54, 202, 43, 213, 33, 223,    //  8  9 10 11
+    68, 188, 54, 202, 43, 213, 33, 223,    //  8  9 10 11
+    68, 188, 54, 202, 43, 213, 33, 223,    //  8  9 10 11
+    26, 230, 20, 236, 17, 239, 16, 240,    // 12 13 14 15
+    26, 230, 20, 236, 17, 239, 16, 240,    // 12 13 14 15
+    26, 230, 20, 236, 17, 239, 16, 240,    // 12 13 14 15
+    26, 230, 20, 236, 17, 239, 16, 240     // 12 13 14 15
+};
+
+// bs = 32
+EB_ALIGN(32) static const uint16_t sm_weights_d_32[256] = {
+    255, 1, 240, 16, 225, 31, 210, 46,      //  0  1  2  3
+    255, 1, 240, 16, 225, 31, 210, 46,      //  0  1  2  3
+    255, 1, 240, 16, 225, 31, 210, 46,      //  0  1  2  3
+    255, 1, 240, 16, 225, 31, 210, 46,      //  0  1  2  3
+    196, 60, 182, 74, 169, 87, 157, 99,     //  4  5  6  7
+    196, 60, 182, 74, 169, 87, 157, 99,     //  4  5  6  7
+    196, 60, 182, 74, 169, 87, 157, 99,     //  4  5  6  7
+    196, 60, 182, 74, 169, 87, 157, 99,     //  4  5  6  7
+    145, 111, 133, 123, 122, 134, 111, 145, //  8  9 10 11
+    145, 111, 133, 123, 122, 134, 111, 145, //  8  9 10 11
+    145, 111, 133, 123, 122, 134, 111, 145, //  8  9 10 11
+    145, 111, 133, 123, 122, 134, 111, 145, //  8  9 10 11
+    101, 155, 92, 164, 83, 173, 74, 182,    // 12 13 14 15
+    101, 155, 92, 164, 83, 173, 74, 182,    // 12 13 14 15
+    101, 155, 92, 164, 83, 173, 74, 182,    // 12 13 14 15
+    101, 155, 92, 164, 83, 173, 74, 182,    // 12 13 14 15
+    66, 190, 59, 197, 52, 204, 45, 211,     // 16 17 18 19
+    66, 190, 59, 197, 52, 204, 45, 211,     // 16 17 18 19
+    66, 190, 59, 197, 52, 204, 45, 211,     // 16 17 18 19
+    66, 190, 59, 197, 52, 204, 45, 211,     // 16 17 18 19
+    39, 217, 34, 222, 29, 227, 25, 231,     // 20 21 22 23
+    39, 217, 34, 222, 29, 227, 25, 231,     // 20 21 22 23
+    39, 217, 34, 222, 29, 227, 25, 231,     // 20 21 22 23
+    39, 217, 34, 222, 29, 227, 25, 231,     // 20 21 22 23
+    21, 235, 17, 239, 14, 242, 12, 244,     // 24 25 26 27
+    21, 235, 17, 239, 14, 242, 12, 244,     // 24 25 26 27
+    21, 235, 17, 239, 14, 242, 12, 244,     // 24 25 26 27
+    21, 235, 17, 239, 14, 242, 12, 244,     // 24 25 26 27
+    10, 246, 9, 247, 8, 248, 8, 248,        // 28 29 30 31
+    10, 246, 9, 247, 8, 248, 8, 248,        // 28 29 30 31
+    10, 246, 9, 247, 8, 248, 8, 248,        // 28 29 30 31
+    10, 246, 9, 247, 8, 248, 8, 248         // 28 29 30 31
+};
+
+// bs = 64
+EB_ALIGN(32) static const uint16_t sm_weights_d_64[512] = {
+    255, 1, 248, 8, 240, 16, 233, 23,       //  0  1  2  3
+    255, 1, 248, 8, 240, 16, 233, 23,       //  0  1  2  3
+    255, 1, 248, 8, 240, 16, 233, 23,       //  0  1  2  3
+    255, 1, 248, 8, 240, 16, 233, 23,       //  0  1  2  3
+    225, 31, 218, 38, 210, 46, 203, 53,     //  4  5  6  7
+    225, 31, 218, 38, 210, 46, 203, 53,     //  4  5  6  7
+    225, 31, 218, 38, 210, 46, 203, 53,     //  4  5  6  7
+    225, 31, 218, 38, 210, 46, 203, 53,     //  4  5  6  7
+    196, 60, 189, 67, 182, 74, 176, 80,     //  8  9 10 11
+    196, 60, 189, 67, 182, 74, 176, 80,     //  8  9 10 11
+    196, 60, 189, 67, 182, 74, 176, 80,     //  8  9 10 11
+    196, 60, 189, 67, 182, 74, 176, 80,     //  8  9 10 11
+    169, 87, 163, 93, 156, 100, 150, 106,   // 12 13 14 15
+    169, 87, 163, 93, 156, 100, 150, 106,   // 12 13 14 15
+    169, 87, 163, 93, 156, 100, 150, 106,   // 12 13 14 15
+    169, 87, 163, 93, 156, 100, 150, 106,   // 12 13 14 15
+    144, 112, 138, 118, 133, 123, 127, 129, // 16 17 18 19
+    144, 112, 138, 118, 133, 123, 127, 129, // 16 17 18 19
+    144, 112, 138, 118, 133, 123, 127, 129, // 16 17 18 19
+    144, 112, 138, 118, 133, 123, 127, 129, // 16 17 18 19
+    121, 135, 116, 140, 111, 145, 106, 150, // 20 21 22 23
+    121, 135, 116, 140, 111, 145, 106, 150, // 20 21 22 23
+    121, 135, 116, 140, 111, 145, 106, 150, // 20 21 22 23
+    121, 135, 116, 140, 111, 145, 106, 150, // 20 21 22 23
+    101, 155, 96, 160, 91, 165, 86, 170,    // 24 25 26 27
+    101, 155, 96, 160, 91, 165, 86, 170,    // 24 25 26 27
+    101, 155, 96, 160, 91, 165, 86, 170,    // 24 25 26 27
+    101, 155, 96, 160, 91, 165, 86, 170,    // 24 25 26 27
+    82, 174, 77, 179, 73, 183, 69, 187,     // 28 29 30 31
+    82, 174, 77, 179, 73, 183, 69, 187,     // 28 29 30 31
+    82, 174, 77, 179, 73, 183, 69, 187,     // 28 29 30 31
+    82, 174, 77, 179, 73, 183, 69, 187,     // 28 29 30 31
+    65, 191, 61, 195, 57, 199, 54, 202,     // 32 33 34 35
+    65, 191, 61, 195, 57, 199, 54, 202,     // 32 33 34 35
+    65, 191, 61, 195, 57, 199, 54, 202,     // 32 33 34 35
+    65, 191, 61, 195, 57, 199, 54, 202,     // 32 33 34 35
+    50, 206, 47, 209, 44, 212, 41, 215,     // 36 37 38 39
+    50, 206, 47, 209, 44, 212, 41, 215,     // 36 37 38 39
+    50, 206, 47, 209, 44, 212, 41, 215,     // 36 37 38 39
+    50, 206, 47, 209, 44, 212, 41, 215,     // 36 37 38 39
+    38, 218, 35, 221, 32, 224, 29, 227,     // 40 41 42 43
+    38, 218, 35, 221, 32, 224, 29, 227,     // 40 41 42 43
+    38, 218, 35, 221, 32, 224, 29, 227,     // 40 41 42 43
+    38, 218, 35, 221, 32, 224, 29, 227,     // 40 41 42 43
+    27, 229, 25, 231, 22, 234, 20, 236,     // 44 45 46 47
+    27, 229, 25, 231, 22, 234, 20, 236,     // 44 45 46 47
+    27, 229, 25, 231, 22, 234, 20, 236,     // 44 45 46 47
+    27, 229, 25, 231, 22, 234, 20, 236,     // 44 45 46 47
+    18, 238, 16, 240, 15, 241, 13, 243,     // 48 49 50 51
+    18, 238, 16, 240, 15, 241, 13, 243,     // 48 49 50 51
+    18, 238, 16, 240, 15, 241, 13, 243,     // 48 49 50 51
+    18, 238, 16, 240, 15, 241, 13, 243,     // 48 49 50 51
+    12, 244, 10, 246, 9, 247, 8, 248,       // 52 53 54 55
+    12, 244, 10, 246, 9, 247, 8, 248,       // 52 53 54 55
+    12, 244, 10, 246, 9, 247, 8, 248,       // 52 53 54 55
+    12, 244, 10, 246, 9, 247, 8, 248,       // 52 53 54 55
+    7, 249, 6, 250, 6, 250, 5, 251,         // 56 57 58 59
+    7, 249, 6, 250, 6, 250, 5, 251,         // 56 57 58 59
+    7, 249, 6, 250, 6, 250, 5, 251,         // 56 57 58 59
+    7, 249, 6, 250, 6, 250, 5, 251,         // 56 57 58 59
+    5, 251, 4, 252, 4, 252, 4, 252,         // 60 61 62 63
+    5, 251, 4, 252, 4, 252, 4, 252,         // 60 61 62 63
+    5, 251, 4, 252, 4, 252, 4, 252,         // 60 61 62 63
+    5, 251, 4, 252, 4, 252, 4, 252          // 60 61 62 63
+};
+
+// bs = 64
+EB_ALIGN(32) static const uint16_t sm_weights_64[128] = {
+    255, 1, 248, 8, 240, 16, 233, 23,       //  0  1  2  3
+    196, 60, 189, 67, 182, 74, 176, 80,     //  8  9 10 11
+    144, 112, 138, 118, 133, 123, 127, 129, // 16 17 18 19
+    101, 155, 96, 160, 91, 165, 86, 170,    // 24 25 26 27
+    225, 31, 218, 38, 210, 46, 203, 53,     //  4  5  6  7
+    169, 87, 163, 93, 156, 100, 150, 106,   // 12 13 14 15
+    121, 135, 116, 140, 111, 145, 106, 150, // 20 21 22 23
+    82, 174, 77, 179, 73, 183, 69, 187,     // 28 29 30 31
+    65, 191, 61, 195, 57, 199, 54, 202,     // 32 33 34 35
+    38, 218, 35, 221, 32, 224, 29, 227,     // 40 41 42 43
+    18, 238, 16, 240, 15, 241, 13, 243,     // 48 49 50 51
+    7, 249, 6, 250, 6, 250, 5, 251,         // 56 57 58 59
+    50, 206, 47, 209, 44, 212, 41, 215,     // 36 37 38 39
+    27, 229, 25, 231, 22, 234, 20, 236,     // 44 45 46 47
+    12, 244, 10, 246, 9, 247, 8, 248,       // 52 53 54 55
+    5, 251, 4, 252, 4, 252, 4, 252          // 60 61 62 63
+};
 // =============================================================================
 
 // DC RELATED PRED
@@ -816,5 +985,669 @@ void aom_highbd_v_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
     for (int32_t i = 0; i < 8; i++) {
         v_pred_64x8(&dst, stride, above0, above1);
     }
+}
+
+// =============================================================================
+
+// High bd Smooth Predictor Kernel
+
+// -----------------------------------------------------------------------------
+
+
+static INLINE void load_left_8(const uint16_t *const left, const __m512i r,
+    __m512i* lr)
+{
+    const __m128i l0 = _mm_loadu_si128((const __m128i *)left);
+    __m512i l = _mm512_broadcast_i32x4(l0);
+    lr[0] = _mm512_unpacklo_epi16(l, r);
+    lr[1] = _mm512_unpackhi_epi16(l, r);
+}
+
+// -----------------------------------------------------------------------------
+// 32xN
+
+static INLINE void load_right_weights_32(const uint16_t *const above,
+    __m512i *const r, __m512i *const weights)
+{
+    *r = _mm512_set1_epi16((uint16_t)above[31]);
+
+    weights[0] = _mm512_loadu_si512((const __m512i *)(sm_weights_32));
+    weights[1] = _mm512_loadu_si512((const __m512i *)(sm_weights_32 + 0x20));
+}
+
+// -----------------------------------------------------------------------------
+// 64xN
+
+static INLINE void load_right_weights_64(const uint16_t *const above,
+    __m512i *const r, __m512i *const weights)
+{
+    *r = _mm512_set1_epi16((uint16_t)above[63]);
+    weights[0] = _mm512_loadu_si512((const __m512i *)(sm_weights_64 + 0x00));
+    weights[1] = _mm512_loadu_si512((const __m512i *)(sm_weights_64 + 0x20));
+    weights[2] = _mm512_loadu_si512((const __m512i *)(sm_weights_64 + 0x40));
+    weights[3] = _mm512_loadu_si512((const __m512i *)(sm_weights_64 + 0x60));
+}
+
+static INLINE void prepare_ab(const uint16_t *const above, const __m512i b,
+    __m512i *const ab)
+{
+    const __m512i a = _mm512_loadu_si512((const __m512i *)above);
+    ab[0] = _mm512_unpacklo_epi16(a, b);
+    ab[1] = _mm512_unpackhi_epi16(a, b);
+}
+
+static INLINE void init_32(const uint16_t *const above,
+    const uint16_t *const left, const int32_t h, __m512i *const ab,
+    __m512i *const r, __m512i *const weights_w, __m512i *const rep)
+{
+    const __m512i b = _mm512_set1_epi16((uint16_t)left[h - 1]);
+    prepare_ab(above + 0x00, b, ab + 0);
+    load_right_weights_32(above, r, weights_w);
+
+    rep[0] = _mm512_set1_epi32(0x03020100);
+    rep[1] = _mm512_set1_epi32(0x07060504);
+    rep[2] = _mm512_set1_epi32(0x0B0A0908);
+    rep[3] = _mm512_set1_epi32(0x0F0E0D0C);
+}
+
+static INLINE __m512i smooth_pred_kernel(const __m512i *const weights_w,
+    const __m512i weights_h, const __m512i rep, const __m512i* ab,
+    const __m512i lr)
+{
+    const __m512i round = _mm512_set1_epi32((1 << sm_weight_log2_scale));
+    __m512i s[2], sum[2];
+    __m512i w = _mm512_shuffle_epi8(weights_h, rep);
+    __m512i t = _mm512_shuffle_epi8(lr, rep);
+    s[0] = _mm512_madd_epi16(ab[0], w);
+    s[1] = _mm512_madd_epi16(ab[1], w);
+    sum[0] = _mm512_madd_epi16(t, weights_w[0]);
+    sum[1] = _mm512_madd_epi16(t, weights_w[1]);
+    sum[0] = _mm512_add_epi32(sum[0], s[0]);
+    sum[1] = _mm512_add_epi32(sum[1], s[1]);
+    sum[0] = _mm512_add_epi32(sum[0], round);
+    sum[1] = _mm512_add_epi32(sum[1], round);
+    sum[0] = _mm512_srai_epi32(sum[0], 1 + sm_weight_log2_scale);
+    sum[1] = _mm512_srai_epi32(sum[1], 1 + sm_weight_log2_scale);
+    return _mm512_packs_epi32(sum[0], sum[1]);
+
+}
+
+static INLINE void smooth_pred_32(const __m512i *const weights_w,
+    const __m512i weights_h, const __m512i rep, const __m512i *const ab,
+    const __m512i lr, uint16_t **const dst, const ptrdiff_t stride)
+{
+    __m512i d;
+
+    d = smooth_pred_kernel(weights_w + 0, weights_h, rep, ab, lr);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), d);
+
+    *dst += stride;
+}
+
+static INLINE void smooth_pred_32x4(const __m512i *const weights_w,
+    const uint16_t *const sm_weights_h, const __m512i *const rep,
+    const __m512i *const ab, const __m512i lr, uint16_t **const dst,
+    const ptrdiff_t stride)
+{
+    const __m512i weights_h = _mm512_loadu_si512((const __m512i *)sm_weights_h);
+    smooth_pred_32(weights_w, weights_h, rep[0], ab, lr, dst, stride);
+    smooth_pred_32(weights_w, weights_h, rep[1], ab, lr, dst, stride);
+    smooth_pred_32(weights_w, weights_h, rep[2], ab, lr, dst, stride);
+    smooth_pred_32(weights_w, weights_h, rep[3], ab, lr, dst, stride);
+}
+
+static INLINE void smooth_pred_32x8(const uint16_t *const left,
+    const __m512i *const weights_w, const uint16_t *const sm_weights_h,
+    const __m512i *const rep, const __m512i *const ab, const __m512i r,
+    uint16_t **const dst, const ptrdiff_t stride)
+{
+    __m512i lr[2];
+    load_left_8(left, r, lr);
+
+    smooth_pred_32x4(weights_w, sm_weights_h + 0, rep, ab, lr[0], dst, stride);
+    smooth_pred_32x4(weights_w, sm_weights_h + 32, rep, ab, lr[1], dst, stride);
+}
+
+// 32x8
+
+void aom_highbd_smooth_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], r, weights_w[2], rep[4];
+    (void)bd;
+
+    init_32(above, left, 8, ab, &r, weights_w, rep);
+
+    smooth_pred_32x8(left, weights_w, sm_weights_d_8, rep, ab, r, &dst, stride);
+}
+
+// 32x16
+
+void aom_highbd_smooth_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], r, weights_w[2], rep[4];
+    (void)bd;
+
+    init_32(above, left, 16, ab, &r, weights_w, rep);
+
+    for (int32_t i = 0; i < 2; i++) {
+        smooth_pred_32x8(left + 8 * i, weights_w, sm_weights_d_16 + 64 * i, rep,
+            ab, r, &dst, stride);
+    }
+}
+
+//32x32
+void aom_highbd_smooth_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], r, weights_w[2], rep[4];
+    (void)bd;
+
+    init_32(above, left, 32, ab, &r, weights_w, rep);
+
+    for (int32_t i = 0; i < 4; i++) {
+        smooth_pred_32x8(left + 8 * i, weights_w, sm_weights_d_32 + 64 * i, rep,
+            ab, r, &dst, stride);
+    }
+}
+
+// 32x64
+
+void aom_highbd_smooth_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], r, weights_w[2], rep[4];
+    (void)bd;
+
+    init_32(above, left, 64, ab, &r, weights_w, rep);
+
+    for (int32_t i = 0; i < 8; i++) {
+        smooth_pred_32x8(left + 8 * i, weights_w, sm_weights_d_64 + 64 * i, rep,
+            ab, r, &dst, stride);
+    }
+}
+
+
+static INLINE void init_64(const uint16_t *const above,
+    const uint16_t *const left, const int32_t h, __m512i *const ab,
+    __m512i *r, __m512i *const weights_w, __m512i *const rep)
+{
+    const __m512i b = _mm512_set1_epi16((uint16_t)left[h - 1]);
+    prepare_ab(above + 0x00, b, ab + 0);
+    prepare_ab(above + 0x20, b, ab + 2);
+    load_right_weights_64(above, r, weights_w);
+
+    rep[0] = _mm512_set1_epi32(0x03020100);
+    rep[1] = _mm512_set1_epi32(0x07060504);
+    rep[2] = _mm512_set1_epi32(0x0B0A0908);
+    rep[3] = _mm512_set1_epi32(0x0F0E0D0C);
+}
+
+static INLINE void smooth_pred_64(const __m512i *const weights_w,
+    const __m512i weights_h, const __m512i rep, const __m512i *const ab,
+    const __m512i lr, uint16_t **const dst, const ptrdiff_t stride)
+{
+    __m512i d;
+
+    d = smooth_pred_kernel(weights_w + 0, weights_h, rep, ab + 0, lr);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), d);
+
+    d = smooth_pred_kernel(weights_w + 2, weights_h, rep, ab + 2, lr);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x20), d);
+    *dst += stride;
+}
+
+static INLINE void smooth_pred_64x4(const __m512i *const weights_w,
+    const uint16_t *const sm_weights_h, const __m512i *const rep,
+    const __m512i *const ab, const __m512i lr, uint16_t **const dst,
+    const ptrdiff_t stride)
+{
+    const __m512i weights_h = _mm512_loadu_si512((const __m512i *)sm_weights_h);
+    smooth_pred_64(weights_w, weights_h, rep[0], ab, lr, dst, stride);
+    smooth_pred_64(weights_w, weights_h, rep[1], ab, lr, dst, stride);
+    smooth_pred_64(weights_w, weights_h, rep[2], ab, lr, dst, stride);
+    smooth_pred_64(weights_w, weights_h, rep[3], ab, lr, dst, stride);
+}
+
+static INLINE void smooth_pred_64x8(const uint16_t *const left,
+    const __m512i *const weights_w, const uint16_t *const sm_weights_h,
+    const __m512i *const rep, const __m512i *const ab, const __m512i r,
+    uint16_t **const dst, const ptrdiff_t stride)
+{
+    __m512i lr[2];
+    load_left_8(left, r, lr);
+
+    smooth_pred_64x4(weights_w, sm_weights_h + 0, rep, ab, lr[0], dst, stride);
+    smooth_pred_64x4(weights_w, sm_weights_h + 32, rep, ab, lr[1], dst, stride);
+}
+
+// 64x16
+
+void aom_highbd_smooth_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[4], r, weights_w[4], rep[4];
+    (void)bd;
+
+    init_64(above, left, 16, ab, &r, weights_w, rep);
+
+    for (int32_t i = 0; i < 2; i++) {
+        smooth_pred_64x8(left + 8 * i, weights_w, sm_weights_d_16 + 64 * i, rep,
+            ab, r, &dst, stride);
+    }
+}
+
+// 64x32
+
+void aom_highbd_smooth_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[4], r, weights_w[4], rep[4];
+    (void)bd;
+
+    init_64(above, left, 32, ab, &r, weights_w, rep);
+
+    for (int32_t i = 0; i < 4; i++) {
+        smooth_pred_64x8(left + 8 * i, weights_w, sm_weights_d_32 + 64 * i, rep,
+            ab, r, &dst, stride);
+    }
+}
+
+// 64x64
+
+void aom_highbd_smooth_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[4], r, weights_w[4], rep[4];
+    (void)bd;
+
+    init_64(above, left, 64, ab, &r, weights_w, rep);
+
+    for (int32_t i = 0; i < 8; i++) {
+        smooth_pred_64x8(left + 8 * i, weights_w, sm_weights_d_64 + 64 * i, rep,
+            ab, r, &dst, stride);
+    }
+}
+
+// =============================================================================
+
+// High bd Smooth V Predictor Kernel
+
+// -----------------------------------------------------------------------------
+
+static INLINE __m512i smooth_v_pred_kernel(const __m512i weights,
+    const __m512i rep, const __m512i *const ab)
+{
+    const __m512i round = _mm512_set1_epi32((1 << (sm_weight_log2_scale - 1)));
+    __m512i sum[2];
+    const __m512i w = _mm512_shuffle_epi8(weights, rep);
+    sum[0] = _mm512_madd_epi16(ab[0], w);
+    sum[1] = _mm512_madd_epi16(ab[1], w);
+    sum[0] = _mm512_add_epi32(sum[0], round);
+    sum[1] = _mm512_add_epi32(sum[1], round);
+    sum[0] = _mm512_srai_epi32(sum[0], sm_weight_log2_scale);
+    sum[1] = _mm512_srai_epi32(sum[1], sm_weight_log2_scale);
+    return _mm512_packs_epi32(sum[0], sum[1]);
+}
+
+static INLINE void smooth_v_pred_32(const __m512i weights, const __m512i rep,
+    const __m512i *const ab, uint16_t **const dst, const ptrdiff_t stride)
+{
+    __m512i d;
+
+    d = smooth_v_pred_kernel(weights, rep, ab + 0);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), d);
+    *dst += stride;
+}
+
+static INLINE void smooth_v_pred_32x4(const uint16_t *const sm_weights_h,
+    const __m512i *const rep, const __m512i *const ab, uint16_t **const dst,
+    const ptrdiff_t stride)
+{
+    const __m512i weights = _mm512_loadu_si512((const __m512i *)sm_weights_h);
+    smooth_v_pred_32(weights, rep[0], ab, dst, stride);
+    smooth_v_pred_32(weights, rep[1], ab, dst, stride);
+    smooth_v_pred_32(weights, rep[2], ab, dst, stride);
+    smooth_v_pred_32(weights, rep[3], ab, dst, stride);
+}
+// 32x8
+
+static INLINE void smooth_v_pred_32x8(const uint16_t *const sm_weights_h,
+    const __m512i *const rep, const __m512i *const ab, uint16_t **const dst,
+    const ptrdiff_t stride)
+{
+    smooth_v_pred_32x4(sm_weights_h + 0, rep, ab, dst, stride);
+    smooth_v_pred_32x4(sm_weights_h + 32, rep, ab, dst, stride);
+}
+
+static INLINE void smooth_v_init_32(const uint16_t *const above,
+    const uint16_t *const left, const int32_t h, __m512i *const ab,
+    __m512i *const rep)
+{
+    const __m512i b = _mm512_set1_epi16((uint16_t)left[h - 1]);
+    prepare_ab(above + 0x00, b, ab + 0);
+
+    rep[0] = _mm512_set1_epi32(0x03020100);
+    rep[1] = _mm512_set1_epi32(0x07060504);
+    rep[2] = _mm512_set1_epi32(0x0B0A0908);
+    rep[3] = _mm512_set1_epi32(0x0F0E0D0C);
+}
+
+void aom_highbd_smooth_v_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], rep[4];
+    (void)bd;
+
+    smooth_v_init_32(above, left, 8, ab, rep);
+
+    smooth_v_pred_32x8(sm_weights_d_8, rep, ab, &dst, stride);
+}
+
+// 32x16
+
+void aom_highbd_smooth_v_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], rep[4];
+    (void)bd;
+
+    smooth_v_init_32(above, left, 16, ab, rep);
+
+    for (int32_t i = 0; i < 2; i++) {
+        smooth_v_pred_32x8(sm_weights_d_16 + 64 * i, rep, ab, &dst, stride);
+    }
+}
+
+// 32x32
+
+void aom_highbd_smooth_v_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], rep[4];
+    (void)bd;
+
+    smooth_v_init_32(above, left, 32, ab, rep);
+
+    for (int32_t i = 0; i < 4; i++) {
+        smooth_v_pred_32x8(sm_weights_d_32 + 64 * i, rep, ab, &dst, stride);
+    }
+}
+
+// 32x64
+
+void aom_highbd_smooth_v_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[2], rep[4];
+    (void)bd;
+
+    smooth_v_init_32(above, left, 64, ab, rep);
+
+    for (int32_t i = 0; i < 8; i++) {
+        smooth_v_pred_32x8(sm_weights_d_64 + 64 * i, rep, ab, &dst, stride);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// 64xN
+
+static INLINE void smooth_v_init_64(const uint16_t *const above,
+    const uint16_t *const left, const int32_t h, __m512i *const ab,
+    __m512i *const rep)
+{
+    const __m512i b = _mm512_set1_epi16((uint16_t)left[h - 1]);
+    prepare_ab(above + 0x00, b, ab + 0);
+    prepare_ab(above + 0x20, b, ab + 2);
+
+    rep[0] = _mm512_set1_epi32(0x03020100);
+    rep[1] = _mm512_set1_epi32(0x07060504);
+    rep[2] = _mm512_set1_epi32(0x0B0A0908);
+    rep[3] = _mm512_set1_epi32(0x0F0E0D0C);
+}
+
+static INLINE void smooth_v_pred_64(const __m512i weights, const __m512i rep,
+    const __m512i *const ab, uint16_t **const dst, const ptrdiff_t stride)
+{
+    __m512i d;
+
+    d = smooth_v_pred_kernel(weights, rep, ab + 0);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), d);
+
+    d = smooth_v_pred_kernel(weights, rep, ab + 2);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x20), d);
+
+    *dst += stride;
+}
+
+static INLINE void smooth_v_pred_64x4(const uint16_t *const sm_weights_h,
+    const __m512i *const rep, const __m512i *const ab, uint16_t **const dst,
+    const ptrdiff_t stride)
+{
+    const __m512i weights = _mm512_loadu_si512((const __m512i *)sm_weights_h);
+    smooth_v_pred_64(weights, rep[0], ab, dst, stride);
+    smooth_v_pred_64(weights, rep[1], ab, dst, stride);
+    smooth_v_pred_64(weights, rep[2], ab, dst, stride);
+    smooth_v_pred_64(weights, rep[3], ab, dst, stride);
+}
+
+static INLINE void smooth_v_pred_64x8(const uint16_t *const sm_weights_h,
+    const __m512i *const rep, const __m512i *const ab,
+    uint16_t **const dst, const ptrdiff_t stride)
+{
+    smooth_v_pred_64x4(sm_weights_h + 0, rep, ab, dst, stride);
+    smooth_v_pred_64x4(sm_weights_h + 32, rep, ab, dst, stride);
+}
+
+// 64x16
+
+void aom_highbd_smooth_v_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[4], rep[4];
+    (void)bd;
+
+    smooth_v_init_64(above, left, 16, ab, rep);
+
+    for (int32_t i = 0; i < 2; i++) {
+        smooth_v_pred_64x8(sm_weights_d_16 + 64 * i, rep, ab, &dst, stride);
+    }
+}
+// 64x32
+
+void aom_highbd_smooth_v_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[4], rep[4];
+    (void)bd;
+
+    smooth_v_init_64(above, left, 32, ab, rep);
+
+    for (int32_t i = 0; i < 4; i++) {
+        smooth_v_pred_64x8(sm_weights_d_32 + 64 * i, rep, ab, &dst, stride);
+    }
+}
+
+// 64x64
+
+void aom_highbd_smooth_v_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    __m512i ab[4], rep[4];
+    (void)bd;
+
+    smooth_v_init_64(above, left, 64, ab, rep);
+
+    for (int32_t i = 0; i < 8; i++) {
+        smooth_v_pred_64x8(sm_weights_d_64 + 64 * i, rep, ab, &dst, stride);
+    }
+}
+
+// =============================================================================
+
+// SMOOTH_H_PRED
+
+// -----------------------------------------------------------------------------
+static INLINE __m512i smooth_h_pred_kernel(const __m512i *const weights,
+    const __m512i lr)
+{
+    const __m512i round = _mm512_set1_epi32((1 << (sm_weight_log2_scale - 1)));
+    __m512i sum[2];
+    sum[0] = _mm512_madd_epi16(lr, weights[0]);
+    sum[1] = _mm512_madd_epi16(lr, weights[1]);
+    sum[0] = _mm512_add_epi32(sum[0], round);
+    sum[1] = _mm512_add_epi32(sum[1], round);
+    sum[0] = _mm512_srai_epi32(sum[0], sm_weight_log2_scale);
+    sum[1] = _mm512_srai_epi32(sum[1], sm_weight_log2_scale);
+    return _mm512_packs_epi32(sum[0], sum[1]);
+}
+
+// -----------------------------------------------------------------------------
+// 32xN
+
+static INLINE void smooth_h_pred_32(const __m512i *const weights,
+    __m512i *const lr, uint16_t **const dst, const ptrdiff_t stride)
+{
+    const __m512i rep = _mm512_set1_epi32(0x03020100);
+    const __m512i t = _mm512_shuffle_epi8(*lr, rep);
+    __m512i d;
+
+    d = smooth_h_pred_kernel(weights + 0, t);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), d);
+    *dst += stride;
+    *lr = _mm512_bsrli_epi128(*lr, FOUR);
+}
+
+static INLINE void smooth_h_pred_32x4(const __m512i *const weights,
+    __m512i *const lr, uint16_t **const dst, const ptrdiff_t stride)
+{
+    smooth_h_pred_32(weights, lr, dst, stride);
+    smooth_h_pred_32(weights, lr, dst, stride);
+    smooth_h_pred_32(weights, lr, dst, stride);
+    smooth_h_pred_32(weights, lr, dst, stride);
+}
+
+static INLINE void smooth_h_pred_32x8(uint16_t *dst,
+    const ptrdiff_t stride, const uint16_t *const above, const uint16_t *left,
+    const int32_t n)
+{
+    __m512i lr[2], weights[2];
+    __m512i r;
+
+    load_right_weights_32(above, &r, weights);
+
+    for (int32_t i = 0; i < n; i++) {
+        load_left_8(left, r, lr);
+        smooth_h_pred_32x4(weights, ((__m512i *)&lr + 0), &dst, stride);
+        smooth_h_pred_32x4(weights, ((__m512i *)&lr + 1), &dst, stride);
+        left += 8;
+    }
+
+}
+
+// 32x8
+
+void aom_highbd_smooth_h_predictor_32x8_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_32x8(dst, stride, above, left, 1);
+}
+
+// 32x16
+
+void aom_highbd_smooth_h_predictor_32x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_32x8(dst, stride, above, left, 2);
+}
+
+// 32x32
+
+void aom_highbd_smooth_h_predictor_32x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_32x8(dst, stride, above, left, 4);
+}
+
+// 32x64
+
+void aom_highbd_smooth_h_predictor_32x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_32x8(dst, stride, above, left, 8);
+}
+static INLINE void smooth_h_pred_64(const __m512i *const weights,
+    __m512i *const lr, uint16_t **const dst, const ptrdiff_t stride)
+{
+    const __m512i rep = _mm512_set1_epi32(0x03020100);
+    const __m512i t = _mm512_shuffle_epi8(*lr, rep);
+    __m512i d0, d1;
+
+    *((__m512i *)&d0 + 0) = smooth_h_pred_kernel(weights + 0, t);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x00), d0);
+
+    *((__m512i *)&d1 + 0) = smooth_h_pred_kernel(weights + 2, t);
+    _mm512_storeu_si512((__m512i *)(*dst + 0x20), d1);
+
+    *dst += stride;
+    *lr = _mm512_bsrli_epi128(*lr, FOUR);
+}
+
+static INLINE void smooth_h_pred_64x4(const __m512i *const weights,
+    __m512i *const lr, uint16_t **const dst, const ptrdiff_t stride)
+{
+    smooth_h_pred_64(weights, lr, dst, stride);
+    smooth_h_pred_64(weights, lr, dst, stride);
+    smooth_h_pred_64(weights, lr, dst, stride);
+    smooth_h_pred_64(weights, lr, dst, stride);
+}
+
+static INLINE void smooth_h_pred_64x8(uint16_t *dst,
+    const ptrdiff_t stride, const uint16_t *const above, const uint16_t *left,
+    const int32_t n)
+{
+    __m512i r;
+    __m512i lr[2], weights[4];
+
+    load_right_weights_64(above, &r, weights);
+
+    for (int32_t i = 0; i < n; i++) {
+        load_left_8(left, r, lr);
+        smooth_h_pred_64x4(weights, (__m512i *)&lr + 0, &dst, stride);
+        smooth_h_pred_64x4(weights, (__m512i *)&lr + 1, &dst, stride);
+        left += 8;
+    }
+}
+
+// 64x16
+
+void aom_highbd_smooth_h_predictor_64x16_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_64x8(dst, stride, above, left, 2);
+}
+
+// 64x32
+
+void aom_highbd_smooth_h_predictor_64x32_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_64x8(dst, stride, above, left, 4);
+}
+
+// 64x64
+
+void aom_highbd_smooth_h_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
+    const uint16_t *above, const uint16_t *left, int32_t bd)
+{
+    (void)bd;
+    smooth_h_pred_64x8(dst, stride, above, left, 8);
 }
 #endif

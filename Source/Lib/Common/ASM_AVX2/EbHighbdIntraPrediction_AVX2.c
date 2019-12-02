@@ -914,7 +914,7 @@ static INLINE void h_pred_32x8(uint16_t **dst, const ptrdiff_t stride,
     assert(!((intptr_t)*dst % 32));
     assert(!(stride % 32));
 
-    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_32(dst, stride, _mm_srli_si128(left_u16, 0));
     h_pred_32(dst, stride, _mm_srli_si128(left_u16, 2));
@@ -974,7 +974,7 @@ static INLINE void h_pred_64x8(uint16_t **dst, const ptrdiff_t stride,
     assert(!((intptr_t)*dst % 32));
     assert(!(stride % 32));
 
-    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_64(dst, stride, _mm_srli_si128(left_u16, 0));
     h_pred_64(dst, stride, _mm_srli_si128(left_u16, 2));
@@ -1474,7 +1474,7 @@ static INLINE __m256i load_left_4(const uint16_t *const left, const __m256i r) {
 static INLINE void load_left_8(const uint16_t *const left, const __m256i r,
     __m256i *const lr)
 {
-    const __m128i l0 = _mm_load_si128((const __m128i *)left);
+    const __m128i l0 = _mm_loadu_si128((const __m128i *)left);
     // 0 1 2 3 4 5 6 7  0 1 2 3 4 5 6 7
     const __m256i l =
         _mm256_inserti128_si256(_mm256_castsi128_si256(l0), l0, 1);
@@ -1776,13 +1776,13 @@ static INLINE void load_right_weights_32(const uint16_t *const above,
     *r = _mm256_set1_epi16((uint16_t)above[31]);
 
     //  0  1  2  3   8  9 10 11
-    weights[0] = _mm256_load_si256((const __m256i *)(sm_weights_32 + 0x00));
+    weights[0] = _mm256_loadu_si256((const __m256i *)(sm_weights_32 + 0x00));
     //  4  5  6  7  12 13 14 15
-    weights[1] = _mm256_load_si256((const __m256i *)(sm_weights_32 + 0x10));
+    weights[1] = _mm256_loadu_si256((const __m256i *)(sm_weights_32 + 0x10));
     // 16 17 18 19  24 25 26 27
-    weights[2] = _mm256_load_si256((const __m256i *)(sm_weights_32 + 0x20));
+    weights[2] = _mm256_loadu_si256((const __m256i *)(sm_weights_32 + 0x20));
     // 20 21 22 23  28 29 30 31
-    weights[3] = _mm256_load_si256((const __m256i *)(sm_weights_32 + 0x30));
+    weights[3] = _mm256_loadu_si256((const __m256i *)(sm_weights_32 + 0x30));
 }
 
 static INLINE void init_32(const uint16_t *const above,
@@ -1821,7 +1821,7 @@ static INLINE void smooth_pred_32x4(const __m256i *const weights_w,
     const __m256i *const ab, const __m256i lr, uint16_t **const dst,
     const ptrdiff_t stride)
 {
-    const __m256i weights_h = _mm256_load_si256((const __m256i *)sm_weights_h);
+    const __m256i weights_h = _mm256_loadu_si256((const __m256i *)sm_weights_h);
     smooth_pred_32(weights_w, weights_h, rep[0], ab, lr, dst, stride);
     smooth_pred_32(weights_w, weights_h, rep[1], ab, lr, dst, stride);
     smooth_pred_32(weights_w, weights_h, rep[2], ab, lr, dst, stride);
@@ -1973,7 +1973,7 @@ static INLINE void smooth_pred_64x4(const __m256i *const weights_w,
     const __m256i *const ab, const __m256i lr, uint16_t **const dst,
     const ptrdiff_t stride)
 {
-    const __m256i weights_h = _mm256_load_si256((const __m256i *)sm_weights_h);
+    const __m256i weights_h = _mm256_loadu_si256((const __m256i *)sm_weights_h);
     smooth_pred_64(weights_w, weights_h, rep[0], ab, lr, dst, stride);
     smooth_pred_64(weights_w, weights_h, rep[1], ab, lr, dst, stride);
     smooth_pred_64(weights_w, weights_h, rep[2], ab, lr, dst, stride);

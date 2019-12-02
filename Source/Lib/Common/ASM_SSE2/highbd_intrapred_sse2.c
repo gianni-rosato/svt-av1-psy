@@ -227,7 +227,7 @@ static INLINE void h_store_32_unpackhi(uint16_t **dst, const ptrdiff_t stride,
 
 static INLINE void h_predictor_32x8(uint16_t *dst, ptrdiff_t stride,
     const uint16_t *left) {
-    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
     const __m128i row0 = _mm_shufflelo_epi16(left_u16, 0x0);
     const __m128i row1 = _mm_shufflelo_epi16(left_u16, 0x55);
     const __m128i row2 = _mm_shufflelo_epi16(left_u16, 0xaa);
