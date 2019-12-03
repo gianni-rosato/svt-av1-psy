@@ -4868,7 +4868,7 @@ EbErrorType av1_estimate_transform(
 
     case TX_32X16:
         // TTK
-        if (transform_type == IDTX)
+        if ((transform_type == DCT_DCT) || (transform_type == IDTX))
             eb_av1_fwd_txfm2d_32x16(
                 residual_buffer,
                 coeff_buffer,
