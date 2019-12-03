@@ -1302,7 +1302,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 1                 ON for INTRA blocks
 #if ATB_10_BIT
 #if ATB_HBD
-        if (picture_control_set_ptr->enc_mode <= ENC_M1 && !picture_control_set_ptr->sc_content_detected)
+        if (picture_control_set_ptr->enc_mode <= ENC_M1)
 #else
         if (picture_control_set_ptr->enc_mode <= ENC_M1 &&  !sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
 #endif

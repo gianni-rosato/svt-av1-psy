@@ -514,7 +514,7 @@ void setup_rtcd_internal(EbAsm asm_type)
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_avx2;
     eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_c;
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
-    eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
+    eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
     if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
 #if II_COMP_FLAG
@@ -1901,7 +1901,7 @@ void setup_rtcd_internal(EbAsm asm_type)
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin);
     SET_SSE2(initialize_buffer_32bits,
-             initialize_buffer_32bits_sse2_intrin,
+             initialize_buffer_32bits_c,
              initialize_buffer_32bits_sse2_intrin);
     SET_SSE41(compute8x8_satd_u8,
               compute8x8_satd_u8_c,

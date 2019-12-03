@@ -1256,17 +1256,33 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE)
     {
         if (picture_control_set_ptr->enc_mode == ENC_M0)
-#else
-        if (picture_control_set_ptr->enc_mode == ENC_M0)
-
-#endif
             context_ptr->global_mv_injection = 1;
         else
             context_ptr->global_mv_injection = 0;
     }
     else
         context_ptr->global_mv_injection = 0;
-
+#else
+    if (sequence_control_set_ptr->static_config.enable_global_warped_motion == EB_TRUE)
+    {
+        if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
+        {
+            if (picture_control_set_ptr->enc_mode <= ENC_M1)
+                context_ptr->global_mv_injection = 1;
+            else
+                context_ptr->global_mv_injection = 0;
+        }
+        else
+        {
+            if (picture_control_set_ptr->enc_mode <= ENC_M7)
+                context_ptr->global_mv_injection = 1;
+            else
+                context_ptr->global_mv_injection = 0;
+        }
+    }
+    else
+        context_ptr->global_mv_injection = 0;
+#endif
 #if M0_OPT
     if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
         context_ptr->new_nearest_near_comb_injection = 0;
