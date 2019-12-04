@@ -19,6 +19,7 @@
 
 #include "EbComputeSAD.h"
 #include "EbReferenceObject.h"
+#include "EbAvcStyleMcp.h"
 #include "EbMeSadCalculation.h"
 
 #include "EbIntraPrediction.h"

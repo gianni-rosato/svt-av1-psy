@@ -35,6 +35,7 @@
 #include "EbComputeMean.h"
 #include "EbHmCode.h"
 #include "EbMeSadCalculation.h"
+#include "EbAvcStyleMcp.h"
 
  /**************************************
  * Instruction Set Support
@@ -1916,14 +1917,14 @@ void setup_rtcd_internal(EbAsm asm_type)
              nxm_sad_avg_kernel_helper_c,
              nxm_sad_avg_kernel_helper_avx2);
     SET_SSSE3(avc_style_luma_interpolation_filter,
-              avc_style_luma_interpolation_filter_helper_ssse3, //Add C
+              avc_style_luma_interpolation_filter_helper_c,
               avc_style_luma_interpolation_filter_helper_ssse3);
     SET_SSE2_AVX2(compute_mean_8x8,
-                  compute_mean8x8_sse2_intrin, //Add C
+                  compute_mean_c,
                   compute_mean8x8_sse2_intrin,
                   compute_mean8x8_avx2_intrin);
     SET_SSE2(compute_mean_square_values_8x8,
-             compute_mean_of_squared_values8x8_sse2_intrin, //Add C
+             compute_mean_squared_values_c,
              compute_mean_of_squared_values8x8_sse2_intrin);
     SET_SSE2_AVX2(pack2d_16_bit_src_mul4,
                   eb_enc_msb_pack2_d,
@@ -1932,9 +1933,6 @@ void setup_rtcd_internal(EbAsm asm_type)
     SET_SSE2(un_pack2d_16_bit_src_mul4,
              eb_enc_msb_un_pack2_d,
              eb_enc_msb_un_pack2d_sse2_intrin);
-    SET_SSE2(picture_addition,
-             picture_addition_sse2, //Add C
-             picture_addition_sse2);
     SET_SSE2_AVX2(compute_interm_var_four8x8,
              compute_interm_var_four8x8_c,
              compute_interm_var_four8x8_helper_sse2,

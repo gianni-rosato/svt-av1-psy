@@ -28,6 +28,7 @@
 #include "EbTransforms.h"
 #include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"
+#include "EbAvcStyleMcp.h"
 #include "aom_dsp_rtcd.h"
 #include "EbCodingLoop.h"
 

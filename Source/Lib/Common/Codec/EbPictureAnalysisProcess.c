@@ -422,6 +422,59 @@ uint64_t ComputeVariance16x16(
     return (meanOf16x16SquaredValuesBlocks - (meanOf16x16Blocks * meanOf16x16Blocks));
 }
 
+
+/*******************************************
+ * compute_mean
+ *   returns the mean of a block
+ *******************************************/
+uint64_t compute_mean_c(
+    uint8_t* input_samples,     /**< input parameter, input samples Ptr */
+    uint32_t input_stride,      /**< input parameter, input stride */
+    uint32_t input_area_width,  /**< input parameter, input area width */
+    uint32_t input_area_height) /**< input parameter, input area height */
+{
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
+
+    for (vi = 0; vi < input_area_height; vi++) {
+        for (hi = 0; hi < input_area_width; hi++) {
+            block_mean += input_samples[hi];
+        }
+        input_samples += input_stride;
+    }
+
+    block_mean = (block_mean << (VARIANCE_PRECISION >> 1)) /
+        (input_area_width * input_area_height);
+
+    return block_mean;
+}
+
+/*******************************************
+ * compute_mean_squared_values_c
+ *   returns the Mean of Squared Values
+ *******************************************/
+uint64_t compute_mean_squared_values_c(
+    uint8_t* input_samples,     /**< input parameter, input samples Ptr */
+    uint32_t input_stride,      /**< input parameter, input stride */
+    uint32_t input_area_width,  /**< input parameter, input area width */
+    uint32_t input_area_height) /**< input parameter, input area height */
+{
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
+
+    for (vi = 0; vi < input_area_height; vi++) {
+        for (hi = 0; hi < input_area_width; hi++) {
+            block_mean += input_samples[hi] * input_samples[hi];
+        }
+        input_samples += input_stride;
+    }
+
+    block_mean = (block_mean << VARIANCE_PRECISION) /
+        (input_area_width * input_area_height);
+
+    return block_mean;
+}
+
 uint64_t compute_sub_mean_c(
     uint8_t* input_samples,     /**< input parameter, input samples Ptr */
     uint32_t input_stride,      /**< input parameter, input stride */

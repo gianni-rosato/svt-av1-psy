@@ -36,7 +36,7 @@ void avc_style_luma_interpolation_filter_pose_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic, src_stride, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(ref_pic, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, 0, skip, 2);
-    picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posf_ssse3(
@@ -54,7 +54,7 @@ void avc_style_luma_interpolation_filter_posf_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic - src_stride, src_stride, temp_buf + tempBufSize, pu_width, pu_width, skip ? (2 * pu_height + 3) : (pu_height + 3), 0, EB_FALSE, 2);
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(temp_buf + tempBufSize + pu_width, pu_width, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
-    picture_average_kernel_sse2(temp_buf + tempBufSize + pu_width, skip ? 2 * pu_width : pu_width, temp_buf, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf + tempBufSize + pu_width, skip ? 2 * pu_width : pu_width, temp_buf, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posg_ssse3(
@@ -72,7 +72,7 @@ void avc_style_luma_interpolation_filter_posg_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic, src_stride, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(ref_pic + 1, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, 0, skip, 2);
-    picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posi_ssse3(
@@ -90,7 +90,7 @@ void avc_style_luma_interpolation_filter_posi_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(ref_pic, src_stride, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
     avc_style_luma_interpolation_filter_posj_ssse3(ref_pic, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, temp_buf + 2 * tempBufSize, skip, 2);
-    picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posj_ssse3(
@@ -128,7 +128,7 @@ void avc_style_luma_interpolation_filter_posk_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(ref_pic + 1, src_stride, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
     avc_style_luma_interpolation_filter_posj_ssse3(ref_pic, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, temp_buf + 2 * tempBufSize, skip, 2);
-    picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posp_ssse3(
@@ -146,7 +146,7 @@ void avc_style_luma_interpolation_filter_posp_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(ref_pic, src_stride, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic + src_stride, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, 0, skip, 2);
-    picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posq_ssse3(
@@ -164,7 +164,7 @@ void avc_style_luma_interpolation_filter_posq_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic - src_stride, src_stride, temp_buf + tempBufSize, pu_width, pu_width, skip ? (2 * pu_height + 3) : (pu_height + 3), 0, EB_FALSE, 2);
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(temp_buf + tempBufSize + pu_width, pu_width, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
-    picture_average_kernel_sse2(temp_buf + tempBufSize + 2 * pu_width, skip ? 2 * pu_width : pu_width, temp_buf, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf + tempBufSize + 2 * pu_width, skip ? 2 * pu_width : pu_width, temp_buf, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_posr_ssse3(
@@ -182,7 +182,7 @@ void avc_style_luma_interpolation_filter_posr_ssse3(
     (void)frac_pos;
     avc_style_luma_interpolation_filter_vertical_ssse3_intrin(ref_pic + 1, src_stride, temp_buf, pu_width, pu_width, pu_height, 0, skip, 2);
     avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(ref_pic + src_stride, src_stride, temp_buf + tempBufSize, pu_width, pu_width, pu_height, 0, skip, 2);
-    picture_average_kernel_sse2(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
+    picture_average_kernel_sse2_intrin(temp_buf, pu_width, temp_buf + tempBufSize, pu_width, dst, dst_stride, pu_width, pu_height);
 }
 
 void avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(

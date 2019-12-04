@@ -46,10 +46,6 @@
  * between 0xE0 and 0xFF
  */
 
-extern "C" {
-#include "EbComputeMean_C.c"
-}
-
 namespace {
 
 using svt_av1_test_tool::SVTRandom;
@@ -96,7 +92,7 @@ TEST(ComputeMeanTest, run_compute_mean_test) {
                 compute_mean8x8_sse2_intrin(input_data, 8, 8, 8);
             uint64_t output_avx2_tst =
                 compute_mean8x8_avx2_intrin(input_data, 8, 8, 8);
-            uint64_t output_c_ref = compute_mean(input_data, 8, 8, 8);
+            uint64_t output_c_ref = compute_mean_c(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -128,7 +124,7 @@ TEST(ComputeMeanTest, run_compute_mean_squared_values_test) {
                 compute_mean_of_squared_values8x8_sse2_intrin(
                     input_data, 8, 8, 8);
             uint64_t output_c_ref =
-                compute_mean_squared_values(input_data, 8, 8, 8);
+                compute_mean_squared_values_c(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
