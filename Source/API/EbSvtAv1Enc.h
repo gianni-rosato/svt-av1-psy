@@ -321,7 +321,7 @@ typedef struct EbSvtAv1EncConfiguration
     uint32_t                 look_ahead_distance;
 
     /* Target bitrate in bits/second, only apllicable when rate control mode is
-     * set to 1.
+     * set to 2 or 3.
      *
      * Default is 7000000. */
     uint32_t                 target_bit_rate;

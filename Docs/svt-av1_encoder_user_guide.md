@@ -109,14 +109,7 @@ Here are some sample encode command lines
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 0 -q 30 -enc-mode 8 -b output.ivf`
 
 #### 1 pass VBR 10000 Kbps at medium speed from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 2 -tbr 10000000 -enc-mode 5 -b output.ivf`
-
-#### 2 pass VBR 5000 Kbps at slow speed from 24fps yuv 1920x1080 input
-Note how this requires two separate executions, one writing a stats file and one reading a stats file
-
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 2 -tbr 5000000 -enc-mode-2p 4 -output-stat-file stats.file -b output.ivf`
-
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 2 -tbr 5000000 -enc-mode 1 -input-stat-file stats.file -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 2 -tbr 10000 -enc-mode 5 -b output.ivf`
 
 ### List of all configuration parameters
 
@@ -149,9 +142,9 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HierarchicalLevels** | -hierarchical-levels | [3 – 4] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 4 == > 15B Pyramid) |
 | **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes auto. |
 | **IntraRefreshType** | -irefresh-type | [1 – 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
-| **TargetBitRate** | -tbr | [1 - 4294967295] | 7000000 | Target bitrate in bits per second when RateControlMode is set to 1, 2, or 3 |
+| **TargetBitRate** | -tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 2, or 3 |
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
-| **RateControlMode** | -rc | [0 - 3] | 0 | 0 = CQP , 1 = ABR , 2 = ABR , 3 = CVBR |
+| **RateControlMode** | -rc | [0 - 3] | 0 | 0 = CQP , 1 = ABR , 2 = VBR , 3 = CVBR |
 | **AdaptiveQuantization** | -adaptive-quantization | [0 - 2] | 0 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
 | **UseDefaultMeHme** | -use-default-me-hme | [0 - 1] | 1 | 0 : Overwrite Default ME HME parameters1 : Use default ME HME parameters, dependent on width and height |
 | **HME** | -hme | [0 - 1] | 1 | Enable HME, 0 = OFF, 1 = ON |
