@@ -1052,7 +1052,7 @@ void UpdateHistogramQueueEntry(
         histogramQueueEntryIndex;
     histogramQueueEntryPtr = encode_context_ptr->hl_rate_control_historgram_queue[histogramQueueEntryIndex];
     histogramQueueEntryPtr->passed_to_hlrc = EB_TRUE;
-    if (sequence_control_set_ptr->static_config.rate_control_mode == 3)
+    if (sequence_control_set_ptr->static_config.rate_control_mode == 2)
         histogramQueueEntryPtr->life_count += (int16_t)(sequence_control_set_ptr->static_config.intra_period_length + 1) - 3; // FramelevelRC does not decrease the life count for first picture in each temporal layer
     else
         histogramQueueEntryPtr->life_count += picture_control_set_ptr->historgram_life_count;

@@ -26,7 +26,6 @@
 
 #include "EbRateControlResults.h"
 #include "EbRateControlTasks.h"
-#include "RateControlModel.h"
 
 #include "EbSegmentation.h"
 
@@ -241,7 +240,6 @@ void rate_control_context_dctor(EbPtr p)
 #endif
     EB_DELETE_PTR_ARRAY(obj->rate_control_param_queue, PARALLEL_GOP_MAX_NUMBER);
     EB_DELETE(obj->high_level_rate_control_ptr);
-    EB_DELETE(obj->rc_model_ptr);
 
 }
 
@@ -266,7 +264,7 @@ EbErrorType rate_control_context_ctor(
         context_ptr->high_level_rate_control_ptr,
         high_level_rate_control_context_ctor);
 
-    EB_NEW(context_ptr->rc_model_ptr, rate_control_model_ctor);
+
 
     EB_ALLOC_PTR_ARRAY(context_ptr->rate_control_param_queue, PARALLEL_GOP_MAX_NUMBER);
 
@@ -2973,7 +2971,7 @@ void init_rc(
             context_ptr->frames_in_interval[5] ++;
         total_frame_in_interval--;
     }
-    if (sequence_control_set_ptr->static_config.rate_control_mode == 2) { // VBR
+    if (sequence_control_set_ptr->static_config.rate_control_mode == 1) { // VBR
         context_ptr->virtual_buffer_size = (((uint64_t)sequence_control_set_ptr->static_config.target_bit_rate * 3) << RC_PRECISION) / (context_ptr->frame_rate);
         context_ptr->rate_average_periodin_frames = (uint64_t)sequence_control_set_ptr->static_config.intra_period_length + 1;
         context_ptr->virtual_buffer_level_initial_value = context_ptr->virtual_buffer_size >> 1;
@@ -2984,7 +2982,8 @@ void init_rc(
         context_ptr->base_layer_frames_avg_qp = sequence_control_set_ptr->qp;
         context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->qp;
     }
-    else if (sequence_control_set_ptr->static_config.rate_control_mode == 3) {
+    else if (sequence_control_set_ptr->static_config.rate_control_mode == 2) {
+
         context_ptr->virtual_buffer_size = ((uint64_t)sequence_control_set_ptr->static_config.target_bit_rate);// vbv_buf_size);
         context_ptr->rate_average_periodin_frames = (uint64_t)sequence_control_set_ptr->static_config.intra_period_length + 1;
         context_ptr->virtual_buffer_level_initial_value = context_ptr->virtual_buffer_size >> 1;
@@ -4176,10 +4175,8 @@ void* rate_control_kernel(void *input_ptr)
     uint64_t                           total_number_of_fb_frames = 0;
 
     RateControlTaskTypes               task_type;
-    EbRateControlModel          *rc_model_ptr;
     RATE_CONTROL                 rc;
 
-    rc_model_ptr = context_ptr->rc_model_ptr;
 
     for (;;) {
         // Get RateControl Task
@@ -4199,7 +4196,6 @@ void* rate_control_kernel(void *input_ptr)
             FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
 
             if (picture_control_set_ptr->picture_number == 0) {
-                rate_control_model_init(rc_model_ptr, sequence_control_set_ptr);
 
                 //init rate control parameters
                 init_rc(
@@ -4219,14 +4215,15 @@ void* rate_control_kernel(void *input_ptr)
             {
                 picture_control_set_ptr->parent_pcs_ptr->intra_selected_org_qp = 0;
                 // High level RC
-                if (sequence_control_set_ptr->static_config.rate_control_mode == 2)
+                if (sequence_control_set_ptr->static_config.rate_control_mode == 1)
+
                     high_level_rc_input_picture_vbr(
                         picture_control_set_ptr->parent_pcs_ptr,
                         sequence_control_set_ptr,
                         sequence_control_set_ptr->encode_context_ptr,
                         context_ptr,
                         context_ptr->high_level_rate_control_ptr);
-                else if (sequence_control_set_ptr->static_config.rate_control_mode == 3)
+                else if (sequence_control_set_ptr->static_config.rate_control_mode == 2)
                     high_level_rc_input_picture_cvbr(
                         picture_control_set_ptr->parent_pcs_ptr,
                         sequence_control_set_ptr,
@@ -4380,9 +4377,7 @@ void* rate_control_kernel(void *input_ptr)
             }
             else {
                 // ***Rate Control***
-                if (sequence_control_set_ptr->static_config.rate_control_mode == 1)
-                    picture_control_set_ptr->picture_qp = rate_control_get_quantizer(rc_model_ptr, picture_control_set_ptr->parent_pcs_ptr);
-                else if (sequence_control_set_ptr->static_config.rate_control_mode == 2) {
+                    if (sequence_control_set_ptr->static_config.rate_control_mode == 1) {
                     frame_level_rc_input_picture_vbr(
                         picture_control_set_ptr,
                         sequence_control_set_ptr,
@@ -4398,7 +4393,7 @@ void* rate_control_kernel(void *input_ptr)
                         prev_gop_rate_control_param_ptr,
                         next_gop_rate_control_param_ptr);
                 }
-                else if (sequence_control_set_ptr->static_config.rate_control_mode == 3) {
+                else if (sequence_control_set_ptr->static_config.rate_control_mode == 2) {
                     frame_level_rc_input_picture_cvbr(
                         picture_control_set_ptr,
                         sequence_control_set_ptr,
@@ -4484,8 +4479,6 @@ void* rate_control_kernel(void *input_ptr)
             parentpicture_control_set_ptr = (PictureParentControlSet  *)rate_control_tasks_ptr->picture_control_set_wrapper_ptr->object_ptr;
             sequence_control_set_ptr = (SequenceControlSet *)parentpicture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
             if (sequence_control_set_ptr->static_config.rate_control_mode) {
-                if (sequence_control_set_ptr->static_config.rate_control_mode == 1)
-                    rate_control_update_model(rc_model_ptr, parentpicture_control_set_ptr);
                 ReferenceQueueEntry           *reference_entry_ptr;
                 uint32_t                          reference_queue_index;
                 EncodeContext             *encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
@@ -4547,12 +4540,12 @@ void* rate_control_kernel(void *input_ptr)
                 high_level_rc_feed_back_picture(
                     parentpicture_control_set_ptr,
                     sequence_control_set_ptr);
-                if (sequence_control_set_ptr->static_config.rate_control_mode == 2)
+                if (sequence_control_set_ptr->static_config.rate_control_mode == 1)
                     frame_level_rc_feedback_picture_vbr(
                         parentpicture_control_set_ptr,
                         sequence_control_set_ptr,
                         context_ptr);
-                else if (sequence_control_set_ptr->static_config.rate_control_mode == 3)
+                else if (sequence_control_set_ptr->static_config.rate_control_mode == 2)
                     frame_level_rc_feedback_picture_cvbr(
                         parentpicture_control_set_ptr,
                         sequence_control_set_ptr,
@@ -4708,6 +4701,6 @@ void* rate_control_kernel(void *input_ptr)
             break;
         }
     }
-    EB_DELETE(rc_model_ptr);
+
     return EB_NULL;
 }
