@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include "EbDefinitions.h"
 #include "EbModeDecisionProcess.h"
+#include "aom_dsp_rtcd.h"
 
 #if PAL_SUP
 
@@ -24,7 +25,7 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
     return *state / 65536 % 32768;
 }
 
-#define AV1_K_MEANS_RENAME(func, dim) func##_dim##dim
+#define AV1_K_MEANS_RENAME(func, dim) func##_dim##dim##_c
 
 void AV1_K_MEANS_RENAME(av1_calc_indices, 1)(const int *data,
     const int *centroids,
@@ -44,10 +45,10 @@ void AV1_K_MEANS_RENAME(av1_k_means, 2)(const int *data, int *centroids,
 static inline void av1_calc_indices(const int *data, const int *centroids,
     uint8_t *indices, int n, int k, int dim) {
     if (dim == 1) {
-        AV1_K_MEANS_RENAME(av1_calc_indices, 1)(data, centroids, indices, n, k);
+        av1_calc_indices_dim1(data, centroids, indices, n, k);
     }
     else if (dim == 2) {
-        AV1_K_MEANS_RENAME(av1_calc_indices, 2)(data, centroids, indices, n, k);
+        av1_calc_indices_dim2(data, centroids, indices, n, k);
     }
     else {
         assert(0 && "Untemplated k means dimension");
@@ -62,10 +63,10 @@ static inline void av1_k_means(const int *data, int *centroids,
     uint8_t *indices, int n, int k, int dim,
     int max_itr) {
     if (dim == 1) {
-        AV1_K_MEANS_RENAME(av1_k_means, 1)(data, centroids, indices, n, k, max_itr);
+        av1_k_means_dim1(data, centroids, indices, n, k, max_itr);
     }
     else if (dim == 2) {
-        AV1_K_MEANS_RENAME(av1_k_means, 2)(data, centroids, indices, n, k, max_itr);
+        av1_k_means_dim2(data, centroids, indices, n, k, max_itr);
     }
     else {
         assert(0 && "Untemplated k means dimension");

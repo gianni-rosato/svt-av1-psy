@@ -2000,6 +2000,18 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     SET_SSE2(residual_kernel16bit,
              residual_kernel16bit_c,
              residual_kernel16bit_sse2_intrin);
+    SET_AVX2(av1_k_means_dim1,
+             av1_k_means_dim1_c,
+             av1_k_means_dim1_avx2);
+    SET_AVX2(av1_k_means_dim2,
+             av1_k_means_dim2_c,
+             av1_k_means_dim2_avx2);
+    SET_AVX2(av1_calc_indices_dim1,
+             av1_calc_indices_dim1_c,
+             av1_calc_indices_dim1_avx2);
+    SET_AVX2(av1_calc_indices_dim2,
+             av1_calc_indices_dim2_c,
+             av1_calc_indices_dim2_avx2);
 
 #if AUTO_MAX_PARTITION
     av1_nn_predict = av1_nn_predict_c;

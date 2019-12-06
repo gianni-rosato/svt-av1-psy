@@ -29,10 +29,13 @@
 #include "EbUtility.h"
 #include "random.h"
 #include "util.h"
+#include "EbTime.h"
+#include "aom_dsp_rtcd.h"
 
 using std::tuple;
 using std::vector;
 using svt_av1_test_tool::SVTRandom;
+
 namespace {
 
 extern "C" int eb_av1_count_colors(const uint8_t *src, int stride, int rows,
@@ -155,9 +158,9 @@ TEST_F(ColorCountHbdTest, MatchTest12Bit) {
     run_test(1000);
 }
 
-extern "C" void av1_k_means_dim1(const int *data, int *centroids,
+extern "C" void av1_k_means_dim1_c(const int *data, int *centroids,
                                  uint8_t *indices, int n, int k, int max_itr);
-extern "C" void av1_k_means_dim2(const int *data, int *centroids,
+extern "C" void av1_k_means_dim2_c(const int *data, int *centroids,
                                  uint8_t *indices, int n, int k, int max_itr);
 static const int MaxItr = 50;
 /**
@@ -211,7 +214,7 @@ class KMeansTest : public ::testing::TestWithParam<int> {
             const int colors = prepare_data(max_colors);
             int centroids[PALETTE_MAX_SIZE] = {0};
             int k = AOMMIN(colors, k_);
-            av1_k_means_dim1(
+            av1_k_means_dim1_c(
                 data_, centroids, indices, MAX_PALETTE_SQUARE, k, MaxItr);
             check_output(centroids, k, data_, indices, MAX_PALETTE_SQUARE);
         }
@@ -259,7 +262,7 @@ class KMeansTest : public ::testing::TestWithParam<int> {
             const int colors = prepare_data_2d(max_colors);
             int centroids[2 * PALETTE_MAX_SIZE] = {0};
             int k = AOMMIN(colors, k_);
-            av1_k_means_dim2(
+            av1_k_means_dim2_c(
                 data_, centroids, indices, MAX_PALETTE_SQUARE, k, MaxItr);
             check_output_2d(centroids, k, data_, indices, MAX_PALETTE_SQUARE);
         }
@@ -308,5 +311,235 @@ TEST_P(KMeansTest, CheckOutput2D) {
 
 INSTANTIATE_TEST_CASE_P(PalleteMode, KMeansTest,
                         ::testing::Range(PALETTE_MIN_SIZE, PALETTE_MAX_SIZE));
+
+
+typedef void (*av1_k_means_func)(const int *data, int *centroids,
+                      uint8_t *indices, int n, int k, int max_itr);
+
+#define MAX_BLOCK_SIZE (MAX_SB_SIZE * MAX_SB_SIZE)
+typedef std::tuple<int, int> BlockSize;
+typedef enum { MIN, MAX, RANDOM } TestPattern;
+BlockSize TEST_BLOCK_SIZES[] = {BlockSize(4, 4),
+                                BlockSize(4, 8),
+                                BlockSize(8, 8),
+                                BlockSize(8, 16),
+                                BlockSize(8, 32),
+                                BlockSize(16, 4),
+                                BlockSize(16, 16),
+                                BlockSize(16, 32),
+                                BlockSize(32, 8),
+                                BlockSize(32, 32),
+                                BlockSize(32, 64),
+                                BlockSize(64, 16),
+                                BlockSize(64, 64),
+                                BlockSize(64, 128),
+                                BlockSize(128, 128)};
+TestPattern TEST_PATTERNS[] = {MIN, MAX, RANDOM};
+
+static void av1_calc_indices_dim1_c_wrap(const int *data, int *centroids,
+                                    uint8_t *indices, int n, int k,
+                                    int max_itr)
+{
+    (void)max_itr;
+    av1_calc_indices_dim1_c(data, centroids, indices, n, k);
+}
+
+static void av1_calc_indices_dim1_avx2_wrap(const int *data, int *centroids,
+                                    uint8_t *indices, int n, int k,
+                                    int max_itr)
+{
+    (void)max_itr;
+    av1_calc_indices_dim1_avx2(data, centroids, indices, n, k);
+}
+
+static void av1_calc_indices_dim2_c_wrap(const int *data, int *centroids,
+                                         uint8_t *indices, int n, int k,
+                                         int max_itr) {
+    (void)max_itr;
+    av1_calc_indices_dim2_c(data, centroids, indices, n, k);
+}
+
+static void av1_calc_indices_dim2_avx2_wrap(const int *data, int *centroids,
+                                            uint8_t *indices, int n, int k,
+                                            int max_itr) {
+    (void)max_itr;
+    av1_calc_indices_dim2_avx2(data, centroids, indices, n, k);
+}
+
+typedef std::tuple<av1_k_means_func, av1_k_means_func> FuncPair;
+FuncPair TEST_FUNC_PAIRS[] = {
+    FuncPair(av1_calc_indices_dim1_c_wrap, av1_calc_indices_dim1_avx2_wrap),
+    FuncPair(av1_k_means_dim1_c, av1_k_means_dim1_avx2),
+    FuncPair(av1_calc_indices_dim2_c_wrap, av1_calc_indices_dim2_avx2_wrap),
+    FuncPair(av1_k_means_dim2_c, av1_k_means_dim2_avx2)
+};
+
+typedef std::tuple<TestPattern, BlockSize, FuncPair> Av1KMeansDimParam;
+
+class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
+                     public ::testing::Test {
+  public:
+    Av1KMeansDim() {
+        rnd8_ = new SVTRandom(0, ((1 << 8) - 1));
+        rnd32_ = new SVTRandom(-((1 << 14) - 1), ((1 << 14) - 1));
+        pattern_ = TEST_GET_PARAM(0);
+        block_ = TEST_GET_PARAM(1);
+        func_ref_ = std::get<0>(TEST_GET_PARAM(2));
+        func_tst_ = std::get<1>(TEST_GET_PARAM(2));
+
+        n_ = std::get<0>(block_) * std::get<1>(block_);
+
+        // Additonal *2 to account possibility of write into extra memory
+        centroids_size_ = 2 * PALETTE_MAX_SIZE * 2;
+        indices_size_ = MAX_SB_SQUARE * 2;
+
+        //*2 to account of AV1_K_MEANS_DIM = 2
+        data_ = new int[n_ * 2];
+        centroids_ref_ = new int[centroids_size_];
+        centroids_tst_ = new int[centroids_size_];
+        indices_ref_ = new uint8_t[indices_size_];
+        indices_tst_ = new uint8_t[indices_size_];
+    }
+
+    void TearDown() override {
+        if (rnd32_)
+            delete rnd32_;
+        if (rnd8_)
+            delete rnd8_;
+        if (data_)
+            delete data_;
+        if (centroids_ref_)
+            delete centroids_ref_;
+        if (centroids_tst_)
+            delete centroids_tst_;
+        if (indices_ref_)
+            delete indices_ref_;
+        if (indices_tst_)
+            delete indices_tst_;
+    }
+
+  protected:
+    void prepare_data() {
+        if (pattern_ == MIN) {
+            memset(data_, 0, n_ * sizeof(int) * 2);
+            memset(centroids_ref_, 0, centroids_size_ * sizeof(int));
+            memset(centroids_tst_, 0, centroids_size_ * sizeof(int));
+            memset(indices_ref_, 0, indices_size_ * sizeof(uint8_t));
+            memset(indices_tst_, 0, indices_size_ * sizeof(uint8_t));
+        } else if (pattern_ == MAX) {
+            memset(data_, 0xff, n_ * sizeof(int) * 2);
+            memset(centroids_ref_, 0xff, centroids_size_ * sizeof(int));
+            memset(centroids_tst_, 0xff, centroids_size_ * sizeof(int));
+            memset(indices_ref_, 0xff, indices_size_ * sizeof(uint8_t));
+            memset(indices_tst_, 0xff, indices_size_ * sizeof(uint8_t));
+        } else {  // pattern_ == RANDOM
+            for (size_t i = 0; i < n_ * 2; i++)
+                data_[i] = rnd32_->random();
+            for (size_t i = 0; i < centroids_size_; i++)
+                centroids_ref_[i] = centroids_tst_[i] = rnd32_->random();
+            for (size_t i = 0; i < indices_size_; i++)
+                indices_ref_[i] = indices_tst_[i] = rnd8_->random();
+        }
+    }
+
+    void check_output() {
+        int res = memcmp(
+            centroids_ref_, centroids_tst_, centroids_size_ * sizeof(int));
+        ASSERT_EQ(res, 0) << "Compare Centroids array error";
+
+        res =
+            memcmp(indices_ref_, indices_tst_, indices_size_ * sizeof(uint8_t));
+        ASSERT_EQ(res, 0) << "Compare indices array error";
+    }
+
+    void run_test() {
+        size_t test_num = 100;
+        if (pattern_ == MIN || pattern_ == MAX)
+            test_num = 1;
+
+        for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
+            for (int i = 0; i < test_num; i++) {
+                prepare_data();
+                func_ref_(data_, centroids_ref_, indices_ref_, n_, k, MaxItr);
+                func_tst_(data_, centroids_tst_, indices_tst_, n_, k, MaxItr);
+                check_output();
+            }
+        }
+    }
+
+    void speed() {
+        const uint64_t num_loop = 200000 / (n_ >> 3);
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        prepare_data();
+
+        EbStartTime(&start_time_seconds, &start_time_useconds);
+
+        for (int i = 0; i < num_loop; i++) {
+            for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
+                func_ref_(data_, centroids_ref_, indices_ref_, n_, k, MaxItr);
+            }
+        }
+
+        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+
+        for (int i = 0; i < num_loop; i++) {
+            for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
+                func_tst_(data_, centroids_tst_, indices_tst_, n_, k, MaxItr);
+            }
+        }
+
+        EbStartTime(&finish_time_seconds, &finish_time_useconds);
+
+        check_output();
+
+        EbComputeOverallElapsedTimeMs(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+                                      middle_time_useconds,
+                                      finish_time_seconds,
+                                      finish_time_useconds,
+                                      &time_o);
+
+        printf("    speedup %5.2fx\n", time_c / time_o);
+    }
+
+  protected:
+    SVTRandom *rnd32_;
+    SVTRandom *rnd8_;
+    av1_k_means_func func_ref_;
+    av1_k_means_func func_tst_;
+    int *data_;
+    int *centroids_ref_;
+    int *centroids_tst_;
+    uint8_t *indices_ref_;
+    uint8_t *indices_tst_;
+
+    uint32_t centroids_size_;
+    uint32_t indices_size_;
+    TestPattern pattern_;
+    BlockSize block_;
+    int n_;
+};
+
+TEST_P(Av1KMeansDim, RunCheckOutput) {
+    run_test();
+};
+
+TEST_P(Av1KMeansDim, DISABLED_speed) {
+    speed();
+};
+
+INSTANTIATE_TEST_CASE_P(
+    Av1KMeansDim, Av1KMeansDim,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES),
+                       ::testing::ValuesIn(TEST_FUNC_PAIRS)));
 
 }  // namespace
