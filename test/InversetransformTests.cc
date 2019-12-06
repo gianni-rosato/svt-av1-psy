@@ -58,14 +58,14 @@ static void init_output_r(uint16_t **output_r, uint16_t **output_opt_r, int32_t 
     TEST_ALLIGN_MALLOC(uint16_t*, *output_r, sizeof(uint16_t) * MAX_SB_SIZE * num);
     TEST_ALLIGN_MALLOC(uint16_t*, *output_opt_r, sizeof(uint16_t) * MAX_SB_SIZE * num);
     eb_buf_random_u16(*output_r, MAX_SB_SIZE * num);
-    memcpy(*output_opt_r, *output_r, sizeof(**output_r) * MAX_SB_SIZE * num);
+    memcpy(*output_opt_r, *output_r, sizeof(uint16_t) * MAX_SB_SIZE * num);
 }
 
 static void init_output_w(uint16_t **output_w, uint16_t **output_opt_w, int32_t num) {
     TEST_ALLIGN_MALLOC(uint16_t*, *output_w, sizeof(uint16_t) * MAX_SB_SIZE * num);
     TEST_ALLIGN_MALLOC(uint16_t*, *output_opt_w, sizeof(uint16_t) * MAX_SB_SIZE * num);
-    memset(*output_w, 0, MAX_SB_SIZE * num);
-    memset(*output_opt_w, 0, MAX_SB_SIZE * num);
+    memset(*output_w, 0, sizeof(uint16_t) *MAX_SB_SIZE * num);
+    memset(*output_opt_w, 0, sizeof(uint16_t) *MAX_SB_SIZE * num);
 }
 
 TEST(InverseTransformTest, av1_inv_txfm_2d_square_kernels)

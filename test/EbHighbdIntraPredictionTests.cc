@@ -18,8 +18,8 @@ static void init_data(uint16_t **input, uint16_t **above, uint16_t **left, ptrdi
     TEST_ALLIGN_MALLOC(uint16_t*, *input, sizeof(uint16_t) * MAX_SB_SIZE * input_stride);
     memset(*input, 0, MAX_SB_SIZE * input_stride);
     eb_buf_random_u16(*input, (uint32_t)(MAX_SB_SIZE * input_stride));
-    *above = *input + rand() % (MAX_SB_SIZE * input_stride / 2);
-    *left = *input + rand() % (MAX_SB_SIZE * input_stride / 4);
+    *above = *input + ((rand() % (MAX_SB_SIZE * input_stride / 2)) >> 4 << 4); //align to 16
+    *left = *input + ((rand() % (MAX_SB_SIZE * input_stride / 4)) >> 4 << 4); //align to 16
 }
 
 static void uninit_data(uint16_t *input) {
