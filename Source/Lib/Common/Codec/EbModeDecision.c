@@ -957,7 +957,7 @@ void Unipred3x3CandidatesInjection(
     const SequenceControlSet  *sequence_control_set_ptr,
     PictureControlSet         *picture_control_set_ptr,
     ModeDecisionContext       *context_ptr,
-    LargestCodingUnit         *sb_ptr,
+    SuperBlock                *sb_ptr,
     uint32_t                   me_sb_addr,
     SsMeContext               *inloop_me_context,
     EbBool                     use_close_loop_me,
@@ -1283,7 +1283,7 @@ void Bipred3x3CandidatesInjection(
     const SequenceControlSet *sequence_control_set_ptr,
     PictureControlSet        *picture_control_set_ptr,
     ModeDecisionContext      *context_ptr,
-    LargestCodingUnit        *sb_ptr,
+    SuperBlock               *sb_ptr,
     uint32_t                  me_sb_addr,
     SsMeContext              *inloop_me_context,
     EbBool                    use_close_loop_me,
@@ -4143,7 +4143,7 @@ void  inject_inter_candidates(
     ModeDecisionContext          *context_ptr,
     SsMeContext                  *ss_mecontext,
     const SequenceControlSet     *sequence_control_set_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     uint32_t                       *candidateTotalCnt) {
 
     (void)sequence_control_set_ptr;
@@ -4874,7 +4874,7 @@ static INLINE TxType av1_get_tx_type(
 void  inject_intra_candidates_ois(
     PictureControlSet            *picture_control_set_ptr,
     ModeDecisionContext          *context_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     uint32_t                       *candidate_total_cnt){
     uint8_t                     intra_candidate_counter;
     uint8_t                     intra_mode;
@@ -5382,7 +5382,7 @@ void  inject_intra_candidates(
     PictureControlSet            *picture_control_set_ptr,
     ModeDecisionContext          *context_ptr,
     const SequenceControlSet     *sequence_control_set_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     uint32_t                       *candidateTotalCnt){
     (void)sequence_control_set_ptr;
     (void)sb_ptr;
@@ -5816,7 +5816,7 @@ void  inject_palette_candidates(
 }
 #endif
 EbErrorType generate_md_stage_0_cand(
-    LargestCodingUnit   *sb_ptr,
+    SuperBlock          *sb_ptr,
     ModeDecisionContext *context_ptr,
     SsMeContext         *ss_mecontext,
     uint32_t            *candidate_total_count_ptr,
@@ -5895,9 +5895,6 @@ EbErrorType generate_md_stage_0_cand(
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
     }
 #endif
-
-    // Track the total number of fast intra candidates
-    context_ptr->fast_candidate_intra_count = canTotalCnt;
 
     if (slice_type != I_SLICE) {
         if (inject_inter_candidate)

@@ -108,7 +108,7 @@ extern "C" {
         uint64_t                               lambda,
         PictureControlSet                   *picture_control_set_ptr);
     extern EbErrorType  merge_skip_full_cost(
-        LargestCodingUnit           *sb_ptr,
+        SuperBlock                  *sb_ptr,
         CodingUnit                  *cu_ptr,
         uint32_t                       cu_size,
         uint32_t                       cu_size_log2,

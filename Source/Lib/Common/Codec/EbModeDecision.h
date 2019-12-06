@@ -172,7 +172,7 @@ extern "C" {
         uint32_t                                top_neighbor_mode);
 
     typedef EbErrorType(*EB_FULL_COST_FUNC)(
-        LargestCodingUnit                    *sb_ptr,
+        SuperBlock                          *sb_ptr,
         CodingUnit                           *cu_ptr,
         uint32_t                                cu_size,
         uint32_t                                cu_size_log2,

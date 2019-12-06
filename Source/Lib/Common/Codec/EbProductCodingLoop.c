@@ -46,7 +46,7 @@
 #define EIGHT_PEL_REF_WINDOW          3
 #endif
 EbErrorType generate_md_stage_0_cand(
-    LargestCodingUnit   *sb_ptr,
+    SuperBlock          *sb_ptr,
     ModeDecisionContext *context_ptr,
     SsMeContext         *ss_mecontext,
     uint32_t            *fast_candidate_total_count,
@@ -3205,7 +3205,7 @@ void predictive_me_search(
 void AV1CostCalcCfl(
     PictureControlSet                *picture_control_set_ptr,
     ModeDecisionCandidateBuffer      *candidate_buffer,
-    LargestCodingUnit                *sb_ptr,
+    SuperBlock                       *sb_ptr,
     ModeDecisionContext              *context_ptr,
     uint32_t                            component_mask,
     EbPictureBufferDesc              *input_picture_ptr,
@@ -3409,7 +3409,7 @@ void AV1CostCalcCfl(
 void cfl_rd_pick_alpha(
     PictureControlSet     *picture_control_set_ptr,
     ModeDecisionCandidateBuffer  *candidate_buffer,
-    LargestCodingUnit     *sb_ptr,
+    SuperBlock            *sb_ptr,
     ModeDecisionContext   *context_ptr,
     EbPictureBufferDesc   *input_picture_ptr,
     uint32_t                   inputCbOriginIndex,
@@ -3572,7 +3572,7 @@ void cfl_rd_pick_alpha(
 static void CflPrediction(
     PictureControlSet     *picture_control_set_ptr,
     ModeDecisionCandidateBuffer  *candidate_buffer,
-    LargestCodingUnit     *sb_ptr,
+    SuperBlock            *sb_ptr,
     ModeDecisionContext   *context_ptr,
     EbPictureBufferDesc   *input_picture_ptr,
     uint32_t                   inputCbOriginIndex,
@@ -5826,7 +5826,7 @@ void perform_intra_tx_partitioning(
 
 void full_loop_core(
     PictureControlSet           *picture_control_set_ptr,
-    LargestCodingUnit           *sb_ptr,
+    SuperBlock                  *sb_ptr,
     CodingUnit                  *cu_ptr,
     ModeDecisionContext         *context_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer,
@@ -6145,7 +6145,7 @@ void md_stage_1(
 void md_stage_2(
 #endif
     PictureControlSet     *picture_control_set_ptr,
-    LargestCodingUnit     *sb_ptr,
+    SuperBlock            *sb_ptr,
     CodingUnit            *cu_ptr,
     ModeDecisionContext   *context_ptr,
     EbPictureBufferDesc   *input_picture_ptr,
@@ -6217,7 +6217,7 @@ void md_stage_2(
 void md_stage_3(
 #endif
     PictureControlSet     *picture_control_set_ptr,
-    LargestCodingUnit     *sb_ptr,
+    SuperBlock            *sb_ptr,
     CodingUnit            *cu_ptr,
     ModeDecisionContext   *context_ptr,
     EbPictureBufferDesc   *input_picture_ptr,
@@ -7015,7 +7015,7 @@ void  adjust_nsq_rank(
     PictureControlSet            *picture_control_set_ptr,
     ModeDecisionContext          *context_ptr,
     const SequenceControlSet     *sequence_control_set_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     NeighborArrayUnit            *leaf_partition_neighbor_array) {
     const uint32_t                lcu_addr = sb_ptr->index;
     uint8_t ol_part1 = context_ptr->best_nsq_sahpe1;
@@ -7253,7 +7253,7 @@ void  order_nsq_table(
     PictureControlSet            *picture_control_set_ptr,
     ModeDecisionContext          *context_ptr,
     const SequenceControlSet     *sequence_control_set_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     NeighborArrayUnit            *leaf_partition_neighbor_array) {
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     const uint32_t             lcuAddr = sb_ptr->index;
@@ -8464,7 +8464,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
     SequenceControlSet                *sequence_control_set_ptr,
     PictureControlSet                 *picture_control_set_ptr,
     const MdcLcuData * const           mdcResultTbPtr,
-    LargestCodingUnit                 *sb_ptr,
+    SuperBlock                        *sb_ptr,
     uint16_t                             sb_origin_x,
     uint16_t                             sb_origin_y,
     uint32_t                             lcuAddr,

@@ -3916,7 +3916,7 @@ static void sb_qp_derivation_two_pass(
     PictureControlSet         *picture_control_set_ptr) {
 
     SequenceControlSet        *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
-    LargestCodingUnit         *sb_ptr;
+    SuperBlock                *sb_ptr;
     uint32_t                  sb_addr;
 
     picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
@@ -4044,7 +4044,7 @@ static void sb_qp_derivation(
     PictureControlSet         *picture_control_set_ptr) {
 
     SequenceControlSet        *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
-    LargestCodingUnit         *sb_ptr;
+    SuperBlock                *sb_ptr;
     uint32_t                  sb_addr;
     RATE_CONTROL               rc;
     picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
@@ -4447,7 +4447,7 @@ void* rate_control_kernel(void *input_ptr)
                     sb_qp_derivation(picture_control_set_ptr);
             else {
                 picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
-                LargestCodingUnit  *sb_ptr;
+                SuperBlock      *sb_ptr;
                 picture_control_set_ptr->parent_pcs_ptr->average_qp = 0;
                 for (int sb_addr = 0; sb_addr < sequence_control_set_ptr->sb_tot_cnt; ++sb_addr) {
                     sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_addr];

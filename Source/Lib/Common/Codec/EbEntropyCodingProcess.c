@@ -402,7 +402,7 @@ void* entropy_coding_kernel(void *input_ptr)
     EntropyCodingResults                  *entropyCodingResultsPtr;
 
     // SB Loop variables
-    LargestCodingUnit                     *sb_ptr;
+    SuperBlock                                 *sb_ptr;
     uint16_t                                   sb_index;
     uint8_t                                    sb_sz;
     uint8_t                                    lcuSizeLog2;

@@ -20,7 +20,7 @@ extern "C" {
 extern EbErrorType early_mode_decision_lcu(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
+    SuperBlock                           *sb_ptr,
     uint32_t                                  sb_index,
     ModeDecisionConfigurationContext     *context_ptr);
 
@@ -31,7 +31,7 @@ extern EbErrorType early_mode_decision_lcu(
 extern EbErrorType derive_delta_qp_for_each_leaf_lcu(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
+    SuperBlock                           *sb_ptr,
     uint32_t                                  sb_index,
     int32_t                                  intra_min_distance,
     int32_t                                  intra_max_distance,

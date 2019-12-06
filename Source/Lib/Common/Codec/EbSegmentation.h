@@ -27,7 +27,7 @@
 void apply_segmentation_based_quantization(
         const BlockGeom *blk_geom,
         PictureControlSet *picture_control_set_ptr,
-        LargestCodingUnit *sb_ptr,
+        SuperBlock        *sb_ptr,
         CodingUnit *cu_ptr
 );
 

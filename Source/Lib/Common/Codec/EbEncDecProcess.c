@@ -287,7 +287,7 @@ static void ResetEncDec(
  ******************************************************/
 static void EncDecConfigureLcu(
     EncDecContext         *context_ptr,
-    LargestCodingUnit     *sb_ptr,
+    SuperBlock            *sb_ptr,
     PictureControlSet     *picture_control_set_ptr,
     uint8_t                    sb_qp)
 {
@@ -1195,32 +1195,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             CHROMA_MODE_2 :
             CHROMA_MODE_3 ;
 
-    // Set fast loop method
-    // 1 fast loop: SSD_SEARCH not supported
-    // Level                Settings
-    //  0                   Collapsed fast loop
-    //  1                   Decoupled fast loops ( intra/inter)
-    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-            context_ptr->decouple_intra_inter_fast_loop = 0;
-        else
-            context_ptr->decouple_intra_inter_fast_loop = 1;
-    else
-    context_ptr->decouple_intra_inter_fast_loop = 0;
-
-    // Set the search method when decoupled fast loop is used
-    // Hsan: FULL_SAD_SEARCH not supported
-    if (picture_control_set_ptr->parent_pcs_ptr->sc_content_detected)
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-            context_ptr->decoupled_fast_loop_search_method = SSD_SEARCH;
-        else
-            context_ptr->decoupled_fast_loop_search_method = FULL_SAD_SEARCH;
-    else
-        if (picture_control_set_ptr->enc_mode <= ENC_M4)
-            context_ptr->decoupled_fast_loop_search_method = SSD_SEARCH;
-        else
-            context_ptr->decoupled_fast_loop_search_method = FULL_SAD_SEARCH;
-
     // Set the full loop escape level
     // Level                Settings
     // 0                    Off
@@ -1693,7 +1667,7 @@ void* enc_dec_kernel(void *input_ptr)
     EbObjectWrapper                       *encDecResultsWrapperPtr;
     EncDecResults                         *encDecResultsPtr;
     // SB Loop variables
-    LargestCodingUnit                       *sb_ptr;
+    SuperBlock                               *sb_ptr;
     uint16_t                                 sb_index;
     uint8_t                                  sb_sz;
     uint8_t                                  lcuSizeLog2;

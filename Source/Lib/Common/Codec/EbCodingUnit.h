@@ -555,7 +555,7 @@ extern "C" {
         uint8_t  isolated_high_intensity_sb; // to be cleanedup
     } EdgeLcuResults;
 
-    typedef struct LargestCodingUnit
+    typedef struct SuperBlock
     {
         EbDctor                       dctor;
         struct PictureControlSet     *picture_control_set_ptr;
@@ -588,10 +588,10 @@ extern "C" {
         uint64_t                      depth_cost[NUMBER_OF_DEPTH];
 #endif
         TileInfo tile_info;
-    } LargestCodingUnit;
+    } SuperBlock;
 
     extern EbErrorType largest_coding_unit_ctor(
-        LargestCodingUnit             *larget_coding_unit_ptr,
+        SuperBlock                  *larget_coding_unit_ptr,
         uint8_t                        sb_sz,
         uint16_t                       sb_origin_x,
         uint16_t                       sb_origin_y,

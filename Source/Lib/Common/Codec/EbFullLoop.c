@@ -2275,7 +2275,7 @@ void product_full_loop_tx_search(
 void encode_pass_tx_search(
     PictureControlSet            *picture_control_set_ptr,
     EncDecContext                *context_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     uint32_t                      cb_qp,
     EbPictureBufferDesc          *coeffSamplesTB,
     EbPictureBufferDesc          *residual16bit,
@@ -2472,7 +2472,7 @@ void encode_pass_tx_search(
 void encode_pass_tx_search_hbd(
     PictureControlSet            *picture_control_set_ptr,
     EncDecContext                *context_ptr,
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     uint32_t                       cb_qp,
     EbPictureBufferDesc          *coeffSamplesTB,
     EbPictureBufferDesc          *residual16bit,
@@ -2703,7 +2703,7 @@ void inv_transform_recon_wrapper(
  ************  Full loop ****************
 ****************************************/
 void full_loop_r(
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     ModeDecisionCandidateBuffer  *candidate_buffer,
     ModeDecisionContext          *context_ptr,
     EbPictureBufferDesc          *input_picture_ptr,
@@ -2962,7 +2962,7 @@ void full_loop_r(
 // ************ CuFullDistortionFastTuMode ****************
 //****************************************/
 void cu_full_distortion_fast_tu_mode_r(
-    LargestCodingUnit            *sb_ptr,
+    SuperBlock                   *sb_ptr,
     ModeDecisionCandidateBuffer  *candidate_buffer,
     ModeDecisionContext          *context_ptr,
     ModeDecisionCandidate        *candidate_ptr,
@@ -3370,7 +3370,7 @@ void   compute_depth_costs(
 uint32_t d2_inter_depth_block_decision(
     ModeDecisionContext          *context_ptr,
     uint32_t                        blk_mds,
-    LargestCodingUnit            *tb_ptr,
+    SuperBlock                      *tb_ptr,
     uint32_t                          lcuAddr,
     uint32_t                          tbOriginX,
     uint32_t                          tbOriginY,

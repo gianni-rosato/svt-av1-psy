@@ -23,7 +23,7 @@ extern "C" {
         SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet                 *picture_control_set_ptr,
         const MdcLcuData * const           mdcResultTbPtr,
-        LargestCodingUnit                 *sb_ptr,
+        SuperBlock                         *sb_ptr,
         uint32_t                             sb_origin_x,
         uint32_t                             sb_origin_y,
         uint32_t                             lcuAddr,
@@ -33,7 +33,7 @@ extern "C" {
         SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet                 *picture_control_set_ptr,
         const MdcLcuData * const           mdcResultTbPtr,
-        LargestCodingUnit                 *sb_ptr,
+        SuperBlock                        *sb_ptr,
         uint32_t                             sb_origin_x,
         uint32_t                             sb_origin_y,
         uint32_t                             lcuAddr,
@@ -53,7 +53,7 @@ extern "C" {
         SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet                 *picture_control_set_ptr,
         const MdcLcuData * const           mdcResultTbPtr,
-        LargestCodingUnit                 *sb_ptr,
+        SuperBlock                        *sb_ptr,
         uint16_t                             sb_origin_x,
         uint16_t                             sb_origin_y,
         uint32_t                             lcuAddr,
@@ -63,7 +63,7 @@ extern "C" {
     extern EbErrorType ModeDecisionRefinementLcu(
         SequenceControlSet                *sequence_control_set_ptr,
         PictureControlSet                 *picture_control_set_ptr,
-        LargestCodingUnit                 *sb_ptr,
+        SuperBlock                        *sb_ptr,
         uint32_t                               sb_origin_x,
         uint32_t                               sb_origin_y,
         ModeDecisionContext               *context_ptr);
@@ -76,7 +76,7 @@ extern "C" {
     extern void av1_encode_pass(
         SequenceControlSet    *sequence_control_set_ptr,
         PictureControlSet     *picture_control_set_ptr,
-        LargestCodingUnit     *sb_ptr,
+        SuperBlock            *sb_ptr,
         uint32_t                   tbAddr,
         uint32_t                   sb_origin_x,
         uint32_t                   sb_origin_y,
@@ -87,7 +87,7 @@ extern "C" {
     void no_enc_dec_pass(
         SequenceControlSet    *sequence_control_set_ptr,
         PictureControlSet     *picture_control_set_ptr,
-        LargestCodingUnit     *sb_ptr,
+        SuperBlock            *sb_ptr,
         uint32_t                   tbAddr,
         uint32_t                   sb_origin_x,
         uint32_t                   sb_origin_y,

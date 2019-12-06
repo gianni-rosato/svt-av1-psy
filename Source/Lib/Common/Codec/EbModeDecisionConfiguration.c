@@ -1218,7 +1218,7 @@ EB_EXTERN EbErrorType open_loop_partitioning_sb(
 #endif
     uint64_t tot_me_sb;
 #if MDC_ADAPTIVE_LEVEL
-    LargestCodingUnit  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+    SuperBlock  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
     uint64_t depth_cost[NUMBER_OF_DEPTH] = { 0 };
     uint8_t depth_table[NUMBER_OF_DEPTH] = { 0, 1, 2 , 3 ,4 ,5 };
 #endif
@@ -1764,7 +1764,7 @@ void PredictionPartitionLoop(
 EbErrorType early_mode_decision_lcu(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
-    LargestCodingUnit                    *sb_ptr,
+    SuperBlock                           *sb_ptr,
     uint32_t                                  sb_index,
     ModeDecisionConfigurationContext     *context_ptr){
     EbErrorType    return_error = EB_ErrorNone;

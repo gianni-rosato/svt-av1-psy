@@ -13,7 +13,7 @@
 
 void largest_coding_unit_dctor(EbPtr p)
 {
-    LargestCodingUnit* obj = (LargestCodingUnit*)p;
+    SuperBlock* obj = (SuperBlock*)p;
     EB_DELETE(obj->quantized_coeff);
     EB_FREE_ARRAY(obj->av1xd);
     EB_FREE_ARRAY(obj->final_cu_arr);
@@ -29,7 +29,7 @@ Tasks & Questions
     -I don't see a way around doing the copies in temp memory and then copying it in...
 */
 EbErrorType largest_coding_unit_ctor(
-    LargestCodingUnit             *larget_coding_unit_ptr,
+    SuperBlock                     *larget_coding_unit_ptr,
     uint8_t                        sb_size_pix,
     uint16_t                       sb_origin_x,
     uint16_t                       sb_origin_y,

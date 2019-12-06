@@ -6049,7 +6049,7 @@ EbErrorType write_modes_b(
     PictureControlSet     *picture_control_set_ptr,
     EntropyCodingContext  *context_ptr,
     EntropyCoder          *entropy_coder_ptr,
-    LargestCodingUnit     *tb_ptr,
+    SuperBlock            *tb_ptr,
     CodingUnit            *cu_ptr,
     EbPictureBufferDesc   *coeff_ptr)
 {
@@ -6717,7 +6717,7 @@ assert(bsize < BlockSizeS_ALL);
 **********************************************/
 EB_EXTERN EbErrorType write_sb(
     EntropyCodingContext  *context_ptr,
-    LargestCodingUnit     *tb_ptr,
+    SuperBlock            *tb_ptr,
     PictureControlSet     *picture_control_set_ptr,
     EntropyCoder          *entropy_coder_ptr,
     EbPictureBufferDesc   *coeff_ptr)

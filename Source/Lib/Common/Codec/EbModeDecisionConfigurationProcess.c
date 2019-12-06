@@ -783,7 +783,7 @@ void PerformEarlyLcuPartitionning(
     ModeDecisionConfigurationContext     *context_ptr,
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr) {
-    LargestCodingUnit            *sb_ptr;
+    SuperBlock                           *sb_ptr;
     uint32_t                         sb_index;
     picture_control_set_ptr->parent_pcs_ptr->average_qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
 
@@ -803,7 +803,7 @@ void PerformEarlyLcuPartitionningLcu(
     SequenceControlSet                   *sequence_control_set_ptr,
     PictureControlSet                    *picture_control_set_ptr,
     uint32_t                                    sb_index) {
-    LargestCodingUnit            *sb_ptr;
+    SuperBlock                           *sb_ptr;
 
     // SB Loop : Partitionnig Decision
     sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
@@ -1224,7 +1224,7 @@ uint64_t  mdc_tab[9][2][3] = {
 // Update MDC refinement
 uint8_t update_mdc_level(
     PictureControlSet  *picture_control_set_ptr,
-    LargestCodingUnit  *sb_ptr,
+    SuperBlock         *sb_ptr,
     uint32_t sb_size,
     const BlockGeom * blk_geom,
     uint8_t mdc_depth_level) {
@@ -1378,7 +1378,7 @@ void init_considered_block(
     uint32_t  blk_index = 0;
 
 #if MDC_ADAPTIVE_LEVEL
-    LargestCodingUnit  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+    SuperBlock  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
 #else
     uint32_t  parent_depth_idx_mds, sparent_depth_idx_mds, ssparent_depth_idx_mds, child_block_idx_1, child_block_idx_2, child_block_idx_3, child_block_idx_4;
 #endif
@@ -2022,7 +2022,7 @@ void open_loop_partitioning_pass(
         blk_index++;
     }
     if (picture_control_set_ptr->slice_type != I_SLICE) {
-        LargestCodingUnit            *sb_ptr;
+        SuperBlock            *sb_ptr;
         // SB Loop : Partitionnig Decision
         sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
         sb_ptr->qp = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->picture_qp;
@@ -2280,7 +2280,7 @@ void derive_search_method(
 void set_sb_budget(
     SequenceControlSet               *sequence_control_set_ptr,
     PictureControlSet                *picture_control_set_ptr,
-    LargestCodingUnit                *sb_ptr,
+    SuperBlock                       *sb_ptr,
     ModeDecisionConfigurationContext *context_ptr)
 {
     const uint32_t sb_index = sb_ptr->index;
@@ -2356,7 +2356,7 @@ void  derive_optimal_budget_per_sb(
         context_ptr->predicted_cost = 0;
 
         for (sb_index = 0; sb_index < picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->sb_tot_cnt; sb_index++) {
-            LargestCodingUnit* sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+            SuperBlock* sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
 
             set_sb_budget(
                 sequence_control_set_ptr,
@@ -3170,7 +3170,7 @@ void* mode_decision_configuration_kernel(void *input_ptr)
                 for (uint32_t y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
                     for (uint32_t x_lcu_index = 0; x_lcu_index < picture_width_in_sb; ++x_lcu_index) {
                         uint32_t sb_index = (uint16_t)(y_lcu_index * picture_width_in_sb + x_lcu_index);
-                        LargestCodingUnit  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
+                        SuperBlock  *sb_ptr = picture_control_set_ptr->sb_ptr_array[sb_index];
 #if MDC_ADAPTIVE_LEVEL
                         uint32_t is_complete_sb = sequence_control_set_ptr->sb_geom[sb_index].is_complete_sb;
 #endif

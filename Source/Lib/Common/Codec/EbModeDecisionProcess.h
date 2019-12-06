@@ -147,7 +147,7 @@ extern "C" {
         uint32_t                        full_chroma_lambda_sao;
 
         //  Context Variables---------------------------------
-        LargestCodingUnit            *sb_ptr;
+        SuperBlock                   *sb_ptr;
         TransformUnit                *txb_ptr;
         CodingUnit                   *cu_ptr;
         const BlockGeom                *blk_geom;
@@ -215,7 +215,6 @@ extern "C" {
         int16_t                         injected_mv_x_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         int16_t                         injected_mv_y_bipred_l1_array[MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
         uint8_t                         injected_mv_count_bipred;
-        uint32_t                        fast_candidate_intra_count;
         uint32_t                        fast_candidate_inter_count;
         uint32_t                        me_block_offset;
         uint8_t                         tx_depth;
@@ -448,7 +447,7 @@ extern "C" {
     extern void cfl_rd_pick_alpha(
         PictureControlSet             *picture_control_set_ptr,
         ModeDecisionCandidateBuffer   *candidate_buffer,
-        LargestCodingUnit             *sb_ptr,
+        SuperBlock                    *sb_ptr,
         ModeDecisionContext           *context_ptr,
         EbPictureBufferDesc           *input_picture_ptr,
         uint32_t                         inputCbOriginIndex,

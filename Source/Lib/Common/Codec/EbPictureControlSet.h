@@ -13668,7 +13668,7 @@ extern "C" {
      * Picture Control Set
      **************************************/
     struct CodedTreeblock_s;
-    struct LargestCodingUnit;
+    struct SuperBlock;
 #define MAX_MESH_STEP 4
 
     typedef struct MeshPattern
@@ -13777,7 +13777,7 @@ extern "C" {
         // SB Array
         uint8_t                               sb_max_depth;
         uint16_t                              sb_total_count;
-        LargestCodingUnit                 **sb_ptr_array;
+        SuperBlock                            **sb_ptr_array;
         // DLF
         uint8_t                              *qp_array;
         uint16_t                              qp_array_stride;

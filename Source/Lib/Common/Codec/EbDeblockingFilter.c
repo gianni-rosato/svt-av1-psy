@@ -1362,7 +1362,7 @@ void eb_av1_loop_filter_frame(
     PictureControlSet *picture_control_set_ptr,
     int32_t plane_start, int32_t plane_end) {
     SequenceControlSet *scs_ptr = (SequenceControlSet*)picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-    //LargestCodingUnit                     *sb_ptr;
+    //SuperBlock                     *sb_ptr;
     //uint16_t                                   sb_index;
     uint8_t                                   sb_size_Log2 = (uint8_t)Log2f(scs_ptr->sb_size_pix);
     uint32_t                                   x_lcu_index;
