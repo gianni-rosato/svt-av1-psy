@@ -7759,6 +7759,10 @@ void search_best_independent_uv_mode(
             int32_t angle_delta = CLIP(angle_delta_shift * (angleDeltaCandidateCount == 1 ? 0 : angleDeltaCounter - (angleDeltaCandidateCount >> 1)), -MAX_ANGLE_DELTA, MAX_ANGLE_DELTA);
 
             candidate_buffer->candidate_ptr->type = INTRA_MODE;
+#if PAL_SUP
+            candidate_buffer->candidate_ptr->palette_info.pmi.palette_size[0] = 0;
+            candidate_buffer->candidate_ptr->palette_info.pmi.palette_size[1] = 0;
+#endif
             candidate_buffer->candidate_ptr->intra_luma_mode = intra_mode;
             candidate_buffer->candidate_ptr->distortion_ready = 0;
             candidate_buffer->candidate_ptr->use_intrabc = 0;
