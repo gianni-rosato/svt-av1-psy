@@ -1156,7 +1156,7 @@ void process_output_statistics_buffer(
 
     // Write statistic Data to file
     if (config->stat_file)
-        fprintf(config->stat_file, "Picture Number: %4d\t QP: %4d  [ PSNR-Y: %.2f dB,\tPSNR-U: %.2f dB,\tPSNR-V: %.2f dB,\tMSE-Y: %.2f,\tMSE-U: %.2f,\tMSE-V: %.2f ]\t %6d bits\n",
+        fprintf(config->stat_file, "Picture Number: %4d\t QP: %4d  [ PSNR-Y: %.2f dB,\tPSNR-U: %.2f dB,\tPSNR-V: %.2f dB,\tMSE-Y: %.2f,\tMSE-U: %.2f,\tMSE-V: %.2f ]\t %6d bytes\n",
         (int)picture_number,
         (int)picture_qp,
         luma_psnr,
