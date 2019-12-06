@@ -937,23 +937,6 @@ void* resource_coordination_kernel(void *input_ptr)
                     2);
             ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->input_padded_picture_ptr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
 
-            // Get Empty Output Results Object
-            if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
-            {
-                ((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->end_of_sequence_flag = end_of_sequence_flag;
-                eb_get_empty_object(
-                    context_ptr->resource_coordination_results_output_fifo_ptr,
-                    &outputWrapperPtr);
-                outputResultsPtr = (ResourceCoordinationResults*)outputWrapperPtr->object_ptr;
-                outputResultsPtr->picture_control_set_wrapper_ptr = prevPictureControlSetWrapperPtr;
-                // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
-                if (((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->is_overlay && end_of_sequence_flag)
-                    ((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
-                // Post the finished Results Object
-                eb_post_full_object(outputWrapperPtr);
-            }
-            prevPictureControlSetWrapperPtr = picture_control_set_wrapper_ptr;
-
             set_tile_info(picture_control_set_ptr);
             if(sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0)
             {
@@ -993,6 +976,23 @@ void* resource_coordination_kernel(void *input_ptr)
                     }
                 }
             }
+
+            // Get Empty Output Results Object
+            if (picture_control_set_ptr->picture_number > 0 && (prevPictureControlSetWrapperPtr != NULL))
+            {
+                ((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->end_of_sequence_flag = end_of_sequence_flag;
+                eb_get_empty_object(
+                    context_ptr->resource_coordination_results_output_fifo_ptr,
+                    &outputWrapperPtr);
+                outputResultsPtr = (ResourceCoordinationResults*)outputWrapperPtr->object_ptr;
+                outputResultsPtr->picture_control_set_wrapper_ptr = prevPictureControlSetWrapperPtr;
+                // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
+                if (((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->is_overlay && end_of_sequence_flag)
+                    ((PictureParentControlSet       *)prevPictureControlSetWrapperPtr->object_ptr)->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
+                // Post the finished Results Object
+                eb_post_full_object(outputWrapperPtr);
+            }
+            prevPictureControlSetWrapperPtr = picture_control_set_wrapper_ptr;
         }
     }
 
