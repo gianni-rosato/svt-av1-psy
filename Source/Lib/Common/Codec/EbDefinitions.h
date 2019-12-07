@@ -92,7 +92,7 @@ extern "C" {
 #define GM_OPT                       1 // Perform global motion estimation on a down-sampled version of the input picture
 
 #ifndef NON_AVX512_SUPPORT
-#define NON_AVX512_SUPPORT
+//#define NON_AVX512_SUPPORT
 #endif
 
 #define MR_MODE                           0

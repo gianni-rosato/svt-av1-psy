@@ -52,12 +52,6 @@ void convolve_2d_sr_hor_4tap_ssse3(
     const int32_t h, const InterpFilterParams *const filter_params_x,
     const int32_t subpel_x_q4, int16_t *const im_block);
 
-void convolve_2d_sr_ver_4tap_avx2(const int16_t *const im_block,
-    const int32_t w, const int32_t h,
-    InterpFilterParams *const filter_params_y,
-    const int32_t subpel_y_q4, uint8_t *dst,
-    const int32_t dst_stride);
-
 void jnt_convolve_y_4tap_avx2(const uint8_t *const src,
     const int32_t src_stride, uint8_t *dst8,
     const int32_t dst8_stride, const int32_t w,
@@ -109,6 +103,42 @@ static INLINE int32_t get_convolve_tap(const int16_t *const filter) {
         return 6;
     else
         return 8;
+}
+
+static INLINE void populate_coeffs_4tap_avx2(const __m128i coeffs_128,
+    __m256i coeffs[2]) {
+    const __m256i coeffs_256 = _mm256_broadcastsi128_si256(coeffs_128);
+
+    // coeffs 2 3 2 3 2 3 2 3
+    coeffs[0] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0604u));
+    // coeffs 4 5 4 5 4 5 4 5
+    coeffs[1] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0a08u));
+}
+
+static INLINE void populate_coeffs_6tap_avx2(const __m128i coeffs_128,
+    __m256i coeffs[3]) {
+    const __m256i coeffs_256 = _mm256_broadcastsi128_si256(coeffs_128);
+
+    // coeffs 1 2 1 2 1 2 1 2
+    coeffs[0] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0402u));
+    // coeffs 3 4 3 4 3 4 3 4
+    coeffs[1] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0806u));
+    // coeffs 5 6 5 6 5 6 5 6
+    coeffs[2] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0C0Au));
+}
+
+static INLINE void populate_coeffs_8tap_avx2(const __m128i coeffs_128,
+    __m256i coeffs[4]) {
+    const __m256i coeffs_256 = _mm256_broadcastsi128_si256(coeffs_128);
+
+    // coeffs 0 1 0 1 0 1 0 1
+    coeffs[0] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0200u));
+    // coeffs 2 3 2 3 2 3 2 3
+    coeffs[1] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0604u));
+    // coeffs 4 5 4 5 4 5 4 5
+    coeffs[2] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0a08u));
+    // coeffs 6 7 6 7 6 7 6 7
+    coeffs[3] = _mm256_shuffle_epi8(coeffs_256, _mm256_set1_epi16(0x0e0cu));
 }
 
 static INLINE void prepare_half_coeffs_2tap_ssse3(
@@ -235,7 +265,6 @@ static INLINE void prepare_half_coeffs_4tap_avx2(
     const int16_t *const filter = av1_get_interp_filter_subpel_kernel(
         *filter_params, subpel_q4 & SUBPEL_MASK);
     const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
-    const __m256i filter_coeffs = _mm256_broadcastsi128_si256(coeffs_8);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -244,13 +273,8 @@ static INLINE void prepare_half_coeffs_4tap_avx2(
     // end result
     assert(_mm_test_all_zeros(_mm_and_si128(coeffs_8, _mm_set1_epi16(1)),
         _mm_set1_epi16((short)0xffff)));
-
-    const __m256i coeffs_1 = _mm256_srai_epi16(filter_coeffs, 1);
-
-    // coeffs 2 3 2 3 2 3 2 3
-    coeffs[0] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0604u));
-    // coeffs 4 5 4 5 4 5 4 5
-    coeffs[1] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0a08u));
+    const __m128i coeffs_1 = _mm_srai_epi16(coeffs_8, 1);
+    populate_coeffs_4tap_avx2(coeffs_1, coeffs);
 }
 
 static INLINE void prepare_half_coeffs_6tap_avx2(
@@ -259,7 +283,6 @@ static INLINE void prepare_half_coeffs_6tap_avx2(
     const int16_t *const filter = av1_get_interp_filter_subpel_kernel(
         *filter_params, subpel_q4 & SUBPEL_MASK);
     const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
-    const __m256i filter_coeffs = _mm256_broadcastsi128_si256(coeffs_8);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -268,15 +291,8 @@ static INLINE void prepare_half_coeffs_6tap_avx2(
     // end result
     assert(_mm_test_all_zeros(_mm_and_si128(coeffs_8, _mm_set1_epi16(1)),
         _mm_set1_epi16((short)0xffff)));
-
-    const __m256i coeffs_1 = _mm256_srai_epi16(filter_coeffs, 1);
-
-    // coeffs 1 2 1 2 1 2 1 2
-    coeffs[0] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0402u));
-    // coeffs 3 4 3 4 3 4 3 4
-    coeffs[1] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0806u));
-    // coeffs 5 6 5 6 5 6 5 6
-    coeffs[2] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0C0Au));
+    const __m128i coeffs_1 = _mm_srai_epi16(coeffs_8, 1);
+    populate_coeffs_6tap_avx2(coeffs_1, coeffs);
 }
 
 static INLINE void prepare_half_coeffs_8tap_avx2(
@@ -285,7 +301,6 @@ static INLINE void prepare_half_coeffs_8tap_avx2(
     const int16_t *const filter = av1_get_interp_filter_subpel_kernel(
         *filter_params, subpel_q4 & SUBPEL_MASK);
     const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
-    const __m256i filter_coeffs = _mm256_broadcastsi128_si256(coeffs_8);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -294,17 +309,8 @@ static INLINE void prepare_half_coeffs_8tap_avx2(
     // end result
     assert(_mm_test_all_zeros(_mm_and_si128(coeffs_8, _mm_set1_epi16(1)),
         _mm_set1_epi16((short)0xffff)));
-
-    const __m256i coeffs_1 = _mm256_srai_epi16(filter_coeffs, 1);
-
-    // coeffs 0 1 0 1 0 1 0 1
-    coeffs[0] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0200u));
-    // coeffs 2 3 2 3 2 3 2 3
-    coeffs[1] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0604u));
-    // coeffs 4 5 4 5 4 5 4 5
-    coeffs[2] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0a08u));
-    // coeffs 6 7 6 7 6 7 6 7
-    coeffs[3] = _mm256_shuffle_epi8(coeffs_1, _mm256_set1_epi16(0x0e0cu));
+    const __m128i coeffs_1 = _mm_srai_epi16(coeffs_8, 1);
+    populate_coeffs_8tap_avx2(coeffs_1, coeffs);
 }
 
 static INLINE void prepare_coeffs_2tap_sse2(
@@ -430,7 +436,7 @@ static INLINE void prepare_coeffs_8tap_avx2(
 }
 
 static INLINE void load_16bit_5rows_avx2(const int16_t *const src,
-    const int32_t stride, __m256i dst[5]) {
+    const ptrdiff_t stride, __m256i dst[5]) {
     dst[0] = _mm256_load_si256((__m256i *)(src + 0 * stride));
     dst[1] = _mm256_load_si256((__m256i *)(src + 1 * stride));
     dst[2] = _mm256_load_si256((__m256i *)(src + 2 * stride));
@@ -439,7 +445,7 @@ static INLINE void load_16bit_5rows_avx2(const int16_t *const src,
 }
 
 static INLINE void load_16bit_7rows_avx2(const int16_t *const src,
-    const int32_t stride, __m256i dst[7]) {
+    const ptrdiff_t stride, __m256i dst[7]) {
     dst[0] = _mm256_load_si256((__m256i *)(src + 0 * stride));
     dst[1] = _mm256_load_si256((__m256i *)(src + 1 * stride));
     dst[2] = _mm256_load_si256((__m256i *)(src + 2 * stride));
@@ -450,7 +456,7 @@ static INLINE void load_16bit_7rows_avx2(const int16_t *const src,
 }
 
 SIMD_INLINE void load_16bit_8rows_avx2(const int16_t *const src,
-    const int32_t stride, __m256i dst[8]) {
+    const ptrdiff_t stride, __m256i dst[8]) {
     dst[0] = _mm256_load_si256((__m256i *)(src + 0 * stride));
     dst[1] = _mm256_load_si256((__m256i *)(src + 1 * stride));
     dst[2] = _mm256_load_si256((__m256i *)(src + 2 * stride));
@@ -462,7 +468,7 @@ SIMD_INLINE void load_16bit_8rows_avx2(const int16_t *const src,
 }
 
 SIMD_INLINE void loadu_unpack_16bit_5rows_avx2(const int16_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     __m256i s_256[5],
     __m256i ss_256[5],
     __m256i tt_256[5]) {
@@ -484,7 +490,7 @@ SIMD_INLINE void loadu_unpack_16bit_5rows_avx2(const int16_t *const src,
 }
 
 SIMD_INLINE void loadu_unpack_16bit_3rows_avx2(const int16_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     __m256i s_256[3],
     __m256i ss_256[3],
     __m256i tt_256[3]) {
@@ -635,6 +641,17 @@ static INLINE __m256i convolve16_8tap_avx2(const __m256i ss[4],
     const __m256i res_0123 = _mm256_add_epi32(res_01, res_23);
     const __m256i res_4567 = _mm256_add_epi32(res_45, res_67);
     return _mm256_add_epi32(res_0123, res_4567);
+}
+
+static INLINE __m256i x_convolve_4tap_avx2(const __m256i data,
+    const __m256i coeffs[2],
+    const __m256i filt[2]) {
+    __m256i ss[2];
+
+    ss[0] = _mm256_shuffle_epi8(data, filt[0]);
+    ss[1] = _mm256_shuffle_epi8(data, filt[1]);
+
+    return convolve_4tap_avx2(ss, coeffs);
 }
 
 static INLINE __m256i x_convolve_6tap_avx2(const __m256i data,
@@ -789,20 +806,20 @@ static INLINE __m256i jnt_no_avg_round_avx2(const __m256i src,
 }
 
 static INLINE void pack_store_2x2_sse2(const __m128i res, uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m128i d = _mm_packus_epi16(res, res);
     *(int16_t *)dst = (int16_t)_mm_cvtsi128_si32(d);
     *(int16_t *)(dst + stride) = (int16_t)_mm_extract_epi16(d, 1);
 }
 
 static INLINE void pack_store_4x2_sse2(const __m128i res, uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m128i d = _mm_packus_epi16(res, res);
     store_u8_4x2_sse2(d, dst, stride);
 }
 
 static INLINE void pack_store_4x2_avx2(const __m256i res, uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i d = _mm256_packus_epi16(res, res);
     const __m128i d0 = _mm256_castsi256_si128(d);
     const __m128i d1 = _mm256_extracti128_si256(d, 1);
@@ -811,7 +828,7 @@ static INLINE void pack_store_4x2_avx2(const __m256i res, uint8_t *const dst,
 }
 
 static INLINE void pack_store_8x2_avx2(const __m256i res, uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i d = _mm256_packus_epi16(res, res);
     const __m128i d0 = _mm256_castsi256_si128(d);
     const __m128i d1 = _mm256_extracti128_si256(d, 1);
@@ -821,7 +838,7 @@ static INLINE void pack_store_8x2_avx2(const __m256i res, uint8_t *const dst,
 
 static INLINE void pack_store_16x2_avx2(const __m256i res0, const __m256i res1,
     uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i d = _mm256_packus_epi16(res0, res1);
     storeu_u8_16x2_avx2(d, dst, stride);
 }
@@ -829,7 +846,7 @@ static INLINE void pack_store_16x2_avx2(const __m256i res0, const __m256i res1,
 static INLINE void xy_y_pack_store_16x2_avx2(const __m256i res0,
     const __m256i res1,
     uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i t = _mm256_packus_epi16(res0, res1);
     const __m256i d = _mm256_permute4x64_epi64(t, 0xD8);
     storeu_u8_16x2_avx2(d, dst, stride);
@@ -844,7 +861,7 @@ static INLINE void pack_store_32_avx2(const __m256i res0, const __m256i res1,
 
 static INLINE void xy_y_round_store_2x2_sse2(const __m128i res,
     uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m128i r = xy_y_round_sse2(res);
     const __m128i rr = _mm_packs_epi32(r, r);
     pack_store_2x2_sse2(rr, dst, stride);
@@ -852,7 +869,7 @@ static INLINE void xy_y_round_store_2x2_sse2(const __m128i res,
 
 static INLINE void xy_y_round_store_4x2_avx2(const __m256i res,
     uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i r = xy_y_round_avx2(res);
     const __m256i rr = _mm256_packs_epi32(r, r);
     pack_store_4x2_avx2(rr, dst, stride);
@@ -901,14 +918,14 @@ static INLINE __m128i sr_y_round_sse2(const __m128i src) {
 
 static INLINE void sr_x_round_store_8x2_avx2(const __m256i res,
     uint8_t *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i r = sr_x_round_avx2(res);
     pack_store_8x2_avx2(r, dst, dst_stride);
 }
 
 static INLINE void sr_x_round_store_16x2_avx2(const __m256i res[2],
     uint8_t *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     __m256i r[2];
 
     r[0] = sr_x_round_avx2(res[0]);
@@ -927,14 +944,14 @@ static INLINE void sr_x_round_store_32_avx2(const __m256i res[2],
 
 static INLINE void sr_y_round_store_8x2_avx2(const __m256i res,
     uint8_t *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i r = sr_y_round_avx2(res);
     pack_store_8x2_avx2(r, dst, dst_stride);
 }
 
 static INLINE void sr_y_round_store_16x2_avx2(const __m256i res[2],
     uint8_t *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     __m256i r[2];
 
     r[0] = sr_y_round_avx2(res[0]);
@@ -961,7 +978,7 @@ static INLINE void sr_x_2tap_32_avg_avx2(const uint8_t *const src,
 static INLINE void jnt_no_avg_store_16x2_avx2(const __m256i src0,
     const __m256i src1,
     ConvBufType *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i d0 =
         _mm256_inserti128_si256(src0, _mm256_extracti128_si256(src1, 0), 1);
     const __m256i d1 =
@@ -971,7 +988,7 @@ static INLINE void jnt_no_avg_store_16x2_avx2(const __m256i src0,
 }
 
 static INLINE __m128i x_convolve_2tap_2x2_sse4_1(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1]) {
     const __m128i sfl =
         _mm_setr_epi8(0, 1, 1, 2, 4, 5, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -981,7 +998,7 @@ static INLINE __m128i x_convolve_2tap_2x2_sse4_1(const uint8_t *const src,
 }
 
 static INLINE __m128i x_convolve_2tap_4x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1]) {
     const __m128i sfl =
         _mm_setr_epi8(0, 1, 1, 2, 2, 3, 3, 4, 8, 9, 9, 10, 10, 11, 11, 12);
@@ -991,7 +1008,7 @@ static INLINE __m128i x_convolve_2tap_4x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE void x_convolve_2tap_8x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1],
     __m128i r[2]) {
     __m128i ss[2];
@@ -1007,7 +1024,7 @@ static INLINE void x_convolve_2tap_8x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m256i x_convolve_2tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[1]) {
     __m128i s_128[2][2];
     __m256i s_256[2];
@@ -1023,20 +1040,13 @@ static INLINE __m256i x_convolve_2tap_8x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void x_convolve_2tap_16x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[1],
     __m256i r[2]) {
-    __m128i s_128[2][2];
-    __m256i s_256[2];
-
-    s_128[0][0] = _mm_loadu_si128((__m128i *)src);
-    s_128[0][1] = _mm_loadu_si128((__m128i *)(src + 1));
-    s_128[1][0] = _mm_loadu_si128((__m128i *)(src + stride));
-    s_128[1][1] = _mm_loadu_si128((__m128i *)(src + stride + 1));
-    s_256[0] = _mm256_setr_m128i(s_128[0][0], s_128[1][0]);
-    s_256[1] = _mm256_setr_m128i(s_128[0][1], s_128[1][1]);
-    const __m256i s0 = _mm256_unpacklo_epi8(s_256[0], s_256[1]);
-    const __m256i s1 = _mm256_unpackhi_epi8(s_256[0], s_256[1]);
+    const __m256i s0_256 = loadu_8bit_16x2_avx2(src, stride);
+    const __m256i s1_256 = loadu_8bit_16x2_avx2(src + 1, stride);
+    const __m256i s0 = _mm256_unpacklo_epi8(s0_256, s1_256);
+    const __m256i s1 = _mm256_unpackhi_epi8(s0_256, s1_256);
     r[0] = convolve_2tap_avx2(&s0, coeffs);
     r[1] = convolve_2tap_avx2(&s1, coeffs);
 }
@@ -1054,7 +1064,7 @@ static INLINE void x_convolve_2tap_32_avx2(const uint8_t *const src,
 }
 
 static INLINE __m128i x_convolve_4tap_2x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1]) {
     const __m128i sfl0 =
         _mm_setr_epi8(0, 1, 1, 2, 8, 9, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -1069,7 +1079,7 @@ static INLINE __m128i x_convolve_4tap_2x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m128i x_convolve_4tap_4x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1]) {
     const __m128i s = load_u8_8x2_sse2(src, stride);
     const __m128i sfl0 =
@@ -1084,12 +1094,10 @@ static INLINE __m128i x_convolve_4tap_4x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m256i x_convolve_6tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[3],
     const __m256i filt[3]) {
-    const __m128i s0 = _mm_loadu_si128((__m128i *)src);
-    const __m128i s1 = _mm_loadu_si128((__m128i *)(src + stride));
-    const __m256i s_256 = _mm256_setr_m128i(s0, s1);
+    const __m256i s_256 = loadu_8bit_16x2_avx2(src, stride);
     return x_convolve_6tap_avx2(s_256, coeffs, filt);
 }
 
@@ -1098,15 +1106,8 @@ static INLINE void x_convolve_6tap_16x2_avx2(const uint8_t *const src,
     const __m256i coeffs[3],
     const __m256i filt[3],
     __m256i r[2]) {
-    const __m128i s0_128 = _mm_loadu_si128((__m128i *)src);
-    const __m128i s1_128 = _mm_loadu_si128((__m128i *)(src + src_stride));
-    const __m128i s2_128 = _mm_loadu_si128((__m128i *)(src + 8));
-    const __m128i s3_128 = _mm_loadu_si128((__m128i *)(src + src_stride + 8));
-    const __m256i s0_256 = _mm256_setr_m128i(s0_128, s1_128);
-    const __m256i s1_256 = _mm256_setr_m128i(s2_128, s3_128);
-
-    r[0] = x_convolve_6tap_avx2(s0_256, coeffs, filt);
-    r[1] = x_convolve_6tap_avx2(s1_256, coeffs, filt);
+    r[0] = x_convolve_6tap_8x2_avx2(src + 0, src_stride, coeffs, filt);
+    r[1] = x_convolve_6tap_8x2_avx2(src + 8, src_stride, coeffs, filt);
 }
 
 static INLINE void x_convolve_6tap_32_avx2(const uint8_t *const src,
@@ -1121,12 +1122,10 @@ static INLINE void x_convolve_6tap_32_avx2(const uint8_t *const src,
 }
 
 static INLINE __m256i x_convolve_8tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[4],
     const __m256i filt[4]) {
-    const __m128i s0 = _mm_loadu_si128((__m128i *)src);
-    const __m128i s1 = _mm_loadu_si128((__m128i *)(src + stride));
-    const __m256i s_256 = _mm256_setr_m128i(s0, s1);
+    const __m256i s_256 = loadu_8bit_16x2_avx2(src, stride);
     return x_convolve_8tap_avx2(s_256, coeffs, filt);
 }
 
@@ -1135,15 +1134,8 @@ SIMD_INLINE void x_convolve_8tap_16x2_avx2(const uint8_t *const src,
     const __m256i coeffs[4],
     const __m256i filt[4],
     __m256i r[2]) {
-    const __m128i s0_128 = _mm_loadu_si128((__m128i *)src);
-    const __m128i s1_128 = _mm_loadu_si128((__m128i *)(src + src_stride));
-    const __m128i s2_128 = _mm_loadu_si128((__m128i *)(src + 8));
-    const __m128i s3_128 = _mm_loadu_si128((__m128i *)(src + src_stride + 8));
-    const __m256i s0_256 = _mm256_setr_m128i(s0_128, s1_128);
-    const __m256i s1_256 = _mm256_setr_m128i(s2_128, s3_128);
-
-    r[0] = x_convolve_8tap_avx2(s0_256, coeffs, filt);
-    r[1] = x_convolve_8tap_avx2(s1_256, coeffs, filt);
+    r[0] = x_convolve_8tap_8x2_avx2(src + 0, src_stride, coeffs, filt);
+    r[1] = x_convolve_8tap_8x2_avx2(src + 8, src_stride, coeffs, filt);
 }
 
 SIMD_INLINE void x_convolve_8tap_32_avx2(const uint8_t *const src,
@@ -1157,7 +1149,7 @@ SIMD_INLINE void x_convolve_8tap_32_avx2(const uint8_t *const src,
 }
 
 static INLINE __m128i y_convolve_2tap_2x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1],
     __m128i s_16[2]) {
     __m128i s_128[2];
@@ -1171,7 +1163,7 @@ static INLINE __m128i y_convolve_2tap_2x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m128i y_convolve_2tap_4x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[1],
     __m128i s_32[2]) {
     __m128i s_128[2];
@@ -1185,7 +1177,7 @@ static INLINE __m128i y_convolve_2tap_4x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m256i y_convolve_2tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[1],
     __m128i s_64[2]) {
     __m256i s_256[2];
@@ -1199,7 +1191,7 @@ static INLINE __m256i y_convolve_2tap_8x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_2tap_16x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[1],
     __m128i s_128[2], __m256i r[2]) {
     __m256i s_256[2];
@@ -1226,7 +1218,7 @@ static INLINE void y_convolve_2tap_32_avx2(const uint8_t *const src,
 }
 
 static INLINE __m128i y_convolve_4tap_2x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[2],
     __m128i s_16[4],
     __m128i ss_128[2]) {
@@ -1239,7 +1231,7 @@ static INLINE __m128i y_convolve_4tap_2x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m128i y_convolve_4tap_4x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[2],
     __m128i s_32[4],
     __m128i ss_128[2]) {
@@ -1252,7 +1244,7 @@ static INLINE __m128i y_convolve_4tap_4x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m256i y_convolve_4tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[2],
     __m128i s_64[4],
     __m256i ss_256[2]) {
@@ -1265,7 +1257,7 @@ static INLINE __m256i y_convolve_4tap_8x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_4tap_16x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[2],
     __m128i s_128[4],
     __m256i ss_256[2], __m256i r[2]) {
@@ -1280,7 +1272,7 @@ static INLINE void y_convolve_4tap_16x2_avx2(const uint8_t *const src,
 }
 
 static INLINE __m128i y_convolve_6tap_2x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[3],
     __m128i s_16[6],
     __m128i ss_128[3]) {
@@ -1293,7 +1285,7 @@ static INLINE __m128i y_convolve_6tap_2x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_4tap_32x2_avx2(
-    const uint8_t *const src, const int32_t stride, const __m256i coeffs[2],
+    const uint8_t *const src, const ptrdiff_t stride, const __m256i coeffs[2],
     __m256i s_256[4], __m256i ss_256[4], __m256i tt_256[4], __m256i r[4]) {
     s_256[3] = _mm256_loadu_si256((__m256i *)(src + 1 * stride));
     ss_256[1] = _mm256_unpacklo_epi8(s_256[2], s_256[3]);
@@ -1308,7 +1300,7 @@ static INLINE void y_convolve_4tap_32x2_avx2(
 }
 
 static INLINE __m128i y_convolve_6tap_4x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[3],
     __m128i s_32[6],
     __m128i ss_128[3]) {
@@ -1321,7 +1313,7 @@ static INLINE __m128i y_convolve_6tap_4x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m256i y_convolve_6tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[3],
     __m128i s_64[6],
     __m256i ss_256[3]) {
@@ -1334,7 +1326,7 @@ static INLINE __m256i y_convolve_6tap_8x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_6tap_16x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[3],
     __m128i s_128[6],
     __m256i ss_256[3], __m256i r[2]) {
@@ -1349,7 +1341,7 @@ static INLINE void y_convolve_6tap_16x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_6tap_32x2_avx2(
-    const uint8_t *const src, const int32_t stride, const __m256i coeffs[3],
+    const uint8_t *const src, const ptrdiff_t stride, const __m256i coeffs[3],
     __m256i s_256[6], __m256i ss_256[6], __m256i tt_256[6], __m256i r[4]) {
     s_256[5] = _mm256_loadu_si256((__m256i *)(src + 3 * stride));
     ss_256[2] = _mm256_unpacklo_epi8(s_256[4], s_256[5]);
@@ -1364,7 +1356,7 @@ static INLINE void y_convolve_6tap_32x2_avx2(
 }
 
 static INLINE __m128i y_convolve_8tap_2x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[4],
     __m128i s_16[8],
     __m128i ss_128[4]) {
@@ -1377,7 +1369,7 @@ static INLINE __m128i y_convolve_8tap_2x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m128i y_convolve_8tap_4x2_ssse3(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m128i coeffs[4],
     __m128i s_32[8],
     __m128i ss_128[4]) {
@@ -1390,7 +1382,7 @@ static INLINE __m128i y_convolve_8tap_4x2_ssse3(const uint8_t *const src,
 }
 
 static INLINE __m256i y_convolve_8tap_8x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[4],
     __m128i s_64[8],
     __m256i ss_256[4]) {
@@ -1403,7 +1395,7 @@ static INLINE __m256i y_convolve_8tap_8x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_8tap_16x2_avx2(const uint8_t *const src,
-    const int32_t stride,
+    const ptrdiff_t stride,
     const __m256i coeffs[4],
     __m128i s_128[8],
     __m256i ss_256[4], __m256i r[2]) {
@@ -1418,7 +1410,7 @@ static INLINE void y_convolve_8tap_16x2_avx2(const uint8_t *const src,
 }
 
 static INLINE void y_convolve_8tap_32x2_avx2(
-    const uint8_t *const src, const int32_t stride, const __m256i coeffs[4],
+    const uint8_t *const src, const ptrdiff_t stride, const __m256i coeffs[4],
     __m256i s_256[8], __m256i ss_256[8], __m256i tt_256[8], __m256i r[4]) {
     s_256[7] = _mm256_loadu_si256((__m256i *)(src + 7 * stride));
     ss_256[3] = _mm256_unpacklo_epi8(s_256[6], s_256[7]);
@@ -1576,7 +1568,7 @@ static INLINE void xy_y_convolve_2tap_16x2_half_pel_avx2(
 }
 
 static INLINE void xy_y_store_16x2_avx2(const __m256i r[2], uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i t = _mm256_packus_epi16(r[0], r[1]);
     const __m256i d = _mm256_permute4x64_epi64(t, 0xD8);
     storeu_u8_16x2_avx2(d, dst, stride);
@@ -1716,7 +1708,7 @@ static INLINE void xy_y_convolve_4tap_16x2_avx2(
 }
 
 static INLINE void xy_y_convolve_4tap_32x2_avx2(
-    const int16_t *const src, const int32_t stride, __m256i s_256[4],
+    const int16_t *const src, const ptrdiff_t stride, __m256i s_256[4],
     __m256i ss_256[4], __m256i tt_256[4], const __m256i coeffs[2],
     __m256i r[4]) {
     s_256[3] = _mm256_loadu_si256((__m256i *)(src + 3 * stride));
@@ -1828,7 +1820,7 @@ static INLINE void xy_y_convolve_6tap_8x2_half_pel_avx2(
 }
 
 static INLINE void xy_y_convolve_6tap_16x2_avx2(
-    const int16_t *const src, const int32_t stride, __m256i s_256[6],
+    const int16_t *const src, const ptrdiff_t stride, __m256i s_256[6],
     __m256i ss_256[6], __m256i tt_256[6], const __m256i coeffs[3],
     __m256i r[4]) {
     s_256[5] = _mm256_loadu_si256((__m256i *)(src + 5 * stride));
@@ -1853,7 +1845,7 @@ static INLINE void xy_y_convolve_6tap_16x2_avx2(
 }
 
 static INLINE void xy_y_convolve_6tap_16x2_half_pel_avx2(
-    const int16_t *const src, const int32_t stride, __m256i s_256[6],
+    const int16_t *const src, const ptrdiff_t stride, __m256i s_256[6],
     __m256i ss_256[4], const __m256i coeffs[2], __m256i r[4]) {
     __m256i a_256[2];
 
@@ -1963,7 +1955,7 @@ static INLINE void xy_y_convolve_8tap_8x2_half_pel_avx2(
 }
 
 SIMD_INLINE void xy_y_convolve_8tap_16x2_avx2(
-    const int16_t *const src, const int32_t stride, const __m256i coeffs[4],
+    const int16_t *const src, const ptrdiff_t stride, const __m256i coeffs[4],
     __m256i s_256[8], __m256i ss_256[8], __m256i tt_256[8], __m256i r[4]) {
     s_256[7] = _mm256_load_si256((__m256i *)(src + 7 * stride));
     ss_256[3] = _mm256_unpacklo_epi16(s_256[6], s_256[7]);
@@ -1991,7 +1983,7 @@ SIMD_INLINE void xy_y_convolve_8tap_16x2_avx2(
 }
 
 static INLINE void xy_y_convolve_8tap_16x2_half_pel_avx2(
-    const int16_t *const src, const int32_t stride, const __m256i coeffs[4],
+    const int16_t *const src, const ptrdiff_t stride, const __m256i coeffs[4],
     __m256i s_256[8], __m256i r[4]) {
     __m256i a_256[4], ss_256[4];
     s_256[7] = _mm256_load_si256((__m256i *)(src + 7 * stride));
@@ -2029,7 +2021,7 @@ static INLINE void xy_y_convolve_8tap_16x2_half_pel_avx2(
 
 static INLINE void jnt_comp_avg_round_store_2x2_kernel_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m128i d;
 
@@ -2044,7 +2036,7 @@ static INLINE void jnt_comp_avg_round_store_2x2_kernel_sse2(
 
 static INLINE void jnt_comp_avg_round_store_2x2_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i r = jnt_y_round_sse2(res);
 
@@ -2054,7 +2046,7 @@ static INLINE void jnt_comp_avg_round_store_2x2_sse2(
 
 static INLINE void jnt_comp_avg_round_store_4x2_kernel_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i dst_128 = load_u16_4x2_sse2(dst, dst_stride);
     __m128i d[2];
@@ -2073,7 +2065,7 @@ static INLINE void jnt_comp_avg_round_store_4x2_kernel_sse2(
 
 static INLINE void jnt_comp_avg_round_store_4x2_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i r = jnt_y_round_sse2(res);
     jnt_comp_avg_round_store_4x2_kernel_sse2(
@@ -2099,7 +2091,7 @@ static INLINE __m256i jnt_comp_avg_convolve_16_avx2(const __m256i res,
 
 static INLINE void jnt_comp_avg_round_store_8x2_kernel_avx2(
     const __m256i res, const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m256i d;
 
@@ -2110,7 +2102,7 @@ static INLINE void jnt_comp_avg_round_store_8x2_kernel_avx2(
 
 static INLINE void jnt_comp_avg_round_store_16x2_kernel_avx2(
     const __m256i res[2], const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m256i d[2];
 
@@ -2135,7 +2127,7 @@ static INLINE void jnt_comp_avg_round_store_32_kernel_avx2(
 
 static INLINE void jnt_comp_avg_round_store_8x2_avx2(
     const __m256i res, const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m256i r = jnt_y_round_avx2(res);
     jnt_comp_avg_round_store_8x2_kernel_avx2(
@@ -2144,7 +2136,7 @@ static INLINE void jnt_comp_avg_round_store_8x2_avx2(
 
 SIMD_INLINE void jnt_comp_avg_round_store_16x2_avx2(
     const __m256i res[2], const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m256i r[2], d[2];
 
@@ -2180,7 +2172,7 @@ static INLINE __m128i jnt_avg_8_sse2(const __m128i res, const __m128i dst) {
 
 static INLINE void jnt_copy_avg_round_store_2x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = _mm_add_epi16(res, offset);
     __m128i d;
 
@@ -2191,7 +2183,7 @@ static INLINE void jnt_copy_avg_round_store_2x2_sse2(
 
 static INLINE void jnt_avg_round_store_2x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = jnt_avg_round_sse2(res, offset);
     __m128i d;
 
@@ -2202,7 +2194,7 @@ static INLINE void jnt_avg_round_store_2x2_sse2(
 
 static INLINE void jnt_copy_avg_round_store_4x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = _mm_add_epi16(res, offset);
     __m128i d;
 
@@ -2213,7 +2205,7 @@ static INLINE void jnt_copy_avg_round_store_4x2_sse2(
 
 static INLINE void jnt_avg_round_store_4x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = jnt_avg_round_sse2(res, offset);
     __m128i d;
 
@@ -2229,7 +2221,7 @@ static INLINE __m256i jnt_avg_16_avx2(const __m256i res, const __m256i dst) {
 
 static INLINE void jnt_copy_avg_round_store_8x2_avx2(
     const __m256i res, const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m256i r = _mm256_add_epi16(res, offset);
     __m256i d;
 
@@ -2240,7 +2232,7 @@ static INLINE void jnt_copy_avg_round_store_8x2_avx2(
 
 static INLINE void jnt_copy_avg_round_store_16x2_avx2(
     const __m256i res[2], const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     __m256i r[2], d[2];
 
     r[0] = _mm256_add_epi16(res[0], offset);
@@ -2320,7 +2312,7 @@ static INLINE void jnt_copy_comp_avg_32_avx2(const uint8_t *const src,
 
 static INLINE void jnt_avg_round_store_8x2_avx2(
     const __m256i res, const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m256i r = jnt_avg_round_avx2(res, offset);
     __m256i d;
 
@@ -2331,7 +2323,7 @@ static INLINE void jnt_avg_round_store_8x2_avx2(
 
 static INLINE void jnt_avg_round_store_16x2_avx2(
     const __m256i res[2], const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     __m256i r[2], d[2];
 
     r[0] = jnt_avg_round_avx2(res[0], offset);
@@ -2361,7 +2353,7 @@ static INLINE void jnt_avg_round_store_32_avx2(const __m256i res[2],
 static INLINE void jnt_no_avg_round_store_2x2_sse2(const __m128i res,
     const __m128i offset,
     ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m128i d = jnt_no_avg_round_sse2(res, offset);
     store_u16_2x2_sse2(d, dst, dst_stride);
 }
@@ -2369,7 +2361,7 @@ static INLINE void jnt_no_avg_round_store_2x2_sse2(const __m128i res,
 static INLINE void jnt_no_avg_round_store_4x2_sse2(const __m128i res,
     const __m128i offset,
     ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m128i d = jnt_no_avg_round_sse2(res, offset);
     store_u16_4x2_sse2(d, dst, dst_stride);
 }
@@ -2377,7 +2369,7 @@ static INLINE void jnt_no_avg_round_store_4x2_sse2(const __m128i res,
 static INLINE void jnt_no_avg_round_store_8x2_avx2(const __m256i res,
     const __m256i offset,
     ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i d = jnt_no_avg_round_avx2(res, offset);
     storeu_u16_8x2_avx2(d, dst, dst_stride);
 }
@@ -2385,7 +2377,7 @@ static INLINE void jnt_no_avg_round_store_8x2_avx2(const __m256i res,
 static INLINE void jnt_no_avg_round_store_16x2_avx2(const __m256i res[2],
     const __m256i offset,
     ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     __m256i d[2];
 
     d[0] = jnt_no_avg_round_avx2(res[0], offset);
@@ -2405,14 +2397,14 @@ static INLINE void jnt_no_avg_round_store_32_avx2(const __m256i res[2],
 
 static INLINE void xy_y_round_store_8x2_avx2(const __m256i res[2],
     uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i r = xy_y_round_16_avx2(res);
     pack_store_8x2_avx2(r, dst, stride);
 }
 
 static INLINE void xy_y_round_store_16x2_avx2(const __m256i res[4],
     uint8_t *const dst,
-    const int32_t stride) {
+    const ptrdiff_t stride) {
     const __m256i r0 = xy_y_round_16_avx2(res + 0);
     const __m256i r1 = xy_y_round_16_avx2(res + 2);
     xy_y_pack_store_16x2_avx2(r0, r1, dst, stride);
@@ -2464,7 +2456,7 @@ static INLINE __m256i jnt_2d_comp_avg_round_half_pel_avx2(const __m256i src) {
 
 static INLINE void jnt_2d_comp_avg_round_store_2x2_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i r = jnt_2d_comp_avg_round_4_sse2(res);
     __m128i d;
@@ -2480,7 +2472,7 @@ static INLINE void jnt_2d_comp_avg_round_store_2x2_sse2(
 
 static INLINE void jnt_2d_comp_avg_round_store_half_pel_2x2_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i r = jnt_2d_comp_avg_round_half_pel_sse2(res);
     __m128i d;
@@ -2496,7 +2488,7 @@ static INLINE void jnt_2d_comp_avg_round_store_half_pel_2x2_sse2(
 
 static INLINE void jnt_2d_comp_avg_round_store_4x2_sse2(
     const __m128i res[2], const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i r = jnt_2d_comp_avg_round_4x2_sse2(res);
     const __m128i d = load_u16_4x2_sse2(dst, dst_stride);
@@ -2516,7 +2508,7 @@ static INLINE void jnt_2d_comp_avg_round_store_4x2_sse2(
 
 static INLINE void jnt_2d_comp_avg_round_store_half_pel_4x2_sse2(
     const __m128i res, const __m128i factor, const __m128i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m128i r = jnt_2d_comp_avg_round_half_pel_sse2(res);
     const __m128i d = load_u16_4x2_sse2(dst, dst_stride);
@@ -2585,12 +2577,12 @@ static INLINE __m256i jnt_2d_comp_avg_round_pack_half_pel_avx2(
 
 static INLINE void jnt_2d_comp_avg_round_store_4x2_avx2(
     const __m256i res, const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m128i d_128[2];
     __m256i d;
 
-    d_128[0] = _mm_loadl_epi64((__m128i *)(dst));
+    d_128[0] = _mm_loadl_epi64((__m128i *)dst);
     d_128[1] = _mm_loadl_epi64((__m128i *)(dst + dst_stride));
     d = _mm256_setr_m128i(d_128[0], d_128[1]);
     d = loadu_u16_8x2_avx2(dst, dst_stride);
@@ -2604,7 +2596,7 @@ static INLINE void jnt_2d_comp_avg_round_store_4x2_avx2(
 
 static INLINE void jnt_2d_comp_avg_round_store_8x2_avx2(
     const __m256i res[2], const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m256i d = loadu_u16_8x2_avx2(dst, dst_stride);
     const __m256i dd =
@@ -2614,7 +2606,7 @@ static INLINE void jnt_2d_comp_avg_round_store_8x2_avx2(
 
 static INLINE void jnt_2d_comp_avg_round_store_half_pel_8x2_avx2(
     const __m256i res, const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     const __m256i d = loadu_u16_8x2_avx2(dst, dst_stride);
     const __m256i dd =
@@ -2624,7 +2616,7 @@ static INLINE void jnt_2d_comp_avg_round_store_half_pel_8x2_avx2(
 
 static INLINE void jnt_2d_comp_avg_round_store_16x2_avx2(
     const __m256i res[4], const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m256i d[2];
 
@@ -2637,7 +2629,7 @@ static INLINE void jnt_2d_comp_avg_round_store_16x2_avx2(
 
 static INLINE void jnt_2d_comp_avg_round_store_half_pel_16x2_avx2(
     const __m256i res[2], const __m256i factor, const __m256i offset,
-    const ConvBufType *const dst, const int32_t dst_stride, uint8_t *const dst8,
+    const ConvBufType *const dst, const ptrdiff_t dst_stride, uint8_t *const dst8,
     const int32_t dst8_stride) {
     __m256i d[2];
 
@@ -2722,7 +2714,7 @@ static INLINE __m256i jnt_2d_round_half_pel_avx2(const __m256i src,
 
 static INLINE void jnt_2d_avg_round_store_2x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = jnt_2d_round_4_sse2(res, offset);
     __m128i d;
 
@@ -2733,7 +2725,7 @@ static INLINE void jnt_2d_avg_round_store_2x2_sse2(
 
 static INLINE void jnt_2d_avg_round_store_half_pel_2x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = jnt_2d_round_half_pel_sse2(res, offset);
     __m128i d;
 
@@ -2744,7 +2736,7 @@ static INLINE void jnt_2d_avg_round_store_half_pel_2x2_sse2(
 
 static INLINE void jnt_2d_avg_round_store_4x2_sse2(
     const __m128i res[2], const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = jnt_2d_round_4x2_sse2(res, offset);
     __m128i d;
 
@@ -2755,7 +2747,7 @@ static INLINE void jnt_2d_avg_round_store_4x2_sse2(
 
 static INLINE void jnt_2d_avg_round_store_half_pel_4x2_sse2(
     const __m128i res, const __m128i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m128i r = jnt_2d_round_half_pel_sse2(res, offset);
     __m128i d;
 
@@ -2766,12 +2758,12 @@ static INLINE void jnt_2d_avg_round_store_half_pel_4x2_sse2(
 
 static INLINE void jnt_2d_avg_round_store_4x2_avx2(
     const __m256i res, const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m256i r = jnt_2d_round_4x2_avx2(res, offset);
     __m128i d_128[2];
     __m256i d;
 
-    d_128[0] = _mm_loadl_epi64((__m128i *)(dst));
+    d_128[0] = _mm_loadl_epi64((__m128i *)dst);
     d_128[1] = _mm_loadl_epi64((__m128i *)(dst + dst_stride));
     d = _mm256_setr_m128i(d_128[0], d_128[1]);
     d = jnt_avg_16_avx2(r, d);
@@ -2784,7 +2776,7 @@ static INLINE void jnt_2d_avg_round_store_4x2_avx2(
 
 static INLINE void jnt_2d_avg_round_store_8x2_avx2(
     const __m256i res[2], const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m256i r = jnt_2d_round_16_avx2(res, offset);
     __m256i d;
 
@@ -2795,7 +2787,7 @@ static INLINE void jnt_2d_avg_round_store_8x2_avx2(
 
 static INLINE void jnt_2d_avg_round_store_half_pel_8x2_avx2(
     const __m256i res, const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     const __m256i r = jnt_2d_round_half_pel_avx2(res, offset);
     __m256i d;
 
@@ -2806,7 +2798,7 @@ static INLINE void jnt_2d_avg_round_store_half_pel_8x2_avx2(
 
 static INLINE void jnt_2d_avg_round_store_16x2_avx2(
     const __m256i res[4], const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     __m256i r[2], d[2];
 
     r[0] = jnt_2d_round_16_avx2(res + 0, offset);
@@ -2820,7 +2812,7 @@ static INLINE void jnt_2d_avg_round_store_16x2_avx2(
 
 static INLINE void jnt_2d_avg_round_store_half_pel_16x2_avx2(
     const __m256i res[2], const __m256i offset, const ConvBufType *const dst,
-    const int32_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
+    const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
     __m256i r[2], d[2];
 
     r[0] = jnt_2d_round_half_pel_avx2(res[0], offset);
@@ -2864,28 +2856,28 @@ static INLINE void jnt_2d_avg_round_store_half_pel_32_avx2(
 
 static INLINE void jnt_2d_no_avg_round_store_2x2_sse2(
     const __m128i res, const __m128i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m128i d = jnt_2d_round_4_sse2(res, offset);
     store_u16_2x2_sse2(d, dst, dst_stride);
 }
 
 static INLINE void jnt_2d_no_avg_round_store_half_pel_2x2_sse2(
     const __m128i res, const __m128i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m128i d = jnt_2d_round_half_pel_sse2(res, offset);
     store_u16_2x2_sse2(d, dst, dst_stride);
 }
 
 static INLINE void jnt_2d_no_avg_round_store_4x2_sse2(
     const __m128i res[2], const __m128i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m128i d = jnt_2d_round_4x2_sse2(res, offset);
     store_u16_4x2_sse2(d, dst, dst_stride);
 }
 
 static INLINE void jnt_2d_no_avg_round_store_4x2_avx2(
     const __m256i res, const __m256i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i d = jnt_2d_round_4x2_avx2(res, offset);
     const __m128i d0 = _mm256_castsi256_si128(d);
     const __m128i d1 = _mm256_extracti128_si256(d, 1);
@@ -2895,28 +2887,28 @@ static INLINE void jnt_2d_no_avg_round_store_4x2_avx2(
 
 static INLINE void jnt_2d_no_avg_round_store_half_pel_4x2_sse2(
     const __m128i res, const __m128i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m128i d = jnt_2d_round_half_pel_sse2(res, offset);
     store_u16_4x2_sse2(d, dst, dst_stride);
 }
 
 static INLINE void jnt_2d_no_avg_round_store_8x2_avx2(
     const __m256i res[2], const __m256i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i d = jnt_2d_round_16_avx2(res, offset);
     storeu_u16_8x2_avx2(d, dst, dst_stride);
 }
 
 static INLINE void jnt_2d_no_avg_round_store_half_pel_8x2_avx2(
     const __m256i res, const __m256i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i d = jnt_2d_round_half_pel_avx2(res, offset);
     storeu_u16_8x2_avx2(d, dst, dst_stride);
 }
 
 static INLINE void jnt_2d_no_avg_round_store_16x2_avx2(
     const __m256i res[4], const __m256i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i d0 = jnt_2d_round_16_avx2(res + 0, offset);
     const __m256i d1 = jnt_2d_round_16_avx2(res + 2, offset);
     _mm256_storeu_si256((__m256i *)dst, d0);
@@ -2925,7 +2917,7 @@ static INLINE void jnt_2d_no_avg_round_store_16x2_avx2(
 
 static INLINE void jnt_2d_no_avg_round_store_half_pel_16x2_avx2(
     const __m256i res[2], const __m256i offset, ConvBufType *const dst,
-    const int32_t dst_stride) {
+    const ptrdiff_t dst_stride) {
     const __m256i d0 = jnt_2d_round_half_pel_avx2(res[0], offset);
     const __m256i d1 = jnt_2d_round_half_pel_avx2(res[1], offset);
     _mm256_storeu_si256((__m256i *)dst, d0);

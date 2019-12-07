@@ -13,6 +13,7 @@
 #define AOM_DSP_X86_SYNONYMS_AVX2_H_
 
 #include <immintrin.h>
+#include <stdio.h>
 
  /**
   * Various reusable shorthands for x86 SIMD intrinsics.

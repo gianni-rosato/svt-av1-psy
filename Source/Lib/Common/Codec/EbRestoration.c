@@ -131,19 +131,6 @@ static INLINE ConvolveParams get_conv_params_wiener(int32_t bd) {
     return conv_params;
 }
 
-void eb_av1_wiener_convolve_add_src_c(const uint8_t *src, ptrdiff_t src_stride,
-    uint8_t *dst, ptrdiff_t dst_stride,
-    const int16_t *filter_x, int32_t x_step_q4,
-    const int16_t *filter_y, int32_t y_step_q4,
-    int32_t w, int32_t h,
-    const ConvolveParams *conv_params);
-
-void eb_av1_highbd_wiener_convolve_add_src_c(
-    const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
-    ptrdiff_t dst_stride, const int16_t *filter_x, int32_t x_step_q4,
-    const int16_t *filter_y, int32_t y_step_q4, int32_t w, int32_t h,
-    const ConvolveParams *conv_params, int32_t bd);
-
 void *eb_aom_memalign(size_t align, size_t size);
 void eb_aom_free(void *memblk);
 
@@ -529,8 +516,8 @@ static void wiener_filter_stripe(const RestorationUnitInfo *rui,
         const uint8_t *src_p = src + j;
         uint8_t *dst_p = dst + j;//CHKN  SSE
         eb_av1_wiener_convolve_add_src(
-            src_p, src_stride, dst_p, dst_stride, rui->wiener_info.hfilter, 16,
-            rui->wiener_info.vfilter, 16, w, stripe_height, &conv_params);
+            src_p, src_stride, dst_p, dst_stride, rui->wiener_info.hfilter,
+            rui->wiener_info.vfilter, w, stripe_height, &conv_params);
     }
 }
 
@@ -1112,8 +1099,8 @@ static void wiener_filter_stripe_highbd(const RestorationUnitInfo *rui,
         const uint8_t *src8_p = src8 + j;
         uint8_t *dst8_p = dst8 + j;
         eb_av1_highbd_wiener_convolve_add_src(src8_p, src_stride, dst8_p, dst_stride,  //CHKN  SSE
-            rui->wiener_info.hfilter, 16,
-            rui->wiener_info.vfilter, 16, w,
+            rui->wiener_info.hfilter,
+            rui->wiener_info.vfilter, w,
             stripe_height, &conv_params, bit_depth);
     }
 }

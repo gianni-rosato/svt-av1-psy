@@ -590,7 +590,7 @@ static void convolve_2d_sr_ver_2tap_half_avx2(
     }
 }
 
-void convolve_2d_sr_ver_4tap_avx2(const int16_t *const im_block,
+static void convolve_2d_sr_ver_4tap_avx2(const int16_t *const im_block,
     const int32_t w, const int32_t h,
     InterpFilterParams *const filter_params_y,
     const int32_t subpel_y_q4, uint8_t *dst,
