@@ -78,7 +78,10 @@ script:
     cmake $TRAVIS_BUILD_DIR -G"${generator:-Unix Makefiles}" -DCMAKE_BUILD_TYPE=${build_type:-Release} ${CMAKE_EFLAGS}
     cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
     sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
-  - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150 -b test1.ivf
+  - &8bit_test |
+    SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 && SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150
+  - &10bit_test |
+    SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 && SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
 before_cache:
   - "sudo chown -R travis: $HOME/.ccache"
   - ccache -c
@@ -94,6 +97,7 @@ matrix:
     - name: Coveralls osx+clang
     - name: Unit Tests Linux+gcc
     - name: Unit Tests osx+clang
+    - name: macOS 10-bit test
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
   include:
     # Coding style check
@@ -146,9 +150,6 @@ matrix:
     - name: Linux Clang 10 build
       compiler: clang
       env: build_type=release CC=clang-10 CXX=clang++-10
-    - name: macOS Clang build
-      os: osx
-      compiler: clang
     # FFmpeg interation build
     - name: FFmpeg patch
       env: build_type=release CMAKE_EFLAGS="-DBUILD_SHARED_LIBS=OFF"
@@ -163,6 +164,24 @@ matrix:
         - export CFLAGS=""
         - ./configure --enable-libsvtav1 || less ffbuild/config.log
         - make --quiet -j$(nproc) && sudo make install
+    # macOS builds and 8-bit test
+    - name: macOS Clang build and 8-bit test
+      os: osx
+      compiler: clang
+      script:
+        # Build and install SVT-AV1
+        - *base_script
+        # Run the 8-bit test
+        - *8bit_test
+    # macOS builds and 10-bit test
+    - name: macOS 10-bit test # allowed to fail for now
+      os: osx
+      compiler: clang
+      script:
+        # Build and install SVT-AV1
+        - *base_script
+        # Run the 10-bit test
+        - *10bit_test
     # GStreamer interation build
     - name: GStreamer patch
       env: build_type=release
@@ -179,20 +198,27 @@ matrix:
     - name: Binary Identical?
       script:
         - mv -t $HOME akiyo_cif.y4m
+        - mv -t $HOME Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
         - *base_script
         - cd $HOME
-        - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-pr-m8.ivf
-        - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-pr-m0.ivf
+        - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-pr-8bit-m8.ivf
+        - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-pr-8bit-m0.ivf
+        - SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b test-pr-10bit-m8.ivf
+        - SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b test-pr-10bit-m0.ivf
         - cd $TRAVIS_BUILD_DIR
         - git fetch https://github.com/OpenVisualCloud/SVT-AV1.git master
         - git checkout FETCH_HEAD
         - rm -rf $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}/*
         - *base_script
         - cd $HOME
-        - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-master-m8.ivf
-        - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-master-m0.ivf
-        - diff test-pr-m8.ivf test-master-m8.ivf
-        - diff test-pr-m0.ivf test-master-m0.ivf
+        - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-master-8bit-m8.ivf
+        - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-master-8bit-m0.ivf
+        - SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b test-master-10bit-m8.ivf
+        - SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b test-master-10bit-m0.ivf
+        - diff test-pr-8bit-m8.ivf test-master-8bit-m8.ivf
+        - diff test-pr-8bit-m0.ivf test-master-8bit-m0.ivf
+        - diff test-pr-10bit-m8.ivf test-master-10bit-m8.ivf
+        - diff test-pr-10bit-m0.ivf test-master-10bit-m0.ivf
 
     # Coveralls on Linux and macOS
     - name: Coveralls Linux+gcc
