@@ -235,7 +235,12 @@ EbErrorType signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
     else
+#if ENHANCED_M0_SETTINGS
+        context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#else
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
+#endif
+
     // ME Search Method
     if (picture_control_set_ptr->sc_content_detected)
         if (enc_mode <= ENC_M3)
@@ -243,9 +248,13 @@ EbErrorType signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
     else
+#if ENHANCED_M0_SETTINGS
+        context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+#else
         context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M1) ?
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
+#endif
 
     if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE)
     {

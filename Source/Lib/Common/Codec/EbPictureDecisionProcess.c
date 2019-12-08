@@ -850,7 +850,6 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 picture_control_set_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
 
-
         if (picture_control_set_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
             assert(sequence_control_set_ptr->nsq_present == 1 && "use nsq_present 1");
 
@@ -1345,7 +1344,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 1                                     ON
 
 #if SPEED_OPT
+#if ENHANCED_M0_SETTINGS
+        if (picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->sc_content_detected)
+#else
         if (MR_MODE || picture_control_set_ptr->sc_content_detected)
+#endif
 #else
         if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->sc_content_detected)
 #endif

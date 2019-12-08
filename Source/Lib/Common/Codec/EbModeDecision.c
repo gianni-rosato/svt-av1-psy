@@ -4326,6 +4326,9 @@ void  inject_inter_candidates(
     SsMeContext                  *ss_mecontext,
     const SequenceControlSet     *sequence_control_set_ptr,
     SuperBlock                   *sb_ptr,
+#if ENHANCED_M0_SETTINGS
+    EbBool                        coeff_based_nsq_cand_reduction,
+#endif
     uint32_t                       *candidateTotalCnt) {
 
     (void)sequence_control_set_ptr;
@@ -4347,6 +4350,7 @@ void  inject_inter_candidates(
 
     uint32_t close_loop_me_index = use_close_loop_me ? get_in_loop_me_info_index(MAX_SS_ME_PU_COUNT, sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128 ? 1 : 0, context_ptr->blk_geom) : 0;
     EbBool allow_bipred = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE : EB_TRUE;
+#if !ENHANCED_M0_SETTINGS
     uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
     uint8_t inject_newmv_candidate = 1;
 #if MULTI_PASS_PD // Shut coef-based inter skip if 1st pass
@@ -4359,7 +4363,7 @@ void  inject_inter_candidates(
             inject_newmv_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                 context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_newmv_candidate : 0;
     }
-
+#endif
 #if FIX_COMPOUND
     BlockSize bsize = context_ptr->blk_geom->bsize;                       // bloc size
 #if MULTI_PASS_PD
@@ -4452,8 +4456,9 @@ void  inject_inter_candidates(
             }
         }
     }
-
+#if !ENHANCED_M0_SETTINGS
     if (inject_newmv_candidate) {
+#endif
 
         inject_new_candidates(
             sequence_control_set_ptr,
@@ -4517,8 +4522,9 @@ void  inject_inter_candidates(
                     &canTotalCnt);
             }
         }
+#if !ENHANCED_M0_SETTINGS
     }
-
+#endif
     if (context_ptr->global_mv_injection) {
 #if GLOBAL_WARPED_MOTION
 #if GM_OPT
@@ -4936,8 +4942,11 @@ void  inject_inter_candidates(
             use_close_loop_me,
             close_loop_me_index);
     }
-
+#if ENHANCED_M0_SETTINGS
+    if (!coeff_based_nsq_cand_reduction) {
+#else
     if (inject_newmv_candidate) {
+#endif
         if (isCompoundEnabled) {
             if (allow_bipred) {
 
@@ -5595,7 +5604,10 @@ void  inject_intra_candidates(
     ModeDecisionContext          *context_ptr,
     const SequenceControlSet     *sequence_control_set_ptr,
     SuperBlock                   *sb_ptr,
-    uint32_t                       *candidateTotalCnt){
+#if ENHANCED_M0_SETTINGS
+    EbBool                        dc_cand_only_flag,
+#endif
+    uint32_t                     *candidateTotalCnt){
     (void)sequence_control_set_ptr;
     (void)sb_ptr;
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
@@ -5605,7 +5617,11 @@ void  inject_intra_candidates(
     uint8_t                     intra_mode_start = DC_PRED;
 #if PAETH_HBD
 #if MULTI_PASS_PD
+#if ENHANCED_M0_SETTINGS
+    uint8_t                     intra_mode_end = dc_cand_only_flag ? DC_PRED : PAETH_PRED;
+#else
     uint8_t                     intra_mode_end = context_ptr->dc_cand_only_flag ? DC_PRED : PAETH_PRED;
+#endif
 #else
     uint8_t                     intra_mode_end   =  PAETH_PRED;
 #endif
@@ -6058,9 +6074,12 @@ EbErrorType generate_md_stage_0_cand(
     context_ptr->injected_mv_count_l1 = 0;
     context_ptr->injected_mv_count_bipred = 0;
     uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+#if ENHANCED_M0_SETTINGS
+    EbBool coeff_based_nsq_cand_reduction = EB_FALSE;
+#else
     uint8_t inject_intra_candidate = 1;
     uint8_t inject_inter_candidate = 1;
-
+#endif
     if (slice_type != I_SLICE) {
 #if MULTI_PASS_PD // Shut coef-based inter skip if 1st pass
         if (context_ptr->coeff_based_nsq_cand_reduction) {
@@ -6069,15 +6088,23 @@ EbErrorType generate_md_stage_0_cand(
             picture_control_set_ptr->parent_pcs_ptr->nsq_search_level < NSQ_SEARCH_FULL) {
 #endif
             if (context_ptr->md_local_cu_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
+#if ENHANCED_M0_SETTINGS
+                coeff_based_nsq_cand_reduction = context_ptr->blk_geom->shape == PART_N || context_ptr->parent_sq_has_coeff[sq_index] != 0 ? EB_FALSE : EB_TRUE;
+#else
                 inject_intra_candidate = context_ptr->blk_geom->shape == PART_N ? 1 :
                     context_ptr->parent_sq_has_coeff[sq_index] != 0 ? inject_intra_candidate : 0;
+#endif
         }
 }
     //----------------------
     // Intra
     if (context_ptr->blk_geom->sq_size < 128) {
 #if MULTI_PASS_PD
+#if ENHANCED_M0_SETTINGS
+        if (!context_ptr->dc_cand_only_flag && !coeff_based_nsq_cand_reduction && picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
+#else
         if (!context_ptr->dc_cand_only_flag && picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
+#endif
 #else
         if (picture_control_set_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
 #endif
@@ -6087,16 +6114,24 @@ EbErrorType generate_md_stage_0_cand(
                 sb_ptr,
                 &canTotalCnt);
         else
+#if !ENHANCED_M0_SETTINGS
             if (inject_intra_candidate)
-            inject_intra_candidates(
-                picture_control_set_ptr,
-                context_ptr,
-                sequence_control_set_ptr,
-                sb_ptr,
+#endif
+                inject_intra_candidates(
+                    picture_control_set_ptr,
+                    context_ptr,
+                    sequence_control_set_ptr,
+                    sb_ptr,
+#if ENHANCED_M0_SETTINGS
+                    context_ptr->dc_cand_only_flag || coeff_based_nsq_cand_reduction,
+#endif
                 &canTotalCnt);
     }
 #if FILTER_INTRA_FLAG
 #if MULTI_PASS_PD
+#if ENHANCED_M0_SETTINGS
+    if (!coeff_based_nsq_cand_reduction)
+#endif
        if (context_ptr->md_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(sequence_control_set_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
 #else
        if (picture_control_set_ptr->pic_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(sequence_control_set_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
@@ -6135,13 +6170,18 @@ EbErrorType generate_md_stage_0_cand(
 #endif
 
     if (slice_type != I_SLICE) {
+#if !ENHANCED_M0_SETTINGS
         if (inject_inter_candidate)
+#endif
             inject_inter_candidates(
                 picture_control_set_ptr,
                 context_ptr,
                 ss_mecontext,
                 sequence_control_set_ptr,
                 sb_ptr,
+#if ENHANCED_M0_SETTINGS
+                coeff_based_nsq_cand_reduction,
+#endif
                 &canTotalCnt);
     }
 

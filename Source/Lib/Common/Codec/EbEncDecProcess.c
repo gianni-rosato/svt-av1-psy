@@ -1311,11 +1311,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 CHROMA_MODE_2 :
                 CHROMA_MODE_3;
     else
+#if ENHANCED_M0_SETTINGS
+        if (picture_control_set_ptr->enc_mode == ENC_M0)
+            context_ptr->chroma_level = CHROMA_MODE_0;
+#else
     if (MR_MODE)
         context_ptr->chroma_level = CHROMA_MODE_0;
     else
     if (picture_control_set_ptr->enc_mode == ENC_M0 && picture_control_set_ptr->temporal_layer_index == 0)
         context_ptr->chroma_level = CHROMA_MODE_0;
+#endif
     else
     if (picture_control_set_ptr->enc_mode <= ENC_M4)
         context_ptr->chroma_level = CHROMA_MODE_1;
@@ -1836,13 +1841,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #if INTER_INTRA_CLASS_PRUNING
 
-    // TH_S (for single candidate removal per class)
-    // Remove candidate if deviation to the best is higher than TH_S
+    // md_stage_1_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than md_stage_1_cand_prune_th
 #if MULTI_PASS_PD
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
+#if ENHANCED_M0_SETTINGS // lossless change - PD_PASS_2 and PD_PASS_1 should be completely decoupled: previous merge conflict
+        context_ptr->md_stage_1_cand_prune_th = 75;
+#else
         context_ptr->md_stage_1_cand_prune_th = sequence_control_set_ptr->static_config.md_stage_1_cand_prune_th;
+#endif
     else
 #endif
 #if M0_OPT
@@ -1865,13 +1874,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #if INTER_INTRA_CLASS_PRUNING
 
-    // TH_C (for class removal)
+    // md_stage_1_class_prune_th (for class removal)
     // Remove class if deviation to the best higher than TH_C
 #if MULTI_PASS_PD
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
+#if ENHANCED_M0_SETTINGS // lossless change - PD_PASS_2 and PD_PASS_1 should be completely decoupled: previous merge conflict
+        context_ptr->md_stage_1_class_prune_th = 100;
+#else
         context_ptr->md_stage_1_class_prune_th = sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
+#endif
     else
 #endif
 #if M0_OPT
@@ -1885,8 +1898,8 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
 
-    // TH_S (for single candidate removal per class)
-    // Remove candidate if deviation to the best is higher than TH_S
+    // md_stage_2_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than md_stage_2_cand_prune_th
 #if MULTI_PASS_PD
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
@@ -1911,13 +1924,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
 
-    // TH_C (for class removal)
-    // Remove class if deviation to the best is higher than TH_C
+    // md_stage_2_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than md_stage_2_class_prune_th
 #if MULTI_PASS_PD
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
+#if ENHANCED_M0_SETTINGS // lossless change - PD_PASS_2 and PD_PASS_1 should be completely decoupled: previous merge conflict
+        context_ptr->md_stage_2_class_prune_th = 25;
+#else
         context_ptr->md_stage_2_class_prune_th = sequence_control_set_ptr->static_config.md_stage_2_class_prune_th;
+#endif
     else
 #endif
 #if M0_OPT
@@ -1945,7 +1962,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->sq_weight = (uint32_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
+#if ENHANCED_M0_SETTINGS // lossless change - PD_PASS_2 and PD_PASS_1 should be completely decoupled: previous merge conflict
+        context_ptr->sq_weight = 100;
+#else
         context_ptr->sq_weight = sequence_control_set_ptr->static_config.sq_weight;
+#endif
     else
 #endif
     if (MR_MODE)
@@ -1954,7 +1975,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->sq_weight = sequence_control_set_ptr->static_config.sq_weight;
 
 #endif
-
+#if !ENHANCED_M0_SETTINGS // lossless change - enable_auto_max_partition is properly derived using pd_pass @ the bottom: previous merge conflict
 #if AUTO_MAX_PARTITION
     // signal for enabling shortcut to skip search depths
     if (picture_control_set_ptr->enc_mode == ENC_M0 ||
@@ -1962,6 +1983,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->enable_auto_max_partition = 0;
     else
         context_ptr->enable_auto_max_partition = sequence_control_set_ptr->static_config.enable_auto_max_partition;
+#endif
 #endif
 #if MULTI_PASS_PD
     // Set pred ME full search area
@@ -1994,10 +2016,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;
     else if (context_ptr->pd_pass == PD_PASS_1)
         context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;
+#if ENHANCED_M0_SETTINGS
+    else
+        context_ptr->coeff_based_nsq_cand_reduction = EB_TRUE;
+#else
     else if (MR_MODE)
         context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;
     else
         context_ptr->coeff_based_nsq_cand_reduction = EB_TRUE;
+#endif
 
     // Set rdoq_quantize_fp @ MD
     if (context_ptr->pd_pass == PD_PASS_0)
