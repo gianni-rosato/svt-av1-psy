@@ -3878,12 +3878,24 @@ void* picture_decision_kernel(void *input_ptr)
                                 //initilize list
                                 for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+#if NON_KF_INTRA_TF_FIX
+                                // Jing: Intra CRA case
+                                num_past_pics = MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count -1);
 
                                 //get previous+current pictures from the the pre-assign buffer
                                 for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
                                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
                                 }
+
+#else
+                                //get previous+current pictures from the the pre-assign buffer
+                                for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
+                                    PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
+                                    picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
+                                }
+#endif
+
 #if FIX_ALTREF
                                 int actual_past_pics = num_past_pics;
                                 int actual_future_pics = 0;
@@ -3952,7 +3964,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 actual_past_pics = actual_future_pics;
                                 actual_past_pics += (altref_nframes + 1) & 0x1;
 #endif
+#if NON_KF_INTRA_TF_FIX
+                                int index_center = actual_past_pics;
+#else
                                 int index_center = (uint8_t)(picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes / 2);
+#endif
                                 int pic_itr;
                                 int ahd;
 
