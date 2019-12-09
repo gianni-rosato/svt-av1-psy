@@ -240,7 +240,7 @@ typedef struct EbSvtAv1EncConfiguration
     /* RDOQ
     *
     * Default is -1. */
-    int8_t                   enable_rdoq;
+    int                      enable_rdoq;
 
     /* Filter intra prediction
     *

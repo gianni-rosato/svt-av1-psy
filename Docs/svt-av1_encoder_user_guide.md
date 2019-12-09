@@ -140,7 +140,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **FrameRateNumerator** | -fps-num | [0 - 2^64 -1] | 0 | Frame rate numerator e.g. 6000 |
 | **FrameRateDenominator** | -fps-denom | [0 - 2^64 -1] | 0 | Frame rate denominator e.g. 100 |
 | **HierarchicalLevels** | -hierarchical-levels | [3 – 4] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 4 == > 15B Pyramid) |
-| **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes auto. |
+| **IntraPeriod** | -intra-period | [-2 - 255] | -2 | Distance Between Intra Frame inserted. -1 denotes no intra update. -2 denotes default. |
 | **IntraRefreshType** | -irefresh-type | [1 – 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
 | **TargetBitRate** | -tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 2, or 3 |
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
@@ -153,7 +153,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HMELevel2** | -hme-l2 | [0 - 1] | Depends on input resolution | Enable HME Level 2 , 0 = OFF, 1 = ON |
 | **InLoopMeFlag** | -in-loop-me | [0 - 1] | Depends on –enc-mode | 0=ME on source samples, 1= ME on recon samples |
 | **LocalWarpedMotion** | -local-warp | [0 - 1] | 0 | Enable warped motion use , 0 = OFF, 1 = ON |
-| **RDOQ** | -rdoq | [0/1, -1 for auto] | AUTO | Enable RDOQ, 0 = OFF, 1 = ON, -1 = AUTO |
+| **RDOQ** | -rdoq | [0/1, -1 for default] | DEFAULT | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
 | **ExtBlockFlag** | -ext-block | [0 - 1] | Depends on –enc-mode | Enable the non-square block 0=OFF, 1= ON |
 | **ScreenContentMode** | -scm | [0 - 2] | 2 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
 | **SearchAreaWidth** | -search-w | [1 - 256] | Depends on input resolution | Search Area in Width |
@@ -177,8 +177,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | -tile-columns | [0-6] | 0 | log2 of tile columns |
 | **UnrestrictedMotionVector** | -umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set -umv 0 |
-| **PaletteMode** | -palette | [0 - 6] | -1 | Enable Palette mode (-1: Auto Mode(ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
-| **OlpdRefinement** | -olpd-refinement | [0 - 1] | -1 | Enable open loop partitioning decision refinement (-1: Auto Mode(ON for M0, no SC, OFF otherwise), 0: OFF 1: ON for M0, error otherwise ) |
+| **PaletteMode** | -palette | [0 - 6] | -1 | Enable Palette mode (-1: DEFAULT (ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
+| **OlpdRefinement** | -olpd-refinement | [0 - 1] | -1 | Enable open loop partitioning decision refinement (-1: DEFAULT (ON for M0, no SC, OFF otherwise), 0: OFF 1: ON for M0, error otherwise ) |
 | **SquareWeight** | -sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
 | **MDStage1PruneClassThreshold** | -mds1p-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
 | **MDStage1PruneCandThreshold** | -mds1p-cand-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |

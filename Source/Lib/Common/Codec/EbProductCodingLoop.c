@@ -6429,6 +6429,7 @@ void md_stage_3(
         context_ptr->md_staging_tx_search = candidate_ptr->cand_class == CAND_CLASS_0 ? 2 : 1;
 #endif
         context_ptr->md_staging_skip_full_chroma = EB_FALSE;
+
         context_ptr->md_staging_skip_rdoq = EB_FALSE;
 
         if (picture_control_set_ptr->slice_type != I_SLICE) {

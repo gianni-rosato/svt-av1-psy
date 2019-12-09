@@ -2609,7 +2609,7 @@ static EbErrorType VerifySettings(
     }
 
     // RDOQ
-    if (config->enable_rdoq != (int8_t)0 && config->enable_rdoq != (int8_t)1 && config->enable_rdoq != (int8_t)-1) {
+    if (config->enable_rdoq != 0 && config->enable_rdoq != 1 && config->enable_rdoq != -1) {
         SVT_LOG( "Error instance %u: Invalid RDOQ parameter [-1, 0, 1], your input: %i\n", channelNumber + 1, config->enable_rdoq);
         return_error = EB_ErrorBadParameter;
     }

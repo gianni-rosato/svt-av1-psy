@@ -1611,10 +1611,13 @@ int32_t av1_quantize_inv_quantize(
 #endif
 
     SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-    perform_rdoq = perform_rdoq && (EbBool) sequence_control_set_ptr->static_config.enable_rdoq;
-    if (sequence_control_set_ptr->static_config.encoder_bit_depth > 8
-        && picture_control_set_ptr->hbd_mode_decision==0 )
-        perform_rdoq = EB_FALSE;
+    if (sequence_control_set_ptr->static_config.enable_rdoq == DEFAULT) {
+        perform_rdoq = perform_rdoq && (EbBool) sequence_control_set_ptr->static_config.enable_rdoq;
+        if (sequence_control_set_ptr->static_config.encoder_bit_depth > 8
+            && picture_control_set_ptr->hbd_mode_decision==0 )
+            perform_rdoq = EB_FALSE;
+    } else
+        perform_rdoq = (EbBool)sequence_control_set_ptr->static_config.enable_rdoq;
 
 #if MULTI_PASS_PD
     if (perform_rdoq && md_context->rdoq_quantize_fp && !is_inter) {
