@@ -230,6 +230,7 @@ EbErrorType mode_decision_context_ctor(
         const BlockGeom * blk_geom = get_blk_geom_mds(codedLeafIndex);
         UNUSED(blk_geom);
         context_ptr->md_cu_arr_nsq[codedLeafIndex].av1xd = context_ptr->md_cu_arr_nsq[0].av1xd + codedLeafIndex;
+        context_ptr->md_cu_arr_nsq[codedLeafIndex].segment_id = 0;
 #if !HBD_CLEAN_UP
         if (context_ptr->hbd_mode_decision) {
 #endif
