@@ -250,8 +250,6 @@ extern "C" {
         uint8_t                         parent_sq_pred_mode[MAX_PARENT_SQ];
         uint8_t                         chroma_level;
         PART                            nsq_table[NSQ_TAB_SIZE];
-        uint8_t                         decoupled_fast_loop_search_method;
-        uint8_t                         decouple_intra_inter_fast_loop;
         uint8_t                         full_loop_escape;
         uint8_t                         global_mv_injection;
         uint8_t                         nx4_4xn_parent_mv_injection;

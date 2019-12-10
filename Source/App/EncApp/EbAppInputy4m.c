@@ -33,7 +33,6 @@ int32_t read_y4m_header(EbConfig *cfg){
     uint32_t bitdepth = 8, width = 0, height = 0, fr_n = 0,
         fr_d = 0, aspect_n, aspect_d;
     char chroma[CHROMA_MAX] = "420", scan_type = 'p';
-    EbBool interlaced = EB_TRUE;
 
     /* pointer to the input file */
     ptr_in = cfg->input_file;
@@ -74,15 +73,12 @@ int32_t read_y4m_header(EbConfig *cfg){
         case 'I': /* scan type, not required, default: 'p' */
             switch (*tokstart++) {
             case 'p':
-                interlaced = EB_FALSE;
                 scan_type = 'p';
                 break;
             case 't':
-                interlaced = EB_TRUE;
                 scan_type = 't';
                 break;
             case 'b':
-                interlaced = EB_TRUE;
                 scan_type = 'b';
                 break;
             case '?':
@@ -240,7 +236,6 @@ int32_t read_y4m_header(EbConfig *cfg){
     cfg->frame_rate_denominator = fr_d;
     cfg->frame_rate = fr_n/fr_d;
     cfg->encoder_bit_depth = bitdepth;
-    cfg->interlaced_video = interlaced;
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */
 

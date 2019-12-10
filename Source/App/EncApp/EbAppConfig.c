@@ -61,8 +61,6 @@
 #define LEVEL_TOKEN                     "-level"
 #define LATENCY_MODE                    "-latency-mode" // no Eval
 #define FILM_GRAIN_TOKEN                "-film-grain"
-#define INTERLACED_VIDEO_TOKEN          "-interlaced-video"
-#define SEPERATE_FILDS_TOKEN            "-separate-fields"
 #define INTRA_REFRESH_TYPE_TOKEN        "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN       "-dlf"
 #define RESTORATION_ENABLE_TOKEN        "-restoration-filtering"
@@ -96,7 +94,6 @@
 #define HME_L1_ENABLE_TOKEN             "-hme-l1"
 #define HME_L2_ENABLE_TOKEN             "-hme-l2"
 #define EXT_BLOCK                       "-ext-block"
-#define IN_LOOP_ME                      "-in-loop-me"
 #define SEARCH_AREA_WIDTH_TOKEN         "-search-w"
 #define SEARCH_AREA_HEIGHT_TOKEN        "-search-h"
 #define NUM_HME_SEARCH_WIDTH_TOKEN      "-num-hme-w"
@@ -240,11 +237,9 @@ static void SetCfgStatFile(const char *value, EbConfig *cfg)
 };
 static void SetStatReport                       (const char *value, EbConfig *cfg) {cfg->stat_report = (uint8_t) strtoul(value, NULL, 0);};
 static void SetCfgSourceWidth                   (const char *value, EbConfig *cfg) {cfg->source_width = strtoul(value, NULL, 0);};
-static void SetInterlacedVideo                  (const char *value, EbConfig *cfg) {cfg->interlaced_video  = (EbBool) strtoul(value, NULL, 0);};
-static void SetSeperateFields                   (const char *value, EbConfig *cfg) {cfg->separate_fields = (EbBool) strtoul(value, NULL, 0);};
-static void SetCfgSourceHeight                  (const char *value, EbConfig *cfg) {cfg->source_height = strtoul(value, NULL, 0) >> cfg->separate_fields;};
-static void SetCfgFramesToBeEncoded             (const char *value, EbConfig *cfg) {cfg->frames_to_be_encoded = strtol(value,  NULL, 0) << cfg->separate_fields;};
-static void SetBufferedInput                    (const char *value, EbConfig *cfg) {cfg->buffered_input = (strtol(value, NULL, 0) != -1 && cfg->separate_fields) ? strtol(value, NULL, 0) << cfg->separate_fields : strtol(value, NULL, 0);};
+static void SetCfgSourceHeight                  (const char *value, EbConfig *cfg) { cfg->source_height = strtoul(value, NULL, 0); };
+static void SetCfgFramesToBeEncoded             (const char *value, EbConfig *cfg) { cfg->frames_to_be_encoded = strtol(value, NULL, 0); };
+static void SetBufferedInput                    (const char *value, EbConfig *cfg) {cfg->buffered_input = strtol(value, NULL, 0);};
 static void SetFrameRate                        (const char *value, EbConfig *cfg) {
     cfg->frame_rate = strtoul(value, NULL, 0);
     if (cfg->frame_rate > 1000 )
@@ -315,7 +310,6 @@ static void SetCfgHmeLevel0TotalSearchAreaWidth (const char *value, EbConfig *cf
 static void SetCfgHmeLevel0TotalSearchAreaHeight(const char *value, EbConfig *cfg) {cfg->hme_level0_total_search_area_height = strtoul(value, NULL, 0);};
 static void SetCfgUseDefaultMeHme               (const char *value, EbConfig *cfg) {cfg->use_default_me_hme = (EbBool)strtol(value, NULL, 0); };
 static void SetEnableExtBlockFlag(const char *value, EbConfig *cfg) { cfg->ext_block_flag = (EbBool)strtoul(value, NULL, 0); };
-static void SetEnableInLoopMeFlag(const char *value, EbConfig *cfg) { cfg->in_loop_me_flag = (EbBool)strtoul(value, NULL, 0); };
 static void SetHmeLevel0SearchAreaInWidthArray  (const char *value, EbConfig *cfg) {cfg->hme_level0_search_area_in_width_array[cfg->hme_level0_column_index++] = strtoul(value, NULL, 0);};
 static void SetHmeLevel0SearchAreaInHeightArray (const char *value, EbConfig *cfg) {cfg->hme_level0_search_area_in_height_array[cfg->hme_level0_row_index++] = strtoul(value, NULL, 0);};
 static void SetHmeLevel1SearchAreaInWidthArray  (const char *value, EbConfig *cfg) {cfg->hme_level1_search_area_in_width_array[cfg->hme_level1_column_index++] = strtoul(value, NULL, 0);};
@@ -445,10 +439,6 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file },
     { SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file },
 #endif
-
-    // Interlaced Video
-    { SINGLE_INPUT, INTERLACED_VIDEO_TOKEN , "InterlacedVideo" , SetInterlacedVideo },
-    { SINGLE_INPUT, SEPERATE_FILDS_TOKEN, "SeperateFields", SetSeperateFields },
     // Picture Dimensions
     { SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", SetCfgSourceWidth },
     { SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", SetCfgSourceHeight },
@@ -542,7 +532,6 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, HME_L1_ENABLE_TOKEN, "HMELevel1", SetEnableHmeLevel1Flag },
     { SINGLE_INPUT, HME_L2_ENABLE_TOKEN, "HMELevel2", SetEnableHmeLevel2Flag },
     { SINGLE_INPUT, EXT_BLOCK, "ExtBlockFlag", SetEnableExtBlockFlag },
-    { SINGLE_INPUT, IN_LOOP_ME, "InLoopMeFlag", SetEnableInLoopMeFlag },
     // ME Parameters
     { SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", SetCfgSearchAreaWidth },
     { SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", SetCfgSearchAreaHeight },
@@ -656,7 +645,6 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->bipred_3x3_inject                    = DEFAULT;
     config_ptr->compound_level                       = DEFAULT;
     config_ptr->enable_filter_intra                  = EB_TRUE;
-    config_ptr->in_loop_me_flag                      = EB_TRUE;
     config_ptr->use_default_me_hme                   = EB_TRUE;
     config_ptr->enable_hme_flag                        = EB_TRUE;
     config_ptr->enable_hme_level0_flag                  = EB_TRUE;
@@ -992,16 +980,6 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
 
     if (config->use_qp_file == EB_TRUE && config->qp_file == NULL) {
         fprintf(config->error_log_file, "Error instance %u: Could not find QP file, UseQpFile is set to 1\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->separate_fields > 1) {
-        fprintf(config->error_log_file, "Error Instance %u: Invalid SeperateFields Input\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->encoder_bit_depth == 10 && config->separate_fields == 1)
-    {
-        fprintf(config->error_log_file, "Error instance %u: Separate fields is not supported for 10 bit input \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
 

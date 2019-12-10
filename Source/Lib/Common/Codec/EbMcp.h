@@ -58,9 +58,6 @@ extern "C" {
             is_last indicates if there is any further filtering (interpolation filtering)
             afterwards.
      */
-    extern EbErrorType in_loop_me_context_ctor(
-        SsMeContext                         *ss_mecontext);
-
     extern void generate_padding(
         EbByte              src_pic,
         uint32_t            src_stride,

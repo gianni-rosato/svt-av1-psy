@@ -910,13 +910,13 @@ void* resource_coordination_kernel(void *input_ptr)
                 if (picture_control_set_ptr->input_ptr->qp > MAX_QP_VALUE) {
                     SVT_LOG("SVT [WARNING]: INPUT QP OUTSIDE OF RANGE\n");
                     picture_control_set_ptr->qp_on_the_fly = EB_FALSE;
-                    picture_control_set_ptr->picture_qp = (uint8_t)sequence_control_set_ptr->qp;
+                    picture_control_set_ptr->picture_qp = (uint8_t)sequence_control_set_ptr->static_config.qp;
                 }
                 picture_control_set_ptr->picture_qp = (uint8_t)picture_control_set_ptr->input_ptr->qp;
             }
             else {
                 picture_control_set_ptr->qp_on_the_fly = EB_FALSE;
-                picture_control_set_ptr->picture_qp = (uint8_t)sequence_control_set_ptr->qp;
+                picture_control_set_ptr->picture_qp = (uint8_t)sequence_control_set_ptr->static_config.qp;
             }
 
             // Picture Stats

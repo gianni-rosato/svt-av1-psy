@@ -3684,7 +3684,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 TX_MODE_LARGEST;
 
                                 picture_control_set_ptr->use_src_ref = EB_FALSE;
-                                picture_control_set_ptr->enable_in_loop_motion_estimation_flag = EB_FALSE;
                                 picture_control_set_ptr->limit_ois_to_dc_mode_flag = EB_FALSE;
 
                                 // Update the Dependant List Count - If there was an I-frame or Scene Change, then cleanup the Picture Decision PA Reference Queue Dependent Counts

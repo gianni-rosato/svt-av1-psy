@@ -504,12 +504,12 @@ void high_level_rc_input_picture_vbr(
             qp_search_min = (uint8_t)CLIP3(
                 sequence_control_set_ptr->static_config.min_qp_allowed,
                 MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
-                (uint32_t)MAX((int32_t)sequence_control_set_ptr->qp - 40, 0));
+                (uint32_t)MAX((int32_t)sequence_control_set_ptr->static_config.qp - 40, 0));
 
             qp_search_max = (uint8_t)CLIP3(
                 sequence_control_set_ptr->static_config.min_qp_allowed,
                 MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
-                sequence_control_set_ptr->qp + 40);
+                sequence_control_set_ptr->static_config.qp + 40);
 
             for (ref_qp_table_index = qp_search_min; ref_qp_table_index < qp_search_max; ref_qp_table_index++)
                 high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_table_index] = 0;
@@ -858,8 +858,8 @@ void frame_level_rc_input_picture_vbr(
         }
 
         if (picture_control_set_ptr->picture_number == 0) {
-            rate_control_param_ptr->intra_frames_qp = sequence_control_set_ptr->qp;
-            rate_control_param_ptr->intra_frames_qp_bef_scal = (uint8_t)sequence_control_set_ptr->qp;
+            rate_control_param_ptr->intra_frames_qp = sequence_control_set_ptr->static_config.qp;
+            rate_control_param_ptr->intra_frames_qp_bef_scal = (uint8_t)sequence_control_set_ptr->static_config.qp;
         }
 
         if (picture_control_set_ptr->picture_number == rate_control_param_ptr->first_poc) {
@@ -1814,12 +1814,12 @@ void high_level_rc_input_picture_cvbr(
             qp_search_min = (uint8_t)CLIP3(
                 sequence_control_set_ptr->static_config.min_qp_allowed,
                 MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
-                (uint32_t)MAX((int32_t)sequence_control_set_ptr->qp - 40, 0));
+                (uint32_t)MAX((int32_t)sequence_control_set_ptr->static_config.qp - 40, 0));
 
             qp_search_max = (uint8_t)CLIP3(
                 sequence_control_set_ptr->static_config.min_qp_allowed,
                 MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
-                sequence_control_set_ptr->qp + 40);
+                sequence_control_set_ptr->static_config.qp + 40);
 
             for (ref_qp_table_index = qp_search_min; ref_qp_table_index < qp_search_max; ref_qp_table_index++)
                 high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_table_index] = 0;
@@ -2160,8 +2160,8 @@ void frame_level_rc_input_picture_cvbr(
         }
 
         if (picture_control_set_ptr->picture_number == 0) {
-            rate_control_param_ptr->intra_frames_qp = sequence_control_set_ptr->qp;
-            rate_control_param_ptr->intra_frames_qp_bef_scal = (uint8_t)sequence_control_set_ptr->qp;
+            rate_control_param_ptr->intra_frames_qp = sequence_control_set_ptr->static_config.qp;
+            rate_control_param_ptr->intra_frames_qp_bef_scal = (uint8_t)sequence_control_set_ptr->static_config.qp;
         }
 
         if (picture_control_set_ptr->picture_number == rate_control_param_ptr->first_poc) {
@@ -2270,12 +2270,12 @@ void frame_level_rc_input_picture_cvbr(
         qp_search_min = (uint8_t)CLIP3(
             sequence_control_set_ptr->static_config.min_qp_allowed,
             MAX_REF_QP_NUM,//sequence_control_set_ptr->static_config.max_qp_allowed,
-            (uint32_t)MAX((int32_t)sequence_control_set_ptr->qp - 40, 0));
+            (uint32_t)MAX((int32_t)sequence_control_set_ptr->static_config.qp - 40, 0));
 
         qp_search_max = (uint8_t)CLIP3(
             sequence_control_set_ptr->static_config.min_qp_allowed,
             MAX_REF_QP_NUM,
-            sequence_control_set_ptr->qp + 40);
+            sequence_control_set_ptr->static_config.qp + 40);
 
         for (ref_qp_table_index = qp_search_min; ref_qp_table_index < qp_search_max; ref_qp_table_index++)
             high_level_rate_control_ptr->pred_bits_ref_qpPerSw[ref_qp_table_index] = 0;
@@ -2979,8 +2979,8 @@ void init_rc(
         context_ptr->previous_virtual_buffer_level = context_ptr->virtual_buffer_size >> 1;
         context_ptr->vb_fill_threshold1 = (context_ptr->virtual_buffer_size * 6) >> 3;
         context_ptr->vb_fill_threshold2 = (context_ptr->virtual_buffer_size << 3) >> 3;
-        context_ptr->base_layer_frames_avg_qp = sequence_control_set_ptr->qp;
-        context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->qp;
+        context_ptr->base_layer_frames_avg_qp = sequence_control_set_ptr->static_config.qp;
+        context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->static_config.qp;
     }
     else if (sequence_control_set_ptr->static_config.rate_control_mode == 2) {
 
@@ -2991,8 +2991,8 @@ void init_rc(
         context_ptr->previous_virtual_buffer_level = context_ptr->virtual_buffer_size >> 1;
         context_ptr->vb_fill_threshold1 = context_ptr->virtual_buffer_level_initial_value + (context_ptr->virtual_buffer_size / 4);
         context_ptr->vb_fill_threshold2 = context_ptr->virtual_buffer_level_initial_value + (context_ptr->virtual_buffer_size / 3);
-        context_ptr->base_layer_frames_avg_qp = sequence_control_set_ptr->qp;
-        context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->qp;
+        context_ptr->base_layer_frames_avg_qp = sequence_control_set_ptr->static_config.qp;
+        context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->static_config.qp;
     }
 
     for (uint32_t base_qp = 0; base_qp < MAX_REF_QP_NUM; base_qp++) {
@@ -3927,7 +3927,7 @@ static void sb_qp_derivation_two_pass(
 
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
         const int bit_depth = sequence_control_set_ptr->static_config.encoder_bit_depth;
-        int active_worst_quality = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
+        int active_worst_quality = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->static_config.qp];
         int *kf_low_motion_minq;
         int *kf_high_motion_minq;
         ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq);
@@ -4061,7 +4061,7 @@ static void sb_qp_derivation(
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
         const int bit_depth = sequence_control_set_ptr->static_config.encoder_bit_depth;
         int active_best_quality = 0;
-        int active_worst_quality = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
+        int active_worst_quality = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->static_config.qp];
         int *kf_low_motion_minq;
         int *kf_high_motion_minq;
         ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq);
@@ -4272,7 +4272,7 @@ void* rate_control_kernel(void *input_ptr)
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[picture_control_set_ptr->picture_qp];
 
                 if (sequence_control_set_ptr->static_config.enable_qp_scaling_flag && picture_control_set_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
-                    const int32_t qindex = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->qp];
+                    const int32_t qindex = quantizer_to_qindex[(uint8_t)sequence_control_set_ptr->static_config.qp];
                     const double q_val = eb_av1_convert_qindex_to_q(qindex, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth);
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
 #if TWO_PASS

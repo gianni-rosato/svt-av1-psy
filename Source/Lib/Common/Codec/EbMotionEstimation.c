@@ -12378,47 +12378,6 @@ uint32_t get_me_info_index(uint32_t max_me_block, const BlockGeom *blk_geom,
     return me_info_index;
 }
 
-// Nader - to be replaced by loock-up table
-/*******************************************
- * get_me_info_index
- *   search the correct index of the motion
- *   info that corresponds to the input
- *   md candidate
- *******************************************/
-uint32_t get_in_loop_me_info_index(uint32_t max_me_block, uint8_t is_128_sb,
-                                   const BlockGeom *blk_geom) {
-    // search for motion info
-    uint32_t block_index;
-    uint32_t me_info_index = 0xFFFFFFF;
-    if (is_128_sb) {
-        for (block_index = 0; block_index < max_me_block; block_index++) {
-            if (blk_geom->bwidth ==
-                    in_loop_me_block_width_128_sb[block_index] &&
-                blk_geom->bheight ==
-                    in_loop_me_block_height_128_sb[block_index] &&
-                blk_geom->origin_x ==
-                    in_loop_me_block_index_128_sb[block_index][0] &&
-                blk_geom->origin_y ==
-                    in_loop_me_block_index_128_sb[block_index][1]) {
-                me_info_index = block_index;
-                break;
-            }
-        }
-    } else {
-        for (block_index = 0; block_index < max_me_block; block_index++) {
-            if (blk_geom->bwidth == in_loop_me_block_width[block_index] &&
-                blk_geom->bheight == in_loop_me_block_height[block_index] &&
-                blk_geom->origin_x == in_loop_me_block_index[block_index][0] &&
-                blk_geom->origin_y == in_loop_me_block_index[block_index][1]) {
-                me_info_index = block_index;
-                break;
-            }
-        }
-    }
-
-    return me_info_index;
-}
-
 #define NSET_CAND(mePuResult, num, dist, dir)                      \
     (mePuResult)->distortion_direction[(num)].distortion = (dist); \
     (mePuResult)->distortion_direction[(num)].direction = (dir);

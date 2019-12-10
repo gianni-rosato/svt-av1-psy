@@ -168,7 +168,6 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.frame_rate_numerator = config->frame_rate_numerator;
     callback_data->eb_enc_parameters.hierarchical_levels = config->hierarchical_levels;
     callback_data->eb_enc_parameters.pred_structure = (uint8_t)config->pred_structure;
-    callback_data->eb_enc_parameters.in_loop_me_flag = config->in_loop_me_flag;
     callback_data->eb_enc_parameters.ext_block_flag = config->ext_block_flag;
     callback_data->eb_enc_parameters.tile_rows = config->tile_rows;
     callback_data->eb_enc_parameters.tile_columns = config->tile_columns;
@@ -454,124 +453,6 @@ EbErrorType PreloadFramesIntoRam(
 
     for (processed_frame_count = 0; processed_frame_count < config->buffered_input; ++processed_frame_count) {
         EB_APP_MALLOC(uint8_t*, config->sequence_buffer[processed_frame_count], readSize, EB_N_PTR, EB_ErrorInsufficientResources);
-        // Interlaced Video
-        if (config->separate_fields) {
-            EbBool is16bit = config->encoder_bit_depth > 8;
-            if (is16bit == 0 || (is16bit == 1 && config->compressed_ten_bit_format == 0)) {
-                const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
-
-                const size_t luma8bitSize =
-
-                    (config->input_padded_width) *
-                    (config->input_padded_height) *
-
-                    (1 << tenBitPackedMode);
-
-                const size_t chroma8bitSize = luma8bitSize >> 2;
-
-                filledLen = 0;
-
-                ProcessInputFieldBufferingMode(
-                    processed_frame_count,
-                    &filledLen,
-                    input_file,
-                    config->sequence_buffer[processed_frame_count],
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize,
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize + chroma8bitSize,
-                    (uint32_t)input_padded_width,
-                    (uint32_t)input_padded_height,
-                    is16bit);
-
-                if (readSize != filledLen) {
-                    fseek(input_file, 0, SEEK_SET);
-                    filledLen = 0;
-
-                    ProcessInputFieldBufferingMode(
-                        processed_frame_count,
-                        &filledLen,
-                        input_file,
-                        config->sequence_buffer[processed_frame_count],
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize,
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize + chroma8bitSize,
-                        (uint32_t)input_padded_width,
-                        (uint32_t)input_padded_height,
-                        is16bit);
-                }
-
-                // Reset the pointer position after a top field
-                if (processed_frame_count % 2 == 0)
-                    fseek(input_file, -(long)(readSize << 1), SEEK_CUR);
-            }
-            // Unpacked 10 bit
-            else {
-                const int32_t tenBitPackedMode = (config->encoder_bit_depth > 8) && (config->compressed_ten_bit_format == 0) ? 1 : 0;
-
-                const size_t luma8bitSize =
-                    (config->input_padded_width) *
-                    (config->input_padded_height) *
-                    (1 << tenBitPackedMode);
-
-                const size_t chroma8bitSize = luma8bitSize >> 2;
-
-                const size_t luma10bitSize = (config->encoder_bit_depth > 8 && tenBitPackedMode == 0) ? luma8bitSize : 0;
-                const size_t chroma10bitSize = (config->encoder_bit_depth > 8 && tenBitPackedMode == 0) ? chroma8bitSize : 0;
-
-                filledLen = 0;
-
-                ProcessInputFieldBufferingMode(
-                    processed_frame_count,
-                    &filledLen,
-                    input_file,
-                    config->sequence_buffer[processed_frame_count],
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize,
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize + chroma8bitSize,
-                    (uint32_t)input_padded_width,
-                    (uint32_t)input_padded_height,
-                    0);
-
-                ProcessInputFieldBufferingMode(
-                    processed_frame_count,
-                    &filledLen,
-                    input_file,
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize + (chroma8bitSize << 1),
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize + (chroma8bitSize << 1) + luma10bitSize,
-                    config->sequence_buffer[processed_frame_count] + luma8bitSize + (chroma8bitSize << 1) + luma10bitSize + chroma10bitSize,
-                    (uint32_t)input_padded_width,
-                    (uint32_t)input_padded_height,
-                    0);
-
-                if (readSize != filledLen) {
-                    fseek(input_file, 0, SEEK_SET);
-                    filledLen = 0;
-
-                    ProcessInputFieldBufferingMode(
-                        processed_frame_count,
-                        &filledLen,
-                        input_file,
-                        config->sequence_buffer[processed_frame_count],
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize,
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize + chroma8bitSize,
-                        (uint32_t)input_padded_width,
-                        (uint32_t)input_padded_height,
-                        0);
-
-                    ProcessInputFieldBufferingMode(
-                        processed_frame_count,
-                        &filledLen,
-                        input_file,
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize + (chroma8bitSize << 1),
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize + (chroma8bitSize << 1) + luma10bitSize,
-                        config->sequence_buffer[processed_frame_count] + luma8bitSize + (chroma8bitSize << 1) + luma10bitSize + chroma10bitSize,
-                        (uint32_t)input_padded_width,
-                        (uint32_t)input_padded_height,
-                        0);
-                }
-
-                // Reset the pointer position after a top field
-                if (processed_frame_count % 2 == 0)
-                    fseek(input_file, -(long)(readSize << 1), SEEK_CUR);
-            }
-        } else {
             // Fill the buffer with a complete frame
             filledLen = 0;
             filledLen += (uint32_t)fread(config->sequence_buffer[processed_frame_count], 1, readSize, input_file);
@@ -583,7 +464,6 @@ EbErrorType PreloadFramesIntoRam(
                 filledLen = 0;
                 filledLen += (uint32_t)fread(config->sequence_buffer[processed_frame_count], 1, readSize, input_file);
             }
-        }
     }
 
     return return_error;

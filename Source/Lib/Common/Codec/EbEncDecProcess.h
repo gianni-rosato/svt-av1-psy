@@ -53,7 +53,6 @@ extern "C" {
         const BlockGeom                     *blk_geom;
         // MCP Context
         MotionCompensationPredictionContext *mcp_context;
-        SsMeContext                         *ss_mecontext;
 
         // Coding Unit Workspace---------------------------
         EbPictureBufferDesc                 *residual_buffer;

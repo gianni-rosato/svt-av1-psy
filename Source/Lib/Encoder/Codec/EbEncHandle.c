@@ -908,10 +908,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.hbd_mode_decision = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enable_hbd_mode_decision;
         inputData.film_grain_noise_level = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.film_grain_denoise_strength;
         inputData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.encoder_bit_depth;
-
         inputData.ext_block_flag = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.ext_block_flag;
-
-        inputData.in_loop_me_flag = (uint8_t)enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.in_loop_me_flag;
         inputData.mrp_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mrp_mode;
         inputData.nsq_present = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->nsq_present;
         EB_NEW(
@@ -1946,9 +1943,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 {
     uint16_t subsampling_x = sequence_control_set_ptr->subsampling_x;
     uint16_t subsampling_y = sequence_control_set_ptr->subsampling_y;
-    sequence_control_set_ptr->general_frame_only_constraint_flag = 0;
-    sequence_control_set_ptr->general_progressive_source_flag = 1;
-    sequence_control_set_ptr->general_interlaced_source_flag = 0;
 
     // Update picture width, and picture height
     if (sequence_control_set_ptr->max_input_luma_width % MIN_BLOCK_SIZE) {
@@ -2053,17 +2047,10 @@ void CopyApiFromApp(
 
     sequence_control_set_ptr->max_input_luma_width = pComponentParameterStructure->source_width;
     sequence_control_set_ptr->max_input_luma_height = pComponentParameterStructure->source_height;
-
     sequence_control_set_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->frame_rate;
-
-    sequence_control_set_ptr->general_frame_only_constraint_flag = 0;
-    sequence_control_set_ptr->general_progressive_source_flag = 1;
-    sequence_control_set_ptr->general_interlaced_source_flag = 0;
-
     // SB Definitions
     sequence_control_set_ptr->static_config.pred_structure = 2; // Hardcoded(Cleanup)
     sequence_control_set_ptr->static_config.enable_qp_scaling_flag = 1;
-
     sequence_control_set_ptr->max_cu_size = (uint8_t)64;
     sequence_control_set_ptr->min_cu_size = (uint8_t)8;
     sequence_control_set_ptr->max_intra_size = (uint8_t)32;
@@ -2193,8 +2180,6 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.hme_level0_total_search_area_width = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->hme_level0_total_search_area_width;
     sequence_control_set_ptr->static_config.hme_level0_total_search_area_height = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->hme_level0_total_search_area_height;
     sequence_control_set_ptr->static_config.ext_block_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->ext_block_flag;
-    sequence_control_set_ptr->static_config.in_loop_me_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->in_loop_me_flag;
-
     for (hmeRegionIndex = 0; hmeRegionIndex < sequence_control_set_ptr->static_config.number_hme_search_region_in_width; ++hmeRegionIndex) {
         sequence_control_set_ptr->static_config.hme_level0_search_area_in_width_array[hmeRegionIndex] = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->hme_level0_search_area_in_width_array[hmeRegionIndex];
         sequence_control_set_ptr->static_config.hme_level1_search_area_in_width_array[hmeRegionIndex] = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->hme_level1_search_area_in_width_array[hmeRegionIndex];
@@ -2282,7 +2267,7 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->active_channel_count;
     sequence_control_set_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->logical_processors;
     sequence_control_set_ptr->static_config.target_socket = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->target_socket;
-    sequence_control_set_ptr->qp = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->qp;
+    sequence_control_set_ptr->static_config.qp = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->qp;
     sequence_control_set_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->recon_enabled;
 
     // Extract frame rate from Numerator and Denominator if not 0
@@ -2370,12 +2355,6 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-
-    if (config->in_loop_me_flag > 1) {
-        SVT_LOG("Error instance %u: InLoopMeFlag must be [0-1]\n", channelNumber + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
     if (sequence_control_set_ptr->max_input_luma_width < 64) {
         SVT_LOG("Error instance %u: Source Width must be at least 64\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -2887,7 +2866,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->bipred_3x3_inject = DEFAULT;
     config_ptr->compound_level = DEFAULT;
     config_ptr->enable_filter_intra = EB_TRUE;
-    config_ptr->in_loop_me_flag = EB_TRUE;
     config_ptr->ext_block_flag = EB_FALSE;
     config_ptr->use_default_me_hme = EB_TRUE;
     config_ptr->enable_hme_flag = EB_TRUE;
@@ -3011,7 +2989,7 @@ static void print_lib_params(
     else if (config->rate_control_mode == 2)
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: Constraint VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
     else
-        SVT_LOG("\nSVT [config]: BRC Mode / QP  / LookaheadDistance / SceneChange\t\t\t: CQP / %d / %d / %d ", scs->qp, config->look_ahead_distance, config->scene_change_detection);
+        SVT_LOG("\nSVT [config]: BRC Mode / QP  / LookaheadDistance / SceneChange\t\t\t: CQP / %d / %d / %d ", scs->static_config.qp, config->look_ahead_distance, config->scene_change_detection);
 #ifdef DEBUG_BUFFERS
     SVT_LOG("\nSVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
     SVT_LOG("\nSVT [config]: CPCS / PAREF / REF \t\t\t\t\t\t: %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count);

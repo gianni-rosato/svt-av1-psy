@@ -97,18 +97,13 @@ extern "C" {
         uint8_t                                 max_intra_size;
         uint8_t                                 min_intra_size;
         EbBool                                  intra4x4_flag;
-
-        uint32_t                                general_progressive_source_flag;
-        uint32_t                                general_interlaced_source_flag;
-        uint32_t                                general_frame_only_constraint_flag;
-
         // Rate Control
         uint32_t                                rate_control_mode;
         uint32_t                                target_bitrate;
         uint32_t                                available_bandwidth;
 
         // Quantization
-        uint32_t                                qp;
+       /* uint32_t                                qp;*/
         // Picture Analysis
         uint32_t                                picture_analysis_number_of_regions_per_width;
         uint32_t                                picture_analysis_number_of_regions_per_height;

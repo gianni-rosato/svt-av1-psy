@@ -2777,54 +2777,6 @@ void* enc_dec_kernel(void *input_ptr)
                         picture_control_set_ptr,
                         (uint8_t)sb_ptr->qp);
 
-                    uint32_t lcuRow;
-                    if (picture_control_set_ptr->parent_pcs_ptr->enable_in_loop_motion_estimation_flag) {
-                        EbPictureBufferDesc       *input_picture_ptr;
-
-                        input_picture_ptr = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-
-                        // Load the SB from the input to the intermediate SB buffer
-                        uint32_t bufferIndex = (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y + input_picture_ptr->origin_x + sb_origin_x;
-
-                        // Copy the source superblock to the me local buffer
-                        uint32_t sb_height = (sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y) < MAX_SB_SIZE ? sequence_control_set_ptr->seq_header.max_frame_height - sb_origin_y : MAX_SB_SIZE;
-                        uint32_t sb_width = (sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x) < MAX_SB_SIZE ? sequence_control_set_ptr->seq_header.max_frame_width - sb_origin_x : MAX_SB_SIZE;
-                        uint32_t is_complete_sb = sequence_control_set_ptr->sb_geom[sb_index].is_complete_sb;
-
-                        if (!is_complete_sb)
-                            memset(context_ptr->ss_mecontext->sb_buffer, 0, MAX_SB_SIZE*MAX_SB_SIZE);
-                        for (lcuRow = 0; lcuRow < sb_height; lcuRow++) {
-                            EB_MEMCPY((&(context_ptr->ss_mecontext->sb_buffer[lcuRow * MAX_SB_SIZE])), (&(input_picture_ptr->buffer_y[bufferIndex + lcuRow * input_picture_ptr->stride_y])), sb_width * sizeof(uint8_t));
-                        }
-
-                        context_ptr->ss_mecontext->sb_src_ptr = &(context_ptr->ss_mecontext->sb_buffer[0]);
-                        context_ptr->ss_mecontext->sb_src_stride = context_ptr->ss_mecontext->sb_buffer_stride;
-                        // Set in-loop ME Search Area
-                        int16_t mv_l0_x;
-                        int16_t mv_l0_y;
-                        int16_t mv_l1_x;
-                        int16_t mv_l1_y;
-
-                        mv_l0_x = 0;
-                        mv_l0_y = 0;
-                        mv_l1_x = 0;
-                        mv_l1_y = 0;
-
-                        context_ptr->ss_mecontext->search_area_width = 64;
-                        context_ptr->ss_mecontext->search_area_height = 64;
-
-                        // perform in-loop ME
-                        in_loop_motion_estimation_sblock(
-                            picture_control_set_ptr,
-                            sb_origin_x,
-                            sb_origin_y,
-                            mv_l0_x,
-                            mv_l0_y,
-                            mv_l1_x,
-                            mv_l1_y,
-                            context_ptr->ss_mecontext);
-                    }
-
 #if MULTI_PASS_PD
                     // Multi-Pass PD Path
                     // For each SB, all blocks are tested in PD0 (4421 blocks if 128x128 SB, and 1101 blocks if 64x64 SB).
@@ -2869,7 +2821,6 @@ void* enc_dec_kernel(void *input_ptr)
                             sb_origin_x,
                             sb_origin_y,
                             sb_index,
-                            context_ptr->ss_mecontext,
                             context_ptr->md_context);
 
                         // Perform Pred_0 depth refinement - Add blocks to be considered in the next stage(s) of PD based on depth cost.
@@ -2922,7 +2873,6 @@ void* enc_dec_kernel(void *input_ptr)
                                 sb_origin_x,
                                 sb_origin_y,
                                 sb_index,
-                                context_ptr->ss_mecontext,
                                 context_ptr->md_context);
 
                             // Perform Pred_1 depth refinement - Add blocks to be considered in the next stage(s) of PD based on depth cost.
@@ -2972,7 +2922,6 @@ void* enc_dec_kernel(void *input_ptr)
                         sb_origin_x,
                         sb_origin_y,
                         sb_index,
-                        context_ptr->ss_mecontext,
                         context_ptr->md_context);
 
                     // Configure the LCU

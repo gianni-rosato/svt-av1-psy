@@ -755,37 +755,6 @@ void ReadInputFrames(
             readSize = (uint64_t)SIZE_OF_ONE_FRAME_IN_BYTES(input_padded_width, input_padded_height, color_format, is16bit);
 
             headerPtr->n_filled_len = 0;
-
-            // Interlaced Video
-            if (config->separate_fields) {
-                ProcessInputFieldStandardMode(
-                    config,
-                    headerPtr,
-                    input_file,
-                    inputPtr->luma,
-                    inputPtr->cb,
-                    inputPtr->cr,
-                    is16bit);
-
-                if (readSize != headerPtr->n_filled_len) {
-                    fseek(input_file, 0, SEEK_SET);
-                    headerPtr->n_filled_len = 0;
-
-                    ProcessInputFieldStandardMode(
-                        config,
-                        headerPtr,
-                        input_file,
-                        inputPtr->luma,
-                        inputPtr->cb,
-                        inputPtr->cr,
-                        is16bit);
-                }
-
-                // Reset the pointer position after a top field
-                if (config->processed_frame_count % 2 == 0)
-                    fseek(input_file, -(long)(readSize << 1), SEEK_CUR);
-            }
-            else {
                 /* if input is a y4m file, read next line which contains "FRAME" */
                 if(config->y4m_input==EB_TRUE)
                     read_y4m_frame_delimiter(config);
@@ -809,7 +778,6 @@ void ReadInputFrames(
                     headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cb, 1, lumaReadSize >> (3 - color_format), input_file);
                     headerPtr->n_filled_len += (uint32_t)fread(inputPtr->cr, 1, lumaReadSize >> (3 - color_format), input_file);
                 }
-            }
         } else  {
             assert(is16bit == 1 && config->compressed_ten_bit_format == 1);
             // 10-bit Compressed Unpacked Mode

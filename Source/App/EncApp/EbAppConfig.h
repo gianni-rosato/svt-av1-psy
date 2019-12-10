@@ -208,12 +208,6 @@ typedef struct EbConfig
 
     uint8_t                  latency_mode;
 
-    /****************************************
-     * // Interlaced Video
-     ****************************************/
-    EbBool                  interlaced_video;
-    EbBool                  separate_fields;
-
     /*****************************************
      * Coding Structure
      *****************************************/
@@ -368,7 +362,6 @@ typedef struct EbConfig
     EbBool                  enable_hme_level1_flag;
     EbBool                  enable_hme_level2_flag;
     EbBool                  ext_block_flag;
-    EbBool                  in_loop_me_flag;
 
     /****************************************
      * ME Parameters
