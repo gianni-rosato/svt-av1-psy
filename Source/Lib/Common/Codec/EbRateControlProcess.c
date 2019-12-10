@@ -4478,23 +4478,7 @@ void* rate_control_kernel(void *input_ptr)
 
             parentpicture_control_set_ptr = (PictureParentControlSet  *)rate_control_tasks_ptr->picture_control_set_wrapper_ptr->object_ptr;
             sequence_control_set_ptr = (SequenceControlSet *)parentpicture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
-            if (sequence_control_set_ptr->static_config.rate_control_mode) {
-                ReferenceQueueEntry           *reference_entry_ptr;
-                uint32_t                          reference_queue_index;
-                EncodeContext             *encode_context_ptr = sequence_control_set_ptr->encode_context_ptr;
-                reference_queue_index = encode_context_ptr->reference_picture_queue_head_index;
-                // Find the Reference in the Reference Queue
-                do {
-                    reference_entry_ptr = encode_context_ptr->reference_picture_queue[reference_queue_index];
-                    if (reference_entry_ptr->picture_number == parentpicture_control_set_ptr->picture_number) {
-                        // Set the feedback arrived
-                        reference_entry_ptr->feedback_arrived = EB_TRUE;
-                    }
 
-                    // Increment the reference_queue_index Iterator
-                    reference_queue_index = (reference_queue_index == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : reference_queue_index + 1;
-                } while ((reference_queue_index != encode_context_ptr->reference_picture_queue_tail_index) && (reference_entry_ptr->picture_number != parentpicture_control_set_ptr->picture_number));
-            }
             // Frame level RC
             if (sequence_control_set_ptr->intra_period_length == -1 || sequence_control_set_ptr->static_config.rate_control_mode == 0) {
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[0];

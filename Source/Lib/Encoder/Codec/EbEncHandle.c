@@ -1911,7 +1911,7 @@ void SetDefaultConfigurationParameters(
 static uint32_t compute_default_look_ahead(
     EbSvtAv1EncConfiguration*   config){
     int32_t lad = 0;
-    if (config->rate_control_mode == 0)
+    if (config->rate_control_mode == 0 || config->intra_period_length < 0)
         lad = (2 << config->hierarchical_levels)+1;
     else
         lad = config->intra_period_length;
@@ -2488,9 +2488,8 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if ((config->rate_control_mode == 1 || config->rate_control_mode == 2) && config->look_ahead_distance != (uint32_t)config->intra_period_length) {
-        SVT_LOG("Error Instance %u: The rate control mode 1/2 LAD must be equal to intra_period \n", channelNumber + 1);
-
+    if ((config->rate_control_mode == 3|| config->rate_control_mode == 2) && config->look_ahead_distance != (uint32_t)config->intra_period_length && config->intra_period_length >= 0) {
+        SVT_LOG("Error Instance %u: The rate control mode 2/3 LAD must be equal to intra_period \n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
     }
     if (config->look_ahead_distance > MAX_LAD && config->look_ahead_distance != (uint32_t)~0) {

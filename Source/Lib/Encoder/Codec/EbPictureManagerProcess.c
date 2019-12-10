@@ -487,9 +487,11 @@ void* picture_manager_kernel(void *input_ptr)
             // Find the Reference in the Reference Queue
             do {
                 referenceEntryPtr = encode_context_ptr->reference_picture_queue[referenceQueueIndex];
-                if (referenceEntryPtr->picture_number == inputPictureDemuxPtr->picture_number)
+                if (referenceEntryPtr->picture_number == inputPictureDemuxPtr->picture_number) {
                     // Set the feedback arrived
+                    referenceEntryPtr->feedback_arrived = EB_TRUE;
                     referenceEntryPtr->frame_context_updated = EB_TRUE;
+                }
                 // Increment the referenceQueueIndex Iterator
                 referenceQueueIndex = (referenceQueueIndex == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : referenceQueueIndex + 1;
 
