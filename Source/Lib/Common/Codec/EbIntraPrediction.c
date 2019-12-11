@@ -4406,10 +4406,12 @@ void eb_av1_predict_intra_block_16bit(
 is the main function to compute intra prediction for a PU
 */
 EbErrorType eb_av1_intra_prediction_cl(
+    uint8_t                              hbd_mode_decision,
     ModeDecisionContext                  *md_context_ptr,
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionCandidateBuffer           *candidate_buffer_ptr)
 {
+    (void) hbd_mode_decision;
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t modeTypeLeftNeighborIndex = get_neighbor_array_unit_left_index(

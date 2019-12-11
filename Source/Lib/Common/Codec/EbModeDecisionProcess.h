@@ -356,8 +356,15 @@ extern "C" {
     uint64_t                            md_stage_2_class_prune_th;
 #endif
 #if OBMC_FLAG
+#if HBD2_OBMC
+    DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2* 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2* 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, obmc_buff_0_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, obmc_buff_1_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+#else
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+#endif
     DECLARE_ALIGNED(16, int32_t, wsrc_buf[MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, int32_t, mask_buf[MAX_SB_SQUARE]);
     unsigned int pred_sse[REF_FRAMES];

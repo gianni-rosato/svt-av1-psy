@@ -667,7 +667,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     config_ptr->hme_level2_search_area_in_height_array[0]  = 1;
     config_ptr->hme_level2_search_area_in_height_array[1]  = 1;
     config_ptr->screen_content_mode                  = 2;
-    config_ptr->enable_hbd_mode_decision             = 1;
+    config_ptr->enable_hbd_mode_decision             = 2;
     config_ptr->enable_palette                       = -1;
     config_ptr->olpd_refinement                      = -1;
     config_ptr->injector_frame_rate                    = 60 << 16;

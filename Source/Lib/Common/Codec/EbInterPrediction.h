@@ -249,6 +249,7 @@ EbErrorType av1_inter_prediction_hbd(
         const ScaleFactors *sf);
 
     EbErrorType inter_pu_prediction_av1(
+        uint8_t                              hbd_mode_decision,
         struct ModeDecisionContext           *md_context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
         ModeDecisionCandidateBuffer          *candidate_buffer_ptr);

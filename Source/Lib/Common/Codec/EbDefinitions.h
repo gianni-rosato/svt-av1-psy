@@ -38,6 +38,10 @@ extern "C" {
 
 #define HBD_CLEAN_UP                 1
 
+#define HBD2_COMP                    1 // Inter-Inter compound mode HBD2
+#define HBD2_PME                     1 // Predictive ME (PME) HBD2
+#define HBD2_OBMC                    1 // OBMC semi-lossless for HBD1 & HBD2
+
 #define IFS_8BIT_MD                  1
 
 #define COMP_HBD                     1

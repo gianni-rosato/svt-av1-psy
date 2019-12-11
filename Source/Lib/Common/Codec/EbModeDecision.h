@@ -151,6 +151,7 @@ extern "C" {
     * Function Ptrs Definitions
     **************************************/
     typedef EbErrorType(*EbPredictionFunc)(
+        uint8_t                              hbd_mode_decision,
         struct ModeDecisionContext           *context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
         struct ModeDecisionCandidateBuffer   *candidate_buffer_ptr);

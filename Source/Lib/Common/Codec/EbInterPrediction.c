@@ -2431,9 +2431,13 @@ static void pick_wedge(
     int8_t *const best_wedge_sign,
     int8_t *const best_wedge_index)
 {
-
+#if HBD2_COMP
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+#else
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision;
+#endif
 #if COMP_HBD
-    EbPictureBufferDesc  *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc  *src_pic = hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #else
     EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #endif
@@ -2453,7 +2457,7 @@ static void pick_wedge(
     DECLARE_ALIGNED(32, int16_t, residual0[MAX_SB_SQUARE]);  // src - pred0
 
 #if COMP_HBD //CCODE
-    if (context_ptr->hbd_mode_decision) {
+    if (hbd_mode_decision) {
         uint16_t *src_buf_hbd = (uint16_t*)src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
         aom_highbd_subtract_block(bh, bw, residual0, bw, (uint8_t*)src_buf_hbd/*src->buf*/, src_pic->stride_y/*src->stride*/, (uint8_t*)p0, bw, EB_10BIT);
     }
@@ -2502,6 +2506,11 @@ static int8_t estimate_wedge_sign(
     const uint8_t *pred1,
     int stride1)
 {
+#if HBD2_COMP
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+#else
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision;
+#endif
     static const BlockSize split_qtr[BlockSizeS_ALL] = {
         //                            4X4
         BLOCK_INVALID,
@@ -2532,7 +2541,7 @@ static int8_t estimate_wedge_sign(
 
     const aom_variance_fn_ptr_t *fn_ptr = &mefn_ptr[bsize];
 #if COMP_HBD // TO BE FIXED
-    EbPictureBufferDesc  *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc  *src_pic = hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #else
     EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #endif
@@ -2654,6 +2663,11 @@ static void  pick_interinter_seg(
     const int16_t *const residual1,
     const int16_t *const diff10)
 {
+    #if HBD2_COMP
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+#else
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision;
+#endif
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
     const int N = 1 << num_pels_log2_lookup[bsize];
@@ -2672,7 +2686,7 @@ static void  pick_interinter_seg(
 
         // build mask and inverse
 #if COMP_HBD //CCODE
-        if (context_ptr->hbd_mode_decision)
+        if (hbd_mode_decision)
             av1_build_compound_diffwtd_mask_highbd(tmp_mask[cur_mask_type], cur_mask_type,
                  p0, bw, p1, bw, bh, bw, EB_10BIT);
         else
@@ -2727,8 +2741,13 @@ void search_compound_diff_wedge(
 
     //if (*calc_pred_masked_compound)
     {
+#if HBD2_COMP
+        uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+#else
+        uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision ;
+#endif
 #if COMP_HBD
-        EbPictureBufferDesc  *src_pic = context_ptr->hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        EbPictureBufferDesc  *src_pic = hbd_mode_decision ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #else
         EbPictureBufferDesc   *src_pic = picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 #endif
@@ -2764,14 +2783,14 @@ void search_compound_diff_wedge(
         assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
 #if COMP_HBD
         if (ref_idx_l0 >= 0)
-            ref_pic_list0 = context_ptr->hbd_mode_decision ?
+            ref_pic_list0 = hbd_mode_decision ?
                             ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit :
                             ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
         else
             ref_pic_list0 = (EbPictureBufferDesc*)EB_NULL;
 
         if (ref_idx_l1 >= 0)
-            ref_pic_list1 = context_ptr->hbd_mode_decision ?
+            ref_pic_list1 = hbd_mode_decision ?
                             ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture16bit :
                             ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
         else
@@ -2792,7 +2811,7 @@ void search_compound_diff_wedge(
         pred_desc.buffer_y = context_ptr->pred0;
 
         //we call the regular inter prediction path here(no compound)
-        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
+        av1_inter_prediction_function_table[hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             0,//fixed interpolation filter for compound search
             context_ptr->cu_ptr,
@@ -2826,14 +2845,14 @@ void search_compound_diff_wedge(
             0,          //output origin_x,
             0,          //output origin_y,
             0,//do chroma
-             context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
         //ref1 prediction
         mv_unit.pred_direction = UNI_PRED_LIST_1;
         pred_desc.buffer_y = context_ptr->pred1;
 
         //we call the regular inter prediction path here(no compound)
-        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
+        av1_inter_prediction_function_table[hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             0,//fixed interpolation filter for compound search
             context_ptr->cu_ptr,
@@ -2867,10 +2886,10 @@ void search_compound_diff_wedge(
             0,          //output origin_x,
             0,          //output origin_y,
             0,//do chroma
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+            hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
 #if COMP_HBD //CCODE
-        if (context_ptr->hbd_mode_decision) {
+        if (hbd_mode_decision) {
             uint16_t *src_buf_hbd = (uint16_t*)src_pic->buffer_y + (context_ptr->cu_origin_x + src_pic->origin_x) + (context_ptr->cu_origin_y + src_pic->origin_y) * src_pic->stride_y;
             aom_highbd_subtract_block(bheight, bwidth, context_ptr->residual1, bwidth,(uint8_t*)  src_buf_hbd, src_pic->stride_y, (uint8_t*) context_ptr->pred1, bwidth,EB_10BIT);
             aom_highbd_subtract_block(bheight, bwidth, context_ptr->diff10, bwidth, (uint8_t*) context_ptr->pred1, bwidth, (uint8_t*) context_ptr->pred0, bwidth,EB_10BIT);
@@ -4658,28 +4677,79 @@ void precompute_obmc_data(
     ModeDecisionContext          *context_ptr)
 {
 
+#if HBD2_OBMC
+    uint8_t * tmp_obmc_bufs_8b[2];
+#endif
     uint8_t * tmp_obmc_bufs[2];
 
     tmp_obmc_bufs[0] = context_ptr->obmc_buff_0;
     tmp_obmc_bufs[1] = context_ptr->obmc_buff_1;
 
+#if HBD2_OBMC
+    DECLARE_ALIGNED(16, uint8_t, junk_2b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, buf0_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, buf1_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
 
+    uint8_t *dst_buf1_8b[MAX_MB_PLANE], *dst_buf2_8b[MAX_MB_PLANE],*dst_junk_2b[MAX_MB_PLANE];
+
+    tmp_obmc_bufs_8b[0] = buf0_8b;
+    tmp_obmc_bufs_8b[1] = buf1_8b;
+
+    dst_buf1_8b[0] = tmp_obmc_bufs_8b[0];
+    dst_buf1_8b[1] = tmp_obmc_bufs_8b[0] + MAX_SB_SQUARE;
+    dst_buf1_8b[2] = tmp_obmc_bufs_8b[0] + MAX_SB_SQUARE * 2;
+    dst_buf2_8b[0] = tmp_obmc_bufs_8b[1];
+    dst_buf2_8b[1] = tmp_obmc_bufs_8b[1] + MAX_SB_SQUARE;
+    dst_buf2_8b[2] = tmp_obmc_bufs_8b[1] + MAX_SB_SQUARE * 2;
+    dst_junk_2b[0] = junk_2b;
+#endif
     uint8_t *dst_buf1[MAX_MB_PLANE], *dst_buf2[MAX_MB_PLANE];
     int dst_stride1[MAX_MB_PLANE] = { MAX_SB_SIZE, MAX_SB_SIZE, MAX_SB_SIZE };
     int dst_stride2[MAX_MB_PLANE] = { MAX_SB_SIZE, MAX_SB_SIZE, MAX_SB_SIZE };
 
     {
+#if HBD2_OBMC
+        if (context_ptr->hbd_mode_decision) {
+            dst_buf1[0] = (uint8_t *)((uint16_t *)tmp_obmc_bufs[0]);
+            dst_buf1[1] = (uint8_t *)((uint16_t *)tmp_obmc_bufs[0] + MAX_SB_SQUARE);
+            dst_buf1[2] = (uint8_t *)((uint16_t *)tmp_obmc_bufs[0] + MAX_SB_SQUARE * 2);
+            dst_buf2[0] = (uint8_t *)((uint16_t *)tmp_obmc_bufs[1]);
+            dst_buf2[1] = (uint8_t *)((uint16_t *)tmp_obmc_bufs[1] + MAX_SB_SQUARE);
+            dst_buf2[2] = (uint8_t *)((uint16_t *)tmp_obmc_bufs[1] + MAX_SB_SQUARE * 2);
+        }
+        else {
+            dst_buf1[0] = tmp_obmc_bufs[0];
+            dst_buf1[1] = tmp_obmc_bufs[0] + MAX_SB_SQUARE;
+            dst_buf1[2] = tmp_obmc_bufs[0] + MAX_SB_SQUARE * 2;
+            dst_buf2[0] = tmp_obmc_bufs[1];
+            dst_buf2[1] = tmp_obmc_bufs[1] + MAX_SB_SQUARE;
+            dst_buf2[2] = tmp_obmc_bufs[1] + MAX_SB_SQUARE * 2;
+        }
+#else
         dst_buf1[0] = tmp_obmc_bufs[0];
         dst_buf1[1] = tmp_obmc_bufs[0] + MAX_SB_SQUARE;
         dst_buf1[2] = tmp_obmc_bufs[0] + MAX_SB_SQUARE * 2;
         dst_buf2[0] = tmp_obmc_bufs[1];
         dst_buf2[1] = tmp_obmc_bufs[1] + MAX_SB_SQUARE;
         dst_buf2[2] = tmp_obmc_bufs[1] + MAX_SB_SQUARE * 2;
+#endif
     }
-
     int mi_row = context_ptr->cu_origin_y >> 2;
     int mi_col = context_ptr->cu_origin_x >> 2;
+#if HBD2_OBMC
+    if (context_ptr->hbd_mode_decision) {
+        build_prediction_by_above_preds_hbd(
+            1,
+            context_ptr->blk_geom->bsize, picture_control_set_ptr, context_ptr->cu_ptr->av1xd, mi_row, mi_col, (uint16_t **)dst_buf1,
+            dst_stride1);
 
+        build_prediction_by_left_preds_hbd(
+            1,
+            context_ptr->blk_geom->bsize, picture_control_set_ptr, context_ptr->cu_ptr->av1xd, mi_row, mi_col, (uint16_t **)dst_buf2,
+            dst_stride2);
+    }
+    else {
+#endif
     build_prediction_by_above_preds(
         1,
         context_ptr->blk_geom->bsize, picture_control_set_ptr, context_ptr->cu_ptr->av1xd, mi_row, mi_col, dst_buf1,
@@ -4690,14 +4760,51 @@ void precompute_obmc_data(
         context_ptr->blk_geom->bsize, picture_control_set_ptr, context_ptr->cu_ptr->av1xd, mi_row, mi_col, dst_buf2,
         dst_stride2);
 
-
+#if HBD2_OBMC
+    }
+#endif
+#if HBD2_OBMC
+    if (context_ptr->hbd_mode_decision) {
+        un_pack2d(
+            (uint16_t*)dst_buf1[0],
+            dst_stride1[0],
+            dst_buf1_8b[0],
+            dst_stride1[0],
+            dst_junk_2b[0],
+            dst_stride1[0],
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight);
+        un_pack2d(
+            (uint16_t*)dst_buf2[0],
+            dst_stride2[0],
+            dst_buf2_8b[0],
+            dst_stride2[0],
+            dst_junk_2b[0],
+            dst_stride2[0],
+            context_ptr->blk_geom->bwidth,
+            context_ptr->blk_geom->bheight);
+    }
+#endif
+#if HBD2_OBMC
+    calc_target_weighted_pred(
+        picture_control_set_ptr,
+        context_ptr,
+        picture_control_set_ptr->parent_pcs_ptr->av1_cm,
+        context_ptr->cu_ptr->av1xd,
+        mi_row,
+        mi_col,
+        context_ptr->hbd_mode_decision ? dst_buf1_8b[0] : dst_buf1[0],
+        dst_stride1[0] ,
+        context_ptr->hbd_mode_decision ? dst_buf2_8b[0] : dst_buf2[0],
+        dst_stride2[0]);
+#else
     calc_target_weighted_pred(
         picture_control_set_ptr,
         context_ptr,
         picture_control_set_ptr->parent_pcs_ptr->av1_cm, context_ptr->cu_ptr->av1xd, mi_row, mi_col, dst_buf1[0],
         dst_stride1[0] , dst_buf2[0]  ,
         dst_stride2[0] );
-
+#endif
 }
 #endif
 EbErrorType av1_inter_prediction(
@@ -5495,7 +5602,9 @@ EbErrorType av1_inter_prediction_hbd(
     EbBool                          perform_chroma,
     uint8_t                         bit_depth)
 {
+#if !HBD2_OBMC
     (void)use_precomputed_obmc;
+#endif
     (void) md_context;
 
     EbErrorType  return_error = EB_ErrorNone;
@@ -6179,7 +6288,20 @@ EbErrorType av1_inter_prediction_hbd(
 
         int mi_row = pu_origin_y >> 2;
         int mi_col = pu_origin_x >> 2;
-
+#if HBD2_OBMC
+        //use_precomputed_obmc=0;
+        if (use_precomputed_obmc)
+        {
+            dst_buf1[0] = (uint16_t*)md_context->obmc_buff_0;
+            dst_buf1[1] = (uint16_t*) md_context->obmc_buff_0 + MAX_SB_SQUARE;
+            dst_buf1[2] = (uint16_t*)md_context->obmc_buff_0 + MAX_SB_SQUARE*2;
+            dst_buf2[0] = (uint16_t*)md_context->obmc_buff_1;
+            dst_buf2[1] = (uint16_t*)md_context->obmc_buff_1 + MAX_SB_SQUARE;
+            dst_buf2[2] = (uint16_t*)md_context->obmc_buff_1 + MAX_SB_SQUARE*2;
+        }
+        else
+        {
+#endif
         build_prediction_by_above_preds_hbd(
             perform_chroma,
             blk_geom->bsize, picture_control_set_ptr, cu_ptr->av1xd, mi_row, mi_col, dst_buf1,
@@ -6189,7 +6311,9 @@ EbErrorType av1_inter_prediction_hbd(
             perform_chroma,
             blk_geom->bsize, picture_control_set_ptr, cu_ptr->av1xd, mi_row, mi_col, dst_buf2,
             dst_stride2);
-
+#if HBD2_OBMC
+        }
+#endif
         uint16_t * final_dst_ptr_y  = (uint16_t*) prediction_ptr->buffer_y + prediction_ptr->origin_x + dst_origin_x + (prediction_ptr->origin_y + dst_origin_y) * prediction_ptr->stride_y;
         uint16_t  final_dst_stride_y = prediction_ptr->stride_y;
 
@@ -7379,6 +7503,7 @@ void interpolation_filter_search(
 }
 
 EbErrorType inter_pu_prediction_av1(
+    uint8_t                              hbd_mode_decision,
     ModeDecisionContext                  *md_context_ptr,
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionCandidateBuffer          *candidate_buffer_ptr)
@@ -7401,12 +7526,12 @@ EbErrorType inter_pu_prediction_av1(
     mv_unit.mv[1] = mv_1;
 
     if (candidate_buffer_ptr->candidate_ptr->use_intrabc) {
-        if (!md_context_ptr->hbd_mode_decision)
+        if (!hbd_mode_decision)
             ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
         else
             ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
 
-        av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision > EB_8_BIT_MD](
+        av1_inter_prediction_function_table[hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
             md_context_ptr->cu_ptr,
@@ -7440,7 +7565,7 @@ EbErrorType inter_pu_prediction_av1(
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
             md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
-            md_context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+            hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
         return return_error;
     }
@@ -7460,13 +7585,13 @@ EbErrorType inter_pu_prediction_av1(
     assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
 
     if (ref_idx_l0 >= 0) {
-        ref_pic_list0 = md_context_ptr->hbd_mode_decision ?
+        ref_pic_list0 = hbd_mode_decision ?
             ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit
             : ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
     }
 
     if (ref_idx_l1 >= 0) {
-        ref_pic_list1 =  md_context_ptr->hbd_mode_decision ?
+        ref_pic_list1 =  hbd_mode_decision ?
             ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture16bit
             : ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture;
     }
@@ -7485,7 +7610,7 @@ EbErrorType inter_pu_prediction_av1(
     }
 
     uint8_t bit_depth = EB_8BIT;
-    if (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT && md_context_ptr->hbd_mode_decision)
+    if (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT && hbd_mode_decision)
         bit_depth = sequence_control_set_ptr->static_config.encoder_bit_depth;
 
 
@@ -7530,7 +7655,7 @@ EbErrorType inter_pu_prediction_av1(
             if (md_context_ptr->blk_geom->bwidth > capped_size && md_context_ptr->blk_geom->bheight > capped_size)
 #if IFS_8BIT_MD
             {
-                if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD) {
+                if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD && hbd_mode_decision == EB_DUAL_BIT_MD ) {
 
                     if (ref_idx_l0 >= 0)
                         ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture;
@@ -7550,7 +7675,7 @@ EbErrorType inter_pu_prediction_av1(
                     md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: md_context_ptr->hbd_mode_decision,
                     bit_depth);
 #if IFS_8BIT_MD
-                if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD) {
+                if (md_context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD && hbd_mode_decision == EB_DUAL_BIT_MD ) {
                     if (ref_idx_l0 >= 0)
                         ref_pic_list0 = ((EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit;
 
@@ -7566,7 +7691,7 @@ EbErrorType inter_pu_prediction_av1(
     NeighborArrayUnit            *cb_recon_neighbor_array;
     NeighborArrayUnit            *cr_recon_neighbor_array;
 
-    if (!md_context_ptr->hbd_mode_decision) {
+    if (!hbd_mode_decision) {
         luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array;
         cb_recon_neighbor_array = md_context_ptr->cb_recon_neighbor_array;
         cr_recon_neighbor_array = md_context_ptr->cr_recon_neighbor_array;
@@ -7578,7 +7703,7 @@ EbErrorType inter_pu_prediction_av1(
 
     }
 
-    av1_inter_prediction_function_table[md_context_ptr->hbd_mode_decision > EB_8_BIT_MD](
+    av1_inter_prediction_function_table[hbd_mode_decision > EB_8_BIT_MD](
         picture_control_set_ptr,
         candidate_buffer_ptr->candidate_ptr->interp_filters,
         md_context_ptr->cu_ptr,
@@ -7612,7 +7737,7 @@ EbErrorType inter_pu_prediction_av1(
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
         md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
-        md_context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+        hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     return return_error;
 }

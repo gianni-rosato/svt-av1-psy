@@ -1454,6 +1454,7 @@ void fast_loop_core(
     // Set default interp_filters
     candidate_buffer->candidate_ptr->interp_filters = (context_ptr->md_staging_use_bilinear) ? av1_make_interp_filters(BILINEAR, BILINEAR) : 0;
     ProductPredictionFunTable[candidate_buffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
+        context_ptr->hbd_mode_decision,
         context_ptr,
         picture_control_set_ptr,
         candidate_buffer);
@@ -2713,19 +2714,24 @@ void predictive_me_full_pel_search(
     int16_t                  *best_mvy,
     uint32_t                 *best_distortion)
 {
+#if HBD2_PME
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+#else
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision;
+#endif
     uint32_t  distortion;
     ModeDecisionCandidateBuffer  *candidate_buffer = &(context_ptr->candidate_buffer_ptr_array[0][0]);
     candidate_buffer->candidate_ptr = &(context_ptr->fast_candidate_array[0]);
 
     EbReferenceObject *refObj = picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-    EbPictureBufferDesc *ref_pic = context_ptr->hbd_mode_decision ?
+    EbPictureBufferDesc *ref_pic = hbd_mode_decision ?
         refObj->reference_picture16bit : refObj->reference_picture;
     for (int32_t refinement_pos_x = search_position_start_x; refinement_pos_x <= search_position_end_x; ++refinement_pos_x) {
         for (int32_t refinement_pos_y = search_position_start_y; refinement_pos_y <= search_position_end_y; ++refinement_pos_y) {
 
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvx >> 3) + refinement_pos_x) + (context_ptr->cu_origin_y + (mvy >> 3) + ref_pic->origin_y + refinement_pos_y) * ref_pic->stride_y;
             if (use_ssd) {
-                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                EbSpatialFullDistType spatial_full_dist_type_fun = hbd_mode_decision ?
                     full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 distortion = (uint32_t) spatial_full_dist_type_fun(
@@ -2741,7 +2747,7 @@ void predictive_me_full_pel_search(
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
 
-                if (context_ptr->hbd_mode_decision) {
+                if (hbd_mode_decision) {
                     distortion = sad_16b_kernel(
                         ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
                         input_picture_ptr->stride_y,
@@ -2790,6 +2796,11 @@ void predictive_me_sub_pel_search(
     uint32_t                 *best_distortion,
     uint8_t                   search_pattern)
 {
+#if HBD2_PME
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+#else
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision;
+#endif
     uint32_t  distortion;
     ModeDecisionCandidateBuffer  *candidate_buffer = &(context_ptr->candidate_buffer_ptr_array[0][0]);
     candidate_buffer->candidate_ptr = &(context_ptr->fast_candidate_array[0]);
@@ -2844,13 +2855,14 @@ void predictive_me_sub_pel_search(
             context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
             context_ptr->md_staging_skip_inter_chroma_pred = EB_TRUE;
             ProductPredictionFunTable[INTER_MODE](
+                hbd_mode_decision,
                 context_ptr,
                 picture_control_set_ptr,
                 candidate_buffer);
 
             // Distortion
             if (use_ssd) {
-                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                EbSpatialFullDistType spatial_full_dist_type_fun = hbd_mode_decision ?
                     full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 distortion = (uint32_t) spatial_full_dist_type_fun(
@@ -2866,7 +2878,7 @@ void predictive_me_sub_pel_search(
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
 
-                if (context_ptr->hbd_mode_decision) {
+                if (hbd_mode_decision) {
                     distortion = sad_16b_kernel(
                         ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
                         input_picture_ptr->stride_y,
@@ -2926,7 +2938,15 @@ void predictive_me_search(
 #endif
 #endif
     EbBool use_ssd = EB_TRUE;
+#if HBD2_PME
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD ? EB_8_BIT_MD: context_ptr->hbd_mode_decision ;
+    input_picture_ptr =  hbd_mode_decision  ? picture_control_set_ptr->input_frame16bit : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    //Update input origin
+    inputOriginIndex = (context_ptr->cu_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y + (context_ptr->cu_origin_x + input_picture_ptr->origin_x);
 
+#else
+    uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision;
+#endif
     // Reset valid_refined_mv
     memset(context_ptr->valid_refined_mv, 0, 8); // [2][4]
 
@@ -2979,12 +2999,12 @@ void predictive_me_search(
 
             uint32_t pa_me_distortion;
             EbReferenceObject *refObj = picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-            EbPictureBufferDesc *ref_pic = context_ptr->hbd_mode_decision ?
+            EbPictureBufferDesc *ref_pic = hbd_mode_decision ?
                 refObj->reference_picture16bit : refObj->reference_picture;
 
             uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (me_mv_x >> 3)) + (context_ptr->cu_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
             if (use_ssd) {
-                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                EbSpatialFullDistType spatial_full_dist_type_fun = hbd_mode_decision ?
                     full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                 pa_me_distortion = (uint32_t) spatial_full_dist_type_fun(
@@ -3000,7 +3020,7 @@ void predictive_me_search(
             else {
                 assert((context_ptr->blk_geom->bwidth >> 3) < 17);
 
-               if (context_ptr->hbd_mode_decision) {
+               if (hbd_mode_decision) {
                     pa_me_distortion = sad_16b_kernel(
                         ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
                         input_picture_ptr->stride_y,
@@ -3057,12 +3077,12 @@ void predictive_me_search(
 
                     // MVP Distortion
                     EbReferenceObject *refObj = picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-                    EbPictureBufferDesc *ref_pic = context_ptr->hbd_mode_decision ?
+                    EbPictureBufferDesc *ref_pic = hbd_mode_decision ?
                         refObj->reference_picture16bit : refObj->reference_picture;
 
                    uint32_t ref_origin_index = ref_pic->origin_x + (context_ptr->cu_origin_x + (mvp_x_array[mvp_index] >> 3)) + (context_ptr->cu_origin_y + (mvp_y_array[mvp_index] >> 3) + ref_pic->origin_y) * ref_pic->stride_y;
                     if (use_ssd) {
-                        EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ?
+                        EbSpatialFullDistType spatial_full_dist_type_fun = hbd_mode_decision ?
                             full_distortion_kernel16_bits : spatial_full_distortion_kernel;
 
                         mvp_distortion = (uint32_t) spatial_full_dist_type_fun(
@@ -3078,7 +3098,7 @@ void predictive_me_search(
                     else {
                         assert((context_ptr->blk_geom->bwidth >> 3) < 17);
 
-                       if (context_ptr->hbd_mode_decision) {
+                       if (hbd_mode_decision) {
                             mvp_distortion = sad_16b_kernel(
                                 ((uint16_t *)input_picture_ptr->buffer_y) + inputOriginIndex,
                                 input_picture_ptr->stride_y,
@@ -3973,6 +3993,7 @@ void check_best_indepedant_cfl(
         uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
         ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
+            context_ptr->hbd_mode_decision,
             context_ptr,
             picture_control_set_ptr,
             candidate_buffer);
@@ -6015,6 +6036,7 @@ void full_loop_core(
                     context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
                     ProductPredictionFunTable[candidate_ptr->type](
+                        context_ptr->hbd_mode_decision,
                         context_ptr,
                         picture_control_set_ptr,
                         candidate_buffer);
@@ -7681,6 +7703,7 @@ void search_best_independent_uv_mode(
 
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
         ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
+            context_ptr->hbd_mode_decision,
             context_ptr,
             picture_control_set_ptr,
             candidate_buffer);
@@ -7957,6 +7980,7 @@ void search_best_independent_uv_mode(
             uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
             context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
             ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
+                context_ptr->hbd_mode_decision,
                 context_ptr,
                 picture_control_set_ptr,
                 candidate_buffer);
@@ -8757,6 +8781,7 @@ void md_encode_block(
                 context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
                 context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
                 ProductPredictionFunTable[candidate_buffer->candidate_ptr->type](
+                    context_ptr->hbd_mode_decision,
                     context_ptr,
                     picture_control_set_ptr,
                     candidate_buffer);
