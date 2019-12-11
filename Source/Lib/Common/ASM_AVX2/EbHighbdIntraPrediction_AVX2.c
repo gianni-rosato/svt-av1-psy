@@ -843,10 +843,6 @@ static INLINE void h_pred_16(uint16_t **const dst, const ptrdiff_t stride,
 static INLINE void h_pred_16x8(uint16_t **dst, const ptrdiff_t stride,
     const uint16_t *const left)
 {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
-
     const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
 
     h_pred_16(dst, stride, _mm_srli_si128(left_u16, 0));
@@ -866,11 +862,6 @@ void eb_aom_highbd_h_predictor_16x4_avx2(uint16_t *dst, ptrdiff_t stride,
 {
     (void)above;
     (void)bd;
-
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)dst % 32));
-    assert(!(stride % 32));
-
     const __m128i left_u16 = _mm_loadl_epi64((const __m128i *)left);
 
     h_pred_16(&dst, stride, _mm_srli_si128(left_u16, 0));
@@ -910,10 +901,6 @@ static INLINE void h_pred_32(uint16_t **const dst, const ptrdiff_t stride,
 static INLINE void h_pred_32x8(uint16_t **dst, const ptrdiff_t stride,
     const uint16_t *const left)
 {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
-
     const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_32(dst, stride, _mm_srli_si128(left_u16, 0));
@@ -970,10 +957,6 @@ static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride,
 static INLINE void h_pred_64x8(uint16_t **dst, const ptrdiff_t stride,
     const uint16_t *const left)
 {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
-
     const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_64(dst, stride, _mm_srli_si128(left_u16, 0));
@@ -1039,9 +1022,6 @@ static INLINE void v_pred_16(uint16_t **const dst, const ptrdiff_t stride,
 static INLINE void v_pred_16x8(uint16_t **const dst, const ptrdiff_t stride,
     const __m256i above)
 {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
 
     v_pred_16(dst, stride, above);
     v_pred_16(dst, stride, above);
@@ -1064,10 +1044,6 @@ void eb_aom_highbd_v_predictor_16x4_avx2(uint16_t *dst, ptrdiff_t stride,
     (void)left;
     (void)bd;
 
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)dst % 32));
-    assert(!(stride % 32));
-
     v_pred_16(&dst, stride, above0);
     v_pred_16(&dst, stride, above0);
     v_pred_16(&dst, stride, above0);
@@ -1084,10 +1060,6 @@ void eb_aom_highbd_v_predictor_16x8_avx2(uint16_t *dst, ptrdiff_t stride,
 
     (void)left;
     (void)bd;
-
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)dst % 32));
-    assert(!(stride % 32));
 
     v_pred_16x8(&dst, stride, above0);
 }
@@ -1153,9 +1125,6 @@ static INLINE void v_pred_32(uint16_t **const dst, const ptrdiff_t stride,
 static INLINE void v_pred_32x8(uint16_t **const dst, const ptrdiff_t stride,
     const __m256i above0, const __m256i above1)
 {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
 
     v_pred_32(dst, stride, above0, above1);
     v_pred_32(dst, stride, above0, above1);
@@ -1250,10 +1219,6 @@ static INLINE void v_pred_64x8(uint16_t **const dst, const ptrdiff_t stride,
     const __m256i above0, const __m256i above1, const __m256i above2,
     const __m256i above3)
 {
-    // dst and it's stride must be 32-byte aligned.
-    assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
-
     v_pred_64(dst, stride, above0, above1, above2, above3);
     v_pred_64(dst, stride, above0, above1, above2, above3);
     v_pred_64(dst, stride, above0, above1, above2, above3);
