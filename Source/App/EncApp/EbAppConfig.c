@@ -1030,36 +1030,6 @@ static EbErrorType VerifySettings(EbConfig *config, uint32_t channelNumber)
         return_error = EB_ErrorBadParameter;
     }
 
-    // Local Warped Motion
-    if (config->enable_warped_motion != 0 && config->enable_warped_motion != 1) {
-        fprintf(config->error_log_file, "Error instance %u: Invalid warped motion flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    // Global Motion
-    if (config->enable_global_motion != 0 && config->enable_global_motion != 1) {
-        fprintf(config->error_log_file, "Error instance %u: Invalid global motion flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    // OBMC
-    if (config->enable_obmc != 0 && config->enable_obmc != 1) {
-        fprintf(config->error_log_file, "Error instance %u: Invalid OBMC flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    // Filter Intra prediction
-    if (config->enable_filter_intra != 0 && config->enable_filter_intra != 1) {
-        fprintf(config->error_log_file, "Error instance %u: Invalid Filter Intra flag [0 - 1], your input: %d\n", channelNumber + 1, config->target_socket);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    // HBD mode decision
-    if (config->enable_hbd_mode_decision != 0 && config->enable_hbd_mode_decision != 1 && config->enable_hbd_mode_decision != 2) {
-        fprintf(config->error_log_file, "Error instance %u: Invalid HBD mode decision flag [0 - 2], your input: %d\n", channelNumber + 1, config->target_socket);
-        return_error = EB_ErrorBadParameter;
-    }
-
     return return_error;
 }
 
