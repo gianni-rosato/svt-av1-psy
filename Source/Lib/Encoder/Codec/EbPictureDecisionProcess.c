@@ -954,10 +954,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     */
     if (frm_hdr->allow_screen_content_tools)
         if (scs_ptr->static_config.enable_palette == -1)//auto mode; if not set by cfg
-            pcs_ptr->palette_mode =
-            (scs_ptr->static_config.encoder_bit_depth == EB_8BIT ||
-            (scs_ptr->static_config.encoder_bit_depth > EB_8BIT && scs_ptr->static_config.enable_hbd_mode_decision == 0)) &&
-            pcs_ptr->enc_mode == ENC_M0 ? 6 : 0;
+            pcs_ptr->palette_mode = pcs_ptr->enc_mode == ENC_M0 ? 6 : 0;
         else
             pcs_ptr->palette_mode = scs_ptr->static_config.enable_palette;
     else

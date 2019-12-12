@@ -692,7 +692,8 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                 uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
                 const int n_cache = eb_get_palette_cache(blk_ptr->av1xd, 0, color_cache);
                 palette_mode_cost += av1_palette_color_cost_y(
-                    &candidate_ptr->palette_info.pmi, color_cache, n_cache, EB_8BIT);
+                    &candidate_ptr->palette_info.pmi, color_cache, n_cache,
+                    pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth);
                 palette_mode_cost += av1_cost_color_map(&candidate_ptr->palette_info,
                                                         candidate_ptr->md_rate_estimation_ptr,
                                                         blk_ptr,

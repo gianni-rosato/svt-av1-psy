@@ -270,7 +270,8 @@ static AOM_INLINE void extend_palette_color_map(uint8_t *const color_map, int or
     }
 }
 void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, BlockSize bsize,
-                  const int *data, int *centroids, int n, uint16_t *color_cache, int n_cache) {
+                  const int *data, int *centroids, int n, uint16_t *color_cache, int n_cache,
+                  int bit_depth) {
     optimize_palette_colors(color_cache, n_cache, n, 1, centroids);
     int k = av1_remove_duplicates(centroids, n);
     if (k < PALETTE_MIN_SIZE) {
@@ -280,12 +281,14 @@ void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, B
         return;
     }
 
-    //if (cpi->common.seq_params.use_highbitdepth)
-    //    for (int i = 0; i < k; ++i)
-    //        pmi->palette_colors[i] = clip_pixel_highbd(
-    //        (int)centroids[i], cpi->common.seq_params.bit_depth);
-    //else
-    for (int i = 0; i < k; ++i) palette_info->pmi.palette_colors[i] = clip_pixel(centroids[i]);
+    if (bit_depth > EB_8BIT) {
+       for (int i = 0; i < k; ++i)
+           palette_info->pmi.palette_colors[i] =
+                   clip_pixel_highbd((int)centroids[i], bit_depth);
+    } else {
+        for (int i = 0; i < k; ++i)
+            palette_info->pmi.palette_colors[i] = clip_pixel(centroids[i]);
+    }
     palette_info->pmi.palette_size[0] = k;
 
     uint8_t *const color_map = palette_info->color_idx_map;
@@ -304,14 +307,19 @@ int av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int b
  ****************************************/
 void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                          PaletteInfo *palette_cand, uint32_t *tot_palette_cands) {
-    int                  colors, n;
-    EbPictureBufferDesc *src_pic    = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    const int            src_stride = src_pic->stride_y;
-    uint16_t *           src16      = 0;
-    const uint8_t *const src = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
-                               (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+    int colors, n;
+    EbBool is16bit = context_ptr->hbd_mode_decision > 0;
+
+    EbPictureBufferDesc *src_pic = is16bit ?
+        pcs_ptr->input_frame16bit :
+        pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    const int src_stride = src_pic->stride_y;
+
+    const uint8_t *const src = src_pic->buffer_y +
+          (((context_ptr->blk_origin_x + src_pic->origin_x) +
+            (context_ptr->blk_origin_y + src_pic->origin_y) *
+            src_pic->stride_y) << is16bit);
     int     block_width, block_height, rows, cols;
-    uint8_t hbd_md = 0;
 
     Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd       = context_ptr->blk_ptr->av1xd;
@@ -367,13 +375,10 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     int count_buf[1 << 12]; // Maximum (1 << 12) color levels.
 
-    if (hbd_md)
-        colors = av1_count_colors_highbd(src16,
-                                         src_stride,
-                                         rows,
-                                         cols,
-                                         pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth,
-                                         count_buf);
+    unsigned bit_depth = pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth;
+    if (is16bit)
+        colors = av1_count_colors_highbd((uint16_t *)src, src_stride, rows, cols,
+            bit_depth, count_buf);
     else
         colors = eb_av1_count_colors(src, src_stride, rows, cols, count_buf);
 
@@ -382,20 +387,27 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         const int  max_itr = 50;
         int *const data    = context_ptr->palette_buffer.kmeans_data_buf;
         int        centroids[PALETTE_MAX_SIZE];
-        int        lb, ub, val;
-        lb = ub = src[0];
-        {
-            for (r = 0; r < rows; ++r) {
-                for (c = 0; c < cols; ++c) {
-                    val                = src[r * src_stride + c];
-                    data[r * cols + c] = val;
-                    if (val < lb)
-                        lb = val;
-                    else if (val > ub)
-                        ub = val;
-                }
-            }
-        }
+        int lb, ub;
+
+        #define GENERATE_KMEANS_DATA(src_data_type)                           \
+            do {                                                              \
+                lb = ub = ((src_data_type)src)[0];                            \
+                for (r = 0; r < rows; ++r) {                                  \
+                    for (c = 0; c < cols; ++c) {                              \
+                        int val = ((src_data_type)src)[r * src_stride + c];   \
+                        data[r * cols + c] = val;                             \
+                        if (val < lb)                                         \
+                            lb = val;                                         \
+                        else if (val > ub)                                    \
+                            ub = val;                                         \
+                    }                                                         \
+                }                                                             \
+            } while (0)
+
+        if (is16bit)
+            GENERATE_KMEANS_DATA(uint16_t *);
+        else
+            GENERATE_KMEANS_DATA(uint8_t *);
 
         uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
         const int n_cache = eb_get_palette_cache(xd, 0, color_cache);
@@ -404,7 +416,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         int top_colors[PALETTE_MAX_SIZE] = {0};
         for (i = 0; i < AOMMIN(colors, PALETTE_MAX_SIZE); ++i) {
             int max_count = 0;
-            for (int j = 0; j < (1 << EB_8BIT); ++j) {
+            for (int j = 0; j < (1 << bit_depth); ++j) {
                 if (count_buf[j] > max_count) {
                     max_count     = count_buf[j];
                     top_colors[i] = j;
@@ -424,14 +436,8 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         for (n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {
             for (i = 0; i < n; ++i) centroids[i] = top_colors[i];
 
-            palette_rd_y(&palette_cand[*tot_palette_cands],
-                         context_ptr,
-                         bsize,
-                         data,
-                         centroids,
-                         n,
-                         color_cache,
-                         n_cache);
+            palette_rd_y(&palette_cand[*tot_palette_cands], context_ptr, bsize, data,
+                         centroids, n, color_cache, n_cache, bit_depth);
 
             //consider this candidate if it has some non zero palette
             if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2) (*tot_palette_cands)++;
@@ -459,14 +465,8 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 av1_k_means(data, centroids, color_map, rows * cols, n, 1, max_itr);
             }
 
-            palette_rd_y(&palette_cand[*tot_palette_cands],
-                         context_ptr,
-                         bsize,
-                         data,
-                         centroids,
-                         n,
-                         color_cache,
-                         n_cache);
+            palette_rd_y(&palette_cand[*tot_palette_cands], context_ptr, bsize, data,
+                         centroids, n, color_cache, n_cache, bit_depth);
 
             //consider this candidate if it has some non zero palette
             if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2) (*tot_palette_cands)++;
