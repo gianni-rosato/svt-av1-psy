@@ -130,9 +130,12 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc*recon_picture_src
     return EB_ErrorNone;
 }
 
-void av1_superres_upscale(struct Av1Common *cm, FrameHeader *frm_hdr,
-    SeqHeader*seq_hdr, EbPictureBufferDesc *recon_picture_src)
+
+void av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader*seq_hdr,
+    EbPictureBufferDesc *recon_picture_src,  int enable_flag)
 {
+    if (!enable_flag) return;
+
     const int num_planes = seq_hdr->color_config.mono_chrome ? 1 : MAX_MB_PLANE;
     if (av1_superres_unscaled(&frm_hdr->frame_size)) return;
 

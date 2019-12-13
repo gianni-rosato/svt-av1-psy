@@ -62,8 +62,10 @@ void fill_4x4_param_uv(LFBlockParamUV* lf_block_uv, int32_t tu_x, int32_t tu_y,
 void dec_av1_loop_filter_frame(
     EbDecHandle *dec_handle_ptr,
     EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
-    int32_t plane_start, int32_t plane_end);
+    int32_t plane_start, int32_t plane_end, int32_t is_mt,
+    int enable_flag);
 
-
+void set_lbd_lf_filter_tap_functions(void);
+void set_hbd_lf_filter_tap_functions(void);
 
 #endif  // EbDecLF_h

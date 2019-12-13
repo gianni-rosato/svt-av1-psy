@@ -17,6 +17,10 @@ typedef struct DecModCtxt {
     /** Decoder Handle */
     void *dec_handle_ptr;
 
+    SeqHeader *seq_header;
+
+    FrameHeader *frame_header;
+
     int32_t *sb_iquant_ptr;
 
     int32_t *iquant_cur_ptr;
@@ -35,7 +39,7 @@ typedef struct DecModCtxt {
     int32_t *cur_coeff[MAX_MB_PLANE];
 
     /* Current tile info */
-    TileInfo    *cur_tile_info;
+    TileInfo    cur_tile_info;
 
     /* CFL context */
     CflCtx  cfl_ctx;
@@ -87,6 +91,21 @@ typedef struct LRCtxt {
 void decode_super_block(DecModCtxt *dec_mod_ctxt,
                         uint32_t mi_row, uint32_t mi_col,
                         SBInfo *sbInfo);
+
+EbErrorType start_decode_tile(EbDecHandle *dec_handle_ptr,
+    DecModCtxt *dec_mod_ctxt, TilesInfo *tiles_info, int32_t tile_num);
+
+#if !ENABLE_ROW_MT_DECODE
+EbErrorType decode_tile(
+    DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
+    DecMTParseReconTileInfo *parse_recon_tile_info_array,
+    int32_t tile_row, int32_t tile_col);
+#else
+EbErrorType decode_tile(
+    DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
+    DecMTParseReconTileInfo *parse_recon_tile_info_array,
+    int32_t tile_col);
+#endif
 
 /* TODO: Should be moved out once decode tile is moved out from parse_tile */
 void cfl_init(CflCtx *cfl, EbColorConfig *cc);

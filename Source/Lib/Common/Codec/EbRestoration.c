@@ -1551,7 +1551,7 @@ void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride,
     }
 }
 
-static void save_deblock_boundary_lines(
+void save_deblock_boundary_lines(
     uint8_t *src_buf, int32_t src_stride, int32_t src_width, int32_t src_height,
     const Av1Common *cm, int32_t plane, int32_t row,
     int32_t stripe, int32_t use_highbd, int32_t is_above,

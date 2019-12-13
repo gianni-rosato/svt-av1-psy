@@ -19,6 +19,7 @@ void EbFinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds);
 void EbComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration);
 void EbComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration);
 void EbInjector(uint64_t processedFrameCount, uint32_t injector_frame_rate);
+void EbSleepMs(uint64_t milliSeconds);
 
 #ifdef __cplusplus
 }

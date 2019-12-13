@@ -363,6 +363,8 @@ typedef struct LRParams {
      * the current plane */
     uint16_t            loop_restoration_size;
 
+    /*!< Loop Restoration size in log2 unit */
+    uint8_t             lr_size_log2;
 } LRParams;
 
 typedef struct SkipModeInfo  {

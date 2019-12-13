@@ -23,6 +23,7 @@ extern "C" {
 
 #include "EbDecStruct.h"
 #include "EbDecBlock.h"
+#include "EbDecProcess.h"
 
 /* Maximum number of frames in parallel */
 #define DEC_MAX_NUM_FRM_PRLL    1
@@ -30,7 +31,7 @@ extern "C" {
 #define MAX_PIC_BUFS (REF_FRAMES + 1 + DEC_MAX_NUM_FRM_PRLL)
 
 /*Optimisation of Coeff Buffer in Single Thread*/
-#define SINGLE_THRD_COEFF_BUF_OPT   1
+#define SINGLE_THRD_COEFF_BUF_OPT   0
 /** Picture Structure **/
 typedef struct EbDecPicBuf {
 
@@ -98,6 +99,8 @@ typedef struct CurFrameBuf {
 
     /*!< Global warp params of current frame */
     EbWarpedMotionParams global_motion_warp[REF_FRAMES];
+
+    DecMTFrameData  dec_mt_frame_data;
 
 } CurFrameBuf;
 
@@ -179,7 +182,7 @@ typedef struct EbDecHandle {
     // Thread Handles
 
     // Module Contexts
-    void   *pv_parse_ctxt;
+    void   *pv_master_parse_ctxt;
 
     void   *pv_dec_mod_ctxt;
 
@@ -237,7 +240,33 @@ typedef struct EbDecHandle {
 
     // Loop filter frame level flag
     uint8_t              is_lf_enabled;
+
+    // Thread Handles
+    EbHandle                    *decode_thread_handle_array;
+    EbBool                      start_thread_process;
+#if SEM_CHANGE
+    EbHandle        thread_semaphore;
+    struct DecThreadCtxt   *thread_ctxt_pa;
+#endif
 }EbDecHandle;
+
+/* Thread level context data */
+typedef struct DecThreadCtxt {
+
+    /* Unique ID for the thread */
+    uint32_t        thread_cnt;
+#if SEM_CHANGE
+    EbHandle    thread_semaphore;
+#endif
+    /* Pointer to the decode handle */
+    EbDecHandle     *dec_handle_ptr;
+
+    /* Pointer to the decode context */
+    void            *dec_mod_ctxt;
+
+    /* Loop filter information */
+    LoopFilterInfoN lf_info;
+} DecThreadCtxt;
 
 #ifdef __cplusplus
     }

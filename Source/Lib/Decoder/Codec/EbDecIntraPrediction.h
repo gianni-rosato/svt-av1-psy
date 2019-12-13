@@ -16,9 +16,9 @@ CflAllowedType store_cfl_required(const EbColorConfig *cc,
     PartitionInfo_t  *xd, int32_t is_chroma_ref);
 
 void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part_info,
-    int32_t plane,TxSize tx_size, TileInfo *td,uint8_t *blk_recon_buf,
-    int32_t recon_stride, EbBitDepthEnum bit_depth, int32_t blk_mi_col_off,
-    int32_t blk_mi_row_off);
+    int32_t plane, TxSize tx_size, TileInfo *td,
+    void *pv_blk_recon_buf, int32_t recon_stride,
+    EbBitDepthEnum bit_depth, int32_t blk_mi_col_off, int32_t blk_mi_row_off);
 
 #if COMP_INTERINTRA
 

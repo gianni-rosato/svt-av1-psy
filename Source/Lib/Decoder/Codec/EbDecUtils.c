@@ -85,7 +85,10 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
     }
 }
 
-void pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr) {
+void pad_pic(EbPictureBufferDesc *recon_picture_buf,
+    FrameHeader *frame_hdr, int enable_flag)
+{
+    if (!enable_flag) return;
 
     FrameSize *frame_size = &frame_hdr->frame_size;
     int32_t sx = 0, sy = 0;

@@ -18,12 +18,18 @@
 #define EbDecCdef_h
 
 #include "EbDecHandle.h"
+#include "EbDecUtils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void svt_cdef_frame(EbDecHandle *dec_handle);
+void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag);
+
+void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2,
+    int32_t *mi_high_l2, uint16_t **colbuf,
+    int32_t sb_fbr, uint16_t *src, int32_t *curr_recon_stride,
+    uint8_t **curr_blk_recon_buf);
 
 #ifdef __cplusplus
 }

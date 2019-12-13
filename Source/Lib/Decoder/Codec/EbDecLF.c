@@ -484,11 +484,65 @@ void dec_loop_filter_sb(
     }
 }
 
-/*Frame level function to trigger loop filter for each superblock*/
-void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
+/* Row level function to trigger loop filter for each superblock*/
+void dec_loop_filter_row(
+    EbDecHandle *dec_handle_ptr,
     EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
+    LoopFilterInfoN *lf_info, uint32_t y_lcu_index,
     int32_t plane_start, int32_t plane_end)
 {
+    MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
+    CurFrameBuf    *frame_buf = &master_frame_buf->cur_frame_bufs[0];
+    FrameHeader *frm_hdr = &dec_handle_ptr->frame_header;
+    SeqHeader *seq_header = &dec_handle_ptr->seq_header;
+    uint8_t     sb_size_Log2 = seq_header->sb_size_log2;
+    int32_t sb_size_w = block_size_wide[seq_header->sb_size];
+    int32_t picture_width_in_sb =
+        (seq_header->max_frame_width + sb_size_w - 1) / sb_size_w;
+    uint32_t sb_origin_y = y_lcu_index << sb_size_Log2;
+
+    volatile int32_t *sb_lf_completed_in_prev_row = NULL;
+    DecMTLFFrameInfo *lf_frame_info = &dec_handle_ptr->
+        master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.lf_frame_info;
+    if (y_lcu_index) {
+        sb_lf_completed_in_prev_row = (volatile int32_t *)&lf_frame_info->
+            sb_lf_completed_in_row[y_lcu_index-1];
+    }
+    int32_t *sb_lf_completed_in_row = &lf_frame_info->
+            sb_lf_completed_in_row[y_lcu_index];
+
+    for (int32_t x_lcu_index = 0; x_lcu_index < picture_width_in_sb; ++x_lcu_index) {
+        int32_t sb_origin_x = x_lcu_index << sb_size_Log2;
+        int32_t endOfRowFlag = (x_lcu_index == picture_width_in_sb - 1) ?
+            EB_TRUE : EB_FALSE;
+
+        SBInfo  *sb_info = frame_buf->sb_info + (
+            ((y_lcu_index * master_frame_buf->sb_cols) + x_lcu_index));
+
+        /* Top-Right Sync*/
+        if (y_lcu_index) {
+            while (*sb_lf_completed_in_prev_row <
+                MIN((x_lcu_index + 2), picture_width_in_sb - 1));
+        }
+        /*LF function for a SB*/
+        dec_loop_filter_sb(frm_hdr, seq_header, recon_picture_buf,
+            lf_ctxt, lf_info, sb_origin_y >> 2, sb_origin_x >> 2,
+            plane_start, plane_end, endOfRowFlag, sb_info->sb_delta_lf);
+        /* Update Top-Right Sync*/
+        *sb_lf_completed_in_row = x_lcu_index;
+    }
+}
+
+
+/*Frame level function to trigger loop filter for each superblock*/
+void dec_av1_loop_filter_frame(
+    EbDecHandle *dec_handle_ptr,
+    EbPictureBufferDesc *recon_picture_buf, LFCtxt *lf_ctxt,
+    int32_t plane_start, int32_t plane_end, int32_t is_mt,
+    int enable_flag)
+{
+    if (!enable_flag) return;
+
     FrameHeader *frm_hdr = &dec_handle_ptr->frame_header;
     SeqHeader *seq_header = &dec_handle_ptr->seq_header;
     uint8_t     sb_size_Log2 = seq_header->sb_size_log2;
@@ -519,27 +573,37 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
     set_lbd_lf_filter_tap_functions();
     set_hbd_lf_filter_tap_functions();
 
-    /*Loop over a frame : tregger dec_loop_filter_sb for each SB*/
-    for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
-        for (x_lcu_index = 0; x_lcu_index < picture_width_in_sb; ++x_lcu_index) {
-            sb_origin_x = x_lcu_index << sb_size_Log2;
-            sb_origin_y = y_lcu_index << sb_size_Log2;
-            endOfRowFlag = (x_lcu_index == picture_width_in_sb - 1) ?
-                EB_TRUE : EB_FALSE;
+    if (is_mt) {
+        for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
+            dec_loop_filter_row(dec_handle_ptr, recon_picture_buf,
+                lf_ctxt, lf_info, y_lcu_index, plane_start, plane_end);
+        }
+    }
+    else {
+        /*Loop over a frame : tregger dec_loop_filter_sb for each SB*/
+        for (y_lcu_index = 0; y_lcu_index < picture_height_in_sb; ++y_lcu_index) {
+            for (x_lcu_index = 0; x_lcu_index < picture_width_in_sb; ++x_lcu_index) {
+                sb_origin_x = x_lcu_index << sb_size_Log2;
+                sb_origin_y = y_lcu_index << sb_size_Log2;
+                endOfRowFlag = (x_lcu_index == picture_width_in_sb - 1) ?
+                    EB_TRUE : EB_FALSE;
 
-            MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
-            CurFrameBuf    *frame_buf = &master_frame_buf->cur_frame_bufs[0];
+                MasterFrameBuf *master_frame_buf = &dec_handle_ptr->
+                    master_frame_buf;
+                CurFrameBuf    *frame_buf =
+                    &master_frame_buf->cur_frame_bufs[0];
 
-            SBInfo  *sb_info = frame_buf->sb_info + (
-                ((y_lcu_index * master_frame_buf->sb_cols) + x_lcu_index));
+                SBInfo  *sb_info = frame_buf->sb_info + (
+                    ((y_lcu_index * master_frame_buf->sb_cols) + x_lcu_index));
 
-            /*sb_info->sb_delta_lf = frame_buf->delta_lf + (FRAME_LF_COUNT *
-                ((y_lcu_index * master_frame_buf->sb_cols) + x_lcu_index));*/
+                /*sb_info->sb_delta_lf = frame_buf->delta_lf + (FRAME_LF_COUNT *
+                    ((y_lcu_index * master_frame_buf->sb_cols) + x_lcu_index));*/
 
-            /*LF function for a SB*/
-            dec_loop_filter_sb(frm_hdr, seq_header, recon_picture_buf,
-                lf_ctxt, lf_info, sb_origin_y >> 2, sb_origin_x >> 2,
+                /*LF function for a SB*/
+                dec_loop_filter_sb(frm_hdr, seq_header, recon_picture_buf,
+                    lf_ctxt, lf_info, sb_origin_y >> 2, sb_origin_x >> 2,
                 plane_start, plane_end, endOfRowFlag, sb_info->sb_delta_lf);
+            }
         }
     }
 }

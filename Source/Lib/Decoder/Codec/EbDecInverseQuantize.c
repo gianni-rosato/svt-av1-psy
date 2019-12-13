@@ -39,12 +39,10 @@ static INLINE int16_t get_ac_quant(int32_t qindex, int32_t delta, AomBitDepth bi
 }
 
 // Called in read_frame_header_obu() -> av1_decode_frame_headers_and_setup() -> read_uncompressed_header()
-void setup_segmentation_dequant(EbDecHandle *dec_handle_ptr, EbColorConfig *color_config)
+void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt)
 {
-    (void)color_config;
-    SeqHeader *seq_header = &dec_handle_ptr->seq_header;
-    FrameHeader *frame_info = &dec_handle_ptr->frame_header;
-    DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
+    SeqHeader *seq_header = dec_mod_ctxt->seq_header;
+    FrameHeader *frame_info = dec_mod_ctxt->frame_header;
     int bit_depth = seq_header->color_config.bit_depth;
     /*int max_segments = frame_info->segmentation_params.segmentation_enabled ?
         MAX_SEGMENTS : 1;*/
@@ -66,10 +64,8 @@ void setup_segmentation_dequant(EbDecHandle *dec_handle_ptr, EbColorConfig *colo
     }
 }
 
-void av1_inverse_qm_init(EbDecHandle *dec_handle_ptr)
-{
-    DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
-    const int num_planes = av1_num_planes(&dec_handle_ptr->seq_header.color_config);
+void av1_inverse_qm_init(DecModCtxt *dec_mod_ctxt, SeqHeader *seq_header) {
+    const int num_planes = av1_num_planes(&seq_header->color_config);
     int q, c;
     uint8_t t;
     int current;
@@ -107,13 +103,11 @@ void av1_init_sb(FrameHeader *frame)
 
 // Called in parse_decode_block()
 // Update de-quantization parameter based on delta qp param
-void update_dequant(EbDecHandle *dec_handle, SBInfo *sb_info)
-{
+void update_dequant(DecModCtxt *dec_mod_ctxt, SBInfo *sb_info) {
     int32_t current_qindex;
     int dc_delta_q, ac_delta_q;
-    SeqHeader *seq_header = &dec_handle->seq_header;
-    FrameHeader *frame = &dec_handle->frame_header;
-    DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle->pv_dec_mod_ctxt;
+    SeqHeader *seq_header = dec_mod_ctxt->seq_header;
+    FrameHeader *frame = dec_mod_ctxt->frame_header;
 
     int bit_depth = seq_header->color_config.bit_depth;
     dec_mod_ctxt->dequants_delta_q = &dec_mod_ctxt->dequants;
@@ -143,13 +137,12 @@ static INLINE int get_dqv(const int16_t dequant, int coeff_idx, const QmVal *iqm
     return dqv;
 }
 
-int32_t inverse_quantize(EbDecHandle * dec_handle, PartitionInfo_t *part, BlockModeInfo *mode,
+int32_t inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo_t *part, BlockModeInfo *mode,
     int32_t *level, int32_t *qcoeffs, TxType tx_type, TxSize tx_size, int plane)
 {
     (void)part;
-    SeqHeader *seq = &dec_handle->seq_header;
-    FrameHeader *frame = &dec_handle->frame_header;
-    DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle->pv_dec_mod_ctxt;
+    SeqHeader *seq = dec_mod_ctxt->seq_header;
+    FrameHeader *frame = dec_mod_ctxt->frame_header;
     const ScanOrder *const scan_order = &av1_scan_orders[tx_size][tx_type]; //get_scan(tx_size, tx_type);
     const int16_t *scan = scan_order->scan;
     const int32_t max_value = (1 << (7 + seq->color_config.bit_depth)) - 1;

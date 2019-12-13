@@ -7,8 +7,11 @@
 #define EbDecParseHelper_h
 
 #include "EbObuParse.h"
+#include "EbDecParseFrame.h"
 
 #define ACCT_STR __func__
+
+#define ZERO_ARRAY(dest, n) memset(dest, 0, n * sizeof(*(dest)))
 
 typedef struct MvCount{
     uint8_t newmv_count;
@@ -60,8 +63,7 @@ static INLINE int max_block_high(PartitionInfo_t *part_info, int plane_bsize, in
     return max_blocks_high >> tx_size_high_log2[0];
 }
 
-TxSize read_selected_tx_size(PartitionInfo_t *xd, SvtReader *r,
-    EbDecHandle *dec_handle);
+TxSize read_selected_tx_size(PartitionInfo_t *xd, ParseCtxt *parse_ctxt);
 PredictionMode read_intra_mode(SvtReader *r, AomCdfProb *cdf);
 UvPredictionMode read_intra_mode_uv(FRAME_CONTEXT *ec_ctx, SvtReader *r,
     CflAllowedType cfl_allowed, PredictionMode y_mode);
@@ -78,6 +80,6 @@ int get_intra_inter_context(PartitionInfo_t *xd);
 int get_comp_reference_type_context(const PartitionInfo_t *xd);
 int seg_feature_active(SegmentationParams *seg, int segment_id,
     SEG_LVL_FEATURES feature_id);
-int find_warp_samples(EbDecHandle *dec_handle, PartitionInfo_t *pi,
+int find_warp_samples(EbDecHandle *dec_handle, TileInfo *tile, PartitionInfo_t *pi,
     int *pts, int *pts_inref);
 #endif  // EbDecParseHelper_h

@@ -178,10 +178,10 @@ static INLINE void build_obmc_inter_pred_left(EbDecHandle *dec_handle,
 
 }
 
-static INLINE void dec_build_prediction_by_above_pred(EbDecHandle *dec_handle,
-    PartitionInfo_t *backup_pi, BlockSize bsize, int bw4, int mi_row, int mi_col,
-    int rel_mi_col, uint8_t above_mi_width, BlockModeInfo *above_mbmi,
-    uint8_t *tmp_buf[MAX_MB_PLANE], int tmp_stride[MAX_MB_PLANE],
+static INLINE void dec_build_prediction_by_above_pred(DecModCtxt *dec_mod_ctx,
+    EbDecHandle *dec_handle, PartitionInfo_t *backup_pi, BlockSize bsize,
+    int bw4, int mi_row, int mi_col, int rel_mi_col, uint8_t above_mi_width,
+    BlockModeInfo *above_mbmi, uint8_t *tmp_buf[MAX_MB_PLANE], int tmp_stride[MAX_MB_PLANE],
     const int num_planes)
 {
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->
@@ -232,7 +232,7 @@ static INLINE void dec_build_prediction_by_above_pred(EbDecHandle *dec_handle,
         }
 
         if (av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
-        svtav1_predict_inter_block_plane(dec_handle, backup_pi, plane,
+        svtav1_predict_inter_block_plane(dec_mod_ctx, dec_handle, backup_pi, plane,
             1/*obmc*/, mi_x, mi_y, (void *)tmp_recon_buf, tmp_recon_stride,
             0/*some_use_intra*/, recon_picture_buf->bit_depth);
 
@@ -240,7 +240,7 @@ static INLINE void dec_build_prediction_by_above_pred(EbDecHandle *dec_handle,
     }
 }
 
-static void dec_build_prediction_by_above_preds(EbDecHandle *dec_handle,
+static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_handle,
     PartitionInfo_t *pi, int mi_row, int mi_col,
     uint8_t *above_dst_buf[MAX_MB_PLANE],
     int above_dst_stride[MAX_MB_PLANE])
@@ -308,7 +308,7 @@ static void dec_build_prediction_by_above_preds(EbDecHandle *dec_handle,
         if (dec_is_neighbor_overlappable(above_mi)) {
             ++nb_count;
             /*OBMC above prediction*/
-            dec_build_prediction_by_above_pred(dec_handle, &backup_pi, bsize,
+            dec_build_prediction_by_above_pred(dec_mod_ctx, dec_handle, &backup_pi, bsize,
                 bw4, mi_row, mi_col, above_mi_col - mi_col,
                 AOMMIN((uint8_t)bw4, mi_step), above_mi, above_dst_buf,
                 above_dst_stride, num_planes);
@@ -323,10 +323,10 @@ static void dec_build_prediction_by_above_preds(EbDecHandle *dec_handle,
 }
 
 
-static INLINE void dec_build_prediction_by_left_pred(EbDecHandle *dec_handle,
-    PartitionInfo_t *backup_pi, BlockSize bsize, int bh4, int mi_row, int mi_col,
-    int rel_mi_row, uint8_t left_mi_height, BlockModeInfo *left_mbmi,
-    uint8_t *tmp_buf[MAX_MB_PLANE], int tmp_stride[MAX_MB_PLANE],
+static INLINE void dec_build_prediction_by_left_pred(DecModCtxt *dec_mod_ctx,
+    EbDecHandle *dec_handle, PartitionInfo_t *backup_pi, BlockSize bsize,
+    int bh4, int mi_row, int mi_col, int rel_mi_row, uint8_t left_mi_height,
+    BlockModeInfo *left_mbmi, uint8_t *tmp_buf[MAX_MB_PLANE], int tmp_stride[MAX_MB_PLANE],
     const int num_planes)
 {
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->
@@ -380,15 +380,15 @@ static INLINE void dec_build_prediction_by_left_pred(EbDecHandle *dec_handle,
         if (av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
        // dec_build_inter_predictors(ctxt->cm, pi, j, &backup_mbmi, 1, bw, bh, mi_x,
        //                            mi_y);
-        svtav1_predict_inter_block_plane(dec_handle, backup_pi, plane,
+        svtav1_predict_inter_block_plane(dec_mod_ctx, dec_handle, backup_pi, plane,
             1/*obmc*/, mi_x, mi_y, (void *)tmp_recon_buf, tmp_recon_stride,
             0/*some_use_intra*/, recon_picture_buf->bit_depth);
 
     }
 }
 
-static void dec_build_prediction_by_left_preds(EbDecHandle *dec_handle,
-    PartitionInfo_t *pi, int mi_row, int mi_col,
+static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx,
+    EbDecHandle *dec_handle, PartitionInfo_t *pi, int mi_row, int mi_col,
     uint8_t *left_dst_buf[MAX_MB_PLANE],
     int left_dst_stride[MAX_MB_PLANE])
 {
@@ -448,7 +448,7 @@ static void dec_build_prediction_by_left_preds(EbDecHandle *dec_handle,
         if (dec_is_neighbor_overlappable(left_mi)) {
             ++nb_count;
             /*OBMC left prediction*/
-            dec_build_prediction_by_left_pred(dec_handle, &backup_pi, bsize,
+            dec_build_prediction_by_left_pred(dec_mod_ctx, dec_handle, &backup_pi, bsize,
                 bh4, mi_row, mi_col, left_mi_row - mi_row,
                 AOMMIN((uint8_t)bh4, mi_step), left_mi, left_dst_buf,
                 left_dst_stride, num_planes);
@@ -462,10 +462,10 @@ static void dec_build_prediction_by_left_preds(EbDecHandle *dec_handle,
 }
 
 
-void dec_build_obmc_inter_predictors_sb( EbDecHandle *dec_handle,
-    PartitionInfo_t *pi, int mi_row, int mi_col)
+void dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctxt,
+    EbDecHandle *dec_handle, PartitionInfo_t *pi, int mi_row, int mi_col)
 {
-    DecModCtxt *dec_mod_ctxt = (DecModCtxt *)dec_handle->pv_dec_mod_ctxt;
+    DecModCtxt *dec_mod_ctxt = (DecModCtxt *)pv_dec_mod_ctxt;
     uint8_t *dst_buf[MAX_MB_PLANE];
     dec_mod_ctxt->obmc_ctx.dst_stride[AOM_PLANE_Y] = MAX_SB_SIZE;
     dec_mod_ctxt->obmc_ctx.dst_stride[AOM_PLANE_U] = MAX_SB_SIZE;
@@ -474,11 +474,11 @@ void dec_build_obmc_inter_predictors_sb( EbDecHandle *dec_handle,
     dst_buf[1] = dec_mod_ctxt->obmc_ctx.tmp_obmc_bufs[AOM_PLANE_U];
     dst_buf[2] = dec_mod_ctxt->obmc_ctx.tmp_obmc_bufs[AOM_PLANE_V];
     /*OBMC above prediction followed by Blending happen in below fun call*/
-    dec_build_prediction_by_above_preds(dec_handle, pi, mi_row, mi_col,
+    dec_build_prediction_by_above_preds(dec_mod_ctxt, dec_handle, pi, mi_row, mi_col,
         dst_buf, dec_mod_ctxt->obmc_ctx.dst_stride);
 
     /*OBMC left prediction followed by Blending happen in below fun call*/
-    dec_build_prediction_by_left_preds(dec_handle, pi, mi_row, mi_col,
+    dec_build_prediction_by_left_preds(dec_mod_ctxt, dec_handle, pi, mi_row, mi_col,
         dst_buf, dec_mod_ctxt->obmc_ctx.dst_stride);
 }
 

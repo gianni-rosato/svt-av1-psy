@@ -29,6 +29,7 @@ Decoder
 - Reference Frame Scaling support
 - 12-bit support
 - Annex B support
+- Multi-Thread support
 
 Build and Testing
 - Bug fixes

@@ -34,7 +34,8 @@ void derive_blk_pointers(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                          void **pp_blk_recon_buf, int32_t *recon_stride,
                          int32_t sub_x, int32_t sub_y);
 
-void pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr);
+void pad_pic(EbPictureBufferDesc *recon_picture_buf,
+    FrameHeader *frame_hdr, int enable_flag);
 
 int inverse_recenter(int r, int v);
 

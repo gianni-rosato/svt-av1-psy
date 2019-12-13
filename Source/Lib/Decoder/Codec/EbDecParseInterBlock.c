@@ -265,19 +265,17 @@ static int32_t get_pred_context_last3_or_gld(PartitionInfo_t *pi) {
     return pred_context;
 }
 
-static void read_ref_frames(EbDecHandle *dec_handle, PartitionInfo_t *const pi,
-    SvtReader *r)
-{
+static void read_ref_frames(ParseCtxt *parse_ctxt, PartitionInfo_t *const pi) {
+    SvtReader *r = &parse_ctxt->r;
     int segment_id = pi->mi->segment_id;
     MvReferenceFrame *ref_frame = pi->mi->ref_frame;
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     AomCdfProb *cdf;
-    SegmentationParams *seg_params = &dec_handle->frame_header.segmentation_params;
+    SegmentationParams *seg_params = &parse_ctxt->frame_header->segmentation_params;
     if (pi->mi->skip_mode) {
         ref_frame[0] = (MvReferenceFrame)(
-            dec_handle->frame_header.skip_mode_params.ref_frame_idx_0);
+            parse_ctxt->frame_header->skip_mode_params.ref_frame_idx_0);
         ref_frame[1] = (MvReferenceFrame)(
-            dec_handle->frame_header.skip_mode_params.ref_frame_idx_1);
+            parse_ctxt->frame_header->skip_mode_params.ref_frame_idx_1);
     }
     else if (seg_feature_active(seg_params, segment_id, SEG_LVL_REF_FRAME)) {
         ref_frame[0] = (MvReferenceFrame)get_segdata(seg_params, segment_id,
@@ -294,7 +292,7 @@ static void read_ref_frames(EbDecHandle *dec_handle, PartitionInfo_t *const pi,
         ReferenceMode mode = SINGLE_REFERENCE;
         int bw4 = mi_size_wide[pi->mi->sb_type];
         int bh4 = mi_size_high[pi->mi->sb_type];
-        if (dec_handle->frame_header.reference_mode == REFERENCE_MODE_SELECT
+        if (parse_ctxt->frame_header->reference_mode == REFERENCE_MODE_SELECT
             && (AOMMIN(bw4, bh4) >= 2))
         {
             const int ctx = get_reference_mode_context(pi);
@@ -506,8 +504,8 @@ static void add_ref_mv_candidate(EbDecHandle *dec_handle,
     }
 }
 
-static void scan_row_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    int delta_row, const MvReferenceFrame rf[2],
+static void scan_row_mbmi(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
+    PartitionInfo_t *pi, int delta_row, const MvReferenceFrame rf[2],
     CandidateMv *ref_mv_stack, uint8_t *num_mv_found, uint8_t *found_match,
     uint8_t *newmv_count, IntMv *gm_mv_candidates, int max_row_offset,
     int *processed_rows)
@@ -516,7 +514,6 @@ static void scan_row_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int mi_col = pi->mi_col;
 
     int bw4 = mi_size_wide[pi->mi->sb_type];
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     FrameHeader *frm_header = &dec_handle->frame_header;
     int end4 = AOMMIN(AOMMIN(bw4, (int)frm_header->mi_cols - mi_col), 16);
     int delta_col = 0;
@@ -558,8 +555,8 @@ static void scan_row_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     }
 }
 
-static void scan_col_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    int delta_col, const MvReferenceFrame rf[2],
+static void scan_col_mbmi(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
+    PartitionInfo_t *pi, int delta_col, const MvReferenceFrame rf[2],
     CandidateMv *ref_mv_stack, uint8_t *num_mv_found, uint8_t *found_match,
     uint8_t *newmv_count, IntMv *gm_mv_candidates, int max_col_offset,
     int *processed_cols)
@@ -567,7 +564,6 @@ static void scan_col_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int mi_row = pi->mi_row;
     int mi_col = pi->mi_col;
     int bh4 = mi_size_high[pi->mi->sb_type];
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     FrameHeader *frm_header = &dec_handle->frame_header;
     int end4 = AOMMIN(AOMMIN(bh4, (int)frm_header->mi_rows - mi_row), 16);
     int delta_row = 0;
@@ -609,13 +605,11 @@ static void scan_col_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     }
 }
 
-static void scan_blk_mbmi(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    int delta_row, int delta_col, const MvReferenceFrame rf[2],
+static void scan_blk_mbmi(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
+    PartitionInfo_t *pi, int delta_row, int delta_col, const MvReferenceFrame rf[2],
     CandidateMv *ref_mv_stack, uint8_t *found_match, uint8_t *newmv_count,
     IntMv *gm_mv_candidates, uint8_t num_mv_found[MODE_CTX_REF_FRAMES])
 {
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
-
     int mv_row = pi->mi_row + delta_row;
     int mv_col = pi->mi_col + delta_col;
     int weight = 4;
@@ -667,13 +661,12 @@ static int has_top_right(EbDecHandle *dec_handle, PartitionInfo_t *pi, int bs)
     return has_tr;
 }
 
-static int add_tpl_ref_mv(EbDecHandle *dec_handle, int mi_row, int mi_col,
-    MvReferenceFrame ref_frame, int blk_row, int blk_col,
+static int add_tpl_ref_mv(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
+    int mi_row, int mi_col, MvReferenceFrame ref_frame, int blk_row, int blk_col,
     IntMv *gm_mv_candidates, uint8_t *num_mv_found,
     CandidateMv ref_mv_stacks[][MAX_REF_MV_STACK_SIZE], int16_t *mode_context)
 {
     uint8_t idx;
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     FrameHeader *frm_header = &dec_handle->frame_header;
     int mv_row = (mi_row + blk_row) | 1;
     int mv_col = (mi_col + blk_col) | 1;
@@ -846,8 +839,8 @@ static INLINE void clamp_mv_ref(MV *mv, int bw, int bh, PartitionInfo_t *pi) {
         pi->mb_to_bottom_edge + bh * 8 + MV_BORDER);
 }
 
-static void dec_setup_ref_mv_list(
-    EbDecHandle *dec_handle, PartitionInfo_t *pi, MvReferenceFrame ref_frame,
+static void dec_setup_ref_mv_list(EbDecHandle *dec_handle,
+    ParseCtxt *parse_ctx, PartitionInfo_t *pi, MvReferenceFrame ref_frame,
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
     IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv *gm_mv_candidates,
     int16_t *mode_context, MvCount *mv_cnt)
@@ -857,8 +850,7 @@ static void dec_setup_ref_mv_list(
     const int bs = AOMMAX(n4_w, n4_h);
     MvReferenceFrame rf[2];
 
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
-    FrameHeader *frame_info = &dec_handle->frame_header;
+    FrameHeader *frame_info = parse_ctx->frame_header;
     const TileInfo *const tile = &parse_ctx->cur_tile_info;
     int max_row_offset = 0, max_col_offset = 0;
     int32_t mi_row = pi->mi_row;
@@ -895,20 +887,20 @@ static void dec_setup_ref_mv_list(
 
     // Scan the first above row mode info. row_offset = -1;
     if (abs(max_row_offset) >= 1) {
-        scan_row_mbmi(dec_handle, pi, -1, rf, ref_mv_stack[ref_frame],
+        scan_row_mbmi(dec_handle, parse_ctx, pi, -1, rf, ref_mv_stack[ref_frame],
             &mv_cnt->num_mv_found[ref_frame], &mv_cnt->found_above_match,
             &mv_cnt->newmv_count, gm_mv_candidates, max_row_offset, &processed_rows);
     }
 
     // Scan the first left column mode info. col_offset = -1;
     if (abs(max_col_offset) >= 1) {
-        scan_col_mbmi(dec_handle, pi, -1, rf, ref_mv_stack[ref_frame],
+        scan_col_mbmi(dec_handle, parse_ctx, pi, -1, rf, ref_mv_stack[ref_frame],
             &mv_cnt->num_mv_found[ref_frame], &mv_cnt->found_left_match,
             &mv_cnt->newmv_count, gm_mv_candidates, max_col_offset, &processed_cols);
     }
 
     if (has_top_right(dec_handle, pi, bs)) {
-        scan_blk_mbmi(dec_handle, pi, -1, n4_w, rf,
+        scan_blk_mbmi(dec_handle, parse_ctx, pi, -1, n4_w, rf,
             ref_mv_stack[ref_frame], &mv_cnt->found_above_match, &mv_cnt->newmv_count,
             gm_mv_candidates, &mv_cnt->num_mv_found[ref_frame]);
     }
@@ -948,7 +940,7 @@ static void dec_setup_ref_mv_list(
         for (int blk_row = 0; blk_row < blk_row_end; blk_row += step_h) {
             for (int blk_col = 0; blk_col < blk_col_end; blk_col += step_w) {
 
-                int ret = add_tpl_ref_mv(dec_handle, mi_row, mi_col,
+                int ret = add_tpl_ref_mv(dec_handle, parse_ctx, mi_row, mi_col,
                     ref_frame, blk_row, blk_col, gm_mv_candidates,
                     &mv_cnt->num_mv_found[ref_frame], ref_mv_stack, mode_context);
                 if (blk_row == 0 && blk_col == 0) is_available = ret;
@@ -963,8 +955,8 @@ static void dec_setup_ref_mv_list(
                 const int blk_col = tpl_sample_pos[i][1];
 
                 if (check_sb_border(mi_row, mi_col, blk_row, blk_col)) {
-                    add_tpl_ref_mv(dec_handle, mi_row, mi_col, ref_frame,
-                        blk_row, blk_col, gm_mv_candidates,
+                    add_tpl_ref_mv(dec_handle, parse_ctx, mi_row, mi_col,
+                        ref_frame, blk_row, blk_col, gm_mv_candidates,
                         &mv_cnt->num_mv_found[ref_frame],
                         ref_mv_stack, mode_context);
                 }
@@ -973,7 +965,7 @@ static void dec_setup_ref_mv_list(
     }
 
     // Scan the second outer area.
-    scan_blk_mbmi(dec_handle, pi, -1, -1, rf,
+    scan_blk_mbmi(dec_handle, parse_ctx, pi, -1, -1, rf,
         ref_mv_stack[ref_frame], &mv_cnt->found_above_match, &mv_cnt->newmv_count,
         gm_mv_candidates, &mv_cnt->num_mv_found[ref_frame]);
 
@@ -981,14 +973,14 @@ static void dec_setup_ref_mv_list(
         const int row_offset = -(idx << 1) + 1 + row_adj;
         const int col_offset = -(idx << 1) + 1 + col_adj;
         if (abs(row_offset) <= abs(max_row_offset) && abs(row_offset) > processed_rows) {
-            scan_row_mbmi(dec_handle, pi, row_offset, rf,
+            scan_row_mbmi(dec_handle, parse_ctx, pi, row_offset, rf,
                 ref_mv_stack[ref_frame], &mv_cnt->num_mv_found[ref_frame],
                 &mv_cnt->found_above_match, &mv_cnt->newmv_count,
                 gm_mv_candidates, max_row_offset, &processed_rows);
         }
 
         if (abs(col_offset) <= abs(max_col_offset) && abs(col_offset) > processed_cols) {
-            scan_col_mbmi(dec_handle, pi, col_offset, rf,
+            scan_col_mbmi(dec_handle, parse_ctx, pi, col_offset, rf,
                 ref_mv_stack[ref_frame], &mv_cnt->num_mv_found[ref_frame],
                 &mv_cnt->found_left_match, &mv_cnt->newmv_count,
                 gm_mv_candidates, max_col_offset, &processed_cols);
@@ -1207,7 +1199,7 @@ static INLINE int16_t svt_mode_context_analyzer(
     return comp_ctx;
 }
 
-void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
+void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi, ParseCtxt *parse_ctx,
     MvReferenceFrame ref_frame, CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
     IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv global_mvs[2],
     int16_t *mode_context, MvCount *mv_cnt)
@@ -1230,14 +1222,12 @@ void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo_t *pi,
                 dec_handle->frame_header.allow_high_precision_mv, bsize,
                 pi->mi_col, pi->mi_row, dec_handle->frame_header.force_integer_mv).as_int : 0;
     }
-    dec_setup_ref_mv_list(dec_handle, pi, ref_frame, ref_mv_stack, mv_ref_list,
+    dec_setup_ref_mv_list(dec_handle, parse_ctx, pi, ref_frame, ref_mv_stack, mv_ref_list,
         global_mvs, mode_context, mv_cnt);
 }
 
-static PredictionMode read_inter_compound_mode(EbDecHandle *dec_handle,
-    SvtReader *r, int16_t ctx)
-{
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+static PredictionMode read_inter_compound_mode(ParseCtxt *parse_ctxt, int16_t ctx) {
+    SvtReader *r = &parse_ctxt->r;
     const int mode =
         svt_read_symbol(r, parse_ctxt->cur_tile_ctx.inter_compound_mode_cdf[ctx],
             INTER_COMPOUND_MODES, ACCT_STR);
@@ -1267,10 +1257,10 @@ static INLINE uint8_t get_drl_ctx(const CandidateMv *ref_mv_stack, int ref_idx) 
     return 0;
 }
 
-static void read_drl_idx(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    BlockModeInfo *mbmi, SvtReader *r, int num_mv_found)
+static void read_drl_idx(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
+    BlockModeInfo *mbmi, int num_mv_found)
 {
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    SvtReader *r = &parse_ctxt->r;
     uint8_t ref_frame_type = av1_ref_frame_type(mbmi->ref_frame);
     mbmi->ref_mv_idx = 0;
     if (mbmi->mode == NEWMV || mbmi->mode == NEW_NEWMV) {
@@ -1360,15 +1350,15 @@ static INLINE void read_mv(SvtReader *r, MV *mv, MV *ref,
     mv->col = ref->col + diff.col;
 }
 
-static INLINE int assign_mv(EbDecHandle *dec_handle, PartitionInfo_t *pi,
+static INLINE int assign_mv(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
     IntMv mv[2], IntMv *global_mvs, IntMv ref_mv[2],
     IntMv nearest_mv[2], IntMv near_mv[2],
-    int is_compound, int allow_hp, SvtReader *r)
+    int is_compound, int allow_hp)
 {
+    SvtReader *r = &parse_ctxt->r;
     BlockModeInfo *mbmi = pi->mi;
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
 
-    if (dec_handle->frame_header.force_integer_mv)
+    if (parse_ctxt->frame_header->force_integer_mv)
         allow_hp = MV_SUBPEL_NONE;
 
     switch (mbmi->mode) {
@@ -1452,13 +1442,14 @@ static INLINE int assign_mv(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     return ret;
 }
 
-static INLINE int is_dv_valid(MV dv, EbDecHandle *dec_handle,
-    PartitionInfo_t *pi, int mib_size_log2)
+static INLINE int is_dv_valid(MV dv, ParseCtxt *parse_ctx,
+    PartitionInfo_t *pi)
 {
     int mi_row = pi->mi_row;
     int mi_col = pi->mi_col;
-    int subsampling_x = dec_handle->seq_header.color_config.subsampling_x;
-    int subsampling_y = dec_handle->seq_header.color_config.subsampling_y;
+    int mib_size_log2 = parse_ctx->seq_header->sb_size_log2;
+    int subsampling_x = parse_ctx->seq_header->color_config.subsampling_x;
+    int subsampling_y = parse_ctx->seq_header->color_config.subsampling_y;
     BlockSize bsize = pi->mi->sb_type;
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
@@ -1466,7 +1457,6 @@ static INLINE int is_dv_valid(MV dv, EbDecHandle *dec_handle,
     if (((dv.row & (SCALE_PX_TO_MV - 1)) || (dv.col & (SCALE_PX_TO_MV - 1))))
         return 0;
 
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     TileInfo *tile = &parse_ctx->cur_tile_info;
     const int src_top_edge = mi_row * MI_SIZE * SCALE_PX_TO_MV + dv.row;
     const int tile_top_edge = tile->mi_row_start * MI_SIZE * SCALE_PX_TO_MV;
@@ -1483,7 +1473,7 @@ static INLINE int is_dv_valid(MV dv, EbDecHandle *dec_handle,
 
     // Special case for sub 8x8 chroma cases, to prevent referring to chroma
     // pixels outside current tile.
-    int num_planes = dec_handle->seq_header.color_config.mono_chrome ? 1 : MAX_MB_PLANE;
+    int num_planes = parse_ctx->seq_header->color_config.mono_chrome ? 1 : MAX_MB_PLANE;
     int32_t is_chroma_ref = pi->is_chroma_ref;
     for (int plane = 1; plane < num_planes; ++plane) {
         if (is_chroma_ref) {
@@ -1516,10 +1506,10 @@ static INLINE int is_dv_valid(MV dv, EbDecHandle *dec_handle,
     return 1;
 }
 
-int dec_assign_dv(EbDecHandle *dec_handle, PartitionInfo_t *pi, IntMv *mv,
-    IntMv *ref_mv, SvtReader *r)
+int dec_assign_dv(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
+    IntMv *mv, IntMv *ref_mv)
 {
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    SvtReader *r = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     read_mv(r, &mv->as_mv, &ref_mv->as_mv, &frm_ctx->ndvc, MV_SUBPEL_NONE);
     // DV should not have sub-pel.
@@ -1528,39 +1518,35 @@ int dec_assign_dv(EbDecHandle *dec_handle, PartitionInfo_t *pi, IntMv *mv,
     mv->as_mv.col = (mv->as_mv.col >> 3) * 8;
     mv->as_mv.row = (mv->as_mv.row >> 3) * 8;
     int valid = is_mv_valid(&mv->as_mv) &&
-        is_dv_valid(mv->as_mv, dec_handle, pi,
-            dec_handle->seq_header.sb_size_log2);
+        is_dv_valid(mv->as_mv, parse_ctxt, pi);
     return valid;
 }
 
-void assign_intrabc_mv(EbDecHandle *dec_handle,
+void assign_intrabc_mv(ParseCtxt *parse_ctxt,
     IntMv ref_mvs[INTRA_FRAME + 1][MAX_MV_REF_CANDIDATES],
-    PartitionInfo_t *pi, SvtReader *r)
+    PartitionInfo_t *pi)
 {
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     BlockModeInfo *mbmi = pi->mi;
     IntMv nearestmv, nearmv;
     svt_find_best_ref_mvs(0, ref_mvs[INTRA_FRAME], &nearestmv, &nearmv, 0);
     IntMv dv_ref = nearestmv.as_int == 0 ? nearmv : nearestmv;
     if (dv_ref.as_int == 0) {
         av1_find_ref_dv(&dv_ref, &parse_ctxt->cur_tile_info,
-            dec_handle->seq_header.sb_mi_size, pi->mi_row, pi->mi_col);
+            parse_ctxt->seq_header->sb_mi_size, pi->mi_row, pi->mi_col);
     }
     // Ref DV should not have sub-pel.
     int valid_dv = (dv_ref.as_mv.col & 7) == 0 && (dv_ref.as_mv.row & 7) == 0;
     dv_ref.as_mv.col = (dv_ref.as_mv.col >> 3) * 8;
     dv_ref.as_mv.row = (dv_ref.as_mv.row >> 3) * 8;
-    valid_dv = valid_dv && dec_assign_dv(dec_handle, pi, &mbmi->mv[0], &dv_ref, r);
+    valid_dv = valid_dv && dec_assign_dv(parse_ctxt, pi, &mbmi->mv[0], &dv_ref);
 }
 
 
-void read_interintra_mode(EbDecHandle *dec_handle,
-    BlockModeInfo *mbmi, SvtReader *r)
-{
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+void read_interintra_mode(ParseCtxt *parse_ctxt, BlockModeInfo *mbmi) {
+    SvtReader *r = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     BlockSize bsize = mbmi->sb_type;
-    if (dec_handle->seq_header.enable_interintra_compound
+    if (parse_ctxt->seq_header->enable_interintra_compound
         && !mbmi->skip_mode && is_interintra_allowed(mbmi))
     {
         const int bsize_group = size_group_lookup[bsize];
@@ -1601,7 +1587,7 @@ static INLINE void add_samples(BlockModeInfo *mbmi, int *pts, int *pts_inref,
     pts_inref[1] = (y * 8) + mbmi->mv[0].as_mv.row;
 }
 
-int find_warp_samples(EbDecHandle *dec_handle, PartitionInfo_t *pi,
+int find_warp_samples(EbDecHandle *dec_handle, TileInfo *tile, PartitionInfo_t *pi,
     int *pts, int *pts_inref)
 {
     int mi_row = pi->mi_row;
@@ -1613,8 +1599,6 @@ int find_warp_samples(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     int left_available = pi->left_available;
     int i, mi_step = 1, np = 0;
 
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
-    TileInfo *tile = &parse_ctx->cur_tile_info;
     int do_tl = 1;
     int do_tr = 1;
     int b4_w = mi_size_wide[pi->mi->sb_type];
@@ -1744,11 +1728,11 @@ int find_warp_samples(EbDecHandle *dec_handle, PartitionInfo_t *pi,
     return np;
 }
 
-int has_overlappable_cand(EbDecHandle *dec_handle, PartitionInfo_t *pi)
+int has_overlappable_cand(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
+    PartitionInfo_t *pi)
 {
     int mi_row = pi->mi_row;
     int mi_col = pi->mi_col;
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
     const TileInfo *const tile = &parse_ctx->cur_tile_info;
     BlockModeInfo *mbmi = pi->mi;
     if (!is_motion_variation_allowed_bsize(mbmi->sb_type)) return 0;
@@ -1779,7 +1763,8 @@ int has_overlappable_cand(EbDecHandle *dec_handle, PartitionInfo_t *pi)
 }
 
 static INLINE MotionMode is_motion_mode_allowed(EbDecHandle *dec_handle,
-    GlobalMotionParams *gm_params, PartitionInfo_t *pi, int allow_warped_motion)
+    ParseCtxt *parse_ctx, GlobalMotionParams *gm_params, PartitionInfo_t *pi,
+    int allow_warped_motion)
 {
     BlockModeInfo *mbmi = pi->mi;
     if (dec_handle->frame_header.force_integer_mv == 0) {
@@ -1790,7 +1775,7 @@ static INLINE MotionMode is_motion_mode_allowed(EbDecHandle *dec_handle,
     if ((block_size_wide[mbmi->sb_type] >= 8 && block_size_high[mbmi->sb_type] >= 8) &&
         (mbmi->mode >= NEARESTMV && mbmi->mode < MB_MODE_COUNT)
         && mbmi->ref_frame[1] != INTRA_FRAME && !has_second_ref(mbmi)) {
-        if (!has_overlappable_cand(dec_handle, pi))
+        if (!has_overlappable_cand(dec_handle, parse_ctx, pi))
             return SIMPLE_TRANSLATION;
         assert(!has_second_ref(mbmi));
 
@@ -1809,10 +1794,10 @@ static INLINE MotionMode is_motion_mode_allowed(EbDecHandle *dec_handle,
     }
 }
 
-MotionMode read_motion_mode(EbDecHandle *dec_handle,
-    PartitionInfo_t *pi, SvtReader *r)
+MotionMode read_motion_mode(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
+    PartitionInfo_t *pi)
 {
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+    SvtReader *r = &parse_ctxt->r;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
     FrameHeader *frame_info = &dec_handle->frame_header;
     int allow_warped_motion = frame_info->allow_warped_motion;
@@ -1822,7 +1807,7 @@ MotionMode read_motion_mode(EbDecHandle *dec_handle,
     if (mbmi->skip_mode) return SIMPLE_TRANSLATION;
 
     const MotionMode last_motion_mode_allowed =
-        is_motion_mode_allowed(dec_handle,
+        is_motion_mode_allowed(dec_handle, parse_ctxt,
             dec_handle->cur_pic_buf[0]->global_motion, pi,
             allow_warped_motion);
     int motion_mode;
@@ -1851,15 +1836,16 @@ static INLINE int get_comp_group_idx_context(ParseCtxt *parse_ctxt,
 
     if (above_mi) {
         if (has_second_ref(above_mi)) {
-            above_ctx = parse_ctxt->parse_nbr4x4_ctxt.
-                above_comp_grp_idx[xd->mi_col];
+            above_ctx = parse_ctxt->parse_above_nbr4x4_ctxt->
+                above_comp_grp_idx[xd->mi_col -
+                parse_ctxt->cur_tile_info.mi_col_start];
         }
         else if (above_mi->ref_frame[0] == ALTREF_FRAME)
             above_ctx = 3;
     }
     if (left_mi) {
         if (has_second_ref(left_mi)) {
-            left_ctx = parse_ctxt->parse_nbr4x4_ctxt.
+            left_ctx = parse_ctxt->parse_left_nbr4x4_ctxt->
                 left_comp_grp_idx[xd->mi_row - parse_ctxt->sb_row_mi];
         }
         else if (left_mi->ref_frame[0] == ALTREF_FRAME)
@@ -1911,32 +1897,32 @@ int get_comp_index_context(EbDecHandle *dec_handle, PartitionInfo_t *pi) {
     return above_ctx + left_ctx + 3 * offset;
 }
 
-void update_compound_ctx(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    uint32_t blk_row, uint32_t blk_col,
-    uint32_t comp_grp_idx)
+void update_compound_ctx(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
+    uint32_t blk_row, uint32_t blk_col, uint32_t comp_grp_idx)
 {
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
-    ParseNbr4x4Ctxt *ngr_ctx = &parse_ctxt->parse_nbr4x4_ctxt;
+    ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
+    ParseLeftNbr4x4Ctxt *left_parse_ctx = parse_ctxt->parse_left_nbr4x4_ctxt;
 
     const uint32_t bw = mi_size_wide[pi->mi->sb_type];
     const uint32_t bh = mi_size_high[pi->mi->sb_type];
 
-    int8_t *above_ctx = ngr_ctx->above_comp_grp_idx + blk_col;
-    int8_t *left_ctx = ngr_ctx->left_comp_grp_idx +
+    int8_t *above_ctx = above_parse_ctx->above_comp_grp_idx +
+        blk_col - parse_ctxt->cur_tile_info.mi_col_start;
+    int8_t *left_ctx = left_parse_ctx->left_comp_grp_idx +
         ((blk_row - parse_ctxt->sb_row_mi) & MAX_MIB_MASK);
 
     memset(above_ctx, comp_grp_idx, bw);
     memset(left_ctx, comp_grp_idx, bh);
 }
 
-void read_compound_type(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    SvtReader *r)
+void read_compound_type(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
+    PartitionInfo_t *pi)
 {
+    SvtReader *r = &parse_ctxt->r;
     BlockModeInfo *mbmi = pi->mi;
     BlockSize bsize = mbmi->sb_type;
     int32_t comp_group_idx = 0;
     mbmi->compound_idx = 1;
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     FRAME_CONTEXT *frm_ctx = &parse_ctxt->cur_tile_ctx;
 
     if (mbmi->skip_mode) mbmi->inter_inter_compound.type = COMPOUND_AVERAGE;
@@ -1994,7 +1980,7 @@ void read_compound_type(EbDecHandle *dec_handle, PartitionInfo_t *pi,
         }
     }
 
-    update_compound_ctx(dec_handle, pi, pi->mi_row, pi->mi_col, comp_group_idx);
+    update_compound_ctx(parse_ctxt, pi, pi->mi_row, pi->mi_col, comp_group_idx);
 }
 
 static INLINE int is_nontrans_global_motion(PartitionInfo_t *pi,
@@ -2070,16 +2056,16 @@ int get_context_interp(PartitionInfo_t *pi, int dir) {
     return filter_type_ctx;
 }
 
-void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
-    SvtReader *r)
+void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt,
+    PartitionInfo_t* pi)
 {
     BlockModeInfo *mbmi = pi->mi;
+    SvtReader *r = &parse_ctxt->r;
     const int allow_hp = dec_handle->frame_header.allow_high_precision_mv;
     IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES] = { { { 0 } } };
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
     int pts[SAMPLES_ARRAY_SIZE], pts_inref[SAMPLES_ARRAY_SIZE];
     SegmentationParams *seg = &dec_handle->frame_header.segmentation_params;
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
     MvCount mv_cnt;
 
     mbmi->palette_size[0] = 0;
@@ -2089,7 +2075,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
 
     svt_collect_neighbors_ref_counts(pi);
 
-    read_ref_frames(dec_handle, pi, r);
+    read_ref_frames(parse_ctxt, pi);
    /* if ((pi->mi->ref_frame[0] >= BWDREF_FRAME && pi->mi->ref_frame[0] <= ALTREF_FRAME) ||
         (pi->mi->ref_frame[1] >= BWDREF_FRAME && pi->mi->ref_frame[1] <= ALTREF_FRAME)) {
         printf("ALTREF found - frame : %d\n", dec_handle->dec_cnt);
@@ -2099,12 +2085,12 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
 
     MvReferenceFrame ref_frame = av1_ref_frame_type(mbmi->ref_frame);
     IntMv global_mvs[2];
-    av1_find_mv_refs(dec_handle, pi, ref_frame, pi->ref_mv_stack,
+    av1_find_mv_refs(dec_handle, pi, parse_ctxt, ref_frame, pi->ref_mv_stack,
         ref_mvs, global_mvs, inter_mode_ctx, &mv_cnt);
 
 #if EXTRA_DUMP
     if (enable_dump) {
-        printf("\n mi_row: %d mi_col: %d\n", mi_row, mi_col);
+        printf("\n mi_row: %d mi_col: %d\n", pi->mi_row, pi->mi_col);
         /*for (int i = 0; i < MODE_CTX_REF_FRAMES; i++)
             for (int j = 0; j < MAX_REF_MV_STACK_SIZE; j++)
                 printf("ref_mv_stack[%d][%d]=%d\t", i, j, pi->ref_mv_stack[i][j].this_mv.as_int);
@@ -2126,7 +2112,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
             mbmi->mode = GLOBALMV;
         else {
             if (is_compound)
-                mbmi->mode = read_inter_compound_mode(dec_handle, r, mode_ctx);
+                mbmi->mode = read_inter_compound_mode(parse_ctxt, mode_ctx);
             else {
                 int new_mv = svt_read_symbol(r, parse_ctxt->cur_tile_ctx.
                     newmv_cdf[mode_ctx & NEWMV_CTX_MASK], 2, ACCT_STR);
@@ -2149,7 +2135,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
             }
             if (mbmi->mode == NEWMV || mbmi->mode == NEW_NEWMV ||
                 has_nearmv(mbmi->mode))
-                read_drl_idx(dec_handle, pi, mbmi, r, mv_cnt.num_mv_found[ref_frame]);
+                read_drl_idx(parse_ctxt, pi, mbmi, mv_cnt.num_mv_found[ref_frame]);
         }
     }
     mbmi->uv_mode = UV_DC_PRED;
@@ -2206,8 +2192,8 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
         }
     }
 
-    assign_mv(dec_handle, pi, mbmi->mv, global_mvs,
-        ref_mv, nearestmv, nearmv, is_compound, allow_hp, r);
+    assign_mv(parse_ctxt, pi, mbmi->mv, global_mvs,
+        ref_mv, nearestmv, nearmv, is_compound, allow_hp);
 
 #if EXTRA_DUMP
     if (enable_dump) {
@@ -2215,18 +2201,19 @@ void inter_block_mode_info(EbDecHandle *dec_handle, PartitionInfo_t* pi,
         fflush(stdout);
     }
 #endif
-    read_interintra_mode(dec_handle, mbmi, r);
+    read_interintra_mode(parse_ctxt, mbmi);
 
     for (int ref = 0; ref < 1 + has_second_ref(mbmi); ++ref) {
         const MvReferenceFrame frame = mbmi->ref_frame[ref];
         pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
     }
 
-    pi->num_samples = find_warp_samples(dec_handle, pi, pts, pts_inref);
+    pi->num_samples = find_warp_samples(dec_handle, &parse_ctxt->cur_tile_info,
+        pi, pts, pts_inref);
 
-    mbmi->motion_mode = read_motion_mode(dec_handle, pi, r);
+    mbmi->motion_mode = read_motion_mode(dec_handle, parse_ctxt, pi);
 
-    read_compound_type(dec_handle, pi, r);
+    read_compound_type(dec_handle, parse_ctxt, pi);
 
     if (!av1_is_interp_needed(pi, dec_handle->cur_pic_buf[0]->global_motion)) {
         mbmi->interp_filters =
@@ -2316,16 +2303,15 @@ int get_palette_color_context(
 }
 
 
-void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
-    SvtReader *r)
+void palette_tokens(EbDecHandle *dec_handle, ParseCtxt *parse_ctx,
+    PartitionInfo_t *pi)
 {
     int mi_row = pi->mi_row;
     int mi_col = pi->mi_col;
     BlockModeInfo *mbmi = pi->mi;
     BlockSize bsize = mbmi->sb_type;
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle->pv_parse_ctxt;
-    ParseNbr4x4Ctxt  *nbr_ctx = &parse_ctx->parse_nbr4x4_ctxt;
     FRAME_CONTEXT *frm_ctx = &parse_ctx->cur_tile_ctx;
+    SvtReader *r = &parse_ctx->r;
     int block_height = block_size_high[bsize];
     int block_width = block_size_wide[bsize];
     int mi_cols = (&dec_handle->frame_header)->mi_cols;
@@ -2406,8 +2392,8 @@ void palette_tokens(EbDecHandle *dec_handle, PartitionInfo_t *pi,
                     (mi_col >> sub_x) * MI_SIZE,
                     (mi_row >> sub_y) * MI_SIZE,
                     &blk_recon_buf, &recon_stride, sub_x, sub_y);
-                uint16_t *palette = &nbr_ctx->
-                    palette_colors[plane_itr][0];
+                uint16_t *palette = parse_ctx->
+                    palette_colors[plane_itr];
                 if (recon_picture_buf->bit_depth == EB_8BIT) {
                     uint8_t *temp_buf = (uint8_t*)blk_recon_buf;
                     for (int i = 0; i < block_height; i++) {

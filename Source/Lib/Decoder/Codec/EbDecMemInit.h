@@ -79,6 +79,8 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
 
 EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr);
 
+EbErrorType init_dec_mod_ctxt(EbDecHandle *dec_handle_ptr, void **dec_mod_ctxt);
+
 #ifdef __cplusplus
 }
 #endif

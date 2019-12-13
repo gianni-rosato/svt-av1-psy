@@ -286,6 +286,10 @@ extern "C" {
         EbFifo           *full_fifo_ptr,
         EbObjectWrapper **wrapper_dbl_ptr);
 
+    extern EbErrorType eb_dec_get_full_object_non_blocking(
+        EbFifo           *full_fifo_ptr,
+        EbObjectWrapper **wrapper_dbl_ptr);
+
     /*********************************************************************
      * EbSystemResourceReleaseObject
      *   Queues an empty EbObjectWrapper to the SystemResource. This

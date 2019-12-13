@@ -32,6 +32,9 @@
 #include "EbDecLF.h"
 #include "EbDecPicMgr.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 extern int select_samples(
     MV *mv,
     int *pts,
@@ -146,15 +149,16 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     BlockSize bsize, TileInfo *tile, SBInfo *sb_info)
 {
     EbDecHandle *dec_handle   = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    EbColorConfig *color_config = &dec_handle->seq_header.color_config;
+    EbColorConfig *color_config = &dec_mod_ctxt->seq_header->color_config;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-    uint32_t mi_cols = (&dec_handle->frame_header)->mi_cols;
-    uint32_t mi_rows = (&dec_handle->frame_header)->mi_rows;
+    uint32_t mi_cols = dec_mod_ctxt->frame_header->mi_cols;
+    uint32_t mi_rows = dec_mod_ctxt->frame_header->mi_rows;
 
     int num_planes = av1_num_planes(color_config);
 
     BlockModeInfo *mode_info = get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
     bool inter_block = is_inter_block(mode_info);
+
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);
     assert(mode_info->mi_col == mi_col);
@@ -257,7 +261,8 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             int32_t nsamples = 0;
             int32_t apply_wm = 0;
 
-            nsamples = find_warp_samples(dec_handle, &part_info, pts, pts_inref);
+            nsamples = find_warp_samples(dec_handle, tile,
+                &part_info, pts, pts_inref);
             assert(nsamples > 0);
 
             MV mv = mode_info->mv[REF_LIST_0].as_mv;
@@ -293,7 +298,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     }
 
     if (inter_block)
-        svtav1_predict_inter_block(dec_handle, &part_info, mi_row, mi_col,
+        svtav1_predict_inter_block(dec_mod_ctxt, dec_handle, &part_info, mi_row, mi_col,
             num_planes);
 
     TxType tx_type;
@@ -305,13 +310,13 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
     const int max_blocks_wide = max_block_wide(&part_info, bsize, 0);
     const int max_blocks_high = max_block_high(&part_info, bsize, 0);
 
-    uint8_t lossless = dec_handle->frame_header.lossless_array[part_info.mi->segment_id];
+    uint8_t lossless = dec_mod_ctxt->frame_header->lossless_array[part_info.mi->segment_id];
     int lossless_block = (lossless && ((bsize >= BLOCK_64X64) && (bsize <= BLOCK_128X128)));
     int num_chroma_tus = lossless_block ? (max_blocks_wide * max_blocks_high) >>
         (color_config->subsampling_x + color_config->subsampling_y) : mode_info->num_tus[AOM_PLANE_U];
 
     LFCtxt *lf_ctxt = (LFCtxt *)dec_handle->pv_lf_ctxt;
-    int32_t lf_stride = dec_handle->frame_header.mi_stride;
+    int32_t lf_stride = dec_mod_ctxt->frame_header->mi_stride;
     struct LFBlockParamL* lf_block_l = lf_ctxt->lf_block_luma;
     struct LFBlockParamUV* lf_block_uv = lf_ctxt->lf_block_uv;
 
@@ -326,8 +331,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
             mode_info->first_tu_offset[plane - 1] + num_chroma_tus) :
             (sb_info->sb_trans_info[plane] + mode_info->first_tu_offset[plane]);
 
-        if (lossless_block)
-        {
+        if (lossless_block) {
             assert(trans_info->tx_size == TX_4X4);
             num_tu = (max_blocks_wide * max_blocks_high) >> (sub_x + sub_y);
 
@@ -346,7 +350,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
         for (uint32_t tu = 0; tu < num_tu; tu++)
         {
-            int32_t *qcoeffs = dec_mod_ctxt->iquant_cur_ptr;
             void *tu_recon_buf;
             int32_t tu_offset;
 
@@ -374,7 +377,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
             if (!inter_block)
                 svt_av1_predict_intra(dec_mod_ctxt, &part_info, plane,
-                    tx_size, dec_mod_ctxt->cur_tile_info, tu_recon_buf,
+                    tx_size, tile, tu_recon_buf,
                     recon_stride, recon_picture_buf->bit_depth,
                     trans_info->tu_x_offset, trans_info->tu_y_offset);
 
@@ -382,6 +385,11 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
             if (!mode_info->skip && trans_info->cbf)
             {
+                int32_t *qcoeffs = dec_mod_ctxt->iquant_cur_ptr;
+                int32_t iq_size = tx_size_wide[tx_size] * tx_size_high[tx_size];
+                memset(dec_mod_ctxt->iquant_cur_ptr, 0, iq_size *
+                    sizeof(*dec_mod_ctxt->iquant_cur_ptr));
+                dec_mod_ctxt->iquant_cur_ptr = dec_mod_ctxt->iquant_cur_ptr + iq_size;
 #if SVT_DEC_COEFF_DEBUG
                 {
                     /* For debug purpose */
@@ -398,7 +406,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 #endif
                 tx_type = trans_info->txk_type;
 
-                n_coeffs = inverse_quantize(dec_handle, &part_info,
+                n_coeffs = inverse_quantize(dec_mod_ctxt, &part_info,
                     mode_info, coeffs, qcoeffs, tx_type, tx_size, plane);
                 if (n_coeffs != 0) {
                     dec_mod_ctxt->cur_coeff[plane] += (n_coeffs + 1);
@@ -429,8 +437,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col,
 
             // increment transform pointer
             trans_info++;
-            dec_mod_ctxt->iquant_cur_ptr = dec_mod_ctxt->iquant_cur_ptr +
-                (tx_size_wide[tx_size] * tx_size_high[tx_size]);
         }
     }
     return;

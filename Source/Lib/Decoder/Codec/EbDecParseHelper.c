@@ -71,8 +71,9 @@ static INLINE int get_tx_size_context(const PartitionInfo_t *xd,
     const int has_above = xd->up_available;
     const int has_left = xd->left_available;
 
-    int above = parse_ctxt->parse_nbr4x4_ctxt.above_tx_wd[xd->mi_col] >= max_tx_wide;
-    int left = parse_ctxt->parse_nbr4x4_ctxt.
+    int above = parse_ctxt->parse_above_nbr4x4_ctxt->above_tx_wd[xd->mi_col -
+        parse_ctxt->cur_tile_info.mi_col_start] >= max_tx_wide;
+    int left = parse_ctxt->parse_left_nbr4x4_ctxt->
         left_tx_ht[xd->mi_row - parse_ctxt->sb_row_mi] >= max_tx_high;
 
     if (has_above)
@@ -105,12 +106,14 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
 {
     int mi_row = pi->mi_row;
     int mi_col = pi->mi_col;
-    ParseNbr4x4Ctxt *ngr_ctx = &parse_ctxt->parse_nbr4x4_ctxt;
+    ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
+    ParseLeftNbr4x4Ctxt *left_parse_ctx = parse_ctxt->parse_left_nbr4x4_ctxt;
     BlockSize b_size = bsize;
     if(is_inter_block(pi->mi))
         b_size = txsize_to_bsize[txSize];
-    uint8_t *const above_ctx = ngr_ctx->above_tx_wd + mi_col + blk_col;
-    uint8_t *const left_ctx = ngr_ctx->left_tx_ht +
+    uint8_t *const above_ctx = above_parse_ctx->above_tx_wd +
+        (mi_col - parse_ctxt->cur_tile_info.mi_col_start + blk_col);
+    uint8_t *const left_ctx = left_parse_ctx->left_tx_ht +
         (mi_row - parse_ctxt->sb_row_mi + blk_row);
 
     const uint8_t tx_wide = tx_size_wide[txSize];
@@ -122,10 +125,8 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo_t *pi,
     memset(left_ctx, tx_high, bh);
 }
 
-TxSize read_selected_tx_size(PartitionInfo_t *xd, SvtReader *r,
-    EbDecHandle *dec_handle)
-{
-    ParseCtxt *parse_ctxt = (ParseCtxt *)dec_handle->pv_parse_ctxt;
+TxSize read_selected_tx_size(PartitionInfo_t *xd, ParseCtxt *parse_ctxt) {
+    SvtReader *r = &parse_ctxt->r;
     const BlockSize bsize = xd->mi->sb_type;
     const int32_t tx_size_cat = bsize_to_tx_size_cat(bsize);
     const int maxTxDepth = bsize_to_max_depth(bsize);

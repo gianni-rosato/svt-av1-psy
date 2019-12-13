@@ -19,12 +19,14 @@
 #include "EbDecProcessFrame.h"
 
 #include "EbObuParse.h"
+#include "EbDecParseFrame.h"
 
 #include "EbDecMemInit.h"
 #include "EbDecInverseQuantize.h"
 
 #include "EbDecPicMgr.h"
 #include "EbDecLF.h"
+#include "EbDecUtils.h"
 
 /*TODO: Remove and harmonize with encoder. Globals prevent harmonization now! */
 /*****************************************
@@ -157,7 +159,8 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
         EB_MALLOC_DEC(BlockModeInfo*, cur_frame_buf->mode_info,
                     (num_sb * num_mis_in_sb * sizeof(BlockModeInfo)), EB_N_PTR);
 
-        /* TransformInfo str allocation at 4x4 level */
+        /* TransformInfo str allocation at 4x4 level
+           TO-DO optimize memory based on the chroma subsampling.*/
         EB_MALLOC_DEC(TransformInfo_t*, cur_frame_buf->trans_info[AOM_PLANE_Y],
             (num_sb * num_mis_in_sb * sizeof(TransformInfo_t)), EB_N_PTR);
 
@@ -319,82 +322,48 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
 static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_parse_ctxt, sizeof(ParseCtxt), EB_N_PTR);
+    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_master_parse_ctxt,
+        sizeof(MasterParseCtxt), EB_N_PTR);
+    MasterParseCtxt *master_parse_ctx =
+        (MasterParseCtxt*)dec_handle_ptr->pv_master_parse_ctxt;
 
-    ParseCtxt *parse_ctx = (ParseCtxt*)dec_handle_ptr->pv_parse_ctxt;
+    master_parse_ctx->context_count = 0;
+    master_parse_ctx->tile_parse_ctxt = NULL;
 
-    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
+    master_parse_ctx->parse_above_nbr4x4_ctxt = NULL;
+    master_parse_ctx->parse_left_nbr4x4_ctxt = NULL;
 
-    int32_t num_mi_row, num_mi_col;
-    //int32_t num_mi_frame;
-
-    int32_t num_4x4_neigh_sb    = seq_header->sb_mi_size;
-    int32_t sb_size_log2        = seq_header->sb_size_log2;
-    int32_t sb_aligned_width    = ALIGN_POWER_OF_TWO(seq_header->max_frame_width,
-                                    sb_size_log2);
-    /*int32_t sb_aligned_height   = ALIGN_POWER_OF_TWO(seq_header->max_frame_height,
-                                    sb_size_log2);*/
-    int32_t sb_cols             = sb_aligned_width >> sb_size_log2;
-    //int32_t sb_rows             = sb_aligned_height >> sb_size_log2;
-    int8_t num_planes           = seq_header->color_config.mono_chrome ? 1 : MAX_MB_PLANE;
-
-    ParseNbr4x4Ctxt *neigh_ctx = &parse_ctx->parse_nbr4x4_ctxt;
-
-    num_mi_col = sb_cols * num_4x4_neigh_sb;
-    neigh_ctx->num_mi_col = num_mi_col;
-    num_mi_row = num_4x4_neigh_sb;
-    //num_mi_frame = sb_cols * sb_rows * num_4x4_neigh_sb;
-
-    int num4_64x64 = mi_size_wide[BLOCK_64X64];
-
-    EB_MALLOC_DEC(uint8_t*, neigh_ctx->above_tx_wd, num_mi_col * sizeof(uint8_t), EB_N_PTR);
-    EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_tx_ht, num_mi_row * sizeof(uint8_t), EB_N_PTR);
-
-    EB_MALLOC_DEC(uint8_t*, neigh_ctx->above_part_wd, num_mi_col * sizeof(uint8_t), EB_N_PTR);
-    EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_part_ht, num_mi_row * sizeof(uint8_t), EB_N_PTR);
-    /* TODO : Optimize the size for Chroma */
-    for (int i = 0; i < num_planes; i++) {
-        EB_MALLOC_DEC(int8_t*, neigh_ctx->left_ctx[i], num_mi_row * sizeof(int8_t), EB_N_PTR);
-        EB_MALLOC_DEC(int8_t*, neigh_ctx->above_ctx[i], num_mi_col * sizeof(int8_t), EB_N_PTR);
-
-        EB_MALLOC_DEC(uint16_t*, neigh_ctx->above_palette_colors[i],
-            num4_64x64 * PALETTE_MAX_SIZE *sizeof(uint16_t), EB_N_PTR);
-        EB_MALLOC_DEC(uint16_t*, neigh_ctx->left_palette_colors[i],
-            num_4x4_neigh_sb * PALETTE_MAX_SIZE *sizeof(uint16_t), EB_N_PTR);
-    }
-
-    EB_MALLOC_DEC(int8_t*, neigh_ctx->above_comp_grp_idx, num_mi_col * sizeof(int8_t), EB_N_PTR);
-    EB_MALLOC_DEC(int8_t*, neigh_ctx->left_comp_grp_idx, num_mi_row * sizeof(int8_t), EB_N_PTR);
-
-    EB_MALLOC_DEC(uint8_t*, neigh_ctx->above_seg_pred_ctx, num_mi_col * sizeof(uint8_t), EB_N_PTR);
-    EB_MALLOC_DEC(uint8_t*, neigh_ctx->left_seg_pred_ctx, num_mi_row * sizeof(uint8_t), EB_N_PTR);
+    master_parse_ctx->num_tiles = 0;
+    master_parse_ctx->parse_tile_data = NULL;
 
     return return_error;
 }
 
 /*TODO: Move to module files */
-static EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr)
+EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
+    void **pp_dec_mod_ctxt)
 {
     EbErrorType return_error = EB_ErrorNone;
-    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
+    SeqHeader *seq_header = &dec_handle_ptr->seq_header;
     EbColorConfig *color_config = &seq_header->color_config;
 
-    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_dec_mod_ctxt, sizeof(DecModCtxt), EB_N_PTR);
+    EB_MALLOC_DEC(void *, *pp_dec_mod_ctxt, sizeof(DecModCtxt), EB_N_PTR);
 
-    DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
+    DecModCtxt *p_dec_mod_ctxt = (DecModCtxt*)*pp_dec_mod_ctxt;
+    p_dec_mod_ctxt->dec_handle_ptr  = (void *)dec_handle_ptr;
+    p_dec_mod_ctxt->seq_header      = &dec_handle_ptr->seq_header;
+    p_dec_mod_ctxt->frame_header    = &dec_handle_ptr->frame_header;
 
-    dec_mod_ctxt->dec_handle_ptr = (void *)dec_handle_ptr;
-
-    int32_t sb_size_log2 = dec_handle_ptr->seq_header.sb_size_log2;
+    int32_t sb_size_log2 = seq_header->sb_size_log2;
 
     int32_t y_size = (1 << sb_size_log2) * (1 << sb_size_log2);
     int32_t iq_size = y_size +
         (color_config->subsampling_x ? y_size >> 2 : y_size) +
         (color_config->subsampling_y ? y_size >> 2 : y_size);
 
-    EB_MALLOC_DEC(int32_t*, dec_mod_ctxt->sb_iquant_ptr,
+    EB_MALLOC_DEC(int32_t*, p_dec_mod_ctxt->sb_iquant_ptr,
         iq_size * sizeof(int32_t), EB_N_PTR);
-    av1_inverse_qm_init(dec_handle_ptr);
+    av1_inverse_qm_init(p_dec_mod_ctxt, seq_header);
 
     return return_error;
 }
@@ -490,7 +459,8 @@ EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
 
     return_error |= init_parse_context(dec_handle_ptr);
 
-    return_error |= init_dec_mod_ctxt(dec_handle_ptr);
+    return_error |= init_dec_mod_ctxt(dec_handle_ptr,
+                    &dec_handle_ptr->pv_dec_mod_ctxt);
 
     return_error |= init_lf_ctxt(dec_handle_ptr);
 

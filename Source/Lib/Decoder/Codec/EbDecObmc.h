@@ -12,6 +12,8 @@
 #ifndef EbDecObmc_h
 #define EbDecObmc_h
 
+#include "EbDecHandle.h"
+
 #define MAX_OBMC_LEN 32
 
 typedef struct ObmcCtx {
@@ -27,8 +29,8 @@ typedef struct ObmcCtx {
 
 static const int max_neighbor_obmc[6] = { 0, 1, 2, 3, 4, 4 };
 
-void dec_build_obmc_inter_predictors_sb(EbDecHandle *dec_handle,
-    PartitionInfo_t *pi, int mi_row, int mi_col);
+void dec_build_obmc_inter_predictors_sb(void *pv_dec_mod_ctx,
+    EbDecHandle *dec_handle, PartitionInfo_t *pi, int mi_row, int mi_col);
 
 
 #endif  // EbDecObmc_h

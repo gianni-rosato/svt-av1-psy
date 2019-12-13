@@ -78,7 +78,7 @@ void EbComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds
 #endif
 }
 
-static void EbSleepMs(uint64_t milliSeconds)
+void EbSleepMs(uint64_t milliSeconds)
 {
     if(milliSeconds) {
 #ifdef _WIN32

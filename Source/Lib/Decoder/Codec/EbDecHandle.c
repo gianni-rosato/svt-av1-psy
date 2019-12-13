@@ -36,6 +36,19 @@
 /**************************************
 * Globals
 **************************************/
+uint8_t                          num_groups = 0;
+#ifdef _WIN32
+GROUP_AFFINITY                   group_affinity;
+EbBool                           alternate_groups = 0;
+#elif defined(__linux__)
+cpu_set_t                        group_affinity;
+typedef struct logicalProcessorGroup {
+    uint32_t num;
+    uint32_t group[1024];
+    }processorGroup;
+#define INITIAL_PROCESSOR_GROUP 16
+processorGroup                  *lp_group = NULL;
+#endif
 
 EbMemoryMapEntry                 *svt_dec_memory_map;
 uint32_t                         *svt_dec_memory_map_index;
@@ -57,6 +70,7 @@ void init_intra_dc_predictors_c_internal(void);
 void asmSetConvolveHbdAsmTable(void);
 void init_intra_predictors_internal(void);
 extern void av1_init_wedge_masks(void);
+void dec_sync_all_threads(EbDecHandle *dec_handle_ptr);
 
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr,
                                 uint8_t **data, size_t data_size, uint32_t is_annexb);
@@ -85,7 +99,8 @@ static EbErrorType eb_dec_handle_ctor(
     EbErrorType return_error = EB_ErrorNone;
 
     // Allocate Memory
-    EbDecHandle   *dec_handle_ptr = (EbDecHandle  *)malloc(sizeof(EbDecHandle  ));
+    EbDecHandle   *dec_handle_ptr =
+        (EbDecHandle  *)malloc(sizeof(EbDecHandle));
     *decHandleDblPtr = dec_handle_ptr;
     if (dec_handle_ptr == (EbDecHandle  *)EB_NULL)
         return EB_ErrorInsufficientResources;
@@ -98,6 +113,8 @@ static EbErrorType eb_dec_handle_ctor(
     svt_dec_memory_map = dec_handle_ptr->memory_map;
     svt_dec_memory_map_index = &dec_handle_ptr->memory_map_index;
     svt_dec_lib_malloc_count = 0;
+
+    dec_handle_ptr->start_thread_process = EB_FALSE;
 
     return return_error;
 }
@@ -347,6 +364,10 @@ EbErrorType eb_svt_dec_set_default_parameter(
     config_ptr->active_channel_count = 1;
     config_ptr->stat_report = 0;
 
+    /* Multi-thread parameters */
+    config_ptr->threads = 1;
+    config_ptr->num_p_frames = 1;
+
     return return_error;
 }
 
@@ -577,6 +598,8 @@ EB_API EbErrorType eb_deinit_decoder(
     EbErrorType return_error    = EB_ErrorNone;
 
     if (dec_handle_ptr) {
+        if(dec_handle_ptr->dec_config.threads > 1)
+            dec_sync_all_threads(dec_handle_ptr);
         if (svt_dec_memory_map) {
             // Loop through the ptr table and free all malloc'd pointers per channel
             EbMemoryMapEntry*    memory_entry = svt_dec_memory_map;
