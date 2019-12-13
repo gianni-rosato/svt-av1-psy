@@ -962,7 +962,9 @@ void* resource_coordination_kernel(void *input_ptr)
                 eb_object_inc_live_count(
                     picture_control_set_ptr->pa_reference_picture_wrapper_ptr,
                     2);
+#if !PAREF_OUT
             ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->input_padded_picture_ptr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
+#endif
 
             set_tile_info(picture_control_set_ptr);
             if(sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0)

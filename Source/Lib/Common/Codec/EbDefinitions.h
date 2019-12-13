@@ -34,6 +34,15 @@ extern "C" {
 #endif
 #define TX_SIZE_EARLY_EXIT          1 // Exit TX size search when all coefficients are zero.
 
+#define   SINGLE_CORE_ENCODE   1
+#if SINGLE_CORE_ENCODE
+#define SERIAL_MODE                  1 // change ressource allocations  to optimize single core operating mode
+#define OUT_ALLOC                    1 // output bitsream allocation at run time for both single/multi core
+#define PAREF_OUT                    1 // disconnect pa ref  from input for both single/multi core
+#endif
+#define INIT_GM_FIX           1 // initilize global motion to be OFF for all references frames.
+#define REVERT_ALTREF_FIX     1 // put back padding r2r fix for altref
+
 #define ENHANCED_M0_SETTINGS         1 // Updated M0 settings(optimized independent chroma search for all layers, conservative coeff - based NSQ cands reduction, shut coeff - based skip tx size search, warped for all layers, SUB - SAD as ME search method for non - SC only)
 #define MULTI_PASS_PD                1 // Multi-Pass Partitioning Depth (Multi-Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure. As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
 #define RATE_ESTIMATION_UPDATE       1 // Adding the rate estimation updates used in MD for missing syntax elements

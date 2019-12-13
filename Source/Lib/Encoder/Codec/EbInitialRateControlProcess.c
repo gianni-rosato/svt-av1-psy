@@ -216,6 +216,12 @@ void CheckForNonUniformMotionVectorField(
 void DetectGlobalMotion(
     PictureParentControlSet    *picture_control_set_ptr)
 {
+
+#if  INIT_GM_FIX
+    //initilize global motion to be OFF for all references frames.
+    memset(picture_control_set_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
+#endif
+
 #if GLOBAL_WARPED_MOTION
 #if GM_OPT
     if (picture_control_set_ptr->gm_level <= GM_DOWN) {
@@ -1227,9 +1233,9 @@ void* initial_rate_control_kernel(void *input_ptr)
 
     // Segments
     uint32_t                              segment_index;
-
+#if ! OUT_ALLOC
     EbObjectWrapper                *output_stream_wrapper_ptr;
-
+#endif
     for (;;) {
         // Get Input Full Object
         eb_get_full_object(
@@ -1429,13 +1435,14 @@ void* initial_rate_control_kernel(void *input_ptr)
                         if (sequence_control_set_ptr->use_output_stat_file)
                             memset(picture_control_set_ptr->stat_struct_first_pass_ptr, 0, sizeof(stat_struct_t));
 #endif
+#if ! OUT_ALLOC
                         //OPTION 1:  get the output stream buffer in ressource coordination
                         eb_get_empty_object(
                             sequence_control_set_ptr->encode_context_ptr->stream_output_fifo_ptr,
                             &output_stream_wrapper_ptr);
 
                         picture_control_set_ptr->output_stream_wrapper_ptr = output_stream_wrapper_ptr;
-
+#endif
                         // Get Empty Results Object
                         eb_get_empty_object(
                             context_ptr->initialrate_control_results_output_fifo_ptr,

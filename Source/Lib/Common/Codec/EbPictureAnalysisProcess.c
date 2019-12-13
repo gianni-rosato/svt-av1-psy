@@ -4300,6 +4300,25 @@ void* picture_analysis_kernel(void *input_ptr)
             pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             sb_total_count = picture_width_in_sb * pictureHeighInLcu;
 
+#if PAREF_OUT
+            generate_padding(
+                input_picture_ptr->buffer_y,
+                input_picture_ptr->stride_y,
+                input_picture_ptr->width,
+                input_picture_ptr->height,
+                input_picture_ptr->origin_x,
+                input_picture_ptr->origin_y);
+            {
+                uint8_t* pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x + input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+                uint8_t* in = input_picture_ptr->buffer_y        + input_picture_ptr->origin_x        + input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+                for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+                    EB_MEMCPY(
+                        pa + row * input_padded_picture_ptr->stride_y,
+                        in + row * input_picture_ptr->stride_y,
+                        sizeof(uint8_t)* input_picture_ptr->width);
+            }
+
+#endif
             // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
             SetPictureParametersForStatisticsGathering(
                 sequence_control_set_ptr);

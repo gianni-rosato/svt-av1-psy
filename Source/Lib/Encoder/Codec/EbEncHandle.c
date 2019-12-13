@@ -455,7 +455,75 @@ EbErrorType load_default_buffer_configuration_settings(
     sequence_control_set_ptr->output_recon_buffer_fifo_init_count       = sequence_control_set_ptr->reference_picture_buffer_init_count;
     sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ?
                                                                           (2 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
+#if SERIAL_MODE
+    //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
+    sequence_control_set_ptr->scd_delay =
+        sequence_control_set_ptr->static_config.enable_altrefs || sequence_control_set_ptr->static_config.scene_change_detection ? SCD_LAD : 0;
 
+    // bistream buffer will be allocated at run time. app will free the buffer once written to file.
+    sequence_control_set_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
+
+    uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
+    {
+        /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
+          the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
+        uint32_t mg_size = 1 << sequence_control_set_ptr->static_config.hierarchical_levels;
+        uint32_t needed_lad_pictures = ((sequence_control_set_ptr->static_config.look_ahead_distance + mg_size - 1) / mg_size) * mg_size;
+
+        /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
+           note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
+           to be released back to be able to start first base(16). Anyway poc16 needs to wait for poc0 to finish.*/
+        uint32_t eos_delay = 1;
+
+        //Minimum input pictures needed in the pipeline
+        return_ppcs = (mg_size + 1) + eos_delay + sequence_control_set_ptr->scd_delay + needed_lad_pictures;
+
+        //sequence_control_set_ptr->input_buffer_fifo_init_count = return_ppcs;
+        min_input = return_ppcs;
+
+        if (sequence_control_set_ptr->static_config.enable_overlays)
+            //sequence_control_set_ptr->picture_control_set_pool_init_count =
+            min_parent =  ((mg_size + 1) + eos_delay + sequence_control_set_ptr->scd_delay) * 2 + //min to get a mini-gop in PD - release all and keep one.
+                needed_lad_pictures +
+                needed_lad_pictures / mg_size + 1;// Number of overlays in the look-ahead window
+        else
+           min_parent = return_ppcs;
+
+        //Pic-Manager will inject one child at a time.
+        min_child = 1;
+
+        //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
+        min_ref = 17;
+
+        //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
+        min_paref = 25 +  sequence_control_set_ptr->scd_delay + eos_delay;
+        if (sequence_control_set_ptr->static_config.enable_overlays)
+            min_paref *= 2;
+
+        //Overlays
+        min_overlay = sequence_control_set_ptr->static_config.enable_overlays ?
+              mg_size + eos_delay + sequence_control_set_ptr->scd_delay : 1;
+    }
+
+    if (core_count == SINGLE_CORE_COUNT) {
+        sequence_control_set_ptr->input_buffer_fifo_init_count                  = min_input;
+        sequence_control_set_ptr->picture_control_set_pool_init_count           = min_parent;
+        sequence_control_set_ptr->pa_reference_picture_buffer_init_count        = min_paref;
+        sequence_control_set_ptr->reference_picture_buffer_init_count           = min_ref;
+        sequence_control_set_ptr->picture_control_set_pool_init_count_child     = min_child;
+        sequence_control_set_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
+
+        sequence_control_set_ptr->output_recon_buffer_fifo_init_count = sequence_control_set_ptr->reference_picture_buffer_init_count;
+    }
+    else {
+        sequence_control_set_ptr->input_buffer_fifo_init_count              = MAX(min_input, sequence_control_set_ptr->input_buffer_fifo_init_count);
+        sequence_control_set_ptr->picture_control_set_pool_init_count       = MAX(min_parent, sequence_control_set_ptr->picture_control_set_pool_init_count);
+        sequence_control_set_ptr->pa_reference_picture_buffer_init_count    = MAX(min_paref, sequence_control_set_ptr->pa_reference_picture_buffer_init_count);
+        sequence_control_set_ptr->reference_picture_buffer_init_count       = MAX(min_ref, sequence_control_set_ptr->reference_picture_buffer_init_count);
+        sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(min_child, sequence_control_set_ptr->picture_control_set_pool_init_count_child);
+        sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = MAX(min_overlay, sequence_control_set_ptr->overlay_input_picture_buffer_init_count);
+    }
+#endif
     //#====================== Inter process Fifos ======================
     sequence_control_set_ptr->resource_coordination_fifo_init_count       = 300;
     sequence_control_set_ptr->picture_analysis_fifo_init_count            = 300;
@@ -1028,7 +1096,11 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
         referencePictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
         referencePictureBufferDescInitData.color_format = EB_YUV420; //use 420 for picture analysis
+#if PAREF_OUT
+        referencePictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+#else
         referencePictureBufferDescInitData.buffer_enable_mask = 0;
+#endif
         referencePictureBufferDescInitData.left_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.right_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
@@ -3460,8 +3532,14 @@ EB_API void eb_svt_release_out_buffer(
     EbBufferHeaderType  **p_buffer)
 {
     if (p_buffer && (*p_buffer)->wrapper_ptr)
+    {
+#if  OUT_ALLOC
+        if((*p_buffer)->p_buffer)
+           free((*p_buffer)->p_buffer);
+#endif
         // Release out put buffer back into the pool
         eb_release_object((EbObjectWrapper  *)(*p_buffer)->wrapper_ptr);
+     }
     return;
 }
 
@@ -3664,9 +3742,9 @@ EbErrorType EbOutputBufferHeaderCreator(
 
     // Initialize Header
     outBufPtr->size = sizeof(EbBufferHeaderType);
-
+#if ! OUT_ALLOC
     EB_MALLOC(outBufPtr->p_buffer, n_stride);
-
+#endif
     outBufPtr->n_alloc_len = n_stride;
     outBufPtr->p_app_private = NULL;
 
@@ -3678,7 +3756,9 @@ EbErrorType EbOutputBufferHeaderCreator(
 void EbOutputBufferHeaderDestoryer(    EbPtr p)
 {
     EbBufferHeaderType* obj = (EbBufferHeaderType*)p;
+#if ! OUT_ALLOC
     EB_FREE(obj->p_buffer);
+#endif
     EB_FREE(obj);
 }
 

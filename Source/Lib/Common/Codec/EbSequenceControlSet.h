@@ -117,6 +117,10 @@ extern "C" {
         uint32_t                                tf_segment_column_count;
         uint32_t                                tf_segment_row_count;
         EbBool                                  enable_altrefs;
+
+#if SERIAL_MODE
+        uint32_t                                scd_delay; //Number of delay frames needed to implement future window for algorithms such as SceneChange or TemporalFiltering
+#endif
         // Buffers
         uint32_t                                picture_control_set_pool_init_count;
         uint32_t                                picture_control_set_pool_init_count_child;

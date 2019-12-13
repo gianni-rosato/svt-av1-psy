@@ -298,6 +298,10 @@ EbErrorType copy_sequence_control_set(
     dst->use_input_stat_file = src->use_input_stat_file;
     dst->use_output_stat_file = src->use_output_stat_file;
 #endif
+
+#if SERIAL_MODE
+    dst->scd_delay = src->scd_delay;
+#endif
     return EB_ErrorNone;
 }
 

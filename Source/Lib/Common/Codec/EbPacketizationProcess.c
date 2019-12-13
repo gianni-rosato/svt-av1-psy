@@ -281,11 +281,22 @@ void* packetization_kernel(void *input_ptr)
         queueEntryPtr->start_time_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_seconds;
         queueEntryPtr->start_time_u_seconds = picture_control_set_ptr->parent_pcs_ptr->start_time_u_seconds;
         queueEntryPtr->is_alt_ref = picture_control_set_ptr->parent_pcs_ptr->is_alt_ref;
-
+#if OUT_ALLOC
+        eb_get_empty_object(
+            sequence_control_set_ptr->encode_context_ptr->stream_output_fifo_ptr,
+            &picture_control_set_ptr->parent_pcs_ptr->output_stream_wrapper_ptr);
+        output_stream_wrapper_ptr = picture_control_set_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
+        output_stream_ptr = (EbBufferHeaderType*)output_stream_wrapper_ptr->object_ptr;
+        output_stream_ptr->p_buffer =(uint8_t*)malloc(output_stream_ptr->n_alloc_len);
+        assert(output_stream_ptr->p_buffer != NULL && "bit-stream memory allocation failure");
+#else
         //TODO: The output buffer should be big enough to avoid a deadlock here. Add an assert that make the warning
         // Get  Output Bitstream buffer
         output_stream_wrapper_ptr = picture_control_set_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
         output_stream_ptr = (EbBufferHeaderType*)output_stream_wrapper_ptr->object_ptr;
+#endif
+
+
         output_stream_ptr->flags = 0;
         output_stream_ptr->flags |= (encode_context_ptr->terminating_sequence_flag_received == EB_TRUE && picture_control_set_ptr->parent_pcs_ptr->decode_order == encode_context_ptr->terminating_picture_number) ? EB_BUFFERFLAG_EOS : 0;
         output_stream_ptr->n_filled_len = 0;

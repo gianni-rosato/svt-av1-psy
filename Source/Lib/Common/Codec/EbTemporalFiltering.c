@@ -1979,6 +1979,26 @@ static void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_contr
     // reference structures (padded pictures + downsampled versions)
     EbPaReferenceObject *src_object = (EbPaReferenceObject*)picture_control_set_ptr_central->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
+
+#if PAREF_OUT
+    {
+        EbPictureBufferDesc *input_picture_ptr =picture_control_set_ptr_central->enhanced_picture_ptr;
+        uint8_t* pa = padded_pic_ptr->buffer_y + padded_pic_ptr->origin_x + padded_pic_ptr->origin_y * padded_pic_ptr->stride_y;
+        uint8_t* in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+        for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+            EB_MEMCPY(pa + row * padded_pic_ptr->stride_y,
+                in + row * input_picture_ptr->stride_y,
+                sizeof(uint8_t)* input_picture_ptr->width);
+
+       generate_padding(
+            &(input_picture_ptr->buffer_y[C_Y]),
+            input_picture_ptr->stride_y,
+            input_picture_ptr->width,
+            input_picture_ptr->height,
+            input_picture_ptr->origin_x,
+            input_picture_ptr->origin_y);
+    }
+#endif
     generate_padding(
         &(padded_pic_ptr->buffer_y[C_Y]),
         padded_pic_ptr->stride_y,
@@ -2160,7 +2180,7 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
         // Pad chroma reference samples - once only per picture
         for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes + picture_control_set_ptr_central->future_altref_nframes + 1); i++) {
             EbPictureBufferDesc *pic_ptr_ref = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
-#if FIX_ALTREF
+#if FIX_ALTREF && !REVERT_ALTREF_FIX
             if (i != picture_control_set_ptr_central->past_altref_nframes)
 #endif
                 generate_padding_pic(pic_ptr_ref,
@@ -2214,19 +2234,19 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
 
 #if DEBUG_TF
         if(!is_highbd)
-            save_YUV_to_file("filtered_picture.yuv",
-                             central_picture_ptr->buffer_y,
-                             central_picture_ptr->buffer_cb,
-                             central_picture_ptr->buffer_cr,
-                             central_picture_ptr->width,
-                             central_picture_ptr->height,
-                             central_picture_ptr->stride_y,
-                             central_picture_ptr->stride_cb,
-                             central_picture_ptr->stride_cr,
-                             central_picture_ptr->origin_y,
-                             central_picture_ptr->origin_x,
-                             ss_x,
-                             ss_y);
+                save_YUV_to_file("filtered_picture.yuv",
+                    central_picture_ptr->buffer_y,
+                    central_picture_ptr->buffer_cb,
+                    central_picture_ptr->buffer_cr,
+                    central_picture_ptr->width,
+                    central_picture_ptr->height,
+                    central_picture_ptr->stride_y,
+                    central_picture_ptr->stride_cb,
+                    central_picture_ptr->stride_cr,
+                    central_picture_ptr->origin_y,
+                    central_picture_ptr->origin_x,
+                    ss_x,
+                    ss_y);
         else
             save_YUV_to_file_highbd("filtered_picture.yuv",
                                     picture_control_set_ptr_central->altref_buffer_highbd[C_Y],

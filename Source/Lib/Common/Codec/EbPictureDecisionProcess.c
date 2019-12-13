@@ -3459,7 +3459,11 @@ void* picture_decision_kernel(void *input_ptr)
 
                 ParentPcsWindow[0] = queueEntryPtr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr->object_ptr : NULL;
                 ParentPcsWindow[1] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
+#if SERIAL_MODE
+                for (windowIndex = 0; windowIndex < sequence_control_set_ptr->scd_delay; windowIndex++) {
+#else
                 for (windowIndex = 0; windowIndex < FUTURE_WINDOW_WIDTH; windowIndex++) {
+#endif
                     entryIndex = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, windowIndex + 1);
                     if (encode_context_ptr->picture_decision_reorder_queue[entryIndex]->parent_pcs_wrapper_ptr == NULL) {
                         windowAvail = EB_FALSE;
