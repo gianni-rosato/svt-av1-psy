@@ -14338,6 +14338,9 @@ extern "C" {
 #if GM_OPT
         uint8_t                                gm_level;
 #endif
+#if TX_SIZE_EARLY_EXIT
+        uint8_t                                tx_size_early_exit;
+#endif
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData
