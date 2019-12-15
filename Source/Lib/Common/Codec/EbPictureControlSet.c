@@ -142,6 +142,9 @@ void picture_control_set_dctor(EbPtr p)
     EB_DELETE(obj->ep_luma_dc_sign_level_coeff_neighbor_array);
     EB_DELETE(obj->ep_cb_dc_sign_level_coeff_neighbor_array);
     EB_DELETE(obj->ep_cr_dc_sign_level_coeff_neighbor_array);
+#if RATE_ESTIMATION_UPDATE
+    EB_DELETE(obj->ep_partition_context_neighbor_array);
+#endif
     EB_DELETE(obj->mode_type_neighbor_array);
     EB_DELETE(obj->partition_context_neighbor_array);
     EB_DELETE(obj->skip_flag_neighbor_array);
@@ -838,7 +841,18 @@ EbErrorType picture_control_set_ctor(
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
             },
-
+#if RATE_ESTIMATION_UPDATE
+            // Encode pass partition neighbor array
+            {
+                &object_ptr->ep_partition_context_neighbor_array,
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(struct PartitionContext),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+#endif
             // Entropy Coding Neighbor Arrays
             {
                 &object_ptr->mode_type_neighbor_array,

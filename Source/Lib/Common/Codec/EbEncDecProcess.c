@@ -231,6 +231,9 @@ static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set
     neighbor_array_unit_reset(picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_cb_dc_sign_level_coeff_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_cr_dc_sign_level_coeff_neighbor_array);
+#if RATE_ESTIMATION_UPDATE
+    neighbor_array_unit_reset(picture_control_set_ptr->ep_partition_context_neighbor_array);
+#endif
     // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is16bit==0?
     EbBool is16bit = (EbBool)(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT);
     if (is16bit) {
@@ -2173,11 +2176,11 @@ void move_cu_data(
     CodingUnit *src_cu,
     CodingUnit *dst_cu);
 #endif
-
+#if !RATE_ESTIMATION_UPDATE
 void av1_estimate_syntax_rate___partial(
     MdRateEstimationContext        *md_rate_estimation_array,
     FRAME_CONTEXT                  *fc);
-
+#endif
 #if MULTI_PASS_PD
 void copy_neighbour_arrays(
     PictureControlSet   *picture_control_set_ptr,
@@ -2751,17 +2754,50 @@ void* enc_dec_kernel(void *input_ptr)
                         else
                             picture_control_set_ptr->ec_ctx_array[sb_index] = picture_control_set_ptr->ec_ctx_array[sb_index - 1];
 #else
+#if RATE_ESTIMATION_UPDATE
+                        // Use the latest available CDF for the current SB
+                        // Use the weighted average of left (3x) and top (1x) if available.
+                        int8_t up_available     = ((int32_t)(sb_origin_y >> MI_SIZE_LOG2) > sb_ptr->tile_info.mi_row_start);
+                        int8_t left_available   = ((int32_t)(sb_origin_x >> MI_SIZE_LOG2) > sb_ptr->tile_info.mi_col_start);
+                        if (!left_available && !up_available)
+                            picture_control_set_ptr->ec_ctx_array[sb_index] = *picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc;
+                        else if (!left_available)
+                            picture_control_set_ptr->ec_ctx_array[sb_index] = picture_control_set_ptr->ec_ctx_array[sb_index - picture_width_in_sb];
+                        else if (!up_available)
+                            picture_control_set_ptr->ec_ctx_array[sb_index] = picture_control_set_ptr->ec_ctx_array[sb_index - 1];
+                        else {
+                            picture_control_set_ptr->ec_ctx_array[sb_index] = picture_control_set_ptr->ec_ctx_array[sb_index - 1];
+                            avg_cdf_symbols(
+                                &picture_control_set_ptr->ec_ctx_array[sb_index],
+                                &picture_control_set_ptr->ec_ctx_array[sb_index - picture_width_in_sb],
+                                AVG_CDF_WEIGHT_LEFT,
+                                AVG_CDF_WEIGHT_TOP);
+                        }
+#else
                         if (sb_origin_x == 0)
                             picture_control_set_ptr->ec_ctx_array[sb_index] = *picture_control_set_ptr->coeff_est_entropy_coder_ptr->fc;
                         else
                             picture_control_set_ptr->ec_ctx_array[sb_index] = picture_control_set_ptr->ec_ctx_array[sb_index - 1];
 #endif
+#endif
+#if RATE_ESTIMATION_UPDATE
+                        // Initial Rate Estimation of the syntax elements
+                        av1_estimate_syntax_rate(
+                            &picture_control_set_ptr->rate_est_array[sb_index],
+                            picture_control_set_ptr->slice_type == I_SLICE,
+                            &picture_control_set_ptr->ec_ctx_array[sb_index]);
 
+                        // Initial Rate Estimation of the Motion vectors
+                        av1_estimate_mv_rate(
+                            picture_control_set_ptr,
+                            &picture_control_set_ptr->rate_est_array[sb_index],
+                            &picture_control_set_ptr->ec_ctx_array[sb_index]);
+#else
                         //construct the tables using the latest CDFs : Coeff Only here ---to check if I am using all the uptodate CDFs here
                         av1_estimate_syntax_rate___partial(
                             &picture_control_set_ptr->rate_est_array[sb_index],
                             &picture_control_set_ptr->ec_ctx_array[sb_index]);
-
+#endif
                         av1_estimate_coefficients_rate(
                             &picture_control_set_ptr->rate_est_array[sb_index],
                             &picture_control_set_ptr->ec_ctx_array[sb_index]);
@@ -2770,6 +2806,9 @@ void* enc_dec_kernel(void *input_ptr)
                         uint32_t  candidateIndex;
                         for (candidateIndex = 0; candidateIndex < MODE_DECISION_CANDIDATE_MAX_COUNT; ++candidateIndex)
                             context_ptr->md_context->fast_candidate_ptr_array[candidateIndex]->md_rate_estimation_ptr = &picture_control_set_ptr->rate_est_array[sb_index];
+#if RATE_ESTIMATION_UPDATE
+                        context_ptr->md_context->md_rate_estimation_ptr = &picture_control_set_ptr->rate_est_array[sb_index];
+#endif
                     }
                     // Configure the LCU
                     mode_decision_configure_lcu(

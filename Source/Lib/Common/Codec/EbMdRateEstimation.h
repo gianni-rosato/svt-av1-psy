@@ -9,6 +9,9 @@
 #include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
 #include "EbPictureControlSet.h"
+#if RATE_ESTIMATION_UPDATE
+#include "EbCodingUnit.h"
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -322,11 +325,210 @@ extern "C" {
     * Estimate the rate of motion vectors
     * based on the frame CDF
     ***************************************************************************/
-    extern void av1_estimate_mv_rate(
-        struct PictureControlSet     *picture_control_set_ptr,
+extern void av1_estimate_mv_rate(
+        struct PictureControlSet *picture_control_set_ptr,
         MdRateEstimationContext  *md_rate_estimation_array,
+#if RATE_ESTIMATION_UPDATE
+        FRAME_CONTEXT            *fc);
+#else
         NmvContext                *nmv_ctx);
+#endif
+#if RATE_ESTIMATION_UPDATE
+#define AVG_CDF_WEIGHT_LEFT      3
+#define AVG_CDF_WEIGHT_TOP       1
 
+static AOM_INLINE void avg_cdf_symbol(AomCdfProb *cdf_ptr_left,
+    AomCdfProb *cdf_ptr_tr, int num_cdfs,
+    int cdf_stride, int nsymbs, int wt_left,
+    int wt_tr) {
+    for (int i = 0; i < num_cdfs; i++) {
+        for (int j = 0; j <= nsymbs; j++) {
+            cdf_ptr_left[i * cdf_stride + j] =
+                (AomCdfProb)(((int)cdf_ptr_left[i * cdf_stride + j] * wt_left +
+                (int)cdf_ptr_tr[i * cdf_stride + j] * wt_tr +
+                    ((wt_left + wt_tr) / 2)) /
+                    (wt_left + wt_tr));
+            assert(cdf_ptr_left[i * cdf_stride + j] >= 0 &&
+                cdf_ptr_left[i * cdf_stride + j] < CDF_PROB_TOP);
+        }
+    }
+}
+
+#define AVERAGE_CDF(cname_left, cname_tr, nsymbs) \
+  AVG_CDF_STRIDE(cname_left, cname_tr, nsymbs, CDF_SIZE(nsymbs))
+
+#define AVG_CDF_STRIDE(cname_left, cname_tr, nsymbs, cdf_stride)           \
+  do {                                                                     \
+    AomCdfProb *cdf_ptr_left = (AomCdfProb *)cname_left;               \
+    AomCdfProb *cdf_ptr_tr = (AomCdfProb *)cname_tr;                   \
+    int array_size = (int)sizeof(cname_left) / sizeof(AomCdfProb);       \
+    int num_cdfs = array_size / cdf_stride;                                \
+    avg_cdf_symbol(cdf_ptr_left, cdf_ptr_tr, num_cdfs, cdf_stride, nsymbs, \
+                   wt_left, wt_tr);                                        \
+  } while (0)
+
+static AOM_INLINE void avg_nmv(NmvContext *nmv_left, NmvContext *nmv_tr,
+    int wt_left, int wt_tr) {
+    AVERAGE_CDF(nmv_left->joints_cdf, nmv_tr->joints_cdf, 4);
+    for (int i = 0; i < 2; i++) {
+        AVERAGE_CDF(nmv_left->comps[i].classes_cdf, nmv_tr->comps[i].classes_cdf,
+            MV_CLASSES);
+        AVERAGE_CDF(nmv_left->comps[i].class0_fp_cdf,
+            nmv_tr->comps[i].class0_fp_cdf, MV_FP_SIZE);
+        AVERAGE_CDF(nmv_left->comps[i].fp_cdf, nmv_tr->comps[i].fp_cdf, MV_FP_SIZE);
+        AVERAGE_CDF(nmv_left->comps[i].sign_cdf, nmv_tr->comps[i].sign_cdf, 2);
+        AVERAGE_CDF(nmv_left->comps[i].class0_hp_cdf,
+            nmv_tr->comps[i].class0_hp_cdf, 2);
+        AVERAGE_CDF(nmv_left->comps[i].hp_cdf, nmv_tr->comps[i].hp_cdf, 2);
+        AVERAGE_CDF(nmv_left->comps[i].class0_cdf, nmv_tr->comps[i].class0_cdf,
+            CLASS0_SIZE);
+        AVERAGE_CDF(nmv_left->comps[i].bits_cdf, nmv_tr->comps[i].bits_cdf, 2);
+    }
+}
+
+// Since the top and left SBs are completed, we can average the top SB's CDFs and
+// the left SB's CDFs and use it for current SB's encoding to
+// improve the performance. This function facilitates the averaging
+// of CDF.
+static AOM_INLINE void avg_cdf_symbols(FRAME_CONTEXT *ctx_left,
+    FRAME_CONTEXT *ctx_tr, int wt_left,
+    int wt_tr) {
+    AVERAGE_CDF(ctx_left->txb_skip_cdf, ctx_tr->txb_skip_cdf, 2);
+    AVERAGE_CDF(ctx_left->eob_extra_cdf, ctx_tr->eob_extra_cdf, 2);
+    AVERAGE_CDF(ctx_left->dc_sign_cdf, ctx_tr->dc_sign_cdf, 2);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf16, ctx_tr->eob_flag_cdf16, 5);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf32, ctx_tr->eob_flag_cdf32, 6);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf64, ctx_tr->eob_flag_cdf64, 7);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf128, ctx_tr->eob_flag_cdf128, 8);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf256, ctx_tr->eob_flag_cdf256, 9);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf512, ctx_tr->eob_flag_cdf512, 10);
+    AVERAGE_CDF(ctx_left->eob_flag_cdf1024, ctx_tr->eob_flag_cdf1024, 11);
+    AVERAGE_CDF(ctx_left->coeff_base_eob_cdf, ctx_tr->coeff_base_eob_cdf, 3);
+    AVERAGE_CDF(ctx_left->coeff_base_cdf, ctx_tr->coeff_base_cdf, 4);
+    AVERAGE_CDF(ctx_left->coeff_br_cdf, ctx_tr->coeff_br_cdf, BR_CDF_SIZE);
+    AVERAGE_CDF(ctx_left->newmv_cdf, ctx_tr->newmv_cdf, 2);
+    AVERAGE_CDF(ctx_left->zeromv_cdf, ctx_tr->zeromv_cdf, 2);
+    AVERAGE_CDF(ctx_left->refmv_cdf, ctx_tr->refmv_cdf, 2);
+    AVERAGE_CDF(ctx_left->drl_cdf, ctx_tr->drl_cdf, 2);
+    AVERAGE_CDF(ctx_left->inter_compound_mode_cdf,
+        ctx_tr->inter_compound_mode_cdf, INTER_COMPOUND_MODES);
+    AVERAGE_CDF(ctx_left->compound_type_cdf, ctx_tr->compound_type_cdf,
+        MASKED_COMPOUND_TYPES);
+    AVERAGE_CDF(ctx_left->wedge_idx_cdf, ctx_tr->wedge_idx_cdf, 16);
+    AVERAGE_CDF(ctx_left->interintra_cdf, ctx_tr->interintra_cdf, 2);
+    AVERAGE_CDF(ctx_left->wedge_interintra_cdf, ctx_tr->wedge_interintra_cdf, 2);
+    AVERAGE_CDF(ctx_left->interintra_mode_cdf, ctx_tr->interintra_mode_cdf,
+        INTERINTRA_MODES);
+    AVERAGE_CDF(ctx_left->motion_mode_cdf, ctx_tr->motion_mode_cdf, MOTION_MODES);
+    AVERAGE_CDF(ctx_left->obmc_cdf, ctx_tr->obmc_cdf, 2);
+    AVERAGE_CDF(ctx_left->palette_y_size_cdf, ctx_tr->palette_y_size_cdf,
+        PALETTE_SIZES);
+    AVERAGE_CDF(ctx_left->palette_uv_size_cdf, ctx_tr->palette_uv_size_cdf,
+        PALETTE_SIZES);
+    for (int j = 0; j < PALETTE_SIZES; j++) {
+        int nsymbs = j + PALETTE_MIN_SIZE;
+        AVG_CDF_STRIDE(ctx_left->palette_y_color_index_cdf[j],
+            ctx_tr->palette_y_color_index_cdf[j], nsymbs,
+            CDF_SIZE(PALETTE_COLORS));
+        AVG_CDF_STRIDE(ctx_left->palette_uv_color_index_cdf[j],
+            ctx_tr->palette_uv_color_index_cdf[j], nsymbs,
+            CDF_SIZE(PALETTE_COLORS));
+    }
+    AVERAGE_CDF(ctx_left->palette_y_mode_cdf, ctx_tr->palette_y_mode_cdf, 2);
+    AVERAGE_CDF(ctx_left->palette_uv_mode_cdf, ctx_tr->palette_uv_mode_cdf, 2);
+    AVERAGE_CDF(ctx_left->comp_inter_cdf, ctx_tr->comp_inter_cdf, 2);
+    AVERAGE_CDF(ctx_left->single_ref_cdf, ctx_tr->single_ref_cdf, 2);
+    AVERAGE_CDF(ctx_left->comp_ref_type_cdf, ctx_tr->comp_ref_type_cdf, 2);
+    AVERAGE_CDF(ctx_left->uni_comp_ref_cdf, ctx_tr->uni_comp_ref_cdf, 2);
+    AVERAGE_CDF(ctx_left->comp_ref_cdf, ctx_tr->comp_ref_cdf, 2);
+    AVERAGE_CDF(ctx_left->comp_bwdref_cdf, ctx_tr->comp_bwdref_cdf, 2);
+    AVERAGE_CDF(ctx_left->txfm_partition_cdf, ctx_tr->txfm_partition_cdf, 2);
+    AVERAGE_CDF(ctx_left->compound_index_cdf, ctx_tr->compound_index_cdf, 2);
+    AVERAGE_CDF(ctx_left->comp_group_idx_cdf, ctx_tr->comp_group_idx_cdf, 2);
+    AVERAGE_CDF(ctx_left->skip_mode_cdfs, ctx_tr->skip_mode_cdfs, 2);
+    AVERAGE_CDF(ctx_left->skip_cdfs, ctx_tr->skip_cdfs, 2);
+    AVERAGE_CDF(ctx_left->intra_inter_cdf, ctx_tr->intra_inter_cdf, 2);
+    avg_nmv(&ctx_left->nmvc, &ctx_tr->nmvc, wt_left, wt_tr);
+    avg_nmv(&ctx_left->ndvc, &ctx_tr->ndvc, wt_left, wt_tr);
+    AVERAGE_CDF(ctx_left->intrabc_cdf, ctx_tr->intrabc_cdf, 2);
+    AVERAGE_CDF(ctx_left->seg.tree_cdf, ctx_tr->seg.tree_cdf, MAX_SEGMENTS);
+    AVERAGE_CDF(ctx_left->seg.pred_cdf, ctx_tr->seg.pred_cdf, 2);
+    AVERAGE_CDF(ctx_left->seg.spatial_pred_seg_cdf,
+        ctx_tr->seg.spatial_pred_seg_cdf, MAX_SEGMENTS);
+    AVERAGE_CDF(ctx_left->filter_intra_cdfs, ctx_tr->filter_intra_cdfs, 2);
+    AVERAGE_CDF(ctx_left->filter_intra_mode_cdf, ctx_tr->filter_intra_mode_cdf,
+        FILTER_INTRA_MODES);
+    AVERAGE_CDF(ctx_left->switchable_restore_cdf, ctx_tr->switchable_restore_cdf,
+        RESTORE_SWITCHABLE_TYPES);
+    AVERAGE_CDF(ctx_left->wiener_restore_cdf, ctx_tr->wiener_restore_cdf, 2);
+    AVERAGE_CDF(ctx_left->sgrproj_restore_cdf, ctx_tr->sgrproj_restore_cdf, 2);
+    AVERAGE_CDF(ctx_left->y_mode_cdf, ctx_tr->y_mode_cdf, INTRA_MODES);
+    AVG_CDF_STRIDE(ctx_left->uv_mode_cdf[0], ctx_tr->uv_mode_cdf[0],
+        UV_INTRA_MODES - 1, CDF_SIZE(UV_INTRA_MODES));
+    AVERAGE_CDF(ctx_left->uv_mode_cdf[1], ctx_tr->uv_mode_cdf[1], UV_INTRA_MODES);
+    for (int i = 0; i < PARTITION_CONTEXTS; i++) {
+        if (i < 4) {
+            AVG_CDF_STRIDE(ctx_left->partition_cdf[i], ctx_tr->partition_cdf[i], 4,
+                CDF_SIZE(10));
+        }
+        else if (i < 16) {
+            AVERAGE_CDF(ctx_left->partition_cdf[i], ctx_tr->partition_cdf[i], 10);
+        }
+        else {
+            AVG_CDF_STRIDE(ctx_left->partition_cdf[i], ctx_tr->partition_cdf[i], 8,
+                CDF_SIZE(10));
+        }
+    }
+    AVERAGE_CDF(ctx_left->switchable_interp_cdf, ctx_tr->switchable_interp_cdf,
+        SWITCHABLE_FILTERS);
+    AVERAGE_CDF(ctx_left->kf_y_cdf, ctx_tr->kf_y_cdf, INTRA_MODES);
+    AVERAGE_CDF(ctx_left->angle_delta_cdf, ctx_tr->angle_delta_cdf,
+        2 * MAX_ANGLE_DELTA + 1);
+    AVG_CDF_STRIDE(ctx_left->tx_size_cdf[0], ctx_tr->tx_size_cdf[0], MAX_TX_DEPTH,
+        CDF_SIZE(MAX_TX_DEPTH + 1));
+    AVERAGE_CDF(ctx_left->tx_size_cdf[1], ctx_tr->tx_size_cdf[1],
+        MAX_TX_DEPTH + 1);
+    AVERAGE_CDF(ctx_left->tx_size_cdf[2], ctx_tr->tx_size_cdf[2],
+        MAX_TX_DEPTH + 1);
+    AVERAGE_CDF(ctx_left->tx_size_cdf[3], ctx_tr->tx_size_cdf[3],
+        MAX_TX_DEPTH + 1);
+    AVERAGE_CDF(ctx_left->delta_q_cdf, ctx_tr->delta_q_cdf, DELTA_Q_PROBS + 1);
+    AVERAGE_CDF(ctx_left->delta_lf_cdf, ctx_tr->delta_lf_cdf, DELTA_LF_PROBS + 1);
+    for (int i = 0; i < FRAME_LF_COUNT; i++) {
+        AVERAGE_CDF(ctx_left->delta_lf_multi_cdf[i], ctx_tr->delta_lf_multi_cdf[i],
+            DELTA_LF_PROBS + 1);
+    }
+    AVG_CDF_STRIDE(ctx_left->intra_ext_tx_cdf[1], ctx_tr->intra_ext_tx_cdf[1], 7,
+        CDF_SIZE(TX_TYPES));
+    AVG_CDF_STRIDE(ctx_left->intra_ext_tx_cdf[2], ctx_tr->intra_ext_tx_cdf[2], 5,
+        CDF_SIZE(TX_TYPES));
+    AVG_CDF_STRIDE(ctx_left->inter_ext_tx_cdf[1], ctx_tr->inter_ext_tx_cdf[1], 16,
+        CDF_SIZE(TX_TYPES));
+    AVG_CDF_STRIDE(ctx_left->inter_ext_tx_cdf[2], ctx_tr->inter_ext_tx_cdf[2], 12,
+        CDF_SIZE(TX_TYPES));
+    AVG_CDF_STRIDE(ctx_left->inter_ext_tx_cdf[3], ctx_tr->inter_ext_tx_cdf[3], 2,
+        CDF_SIZE(TX_TYPES));
+    AVERAGE_CDF(ctx_left->cfl_sign_cdf, ctx_tr->cfl_sign_cdf, CFL_JOINT_SIGNS);
+    AVERAGE_CDF(ctx_left->cfl_alpha_cdf, ctx_tr->cfl_alpha_cdf,
+        CFL_ALPHABET_SIZE);
+}
+/*******************************************************************************
+ * Updates all the syntax stats/CDF for the current block
+ ******************************************************************************/
+void update_stats(
+    struct PictureControlSet   *picture_control_set_ptr,
+    struct CodingUnit          *cu_ptr,
+    int                         mi_row,
+    int                         mi_col);
+/*******************************************************************************
+ * Updates the partition stats/CDF for the current block
+ ******************************************************************************/
+void update_part_stats(
+    struct PictureControlSet   *picture_control_set_ptr,
+    struct CodingUnit          *cu_ptr,
+    int                         mi_row,
+    int                         mi_col);
+#endif
 #ifdef __cplusplus
 }
 #endif

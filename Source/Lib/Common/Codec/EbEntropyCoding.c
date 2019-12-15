@@ -43,7 +43,15 @@ int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
     int32_t *rrow1, int32_t *tile_tl_idx);
-
+#if RATE_ESTIMATION_UPDATE
+int has_second_ref(const MbModeInfo *mbmi) {
+    return mbmi->block_mi.ref_frame[1] > INTRA_FRAME;
+}
+int has_uni_comp_refs(const MbModeInfo *mbmi) {
+    return has_second_ref(mbmi) && (!((mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME) ^
+        (mbmi->block_mi.ref_frame[1] >= BWDREF_FRAME)));
+}
+#else
 static INLINE int has_second_ref(const MbModeInfo *mbmi) {
     return mbmi->block_mi.ref_frame[1] > INTRA_FRAME;
 }
@@ -52,6 +60,7 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
     return has_second_ref(mbmi) && (!((mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME) ^
         (mbmi->block_mi.ref_frame[1] >= BWDREF_FRAME)));
 }
+#endif
 int32_t is_inter_block(const BlockModeInfo *mbmi);
 #if(CHAR_BIT!=8)
 #undef CHAR_BIT
@@ -1196,7 +1205,11 @@ static EbErrorType Av1EncodeCoeff1D(
 *********************************************************************/
 // Return the number of elements in the partition CDF when
 // partitioning the (square) block with luma block size of bsize.
+#if RATE_ESTIMATION_UPDATE
+int32_t partition_cdf_length(BlockSize bsize) {
+#else
 static INLINE int32_t partition_cdf_length(BlockSize bsize) {
+#endif
     if (bsize <= BLOCK_8X8)
         return PARTITION_TYPES;
     else if (bsize == BLOCK_128X128)
@@ -1688,7 +1701,6 @@ static void write_motion_mode(
 
     return;
 }
-
 //****************************************************************************************************//
 extern  int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 uint16_t compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
@@ -2341,10 +2353,12 @@ int32_t eb_av1_get_reference_mode_context(
     return ctx;
 }
 int av1_get_intra_inter_context(const MacroBlockD *xd);
-
 int av1_get_reference_mode_context_new(const MacroBlockD *xd);
-
+#if RATE_ESTIMATION_UPDATE
+AomCdfProb *av1_get_reference_mode_cdf(const MacroBlockD *xd) {
+#else
 static INLINE AomCdfProb *av1_get_reference_mode_cdf(const MacroBlockD *xd) {
+#endif
     return xd->tile_ctx->comp_inter_cdf[av1_get_reference_mode_context_new(xd)];
 }
 
@@ -2357,7 +2371,60 @@ int eb_av1_get_pred_context_uni_comp_ref_p(const MacroBlockD *xd);
 int eb_av1_get_pred_context_uni_comp_ref_p1(const MacroBlockD *xd);
 
 int eb_av1_get_pred_context_uni_comp_ref_p2(const MacroBlockD *xd);
+#if RATE_ESTIMATION_UPDATE
+AomCdfProb *av1_get_comp_reference_type_cdf(
+    const MacroBlockD *xd) {
+    const int pred_context = av1_get_comp_reference_type_context_new(xd);
+    return xd->tile_ctx->comp_ref_type_cdf[pred_context];
+}
 
+AomCdfProb *av1_get_pred_cdf_uni_comp_ref_p(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_uni_comp_ref_p(xd);
+    return xd->tile_ctx->uni_comp_ref_cdf[pred_context][0];
+}
+
+AomCdfProb *av1_get_pred_cdf_uni_comp_ref_p1(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_uni_comp_ref_p1(xd);
+    return xd->tile_ctx->uni_comp_ref_cdf[pred_context][1];
+}
+
+AomCdfProb *av1_get_pred_cdf_uni_comp_ref_p2(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_uni_comp_ref_p2(xd);
+    return xd->tile_ctx->uni_comp_ref_cdf[pred_context][2];
+}
+
+AomCdfProb *av1_get_pred_cdf_comp_ref_p(const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_comp_ref_p(xd);
+    return xd->tile_ctx->comp_ref_cdf[pred_context][0];
+}
+
+AomCdfProb *av1_get_pred_cdf_comp_ref_p1(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_comp_ref_p1(xd);
+    return xd->tile_ctx->comp_ref_cdf[pred_context][1];
+}
+
+AomCdfProb *av1_get_pred_cdf_comp_ref_p2(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_comp_ref_p2(xd);
+    return xd->tile_ctx->comp_ref_cdf[pred_context][2];
+}
+
+AomCdfProb *av1_get_pred_cdf_comp_bwdref_p(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_comp_bwdref_p(xd);
+    return xd->tile_ctx->comp_bwdref_cdf[pred_context][0];
+}
+
+AomCdfProb *av1_get_pred_cdf_comp_bwdref_p1(
+    const MacroBlockD *xd) {
+    const int pred_context = eb_av1_get_pred_context_comp_bwdref_p1(xd);
+    return xd->tile_ctx->comp_bwdref_cdf[pred_context][1];
+}
+#else
 static INLINE AomCdfProb *av1_get_comp_reference_type_cdf(
     const MacroBlockD *xd) {
     const int pred_context = av1_get_comp_reference_type_context_new(xd);
@@ -2410,7 +2477,7 @@ static INLINE AomCdfProb *av1_get_pred_cdf_comp_bwdref_p1(
     const int pred_context = eb_av1_get_pred_context_comp_bwdref_p1(xd);
     return xd->tile_ctx->comp_bwdref_cdf[pred_context][1];
 }
-
+#endif
 int av1_get_comp_reference_type_context_new(const MacroBlockD *xd) {
     int pred_context;
     const MbModeInfo *const above_mbmi = xd->above_mbmi;
@@ -2947,6 +3014,38 @@ int32_t eb_av1_get_pred_context_single_ref_p1(const MacroBlockD *xd) {
     assert(pred_context >= 0 && pred_context < REF_CONTEXTS);
     return pred_context;
 }
+#if RATE_ESTIMATION_UPDATE
+AomCdfProb *av1_get_pred_cdf_single_ref_p1(
+    const MacroBlockD *xd) {
+    return xd->tile_ctx
+        ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p1(xd)][0];
+}
+AomCdfProb *av1_get_pred_cdf_single_ref_p2(
+    const MacroBlockD *xd) {
+    return xd->tile_ctx
+        ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p2(xd)][1];
+}
+AomCdfProb *av1_get_pred_cdf_single_ref_p3(
+    const MacroBlockD *xd) {
+    return xd->tile_ctx
+        ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p3(xd)][2];
+}
+AomCdfProb *av1_get_pred_cdf_single_ref_p4(
+    const MacroBlockD *xd) {
+    return xd->tile_ctx
+        ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p4(xd)][3];
+}
+AomCdfProb *av1_get_pred_cdf_single_ref_p5(
+    const MacroBlockD *xd) {
+    return xd->tile_ctx
+        ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p5(xd)][4];
+}
+AomCdfProb *av1_get_pred_cdf_single_ref_p6(
+    const MacroBlockD *xd) {
+    return xd->tile_ctx
+        ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p6(xd)][5];
+}
+#else
 static INLINE AomCdfProb *av1_get_pred_cdf_single_ref_p1(
     const MacroBlockD *xd) {
     return xd->tile_ctx
@@ -2977,7 +3076,7 @@ static INLINE AomCdfProb *av1_get_pred_cdf_single_ref_p6(
     return xd->tile_ctx
         ->single_ref_cdf[eb_av1_get_pred_context_single_ref_p6(xd)][5];
 }
-
+#endif
 // For the bit to signal whether the single reference is ALTREF_FRAME or
 // non-ALTREF backward reference frame, knowing that it shall be either of
 // these 2 choices.
@@ -6028,6 +6127,24 @@ void write_inter_segment_id(PictureControlSet *picture_control_set_ptr,
 }
 
 #if II_COMP_FLAG
+#if RATE_ESTIMATION_UPDATE
+int is_interintra_allowed_bsize(const BlockSize bsize) {
+    return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
+}
+
+int is_interintra_allowed_mode(const PredictionMode mode) {
+    return (mode >= SINGLE_INTER_MODE_START) && (mode < SINGLE_INTER_MODE_END);
+}
+
+int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
+    return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
+}
+int is_interintra_allowed(const MbModeInfo *mbmi) {
+    return is_interintra_allowed_bsize(mbmi->block_mi.sb_type) &&
+        is_interintra_allowed_mode(mbmi->block_mi.mode) &&
+        is_interintra_allowed_ref(mbmi->block_mi.ref_frame);
+}
+#else
 static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
 }
@@ -6039,13 +6156,12 @@ static INLINE int is_interintra_allowed_mode(const PredictionMode mode) {
 static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
     return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
 }
-
 static INLINE int is_interintra_allowed(const MbModeInfo *mbmi) {
   return is_interintra_allowed_bsize(mbmi->block_mi.sb_type) &&
          is_interintra_allowed_mode(mbmi->block_mi.mode) &&
          is_interintra_allowed_ref(mbmi->block_mi.ref_frame);
 }
-
+#endif
 int is_interintra_wedge_used(BlockSize sb_type);
 #endif
 
@@ -6754,7 +6870,7 @@ EB_EXTERN EbErrorType write_sb(
 
         cu_ptr = &tb_ptr->final_cu_arr[final_cu_index];
 
-        blk_geom = get_blk_geom_mds(cu_index); // AMIR to be replaced with /*cu_ptr->mds_idx*/
+        blk_geom = get_blk_geom_mds(cu_index);
 
         bsize = blk_geom->bsize;
         assert(bsize < BlockSizeS_ALL);

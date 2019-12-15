@@ -59,7 +59,6 @@ static EB_AV1_INTER_PREDICTION_FUNC_PTR   av1_inter_prediction_function_table[2]
 void av1_set_ref_frame(MvReferenceFrame *rf,
     int8_t ref_frame_type);
 
-
 static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
 }
@@ -71,9 +70,6 @@ static INLINE int is_interintra_allowed_mode(const PredictionMode mode) {
 static INLINE int is_interintra_allowed_ref(const MvReferenceFrame rf[2]) {
     return (rf[0] > INTRA_FRAME) && (rf[1] <= INTRA_FRAME);
 }
-
-
-
 int svt_is_interintra_allowed(
     uint8_t enable_inter_intra,
     BlockSize sb_type,
@@ -156,7 +152,11 @@ void precompute_obmc_data(
 #endif
 //static uint32_t  AntiContouringIntraMode[11] = { EB_INTRA_PLANAR, EB_INTRA_DC, EB_INTRA_HORIZONTAL, EB_INTRA_VERTICAL,
 //EB_INTRA_MODE_2, EB_INTRA_MODE_6, EB_INTRA_MODE_14, EB_INTRA_MODE_18, EB_INTRA_MODE_22, EB_INTRA_MODE_30, EB_INTRA_MODE_34 };
+#if RATE_ESTIMATION_UPDATE
+int32_t have_newmv_in_inter_mode(PredictionMode mode) {
+#else
 static int32_t have_newmv_in_inter_mode(PredictionMode mode) {
+#endif
     return (mode == NEWMV || mode == NEW_NEWMV || mode == NEAREST_NEWMV ||
         mode == NEW_NEARESTMV || mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }

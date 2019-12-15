@@ -12475,12 +12475,6 @@ EbErrorType CheckZeroZeroCenter(EbPictureBufferDesc *refPicPtr,
     hmeMvSad = hmeMvSad << subsampleSad;
 
     hmeMvdRate = 0;
-    // AMIR use AV1 rate estimation functions
-    // MeGetMvdFractionBits(
-    //    ABS(*x_search_center << 2),
-    //    ABS(*y_search_center << 2),
-    //    context_ptr->mvd_bits_array,
-    //    &hmeMvdRate);
 
     hmeMvCost = (hmeMvSad << COST_PRECISION) +
                 (((context_ptr->lambda * hmeMvdRate) + MD_OFFSET) >> MD_SHIFT);

@@ -705,7 +705,7 @@ void md_scan_all_blks(uint32_t *idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
             blk_geom_mds[*idx_mds].bwidth_log2 = Log2f(blk_geom_mds[*idx_mds].bwidth);
             blk_geom_mds[*idx_mds].bheight_log2 = Log2f(blk_geom_mds[*idx_mds].bheight);
             blk_geom_mds[*idx_mds].bsize = hvsize_to_bsize[blk_geom_mds[*idx_mds].bwidth_log2 - 2][blk_geom_mds[*idx_mds].bheight_log2 - 2];
-            blk_geom_mds[*idx_mds].bwidth_uv = MAX(4, blk_geom_mds[*idx_mds].bwidth >> 1); // AMIR to clean to check for 4x4
+            blk_geom_mds[*idx_mds].bwidth_uv = MAX(4, blk_geom_mds[*idx_mds].bwidth >> 1);
             blk_geom_mds[*idx_mds].bheight_uv = MAX(4, blk_geom_mds[*idx_mds].bheight >> 1);
             blk_geom_mds[*idx_mds].has_uv = 1;
 

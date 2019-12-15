@@ -13853,6 +13853,9 @@ extern "C" {
         NeighborArrayUnit                  *ep_luma_dc_sign_level_coeff_neighbor_array;
         NeighborArrayUnit                  *ep_cr_dc_sign_level_coeff_neighbor_array;
         NeighborArrayUnit                  *ep_cb_dc_sign_level_coeff_neighbor_array;
+#if RATE_ESTIMATION_UPDATE
+        NeighborArrayUnit                  *ep_partition_context_neighbor_array;
+#endif
         // Entropy Coding Neighbor Arrays
         NeighborArrayUnit                  *mode_type_neighbor_array;
         NeighborArrayUnit                  *partition_context_neighbor_array;
