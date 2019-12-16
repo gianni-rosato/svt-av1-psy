@@ -26,16 +26,13 @@
 #include "EbMotionEstimation.h"
 #include "EbMotionEstimationProcess.h"
 #include "EbMotionEstimationContext.h"
-#include "EbDefinitions.h"
 #include "EbLambdaRateTables.h"
 #include "EbPictureAnalysisProcess.h"
 #include "EbMcp.h"
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 #include "EbObject.h"
-#include "EbPictureOperators.h"
 #include "EbInterPrediction.h"
-#include "aom_dsp_rtcd.h"
 #include "EbComputeVariance_C.h"
 
 #undef _MM_HINT_T2

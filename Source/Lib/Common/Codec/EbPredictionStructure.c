@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "EbDefinitions.h"
 #include "EbPredictionStructure.h"
 #include "EbUtility.h"
 

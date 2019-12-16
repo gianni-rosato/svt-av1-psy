@@ -8,7 +8,6 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
-#include "EbRateControlTables.h"
 #include "EbPictureControlSet.h"
 #include "EbObject.h"
 /************************************************

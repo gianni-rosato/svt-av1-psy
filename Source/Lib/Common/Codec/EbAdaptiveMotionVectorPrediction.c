@@ -17,7 +17,6 @@
 #include <string.h>
 
 #include "EbDefinitions.h"
-#include "EbUtility.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbSvtAv1.h"
 #include "EbModeDecisionProcess.h"

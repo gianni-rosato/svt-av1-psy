@@ -19,17 +19,13 @@
 ***************************************/
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
-#include "EbUtility.h"
 #include "EbCommonUtils.h"
 #include "EbSequenceControlSet.h"
-
 #include "EbModeDecision.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbTransformUnit.h"
 #include "EbModeDecisionProcess.h"
 #include "EbMotionEstimation.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
+
 
 #include "av1me.h"
 #include "hash.h"

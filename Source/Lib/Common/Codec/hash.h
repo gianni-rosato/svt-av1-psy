@@ -12,9 +12,6 @@
 #ifndef AOM_AV1_ENCODER_HASH_H_
 #define AOM_AV1_ENCODER_HASH_H_
 
-//#include "config/aom_config.h"
-
-//#include "aom/aom_integer.h"
 #include "EbDefinitions.h"
 
 #ifdef __cplusplus

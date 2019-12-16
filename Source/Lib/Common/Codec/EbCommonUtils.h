@@ -8,6 +8,7 @@
 
 #include "EbCodingUnit.h"
 #include "EbDefinitions.h"
+#include "EbSegmentationParams.h"
 
 #define MAX_OFFSET_WIDTH 64
 #define MAX_OFFSET_HEIGHT 0

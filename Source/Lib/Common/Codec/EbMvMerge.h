@@ -6,8 +6,6 @@
 #define EbMvMerge_h
 
 #include "EbDefinitions.h"
-#include "EbDefinitions.h"
-#include "EbPictureControlSet.h"
 #include "EbCodingUnit.h"
 #include "EbPredictionUnit.h"
 #include "EbNeighborArrays.h"

@@ -22,11 +22,9 @@
 #include "EbRateDistortionCost.h"
 #include "EbFullLoop.h"
 #include "EbPictureOperators.h"
-
 #include "EbModeDecisionProcess.h"
 #include "EbComputeSAD.h"
 #include "EbTransforms.h"
-#include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"
 #include "EbAvcStyleMcp.h"
 #include "aom_dsp_rtcd.h"

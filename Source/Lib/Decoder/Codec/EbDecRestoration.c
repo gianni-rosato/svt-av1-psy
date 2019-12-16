@@ -15,13 +15,9 @@
 */
 
 #include "EbDefinitions.h"
-#include "EbDecHandle.h"
 #include "EbDecUtils.h"
-
-#include "EbDecInverseQuantize.h"
 #include "EbDecProcessFrame.h"
 #include "EbRestoration.h"
-#include "EbDecRestoration.h"
 
 #define LR_PAD_SIDE 3
 #define LR_PAD_MAX  (LR_PAD_SIDE << 1)

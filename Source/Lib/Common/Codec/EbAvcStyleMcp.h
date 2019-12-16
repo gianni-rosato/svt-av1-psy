@@ -5,11 +5,8 @@
 
 #ifndef EBAVCSTYLEMCP_H
 #define EBAVCSTYLEMCP_H
-#include "EbPictureOperators.h"
-#include "EbMcp.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
-#include "EbPictureControlSet.h"
 
 #ifdef __cplusplus
 extern "C" {

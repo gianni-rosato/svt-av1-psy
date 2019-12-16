@@ -15,9 +15,6 @@
 */
 
 #include <stdlib.h>
-#include "EbUtility.h"
-#include "EbPictureOperators.h"
-#include "EbDefinitions.h"
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 

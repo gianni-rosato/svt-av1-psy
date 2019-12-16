@@ -19,11 +19,11 @@
 #include "EbGlobalMotionEstimation.h"
 #include "EbGlobalMotionEstimationCost.h"
 #include "EbReferenceObject.h"
-
+#include "EbMotionEstimationProcess.h"
+#include "EbWarpedMotion.h"
+#include "EbUtility.h"
 #include "global_motion.h"
 #include "corner_detect.h"
-
-
 
 void global_motion_estimation(PictureParentControlSet *picture_control_set_ptr,
                               MeContext *context_ptr,

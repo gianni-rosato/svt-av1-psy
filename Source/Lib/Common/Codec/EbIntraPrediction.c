@@ -17,15 +17,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #include "EbIntraPrediction.h"
-#include "EbUtility.h"
-#include "EbModeDecision.h"
-#include "EbCodingUnit.h"
 #include "EbModeDecisionProcess.h"
-#include "EbDefinitions.h"
-#include "EbPictureControlSet.h"
-#include "EbEncDecProcess.h"
 #include "aom_dsp_rtcd.h"
+#include "EbIntraPrediction_AVX2.h"
 
 void *eb_aom_memset16(void *dest, int32_t val, size_t length);
 

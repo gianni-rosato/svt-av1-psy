@@ -20,6 +20,7 @@
 #include "EbUnitTestUtility.h"
 #include "EbWarpedMotion.h"
 #include "warp_filter_test_util.h"
+#include "convolve.h"
 
 using std::make_tuple;
 using std::tuple;

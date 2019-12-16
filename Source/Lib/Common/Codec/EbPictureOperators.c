@@ -21,6 +21,8 @@
 #include "EbPictureOperators.h"
 #include "EbPackUnPack.h"
 #include "aom_dsp_rtcd.h"
+#include "EbUtility.h"
+#include "EbHmCode.h"
 
 #define VARIANCE_PRECISION      16
 #define MEAN_PRECISION      (VARIANCE_PRECISION >> 1)

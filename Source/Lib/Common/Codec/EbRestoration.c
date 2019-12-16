@@ -9,12 +9,11 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  *
  */
-#include "EbDefinitions.h"
 #include "EbSequenceControlSet.h"
-#include "EbPictureBufferDesc.h"
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRestoration.h"
+#include "EbUtility.h"
 
 void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
     int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);

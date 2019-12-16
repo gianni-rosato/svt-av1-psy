@@ -10,8 +10,6 @@
 #include <stdio.h>
 
 #include "aom_dsp_rtcd.h"
-#include "EbDefinitions.h"
-
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbMotionEstimation.h"
@@ -20,11 +18,10 @@
 #include "EbComputeSAD.h"
 #include "EbReferenceObject.h"
 #include "EbAvcStyleMcp.h"
-#include "EbMeSadCalculation.h"
 
 #include "EbIntraPrediction.h"
 #include "EbLambdaRateTables.h"
-#include "EbPictureOperators.h"
+
 #define OIS_TH_COUNT 4
 
 int32_t OisPointTh[3][MAX_TEMPORAL_LAYERS][OIS_TH_COUNT] = {

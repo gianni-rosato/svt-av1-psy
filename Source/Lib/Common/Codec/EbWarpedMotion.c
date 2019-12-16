@@ -11,10 +11,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <assert.h>
 #include "aom_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
+#include "EbPictureControlSet.h"
+#include "EbDefinitions.h"
+#include "convolve.h"
 
 #define WARP_ERROR_BLOCK 32
 

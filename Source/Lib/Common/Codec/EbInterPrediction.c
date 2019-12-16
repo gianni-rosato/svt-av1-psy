@@ -16,16 +16,7 @@
 
 #include <stdlib.h>
 
-#include "EbPictureControlSet.h"
-#include "EbReferenceObject.h"
-
 #include "EbInterPrediction.h"
-#include "EbSvtAv1.h"
-#include "EbDefinitions.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
-
-#include "EbModeDecisionProcess.h"
-
 #include "convolve.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"

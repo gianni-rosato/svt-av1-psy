@@ -22,7 +22,7 @@
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbRateControlProcess.h"
-
+#include "EbUtility.h"
 
 void apply_segmentation_based_quantization(
         const BlockGeom *blk_geom,

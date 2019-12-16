@@ -5,10 +5,8 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbPacketizationProcess.h"
 #include "EbEntropyCodingResults.h"
-#include "EbSystemResourceManager.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "EbEntropyCoding.h"

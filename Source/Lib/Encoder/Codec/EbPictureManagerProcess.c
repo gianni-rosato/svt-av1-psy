@@ -6,15 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "EbDefinitions.h"
 #include "EbUtility.h"
-#include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
-
 #include "EbPictureManagerProcess.h"
 #include "EbReferenceObject.h"
-
 #include "EbPictureDemuxResults.h"
 #include "EbPictureManagerQueue.h"
 #include "EbPredictionStructure.h"

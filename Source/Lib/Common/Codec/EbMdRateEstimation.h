@@ -6,7 +6,6 @@
 #ifndef EbMdRateEstimation_h
 #define EbMdRateEstimation_h
 
-#include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
 #include "EbPictureControlSet.h"
 #if RATE_ESTIMATION_UPDATE

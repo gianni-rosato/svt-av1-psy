@@ -13,13 +13,9 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <math.h>
-#include <assert.h>
-
-//#include "config/aom_dsp_rtcd.h"
 
 #include "global_motion.h"
-
-//#include "segmentation.h"
+#include "EbUtility.h"
 #include "corner_detect.h"
 #include "corner_match.h"
 #include "ransac.h"

@@ -6,15 +6,7 @@
 #ifndef EBMCP_H
 #define EBMCP_H
 
-#include "EbMcp_SSE2.h"
-
-#include "EbDefinitions.h"
-#include "EbUtility.h"
-#include "EbPictureBufferDesc.h"
-#include "EbPictureControlSet.h"
-#include "EbSequenceControlSet.h"
 #include "EbMotionEstimationContext.h"
-#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {

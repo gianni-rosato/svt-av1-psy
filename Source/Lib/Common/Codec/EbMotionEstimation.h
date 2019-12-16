@@ -12,9 +12,10 @@
 #include "EbMotionEstimationProcess.h"
 #include "EbMotionEstimationContext.h"
 #include "EbPictureBufferDesc.h"
-#include "EbSequenceControlSet.h"
 #include "EbReferenceObject.h"
 #include "EbPictureDecisionProcess.h"
+#include "EbUtility.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

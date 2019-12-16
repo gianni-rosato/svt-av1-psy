@@ -14,7 +14,6 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
 
 /**********************************************************************************************************************/

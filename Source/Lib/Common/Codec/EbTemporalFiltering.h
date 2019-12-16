@@ -19,15 +19,8 @@
 #ifndef EbTemporalFiltering_h
 #define EbTemporalFiltering_h
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
 #include "EbPictureControlSet.h"
 #include "EbMotionEstimationProcess.h"
-#include "EbSequenceControlSet.h"
-#include "EbDefinitions.h"
-#include "EbBitstreamUnit.h"
 
 // ALT-REF debug-specific defines
 #define DEBUG_TF 0

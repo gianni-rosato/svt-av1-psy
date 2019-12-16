@@ -15,12 +15,8 @@
 */
 
 #include "EbDefinitions.h"
-#include "EbUtility.h"
-#include "EbPictureBufferDesc.h"
-
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
-#include "EbObuParse.h"
 
 #include "EbDecParseHelper.h"
 #include "EbDecUtils.h"

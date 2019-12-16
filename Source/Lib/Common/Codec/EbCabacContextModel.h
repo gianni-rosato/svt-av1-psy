@@ -18,7 +18,6 @@
 #define EbCabacContextModel_h
 
 #include "EbDefinitions.h"
-#include "EbSegmentationParams.h"
 
 #ifdef __cplusplus
 extern "C" {

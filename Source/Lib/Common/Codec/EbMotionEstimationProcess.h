@@ -9,7 +9,6 @@
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
 #include "EbSequenceControlSet.h"
-#include "EbPictureControlSet.h"
 #include "EbMotionEstimationContext.h"
 #include "EbObject.h"
 

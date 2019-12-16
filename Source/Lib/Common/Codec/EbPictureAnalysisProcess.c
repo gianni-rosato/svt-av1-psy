@@ -17,13 +17,9 @@
 #include "EbPictureAnalysisProcess.h"
 #include "EbPictureAnalysisResults.h"
 #include "EbMcp.h"
-#include "EbMotionEstimation.h"
 #include "EbReferenceObject.h"
-
-#include "EbComputeMean.h"
-#include "EbMeSadCalculation.h"
 #include "EbComputeMean_SSE2.h"
-#include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
+#include "EbUtility.h"
 
 #define VARIANCE_PRECISION        16
 #define  LCU_LOW_VAR_TH                5

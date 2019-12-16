@@ -6,14 +6,7 @@
 #ifndef EbCdefProcess_h
 #define EbCdefProcess_h
 
-#include "EbDefinitions.h"
-
 #include "EbSystemResourceManager.h"
-#include "EbPictureBufferDesc.h"
-#include "EbSequenceControlSet.h"
-#include "EbUtility.h"
-#include "EbPsnr.h"
-#include "EbPictureControlSet.h"
 #include "EbObject.h"
 /**************************************
  * Cdef Context

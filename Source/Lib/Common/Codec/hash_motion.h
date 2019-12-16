@@ -12,10 +12,6 @@
 #ifndef AOM_AV1_ENCODER_HASH_MOTION_H_
 #define AOM_AV1_ENCODER_HASH_MOTION_H_
 
-//#include "config/aom_config.h"
-
-//#include "aom/aom_integer.h"
-//#include "aom_scale/yv12config.h"
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
 #include "vector.h"

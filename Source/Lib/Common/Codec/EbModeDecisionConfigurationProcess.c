@@ -16,9 +16,7 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbUtility.h"
-#include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "EbModeDecisionConfigurationProcess.h"
 #include "EbRateControlResults.h"
@@ -28,6 +26,7 @@
 #include "EbModeDecisionProcess.h"
 #include "av1me.h"
 #include "EbCommonUtils.h"
+#include "EbQMatrices.h"
 
 #define MAX_MESH_SPEED 5  // Max speed setting for mesh motion method
 static MeshPattern

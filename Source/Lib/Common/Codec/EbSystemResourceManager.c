@@ -6,6 +6,8 @@
 #include <stdlib.h>
 
 #include "EbSystemResourceManager.h"
+#include "EbDefinitions.h"
+#include "EbThreads.h"
 
 void EbFifoDctor(EbPtr p)
 {

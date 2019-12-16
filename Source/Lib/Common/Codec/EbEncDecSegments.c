@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "EbEncDecSegments.h"
-#include "EbThreads.h"
 
 static void enc_dec_segments_dctor(EbPtr p)
 {

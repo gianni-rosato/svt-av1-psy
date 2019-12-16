@@ -9,10 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include <assert.h>
 #include <math.h>
-#include "EbDefinitions.h"
-#include "EbPictureBufferDesc.h"
+
 #include "EbPsnr.h"
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"

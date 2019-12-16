@@ -4,7 +4,7 @@
 */
 
 #include <stdlib.h>
-#include "EbDefinitions.h"
+//#include "EbDefinitions.h"
 #include "EbEncDecResults.h"
 
 EbErrorType enc_dec_results_ctor(

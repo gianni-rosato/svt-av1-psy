@@ -6,16 +6,13 @@
 #ifndef EbCodingUnit_h
 #define EbCodingUnit_h
 
-#include "EbDefinitions.h"
-#include "EbSyntaxElements.h"
 #include "EbMotionEstimationLcuResults.h"
-#include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 #include "EbPredictionUnit.h"
 #include "EbTransformUnit.h"
 #include "EbCabacContextModel.h"
 #include "hash.h"
-#include "EbObject.h"
+
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbEncDecTasks.h"
 
 EbErrorType enc_dec_tasks_ctor(

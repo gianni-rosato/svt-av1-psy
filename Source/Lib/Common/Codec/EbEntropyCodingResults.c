@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbEntropyCodingResults.h"
 
 EbErrorType entropy_coding_results_ctor(

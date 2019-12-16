@@ -14,23 +14,19 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#include "stdlib.h"
+#include <stdlib.h>
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "EbEntropyCoding.h"
-
-#include"EbAv1Structs.h"
 #include "EbDecStruct.h"
 #include "EbDecBlock.h"
 #include "EbDecHandle.h"
-
 #include "EbObuParse.h"
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
 #include "EbRestoration.h"
 #include "EbDecRestoration.h"
-
 #include "EbDecParseObuUtil.h"
 
 /*TODO : Should be removed */

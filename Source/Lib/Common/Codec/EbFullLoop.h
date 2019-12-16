@@ -8,6 +8,8 @@
 
 #include "EbModeDecisionProcess.h"
 #include "EbCommonUtils.h"
+#include "EbTransforms.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

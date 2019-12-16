@@ -19,11 +19,7 @@
 
 #include "EbDefinitions.h"
 #include "EbAv1Structs.h"
-#include "EbThreads.h"
-#include "EbSystemResourceManager.h"
 #include "EbEncodeContext.h"
-#include "EbPredictionStructure.h"
-#include "noise_model.h"
 #include "EbObject.h"
 
 #ifdef __cplusplus

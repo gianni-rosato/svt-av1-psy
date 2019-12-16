@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "EbPictureBufferDesc.h"
+#include "EbThreads.h"
 #include "EbReferenceObject.h"
+#include "EbPictureBufferDesc.h"
+
 
 void InitializeSamplesNeighboringReferencePicture16Bit(
     EbByte  reconSamplesBufferPtr,

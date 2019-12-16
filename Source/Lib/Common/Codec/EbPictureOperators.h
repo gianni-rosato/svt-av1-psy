@@ -11,10 +11,8 @@
 #include "EbPictureOperators_SSE4_1.h"
 #include "EbPictureOperators_AVX2.h"
 #include "EbPictureOperators_AVX512.h"
-#include "EbHmCode.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
-#include "EbSequenceControlSet.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

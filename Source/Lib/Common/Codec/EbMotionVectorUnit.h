@@ -7,7 +7,6 @@
 #define EbMotionVectorUnit_h
 
 #include "EbDefinitions.h"
-#include "EbDefinitions.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

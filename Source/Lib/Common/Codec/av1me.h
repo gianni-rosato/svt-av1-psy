@@ -14,10 +14,6 @@
 
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
-#include "EbUtility.h"
-
-//#include "av1/encoder/block.h"
-//#include "aom_dsp/variance.h"
 
 #ifdef __cplusplus
 extern "C" {

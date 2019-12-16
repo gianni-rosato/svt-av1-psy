@@ -11,13 +11,12 @@
 #include <string.h>
 #include <limits.h>
 
+#include "EbPictureDecisionProcess.h"
 #include "EbDefinitions.h"
-#include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureAnalysisProcess.h"
 #include "EbPictureAnalysisResults.h"
-#include "EbPictureDecisionProcess.h"
 #include "EbPictureDecisionResults.h"
 #include "EbReferenceObject.h"
 #include "EbSvtAv1ErrorCodes.h"

@@ -6,11 +6,11 @@
 #ifndef EbCodingLoop_h
 #define EbCodingLoop_h
 
-#include "EbDefinitions.h"
 #include "EbCodingUnit.h"
 #include "EbSequenceControlSet.h"
 #include "EbModeDecisionProcess.h"
 #include "EbEncDecProcess.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

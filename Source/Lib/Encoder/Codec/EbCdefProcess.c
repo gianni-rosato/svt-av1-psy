@@ -21,9 +21,12 @@
 #include "EbEncDecResults.h"
 #include "EbThreads.h"
 #include "EbReferenceObject.h"
-
 #include "EbCdef.h"
 #include "EbEncDecProcess.h"
+#include "EbPictureBufferDesc.h"
+#include "EbSequenceControlSet.h"
+#include "EbUtility.h"
+#include "EbPictureControlSet.h"
 
 static int32_t priconv[REDUCED_PRI_STRENGTHS] = { 0, 1, 2, 3, 5, 7, 10, 13 };
 

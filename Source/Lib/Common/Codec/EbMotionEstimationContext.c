@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "EbMotionEstimationContext.h"
+#include "EbUtility.h"
 
 void MotionEstimetionPredUnitCtor(
     MePredUnit   *pu)

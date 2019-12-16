@@ -4,6 +4,8 @@
 */
 
 #include "EbRateControlTables.h"
+#include "EbUtility.h"
+
 static const EbBitNumber initial_rate_control_sad64x64_tables[] = {
     //Q0.txt
    8433,    15005,    17578,    20095,

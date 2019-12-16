@@ -16,14 +16,13 @@
 
 #include <string.h>
 
+#include "EbDeblockingFilter.h"
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbCodingUnit.h"
 #include "EbSequenceControlSet.h"
 #include "EbReferenceObject.h"
-#include "EbDeblockingFilter.h"
-
 #include "EbCommonUtils.h"
 
 #define   convertToChromaQp(iQpY)  ( ((iQpY) < 0) ? (iQpY) : (((iQpY) > 57) ? ((iQpY)-6) : (int32_t)(map_chroma_qp((uint32_t)iQpY))) )

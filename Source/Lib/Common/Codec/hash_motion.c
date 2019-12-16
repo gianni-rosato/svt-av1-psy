@@ -9,9 +9,6 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include <assert.h>
-#include "EbCodingUnit.h"
-
 #include "hash.h"
 #include "hash_motion.h"
 #include "EbPictureControlSet.h"

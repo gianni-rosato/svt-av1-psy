@@ -15,7 +15,6 @@
 */
 
 #include "EbDecParseInterBlock.h"
-#include "EbDecParseHelper.h"
 #include "EbCommonUtils.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 

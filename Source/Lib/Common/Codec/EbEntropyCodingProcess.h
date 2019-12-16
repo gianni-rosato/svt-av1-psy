@@ -11,12 +11,9 @@
 
 #include "EbSystemResourceManager.h"
 #include "EbPictureBufferDesc.h"
-#include "EbModeDecision.h"
 #include "EbInterPrediction.h"
 #include "EbEntropyCoding.h"
 #include "EbTransQuantBuffers.h"
-#include "EbReferenceObject.h"
-#include "EbNeighborArrays.h"
 #include "EbCodingUnit.h"
 #include "EbObject.h"
 

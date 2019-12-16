@@ -17,7 +17,6 @@
 
 #include "EbDefinitions.h"
 #include "EbRateControlProcess.h"
-#include "EbSystemResourceManager.h"
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "EbUtility.h"

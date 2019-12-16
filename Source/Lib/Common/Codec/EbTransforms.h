@@ -22,9 +22,6 @@
 extern "C" {
 #endif
 
-#include "EbTransforms_AVX2.h"
-#include "EbSequenceControlSet.h"
-#include "EbPictureControlSet.h"
 #include "EbEncDecProcess.h"
 
 #define UNIT_QUANT_SHIFT        2

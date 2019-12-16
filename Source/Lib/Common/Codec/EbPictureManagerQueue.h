@@ -7,10 +7,8 @@
 #define EbPictureManagerQueue_h
 
 #include "EbDefinitions.h"
-#include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
 #include "EbPredictionStructure.h"
-#include "EbApiSei.h"
 #include "EbObject.h"
 #include "EbCabacContextModel.h"
 

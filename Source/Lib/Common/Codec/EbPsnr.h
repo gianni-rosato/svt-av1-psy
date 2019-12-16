@@ -14,7 +14,6 @@
 
 #include "EbPictureBufferDesc.h"
 #include "EbDefinitions.h"
-#include "EbDefinitions.h"
 #include "EbUtility.h"
 #define MAX_PSNR 100.0
 

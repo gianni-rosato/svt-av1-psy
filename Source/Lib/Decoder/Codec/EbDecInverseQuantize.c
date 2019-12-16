@@ -25,6 +25,7 @@
 #include "EbDecProcessFrame.h"
 
 #include "EbTransforms.h"
+#include "EbQMatrices.h"
 
 // Same wrapper(av1_ac/dc_quant_QTX) available in .c file of encoder
 static INLINE int16_t get_dc_quant(int32_t qindex, int32_t delta, AomBitDepth bit_depth)

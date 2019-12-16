@@ -6,18 +6,8 @@
 #ifndef EbIntraPrediction_h
 #define EbIntraPrediction_h
 
-#include "EbIntraPrediction_AVX2.h"
-
-#include "EbDefinitions.h"
-#include "EbUtility.h"
-#include "EbPictureBufferDesc.h"
-#include "EbPictureControlSet.h"
-#include "EbCodingUnit.h"
-#include "EbPictureControlSet.h"
 #include "EbModeDecision.h"
-#include "EbNeighborArrays.h"
 #include "EbMotionEstimationProcess.h"
-#include "EbObject.h"
 
 #ifdef __cplusplus
 extern "C" {

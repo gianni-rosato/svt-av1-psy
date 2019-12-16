@@ -5,11 +5,8 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
-#include "EbSystemResourceManager.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
-
 #include "EbMotionEstimationResults.h"
 #include "EbInitialRateControlProcess.h"
 #include "EbInitialRateControlResults.h"

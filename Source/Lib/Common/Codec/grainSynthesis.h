@@ -16,6 +16,8 @@
 #ifndef AOM_AOM_GRAIN_SYNTHESIS_H_
 #define AOM_AOM_GRAIN_SYNTHESIS_H_
 
+#include "EbDefinitions.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

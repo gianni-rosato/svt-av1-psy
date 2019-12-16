@@ -6,14 +6,10 @@
 #ifndef EbInterPrediction_h
 #define EbInterPrediction_h
 
-#include "EbDefinitions.h"
-#include "EbPictureControlSet.h"
-#include "EbCodingUnit.h"
-#include "EbPredictionUnit.h"
 #include "EbModeDecision.h"
 #include "EbMcp.h"
-#include "EbMvMerge.h"
-#include "EbObject.h"
+#include "filter.h"
+#include "convolve.h"
 
 #ifdef __cplusplus
 extern "C" {

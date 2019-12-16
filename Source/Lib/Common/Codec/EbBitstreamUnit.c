@@ -16,8 +16,10 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbBitstreamUnit.h"
+#include "EbDefinitions.h"
+#include "EbUtility.h"
+
 #if OD_MEASURE_EC_OVERHEAD
 #include <stdio.h>
 #endif

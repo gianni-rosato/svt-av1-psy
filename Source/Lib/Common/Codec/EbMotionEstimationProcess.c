@@ -7,13 +7,11 @@
 
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
-#include "EbSequenceControlSet.h"
 #include "EbPictureDecisionResults.h"
 #include "EbMotionEstimationProcess.h"
 #include "EbMotionEstimationResults.h"
 #include "EbReferenceObject.h"
 #include "EbMotionEstimation.h"
-#include "EbIntraPrediction.h"
 #include "EbLambdaRateTables.h"
 #include "EbComputeSAD.h"
 

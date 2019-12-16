@@ -10,18 +10,12 @@
  * Includes
  **************************************/
 #include <stdlib.h>
-
+#include "EbDecUtils.h"
 #include "EbDefinitions.h"
 #include "EbUtility.h"
 #include "EbEntropyCoding.h"
-
-#include "EbDecStruct.h"
 #include "EbDecBlock.h"
-
-#include "EbDecHandle.h"
 #include "EbDecMemInit.h"
-
-#include "EbDecUtils.h"
 
 EbErrorType check_add_tplmv_buf(EbDecHandle *dec_handle_ptr) {
 

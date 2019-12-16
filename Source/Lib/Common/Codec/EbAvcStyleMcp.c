@@ -6,6 +6,9 @@
 #include "EbAvcStyleMcp.h"
 #include "EbPictureOperators.h"
 #include "aom_dsp_rtcd.h"
+#include "EbMcp.h"
+#include "EbPictureControlSet.h"
+#include "EbUtility.h"
 
 static const   uint8_t  frac_mapped_pos_tab_x[16] = { 0, 1, 2, 3,
     0, 1, 2, 3,

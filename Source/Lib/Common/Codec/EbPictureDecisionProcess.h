@@ -11,6 +11,7 @@
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbObject.h"
+#include "EbUtility.h"
 
 /**************************************
  * Context

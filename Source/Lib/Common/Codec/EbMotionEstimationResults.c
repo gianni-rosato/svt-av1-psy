@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbMotionEstimationResults.h"
 
 EbErrorType motion_estimation_results_ctor(

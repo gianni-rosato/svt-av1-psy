@@ -6,6 +6,9 @@
 #ifndef EbDecUtils_h
 #define EbDecUtils_h
 
+#include "EbDecStruct.h"
+#include "EbDecHandle.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

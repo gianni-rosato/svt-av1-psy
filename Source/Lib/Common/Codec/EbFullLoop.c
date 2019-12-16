@@ -15,11 +15,8 @@
 */
 
 #include "EbDefinitions.h"
-#include "EbModeDecisionProcess.h"
-#include "EbTransforms.h"
 #include "EbFullLoop.h"
 #include "EbRateDistortionCost.h"
-#include "EbCommonUtils.h"
 #include "aom_dsp_rtcd.h"
 
 #ifdef __GNUC__

@@ -15,13 +15,13 @@
 */
 
 #include <stdlib.h>
-#include "EbDefinitions.h"
 #include "EbDlfProcess.h"
 #include "EbEncDecResults.h"
-#include "EbThreads.h"
 #include "EbReferenceObject.h"
-
 #include "EbDeblockingFilter.h"
+#include "EbDefinitions.h"
+#include "EbSequenceControlSet.h"
+#include "EbPictureControlSet.h"
 
 void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm, int32_t after_cdef);
 

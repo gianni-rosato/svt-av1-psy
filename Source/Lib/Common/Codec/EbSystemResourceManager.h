@@ -6,8 +6,6 @@
 #ifndef EbSystemResource_h
 #define EbSystemResource_h
 
-#include "EbDefinitions.h"
-#include "EbThreads.h"
 #include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {

@@ -5,7 +5,6 @@
 
 #include <stdlib.h>
 
-#include "EbDefinitions.h"
 #include "EbRateControlTasks.h"
 
 EbErrorType rate_control_tasks_ctor(

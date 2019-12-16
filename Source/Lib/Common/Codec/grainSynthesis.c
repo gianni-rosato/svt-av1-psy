@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "EbDefinitions.h"
 #include "grainSynthesis.h"
 
   // Samples with Gaussian distribution in the range of [-2048, 2047] (12 bits)

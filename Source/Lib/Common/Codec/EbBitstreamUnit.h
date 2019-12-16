@@ -6,8 +6,6 @@
 #ifndef EbBitstreamUnit_h
 #define EbBitstreamUnit_h
 
-#include "EbDefinitions.h"
-#include "EbUtility.h"
 #include "EbObject.h"
 #include <stdint.h>
 #ifdef __cplusplus

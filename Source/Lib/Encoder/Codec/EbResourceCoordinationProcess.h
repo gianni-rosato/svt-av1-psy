@@ -8,7 +8,6 @@
 
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
-#include "EbDefinitions.h"
 #include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {

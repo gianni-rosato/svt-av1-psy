@@ -12,9 +12,8 @@
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
-#include "EbDefinitions.h"
-#include "EbCodingUnit.h"
 #include "av1me.h"
+#include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbComputeSAD.h"

@@ -10,9 +10,8 @@
  */
 
 #include <assert.h>
-#include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
 #include "convolve.h"
+#include "aom_dsp_rtcd.h"
 
  // Note: Fixed size intermediate buffers, place limits on parameters
  // of some functions. 2d filtering proceeds in 2 steps:

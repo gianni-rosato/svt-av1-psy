@@ -13,9 +13,8 @@
 #include <sys/time.h>
 #endif
 
-#include "EbDefinitions.h"
 #include "EbUtility.h"
-#include "EbTime.h"
+
 /********************************************************************************************
 * faster memcopy for <= 64B blocks, great w/ inlining and size known at compile time (or w/ PGO)
 * THIS NEEDS TO STAY IN A HEADER FOR BEST PERFORMANCE

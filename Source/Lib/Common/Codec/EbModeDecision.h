@@ -17,6 +17,7 @@
 #include "EbPictureOperators.h"
 #include "EbNeighborArrays.h"
 #include "EbObject.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "EbCodingUnit.h"
-#include "EbDefinitions.h"
 #include "EbTransformUnit.h"
 #include "EbPictureControlSet.h"
 
