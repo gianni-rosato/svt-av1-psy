@@ -722,8 +722,8 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
                                                           fast,
                                                           start_gi,
                                                           end_gi);
-                for (int l = 0; l < sizeof(search_one_dual_func_table) /
-                                        sizeof(*search_one_dual_func_table);
+                for (int l = 0; l < (int) (sizeof(search_one_dual_func_table) /
+                                        sizeof(*search_one_dual_func_table));
                      ++l) {
                     uint64_t best_mse_tst =
                         search_one_dual_func_table[l](lvl_luma_tst,
@@ -784,8 +784,8 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
     memset(lvl_luma_tst, 0, sizeof(lvl_luma_tst));
     memset(lvl_chroma_tst, 0, sizeof(lvl_chroma_tst));
 
-    for (int i = 0; i < sizeof(search_one_dual_func_table) /
-                            sizeof(*search_one_dual_func_table);
+    for (int i = 0; i < (int) (sizeof(search_one_dual_func_table) /
+                            sizeof(*search_one_dual_func_table));
          ++i) {
         for (int j = 0; j < nb_strengths; ++j) {
             uint64_t best_mse_ref, best_mse_tst;

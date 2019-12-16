@@ -901,8 +901,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
                 sad16x16_1,
                 false);
 
-            for (int j = 0; j < sizeof(get_eight_sad_8_16_func_table) /
-                                    sizeof(*get_eight_sad_8_16_func_table);
+            for (int j = 0; j < (int) (sizeof(get_eight_sad_8_16_func_table) /
+                                    sizeof(*get_eight_sad_8_16_func_table));
                  j++) {
                 uint32_t best_sad8x8_2[4] = {BEST_SAD_MAX, 0, BEST_SAD_MAX, 0};
                 uint32_t best_mv8x8_2[4] = {
@@ -977,8 +977,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
                                       middle_time_useconds,
                                       &time_c);
 
-        for (int i = 0; i < sizeof(get_eight_sad_8_16_func_table) /
-                                sizeof(*get_eight_sad_8_16_func_table);
+        for (int i = 0; i < (int) (sizeof(get_eight_sad_8_16_func_table) /
+                                sizeof(*get_eight_sad_8_16_func_table));
              i++) {
             uint32_t best_sad8x8_2[4] = {BEST_SAD_MAX, 0, BEST_SAD_MAX, 0};
             uint32_t best_mv8x8_2[4] = {
@@ -1065,8 +1065,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
                 &best_mv64x64_1,
                 mv);
 
-            for (int j = 0; j < sizeof(get_eight_sad_32_64_func_table) /
-                                    sizeof(*get_eight_sad_32_64_func_table);
+            for (int j = 0; j < (int) (sizeof(get_eight_sad_32_64_func_table) /
+                                    sizeof(*get_eight_sad_32_64_func_table));
                  j++) {
                 memcpy(best_sad32x32_2, best_sad32x32, sizeof(best_sad32x32));
 
@@ -1133,8 +1133,8 @@ class GetEightSadTest : public ::testing::WithParamInterface<SadCalTestParam>,
                                       middle_time_useconds,
                                       &time_c);
 
-        for (int i = 0; i < sizeof(get_eight_sad_32_64_func_table) /
-                                sizeof(*get_eight_sad_32_64_func_table);
+        for (int i = 0; i < (int) (sizeof(get_eight_sad_32_64_func_table) /
+                                sizeof(*get_eight_sad_32_64_func_table));
              i++) {
             uint32_t best_mv32x32_2[4] = {
                 0x00010002, 0x0003FFF4, 0xFFF70008, 0xFFF9FFF1};
@@ -1870,8 +1870,8 @@ class SSDAvgTest : public ::testing::WithParamInterface<TestSadParam>,
                                                            height_,
                                                            width_);
 
-        for (int i = 0; i < sizeof(combined_averaging_ssd_func_table) /
-                                sizeof(*combined_averaging_ssd_func_table);
+        for (int i = 0; i < (int) (sizeof(combined_averaging_ssd_func_table) /
+                                sizeof(*combined_averaging_ssd_func_table));
              i++) {
             const uint32_t sum1_ssd =
                 combined_averaging_ssd_func_table[i](src_aligned_,
@@ -1920,8 +1920,8 @@ class SSDAvgTest : public ::testing::WithParamInterface<TestSadParam>,
                                       middle_time_useconds,
                                       &time_c);
 
-        for (int i = 0; i < sizeof(combined_averaging_ssd_func_table) /
-                                sizeof(*combined_averaging_ssd_func_table);
+        for (int i = 0; i < (int) (sizeof(combined_averaging_ssd_func_table) /
+                                sizeof(*combined_averaging_ssd_func_table));
              i++) {
             uint32_t sum1_ssd;
 

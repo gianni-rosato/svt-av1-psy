@@ -349,7 +349,7 @@ static void SetInjectorFrameRate                (const char *value, EbConfig *cf
 static void SetLatencyMode                      (const char *value, EbConfig *cfg)  {cfg->latency_mode               = (uint8_t)strtol(value, NULL, 0);};
 static void SetAsmType                          (const char *value, EbConfig *cfg)  {
     const struct {
-        char *name;
+        const char *name;
         CPU_FLAGS flags;
     } param_maps[] ={
         {"c",       0},                             {"0",  0},

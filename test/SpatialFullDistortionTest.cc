@@ -562,7 +562,7 @@ class FullDistortionKernel16BitsFuncTest
     }
 
   protected:
-    void RunCheckOutput();
+    void RunCheckOutput() override;
     void RunSpeedTest();
     SpatialFullDistortionKernelFunc test_func_;
 };

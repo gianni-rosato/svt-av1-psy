@@ -92,7 +92,7 @@ processorGroup                  *lp_group = NULL;
 static const char *get_asm_level_name_str(CPU_FLAGS cpu_flags) {
 
     const struct {
-        char *name;
+        const char *name;
         CPU_FLAGS flags;
     } param_maps[] = {
         {"c",       0},

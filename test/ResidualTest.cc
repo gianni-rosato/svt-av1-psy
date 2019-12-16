@@ -195,8 +195,8 @@ class ResidualKernelTest
                           area_width_,
                           area_height_);
 
-        for (int i = 0; i < sizeof(residual_kernel8bit_func_table) /
-                                sizeof(*residual_kernel8bit_func_table);
+        for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
+                                sizeof(*residual_kernel8bit_func_table));
              i++) {
             eb_buf_random_s16(residual2_, test_size_);
             residual_kernel8bit_func_table[i](input_,
@@ -241,8 +241,8 @@ class ResidualKernelTest
                                       middle_time_useconds,
                                       &time_c);
 
-        for (int i = 0; i < sizeof(residual_kernel8bit_func_table) /
-                                sizeof(*residual_kernel8bit_func_table);
+        for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
+                                sizeof(*residual_kernel8bit_func_table));
              i++) {
             eb_buf_random_s16(residual2_, test_size_);
 

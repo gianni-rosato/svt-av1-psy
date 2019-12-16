@@ -199,6 +199,8 @@ static INLINE bool is_txfm_allowed(TxType tx_type, TxSize tx_size) {
             support_types = types;
             break;
         }
+        default:
+            break;
     }
 
     while (*support_types > -1) {

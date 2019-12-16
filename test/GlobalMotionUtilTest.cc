@@ -62,7 +62,6 @@ using AffineMat = struct {
 };
 
 static const int CoordinateMax = (1 << 16) - 1;
-static const int CoordinateHalf = (1 << 15);
 static const int PointCountMin = 15; /**< 3*MINPTS_MULTIPLIER */
 
 /**

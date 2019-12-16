@@ -211,8 +211,8 @@ class PictureOperatorTest : public ::testing::Test,
     }
 
     int tst_size;
-    TestPattern test_pattern_;
     uint32_t pu_width_, pu_height_;
+    TestPattern test_pattern_;
     uint32_t tst_stride_;
     uint8_t *tst1_aligned_, *tst2_aligned_;
     uint8_t *dst1_aligned_, *dst2_aligned_;

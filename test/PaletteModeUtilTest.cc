@@ -433,7 +433,7 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
             memset(indices_ref_, 0xff, indices_size_ * sizeof(uint8_t));
             memset(indices_tst_, 0xff, indices_size_ * sizeof(uint8_t));
         } else {  // pattern_ == RANDOM
-            for (size_t i = 0; i < n_ * 2; i++)
+            for (int i = 0; i < n_ * 2; i++)
                 data_[i] = rnd32_->random();
             for (size_t i = 0; i < centroids_size_; i++)
                 centroids_ref_[i] = centroids_tst_[i] = rnd32_->random();
@@ -458,7 +458,7 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
             test_num = 1;
 
         for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
-            for (int i = 0; i < test_num; i++) {
+            for (size_t i = 0; i < test_num; i++) {
                 prepare_data();
                 func_ref_(data_, centroids_ref_, indices_ref_, n_, k, MaxItr);
                 func_tst_(data_, centroids_tst_, indices_tst_, n_, k, MaxItr);
@@ -478,7 +478,7 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
 
         EbStartTime(&start_time_seconds, &start_time_useconds);
 
-        for (int i = 0; i < num_loop; i++) {
+        for (uint64_t i = 0; i < num_loop; i++) {
             for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
                 func_ref_(data_, centroids_ref_, indices_ref_, n_, k, MaxItr);
             }
@@ -486,7 +486,7 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
 
         EbStartTime(&middle_time_seconds, &middle_time_useconds);
 
-        for (int i = 0; i < num_loop; i++) {
+        for (uint64_t i = 0; i < num_loop; i++) {
             for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
                 func_tst_(data_, centroids_tst_, indices_tst_, n_, k, MaxItr);
             }
