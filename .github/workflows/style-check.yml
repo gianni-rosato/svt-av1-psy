@@ -1,0 +1,43 @@
+name: Style Check
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Tab check
+        run: |
+          ! git grep -InP --heading "\t" -- . ':!third_party/**/*'
+      - name: Carriage Return check
+        run: |
+          ! git grep -InP --heading "\r" -- . ':!third_party/**/*'
+      - name: Trailing spaces
+        run: |
+          ! git grep -InP --heading " $" -- . ':!third_party/**/*'
+      - name: Fetch upstream
+        run: git fetch -q https://github.com/OpenVisualCloud/SVT-AV1.git master
+      - name: newline at EOF check
+        run: |
+          for file in $(git diff --name-only FETCH_HEAD  -- . ':!third_party' ':!test/e2e_test/test_vector_list.txt' ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' ':!*.png'); do
+            if [ -n "$(tail -c1 "$file")" ]; then
+              echo "No newline at end of $file"
+              false
+            fi
+          done
+      - name: Check commit message
+        run: |
+          for i in $(git rev-list HEAD ^FETCH_HEAD); do
+            echo "Checking commit message of $i"
+            msg="$(git log --format=%B -n 1 $i)"
+            if [ -n "$(sed -n 2p <<<"$msg")" ]; then
+              echo "Malformed commit message in $i, second line must be empty"
+              false
+            fi
+            if head -1 <<<"$msg" | grep -q '\.$'; then
+              echo "Malformed commit message in $i, trailing period in subject line"
+              false
+            fi
+          done

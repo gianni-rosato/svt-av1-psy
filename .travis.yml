@@ -32,7 +32,6 @@ notifications:
 
 # Pipeline stages
 stages:
-  - name: style
   - name: test
   - name: coveralls+valgrind
     if: type != pull_request
@@ -100,42 +99,6 @@ matrix:
     - name: macOS 10-bit test
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
   include:
-    # Coding style check
-    - name: Style check
-      stage: style
-      addons: skip
-      before_install: skip
-      install: skip
-      script:
-        - |
-          echo "Checking for tabs"
-          ! git grep -InP --heading "\t" -- . ':!third_party/**/*'
-          echo "Checking for carriage returns"
-          ! git grep -InP --heading "\r" -- . ':!third_party/**/*'
-          echo "Checking for trailing spaces"
-          ! git grep -InP --heading " $" -- . ':!third_party/**/*';
-        - git fetch -q https://github.com/OpenVisualCloud/SVT-AV1.git master
-        - |
-          for file in $(git diff --name-only FETCH_HEAD |
-            grep -vE "third_party/|test/e2e_test/test_vector_list.txt|test/vectors/smoking_test.cfg|test/vectors/video_src.cfg|.png"); do
-            if [ -n "$(tail -c1 "$file")" ]; then
-              echo "No newline at end of $file"
-              false
-            fi
-          done
-        - |
-          for i in $(git rev-list HEAD ^FETCH_HEAD); do
-            echo "Checking commit message of $i"
-            msg="$(git log --format=%B -n 1 $i)"
-            if [ -n "$(sed -n 2p <<<"$msg")" ]; then
-              echo "Malformed commit message in $i, second line must be empty"
-              false
-            fi
-            if head -1 <<<"$msg" | grep -q '\.$'; then
-              echo "Malformed commit message in $i, trailing period in subject line"
-              false
-            fi
-          done
     # GCC & Clang builds
     - name: Linux GCC 7 build
       stage: test
