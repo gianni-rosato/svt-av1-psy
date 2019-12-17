@@ -1739,18 +1739,18 @@ static void  Av1GenerateRpsInfo(
         prune_refs(pred_position_ptr, av1_rps);
 
         if (!set_frame_display_params(picture_control_set_ptr, context_ptr, mini_gop_index)) {
-			if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0) {
-				frm_hdr->show_frame = EB_FALSE;
-				picture_control_set_ptr->has_show_existing = EB_FALSE;
-			} else {
-				frm_hdr->show_frame = EB_TRUE;
-				picture_control_set_ptr->has_show_existing = EB_TRUE;
+            if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0) {
+                frm_hdr->show_frame = EB_FALSE;
+                picture_control_set_ptr->has_show_existing = EB_FALSE;
+            } else {
+                frm_hdr->show_frame = EB_TRUE;
+                picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-				if (picture_index == 0)
-					frm_hdr->show_existing_frame = base2_idx;
+                if (picture_index == 0)
+                    frm_hdr->show_existing_frame = base2_idx;
                 else
-					printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
-			}
+                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+            }
         }
 
         // Toggle layer0 and layer1
@@ -1913,20 +1913,20 @@ static void  Av1GenerateRpsInfo(
         prune_refs(pred_position_ptr, av1_rps);
 
         if (!set_frame_display_params(picture_control_set_ptr, context_ptr, mini_gop_index)) {
-			if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0) {
-				frm_hdr->show_frame = EB_FALSE;
-				picture_control_set_ptr->has_show_existing = EB_FALSE;
-			} else {
-				frm_hdr->show_frame = EB_TRUE;
-				picture_control_set_ptr->has_show_existing = EB_TRUE;
+            if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0) {
+                frm_hdr->show_frame = EB_FALSE;
+                picture_control_set_ptr->has_show_existing = EB_FALSE;
+            } else {
+                frm_hdr->show_frame = EB_TRUE;
+                picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-				if (picture_index == 0)
-					frm_hdr->show_existing_frame = lay1_1_idx;
-				else if (picture_index == 2)
-					frm_hdr->show_existing_frame = base2_idx;
-				else
-					printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
-			}
+                if (picture_index == 0)
+                    frm_hdr->show_existing_frame = lay1_1_idx;
+                else if (picture_index == 2)
+                    frm_hdr->show_existing_frame = base2_idx;
+                else
+                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+            }
         }
 
         if ((picture_index == (context_ptr->mini_gop_end_index[mini_gop_index]) &&
@@ -2275,28 +2275,28 @@ static void  Av1GenerateRpsInfo(
 
         if (!set_frame_display_params(picture_control_set_ptr, context_ptr, mini_gop_index)) {
 #if PRED_CHANGE
-			if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0)
+            if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0)
 #else
-			if (picture_control_set_ptr->is_used_as_reference_flag)
+            if (picture_control_set_ptr->is_used_as_reference_flag)
 #endif
-			{
-				frm_hdr->show_frame = EB_FALSE;
-				picture_control_set_ptr->has_show_existing = EB_FALSE;
-			} else {
-				frm_hdr->show_frame = EB_TRUE;
-				picture_control_set_ptr->has_show_existing = EB_TRUE;
+            {
+                frm_hdr->show_frame = EB_FALSE;
+                picture_control_set_ptr->has_show_existing = EB_FALSE;
+            } else {
+                frm_hdr->show_frame = EB_TRUE;
+                picture_control_set_ptr->has_show_existing = EB_TRUE;
 
-				if (picture_index == 0)
-					frm_hdr->show_existing_frame = lay2_1_idx;
-				else if (picture_index == 2)
-					frm_hdr->show_existing_frame = lay1_1_idx;
-				else if (picture_index == 4)
-					frm_hdr->show_existing_frame = lay2_1_idx;
-				else if (picture_index == 6)
-					frm_hdr->show_existing_frame = base2_idx;
-				else
-					printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
-			}
+                if (picture_index == 0)
+                    frm_hdr->show_existing_frame = lay2_1_idx;
+                else if (picture_index == 2)
+                    frm_hdr->show_existing_frame = lay1_1_idx;
+                else if (picture_index == 4)
+                    frm_hdr->show_existing_frame = lay2_1_idx;
+                else if (picture_index == 6)
+                    frm_hdr->show_existing_frame = base2_idx;
+                else
+                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+            }
         }
 
         //last pic in MiniGop: Base layer toggling
@@ -2980,7 +2980,7 @@ static void  Av1GenerateRpsInfo(
                 else if (picture_index == 14)
                     frm_hdr->show_existing_frame = base2_idx;
                 else
-					printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
+                    printf("Error in GOP indexing for hierarchical level %d\n", picture_control_set_ptr->hierarchical_levels);
             }
         }
 
