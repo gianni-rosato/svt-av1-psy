@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.8.0] - 2019-12-20
+
+Encoder
+- Preset Optimizations
+- Single-core execution memory optimization [-lp 1 -lad 0]
+- Rate estimation update enhancements
+- Added on / off flags for feature run-time switching
+- Added auto-max partitioning algorithm
+- Multi-pass partitioning depth support
+- Remove deprecated RC mode 1 and shifter RC mode 2 and mode 3 to mode 1 and mode 2 respectively
+- Update Cost Calculation for CDEF Filtering
+- Intra-Inter Compound for 10-bit
+- Eigth-pel optimization
+- Added AVX512 Optimizations
+- Added AVX2 Optimizations
+
+Decoder
+- Initial multi-threading support
+- Decoder optimizations / cleanup
+
+Build and Testing
+- Bug fixes
+- Improve CI
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+
 ## [0.7.5] - 2019-11-24
 
 Encoder
@@ -29,7 +55,6 @@ Decoder
 - Reference Frame Scaling support
 - 12-bit support
 - Annex B support
-- Multi-Thread support
 
 Build and Testing
 - Bug fixes
