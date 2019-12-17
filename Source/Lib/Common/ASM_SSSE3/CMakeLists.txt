@@ -28,4 +28,7 @@ file(GLOB all_files
     "*.asm"
     "*.c")
 
+file(GLOB asm_includes "x86_abi_support.asm")
+list(REMOVE_ITEM all_files ${asm_includes})
+
 add_library(COMMON_ASM_SSSE3 OBJECT ${all_files})
