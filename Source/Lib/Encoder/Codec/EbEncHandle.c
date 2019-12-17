@@ -196,75 +196,93 @@ void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration *config_ptr)
     uint32_t num_logical_processors = GetNumProcessors();
     // For system with a single processor group(no more than 64 logic processors all together)
     // Affinity of the thread can be set to one or more logical processors
-    if (num_groups == 1) {
-        uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
-            config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
-        group_affinity.Mask = GetAffinityMask(lps);
+#if NO_THREAD_PIN
+    if (config_ptr->logical_processors == 1 && config_ptr->unpin_lp1 == 1) {
+        group_affinity.Mask = GetAffinityMask(num_logical_processors);
     }
-    else if (num_groups > 1) { // For system with multiple processor group
-        if (config_ptr->logical_processors == 0) {
-            if (config_ptr->target_socket != -1)
-                group_affinity.Group = config_ptr->target_socket;
+    else {
+#endif
+        if (num_groups == 1) {
+            uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+                config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
+            group_affinity.Mask = GetAffinityMask(lps);
         }
-        else {
-            uint32_t num_lp_per_group = num_logical_processors / num_groups;
-            if (config_ptr->target_socket == -1) {
-                if (config_ptr->logical_processors > num_lp_per_group) {
-                    alternate_groups = EB_TRUE;
-                    SVT_LOG("SVT [WARNING]: -lp(logical processors) setting is ignored. Run on both sockets. \n");
-                }
-                else
-                    group_affinity.Mask = GetAffinityMask(config_ptr->logical_processors);
+        else if (num_groups > 1) { // For system with multiple processor group
+            if (config_ptr->logical_processors == 0) {
+                if (config_ptr->target_socket != -1)
+                    group_affinity.Group = config_ptr->target_socket;
             }
             else {
-                uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
-                    config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
-                group_affinity.Mask = GetAffinityMask(lps);
-                group_affinity.Group = config_ptr->target_socket;
-            }
-        }
-    }
-#elif defined(__linux__)
-    uint32_t num_logical_processors = GetNumProcessors();
-    CPU_ZERO(&group_affinity);
-
-    if (num_groups == 1) {
-        uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
-            config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
-        for (uint32_t i = 0; i < lps; i++)
-            CPU_SET(lp_group[0].group[i], &group_affinity);
-    }
-    else if (num_groups > 1) {
-        uint32_t num_lp_per_group = num_logical_processors / num_groups;
-        if (config_ptr->logical_processors == 0) {
-            if (config_ptr->target_socket != -1) {
-                for (uint32_t i = 0; i < lp_group[config_ptr->target_socket].num; i++)
-                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
-            }
-        }
-        else {
-            if (config_ptr->target_socket == -1) {
-                uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
-                    config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
-                if (lps > num_lp_per_group) {
-                    for (uint32_t i = 0; i < lp_group[0].num; i++)
-                        CPU_SET(lp_group[0].group[i], &group_affinity);
-                    for (uint32_t i = 0; i < (lps - lp_group[0].num); i++)
-                        CPU_SET(lp_group[1].group[i], &group_affinity);
+                uint32_t num_lp_per_group = num_logical_processors / num_groups;
+                if (config_ptr->target_socket == -1) {
+                    if (config_ptr->logical_processors > num_lp_per_group) {
+                        alternate_groups = EB_TRUE;
+                        SVT_LOG("SVT [WARNING]: -lp(logical processors) setting is ignored. Run on both sockets. \n");
+                    }
+                    else
+                        group_affinity.Mask = GetAffinityMask(config_ptr->logical_processors);
                 }
                 else {
-                    for (uint32_t i = 0; i < lps; i++)
-                        CPU_SET(lp_group[0].group[i], &group_affinity);
+                    uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
+                        config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
+                    group_affinity.Mask = GetAffinityMask(lps);
+                    group_affinity.Group = config_ptr->target_socket;
+                }
+            }
+        }
+#if NO_THREAD_PIN
+    }
+#endif
+#elif defined(__linux__)
+    uint32_t num_logical_processors = GetNumProcessors();
+#if NO_THREAD_PIN
+    if (config_ptr->logical_processors == 1 && config_ptr->unpin_lp1 == 1) {
+        pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &group_affinity);
+    }
+    else {
+#endif
+        CPU_ZERO(&group_affinity);
+
+        if (num_groups == 1) {
+            uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+                config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
+            for (uint32_t i = 0; i < lps; i++)
+                CPU_SET(lp_group[0].group[i], &group_affinity);
+        }
+        else if (num_groups > 1) {
+            uint32_t num_lp_per_group = num_logical_processors / num_groups;
+            if (config_ptr->logical_processors == 0) {
+                if (config_ptr->target_socket != -1) {
+                    for (uint32_t i = 0; i < lp_group[config_ptr->target_socket].num; i++)
+                        CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
                 }
             }
             else {
-                uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
-                    config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
-                for (uint32_t i = 0; i < lps; i++)
-                    CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
+                if (config_ptr->target_socket == -1) {
+                    uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+                        config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
+                    if (lps > num_lp_per_group) {
+                        for (uint32_t i = 0; i < lp_group[0].num; i++)
+                            CPU_SET(lp_group[0].group[i], &group_affinity);
+                        for (uint32_t i = 0; i < (lps - lp_group[0].num); i++)
+                            CPU_SET(lp_group[1].group[i], &group_affinity);
+                    }
+                    else {
+                        for (uint32_t i = 0; i < lps; i++)
+                            CPU_SET(lp_group[0].group[i], &group_affinity);
+                    }
+                }
+                else {
+                    uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
+                        config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
+                    for (uint32_t i = 0; i < lps; i++)
+                        CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
+                }
             }
         }
+#if NO_THREAD_PIN
     }
+#endif
 #else
     UNUSED(config_ptr);
 #endif
@@ -2351,6 +2369,7 @@ void CopyApiFromApp(
     sequence_control_set_ptr->static_config.channel_id = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->channel_id;
     sequence_control_set_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->active_channel_count;
     sequence_control_set_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->logical_processors;
+    sequence_control_set_ptr->static_config.unpin_lp1 = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->unpin_lp1;
     sequence_control_set_ptr->static_config.target_socket = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->target_socket;
     sequence_control_set_ptr->static_config.qp = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->qp;
     sequence_control_set_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->recon_enabled;
@@ -3008,6 +3027,7 @@ EbErrorType eb_svt_enc_init_parameter(
 
     // Channel info
     config_ptr->logical_processors = 0;
+    config_ptr->unpin_lp1 = 1;
     config_ptr->target_socket = -1;
     config_ptr->channel_id = 0;
     config_ptr->active_channel_count = 1;

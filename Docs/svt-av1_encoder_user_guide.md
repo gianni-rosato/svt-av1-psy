@@ -193,6 +193,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **SceneChangeDetection** | -scd | [0 - 1] | 1 | Enables or disables the scene change detection algorithm |
 | **AsmType** | -asm | [0 - 1] | 1 | Assembly instruction set (0: Automatically select lowest assembly instruction set supported, 1: Automatically select highest assembly instruction set supported,) |
 | **LogicalProcessorNumber** | -lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
+| **UnpinSingleCoreExecution** | -unpin-lp1 | [0, 1] | 1 | Unpin the execution . If logical_processors is set to 1, this option does not set the execution to be pinned to core #0 when set to 1. this allows the execution of multiple encodes on the CPU without having to pin them to a specific mask  0=OFF, 1= ON |
 | **TargetSocket** | -ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
 | **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |
 | **TileRow** | -tile-rows | [0-6] | 0 | log2 of tile rows |

@@ -138,6 +138,7 @@
 #define SPEED_CONTROL_TOKEN             "-speed-ctrl"
 #define ASM_TYPE_TOKEN                  "-asm"
 #define THREAD_MGMNT                    "-lp"
+#define UNPIN_LP1_TOKEN                 "-unpin-lp1"
 #define TARGET_SOCKET                   "-ss"
 #define UNRESTRICTED_MOTION_VECTOR      "-umv"
 #define CONFIG_FILE_COMMENT_CHAR    '#'
@@ -378,6 +379,7 @@ static void SetAsmType                          (const char *value, EbConfig *cf
     cfg->cpu_flags_limit = CPU_FLAGS_INVALID;
 };
 static void SetLogicalProcessors                (const char *value, EbConfig *cfg)  {cfg->logical_processors         = (uint32_t)strtoul(value, NULL, 0);};
+static void SetUnpinSingleCoreExecution         (const char *value, EbConfig *cfg)  {cfg->unpin_lp1                  = (uint32_t)strtoul(value, NULL, 0);};
 static void SetTargetSocket                     (const char *value, EbConfig *cfg)  {cfg->target_socket              = (int32_t)strtol(value, NULL, 0);};
 static void SetUnrestrictedMotionVector         (const char *value, EbConfig *cfg)  {cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);};
 
@@ -547,7 +549,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", SetEnableOlpdRefinement },
     { SINGLE_INPUT, CONSTRAINED_INTRA_ENABLE_TOKEN, "ConstrainedIntra", SetEnableConstrainedIntra},
     // Thread Management
-    { SINGLE_INPUT, THREAD_MGMNT, "logicalProcessors", SetLogicalProcessors },
+    { SINGLE_INPUT, THREAD_MGMNT,    "LogicalProcessors", SetLogicalProcessors },
+    { SINGLE_INPUT, UNPIN_LP1_TOKEN, "UnpinSingleCoreExecution", SetUnpinSingleCoreExecution },
     { SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", SetTargetSocket },
     // Optional Features
     { SINGLE_INPUT, UNRESTRICTED_MOTION_VECTOR, "UnrestrictedMotionVector", SetUnrestrictedMotionVector },
@@ -675,6 +678,7 @@ void eb_config_ctor(EbConfig *config_ptr)
     // ASM Type
     config_ptr->cpu_flags_limit                         = CPU_FLAGS_ALL;
 
+    config_ptr->unpin_lp1                           = 1;
     config_ptr->target_socket                         = -1;
 
     config_ptr->unrestricted_motion_vector           = EB_TRUE;

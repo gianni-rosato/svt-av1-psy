@@ -514,6 +514,15 @@ typedef struct EbSvtAv1EncConfiguration
      * OS thread scheduler. */
     uint32_t                logical_processors;
 
+    /* Unpin the execution . If logical_processors is set to 1, this option does not
+    * set the execution to be pinned to core #0 when set to 1. this allows the execution
+    * of multiple encodes on the CPU wihtout having to pin them to a specific mask
+    * 1: unpinned from core 0
+    * 0: pinned to core 0
+    *
+    * Default is 1. */
+    uint32_t                unpin_lp1;
+
     /* Target socket to run on. For dual socket systems, this can specify which
      * socket the encoder runs on.
      *

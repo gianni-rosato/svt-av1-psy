@@ -36,9 +36,10 @@ extern "C" {
 
 #define   SINGLE_CORE_ENCODE   1
 #if SINGLE_CORE_ENCODE
-#define SERIAL_MODE                  1 // change ressource allocations  to optimize single core operating mode
-#define OUT_ALLOC                    1 // output bitsream allocation at run time for both single/multi core
-#define PAREF_OUT                    1 // disconnect pa ref  from input for both single/multi core
+#define SERIAL_MODE                  1 // Change ressource allocations  to optimize single core operating mode
+#define OUT_ALLOC                    1 // Output bitsream allocation at run time for both single/multi core
+#define PAREF_OUT                    1 // Disconnect pa ref  from input for both single/multi core
+#define NO_THREAD_PIN                1 // Adding the ability to not pin the -lp 1 use case to core 0
 #endif
 #define INIT_GM_FIX           1 // initilize global motion to be OFF for all references frames.
 #define REVERT_ALTREF_FIX     1 // put back padding r2r fix for altref

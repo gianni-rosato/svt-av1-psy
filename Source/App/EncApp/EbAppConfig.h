@@ -447,6 +447,7 @@ typedef struct EbConfig
     uint32_t                channel_id;
     uint32_t                active_channel_count;
     uint32_t                logical_processors;
+    uint32_t                unpin_lp1;
     int32_t                 target_socket;
     EbBool                  stop_encoder;         // to signal CTRL+C Event, need to stop encoding.
 
