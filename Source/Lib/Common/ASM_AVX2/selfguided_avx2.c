@@ -58,6 +58,7 @@ static AOM_FORCE_INLINE void integral_images(const uint8_t *src,
     const uint8_t *srcT = src;
     int32_t *CT = C + buf_stride + 1;
     int32_t *DT = D + buf_stride + 1;
+    const __m256i zero = _mm256_setzero_si256();
 
     memset(C, 0, sizeof(*C) * (width + 8));
     memset(D, 0, sizeof(*D) * (width + 8));
@@ -135,6 +136,12 @@ static AOM_FORCE_INLINE void integral_images(const uint8_t *src,
             x += 8;
         } while (x < width);
 
+        /* Used in calc_ab and calc_ab_fast, when calc out of right border */
+        for (int ln = 0; ln < 8; ++ln) {
+            _mm256_store_si256((__m256i *)(CT + x + ln * buf_stride), zero);
+            _mm256_store_si256((__m256i *)(DT + x + ln * buf_stride), zero);
+        }
+
         srcT += 8 * src_stride;
         CT += 8 * buf_stride;
         DT += 8 * buf_stride;
@@ -148,6 +155,7 @@ static AOM_FORCE_INLINE void integral_images_highbd(const uint16_t *src,
     const uint16_t *srcT = src;
     int32_t *CT = C + buf_stride + 1;
     int32_t *DT = D + buf_stride + 1;
+    const __m256i zero = _mm256_setzero_si256();
 
     memset(C, 0, sizeof(*C) * (width + 8));
     memset(D, 0, sizeof(*D) * (width + 8));
@@ -215,6 +223,12 @@ static AOM_FORCE_INLINE void integral_images_highbd(const uint16_t *src,
             store_32bit_8x8(r32, DT + x, buf_stride);
             x += 8;
         } while (x < width);
+
+        /* Used in calc_ab and calc_ab_fast, when calc out of right border */
+        for (int ln = 0; ln < 8; ++ln) {
+            _mm256_store_si256((__m256i *)(CT + x + ln * buf_stride), zero);
+            _mm256_store_si256((__m256i *)(DT + x + ln * buf_stride), zero);
+        }
 
         srcT += 8 * src_stride;
         CT += 8 * buf_stride;
