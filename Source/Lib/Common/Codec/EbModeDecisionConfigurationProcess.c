@@ -2615,7 +2615,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #if EIGHT_PEL_FIX
     FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv =
+#if PRESETS_TUNE
+#if PRESETS_OPT
+        picture_control_set_ptr->enc_mode <= ENC_M7 && frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
+#else
+        picture_control_set_ptr->enc_mode <= ENC_M1 && frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
+#endif
+#else
         picture_control_set_ptr->enc_mode == ENC_M0 && frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
+#endif
         (sequence_control_set_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER) ? 1 : 0;
 #endif
 #if MULTI_PASS_PD
@@ -2629,6 +2637,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #else
         enable_wm = (MR_MODE ||
         (picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M0 && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ||
+#endif
+#if PRESETS_TUNE && !PRESETS_OPT
+            (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M1 && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ||
 #endif
             (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 && picture_control_set_ptr->parent_pcs_ptr->temporal_layer_index == 0)) ? EB_TRUE : EB_FALSE;
 #else
@@ -2649,6 +2660,19 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // 3                                            OBMC @(MVP, PME ) + Opt NICs
     // 4                                            OBMC @(MVP, PME ) + Opt2 NICs
     if (sequence_control_set_ptr->static_config.enable_obmc) {
+#if PRESETS_TUNE
+#if M0_OPT
+        if (picture_control_set_ptr->parent_pcs_ptr->enc_mode == ENC_M0)
+            picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =
+            picture_control_set_ptr->slice_type != I_SLICE ? 2 : 0;
+        else
+#endif
+            if (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+                picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =
+                picture_control_set_ptr->parent_pcs_ptr->sc_content_detected == 0 && picture_control_set_ptr->slice_type != I_SLICE ? 2 : 0;
+        else
+            picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
+#else
         if (picture_control_set_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
             picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =
 #if M0_OPT
@@ -2658,6 +2682,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
         else
             picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
+#endif
 
 #if MR_MODE
         picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode =

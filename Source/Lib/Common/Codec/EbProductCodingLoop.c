@@ -1673,7 +1673,11 @@ void set_md_stage_counts(
     if (context_ptr->combine_class12) {
         context_ptr->md_stage_1_count[CAND_CLASS_1] = context_ptr->md_stage_1_count[CAND_CLASS_1] * 2;
     }
+#if PRESETS_TUNE
+    if (picture_control_set_ptr->enc_mode >= ENC_M3) {
+#else
     if (picture_control_set_ptr->enc_mode >= ENC_M2) {
+#endif
         context_ptr->md_stage_1_count[CAND_CLASS_1] = context_ptr->md_stage_1_count[CAND_CLASS_1] / 2;
         context_ptr->md_stage_1_count[CAND_CLASS_2] = context_ptr->md_stage_1_count[CAND_CLASS_2] / 2;
         context_ptr->md_stage_1_count[CAND_CLASS_3] = context_ptr->md_stage_1_count[CAND_CLASS_3] / 2;
@@ -1737,10 +1741,20 @@ void set_md_stage_counts(
 #endif
     }
 
+#if PRESETS_OPT
+    if (picture_control_set_ptr->enc_mode >= ENC_M8)
+#elif PRESETS_TUNE
+    if (picture_control_set_ptr->enc_mode >= ENC_M2)
+#else
     if (picture_control_set_ptr->enc_mode >= ENC_M1)
+#endif
         context_ptr->md_stage_2_count[CAND_CLASS_0] = (picture_control_set_ptr->slice_type == I_SLICE) ? 10 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 1;
 
+#if PRESETS_TUNE
+    if (picture_control_set_ptr->enc_mode >= ENC_M3 && picture_control_set_ptr->enc_mode <= ENC_M4) {
+#else
     if (picture_control_set_ptr->enc_mode >= ENC_M2 && picture_control_set_ptr->enc_mode <= ENC_M4) {
+#endif
         context_ptr->md_stage_2_count[CAND_CLASS_1] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 2;
         context_ptr->md_stage_2_count[CAND_CLASS_2] = (picture_control_set_ptr->slice_type == I_SLICE) ? 0 : (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 2 : 1;
         if (!context_ptr->combine_class12) {

@@ -1976,7 +1976,13 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 
     //0: MRP Mode 0 (4,3)
     //1: MRP Mode 1 (2,2)
+#if PRESETS_OPT
+    sequence_control_set_ptr->mrp_mode = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
+#elif PRESETS_TUNE
+    sequence_control_set_ptr->mrp_mode = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M2) ? 0 : 1;
+#else
     sequence_control_set_ptr->mrp_mode = (uint8_t) (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 0 : 1;
+#endif
 
     //0: ON
     //1: OFF
@@ -1989,16 +1995,33 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
+#if PRESETS_TUNE
+    if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
+        if (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4)
+            sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
+        else
+            sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
+    else
+        if (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4)
+            sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
+        else
+            sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
+#else
     if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
         sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
     else
         sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
+#endif
 
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed
     // 1                            1: allowed
     if (sequence_control_set_ptr->static_config.over_bndry_blk == DEFAULT)
+#if PRESETS_TUNE
+        if (sequence_control_set_ptr->static_config.enc_mode <= ENC_M5)
+#else
         if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
+#endif
             sequence_control_set_ptr->over_boundary_block_mode = 1;
         else
             sequence_control_set_ptr->over_boundary_block_mode = 0;
@@ -2006,16 +2029,27 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
         sequence_control_set_ptr->over_boundary_block_mode = sequence_control_set_ptr->static_config.over_bndry_blk;
 
     if (sequence_control_set_ptr->static_config.enable_mfmv == DEFAULT)
+#if PRESETS_TUNE
+        if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
+            sequence_control_set_ptr->mfmv_enabled = 0;
+        else
+            sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
+#else
 #if M0_OPT
         sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->static_config.screen_content_mode != 1) ? 1 : 0;
 #else
         sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
 #endif
+#endif
     else
         sequence_control_set_ptr->mfmv_enabled = sequence_control_set_ptr->static_config.enable_mfmv;
 
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
+#if PRESETS_TUNE
+    if (sequence_control_set_ptr->static_config.encoder_bit_depth < 10)
+#else
     if (sequence_control_set_ptr->static_config.enc_mode > ENC_M0 || sequence_control_set_ptr->static_config.encoder_bit_depth < 10)
+#endif
         sequence_control_set_ptr->static_config.enable_hbd_mode_decision = 0;
 }
 

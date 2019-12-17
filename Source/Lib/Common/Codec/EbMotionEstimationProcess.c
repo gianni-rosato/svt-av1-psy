@@ -100,6 +100,10 @@ void* set_me_hme_params_oq(
 #else
     uint8_t  hmeMeLevel =  picture_control_set_ptr->enc_mode; // OMK to be revised after new presets
 #endif
+#if PRESETS_OPT
+    if (hmeMeLevel <= ENC_M1)
+        hmeMeLevel = ENC_M0;
+#endif
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
@@ -164,8 +168,13 @@ EbErrorType signal_derivation_me_kernel_oq(
         set_me_hme_params_from_config(
             sequence_control_set_ptr,
             context_ptr->me_context_ptr);
+
     if (picture_control_set_ptr->sc_content_detected)
+#if PRESETS_TUNE
+        context_ptr->me_context_ptr->fractional_search_method = (enc_mode == ENC_M0) ? FULL_SAD_SEARCH : SUB_SAD_SEARCH;
+#else
         context_ptr->me_context_ptr->fractional_search_method = SUB_SAD_SEARCH;
+#endif
     else
         if (enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
@@ -184,10 +193,15 @@ EbErrorType signal_derivation_me_kernel_oq(
     context_ptr->me_context_ptr->enable_hme_level0_flag = picture_control_set_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = picture_control_set_ptr->enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = picture_control_set_ptr->enable_hme_level2_flag;
+
     if (sequence_control_set_ptr->static_config.enable_subpel == DEFAULT)
         // Set the default settings of subpel
         if (picture_control_set_ptr->sc_content_detected)
+#if PRESETS_TUNE
+            if (enc_mode <= ENC_M5)
+#else
             if (enc_mode <= ENC_M1)
+#endif
                 context_ptr->me_context_ptr->use_subpel_flag = 1;
             else
                 context_ptr->me_context_ptr->use_subpel_flag = 0;
@@ -246,7 +260,11 @@ EbErrorType signal_derivation_me_kernel_oq(
 
     // ME Search Method
     if (picture_control_set_ptr->sc_content_detected)
+#if PRESETS_TUNE
+        if (enc_mode <= ENC_M5)
+#else
         if (enc_mode <= ENC_M3)
+#endif
             context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
         else
             context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
@@ -254,14 +272,22 @@ EbErrorType signal_derivation_me_kernel_oq(
 #if ENHANCED_M0_SETTINGS
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
 #else
+#if PRESETS_TUNE
+        context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M4) ?
+#else
         context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M1) ?
+#endif
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
 #endif
 
     if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE)
     {
+#if PRESETS_OPT
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode == ENC_M0)
+#endif
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
         else
             context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
@@ -480,9 +506,14 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
             context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
         else
             context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
+
     if (sequence_control_set_ptr->static_config.fract_search_64 == DEFAULT)
         if (picture_control_set_ptr->sc_content_detected)
+#if PRESETS_TUNE
+            if (enc_mode <= ENC_M5)
+#else
             if (enc_mode <= ENC_M1)
+#endif
                 context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
             else
                 context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
@@ -558,7 +589,11 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
     else
+#if PRESETS_TUNE
+        context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M4) ?
+#else
         context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M1) ?
+#endif
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
     return return_error;
