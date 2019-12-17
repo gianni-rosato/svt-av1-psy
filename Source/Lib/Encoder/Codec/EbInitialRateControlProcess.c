@@ -3,8 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include <stdlib.h>
-
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
 #include "EbMotionEstimationResults.h"
@@ -1075,125 +1073,7 @@ void UpdateHistogramQueueEntry(
 
     return;
 }
-EbAuraStatus AuraDetection64x64Gold(
-    PictureControlSet           *picture_control_set_ptr,
-    uint8_t                          picture_qp,
-    uint32_t                         x_lcu_index,
-    uint32_t                         y_lcu_index
-);
 
-/******************************************************
-Input   : variance
-Output  : true if current & neighbors are spatially complex
-******************************************************/
-EbBool IsSpatiallyComplexArea(
-    PictureParentControlSet    *parentPcs,
-    uint32_t                       pictureWidthInLcus,
-    uint32_t                       lcuAdrr,
-    uint32_t                       sb_origin_x,
-    uint32_t                       sb_origin_y)
-{
-    uint32_t availableLcusCount = 0;
-    uint32_t highVarianceLcusCount = 0;
-
-    // Check the variance of the current LCU
-    if ((parentPcs->variance[lcuAdrr][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH) {
-        availableLcusCount++;
-        highVarianceLcusCount++;
-    }
-
-    // Check the variance of left SB if available
-    if (sb_origin_x != 0) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of right SB if available
-    if ((sb_origin_x + BLOCK_SIZE_64) < parentPcs->enhanced_picture_ptr->width) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of top SB if available
-    if (sb_origin_y != 0) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr - pictureWidthInLcus][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of bottom LCU
-    if ((sb_origin_y + BLOCK_SIZE_64) < parentPcs->enhanced_picture_ptr->height) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr + pictureWidthInLcus][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of top-left LCU
-    if ((sb_origin_x >= BLOCK_SIZE_64) && (sb_origin_y >= BLOCK_SIZE_64)) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr - pictureWidthInLcus - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of top-right LCU
-    if ((sb_origin_x < parentPcs->enhanced_picture_ptr->width - BLOCK_SIZE_64) && (sb_origin_y >= BLOCK_SIZE_64)) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr - pictureWidthInLcus + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of bottom-left LCU
-    if ((sb_origin_x >= BLOCK_SIZE_64) && (sb_origin_y < parentPcs->enhanced_picture_ptr->height - BLOCK_SIZE_64)) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr + pictureWidthInLcus - 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    // Check the variance of bottom-right LCU
-    if ((sb_origin_x < parentPcs->enhanced_picture_ptr->width - BLOCK_SIZE_64) && (sb_origin_y < parentPcs->enhanced_picture_ptr->height - BLOCK_SIZE_64)) {
-        availableLcusCount++;
-        if ((parentPcs->variance[lcuAdrr + pictureWidthInLcus + 1][ME_TIER_ZERO_PU_64x64]) > IS_COMPLEX_LCU_VARIANCE_TH)
-            highVarianceLcusCount++;
-    }
-
-    if (highVarianceLcusCount == availableLcusCount)
-        return EB_TRUE;
-    return EB_FALSE;
-}
-
-// Derives blockinessPresentFlag
-void DeriveBlockinessPresentFlag(
-    SequenceControlSet        *sequence_control_set_ptr,
-    PictureParentControlSet   *picture_control_set_ptr)
-{
-    uint32_t                      sb_index;
-
-    for (sb_index = 0; sb_index < picture_control_set_ptr->sb_total_count; ++sb_index) {
-        SbParams         *lcuParamPtr = &sequence_control_set_ptr->sb_params_array[sb_index];
-        picture_control_set_ptr->complex_sb_array[sb_index] = SB_COMPLEXITY_STATUS_INVALID;
-
-        // Spatially complex SB within a spatially complex area
-        if (IsSpatiallyComplexArea(
-            picture_control_set_ptr,
-            (picture_control_set_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64,
-            sb_index,
-            lcuParamPtr->origin_x,
-            lcuParamPtr->origin_y)) {
-            // Active SB within an active scene (added a check on 4K & non-BASE to restrict the action - could be generated for all resolutions/layers)
-            if (picture_control_set_ptr->non_moving_index_array[sb_index] == SB_COMPLEXITY_NON_MOVING_INDEX_TH_0 && picture_control_set_ptr->non_moving_index_average >= SB_COMPLEXITY_NON_MOVING_INDEX_TH_1 && picture_control_set_ptr->temporal_layer_index > 0 && sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE)
-                picture_control_set_ptr->complex_sb_array[sb_index] = SB_COMPLEXITY_STATUS_2;
-            // Active SB within a scene with a moderate acitivity (eg. active foregroud & static background)
-            else if (picture_control_set_ptr->non_moving_index_array[sb_index] == SB_COMPLEXITY_NON_MOVING_INDEX_TH_0 && picture_control_set_ptr->non_moving_index_average >= SB_COMPLEXITY_NON_MOVING_INDEX_TH_2 && picture_control_set_ptr->non_moving_index_average < SB_COMPLEXITY_NON_MOVING_INDEX_TH_1)
-                picture_control_set_ptr->complex_sb_array[sb_index] = SB_COMPLEXITY_STATUS_1;
-            else
-                picture_control_set_ptr->complex_sb_array[sb_index] = SB_COMPLEXITY_STATUS_0;
-        }
-        else
-            picture_control_set_ptr->complex_sb_array[sb_index] = SB_COMPLEXITY_STATUS_0;
-    }
-}
 
 /************************************************
 * Initial Rate Control Kernel
@@ -1407,11 +1287,6 @@ void* initial_rate_control_kernel(void *input_ptr)
                                 sequence_control_set_ptr,
                                 picture_control_set_ptr);
                         }
-                        // Derive blockinessPresentFlag
-                        DeriveBlockinessPresentFlag(
-                            sequence_control_set_ptr,
-                            picture_control_set_ptr);
-
                         // Get Empty Reference Picture Object
                         eb_get_empty_object(
                             sequence_control_set_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,

@@ -30,23 +30,10 @@ typedef struct SourceBasedOperationsContext
     EbDctor  dctor;
     EbFifo  *initial_rate_control_results_input_fifo_ptr;
     EbFifo  *picture_demux_results_output_fifo_ptr;
-
-    // Delta QP Map
-    int8_t      min_delta_qp;
-    uint8_t     max_delta_qp;
-
-    int16_t     min_delta_qp_weight[3][4];
-    int16_t     max_delta_qp_weight[3][4];
-
-    // Skin
-    uint8_t     grass_percentage_in_picture;
     // local zz cost array
-    uint32_t    picture_num_grass_sb;
     uint32_t    sb_high_contrast_count;
     uint32_t    complete_sb_count;
     uint32_t    sb_cmplx_contrast_count;
-    uint32_t    high_contrast_num;
-    uint32_t    high_contrast_num_ii;
     uint8_t    *y_mean_ptr;
     uint8_t    *cr_mean_ptr;
     uint8_t    *cb_mean_ptr;

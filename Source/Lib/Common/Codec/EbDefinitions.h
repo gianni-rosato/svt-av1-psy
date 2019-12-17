@@ -2937,11 +2937,6 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define DYNAMIC_GOP_ABOVE_1080P_L5_VS_L4_COST_TH    25//28//9//
 #define DYNAMIC_GOP_ABOVE_1080P_L4_VS_L3_COST_TH    30    // No L4_VS_L3 - 28 is the TH after 1st round of tuning
 #define DYNAMIC_GOP_SUB_480P_L6_VS_L5_COST_TH        9
-
-#define SB_COMPLEXITY_NON_MOVING_INDEX_TH_0 30
-#define SB_COMPLEXITY_NON_MOVING_INDEX_TH_1 29
-#define SB_COMPLEXITY_NON_MOVING_INDEX_TH_2 23
-
 #define GRADUAL_LUMINOSITY_CHANGE_TH                        3
 #define FADED_LCU_PERCENTAGE_TH                             10
 #define FADED_PICTURES_TH                                   15
@@ -2957,13 +2952,6 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define MAX_SUPPORTED_SEGMENTS                            7
 #define NUM_QPS                                           52
 
-// The EbAuraStatus type is used to describe the aura status
-#define EbAuraStatus       uint8_t
-#define AURA_STATUS_0        0
-#define AURA_STATUS_1        1
-#define AURA_STATUS_2        2
-#define AURA_STATUS_3        3
-#define INVALID_AURA_STATUS  128
 
 // Aura detection definitions
 #define    AURA_4K_DISTORTION_TH    25
@@ -3011,14 +2999,6 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define CHROMA_MODE_1  1 // Fast chroma search @ MD
 #define CHROMA_MODE_2  2 // Chroma blind @ MD + CFL @ EP
 #define CHROMA_MODE_3  3 // Chroma blind @ MD + no CFL @ EP
-
-typedef enum EbSbComplexityStatus
-{
-    SB_COMPLEXITY_STATUS_0 = 0,
-    SB_COMPLEXITY_STATUS_1 = 1,
-    SB_COMPLEXITY_STATUS_2 = 2,
-    SB_COMPLEXITY_STATUS_INVALID = (uint8_t)~0
-} EbSbComplexityStatus;
 
 typedef enum EbCleanUpMode
 {

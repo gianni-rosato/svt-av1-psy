@@ -1139,12 +1139,8 @@ static void picture_parent_control_set_dctor(EbPtr p)
     // SB noise variance array
     EB_FREE_ARRAY(obj->sb_flat_noise_array);
     EB_FREE_ARRAY(obj->edge_results_ptr);
-
     EB_FREE_ARRAY(obj->sharp_edge_sb_flag);
     EB_FREE_ARRAY(obj->sb_stat_array);
-
-    EB_FREE_ARRAY(obj->complex_sb_array);
-
     EB_FREE_ARRAY(obj->sb_depth_mode_array);
 
     if (obj->av1_cm) {
@@ -1280,17 +1276,11 @@ EbErrorType picture_parent_control_set_ctor(
 
     EB_MALLOC_ARRAY(object_ptr->sharp_edge_sb_flag, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_stat_array, object_ptr->sb_total_count);
-
-    EB_MALLOC_ARRAY(object_ptr->complex_sb_array, object_ptr->sb_total_count);
-
     EB_CREATE_MUTEX(object_ptr->rc_distortion_histogram_mutex);
-
     EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);
-
     EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->temp_filt_mutex);
     EB_CREATE_MUTEX(object_ptr->debug_mutex);
-
     EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
     object_ptr->av1_cm->interp_filter = SWITCHABLE;

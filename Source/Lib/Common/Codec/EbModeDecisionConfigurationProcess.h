@@ -66,10 +66,6 @@ extern "C" {
         uint64_t                              intra_complexity_minimum;
         uint64_t                              intra_complexity_maximum;
         uint64_t                              intra_complexity_average;
-        int16_t                              min_delta_qp_weight;
-        int16_t                              max_delta_qp_weight;
-        int8_t                               min_delta_qp[4];
-        int8_t                               max_delta_qp[4];
 
         // Adaptive Depth Partitioning
         uint32_t                            *sb_score_array;

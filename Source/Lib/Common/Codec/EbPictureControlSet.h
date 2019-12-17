@@ -551,8 +551,6 @@ extern "C" {
 
     typedef struct CuStat
     {
-        EbBool            grass_area;
-        EbBool            skin_area;
         uint16_t          edge_cu;
         uint16_t          similar_edge_count;
         uint16_t          pm_similar_edge_count;
@@ -686,13 +684,9 @@ extern "C" {
         int16_t                               non_moving_index_min_distance;
         int16_t                               non_moving_index_max_distance;
         uint16_t                              qp_scaling_average_complexity;
-        uint8_t                               grass_percentage_in_picture;
-        uint8_t                               percentage_of_edgein_light_background;
         EbBool                                dark_back_groundlight_fore_ground;
         SbStat                            *sb_stat_array;
         uint8_t                               very_low_var_pic_flag;
-        EbBool                                high_dark_area_density_flag;        // computed @ PictureAnalysisProcess() and used @ SourceBasedOperationsProcess()
-        EbBool                                high_dark_low_light_area_density_flag;        // computed @ PictureAnalysisProcess() and used @ SourceBasedOperationsProcess()
         uint32_t                              intra_complexity_min[4];
         uint32_t                              intra_complexity_max[4];
         uint32_t                              intra_complexity_accum[4];
@@ -765,7 +759,6 @@ extern "C" {
         EbEncMode                             snd_pass_enc_mode;
 #endif
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;
-        EbSbComplexityStatus                 *complex_sb_array;
         EbCu8x8Mode                           cu8x8_mode;
         EbBool                                use_src_ref;
         EbBool                                limit_ois_to_dc_mode_flag;
