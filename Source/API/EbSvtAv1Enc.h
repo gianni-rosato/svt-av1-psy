@@ -427,6 +427,10 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is 7000000. */
     uint32_t                 target_bit_rate;
+
+    /* VBV Buffer size */
+    uint32_t                 vbv_bufsize;
+
     /* Maxium QP value allowed for rate control use, only applicable when rate
      * control mode is set to 1. It has to be greater or equal to minQpAllowed.
      *

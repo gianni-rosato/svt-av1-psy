@@ -2323,6 +2323,8 @@ void CopyApiFromApp(
 
     sequence_control_set_ptr->static_config.target_bit_rate = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->target_bit_rate;
 
+    sequence_control_set_ptr->static_config.vbv_bufsize = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->vbv_bufsize;
+
     sequence_control_set_ptr->static_config.max_qp_allowed = (sequence_control_set_ptr->static_config.rate_control_mode) ?
         ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->max_qp_allowed :
         63;

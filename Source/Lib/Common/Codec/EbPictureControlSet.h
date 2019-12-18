@@ -637,6 +637,7 @@ extern "C" {
         EbBool                                tables_updated;
         EbBool                                percentage_updated;
         uint32_t                              target_bit_rate;
+        uint32_t                              vbv_bufsize;
         EbBool                                min_target_rate_assigned;
         uint32_t                              frame_rate;
         uint16_t                              sb_total_count;

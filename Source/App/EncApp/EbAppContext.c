@@ -179,6 +179,7 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.target_bit_rate = config->target_bit_rate;
     callback_data->eb_enc_parameters.max_qp_allowed = config->max_qp_allowed;
     callback_data->eb_enc_parameters.min_qp_allowed = config->min_qp_allowed;
+    callback_data->eb_enc_parameters.vbv_bufsize = config->vbv_bufsize;
     callback_data->eb_enc_parameters.enable_adaptive_quantization = (EbBool)config->enable_adaptive_quantization;
     callback_data->eb_enc_parameters.qp = config->qp;
     callback_data->eb_enc_parameters.use_qp_file = (EbBool)config->use_qp_file;

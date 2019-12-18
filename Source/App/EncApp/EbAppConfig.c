@@ -121,6 +121,7 @@
 #define RATE_CONTROL_ENABLE_TOKEN       "-rc"
 #define TARGET_BIT_RATE_TOKEN           "-tbr"
 #define MAX_QP_TOKEN                    "-max-qp"
+#define VBV_BUFSIZE_TOKEN               "-vbv-bufsize"
 #define MIN_QP_TOKEN                    "-min-qp"
 #define ADAPTIVE_QP_ENABLE_TOKEN        "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN           "-lad"
@@ -298,6 +299,7 @@ static void SetSceneChangeDetection             (const char *value, EbConfig *cf
 static void SetLookAheadDistance                (const char *value, EbConfig *cfg) {cfg->look_ahead_distance = strtoul(value, NULL, 0);};
 static void SetRateControlMode                  (const char *value, EbConfig *cfg) {cfg->rate_control_mode = strtoul(value, NULL, 0);};
 static void SetTargetBitRate                    (const char *value, EbConfig *cfg) {cfg->target_bit_rate = 1000*strtoul(value, NULL, 0);};
+static void SetVBVBufSize                       (const char *value, EbConfig *cfg) {cfg->vbv_bufsize = 1000*strtoul(value, NULL, 0);};
 static void SetMaxQpAllowed                     (const char *value, EbConfig *cfg) {cfg->max_qp_allowed = strtoul(value, NULL, 0);};
 static void SetMinQpAllowed                     (const char *value, EbConfig *cfg) {cfg->min_qp_allowed = strtoul(value, NULL, 0);};
 static void SetAdaptiveQuantization             (const char *value, EbConfig *cfg) {cfg->enable_adaptive_quantization = (EbBool)strtol(value,  NULL, 0);};
@@ -474,6 +476,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", SetTargetBitRate },
     { SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", SetMaxQpAllowed },
     { SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", SetMinQpAllowed },
+    { SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", SetVBVBufSize},
     { SINGLE_INPUT, ADAPTIVE_QP_ENABLE_TOKEN, "AdaptiveQuantization", SetAdaptiveQuantization },
 
     // DLF

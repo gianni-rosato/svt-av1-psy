@@ -2982,8 +2982,10 @@ void init_rc(
         context_ptr->base_layer_intra_frames_avg_qp = sequence_control_set_ptr->static_config.qp;
     }
     else if (sequence_control_set_ptr->static_config.rate_control_mode == 2) {
-
-        context_ptr->virtual_buffer_size = ((uint64_t)sequence_control_set_ptr->static_config.target_bit_rate);// vbv_buf_size);
+        if (sequence_control_set_ptr->static_config.vbv_bufsize > 0)
+            context_ptr->virtual_buffer_size = ((uint64_t)sequence_control_set_ptr->static_config.vbv_bufsize);// vbv_buf_size);
+        else
+            context_ptr->virtual_buffer_size = ((uint64_t)sequence_control_set_ptr->static_config.target_bit_rate);// vbv_buf_size);
         context_ptr->rate_average_periodin_frames = (uint64_t)sequence_control_set_ptr->static_config.intra_period_length + 1;
         context_ptr->virtual_buffer_level_initial_value = context_ptr->virtual_buffer_size >> 1;
         context_ptr->virtual_buffer_level = context_ptr->virtual_buffer_size >> 1;

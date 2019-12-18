@@ -408,6 +408,7 @@ typedef struct EbConfig
     uint32_t                 target_bit_rate;
     uint32_t                 max_qp_allowed;
     uint32_t                 min_qp_allowed;
+    uint32_t                 vbv_bufsize;
 
     EbBool                 enable_adaptive_quantization;
 
