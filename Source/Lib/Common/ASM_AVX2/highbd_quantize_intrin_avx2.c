@@ -813,6 +813,13 @@ void eb_aom_highbd_quantize_b_32x32_avx2(const TranLow *coeff_ptr, intptr_t n_co
     }
 }
 
+static INLINE void init_one_qp_fp(const __m128i *p, __m256i *qp) {
+  const __m128i zero = _mm_setzero_si128();
+  const __m128i dc = _mm_unpacklo_epi16(*p, zero);
+  const __m128i ac = _mm_unpackhi_epi16(*p, zero);
+  *qp = _mm256_insertf128_si256(_mm256_castsi128_si256(dc), ac, 1);
+}
+
 static INLINE void init_qp_fp(const int16_t *round_ptr, const int16_t *quant_ptr,
                            const int16_t *dequant_ptr, int log_scale,
                            __m256i *qp) {
@@ -824,9 +831,9 @@ static INLINE void init_qp_fp(const int16_t *round_ptr, const int16_t *quant_ptr
   const __m128i quant = _mm_loadu_si128((const __m128i *)quant_ptr);
   const __m128i dequant = _mm_loadu_si128((const __m128i *)dequant_ptr);
 
-  init_one_qp(&round, &qp[0]);
-  init_one_qp(&quant, &qp[1]);
-  init_one_qp(&dequant, &qp[2]);
+  init_one_qp_fp(&round, &qp[0]);
+  init_one_qp_fp(&quant, &qp[1]);
+  init_one_qp_fp(&dequant, &qp[2]);
 }
 
 static INLINE void quantize_highbd_fp(
@@ -876,6 +883,13 @@ static INLINE void quantize_highbd_fp(
   *eob = _mm256_max_epi32(cur_eob, *eob);
 }
 
+
+static INLINE void update_qp_fp(__m256i *qp) {
+  qp[0] = _mm256_permute2x128_si256(qp[0], qp[0], 0x11);
+  qp[1] = _mm256_permute2x128_si256(qp[1], qp[1], 0x11);
+  qp[2] = _mm256_permute2x128_si256(qp[2], qp[2], 0x11);
+}
+
 void eb_av1_highbd_quantize_fp_avx2(
     const TranLow *coeff_ptr,
     intptr_t n_coeffs,
@@ -909,7 +923,7 @@ void eb_av1_highbd_quantize_fp_avx2(
   iscan += step;
   n_coeffs -= step;
 
-  update_qp(qp);
+  update_qp_fp(qp);
   while (n_coeffs > 0) {
     coeff = _mm256_loadu_si256((const __m256i *)coeff_ptr);
     quantize_highbd_fp(qp, &coeff, iscan, log_scale, qcoeff_ptr, dqcoeff_ptr, &eob);
