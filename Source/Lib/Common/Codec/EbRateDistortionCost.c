@@ -142,16 +142,10 @@ int32_t Av1TransformTypeRateEstimation(
     FRAME_CONTEXT *fc,
     struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
     EbBool                                  is_inter,
-#if !FILTER_INTRA_FLAG
-    EbBool                                  useFilterIntraFlag,
-#endif
     TxSize                                  transform_size,
     TxType                                  transform_type,
     EbBool                                  reduced_tx_set_used)
 {
-#if !FILTER_INTRA_FLAG
-    uint8_t filterIntraMode = 0; // AMIR to check// NM- hardcoded to zero for the moment until we support different intra filtering modes.
-#endif
     //const MbModeInfo *mbmi = &xd->mi[0]->mbmi;
     //const int32_t is_inter = is_inter_block(mbmi);
 
@@ -177,13 +171,8 @@ int32_t Av1TransformTypeRateEstimation(
         else {
             if (ext_tx_set > 0) {
                 PredictionMode intra_dir;
-#if FILTER_INTRA_FLAG
                 if (candidate_buffer_ptr->candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES)
                     intra_dir = fimode_to_intradir[candidate_buffer_ptr->candidate_ptr->filter_intra_mode];
-#else
-                if (useFilterIntraFlag)
-                    intra_dir = fimode_to_intradir[filterIntraMode];
-#endif
                 else
                     intra_dir = candidate_buffer_ptr->candidate_ptr->pred_mode;
                 assert(intra_dir < INTRA_MODES);
@@ -495,9 +484,6 @@ uint64_t eb_av1_cost_coeffs_txb(
             ec_ctx,
             candidate_buffer_ptr,
             candidate_buffer_ptr->candidate_ptr->type == INTER_MODE ? EB_TRUE : EB_FALSE,
-#if !FILTER_INTRA_FLAG
-            EB_FALSE, // NM - Hardcoded to false for the moment until we support the intra filtering
-#endif
             transform_size,
             transform_type,
             reducedTransformSetFlag);
@@ -595,18 +581,13 @@ uint64_t eb_av1_cost_coeffs_txb(
 
     return cost;
 }
-#if FILTER_INTRA_FLAG
  int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
-#if PAL_SUP
  int av1_filter_intra_allowed(
      uint8_t   enable_filter_intra,
      BlockSize bsize,
      uint8_t   palette_size,
      uint32_t  mode);
-#else
- int av1_filter_intra_allowed(uint8_t   enable_filter_intra, BlockSize bsize, uint32_t  mode);
-#endif
-#endif
+
 /*static*/ void model_rd_from_sse(
     BlockSize bsize,
     int16_t quantizer,
@@ -703,9 +684,7 @@ uint64_t av1_intra_fast_cost(
     uint64_t intraModeBitsNum = 0;
     uint64_t intraLumaModeBitsNum = 0;
     uint64_t intraLumaAngModeBitsNum = 0;
-#if FILTER_INTRA_FLAG
     uint64_t intra_filter_mode_bits_num = 0;
-#endif
     uint64_t intraChromaModeBitsNum = 0;
     uint64_t intraChromaAngModeBitsNum = 0;
     uint64_t skipModeRate = 0;
@@ -758,19 +737,12 @@ uint64_t av1_intra_fast_cost(
         }
     }
 #endif
-#if FILTER_INTRA_FLAG
-#if PAL_SUP
     if (av1_filter_intra_allowed(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_filter_intra, blk_geom->bsize, candidate_ptr->palette_info.pmi.palette_size[0], intra_mode)) {
-#else
-    if (av1_filter_intra_allowed(picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_filter_intra, blk_geom->bsize, intra_mode)) {
-#endif
        intra_filter_mode_bits_num = candidate_ptr->md_rate_estimation_ptr->filter_intra_fac_bits[blk_geom->bsize][candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES];
         if (candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
             intra_filter_mode_bits_num += candidate_ptr->md_rate_estimation_ptr->filter_intra_mode_fac_bits[candidate_ptr->filter_intra_mode];
         }
     }
-#endif
-
     if (blk_geom->has_uv) {
         if (!isMonochromeFlag && is_chroma_reference(miRow, miCol, blk_geom->bsize, subSamplingX, subSamplingY)) {
             // Estimate luma nominal intra mode bits
@@ -791,11 +763,7 @@ uint64_t av1_intra_fast_cost(
     }
 
     uint32_t isInterRate = picture_control_set_ptr->slice_type != I_SLICE ? candidate_ptr->md_rate_estimation_ptr->intra_inter_fac_bits[cu_ptr->is_inter_ctx][0] : 0;
-#if FILTER_INTRA_FLAG
     lumaRate = (uint32_t)(intraModeBitsNum + skipModeRate + intraLumaModeBitsNum + intraLumaAngModeBitsNum + isInterRate + intra_filter_mode_bits_num);
-#else
-    lumaRate = (uint32_t)(intraModeBitsNum + skipModeRate + intraLumaModeBitsNum + intraLumaAngModeBitsNum + isInterRate);
-#endif
     if (av1_allow_intrabc(picture_control_set_ptr->parent_pcs_ptr->av1_cm))
         lumaRate += candidate_ptr->md_rate_estimation_ptr->intrabc_fac_bits[candidate_ptr->use_intrabc];
 
@@ -1633,7 +1601,6 @@ uint64_t mdc_av1_inter_fast_cost(
     }
 }
 #endif
-#if TWO_PASS_IMPROVEMENT
 /* two_pass_cost_update
  * This function adds some biases for distortion and rate.
  * The function is used in the first pass only and for the purpose of data collection */
@@ -1679,7 +1646,7 @@ void two_pass_cost_update_64bit(
         *distortion += (*distortion) * 2;
     }
 }
-#endif
+
 
 uint64_t av1_inter_fast_cost(
     CodingUnit            *cu_ptr,
@@ -2030,26 +1997,14 @@ uint64_t av1_inter_fast_cost(
         totalDistortion += chromaSad;
 
         rate = lumaRate + chromaRate;
-
-#if TWO_PASS
         if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->use_output_stat_file) {
-#if TWO_PASS_IMPROVEMENT
             two_pass_cost_update(
                 picture_control_set_ptr,
                 candidate_ptr,
                 &rate,
                 &totalDistortion);
-#else
-            MvReferenceFrame ref_type[2];
-            av1_set_ref_frame(ref_type, candidate_ptr->ref_frame_type);
-            if ((candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME || ref_type[1] != BWDREF_FRAME)) ||
-                (!candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME && ref_type[0] != BWDREF_FRAME))) {
-                rate += rate * FIRST_PASS_COST_PENALTY / 100;
-                totalDistortion += totalDistortion * FIRST_PASS_COST_PENALTY / 100;
-            }
-#endif
+
         }
-#endif
         if (candidate_ptr->merge_flag) {
             uint64_t skipModeRate = candidate_ptr->md_rate_estimation_ptr->skip_mode_fac_bits[skipModeCtx][1];
             if (skipModeRate < rate)
@@ -2064,25 +2019,13 @@ uint64_t av1_inter_fast_cost(
         if (blk_geom->has_uv == 0 && chromaSad != 0)
             printf("av1_inter_fast_cost: Chroma error");
         rate = lumaRate + chromaRate;
-#if TWO_PASS
         if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->use_output_stat_file) {
-#if TWO_PASS_IMPROVEMENT
             two_pass_cost_update(
                 picture_control_set_ptr,
                 candidate_ptr,
                 &rate,
                 &totalDistortion);
-#else
-            MvReferenceFrame ref_type[2];
-            av1_set_ref_frame(ref_type, candidate_ptr->ref_frame_type);
-            if ((candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME || ref_type[1] != BWDREF_FRAME)) ||
-                (!candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME && ref_type[0] != BWDREF_FRAME))) {
-                rate += rate * FIRST_PASS_COST_PENALTY / 100;
-                totalDistortion += totalDistortion * FIRST_PASS_COST_PENALTY / 100;
-            }
-#endif
         }
-#endif
         // Assign fast cost
         if (candidate_ptr->merge_flag) {
             uint64_t skipModeRate = candidate_ptr->md_rate_estimation_ptr->skip_mode_fac_bits[skipModeCtx][1];
@@ -2287,7 +2230,6 @@ EbErrorType Av1FullCost(
         }
     }
 
-#if ENHANCE_ATB
     uint64_t tx_size_bits = 0;
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.tx_mode == TX_MODE_SELECT)
         tx_size_bits = get_tx_size_bits(
@@ -2296,16 +2238,11 @@ EbErrorType Av1FullCost(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->tx_depth,
             candidate_buffer_ptr->candidate_ptr->block_has_coeff);
-#endif
 
     // Coeff rate
 
     if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
-#if ENHANCE_ATB
         uint64_t non_skip_cost = RDCOST(lambda, (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + tx_size_bits + (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->skip_fac_bits[cu_ptr->skip_coeff_context][0]), (y_distortion[0] + cb_distortion[0] + cr_distortion[0]));
-#else
-        uint64_t non_skip_cost = RDCOST(lambda, (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->skip_fac_bits[cu_ptr->skip_coeff_context][0]), (y_distortion[0] + cb_distortion[0] + cr_distortion[0]));
-#endif
         uint64_t skip_cost = RDCOST(lambda, ((uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->skip_fac_bits[cu_ptr->skip_coeff_context][1]), (y_distortion[1] + cb_distortion[1] + cr_distortion[1]));
         if ((candidate_buffer_ptr->candidate_ptr->block_has_coeff == 0) || (skip_cost < non_skip_cost)) {
             y_distortion[0] = y_distortion[1];
@@ -2326,30 +2263,15 @@ EbErrorType Av1FullCost(
     totalDistortion = luma_sse + chromaSse;
 
     rate = lumaRate + chromaRate + coeffRate;
-#if ENHANCE_ATB
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff)
         rate += tx_size_bits;
-#endif
-
-#if TWO_PASS
     if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->use_output_stat_file && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
-#if TWO_PASS_IMPROVEMENT
         two_pass_cost_update_64bit(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr,
             &rate,
             &totalDistortion);
-#else
-        MvReferenceFrame ref_type[2];
-        av1_set_ref_frame(ref_type, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
-        if ((candidate_buffer_ptr->candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME || ref_type[1] != BWDREF_FRAME)) ||
-            (!candidate_buffer_ptr->candidate_ptr->is_compound && (ref_type[0] != LAST_FRAME && ref_type[0] != BWDREF_FRAME))) {
-            rate += rate * FIRST_PASS_COST_PENALTY / 100;
-            totalDistortion += totalDistortion * FIRST_PASS_COST_PENALTY / 100;
-        }
-#endif
     }
-#endif
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, totalDistortion);
 
@@ -2458,7 +2380,6 @@ EbErrorType  Av1MergeSkipFullCost(
     mergeRate += candidate_buffer_ptr->candidate_ptr->fast_chroma_rate;
 
     mergeRate += coeffRate;
-#if ENHANCE_ATB
     uint64_t tx_size_bits = 0;
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.tx_mode == TX_MODE_SELECT)
         tx_size_bits = get_tx_size_bits(
@@ -2468,7 +2389,6 @@ EbErrorType  Av1MergeSkipFullCost(
             candidate_buffer_ptr->candidate_ptr->tx_depth,
             candidate_buffer_ptr->candidate_ptr->block_has_coeff);
     mergeRate += tx_size_bits;
-#endif
 
     mergeDistortion = (mergeLumaSse + mergeChromaSse);
 
@@ -2504,7 +2424,6 @@ EbErrorType  Av1MergeSkipFullCost(
     skipDistortion = skipLumaSse + skipChromaSse;
     skipRate = skipModeRate;
     skip_cost = RDCOST(lambda, skipRate, skipDistortion);
-#if TWO_PASS
     if (picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->use_output_stat_file) {
         MvReferenceFrame ref_type[2];
         av1_set_ref_frame(ref_type, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
@@ -2513,7 +2432,6 @@ EbErrorType  Av1MergeSkipFullCost(
             skip_cost += skip_cost * FIRST_PASS_COST_PENALTY / 100;
             merge_cost += merge_cost * FIRST_PASS_COST_PENALTY / 100;
         }
-#if TWO_PASS_IMPROVEMENT
         EbReferenceObject  *refObjL1 = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
         if (picture_control_set_ptr->slice_type == B_SLICE &&
             (candidate_buffer_ptr->candidate_ptr->is_compound || ref_type[0] == BWDREF_FRAME)
@@ -2521,9 +2439,7 @@ EbErrorType  Av1MergeSkipFullCost(
             skip_cost += skip_cost * 2;
             merge_cost += merge_cost * 2;
         }
-#endif
     }
-#endif
     // Assigne full cost
     *candidate_buffer_ptr->full_cost_ptr = (skip_cost <= merge_cost) ? skip_cost : merge_cost;
 

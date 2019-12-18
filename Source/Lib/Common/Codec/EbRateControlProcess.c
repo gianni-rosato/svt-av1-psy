@@ -3230,25 +3230,15 @@ enum {
 #define HIGH_FILTERED_THRESHOLD     (4<<8) // 8 bit precision
 #define LOW_FILTERED_THRESHOLD      (2<<8) // 8 bit precision
 #define QPS_SW_THRESH                   8  // 100 to shut QPS/QPM (i.e. CORE only)
-
-#if TWO_PASS
-#if TWO_PASS_IMPROVEMENT
 #define MAX_REF_AREA_I                 50 // Max ref area for I slice
 #define MAX_REF_AREA_NONI              50 // Max ref area for Non I slice
 #define MAX_REF_AREA_NONI_LOW_RES      40 // Max ref area for Non I slice in low resolution
-#else
-#define MAX_REF_AREA_I                 45 // Max ref area for I slice
-#define MAX_REF_AREA_NONI              40 // Max ref area for Non I slice
-#define MAX_REF_AREA_NONI_LOW_RES      30 // Max ref area for Non I slice in low resolution
-#endif
 #define REF_AREA_DIF_THRESHOLD         10 // Difference threshold for ref area between two frames
 #define REF_AREA_LOW_THRESHOLD          8 // Low threshold for ref area
 #define REF_AREA_MED_THRESHOLD         16 // Medium threshold for ref area
-
 #define ME_SAD_LOW_THRESHOLD1          15 // Low Sad threshold1 for me distortion (very low)
 #define ME_SAD_LOW_THRESHOLD2          25 // Low Sad threshold2 for me distortion (low)
 #define ME_SAD_HIGH_THRESHOLD          80 // High Sad threshold2 for me distortion (high)
-#endif
 
 #define ASSIGN_MINQ_TABLE(bit_depth, name)                   \
   do {                                                       \
@@ -3686,9 +3676,6 @@ static int adaptive_qindex_calc_two_pass(
     int                        qindex) {
 
     SequenceControlSet        *sequence_control_set_ptr = picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr;
-#if !TWO_PASS_IMPROVEMENT
-    const Av1Common  *const cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;
-#endif
     const int cq_level = qindex;
     int active_best_quality = 0;
     int active_worst_quality = qindex;
@@ -3730,11 +3717,6 @@ static int adaptive_qindex_calc_two_pass(
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality =
             get_kf_active_quality(rc, active_worst_quality, bit_depth);
-#if !TWO_PASS_IMPROVEMENT
-        // Allow somewhat lower kf minq with small image formats.
-        if ((cm->frm_size.frame_width * cm->frm_size.frame_height) <= (352 * 288))
-            q_adj_factor -= 0.25;
-#endif
         // Make a further adjustment based on the kf zero motion measure.
         q_adj_factor += 0.05 - (0.001 * (double)picture_control_set_ptr->parent_pcs_ptr->kf_zeromotion_pct/*(double)cpi->twopass.kf_zeromotion_pct*/);
 
@@ -4005,10 +3987,6 @@ static void sb_qp_derivation_two_pass(
             else if (picture_control_set_ptr->temporal_layer_index == 0) {
                 if (referenced_area_sb < REF_AREA_LOW_THRESHOLD)
                     delta_qp = max_delta_qp >> 1;
-#if !TWO_PASS_IMPROVEMENT
-                else if (referenced_area_sb > MAX_REF_AREA_NONI_LOW_RES && me_distortion > ME_SAD_HIGH_THRESHOLD)
-                    delta_qp = -max_delta_qp >> 2;
-#endif
             }
 
             if (picture_control_set_ptr->slice_type == 2)

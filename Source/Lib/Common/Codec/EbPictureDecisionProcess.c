@@ -28,10 +28,8 @@
 #define  LAY0_OFF  0
 #define  LAY1_OFF  3
 #define  LAY2_OFF  5
-#if PRED_CHANGE_5L
 #define  LAY3_OFF  6
 #define  LAY4_OFF  7
-#endif
 extern PredictionStructureConfigEntry flat_pred_struct[];
 extern PredictionStructureConfigEntry two_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
@@ -772,8 +770,6 @@ EbErrorType signal_derivation_multi_processes_oq(
     FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
 
     uint8_t sc_content_detected = picture_control_set_ptr->sc_content_detected;
-
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     uint8_t enc_mode_hme = sequence_control_set_ptr->use_output_stat_file ? picture_control_set_ptr->snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
     picture_control_set_ptr->enable_hme_flag = enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
 
@@ -785,18 +781,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
     picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
     picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][enc_mode_hme];
-#else
-    picture_control_set_ptr->enable_hme_flag = enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
 
-    picture_control_set_ptr->enable_hme_level0_flag = enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-    picture_control_set_ptr->enable_hme_level1_flag = enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-    picture_control_set_ptr->enable_hme_level2_flag = enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-
-    picture_control_set_ptr->tf_enable_hme_flag = tf_enable_hme_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-    picture_control_set_ptr->tf_enable_hme_level0_flag = tf_enable_hme_level0_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-    picture_control_set_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-    picture_control_set_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[picture_control_set_ptr->sc_content_detected][sequence_control_set_ptr->input_resolution][picture_control_set_ptr->enc_mode];
-#endif
 
         if (sc_content_detected)
 #if PRESETS_TUNE
@@ -1440,52 +1425,19 @@ EbErrorType signal_derivation_multi_processes_oq(
         // Set atb mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
-#if ATB_10_BIT
-#if ATB_HBD
-#if PRESETS_OPT
         if (picture_control_set_ptr->enc_mode <= ENC_M2)
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1)
-#endif
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1 &&  !sequence_control_set_ptr->static_config.enable_hbd_mode_decision)
-#endif
-#else
-        if (picture_control_set_ptr->enc_mode <= ENC_M1 && sequence_control_set_ptr->static_config.encoder_bit_depth == EB_8BIT)
-#endif
-
-#if SPEED_OPT
             picture_control_set_ptr->atb_mode = (MR_MODE || picture_control_set_ptr->temporal_layer_index == 0) ? 1 : 0;
-#else
-            picture_control_set_ptr->atb_mode = 1;
-#endif
         else
             picture_control_set_ptr->atb_mode = 0;
 
         // Set skip atb                          Settings
         // 0                                     OFF
         // 1                                     ON
-#if PRESETS_OPT
         // Phoenix: Active only when atb compound is on
         if (picture_control_set_ptr->enc_mode <= ENC_M7)
             picture_control_set_ptr->coeff_based_skip_atb = 0;
         else
             picture_control_set_ptr->coeff_based_skip_atb = 1;
-#else
-#if SPEED_OPT
-#if ENHANCED_M0_SETTINGS
-        if (picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->sc_content_detected)
-#else
-        if (MR_MODE || picture_control_set_ptr->sc_content_detected)
-#endif
-#else
-        if (MR_MODE || picture_control_set_ptr->enc_mode == ENC_M0 || picture_control_set_ptr->sc_content_detected)
-#endif
-            picture_control_set_ptr->coeff_based_skip_atb = 0;
-        else
-            picture_control_set_ptr->coeff_based_skip_atb = 1;
-#endif
-
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
         // 1                 Fast: If two predictors are very similar, skip wedge compound mode search
@@ -1572,12 +1524,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         // GM_TRAN_ONLY                               Translation only using ME MV.
         picture_control_set_ptr->gm_level = GM_FULL;
 #endif
-#if TX_SIZE_EARLY_EXIT
         //Exit TX size search when all coefficients are zero
         // 0: OFF
         // 1: ON
         picture_control_set_ptr->tx_size_early_exit = 1;
-#endif
     return return_error;
 }
 
@@ -2099,12 +2049,7 @@ static void  Av1GenerateRpsInfo(
         //Layer 0 : circular move 0-1-2
         //Layer 1 : circular move 3-4
         //Layer 2 : circular move 5-6
-#if PRED_CHANGE
         //Layer 3 : 7
-#else
-        //Layer 3 : not kept. DPB Location 7 is unused.
-#endif
-
         //pic_num
         //         1     3    5      7    9     11     13      15
         //            2          6           10            14
@@ -2127,9 +2072,7 @@ static void  Av1GenerateRpsInfo(
 
         const uint8_t  lay2_0_idx = picture_index < 4 ? LAY2_OFF + 1 : LAY2_OFF + 0;   //the oldest L2 picture in the DPB
         const uint8_t  lay2_1_idx = picture_index < 4 ? LAY2_OFF + 0 : LAY2_OFF + 1;   //the newest L2 picture in the DPB
-#if PRED_CHANGE
         const uint8_t  lay3_idx = 7;    //the newest L3 picture in the DPB
-#endif
         /*in 5L struct, we switich to  4L at the end of the seq.
         the current pred struct is reset, and the previous 5L minGop is out of reach!
         four_level_hierarchical_pred_struct will be set to follow 4L order, but this will generate some RPS mismatch for some frames.
@@ -2270,20 +2213,12 @@ static void  Av1GenerateRpsInfo(
             else
 
             if (picture_index == 0) {
-#if PRED_CHANGE
                 //{ 1, 3, 5, 8}         // GOP Index 1 - Ref List 0
-#else
-                //{ 1, 3, 5, 9}         // GOP Index 1 - Ref List 0
-#endif
                 //{ -1, -3, -7,  0 }    // GOP Index 1 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = base1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay2_0_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay1_0_idx;
-#if PRED_CHANGE
                 av1_rps->ref_dpb_index[GOLD] = lay3_idx;
-#else
-                av1_rps->ref_dpb_index[GOLD] = base0_idx;
-#endif
                 av1_rps->ref_dpb_index[BWD] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT] = base2_idx;
@@ -2298,30 +2233,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
             }
             else if (picture_index == 2) {
-#if PRED_CHANGE_MOD
                 // { 1, 3, 2, 5},        // GOP Index 3 - Ref List 0
-#elif PRED_CHANGE
-                // { 1, 2, 3, 5},        // GOP Index 3 - Ref List 0
-#else
-                //{ 1, 3, 5, 7},         //    GOP Index 3 - Ref List 0
-#endif
                 //{ -1,  -5, 0,  0 }     //     GOP Index 3 - Ref List 1
-#if PRED_CHANGE_MOD
                 av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = base1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay3_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay2_0_idx;
-#elif PRED_CHANGE
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay2_0_idx;
-#else
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = base1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#endif
                 av1_rps->ref_dpb_index[BWD] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2330,26 +2247,19 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[1]);
                 av1_rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[2]);
                 av1_rps->ref_poc_array[GOLD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[3]);
-
                 av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
                 av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else if (picture_index == 4) {
-#if PRED_CHANGE
                // { 1, 3, 5, 4},    // GOP Index 5 - Ref List 0
-#else
-                //{ 1, 3, 5, 9},         // GOP Index 5 - Ref List 0
-#endif
+
                 //{ -1,  -3, 0,  0 }     // GOP Index 5 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay2_0_idx;
                 av1_rps->ref_dpb_index[LAST3] = base1_idx;
-#if PRED_CHANGE
                 av1_rps->ref_dpb_index[GOLD] = lay3_idx;
-#else
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#endif
+
                 av1_rps->ref_dpb_index[BWD] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2364,20 +2274,14 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else if (picture_index == 6) {
-#if PRED_CHANGE
+
                 //{ 1,  3, 5,  6},     //  GOP Index 7 - Ref List 0
-#else
-                //{ 1, 3, 5, 7},         //  GOP Index 7 - Ref List 0
-#endif
+
                 //{ -1,  0, 0,  0 }      // GOP Index 7 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-#if PRED_CHANGE
                 av1_rps->ref_dpb_index[GOLD] = lay3_idx;
-#else
-                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#endif
                 av1_rps->ref_dpb_index[BWD] = base2_idx;
                 av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2393,14 +2297,10 @@ static void  Av1GenerateRpsInfo(
             }
             else
                 printf("Error in GOp indexing\n");
-#if PRED_CHANGE
             if (picture_index == 0)
                 av1_rps->refresh_frame_mask = 1 << (lay3_idx);
             else
                 av1_rps->refresh_frame_mask = 0;
-#else
-            av1_rps->refresh_frame_mask = 0;
-#endif
             break;
 
         default:
@@ -2411,11 +2311,7 @@ static void  Av1GenerateRpsInfo(
         prune_refs(pred_position_ptr, av1_rps);
 
         if (!set_frame_display_params(picture_control_set_ptr, context_ptr, mini_gop_index)) {
-#if PRED_CHANGE
             if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0)
-#else
-            if (picture_control_set_ptr->is_used_as_reference_flag)
-#endif
             {
                 frm_hdr->show_frame = EB_FALSE;
                 picture_control_set_ptr->has_show_existing = EB_FALSE;
@@ -2484,14 +2380,9 @@ static void  Av1GenerateRpsInfo(
         //DPB: Loc7|Loc6|Loc5|Loc4|Loc3|Loc2|Loc1|Loc0
         //Layer 0 : circular move 0-1-2
         //Layer 1 : circular move 3-4
-#if PRED_CHANGE_5L
         //Layer 2 : DPB Location 5
         //Layer 3 : DPB Location 6
         //Layer 4 : DPB Location 7
-#else
-        //Layer 2 : circular move 5-6
-        //Layer 3 : DPB Location 7
-#endif
         //pic_num                  for poc 17
         //         1     3    5      7    9     11     13      15         17    19     21    23   25     27    29    31
         //            2          6           10            14                18           22          26          30
@@ -2505,16 +2396,9 @@ static void  Av1GenerateRpsInfo(
 
         const uint8_t  lay1_0_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 1 : LAY1_OFF + 0;   //the oldest L1 picture in the DPB
         const uint8_t  lay1_1_idx = context_ptr->lay1_toggle == 0 ? LAY1_OFF + 0 : LAY1_OFF + 1;   //the newest L1 picture in the DPB
-#if PRED_CHANGE_5L
         const uint8_t  lay2_1_idx = LAY2_OFF;   //the oldest L2 picture in the DPB
         const uint8_t  lay3_idx = LAY3_OFF;    //the newest L3 picture in the DPB
         const uint8_t  lay4_idx = LAY4_OFF;    //the newest L3 picture in the DPB
-#else
-        const uint8_t  lay2_0_idx = picture_index < 8 ? LAY2_OFF + 1 : LAY2_OFF + 0;   //the oldest L2 picture in the DPB
-        const uint8_t  lay2_1_idx = picture_index < 8 ? LAY2_OFF + 0 : LAY2_OFF + 1;   //the newest L2 picture in the DPB
-
-        const uint8_t  lay3_idx = 7;    //the newest L3 picture in the DPB
-#endif
         switch (picture_control_set_ptr->temporal_layer_index) {
         case 0:
 
@@ -2574,11 +2458,7 @@ static void  Av1GenerateRpsInfo(
                 //{  4,   8,  12,  20 },  // GOP Index 4 - Ref List 0
                 //{ -4, -12,  0,  0 }     // GOP Index 4 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = base1_idx;
-#if PRED_CHANGE_5L
                 av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
-#else
-                av1_rps->ref_dpb_index[LAST2] = lay2_0_idx;
-#endif
                 av1_rps->ref_dpb_index[LAST3] = lay1_0_idx;
                 av1_rps->ref_dpb_index[GOLD] = base0_idx;
 
@@ -2599,11 +2479,7 @@ static void  Av1GenerateRpsInfo(
                 //{ 4, 8, 12, 0},       // GOP Index 12 - Ref List 0
                 //{ -4,  0, 0,  0 }     // GOP Index 12 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
-#if PRED_CHANGE_5L
                 av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
-#else
-                av1_rps->ref_dpb_index[LAST2] = lay2_0_idx;
-#endif
                 av1_rps->ref_dpb_index[LAST3] = base1_idx;
                 av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
 
@@ -2620,11 +2496,7 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
-#if PRED_CHANGE_5L
             av1_rps->refresh_frame_mask = 1 << (LAY2_OFF);
-#else
-            av1_rps->refresh_frame_mask = 1 << (LAY2_OFF + context_ptr->lay2_toggle);
-#endif
             //toggle 3->4
             context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;
 
@@ -2633,22 +2505,12 @@ static void  Av1GenerateRpsInfo(
         case 3:
 
             if (picture_index == 1) {
-#if PRED_CHANGE_5L
                 //{ 2, 4, 10, 18},        // GOP Index 2 - Ref List 0
                 //{ -2, -6, -14,  0 }   // GOP Index 2 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = base1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay3_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay1_0_idx;
                 av1_rps->ref_dpb_index[GOLD] = base0_idx;
-#else
-                //{ 2, 4, 6, 10},        // GOP Index 2 - Ref List 0
-                //{ -2, -6, -14,  0 }   // GOP Index 2 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = base1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT] = base2_idx;
@@ -2663,22 +2525,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
             }
             else if (picture_index == 5) {
-#if PRED_CHANGE_5L
                 //{ 2, 4, 6, 14},        // GOP Index 6 - Ref List 0
                 //{ -2, -10,  0,  0 }   // GOP Index 6 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay3_idx;
                 av1_rps->ref_dpb_index[LAST3] = base1_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#else
-                //{ 2, 4, 6, 10},        // GOP Index 6 - Ref List 0
-                //{ -2, -10,  0,  0 }   // GOP Index 6 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay2_0_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2693,22 +2545,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else if (picture_index == 9) {
-#if PRED_CHANGE_5L
                 //{ 2, 4, 10, 18},       // GOP Index 10 - Ref List 0
                 //{ -2, -6,  0,  0 }    // GOP Index 10 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay3_idx;
                 av1_rps->ref_dpb_index[LAST3] = base1_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#else
-                //{ 2, 4, 6, 10},       // GOP Index 10 - Ref List 0
-                //{ -2, -6,  0,  0 }    // GOP Index 10 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2745,11 +2587,7 @@ static void  Av1GenerateRpsInfo(
             }
             else
                 printf("Error in GOp indexing\n");
-#if PRED_CHANGE_5L
             av1_rps->refresh_frame_mask = 1 << (lay3_idx);
-#else
-            av1_rps->refresh_frame_mask = 1 << 7;
-#endif
             break;
 
         case 4:
@@ -2775,29 +2613,12 @@ static void  Av1GenerateRpsInfo(
             }
             else
             if (picture_index == 0) {
-#if PRED_CHANGE_MOD
                 //{ 1, 9, 8, 17},  // GOP Index 1 - Ref List 0
                 //{ -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = base1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay1_0_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = base0_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 8, 9, 17},  // GOP Index 1 - Ref List 0
-                //{ -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = base1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay4_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay1_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = base0_idx;
-#else
-                //{ 1, 5, 9, 17},  // GOP Index 1 - Ref List 0
-                //{ -1, -3, -7, 0 }   // GOP Index 1 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = base1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay2_0_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay1_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = base0_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay3_idx;
                 av1_rps->ref_dpb_index[ALT2] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT] = lay1_1_idx;
@@ -2812,29 +2633,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
             }
             else if (picture_index == 2) {
-#if PRED_CHANGE_MOD
                 //{ 1, 3, 2, 11},  // GOP Index 3 - Ref List 0
                //{ -1, -5, -13, 0 }   // GOP Index 3 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay3_idx;
                 av1_rps->ref_dpb_index[LAST2] = base1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 2, 3, 11},  // GOP Index 3 - Ref List 0
-               //{ -1, -5, -13, 0 }   // GOP Index 3 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay4_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#else
-                //{ 1, 3, 7, 11},  // GOP Index 3 - Ref List 0
-               //{ -1, -5, -13, 0 }   // GOP Index 3 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = base1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT] = base2_idx;
@@ -2849,28 +2653,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
             }
             else if (picture_index == 4) {
-#if PRED_CHANGE_MOD
                 //{ 1, 5, 4, 13},  // GOP Index 5 - Ref List 0
                //{ -1, -3, -11, 0 }   // GOP Index 5 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = base1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 4, 5, 13},  // GOP Index 5 - Ref List 0
-               //{ -1, -3, -11, 0 }   // GOP Index 5 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay4_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#else
-                //{ 1, 5, 9, 13},  // GOP Index 5 - Ref List 0
-               //{ -1, -3, -11, 0 }   // GOP Index 5 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = base1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#endif
                 av1_rps->ref_dpb_index[BWD] = lay3_idx;
                 av1_rps->ref_dpb_index[ALT2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT] = base2_idx;
@@ -2885,28 +2673,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
             }
             else if (picture_index == 6) {
-#if PRED_CHANGE_MOD
                 //{ 1, 3, 6, 7},  // GOP Index 7 - Ref List 0
                //{ -1, -9, 0, 0 }   // GOP Index 7 - Ref List 1
                av1_rps->ref_dpb_index[LAST] = lay3_idx;
                av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
                av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 3, 6, 7},  // GOP Index 7 - Ref List 0
-               //{ -1, -9, 0, 0 }   // GOP Index 7 - Ref List 1
-               av1_rps->ref_dpb_index[LAST] = lay3_idx;
-               av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
-               av1_rps->ref_dpb_index[LAST3] = lay4_idx;
-               av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#else
-                //{ 1, 3, 7, 11},  // GOP Index 7 - Ref List 0
-               //{ -1, -9, 0, 0 }   // GOP Index 7 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay2_0_idx;
-#endif
                 av1_rps->ref_dpb_index[BWD] = lay1_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2921,28 +2693,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else if (picture_index == 8) {
-#if PRED_CHANGE_MOD
                 //{ 1, 9, 8, 17},  // GOP Index 9 - Ref List 0
                 //{ -1, -3, -7, 0 }   // GOP Index 9 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = base1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 8, 9, 17},  // GOP Index 9 - Ref List 0
-                //{ -1, -3, -7, 0 }   // GOP Index 9 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay4_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#else
-                //{ 1, 5, 9, 17},  // GOP Index 9 - Ref List 0
-                //{ -1, -3, -7, 0 }   // GOP Index 9 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay2_0_idx;
-                av1_rps->ref_dpb_index[LAST3] = base1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_0_idx;
-#endif
                 av1_rps->ref_dpb_index[BWD] = lay3_idx;
                 av1_rps->ref_dpb_index[ALT2] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT] = base2_idx;
@@ -2957,29 +2713,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, picture_control_set_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
             }
             else if (picture_index == 10) {
-#if PRED_CHANGE_MOD
                 //{ 1, 3, 2, 11},  // GOP Index 11 - Ref List 0
                 //{ -1, -5, 0, 0 }   // GOP Index 11 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay3_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 2, 3, 11},  // GOP Index 11 - Ref List 0
-                //{ -1, -5, 0, 0 }   // GOP Index 11 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay4_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay1_1_idx;
-                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#else
-                //{ 1, 3, 7, 11},  // GOP Index 11 - Ref List 0
-                //{ -1, -5, 0, 0 }   // GOP Index 11 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay1_1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay2_1_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -2994,29 +2733,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else if (picture_index == 12) {
-#if PRED_CHANGE_MOD
                 //{ 1, 5, 4, 13},  // GOP Index 13 - Ref List 0
                 //{ -1, -3, 0, 0 }   // GOP Index 13 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 4, 5, 13},  // GOP Index 13 - Ref List 0
-                //{ -1, -3, 0, 0 }   // GOP Index 13 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay4_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay1_1_idx;
-                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#else
-                //{ 1, 5, 9, 13},  // GOP Index 13 - Ref List 0
-                //{ -1, -3, 0, 0 }   // GOP Index 13 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay1_1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay2_0_idx;
-                av1_rps->ref_dpb_index[GOLD] = base1_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = lay3_idx;
                 av1_rps->ref_dpb_index[ALT2] = base2_idx;
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -3031,29 +2753,12 @@ static void  Av1GenerateRpsInfo(
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else if (picture_index == 14) {
-#if PRED_CHANGE_MOD
                 //{ 1, 3, 6, 7},  // GOP Index 15 - Ref List 0
                 //{ -1, 0, 0, 0 }   // GOP Index 15 - Ref List 1
                 av1_rps->ref_dpb_index[LAST] = lay3_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_1_idx;
-#elif PRED_CHANGE_5L
-                //{ 1, 3, 6, 7},  // GOP Index 15 - Ref List 0
-                //{ -1, 0, 0, 0 }   // GOP Index 15 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay4_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay1_1_idx;
-#else
-                //{ 1, 3, 7, 11},  // GOP Index 15 - Ref List 0
-                //{ -1, 0, 0, 0 }   // GOP Index 15 - Ref List 1
-                av1_rps->ref_dpb_index[LAST] = lay3_idx;
-                av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
-                av1_rps->ref_dpb_index[LAST3] = lay1_1_idx;
-                av1_rps->ref_dpb_index[GOLD] = lay2_0_idx;
-#endif
-
                 av1_rps->ref_dpb_index[BWD] = base2_idx;
                 av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
@@ -3069,14 +2774,10 @@ static void  Av1GenerateRpsInfo(
             }
             else
                 printf("Error in GOp indexing\n");
-#if PRED_CHANGE_5L
             if (picture_index == 0 || picture_index == 8)
                 av1_rps->refresh_frame_mask = 1 << (lay4_idx);
             else
                 av1_rps->refresh_frame_mask = 0;
-#else
-            av1_rps->refresh_frame_mask = 0;
-#endif
             break;
 
         default:
@@ -3088,11 +2789,7 @@ static void  Av1GenerateRpsInfo(
         prune_refs(pred_position_ptr, av1_rps);
 
         if (!set_frame_display_params(picture_control_set_ptr, context_ptr, mini_gop_index)) {
-#if PRED_CHANGE_5L
             if (picture_control_set_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8)
-#else
-            if (picture_control_set_ptr->is_used_as_reference_flag)
-#endif
             {
                 frm_hdr->show_frame = EB_FALSE;
                 picture_control_set_ptr->has_show_existing = EB_FALSE;
@@ -3459,11 +3156,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                 ParentPcsWindow[0] = queueEntryPtr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previousEntryIndex]->parent_pcs_wrapper_ptr->object_ptr : NULL;
                 ParentPcsWindow[1] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
-#if SERIAL_MODE
                 for (windowIndex = 0; windowIndex < sequence_control_set_ptr->scd_delay; windowIndex++) {
-#else
-                for (windowIndex = 0; windowIndex < FUTURE_WINDOW_WIDTH; windowIndex++) {
-#endif
                     entryIndex = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, windowIndex + 1);
                     if (encode_context_ptr->picture_decision_reorder_queue[entryIndex]->parent_pcs_wrapper_ptr == NULL) {
                         windowAvail = EB_FALSE;
@@ -4056,11 +3749,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     sequence_control_set_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
                                     sequence_control_set_ptr->static_config.hierarchical_levels >=2) &&
 
-#if NON_KF_INTRA_TF_FIX
                                 ((picture_control_set_ptr->slice_type == I_SLICE && picture_control_set_ptr->sc_content_detected == 0) ||
-#else
-                                ( (picture_control_set_ptr->idr_flag && picture_control_set_ptr->sc_content_detected == 0) ||
-#endif
                                   (picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->temporal_layer_index == 0)
 #if TWO_PASS
                                     || (sequence_control_set_ptr->use_input_stat_file && picture_control_set_ptr->temporal_layer_index == 1 && picture_control_set_ptr->sc_content_detected == 0)
@@ -4116,7 +3805,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 //initilize list
                                 for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = NULL;
-#if NON_KF_INTRA_TF_FIX
                                 // Jing: Intra CRA case
                                 num_past_pics = MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count -1);
 
@@ -4125,16 +3813,6 @@ void* picture_decision_kernel(void *input_ptr)
                                     PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
                                     picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
                                 }
-
-#else
-                                //get previous+current pictures from the the pre-assign buffer
-                                for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
-                                    PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex - num_past_pics + pic_itr]->object_ptr;
-                                    picture_control_set_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
-                                }
-#endif
-
-#if FIX_ALTREF
                                 int actual_past_pics = num_past_pics;
                                 int actual_future_pics = 0;
                                 int pic_i;
@@ -4164,60 +3842,14 @@ void* picture_decision_kernel(void *input_ptr)
                                         }
                                     }
                                 }
-#else
-                                int actual_future_pics = 0;
-                                int actual_past_pics = 0;
-
-                                int pic_i;
-                                //search reorder-queue to get the future pictures
-                                for (pic_i = num_past_pics + 1; pic_i < ALTREF_MAX_NFRAMES; pic_i++) {
-                                    int32_t q_index = QUEUE_GET_NEXT_SPOT(picture_control_set_ptr->pic_decision_reorder_queue_idx, pic_i - num_past_pics);
-                                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL && pic_i < altref_nframes) {
-                                        PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
-                                        picture_control_set_ptr->temp_filt_pcs_list[pic_i] = pcs_itr;
-                                    }
-                                    else
-                                        break;
-                                }
-
-                                //search in pre-ass if still short
-                                if (pic_i < num_future_pics) {
-                                    for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
-                                        for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
-                                            PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
-                                            if (pcs_itr->picture_number == picture_control_set_ptr->picture_number + pic_i_future + 1) {
-                                                picture_control_set_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
-                                                break; //exist the pre-ass loop, go search the next
-                                            }
-                                        }
-                                    }
-                                }
-
-                                //get actual number of future pictures stored
-                                for(pic_i = num_past_pics + 1; pic_i < ALTREF_MAX_NFRAMES; pic_i++) {
-                                    if(picture_control_set_ptr->temp_filt_pcs_list[pic_i] != NULL)
-                                        actual_future_pics++;
-                                }
-
-                                actual_past_pics = actual_future_pics;
-                                actual_past_pics += (altref_nframes + 1) & 0x1;
-#endif
-#if NON_KF_INTRA_TF_FIX
                                 int index_center = actual_past_pics;
-#else
-                                int index_center = (uint8_t)(picture_control_set_ptr->sequence_control_set_ptr->static_config.altref_nframes / 2);
-#endif
                                 int pic_itr;
                                 int ahd;
 
                                 int ahd_th = (((sequence_control_set_ptr->seq_header.max_frame_width * sequence_control_set_ptr->seq_header.max_frame_height) * AHD_TH_WEIGHT) / 100);
 
                                 // Accumulative histogram absolute differences between the central and past frame
-#if FIX_ALTREF
                                 for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {
-#else
-                                for (pic_itr = index_center - actual_past_pics; pic_itr < index_center - 1; pic_itr++) {
-#endif
                                     ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, picture_control_set_ptr, sequence_control_set_ptr);
 
                                     if (ahd < ahd_th)

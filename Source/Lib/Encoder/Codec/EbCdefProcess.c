@@ -42,9 +42,6 @@ int32_t eb_sb_compute_cdef_list(PictureControlSet   *picture_control_set_ptr, co
     cdef_list *dlist, BlockSize bs);
 void finish_cdef_search(
     EncDecContext                *context_ptr,
-#if !UPDATE_CDEF
-    SequenceControlSet           *sequence_control_set_ptr,
-#endif
     PictureControlSet            *picture_control_set_ptr,
     int32_t                      selected_strength_cnt[64]);
 void av1_cdef_frame16bit(
@@ -476,9 +473,6 @@ void* cdef_kernel(void *input_ptr)
         if (sequence_control_set_ptr->seq_header.enable_cdef && picture_control_set_ptr->parent_pcs_ptr->cdef_filter_mode) {
                 finish_cdef_search(
                     0,
-#if !UPDATE_CDEF
-                    sequence_control_set_ptr,
-#endif
                     picture_control_set_ptr,
                     selected_strength_cnt);
 

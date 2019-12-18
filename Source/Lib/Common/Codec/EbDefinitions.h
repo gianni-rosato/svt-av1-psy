@@ -32,34 +32,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define TX_SIZE_EARLY_EXIT          1 // Exit TX size search when all coefficients are zero.
-
-#define   SINGLE_CORE_ENCODE   1
-#if SINGLE_CORE_ENCODE
-#define SERIAL_MODE                  1 // Change ressource allocations  to optimize single core operating mode
-#define OUT_ALLOC                    1 // Output bitsream allocation at run time for both single/multi core
-#define PAREF_OUT                    1 // Disconnect pa ref  from input for both single/multi core
-#define NO_THREAD_PIN                1 // Adding the ability to not pin the -lp 1 use case to core 0
-#endif
 #define INIT_GM_FIX           1 // initilize global motion to be OFF for all references frames.
-#define REVERT_ALTREF_FIX     1 // put back padding r2r fix for altref
 
 #define ENHANCED_M0_SETTINGS         1 // Updated M0 settings(optimized independent chroma search for all layers, conservative coeff - based NSQ cands reduction, shut coeff - based skip tx size search, warped for all layers, SUB - SAD as ME search method for non - SC only)
 #define MULTI_PASS_PD                1 // Multi-Pass Partitioning Depth (Multi-Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure. As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
-#define RATE_ESTIMATION_UPDATE       1 // Adding the rate estimation updates used in MD for missing syntax elements
-#define HBD_CLEAN_UP                 1
-
-#define HBD2_COMP                    1 // Inter-Inter compound mode HBD2
-#define HBD2_PME                     1 // Predictive ME (PME) HBD2
-#define HBD2_OBMC                    1 // OBMC semi-lossless for HBD1 & HBD2
-
-#define IFS_8BIT_MD                  1
-
-#define COMP_HBD                     1
-#define INTERINTRA_HBD               1
-#define ATB_HBD                      1
-#define ATB_FIX                      1
-
 #define M0_OPT                       1
 #define PRESETS_TUNE                 1
 #define PRESETS_OPT                  1
@@ -72,40 +48,8 @@ extern "C" {
 #if PAL_SUP
 #define PAL_CLASS   1
 #endif
-
-#define AUTO_MAX_PARTITION           1 // Shortcut to skip search depths depending on motion estimation info and statistics
-
-#define LESS_RECTANGULAR_CHECK_LEVEL 1 // Shortcut to skip a/b shapes depending on SQ/H/V shape costs
-
-#define INTER_INTRA_CLASS_PRUNING    1
-
-#define FIX_ALTREF                   1 // Address ALTREF mismatch between rtime-m0-test and master: fixed actual_future_pics derivation, shut padding of the central frame, fixed end past frame index prior to window shrinking
-#define FIX_NEAREST_NEW              1 // Address NEAREST_NEW mismatch between rtime-m0-test and master: fixed injection and fixed settings
-#define FIX_ESTIMATE_INTRA           1 // Address ESTIMATE_INTRA mismatch between rtime-m0-test and master: fixed settings
-#define FIX_SKIP_REDUNDANT_BLOCK     1 // Address SKIP_REDUNDANT_BLOCK mismatch between rtime-m0-test and master: fixed the action to bypass MD
-#define FIX_COEF_BASED_ATB_SKIP      1 // Address COEF_BASED_ATB_SKIP mismatch between rtime-m0-test and master: reset coeff_based_skip_atb @ each SB
-#define FIX_WM_SETTINGS              1 // Address WM_SETTINGS mismatch between rtime-m0-test and master: fixed settings
-#define FIX_ENABLE_CDF_UPDATE        1 // Address ENABLE_CDF_UPDATE mismatch between rtime-m0-test and master: removed useless update
-#define FIX_SORTING_METHOD           1 // Address SORTING mismatch between rtime-m0-test and master: used same method
-#define FIX_SETTINGS_RESET           1 // Address SEGMENT_RESET mismatch between rtime-m0-test and master: only @ 1st segment
-#define FIX_COMPOUND                 1 // Address COMPOUND mismatch between rtime-m0-test and master: used block size @ the derivation of compound count
-
 #define OBMC_FLAG            1 // OBMC motion mode flag
-
-#define INJECT_NEW_NEAR_NEAR_NEW   1   // Inject NEW_NEAR / NEAR_NEW inter prediction
-#define FILTER_INTRA_FLAG    1 // Filter intra prediction
-
-
 #define II_COMP_FLAG                 1 // InterIntra compound
-#define PAETH_HBD                    1 // Enbale Intra PAETH for 10bit
-#define INTER_INTER_HBD              1 // Upgrade InterInter compound 10bit
-#define INTER_INTRA_HBD              1 // Upgrade InterIntra compound 10bit
-#define ATB_10_BIT                   1 // Upgrade ATB  10bit
-
-#define PRED_CHANGE                  1 // Change the MRP in 4L Pictures 3, 5 , 7 and 9 use 1 as the reference
-#define PRED_CHANGE_5L               1 // Change the MRP in 5L Pictures 3, 5 , 7 and 9 use 1 as the reference, 11, 13, 15 and 17 use 9 as the reference
-#define PRED_CHANGE_MOD              1 // Reorder the references for MRP
-#define SPEED_OPT                    1 // Speed optimization(s)
 #define GLOBAL_WARPED_MOTION         1 // Global warped motion detection and insertion
 #define GM_OPT                       1 // Perform global motion estimation on a down-sampled version of the input picture
 
@@ -115,27 +59,13 @@ extern "C" {
 
 #define MR_MODE                           0
 
-#define WARP_UPDATE                       1 // Modified Warp settings: ON for MR mode. ON for ref frames in M0
-#define UPDATE_CDEF                       1 // Update bit cost estimation for CDEF filter
-#define EIGTH_PEL_MV                      1
-#define EIGHT_PEL_PREDICTIVE_ME           1
-#define EIGHT_PEL_FIX                     1 // Improve the 8th pel performance by shutting it based on the qindex and bug fixes
 #define HIGH_PRECISION_MV_QTHRESH         150
-#define COMP_INTERINTRA                   1 // InterIntra mode support
 
-#define ENHANCE_ATB                       1
 
-#define RDOQ_CHROMA                       1
 
 
 #define TWO_PASS                          1 // Two pass encoding. For now, the encoder is called two times and data transfered using file.
                                             // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
-#define TWO_PASS_USE_2NDP_ME_IN_1STP      1 // Add a config parameter to the first pass to use the ME settings of the second pass
-
-#define REMOVE_MD_STAGE_1                 1 // Simplified MD Staging; removed md_stage_1
-#define NON_KF_INTRA_TF_FIX               1 // Fix temporal filtering for non-key Intra frames
-
-#define TWO_PASS_IMPROVEMENT              1 // Tune 2 pass for better Luma by adjusting the reference area and the actions
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 
@@ -252,11 +182,7 @@ enum {
 #define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
 #if II_COMP_FLAG
 #if OBMC_FLAG
-#if FILTER_INTRA_FLAG
 #define MAX_NFL                                 125 // Maximum number of candidates MD can support
-#else
-#define MAX_NFL                                 120 // Maximum number of candidates MD can support
-#endif
 #else
 #define MAX_NFL                                  95
 #endif
@@ -317,11 +243,7 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 64
 #define MAX_TILE_COLS 64
-#if ENHANCE_ATB
 #define MAX_VARTX_DEPTH 2
-#else
-#define MAX_VARTX_DEPTH 1
-#endif
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
 #define MAX_PALETTE_SQUARE (64 * 64)
@@ -608,9 +530,8 @@ typedef enum CAND_CLASS {
 #if OBMC_FLAG
     CAND_CLASS_5,
 #endif
-#if FILTER_INTRA_FLAG
     CAND_CLASS_6,
-#endif
+
 #if PAL_CLASS
     CAND_CLASS_7,
 #endif
@@ -625,15 +546,8 @@ typedef enum MD_STAGE {
     MD_STAGE_3,
     MD_STAGE_TOTAL
 } MD_STAGE;
-#if REMOVE_MD_STAGE_1
 #define MD_STAGING_MODE_0    0
 #define MD_STAGING_MODE_1    1
-#else
-#define MD_STAGING_MODE_0    0
-#define MD_STAGING_MODE_1    1
-#define MD_STAGING_MODE_2    2
-#define MD_STAGING_MODE_3    3
-#endif
 #define INTRA_NFL           16
 #define INTER_NEW_NFL       16
 #define INTER_PRED_NFL      16
@@ -643,9 +557,6 @@ typedef enum MD_STAGE {
 #define MAX_REF_TYPE_CAND   30
 #define PRUNE_REC_TH         5
 #define PRUNE_REF_ME_TH      2
-#if !SPEED_OPT
-#define MD_EXIT_THSL         0 // MD_EXIT_THSL -->0 is lossless 100 is maximum. Increase with a step of 10-20.
-#endif
 typedef enum
 {
     EIGHTTAP_REGULAR,
@@ -1295,11 +1206,9 @@ typedef enum ATTRIBUTE_PACKED
     FILTER_INTRA_MODES,
 } FilterIntraMode;
 
-#if FILTER_INTRA_FLAG
 static const PredictionMode fimode_to_intramode[FILTER_INTRA_MODES] = {
   DC_PRED, V_PRED, H_PRED, D157_PRED, PAETH_PRED
 };
-#endif
 #define DIRECTIONAL_MODES 8
 #define MAX_ANGLE_DELTA 3
 #define ANGLE_STEP 3
@@ -2247,7 +2156,6 @@ typedef enum EbBitDepthEnum
     EB_16BIT = 16,
     EB_32BIT = 32
 } EbBitDepthEnum;
-#if HBD_CLEAN_UP
 /** The MD_BIT_DEPTH_MODE type is used to describe the bitdepth of MD path.
 */
 
@@ -2257,7 +2165,7 @@ typedef enum MD_BIT_DEPTH_MODE
     EB_10_BIT_MD    = 1,    // 10bit mode decision
     EB_DUAL_BIT_MD  = 2     // Auto: 8bit & 10bit mode decision
 } MD_BIT_DEPTH_MODE;
-#endif
+
 /** The EB_GOP type is used to describe the hierarchical coding structure of
 Groups of Pictures (GOP) units.
 */
@@ -2661,9 +2569,6 @@ void(*ErrorHandler)(
 #define LOG2F_MAX_LCU_SIZE                          6u
 #define LOG2_64_SIZE                                6 // log2(BLOCK_SIZE_64)
 #define MAX_LEVEL_COUNT                             5 // log2(BLOCK_SIZE_64) - log2(MIN_BLOCK_SIZE)
-#if !ENHANCE_ATB
-#define MAX_TU_DEPTH                                2
-#endif
 #define LOG_MIN_BLOCK_SIZE                          3
 #define MIN_BLOCK_SIZE                              (1 << LOG_MIN_BLOCK_SIZE)
 #define LOG_MIN_PU_SIZE                             2
@@ -3410,17 +3315,13 @@ static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
     /*84 */3,
 };
 
-#if TWO_PASS
 typedef struct stat_struct_t
 {
     uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
 } stat_struct_t;
-#if TWO_PASS_IMPROVEMENT
 #define TWO_PASS_IR_THRSHLD 40  // Intra refresh threshold used to reduce the reference area.
                                 // If the periodic Intra refresh is less than the threshold,
                                 // the referenced area is normalized
-#endif
-#endif
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
 
 /******************************************************************************

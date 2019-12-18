@@ -50,9 +50,7 @@
 #define ENCODER_COLOR_FORMAT            "-color-format"
 #define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
 #define ENCMODE_TOKEN                   "-enc-mode"
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
 #define ENCMODE2P_TOKEN                 "-enc-mode-2p"
-#endif
 #define HIERARCHICAL_LEVELS_TOKEN       "-hierarchical-levels" // no Eval
 #define PRED_STRUCT_TOKEN               "-pred-struct"
 #define INTRA_PERIOD_TOKEN              "-intra-period"
@@ -217,7 +215,6 @@ static void SetCfgQpFile                        (const char *value, EbConfig *cf
     if (cfg->qp_file) { fclose(cfg->qp_file); }
     FOPEN(cfg->qp_file,value, "r");
 };
-#if TWO_PASS
 static void set_input_stat_file(const char *value, EbConfig *cfg)
 {
     if (cfg->input_stat_file) { fclose(cfg->input_stat_file); }
@@ -228,10 +225,7 @@ static void set_output_stat_file(const char *value, EbConfig *cfg)
     if (cfg->output_stat_file) { fclose(cfg->output_stat_file); }
     FOPEN(cfg->output_stat_file, value, "wb");
 };
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
 static void set_snd_pass_enc_mode(const char *value, EbConfig *cfg) { cfg->snd_pass_enc_mode = (uint8_t)strtoul(value, NULL, 0); };
-#endif
-#endif
 static void SetCfgStatFile(const char *value, EbConfig *cfg)
 {
     if (cfg->stat_file) { fclose(cfg->stat_file); }
@@ -451,9 +445,7 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", SetBufferedInput },
     { SINGLE_INPUT, BASE_LAYER_SWITCH_MODE_TOKEN, "BaseLayerSwitchMode", SetBaseLayerSwitchMode },
     { SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", SetencMode},
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     { SINGLE_INPUT, ENCMODE2P_TOKEN, "EncoderMode2p", set_snd_pass_enc_mode},
-#endif
     { SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", SetCfgIntraPeriod },
     { SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", SetCfgIntraRefreshType },
     { SINGLE_INPUT, FRAME_RATE_TOKEN, "FrameRate", SetFrameRate },
@@ -619,9 +611,7 @@ void eb_config_ctor(EbConfig *config_ptr)
 
     config_ptr->enable_adaptive_quantization         = 2;
     config_ptr->enc_mode                              = MAX_ENC_PRESET;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     config_ptr->snd_pass_enc_mode                     = MAX_ENC_PRESET + 1;
-#endif
     config_ptr->intra_period                          = -2;
     config_ptr->intra_refresh_type                     = 1;
     config_ptr->hierarchical_levels                   = 4;

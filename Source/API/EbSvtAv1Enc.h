@@ -17,7 +17,6 @@ extern "C" {
 #include <stdio.h>
 #endif
 #define TILES    1
-#define TWO_PASS_USE_2NDP_ME_IN_1STP                1
 #define TWO_PASS                                    1
 #define ALT_REF_OVERLAY_APP                         1
     //***HME***
@@ -46,13 +45,11 @@ typedef struct EbSvtAv1EncConfiguration
      *
      * Default is defined as MAX_ENC_PRESET. */
     uint8_t                  enc_mode;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     /* For two pass encoding, the enc_mod of the second pass is passed in the first pass.
     * First pass has the option to run with second pass ME settings.
     *
     * Default is defined as MAX_ENC_PRESET. */
     uint8_t                  snd_pass_enc_mode;
-#endif
     // GOP Structure
 
     /* The intra period defines the interval of frames after which you insert an

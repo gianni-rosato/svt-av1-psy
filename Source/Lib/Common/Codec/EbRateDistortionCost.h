@@ -250,14 +250,12 @@ extern "C" {
         int16_t                                   txb_skip_ctx);
 #endif
 
-#if ENHANCE_ATB
     extern uint64_t get_tx_size_bits(
         ModeDecisionCandidateBuffer          *candidateBuffer,
         ModeDecisionContext                  *context_ptr,
         PictureControlSet                    *picture_control_set_ptr,
         uint8_t                               tx_depth,
         EbBool                                block_has_coeff);
-#endif
 #ifdef __cplusplus
 }
 #endif

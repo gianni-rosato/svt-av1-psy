@@ -1979,8 +1979,6 @@ static void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_contr
     // reference structures (padded pictures + downsampled versions)
     EbPaReferenceObject *src_object = (EbPaReferenceObject*)picture_control_set_ptr_central->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
-
-#if PAREF_OUT
     {
         EbPictureBufferDesc *input_picture_ptr =picture_control_set_ptr_central->enhanced_picture_ptr;
         uint8_t* pa = padded_pic_ptr->buffer_y + padded_pic_ptr->origin_x + padded_pic_ptr->origin_y * padded_pic_ptr->stride_y;
@@ -1998,7 +1996,6 @@ static void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_contr
             input_picture_ptr->origin_x,
             input_picture_ptr->origin_y);
     }
-#endif
     generate_padding(
         &(padded_pic_ptr->buffer_y[C_Y]),
         padded_pic_ptr->stride_y,
@@ -2180,9 +2177,6 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
         // Pad chroma reference samples - once only per picture
         for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes + picture_control_set_ptr_central->future_altref_nframes + 1); i++) {
             EbPictureBufferDesc *pic_ptr_ref = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
-#if FIX_ALTREF && !REVERT_ALTREF_FIX
-            if (i != picture_control_set_ptr_central->past_altref_nframes)
-#endif
                 generate_padding_pic(pic_ptr_ref,
                     ss_x,
                     ss_y,

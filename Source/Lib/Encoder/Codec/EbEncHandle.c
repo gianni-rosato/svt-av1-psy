@@ -196,12 +196,10 @@ void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration *config_ptr)
     uint32_t num_logical_processors = GetNumProcessors();
     // For system with a single processor group(no more than 64 logic processors all together)
     // Affinity of the thread can be set to one or more logical processors
-#if NO_THREAD_PIN
     if (config_ptr->logical_processors == 1 && config_ptr->unpin_lp1 == 1) {
         group_affinity.Mask = GetAffinityMask(num_logical_processors);
     }
     else {
-#endif
         if (num_groups == 1) {
             uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
                 config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
@@ -230,17 +228,13 @@ void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration *config_ptr)
                 }
             }
         }
-#if NO_THREAD_PIN
     }
-#endif
 #elif defined(__linux__)
     uint32_t num_logical_processors = GetNumProcessors();
-#if NO_THREAD_PIN
     if (config_ptr->logical_processors == 1 && config_ptr->unpin_lp1 == 1) {
         pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &group_affinity);
     }
     else {
-#endif
         CPU_ZERO(&group_affinity);
 
         if (num_groups == 1) {
@@ -280,9 +274,7 @@ void EbSetThreadManagementParameters(EbSvtAv1EncConfiguration *config_ptr)
                 }
             }
         }
-#if NO_THREAD_PIN
     }
-#endif
 #else
     UNUSED(config_ptr);
 #endif
@@ -473,7 +465,6 @@ EbErrorType load_default_buffer_configuration_settings(
     sequence_control_set_ptr->output_recon_buffer_fifo_init_count       = sequence_control_set_ptr->reference_picture_buffer_init_count;
     sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = sequence_control_set_ptr->static_config.enable_overlays ?
                                                                           (2 << sequence_control_set_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
-#if SERIAL_MODE
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
     sequence_control_set_ptr->scd_delay =
         sequence_control_set_ptr->static_config.enable_altrefs || sequence_control_set_ptr->static_config.scene_change_detection ? SCD_LAD : 0;
@@ -541,7 +532,7 @@ EbErrorType load_default_buffer_configuration_settings(
         sequence_control_set_ptr->picture_control_set_pool_init_count_child = MAX(min_child, sequence_control_set_ptr->picture_control_set_pool_init_count_child);
         sequence_control_set_ptr->overlay_input_picture_buffer_init_count   = MAX(min_overlay, sequence_control_set_ptr->overlay_input_picture_buffer_init_count);
     }
-#endif
+
     //#====================== Inter process Fifos ======================
     sequence_control_set_ptr->resource_coordination_fifo_init_count       = 300;
     sequence_control_set_ptr->picture_analysis_fifo_init_count            = 300;
@@ -1114,11 +1105,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         referencePictureBufferDescInitData.max_height = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->max_input_luma_height;
         referencePictureBufferDescInitData.bit_depth = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->encoder_bit_depth;
         referencePictureBufferDescInitData.color_format = EB_YUV420; //use 420 for picture analysis
-#if PAREF_OUT
         referencePictureBufferDescInitData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-#else
-        referencePictureBufferDescInitData.buffer_enable_mask = 0;
-#endif
         referencePictureBufferDescInitData.left_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.right_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
         referencePictureBufferDescInitData.top_padding = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->sb_sz + ME_FILTER_TAP;
@@ -2187,25 +2174,20 @@ void CopyApiFromApp(
         sequence_control_set_ptr->cropping_top_offset = 0;
     if (sequence_control_set_ptr->cropping_bottom_offset == -1)
         sequence_control_set_ptr->cropping_bottom_offset = 0;
-
     sequence_control_set_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->intra_period_length;
     sequence_control_set_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->intra_refresh_type;
     sequence_control_set_ptr->static_config.base_layer_switch_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->base_layer_switch_mode;
     sequence_control_set_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->hierarchical_levels;
     sequence_control_set_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->enc_mode;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     sequence_control_set_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->snd_pass_enc_mode;
-#endif
     sequence_control_set_ptr->intra_period_length = sequence_control_set_ptr->static_config.intra_period_length;
     sequence_control_set_ptr->intra_refresh_type = sequence_control_set_ptr->static_config.intra_refresh_type;
     sequence_control_set_ptr->max_temporal_layers = sequence_control_set_ptr->static_config.hierarchical_levels;
     sequence_control_set_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->use_qp_file;
-#if TWO_PASS
     sequence_control_set_ptr->static_config.input_stat_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->input_stat_file;
     sequence_control_set_ptr->static_config.output_stat_file = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->output_stat_file;
     sequence_control_set_ptr->use_input_stat_file = sequence_control_set_ptr->static_config.input_stat_file ? 1 : 0;
     sequence_control_set_ptr->use_output_stat_file = sequence_control_set_ptr->static_config.output_stat_file ? 1 : 0;
-#endif
     // Deblock Filter
     sequence_control_set_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)pComponentParameterStructure)->disable_dlf_flag;
 
@@ -2451,12 +2433,10 @@ static EbErrorType VerifySettings(
         SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-%d]\n", channelNumber + 1, MAX_ENC_PRESET);
         return_error = EB_ErrorBadParameter;
     }
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     if (config->snd_pass_enc_mode > MAX_ENC_PRESET + 1) {
         SVT_LOG("Error instance %u: Second pass encoder mode must be in the range of [0-%d]\n", channelNumber + 1, MAX_ENC_PRESET + 1);
         return_error = EB_ErrorBadParameter;
     }
-#endif
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channelNumber + 1);
         return_error = EB_ErrorBadParameter;
@@ -2938,9 +2918,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->min_qp_allowed = 10;
     config_ptr->base_layer_switch_mode = 0;
     config_ptr->enc_mode = MAX_ENC_PRESET;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     config_ptr->snd_pass_enc_mode = MAX_ENC_PRESET + 1;
-#endif
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
     config_ptr->hierarchical_levels = 4;
@@ -3555,10 +3533,8 @@ EB_API void eb_svt_release_out_buffer(
 {
     if (p_buffer && (*p_buffer)->wrapper_ptr)
     {
-#if  OUT_ALLOC
         if((*p_buffer)->p_buffer)
            free((*p_buffer)->p_buffer);
-#endif
         // Release out put buffer back into the pool
         eb_release_object((EbObjectWrapper  *)(*p_buffer)->wrapper_ptr);
      }
@@ -3764,9 +3740,6 @@ EbErrorType EbOutputBufferHeaderCreator(
 
     // Initialize Header
     outBufPtr->size = sizeof(EbBufferHeaderType);
-#if ! OUT_ALLOC
-    EB_MALLOC(outBufPtr->p_buffer, n_stride);
-#endif
     outBufPtr->n_alloc_len = n_stride;
     outBufPtr->p_app_private = NULL;
 
@@ -3778,9 +3751,6 @@ EbErrorType EbOutputBufferHeaderCreator(
 void EbOutputBufferHeaderDestoryer(    EbPtr p)
 {
     EbBufferHeaderType* obj = (EbBufferHeaderType*)p;
-#if ! OUT_ALLOC
-    EB_FREE(obj->p_buffer);
-#endif
     EB_FREE(obj);
 }
 

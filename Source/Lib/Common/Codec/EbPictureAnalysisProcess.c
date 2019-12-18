@@ -4299,8 +4299,6 @@ void* picture_analysis_kernel(void *input_ptr)
             picture_width_in_sb = (sequence_control_set_ptr->seq_header.max_frame_width + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             pictureHeighInLcu = (sequence_control_set_ptr->seq_header.max_frame_height + sequence_control_set_ptr->sb_sz - 1) / sequence_control_set_ptr->sb_sz;
             sb_total_count = picture_width_in_sb * pictureHeighInLcu;
-
-#if PAREF_OUT
             generate_padding(
                 input_picture_ptr->buffer_y,
                 input_picture_ptr->stride_y,
@@ -4318,7 +4316,6 @@ void* picture_analysis_kernel(void *input_ptr)
                         sizeof(uint8_t)* input_picture_ptr->width);
             }
 
-#endif
             // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
             SetPictureParametersForStatisticsGathering(
                 sequence_control_set_ptr);

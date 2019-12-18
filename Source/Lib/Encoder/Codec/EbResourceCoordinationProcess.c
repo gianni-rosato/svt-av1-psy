@@ -88,11 +88,7 @@ EbErrorType signal_derivation_pre_analysis_oq(
     uint8_t input_resolution = sequence_control_set_ptr->input_resolution;
 
     // HME Flags updated @ signal_derivation_multi_processes_oq
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     uint8_t  hme_me_level = sequence_control_set_ptr->use_output_stat_file ? picture_control_set_ptr->snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
-#else
-    uint8_t  hme_me_level = picture_control_set_ptr->enc_mode;
-#endif
     // Derive HME Flag
     if (sequence_control_set_ptr->static_config.use_default_me_hme) {
         picture_control_set_ptr->enable_hme_flag = enable_hme_flag[0][input_resolution][hme_me_level] || enable_hme_flag[1][input_resolution][hme_me_level];
@@ -569,14 +565,11 @@ static void read_stat_from_file(
         referenced_area_has_non_zero += picture_control_set_ptr->stat_struct.referenced_area[sb_addr];
     }
     referenced_area_avg /= sequence_control_set_ptr->sb_total_count;
-#if TWO_PASS_IMPROVEMENT
     // adjust the reference area based on the intra refresh
     if (sequence_control_set_ptr->intra_period_length && sequence_control_set_ptr->intra_period_length < TWO_PASS_IR_THRSHLD)
         referenced_area_avg = referenced_area_avg * (sequence_control_set_ptr->intra_period_length + 1) / TWO_PASS_IR_THRSHLD;
-#endif
     picture_control_set_ptr->referenced_area_avg = referenced_area_avg;
     picture_control_set_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
-
     eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
 }
 #endif
@@ -705,11 +698,9 @@ void* resource_coordination_kernel(void *input_ptr)
 
             if (sequence_control_set_ptr->static_config.inter_intra_compound == DEFAULT) {
 #if II_COMP_FLAG
-#if INTER_INTRA_HBD
             // Set inter-intra mode      Settings
             // 0                 OFF
             // 1                 ON
-#if INTERINTRA_HBD
 #if M0_OPT
 #if PRESETS_TUNE
                 sequence_control_set_ptr->seq_header.enable_interintra_compound = MR_MODE || (sequence_control_set_ptr->static_config.enc_mode <= ENC_M1 && sequence_control_set_ptr->static_config.screen_content_mode != 1) ? 1 : 0;
@@ -719,52 +710,24 @@ void* resource_coordination_kernel(void *input_ptr)
 #else
             sequence_control_set_ptr->seq_header.enable_interintra_compound = (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
 #endif
-#else
-            sequence_control_set_ptr->seq_header.enable_interintra_compound =  (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_10BIT &&
-                                                                                sequence_control_set_ptr->static_config.enable_hbd_mode_decision ) ? 0:
-#if M0_OPT
-                                                                                (sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->static_config.screen_content_mode != 1) ? 1 : 0;
-#else
-                                                                                (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
-#endif
-#endif
-#else
-            sequence_control_set_ptr->seq_header.enable_interintra_compound = (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_10BIT ) ? 0 :
-                                                                              (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
-#endif
+
+
 #endif
             } else
                 sequence_control_set_ptr->seq_header.enable_interintra_compound = sequence_control_set_ptr->static_config.inter_intra_compound;
-
-#if FILTER_INTRA_FLAG
             // Set filter intra mode      Settings
             // 0                 OFF
             // 1                 ON
             if (sequence_control_set_ptr->static_config.enable_filter_intra)
-#if PRESETS_TUNE
                 sequence_control_set_ptr->seq_header.enable_filter_intra = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#else
-                sequence_control_set_ptr->seq_header.enable_filter_intra = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#endif
             else
                 sequence_control_set_ptr->seq_header.enable_filter_intra        =  0;
-#endif
+
             // Set compound mode      Settings
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (sequence_control_set_ptr->static_config.compound_level == DEFAULT) {
-#if INTER_INTER_HBD
-#if COMP_HBD
                 sequence_control_set_ptr->compound_mode = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#else
-                sequence_control_set_ptr->compound_mode = (sequence_control_set_ptr->static_config.encoder_bit_depth == EB_10BIT &&
-                                                           sequence_control_set_ptr->static_config.enable_hbd_mode_decision ) ? 0:
-                                                          (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#endif
-#else
-                sequence_control_set_ptr->compound_mode = sequence_control_set_ptr->static_config.encoder_bit_depth == EB_10BIT ? 0 :
-                                                         (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#endif
             }
             else
                 sequence_control_set_ptr->compound_mode = sequence_control_set_ptr->static_config.compound_level;
@@ -884,12 +847,10 @@ void* resource_coordination_kernel(void *input_ptr)
             }
             else
                 picture_control_set_ptr->enc_mode = (EbEncMode)sequence_control_set_ptr->static_config.enc_mode;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
             picture_control_set_ptr->snd_pass_enc_mode =
                 ( sequence_control_set_ptr->use_output_stat_file && sequence_control_set_ptr->static_config.snd_pass_enc_mode != MAX_ENC_PRESET + 1)?
                 (EbEncMode)sequence_control_set_ptr->static_config.snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
-#endif
             aspectRatio = (sequence_control_set_ptr->seq_header.max_frame_width * 10) / sequence_control_set_ptr->seq_header.max_frame_height;
             aspectRatio = (aspectRatio <= ASPECT_RATIO_4_3) ? ASPECT_RATIO_CLASS_0 : (aspectRatio <= ASPECT_RATIO_16_9) ? ASPECT_RATIO_CLASS_1 : ASPECT_RATIO_CLASS_2;
 
@@ -962,9 +923,6 @@ void* resource_coordination_kernel(void *input_ptr)
                 eb_object_inc_live_count(
                     picture_control_set_ptr->pa_reference_picture_wrapper_ptr,
                     2);
-#if !PAREF_OUT
-            ((EbPaReferenceObject*)picture_control_set_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->input_padded_picture_ptr->buffer_y = picture_control_set_ptr->enhanced_picture_ptr->buffer_y;
-#endif
 
             set_tile_info(picture_control_set_ptr);
             if(sequence_control_set_ptr->static_config.unrestricted_motion_vector == 0)

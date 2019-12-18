@@ -40,9 +40,7 @@ extern "C" {
 #define FULL_PEL_REF_WINDOW_WIDTH_EXTENDED  15
 #define FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED 15
 #endif
-#if EIGHT_PEL_PREDICTIVE_ME
 #define EIGHT_PEL_REF_WINDOW 3
-#endif
 #endif
 
      /**************************************
@@ -104,9 +102,7 @@ extern "C" {
         ModeDecisionCandidate       **fast_candidate_ptr_array;
         ModeDecisionCandidate        *fast_candidate_array;
         ModeDecisionCandidateBuffer **candidate_buffer_ptr_array;
-#if ENHANCE_ATB
         ModeDecisionCandidateBuffer  *scratch_candidate_buffer;
-#endif
         MdRateEstimationContext      *md_rate_estimation_ptr;
         EbBool                        is_md_rate_estimation_ptr_owner;
         InterPredictionContext       *inter_prediction_context;
@@ -129,9 +125,7 @@ extern "C" {
         NeighborArrayUnit            *tx_search_luma_recon_neighbor_array16bit;
         NeighborArrayUnit            *skip_coeff_neighbor_array;
         NeighborArrayUnit            *luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-#if ENHANCE_ATB
         NeighborArrayUnit            *full_loop_luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-#endif
         NeighborArrayUnit            *tx_search_luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
         NeighborArrayUnit            *cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
         NeighborArrayUnit            *cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
@@ -197,9 +191,7 @@ extern "C" {
         uint8_t                         hbd_mode_decision;
         uint16_t                        qp_index;
         uint64_t                        three_quad_energy;
-#if ENHANCE_ATB
         uint32_t                        txb_1d_offset;
-#endif
         EbBool                          uv_search_path;
         UvPredictionMode                best_uv_mode    [UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
         int32_t                         best_uv_angle   [UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
@@ -278,7 +270,6 @@ extern "C" {
     unsigned int prediction_mse ;
     EbBool      variance_ready;
 
-#if REMOVE_MD_STAGE_1
     uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
     uint8_t                             md_staging_mode;
 #if MULTI_PASS_PD
@@ -294,25 +285,7 @@ extern "C" {
     uint32_t                            md_stage_2_total_count;
 
     uint8_t                             combine_class12; // 1:class1 and 2 are combined.
-#else
-    MD_STAGE                            md_stage;
 
-    uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
-
-
-    uint8_t                             md_staging_mode;
-    uint8_t                             bypass_stage1[CAND_CLASS_TOTAL];
-    uint8_t                             bypass_stage2[CAND_CLASS_TOTAL];
-
-    uint32_t                            md_stage_0_count[CAND_CLASS_TOTAL]; // how many fast candiates per class
-    uint32_t                            md_stage_1_count[CAND_CLASS_TOTAL]; //how many candiates will be tested per md level and  per class
-    uint32_t                            md_stage_2_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_2
-    uint32_t                            md_stage_3_count[CAND_CLASS_TOTAL]; //how many full candiates per class @ md_stage_3
-
-    uint32_t                            md_stage_2_total_count;
-    uint32_t                            md_stage_3_total_count;
-    uint8_t                             combine_class12; //1:class1 and 2 are combined.
-#endif
     CAND_CLASS                          target_class;
 
     // fast_loop_core signals
@@ -328,51 +301,29 @@ extern "C" {
     EbBool                              md_staging_skip_rdoq;
 
 #if II_COMP_FLAG
-#if INTERINTRA_HBD
     DECLARE_ALIGNED(16, uint8_t,      intrapred_buf[INTERINTRA_MODES][2 * 32 * 32]); //MAX block size for inter intra is 32x32
-#else
-   DECLARE_ALIGNED(16, uint8_t,        intrapred_buf[INTERINTRA_MODES][32 * 32]); //MAX block size for inter intra is 32x32
-#endif
 #endif
     uint64_t                           *ref_best_cost_sq_table;
     uint32_t                           *ref_best_ref_sq_table;
     uint8_t                             edge_based_skip_angle_intra;
     EbBool                              coeff_based_skip_atb;
     uint8_t                             prune_ref_frame_for_rec_partitions;
-
-#if SPEED_OPT
     unsigned int                        source_variance; // input block variance
     unsigned int                        inter_inter_wedge_variance_th;
     uint64_t                            md_exit_th;
-#if INTER_INTRA_CLASS_PRUNING
     uint64_t                            md_stage_1_cand_prune_th;
     uint64_t                            md_stage_1_class_prune_th;
-#else
-    uint64_t                            dist_base_md_stage_0_count_th;
-#endif
-#endif
-#if INTER_INTRA_CLASS_PRUNING
     uint64_t                            md_stage_2_cand_prune_th;
     uint64_t                            md_stage_2_class_prune_th;
-#endif
-#if OBMC_FLAG
-#if HBD2_OBMC
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2* 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2* 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
-#else
-    DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
-    DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
-#endif
     DECLARE_ALIGNED(16, int32_t, wsrc_buf[MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, int32_t, mask_buf[MAX_SB_SQUARE]);
     unsigned int pred_sse[REF_FRAMES];
-#endif
-#if ENHANCE_ATB
     uint8_t                            *above_txfm_context;
     uint8_t                            *left_txfm_context;
-#endif
 #if COMBINE_MDC_NSQ_TABLE
     PART best_nsq_sahpe1;
     PART best_nsq_sahpe2;
@@ -383,16 +334,12 @@ extern "C" {
     PART best_nsq_sahpe7;
     PART best_nsq_sahpe8;
 #endif
-
-#if LESS_RECTANGULAR_CHECK_LEVEL
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
-#endif
 
-#if AUTO_MAX_PARTITION
     // signal for enabling shortcut to skip search depths
     uint8_t enable_auto_max_partition;
-#endif
+
 
 #if MULTI_PASS_PD
     MD_COMP_TYPE compound_types_to_try;
@@ -489,9 +436,7 @@ extern "C" {
         208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255};
 
     extern void reset_mode_decision(
-#if EIGHT_PEL_PREDICTIVE_ME
         SequenceControlSet    *sequence_control_set_ptr,
-#endif
         ModeDecisionContext   *context_ptr,
         PictureControlSet     *picture_control_set_ptr,
         uint32_t                 segment_index);

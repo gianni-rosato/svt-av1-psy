@@ -8,9 +8,7 @@
 
 #include "EbCabacContextModel.h"
 #include "EbPictureControlSet.h"
-#if RATE_ESTIMATION_UPDATE
 #include "EbCodingUnit.h"
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -327,12 +325,7 @@ extern "C" {
 extern void av1_estimate_mv_rate(
         struct PictureControlSet *picture_control_set_ptr,
         MdRateEstimationContext  *md_rate_estimation_array,
-#if RATE_ESTIMATION_UPDATE
         FRAME_CONTEXT            *fc);
-#else
-        NmvContext                *nmv_ctx);
-#endif
-#if RATE_ESTIMATION_UPDATE
 #define AVG_CDF_WEIGHT_LEFT      3
 #define AVG_CDF_WEIGHT_TOP       1
 
@@ -527,7 +520,7 @@ void update_part_stats(
     struct CodingUnit          *cu_ptr,
     int                         mi_row,
     int                         mi_col);
-#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -57,12 +57,10 @@ static INLINE int is_interintra_allowed(const BlockModeInfo *mbmi) {
         is_interintra_allowed_ref(mbmi->ref_frame);
 }
 
-#if COMP_INTERINTRA
 static INLINE int is_interintra_pred(const BlockModeInfo *mbmi) {
     return mbmi->ref_frame[0] > INTRA_FRAME &&
         mbmi->ref_frame[1] == INTRA_FRAME && is_interintra_allowed(mbmi);
 }
-#endif //comp_interintra
 
 static INLINE int has_second_ref(const BlockModeInfo *mbmi) {
     return mbmi->ref_frame[1] > INTRA_FRAME;

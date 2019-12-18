@@ -503,9 +503,7 @@ extern "C" {
         int32_t                     interintra_wedge_index;
         int32_t                     ii_wedge_sign;
 #endif
-#if FILTER_INTRA_FLAG
        uint8_t                      filter_intra_mode;
-#endif
 #if PAL_SUP
        PaletteInfo                          palette_info;
 #endif

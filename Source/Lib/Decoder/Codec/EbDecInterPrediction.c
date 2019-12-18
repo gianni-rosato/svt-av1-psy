@@ -31,10 +31,8 @@
 #include "EbDecObmc.h"
 
 #include "aom_dsp_rtcd.h"
-#if COMP_INTERINTRA
 #include "EbDecProcessFrame.h"
 #include "EbDecIntraPrediction.h"
-#endif //comd_interintra
 
 static INLINE void dec_clamp_mv(MV *mv, int32_t min_col, int32_t max_col,
     int32_t min_row, int32_t max_row)
@@ -237,7 +235,6 @@ void svt_make_masked_inter_predictor(PartitionInfo_t *part_info, int32_t ref,
 
 }
 
-#if COMP_INTERINTRA
 void av1_combine_interintra(PartitionInfo_t *part_info, BlockSize bsize,
     int plane, uint8_t *inter_pred, int inter_stride,
     uint8_t *intra_pred, int intra_stride, EbBitDepthEnum bit_depth)
@@ -327,7 +324,6 @@ void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt,
     }
 }
 
-#endif //comp_interintra
 
 
 void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx,
@@ -502,14 +498,12 @@ void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt,
             0/*OBMC_FLAG*/, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf,
             recon_stride, some_use_intra, recon_picture_buf->bit_depth);
 
-#if COMP_INTERINTRA
         if (is_interintra_pred(part_info->mi)) {
 /*Inter prd is done in above function, In the below function Intra prd happens follwed by interintra blending */
             av1_build_interintra_predictors(dec_mod_ctxt, part_info, blk_recon_buf,
                 recon_stride, plane, bsize, recon_picture_buf->bit_depth);
         }
 
-#endif //comp_interitra
     }
     if (part_info->mi->motion_mode == OBMC_CAUSAL) {
         dec_build_obmc_inter_predictors_sb((void *)dec_mod_ctxt,

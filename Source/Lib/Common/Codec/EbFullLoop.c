@@ -1601,11 +1601,7 @@ int32_t av1_quantize_inv_quantize(
 
 
     EbBool is_inter = (pred_mode >= NEARESTMV);
-#if RDOQ_CHROMA
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && !is_intra_bc);
-#else
-    EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) && md_context->trellis_quant_coeff_optimization && component_type == COMPONENT_LUMA && !is_intra_bc);
-#endif
 
     SequenceControlSet *sequence_control_set_ptr = (SequenceControlSet*)picture_control_set_ptr->sequence_control_set_wrapper_ptr->object_ptr;
     if (sequence_control_set_ptr->static_config.enable_rdoq == DEFAULT) {
@@ -1735,20 +1731,9 @@ void product_full_loop(
     uint64_t   y_tu_coeff_bits;
     EB_ALIGN(16) uint64_t tuFullDistortion[3][DIST_CALC_TOTAL];
     context_ptr->three_quad_energy = 0;
-#if ENHANCE_ATB
     uint8_t  tx_depth = context_ptr->tx_depth;
     uint32_t txb_itr = context_ptr->txb_itr;
     uint32_t txb_1d_offset = context_ptr->txb_1d_offset;
-#else
-    uint32_t  txb_1d_offset = 0;
-    uint32_t txb_itr = 0;
-#endif
-#if !ENHANCE_ATB
-    uint8_t  tx_depth = candidate_buffer->candidate_ptr->tx_depth;
-    uint16_t txb_count = context_ptr->blk_geom->txb_count[tx_depth];
-    for (txb_itr = 0; txb_itr < txb_count; txb_itr++)
-    {
-#endif
         uint16_t tx_org_x = context_ptr->blk_geom->tx_org_x[tx_depth][txb_itr];
         uint16_t tx_org_y = context_ptr->blk_geom->tx_org_y[tx_depth][txb_itr];
         int32_t cropped_tx_width = MIN(context_ptr->blk_geom->tx_width[tx_depth][txb_itr], sequence_control_set_ptr->seq_header.max_frame_width - (context_ptr->sb_origin_x + tx_org_x));
@@ -1758,11 +1743,7 @@ void product_full_loop(
         get_txb_ctx(
             sequence_control_set_ptr,
             COMPONENT_LUMA,
-#if ENHANCE_ATB
             context_ptr->full_loop_luma_dc_sign_level_coeff_neighbor_array,
-#else
-            context_ptr->luma_dc_sign_level_coeff_neighbor_array,
-#endif
             context_ptr->sb_origin_x + tx_org_x,
             context_ptr->sb_origin_y + tx_org_y,
             context_ptr->blk_geom->bsize,
@@ -1944,12 +1925,7 @@ void product_full_loop(
 
         y_full_distortion[DIST_CALC_RESIDUAL] += tuFullDistortion[0][DIST_CALC_RESIDUAL];
         y_full_distortion[DIST_CALC_PREDICTION] += tuFullDistortion[0][DIST_CALC_PREDICTION];
-#if ENHANCE_ATB
         context_ptr->txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
-#else
-        txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
-    }
-#endif
 }
 // T1
 uint8_t allowed_tx_set_a[TX_SIZES_ALL][TX_TYPES] = {
@@ -2085,11 +2061,7 @@ void product_full_loop_tx_search(
             get_txb_ctx(
                 sequence_control_set_ptr,
                 COMPONENT_LUMA,
-#if ENHANCE_ATB
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
-#else
-                picture_control_set_ptr->ep_luma_dc_sign_level_coeff_neighbor_array,
-#endif
                 context_ptr->sb_origin_x + txb_origin_x,
                 context_ptr->sb_origin_y + txb_origin_y,
                 //txb_origin_x,// context_ptr->cu_origin_x,
@@ -2448,9 +2420,7 @@ void encode_pass_tx_search(
         EntropyCoder  *coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
         candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-#if FILTER_INTRA_FLAG
         candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode;
-#endif
         const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
         av1_tu_estimate_coeff_bits(
@@ -2644,9 +2614,7 @@ void encode_pass_tx_search_hbd(
         EntropyCoder  *coeff_est_entropy_coder_ptr = picture_control_set_ptr->coeff_est_entropy_coder_ptr;
         candidate_buffer->candidate_ptr->type = cu_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode = cu_ptr->pred_mode;
-#if FILTER_INTRA_FLAG
         candidate_buffer->candidate_ptr->filter_intra_mode = cu_ptr->filter_intra_mode;
-#endif
         const uint32_t coeff1dOffset = context_ptr->coded_area_sb;
 
         av1_tu_estimate_coeff_bits(
@@ -2850,15 +2818,9 @@ void full_loop_r(
                 context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
-#if RDOQ_CHROMA
                 context_ptr->cb_txb_skip_context,
                 context_ptr->cb_dc_sign_context,
                 candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
-#else
-                0,
-                0,
-                0,
-#endif
                 candidate_buffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 
@@ -2938,15 +2900,9 @@ void full_loop_r(
                 context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
-#if RDOQ_CHROMA
                 context_ptr->cr_txb_skip_context,
                 context_ptr->cr_dc_sign_context,
                 candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
-#else
-                0,
-                0,
-                0,
-#endif
                 candidate_buffer->candidate_ptr->use_intrabc,
                 EB_FALSE);
 

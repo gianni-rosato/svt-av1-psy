@@ -199,7 +199,6 @@ EbErrorType av1_inter_prediction_hbd(
         InterpFilterParams *params_x, InterpFilterParams *params_y,
         int32_t w, int32_t h);
 
-#if COMP_INTERINTRA
     /* Mapping of interintra to intra mode for use in the intra component */
     static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
       DC_PRED, V_PRED, H_PRED, SMOOTH_PRED
@@ -222,7 +221,6 @@ EbErrorType av1_inter_prediction_hbd(
         uint8_t *comppred8, int compstride, const uint8_t *interpred8,
         int interstride, const uint8_t *intrapred8, int intrastride, int bd);
 
-#endif //comp_interintra
 
     void av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w,
         int other_h, int this_w, int this_h);

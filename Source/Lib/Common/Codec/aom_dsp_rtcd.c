@@ -252,25 +252,19 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
     av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_c;
     if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_avx2;
-#if COMP_HBD
      av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_c;
      if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_avx2;
-#endif
     av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
     if (flags & HAS_AVX2) av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_avx2;
     aom_subtract_block = aom_subtract_block_c;
     if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
     aom_sse = aom_sse_c;
-#if COMP_HBD
     aom_highbd_subtract_block = aom_highbd_subtract_block_c;
     if (flags & HAS_AVX2) aom_highbd_subtract_block = aom_highbd_subtract_block_sse2;
-#endif
     if (flags & HAS_AVX2) aom_sse = aom_sse_avx2;
     av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_c;
-#if COMP_HBD
      aom_highbd_sse = aom_highbd_sse_c;
      if (flags & HAS_AVX2) aom_highbd_sse = aom_highbd_sse_avx2;
-#endif
     if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_avx2;
     aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_c;
     if (flags & HAS_AVX2) aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_avx2;
@@ -464,10 +458,7 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_av1_warp_affine = eb_av1_warp_affine_avx2;
 
     eb_av1_filter_intra_predictor = eb_av1_filter_intra_predictor_c;
-#if FILTER_INTRA_FLAG
     if (flags & HAS_SSE4_1) eb_av1_filter_intra_predictor = eb_av1_filter_intra_predictor_sse4_1;
-#endif
-
     eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_c;
     if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_avx2;
     eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_c;
@@ -2014,10 +2005,8 @@ void setup_rtcd_internal(CPU_FLAGS flags)
              av1_calc_indices_dim2_c,
              av1_calc_indices_dim2_avx2);
 
-#if AUTO_MAX_PARTITION
     av1_nn_predict = av1_nn_predict_c;
     if (flags & HAS_SSE3) av1_nn_predict = av1_nn_predict_sse3;
-#endif
 
 }
 

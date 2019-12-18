@@ -21,9 +21,7 @@
 
 extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
-#if UPDATE_CDEF
 #include "EbRateDistortionCost.h"
-#endif
 
 //-------memory stuff
 
@@ -1398,9 +1396,6 @@ uint64_t compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const ui
 
 void finish_cdef_search(
     EncDecContext       *context_ptr,
-#if !UPDATE_CDEF
-    SequenceControlSet           *sequence_control_set_ptr,
-#endif
     PictureControlSet   *picture_control_set_ptr,
     int32_t             selected_strength_cnt[64])
 {
@@ -1444,14 +1439,8 @@ void finish_cdef_search(
     int32_t i;
     int32_t nb_strengths;
     int32_t nb_strength_bits;
-#if UPDATE_CDEF
     uint64_t lambda;
-#else
-    int32_t quantizer;
-    double lambda;
-#endif
     const int32_t num_planes = 3; // av1_num_planes(cm);
-#if UPDATE_CDEF
     uint16_t qp_index = (uint8_t)picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     uint32_t fast_lambda, full_lambda, fast_chroma_lambda, full_chroma_lambda;
     (*av1_lambda_assignment_function_table[picture_control_set_ptr->parent_pcs_ptr->pred_structure])(
@@ -1463,11 +1452,6 @@ void finish_cdef_search(
         qp_index,
         picture_control_set_ptr->hbd_mode_decision);
     lambda = full_lambda;
-#else
-    quantizer =
-        eb_av1_ac_quant_Q3(frm_hdr->quantization_params.base_q_idx, 0, (AomBitDepth)sequence_control_set_ptr->static_config.encoder_bit_depth) >> (sequence_control_set_ptr->static_config.encoder_bit_depth - 8);
-    lambda = .12 * quantizer * quantizer / 256.;
-#endif
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
     mse[1] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
@@ -1513,17 +1497,11 @@ void finish_cdef_search(
         else
             tot_mse = joint_strength_search(best_lev0, nb_strengths, mse[0], sb_count, fast, start_gi, end_gi);
         /* Count superblock signalling cost. */
-#if UPDATE_CDEF
         const int total_bits = sb_count * i + nb_strengths * CDEF_STRENGTH_BITS *
             (num_planes > 1 ? 2 : 1);
         const int rate_cost = av1_cost_literal(total_bits);
         const uint64_t dist = tot_mse * 16;
         tot_mse = RDCOST(lambda, rate_cost, dist);
-#else
-        tot_mse += (uint64_t)(sb_count * lambda * i);
-        /* Count header signalling cost. */
-        tot_mse += (uint64_t)(nb_strengths * lambda * CDEF_STRENGTH_BITS);
-#endif
         if (tot_mse < best_tot_mse) {
             best_tot_mse = tot_mse;
             nb_strength_bits = i;

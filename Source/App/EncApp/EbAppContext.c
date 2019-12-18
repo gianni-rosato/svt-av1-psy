@@ -150,19 +150,15 @@ EbErrorType CopyConfigurationParameters(
 
     // Initialize Port Activity Flags
     callback_data->output_stream_port_active = APP_PortActive;
-
     callback_data->eb_enc_parameters.source_width = config->source_width;
     callback_data->eb_enc_parameters.source_height = config->source_height;
     callback_data->eb_enc_parameters.render_width = config->input_padded_width;
     callback_data->eb_enc_parameters.render_height = config->input_padded_height;
-
     callback_data->eb_enc_parameters.intra_period_length = config->intra_period;
     callback_data->eb_enc_parameters.intra_refresh_type = config->intra_refresh_type;
     callback_data->eb_enc_parameters.base_layer_switch_mode = config->base_layer_switch_mode;
     callback_data->eb_enc_parameters.enc_mode = (EbBool)config->enc_mode;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     callback_data->eb_enc_parameters.snd_pass_enc_mode = (EbBool)config->snd_pass_enc_mode;
-#endif
     callback_data->eb_enc_parameters.frame_rate = config->frame_rate;
     callback_data->eb_enc_parameters.frame_rate_denominator = config->frame_rate_denominator;
     callback_data->eb_enc_parameters.frame_rate_numerator = config->frame_rate_numerator;
@@ -171,7 +167,6 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.ext_block_flag = config->ext_block_flag;
     callback_data->eb_enc_parameters.tile_rows = config->tile_rows;
     callback_data->eb_enc_parameters.tile_columns = config->tile_columns;
-
     callback_data->eb_enc_parameters.scene_change_detection = config->scene_change_detection;
     callback_data->eb_enc_parameters.look_ahead_distance = config->look_ahead_distance;
     callback_data->eb_enc_parameters.frames_to_be_encoded = config->frames_to_be_encoded;

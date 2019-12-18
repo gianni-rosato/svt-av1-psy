@@ -283,14 +283,13 @@ extern "C" {
         int interval;
     } MeshPattern;
 
-#if AUTO_MAX_PARTITION
     enum {
         NOT_IN_USE,
         DIRECT_PRED,
         RELAXED_PRED,
         ADAPT_PRED
     } UENUM1BYTE(MAX_PART_PRED_MODE);
-#endif
+
 
     typedef struct SpeedFeatures
     {
@@ -310,13 +309,11 @@ extern "C" {
 
         // Pattern to be used for any exhaustive mesh searches.
         MeshPattern mesh_patterns[MAX_MESH_STEP];
-
-#if AUTO_MAX_PARTITION
         // Sets min and max square partition levels for this superblock based on
         // motion vector and prediction error distribution produced from 16x16
         // simple motion search
         MAX_PART_PRED_MODE auto_max_partition_based_on_simple_motion;
-#endif
+
     } SpeedFeatures;
 
     typedef struct PictureControlSet
@@ -452,9 +449,7 @@ extern "C" {
         NeighborArrayUnit                  *ep_luma_dc_sign_level_coeff_neighbor_array;
         NeighborArrayUnit                  *ep_cr_dc_sign_level_coeff_neighbor_array;
         NeighborArrayUnit                  *ep_cb_dc_sign_level_coeff_neighbor_array;
-#if RATE_ESTIMATION_UPDATE
         NeighborArrayUnit                  *ep_partition_context_neighbor_array;
-#endif
         // Entropy Coding Neighbor Arrays
         NeighborArrayUnit                  *mode_type_neighbor_array;
         NeighborArrayUnit                  *partition_context_neighbor_array;
@@ -508,9 +503,7 @@ extern "C" {
         struct MdRateEstimationContext *md_rate_estimation_array;
         int8_t ref_frame_side[REF_FRAMES];
         TPL_MV_REF  *tpl_mvs;
-#if FILTER_INTRA_FLAG
         uint8_t pic_filter_intra_mode;
-#endif
 #if PAL_SUP
         TOKENEXTRA *tile_tok[64][64];
 #endif
@@ -755,9 +748,7 @@ extern "C" {
 
         // MD
         EbEncMode                             enc_mode;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
         EbEncMode                             snd_pass_enc_mode;
-#endif
         EB_SB_DEPTH_MODE                     *sb_depth_mode_array;
         EbCu8x8Mode                           cu8x8_mode;
         EbBool                                use_src_ref;
@@ -934,9 +925,8 @@ extern "C" {
 #if GM_OPT
         uint8_t                                gm_level;
 #endif
-#if TX_SIZE_EARLY_EXIT
         uint8_t                                tx_size_early_exit;
-#endif
+
     } PictureParentControlSet;
 
     typedef struct PictureControlSetInitData

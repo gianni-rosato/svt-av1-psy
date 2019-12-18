@@ -3625,19 +3625,12 @@ static void build_intra_predictors(
             above_row[-1] = 128;
         left_col[-1] = above_row[-1];
     }
-#if FILTER_INTRA_FLAG
   if (use_filter_intra) {
     eb_av1_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
                                filter_intra_mode);
     return;
   }
-#else
-    //    if (use_filter_intra) {
-    ////        eb_av1_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
-    ////CHKN            filter_intra_mode);
-    //        return;
-    //    }
-#endif
+
     if (is_dr_mode) {
         int32_t upsample_above = 0;
         int32_t upsample_left = 0;
@@ -3823,20 +3816,11 @@ static void build_intra_predictors_high(
             above_row[-1] = (uint16_t)base;
         left_col[-1] = above_row[-1];
     }
-#if FILTER_INTRA_FLAG
 if (use_filter_intra) {
     highbd_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
                                filter_intra_mode,10);
     return;
   }
-#else
-    // not added yet
-    //if (use_filter_intra) {
-    //    highbd_filter_intra_predictor(dst, dst_stride, tx_size, above_row, left_col,
-    //        filter_intra_mode, xd->bd);
-    //    return;
-    //}
-#endif
     if (is_dr_mode) {
         int32_t upsample_above = 0;
         int32_t upsample_left = 0;
@@ -4505,17 +4489,9 @@ EbErrorType eb_av1_intra_prediction_cl(
                 plane ? tx_size_Chroma : tx_size,                                               //TxSize tx_size,
                 mode,                                                                           //PredictionMode mode,
                 plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#if PAL_SUP
                 plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0]>0) : 0,
                 plane==0 ? &candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-#else
-                0,                                                                              //int32_t use_palette,
-#endif
-#if FILTER_INTRA_FLAG
                 plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
-#else
-                FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
-#endif
                 topNeighArray + 1,
                 leftNeighArray + 1,
                 candidate_buffer_ptr->prediction_ptr,                                              //uint8_t *dst,
@@ -4586,17 +4562,9 @@ EbErrorType eb_av1_intra_prediction_cl(
                 plane ? tx_size_Chroma : tx_size,                                               //TxSize tx_size,
                 mode,                                                                           //PredictionMode mode,
                 plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#if PAL_SUP
                 plane == 0 ? (candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0) : 0,
                 plane == 0 ? &candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-#else
-                0,                                                                              //int32_t use_palette,
-#endif
-#if FILTER_INTRA_FLAG
                 plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
-#else
-                FILTER_INTRA_MODES,                                                             //CHKN FilterIntraMode filter_intra_mode,
-#endif
                 topNeighArray + 1,
                 leftNeighArray + 1,
                 candidate_buffer_ptr->prediction_ptr,                                              //uint8_t *dst,

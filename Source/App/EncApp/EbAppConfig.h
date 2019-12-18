@@ -213,9 +213,7 @@ typedef struct EbConfig
      *****************************************/
     uint32_t                 base_layer_switch_mode;
     uint8_t                  enc_mode;
-#if TWO_PASS_USE_2NDP_ME_IN_1STP
     uint8_t                  snd_pass_enc_mode;
-#endif
     int32_t                  intra_period;
     uint32_t                 intra_refresh_type;
     uint32_t                 hierarchical_levels;
