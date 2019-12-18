@@ -80,7 +80,7 @@ script:
   - &8bit_test |
     SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 && SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150
   - &10bit_test |
-    SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 && SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
+    SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -lp 1 && SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
 before_cache:
   - "sudo chown -R travis: $HOME/.ccache"
   - ccache -c
@@ -96,7 +96,6 @@ matrix:
     - name: Coveralls osx+clang
     - name: Unit Tests Linux+gcc
     - name: Unit Tests osx+clang
-    - name: macOS 10-bit test
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
   include:
     # GCC & Clang builds
