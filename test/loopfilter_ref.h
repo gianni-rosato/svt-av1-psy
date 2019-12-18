@@ -691,14 +691,6 @@ static void aom_lpf_vertical_14_c(uint8_t *s, int p, const uint8_t *blimit,
     mb_lpf_vertical_edge_w(s, p, blimit, limit, thresh, 4);
 }
 
-static void aom_lpf_horizontal_4_dual_c(
-    uint8_t *s, int p, const uint8_t *blimit0, const uint8_t *limit0,
-    const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1) {
-    aom_lpf_horizontal_4_c(s, p, blimit0, limit0, thresh0);
-    aom_lpf_horizontal_4_c(s + 4, p, blimit1, limit1, thresh1);
-}
-
 // keep the original reference implementation of 6 or 14 dual filter
 #define ORIGINAL_6_14_DUAL_REF 0
 #if ORIGINAL_6_14_DUAL_REF
@@ -754,39 +746,4 @@ static void aom_highbd_lpf_vertical_14_dual_c(
         s + 4 * pitch, pitch, blimit1, limit1, thresh1, 4, bd);
 }
 #endif
-
-static void aom_highbd_lpf_horizontal_8_dual_c(
-    uint16_t *s, int p, const uint8_t *blimit0, const uint8_t *limit0,
-    const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1, int bd) {
-    aom_highbd_lpf_horizontal_8_c(s, p, blimit0, limit0, thresh0, bd);
-    aom_highbd_lpf_horizontal_8_c(s + 4, p, blimit1, limit1, thresh1, bd);
-}
-
-static void aom_highbd_lpf_vertical_4_dual_c(
-    uint16_t *s, int pitch, const uint8_t *blimit0, const uint8_t *limit0,
-    const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1, int bd) {
-    aom_highbd_lpf_vertical_4_c(s, pitch, blimit0, limit0, thresh0, bd);
-    aom_highbd_lpf_vertical_4_c(
-        s + 4 * pitch, pitch, blimit1, limit1, thresh1, bd);
-}
-
-static void aom_highbd_lpf_vertical_8_dual_c(
-    uint16_t *s, int pitch, const uint8_t *blimit0, const uint8_t *limit0,
-    const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1, int bd) {
-    aom_highbd_lpf_vertical_8_c(s, pitch, blimit0, limit0, thresh0, bd);
-    aom_highbd_lpf_vertical_8_c(
-        s + 4 * pitch, pitch, blimit1, limit1, thresh1, bd);
-}
-
-static void aom_highbd_lpf_horizontal_4_dual_c(
-    uint16_t *s, int p, const uint8_t *blimit0, const uint8_t *limit0,
-    const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1, int bd) {
-    aom_highbd_lpf_horizontal_4_c(s, p, blimit0, limit0, thresh0, bd);
-    aom_highbd_lpf_horizontal_4_c(s + 4, p, blimit1, limit1, thresh1, bd);
-}
-
 #endif

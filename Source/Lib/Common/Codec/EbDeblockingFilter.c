@@ -205,13 +205,6 @@ void aom_lpf_vertical_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
     }
 }
 
-void aom_lpf_vertical_4_dual_c(uint8_t *s, int32_t pitch, const uint8_t *blimit0,
-    const uint8_t *limit0, const uint8_t *thresh0,
-    const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1) {
-    aom_lpf_vertical_4_c(s, pitch, blimit0, limit0, thresh0);
-    aom_lpf_vertical_4_c(s + 4 * pitch, pitch, blimit1, limit1, thresh1);
-}
 
 static INLINE void filter6(int8_t mask, uint8_t thresh, int8_t flat,
     uint8_t *op2, uint8_t *op1, uint8_t *op0,
@@ -305,14 +298,6 @@ void aom_lpf_horizontal_8_c(uint8_t *s, int32_t p, const uint8_t *blimit,
             s + 1 * p, s + 2 * p, s + 3 * p);
         ++s;
     }
-}
-
-void aom_lpf_horizontal_8_dual_c(uint8_t *s, int32_t p, const uint8_t *blimit0,
-    const uint8_t *limit0, const uint8_t *thresh0,
-    const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1) {
-    aom_lpf_horizontal_8_c(s, p, blimit0, limit0, thresh0);
-    aom_lpf_horizontal_8_c(s + 4, p, blimit1, limit1, thresh1);
 }
 
 void aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,

@@ -8,9 +8,7 @@
  *
  * @brief Unit test for cdef tools:
  * * aom_lpf_{horizontal, vertical}_{4, 6, 8, 14}_sse2
- * * aom_lpf_{horizontal, vertical}_{4, 8, 14}_dual_sse2
  * * aom_highbd_lpf_{horizontal, vertical}_{4, 6, 8, 14}_sse2
- * * aom_highbd_lpf_{horizontal, vertical}_{4, 8, 14}_dual_sse2
  *
  * @author Cidana-Wenyao
  *
@@ -45,42 +43,19 @@ namespace {
 extern "C" {
 void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t p, const uint8_t *blimit,
                              const uint8_t *limit, const uint8_t *thresh);
-void aom_lpf_horizontal_4_dual_sse2(
-    uint8_t *s, int32_t p, const uint8_t *_blimit0, const uint8_t *_limit0,
-    const uint8_t *_thresh0, const uint8_t *_blimit1, const uint8_t *_limit1,
-    const uint8_t *_thresh1);
-void aom_lpf_vertical_4_dual_sse2(uint8_t *s, int32_t p, const uint8_t *blimit0,
-                                  const uint8_t *limit0, const uint8_t *thresh0,
-                                  const uint8_t *blimit1, const uint8_t *limit1,
-                                  const uint8_t *thresh1);
-void aom_lpf_horizontal_8_dual_sse2(
-    uint8_t *s, int32_t p, const uint8_t *_blimit0, const uint8_t *_limit0,
-    const uint8_t *_thresh0, const uint8_t *_blimit1, const uint8_t *_limit1,
-    const uint8_t *_thresh1);
 }
-
 // define the common params
 #define LOOP_PARAM \
     int p, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh
-#define DUAL_LOOP_PARAM                                                        \
-    int p, const uint8_t *blimit0, const uint8_t *limit0,                      \
-        const uint8_t *thresh0, const uint8_t *blimit1, const uint8_t *limit1, \
-        const uint8_t *thresh1
 
 // typedef the function type and test param
 using LbdLoopFilterFunc = void (*)(uint8_t *s, LOOP_PARAM);
-using LbdDualLoopFilterFunc = void (*)(uint8_t *s, DUAL_LOOP_PARAM);
 using HbdLoopFilterFunc = void (*)(uint16_t *s, LOOP_PARAM, int bd);
-using HbdDualLoopFilterFunc = void (*)(uint16_t *s, DUAL_LOOP_PARAM, int bd);
 
 using HbdLpfTestParam =
     ::testing::tuple<HbdLoopFilterFunc, HbdLoopFilterFunc, int>;
-using HbdDualLpfTestParam =
-    ::testing::tuple<HbdDualLoopFilterFunc, HbdDualLoopFilterFunc, int>;
 using LdbLpfTestParam =
     ::testing::tuple<LbdLoopFilterFunc, LbdLoopFilterFunc, int>;
-using LdbDualLpfTestParam =
-    ::testing::tuple<LbdDualLoopFilterFunc, LbdDualLoopFilterFunc, int>;
 
 uint8_t get_outer_thresh(ACMRandom *rnd) {
     return static_cast<uint8_t>(rnd->PseudoUniform(3 * MAX_LOOP_FILTER + 5));
@@ -117,7 +92,7 @@ uint8_t get_hev_thresh(ACMRandom *rnd) {
 template <typename Sample, typename FuncType, typename TestParamType>
 class LoopFilterTest : public ::testing::TestWithParam<TestParamType> {
   public:
-    enum LpfType { SINGLE, DUAL };
+    enum LpfType { SINGLE };
     virtual ~LoopFilterTest() {
     }
 
@@ -152,16 +127,6 @@ class LoopFilterTest : public ::testing::TestWithParam<TestParamType> {
         (void)bd;
     }
 
-    virtual void run_dual_lpf(DUAL_LOOP_PARAM, int bd) {
-        (void)p;
-        (void)blimit0;
-        (void)limit0;
-        (void)thresh0;
-        (void)blimit1;
-        (void)limit1;
-        (void)thresh1;
-        (void)bd;
-    }
 
     void run_test() {
         ACMRandom rnd(ACMRandom::DeterministicSeed());
@@ -188,36 +153,11 @@ class LoopFilterTest : public ::testing::TestWithParam<TestParamType> {
             tmp = get_hev_thresh(&rnd);
             init_buffer_with_value(thresh, 16, tmp);
 
-            // params for dual filter
-            DECLARE_ALIGNED(16, uint8_t, blimit1[16]);
-            DECLARE_ALIGNED(16, uint8_t, limit1[16]);
-            DECLARE_ALIGNED(16, uint8_t, thresh1[16]);
-            if (lpf_type_ == DUAL) {
-                tmp = get_outer_thresh(&rnd);
-                init_buffer_with_value(blimit1, 16, tmp);
-
-                tmp = get_inner_thresh(&rnd);
-                init_buffer_with_value(limit1, 16, tmp);
-
-                tmp = get_hev_thresh(&rnd);
-                init_buffer_with_value(thresh1, 16, tmp);
-            }
-
             // Initial sample data
             init_input_random(tst_s, ref_s, &rnd);
 
             // run the filters
-            if (lpf_type_ == SINGLE)
-                run_lpf(p, blimit, limit, thresh, bit_depth_);
-            else
-                run_dual_lpf(p,
-                             blimit,
-                             limit,
-                             thresh,
-                             blimit1,
-                             limit1,
-                             thresh1,
-                             bit_depth_);
+            run_lpf(p, blimit, limit, thresh, bit_depth_);
 
             // check the result
             for (int j = 0; j < kNumCoeffs; ++j)
@@ -240,7 +180,7 @@ class LoopFilterTest : public ::testing::TestWithParam<TestParamType> {
     FuncType lpf_ref_;
     Sample *start_ref_;
     Sample *start_tst_;
-    // loop filter type, could be dual or single
+    // loop filter type
     LpfType lpf_type_;
     // Horizontally and Vertically need 32x32:
     // 8  Coeffs preceeding filtered section
@@ -289,69 +229,6 @@ class HbdLoopFilterTest
 };
 
 TEST_P(HbdLoopFilterTest, MatchTestRandomData) {
-    run_test();
-}
-
-// class to test dual loop filter with low bitdepth
-class LbdDualLoopFilterTest
-    : public LoopFilterTest<uint8_t, LbdDualLoopFilterFunc,
-                            LdbDualLpfTestParam> {
-  public:
-    LbdDualLoopFilterTest() {
-        lpf_type_ = DUAL;
-    }
-
-    virtual ~LbdDualLoopFilterTest() {
-    }
-
-    void run_dual_lpf(DUAL_LOOP_PARAM, int bd) override {
-        (void)bd;
-        lpf_tst_(
-            start_tst_, p, blimit0, limit0, thresh0, blimit1, limit1, thresh1);
-        lpf_ref_(
-            start_ref_, p, blimit0, limit0, thresh0, blimit1, limit1, thresh1);
-    }
-};
-
-TEST_P(LbdDualLoopFilterTest, MatchTestRandomData) {
-    run_test();
-}
-
-// class to test dual loop filter with high bitdepth
-class HbdDualLoopFilterTest
-    : public LoopFilterTest<uint16_t, HbdDualLoopFilterFunc,
-                            HbdDualLpfTestParam> {
-  public:
-    HbdDualLoopFilterTest() {
-        lpf_type_ = DUAL;
-    }
-
-    virtual ~HbdDualLoopFilterTest() {
-    }
-
-    void run_dual_lpf(DUAL_LOOP_PARAM, int bd) override {
-        lpf_tst_(start_tst_,
-                 p,
-                 blimit0,
-                 limit0,
-                 thresh0,
-                 blimit1,
-                 limit1,
-                 thresh1,
-                 bd);
-        lpf_ref_(start_ref_,
-                 p,
-                 blimit0,
-                 limit0,
-                 thresh0,
-                 blimit1,
-                 limit1,
-                 thresh1,
-                 bd);
-    }
-};
-
-TEST_P(HbdDualLoopFilterTest, MatchTestRandomData) {
     run_test();
 }
 
@@ -423,50 +300,4 @@ INSTANTIATE_TEST_CASE_P(SSE2, LbdLoopFilterTest,
                         ::testing::ValuesIn(kLoop8Test6));
 INSTANTIATE_TEST_CASE_P(SSE2, HbdLoopFilterTest,
                         ::testing::ValuesIn(kHbdLoop8Test6));
-
-/* clang-format off */
-// No implement for aom_lpf_{horizontal, vertical}_6_dual_sse2 and
-// aom_lpf_vertical_8_dual_sse2
-const LdbDualLpfTestParam kLoop8Test9[] = {
-    make_tuple(&aom_lpf_horizontal_4_dual_sse2,
-               &aom_lpf_horizontal_4_dual_c, 8),
-    make_tuple(&aom_lpf_vertical_4_dual_sse2,
-               &aom_lpf_vertical_4_dual_c, 8),
-    make_tuple(&aom_lpf_horizontal_8_dual_sse2,
-               &aom_lpf_horizontal_8_dual_c, 8),
-};
-
-const HbdDualLpfTestParam kHbdLoop8Test9[] = {
-    make_tuple(&aom_highbd_lpf_horizontal_4_dual_sse2,
-               &aom_highbd_lpf_horizontal_4_dual_c, 8),
-    make_tuple(&aom_highbd_lpf_horizontal_8_dual_sse2,
-               &aom_highbd_lpf_horizontal_8_dual_c, 8),
-    make_tuple(&aom_highbd_lpf_vertical_4_dual_sse2,
-               &aom_highbd_lpf_vertical_4_dual_c, 8),
-    make_tuple(&aom_highbd_lpf_vertical_8_dual_sse2,
-               &aom_highbd_lpf_vertical_8_dual_c, 8),
-    make_tuple(&aom_highbd_lpf_horizontal_4_dual_sse2,
-               &aom_highbd_lpf_horizontal_4_dual_c, 10),
-    make_tuple(&aom_highbd_lpf_horizontal_8_dual_sse2,
-               &aom_highbd_lpf_horizontal_8_dual_c, 10),
-    make_tuple(&aom_highbd_lpf_vertical_4_dual_sse2,
-               &aom_highbd_lpf_vertical_4_dual_c, 10),
-    make_tuple(&aom_highbd_lpf_vertical_8_dual_sse2,
-               &aom_highbd_lpf_vertical_8_dual_c, 10),
-    make_tuple(&aom_highbd_lpf_horizontal_4_dual_sse2,
-               &aom_highbd_lpf_horizontal_4_dual_c, 12),
-    make_tuple(&aom_highbd_lpf_horizontal_8_dual_sse2,
-               &aom_highbd_lpf_horizontal_8_dual_c, 12),
-    make_tuple(&aom_highbd_lpf_vertical_4_dual_sse2,
-               &aom_highbd_lpf_vertical_4_dual_c, 12),
-    make_tuple(&aom_highbd_lpf_vertical_8_dual_sse2,
-               &aom_highbd_lpf_vertical_8_dual_c, 12),
-};
-/* clang-format off */
-
-INSTANTIATE_TEST_CASE_P(SSE2, LbdDualLoopFilterTest,
-                        ::testing::ValuesIn(kLoop8Test9));
-
-INSTANTIATE_TEST_CASE_P(SSE2, HbdDualLoopFilterTest,
-                        ::testing::ValuesIn(kHbdLoop8Test9));
 }  // namespace
