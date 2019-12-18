@@ -1762,7 +1762,7 @@ static INLINE EbErrorType reallocate_parse_context_memory(
     return EB_ErrorNone;
 }
 
-INLINE EbErrorType reallocate_parse_tile_data(
+static INLINE EbErrorType reallocate_parse_tile_data(
     MasterParseCtxt *master_parse_ctx,
     int num_tiles)
 {
