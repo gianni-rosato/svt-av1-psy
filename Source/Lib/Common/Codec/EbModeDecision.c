@@ -5715,6 +5715,9 @@ void  inject_intra_candidates(
                         candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
                         candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
                         candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
+#if II_COMP_FLAG
+                        candidateArray[canTotalCnt].is_interintra_used = 0;
+#endif
                         INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
                     }
             }
@@ -5782,6 +5785,9 @@ void  inject_intra_candidates(
             candidateArray[canTotalCnt].ref_frame_type = INTRA_FRAME;
             candidateArray[canTotalCnt].pred_mode = (PredictionMode)openLoopIntraCandidate;
             candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
+#if II_COMP_FLAG
+            candidateArray[canTotalCnt].is_interintra_used = 0;
+#endif
             INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
         }
     }
@@ -5872,6 +5878,9 @@ void  inject_filter_intra_candidates(
             candidateArray[canTotalCnt].pred_mode = DC_PRED;
             candidateArray[canTotalCnt].motion_mode = SIMPLE_TRANSLATION;
 
+#if II_COMP_FLAG
+            candidateArray[canTotalCnt].is_interintra_used = 0;
+#endif
             INCRMENT_CAND_TOTAL_COUNT(canTotalCnt);
     }
 
