@@ -22,6 +22,7 @@
 #include "EbComputeMean_SSE2.h"
 #include "EbUtility.h"
 #include "EbMotionEstimationContext.h"
+#include "EbPictureOperators.h"
 
 #define VARIANCE_PRECISION 16
 #define SB_LOW_VAR_TH 5
@@ -3578,6 +3579,25 @@ const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
 
+static const uint16_t eb_AV1_HIGH_VAR_OFFS_10[MAX_SB_SIZE] = {
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
+  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4
+};
+
 unsigned int eb_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, //const AV1_COMP *cpi,
                                               const uint8_t *         src,
                                               int       stride, //const struct Buf2D *ref,
@@ -3589,49 +3609,157 @@ unsigned int eb_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, //
     return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
 }
 
+unsigned int eb_av1_high_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr,
+                                                   const uint16_t *src, int stride,
+                                                   BlockSize bs) {
+  unsigned int sse;
+  const unsigned int var =
+     fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(src), stride,
+                       CONVERT_TO_BYTEPTR(eb_AV1_HIGH_VAR_OFFS_10),
+                       0, &sse);
+  return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
+}
+
+
+// Check if the number of color of a block is superior to 1 and inferior
+// to a given threshold.
+EbBool is_valid_palette_nb_colors(const uint8_t *src, int stride,
+                                  int rows, int cols,
+                                  int nb_colors_threshold)
+{
+    EbBool has_color[1 << 8];  // Maximum (1 << 8) color levels.
+    memset(has_color, 0, (1 << 8) * sizeof(*has_color));
+    int nb_colors = 0;
+
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int c = 0; c < cols; ++c)
+        {
+            const int this_val = src[r * stride + c];
+            if (has_color[this_val] == 0)
+            {
+                has_color[this_val] = 1;
+                nb_colors++;
+                if (nb_colors > nb_colors_threshold)
+                    return EB_FALSE;
+            }
+        }
+    }
+    if (nb_colors <= 1)
+        return EB_FALSE;
+
+    return EB_TRUE;
+}
+
+EbBool is_valid_palette_nb_colors_highbd(const uint16_t *src, int stride,
+                                         int rows, int cols,
+                                         int nb_colors_threshold,
+                                         int bit_depth)
+{
+    EbBool has_color[1 << 12]; // Maximum (1 << 12) color levels.
+    memset(has_color, 0, ((size_t)1 << bit_depth) * sizeof(*has_color));
+    int nb_colors = 0;
+
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int c = 0; c < cols; ++c)
+        {
+            const int this_val = src[r * stride + c];
+            if (has_color[this_val] == 0)
+            {
+                has_color[this_val] = 1;
+                nb_colors++;
+                if (nb_colors > nb_colors_threshold)
+                    return EB_FALSE;
+            }
+        }
+    }
+    if (nb_colors <= 1)
+        return EB_FALSE;
+
+    return EB_TRUE;
+}
+
+
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
-static void is_screen_content(PictureParentControlSet *pcs_ptr, const uint8_t *src, int use_hbd,
-                              int stride, int width, int height) {
-    assert(src != NULL);
+static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
     const int blk_w = 16;
     const int blk_h = 16;
     // These threshold values are selected experimentally.
     const int          color_thresh = 4;
-    const unsigned int var_thresh   = 0;
+    const int          var_thresh = 0;
     // Counts of blocks with no more than color_thresh colors.
     int counts_1 = 0;
     // Counts of blocks with no more than color_thresh colors and variance larger
     // than var_thresh.
     int counts_2 = 0;
 
-    for (int r = 0; r + blk_h <= height; r += blk_h) {
-        for (int c = 0; c + blk_w <= width; c += blk_w) {
-            int       count_buf[1 << 12]; // Maximum (1 << 12) color levels.
-            const int n_colors =
-                use_hbd
-                    ? 0 /*av1_count_colors_highbd(src + r * stride + c, stride, blk_w,
-                    blk_h, bd, count_buf)*/
-                    : eb_av1_count_colors(src + r * stride + c, stride, blk_w, blk_h, count_buf);
-            if (n_colors > 1 && n_colors <= color_thresh) {
-                ++counts_1;
-                //struct Buf2D buf;
-                //buf.stride = stride;
-                //buf.buf = (uint8_t *)src;
-                const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+    const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
 
-                const unsigned int var = eb_av1_get_sby_perpixel_variance(
-                    fn_ptr, src + r * stride + c, stride, BLOCK_16X16);
-                /* use_hbd
-                ? av1_high_get_sby_perpixel_variance(cpi, &buf, BLOCK_16X16, bd)
-                : */
-                if (var > var_thresh) ++counts_2;
+    EbBool is16bit = bit_depth > EB_8BIT;
+    EbPictureBufferDesc *input_picture_ptr =
+        pcs_ptr->enhanced_picture_ptr;
+
+    for (int r = 0; r + blk_h <= input_picture_ptr->height; r += blk_h)
+    {
+        for (int c = 0; c + blk_w <= input_picture_ptr->width; c += blk_w)
+        {
+            if (is16bit)
+            {
+                uint16_t src[BLOCK_SIZE_64 * BLOCK_SIZE_64];
+
+                // In 16 bit mode, we must pack the split input in a temporary buffer.
+                const uint32_t input_luma_offset =
+                    (r + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+                    c + input_picture_ptr->origin_x;
+                const uint32_t input_bit_inc_luma_offset =
+                    (r + input_picture_ptr->origin_y) * input_picture_ptr->stride_bit_inc_y +
+                    c + input_picture_ptr->origin_x;
+
+                pack2d_src(
+                    input_picture_ptr->buffer_y + input_luma_offset,
+                    input_picture_ptr->stride_y,
+                    input_picture_ptr->buffer_bit_inc_y + input_bit_inc_luma_offset,
+                    input_picture_ptr->stride_bit_inc_y,
+                    src,
+                    blk_w,
+                    blk_w,
+                    blk_h);
+
+                if (is_valid_palette_nb_colors_highbd((uint16_t *)src, blk_w,
+                                                      blk_w, blk_h, color_thresh,
+                                                      bit_depth))
+                {
+                    ++counts_1;
+                    int var = eb_av1_high_get_sby_perpixel_variance(fn_ptr, src, blk_w,
+                                                                    BLOCK_16X16);
+                    if (var > var_thresh)
+                        ++counts_2;
+                }
+            }
+            else
+            {
+                uint8_t *src = input_picture_ptr->buffer_y +
+                    (input_picture_ptr->origin_y + r) * input_picture_ptr->stride_y +
+                    input_picture_ptr->origin_x + c;
+
+                if (is_valid_palette_nb_colors(src, input_picture_ptr->stride_y,
+                                               blk_w, blk_h, color_thresh))
+                {
+                    ++counts_1;
+                    int var = eb_av1_get_sby_perpixel_variance(fn_ptr, src, input_picture_ptr->stride_y,
+                                                               BLOCK_16X16);
+                    if (var > var_thresh)
+                        ++counts_2;
+                }
             }
         }
     }
 
-    pcs_ptr->sc_content_detected = (counts_1 * blk_h * blk_w * 10 > width * height) &&
-                                   (counts_2 * blk_h * blk_w * 15 > width * height);
+    pcs_ptr->sc_content_detected =
+        (counts_1 * blk_h * blk_w * 10 > input_picture_ptr->width * input_picture_ptr->height) &&
+        (counts_2 * blk_h * blk_w * 15 > input_picture_ptr->width * input_picture_ptr->height);
 }
 
 /************************************************
@@ -3817,12 +3945,7 @@ void *picture_analysis_kernel(void *input_ptr) {
 
             if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
                 is_screen_content(pcs_ptr,
-                                  input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
-                                      input_picture_ptr->origin_y * input_picture_ptr->stride_y,
-                                  0,
-                                  input_picture_ptr->stride_y,
-                                  scs_ptr->seq_header.max_frame_width,
-                                  scs_ptr->seq_header.max_frame_height);
+                                  scs_ptr->static_config.encoder_bit_depth);
             } else // off / on
                 pcs_ptr->sc_content_detected = scs_ptr->static_config.screen_content_mode;
 
