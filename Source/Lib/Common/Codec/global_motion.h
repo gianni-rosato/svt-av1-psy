@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -95,3 +96,4 @@ int av1_compute_global_motion(TransformationType type,
 }  // extern "C"
 #endif
 #endif  // AOM_AV1_ENCODER_GLOBAL_MOTION_H_
+// clang-format on

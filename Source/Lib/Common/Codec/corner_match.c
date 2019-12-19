@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -195,3 +196,4 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
                          correspondences, num_correspondences);
   return num_correspondences;
 }
+// clang-format on

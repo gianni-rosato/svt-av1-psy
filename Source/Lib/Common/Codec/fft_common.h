@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2018, Alliance for Open Media. All rights reserved
  *
@@ -1048,3 +1049,4 @@ extern "C" {
   }
 
 #endif  // AOM_AOM_DSP_FFT_COMMON_H_
+// clang-format on

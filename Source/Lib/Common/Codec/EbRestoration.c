@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -1786,3 +1787,4 @@ EbErrorType eb_av1_alloc_restoration_buffers(Av1Common *cm) {
 
     return return_error;
 }
+// clang-format on

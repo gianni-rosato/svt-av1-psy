@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2018, Alliance for Open Media. All rights reserved
  *
@@ -206,3 +207,4 @@ void eb_aom_ifft32x32_float_c(const float* input, float* temp, float* output) {
     eb_aom_ifft_2d_gen(input, temp, output, 32, eb_aom_fft1d_32_float,
         eb_aom_fft1d_32_float, eb_aom_ifft1d_32_float, simple_transpose, 1);
 }
+// clang-format on

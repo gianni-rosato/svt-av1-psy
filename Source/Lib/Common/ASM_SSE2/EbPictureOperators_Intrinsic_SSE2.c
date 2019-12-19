@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -568,4 +569,4 @@ uint64_t spatial_full_distortion_kernel128x_n_sse2_intrin(
 
     return Hadd32_SSE2_INTRIN(sum);
 }
-
+// clang-format on

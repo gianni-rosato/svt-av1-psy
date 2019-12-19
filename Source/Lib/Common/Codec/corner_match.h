@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -31,3 +32,4 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
                                  int ref_stride, int *correspondence_pts);
 
 #endif  // AOM_AV1_ENCODER_CORNER_MATCH_H_
+// clang-format on

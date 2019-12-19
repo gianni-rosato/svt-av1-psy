@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -309,3 +310,4 @@ int av1_compute_global_motion(TransformationType type,
   }
   return 0;
 }
+// clang-format on

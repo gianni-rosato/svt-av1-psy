@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -777,3 +778,4 @@ int av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols,
          map_pb_cdf);
  }
 #endif
+// clang-format on

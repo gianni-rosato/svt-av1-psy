@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2018, Alliance for Open Media. All rights reserved
  *
@@ -233,3 +234,4 @@ static const NN_CONFIG av1_max_part_pred_nn_config = {
 #endif
 
 #endif  // AOM_AV1_ENCODER_PARTITION_MODEL_WEIGHTS_H_
+// clang-format on

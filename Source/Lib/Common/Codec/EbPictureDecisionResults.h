@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -33,3 +34,4 @@ extern EbErrorType picture_decision_result_creator(
     EbPtr  object_init_data_ptr);
 
 #endif //EbPictureDecisionResults_h
+// clang-format on

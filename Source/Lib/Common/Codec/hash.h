@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -48,3 +49,4 @@ void av1_crc32c_calculator_init(CRC32C *p_crc32c);
 #endif
 
 #endif  // AOM_AV1_ENCODER_HASH_H_
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -301,3 +302,4 @@ void aom_convolve8_vert_c(const uint8_t *src, ptrdiff_t src_stride,
 
 
 #endif
+// clang-format on

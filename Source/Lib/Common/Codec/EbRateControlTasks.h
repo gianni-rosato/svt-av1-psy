@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -48,3 +49,4 @@ extern EbErrorType rate_control_tasks_creator(
     EbPtr  object_init_data_ptr);
 
 #endif // EbRateControlTasks_h
+// clang-format on

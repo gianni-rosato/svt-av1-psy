@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -1025,3 +1026,4 @@ void eb_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc,
         dst += dst_bc->uv_stride;
     }
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -817,3 +818,4 @@ RansacFuncDouble av1_get_ransac_double_prec_type(TransformationType type) {
     default: assert(0); return NULL;
   }
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -469,3 +470,4 @@ void aom_highbd_blend_a64_hmask_c(uint8_t *dst_8, uint32_t dst_stride,
         }
     }
 }
+// clang-format on

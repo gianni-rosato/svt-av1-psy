@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -152,3 +153,4 @@ void* source_based_operations_kernel(void *input_ptr)
     }
     return EB_NULL;
 }
+// clang-format on

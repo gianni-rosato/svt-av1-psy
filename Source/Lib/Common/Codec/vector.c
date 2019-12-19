@@ -1,3 +1,4 @@
+// clang-format off
 /*
 The MIT License(MIT)
 Copyright(c) 2016 Peter Goldsborough
@@ -528,3 +529,4 @@ void _vector_swap(size_t *first, size_t *second) {
   *first = *second;
   *second = temp;
 }
+// clang-format on

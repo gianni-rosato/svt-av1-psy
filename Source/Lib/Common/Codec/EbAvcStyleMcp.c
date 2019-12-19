@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -333,3 +334,4 @@ void avc_style_luma_interpolation_filter_helper_c(
         assert(0);
     }
 }
+// clang-format on

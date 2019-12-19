@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -320,3 +321,4 @@ int seg_feature_active(SegmentationParams *seg, int segment_id,
 {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -131,3 +132,4 @@ extern "C" {
 #endif
 
 #endif  // AOM_AOM_GRAIN_SYNTHESIS_H_
+// clang-format on

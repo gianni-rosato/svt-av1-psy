@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -1223,3 +1224,4 @@ int eb_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSi
 
   return 0;//CHKN  var;
 }
+// clang-format on

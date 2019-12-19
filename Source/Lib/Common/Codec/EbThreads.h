@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -145,3 +146,4 @@ extern    cpu_set_t                   group_affinity;
 }
 #endif
 #endif // EbThreads_h
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -370,3 +371,4 @@ EbErrorType eb_destroy_mutex(
 
     return return_error;
 }
+// clang-format on

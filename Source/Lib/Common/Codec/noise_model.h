@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2017, Alliance for Open Media. All rights reserved
  *
@@ -372,3 +373,4 @@ extern "C" {
 }  // extern "C"
 #endif  // __cplusplus
 #endif  // AOM_AOM_DSP_NOISE_MODEL_H_
+// clang-format on

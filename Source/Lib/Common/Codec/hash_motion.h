@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -77,3 +78,4 @@ void av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size,
 #endif
 
 #endif  // AOM_AV1_ENCODER_HASH_MOTION_H_
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -1571,3 +1572,4 @@ void finish_cdef_search(
     free(sb_index);
     free(selected_strength);
 }
+// clang-format on

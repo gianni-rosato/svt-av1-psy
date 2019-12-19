@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -14,3 +15,4 @@ EbErrorType packetization_reorder_entry_ctor(
 
     return EB_ErrorNone;
 }
+// clang-format on

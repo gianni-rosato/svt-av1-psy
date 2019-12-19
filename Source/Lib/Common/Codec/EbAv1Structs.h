@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -599,3 +600,4 @@ typedef struct Dequant
 }
 #endif
 #endif // EbAV1Structs_h
+// clang-format on

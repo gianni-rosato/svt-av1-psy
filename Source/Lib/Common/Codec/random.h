@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2017, Alliance for Open Media. All rights reserved
  *
@@ -27,3 +28,4 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 #endif
 
 #endif  // AOM_AV1_ENCODER_RANDOM_H_
+// clang-format on

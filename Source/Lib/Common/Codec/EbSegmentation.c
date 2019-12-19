@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -224,3 +225,4 @@ void temporally_update_qps(
         segment_qp_ptr[i] = temporal_update ? diff : segment_qp_ptr[i];
     }
 }
+// clang-format on

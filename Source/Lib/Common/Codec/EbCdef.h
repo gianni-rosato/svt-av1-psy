@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -84,3 +85,4 @@ extern "C" {
 }
 #endif
 #endif  // AV1_COMMON_CDEF_H_
+// clang-format on

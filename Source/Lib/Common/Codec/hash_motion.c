@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2018, Alliance for Open Media. All rights reserved
  *
@@ -466,3 +467,4 @@ void av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size,
   *hash_value1 = (x->hash_value_buffer[0][dst_idx][0] & crc_mask) + add_value;
   *hash_value2 = x->hash_value_buffer[1][dst_idx][0];
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 The MIT License(MIT)
 Copyright(c) 2016 Peter Goldsborough
@@ -157,3 +158,4 @@ int _vector_reallocate(Vector *vector, size_t new_capacity);
 void _vector_swap(size_t *first, size_t *second);
 
 #endif /* VECTOR_H */
+// clang-format on

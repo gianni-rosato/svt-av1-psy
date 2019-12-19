@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -34,3 +35,4 @@ int av1_fast_corner_detect(unsigned char *buf, int width, int height,
   free(frm_corners_xy);
   return 0;
 }
+// clang-format on

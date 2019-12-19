@@ -1,3 +1,4 @@
+// clang-format off
 /* The copyright in this software is being made available under the BSD
 * License, included below. This software may be subject to other third party
 * and contributor rights, including patent rights, and no such rights are
@@ -285,3 +286,4 @@ uint64_t compute8x8_satd_u8_c(
     *dcValue += m2[0][0];
     return satdBlock8x8;
 }
+// clang-format on

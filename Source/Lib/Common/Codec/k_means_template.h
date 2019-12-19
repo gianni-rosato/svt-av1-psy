@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -118,3 +119,4 @@ void RENAME(av1_k_means)(const int *data, int *centroids, uint8_t *indices,
 }
 #undef RENAME_
 #undef RENAME
+// clang-format on

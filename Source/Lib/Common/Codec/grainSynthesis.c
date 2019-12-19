@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -1541,3 +1542,4 @@ void av1_film_grain_read_updated(aom_film_grain_t *pars,
   pars->clip_to_restricted_range = aom_rb_read_bit(rb);
 }
 */
+// clang-format on

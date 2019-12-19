@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -6549,3 +6550,4 @@ void eb_av1_highbd_inv_txfm_add_avx2(const int32_t *input,
         input, output_r, stride_r, output_w, stride_w, tx_type, tx_size,
         eob, bd);
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -336,3 +337,4 @@ int32_t main(int32_t argc, char* argv[])
 
     return (return_error == 0) ? 0 : 1;
 }
+// clang-format on

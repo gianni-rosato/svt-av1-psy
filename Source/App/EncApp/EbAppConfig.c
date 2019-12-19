@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -1411,3 +1412,4 @@ EbErrorType read_command_line(
         free(config_strings[index]);
     return return_error;
 }
+// clang-format on

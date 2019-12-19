@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -46,3 +47,4 @@ void av1_nn_output_prec_reduce(float *const output, int num_output);
 #endif
 
 #endif  // AOM_AV1_ENCODER_ML_H_
+// clang-format on

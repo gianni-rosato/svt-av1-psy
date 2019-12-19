@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -160,3 +161,4 @@ static INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockS
     return ref_pos;
 }
 #endif//EbCommonUtils_h
+// clang-format on

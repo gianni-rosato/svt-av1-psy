@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -85,3 +86,4 @@ extern const int segmentation_feature_max[SEG_LVL_MAX];
 
 
 #endif //SVT_AV1_EBSEGMENTATIONPARAMS_H
+// clang-format on

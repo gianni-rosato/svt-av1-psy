@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -550,3 +551,4 @@ void mode_decision_configure_lcu(
 
     return;
 }
+// clang-format on

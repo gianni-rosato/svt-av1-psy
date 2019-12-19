@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -1138,3 +1139,4 @@ EbBool eb_find_projection(
 
     return 0;
 }
+// clang-format on

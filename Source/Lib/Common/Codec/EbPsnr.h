@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -126,3 +127,4 @@ extern "C" {
 }  // extern "C"
 #endif
 #endif  // AOM_DSP_PSNR_H_
+// clang-format on

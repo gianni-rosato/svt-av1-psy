@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -78,3 +79,4 @@ int gm_get_params_cost(const EbWarpedMotionParams *gm,
   }
   return (params_cost << AV1_PROB_COST_SHIFT);
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -84,3 +85,4 @@ void av1_nn_softmax(const float *input, float *output, int n) {
   }
   for (int i = 0; i < n; i++) output[i] /= sum_out;
 }
+// clang-format on

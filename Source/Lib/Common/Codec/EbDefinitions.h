@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -4040,3 +4041,4 @@ memset(dst, val, count)
 #endif
 #endif // EbDefinitions_h
 /* File EOF */
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -55,3 +56,4 @@ void calculate_segmentation_data(
 #endif //SVT_AV1_EBSEGMENTATIONS_H
 
 
+// clang-format on

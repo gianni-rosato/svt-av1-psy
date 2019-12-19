@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -45,3 +46,4 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet        *sequence_c
                                            MotionEstimationContext_t *context_ptr);
 
 #endif // EbMotionEstimationProcess_h
+// clang-format on

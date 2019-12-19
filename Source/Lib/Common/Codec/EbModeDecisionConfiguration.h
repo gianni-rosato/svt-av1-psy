@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -87,3 +88,4 @@ EB_ALIGN(16) static const uint8_t ndp_level_1[4] = {Pred + Predp1         , Pred
 }
 #endif
 #endif // EbModeDecisionConfiguration_h
+// clang-format on

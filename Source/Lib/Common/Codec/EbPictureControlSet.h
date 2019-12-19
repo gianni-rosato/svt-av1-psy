@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -1210,3 +1211,4 @@ extern "C" {
 }
 #endif
 #endif // EbPictureControlSet_h
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -91,3 +92,4 @@ typedef void(*EbDctor)(void* pobj);
 //#undef EB_VA_ARGS
 
 #endif //EbObject_h
+// clang-format on

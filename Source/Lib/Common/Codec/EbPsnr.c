@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -275,3 +276,4 @@ int64_t eb_aom_highbd_get_v_sse(const Yv12BufferConfig *a,
     return highbd_get_sse(a->v_buffer, a->uv_stride, b->v_buffer, b->uv_stride,
         a->uv_crop_width, a->uv_crop_height);
 }
+// clang-format on

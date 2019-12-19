@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -2322,3 +2323,4 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm)
 
     eb_aom_free(rusi);
 }
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -148,3 +149,4 @@ int eb_get_shear_params(EbWarpedMotionParams *wm);
 }
 #endif
 #endif // EbWarpedMotion_h
+// clang-format on

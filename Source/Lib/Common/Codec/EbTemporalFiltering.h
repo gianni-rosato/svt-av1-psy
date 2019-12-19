@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -117,3 +118,4 @@ void svt_av1_apply_filtering_highbd_c(const uint16_t *y_src,
 #endif
 #endif //EbTemporalFiltering_h
 
+// clang-format on

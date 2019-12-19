@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -38,3 +39,4 @@ extern EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, u
 extern EbErrorType de_init_encoder(EbAppContext *callback_data_ptr, uint32_t instance_index);
 
 #endif // EbAppContext_h
+// clang-format on

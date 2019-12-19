@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2017, Alliance for Open Media. All rights reserved
  *
@@ -1742,3 +1743,4 @@ int32_t eb_aom_denoise_and_model_run(struct aom_denoise_and_model_t *ctx,
 
     return 1;
 }
+// clang-format on

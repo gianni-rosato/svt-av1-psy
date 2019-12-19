@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -25,3 +26,4 @@ extern EbErrorType picture_decision_reorder_entry_ctor(
     uint32_t                              picture_number);
 
 #endif //EbPictureDecisionReorderQueue_h
+// clang-format on

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -37,3 +38,4 @@ EbErrorType hl_rate_control_histogram_entry_ctor(
 
     return EB_ErrorNone;
 }
+// clang-format on

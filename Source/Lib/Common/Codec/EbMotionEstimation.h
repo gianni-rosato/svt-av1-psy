@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -472,3 +473,4 @@ void interpolate_search_region_AVC_chroma(
 }
 #endif
 #endif // EbMotionEstimation_h
+// clang-format on

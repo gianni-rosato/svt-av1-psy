@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -7009,3 +7010,4 @@ EB_EXTERN EbErrorType write_sb(
     } while (cu_index < sequence_control_set_ptr->max_block_cnt);
     return return_error;
 }
+// clang-format on

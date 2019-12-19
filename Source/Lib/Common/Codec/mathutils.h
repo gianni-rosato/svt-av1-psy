@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2017, Alliance for Open Media. All rights reserved
  *
@@ -357,3 +358,4 @@ static INLINE int32_t SVD(double *U, double *W, double *V, double *matx, int32_t
 }
 
 #endif  // AOM_AV1_ENCODER_MATHUTILS_H_
+// clang-format on

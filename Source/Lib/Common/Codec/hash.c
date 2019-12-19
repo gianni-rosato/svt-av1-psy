@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -120,3 +121,4 @@ uint32_t av1_get_crc32c_value_c(CRC32C *p, uint8_t *buf, size_t len) {
   }
   return (uint32_t)crc ^ 0xffffffff;
 }
+// clang-format on

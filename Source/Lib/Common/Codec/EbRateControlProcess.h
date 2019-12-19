@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -269,3 +270,4 @@ extern EbErrorType rate_control_context_ctor(
 extern void* rate_control_kernel(void *input_ptr);
 
 #endif // EbRateControl_h
+// clang-format on

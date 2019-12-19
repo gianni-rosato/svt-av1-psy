@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -2285,3 +2286,4 @@ EbErrorType svt_av1_init_temporal_filtering(PictureParentControlSet **list_pictu
     return EB_ErrorNone;
 
 }
+// clang-format on

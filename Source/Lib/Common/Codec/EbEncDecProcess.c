@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -3127,3 +3128,4 @@ void eb_av1_add_film_grain(EbPictureBufferDesc *src,
         chroma_subsamp_x);
     return;
 }
+// clang-format on

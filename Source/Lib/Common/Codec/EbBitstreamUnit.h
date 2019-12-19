@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -313,3 +314,4 @@ on a larger type, you can speed up the decoder by using it here.*/
 #endif
 
 #endif // EbBitstreamUnit_h
+// clang-format on

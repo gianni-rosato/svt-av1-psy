@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -102,3 +103,4 @@ int eb_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MAC
 #endif
 
 #endif  // AOM_AV1_ENCODER_MCOMP_H_
+// clang-format on

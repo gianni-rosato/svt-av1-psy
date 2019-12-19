@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -1147,3 +1148,4 @@ void neighbor_array_unit_mv_write(
 
     return;
 }
+// clang-format on

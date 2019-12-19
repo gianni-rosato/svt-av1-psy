@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright (c) 2017, Alliance for Open Media. All rights reserved
  *
@@ -653,3 +654,4 @@ uint32_t od_divu_small_consts[OD_DIVU_DMAX][2] = {
   { 0x80604836, 0x80604836 }, { 0x80402010, 0x80402010 },
   { 0x80200802, 0x80200802 }, { 0xFFFFFFFF, 0xFFFFFFFF }
 };
+// clang-format on
