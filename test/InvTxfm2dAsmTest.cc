@@ -454,7 +454,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             HandleTransform32x64_c,
             HandleTransform64x16_c,
             HandleTransform64x32_c,
-            HandleTransform64x64_c};
+            handle_transform64x64_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
             HandleTransform16x64_avx2,
             HandleTransform32x64_avx2,
@@ -496,7 +496,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             HandleTransform32x64_c,
             HandleTransform64x16_c,
             HandleTransform64x32_c,
-            HandleTransform64x64_c};
+            handle_transform64x64_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
             HandleTransform16x64_avx2,
             HandleTransform32x64_avx2,
@@ -590,9 +590,9 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                        uint8_t bd);
 
         const FwdTxfm2dFunc fwd_txfm_func[TX_SIZES_ALL] = {
-            Av1TransformTwoD_4x4_c,   Av1TransformTwoD_8x8_c,
-            Av1TransformTwoD_16x16_c, Av1TransformTwoD_32x32_c,
-            Av1TransformTwoD_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
+            av1_transform_two_d_4x4_c,   av1_transform_two_d_8x8_c,
+            av1_transform_two_d_16x16_c, av1_transform_two_d_32x32_c,
+            av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
             eb_av1_fwd_txfm2d_8x4_c,     eb_av1_fwd_txfm2d_8x16_c,
             eb_av1_fwd_txfm2d_16x8_c,    eb_av1_fwd_txfm2d_16x32_c,
             eb_av1_fwd_txfm2d_32x16_c,   eb_av1_fwd_txfm2d_32x64_c,
@@ -620,7 +620,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             pixel_input_, input_, stride_, tx_type, static_cast<uint8_t>(bd_));
         // post-process, re-pack the coeffcients
         switch (tx_size) {
-        case TX_64X64: HandleTransform64x64_c(input_); break;
+        case TX_64X64: handle_transform64x64_c(input_); break;
         case TX_64X32: HandleTransform64x32_c(input_); break;
         case TX_32X64: HandleTransform32x64_c(input_); break;
         case TX_64X16: HandleTransform64x16_c(input_); break;

@@ -1400,7 +1400,7 @@ EB_AV1_GENERATE_RECON_FUNC_PTR   Av1EncodeGenerateReconFunctionPtr[2] =
     Av1EncodeGenerateRecon16bit
 };
 
-void Store16bitInputSrc(
+void store16bit_input_src(
     EbPictureBufferDesc     *input_sample16bit_buffer,
     PictureControlSet       *picture_control_set_ptr,
     uint32_t                 lcuX,
@@ -2224,7 +2224,7 @@ EB_EXTERN void av1_encode_pass(
         }
 
         if (context_ptr->md_context->hbd_mode_decision == 0)
-            Store16bitInputSrc(context_ptr->input_sample16bit_buffer, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
+            store16bit_input_src(context_ptr->input_sample16bit_buffer, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
     }
 
     if ((sequence_control_set_ptr->input_resolution == INPUT_SIZE_4K_RANGE) && !picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {

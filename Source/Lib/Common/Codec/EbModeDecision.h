@@ -248,23 +248,12 @@ extern "C" {
         // *Note - We should be able to combine the recon_coeff_ptr & recon_ptr pictures (they aren't needed at the same time)
         EbPictureBufferDesc                  *recon_ptr;
 
-        // Distortion (SAD)
-        uint64_t                                residual_luma_sad;
-        uint64_t                                full_lambda_rate;
-        uint64_t                                full_cost_luma;
-
         // Costs
         uint64_t                               *fast_cost_ptr;
         uint64_t                               *full_cost_ptr;
         uint64_t                               *full_cost_skip_ptr;
         uint64_t                               *full_cost_merge_ptr;
-        //
-        uint64_t                                cb_coeff_bits;
-        uint64_t                                cb_distortion[2];
-        uint64_t                                cr_coeff_bits;
-        uint64_t                                cr_distortion[2];
-        uint64_t                                y_full_distortion[DIST_CALC_TOTAL];
-        uint64_t                                y_coeff_bits;
+
     } ModeDecisionCandidateBuffer;
 
     /**************************************

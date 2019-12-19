@@ -2258,6 +2258,7 @@ EbErrorType Av1FullCost(
     }
     else
         coeffRate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + (uint64_t)candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->skip_fac_bits[cu_ptr->skip_coeff_context][0]);
+
     luma_sse = y_distortion[0];
     chromaSse = cb_distortion[0] + cr_distortion[0];
     totalDistortion = luma_sse + chromaSse;
@@ -2274,11 +2275,6 @@ EbErrorType Av1FullCost(
     }
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, totalDistortion);
-
-    candidate_buffer_ptr->full_lambda_rate = *candidate_buffer_ptr->full_cost_ptr - totalDistortion;
-    coeffRate = *y_coeff_bits;
-    candidate_buffer_ptr->full_cost_luma = RDCOST(lambda, lumaRate + *y_coeff_bits, luma_sse);
-
     return return_error;
 }
 
@@ -2442,10 +2438,6 @@ EbErrorType  Av1MergeSkipFullCost(
     }
     // Assigne full cost
     *candidate_buffer_ptr->full_cost_ptr = (skip_cost <= merge_cost) ? skip_cost : merge_cost;
-
-    uint64_t tempDistortion;
-    tempDistortion = (skip_cost <= merge_cost) ? skipDistortion : mergeDistortion;
-    candidate_buffer_ptr->full_lambda_rate = *candidate_buffer_ptr->full_cost_ptr - tempDistortion;
     *candidate_buffer_ptr->full_cost_merge_ptr = merge_cost;
     *candidate_buffer_ptr->full_cost_skip_ptr = skip_cost;
     // Assigne merge flag

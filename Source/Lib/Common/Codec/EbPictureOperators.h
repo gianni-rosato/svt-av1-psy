@@ -153,11 +153,6 @@ extern "C" {
             in_ptr[i] = value;
     }
 
-    int32_t sum_residual_c(
-        int16_t  *in_ptr,
-        uint32_t  size,
-        uint32_t  stride_in);
-
     void memset16bit_block(
         int16_t  *in_ptr,
         uint32_t  stride_in,

@@ -134,47 +134,6 @@ int32_t eb_aom_daala_stop_encode(DaalaWriter *br) {
     return nb_bits;
 }
 
-/********************************************************************************************************************************/
-// entcode.c
-/*Given the current total integer number of bits used and the current value of
-rng, computes the fraction number of bits used to OD_BITRES precision.
-This is used by od_ec_enc_tell_frac() and od_ec_dec_tell_frac().
-nbits_total: The number of whole bits currently used, i.e., the value
-returned by eb_od_ec_enc_tell() or od_ec_dec_tell().
-rng: The current value of rng from either the encoder or decoder state.
-Return: The number of bits scaled by 2**OD_BITRES.
-This will always be slightly larger than the exact value (e.g., all
-rounding error is in the positive direction).*/
-uint32_t eb_od_ec_tell_frac(uint32_t nbits_total, uint32_t rng) {
-    uint32_t nbits;
-    int32_t l;
-    int32_t i;
-    /*To handle the non-integral number of bits still left in the encoder/decoder
-    state, we compute the worst-case number of bits of val that must be
-    encoded to ensure that the value is inside the range for any possible
-    subsequent bits.
-    The computation here is independent of val itself (the decoder does not
-    even track that value), even though the real number of bits used after
-    eb_od_ec_enc_done() may be 1 smaller if rng is a power of two and the
-    corresponding trailing bits of val are all zeros.
-    If we did try to track that special case, then coding a value with a
-    probability of 1/(1 << n) might sometimes appear to use more than n bits.
-    This may help explain the surprising result that a newly initialized
-    encoder or decoder claims to have used 1 bit.*/
-    nbits = nbits_total << OD_BITRES;
-    l = 0;
-    for (i = OD_BITRES; i-- > 0;) {
-        int32_t b;
-        rng = rng * rng >> 15;
-        b = (int32_t)(rng >> 16);
-        l = l << 1 | b;
-        rng >>= b;
-    }
-    return nbits - l;
-}
-/********************************************************************************************************************************/
-// entenc.c
-
 /*A range encoder.
 See entdec.c and the references for implementation details \cite{Mar79,MNW98}.
 
@@ -481,38 +440,6 @@ int32_t eb_od_ec_enc_tell(const OdEcEnc *enc) {
     /*The 10 here counteracts the offset of -9 baked into cnt, and adds 1 extra
     bit, which we reserve for terminating the stream.*/
     return (enc->cnt + 10) + enc->offs * 8;
-}
-
-/*Saves a entropy coder checkpoint to dst.
-This allows an encoder to reverse a series of entropy coder
-decisions if it decides that the information would have been
-better coded some other way.*/
-void eb_od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src) {
-    OD_COPY(dst, src, 1);
-}
-
-/*Restores an entropy coder checkpoint saved by eb_od_ec_enc_checkpoint.
-This can only be used to restore from checkpoints earlier in the target
-state's history: you can not switch backwards and forwards or otherwise
-switch to a state which isn't a casual ancestor of the current state.
-Restore is also incompatible with patching the initial bits, as the
-changes will remain in the restored version.*/
-void eb_od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src) {
-    uint8_t *buf;
-    uint32_t storage;
-    uint16_t *precarry_buf;
-    uint32_t precarry_storage;
-    assert(dst->storage >= src->storage);
-    assert(dst->precarry_storage >= src->precarry_storage);
-    buf = dst->buf;
-    storage = dst->storage;
-    precarry_buf = dst->precarry_buf;
-    precarry_storage = dst->precarry_storage;
-    OD_COPY(dst, src, 1);
-    dst->buf = buf;
-    dst->storage = storage;
-    dst->precarry_buf = precarry_buf;
-    dst->precarry_storage = precarry_storage;
 }
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/

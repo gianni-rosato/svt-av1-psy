@@ -23,18 +23,18 @@
 #include "EbReferenceObject.h"
 #include "EbPictureControlSet.h"
 
-void ReconOutput(
+void recon_output(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
 void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
     Av1Common *cm, int32_t optimized_lr);
-void CopyStatisticsToRefObject(
+void copy_statistics_to_ref_object(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
 void psnr_calculations(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
-void PadRefAndSetFlags(
+void pad_ref_and_set_flags(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr);
 void generate_padding(
@@ -299,7 +299,7 @@ void* rest_kernel(void *input_ptr)
 
             if (picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // copy stat to ref object (intra_coded_area, Luminance, Scene change detection flags)
-                CopyStatisticsToRefObject(
+                copy_statistics_to_ref_object(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
             }
@@ -312,11 +312,11 @@ void* rest_kernel(void *input_ptr)
 
             // Pad the reference picture and set ref POC
             if (picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                PadRefAndSetFlags(
+                pad_ref_and_set_flags(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
             if (sequence_control_set_ptr->static_config.recon_enabled) {
-                ReconOutput(
+                recon_output(
                     picture_control_set_ptr,
                     sequence_control_set_ptr);
             }

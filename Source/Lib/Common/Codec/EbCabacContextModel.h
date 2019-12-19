@@ -41,11 +41,6 @@ extern "C" {
         // TODO( use packed enum type if appropriate)
         uint8_t token;
     } TOKENEXTRA;
-    typedef struct {
-        TOKENEXTRA *start;
-        TOKENEXTRA *stop;
-        unsigned int count;
-    } TOKENLIST;
 #endif
 #define CDF_SIZE(x) ((x) + 1)
 #define CDF_PROB_BITS 15
@@ -731,8 +726,6 @@ extern "C" {
     void init_mode_probs(struct FrameContexts *fc);
 
     struct FrameContexts;
-
-    typedef char EntropyContext;
 
     //**********************************************************************************************************************//
     // txb_Common.h

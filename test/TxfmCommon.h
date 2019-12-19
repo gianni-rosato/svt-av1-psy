@@ -85,7 +85,7 @@ void eb_av1_iidentity32_c(const int32_t *input, int32_t *output, int8_t cos_bit,
 void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range);
 
-void Av1TransformConfig(TxType tx_type, TxSize tx_size, Txfm2DFlipCfg *cfg);
+void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2DFlipCfg *cfg);
 
 typedef void (*Txfm1dFunc)(const int32_t *input, int32_t *output,
                            int8_t cos_bit, const int8_t *stage_range);
@@ -137,9 +137,9 @@ static INLINE Txfm1dFunc inv_txfm_type_to_func(TxfmType txfm_type) {
 using FwdTxfm2dFunc = void (*)(int16_t *input, int32_t *output, uint32_t stride,
                                TxType tx_type, uint8_t bd);
 static const FwdTxfm2dFunc fwd_txfm_2d_c_func[TX_SIZES_ALL] = {
-    Av1TransformTwoD_4x4_c,   Av1TransformTwoD_8x8_c,
-    Av1TransformTwoD_16x16_c, Av1TransformTwoD_32x32_c,
-    Av1TransformTwoD_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
+    av1_transform_two_d_4x4_c,   av1_transform_two_d_8x8_c,
+    av1_transform_two_d_16x16_c, av1_transform_two_d_32x32_c,
+    av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
     eb_av1_fwd_txfm2d_8x4_c,     eb_av1_fwd_txfm2d_8x16_c,
     eb_av1_fwd_txfm2d_16x8_c,    eb_av1_fwd_txfm2d_16x32_c,
     eb_av1_fwd_txfm2d_32x16_c,   eb_av1_fwd_txfm2d_32x64_c,

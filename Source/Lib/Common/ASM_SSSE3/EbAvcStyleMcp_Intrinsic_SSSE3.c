@@ -12,7 +12,7 @@
 #include "emmintrin.h"
 #include "tmmintrin.h"
 
-EB_EXTERN EB_ALIGN(16) const int8_t AvcStyleLumaIFCoeff8_SSSE3[] = {
+EB_EXTERN EB_ALIGN(16) const int8_t avc_style_luma_if_coeff8_ssse3[] = {
     -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25,
      9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,  9, -1,
     -2, 18, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18,
@@ -206,8 +206,8 @@ void avc_style_luma_interpolation_filter_horizontal_ssse3_intrin(
     pu_height >>= skip;
     frac_pos <<= 5;
     IFOffset = _mm_set1_epi16(0x0010);
-    IFCoeff_1_0 = _mm_load_si128((__m128i *)(AvcStyleLumaIFCoeff8_SSSE3 + frac_pos - 32));
-    IFCoeff_3_2 = _mm_load_si128((__m128i *)(AvcStyleLumaIFCoeff8_SSSE3 + frac_pos - 16));
+    IFCoeff_1_0 = _mm_load_si128((__m128i *)(avc_style_luma_if_coeff8_ssse3 + frac_pos - 32));
+    IFCoeff_3_2 = _mm_load_si128((__m128i *)(avc_style_luma_if_coeff8_ssse3 + frac_pos - 16));
 
     if (!(pu_width & 15)) { // 16x
         __m128i ref0, ref1, ref2, ref3, ref01_lo, ref01_hi, ref23_lo, ref23_hi, sum_lo, sum_hi;
@@ -315,8 +315,8 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(
     frac_pos <<= 5;
     ref_pic -= src_stride;
     IFOffset = _mm_set1_epi16(0x0010);
-    IFCoeff_1_0 = _mm_load_si128((__m128i *)(AvcStyleLumaIFCoeff8_SSSE3 + frac_pos - 32));
-    IFCoeff_3_2 = _mm_load_si128((__m128i *)(AvcStyleLumaIFCoeff8_SSSE3 + frac_pos - 16));
+    IFCoeff_1_0 = _mm_load_si128((__m128i *)(avc_style_luma_if_coeff8_ssse3 + frac_pos - 32));
+    IFCoeff_3_2 = _mm_load_si128((__m128i *)(avc_style_luma_if_coeff8_ssse3 + frac_pos - 16));
     dst_stride <<= skip;
     pu_height >>= skip;
     if (!(pu_width & 15)) { //16x

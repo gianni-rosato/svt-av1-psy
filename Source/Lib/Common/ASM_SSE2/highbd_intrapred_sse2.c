@@ -750,40 +750,4 @@ void eb_aom_highbd_dc_predictor_8x32_sse2(uint16_t *dst, ptrdiff_t stride,
         dst += stride;
     }
 }
-void eb_aom_highbd_dc_predictor_32x16_sse2(uint16_t *dst, ptrdiff_t stride,
-    const uint16_t *above,
-    const uint16_t *left, int32_t bd) {
-    (void)bd;
-    __m128i sum_left = dc_sum_16(left);
-    __m128i sum_above = dc_sum_32(above);
-    const __m128i zero = _mm_setzero_si128();
-    sum_left = _mm_unpacklo_epi16(sum_left, zero);
-    const __m128i sum = _mm_add_epi32(sum_left, sum_above);
-    uint32_t sum32 = _mm_cvtsi128_si32(sum);
-    sum32 += 24;
-    sum32 /= 48;
-    const __m128i row = _mm_set1_epi16((uint16_t)sum32);
-    int32_t i;
-    for (i = 0; i < 4; ++i) {
-        _mm_store_si128((__m128i *)dst, row);
-        _mm_store_si128((__m128i *)(dst + 8), row);
-        _mm_store_si128((__m128i *)(dst + 16), row);
-        _mm_store_si128((__m128i *)(dst + 24), row);
-        dst += stride;
-        _mm_store_si128((__m128i *)dst, row);
-        _mm_store_si128((__m128i *)(dst + 8), row);
-        _mm_store_si128((__m128i *)(dst + 16), row);
-        _mm_store_si128((__m128i *)(dst + 24), row);
-        dst += stride;
-        _mm_store_si128((__m128i *)dst, row);
-        _mm_store_si128((__m128i *)(dst + 8), row);
-        _mm_store_si128((__m128i *)(dst + 16), row);
-        _mm_store_si128((__m128i *)(dst + 24), row);
-        dst += stride;
-        _mm_store_si128((__m128i *)dst, row);
-        _mm_store_si128((__m128i *)(dst + 8), row);
-        _mm_store_si128((__m128i *)(dst + 16), row);
-        _mm_store_si128((__m128i *)(dst + 24), row);
-        dst += stride;
-    }
-}
+

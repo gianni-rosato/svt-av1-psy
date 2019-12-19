@@ -5081,18 +5081,6 @@ void full_loop_core(
             &cb_coeff_bits,
             &cr_coeff_bits,
             context_ptr->blk_geom->bsize);
-
-        candidate_buffer->cb_distortion[DIST_CALC_RESIDUAL] = cbFullDistortion[DIST_CALC_RESIDUAL];
-        candidate_buffer->cb_distortion[DIST_CALC_PREDICTION] = cbFullDistortion[DIST_CALC_PREDICTION];
-        candidate_buffer->cb_coeff_bits = cb_coeff_bits;
-
-        candidate_buffer->cr_distortion[DIST_CALC_RESIDUAL] = crFullDistortion[DIST_CALC_RESIDUAL];
-        candidate_buffer->cr_distortion[DIST_CALC_PREDICTION] = crFullDistortion[DIST_CALC_PREDICTION];
-        candidate_buffer->cr_coeff_bits = cr_coeff_bits;
-        candidate_buffer->candidate_ptr->full_distortion = (uint32_t)(y_full_distortion[0]);
-
-        candidate_buffer->y_coeff_bits = y_coeff_bits;
-        candidate_ptr->full_distortion = (uint32_t)(y_full_distortion[0]);
 }
 void md_stage_1(
     PictureControlSet     *picture_control_set_ptr,
@@ -7684,7 +7672,7 @@ EB_EXTERN EbErrorType mode_decision_sb(
             sb_width >> 1,
             sb_height >> 1);
 
-        Store16bitInputSrc(context_ptr->input_sample16bit_buffer, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
+        store16bit_input_src(context_ptr->input_sample16bit_buffer, picture_control_set_ptr, sb_origin_x, sb_origin_y, sb_width, sb_height);
         //input_picture_ptr = context_ptr->input_sample16bit_buffer;
         input_picture_ptr = picture_control_set_ptr->input_frame16bit;
     }

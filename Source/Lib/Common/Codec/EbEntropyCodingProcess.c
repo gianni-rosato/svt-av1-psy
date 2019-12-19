@@ -161,7 +161,7 @@ void eb_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2],
 /**************************************************
  * Reset Entropy Coding Picture
  **************************************************/
-static void ResetEntropyCodingPicture(
+static void reset_entropy_coding_picture(
     EntropyCodingContext  *context_ptr,
     PictureControlSet     *picture_control_set_ptr,
     SequenceControlSet    *sequence_control_set_ptr)
@@ -440,7 +440,7 @@ void* entropy_coding_kernel(void *input_ptr)
                 uint32_t rowTotalBits = 0;
 
                 if (y_lcu_index == 0) {
-                    ResetEntropyCodingPicture(
+                    reset_entropy_coding_picture(
                         context_ptr,
                         picture_control_set_ptr,
                         sequence_control_set_ptr);

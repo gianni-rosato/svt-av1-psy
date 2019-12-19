@@ -51,7 +51,6 @@ typedef struct EntropyCodingContext
     uint32_t                          sb_origin_y;
     uint32_t                          pu_itr;
     PredictionUnit                 *pu_ptr;
-    const PredictionUnitStats      *pu_stats;
     uint32_t                          pu_origin_x;
     uint32_t                          pu_origin_y;
     uint32_t                          pu_width;

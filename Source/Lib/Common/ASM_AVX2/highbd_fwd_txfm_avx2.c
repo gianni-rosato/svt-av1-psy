@@ -21,7 +21,7 @@
 #include <immintrin.h>
 #include "txfm_common_avx2.h"
 
-void Av1TransformConfig(
+void av1_transform_config(
     TxType tx_type,
     TxSize tx_size,
     Txfm2DFlipCfg *cfg);
@@ -4068,7 +4068,7 @@ void eb_av1_fwd_txfm2d_32x32_avx2(int16_t *input, int32_t *output,
 {
     DECLARE_ALIGNED(32, int32_t, txfm_buf[1024]);
     Txfm2DFlipCfg cfg;
-    Av1TransformConfig(tx_type, TX_32X32, &cfg);
+    av1_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
     fwd_txfm2d_32x32_avx2(input, output, stride, &cfg, txfm_buf);
 }

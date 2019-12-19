@@ -20,14 +20,6 @@ extern "C" {
         const uint8_t *thresh,
         int32_t        bd);
 
-    void aom_highbd_lpf_horizontal_14_dual_sse2(
-        uint16_t      *s,
-        int32_t        pitch,
-        const uint8_t *blimit,
-        const uint8_t *limit,
-        const uint8_t *thresh,
-        int32_t        bd);
-
     void aom_highbd_lpf_horizontal_4_sse2(
         uint16_t      *s,
         int32_t        pitch,
@@ -60,13 +52,7 @@ extern "C" {
         const uint8_t *thresh,
         int32_t        bd);
 
-    void aom_highbd_lpf_vertical_14_dual_sse2(
-        uint16_t      *s,
-        int32_t        pitch,
-        const uint8_t *blimit,
-        const uint8_t *limit,
-        const uint8_t *thresh,
-        int32_t        bd);
+
 
     void aom_highbd_lpf_vertical_4_sse2(
         uint16_t      *s,
@@ -99,13 +85,6 @@ extern "C" {
         const uint8_t *limit,
         const uint8_t *thresh);
 
-    void aom_lpf_horizontal_14_dual_sse2(
-        uint8_t       *s,
-        int32_t        pitch,
-        const uint8_t *blimit,
-        const uint8_t *limit,
-        const uint8_t *thresh);
-
     void aom_lpf_horizontal_4_sse2(
         uint8_t       *s,
         int32_t        pitch,
@@ -128,13 +107,6 @@ extern "C" {
         const uint8_t *thresh);
 
     void aom_lpf_vertical_14_sse2(
-        uint8_t       *s,
-        int32_t        pitch,
-        const uint8_t *blimit,
-        const uint8_t *limit,
-        const uint8_t *thresh);
-
-    void aom_lpf_vertical_14_dual_sse2(
         uint8_t       *s,
         int32_t        pitch,
         const uint8_t *blimit,

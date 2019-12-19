@@ -263,23 +263,6 @@ void aom_lpf_horizontal_6_c(uint8_t *s, int32_t p, const uint8_t *blimit,
     }
 }
 
-void aom_lpf_vertical_6_c(uint8_t *s, int pitch, const uint8_t *blimit,
-    const uint8_t *limit, const uint8_t *thresh)
-{
-    int i;
-    int count = 4;
-
-    for (i = 0; i < count; ++i) {
-        const uint8_t p2 = s[-3], p1 = s[-2], p0 = s[-1];
-        const uint8_t q0 = s[0], q1 = s[1], q2 = s[2];
-        const int8_t mask =
-            filter_mask3_chroma(*limit, *blimit, p2, p1, p0, q0, q1, q2);
-        const int8_t flat = flat_mask3_chroma(1, p2, p1, p0, q0, q1, q2);
-        filter6(mask, *thresh, flat, s - 3, s - 2, s - 1, s, s + 1, s + 2);
-        s += pitch;
-    }
-}
-
 void aom_lpf_horizontal_8_c(uint8_t *s, int32_t p, const uint8_t *blimit,
     const uint8_t *limit, const uint8_t *thresh) {
     int32_t i;
@@ -315,88 +298,6 @@ void aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit,
             s + 3);
         s += pitch;
     }
-}
-
-void aom_lpf_vertical_8_dual_c(uint8_t *s, int32_t pitch, const uint8_t *blimit0,
-    const uint8_t *limit0, const uint8_t *thresh0,
-    const uint8_t *blimit1, const uint8_t *limit1,
-    const uint8_t *thresh1) {
-    aom_lpf_vertical_8_c(s, pitch, blimit0, limit0, thresh0);
-    aom_lpf_vertical_8_c(s + 4 * pitch, pitch, blimit1, limit1, thresh1);
-}
-
-static INLINE void filter14(int8_t mask, uint8_t thresh, int8_t flat,
-    int8_t flat2, uint8_t *op6, uint8_t *op5,
-    uint8_t *op4, uint8_t *op3, uint8_t *op2,
-    uint8_t *op1, uint8_t *op0, uint8_t *oq0,
-    uint8_t *oq1, uint8_t *oq2, uint8_t *oq3,
-    uint8_t *oq4, uint8_t *oq5, uint8_t *oq6) {
-    if (flat2 && flat && mask) {
-        const uint8_t p6 = *op6, p5 = *op5, p4 = *op4, p3 = *op3, p2 = *op2,
-            p1 = *op1, p0 = *op0;
-        const uint8_t q0 = *oq0, q1 = *oq1, q2 = *oq2, q3 = *oq3, q4 = *oq4,
-            q5 = *oq5, q6 = *oq6;
-
-        // 13-tap filter [1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1]
-        *op5 = ROUND_POWER_OF_TWO(p6 * 7 + p5 * 2 + p4 * 2 + p3 + p2 + p1 + p0 + q0,
-            4);
-        *op4 = ROUND_POWER_OF_TWO(
-            p6 * 5 + p5 * 2 + p4 * 2 + p3 * 2 + p2 + p1 + p0 + q0 + q1, 4);
-        *op3 = ROUND_POWER_OF_TWO(
-            p6 * 4 + p5 + p4 * 2 + p3 * 2 + p2 * 2 + p1 + p0 + q0 + q1 + q2, 4);
-        *op2 = ROUND_POWER_OF_TWO(
-            p6 * 3 + p5 + p4 + p3 * 2 + p2 * 2 + p1 * 2 + p0 + q0 + q1 + q2 + q3,
-            4);
-        *op1 = ROUND_POWER_OF_TWO(p6 * 2 + p5 + p4 + p3 + p2 * 2 + p1 * 2 + p0 * 2 +
-            q0 + q1 + q2 + q3 + q4,
-            4);
-        *op0 = ROUND_POWER_OF_TWO(p6 + p5 + p4 + p3 + p2 + p1 * 2 + p0 * 2 +
-            q0 * 2 + q1 + q2 + q3 + q4 + q5,
-            4);
-        *oq0 = ROUND_POWER_OF_TWO(p5 + p4 + p3 + p2 + p1 + p0 * 2 + q0 * 2 +
-            q1 * 2 + q2 + q3 + q4 + q5 + q6,
-            4);
-        *oq1 = ROUND_POWER_OF_TWO(p4 + p3 + p2 + p1 + p0 + q0 * 2 + q1 * 2 +
-            q2 * 2 + q3 + q4 + q5 + q6 * 2,
-            4);
-        *oq2 = ROUND_POWER_OF_TWO(
-            p3 + p2 + p1 + p0 + q0 + q1 * 2 + q2 * 2 + q3 * 2 + q4 + q5 + q6 * 3,
-            4);
-        *oq3 = ROUND_POWER_OF_TWO(
-            p2 + p1 + p0 + q0 + q1 + q2 * 2 + q3 * 2 + q4 * 2 + q5 + q6 * 4, 4);
-        *oq4 = ROUND_POWER_OF_TWO(
-            p1 + p0 + q0 + q1 + q2 + q3 * 2 + q4 * 2 + q5 * 2 + q6 * 5, 4);
-        *oq5 = ROUND_POWER_OF_TWO(p0 + q0 + q1 + q2 + q3 + q4 * 2 + q5 * 2 + q6 * 7,
-            4);
-    }
-    else
-        filter8(mask, thresh, flat, op3, op2, op1, op0, oq0, oq1, oq2, oq3);
-}
-
-static void mb_lpf_vertical_edge_w(uint8_t *s, int32_t p, const uint8_t *blimit,
-    const uint8_t *limit, const uint8_t *thresh,
-    int32_t count) {
-    int32_t i;
-
-    for (i = 0; i < count; ++i) {
-        const uint8_t p6 = s[-7], p5 = s[-6], p4 = s[-5], p3 = s[-4], p2 = s[-3],
-            p1 = s[-2], p0 = s[-1];
-        const uint8_t q0 = s[0], q1 = s[1], q2 = s[2], q3 = s[3], q4 = s[4],
-            q5 = s[5], q6 = s[6];
-        const int8_t mask =
-            filter_mask(*limit, *blimit, p3, p2, p1, p0, q0, q1, q2, q3);
-        const int8_t flat = flat_mask4(1, p3, p2, p1, p0, q0, q1, q2, q3);
-        const int8_t flat2 = flat_mask4(1, p6, p5, p4, p0, q0, q4, q5, q6);
-
-        filter14(mask, *thresh, flat, flat2, s - 7, s - 6, s - 5, s - 4, s - 3,
-            s - 2, s - 1, s, s + 1, s + 2, s + 3, s + 4, s + 5, s + 6);
-        s += p;
-    }
-}
-
-void aom_lpf_vertical_14_dual_c(uint8_t *s, int32_t p, const uint8_t *blimit,
-    const uint8_t *limit, const uint8_t *thresh) {
-    mb_lpf_vertical_edge_w(s, p, blimit, limit, thresh, 8);
 }
 
 // Should we apply any filter at all: 11111111 yes, 00000000 no ?

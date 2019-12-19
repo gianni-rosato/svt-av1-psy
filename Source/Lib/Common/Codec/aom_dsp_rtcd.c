@@ -341,12 +341,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
 
     if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge = eb_av1_filter_intra_edge_sse4_1;
 
-    eb_smooth_v_predictor = smooth_v_predictor_c;
-    if (flags & HAS_SSSE3) eb_smooth_v_predictor = eb_smooth_v_predictor_all_ssse3;
-
-    eb_smooth_h_predictor = smooth_h_predictor_c;
-    if (flags & HAS_SSSE3) eb_smooth_h_predictor = eb_smooth_h_predictor_all_ssse3;
-
     get_proj_subspace = get_proj_subspace_c;
     if (flags & HAS_AVX2) get_proj_subspace = get_proj_subspace_avx2;
 
@@ -444,9 +438,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
 
     eb_av1_highbd_quantize_fp = eb_av1_highbd_quantize_fp_c;
     if (flags & HAS_AVX2) eb_av1_highbd_quantize_fp = eb_av1_highbd_quantize_fp_avx2;
-
-    highbd_variance64 = highbd_variance64_c;
-    if (flags & HAS_AVX2) highbd_variance64 = highbd_variance64_avx2;
 
     eb_aom_highbd_8_mse16x16 = eb_aom_highbd_8_mse16x16_c;
     if (flags & HAS_SSE2) eb_aom_highbd_8_mse16x16 = eb_aom_highbd_8_mse16x16_sse2;
@@ -1320,9 +1311,9 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     eb_av1_fwd_txfm2d_64x32 = eb_av1_fwd_txfm2d_64x32_c;
     eb_av1_fwd_txfm2d_16x64 = eb_av1_fwd_txfm2d_16x64_c;
     eb_av1_fwd_txfm2d_64x16 = eb_av1_fwd_txfm2d_64x16_c;
-    eb_av1_fwd_txfm2d_64x64 = Av1TransformTwoD_64x64_c;
-    eb_av1_fwd_txfm2d_32x32 = Av1TransformTwoD_32x32_c;
-    eb_av1_fwd_txfm2d_16x16 = Av1TransformTwoD_16x16_c;
+    eb_av1_fwd_txfm2d_64x64 = av1_transform_two_d_64x64_c;
+    eb_av1_fwd_txfm2d_32x32 = av1_transform_two_d_32x32_c;
+    eb_av1_fwd_txfm2d_16x16 = av1_transform_two_d_16x16_c;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x64 = eb_av1_fwd_txfm2d_64x64_avx2;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x32 = eb_av1_fwd_txfm2d_32x32_avx2;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x16 = eb_av1_fwd_txfm2d_16x16_avx2;
@@ -1345,21 +1336,21 @@ void setup_rtcd_internal(CPU_FLAGS flags)
         eb_av1_fwd_txfm2d_16x32 = av1_fwd_txfm2d_16x32_avx512;
     }
 #endif
-    eb_av1_fwd_txfm2d_8x8 = Av1TransformTwoD_8x8_c;
+    eb_av1_fwd_txfm2d_8x8 = av1_transform_two_d_8x8_c;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_8x8 = eb_av1_fwd_txfm2d_8x8_avx2;
-    eb_av1_fwd_txfm2d_4x4 = Av1TransformTwoD_4x4_c;
+    eb_av1_fwd_txfm2d_4x4 = av1_transform_two_d_4x4_c;
     if (flags & HAS_SSE4_1) eb_av1_fwd_txfm2d_4x4 = eb_av1_fwd_txfm2d_4x4_sse4_1;
 
-    HandleTransform16x64 = HandleTransform16x64_c;
-    if (flags & HAS_AVX2) HandleTransform16x64 = HandleTransform16x64_avx2;
-    HandleTransform32x64 = HandleTransform32x64_c;
-    if (flags & HAS_AVX2) HandleTransform32x64 = HandleTransform32x64_avx2;
-    HandleTransform64x16 = HandleTransform64x16_c;
-    if (flags & HAS_AVX2) HandleTransform64x16 = HandleTransform64x16_avx2;
-    HandleTransform64x32 = HandleTransform64x32_c;
-    if (flags & HAS_AVX2) HandleTransform64x32 = HandleTransform64x32_avx2;
-    HandleTransform64x64 = HandleTransform64x64_c;
-    if (flags & HAS_AVX2) HandleTransform64x64 = HandleTransform64x64_avx2;
+    handle_transform16x64 = HandleTransform16x64_c;
+    if (flags & HAS_AVX2) handle_transform16x64 = HandleTransform16x64_avx2;
+    handle_transform32x64 = HandleTransform32x64_c;
+    if (flags & HAS_AVX2) handle_transform32x64 = HandleTransform32x64_avx2;
+    handle_transform64x16 = HandleTransform64x16_c;
+    if (flags & HAS_AVX2) handle_transform64x16 = HandleTransform64x16_avx2;
+    handle_transform64x32 = HandleTransform64x32_c;
+    if (flags & HAS_AVX2) handle_transform64x32 = HandleTransform64x32_avx2;
+    handle_transform64x64 = handle_transform64x64_c;
+    if (flags & HAS_AVX2) handle_transform64x64 = HandleTransform64x64_avx2;
 
     // eb_aom_highbd_v_predictor
     eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_c;
@@ -1372,7 +1363,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x64 = eb_aom_highbd_v_predictor_16x64_avx2;
     eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_c;
     if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_avx2;
-    eb_aom_highbd_v_predictor_2x2 = eb_aom_highbd_v_predictor_2x2_c;
     eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_c;
     eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_c;
     eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_c;
@@ -1478,7 +1468,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x64 = eb_aom_highbd_smooth_h_predictor_16x64_avx2;
     eb_aom_highbd_smooth_h_predictor_16x8 = eb_aom_highbd_smooth_h_predictor_16x8_c;
     if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x8 = eb_aom_highbd_smooth_h_predictor_16x8_avx2;
-    eb_aom_highbd_smooth_h_predictor_2x2 = eb_aom_highbd_smooth_h_predictor_2x2_c;
     eb_aom_highbd_smooth_h_predictor_32x16 = eb_aom_highbd_smooth_h_predictor_32x16_c;
     eb_aom_highbd_smooth_h_predictor_32x32 = eb_aom_highbd_smooth_h_predictor_32x32_c;
     eb_aom_highbd_smooth_h_predictor_32x64 = eb_aom_highbd_smooth_h_predictor_32x64_c;
@@ -1531,7 +1520,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x64 = eb_aom_highbd_dc_128_predictor_16x64_avx2;
     eb_aom_highbd_dc_128_predictor_16x8 = eb_aom_highbd_dc_128_predictor_16x8_c;
     if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x8 = eb_aom_highbd_dc_128_predictor_16x8_avx2;
-    eb_aom_highbd_dc_128_predictor_2x2 = eb_aom_highbd_dc_128_predictor_2x2_c;
     eb_aom_highbd_dc_128_predictor_32x16 = eb_aom_highbd_dc_128_predictor_32x16_c;
     if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_32x16 = eb_aom_highbd_dc_128_predictor_32x16_avx2;
     eb_aom_highbd_dc_128_predictor_32x32 = eb_aom_highbd_dc_128_predictor_32x32_c;
@@ -1676,7 +1664,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x64 = eb_aom_highbd_dc_top_predictor_16x64_avx2;
     eb_aom_highbd_dc_top_predictor_16x8 = eb_aom_highbd_dc_top_predictor_16x8_c;
     if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x8 = eb_aom_highbd_dc_top_predictor_16x8_avx2;
-    eb_aom_highbd_dc_top_predictor_2x2 = eb_aom_highbd_dc_top_predictor_2x2_c;
     eb_aom_highbd_dc_top_predictor_32x16 = eb_aom_highbd_dc_top_predictor_32x16_c;
     eb_aom_highbd_dc_top_predictor_32x32 = eb_aom_highbd_dc_top_predictor_32x32_c;
     eb_aom_highbd_dc_top_predictor_32x64 = eb_aom_highbd_dc_top_predictor_32x64_c;
@@ -1723,7 +1710,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_16x64 = eb_aom_highbd_h_predictor_16x64_avx2;
     eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_c;
     if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_sse2;
-    eb_aom_highbd_h_predictor_2x2 = eb_aom_highbd_h_predictor_2x2_c;
     eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_c;
     eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_c;
     eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_c;
@@ -1905,9 +1891,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     SET_AVX2(eb_sad_kernel4x4,
              fast_loop_nxm_sad_kernel,
              eb_compute4x_m_sad_avx2_intrin);
-    SET_AVX2(sum_residual8bit,
-             sum_residual_c,
-             sum_residual8bit_avx2_intrin);
     SET_AVX2(full_distortion_kernel_cbf_zero32_bits,
              full_distortion_kernel_cbf_zero32_bits_c,
              full_distortion_kernel_cbf_zero32_bits_avx2);

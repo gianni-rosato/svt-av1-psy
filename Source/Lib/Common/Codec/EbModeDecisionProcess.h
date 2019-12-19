@@ -87,7 +87,6 @@ extern "C" {
         PartitionContextType           left_neighbor_partition;
         PartitionContextType           above_neighbor_partition;
         uint64_t                    cost;
-        uint64_t                    cost_luma;
         CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES][MAX_REF_MV_STACK_SIZE];//to be used in MD and EncDec
         uint8_t                     avail_blk_flag ;   //tells whether this CU is tested in MD and have a valid cu data
     } MdCodingUnit;
@@ -162,7 +161,6 @@ extern "C" {
         CodingUnit                   *cu_ptr;
         const BlockGeom                *blk_geom;
         PredictionUnit               *pu_ptr;
-        const PredictionUnitStats    *pu_stats;
         MvUnit                        mv_unit;
 #if PAL_SUP
         PALETTE_BUFFER            palette_buffer;
@@ -187,7 +185,6 @@ extern "C" {
         uint16_t                        pu_width;
         uint16_t                        pu_height;
         EbPfMode                        pf_md_mode;
-        EbBool                          cu_use_ref_src_flag;
         uint8_t                         hbd_mode_decision;
         uint16_t                        qp_index;
         uint64_t                        three_quad_energy;

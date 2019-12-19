@@ -49,25 +49,6 @@ void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, 
 void eb_av1_pick_filter_restoration(const Yv12BufferConfig *src, Yv12BufferConfig * trial_frame_rst /*Av1Comp *cpi*/, Macroblock *x, Av1Common *const cm);
 void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm, int32_t optimized_lr);
 
-const int16_t encMinDeltaQpWeightTab[MAX_TEMPORAL_LAYERS] = { 100, 100, 100, 100, 100, 100 };
-const int16_t encMaxDeltaQpWeightTab[MAX_TEMPORAL_LAYERS] = { 100, 100, 100, 100, 100, 100 };
-
-const int8_t  encMinDeltaQpISliceTab[4] = { -5, -5, -3, -2 };
-
-const int8_t  encMinDeltaQpTab[4][MAX_TEMPORAL_LAYERS] = {
-    { -4, -2, -2, -1, -1, -1 },
-    { -4, -2, -2, -1, -1, -1 },
-    { -3, -1, -1, -1, -1, -1 },
-    { -1, -0, -0, -0, -0, -0 },
-};
-
-const int8_t  encMaxDeltaQpTab[4][MAX_TEMPORAL_LAYERS] = {
-    { 4, 5, 5, 5, 5, 5 },
-    { 4, 5, 5, 5, 5, 5 },
-    { 4, 5, 5, 5, 5, 5 },
-    { 4, 5, 5, 5, 5, 5 }
-};
-
 static void enc_dec_context_dctor(EbPtr p)
 {
     EncDecContext* obj = (EncDecContext*)p;
@@ -216,7 +197,7 @@ static void reset_segmentation_map(SegmentationNeighborMap *segmentation_map){
 /**************************************************
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
-static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set_ptr)
+static void reset_encode_pass_neighbor_arrays(PictureControlSet *picture_control_set_ptr)
 {
     neighbor_array_unit_reset(picture_control_set_ptr->ep_intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset(picture_control_set_ptr->ep_intra_chroma_mode_neighbor_array);
@@ -244,7 +225,7 @@ static void ResetEncodePassNeighborArrays(PictureControlSet *picture_control_set
 /**************************************************
  * Reset Coding Loop
  **************************************************/
-static void ResetEncDec(
+static void reset_enc_dec(
     EncDecContext         *context_ptr,
     PictureControlSet     *picture_control_set_ptr,
     SequenceControlSet    *sequence_control_set_ptr,
@@ -281,7 +262,7 @@ static void ResetEncDec(
     }
     context_ptr->md_rate_estimation_ptr = picture_control_set_ptr->md_rate_estimation_array;
     if (segment_index == 0){
-        ResetEncodePassNeighborArrays(picture_control_set_ptr);
+        reset_encode_pass_neighbor_arrays(picture_control_set_ptr);
         reset_segmentation_map(picture_control_set_ptr->segmentation_neighbor_map);
     }
 
@@ -291,7 +272,7 @@ static void ResetEncDec(
 /******************************************************
  * EncDec Configure LCU
  ******************************************************/
-static void EncDecConfigureLcu(
+static void enc_dec_configure_lcu(
     EncDecContext         *context_ptr,
     SuperBlock            *sb_ptr,
     PictureControlSet     *picture_control_set_ptr,
@@ -356,7 +337,7 @@ static void EncDecConfigureLcu(
  *   of the segment-row (B) as this would block other
  *   threads from performing an update (A).
  ******************************************************/
-EbBool AssignEncDecSegments(
+EbBool assign_enc_dec_segments(
     EncDecSegments   *segmentPtr,
     uint16_t             *segmentInOutIndex,
     EncDecTasks      *taskPtr,
@@ -489,7 +470,7 @@ EbBool AssignEncDecSegments(
 
     return continueProcessingFlag;
 }
-void ReconOutput(
+void recon_output(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr) {
     EbObjectWrapper             *outputReconWrapperPtr;
@@ -1020,11 +1001,10 @@ void psnr_calculations(
     }
 }
 
-void PadRefAndSetFlags(
+void pad_ref_and_set_flags(
     PictureControlSet    *picture_control_set_ptr,
-    SequenceControlSet   *sequence_control_set_ptr
-)
-{
+    SequenceControlSet   *sequence_control_set_ptr){
+
     EbReferenceObject   *referenceObject = (EbReferenceObject*)picture_control_set_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *refPicPtr = (EbPictureBufferDesc*)referenceObject->reference_picture;
     EbPictureBufferDesc *refPic16BitPtr = (EbPictureBufferDesc*)referenceObject->reference_picture16bit;
@@ -1132,7 +1112,7 @@ void PadRefAndSetFlags(
 #endif
 }
 
-void CopyStatisticsToRefObject(
+void copy_statistics_to_ref_object(
     PictureControlSet    *picture_control_set_ptr,
     SequenceControlSet   *sequence_control_set_ptr
 )
@@ -2757,7 +2737,7 @@ void* enc_dec_kernel(void *input_ptr)
         context_ptr->tot_intra_coded_area = 0;
 
         // Segment-loop
-        while (AssignEncDecSegments(segments_ptr, &segment_index, encDecTasksPtr, context_ptr->enc_dec_feedback_fifo_ptr) == EB_TRUE)
+        while (assign_enc_dec_segments(segments_ptr, &segment_index, encDecTasksPtr, context_ptr->enc_dec_feedback_fifo_ptr) == EB_TRUE)
         {
             xLcuStartIndex = segments_ptr->x_start_array[segment_index];
             yLcuStartIndex = segments_ptr->y_start_array[segment_index];
@@ -2776,7 +2756,7 @@ void* enc_dec_kernel(void *input_ptr)
                 segment_index);
 
             // Reset EncDec Coding State
-            ResetEncDec(    // HT done
+            reset_enc_dec(    // HT done
                 context_ptr,
                 picture_control_set_ptr,
                 sequence_control_set_ptr,
@@ -2796,7 +2776,6 @@ void* enc_dec_kernel(void *input_ptr)
                     lcuRowIndexCount = (x_lcu_index == picture_width_in_sb - 1) ? lcuRowIndexCount + 1 : lcuRowIndexCount;
                     mdcPtr = &picture_control_set_ptr->mdc_sb_array[sb_index];
                     context_ptr->sb_index = sb_index;
-                    context_ptr->md_context->cu_use_ref_src_flag = (picture_control_set_ptr->parent_pcs_ptr->use_src_ref) && (picture_control_set_ptr->parent_pcs_ptr->edge_results_ptr[sb_index].edge_block_num == EB_FALSE || picture_control_set_ptr->parent_pcs_ptr->sb_flat_noise_array[sb_index]) ? EB_TRUE : EB_FALSE;
 
                     if (picture_control_set_ptr->update_cdf) {
                         picture_control_set_ptr->rate_est_array[sb_index] = *picture_control_set_ptr->md_rate_estimation_array;
@@ -3001,7 +2980,7 @@ void* enc_dec_kernel(void *input_ptr)
                         context_ptr->md_context);
 
                     // Configure the LCU
-                    EncDecConfigureLcu(
+                    enc_dec_configure_lcu(
                         context_ptr,
                         sb_ptr,
                         picture_control_set_ptr,

@@ -484,11 +484,6 @@ class HBDVarianceTest : public ::testing::TestWithParam<BlockSize> {
         memset(ref_data_, 0, MAX_BLOCK_SIZE);
 
         uint64_t sse_c, sse_avx2;
-
-        highbd_variance64_c(
-            src_data_, width_, ref_data_, width_, width_, height_, &sse_c);
-        highbd_variance64_avx2(
-            src_data_, width_, ref_data_, width_, width_, height_, &sse_avx2);
         EXPECT_EQ(sse_c, sse_avx2) << "HBDVariance is mismatched in zero test";
     }
 
@@ -500,11 +495,6 @@ class HBDVarianceTest : public ::testing::TestWithParam<BlockSize> {
             ref_data_[i] = rnd.random();
         }
         uint64_t sse_c, sse_avx2;
-
-        highbd_variance64_c(
-            src_data_, width_, ref_data_, width_, width_, height_, &sse_c);
-        highbd_variance64_avx2(
-            src_data_, width_, ref_data_, width_, width_, height_, &sse_avx2);
         EXPECT_EQ(sse_c, sse_avx2)
             << "HBDVariance is mismatched in random test";
     }
@@ -515,11 +505,6 @@ class HBDVarianceTest : public ::testing::TestWithParam<BlockSize> {
         memset(ref_data_, 255, half);
         memset(ref_data_ + half, 0, half);
         uint64_t sse_c, sse_avx2;
-
-        highbd_variance64_c(
-            src_data_, width_, ref_data_, width_, width_, height_, &sse_c);
-        highbd_variance64_avx2(
-            src_data_, width_, ref_data_, width_, width_, height_, &sse_avx2);
         EXPECT_EQ(sse_c, sse_avx2)
             << "HBDVariance is mismatched in one quater test";
     }

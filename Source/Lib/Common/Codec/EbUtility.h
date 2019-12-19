@@ -137,23 +137,6 @@ extern "C" {
         uint8_t   parent32x32_index;
     } CodedUnitStats;
 
-    // PU Stats Helper Functions
-    typedef struct PredictionUnitStats
-    {
-        uint8_t  width;
-        uint8_t  height;
-        uint8_t  offset_x;
-        uint8_t  offset_y;
-    } PredictionUnitStats;
-
-    // TU Stats Helper Functions
-    typedef struct TransformUnitStats
-    {
-        uint8_t  depth;
-        uint8_t  offset_x;
-        uint8_t  offset_y;
-    } TransformUnitStats;
-
     extern void *eb_aom_memalign(size_t align, size_t size);
     extern void *eb_aom_malloc(size_t size);
     extern void eb_aom_free(void *memblk);
@@ -162,7 +145,6 @@ extern "C" {
     extern uint64_t log2f_high_precision(uint64_t x, uint8_t precision);
 
     extern const CodedUnitStats* get_coded_unit_stats(const uint32_t cuIdx);
-    extern const TransformUnitStats* get_transform_unit_stats(const uint32_t tuIdx);
 
 #define PU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
 #define PU_SIZE_ADJUST(cu_size, puSize) (((cu_size) * (puSize)) >> 2)
@@ -170,16 +152,8 @@ extern "C" {
 #define TU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
 #define TU_SIZE_ADJUST(cu_size, tuDepth) ((cu_size) >> (tuDepth))
 
-    extern EbErrorType z_order_increment(uint32_t *x_loc, uint32_t *y_loc);
-    extern void ZOrderIncrementWithLevel(
-        uint32_t *x_loc,
-        uint32_t *y_loc,
-        uint32_t *level,
-        uint32_t *index);
-
     extern uint32_t Log2f(uint32_t x);
-    extern uint64_t Log2f64(uint64_t x);
-    extern uint32_t endian_swap(uint32_t ui);
+    extern uint64_t log2f_64(uint64_t x);
 
     /****************************
      * MACROS

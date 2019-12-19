@@ -75,10 +75,6 @@ extern "C" {
     out1 = _mm_packs_epi32(d0, d1);               \
   }
 
-    static INLINE __m128i load_16bit_to_16bit(const int16_t *a) {
-        return _mm_load_si128((const __m128i *)a);
-    }
-
     static INLINE __m128i load_32bit_to_16bit(const int32_t *a) {
         const __m128i a_low = _mm_load_si128((const __m128i *)a);
         return _mm_packs_epi32(a_low, *(const __m128i *)(a + 4));
@@ -87,77 +83,6 @@ extern "C" {
     static INLINE __m128i load_32bit_to_16bit_w4(const int32_t *a) {
         const __m128i a_low = _mm_load_si128((const __m128i *)a);
         return _mm_packs_epi32(a_low, a_low);
-    }
-
-    // Store 4 16 bit values. Sign extend the values.
-    static INLINE void store_16bit_to_32bit_w4(const __m128i a, int32_t *const b) {
-        const __m128i a_lo = _mm_unpacklo_epi16(a, a);
-        const __m128i a_1 = _mm_srai_epi32(a_lo, 16);
-        _mm_store_si128((__m128i *)b, a_1);
-    }
-
-    // Store 8 16 bit values. Sign extend the values.
-    static INLINE void store_16bit_to_32bit(__m128i a, int32_t *b) {
-        const __m128i a_lo = _mm_unpacklo_epi16(a, a);
-        const __m128i a_hi = _mm_unpackhi_epi16(a, a);
-        const __m128i a_1 = _mm_srai_epi32(a_lo, 16);
-        const __m128i a_2 = _mm_srai_epi32(a_hi, 16);
-        _mm_store_si128((__m128i *)b, a_1);
-        _mm_store_si128((__m128i *)(b + 4), a_2);
-    }
-
-    static INLINE __m128i scale_round_sse2(const __m128i a, const int32_t scale) {
-        const __m128i scale_rounding = pair_set_epi16(scale, 1 << (NewSqrt2Bits - 1));
-        const __m128i b = _mm_madd_epi16(a, scale_rounding);
-        return _mm_srai_epi32(b, NewSqrt2Bits);
-    }
-
-    static INLINE void store_rect_16bit_to_32bit_w4(const __m128i a,
-        int32_t *const b) {
-        const __m128i one = _mm_set1_epi16(1);
-        const __m128i a_lo = _mm_unpacklo_epi16(a, one);
-        const __m128i b_lo = scale_round_sse2(a_lo, NewSqrt2);
-        _mm_store_si128((__m128i *)b, b_lo);
-    }
-
-    static INLINE void store_rect_16bit_to_32bit(const __m128i a,
-        int32_t *const b) {
-        const __m128i one = _mm_set1_epi16(1);
-        const __m128i a_lo = _mm_unpacklo_epi16(a, one);
-        const __m128i a_hi = _mm_unpackhi_epi16(a, one);
-        const __m128i b_lo = scale_round_sse2(a_lo, NewSqrt2);
-        const __m128i b_hi = scale_round_sse2(a_hi, NewSqrt2);
-        _mm_store_si128((__m128i *)b, b_lo);
-        _mm_store_si128((__m128i *)(b + 4), b_hi);
-    }
-
-    static INLINE void load_buffer_16bit_to_16bit_w4(const int16_t *const in,
-        const int32_t stride,
-        __m128i *const out,
-        const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            out[i] = _mm_loadl_epi64((const __m128i *)(in + i * stride));
-    }
-
-    static INLINE void load_buffer_16bit_to_16bit_w4_flip(const int16_t *const in,
-        const int32_t stride,
-        __m128i *const out,
-        const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            out[out_size - i - 1] = _mm_loadl_epi64((const __m128i *)(in + i * stride));
-    }
-
-    static INLINE void load_buffer_16bit_to_16bit(const int16_t *in, int32_t stride,
-        __m128i *out, int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            out[i] = load_16bit_to_16bit(in + i * stride);
-    }
-
-    static INLINE void load_buffer_16bit_to_16bit_flip(const int16_t *in,
-        int32_t stride, __m128i *out,
-        int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            out[out_size - i - 1] = load_16bit_to_16bit(in + i * stride);
     }
 
     static INLINE void load_buffer_32bit_to_16bit(const int32_t *in, int32_t stride,
@@ -172,126 +97,10 @@ extern "C" {
             out[i] = load_32bit_to_16bit_w4(in + i * stride);
     }
 
-    static INLINE void load_buffer_32bit_to_16bit_flip(const int32_t *in,
-        int32_t stride, __m128i *out,
-        int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            out[out_size - i - 1] = load_32bit_to_16bit(in + i * stride);
-    }
-
-    static INLINE void store_buffer_16bit_to_32bit_w4(const __m128i *const in,
-        int32_t *const out,
-        const int32_t stride,
-        const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            store_16bit_to_32bit_w4(in[i], out + i * stride);
-    }
-
-    static INLINE void store_buffer_16bit_to_32bit_w8(const __m128i *const in,
-        int32_t *const out,
-        const int32_t stride,
-        const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            store_16bit_to_32bit(in[i], out + i * stride);
-    }
-
-    static INLINE void store_rect_buffer_16bit_to_32bit_w4(const __m128i *const in,
-        int32_t *const out,
-        const int32_t stride,
-        const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            store_rect_16bit_to_32bit_w4(in[i], out + i * stride);
-    }
-
-    static INLINE void store_rect_buffer_16bit_to_32bit_w8(const __m128i *const in,
-        int32_t *const out,
-        const int32_t stride,
-        const int32_t out_size) {
-        for (int32_t i = 0; i < out_size; ++i)
-            store_rect_16bit_to_32bit(in[i], out + i * stride);
-    }
-
-    static INLINE void store_buffer_16bit_to_16bit_8x8(const __m128i *in,
-        uint16_t *out,
-        const int32_t stride) {
-        for (int32_t i = 0; i < 8; ++i)
-            _mm_store_si128((__m128i *)(out + i * stride), in[i]);
-    }
-
-    static INLINE void round_shift_16bit(__m128i *in, int32_t size, int32_t bit) {
-        if (bit < 0) {
-            bit = -bit;
-            __m128i rounding = _mm_set1_epi16(1 << (bit - 1));
-            for (int32_t i = 0; i < size; ++i) {
-                in[i] = _mm_adds_epi16(in[i], rounding);
-                in[i] = _mm_srai_epi16(in[i], bit);
-            }
-        }
-        else if (bit > 0) {
-            for (int32_t i = 0; i < size; ++i)
-                in[i] = _mm_slli_epi16(in[i], bit);
-        }
-    }
-
     static INLINE void flip_buf_sse2(__m128i *in, __m128i *out, int32_t size) {
         for (int32_t i = 0; i < size; ++i)
             out[size - i - 1] = in[i];
     }
-
-    void av1_lowbd_fwd_txfm2d_4x4_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_4x8_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_4x16_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_8x4_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_8x8_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_8x16_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_8x32_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_16x4_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_16x8_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_16x16_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_16x32_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_32x8_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_32x16_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_32x32_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_16x64_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    void av1_lowbd_fwd_txfm2d_64x16_sse2(const int16_t *input, int32_t *output,
-        int32_t stride, TxType tx_type, int32_t bd);
-
-    typedef void(*transform_1d_sse2)(const __m128i *input, __m128i *output,
-        int8_t cos_bit);
-
-    typedef struct {
-        transform_1d_sse2 col, row;  // vertical and horizontal
-    } transform_2d_sse2;
 
 #ifdef __cplusplus
 }

@@ -445,7 +445,6 @@ void intra_mode_planar(
 
     return;
 }
-
 /*static INLINE*/ void smooth_v_predictor_c(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint8_t *above,
     const uint8_t *left) {

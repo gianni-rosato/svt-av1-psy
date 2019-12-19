@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 #define USE_PRE_COMPUTE             0
-    extern EB_ALIGN(16) const int16_t intra_prediction_const_sse2[344];
+extern EB_ALIGN(16) const int16_t intra_prediction_const_sse2[344];
     /**************************************************
     * Assembly Declarations
     **************************************************/

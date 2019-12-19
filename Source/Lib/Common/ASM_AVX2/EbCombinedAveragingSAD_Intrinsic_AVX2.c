@@ -46,7 +46,7 @@ uint32_t combined_averaging_8xm_sad_avx2_intrin(
     return _mm_cvtsi128_si32(sad);
 }
 
-static INLINE __m256i CombinedAveragingSad16x2_AVX2(const uint8_t *const src,
+static INLINE __m256i combined_averaging_sad16x2_avx2(const uint8_t *const src,
     const uint32_t src_stride, const uint8_t *const ref1, const uint32_t ref1_stride,
     const uint8_t *const ref2, const uint32_t ref2_stride, const __m256i sum)
 {
@@ -74,7 +74,7 @@ uint32_t combined_averaging_16xm_sad_avx2_intrin(
     (void)width;
 
     do {
-        sum = CombinedAveragingSad16x2_AVX2(src, src_stride, ref1, ref1_stride,
+        sum = combined_averaging_sad16x2_avx2(src, src_stride, ref1, ref1_stride,
             ref2, ref2_stride, sum);
         src += src_stride << 1;
         ref1 += ref1_stride << 1;
@@ -89,7 +89,7 @@ uint32_t combined_averaging_16xm_sad_avx2_intrin(
     return _mm_cvtsi128_si32(sad);
 }
 
-static INLINE __m256i CombinedAveragingSad24_AVX2(const uint8_t *const src,
+static INLINE __m256i combined_averaging_sad24_avx2(const uint8_t *const src,
     const uint8_t *const ref1, const uint8_t *const ref2, const __m256i sum)
 {
     const __m256i s = _mm256_loadu_si256((__m256i*)src);
@@ -116,9 +116,9 @@ uint32_t combined_averaging_24xm_sad_avx2_intrin(
     (void)width;
 
     do {
-        sum = CombinedAveragingSad24_AVX2(src + 0 * src_stride,
+        sum = combined_averaging_sad24_avx2(src + 0 * src_stride,
             ref1 + 0 * ref1_stride, ref2 + 0 * ref2_stride, sum);
-        sum = CombinedAveragingSad24_AVX2(src + 1 * src_stride,
+        sum = combined_averaging_sad24_avx2(src + 1 * src_stride,
             ref1 + 1 * ref1_stride, ref2 + 1 * ref2_stride, sum);
         src += src_stride << 1;
         ref1 += ref1_stride << 1;
@@ -133,7 +133,7 @@ uint32_t combined_averaging_24xm_sad_avx2_intrin(
     return _mm_cvtsi128_si32(sad);
 }
 
-static INLINE __m256i CombinedAveragingSad32_AVX2(const uint8_t *const src,
+static INLINE __m256i combined_averaging_sad32_avx2(const uint8_t *const src,
     const uint8_t *const ref1, const uint8_t *const ref2, const __m256i sum)
 {
     const __m256i s = _mm256_loadu_si256((__m256i*)src);
@@ -160,9 +160,9 @@ uint32_t combined_averaging_32xm_sad_avx2_intrin(
     (void)width;
 
     do {
-        sum = CombinedAveragingSad32_AVX2(src + 0 * src_stride,
+        sum = combined_averaging_sad32_avx2(src + 0 * src_stride,
             ref1 + 0 * ref1_stride, ref2 + 0 * ref2_stride, sum);
-        sum = CombinedAveragingSad32_AVX2(src + 1 * src_stride,
+        sum = combined_averaging_sad32_avx2(src + 1 * src_stride,
             ref1 + 1 * ref1_stride, ref2 + 1 * ref2_stride, sum);
         src += src_stride << 1;
         ref1 += ref1_stride << 1;
@@ -193,11 +193,11 @@ uint32_t combined_averaging_48xm_sad_avx2_intrin(
     (void)width;
 
     do {
-        sum = CombinedAveragingSad32_AVX2(src + 0 * src_stride,
+        sum = combined_averaging_sad32_avx2(src + 0 * src_stride,
             ref1 + 0 * ref1_stride, ref2 + 0 * ref2_stride, sum);
-        sum = CombinedAveragingSad32_AVX2(src + 1 * src_stride,
+        sum = combined_averaging_sad32_avx2(src + 1 * src_stride,
             ref1 + 1 * ref1_stride, ref2 + 1 * ref2_stride, sum);
-        sum = CombinedAveragingSad16x2_AVX2(src + 32, src_stride, ref1 + 32,
+        sum = combined_averaging_sad16x2_avx2(src + 32, src_stride, ref1 + 32,
             ref1_stride, ref2 + 32, ref2_stride, sum);
 
         src += src_stride << 1;
@@ -229,9 +229,9 @@ uint32_t combined_averaging_64xm_sad_avx2_intrin(
     (void)width;
 
     do {
-        sum = CombinedAveragingSad32_AVX2(src + 0x00,
+        sum = combined_averaging_sad32_avx2(src + 0x00,
             ref1 + 0x00, ref2 + 0x00, sum);
-        sum = CombinedAveragingSad32_AVX2(src + 0x20,
+        sum = combined_averaging_sad32_avx2(src + 0x20,
             ref1 + 0x20, ref2 + 0x20, sum);
         src += src_stride;
         ref1 += ref1_stride;

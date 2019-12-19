@@ -75,12 +75,6 @@ static INLINE void variance_final_512_no_sum_avx2(__m256i vsse,
     variance_final_from_32bit_no_sum_avx2(vsse, sse);
 }
 
-// handle 1024 pixels (32x32, 16x64, 64x16)
-static INLINE void variance_final_1024_no_sum_avx2(__m256i vsse,
-    uint32_t *const sse) {
-    // extract the low lane and add it to the high lane
-    variance_final_from_32bit_no_sum_avx2(vsse, sse);
-}
 
 static INLINE __m256i sum_to_32bit_avx2(const __m256i sum) {
     const __m256i sum_lo = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(sum));
@@ -88,13 +82,6 @@ static INLINE __m256i sum_to_32bit_avx2(const __m256i sum) {
         _mm256_cvtepi16_epi32(_mm256_extractf128_si256(sum, 1));
     return _mm256_add_epi32(sum_lo, sum_hi);
 }
-
-// handle 2048 pixels (32x64, 64x32)
-static INLINE void variance_final_2048_no_sum_avx2(__m256i vsse,
-    uint32_t *const sse) {
-    variance_final_from_32bit_no_sum_avx2(vsse, sse);
-}
-
 static INLINE void variance16_kernel_no_sum_avx2(
     const uint8_t *const src, const int32_t src_stride, const uint8_t *const ref,
     const int32_t ref_stride, __m256i *const sse) {
@@ -107,14 +94,6 @@ static INLINE void variance16_kernel_no_sum_avx2(
     variance_kernel_no_sum_avx2(s, r, sse);
 }
 
-static INLINE void variance32_kernel_no_sum_avx2(const uint8_t *const src,
-    const uint8_t *const ref,
-    __m256i *const sse) {
-    const __m256i s = _mm256_loadu_si256((__m256i const *)(src));
-    const __m256i r = _mm256_loadu_si256((__m256i const *)(ref));
-    variance_kernel_no_sum_avx2(s, r, sse);
-}
-
 static INLINE void variance16_no_sum_avx2(const uint8_t *src,
     const int32_t src_stride, const uint8_t *ref, const int32_t ref_stride,
     const int32_t h, __m256i *const vsse) {
@@ -124,41 +103,6 @@ static INLINE void variance16_no_sum_avx2(const uint8_t *src,
         ref += 2 * ref_stride;
     }
 }
-
-static INLINE void variance32_no_sum_avx2(const uint8_t *src, const int32_t src_stride,
-    const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse) {
-    for (int32_t i = 0; i < h; i++) {
-        variance32_kernel_no_sum_avx2(src, ref, vsse);
-        src += src_stride;
-        ref += ref_stride;
-    }
-}
-
-static INLINE void variance64_no_sum_avx2(const uint8_t *src, const int32_t src_stride,
-    const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse) {
-    for (int32_t i = 0; i < h; i++) {
-        variance32_kernel_no_sum_avx2(src + 0, ref + 0, vsse);
-        variance32_kernel_no_sum_avx2(src + 32, ref + 32, vsse);
-        src += src_stride;
-        ref += ref_stride;
-    }
-}
-
-static INLINE void variance128_no_sum_avx2(const uint8_t *src, const int32_t src_stride,
-    const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m256i *const vsse) {
-    for (int32_t i = 0; i < h; i++) {
-        variance32_kernel_no_sum_avx2(src + 0, ref + 0, vsse);
-        variance32_kernel_no_sum_avx2(src + 32, ref + 32, vsse);
-        variance32_kernel_no_sum_avx2(src + 64, ref + 64, vsse);
-        variance32_kernel_no_sum_avx2(src + 96, ref + 96, vsse);
-        src += src_stride;
-        ref += ref_stride;
-    }
-}
-
 #define AOM_VAR_NO_LOOP_NO_SUM_AVX2(bw, bh, bits, max_pixel)                         \
   void eb_aom_variance##bw##x##bh##_no_sum_avx2(                                \
       const uint8_t *src, int32_t src_stride, const uint8_t *ref, int32_t ref_stride, \
@@ -175,99 +119,6 @@ uint32_t eb_aom_mse16x16_avx2(const uint8_t *src, int32_t src_stride,
     uint32_t *sse) {
     eb_aom_variance16x16_no_sum_avx2(src, src_stride, ref, ref_stride, sse);
     return *sse;
-}
-
-void highbd_variance64_avx2(const uint8_t *a8, int32_t a_stride,
-    const uint8_t *b8, int32_t b_stride, int32_t w, int32_t h,
-    uint64_t *sse) {
-    const uint8_t *a = a8;
-    const uint8_t *b = b8;
-
-    if (w == 4) {
-        __m128i vsse = _mm_setzero_si128();
-        uint32_t tsse;
-        variance4_no_sum_sse2(a8, a_stride, b8, b_stride, h, &vsse);
-        variance_final_128_pel_no_sum_sse2(vsse, &tsse);
-        *sse = tsse;
-    }
-    else if (w == 8) {
-        __m128i vsse = _mm_setzero_si128();
-        uint32_t tsse;
-        variance8_no_sum_sse2(a8, a_stride, b8, b_stride, h, &vsse);
-        variance_final_256_pel_no_sum_sse2(vsse, &tsse);
-        *sse = tsse;
-    }
-    else if (w == 16) {
-        __m256i vsse = _mm256_setzero_si256();
-        uint32_t tsse;
-        variance16_no_sum_avx2(a8, a_stride, b8, b_stride, h, &vsse);
-        variance_final_1024_no_sum_avx2(vsse, &tsse);
-        *sse = tsse;
-    }
-    else if (w == 32) {
-        if (h <= 64) {
-            __m256i vsse = _mm256_setzero_si256();
-            uint32_t tsse;
-            variance32_no_sum_avx2(a8, a_stride, b8, b_stride, h, &vsse);
-            variance_final_2048_no_sum_avx2(vsse, &tsse);
-            *sse = tsse;
-        }
-        else {
-            __m256i vsse = _mm256_setzero_si256();
-            uint32_t tsse;
-            variance32_no_sum_avx2(a8, a_stride, b8, b_stride, 64, &vsse);
-            variance32_no_sum_avx2(a8 + 64 * a_stride, a_stride, b8 + 64 * b_stride,
-                b_stride, h - 64, &vsse);
-            variance_final_from_32bit_no_sum_avx2(vsse, &tsse);
-            *sse = tsse;
-        }
-    }
-    else if (w == 64) {
-        if (h <= 32) {
-            __m256i vsse = _mm256_setzero_si256();
-            uint32_t tsse;
-            variance64_no_sum_avx2(a8, a_stride, b8, b_stride, h, &vsse);
-            variance_final_2048_no_sum_avx2(vsse, &tsse);
-            *sse = tsse;
-        }
-        else {
-            __m256i vsse = _mm256_setzero_si256();
-            uint32_t tsse;
-
-            int32_t i = 0;
-            do {
-                variance64_no_sum_avx2(a8, a_stride, b8, b_stride, 32, &vsse);
-                a8 += 32 * a_stride;
-                b8 += 32 * b_stride;
-            } while (++i < (h / 32));
-            variance_final_from_32bit_no_sum_avx2(vsse, &tsse);
-            *sse = tsse;
-        }
-    }
-    else if (w == 128) {
-        __m256i vsse = _mm256_setzero_si256();
-        uint32_t tsse;
-
-        int32_t i = 0;
-        do {
-            variance128_no_sum_avx2(a8, a_stride, b8, b_stride, 16, &vsse);
-            a8 += 16 * a_stride;
-            b8 += 16 * b_stride;
-        } while (++i < (h / 16));
-        variance_final_from_32bit_no_sum_avx2(vsse, &tsse);
-        *sse = tsse;
-    }
-    else
-        highbd_variance64_c(a, a_stride, b, b_stride, w, h, sse);
-#ifdef _WIN32
-    // Add this redundant instruction to fix a Visual Studio compiler bug, which
-    // falsely loads 64-bit intermediate result into *sse in
-    // variance_final_from_32bit_sum_avx2(), instead of 32-bit result as we
-    // wanted. We and *sse back to 32-bit correct result.
-    // No overflow happens here,  since for the largest 8-bit 128x128 block,
-    // *sse is at most 255 * 255 * 128 * 128, i.e., 0x000000003F804000L.
-    *sse &= 0x00000000FFFFFFFFL;
-#endif
 }
 
 static INLINE int variance_final_from_32bit_sum_avx2(__m256i vsse, __m128i vsum,

@@ -18,7 +18,7 @@ const int32_t *sinpi_arr(int32_t n);
 #define TWO  (uint8_t)2U
 #define THREE (uint8_t)3U
 
-void Av1TransformConfig(
+void av1_transform_config(
     TxType tx_type,
     TxSize tx_size,
     Txfm2DFlipCfg *cfg);
@@ -1435,7 +1435,7 @@ void av1_fwd_txfm2d_32x32_avx512(int16_t *input, int32_t *output,
     uint32_t stride, TxType tx_type, uint8_t  bd) {
     DECLARE_ALIGNED(64, int32_t, txfm_buf[1024]);
     Txfm2DFlipCfg cfg;
-    Av1TransformConfig(tx_type, TX_32X32, &cfg);
+    av1_transform_config(tx_type, TX_32X32, &cfg);
     (void)bd;
     fwd_txfm2d_32x32_avx512(input, output, stride, &cfg, txfm_buf);
 }

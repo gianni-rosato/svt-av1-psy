@@ -180,11 +180,6 @@ on a larger type, you can speed up the decoder by using it here.*/
 
 #define OD_ICDF AOM_ICDF
 
-    /*See entcode.c for further documentation.*/
-
-    OD_WARN_UNUSED_RESULT uint32_t eb_od_ec_tell_frac(uint32_t nbits_total,
-        uint32_t rng);
-
     /********************************************************************************************************************************/
     //entenc.h
     typedef struct OdEcEnc OdEcEnc;
@@ -243,9 +238,6 @@ on a larger type, you can speed up the decoder by using it here.*/
     OD_WARN_UNUSED_RESULT int32_t eb_od_ec_enc_tell(const OdEcEnc *enc)
         OD_ARG_NONNULL(1);
 
-    void eb_od_ec_enc_checkpoint(OdEcEnc *dst, const OdEcEnc *src);
-    void eb_od_ec_enc_rollback(OdEcEnc *dst, const OdEcEnc *src);
-
     /********************************************************************************************************************************/
     //daalaboolwriter.h
     struct DaalaWriter {
@@ -280,25 +272,6 @@ on a larger type, you can speed up the decoder by using it here.*/
     /********************************************************************************************************************************/
     // bitwriter.h
     typedef struct DaalaWriter AomWriter;
-
-    typedef struct TokenStats
-    {
-        int32_t cost;
-#if CONFIG_RD_DEBUG
-        int32_t txb_coeff_cost_map[TXB_COEFF_COST_MAP_SIZE][TXB_COEFF_COST_MAP_SIZE];
-#endif
-    } TokenStats;
-
-    static INLINE void init_token_stats(TokenStats *token_stats) {
-#if CONFIG_RD_DEBUG
-        int32_t r, c;
-        for (r = 0; r < TXB_COEFF_COST_MAP_SIZE; ++r) {
-            for (c = 0; c < TXB_COEFF_COST_MAP_SIZE; ++c)
-                token_stats->txb_coeff_cost_map[r][c] = 0;
-        }
-#endif
-        token_stats->cost = 0;
-    }
 
     static INLINE void aom_start_encode(AomWriter *bc, uint8_t *buffer) {
         eb_aom_daala_start_encode(bc, buffer);

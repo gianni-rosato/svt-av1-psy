@@ -48,10 +48,6 @@ typedef struct SearchSiteConfig {
   int searches_per_step;
 } SearchSiteConfig;
 
-typedef struct {
-  MV coord;
-  int coord_offset;
-} search_neighbors;
 #if OBMC_FLAG
 
 typedef unsigned int (*aom_obmc_sad_fn_t)(const uint8_t *pred, int pred_stride,

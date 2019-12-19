@@ -6751,29 +6751,6 @@ int32_t eb_av1_get_switchable_rate(
         return 0;
 }
 
-//void model_rd_norm(int32_t xsq_q10, int32_t *r_q10, int32_t *d_q10) {
- // NOTE: The tables below must be of the same size.
-
- // The functions described below are sampled at the four most significant
- // bits of x^2 + 8 / 256.
-
-void highbd_variance64_c(const uint8_t *a8, int32_t a_stride,
-    const uint8_t *b8, int32_t b_stride, int32_t w, int32_t h,
-    uint64_t *sse) {
-    const uint8_t *a = a8;//CONVERT_TO_SHORTPTR(a8);
-    const uint8_t *b = b8;//CONVERT_TO_SHORTPTR(b8);
-    uint64_t tsse = 0;
-    for (int32_t i = 0; i < h; ++i) {
-        for (int32_t j = 0; j < w; ++j) {
-            const int32_t diff = a[j] - b[j];
-            tsse += (uint32_t)(diff * diff);
-        }
-        a += a_stride;
-        b += b_stride;
-    }
-    *sse = tsse;
-}
-
 #define RDDIV_BITS 7
 #define RDCOST(RM, R, D)                                            \
   (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + \

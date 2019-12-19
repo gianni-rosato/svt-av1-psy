@@ -115,131 +115,8 @@ static TxSize blocksize_to_txsize[BlockSizeS_ALL] = {
       TX_16X64  ,      // BLOCK_16X64
       TX_64X16         // BLOCK_64X16
 };
-EbErrorType z_order_increment(
-    uint32_t *x_loc,   // x location, level agnostic
-    uint32_t *y_loc)   // y location, level agnostic
-{
-    EbErrorType return_error = EB_ErrorNone;
-    uint32_t mask;
 
-    // The basic idea of this function is to increment an x,y coordinate
-    // that has had its size removed to the next z-coding order location.
-    //
-    // In a four quadrant partition, the z coding order is [0,0], [1,0], [0,1], [1,1]
-    // Some observations (only looking at one bit position or the LSB) are:
-    //  1. X is always toggled (achieved with X ^= 0x1)
-    //  2. Y can be toggled with (Y = Y ^ X)
-    //  3. Recall that a value XOR'ed with 1 toggles, and XOR'ed with 0 stays the same
-    //
-    //  Extending this logic is somewhat trickier. The two main observations to make are
-    //  4. The LSB of X and Y are always progressed.
-    //  5. Every other bit-position, N, other than the LSB are progressed in their state
-    //     when the N-1 bit position resets back to [0,0].
-    //
-    //  From 5, we can infer the need of a "progression mask" of the form 0x1, 0x3, 0x7, 0xF, etc.
-    //  The first step of contructing the mask is to find which bit positions are ready to
-    //  reset (found by X & Y) and setting the LSB of the mask to 1 (the LSB always progresses).
-    //  The second step is to eliminate all ones from the mask above the lowest-ordered zero bit.
-    //  Note we can achieve more precision in the second mask step by more masking-out operations,
-    //  but for a 64 -> 4 (5 steps), the precision below is sufficient.
-    //
-    //  Finally, X and Y are progressed only at the bit-positions in the mask.
-
-    mask = ((*x_loc & *y_loc) << 1) | 0x1;
-    mask &= (mask << 1) | 0x01;
-    mask &= (mask << 2) | 0x03;
-    mask &= (mask << 4) | 0x0F;
-    mask &= (mask << 8) | 0xFF;
-
-    *y_loc ^= *x_loc & mask;
-    *x_loc ^= mask;
-
-    return return_error;
-}
-
-/*****************************************
- * Z-Order Increment with Level
- *   This is the main function for progressing
- *   through a treeblock's coding units. To get
- *   the true CU size, multiple the x_loc, y_loc
- *   by the smallest CU size.
- *****************************************/
-void ZOrderIncrementWithLevel(
-    uint32_t *x_loc,   // x location, units of smallest block size
-    uint32_t *y_loc,   // y location, units of smallest block size
-    uint32_t *level,  // level, number of block size-steps from the smallest block size
-    //   (e.g. if 8x8 = level 0, 16x16 = level 1, 32x32 == level 2, 64x64 == level 3)
-    uint32_t *index)  // The CU index, can be used to index a lookup table (see get_coded_unit_stats)
-{
-    uint32_t mask;
-
-    // The basic idea of this function is to increment an x,y coordinate
-    // that has had its size removed to the next z-coding order location.
-    //
-    // In a four quadrant partition, the z coding order is [0,0], [1,0], [0,1], [1,1]
-    // Some observations (only looking at one bit position or the LSB) are:
-    //  1. X is always toggled (achieved with X ^= 0x1)
-    //  2. Y can be toggled with (Y = Y ^ X)
-    //  3. Recall that a value XOR'ed with 1 toggles, and XOR'ed with 0 stays the same
-    //
-    //  Extending this logic is somewhat trickier. The two main observations to make are
-    //  4. The LSB of X and Y are always progressed.
-    //  5. Every other bit-position, N, other than the LSB are progressed in their state
-    //     when the N-1 bit position resets back to [0,0].
-    //
-    //  From 5, we can infer the need of a "progression mask" of the form 0x1, 0x3, 0x7, 0xF, etc.
-    //  The first step of contructing the mask is to find which bit positions are ready to
-    //  reset (found by X & Y) and setting the LSB of the mask to 1 (the LSB always progresses).
-    //  The second step is to eliminate all ones from the mask above the lowest-ordered zero bit.
-    //  Note we can achieve more precision in the second mask step by more masking-out operations,
-    //  but for a 64 -> 4 (5 steps), the precision below is sufficient.
-    //
-    //  Finally, X and Y are progressed only at the bit-positions in the mask.
-
-    // Seed the mask
-    mask = ((*x_loc & *y_loc) << 1) | 0x1;
-
-    // This step zero-outs the mask if level is not zero.
-    //   The purpose of this is step further down the tree
-    //   if not already at the bottom of the tree
-    //   Equivalent to: mask = (level > 0) ? mask : 0;
-    mask &= (uint32_t)(-(*level == 0));
-
-    // Construct the mask
-    mask &= (mask << 1) | 0x01;
-    mask &= (mask << 2) | 0x03;
-    mask &= (mask << 4) | 0x0F;
-    mask &= (mask << 8) | 0xFF;
-
-    // Decrement the level if not already at the bottom of the tree
-    //  Equivalent to level = (level > 0) ? level - 1 : 0;
-    *level = (*level - 1) & -(*level > 0);
-
-    // If at one of the "corner" positions where the mask > 1, we
-    //   need to increase the level since larger blocks are processed
-    //   before smaller blocks.  Note that by using mask, we are protected
-    //   against inadvertently incrementing the level if not already at
-    //   the bottom of the tree.  The level increment should really be
-    //   Log2f(mask >> 1), but since there are only 3 valid positions,
-    //   we are using a cheesy Log2f approximation
-    //   Equivalent to: level += (mask > 3) ? 2 : mask >> 1;
-
-    *level += ((2 ^ (mask >> 1)) & -(mask > 3)) ^ (mask >> 1);
-
-    // Increment the x_loc, y_loc.  Note that this only occurs when
-    //   we are at the bottom of the tree.
-    *y_loc ^= *x_loc & mask;
-    *x_loc ^= mask;
-
-    // Increment the index. Note that the natural progression of this
-    //   block aligns with how leafs are stored in the accompanying
-    //   CU data structures.
-    ++(*index);
-
-    return;
-}
-
-static CodedUnitStats CodedUnitStatsArray[] = {
+static CodedUnitStats coded_unit_stats_array[] = {
     //   Depth       Size      SizeLog2     OriginX    OriginY   cu_num_in_depth   Index
         {0,           64,         6,           0,         0,        0     ,   0    },   // 0
         {1,           32,         5,           0,         0,        0     ,   1    },   // 1
@@ -337,71 +214,8 @@ const CodedUnitStats* get_coded_unit_stats(const uint32_t cuIdx)
     if (cuIdx == 255)
         printf("Invalid CuIndex\n");
 
-    return &CodedUnitStatsArray[cuIdx];
+    return &coded_unit_stats_array[cuIdx];
 }
-
-static const TransformUnitStats TransformUnitStatsArray[] = {
-    //
-    //        depth
-    //       /
-    //      /       offset_x (units of the current depth)
-    //     /       /
-    //    /       /       offset_y (units of the current depth)
-    //   /       /       /
-    {0,     0,      0},     // 0
-    {1,     0,      0},     // 1
-    {1,     2,      0},     // 2
-    {1,     0,      2},     // 3
-    {1,     2,      2},     // 4
-    {2,     0,      0},     // 5
-    {2,     1,      0},     // 6
-    {2,     0,      1},     // 7
-    {2,     1,      1},     // 8
-    {2,     2,      0},     // 9
-    {2,     3,      0},     // 10
-    {2,     2,      1},     // 11
-    {2,     3,      1},     // 12
-    { 2,    0,        2},     // 13
-    { 2,    1,        2},     // 14
-    { 2,    0,        3},     // 15
-    { 2,    1,        3},     // 16
-    { 2,    2,        2},     // 17
-    { 2,    3,        2},     // 18
-    { 2,    2,        3},     // 19
-    { 2,    3,        3},    // 20
-    {0xFF,  0xFF,   0xFF}   // Invalid
-};
-
-/**************************************************************
- * Get Transform Unit Statistics
- **************************************************************/
-const TransformUnitStats* get_transform_unit_stats(const uint32_t tuIdx)
-{
-    return &TransformUnitStatsArray[tuIdx];
-}
-
-/*****************************************
- * Integer Log 2
- *  This is a quick adaptation of a Number
- *  Leading Zeros (NLZ) algorithm to get
- *  the log2f of an integer
- *****************************************/
- /*uint32_t Log2f(uint32_t x)
- {
-     uint32_t y;
-     int32_t n = 32, c = 16;
-
-     do {
-         y = x >> c;
-         if (y > 0) {
-             n -= c;
-             x = y;
-         }
-         c >>= 1;
-     } while (c > 0);
-
-     return 32 - n;
- }*/
 
  /*****************************************
   * Long Log 2
@@ -409,7 +223,7 @@ const TransformUnitStats* get_transform_unit_stats(const uint32_t tuIdx)
   *  Leading Zeros (NLZ) algorithm to get
   *  the log2f of a 64-bit number
   *****************************************/
-inline uint64_t Log2f64(uint64_t x)
+inline uint64_t log2f_64(uint64_t x)
 {
     uint64_t y;
     int64_t n = 64, c = 32;
@@ -426,24 +240,9 @@ inline uint64_t Log2f64(uint64_t x)
     return 64 - n;
 }
 
-/*****************************************
- * Endian Swap
- *****************************************/
-uint32_t endian_swap(uint32_t ui)
-{
-    uint32_t ul2;
-
-    ul2 = ui >> 24;
-    ul2 |= (ui >> 8) & 0x0000ff00;
-    ul2 |= (ui << 8) & 0x00ff0000;
-    ul2 |= ui << 24;
-
-    return ul2;
-}
-
 uint64_t log2f_high_precision(uint64_t x, uint8_t precision)
 {
-    uint64_t sigBitLocation = Log2f64(x);
+    uint64_t sigBitLocation = log2f_64(x);
     uint64_t Remainder = x - ((uint64_t)1 << (uint8_t)sigBitLocation);
     uint64_t result;
 
@@ -1289,10 +1088,6 @@ void build_blk_geom(int32_t use_128x128)
 }
 
 //need to finish filling dps by inherting data from mds
-const BlockGeom * Get_blk_geom_dps(uint32_t bidx_dps)
-{
-    return &blk_geom_dps[bidx_dps];
-}
 const BlockGeom * get_blk_geom_mds(uint32_t bidx_mds)
 {
     return &blk_geom_mds[bidx_mds];

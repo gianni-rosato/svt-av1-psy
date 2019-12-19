@@ -529,13 +529,7 @@ extern "C" {
         OisCandidate*    ois_candidate_array[CU_MAX_COUNT];
         int8_t              best_distortion_index[CU_MAX_COUNT];
     } OisSbResults;
-    typedef struct QpmLcuResults_s {
-        uint8_t  cu_qp;
-        uint8_t  cu_intra_qp;
-        uint8_t  cu_inter_qp;
-        int8_t   delta_qp;
-        int8_t   inner_sb_cu_delta_qp;
-    } QpmLcuResults_t; // to be cleaned up
+
     typedef struct EdgeLcuResults
     {
         uint8_t  edge_block_num;

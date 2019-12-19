@@ -788,20 +788,6 @@ void memcpy32bit(
         out_ptr[i] = in_ptr[i];
 }
 
-int32_t  sum_residual_c(int16_t * in_ptr,
-    uint32_t   size,
-    uint32_t   stride_in)
-{
-    int32_t sumBlock = 0;
-    uint32_t i, j;
-
-    for (j = 0; j < size; j++)
-        for (i = 0; i < size; i++)
-            sumBlock += in_ptr[j*stride_in + i];
-
-    return sumBlock;
-}
-
 void memset16bit_block(
     int16_t * in_ptr,
     uint32_t   stride_in,

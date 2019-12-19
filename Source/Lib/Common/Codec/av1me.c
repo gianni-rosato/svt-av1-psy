@@ -34,41 +34,6 @@ typedef struct dist_wtd_comp_params {
     int bck_offset;
 } DIST_WTD_COMP_PARAMS;
 
-typedef unsigned int(*aom_sad_avg_fn_t)(const uint8_t *a, int a_stride,
-    const uint8_t *b, int b_stride,
-    const uint8_t *second_pred);
-
-typedef void(*aom_copy32xn_fn_t)(const uint8_t *a, int a_stride, uint8_t *b,
-    int b_stride, int n);
-
-typedef unsigned int(*aom_subpixvariance_fn_t)(const uint8_t *a, int a_stride,
-    int xoffset, int yoffset,
-    const uint8_t *b, int b_stride,
-    unsigned int *sse);
-
-typedef unsigned int(*aom_subp_avg_variance_fn_t)(
-    const uint8_t *a, int a_stride, int xoffset, int yoffset, const uint8_t *b,
-    int b_stride, unsigned int *sse, const uint8_t *second_pred);
-
-typedef unsigned int(*aom_dist_wtd_sad_avg_fn_t)(
-    const uint8_t *a, int a_stride, const uint8_t *b, int b_stride,
-    const uint8_t *second_pred, const DIST_WTD_COMP_PARAMS *jcp_param);
-
-typedef unsigned int(*aom_dist_wtd_subp_avg_variance_fn_t)(
-    const uint8_t *a, int a_stride, int xoffset, int yoffset, const uint8_t *b,
-    int b_stride, unsigned int *sse, const uint8_t *second_pred,
-    const DIST_WTD_COMP_PARAMS *jcp_param);
-
-typedef unsigned int(*aom_masked_sad_fn_t)(const uint8_t *src, int src_stride,
-    const uint8_t *ref, int ref_stride,
-    const uint8_t *second_pred,
-    const uint8_t *msk, int msk_stride,
-    int invert_mask);
-typedef unsigned int(*aom_masked_subpixvariance_fn_t)(
-    const uint8_t *src, int src_stride, int xoffset, int yoffset,
-    const uint8_t *ref, int ref_stride, const uint8_t *second_pred,
-    const uint8_t *msk, int msk_stride, int invert_mask, unsigned int *sse);
-
 int eb_av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit,
     int search_range,
     const aom_variance_fn_ptr_t *fn_ptr,

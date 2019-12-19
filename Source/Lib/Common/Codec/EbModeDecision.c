@@ -777,11 +777,6 @@ EbErrorType mode_decision_candidate_buffer_ctor(
         eb_picture_buffer_desc_ctor,
         (EbPtr)&pictureBufferDescInitData);
 
-    //Distortion
-    buffer_ptr->residual_luma_sad = 0;
-
-    buffer_ptr->full_lambda_rate = 0;
-
     // Costs
     buffer_ptr->fast_cost_ptr = fast_cost_ptr;
     buffer_ptr->full_cost_ptr = full_cost_ptr;
@@ -5660,10 +5655,6 @@ uint32_t product_full_mode_decision(
 
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = *(buffer_ptr_array[lowestCostIndex]->full_cost_ptr);
     context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost = (context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost - buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion) + buffer_ptr_array[lowestCostIndex]->candidate_ptr->chroma_distortion_inter_depth;
-
-    if (candidate_ptr->type == INTRA_MODE)
-        context_ptr->md_local_cu_unit[cu_ptr->mds_idx].cost_luma = buffer_ptr_array[lowestCostIndex]->full_cost_luma;
-
     context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].merge_cost = *buffer_ptr_array[lowestCostIndex]->full_cost_merge_ptr;
     context_ptr->md_ep_pipe_sb[cu_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowestCostIndex]->full_cost_skip_ptr;
 

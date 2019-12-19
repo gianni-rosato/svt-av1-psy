@@ -1046,16 +1046,3 @@ void eb_copy_rect8_8bit_to_16bit_avx2(uint16_t *dst, int32_t dstride,
     }
 }
 
-void eb_copy_rect8_16bit_to_16bit_avx2(uint16_t *dst, int32_t dstride,
-    const uint16_t *src, int32_t sstride,
-    int32_t v, int32_t h) {
-    int32_t i, j;
-    for (i = 0; i < v; i++) {
-        for (j = 0; j < (h & ~0x7); j += 8) {
-            __m128i row = _mm_lddqu_si128((__m128i *)&src[i * sstride + j]);
-            _mm_storeu_si128((__m128i *)&dst[i * dstride + j], row);
-        }
-        for (; j < h; j++)
-            dst[i * dstride + j] = src[i * sstride + j];
-    }
-}

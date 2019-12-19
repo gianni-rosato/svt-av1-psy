@@ -16,19 +16,19 @@
 #include "EbPictureDemuxResults.h"
 #define DETAILED_FRAME_OUTPUT 0
 
-static EbBool IsPassthroughData(EbLinkedListNode* dataNode)
+static EbBool is_passthrough_data(EbLinkedListNode* data_node)
 {
-    return dataNode->passthrough;
+    return data_node->passthrough;
 }
 
 // Extracts passthrough data from a linked list. The extracted data nodes are removed from the original linked list and
 // returned as a linked list. Does not gaurantee the original order of the nodes.
-static EbLinkedListNode* ExtractPassthroughData(EbLinkedListNode** llPtrPtr)
+static EbLinkedListNode* extract_passthrough_data(EbLinkedListNode** ll_ptr_ptr)
 {
-    EbLinkedListNode* llRestPtr = NULL;
-    EbLinkedListNode* llPassPtr = split_eb_linked_list(*llPtrPtr, &llRestPtr, IsPassthroughData);
-    *llPtrPtr = llRestPtr;
-    return llPassPtr;
+    EbLinkedListNode* ll_rest_ptr = NULL;
+    EbLinkedListNode* ll_pass_ptr = split_eb_linked_list(*ll_ptr_ptr, &ll_rest_ptr, is_passthrough_data);
+    *ll_ptr_ptr = ll_rest_ptr;
+    return ll_pass_ptr;
 }
 
 static void packetization_context_dctor(EbPtr p)
@@ -413,7 +413,7 @@ void* packetization_kernel(void *input_ptr)
         // Note: last chance here to add more output meta data for an encoded picture -->
 
         // collect output meta data
-        queueEntryPtr->out_meta_data = concat_eb_linked_list(ExtractPassthroughData(&(picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr)),
+        queueEntryPtr->out_meta_data = concat_eb_linked_list(extract_passthrough_data(&(picture_control_set_ptr->parent_pcs_ptr->data_ll_head_ptr)),
             picture_control_set_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr);
         picture_control_set_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)EB_NULL;
 

@@ -327,14 +327,6 @@ typedef struct SubSampledParam {
     AreaSize area_size;
     SUB_SAMPLED_TEST_FUNC test_func;
 } SubSampledParam;
-
-SubSampledParam SUB_SAMPLED_PARAMS[] = {
-    {AreaSize(4, 4), &residual_kernel_sub_sampled4x4_sse_intrin},
-    {AreaSize(8, 8), &residual_kernel_sub_sampled8x8_sse2_intrin},
-    {AreaSize(16, 16), &residual_kernel_sub_sampled16x16_sse2_intrin},
-    {AreaSize(32, 32), &residual_kernel_sub_sampled32x32_sse2_intrin},
-    {AreaSize(64, 64), &residual_kernel_sub_sampled64x64_sse2_intrin}};
-
 typedef std::tuple<TestPattern, SubSampledParam> TestSubParam;
 
 class ResidualSubSampledTest
@@ -382,11 +374,6 @@ TEST_P(ResidualSubSampledTest, MatchTest) {
     run_sub_sample_test();
 };
 
-INSTANTIATE_TEST_CASE_P(
-    ResidualUtil, ResidualSubSampledTest,
-    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(SUB_SAMPLED_PARAMS)));
-
 typedef std::tuple<int, TestPattern> TestSumParam;
 
 class ResidualSumTest : public ::testing::Test,
@@ -428,29 +415,11 @@ class ResidualSumTest : public ::testing::Test,
         default: break;
         }
     }
-
-    void run_test() {
-        int32_t sum_block1 = 0, sum_block2 = 0;
-        prepare_data();
-
-        sum_block1 =
-            sum_residual8bit_avx2_intrin(residual_, size_, residual_stride_);
-        sum_block2 = sum_residual_c(residual_, size_, residual_stride_);
-
-        EXPECT_EQ(sum_block1, sum_block2)
-            << "compare sum residual result error";
-    }
-
     uint32_t size_;
     TestPattern test_pattern_;
     int16_t *residual_;
     uint32_t residual_stride_;
 };
-
-TEST_P(ResidualSumTest, MatchTest) {
-    run_test();
-};
-
 INSTANTIATE_TEST_CASE_P(ResidualUtil, ResidualSumTest,
                         ::testing::Combine(::testing::Values(4, 8, 16, 32, 64),
                                            ::testing::ValuesIn(TEST_PATTERNS)));
