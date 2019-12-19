@@ -7,7 +7,7 @@ jobs:
 
     strategy:
       matrix:
-        compiler: ['gcc-7', 'gcc-8', 'gcc-9', 'clang-6']
+        compiler: ['gcc-7', 'gcc-8', 'gcc-9', 'clang-6', 'clang-10']
         include:
           - compiler: gcc-7
             packages: gcc-7 g++-7
@@ -21,10 +21,20 @@ jobs:
           - compiler: clang-6
             packages: ''
             env: { 'CC': 'clang-6.0', 'CXX': 'clang++-6.0' }
+          - compiler: clang-10
+            packages: 'clang-10'
+            env: { 'CC': 'clang-10', 'CXX': 'clang++-10' }
 
     env: ${{ matrix.env }}
 
     steps:
+    - name: Add Clang apt repository
+      if: matrix.compiler == 'clang-10'
+      run: |
+        echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" \
+        | sudo tee -a /etc/apt/sources.list.d/llvm.list
+        curl -L https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo apt-get update
     - name: Install dependencies
       run: sudo apt-get install -y ${{ matrix.packages }} nasm yasm cmake
     - uses: actions/checkout@v1
