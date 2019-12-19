@@ -4,14 +4,30 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        compiler: ['gcc-7', 'gcc-8', 'gcc-9']
+        include:
+          - compiler: gcc-7
+            packages: gcc-7 g++-7
+            env: { 'CC': 'gcc-7', 'CXX': 'g++-7' }
+          - compiler: gcc-8
+            packages: gcc-8 g++-8
+            env: { 'CC': 'gcc-8', 'CXX': 'g++-8' }
+          - compiler: gcc-9
+            packages: gcc-9 g++-9
+            env: { 'CC': 'gcc-9', 'CXX': 'g++-9' }
+
+    env: ${{ matrix.env }}
+
     steps:
     - name: Install dependencies
-      run: sudo apt-get install -y gcc-9 g++-9 nasm yasm cmake
+      run: sudo apt-get install -y ${{ matrix.packages }} nasm yasm cmake
     - uses: actions/checkout@v1
       with:
         fetch-depth: 1
     - name: Compile SVT-AV1
       run: |
-        export CC=gcc-9 CXX=g++-9
         ./Build/linux/build.sh release
         ./Bin/Release/SvtAv1EncApp -help
