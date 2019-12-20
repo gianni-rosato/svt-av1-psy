@@ -49,9 +49,6 @@ link_directories(
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
 )
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
-
 file(GLOB all_files
     "Codec/*.h"
     "Codec/*.c")

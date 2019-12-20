@@ -11,10 +11,6 @@ if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
                     "Please use the Build folder or create your own.")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC OR CMAKE_GENERATOR STREQUAL "Xcode"))
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-
 option(YASM "Use yasm (if present in PATH)" ON)
 if(YASM)
     find_program(YASM_EXE yasm)
@@ -26,6 +22,10 @@ endif()
 
 project(${project_name} C CXX ASM_NASM)
 
+if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC OR CMAKE_GENERATOR STREQUAL "Xcode"))
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(WARNING "32-bit is not supported")
 endif()
@@ -34,8 +34,8 @@ include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
 if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
