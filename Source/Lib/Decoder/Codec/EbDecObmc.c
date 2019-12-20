@@ -13,11 +13,9 @@
 * Media Patent License 1.0 was not distributed with this source code in the
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
-#include <stdlib.h>
-#include <string.h>
 
-#include "EbCodingUnit.h"
-#include "EbInterPrediction.h"
+#include "../../Encoder/Codec/EbCodingUnit.h"
+#include "../../Encoder/Codec/EbInterPrediction.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
@@ -26,9 +24,8 @@
 #include "EbDecObmc.h"
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
-#include "EbDecInverseQuantize.h"
 #include "EbDecInterPrediction.h"
-#include "aom_dsp_rtcd.h"
+#include "../../Encoder/Codec/aom_dsp_rtcd.h"
 
 //This function is present in encoder also, but encoder structures & decoder structures are different.
 static INLINE int dec_is_neighbor_overlappable(const BlockModeInfo *mbmi){

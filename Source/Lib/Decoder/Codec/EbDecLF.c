@@ -25,7 +25,7 @@ Contains the Decoder Loop Filtering related functions*/
 #include "EbObuParse.h"
 #include "EbDecProcessFrame.h"
 #include "EbDecUtils.h"
-#include "EbDeblockingFilter.h"
+#include "../../Encoder/Codec/EbDeblockingFilter.h"
 #include "EbDecLF.h"
 #include "EbDecParseHelper.h"
 

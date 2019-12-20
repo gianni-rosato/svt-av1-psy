@@ -15,7 +15,6 @@
 */
 
 #include "EbDefinitions.h"
-#include "EbPictureBufferDesc.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
@@ -24,7 +23,7 @@
 #include "EbObuParse.h"
 #include "EbDecProcessFrame.h"
 
-#include "EbTransforms.h"
+#include "../../Encoder/Codec/EbTransforms.h"
 #include "EbQMatrices.h"
 
 // Same wrapper(av1_ac/dc_quant_QTX) available in .c file of encoder

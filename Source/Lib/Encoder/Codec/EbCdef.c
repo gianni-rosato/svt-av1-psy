@@ -16,8 +16,6 @@
 
 #include "EbCdef.h"
 #include "stdint.h"
-#include "EbCodingUnit.h"
-#include "EbEncDecProcess.h"
 #include "aom_dsp_rtcd.h"
 
 extern int16_t eb_av1_ac_quant_Q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);

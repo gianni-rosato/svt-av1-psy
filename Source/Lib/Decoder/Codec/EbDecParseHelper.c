@@ -21,9 +21,9 @@
 
 #include "EbDecParseHelper.h"
 #include "EbDecUtils.h"
-#include "EbTransforms.h"
-#include "EbEntropyCoding.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
+#include "../../Encoder/Codec/EbTransforms.h"
+#include "../../Encoder/Codec/EbEntropyCoding.h"
+#include "../../Encoder/Codec/EbAdaptiveMotionVectorPrediction.h"
 
 int neg_deinterleave(const int diff, int ref, int max) {
     if (!ref) return diff;

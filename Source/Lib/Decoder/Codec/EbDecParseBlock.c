@@ -24,7 +24,7 @@
 #include "EbObuParse.h"
 
 #include "EbDecParseHelper.h"
-#include "EbTransforms.h"
+#include "../../Encoder/Codec/EbTransforms.h"
 
 #include "EbDecNbr.h"
 #include "EbDecPicMgr.h"
@@ -32,8 +32,8 @@
 
 #include "EbDecParseInterBlock.h"
 #include "EbDecProcessFrame.h"
-#include "EbEntropyCoding.h"
-#include "EbFullLoop.h"
+#include "../../Encoder/Codec/EbEntropyCoding.h"
+#include "../../Encoder/Codec/EbFullLoop.h"
 
 #if ENABLE_ENTROPY_TRACE
 FILE* temp_fp;

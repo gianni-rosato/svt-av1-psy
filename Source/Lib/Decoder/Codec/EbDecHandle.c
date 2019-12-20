@@ -31,7 +31,7 @@
 # include <intrin.h>
 #endif
 
-#include "aom_dsp_rtcd.h"
+#include "../../Encoder/Codec/aom_dsp_rtcd.h"
 
 /**************************************
 * Globals

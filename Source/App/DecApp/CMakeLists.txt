@@ -23,7 +23,7 @@ add_executable(SvtAv1DecApp
 #********** SET COMPILE FLAGS************
 # Link the Decoder App
 target_link_libraries(SvtAv1DecApp
-    SvtAv1Dec)
+    SvtAv1Dec SvtAv1Enc)
 
 if(UNIX)
     target_link_libraries(SvtAv1DecApp

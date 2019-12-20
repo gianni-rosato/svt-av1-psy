@@ -18,16 +18,14 @@
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
-#include "EbEntropyCoding.h"
-
-#include "EbAv1Structs.h"
+#include "../../Encoder/Codec/EbEntropyCoding.h"
 #include "EbDecStruct.h"
 #include "EbDecBlock.h"
 #include "EbDecHandle.h"
 #include "EbObuParse.h"
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
-#include "EbRestoration.h"
+#include "../../Encoder/Codec/EbRestoration.h"
 #include "EbDecRestoration.h"
 #include "EbDecParseObuUtil.h"
 #include "EbDecParseFrame.h"
@@ -36,7 +34,6 @@
 #include "EbDecInverseQuantize.h"
 #include "EbDecProcessFrame.h"
 
-//#include "EbDecNbr.h"
 #include "EbDecUtils.h"
 #include "EbDecLF.h"
 

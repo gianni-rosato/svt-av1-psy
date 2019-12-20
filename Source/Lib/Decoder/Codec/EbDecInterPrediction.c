@@ -17,20 +17,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "EbInterPrediction.h"
+#include "../../Encoder/Codec/EbInterPrediction.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
 
 #include "EbObuParse.h"
-#include "EbDecParseHelper.h"
 
 #include "EbDecPicMgr.h"
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
 #include "EbDecObmc.h"
 
-#include "aom_dsp_rtcd.h"
+#include "../../Encoder/Codec/aom_dsp_rtcd.h"
+
 #include "EbDecProcessFrame.h"
 #include "EbDecIntraPrediction.h"
 

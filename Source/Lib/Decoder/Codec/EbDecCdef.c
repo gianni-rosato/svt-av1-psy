@@ -16,13 +16,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
 
 #include "EbDecCdef.h"
-//#include "EbDecUtils.h"
-#include "EbDecInverseQuantize.h"
-#include "EbCdef.h"
+//#include "EbDecInverseQuantize.h"
+#include "EbDecUtils.h"
+#include "../../Encoder/Codec/EbCdef.h"
 #include "EbDecNbr.h"
 #include "EbUtility.h"
 

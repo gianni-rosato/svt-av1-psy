@@ -6,9 +6,9 @@
 #ifndef EbDecBlock_h
 #define EbDecBlock_h
 
-#include "EbCodingUnit.h"
+#include "../../Encoder/Codec/EbCodingUnit.h"
 #include "EbDefinitions.h"
-#include "EbRestoration.h"
+#include "../../Encoder/Codec/EbRestoration.h"
 
 #define MODE_INFO_DBG   0
 

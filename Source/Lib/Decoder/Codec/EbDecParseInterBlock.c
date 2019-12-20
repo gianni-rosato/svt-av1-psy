@@ -15,8 +15,8 @@
 */
 
 #include "EbDecParseInterBlock.h"
-#include "EbCommonUtils.h"
-#include "EbAdaptiveMotionVectorPrediction.h"
+#include "../../Encoder/Codec/EbCommonUtils.h"
+#include "../../Encoder/Codec/EbAdaptiveMotionVectorPrediction.h"
 
 
 typedef const int(*ColorCost)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS]

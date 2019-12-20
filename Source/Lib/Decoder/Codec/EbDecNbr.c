@@ -4,15 +4,11 @@
 */
 
 #include "EbDefinitions.h"
-#include "EbPictureBufferDesc.h"
-
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
-
 #include "EbObuParse.h"
-#include "EbDecProcessFrame.h"
+#include "EbDecParseFrame.h"
 
-#include "EbDecNbr.h"
 #if !FRAME_MI_MAP
 void update_nbrs_before_sb(FrameMiMap *frame_mi_map, int32_t sb_col) {
     int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
