@@ -146,6 +146,7 @@ void reference_idtx_1d(const double *in, double *out, int size) {
     case 8: scale = 2; break;
     case 16: scale = 2 * Sqrt2; break;
     case 32: scale = 4; break;
+    case 64: scale = 4 * Sqrt2; break;
     default: assert(0); break;
     }
 
