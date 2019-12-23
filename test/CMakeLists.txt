@@ -27,9 +27,11 @@ include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Globals
     ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec
     ${PROJECT_SOURCE_DIR}/Source/App/EncApp
-    ${PROJECT_SOURCE_DIR}/Source/API)
+    ${PROJECT_SOURCE_DIR}/Source/API
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/)
 
 # Define helper functions and macros used by Google Test.
 include(../third_party/googletest/cmake/internal_utils.cmake)
@@ -79,7 +81,7 @@ set(lib_list
     $<TARGET_OBJECTS:ENCODER_ASM_SSE4_1>
     $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
     $<TARGET_OBJECTS:ENCODER_ASM_AVX512>
-
+    $<TARGET_OBJECTS:ENCODER_GLOBALS>
     gtest_all)
 if(UNIX)
   # App Source Files

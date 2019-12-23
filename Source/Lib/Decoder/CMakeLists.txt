@@ -19,7 +19,6 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
 #    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
 #    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
 #    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/
@@ -27,7 +26,9 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE4_1/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/)
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+        )
 
 link_directories(
 #        ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
@@ -36,14 +37,17 @@ link_directories(
 #    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE4_1/
 #    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX2/
 #    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/
+#    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
+#    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSSE3/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE4_1/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX2/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/)
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_AVX512/
+    ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
@@ -81,12 +85,14 @@ add_library(SvtAv1Dec
 #    $<TARGET_OBJECTS:COMMON_ASM_SSE4_1>
 #    $<TARGET_OBJECTS:COMMON_ASM_AVX2>
 #    $<TARGET_OBJECTS:COMMON_ASM_AVX512>
-    $<TARGET_OBJECTS:ENCODER_C_DEFAULT>
-    $<TARGET_OBJECTS:ENCODER_ASM_SSE2>
-    $<TARGET_OBJECTS:ENCODER_ASM_SSSE3>
-    $<TARGET_OBJECTS:ENCODER_ASM_SSE4_1>
-    $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
-    $<TARGET_OBJECTS:ENCODER_ASM_AVX512>)
+     $<TARGET_OBJECTS:ENCODER_C_DEFAULT>
+     $<TARGET_OBJECTS:ENCODER_ASM_SSE2>
+     $<TARGET_OBJECTS:ENCODER_ASM_SSSE3>
+     $<TARGET_OBJECTS:ENCODER_ASM_SSE4_1>
+     $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
+     $<TARGET_OBJECTS:ENCODER_ASM_AVX512>
+     $<TARGET_OBJECTS:ENCODER_CODEC>)
+
 set_target_properties(SvtAv1Dec PROPERTIES VERSION ${DEC_VERSION})
 set_target_properties(SvtAv1Dec PROPERTIES SOVERSION ${DEC_VERSION_MAJOR})
 target_link_libraries(SvtAv1Dec ${PLATFORM_LIBS})
