@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -15,8 +14,8 @@
  * Process Results
  **************************************/
 typedef struct PictureAnalysisResults {
-    EbDctor         dctor;
-    EbObjectWrapper *picture_control_set_wrapper_ptr;
+    EbDctor          dctor;
+    EbObjectWrapper *pcs_wrapper_ptr;
 } PictureAnalysisResults;
 
 typedef struct PictureAnalysisResultInitData {
@@ -26,9 +25,7 @@ typedef struct PictureAnalysisResultInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType picture_analysis_result_creator(
-    EbPtr *object_dbl_ptr,
-    EbPtr  object_init_data_ptr);
+extern EbErrorType picture_analysis_result_creator(EbPtr *object_dbl_ptr,
+                                                   EbPtr  object_init_data_ptr);
 
 #endif //EbPictureAnalysisResults_h
-// clang-format on

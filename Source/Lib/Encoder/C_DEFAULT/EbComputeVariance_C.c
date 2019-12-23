@@ -5,8 +5,8 @@
 
 #include <stdint.h>
 
-static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b,
-    int b_stride, int w, int h, uint32_t *sse, int *sum) {
+static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int w, int h,
+                       uint32_t *sse, int *sum) {
     int i, j;
 
     *sum = 0;
@@ -25,17 +25,12 @@ static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b,
 }
 
 // TODO: use or implement a simd version of this
-uint32_t variance_highbd_c(const uint16_t *a,
-                           int a_stride,
-                           const uint16_t *b,
-                           int b_stride,
-                           int w,
-                           int h,
-                           uint32_t *sse) {
+uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w,
+                           int h, uint32_t *sse) {
     int i, j;
 
     int sad = 0;
-    *sse = 0;
+    *sse    = 0;
 
     for (i = 0; i < h; ++i) {
         for (j = 0; j < w; ++j) {
@@ -48,17 +43,16 @@ uint32_t variance_highbd_c(const uint16_t *a,
         b += b_stride;
     }
 
-    return *sse - (sad * sad)/(w*h);
+    return *sse - (sad * sad) / (w * h);
 }
 
-#define VAR(W, H)                                                    \
-  uint32_t eb_aom_variance##W##x##H##_c(const uint8_t *a, int a_stride, \
-                                     const uint8_t *b, int b_stride, \
-                                     uint32_t *sse) {                \
-    int sum;                                                         \
-    variance_c(a, a_stride, b, b_stride, W, H, sse, &sum);           \
-    return *sse - (uint32_t)(((int64_t)sum * sum) / (W * H));        \
-  }
+#define VAR(W, H)                                                                        \
+    uint32_t eb_aom_variance##W##x##H##_c(                                               \
+        const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, uint32_t *sse) { \
+        int sum;                                                                         \
+        variance_c(a, a_stride, b, b_stride, W, H, sse, &sum);                           \
+        return *sse - (uint32_t)(((int64_t)sum * sum) / (W * H));                        \
+    }
 
 VAR(4, 4)
 VAR(4, 8)

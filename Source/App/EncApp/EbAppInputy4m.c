@@ -11,9 +11,9 @@
 #define CHROMA_MAX 4
 
 /* copy a string until a specified character or a new line is found */
-char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
-    rsize_t count = 0;
-    char * src_init = src;
+char *copy_until_char_or_newline(char *src, char *dst, char chr) {
+    rsize_t count    = 0;
+    char *  src_init = src;
 
     while (*src != chr && *src != '\n') {
         src++;
@@ -26,24 +26,22 @@ char* copyUntilCharacterOrNewLine(char *src, char *dst, char chr){
 }
 
 /* reads the y4m header and parses the input parameters */
-int32_t read_y4m_header(EbConfig *cfg){
-    FILE *ptr_in;
-    char buffer[YFM_HEADER_MAX];
-    char *fresult, *tokstart, *tokend, format_str[YFM_HEADER_MAX];
-    uint32_t bitdepth = 8, width = 0, height = 0, fr_n = 0,
-        fr_d = 0, aspect_n, aspect_d;
-    char chroma[CHROMA_MAX] = "420", scan_type = 'p';
+int32_t read_y4m_header(EbConfig *cfg) {
+    FILE *   ptr_in;
+    char     buffer[YFM_HEADER_MAX];
+    char *   fresult, *tokstart, *tokend, format_str[YFM_HEADER_MAX];
+    uint32_t bitdepth = 8, width = 0, height = 0, fr_n = 0, fr_d = 0, aspect_n, aspect_d;
+    char     chroma[CHROMA_MAX] = "420", scan_type = 'p';
 
     /* pointer to the input file */
     ptr_in = cfg->input_file;
 
     /* get first line after YUV4MPEG2 */
     fresult = fgets(buffer, sizeof(buffer), ptr_in);
-    if(fresult==NULL)
-        return EB_ErrorBadParameter;
+    if (fresult == NULL) return EB_ErrorBadParameter;
 
     /* print header */
-    if(PRINT_HEADER) {
+    if (PRINT_HEADER) {
         fprintf(stderr, "y4m header:");
         fputs(buffer, stdout);
     }
@@ -60,37 +58,28 @@ int32_t read_y4m_header(EbConfig *cfg){
         switch (*tokstart++) {
         case 'W': /* width, required. */
             width = (uint32_t)strtol(tokstart, &tokend, 10);
-            if(PRINT_HEADER)
-                fprintf(stderr, "width = %d\n", width);
+            if (PRINT_HEADER) fprintf(stderr, "width = %d\n", width);
             tokstart = tokend;
             break;
         case 'H': /* height, required. */
             height = (uint32_t)strtol(tokstart, &tokend, 10);
-            if(PRINT_HEADER)
-                fprintf(stderr, "height = %d\n", height);
+            if (PRINT_HEADER) fprintf(stderr, "height = %d\n", height);
             tokstart = tokend;
             break;
         case 'I': /* scan type, not required, default: 'p' */
             switch (*tokstart++) {
-            case 'p':
-                scan_type = 'p';
-                break;
-            case 't':
-                scan_type = 't';
-                break;
-            case 'b':
-                scan_type = 'b';
-                break;
+            case 'p': scan_type = 'p'; break;
+            case 't': scan_type = 't'; break;
+            case 'b': scan_type = 'b'; break;
             case '?':
             default:
                 fprintf(cfg->error_log_file, "interlace type not supported\n");
                 return EB_ErrorBadParameter;
             }
-            if(PRINT_HEADER)
-                fprintf(stderr, "scan_type = %c\n", scan_type);
+            if (PRINT_HEADER) fprintf(stderr, "scan_type = %c\n", scan_type);
             break;
         case 'C': /* color space, not required: default "420" */
-            tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, 0x20);
+            tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
             if (EB_STRCMP("420mpeg2", format_str) == 0) {
                 EB_STRCPY(chroma, CHROMA_MAX, "420");
                 // chroma left
@@ -99,7 +88,7 @@ int32_t read_y4m_header(EbConfig *cfg){
                 EB_STRCPY(chroma, CHROMA_MAX, "420");
                 // chroma top-left
                 bitdepth = 8;
-            }else if (EB_STRCMP("420jpeg", format_str) == 0) {
+            } else if (EB_STRCMP("420jpeg", format_str) == 0) {
                 EB_STRCPY(chroma, CHROMA_MAX, "420");
                 // chroma center
                 bitdepth = 8;
@@ -179,35 +168,33 @@ int32_t read_y4m_header(EbConfig *cfg){
                 fprintf(cfg->error_log_file, "chroma format not supported\n");
                 return EB_ErrorBadParameter;
             }
-            if(PRINT_HEADER)
-                fprintf(stderr, "chroma = %s, bitdepth = %d\n", chroma, bitdepth);
+            if (PRINT_HEADER) fprintf(stderr, "chroma = %s, bitdepth = %d\n", chroma, bitdepth);
             break;
         case 'F': /* frame rate, required */
-            tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, ':');
-            fr_n = (uint32_t) strtol(format_str, (char **)NULL, 10);
+            tokstart = copy_until_char_or_newline(tokstart, format_str, ':');
+            fr_n     = (uint32_t)strtol(format_str, (char **)NULL, 10);
             tokstart++;
-            tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, 0x20);
-            fr_d = (uint32_t) strtol(format_str, (char **)NULL, 10);
-            if(PRINT_HEADER) {
+            tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
+            fr_d     = (uint32_t)strtol(format_str, (char **)NULL, 10);
+            if (PRINT_HEADER) {
                 fprintf(stderr, "framerate_n = %d\n", fr_n);
                 fprintf(stderr, "framerate_d = %d\n", fr_d);
             }
             break;
         case 'A': /* aspect ratio, not required */
-            tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, ':');
-            aspect_n = (uint32_t) strtol(format_str, (char **)NULL, 10);
+            tokstart = copy_until_char_or_newline(tokstart, format_str, ':');
+            aspect_n = (uint32_t)strtol(format_str, (char **)NULL, 10);
             tokstart++;
-            tokstart = copyUntilCharacterOrNewLine(tokstart, format_str, 0x20);
-            aspect_d = (uint32_t) strtol(format_str, (char **)NULL, 10);
-            if(PRINT_HEADER) {
+            tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
+            aspect_d = (uint32_t)strtol(format_str, (char **)NULL, 10);
+            if (PRINT_HEADER) {
                 fprintf(stderr, "aspect_n = %d\n", aspect_n);
                 fprintf(stderr, "aspect_d = %d\n", aspect_d);
             }
             break;
         default:
             /* Unknown section: skip it */
-            while (*tokstart != 0x20 && *tokstart != '\0')
-                tokstart++;
+            while (*tokstart != 0x20 && *tokstart != '\0') tokstart++;
             break;
         }
     }
@@ -216,26 +203,26 @@ int32_t read_y4m_header(EbConfig *cfg){
     assert(fresult + strlen(fresult) == tokstart);
 
     /*check if required parameters were read*/
-    if(width == 0) {
+    if (width == 0) {
         fprintf(cfg->error_log_file, "width not found in y4m header\n");
         return EB_ErrorBadParameter;
     }
-    if(height == 0) {
+    if (height == 0) {
         fprintf(cfg->error_log_file, "height not found in y4m header\n");
         return EB_ErrorBadParameter;
     }
-    if(fr_n == 0 || fr_d == 0) {
+    if (fr_n == 0 || fr_d == 0) {
         fprintf(cfg->error_log_file, "frame rate not found in y4m header\n");
         return EB_ErrorBadParameter;
     }
 
     /* Assign parameters to cfg */
-    cfg->source_width = width;
-    cfg->source_height = height;
-    cfg->frame_rate_numerator = fr_n;
+    cfg->source_width           = width;
+    cfg->source_height          = height;
+    cfg->frame_rate_numerator   = fr_n;
     cfg->frame_rate_denominator = fr_d;
-    cfg->frame_rate = fr_n/fr_d;
-    cfg->encoder_bit_depth = bitdepth;
+    cfg->frame_rate             = fr_n / fr_d;
+    cfg->encoder_bit_depth      = bitdepth;
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */
 
@@ -243,18 +230,18 @@ int32_t read_y4m_header(EbConfig *cfg){
 }
 
 /* read next line which contains the "FRAME" delimiter */
-int32_t read_y4m_frame_delimiter(EbConfig *cfg){
-    unsigned char bufferY4Mheader[10];
-    char *fresult;
+int32_t read_y4m_frame_delimiter(EbConfig *cfg) {
+    unsigned char buffer_y4m_header[10];
+    char *        fresult;
 
-    fresult = fgets((char *)bufferY4Mheader, sizeof(bufferY4Mheader), cfg->input_file);
+    fresult = fgets((char *)buffer_y4m_header, sizeof(buffer_y4m_header), cfg->input_file);
 
-    if(fresult == NULL){
+    if (fresult == NULL) {
         assert(feof(cfg->input_file));
         return EB_ErrorNone;
     }
 
-    if (EB_STRCMP((const char*)bufferY4Mheader, "FRAME\n") != 0) {
+    if (EB_STRCMP((const char *)buffer_y4m_header, "FRAME\n") != 0) {
         fprintf(cfg->error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
         return EB_ErrorBadParameter;
     }
@@ -263,13 +250,11 @@ int32_t read_y4m_frame_delimiter(EbConfig *cfg){
 }
 
 /* check if the input file is in YUV4MPEG2 (y4m) format */
-EbBool check_if_y4m(EbConfig *cfg)
-{
+EbBool check_if_y4m(EbConfig *cfg) {
     size_t len;
-    char buf[YUV4MPEG2_IND_SIZE+1];
+    char   buf[YUV4MPEG2_IND_SIZE + 1];
     len = fread(buf, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
-    if (len != 1)
-        return EB_FALSE;
+    if (len != 1) return EB_FALSE;
 
     if ((cfg->input_file != stdin) && (!cfg->input_file_is_fifo)) {
         fseek(cfg->input_file, 0, SEEK_SET);

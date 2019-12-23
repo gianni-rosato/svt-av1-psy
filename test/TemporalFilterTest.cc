@@ -184,18 +184,18 @@ class TemporalFilterTest : public ::testing::Test,
 
   protected:
     void init_param() {
-        uint8_t offset_src_buffer_Y =
+        uint8_t offset_src_buffer_y =
             block_row_ * (BH >> 1) * stride_[C_Y] + block_col_ * (BW >> 1);
-        uint8_t offset_src_buffer_U =
+        uint8_t offset_src_buffer_u =
             block_row_ * (BH >> 2) * stride_[C_U] + block_col_ * (BW >> 2);
-        uint8_t offset_src_buffer_V =
+        uint8_t offset_src_buffer_v =
             block_row_ * (BH >> 2) * stride_[C_V] + block_col_ * (BW >> 2);
 
-        uint8_t offset_block_buffer_Y =
+        uint8_t offset_block_buffer_y =
             block_row_ * 32 * stride_pred_[C_Y] + block_col_ * 32;
-        uint8_t offset_block_buffer_U =
+        uint8_t offset_block_buffer_u =
             block_row_ * 16 * stride_pred_[C_U] + block_col_ * 16;
-        uint8_t offset_block_buffer_V =
+        uint8_t offset_block_buffer_v =
             block_row_ * 16 * stride_pred_[C_V] + block_col_ * 16;
 
         int idx_32x32 = block_row_ * 2 + block_col_;
@@ -206,40 +206,40 @@ class TemporalFilterTest : public ::testing::Test,
             blk_fw_32x32_[ifw] = blk_fw_[ifw_index];
         }
 
-        src_ptr_[C_Y] = src_[C_Y] + offset_src_buffer_Y;
-        src_ptr_[C_U] = src_[C_U] + offset_src_buffer_U;
-        src_ptr_[C_V] = src_[C_V] + offset_src_buffer_V;
+        src_ptr_[C_Y] = src_[C_Y] + offset_src_buffer_y;
+        src_ptr_[C_U] = src_[C_U] + offset_src_buffer_u;
+        src_ptr_[C_V] = src_[C_V] + offset_src_buffer_v;
 
-        pred_ptr_[C_Y] = pred_[C_Y] + offset_block_buffer_Y;
-        pred_ptr_[C_U] = pred_[C_U] + offset_block_buffer_U;
-        pred_ptr_[C_V] = pred_[C_V] + offset_block_buffer_V;
+        pred_ptr_[C_Y] = pred_[C_Y] + offset_block_buffer_y;
+        pred_ptr_[C_U] = pred_[C_U] + offset_block_buffer_u;
+        pred_ptr_[C_V] = pred_[C_V] + offset_block_buffer_v;
 
-        hbd_src_ptr_[C_Y] = hbd_src_[C_Y] + offset_src_buffer_Y;
-        hbd_src_ptr_[C_U] = hbd_src_[C_U] + offset_src_buffer_U;
-        hbd_src_ptr_[C_V] = hbd_src_[C_V] + offset_src_buffer_V;
+        hbd_src_ptr_[C_Y] = hbd_src_[C_Y] + offset_src_buffer_y;
+        hbd_src_ptr_[C_U] = hbd_src_[C_U] + offset_src_buffer_u;
+        hbd_src_ptr_[C_V] = hbd_src_[C_V] + offset_src_buffer_v;
 
-        hbd_pred_ptr_[C_Y] = hbd_pred_[C_Y] + offset_block_buffer_Y;
-        hbd_pred_ptr_[C_U] = hbd_pred_[C_U] + offset_block_buffer_U;
-        hbd_pred_ptr_[C_V] = hbd_pred_[C_V] + offset_block_buffer_V;
+        hbd_pred_ptr_[C_Y] = hbd_pred_[C_Y] + offset_block_buffer_y;
+        hbd_pred_ptr_[C_U] = hbd_pred_[C_U] + offset_block_buffer_u;
+        hbd_pred_ptr_[C_V] = hbd_pred_[C_V] + offset_block_buffer_v;
 
-        accum_ptr1_[C_Y] = accum_1_[C_Y] + offset_block_buffer_Y;
-        accum_ptr1_[C_U] = accum_1_[C_U] + offset_block_buffer_U;
-        accum_ptr1_[C_V] = accum_1_[C_V] + offset_block_buffer_V;
-        accum_ptr2_[C_Y] = accum_2_[C_Y] + offset_block_buffer_Y;
-        accum_ptr2_[C_U] = accum_2_[C_U] + offset_block_buffer_U;
-        accum_ptr2_[C_V] = accum_2_[C_V] + offset_block_buffer_V;
-        accum_ptr3_[C_Y] = accum_3_[C_Y] + offset_block_buffer_Y;
-        accum_ptr3_[C_U] = accum_3_[C_U] + offset_block_buffer_U;
-        accum_ptr3_[C_V] = accum_3_[C_V] + offset_block_buffer_V;
-        count_ptr1_[C_Y] = count_1_[C_Y] + offset_block_buffer_Y;
-        count_ptr1_[C_U] = count_1_[C_U] + offset_block_buffer_U;
-        count_ptr1_[C_V] = count_1_[C_V] + offset_block_buffer_V;
-        count_ptr2_[C_Y] = count_2_[C_Y] + offset_block_buffer_Y;
-        count_ptr2_[C_U] = count_2_[C_U] + offset_block_buffer_U;
-        count_ptr2_[C_V] = count_2_[C_V] + offset_block_buffer_V;
-        count_ptr3_[C_Y] = count_3_[C_Y] + offset_block_buffer_Y;
-        count_ptr3_[C_U] = count_3_[C_U] + offset_block_buffer_U;
-        count_ptr3_[C_V] = count_3_[C_V] + offset_block_buffer_V;
+        accum_ptr1_[C_Y] = accum_1_[C_Y] + offset_block_buffer_y;
+        accum_ptr1_[C_U] = accum_1_[C_U] + offset_block_buffer_u;
+        accum_ptr1_[C_V] = accum_1_[C_V] + offset_block_buffer_v;
+        accum_ptr2_[C_Y] = accum_2_[C_Y] + offset_block_buffer_y;
+        accum_ptr2_[C_U] = accum_2_[C_U] + offset_block_buffer_u;
+        accum_ptr2_[C_V] = accum_2_[C_V] + offset_block_buffer_v;
+        accum_ptr3_[C_Y] = accum_3_[C_Y] + offset_block_buffer_y;
+        accum_ptr3_[C_U] = accum_3_[C_U] + offset_block_buffer_u;
+        accum_ptr3_[C_V] = accum_3_[C_V] + offset_block_buffer_v;
+        count_ptr1_[C_Y] = count_1_[C_Y] + offset_block_buffer_y;
+        count_ptr1_[C_U] = count_1_[C_U] + offset_block_buffer_u;
+        count_ptr1_[C_V] = count_1_[C_V] + offset_block_buffer_v;
+        count_ptr2_[C_Y] = count_2_[C_Y] + offset_block_buffer_y;
+        count_ptr2_[C_U] = count_2_[C_U] + offset_block_buffer_u;
+        count_ptr2_[C_V] = count_2_[C_V] + offset_block_buffer_v;
+        count_ptr3_[C_Y] = count_3_[C_Y] + offset_block_buffer_y;
+        count_ptr3_[C_U] = count_3_[C_U] + offset_block_buffer_u;
+        count_ptr3_[C_V] = count_3_[C_V] + offset_block_buffer_v;
     }
 
     void populate_list_with_value(int *list, int nelements, const int value) {

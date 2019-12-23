@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -14,12 +13,11 @@
 #define MAX_OFFSET_WIDTH 64
 #define MAX_OFFSET_HEIGHT 0
 
-static const int16_t eb_k_eob_group_start[12] = { 0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513 };
-static const int16_t eb_k_eob_offset_bits[12] = { 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+static const int16_t eb_k_eob_group_start[12] = {0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513};
+static const int16_t eb_k_eob_offset_bits[12] = {0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {
-    DC_PRED, V_PRED, H_PRED, D157_PRED, DC_PRED
-};
+    DC_PRED, V_PRED, H_PRED, D157_PRED, DC_PRED};
 
 static INLINE uint8_t *set_levels(uint8_t *const levels_buf, const int32_t width) {
     return levels_buf + TX_PAD_TOP * (width + TX_PAD_HOR);
@@ -47,41 +45,41 @@ static INLINE int get_txb_high(TxSize tx_size) {
 static INLINE PredictionMode get_uv_mode(UvPredictionMode mode) {
     assert(mode < UV_INTRA_MODES);
     static const PredictionMode uv2y[] = {
-      DC_PRED,        // UV_DC_PRED
-      V_PRED,         // UV_V_PRED
-      H_PRED,         // UV_H_PRED
-      D45_PRED,       // UV_D45_PRED
-      D135_PRED,      // UV_D135_PRED
-      D113_PRED,      // UV_D113_PRED
-      D157_PRED,      // UV_D157_PRED
-      D203_PRED,      // UV_D203_PRED
-      D67_PRED,       // UV_D67_PRED
-      SMOOTH_PRED,    // UV_SMOOTH_PRED
-      SMOOTH_V_PRED,  // UV_SMOOTH_V_PRED
-      SMOOTH_H_PRED,  // UV_SMOOTH_H_PRED
-      PAETH_PRED,     // UV_PAETH_PRED
-      DC_PRED,        // UV_CFL_PRED
-      INTRA_INVALID,  // UV_INTRA_MODES
-      INTRA_INVALID,  // UV_MODE_INVALID
+        DC_PRED, // UV_DC_PRED
+        V_PRED, // UV_V_PRED
+        H_PRED, // UV_H_PRED
+        D45_PRED, // UV_D45_PRED
+        D135_PRED, // UV_D135_PRED
+        D113_PRED, // UV_D113_PRED
+        D157_PRED, // UV_D157_PRED
+        D203_PRED, // UV_D203_PRED
+        D67_PRED, // UV_D67_PRED
+        SMOOTH_PRED, // UV_SMOOTH_PRED
+        SMOOTH_V_PRED, // UV_SMOOTH_V_PRED
+        SMOOTH_H_PRED, // UV_SMOOTH_H_PRED
+        PAETH_PRED, // UV_PAETH_PRED
+        DC_PRED, // UV_CFL_PRED
+        INTRA_INVALID, // UV_INTRA_MODES
+        INTRA_INVALID, // UV_MODE_INVALID
     };
     return uv2y[mode];
 }
 
 static INLINE TxType intra_mode_to_tx_type(const BlockModeInfo *mbmi, PlaneType plane_type) {
     static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
-        DCT_DCT,    // DC
-        ADST_DCT,   // V
-        DCT_ADST,   // H
-        DCT_DCT,    // D45
-        ADST_ADST,  // D135
-        ADST_DCT,   // D117
-        DCT_ADST,   // D153
-        DCT_ADST,   // D207
-        ADST_DCT,   // D63
-        ADST_ADST,  // SMOOTH
-        ADST_DCT,   // SMOOTH_V
-        DCT_ADST,   // SMOOTH_H
-        ADST_ADST,  // PAETH
+        DCT_DCT, // DC
+        ADST_DCT, // V
+        DCT_ADST, // H
+        DCT_DCT, // D45
+        ADST_ADST, // D135
+        ADST_DCT, // D117
+        DCT_ADST, // D153
+        DCT_ADST, // D207
+        ADST_DCT, // D63
+        ADST_ADST, // SMOOTH
+        ADST_DCT, // SMOOTH_V
+        DCT_ADST, // SMOOTH_H
+        ADST_ADST, // PAETH
     };
     const PredictionMode mode =
         (plane_type == PLANE_TYPE_Y) ? mbmi->mode : get_uv_mode(mbmi->uv_mode);
@@ -90,34 +88,30 @@ static INLINE TxType intra_mode_to_tx_type(const BlockModeInfo *mbmi, PlaneType 
 }
 
 static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
-    SEG_LVL_FEATURES feature_id)
-{
+                              SEG_LVL_FEATURES feature_id) {
     return seg->feature_data[segment_id][feature_id];
 }
 
-static AOM_FORCE_INLINE int get_br_ctx_eob(const int c,  // raster order
-    const int bwl, const TxClass tx_class)
-{
+static AOM_FORCE_INLINE int get_br_ctx_eob(const int c, // raster order
+                                           const int bwl, const TxClass tx_class) {
     const int row = c >> bwl;
     const int col = c - (row << bwl);
     if (c == 0) return 0;
     if ((tx_class == TX_CLASS_2D && row < 2 && col < 2) ||
-        (tx_class == TX_CLASS_HORIZ && col == 0) ||
-        (tx_class == TX_CLASS_VERT && row == 0))
+        (tx_class == TX_CLASS_HORIZ && col == 0) || (tx_class == TX_CLASS_VERT && row == 0))
         return 7;
     return 14;
 }
 
 static INLINE int32_t get_br_ctx(const uint8_t *const levels,
-    const int32_t c,  // raster order
-    const int32_t bwl, const TxType tx_type)
-{
-    const int32_t row = c >> bwl;
-    const int32_t col = c - (row << bwl);
-    const int32_t stride = (1 << bwl) + TX_PAD_HOR;
+                                 const int32_t        c, // raster order
+                                 const int32_t bwl, const TxType tx_type) {
+    const int32_t row      = c >> bwl;
+    const int32_t col      = c - (row << bwl);
+    const int32_t stride   = (1 << bwl) + TX_PAD_HOR;
     const TxClass tx_class = tx_type_to_class[tx_type];
-    const int32_t pos = row * stride + col;
-    int32_t mag = levels[pos + 1];
+    const int32_t pos      = row * stride + col;
+    int32_t       mag      = levels[pos + 1];
     mag += levels[pos + stride];
     switch (tx_class) {
     case TX_CLASS_2D:
@@ -152,13 +146,11 @@ static INLINE int get_lower_levels_ctx_eob(int bwl, int height, int scan_idx) {
 }
 
 static INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,
-    int32_t subsampling_x, int32_t subsampling_y)
-{
-    const int32_t bw = mi_size_wide[bsize];
-    const int32_t bh = mi_size_high[bsize];
-    int32_t ref_pos = ((mi_row & 0x01) || !(bh & 0x01) || !subsampling_y) &&
-        ((mi_col & 0x01) || !(bw & 0x01) || !subsampling_x);
+                                          int32_t subsampling_x, int32_t subsampling_y) {
+    const int32_t bw      = mi_size_wide[bsize];
+    const int32_t bh      = mi_size_high[bsize];
+    int32_t       ref_pos = ((mi_row & 0x01) || !(bh & 0x01) || !subsampling_y) &&
+                      ((mi_col & 0x01) || !(bw & 0x01) || !subsampling_x);
     return ref_pos;
 }
-#endif//EbCommonUtils_h
-// clang-format on
+#endif //EbCommonUtils_h

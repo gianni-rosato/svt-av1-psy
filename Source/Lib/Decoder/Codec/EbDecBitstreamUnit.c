@@ -66,7 +66,7 @@
    number=3,
    pages="256--294",
    month=Jul,
-   URL="http://researchcommons.waikato.ac.nz/bitstream/handle/10289/78/content.pdf"
+   URL="http://researchcommons.waikato.ac.nz/Bitstream/handle/10289/78/content.pdf"
   }*/
 
 // Commented it because it is included in EbDecBitstreamUnit.h file.
@@ -86,27 +86,27 @@
 
 /*The return value of od_ec_dec_tell does not change across an od_ec_dec_refill
    call.*/
-static void od_ec_dec_refill(od_ec_dec *dec) {
-  int s;
-  od_ec_window dif;
-  int16_t cnt;
-  const unsigned char *bptr;
-  const unsigned char *end;
-  dif = dec->dif;
-  cnt = dec->cnt;
-  bptr = dec->bptr;
-  end = dec->end;
-  s = OD_EC_WINDOW_SIZE - 9 - (cnt + 15);
-  for (; s >= 0 && bptr < end; s -= 8, bptr++) {
-    /*Each time a byte is inserted into the window (dif), bptr advances and cnt
+static void od_ec_dec_refill(OdEcDec *dec) {
+    int                  s;
+    OdEcWindow           dif;
+    int16_t              cnt;
+    const unsigned char *bptr;
+    const unsigned char *end;
+    dif  = dec->dif;
+    cnt  = dec->cnt;
+    bptr = dec->bptr;
+    end  = dec->end;
+    s    = OD_EC_WINDOW_SIZE - 9 - (cnt + 15);
+    for (; s >= 0 && bptr < end; s -= 8, bptr++) {
+        /*Each time a byte is inserted into the window (dif), bptr advances and cnt
        is incremented by 8, so the total number of consumed bits (the return
        value of od_ec_dec_tell) does not change.*/
-    assert(s <= OD_EC_WINDOW_SIZE - 8);
-    dif ^= (od_ec_window)bptr[0] << s;
-    cnt += 8;
-  }
-  if (bptr >= end) {
-    /*We've reached the end of the buffer. It is perfectly valid for us to need
+        assert(s <= OD_EC_WINDOW_SIZE - 8);
+        dif ^= (OdEcWindow)bptr[0] << s;
+        cnt += 8;
+    }
+    if (bptr >= end) {
+        /*We've reached the end of the buffer. It is perfectly valid for us to need
        to fill the window with additional bits past the end of the buffer (and
        this happens in normal operation). These bits should all just be taken
        as zero. But we cannot increment bptr past 'end' (this is undefined
@@ -117,12 +117,12 @@ static void od_ec_dec_refill(od_ec_dec *dec) {
        puts lots of zero bits into the window, and means we won't try to refill
        it from the buffer for a very long time (at which point we'll put lots
        of zero bits into the window again).*/
-    dec->tell_offs += OD_EC_LOTS_OF_BITS - cnt;
-    cnt = OD_EC_LOTS_OF_BITS;
-  }
-  dec->dif = dif;
-  dec->cnt = cnt;
-  dec->bptr = bptr;
+        dec->tell_offs += OD_EC_LOTS_OF_BITS - cnt;
+        cnt = OD_EC_LOTS_OF_BITS;
+    }
+    dec->dif  = dif;
+    dec->cnt  = cnt;
+    dec->bptr = bptr;
 }
 
 /*Takes updated dif and range values, renormalizes them so that
@@ -133,66 +133,61 @@ static void od_ec_dec_refill(od_ec_dec *dec) {
   ret: The value to return.
   Return: ret.
           This allows the compiler to jump to this function via a tail-call.*/
-static int od_ec_dec_normalize(od_ec_dec *dec, od_ec_window dif, unsigned rng,
-                               int ret)
-{
-  int d;
-  assert(rng <= 65535U);
-  /*The number of leading zeros in the 16-bit binary representation of rng.*/
-  d = 16 - OD_ILOG_NZ(rng);
-  /*d bits in dec->dif are consumed.*/
-  dec->cnt -= d;
-  /*This is equivalent to shifting in 1's instead of 0's.*/
-  dec->dif = ((dif + 1) << d) - 1;
-  dec->rng = rng << d;
-  if (dec->cnt < 0) od_ec_dec_refill(dec);
-  return ret;
+static int od_ec_dec_normalize(OdEcDec *dec, OdEcWindow dif, unsigned rng, int ret) {
+    int d;
+    assert(rng <= 65535U);
+    /*The number of leading zeros in the 16-bit binary representation of rng.*/
+    d = 16 - OD_ILOG_NZ(rng);
+    /*d bits in dec->dif are consumed.*/
+    dec->cnt -= d;
+    /*This is equivalent to shifting in 1's instead of 0's.*/
+    dec->dif = ((dif + 1) << d) - 1;
+    dec->rng = rng << d;
+    if (dec->cnt < 0) od_ec_dec_refill(dec);
+    return ret;
 }
 
 /*Initializes the decoder.
   buf: The input buffer to use.
   storage: The size in bytes of the input buffer.*/
-static void od_ec_dec_init(od_ec_dec    *dec,
-                    const unsigned char *buf,
-                    uint32_t            storage)
-{
-    dec->buf = buf;
+static void od_ec_dec_init(OdEcDec *dec, const unsigned char *buf, uint32_t storage) {
+    dec->buf       = buf;
     dec->tell_offs = 10 - (OD_EC_WINDOW_SIZE - 8);
-    dec->end = buf + storage;
-    dec->bptr = buf;
-    dec->dif = ((od_ec_window)1 << (OD_EC_WINDOW_SIZE - 1)) - 1;
-    dec->rng = 0x8000;
-    dec->cnt = -15;
+    dec->end       = buf + storage;
+    dec->bptr      = buf;
+    dec->dif       = ((OdEcWindow)1 << (OD_EC_WINDOW_SIZE - 1)) - 1;
+    dec->rng       = 0x8000;
+    dec->cnt       = -15;
     od_ec_dec_refill(dec);
 }
 
 /*Decode a single binary value.
   f: The probability that the bit is one, scaled by 32768.
   Return: The value decoded (0 or 1).*/
-int od_ec_decode_bool_q15(od_ec_dec *dec, unsigned f) {
-  od_ec_window dif;
-  od_ec_window vw;
-  unsigned r;
-  unsigned r_new;
-  unsigned v;
-  int ret;
-  assert(0 < f);
-  assert(f < 32768U);
-  dif = dec->dif;
-  r = dec->rng;
-  assert(dif >> (OD_EC_WINDOW_SIZE - 16) < r);
-  assert(32768U <= r);
-  v = ((r >> 8) * (uint32_t)(f >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT));
-  v += EC_MIN_PROB;
-  vw = (od_ec_window)v << (OD_EC_WINDOW_SIZE - 16);
-  ret = 1;
-  r_new = v;
-  if (dif >= vw) {
-    r_new = r - v;
-    dif -= vw;
-    ret = 0;
-  }
-  return od_ec_dec_normalize(dec, dif, r_new, ret);
+int od_ec_decode_bool_q15(OdEcDec *dec, unsigned f) {
+    OdEcWindow dif;
+    OdEcWindow vw;
+    unsigned   r;
+    unsigned   r_new;
+    unsigned   v;
+    int        ret;
+    assert(0 < f);
+    assert(f < 32768U);
+    dif = dec->dif;
+    r   = dec->rng;
+    assert(dif >> (OD_EC_WINDOW_SIZE - 16) < r);
+    assert(32768U <= r);
+    v = ((r >> 8) * (uint32_t)(f >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT));
+    v += EC_MIN_PROB;
+    vw    = (OdEcWindow)v << (OD_EC_WINDOW_SIZE - 16);
+    ret   = 1;
+    r_new = v;
+    if (dif >= vw) {
+        r_new = r - v;
+        dif -= vw;
+        ret = 0;
+    }
+    return od_ec_dec_normalize(dec, dif, r_new, ret);
 }
 
 /*Decodes a symbol given an inverse cumulative distribution function (CDF)
@@ -204,36 +199,36 @@ int od_ec_decode_bool_q15(od_ec_dec *dec, unsigned f) {
   nsyms: The number of symbols in the alphabet.
          This should be at most 16.
   Return: The decoded symbol s.*/
-int od_ec_decode_cdf_q15(od_ec_dec *dec, const uint16_t *icdf, int nsyms) {
-  od_ec_window dif;
-  unsigned r;
-  unsigned c;
-  unsigned u;
-  unsigned v;
-  int ret;
-  (void)nsyms;
-  dif = dec->dif;
-  r = dec->rng;
-  const int N = nsyms - 1;
+int od_ec_decode_cdf_q15(OdEcDec *dec, const uint16_t *icdf, int nsyms) {
+    OdEcWindow dif;
+    unsigned   r;
+    unsigned   c;
+    unsigned   u;
+    unsigned   v;
+    int        ret;
+    (void)nsyms;
+    dif         = dec->dif;
+    r           = dec->rng;
+    const int N = nsyms - 1;
 
-  assert(dif >> (OD_EC_WINDOW_SIZE - 16) < r);
-  assert(icdf[nsyms - 1] == OD_ICDF(CDF_PROB_TOP));
-  assert(32768U <= r);
-  assert(7 - EC_PROB_SHIFT - CDF_SHIFT >= 0);
-  c = (unsigned)(dif >> (OD_EC_WINDOW_SIZE - 16));
-  v = r;
-  ret = -1;
-  do {
-    u = v;
-    v = ((r >> 8) * (uint32_t)(icdf[++ret] >> EC_PROB_SHIFT) >>
-         (7 - EC_PROB_SHIFT - CDF_SHIFT));
-    v += EC_MIN_PROB * (N - ret);
-  } while (c < v);
-  assert(v < u);
-  assert(u <= r);
-  r = u - v;
-  dif -= (od_ec_window)v << (OD_EC_WINDOW_SIZE - 16);
-  return od_ec_dec_normalize(dec, dif, r, ret);
+    assert(dif >> (OD_EC_WINDOW_SIZE - 16) < r);
+    assert(icdf[nsyms - 1] == OD_ICDF(CDF_PROB_TOP));
+    assert(32768U <= r);
+    assert(7 - EC_PROB_SHIFT - CDF_SHIFT >= 0);
+    c   = (unsigned)(dif >> (OD_EC_WINDOW_SIZE - 16));
+    v   = r;
+    ret = -1;
+    do {
+        u = v;
+        v = ((r >> 8) * (uint32_t)(icdf[++ret] >> EC_PROB_SHIFT) >>
+             (7 - EC_PROB_SHIFT - CDF_SHIFT));
+        v += EC_MIN_PROB * (N - ret);
+    } while (c < v);
+    assert(v < u);
+    assert(u <= r);
+    r = u - v;
+    dif -= (OdEcWindow)v << (OD_EC_WINDOW_SIZE - 16);
+    return od_ec_dec_normalize(dec, dif, r, ret);
 }
 
 /********************************************************************************************************************************/
@@ -243,21 +238,16 @@ int od_ec_decode_cdf_q15(od_ec_dec *dec, const uint16_t *icdf, int nsyms) {
 // daalaboolreader.c from AOM
 
 int aom_daala_reader_init(DaalaReader_t *r, const uint8_t *buffer, int size) {
-  if (size && !buffer)
-    return 1;
-  r->buffer_end = buffer + size;
-  r->buffer = buffer;
-  od_ec_dec_init(&r->ec, buffer, size);
+    if (size && !buffer) return 1;
+    r->buffer_end = buffer + size;
+    r->buffer     = buffer;
+    od_ec_dec_init(&r->ec, buffer, size);
 #if CONFIG_ACCOUNTING
-  r->accounting = NULL;
+    r->accounting = NULL;
 #endif
-  return 0;
+    return 0;
 }
 
-const uint8_t *aom_daala_reader_find_begin(DaalaReader_t *r) {
-  return r->buffer;
-}
+const uint8_t *aom_daala_reader_find_begin(DaalaReader_t *r) { return r->buffer; }
 
-const uint8_t *aom_daala_reader_find_end(DaalaReader_t *r) {
-  return r->buffer_end;
-}
+const uint8_t *aom_daala_reader_find_end(DaalaReader_t *r) { return r->buffer_end; }

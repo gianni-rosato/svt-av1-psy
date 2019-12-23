@@ -14,7 +14,7 @@
 
 #include "EbDefinitions.h"
 #include <assert.h>
-#include <emmintrin.h>  // SSE2
+#include <emmintrin.h> // SSE2
 #include "aom_dsp_rtcd.h"
 #include "synonyms.h"
 
@@ -45,29 +45,27 @@ static INLINE uint32_t add32x4_sse2(__m128i val) {
 }
 
 static INLINE void variance_kernel_no_sum_sse2(const __m128i src, const __m128i ref,
-    __m128i *const sse) {
+                                               __m128i *const sse) {
     const __m128i diff = _mm_sub_epi16(src, ref);
-    *sse = _mm_add_epi32(*sse, _mm_madd_epi16(diff, diff));
+    *sse               = _mm_add_epi32(*sse, _mm_madd_epi16(diff, diff));
 }
 
 // Can handle 128 pixels' diff sum (such as 8x16 or 16x8)
 // Slightly faster than variance_final_256_pel_no_sum_sse2()
 // diff sum of 128 pixels can still fit in 16bit integer
-static INLINE void variance_final_128_pel_no_sum_sse2(__m128i vsse,
-    uint32_t *const sse) {
+static INLINE void variance_final_128_pel_no_sum_sse2(__m128i vsse, uint32_t *const sse) {
     *sse = add32x4_sse2(vsse);
 }
 
 // Can handle 256 pixels' diff sum (such as 16x16)
-static INLINE void variance_final_256_pel_no_sum_sse2(__m128i vsse,
-    uint32_t *const sse) {
+static INLINE void variance_final_256_pel_no_sum_sse2(__m128i vsse, uint32_t *const sse) {
     *sse = add32x4_sse2(vsse);
 }
 
 static INLINE void variance4_no_sum_sse2(const uint8_t *src, const int32_t src_stride,
-    const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m128i *const sse) {
-    assert(h <= 256);  // May overflow for larger height.
+                                         const uint8_t *ref, const int32_t ref_stride,
+                                         const int32_t h, __m128i *const sse) {
+    assert(h <= 256); // May overflow for larger height.
 
     for (int32_t i = 0; i < h; i += 2) {
         const __m128i s = load4x2_sse2(src, src_stride);
@@ -80,9 +78,9 @@ static INLINE void variance4_no_sum_sse2(const uint8_t *src, const int32_t src_s
 }
 
 static INLINE void variance8_no_sum_sse2(const uint8_t *src, const int32_t src_stride,
-    const uint8_t *ref, const int32_t ref_stride,
-    const int32_t h, __m128i *const sse) {
-    assert(h <= 128);  // May overflow for larger height.
+                                         const uint8_t *ref, const int32_t ref_stride,
+                                         const int32_t h, __m128i *const sse) {
+    assert(h <= 128); // May overflow for larger height.
     for (int32_t i = 0; i < h; i++) {
         const __m128i s = load8_8to16_sse2(src);
         const __m128i r = load8_8to16_sse2(ref);
@@ -93,4 +91,4 @@ static INLINE void variance8_no_sum_sse2(const uint8_t *src, const int32_t src_s
     }
 }
 
-#endif  // EBVARIANCE_SSE2_H
+#endif // EBVARIANCE_SSE2_H

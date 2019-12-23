@@ -32,7 +32,7 @@
 #include "noise_model.h"
 #include "aom_dsp_rtcd.h"
 
-static aom_film_grain_t film_grain_test_vectors[3] = {
+static AomFilmGrain film_grain_test_vectors[3] = {
     /* Test 1 */
     {
         1 /* apply_grain */,
@@ -311,7 +311,7 @@ double randn(libaom_test::ACMRandom *random, double sigma) {
 }
 
 void denoise_and_model_dctor(EbPtr p) {
-    aom_denoise_and_model_t *obj = (aom_denoise_and_model_t *)p;
+    AomDenoiseAndModel *obj = (AomDenoiseAndModel *)p;
 
     free(obj->flat_blocks);
     for (int32_t i = 0; i < 3; ++i) {
@@ -324,7 +324,7 @@ void denoise_and_model_dctor(EbPtr p) {
 }
 
 /* clang-format off */
-static aom_film_grain_t expected_film_grain = {
+static AomFilmGrain expected_film_grain = {
     1 /* apply_grain */,
     1 /* update_parameters */,
     {{0, 36}, {54, 36}, {134, 34}, {255, 36}, },
@@ -385,7 +385,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         EXPECT_EQ(err, 0) << "create input pic fail";
 
         // create the denoise and noise model
-        denoise_and_model_init_data_t fg_init_data;
+        DenoiseAndModelInitData fg_init_data;
         fg_init_data.encoder_bit_depth = EB_8BIT;
         fg_init_data.encoder_color_format = EB_YUV420;
         fg_init_data.noise_level = 4;  // TODO: check the range;
@@ -461,8 +461,8 @@ class DenoiseModelRunTest : public ::testing::Test {
     int subsampling_x_;
     int subsampling_y_;
     EbPictureBufferDesc in_pic_;
-    aom_denoise_and_model_t noise_model;
-    aom_film_grain_t output_film_grain;
+    AomDenoiseAndModel noise_model;
+    AomFilmGrain output_film_grain;
     libaom_test::ACMRandom random_;
     uint8_t *data_ptr_[3];
     uint8_t *denoised_ptr_[3];

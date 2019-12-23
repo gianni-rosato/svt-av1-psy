@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -23,127 +22,128 @@
 __attribute__((optimize("unroll-loops")))
 #endif
 
-void EbStartTime(uint64_t *Startseconds, uint64_t *Startuseconds) {
+void eb_start_time(uint64_t *start_seconds, uint64_t *start_u_seconds) {
 #ifdef _WIN32
-    *Startseconds = (uint64_t)clock();
-    (void)(*Startuseconds);
+    *start_seconds = (uint64_t)clock();
+    (void)(*start_u_seconds);
 #else
     struct timeval start;
     gettimeofday(&start, NULL);
-    *Startseconds = start.tv_sec;
-    *Startuseconds = start.tv_usec;
+    *start_seconds   = start.tv_sec;
+    *start_u_seconds = start.tv_usec;
 #endif
 }
 
-void EbFinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds) {
+void eb_finish_time(uint64_t *finish_seconds, uint64_t *finish_u_seconds) {
 #ifdef _WIN32
-    *Finishseconds = (uint64_t)clock();
-    (void)(*Finishuseconds);
+    *finish_seconds = (uint64_t)clock();
+    (void)(*finish_u_seconds);
 #else
     struct timeval finish;
     gettimeofday(&finish, NULL);
-    *Finishseconds = finish.tv_sec;
-    *Finishuseconds = finish.tv_usec;
+    *finish_seconds   = finish.tv_sec;
+    *finish_u_seconds = finish.tv_usec;
 #endif
 }
 
-void EbComputeOverallElapsedTime(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
-{
+void eb_compute_overall_elapsed_time(uint64_t start_seconds, uint64_t start_u_seconds,
+                                     uint64_t finish_seconds, uint64_t finish_u_seconds,
+                                     double *duration) {
 #ifdef _WIN32
     //double  duration;
-    *duration = (double)(Finishseconds - Startseconds) / CLOCKS_PER_SEC;
-    (void)(Startuseconds);
-    (void)(Finishuseconds);
+    *duration = (double)(finish_seconds - start_seconds) / CLOCKS_PER_SEC;
+    (void)(start_u_seconds);
+    (void)(finish_u_seconds);
 #else
-    long   mtime, seconds, useconds;
-    seconds = Finishseconds - Startseconds;
-    useconds = Finishuseconds - Startuseconds;
-    mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
+    long mtime, seconds, useconds;
+    seconds   = finish_seconds - start_seconds;
+    useconds  = finish_u_seconds - start_u_seconds;
+    mtime     = ((seconds)*1000 + useconds / 1000.0) + 0.5;
     *duration = (double)mtime / 1000;
 #endif
 }
 
-void EbComputeOverallElapsedTimeMs(uint64_t Startseconds, uint64_t Startuseconds, uint64_t Finishseconds, uint64_t Finishuseconds, double *duration)
-{
+void eb_compute_overall_elapsed_time_ms(uint64_t start_seconds, uint64_t start_u_seconds,
+                                        uint64_t finish_seconds, uint64_t finish_u_seconds,
+                                        double *duration) {
 #ifdef _WIN32
     //double  duration;
-    *duration = (double)(Finishseconds - Startseconds);
-    (void)(Startuseconds);
-    (void)(Finishuseconds);
+    *duration = (double)(finish_seconds - start_seconds);
+    (void)(start_u_seconds);
+    (void)(finish_u_seconds);
 #else
     long mtime, seconds, useconds;
-    seconds = Finishseconds - Startseconds;
-    useconds = Finishuseconds - Startuseconds;
-    mtime = ((seconds) * 1000 + useconds / 1000.0) + 0.5;
+    seconds   = finish_seconds - start_seconds;
+    useconds  = finish_u_seconds - start_u_seconds;
+    mtime     = ((seconds)*1000 + useconds / 1000.0) + 0.5;
     *duration = (double)mtime;
 #endif
 }
 
-void EbSleepMs(uint64_t milliSeconds)
-{
-    if(milliSeconds) {
+void eb_sleep_ms(uint64_t milli_seconds) {
+    if (milli_seconds) {
 #ifdef _WIN32
-        Sleep((DWORD) milliSeconds);
+        Sleep((DWORD)milli_seconds);
 #else
-        struct timespec req,rem;
-        req.tv_sec=(int32_t)(milliSeconds/1000);
-        milliSeconds -= req.tv_sec * 1000;
-        req.tv_nsec = milliSeconds * 1000000UL;
-        nanosleep(&req,&rem);
+        struct timespec req, rem;
+        req.tv_sec = (int32_t)(milli_seconds / 1000);
+        milli_seconds -= req.tv_sec * 1000;
+        req.tv_nsec = milli_seconds * 1000000UL;
+        nanosleep(&req, &rem);
 #endif
     }
 }
 
-void EbInjector(uint64_t processed_frame_count,
-              uint32_t injector_frame_rate)
-{
+void eb_injector(uint64_t processed_frame_count, uint32_t injector_frame_rate) {
 #ifdef _WIN32
-    static LARGE_INTEGER    startCount;               // this is the start time
-    static LARGE_INTEGER    counterFreq;              // performance counter frequency
-    LARGE_INTEGER           nowCount;                 // this is the current time
+    static LARGE_INTEGER start_count; // this is the start time
+    static LARGE_INTEGER counter_freq; // performance counter frequency
+    LARGE_INTEGER        now_count; // this is the current time
 #else
-    uint64_t                  currentTimesSeconds = 0;
-    uint64_t                  currentTimesuSeconds = 0;
-    static uint64_t           startTimesSeconds;
-    static uint64_t           startTimesuSeconds;
+    uint64_t        currentTimesSeconds  = 0;
+    uint64_t        currentTimesuSeconds = 0;
+    static uint64_t startTimesSeconds;
+    static uint64_t startTimesuSeconds;
 #endif
 
-    double                 injectorInterval  = (double)(1<<16)/(double)injector_frame_rate;     // 1.0 / injector frame rate (in this case, 1.0/encodRate)
-    double                  elapsedTime;
-    double                  predictedTime;
-    int32_t                     bufferFrames = 1;         // How far ahead of time should we let it get
-    int32_t                     milliSecAhead;
-    static int32_t              firstTime = 0;
+    double injector_interval =
+        (double)(1 << 16) /
+        (double)injector_frame_rate; // 1.0 / injector frame rate (in this case, 1.0/encodRate)
+    double         elapsed_time;
+    double         predicted_time;
+    int32_t        buffer_frames = 1; // How far ahead of time should we let it get
+    int32_t        millisec_ahead;
+    static int32_t first_time = 0;
 
-    if (firstTime == 0)
-    {
-        firstTime = 1;
+    if (first_time == 0) {
+        first_time = 1;
 
 #ifdef _WIN32
-        QueryPerformanceFrequency(&counterFreq);
-        QueryPerformanceCounter(&startCount);
+        QueryPerformanceFrequency(&counter_freq);
+        QueryPerformanceCounter(&start_count);
 #else
-        EbStartTime((uint64_t*)&startTimesSeconds, (uint64_t*)&startTimesuSeconds);
+        eb_start_time((uint64_t *)&startTimesSeconds, (uint64_t *)&startTimesuSeconds);
 #endif
-    }
-    else
-    {
+    } else {
 #ifdef _WIN32
-        QueryPerformanceCounter(&nowCount);
-        elapsedTime = (double)(nowCount.QuadPart - startCount.QuadPart) / (double)counterFreq.QuadPart;
+        QueryPerformanceCounter(&now_count);
+        elapsed_time =
+            (double)(now_count.QuadPart - start_count.QuadPart) / (double)counter_freq.QuadPart;
 #else
-        EbFinishTime((uint64_t*)&currentTimesSeconds, (uint64_t*)&currentTimesuSeconds);
-        EbComputeOverallElapsedTime(startTimesSeconds, startTimesuSeconds, currentTimesSeconds, currentTimesuSeconds, &elapsedTime);
+        eb_finish_time((uint64_t *)&currentTimesSeconds, (uint64_t *)&currentTimesuSeconds);
+        eb_compute_overall_elapsed_time(startTimesSeconds,
+                                        startTimesuSeconds,
+                                        currentTimesSeconds,
+                                        currentTimesuSeconds,
+                                        &elapsed_time);
 #endif
 
-        predictedTime = (processed_frame_count - bufferFrames) * injectorInterval;
-        milliSecAhead = (int32_t)(1000 * (predictedTime - elapsedTime ));
-        if (milliSecAhead>0)
-        {
+        predicted_time = (processed_frame_count - buffer_frames) * injector_interval;
+        millisec_ahead = (int32_t)(1000 * (predicted_time - elapsed_time));
+        if (millisec_ahead > 0) {
             //  timeBeginPeriod(1);
-            EbSleepMs(milliSecAhead);
+            eb_sleep_ms(millisec_ahead);
             //  timeEndPeriod (1);
         }
     }
 }
-// clang-format on

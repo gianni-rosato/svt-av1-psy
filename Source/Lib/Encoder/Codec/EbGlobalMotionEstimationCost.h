@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -20,9 +19,7 @@
 
 #include "EbDefinitions.h"
 
-
-int gm_get_params_cost(const EbWarpedMotionParams *gm,
-                       const EbWarpedMotionParams *ref_gm, int allow_hp);
+int gm_get_params_cost(const EbWarpedMotionParams *gm, const EbWarpedMotionParams *ref_gm,
+                       int allow_hp);
 
 #endif
-// clang-format on

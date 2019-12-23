@@ -10,10 +10,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    // Weights are quadratic from '1' to '1 / BlockSize', scaled by
-    // 2^sm_weight_log2_scale.
-    static const int32_t sm_weight_log2_scale = 8;
-    // max(block_size_wide[BLOCK_LARGEST], block_size_high[BLOCK_LARGEST])
+// Weights are quadratic from '1' to '1 / BlockSize', scaled by
+// 2^sm_weight_log2_scale.
+static const int32_t sm_weight_log2_scale = 8;
+// max(block_size_wide[BLOCK_LARGEST], block_size_high[BLOCK_LARGEST])
 #define MAX_BLOCK_DIM 64
 /* clang-format off */
     static const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM] = {

@@ -12,10 +12,8 @@
 extern "C" {
 #endif
 
-    uint64_t compute8x8_satd_u8_sse4(
-        uint8_t  *src,       // input parameter, diff samples Ptr
-        uint64_t *dc_value,
-        uint32_t  src_stride);
+uint64_t compute8x8_satd_u8_sse4(uint8_t * src, // input parameter, diff samples Ptr
+                                 uint64_t *dc_value, uint32_t src_stride);
 
 #ifdef __cplusplus
 }

@@ -31,7 +31,7 @@
 #include "TxfmRef.h"
 namespace svt_av1_test_reference {
 
-double get_scale_factor(Txfm2DFlipCfg &cfg, const int tx_width,
+double get_scale_factor(Txfm2dFlipCfg &cfg, const int tx_width,
                         const int tx_height) {
     const int8_t *shift = cfg.shift;
     const int amplify_bit = shift[0] + shift[1] + shift[2];

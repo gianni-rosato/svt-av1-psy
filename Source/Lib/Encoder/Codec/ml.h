@@ -1,4 +1,3 @@
-// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -20,18 +19,18 @@ extern "C" {
 #define NN_MAX_HIDDEN_LAYERS 10
 #define NN_MAX_NODES_PER_LAYER 128
 
-struct NN_CONFIG {
-  int num_inputs;         // Number of input nodes, i.e. features.
-  int num_outputs;        // Number of output nodes.
-  int num_hidden_layers;  // Number of hidden layers, maximum 10.
-  // Number of nodes for each hidden layer.
-  int num_hidden_nodes[NN_MAX_HIDDEN_LAYERS];
-  // Weight parameters, indexed by layer.
-  const float *weights[NN_MAX_HIDDEN_LAYERS + 1];
-  // Bias parameters, indexed by layer.
-  const float *bias[NN_MAX_HIDDEN_LAYERS + 1];
+struct NnConfig {
+    int num_inputs; // Number of input nodes, i.e. features.
+    int num_outputs; // Number of output nodes.
+    int num_hidden_layers; // Number of hidden layers, maximum 10.
+    // Number of nodes for each hidden layer.
+    int num_hidden_nodes[NN_MAX_HIDDEN_LAYERS];
+    // Weight parameters, indexed by layer.
+    const float *weights[NN_MAX_HIDDEN_LAYERS + 1];
+    // Bias parameters, indexed by layer.
+    const float *bias[NN_MAX_HIDDEN_LAYERS + 1];
 };
-typedef struct NN_CONFIG NN_CONFIG;
+typedef struct NnConfig NnConfig;
 
 // Applies the softmax normalization function to the input
 // to get a valid probability distribution in the output:
@@ -43,8 +42,7 @@ void av1_nn_softmax(const float *input, float *output, int n);
 void av1_nn_output_prec_reduce(float *const output, int num_output);
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif
 
-#endif  // AOM_AV1_ENCODER_ML_H_
-// clang-format on
+#endif // AOM_AV1_ENCODER_ML_H_

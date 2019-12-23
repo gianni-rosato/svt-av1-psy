@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -12,13 +11,9 @@
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType rest_context_ctor(
-    EbThreadContext   *thread_context_ptr,
-    const EbEncHandle *enc_handle_ptr,
-    int               index,
-    int               demux_index);
+extern EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
+                                     const EbEncHandle *enc_handle_ptr, int index, int demux_index);
 
-extern void* rest_kernel(void *input_ptr);
+extern void *rest_kernel(void *input_ptr);
 
 #endif
-// clang-format on

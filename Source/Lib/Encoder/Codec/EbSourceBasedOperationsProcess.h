@@ -23,11 +23,9 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType source_based_operations_context_ctor(
-    EbThreadContext     *thread_context_ptr,
-    const EbEncHandle   *enc_handle_ptr,
-    int index);
+EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
+                                                 const EbEncHandle *enc_handle_ptr, int index);
 
-extern void* source_based_operations_kernel(void *input_ptr);
+extern void *source_based_operations_kernel(void *input_ptr);
 
 #endif // EbSourceBasedOperations_h

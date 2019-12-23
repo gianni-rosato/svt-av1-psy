@@ -173,10 +173,10 @@ typedef enum ATTRIBUTE_PACKED {
     COMP_INTER_MODE_NUM = COMP_INTER_MODE_END - COMP_INTER_MODE_START,
     INTRA_MODES = PAETH_PRED + 1,  // PAETH_PRED has to be the last intra mode.
     INTRA_INVALID = MB_MODE_COUNT  // For uv_mode in inter blocks
-} PREDICTION_MODE;
+} PredictionMode;
 
 // TODO(ltrudeau) Do we really want to pack this?
-// TODO(ltrudeau) Do we match with PREDICTION_MODE?
+// TODO(ltrudeau) Do we match with PredictionMode?
 typedef enum ATTRIBUTE_PACKED {
     UV_DC_PRED,        // Average of above and left pixels
     UV_V_PRED,         // Vertical
@@ -194,14 +194,14 @@ typedef enum ATTRIBUTE_PACKED {
     UV_CFL_PRED,       // Chroma-from-Luma
     UV_INTRA_MODES,
     UV_MODE_INVALID,  // For uv_mode in inter blocks
-} UV_PREDICTION_MODE;
+} UvPredictionMode;
 
 typedef enum ATTRIBUTE_PACKED {
     SIMPLE_TRANSLATION,
     OBMC_CAUSAL,    // 2-sided OBMC
     WARPED_CAUSAL,  // 2-sided WARPED
     MOTION_MODES
-} MOTION_MODE;
+} MotionMode;
 
 using namespace svt_av1_e2e_tools;
 

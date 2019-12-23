@@ -41,9 +41,9 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     EbPtr   object_init_data_ptr)
 {
     EbPictureBufferDesc          *picture_buffer_desc_ptr;
-    EbPictureBufferDescInitData  *pictureBufferDescInitDataPtr = (EbPictureBufferDescInitData*)object_init_data_ptr;
+    EbPictureBufferDescInitData  *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData*)object_init_data_ptr;
 
-    uint32_t bytesPerPixel = (pictureBufferDescInitDataPtr->bit_depth == EB_8BIT) ? 1 : 2;
+    uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_8BIT) ? 1 : 2;
 
     EB_MALLOC_DEC(EbPictureBufferDesc*, picture_buffer_desc_ptr, sizeof(EbPictureBufferDesc), EB_N_PTR);
 
@@ -51,14 +51,14 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     *object_dbl_ptr = (EbPtr)picture_buffer_desc_ptr;
 
     // Set the Picture Buffer Static variables
-    picture_buffer_desc_ptr->max_width = pictureBufferDescInitDataPtr->max_width;
-    picture_buffer_desc_ptr->max_height = pictureBufferDescInitDataPtr->max_height;
-    picture_buffer_desc_ptr->width = pictureBufferDescInitDataPtr->max_width;
-    picture_buffer_desc_ptr->height = pictureBufferDescInitDataPtr->max_height;
-    picture_buffer_desc_ptr->bit_depth = pictureBufferDescInitDataPtr->bit_depth;
-    picture_buffer_desc_ptr->color_format = pictureBufferDescInitDataPtr->color_format;
-    picture_buffer_desc_ptr->stride_y = pictureBufferDescInitDataPtr->max_width +
-        pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding;
+    picture_buffer_desc_ptr->max_width = picture_buffer_desc_init_data_ptr->max_width;
+    picture_buffer_desc_ptr->max_height = picture_buffer_desc_init_data_ptr->max_height;
+    picture_buffer_desc_ptr->width = picture_buffer_desc_init_data_ptr->max_width;
+    picture_buffer_desc_ptr->height = picture_buffer_desc_init_data_ptr->max_height;
+    picture_buffer_desc_ptr->bit_depth = picture_buffer_desc_init_data_ptr->bit_depth;
+    picture_buffer_desc_ptr->color_format = picture_buffer_desc_init_data_ptr->color_format;
+    picture_buffer_desc_ptr->stride_y = picture_buffer_desc_init_data_ptr->max_width +
+        picture_buffer_desc_init_data_ptr->left_padding + picture_buffer_desc_init_data_ptr->right_padding;
     if(picture_buffer_desc_ptr->color_format == EB_YUV420 ||
        picture_buffer_desc_ptr->color_format == EB_YUV422)
         picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr
@@ -66,14 +66,14 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     else if (picture_buffer_desc_ptr->color_format == EB_YUV444)
         picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr
             = picture_buffer_desc_ptr->stride_y;
-    picture_buffer_desc_ptr->origin_x = pictureBufferDescInitDataPtr->left_padding;
-    picture_buffer_desc_ptr->origin_y = pictureBufferDescInitDataPtr->top_padding;
-    picture_buffer_desc_ptr->origin_bot_y = pictureBufferDescInitDataPtr->bot_padding;
+    picture_buffer_desc_ptr->origin_x = picture_buffer_desc_init_data_ptr->left_padding;
+    picture_buffer_desc_ptr->origin_y = picture_buffer_desc_init_data_ptr->top_padding;
+    picture_buffer_desc_ptr->origin_bot_y = picture_buffer_desc_init_data_ptr->bot_padding;
 
-    picture_buffer_desc_ptr->luma_size = (pictureBufferDescInitDataPtr->max_width +
-        pictureBufferDescInitDataPtr->left_padding + pictureBufferDescInitDataPtr->right_padding) *
-        (pictureBufferDescInitDataPtr->max_height + pictureBufferDescInitDataPtr->top_padding
-            + pictureBufferDescInitDataPtr->bot_padding);
+    picture_buffer_desc_ptr->luma_size = (picture_buffer_desc_init_data_ptr->max_width +
+        picture_buffer_desc_init_data_ptr->left_padding + picture_buffer_desc_init_data_ptr->right_padding) *
+        (picture_buffer_desc_init_data_ptr->max_height + picture_buffer_desc_init_data_ptr->top_padding
+            + picture_buffer_desc_init_data_ptr->bot_padding);
 
     if (picture_buffer_desc_ptr->color_format == EB_YUV420) // 420
         picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size >> 2;
@@ -82,28 +82,28 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     else if (picture_buffer_desc_ptr->color_format == EB_YUV444) // 444
         picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size;
 
-    picture_buffer_desc_ptr->packedFlag = EB_FALSE;
+    picture_buffer_desc_ptr->packed_flag = EB_FALSE;
 
     picture_buffer_desc_ptr->stride_bit_inc_y = 0;
     picture_buffer_desc_ptr->stride_bit_inc_cb = 0;
     picture_buffer_desc_ptr->stride_bit_inc_cr = 0;
 
     // Allocate the Picture Buffers (luma & chroma)
-    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_y, picture_buffer_desc_ptr->luma_size * bytesPerPixel, EB_A_PTR);
-        memset(picture_buffer_desc_ptr->buffer_y, 0, picture_buffer_desc_ptr->luma_size      * bytesPerPixel);
+    if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
+        EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_y, picture_buffer_desc_ptr->luma_size * bytes_per_pixel, EB_A_PTR);
+        memset(picture_buffer_desc_ptr->buffer_y, 0, picture_buffer_desc_ptr->luma_size      * bytes_per_pixel);
     }
     else
         picture_buffer_desc_ptr->buffer_y = 0;
-    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cb, picture_buffer_desc_ptr->chroma_size * bytesPerPixel, EB_A_PTR);
-        memset(picture_buffer_desc_ptr->buffer_cb, 0, picture_buffer_desc_ptr->chroma_size      * bytesPerPixel);
+    if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+        EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cb, picture_buffer_desc_ptr->chroma_size * bytes_per_pixel, EB_A_PTR);
+        memset(picture_buffer_desc_ptr->buffer_cb, 0, picture_buffer_desc_ptr->chroma_size      * bytes_per_pixel);
     }
     else
         picture_buffer_desc_ptr->buffer_cb = 0;
-    if (pictureBufferDescInitDataPtr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cr, picture_buffer_desc_ptr->chroma_size * bytesPerPixel, EB_A_PTR);
-        memset(picture_buffer_desc_ptr->buffer_cr, 0, picture_buffer_desc_ptr->chroma_size      * bytesPerPixel);
+    if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+        EB_ALLIGN_MALLOC_DEC(EbByte, picture_buffer_desc_ptr->buffer_cr, picture_buffer_desc_ptr->chroma_size * bytes_per_pixel, EB_A_PTR);
+        memset(picture_buffer_desc_ptr->buffer_cr, 0, picture_buffer_desc_ptr->chroma_size      * bytes_per_pixel);
     }
     else
         picture_buffer_desc_ptr->buffer_cr = 0;
@@ -261,7 +261,7 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
         // accessing will skip few SB in-between.
         // if rest_unit_size == SB_size then it's straight forward to access
         // every SB level loop restoration filter value.
-        LRCtxt *lr_ctxt = (LRCtxt *)dec_handle_ptr->pv_lr_ctxt;
+        LrCtxt *lr_ctxt = (LrCtxt *)dec_handle_ptr->pv_lr_ctxt;
         for (int32_t plane = 0; plane <= AOM_PLANE_V; plane++) {
             EB_MALLOC_DEC(RestorationUnitInfo *, cur_frame_buf->lr_unit[plane],
                 (num_sb * sizeof(RestorationUnitInfo)), EB_N_PTR);
@@ -355,17 +355,17 @@ static EbErrorType init_lf_ctxt(EbDecHandle  *dec_handle_ptr) {
     int32_t mi_cols = aligned_width >> MI_SIZE_LOG2;
     int32_t mi_rows = aligned_height >> MI_SIZE_LOG2;
 
-    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_lf_ctxt, sizeof(LFCtxt), EB_N_PTR);
+    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_lf_ctxt, sizeof(LfCtxt), EB_N_PTR);
 
-    LFCtxt *lf_ctxt = (LFCtxt *)dec_handle_ptr->pv_lf_ctxt;
+    LfCtxt *lf_ctxt = (LfCtxt *)dec_handle_ptr->pv_lf_ctxt;
 
     /*Mem allocation for luma parmas 4x4 unit*/
-    EB_MALLOC_DEC(LFBlockParamL *, lf_ctxt->lf_block_luma,
-        mi_rows * mi_cols * sizeof(LFBlockParamL), EB_N_PTR);
+    EB_MALLOC_DEC(LfBlockParamL *, lf_ctxt->lf_block_luma,
+        mi_rows * mi_cols * sizeof(LfBlockParamL), EB_N_PTR);
 
     /*Allocation of chroma params at 4x4 luma unit, can be optimized */
-    EB_MALLOC_DEC(LFBlockParamUV *, lf_ctxt->lf_block_uv,
-        mi_rows * mi_cols * sizeof(LFBlockParamUV), EB_N_PTR);
+    EB_MALLOC_DEC(LfBlockParamUv *, lf_ctxt->lf_block_uv,
+        mi_rows * mi_cols * sizeof(LfBlockParamUv), EB_N_PTR);
 
     return return_error;
 }
@@ -373,9 +373,9 @@ static EbErrorType init_lf_ctxt(EbDecHandle  *dec_handle_ptr) {
 static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
-    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_lr_ctxt, sizeof(LRCtxt), EB_N_PTR);
+    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_lr_ctxt, sizeof(LrCtxt), EB_N_PTR);
 
-    LRCtxt *lr_ctxt = (LRCtxt*)dec_handle_ptr->pv_lr_ctxt;
+    LrCtxt *lr_ctxt = (LrCtxt*)dec_handle_ptr->pv_lr_ctxt;
     lr_ctxt->dec_handle_ptr = (void *)dec_handle_ptr;
 
     EB_MALLOC_DEC(RestorationLineBuffers *, lr_ctxt->rlbs,

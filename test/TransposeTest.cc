@@ -89,18 +89,18 @@ void TransposeTest::RunSpeedTest() {
     for (int i = 0; i < 16; i++)
         in[i] = _mm_loadu_si128((__m128i *)(in_ + 16 * i));
 
-    EbStartTime(&start_time_seconds, &start_time_useconds);
+    eb_start_time(&start_time_seconds, &start_time_useconds);
 
     for (int i = 0; i < num_loops; ++i) {
         transpose_8bit_16x16_sse2(in, out_c);
     }
 
-    EbStartTime(&middle_time_seconds, &middle_time_useconds);
+    eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
     for (int i = 0; i < num_loops; ++i) {
         transpose_8bit_16x16_reg128bit_instance_avx2(in, out_o);
     }
-    EbStartTime(&finish_time_seconds, &finish_time_useconds);
+    eb_start_time(&finish_time_seconds, &finish_time_useconds);
 
     for (int i = 0; i < 16; i++) {
         _mm_storeu_si128((__m128i *)(out_c_ + 16 * i), out_c[i]);
@@ -110,12 +110,12 @@ void TransposeTest::RunSpeedTest() {
     for (int i = 0; i < 256; ++i)
         ASSERT_EQ(out_c_[i], out_o_[i]) << "[" << i << "]";
 
-    EbComputeOverallElapsedTimeMs(start_time_seconds,
+    eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                   start_time_useconds,
                                   middle_time_seconds,
                                   middle_time_useconds,
                                   &time_c);
-    EbComputeOverallElapsedTimeMs(middle_time_seconds,
+    eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                   middle_time_useconds,
                                   finish_time_seconds,
                                   finish_time_useconds,

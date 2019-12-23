@@ -83,13 +83,13 @@ class FrameQueueFile : public FrameQueue {
             }
 
             rewind(recon_file_);
-            uint64_t frameNum = frame->timestamp;
-            while (frameNum > 0) {
+            uint64_t frame_num = frame->timestamp;
+            while (frame_num > 0) {
                 int ret = fseeko(recon_file_, frame->buf_size, SEEK_CUR);
                 if (ret != 0) {
                     return;
                 }
-                frameNum--;
+                frame_num--;
             }
             fwrite(frame->buffer, 1, frame->buf_size, recon_file_);
             fflush(recon_file_);

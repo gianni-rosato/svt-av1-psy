@@ -27,14 +27,14 @@ const struct DistInfo sad_size_info[num_sad] = {
     {32, 8},  {32, 16},  {32, 32},  {32, 64},  {64, 16}, {64, 32},
     {64, 64}, {64, 128}, {128, 64}, {128, 128}};
 
-typedef uint32_t (*aom_sad_fn_t)(const uint8_t *a, int a_stride,
+typedef uint32_t (*AomSadFn)(const uint8_t *a, int a_stride,
                                  const uint8_t *b, int b_stride);
 
-typedef void (*aom_sad_multi_d_fn_t)(const uint8_t *a, int a_stride,
+typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride,
                                      const uint8_t *const b_array[],
                                      int b_stride, uint32_t *sad_array);
 
-aom_sad_fn_t aom_sad_c_func_ptr_array[num_sad] = {
+AomSadFn aom_sad_c_func_ptr_array[num_sad] = {
     eb_aom_sad4x4_c,    eb_aom_sad4x8_c,    eb_aom_sad4x16_c,
     eb_aom_sad8x4_c,    eb_aom_sad8x8_c,    eb_aom_sad8x16_c,
     eb_aom_sad8x32_c,   eb_aom_sad16x4_c,   eb_aom_sad16x8_c,
@@ -44,7 +44,7 @@ aom_sad_fn_t aom_sad_c_func_ptr_array[num_sad] = {
     eb_aom_sad64x64_c,  eb_aom_sad64x128_c, eb_aom_sad128x64_c,
     eb_aom_sad128x128_c};
 
-aom_sad_multi_d_fn_t aom_sad_4d_c_func_ptr_array[num_sad] = {
+AomSadMultiDFn aom_sad_4d_c_func_ptr_array[num_sad] = {
     eb_aom_sad4x4x4d_c,    eb_aom_sad4x8x4d_c,    eb_aom_sad4x16x4d_c,
     eb_aom_sad8x4x4d_c,    eb_aom_sad8x8x4d_c,    eb_aom_sad8x16x4d_c,
     eb_aom_sad8x32x4d_c,   eb_aom_sad16x4x4d_c,   eb_aom_sad16x8x4d_c,
@@ -54,7 +54,7 @@ aom_sad_multi_d_fn_t aom_sad_4d_c_func_ptr_array[num_sad] = {
     eb_aom_sad64x64x4d_c,  eb_aom_sad64x128x4d_c, eb_aom_sad128x64x4d_c,
     eb_aom_sad128x128x4d_c};
 
-aom_sad_fn_t aom_sad_avx2_func_ptr_array[num_sad] = {
+AomSadFn aom_sad_avx2_func_ptr_array[num_sad] = {
     eb_aom_sad4x4_avx2,    eb_aom_sad4x8_avx2,    eb_aom_sad4x16_avx2,
     eb_aom_sad8x4_avx2,    eb_aom_sad8x8_avx2,    eb_aom_sad8x16_avx2,
     eb_aom_sad8x32_avx2,   eb_aom_sad16x4_avx2,   eb_aom_sad16x8_avx2,
@@ -64,7 +64,7 @@ aom_sad_fn_t aom_sad_avx2_func_ptr_array[num_sad] = {
     eb_aom_sad64x64_avx2,  eb_aom_sad64x128_avx2, eb_aom_sad128x64_avx2,
     eb_aom_sad128x128_avx2};
 
-aom_sad_multi_d_fn_t aom_sad_4d_avx2_func_ptr_array[num_sad] = {
+AomSadMultiDFn aom_sad_4d_avx2_func_ptr_array[num_sad] = {
     eb_aom_sad4x4x4d_avx2,    eb_aom_sad4x8x4d_avx2,
     eb_aom_sad4x16x4d_avx2,   eb_aom_sad8x4x4d_avx2,
     eb_aom_sad8x8x4d_avx2,    eb_aom_sad8x16x4d_avx2,
@@ -106,7 +106,7 @@ static void uninit_data(uint8_t *src_ptr, uint8_t *ref_ptr) {
     free(ref_ptr);
 }
 
-void sadMxN_match_test(const aom_sad_fn_t *const func_table) {
+void sadMxN_match_test(const AomSadFn *const func_table) {
     uint8_t *src_ptr, *ref_ptr;
     uint32_t src_stride, ref_stride;
 
@@ -128,7 +128,7 @@ void sadMxN_match_test(const aom_sad_fn_t *const func_table) {
     }
 }
 
-void sadMxNx4d_match_test(const aom_sad_multi_d_fn_t *const func_table) {
+void sadMxNx4d_match_test(const AomSadMultiDFn *const func_table) {
     uint8_t *src_ptr, *ref_ptr[4];
     uint32_t src_stride, ref_stride;
     uint32_t sad_array_org[4], sad_array_opt[4];
@@ -153,7 +153,7 @@ void sadMxNx4d_match_test(const aom_sad_multi_d_fn_t *const func_table) {
     }
 }
 
-void sadMxN_speed_test(const aom_sad_fn_t *const func_table) {
+void sadMxN_speed_test(const AomSadFn *const func_table) {
     uint8_t *src_ptr, *ref_ptr;
     uint32_t src_stride, ref_stride;
     double time_c, time_o;
@@ -171,24 +171,24 @@ void sadMxN_speed_test(const aom_sad_fn_t *const func_table) {
         const uint64_t num_loop = 100000000 / (width + height);
         uint32_t sad_org, sad_opt;
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++)
             sad_org = aom_sad_c_func_ptr_array[j](
                 src_ptr, src_stride, ref_ptr, ref_stride);
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++)
             sad_opt = func_table[j](src_ptr, src_stride, ref_ptr, ref_stride);
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -213,7 +213,7 @@ void sadMxN_speed_test(const aom_sad_fn_t *const func_table) {
     uninit_data(src_ptr, ref_ptr);
 }
 
-void sadMxNx4d_speed_test(const aom_sad_multi_d_fn_t *const func_table) {
+void sadMxNx4d_speed_test(const AomSadMultiDFn *const func_table) {
     uint8_t *src_ptr, *ref_ptr[4];
     uint32_t src_stride, ref_stride;
     uint32_t sad_array_org[4], sad_array_opt[4];
@@ -232,25 +232,25 @@ void sadMxNx4d_speed_test(const aom_sad_multi_d_fn_t *const func_table) {
         const uint32_t height = sad_size_info[j].height;
         const uint64_t num_loop = 20000000 / (width + height);
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++)
             aom_sad_4d_c_func_ptr_array[j](
                 src_ptr, src_stride, ref_ptr, ref_stride, sad_array_org);
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++)
             func_table[j](
                 src_ptr, src_stride, ref_ptr, ref_stride, sad_array_opt);
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -295,7 +295,7 @@ TEST(MotionEstimation_avx2, DISABLED_sadMxNx4d_speed) {
 #ifndef NON_AVX512_SUPPORT
 
 //NULL means not implemented
-aom_sad_fn_t aom_sad_avx512_func_ptr_array[num_sad] = {
+AomSadFn aom_sad_avx512_func_ptr_array[num_sad] = {
     NULL, NULL, NULL,
     NULL, NULL, NULL,
     NULL, NULL, NULL,
@@ -306,7 +306,7 @@ aom_sad_fn_t aom_sad_avx512_func_ptr_array[num_sad] = {
     eb_aom_sad128x64_avx512, eb_aom_sad128x128_avx512};
 
 //NULL means not implemented
-aom_sad_multi_d_fn_t aom_sad_4d_avx512_func_ptr_array[num_sad] = {
+AomSadMultiDFn aom_sad_4d_avx512_func_ptr_array[num_sad] = {
     NULL, NULL, NULL,
     NULL, NULL, NULL,
     NULL, NULL, NULL,

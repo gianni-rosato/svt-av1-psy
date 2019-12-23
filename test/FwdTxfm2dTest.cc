@@ -175,11 +175,11 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
                                   : reinterpret_cast<uint8_t *>(output_ref_);
 
             if (tx_width == 64 && tx_height == 64) {  // tx_size == TX_64X64
-                // Zero out top-right 32x32 area.
+                // zero out top-right 32x32 area.
                 for (int row = 0; row < 32; ++row) {
                     memset(out + (row * 64 + 32) * e_size, 0, 32 * e_size);
                 }
-                // Zero out the bottom 64x32 area.
+                // zero out the bottom 64x32 area.
                 memset(out + 32 * 64 * e_size, 0, 32 * 64 * e_size);
                 // Re-pack non-zero coeffs in the first 32x32 indices.
                 for (int row = 1; row < 32; ++row) {
@@ -189,12 +189,12 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
                 }
             } else if (tx_width == 32 &&
                        tx_height == 64) {  // tx_size == TX_32X64
-                // Zero out the bottom 32x32 area.
+                // zero out the bottom 32x32 area.
                 memset(out + 32 * 32 * e_size, 0, 32 * 32 * e_size);
                 // Note: no repacking needed here.
             } else if (tx_width == 64 &&
                        tx_height == 32) {  // tx_size == TX_64X32
-                // Zero out right 32x32 area.
+                // zero out right 32x32 area.
                 for (int row = 0; row < 32; ++row) {
                     memset(out + (row * 64 + 32) * e_size, 0, 32 * e_size);
                 }
@@ -206,12 +206,12 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
                 }
             } else if (tx_width == 16 &&
                        tx_height == 64) {  // tx_size == TX_16X64
-                // Zero out the bottom 16x32 area.
+                // zero out the bottom 16x32 area.
                 memset(out + 16 * 32 * e_size, 0, 16 * 32 * e_size);
                 // Note: no repacking needed here.
             } else if (tx_width == 64 &&
                        tx_height == 16) {  // tx_size == TX_64X16
-                // Zero out right 32x16 area.
+                // zero out right 32x16 area.
                 for (int row = 0; row < 16; ++row) {
                     memset(out + (row * 64 + 32) * e_size, 0, 32 * e_size);
                 }
@@ -230,7 +230,7 @@ class AV1FwdTxfm2dTest : public ::testing::TestWithParam<FwdTxfm2dParam> {
     const TxSize txfm_size_;
     const TxType txfm_type_;
     double scale_factor_;
-    Txfm2DFlipCfg cfg_;
+    Txfm2dFlipCfg cfg_;
     int16_t *input_test_;
     int32_t *output_test_;
     double *input_ref_;

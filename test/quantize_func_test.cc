@@ -225,7 +225,7 @@ class QuantizeLbdTest : public QuantizeTest<QuantizeParam, QuantizeFunc> {
         }
 
         const int16_t *quant_shift = qtab_->quant.y_quant_shift[q];
-        const int16_t *dequant = qtab_->dequant.y_dequant_QTX[q];
+        const int16_t *dequant = qtab_->dequant.y_dequant_qtx[q];
 
         for (int i = 0; i < test_num; ++i) {
             if (is_loop)
@@ -329,7 +329,7 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
     const int16_t *round_fp = qtab_->quant.y_round_fp[q];
     const int16_t *quant_fp = qtab_->quant.y_quant_fp[q];
     const int16_t *quant_shift = qtab_->quant.y_quant_shift[q];
-    const int16_t *dequant = qtab_->dequant.y_dequant_QTX[q];
+    const int16_t *dequant = qtab_->dequant.y_dequant_qtx[q];
     const int kNumTests = 5000000;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
@@ -342,7 +342,7 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
     for (int cnt = 0; cnt <= rows; cnt++) {
         FillCoeffRandomRows(cnt * cols);
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
         for (int n = 0; n < kNumTests; ++n) {
             quant_ref_(coeff_ptr,
                        n_coeffs,
@@ -358,7 +358,7 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
                        sc->iscan);
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (int n = 0; n < kNumTests; ++n) {
             quant_(coeff_ptr,
@@ -374,13 +374,13 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
                    sc->scan,
                    sc->iscan);
         }
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -431,7 +431,7 @@ class QuantizeHbdTest : public QuantizeTest<QuantizeHbdParam, QuantizeHbdFunc> {
         }
 
         const int16_t *quant_shift = qtab_->quant.y_quant_shift[q];
-        const int16_t *dequant = qtab_->dequant.y_dequant_QTX[q];
+        const int16_t *dequant = qtab_->dequant.y_dequant_qtx[q];
 
         for (int i = 0; i < test_num; ++i) {
             if (is_loop)
@@ -537,7 +537,7 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
     const int16_t *round_fp = qtab_->quant.y_round_fp[q];
     const int16_t *quant_fp = qtab_->quant.y_quant_fp[q];
     const int16_t *quant_shift = qtab_->quant.y_quant_shift[q];
-    const int16_t *dequant = qtab_->dequant.y_dequant_QTX[q];
+    const int16_t *dequant = qtab_->dequant.y_dequant_qtx[q];
     const int kNumTests = 5000000;
     double time_c, time_o;
     uint64_t start_time_seconds, start_time_useconds;
@@ -550,7 +550,7 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
     for (int cnt = 0; cnt <= rows; cnt++) {
         FillCoeffRandomRows(cnt * cols);
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
         for (int n = 0; n < kNumTests; ++n) {
             quant_ref_(coeff_ptr,
                        n_coeffs,
@@ -567,7 +567,7 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
                        av1_get_tx_scale(tx_size_));
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (int n = 0; n < kNumTests; ++n) {
             quant_(coeff_ptr,
@@ -584,13 +584,13 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
                    sc->iscan,
                    av1_get_tx_scale(tx_size_));
         }
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,

@@ -221,7 +221,7 @@ class ResidualKernelTest
 
         prepare_data();
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             residual_kernel8bit_c(input_,
@@ -234,8 +234,8 @@ class ResidualKernelTest
                           area_height_);
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
@@ -246,7 +246,7 @@ class ResidualKernelTest
              i++) {
             eb_buf_random_s16(residual2_, test_size_);
 
-            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+            eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t j = 0; j < num_loop; j++) {
                 residual_kernel8bit_func_table[i](input_,
@@ -260,8 +260,8 @@ class ResidualKernelTest
             }
             check_residuals(area_width_, area_height_);
 
-            EbStartTime(&finish_time_seconds, &finish_time_useconds);
-            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+            eb_start_time(&finish_time_seconds, &finish_time_useconds);
+            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                               middle_time_useconds,
                                               finish_time_seconds,
                                               finish_time_useconds,

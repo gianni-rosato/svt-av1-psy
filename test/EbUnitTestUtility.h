@@ -180,9 +180,9 @@ extern void eb_unit_test_log_image_u32(const char *const nameBuf,
                                        const uint32_t height,
                                        const ptrdiff_t stride);
 
-extern void EbStartTime(uint64_t *Startseconds, uint64_t *Startuseconds);
-extern void EbFinishTime(uint64_t *Finishseconds, uint64_t *Finishuseconds);
-extern void EbComputeOverallElapsedTimeMs(uint64_t Startseconds,
+extern void eb_start_time(uint64_t *Startseconds, uint64_t *Startuseconds);
+extern void eb_finish_time(uint64_t *Finishseconds, uint64_t *Finishuseconds);
+extern void eb_compute_overall_elapsed_time_ms(uint64_t Startseconds,
                                           uint64_t Startuseconds,
                                           uint64_t Finishseconds,
                                           uint64_t Finishuseconds,

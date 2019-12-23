@@ -26,81 +26,80 @@ extern "C" {
 #include "EbDecProcess.h"
 
 /* Maximum number of frames in parallel */
-#define DEC_MAX_NUM_FRM_PRLL    1
+#define DEC_MAX_NUM_FRM_PRLL 1
 /** Maximum picture buffers needed **/
 #define MAX_PIC_BUFS (REF_FRAMES + 1 + DEC_MAX_NUM_FRM_PRLL)
 
 /*Optimisation of Coeff Buffer in Single Thread*/
-#define SINGLE_THRD_COEFF_BUF_OPT   0
+#define SINGLE_THRD_COEFF_BUF_OPT 0
 /** Picture Structure **/
 typedef struct EbDecPicBuf {
+    uint8_t is_free;
 
-    uint8_t             is_free;
-
-    size_t              size;
+    size_t size;
 
     /* Number of reference for this frame */
-    uint8_t             ref_count;
+    uint8_t ref_count;
 
-    uint32_t            order_hint;
-    uint32_t            ref_order_hints[INTER_REFS_PER_FRAME];
-    FrameType           frame_type;
+    uint32_t  order_hint;
+    uint32_t  ref_order_hints[INTER_REFS_PER_FRAME];
+    FrameType frame_type;
 
     /*!< Height of the frame in luma samples */
-    uint16_t            frame_width;
+    uint16_t frame_width;
     /* Following 4 prms needed for frame_size_with_refs */
     /*!< Height of the frame in luma samples */
-    uint16_t            frame_height;
+    uint16_t frame_height;
     /*!< Render width of the frame in luma samples */
-    uint16_t            render_width;
+    uint16_t render_width;
     /*!< Render height of the frame in luma samples */
-    uint16_t            render_height;
+    uint16_t render_height;
     /*!< Width of Upscaled SuperRes */
-    uint16_t            superres_upscaled_width;
+    uint16_t superres_upscaled_width;
 
     EbPictureBufferDesc *ps_pic_buf;
 
-    FRAME_CONTEXT       final_frm_ctx;
+    FRAME_CONTEXT final_frm_ctx;
 
-    GlobalMotionParams  global_motion[REF_FRAMES];
+    GlobalMotionParams global_motion[REF_FRAMES];
 
     /* MV at 8x8 lvl */
-    TemporalMvRef       *mvs;
+    TemporalMvRef *mvs;
 
     /* seg map */
-    uint8_t *segment_maps;
+    uint8_t *          segment_maps;
     SegmentationParams seg_params;
 
     /* order hint */
     /* film grain */
-    aom_film_grain_t    film_grain_params;
+    AomFilmGrain film_grain_params;
 
 } EbDecPicBuf;
 
 /* Frame level buffers */
 typedef struct CurFrameBuf {
-    SBInfo          *sb_info;
+    SBInfo *sb_info;
 
-    BlockModeInfo   *mode_info;
+    BlockModeInfo *mode_info;
 
-    int32_t         *coeff[MAX_MB_PLANE];
+    int32_t *coeff[MAX_MB_PLANE];
 
     TransformInfo_t *trans_info[MAX_MB_PLANE - 1];
 
-    int8_t          *cdef_strength;
-    int32_t         *delta_q;
-    int32_t         *delta_lf;
+    int8_t * cdef_strength;
+    int32_t *delta_q;
+    int32_t *delta_lf;
 
     // Loop Restoration Unit
-    RestorationUnitInfo    *lr_unit[MAX_MB_PLANE];
+    RestorationUnitInfo *lr_unit[MAX_MB_PLANE];
 
     /* Tile Map at SB level : TODO. Can be removed? */
-    uint8_t         *tile_map_sb;
+    uint8_t *tile_map_sb;
 
     /*!< Global warp params of current frame */
     EbWarpedMotionParams global_motion_warp[REF_FRAMES];
 
-    DecMTFrameData  dec_mt_frame_data;
+    DecMtFrameData dec_mt_frame_data;
 
 } CurFrameBuf;
 
@@ -108,37 +107,37 @@ typedef struct CurFrameBuf {
 /* Frame level buffers */
 typedef struct FrameMiMap {
     /* SBInfo pointers for entire frame */
-    SBInfo      **pps_sb_info;
+    SBInfo **pps_sb_info;
     /* ModeInfo offset wrt it's SB start */
-    uint16_t    *p_mi_offset;
+    uint16_t *p_mi_offset;
     /*!< superblock size inlog2 unit */
-    uint8_t     sb_size_log2;
+    uint8_t sb_size_log2;
 
-    int32_t         mi_cols_algnsb;
-    int32_t         mi_rows_algnsb;
-    int32_t         sb_cols;
-    int32_t         sb_rows;
+    int32_t mi_cols_algnsb;
+    int32_t mi_rows_algnsb;
+    int32_t sb_cols;
+    int32_t sb_rows;
     /*  number of MI in SB width,
         is same as number of MI in SB height */
-    int32_t     num_mis_in_sb_wd;
+    int32_t num_mis_in_sb_wd;
 } FrameMiMap;
 
 /* Master Frame Buf containing all frame level bufs like ModeInfo
        for all the frames in parallel */
 typedef struct MasterFrameBuf {
-    CurFrameBuf     cur_frame_bufs[DEC_MAX_NUM_FRM_PRLL];
+    CurFrameBuf cur_frame_bufs[DEC_MAX_NUM_FRM_PRLL];
 
-    int32_t         num_mis_in_sb;
+    int32_t num_mis_in_sb;
 
-    int32_t         sb_cols;
-    int32_t         sb_rows;
+    int32_t sb_cols;
+    int32_t sb_rows;
 
     /* TODO : Should be moved to thread ctxt */
-    FrameMiMap      frame_mi_map;
+    FrameMiMap frame_mi_map;
 
-    TemporalMvRef   *tpl_mvs;
-    int32_t         tpl_mvs_size;
-    int8_t          ref_frame_side[REF_FRAMES];
+    TemporalMvRef *tpl_mvs;
+    int32_t        tpl_mvs_size;
+    int8_t         ref_frame_side[REF_FRAMES];
 
 } MasterFrameBuf;
 
@@ -159,7 +158,7 @@ typedef struct EbDecHandle {
     int32_t mem_init_done;
 
     /** Dec Configuration parameters */
-    EbSvtAv1DecConfiguration    dec_config;
+    EbSvtAv1DecConfiguration dec_config;
 
     SeqHeader   seq_header;
     FrameHeader frame_header;
@@ -168,21 +167,21 @@ typedef struct EbDecHandle {
     /* TODO: Move to frmae ctxt ? */
     uint8_t show_existing_frame;
     uint8_t show_frame;
-    uint8_t showable_frame;  // frame can be used as show existing frame in future
+    uint8_t showable_frame; // frame can be used as show existing frame in future
 
     // Thread Handles
 
     // Module Contexts
-    void   *pv_master_parse_ctxt;
+    void *pv_master_parse_ctxt;
 
-    void   *pv_dec_mod_ctxt;
+    void *pv_dec_mod_ctxt;
 
-    void   *pv_lf_ctxt;
+    void *pv_lf_ctxt;
 
-    void   *pv_lr_ctxt;
+    void *pv_lr_ctxt;
 
     /** Pointer to Picture manager structure **/
-    void   *pv_pic_mgr;
+    void *pv_pic_mgr;
 
     // * 'remapped_ref_idx[i - 1]' maps reference type 'i' (range: LAST_FRAME ...
     // EXTREF_FRAME) to a remapped index 'j' (in range: 0 ... REF_FRAMES - 1)
@@ -223,39 +222,38 @@ typedef struct EbDecHandle {
     MasterFrameBuf master_frame_buf;
 
     // Memory Map
-    EbMemoryMapEntry            *memory_map_init_address;
-    EbMemoryMapEntry            *memory_map;
-    uint32_t                     memory_map_index;
-    uint64_t                     total_lib_memory;
-    struct Av1Common             cm;
+    EbMemoryMapEntry *memory_map_init_address;
+    EbMemoryMapEntry *memory_map;
+    uint32_t          memory_map_index;
+    uint64_t          total_lib_memory;
+    struct Av1Common  cm;
 
     // Loop filter frame level flag
-    uint8_t              is_lf_enabled;
+    uint8_t is_lf_enabled;
 
     // Thread Handles
-    EbHandle                    *decode_thread_handle_array;
-    EbBool                      start_thread_process;
-    EbHandle        thread_semaphore;
-    struct DecThreadCtxt   *thread_ctxt_pa;
-}EbDecHandle;
+    EbHandle *            decode_thread_handle_array;
+    EbBool                start_thread_process;
+    EbHandle              thread_semaphore;
+    struct DecThreadCtxt *thread_ctxt_pa;
+} EbDecHandle;
 
 /* Thread level context data */
 typedef struct DecThreadCtxt {
-
     /* Unique ID for the thread */
-    uint32_t        thread_cnt;
-    EbHandle    thread_semaphore;
+    uint32_t thread_cnt;
+    EbHandle thread_semaphore;
     /* Pointer to the decode handle */
-    EbDecHandle     *dec_handle_ptr;
+    EbDecHandle *dec_handle_ptr;
 
     /* Pointer to the decode context */
-    void            *dec_mod_ctxt;
+    void *dec_mod_ctxt;
 
     /* Loop filter information */
     LoopFilterInfoN lf_info;
 } DecThreadCtxt;
 
 #ifdef __cplusplus
-    }
+}
 #endif
 #endif // EbEncHandle_h

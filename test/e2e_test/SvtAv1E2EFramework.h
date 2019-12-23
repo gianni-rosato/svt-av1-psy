@@ -93,7 +93,7 @@ class SvtAv1E2ETestFramework : public ::testing::TestWithParam<EncTestSetting> {
 
     /** Add custom process here, which will be invoked after
      encoding loop is finished, like output stats,
-     analyse the bitstream generated.
+     analyse the Bitstream generated.
     */
     virtual void post_process();
 
@@ -179,7 +179,7 @@ class SvtAv1E2ETestFramework : public ::testing::TestWithParam<EncTestSetting> {
                           not */
     bool enable_decoder;        /**< flag to control if create av1 decoder */
     bool enable_stat;           /**< flag to control if output encoder stat */
-    bool enable_save_bitstream; /**< flag to control if the bitstream is saved
+    bool enable_save_bitstream; /**< flag to control if the Bitstream is saved
                                    on disk */
     bool
         enable_analyzer; /**< flag to control if create decoder with analyzer */

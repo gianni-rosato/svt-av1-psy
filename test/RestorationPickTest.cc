@@ -413,7 +413,7 @@ void speed_test(av1_compute_stats_func func) {
         const int32_t wiener_win = wins[j];
         const uint64_t num_loop = 100000 / (wiener_win * wiener_win);
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             eb_av1_compute_stats_c(wiener_win,
@@ -429,7 +429,7 @@ void speed_test(av1_compute_stats_func func) {
                                    H_org);
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func(wiener_win,
@@ -445,13 +445,13 @@ void speed_test(av1_compute_stats_func func) {
                  H_opt);
         }
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -504,7 +504,7 @@ void highbd_speed_test(av1_compute_stats_highbd_func func) {
             const int32_t wiener_win = wins[j];
             const uint64_t num_loop = 1000000 / (wiener_win * wiener_win);
 
-            EbStartTime(&start_time_seconds, &start_time_useconds);
+            eb_start_time(&start_time_seconds, &start_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++) {
                 eb_av1_compute_stats_highbd_c(wiener_win,
@@ -521,7 +521,7 @@ void highbd_speed_test(av1_compute_stats_highbd_func func) {
                                               bit_depth);
             }
 
-            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+            eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++) {
                 func(wiener_win,
@@ -538,13 +538,13 @@ void highbd_speed_test(av1_compute_stats_highbd_func func) {
                      bit_depth);
             }
 
-            EbStartTime(&finish_time_seconds, &finish_time_useconds);
-            EbComputeOverallElapsedTimeMs(start_time_seconds,
+            eb_start_time(&finish_time_seconds, &finish_time_useconds);
+            eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                           start_time_useconds,
                                           middle_time_seconds,
                                           middle_time_useconds,
                                           &time_c);
-            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                           middle_time_useconds,
                                           finish_time_seconds,
                                           finish_time_useconds,

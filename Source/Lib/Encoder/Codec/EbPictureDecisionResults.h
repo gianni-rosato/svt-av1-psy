@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -14,12 +13,11 @@
 /**************************************
  * Process Results
  **************************************/
-typedef struct PictureDecisionResults
-{
-    EbDctor           dctor;
-    EbObjectWrapper   *picture_control_set_wrapper_ptr;
-    uint32_t               segment_index;
-    uint8_t           task_type; //0:ME   1:Temporal Filtering
+typedef struct PictureDecisionResults {
+    EbDctor          dctor;
+    EbObjectWrapper *pcs_wrapper_ptr;
+    uint32_t         segment_index;
+    uint8_t          task_type; //0:ME   1:Temporal Filtering
 } PictureDecisionResults;
 
 typedef struct PictureDecisionResultInitData {
@@ -29,9 +27,7 @@ typedef struct PictureDecisionResultInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType picture_decision_result_creator(
-    EbPtr *object_dbl_ptr,
-    EbPtr  object_init_data_ptr);
+extern EbErrorType picture_decision_result_creator(EbPtr *object_dbl_ptr,
+                                                   EbPtr  object_init_data_ptr);
 
 #endif //EbPictureDecisionResults_h
-// clang-format on

@@ -45,14 +45,14 @@ class RefDecoder {
         /*!\brief Algorithm does not have required capability */
         REF_CODEC_INCAPABLE = 0 - AOM_CODEC_INCAPABLE,
 
-        /*!\brief The given bitstream is not supported.
+        /*!\brief The given Bitstream is not supported.
          *
-         * The bitstream was unable to be parsed at the highest level. The
+         * The Bitstream was unable to be parsed at the highest level. The
          * decoder is unable to proceed. This error \ref SHOULD be treated as
          * fatal to the stream. */
         REF_CODEC_UNSUP_BITSTREAM = 0 - AOM_CODEC_UNSUP_BITSTREAM,
 
-        /*!\brief Encoded bitstream uses an unsupported feature
+        /*!\brief Encoded Bitstream uses an unsupported feature
          *
          * The decoder does not implement a feature required by the encoder.
          * This return code should only be used for features that prevent future

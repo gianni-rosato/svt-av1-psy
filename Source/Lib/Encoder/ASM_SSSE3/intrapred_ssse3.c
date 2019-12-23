@@ -13,8 +13,8 @@
 #include "aom_dsp_rtcd.h"
 #include <tmmintrin.h>
 
- // Weights are quadratic from '1' to '1 / BlockSize', scaled by
- // 2^sm_weight_log2_scale.
+// Weights are quadratic from '1' to '1 / BlockSize', scaled by
+// 2^sm_weight_log2_scale.
 static const int32_t sm_weight_log2_scale = 8;
 
 // max(block_size_wide[BLOCK_LARGEST], block_size_high[BLOCK_LARGEST])
@@ -1164,4 +1164,3 @@ void eb_aom_smooth_h_predictor_64x16_ssse3(uint8_t *dst, ptrdiff_t stride,
     const uint8_t *left) {
     smooth_h_predictor_wxh(dst, stride, above, left, 64, 16);
 }
-

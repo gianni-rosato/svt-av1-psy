@@ -15,7 +15,7 @@
  * with every copy.
  *
  * To compute the message digest of a chunk of bytes, declare an
- * MD5Context structure, pass it to MD5Init, call MD5Update as
+ * Md5Context structure, pass it to MD5Init, call MD5Update as
  * needed on buffers full of bytes, and then call MD5Final, which
  * will fill a supplied 16-byte array with the digest.
  *
@@ -28,18 +28,18 @@
 #ifndef EbMD_Utility_h
 #define EbMD_Utility_h
 
-typedef struct MD5Context {
+typedef struct Md5Context {
     unsigned int buf[4];
     unsigned int bytes[2];
     unsigned int in[16];
-}MD5Context;
+}Md5Context;
 
-void md5_init(MD5Context *context);
-void md5_update(MD5Context *context, unsigned char const *buf, unsigned int len);
-void md5_final(unsigned char digest[16], MD5Context *context);
+void md5_init(Md5Context *context);
+void md5_update(Md5Context *context, unsigned char const *buf, unsigned int len);
+void md5_final(unsigned char digest[16], Md5Context *context);
 void md5_transform(unsigned int buf[4], unsigned int const in[16]);
 
 void print_md5(unsigned char digest[16]);
-void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5);
+void write_md5(EbBufferHeaderType *recon_buffer, Md5Context *md5);
 
 #endif

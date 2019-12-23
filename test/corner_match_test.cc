@@ -94,26 +94,26 @@ void AV1CornerMatchTest::RunCheckOutput(int run_times) {
     double res_simd = target_func(input1, w, x1, y1, input2, w, x2, y2);
 
     if (run_times > 1) {
-      EbStartTime(&start_time_seconds, &start_time_useconds);
+      eb_start_time(&start_time_seconds, &start_time_useconds);
       for (j = 0; j < run_times; j++) {
         av1_compute_cross_correlation_c(input1, w, x1, y1, input2, w, x2, y2);
       }
-      EbStartTime(&middle_time_seconds, &middle_time_useconds);
+      eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
       for (j = 0; j < run_times; j++) {
         target_func(input1, w, x1, y1, input2, w, x2, y2);
       }
 
-      EbStartTime(&finish_time_seconds, &finish_time_useconds);
+      eb_start_time(&finish_time_seconds, &finish_time_useconds);
 
 
-       EbComputeOverallElapsedTimeMs(start_time_seconds,
+       eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                     start_time_useconds,
                                     middle_time_seconds,
                                     middle_time_useconds,
                                     &time);
       time_c += time;
-      EbComputeOverallElapsedTimeMs(middle_time_seconds,
+      eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                     middle_time_useconds,
                                     finish_time_seconds,
                                     finish_time_useconds,

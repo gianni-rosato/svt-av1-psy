@@ -10,15 +10,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    /***************************************
+/***************************************
      * Extern Function Declaration
      ***************************************/
-    EbErrorType resource_coordination_context_ctor(
-        EbThreadContext *thread_context_ptr,
-        EbEncHandle* enc_handle_ptr);
+EbErrorType resource_coordination_context_ctor(EbThreadContext* thread_context_ptr,
+                                               EbEncHandle*     enc_handle_ptr);
 
-
-    extern void* resource_coordination_kernel(void *input_ptr);
+extern void* resource_coordination_kernel(void* input_ptr);
 #ifdef __cplusplus
 }
 #endif

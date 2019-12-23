@@ -10,12 +10,12 @@
 #endif
 
 typedef enum {
-    SVT_LOG_ALL     = -1,
-    SVT_LOG_FATAL   = 0,
-    SVT_LOG_ERROR   = 1,
-    SVT_LOG_WARN    = 2,
-    SVT_LOG_INFO    = 3,
-    SVT_LOG_DEBUG   = 4,
+    SVT_LOG_ALL   = -1,
+    SVT_LOG_FATAL = 0,
+    SVT_LOG_ERROR = 1,
+    SVT_LOG_WARN  = 2,
+    SVT_LOG_INFO  = 3,
+    SVT_LOG_DEBUG = 4,
 } SvtLogLevel;
 
 //define this to turn off all library log
@@ -33,12 +33,24 @@ typedef enum {
 
 #else
 
-#define SVT_LOG(format, ...) do { } while (0)
-#define SVT_DEBUG(format, ...) do { } while (0)
-#define SVT_INFO(format, ...) do { } while (0)
-#define SVT_WARN(format, ...) do { } while (0)
-#define SVT_ERROR(format, ...) do { } while (0)
-#define SVT_FATAL(format, ...) do { } while (0)
+#define SVT_LOG(format, ...) \
+    do {                     \
+    } while (0)
+#define SVT_DEBUG(format, ...) \
+    do {                       \
+    } while (0)
+#define SVT_INFO(format, ...) \
+    do {                      \
+    } while (0)
+#define SVT_WARN(format, ...) \
+    do {                      \
+    } while (0)
+#define SVT_ERROR(format, ...) \
+    do {                       \
+    } while (0)
+#define SVT_FATAL(format, ...) \
+    do {                       \
+    } while (0)
 
 #endif //SVT_LOG_QUIET
 

@@ -450,17 +450,17 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const TxSize htf_tx_size[num_htf_sizes] = {
             TX_16X64, TX_32X64, TX_64X16, TX_64X32, TX_64X64};
         const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
-            HandleTransform16x64_c,
-            HandleTransform32x64_c,
-            HandleTransform64x16_c,
-            HandleTransform64x32_c,
+            handle_transform16x64_c,
+            handle_transform32x64_c,
+            handle_transform64x16_c,
+            handle_transform64x32_c,
             handle_transform64x64_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
-            HandleTransform16x64_avx2,
-            HandleTransform32x64_avx2,
-            HandleTransform64x16_avx2,
-            HandleTransform64x32_avx2,
-            HandleTransform64x64_avx2};
+            handle_transform16x64_avx2,
+            handle_transform32x64_avx2,
+            handle_transform64x16_avx2,
+            handle_transform64x32_avx2,
+            handle_transform64x64_avx2};
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
 
         for (int idx = 0; idx < num_htf_sizes; ++idx) {
@@ -484,7 +484,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         }
     }
 
-    void run_HandleTransform_speed_test() {
+    void run_handle_transform_speed_test() {
         using HandleTxfmFunc = uint64_t (*)(int32_t * output);
         const int num_htf_sizes = 5;
         const TxSize htf_tx_size[num_htf_sizes] = {
@@ -492,17 +492,17 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const int widths[num_htf_sizes] = {16, 32, 64, 64, 64};
         const int heights[num_htf_sizes] = {64, 64, 16, 32, 64};
         const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
-            HandleTransform16x64_c,
-            HandleTransform32x64_c,
-            HandleTransform64x16_c,
-            HandleTransform64x32_c,
+            handle_transform16x64_c,
+            handle_transform32x64_c,
+            handle_transform64x16_c,
+            handle_transform64x32_c,
             handle_transform64x64_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
-            HandleTransform16x64_avx2,
-            HandleTransform32x64_avx2,
-            HandleTransform64x16_avx2,
-            HandleTransform64x32_avx2,
-            HandleTransform64x64_avx2};
+            handle_transform16x64_avx2,
+            handle_transform32x64_avx2,
+            handle_transform64x16_avx2,
+            handle_transform64x32_avx2,
+            handle_transform64x64_avx2};
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
         double time_c, time_o;
         uint64_t start_time_seconds, start_time_useconds;
@@ -517,23 +517,23 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             eb_buf_random_s32(input_, MAX_TX_SQUARE);
             memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
 
-            EbStartTime(&start_time_seconds, &start_time_useconds);
+            eb_start_time(&start_time_seconds, &start_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++)
                 energy_ref = htf_ref_funcs[idx](input_);
 
-            EbStartTime(&middle_time_seconds, &middle_time_useconds);
+            eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++)
                 energy_asm = htf_asm_funcs[idx](input);
 
-            EbStartTime(&finish_time_seconds, &finish_time_useconds);
-            EbComputeOverallElapsedTimeMs(start_time_seconds,
+            eb_start_time(&finish_time_seconds, &finish_time_useconds);
+            eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                           start_time_useconds,
                                           middle_time_seconds,
                                           middle_time_useconds,
                                           &time_c);
-            EbComputeOverallElapsedTimeMs(middle_time_seconds,
+            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                           middle_time_useconds,
                                           finish_time_seconds,
                                           finish_time_useconds,
@@ -621,10 +621,10 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         // post-process, re-pack the coeffcients
         switch (tx_size) {
         case TX_64X64: handle_transform64x64_c(input_); break;
-        case TX_64X32: HandleTransform64x32_c(input_); break;
-        case TX_32X64: HandleTransform32x64_c(input_); break;
-        case TX_64X16: HandleTransform64x16_c(input_); break;
-        case TX_16X64: HandleTransform16x64_c(input_); break;
+        case TX_64X32: handle_transform64x32_c(input_); break;
+        case TX_32X64: handle_transform32x64_c(input_); break;
+        case TX_64X16: handle_transform64x16_c(input_); break;
+        case TX_16X64: handle_transform16x64_c(input_); break;
         default: break;
         }
         return;
@@ -678,7 +678,7 @@ TEST_P(InvTxfm2dAsmTest, HandleTransform_match_test) {
 }
 
 TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
-    run_HandleTransform_speed_test();
+    run_handle_transform_speed_test();
 }
 
 INSTANTIATE_TEST_CASE_P(

@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -24,17 +23,16 @@ typedef enum RateControlTaskTypes {
 /**************************************
  * Process Results
  **************************************/
-typedef struct RateControlTasks
-{
-    EbDctor                           dctor;
-    RateControlTaskTypes              task_type;
-    EbObjectWrapper                  *picture_control_set_wrapper_ptr;
-    uint32_t                              segment_index;
+typedef struct RateControlTasks {
+    EbDctor              dctor;
+    RateControlTaskTypes task_type;
+    EbObjectWrapper *    pcs_wrapper_ptr;
+    uint32_t             segment_index;
 
     // Following are valid for RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT only
-    uint64_t                              picture_number;
-    uint32_t                              row_number;
-    uint32_t                              bit_count;
+    uint64_t picture_number;
+    uint32_t row_number;
+    uint32_t bit_count;
 } RateControlTasks;
 
 typedef struct RateControlTasksInitData {
@@ -44,9 +42,6 @@ typedef struct RateControlTasksInitData {
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType rate_control_tasks_creator(
-    EbPtr *object_dbl_ptr,
-    EbPtr  object_init_data_ptr);
+extern EbErrorType rate_control_tasks_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 
 #endif // EbRateControlTasks_h
-// clang-format on

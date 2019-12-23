@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -38,58 +37,55 @@
 }
 */
 
-typedef void(*EbDctor)(void* pobj);
+typedef void (*EbDctor)(void* pobj);
 
-#define EB_DELETE_UNCHECKED(pobj) \
-    do { \
+#define EB_DELETE_UNCHECKED(pobj)               \
+    do {                                        \
         if ((pobj)->dctor) (pobj)->dctor(pobj); \
-        EB_FREE((pobj)); \
+        EB_FREE((pobj));                        \
     } while (0)
 
 //trick: to support zero param constructor
-#define EB_VA_ARGS(...) ,##__VA_ARGS__
+#define EB_VA_ARGS(...) , ##__VA_ARGS__
 
-#define EB_NO_THROW_NEW(pobj, ctor, ...) \
-   do { \
-        EbErrorType err; \
-        size_t size = sizeof(*pobj); \
-        EB_NO_THROW_CALLOC(pobj, 1, size); \
-        if (pobj) { \
-            err = ctor(pobj EB_VA_ARGS(__VA_ARGS__)); \
+#define EB_NO_THROW_NEW(pobj, ctor, ...)                        \
+    do {                                                        \
+        EbErrorType err;                                        \
+        size_t      size = sizeof(*pobj);                       \
+        EB_NO_THROW_CALLOC(pobj, 1, size);                      \
+        if (pobj) {                                             \
+            err = ctor(pobj EB_VA_ARGS(__VA_ARGS__));           \
             if (err != EB_ErrorNone) EB_DELETE_UNCHECKED(pobj); \
-        } \
+        }                                                       \
     } while (0)
 
-#define EB_NEW(pobj, ctor, ...) \
-    do { \
-        EbErrorType err; \
-        size_t size = sizeof(*pobj); \
-        EB_CALLOC(pobj, 1, size); \
+#define EB_NEW(pobj, ctor, ...)                   \
+    do {                                          \
+        EbErrorType err;                          \
+        size_t      size = sizeof(*pobj);         \
+        EB_CALLOC(pobj, 1, size);                 \
         err = ctor(pobj EB_VA_ARGS(__VA_ARGS__)); \
-        if (err != EB_ErrorNone) { \
-            EB_DELETE_UNCHECKED(pobj); \
-            return err; \
-        } \
+        if (err != EB_ErrorNone) {                \
+            EB_DELETE_UNCHECKED(pobj);            \
+            return err;                           \
+        }                                         \
     } while (0)
 
-#define EB_DELETE(pobj) \
-    do { \
+#define EB_DELETE(pobj)                      \
+    do {                                     \
         if (pobj) EB_DELETE_UNCHECKED(pobj); \
     } while (0)
 
-#define EB_DELETE_PTR_ARRAY(pa, count) \
-    do {\
-        uint32_t i; \
-        if (pa) { \
-            for (i = 0; i < count; i++) { \
-                EB_DELETE(pa[i]); \
-            } \
-            EB_FREE(pa); \
-        } \
+#define EB_DELETE_PTR_ARRAY(pa, count)                        \
+    do {                                                      \
+        uint32_t i;                                           \
+        if (pa) {                                             \
+            for (i = 0; i < count; i++) { EB_DELETE(pa[i]); } \
+            EB_FREE(pa);                                      \
+        }                                                     \
     } while (0)
 
 #undef EB_DELETE_UNCHECK //do not use this outside
 //#undef EB_VA_ARGS
 
 #endif //EbObject_h
-// clang-format on

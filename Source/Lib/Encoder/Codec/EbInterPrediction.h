@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -58,10 +57,10 @@ extern "C" {
         const ScaleFactors *sf, int32_t w, int32_t h, ConvolveParams *conv_params,
         InterpFilters interp_filters, int32_t is_intrabc, int32_t bd);
 
-typedef EbErrorType(*EB_AV1_INTER_PREDICTION_FUNC_PTR)(
-    PictureControlSet              *picture_control_set_ptr,
+typedef EbErrorType(*EbAv1InterPredictionFuncPtr)(
+    PictureControlSet              *pcs_ptr,
     uint32_t                        interp_filters,
-    CodingUnit                     *cu_ptr,
+    CodingUnit                     *blk_ptr,
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
@@ -75,7 +74,7 @@ typedef EbErrorType(*EB_AV1_INTER_PREDICTION_FUNC_PTR)(
     NeighborArrayUnit              *cb_recon_neighbor_array ,
     NeighborArrayUnit              *cr_recon_neighbor_array ,
     uint8_t                         is_interintra_used ,
-    INTERINTRA_MODE                 interintra_mode,
+    InterIntraMode                 interintra_mode,
     uint8_t                         use_wedge_interintra,
     int32_t                         interintra_wedge_index,
     uint16_t                        pu_origin_x,
@@ -93,9 +92,9 @@ typedef EbErrorType(*EB_AV1_INTER_PREDICTION_FUNC_PTR)(
 
 
     EbErrorType av1_inter_prediction(
-    PictureControlSet              *picture_control_set_ptr,
+    PictureControlSet              *pcs_ptr,
     uint32_t                        interp_filters,
-    CodingUnit                     *cu_ptr,
+    CodingUnit                     *blk_ptr,
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
@@ -109,7 +108,7 @@ typedef EbErrorType(*EB_AV1_INTER_PREDICTION_FUNC_PTR)(
     NeighborArrayUnit              *cb_recon_neighbor_array ,
     NeighborArrayUnit              *cr_recon_neighbor_array ,
     uint8_t                         is_interintra_used ,
-    INTERINTRA_MODE                 interintra_mode,
+    InterIntraMode                 interintra_mode,
     uint8_t                         use_wedge_interintra,
     int32_t                         interintra_wedge_index,
     uint16_t                        pu_origin_x,
@@ -126,9 +125,9 @@ typedef EbErrorType(*EB_AV1_INTER_PREDICTION_FUNC_PTR)(
 
 
 EbErrorType av1_inter_prediction_hbd(
-    PictureControlSet              *picture_control_set_ptr,
+    PictureControlSet              *pcs_ptr,
     uint32_t                        interp_filters,
-    CodingUnit                     *cu_ptr,
+    CodingUnit                     *blk_ptr,
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
@@ -142,7 +141,7 @@ EbErrorType av1_inter_prediction_hbd(
     NeighborArrayUnit              *cb_recon_neighbor_array ,
     NeighborArrayUnit              *cr_recon_neighbor_array ,
     uint8_t                         is_interintra_used ,
-    INTERINTRA_MODE                 interintra_mode,
+    InterIntraMode                 interintra_mode,
     uint8_t                         use_wedge_interintra,
     int32_t                         interintra_wedge_index,
     uint16_t                        pu_origin_x,
@@ -158,11 +157,11 @@ EbErrorType av1_inter_prediction_hbd(
     uint8_t                         bit_depth);
 
     void search_compound_diff_wedge(
-        PictureControlSet                    *picture_control_set_ptr,
+        PictureControlSet                    *pcs_ptr,
         struct ModeDecisionContext                  *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
     void search_compound_avg_dist(
-        PictureControlSet                    *picture_control_set_ptr,
+        PictureControlSet                    *pcs_ptr,
         struct ModeDecisionContext                    *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
 
@@ -196,7 +195,7 @@ EbErrorType av1_inter_prediction_hbd(
         return wedge_params_lookup[sb_type].bits > 0;
     }
 
-    void combine_interintra(INTERINTRA_MODE mode,
+    void combine_interintra(InterIntraMode mode,
         int8_t use_wedge_interintra, int wedge_index,
         int wedge_sign, BlockSize bsize,
         BlockSize plane_bsize, uint8_t *comppred,
@@ -234,14 +233,14 @@ EbErrorType av1_inter_prediction_hbd(
     EbErrorType inter_pu_prediction_av1(
         uint8_t                              hbd_mode_decision,
         struct ModeDecisionContext           *md_context_ptr,
-        PictureControlSet                    *picture_control_set_ptr,
+        PictureControlSet                    *pcs_ptr,
         ModeDecisionCandidateBuffer          *candidate_buffer_ptr);
 
 
     EbErrorType choose_mvp_idx_v2(
         ModeDecisionCandidate               *candidate_ptr,
-        uint32_t                               cu_origin_x,
-        uint32_t                               cu_origin_y,
+        uint32_t                               blk_origin_x,
+        uint32_t                               blk_origin_y,
         uint32_t                               pu_index,
         uint32_t                               tb_size,
         int16_t                               *ref0_amvp_cand_array_x,
@@ -250,17 +249,17 @@ EbErrorType av1_inter_prediction_hbd(
         int16_t                               *ref1_amvp_cand_array_x,
         int16_t                               *ref1_amvp_cand_array_y,
         uint32_t                               ref1_num_available_amvp_cand,
-        PictureControlSet                   *picture_control_set_ptr);
+        PictureControlSet                   *pcs_ptr);
 
     EbErrorType warped_motion_prediction(
-        PictureControlSet                    *picture_control_set_ptr,
+        PictureControlSet                    *pcs_ptr,
         MvUnit                               *mv_unit,
         uint8_t                               ref_frame_type,
         uint8_t                               compound_idx,
         InterInterCompoundData               *interinter_comp,
         uint16_t                              pu_origin_x,
         uint16_t                              pu_origin_y,
-        CodingUnit                           *cu_ptr,
+        CodingUnit                           *blk_ptr,
         const BlockGeom                      *blk_geom,
         EbPictureBufferDesc                  *ref_pic_list0,
         EbPictureBufferDesc                  *ref_pic_list1,
@@ -272,11 +271,10 @@ EbErrorType av1_inter_prediction_hbd(
         uint8_t                               bit_depth,
         EbBool                                perform_chroma);
 
-    extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/2][/*subY*/2][/*bi*/2];
-    extern aom_convolve_fn_t convolve[/*subX*/2][/*subY*/2][/*bi*/2];
+    extern aom_highbd_convolve_fn_t convolve_hbd[/*sub_x*/2][/*sub_y*/2][/*bi*/2];
+    extern AomConvolveFn convolve[/*sub_x*/2][/*sub_y*/2][/*bi*/2];
 
 #ifdef __cplusplus
 }
 #endif
 #endif //EbInterPrediction_h
-// clang-format on

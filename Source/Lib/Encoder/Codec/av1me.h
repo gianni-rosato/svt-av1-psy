@@ -1,4 +1,3 @@
-// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -34,57 +33,50 @@ extern "C" {
 
 #define SEARCH_RANGE_8P 3
 #define SEARCH_GRID_STRIDE_8P (2 * SEARCH_RANGE_8P + 1)
-#define SEARCH_GRID_CENTER_8P \
-  (SEARCH_RANGE_8P * SEARCH_GRID_STRIDE_8P + SEARCH_RANGE_8P)
+#define SEARCH_GRID_CENTER_8P (SEARCH_RANGE_8P * SEARCH_GRID_STRIDE_8P + SEARCH_RANGE_8P)
 
 // motion search site
-typedef struct search_site {
-  MV mv;
-  int offset;
-} search_site;
+typedef struct SearchSite {
+    MV  mv;
+    int offset;
+} SearchSite;
 
 typedef struct SearchSiteConfig {
-  search_site ss[8 * MAX_MVSEARCH_STEPS + 1];
-  int ss_count;
-  int searches_per_step;
+    SearchSite ss[8 * MAX_MVSEARCH_STEPS + 1];
+    int        ss_count;
+    int        searches_per_step;
 } SearchSiteConfig;
 
 typedef struct {
-  MV coord;
-  int coord_offset;
-} search_neighbors;
-typedef unsigned int (*aom_obmc_sad_fn_t)(const uint8_t *pred, int pred_stride,
-                                          const int32_t *wsrc,
+    MV  coord;
+    int coord_offset;
+} SearchNeighbors;
+typedef unsigned int (*AomObmcSadFn)(const uint8_t *pred, int pred_stride, const int32_t *wsrc,
                                           const int32_t *msk);
-typedef unsigned int (*aom_obmc_variance_fn_t)(const uint8_t *pred,
-                                               int pred_stride,
-                                               const int32_t *wsrc,
-                                               const int32_t *msk,
+typedef unsigned int (*AomObmcVarianceFn)(const uint8_t *pred, int pred_stride,
+                                               const int32_t *wsrc, const int32_t *msk,
                                                unsigned int *sse);
-typedef unsigned int (*aom_obmc_subpixvariance_fn_t)(
-    const uint8_t *pred, int pred_stride, int xoffset, int yoffset,
-    const int32_t *wsrc, const int32_t *msk, unsigned int *sse);
-typedef unsigned int(*aom_sad_fn_t)(const uint8_t *a, int a_stride,
-                                    const uint8_t *b, int b_stride);
+typedef unsigned int (*AomObmcSubpixvarianceFn)(const uint8_t *pred, int pred_stride,
+                                                     int xoffset, int yoffset, const int32_t *wsrc,
+                                                     const int32_t *msk, unsigned int *sse);
+typedef unsigned int (*AomSadFn)(const uint8_t *a, int a_stride, const uint8_t *b,
+                                     int b_stride);
 
-typedef unsigned int(*aom_variance_fn_t)(const uint8_t *a, int a_stride,
-                                         const uint8_t *b, int b_stride,
-                                         unsigned int *sse);
+typedef unsigned int (*AomVarianceFn)(const uint8_t *a, int a_stride, const uint8_t *b,
+                                          int b_stride, unsigned int *sse);
 
-typedef void(*aom_sad_multi_d_fn_t)(const uint8_t *a, int a_stride,
-                                    const uint8_t *const b_array[],
-                                    int b_stride, unsigned int *sad_array);
+typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride, const uint8_t *const b_array[],
+                                     int b_stride, unsigned int *sad_array);
 
 typedef struct aom_variance_vtable {
-    aom_sad_fn_t sdf;
-    aom_variance_fn_t vf;
-    aom_sad_multi_d_fn_t sdx4df;
-    aom_obmc_sad_fn_t osdf;
-    aom_obmc_variance_fn_t ovf;
-    aom_obmc_subpixvariance_fn_t osvf;
+    AomSadFn                 sdf;
+    AomVarianceFn            vf;
+    AomSadMultiDFn         sdx4df;
+    AomObmcSadFn            osdf;
+    AomObmcVarianceFn       ovf;
+    AomObmcSubpixvarianceFn osvf;
 
-
-} aom_variance_fn_ptr_t;
+} AomVarianceFnPtr;
 
 void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);
 void eb_av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
@@ -93,15 +85,13 @@ struct Av1Comp;
 struct SpeedFeatures;
 
 int eb_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
-                          BlockSize bsize, MV *mvp_full, int step_param,
-                          int method, int run_mesh_search, int error_per_bit,
-                          int *cost_list, const MV *ref_mv, int var_max, int rd,
-                          int x_pos, int y_pos, int intra);
+                             BlockSize bsize, MV *mvp_full, int step_param, int method,
+                             int run_mesh_search, int error_per_bit, int *cost_list,
+                             const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
+                             int intra);
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif
 
-#endif  // AOM_AV1_ENCODER_MCOMP_H_
-
-// clang-format on
+#endif // AOM_AV1_ENCODER_MCOMP_H_

@@ -32,7 +32,7 @@ namespace {
 
     typedef void (*av1_nn_predict_func)(
         const float *input_nodes,
-        const NN_CONFIG *const nn_config,
+        const NnConfig *const nn_config,
         int reduce_prec,
         float *const output);
 
@@ -74,7 +74,7 @@ namespace {
 
         av1_nn_predict_func func_;
 
-        const NN_CONFIG *nn_config;
+        const NnConfig *nn_config;
 
         float   features1[FEATURE_SIZE_MAX_MIN_PART_PRED],
                 features2[FEATURE_SIZE_MAX_MIN_PART_PRED],

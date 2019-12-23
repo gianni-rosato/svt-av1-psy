@@ -21,7 +21,7 @@ jobs:
         run: git fetch -q https://github.com/OpenVisualCloud/SVT-AV1.git master
       - name: newline at EOF check
         run: |
-          for file in $(git diff --name-only FETCH_HEAD  -- . ':!third_party' ':!test/e2e_test/test_vector_list.txt' ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' ':!*.png'); do
+          for file in $(git diff --name-only --diff-filter=d FETCH_HEAD  -- . ':!third_party' ':!test/e2e_test/test_vector_list.txt' ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' ':!*.png'); do
             if [ -n "$(tail -c1 "$file")" ]; then
               echo "No newline at end of $file"
               false

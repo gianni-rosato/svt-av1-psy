@@ -1,4 +1,3 @@
-// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -21,15 +20,13 @@
 #define MATCH_SZ_SQ (MATCH_SZ * MATCH_SZ)
 
 typedef struct {
-  int x, y;
-  int rx, ry;
+    int x, y;
+    int rx, ry;
 } Correspondence;
 
-int av1_determine_correspondence(unsigned char *frm, int *frm_corners,
-                                 int num_frm_corners, unsigned char *ref,
-                                 int *ref_corners, int num_ref_corners,
-                                 int width, int height, int frm_stride,
-                                 int ref_stride, int *correspondence_pts);
+int av1_determine_correspondence(unsigned char *frm, int *frm_corners, int num_frm_corners,
+                                 unsigned char *ref, int *ref_corners, int num_ref_corners,
+                                 int width, int height, int frm_stride, int ref_stride,
+                                 int *correspondence_pts);
 
-#endif  // AOM_AV1_ENCODER_CORNER_MATCH_H_
-// clang-format on
+#endif // AOM_AV1_ENCODER_CORNER_MATCH_H_

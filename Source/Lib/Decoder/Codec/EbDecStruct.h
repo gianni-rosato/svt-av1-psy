@@ -17,9 +17,9 @@ extern "C" {
 #endif
 
 /* TO enable some debug checks for coeff producer and consumer */
-#define SVT_DEC_COEFF_DEBUG    0
+#define SVT_DEC_COEFF_DEBUG 0
 
 #ifdef __cplusplus
-    }
+}
 #endif
 #endif // EbDecStruct_h

@@ -127,13 +127,13 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     void setup_func_ptrs() {
         if (bd_ == AOM_BITS_8) {
             if (tx_size_ == TX_32X32) {
-                quant_ref_ = eb_aom_quantize_b_32x32_c_II;
+                quant_ref_ = eb_aom_quantize_b_32x32_c_ii;
                 quant_test_ = eb_aom_quantize_b_32x32_avx2;
             } else if (tx_size_ == TX_64X64) {
-                quant_ref_ = eb_aom_quantize_b_64x64_c_II;
+                quant_ref_ = eb_aom_quantize_b_64x64_c_ii;
                 quant_test_ = eb_aom_quantize_b_64x64_avx2;
             } else {
-                quant_ref_ = eb_aom_quantize_b_c_II;
+                quant_ref_ = eb_aom_quantize_b_c_ii;
                 quant_test_ = eb_aom_quantize_b_avx2;
             }
         } else {
@@ -161,7 +161,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
         const int16_t *round = qtab_quants_.y_round[q];
         const int16_t *quant = qtab_quants_.y_quant[q];
         const int16_t *quant_shift = qtab_quants_.y_quant_shift[q];
-        const int16_t *dequant = qtab_deq_.y_dequant_QTX[q];
+        const int16_t *dequant = qtab_deq_.y_dequant_qtx[q];
 
         memset(qcoeff_ref_, 0, MAX_TX_SQUARE * sizeof(TranLow));
         memset(dqcoeff_ref_, 0, MAX_TX_SQUARE * sizeof(TranLow));

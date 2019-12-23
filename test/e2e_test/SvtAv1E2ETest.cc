@@ -164,7 +164,7 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"TileTest2", {{"TileCol", "1"}}, default_test_vectors},
     {"TileTest3", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors},
 
-    {"SpeedControlTest1", {{"SpeedControlFlag", "1"}}, default_test_vectors},
+    {"SpeedControlTest1", {{"speed_control_flag", "1"}}, default_test_vectors},
 
     // Validate by setting a low bitrate and MaxQpAllowed, push the encoder to producing
     // large partitions.

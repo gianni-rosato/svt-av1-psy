@@ -12,11 +12,9 @@
 /**************************************
  * Extern Function Declarations
  **************************************/
-extern EbErrorType cdef_context_ctor(
-    EbThreadContext     *thread_context_ptr,
-    const EbEncHandle   *enc_handle_ptr,
-    int                 index);
+extern EbErrorType cdef_context_ctor(EbThreadContext *  thread_context_ptr,
+                                     const EbEncHandle *enc_handle_ptr, int index);
 
-extern void* cdef_kernel(void *input_ptr);
+extern void *cdef_kernel(void *input_ptr);
 
 #endif

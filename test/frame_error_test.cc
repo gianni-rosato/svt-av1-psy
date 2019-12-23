@@ -131,13 +131,13 @@ void AV1FrameErrorTest::RunSpeedTest(frame_error_func test_impl, int width,
         uint64_t start_time_seconds, start_time_useconds;
         uint64_t finish_time_seconds, finish_time_useconds;
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
         frame_error_func func = funcs[i];
         for (int j = 0; j < num_loops; ++j) {
             func(ref, stride, dst, width, height, stride);
         }
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,

@@ -180,27 +180,27 @@ class ExtractFilterTest : public ::testing::Test {
         }
     }
 
-    void run_luma_lcu_test() {
+    void run_luma_sb_test() {
         init_pic(&in_pic_);
 
         for (uint32_t sb_y = 0; sb_y < height_; sb_y += 64) {
             for (uint32_t sb_x = 0; sb_x < width_; sb_x += 64) {
-                noise_extract_luma_weak_lcu_c(
+                noise_extract_luma_weak_sb_c(
                     &in_pic_, &denoised_pic_ref_, &noise_pic_ref_, 0, 0);
-                noise_extract_luma_weak_lcu_avx2_intrin(
+                noise_extract_luma_weak_sb_avx2_intrin(
                     &in_pic_, &denoised_pic_tst_, &noise_pic_tst_, 0, 0);
 
                 EbBool ret =
                     check_pic_content(&denoised_pic_ref_, &denoised_pic_tst_);
                 EXPECT_EQ(ret, EB_TRUE)
-                    << "noise_extract_luma_weak_lcu test: Denoised pic "
+                    << "noise_extract_luma_weak_sb test: Denoised pic "
                        "different with dim ["
                     << width_ << " x " << height_ << "] sb_origin [" << sb_x
                     << " x " << sb_y << "]";
 
                 ret = check_pic_content(&noise_pic_ref_, &noise_pic_tst_);
                 EXPECT_EQ(ret, EB_TRUE)
-                    << "noise_extract_luma_weak_lcu test: noise pic different "
+                    << "noise_extract_luma_weak_sb test: noise pic different "
                        "with dim ["
                     << width_ << " x " << height_ << "] sb_origin [" << sb_x
                     << " x " << sb_y << "]";
@@ -307,8 +307,8 @@ TEST_F(ExtractFilterTest, LumaWeakNoiseTest) {
     run_luma_test();
 }
 
-TEST_F(ExtractFilterTest, LumaWeakNoiseLcuTest) {
-    run_luma_lcu_test();
+TEST_F(ExtractFilterTest, LumaWeakNoiseSbTest) {
+    run_luma_sb_test();
 }
 
 TEST_F(ExtractFilterTest, LumaStrongNoiseTest) {

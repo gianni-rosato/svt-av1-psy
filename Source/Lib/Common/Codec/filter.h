@@ -1,5 +1,4 @@
-// clang-format off
- /*
+/*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
@@ -19,7 +18,7 @@
 extern "C" {
 #endif
 
-    //---aom_filter.h
+//---aom_filter.h
 #define FILTER_BITS 7
 
 #define SUBPEL_BITS 4
@@ -36,67 +35,69 @@ extern "C" {
 #define BIL_SUBPEL_BITS 3
 #define BIL_SUBPEL_SHIFTS (1 << BIL_SUBPEL_BITS)
 
-    // 2 tap bilinear filters
-    static const uint8_t bilinear_filters_2t[BIL_SUBPEL_SHIFTS][2] = {
-        { 128, 0 }, { 112, 16 }, { 96, 32 }, { 80, 48 },
-        { 64, 64 }, { 48, 80 }, { 32, 96 }, { 16, 112 },
-    };
-    //----
+// 2 tap bilinear filters
+static const uint8_t bilinear_filters_2t[BIL_SUBPEL_SHIFTS][2] = {
+    {128, 0},
+    {112, 16},
+    {96, 32},
+    {80, 48},
+    {64, 64},
+    {48, 80},
+    {32, 96},
+    {16, 112},
+};
+//----
 #define MAX_FILTER_TAP 8
 
-    // With CONFIG_DUAL_FILTER, pack two InterpFilter's into a uint32_t: since
-    // there are at most 10 filters, we can use 16 bits for each and have more than
-    // enough space. This reduces argument passing and unifies the operation of
-    // setting a (pair of) filters.
-    //
-    // Without CONFIG_DUAL_FILTER,
-    typedef uint32_t InterpFilters;
-    static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters,
-        int32_t x_filter) {
-        return (InterpFilter)((filters >> (x_filter ? 16 : 0)) & 0xffff);
-    }
+// With CONFIG_DUAL_FILTER, pack two InterpFilter's into a uint32_t: since
+// there are at most 10 filters, we can use 16 bits for each and have more than
+// enough space. This reduces argument passing and unifies the operation of
+// setting a (pair of) filters.
+//
+// Without CONFIG_DUAL_FILTER,
+typedef uint32_t           InterpFilters;
+static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters, int32_t x_filter) {
+    return (InterpFilter)((filters >> (x_filter ? 16 : 0)) & 0xffff);
+}
 
-    static INLINE InterpFilters av1_make_interp_filters(InterpFilter y_filter,
-        InterpFilter x_filter) {
-        uint16_t y16 = y_filter & 0xffff;
-        uint16_t x16 = x_filter & 0xffff;
-        return y16 | ((uint32_t)x16 << 16);
-    }
+static INLINE InterpFilters av1_make_interp_filters(InterpFilter y_filter, InterpFilter x_filter) {
+    uint16_t y16 = y_filter & 0xffff;
+    uint16_t x16 = x_filter & 0xffff;
+    return y16 | ((uint32_t)x16 << 16);
+}
 
-    static INLINE InterpFilters av1_broadcast_interp_filter(InterpFilter filter) {
-        return av1_make_interp_filters(filter, filter);
-    }
+static INLINE InterpFilters av1_broadcast_interp_filter(InterpFilter filter) {
+    return av1_make_interp_filters(filter, filter);
+}
 
-    static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
-        return filter == SWITCHABLE ? EIGHTTAP_REGULAR : filter;
-    }
+static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
+    return filter == SWITCHABLE ? EIGHTTAP_REGULAR : filter;
+}
 
-#define LOG_SWITCHABLE_FILTERS \
-  2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */
+#define LOG_SWITCHABLE_FILTERS 2 /* (1 << LOG_SWITCHABLE_FILTERS) > SWITCHABLE_FILTERS */
 
 #define MAX_SUBPEL_TAPS 12
 #define SWITCHABLE_FILTER_CONTEXTS ((SWITCHABLE_FILTERS + 1) * 4)
 #define INTER_FILTER_COMP_OFFSET (SWITCHABLE_FILTERS + 1)
 #define INTER_FILTER_DIR_OFFSET ((SWITCHABLE_FILTERS + 1) * 2)
-    //
-    //typedef struct InterpFilterParams {
-    //  const int16_t *filter_ptr;
-    //  uint16_t taps;
-    //  uint16_t subpel_shifts;
-    //  InterpFilter interp_filter;
-    //} InterpFilterParams;
+//
+//typedef struct InterpFilterParams {
+//  const int16_t *filter_ptr;
+//  uint16_t taps;
+//  uint16_t subpel_shifts;
+//  InterpFilter interp_filter;
+//} InterpFilterParams;
 
-    InterpFilterParams av1_get_interp_filter_params_with_block_size(
-        const InterpFilter interp_filter, const int32_t w);
+InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
+                                                                const int32_t      w);
 
-    static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
-        const InterpFilterParams filter_params, const int32_t subpel) {
-        return filter_params.filter_ptr + filter_params.taps * subpel;
-    }
+static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
+    const InterpFilterParams filter_params, const int32_t subpel) {
+    return filter_params.filter_ptr + filter_params.taps * subpel;
+}
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif
 
-#endif  // AV1_COMMON_FILTER_H_
-// clang-format on
+#endif // AV1_COMMON_FILTER_H_

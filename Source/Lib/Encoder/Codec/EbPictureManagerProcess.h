@@ -13,15 +13,13 @@
 extern "C" {
 #endif
 
-    /***************************************
+/***************************************
      * Extern Function Declaration
      ***************************************/
-    EbErrorType picture_manager_context_ctor(
-        EbThreadContext     *thread_context_ptr,
-        const EbEncHandle   *enc_handle_ptr,
-        int rate_control_index);
+EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
+                                         const EbEncHandle *enc_handle_ptr, int rate_control_index);
 
-    extern void* picture_manager_kernel(void *input_ptr);
+extern void *picture_manager_kernel(void *input_ptr);
 
 #ifdef __cplusplus
 }

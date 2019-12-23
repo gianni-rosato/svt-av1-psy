@@ -19,7 +19,7 @@
 #include <stdint.h>
 
 #if defined(_WIN32)
- /*
+/*
   * Win32 specific includes
   */
 #ifndef WIN32_LEAN_AND_MEAN
@@ -27,22 +27,22 @@
 #endif
 #include <windows.h>
 #else
- /*
+/*
   * POSIX specific includes
   */
 #include <sys/time.h>
 
-  /* timersub is not provided by msys at this time. */
+/* timersub is not provided by msys at this time. */
 #ifndef timersub
-#define timersub(a, b, result)                       \
-  do {                                               \
-    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;    \
-    (result)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
-    if ((result)->tv_usec < 0) {                     \
-      --(result)->tv_sec;                            \
-      (result)->tv_usec += 1000000;                  \
-    }                                                \
-  } while (0)
+#define timersub(a, b, result)                           \
+    do {                                                 \
+        (result)->tv_sec  = (a)->tv_sec - (b)->tv_sec;   \
+        (result)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
+        if ((result)->tv_usec < 0) {                     \
+            --(result)->tv_sec;                          \
+            (result)->tv_usec += 1000000;                \
+        }                                                \
+    } while (0)
 #endif
 #endif
 
@@ -54,6 +54,6 @@ struct EbDecTimer {
 #endif
 };
 
-void dec_timer_start(struct EbDecTimer *t);
-void dec_timer_mark(struct EbDecTimer *t);
+void    dec_timer_start(struct EbDecTimer *t);
+void    dec_timer_mark(struct EbDecTimer *t);
 int64_t dec_timer_elapsed(struct EbDecTimer *t);

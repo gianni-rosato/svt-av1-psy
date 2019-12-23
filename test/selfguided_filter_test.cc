@@ -84,7 +84,7 @@ class AV1SelfguidedFilterTest
         uint64_t middle_time_seconds, middle_time_useconds;
         uint64_t finish_time_seconds, finish_time_useconds;
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
                 for (j = 0; j < width; j += pu_width) {
@@ -105,7 +105,7 @@ class AV1SelfguidedFilterTest
                                                    0);
                 }
         }
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
@@ -128,13 +128,13 @@ class AV1SelfguidedFilterTest
                 }
         }
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &ref_time);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -307,7 +307,7 @@ class AV1HighbdSelfguidedFilterTest
         uint64_t middle_time_seconds, middle_time_useconds;
         uint64_t finish_time_seconds, finish_time_useconds;
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
                 for (j = 0; j < width; j += pu_width) {
@@ -328,7 +328,7 @@ class AV1HighbdSelfguidedFilterTest
                                                    1);
                 }
         }
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
@@ -351,13 +351,13 @@ class AV1HighbdSelfguidedFilterTest
                 }
         }
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &ref_time);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -564,8 +564,8 @@ TEST(IntegralImagesTest, integral_images) {
     uint16_t *src16;
     int32_t src_stride;
 
-    // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of Atl, Btl,
-    // Ctl and Dtl is 32-byte aligned.
+    // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of atl, btl,
+    // ctl and dtl is 32-byte aligned.
     const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
     int32_t *buf_c, *buf_o;
 
@@ -581,7 +581,7 @@ TEST(IntegralImagesTest, integral_images) {
                 const int32_t width_ext = width + 2 * SGRPROJ_BORDER_HORZ;
                 const int32_t height_ext = height + 2 * SGRPROJ_BORDER_VERT;
 
-                // Adjusting the stride of A and B here appears to avoid bad
+                // Adjusting the stride of A and b here appears to avoid bad
                 // cache effects, leading to a significant speed
                 // improvement. We also align the stride to a multiple of 32
                 // bytes for efficiency.
@@ -600,7 +600,7 @@ TEST(IntegralImagesTest, integral_images) {
 
                 // The "0" pointers are (- SGRPROJ_BORDER_VERT,
                 // -SGRPROJ_BORDER_HORZ). Note there's a zero row and column
-                // in A, B (integral images), so we move down and right one
+                // in A, b (integral images), so we move down and right one
                 // for them.
                 const int32_t buf_diag_border =
                     SGRPROJ_BORDER_HORZ + buf_stride * SGRPROJ_BORDER_VERT;
@@ -614,7 +614,7 @@ TEST(IntegralImagesTest, integral_images) {
                 int32_t *C0_o = Ctl_o + 1 + buf_stride;
                 int32_t *D0_o = Dtl_o + 1 + buf_stride;
 
-                // Finally, A, B, C, D point at position (0, 0).
+                // Finally, A, b, C, D point at position (0, 0).
                 int32_t *A_c = A0_c + buf_diag_border;
                 int32_t *B_c = B0_c + buf_diag_border;
                 int32_t *C_c = C0_c + buf_diag_border;
@@ -703,8 +703,8 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
     uint64_t middle_time_seconds, middle_time_useconds;
     uint64_t finish_time_seconds, finish_time_useconds;
 
-    // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of Atl, Btl,
-    // Ctl and Dtl is 32-byte aligned.
+    // The ALIGN_POWER_OF_TWO macro here ensures that column 1 of atl, btl,
+    // ctl and dtl is 32-byte aligned.
     const int32_t buf_elts = ALIGN_POWER_OF_TWO(RESTORATION_PROC_UNIT_PELS, 3);
     int32_t *buf_c, *buf_o;
 
@@ -719,7 +719,7 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
     const int32_t width_ext = width + 2 * SGRPROJ_BORDER_HORZ;
     const int32_t height_ext = height + 2 * SGRPROJ_BORDER_VERT;
 
-    // Adjusting the stride of A and B here appears to avoid bad
+    // Adjusting the stride of A and b here appears to avoid bad
     // cache effects, leading to a significant speed
     // improvement. We also align the stride to a multiple of 32
     // bytes for efficiency.
@@ -738,7 +738,7 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
 
     // The "0" pointers are (- SGRPROJ_BORDER_VERT,
     // -SGRPROJ_BORDER_HORZ). Note there's a zero row and column
-    // in A, B (integral images), so we move down and right one
+    // in A, b (integral images), so we move down and right one
     // for them.
     const int32_t buf_diag_border =
         SGRPROJ_BORDER_HORZ + buf_stride * SGRPROJ_BORDER_VERT;
@@ -752,7 +752,7 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
     int32_t *C0_o = Ctl_o + 1 + buf_stride;
     int32_t *D0_o = Dtl_o + 1 + buf_stride;
 
-    // Finally, A, B, C, D point at position (0, 0).
+    // Finally, A, b, C, D point at position (0, 0).
     int32_t *A_c = A0_c + buf_diag_border;
     int32_t *B_c = B0_c + buf_diag_border;
     int32_t *C_c = C0_c + buf_diag_border;
@@ -777,27 +777,27 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
 
     const uint64_t num_loop = 1000000;
 
-    EbStartTime(&start_time_seconds, &start_time_useconds);
+    eb_start_time(&start_time_seconds, &start_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images_c(
             src8, src_stride, width_ext, height_ext, Ctl_c, Dtl_c, buf_stride);
     }
 
-    EbStartTime(&middle_time_seconds, &middle_time_useconds);
+    eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images(
             src8, src_stride, width_ext, height_ext, Ctl_o, Dtl_o, buf_stride);
     }
 
-    EbStartTime(&finish_time_seconds, &finish_time_useconds);
-    EbComputeOverallElapsedTimeMs(start_time_seconds,
+    eb_start_time(&finish_time_seconds, &finish_time_useconds);
+    eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                   start_time_useconds,
                                   middle_time_seconds,
                                   middle_time_useconds,
                                   &time_c);
-    EbComputeOverallElapsedTimeMs(middle_time_seconds,
+    eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                   middle_time_useconds,
                                   finish_time_seconds,
                                   finish_time_useconds,
@@ -817,27 +817,27 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
            1000000 * time_o / num_loop,
            time_c / time_o);
 
-    EbStartTime(&start_time_seconds, &start_time_useconds);
+    eb_start_time(&start_time_seconds, &start_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images_highbd_c(
             src16, src_stride, width_ext, height_ext, Ctl_c, Dtl_c, buf_stride);
     }
 
-    EbStartTime(&middle_time_seconds, &middle_time_useconds);
+    eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images_highbd(
             src16, src_stride, width_ext, height_ext, Ctl_o, Dtl_o, buf_stride);
     }
 
-    EbStartTime(&finish_time_seconds, &finish_time_useconds);
-    EbComputeOverallElapsedTimeMs(start_time_seconds,
+    eb_start_time(&finish_time_seconds, &finish_time_useconds);
+    eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                   start_time_useconds,
                                   middle_time_seconds,
                                   middle_time_useconds,
                                   &time_c);
-    EbComputeOverallElapsedTimeMs(middle_time_seconds,
+    eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                   middle_time_useconds,
                                   finish_time_seconds,
                                   finish_time_useconds,

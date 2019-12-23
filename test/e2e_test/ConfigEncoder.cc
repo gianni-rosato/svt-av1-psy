@@ -10,7 +10,7 @@ extern "C" {
 
 void set_enc_config(void *config_ptr, const char *name, const char *value) {
     EbConfig *config = (EbConfig *)config_ptr;
-    SetConfigValue(config, name, value);
+    set_config_value(config, name, value);
 }
 
 void *create_enc_config() {
@@ -36,7 +36,7 @@ int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr) {
            dst_enc_config,
            sizeof(EbSvtAv1EncConfiguration));
 
-    CopyConfigurationParameters(
+    copy_configuration_parameters(
         config, &app_ctx, 0);  // instance_idx is not used;
 
     // copy back to dst_enc_config

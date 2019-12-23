@@ -12,10 +12,10 @@ extern "C" {
 
 #include "EbDecHandle.h"
 
-void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle,
-    int after_cdef, int enable_flag);
-void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle,
-    int optimized_lr, int enable_flag);
+void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle, int after_cdef,
+                                                  int enable_flag);
+void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimized_lr,
+                                           int enable_flag);
 
 #ifdef __cplusplus
 }

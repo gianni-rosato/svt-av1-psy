@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -25,28 +24,24 @@
 #include <stdio.h>
 #endif
 
-static void output_bitstream_unit_dctor(EbPtr p)
-{
-    OutputBitstreamUnit *obj = (OutputBitstreamUnit*)p;
+static void output_bitstream_unit_dctor(EbPtr p) {
+    OutputBitstreamUnit *obj = (OutputBitstreamUnit *)p;
     EB_FREE_ARRAY(obj->buffer_begin_av1);
 }
 
 /**********************************
  * Constructor
  **********************************/
-EbErrorType output_bitstream_unit_ctor(
-    OutputBitstreamUnit   *bitstream_ptr,
-    uint32_t                 buffer_size){
+EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint32_t buffer_size) {
     bitstream_ptr->dctor = output_bitstream_unit_dctor;
     if (buffer_size) {
         bitstream_ptr->size = buffer_size / sizeof(uint32_t);
         EB_MALLOC_ARRAY(bitstream_ptr->buffer_begin_av1, bitstream_ptr->size);
         bitstream_ptr->buffer_av1 = bitstream_ptr->buffer_begin_av1;
-    }
-    else {
-        bitstream_ptr->size = 0;
+    } else {
+        bitstream_ptr->size             = 0;
         bitstream_ptr->buffer_begin_av1 = 0;
-        bitstream_ptr->buffer_av1 = 0;
+        bitstream_ptr->buffer_av1       = 0;
     }
     bitstream_ptr->written_bits_count = 0;
 
@@ -56,9 +51,7 @@ EbErrorType output_bitstream_unit_ctor(
 /**********************************
  * Reset Bitstream
  **********************************/
-EbErrorType output_bitstream_reset(
-    OutputBitstreamUnit *bitstream_ptr)
-{
+EbErrorType output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     bitstream_ptr->written_bits_count = 0;
@@ -72,22 +65,20 @@ EbErrorType output_bitstream_reset(
  * Output RBSP to payload
  *   Intended to be used in CABAC
  **********************************/
-EbErrorType output_bitstream_rbsp_to_payload(
-    OutputBitstreamUnit   *bitstream_ptr,
-    EbByte                  output_buffer,
-    uint32_t                *output_buffer_index,
-    uint32_t                *output_buffer_size,
-    uint32_t                 start_location)
-{
+EbErrorType output_bitstream_rbsp_to_payload(OutputBitstreamUnit *bitstream_ptr,
+                                             EbByte output_buffer, uint32_t *output_buffer_index,
+                                             uint32_t *output_buffer_size,
+                                             uint32_t  start_location) {
     EbErrorType return_error = EB_ErrorNone;
-    uint32_t  buffer_written_bytes_count = (uint32_t)(bitstream_ptr->buffer_av1 - bitstream_ptr->buffer_begin_av1);
-    uint32_t  write_location = start_location;
-    uint32_t  read_location = start_location;
-    EbByte read_byte_ptr;
-    EbByte write_byte_ptr;
+    uint32_t    buffer_written_bytes_count =
+        (uint32_t)(bitstream_ptr->buffer_av1 - bitstream_ptr->buffer_begin_av1);
+    uint32_t write_location = start_location;
+    uint32_t read_location  = start_location;
+    EbByte   read_byte_ptr;
+    EbByte   write_byte_ptr;
 
     // IVF data
-    read_byte_ptr = (EbByte)bitstream_ptr->buffer_begin_av1;
+    read_byte_ptr  = (EbByte)bitstream_ptr->buffer_begin_av1;
     write_byte_ptr = &output_buffer[*output_buffer_index];
     //frame_count++;
     while ((read_location < buffer_written_bytes_count)) {
@@ -107,16 +98,16 @@ EbErrorType output_bitstream_rbsp_to_payload(
 // daalaboolwriter.c
 void eb_aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
     br->buffer = source;
-    br->pos = 0;
+    br->pos    = 0;
     eb_od_ec_enc_init(&br->ec, 62025);
 }
 
 int32_t eb_aom_daala_stop_encode(DaalaWriter *br) {
-    int32_t nb_bits;
+    int32_t  nb_bits;
     uint32_t daala_bytes;
     uint8_t *daala_data;
     daala_data = eb_od_ec_enc_done(&br->ec, &daala_bytes);
-    nb_bits = eb_od_ec_enc_tell(&br->ec);
+    nb_bits    = eb_od_ec_enc_tell(&br->ec);
     memcpy(br->buffer, daala_data, daala_bytes);
     br->pos = daala_bytes;
     eb_od_ec_enc_clear(&br->ec);
@@ -145,7 +136,7 @@ volume=16,
 number=3,
 pages="256--294",
 month=Jul,
-URL="http://researchcommons.waikato.ac.nz/bitstream/handle/10289/78/content.pdf"
+URL="http://researchcommons.waikato.ac.nz/Bitstream/handle/10289/78/content.pdf"
 }*/
 
 /*Takes updated low and range values, renormalizes them so that
@@ -153,8 +144,7 @@ URL="http://researchcommons.waikato.ac.nz/bitstream/handle/10289/78/content.pdf"
 necessary), and stores them back in the encoder context.
 low: The new value of low.
 rng: The new value of the range.*/
-static void od_ec_enc_normalize(OdEcEnc *enc, od_ec_window low,
-    unsigned rng) {
+static void od_ec_enc_normalize(OdEcEnc *enc, OdEcWindow low, unsigned rng) {
     int32_t d;
     int32_t c;
     int32_t s;
@@ -163,27 +153,27 @@ static void od_ec_enc_normalize(OdEcEnc *enc, od_ec_window low,
     d = 16 - OD_ILOG_NZ(rng);
     s = c + d;
     /*TODO: Right now we flush every time we have at least one byte available.
-    Instead we should use an od_ec_window and flush right before we're about to
+    Instead we should use an OdEcWindow and flush right before we're about to
     shift bits off the end of the window.
     For a 32-bit window this is about the same amount of work, but for a 64-bit
     window it should be a fair win.*/
     if (s >= 0) {
         uint16_t *buf;
-        uint32_t storage;
-        uint32_t offs;
-        unsigned m;
-        buf = enc->precarry_buf;
+        uint32_t  storage;
+        uint32_t  offs;
+        unsigned  m;
+        buf     = enc->precarry_buf;
         storage = enc->precarry_storage;
-        offs = enc->offs;
+        offs    = enc->offs;
         if (offs + 2 > storage) {
             storage = 2 * storage + 2;
-            buf = (uint16_t *)realloc(buf, sizeof(*buf) * storage);
+            buf     = (uint16_t *)realloc(buf, sizeof(*buf) * storage);
             if (buf == NULL) {
                 enc->error = -1;
-                enc->offs = 0;
+                enc->offs  = 0;
                 return;
             }
-            enc->precarry_buf = buf;
+            enc->precarry_buf     = buf;
             enc->precarry_storage = storage;
         }
         c += 16;
@@ -197,7 +187,7 @@ static void od_ec_enc_normalize(OdEcEnc *enc, od_ec_window low,
         }
         assert(offs < storage);
         buf[offs++] = (uint16_t)(low >> c);
-        s = c + d - 24;
+        s           = c + d - 24;
         low &= m;
         enc->offs = offs;
     }
@@ -210,31 +200,31 @@ static void od_ec_enc_normalize(OdEcEnc *enc, od_ec_window low,
 size: The initial size of the buffer, in bytes.*/
 void eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) {
     eb_od_ec_enc_reset(enc);
-    enc->buf = (uint8_t *)malloc(sizeof(*enc->buf) * size);
+    enc->buf     = (uint8_t *)malloc(sizeof(*enc->buf) * size);
     enc->storage = size;
     if (size > 0 && enc->buf == NULL) {
         enc->storage = 0;
-        enc->error = -1;
+        enc->error   = -1;
     }
-    enc->precarry_buf = (uint16_t *)malloc(sizeof(*enc->precarry_buf) * size);
+    enc->precarry_buf     = (uint16_t *)malloc(sizeof(*enc->precarry_buf) * size);
     enc->precarry_storage = size;
     if (size > 0 && enc->precarry_buf == NULL) {
         enc->precarry_storage = 0;
-        enc->error = -1;
+        enc->error            = -1;
     }
 }
 
 /*Reinitializes the encoder.*/
 void eb_od_ec_enc_reset(OdEcEnc *enc) {
     enc->offs = 0;
-    enc->low = 0;
-    enc->rng = 0x8000;
+    enc->low  = 0;
+    enc->rng  = 0x8000;
     /*This is initialized to -9 so that it crosses zero after we've accumulated
     one byte + one carry bit.*/
-    enc->cnt = -9;
+    enc->cnt   = -9;
     enc->error = 0;
 #if OD_MEASURE_EC_OVERHEAD
-    enc->entropy = 0;
+    enc->entropy    = 0;
     enc->nb_symbols = 0;
 #endif
 }
@@ -252,12 +242,11 @@ one to be encoded.
 fh: CDF_PROB_TOP minus the cumulative frequency of all symbols up to and
 including
 the one to be encoded.*/
-static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s,
-    int32_t nsyms) {
-    od_ec_window l;
-    unsigned r;
-    unsigned u;
-    unsigned v;
+static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s, int32_t nsyms) {
+    OdEcWindow l;
+    unsigned   r;
+    unsigned   u;
+    unsigned   v;
     l = enc->low;
     r = enc->rng;
     assert(32768U <= r);
@@ -266,19 +255,15 @@ static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s,
     assert(7 - EC_PROB_SHIFT - CDF_SHIFT >= 0);
     const int32_t N = nsyms - 1;
     if (fl < CDF_PROB_TOP) {
-        u = ((r >> 8) * (uint32_t)(fl >> EC_PROB_SHIFT) >>
-            (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
+        u = ((r >> 8) * (uint32_t)(fl >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
             EC_MIN_PROB * (N - (s - 1));
-        v = ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >>
-            (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
+        v = ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
             EC_MIN_PROB * (N - (s + 0));
         l += r - u;
         r = u - v;
-    }
-    else {
-        r -= ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >>
-            (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
-            EC_MIN_PROB * (N - (s + 0));
+    } else {
+        r -= ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
+             EC_MIN_PROB * (N - (s + 0));
     }
     od_ec_enc_normalize(enc, l, r);
 #if OD_MEASURE_EC_OVERHEAD
@@ -291,9 +276,9 @@ static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s,
 val: The value to encode (0 or 1).
 f: The probability that the val is one, scaled by 32768.*/
 void eb_od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f) {
-    od_ec_window l;
-    unsigned r;
-    unsigned v;
+    OdEcWindow l;
+    unsigned   r;
+    unsigned   v;
     assert(0 < f);
     assert(f < 32768U);
     l = enc->low;
@@ -318,8 +303,7 @@ The values must be monotonically decreasing, and icdf[nsyms - 1] must
 be 0.
 nsyms: The number of symbols in the alphabet.
 This should be at most 16.*/
-void eb_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf,
-    int32_t nsyms) {
+void eb_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf, int32_t nsyms) {
     (void)nsyms;
     assert(s >= 0);
     assert(s < nsyms);
@@ -328,25 +312,23 @@ void eb_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *icdf,
 }
 
 uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
-    uint8_t *out;
-    uint32_t storage;
-    uint16_t *buf;
-    uint32_t offs;
-    od_ec_window m;
-    od_ec_window e;
-    od_ec_window l;
-    int32_t c;
-    int32_t s;
+    uint8_t *  out;
+    uint32_t   storage;
+    uint16_t * buf;
+    uint32_t   offs;
+    OdEcWindow m;
+    OdEcWindow e;
+    OdEcWindow l;
+    int32_t    c;
+    int32_t    s;
     if (enc->error) return NULL;
 #if OD_MEASURE_EC_OVERHEAD
     {
         uint32_t tell;
         /* Don't count the 1 bit we lose to raw bits as overhead. */
         tell = eb_od_ec_enc_tell(enc) - 1;
-        SVT_ERROR("overhead: %f%%\n",
-            100 * (tell - enc->entropy) / enc->entropy);
-        SVT_ERROR("efficiency: %f bits/symbol\n",
-            (double)tell / enc->nb_symbols);
+        SVT_ERROR("overhead: %f%%\n", 100 * (tell - enc->entropy) / enc->entropy);
+        SVT_ERROR("efficiency: %f bits/symbol\n", (double)tell / enc->nb_symbols);
     }
 #endif
     /*We output the minimum number of bits that ensures that the symbols encoded
@@ -358,18 +340,18 @@ uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     e = ((l + m) & ~m) | (m + 1);
     s += c;
     offs = enc->offs;
-    buf = enc->precarry_buf;
+    buf  = enc->precarry_buf;
     if (s > 0) {
         unsigned n;
         storage = enc->precarry_storage;
         if (offs + ((s + 7) >> 3) > storage) {
             storage = storage * 2 + ((s + 7) >> 3);
-            buf = (uint16_t *)realloc(buf, sizeof(*buf) * storage);
+            buf     = (uint16_t *)realloc(buf, sizeof(*buf) * storage);
             if (buf == NULL) {
                 enc->error = -1;
                 return NULL;
             }
-            enc->precarry_buf = buf;
+            enc->precarry_buf     = buf;
             enc->precarry_storage = storage;
         }
         n = (1 << (c + 16)) - 1;
@@ -383,27 +365,27 @@ uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
         } while (s > 0);
     }
     /*Make sure there's enough room for the entropy-coded bits.*/
-    out = enc->buf;
+    out     = enc->buf;
     storage = enc->storage;
-    c = OD_MAXI((s + 7) >> 3, 0);
+    c       = OD_MAXI((s + 7) >> 3, 0);
     if (offs + c > storage) {
         storage = offs + c;
-        out = (uint8_t *)realloc(out, sizeof(*out) * storage);
+        out     = (uint8_t *)realloc(out, sizeof(*out) * storage);
         if (out == NULL) {
             enc->error = -1;
             return NULL;
         }
-        enc->buf = out;
+        enc->buf     = out;
         enc->storage = storage;
     }
     *nbytes = offs;
     /*Perform carry propagation.*/
     assert(offs <= storage);
     out = out + storage - offs;
-    c = 0;
+    c   = 0;
     while (offs > 0) {
         offs--;
-        c = buf[offs] + c;
+        c         = buf[offs] + c;
         out[offs] = (uint8_t)c;
         c >>= 8;
     }
@@ -433,4 +415,3 @@ int32_t eb_od_ec_enc_tell(const OdEcEnc *enc) {
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
-// clang-format on

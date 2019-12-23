@@ -11,44 +11,25 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define USE_PRE_COMPUTE             0
+#define USE_PRE_COMPUTE 0
 extern EB_ALIGN(16) const int16_t intra_prediction_const_sse2[344];
-    /**************************************************
+/**************************************************
     * Assembly Declarations
     **************************************************/
-    extern void picture_copy_kernel_sse2(
-        EbByte   src,
-        uint32_t src_stride,
-        EbByte   dst,
-        uint32_t dst_stride,
-        uint32_t area_width,
-        uint32_t area_height);
+extern void picture_copy_kernel_sse2(EbByte src, uint32_t src_stride, EbByte dst,
+                                     uint32_t dst_stride, uint32_t area_width,
+                                     uint32_t area_height);
 
-    void picture_average_kernel_sse2(
-        EbByte   src0,
-        uint32_t src0_stride,
-        EbByte   src1,
-        uint32_t src1_stride,
-        EbByte   dst,
-        uint32_t dst_stride,
-        uint32_t area_width,
-        uint32_t area_height);
+void picture_average_kernel_sse2(EbByte src0, uint32_t src0_stride, EbByte src1,
+                                 uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
+                                 uint32_t area_width, uint32_t area_height);
 
-    void picture_average_kernel_sse2_intrin(
-        EbByte   src0,
-        uint32_t src0_stride,
-        EbByte   src1,
-        uint32_t src1_stride,
-        EbByte   dst,
-        uint32_t dst_stride,
-        uint32_t area_width,
-        uint32_t area_height);
+void picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
+                                        uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
+                                        uint32_t area_width, uint32_t area_height);
 
-    void picture_average_kernel1_line_sse2_intrin(
-        EbByte   src0,
-        EbByte   src1,
-        EbByte   dst,
-        uint32_t area_width);
+void picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
+                                              uint32_t area_width);
 
 #ifdef __cplusplus
 }

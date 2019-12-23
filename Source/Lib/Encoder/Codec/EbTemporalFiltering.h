@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Netflix, Inc.
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -37,12 +36,12 @@
 // Block size used in temporal filtering
 #define BW 64
 #define BH 64
-#define BLK_PELS 4096  // Pixels in the block
+#define BLK_PELS 4096 // Pixels in the block
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
 
 #define INT_MAX_TF 2147483647 //max value for an int
-#define INT_MIN_TF (-2147483647-1) //min value for an int
+#define INT_MIN_TF (-2147483647 - 1) //min value for an int
 #define THR_SHIFT 2 // should be 2
 
 #define INIT_WEIGHT 2
@@ -60,62 +59,28 @@
 extern "C" {
 #endif
 
-int svt_av1_init_temporal_filtering(PictureParentControlSet **list_picture_control_set_ptr,
-                                    PictureParentControlSet *picture_control_set_ptr_central,
+int svt_av1_init_temporal_filtering(PictureParentControlSet ** list_picture_control_set_ptr,
+                                    PictureParentControlSet *  picture_control_set_ptr_central,
                                     MotionEstimationContext_t *me_context_ptr,
-                                    int32_t segment_index);
+                                    int32_t                    segment_index);
 
-void svt_av1_apply_filtering_c(const uint8_t *y_src,
-                            int y_src_stride,
-                            const uint8_t *y_pre,
-                            int y_pre_stride,
-                            const uint8_t *u_src,
-                            const uint8_t *v_src,
-                            int uv_src_stride,
-                            const uint8_t *u_pre,
-                            const uint8_t *v_pre,
-                            int uv_pre_stride,
-                            unsigned int block_width,
-                            unsigned int block_height,
-                            int ss_x,
-                            int ss_y,
-                            int strength,
-                            const int *blk_fw,
-                            int use_whole_blk,
-                            uint32_t *y_accum,
-                            uint16_t *y_count,
-                            uint32_t *u_accum,
-                            uint16_t *u_count,
-                            uint32_t *v_accum,
-                            uint16_t *v_count);
+void svt_av1_apply_filtering_c(const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+                               int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src,
+                               int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre,
+                               int uv_pre_stride, unsigned int block_width,
+                               unsigned int block_height, int ss_x, int ss_y, int strength,
+                               const int *blk_fw, int use_whole_blk, uint32_t *y_accum,
+                               uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
+                               uint32_t *v_accum, uint16_t *v_count);
 
-void svt_av1_apply_filtering_highbd_c(const uint16_t *y_src,
-                            int y_src_stride,
-                            const uint16_t *y_pre,
-                            int y_pre_stride,
-                            const uint16_t *u_src,
-                            const uint16_t *v_src,
-                            int uv_src_stride,
-                            const uint16_t *u_pre,
-                            const uint16_t *v_pre,
-                            int uv_pre_stride,
-                            unsigned int block_width,
-                            unsigned int block_height,
-                            int ss_x,
-                            int ss_y,
-                            int strength,
-                            const int *blk_fw,
-                            int use_whole_blk,
-                            uint32_t *y_accum,
-                            uint16_t *y_count,
-                            uint32_t *u_accum,
-                            uint16_t *u_count,
-                            uint32_t *v_accum,
-                            uint16_t *v_count);
+void svt_av1_apply_filtering_highbd_c(
+    const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
+    const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
+    const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
+    int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk, uint32_t *y_accum,
+    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 
 #ifdef __cplusplus
 }
 #endif
 #endif //EbTemporalFiltering_h
-
-// clang-format on

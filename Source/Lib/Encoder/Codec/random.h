@@ -1,4 +1,3 @@
-// clang-format off
 /*
  * Copyright (c) 2017, Alliance for Open Media. All rights reserved
  *
@@ -19,13 +18,12 @@ extern "C" {
 
 // Generate a random number in the range [0, 32768).
 static INLINE unsigned int lcg_rand16(unsigned int *state) {
-  *state = (unsigned int)(*state * 1103515245ULL + 12345);
-  return *state / 65536 % 32768;
+    *state = (unsigned int)(*state * 1103515245ULL + 12345);
+    return *state / 65536 % 32768;
 }
 
 #ifdef __cplusplus
-}  // extern "C"
+} // extern "C"
 #endif
 
-#endif  // AOM_AV1_ENCODER_RANDOM_H_
-// clang-format on
+#endif // AOM_AV1_ENCODER_RANDOM_H_

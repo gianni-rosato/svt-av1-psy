@@ -476,7 +476,7 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
 
         prepare_data();
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
@@ -484,7 +484,7 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
             }
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             for (int k = PALETTE_MIN_SIZE; k <= PALETTE_MAX_SIZE; k++) {
@@ -492,16 +492,16 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
             }
         }
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
 
         check_output();
 
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,

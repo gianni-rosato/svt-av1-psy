@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -33,51 +32,50 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define GLOBAL_WARPED_MOTION         1 // Global warped motion detection and insertion
+#define GLOBAL_WARPED_MOTION 1 // Global warped motion detection and insertion
 #ifndef NON_AVX512_SUPPORT
 #define NON_AVX512_SUPPORT
 #endif
 
-#define MR_MODE                           0
+#define MR_MODE 0
 
-#define HIGH_PRECISION_MV_QTHRESH         150
-                                            // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
+#define HIGH_PRECISION_MV_QTHRESH 150
+// Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 //FOR DEBUGGING - Do not remove
-#define NO_ENCDEC                         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
-#define AOM_INTERP_EXTEND                               4
+#define NO_ENCDEC \
+    0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
+#define AOM_INTERP_EXTEND 4
 #define AOM_LEFT_TOP_MARGIN_PX(subsampling) \
-  ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
+    ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
 #define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
-  (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
+    (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
 
-#define H_PEL_SEARCH_WIND 3  // 1/2-pel serach window
-#define Q_PEL_SEARCH_WIND 2  // 1/4-pel serach window
-#define HP_REF_OPT        1  // Remove redundant positions.
-typedef enum ME_HP_MODE {
-    EX_HP_MODE = 0,       // Exhaustive  1/2-pel serach mode.
+#define H_PEL_SEARCH_WIND 3 // 1/2-pel serach window
+#define Q_PEL_SEARCH_WIND 2 // 1/4-pel serach window
+#define HP_REF_OPT 1 // Remove redundant positions.
+typedef enum MeHpMode {
+    EX_HP_MODE        = 0, // Exhaustive  1/2-pel serach mode.
     REFINMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
-} ME_HP_MODE;
-typedef enum ME_QP_MODE {
-    EX_QP_MODE = 0,       // Exhaustive  1/4-pel serach mode.
+} MeHpMode;
+typedef enum MeQpMode {
+    EX_QP_MODE        = 0, // Exhaustive  1/4-pel serach mode.
     REFINMENT_QP_MODE = 1 // Refinement 1/4-pel serach mode.
-} ME_QP_MODE;
+} MeQpMode;
 #if GLOBAL_WARPED_MOTION
 typedef enum GM_LEVEL {
-    GM_FULL         = 0,       // Exhaustive search mode.
-    GM_DOWN         = 1,       // Downsampled search mode, with a downsampling factor of 2 in each dimension
-    GM_TRAN_ONLY    = 2        // Translation only using ME MV.
+    GM_FULL      = 0, // Exhaustive search mode.
+    GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
+    GM_TRAN_ONLY = 2 // Translation only using ME MV.
 } GM_LEVEL;
 #endif
-struct Buf2D
-{
+struct Buf2D {
     uint8_t *buf;
     uint8_t *buf0;
-    int width;
-    int height;
-    int stride;
+    int      width;
+    int      height;
+    int      stride;
 };
-typedef struct MvLimits
-{
+typedef struct MvLimits {
     int col_min;
     int col_max;
     int row_min;
@@ -87,20 +85,20 @@ typedef struct {
     uint8_t by;
     uint8_t bx;
     uint8_t skip;
-} cdef_list;
+} CdefList;
 
 /*!\brief force enum to be unsigned 1 byte*/
 #define UENUM1BYTE(enumvar) \
-  ;                         \
-  typedef uint8_t enumvar
+    ;                       \
+    typedef uint8_t enumvar
 
 enum {
-    DIAMOND = 0,
-    NSTEP = 1,
-    HEX = 2,
-    BIGDIA = 3,
-    SQUARE = 4,
-    FAST_HEX = 5,
+    DIAMOND      = 0,
+    NSTEP        = 1,
+    HEX          = 2,
+    BIGDIA       = 3,
+    SQUARE       = 4,
+    FAST_HEX     = 5,
     FAST_DIAMOND = 6
 } UENUM1BYTE(SEARCH_METHODS);
 
@@ -108,27 +106,30 @@ enum {
 /****************** Pre-defined Values ******************/
 /********************************************************/
 
-#define ALTREF_MAX_NFRAMES 10 // maximum number of frames allowed for the Alt-ref picture computation
-                              // this number can be increased by increasing the constant
-                              // FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
+/* maximum number of frames allowed for the Alt-ref picture computation
+ * this number can be increased by increasing the constant
+ * FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
+ */
+#define ALTREF_MAX_NFRAMES 10
 #define ALTREF_MAX_STRENGTH 6
-#define PAD_VALUE                                (128+32)
-#define NSQ_TAB_SIZE                                    8
-#define NUMBER_OF_DEPTH                                 6
-#define NUMBER_OF_SHAPES                                10
+#define PAD_VALUE (128 + 32)
+#define NSQ_TAB_SIZE 8
+#define NUMBER_OF_DEPTH 6
+#define NUMBER_OF_SHAPES 10
 //  Delta QP support
-#define ADD_DELTA_QP_SUPPORT                      1  // Add delta QP support
-#define BLOCK_MAX_COUNT_SB_128                    4421  // TODO: reduce alloction for 64x64
-#define BLOCK_MAX_COUNT_SB_64                     1101  // TODO: reduce alloction for 64x64
-#define MAX_TXB_COUNT                             4 // Maximum number of transform blocks.
-#define MAX_NFL                                 125 // Maximum number of candidates MD can support
-#define MAX_NFL_BUFF                              (MAX_NFL + CAND_CLASS_TOTAL)  //need one extra temp buffer for each fast loop call
-#define MAX_LAD                                   120 // max lookahead-distance 2x60fps
-#define ROUND_UV(x) (((x)>>3)<<3)
+#define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
+#define BLOCK_MAX_COUNT_SB_128 4421 // TODO: reduce alloction for 64x64
+#define BLOCK_MAX_COUNT_SB_64 1101 // TODO: reduce alloction for 64x64
+#define MAX_TXB_COUNT 4 // Maximum number of transform blocks.
+#define MAX_NFL 125 // Maximum number of candidates MD can support
+#define MAX_NFL_BUFF \
+    (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
+#define MAX_LAD 120 // max lookahead-distance 2x60fps
+#define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
 #define AOMINNERBORDERINPIXELS 160
 #define SWITCHABLE_FILTER_CONTEXTS ((SWITCHABLE_FILTERS + 1) * 4)
-#define MAX_MB_PLANE   3
+#define MAX_MB_PLANE 3
 #define CFL_MAX_BlockSize (BLOCK_32X32)
 #define CFL_BUF_LINE (32)
 #define CFL_BUF_LINE_I128 (CFL_BUF_LINE >> 3)
@@ -148,8 +149,8 @@ enum {
 #define MAX_SB_SIZE_LOG2 7
 #define MAX_SB_SIZE (1 << MAX_SB_SIZE_LOG2)
 #define MAX_SB_SQUARE (MAX_SB_SIZE * MAX_SB_SIZE)
-#define SB_STRIDE_Y    MAX_SB_SIZE
-#define SB_STRIDE_UV  (MAX_SB_SIZE>>1)
+#define SB_STRIDE_Y MAX_SB_SIZE
+#define SB_STRIDE_UV (MAX_SB_SIZE >> 1)
 
 // Min superblock size
 #define MIN_SB_SIZE_LOG2 6
@@ -228,11 +229,10 @@ one more than the minimum. */
 #define TX_PAD_VER (TX_PAD_TOP + TX_PAD_BOTTOM)
 // Pad 16 extra bytes to avoid reading overflow in SIMD optimization.
 #define TX_PAD_END 16
-#define TX_PAD_2D \
-((MAX_TX_SIZE + TX_PAD_HOR) * (MAX_TX_SIZE + TX_PAD_VER) + TX_PAD_END)
+#define TX_PAD_2D ((MAX_TX_SIZE + TX_PAD_HOR) * (MAX_TX_SIZE + TX_PAD_VER) + TX_PAD_END)
 #define COMPOUND_WEIGHT_MODE DIST
 #define DIST_PRECISION_BITS 4
-#define DIST_PRECISION (1 << DIST_PRECISION_BITS)  // 16
+#define DIST_PRECISION (1 << DIST_PRECISION_BITS) // 16
 
 // TODO(chengchen): Temporal flag serve as experimental flag for WIP
 // bitmask construction.
@@ -258,26 +258,23 @@ typedef int16_t InterpKernel[SUBPEL_TAPS];
 /***************************************************/
 /****************** Helper Macros ******************/
 /***************************************************/
-void aom_reset_mmx_state(void);
+void        aom_reset_mmx_state(void);
 extern void RunEmms();
 #define aom_clear_system_state() RunEmms() //aom_reset_mmx_state()
 
 /* Shift down with rounding for use when n >= 0, value >= 0 */
-#define ROUND_POWER_OF_TWO(value, n) (((value)+(((1 << (n)) >> 1))) >> (n))
+#define ROUND_POWER_OF_TWO(value, n) (((value) + (((1 << (n)) >> 1))) >> (n))
 
 /* Shift down with rounding for signed integers, for use when n >= 0 */
-#define ROUND_POWER_OF_TWO_SIGNED(value, n)           \
-    (((value) < 0) ? -ROUND_POWER_OF_TWO(-(value), (n)) \
-                 : ROUND_POWER_OF_TWO((value), (n)))
+#define ROUND_POWER_OF_TWO_SIGNED(value, n) \
+    (((value) < 0) ? -ROUND_POWER_OF_TWO(-(value), (n)) : ROUND_POWER_OF_TWO((value), (n)))
 
 /* Shift down with rounding for use when n >= 0, value >= 0 for (64 bit) */
-#define ROUND_POWER_OF_TWO_64(value, n) \
-    (((value) + ((((int64_t)1 << (n)) >> 1))) >> (n))
+#define ROUND_POWER_OF_TWO_64(value, n) (((value) + ((((int64_t)1 << (n)) >> 1))) >> (n))
 
 /* Shift down with rounding for signed integers, for use when n >= 0 (64 bit) */
-#define ROUND_POWER_OF_TWO_SIGNED_64(value, n)           \
-    (((value) < 0) ? -ROUND_POWER_OF_TWO_64(-(value), (n)) \
-                 : ROUND_POWER_OF_TWO_64((value), (n)))
+#define ROUND_POWER_OF_TWO_SIGNED_64(value, n) \
+    (((value) < 0) ? -ROUND_POWER_OF_TWO_64(-(value), (n)) : ROUND_POWER_OF_TWO_64((value), (n)))
 
 #define IS_POWER_OF_TWO(x) (((x) & ((x)-1)) == 0)
 
@@ -290,12 +287,12 @@ extern void RunEmms();
 #define INLINE __inline
 #define RESTRICT
 #ifdef _WIN32
-#define FOPEN(f,s,m) fopen_s(&f,s,m)
+#define FOPEN(f, s, m) fopen_s(&f, s, m)
 #else
-#define FOPEN(f,s,m) f=fopen(s,m)
+#define FOPEN(f, s, m) f = fopen(s, m)
 #endif
 
-#define IMPLIES(a, b) (!(a) || (b))  //  Logical 'a implies b' (or 'a -> b')
+#define IMPLIES(a, b) (!(a) || (b)) //  Logical 'a implies b' (or 'a -> b')
 #if (defined(__GNUC__) && __GNUC__) || defined(__SUNPRO_C)
 #define DECLARE_ALIGNED(n, typ, val) typ val __attribute__((aligned(n)))
 #elif defined(_WIN32)
@@ -318,29 +315,28 @@ extern void RunEmms();
 #define AOM_INLINE __inline
 #else
 #define AOM_FORCE_INLINE __inline__ __attribute__((always_inline))
-    // TODO(jbb): Allow a way to force inline off for older compilers.
+// TODO(jbb): Allow a way to force inline off for older compilers.
 #define AOM_INLINE inline
 #endif
 
 #define SIMD_INLINE static AOM_FORCE_INLINE
 
-    //*********************************************************************************************************************//
-    // mem.h
-    /* shift right or left depending on sign of n */
-#define RIGHT_SIGNED_SHIFT(value, n) \
-((n) < 0 ? ((value) << (-(n))) : ((value) >> (n)))
-    //*********************************************************************************************************************//
-    // cpmmom.h
-    // Only need this for fixed-size arrays, for structs just assign.
-#define av1_copy(dest, src)              \
-{                                      \
-    assert(sizeof(dest) == sizeof(src)); \
-    memcpy(dest, src, sizeof(src));      \
-}
+//*********************************************************************************************************************//
+// mem.h
+/* shift right or left depending on sign of n */
+#define RIGHT_SIGNED_SHIFT(value, n) ((n) < 0 ? ((value) << (-(n))) : ((value) >> (n)))
+//*********************************************************************************************************************//
+// cpmmom.h
+// Only need this for fixed-size arrays, for structs just assign.
+#define av1_copy(dest, src)                  \
+    {                                        \
+        assert(sizeof(dest) == sizeof(src)); \
+        memcpy(dest, src, sizeof(src));      \
+    }
 
-    // mem_ops.h
+// mem_ops.h
 #ifndef MAU_T
-    /* Minimum Access Unit for this target */
+/* Minimum Access Unit for this target */
 #define MAU_T uint8_t
 #endif
 
@@ -435,13 +431,13 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
 #define ATTRIBUTE_PACKED
 #endif
 #endif /* ATTRIBUTE_PACKED */
-typedef enum PD_PASS {
+typedef enum PdPass {
     PD_PASS_0,
     PD_PASS_1,
     PD_PASS_2,
     PD_PASS_TOTAL,
-} PD_PASS;
-typedef enum CAND_CLASS {
+} PdPass;
+typedef enum CandClass {
     CAND_CLASS_0,
     CAND_CLASS_1,
     CAND_CLASS_2,
@@ -452,9 +448,9 @@ typedef enum CAND_CLASS {
     CAND_CLASS_7,
     CAND_CLASS_8,
     CAND_CLASS_TOTAL
-} CAND_CLASS;
+} CandClass;
 
-typedef enum MD_STAGE { MD_STAGE_0, MD_STAGE_1, MD_STAGE_2, MD_STAGE_3, MD_STAGE_TOTAL } MD_STAGE;
+typedef enum MdStage { MD_STAGE_0, MD_STAGE_1, MD_STAGE_2, MD_STAGE_3, MD_STAGE_TOTAL } MdStage;
 #define MD_STAGING_MODE_0 0
 #define MD_STAGING_MODE_1 1
 #define INTRA_NFL 16
@@ -586,7 +582,7 @@ typedef enum ATTRIBUTE_PACKED {
     PART_H4,
     PART_V4,
     PART_S
-} PART;
+} Part;
 
 static const uint8_t mi_size_wide[BlockSizeS_ALL] = {1,  1,  2,  2,  2,  4, 4, 4, 8, 8, 8,
                                                      16, 16, 16, 32, 32, 1, 4, 2, 8, 4, 16};
@@ -986,7 +982,7 @@ typedef struct {
     DIFFWTD_MASK_TYPE mask_type;
 } InterInterCompoundData;
 
-#define INTERINTRA_MODE InterIntraMode
+#define InterIntraMode InterIntraMode
 typedef enum ATTRIBUTE_PACKED {
     FILTER_DC_PRED,
     FILTER_V_PRED,
@@ -1204,13 +1200,13 @@ typedef enum AomCodecErr
     AOM_CODEC_ABI_MISMATCH,
     /*!\brief Algorithm does not have required capability */
     AOM_CODEC_INCAPABLE,
-    /*!\brief The given bitstream is not supported.
+    /*!\brief The given Bitstream is not supported.
     *
-    * The bitstream was unable to be parsed at the highest level. The decoder
+    * The Bitstream was unable to be parsed at the highest level. The decoder
     * is unable to proceed. This error \ref SHOULD be treated as fatal to the
     * stream. */
     AOM_CODEC_UNSUP_BITSTREAM,
-    /*!\brief Encoded bitstream uses an unsupported feature
+    /*!\brief Encoded Bitstream uses an unsupported feature
     *
     * The decoder does not implement a feature required by the encoder. This
     * return code should only be used for features that prevent future
@@ -2003,8 +1999,8 @@ typedef uint8_t EbModeType;
 
 /** INTRA_4x4 offsets
 */
-static const uint8_t INTRA_4x4_OFFSET_X[4] = { 0, 4, 0, 4 };
-static const uint8_t INTRA_4x4_OFFSET_Y[4] = { 0, 0, 4, 4 };
+static const uint8_t intra_4x4_offset_x[4] = { 0, 4, 0, 4 };
+static const uint8_t intra_4x4_offset_y[4] = { 0, 0, 4, 4 };
 
 /** The EbPartMode type is used to describe the CU partition size.
 */
@@ -2109,7 +2105,7 @@ typedef enum EbTuSize
 #define EB_FRAME_CARAC_3           3
 #define EB_FRAME_CARAC_4           4
 
-static const uint8_t QP_OFFSET_WEIGHT[3][4] = { // [Slice Type][QP Offset Weight Level]
+static const uint8_t qp_offset_weight[3][4] = { // [Slice Type][QP Offset Weight Level]
     { 9, 8, 7, 6 },
     { 9, 8, 7, 6 },
     { 10, 9, 8, 7 }
@@ -2330,9 +2326,9 @@ memset(dst, val, count)
 **************************************/
 typedef struct EbCallback
 {
-EbPtr appPrivateData;
+EbPtr app_private_data;
 EbPtr handle;
-void(*ErrorHandler)(
+void(*error_handler)(
     EbPtr handle,
     uint32_t errorCode);
 } EbCallback;
@@ -2352,7 +2348,7 @@ void(*ErrorHandler)(
 #define MAX_SAMPLE_VALUE                            ((1 << INTERNAL_BIT_DEPTH) - 1)
 #define MAX_SAMPLE_VALUE_10BIT                      0x3FF
 #define BLOCK_SIZE_64                                64u
-#define LOG2F_MAX_LCU_SIZE                          6u
+#define LOG2F_MAX_SB_SIZE                          6u
 #define LOG2_64_SIZE                                6 // log2(BLOCK_SIZE_64)
 #define MAX_LEVEL_COUNT                             5 // log2(BLOCK_SIZE_64) - log2(MIN_BLOCK_SIZE)
 #define LOG_MIN_BLOCK_SIZE                          3
@@ -2362,7 +2358,7 @@ void(*ErrorHandler)(
 #define MAX_NUM_OF_PU_PER_CU                        1
 #define MAX_NUM_OF_REF_PIC_LIST                     2
 #define MAX_NUM_OF_PART_SIZE                        8
-#define EB_MAX_LCU_DEPTH                            (((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) == 1) ? 1 : \
+#define EB_MAX_SB_DEPTH                            (((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) == 1) ? 1 : \
                                                     ((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) == 2) ? 2 : \
                                                     ((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) == 4) ? 3 : \
                                                     ((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) == 8) ? 4 : \
@@ -2371,7 +2367,7 @@ void(*ErrorHandler)(
 #define MIN_CU_BLK_COUNT                            ((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) * (BLOCK_SIZE_64 / MIN_BLOCK_SIZE))
 #define MAX_NUM_OF_TU_PER_CU                        21
 #define MIN_NUM_OF_TU_PER_CU                        5
-#define MAX_LCU_ROWS                                ((MAX_PICTURE_HEIGHT_SIZE) / (BLOCK_SIZE_64))
+#define MAX_SB_ROWS                                ((MAX_PICTURE_HEIGHT_SIZE) / (BLOCK_SIZE_64))
 
 #define MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE       ((MAX_PICTURE_WIDTH_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) * \
                                                 ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
@@ -2451,8 +2447,8 @@ typedef enum DownSamplingMethod
 #define MIN_NEG_16BIT_NUM      -32768
 #define QUANT_OFFSET_I         171
 #define QUANT_OFFSET_P         85
-#define LOW_LCU_VARIANCE        10
-#define MEDIUM_LCU_VARIANCE        50
+#define LOW_SB_VARIANCE        10
+#define MEDIUM_SB_VARIANCE        50
 
 /*********************************************************
 * used for the first time, but not the last time interpolation filter
@@ -2577,9 +2573,9 @@ typedef enum DownSamplingMethod
 
 #define PM_NON_MOVING_INDEX_TH 23
 
-#define QP_OFFSET_LCU_SCORE_0    0
-#define QP_OFFSET_LCU_SCORE_1    50
-#define QP_OFFSET_LCU_SCORE_2    100
+#define QP_OFFSET_SB_SCORE_0    0
+#define QP_OFFSET_SB_SCORE_1    50
+#define QP_OFFSET_SB_SCORE_2    100
 #define UNCOVERED_AREA_ZZ_COST_TH 8
 #define BEA_MIN_DELTA_QP_T00 1
 #define BEA_MIN_DELTA_QP_T0  3
@@ -2629,16 +2625,16 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define DYNAMIC_GOP_ABOVE_1080P_L4_VS_L3_COST_TH    30    // No L4_VS_L3 - 28 is the TH after 1st round of tuning
 #define DYNAMIC_GOP_SUB_480P_L6_VS_L5_COST_TH        9
 #define GRADUAL_LUMINOSITY_CHANGE_TH                        3
-#define FADED_LCU_PERCENTAGE_TH                             10
+#define FADED_SB_PERCENTAGE_TH                             10
 #define FADED_PICTURES_TH                                   15
 #define CLASS_SUB_0_PICTURE_ACTIVITY_REGIONS_TH             1
 #define CLASS_1_SIZE_PICTURE_ACTIVITY_REGIONS_TH            2
 #define HIGHER_THAN_CLASS_1_PICTURE_ACTIVITY_REGIONS_TH     8
 
-#define IS_COMPLEX_LCU_VARIANCE_TH                          100
-#define IS_COMPLEX_LCU_FLAT_VARIANCE_TH                     10
-#define IS_COMPLEX_LCU_VARIANCE_DEVIATION_TH                13
-#define IS_COMPLEX_LCU_ZZ_SAD_FACTOR_TH                     25
+#define IS_COMPLEX_SB_VARIANCE_TH                          100
+#define IS_COMPLEX_SB_FLAT_VARIANCE_TH                     10
+#define IS_COMPLEX_SB_VARIANCE_DEVIATION_TH                13
+#define IS_COMPLEX_SB_ZZ_SAD_FACTOR_TH                     25
 
 #define MAX_SUPPORTED_SEGMENTS                            7
 #define NUM_QPS                                           52
@@ -2732,13 +2728,6 @@ typedef enum EbPictureDepthMode
 #define SB_OPEN_LOOP_DEPTH_MODE             3
 #define SB_FAST_OPEN_LOOP_DEPTH_MODE        4
 #define SB_PRED_OPEN_LOOP_DEPTH_MODE        5
-
-typedef enum EbIntrA4x4SearchMethod
-{
-    INTRA4x4_OFF = 0,
-    INTRA4x4_INLINE_SEARCH = 1,
-    INTRA4x4_REFINEMENT_SEARCH = 2,
-} EbIntrA4x4SearchMethod;
 
 static const int32_t global_motion_threshold[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_LAYERS] = { // [Highest Temporal Layer] [Temporal Layer Index]
     { 2 },
@@ -2857,7 +2846,7 @@ typedef enum RasterScanCuIndex
     RASTER_SCAN_CU_INDEX_8x8_63 = 84
 } RasterScanCuIndex;
 
-static const uint32_t raster_scan_cu_x[CU_MAX_COUNT] =
+static const uint32_t raster_scan_blk_x[CU_MAX_COUNT] =
 {
     0,
     0, 32,
@@ -2876,7 +2865,7 @@ static const uint32_t raster_scan_cu_x[CU_MAX_COUNT] =
     0, 8, 16, 24, 32, 40, 48, 56
 };
 
-static const uint32_t raster_scan_cu_y[CU_MAX_COUNT] =
+static const uint32_t raster_scan_blk_y[CU_MAX_COUNT] =
 {
     0,
     0, 0,
@@ -2895,7 +2884,7 @@ static const uint32_t raster_scan_cu_y[CU_MAX_COUNT] =
     56, 56, 56, 56, 56, 56, 56, 56
 };
 
-static const uint32_t raster_scan_cu_size[CU_MAX_COUNT] =
+static const uint32_t raster_scan_blk_size[CU_MAX_COUNT] =
 {   64,
     32, 32,
     32, 32,
@@ -2912,48 +2901,6 @@ static const uint32_t raster_scan_cu_size[CU_MAX_COUNT] =
     8, 8, 8, 8, 8, 8, 8, 8,
     8, 8, 8, 8, 8, 8, 8, 8
 };
-
-static const uint32_t RASTER_SCAN_CU_DEPTH[CU_MAX_COUNT] =
-{   0,
-    1, 1,
-    1, 1,
-    2, 2, 2, 2,
-    2, 2, 2, 2,
-    2, 2, 2, 2,
-    2, 2, 2, 2,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3,
-    3, 3, 3, 3, 3, 3, 3, 3
-};
-
-static const uint32_t raster_scan_to_md_scan[CU_MAX_COUNT] =
-{
-    0,
-    1, 22,
-    43, 64,
-    2, 7, 23, 28,
-    12, 17, 33, 38,
-    44, 49, 65, 70,
-    54, 59, 75, 80,
-    3, 4, 8, 9, 24, 25, 29, 30,
-    5, 6, 10, 11, 26, 27, 31, 32,
-    13, 14, 18, 19, 34, 35, 39, 40,
-    15, 16, 20, 21, 36, 37, 41, 42,
-    45, 46, 50, 51, 66, 67, 71, 72,
-    47, 48, 52, 53, 68, 69, 73, 74,
-    55, 56, 60, 61, 76, 77, 81, 82,
-    57, 58, 62, 63, 78, 79, 83, 84
-};
-
-static const uint32_t ParentBlockIndex[85] = { 0, 0, 0, 2, 2, 2, 2, 0, 7, 7, 7, 7, 0, 12, 12, 12, 12, 0, 17, 17, 17, 17, 0, 0,
-    23, 23, 23, 23, 0, 28, 28, 28, 28, 0, 33, 33, 33, 33, 0, 38, 38, 38, 38, 0, 0,
-    44, 44, 44, 44, 0, 49, 49, 49, 49, 0, 54, 54, 54, 54, 0, 59, 59, 59, 59, 0, 0,
-    65, 65, 65, 65, 0, 70, 70, 70, 70, 0, 75, 75, 75, 75, 0, 80, 80, 80, 80 };
 
 static const uint32_t md_scan_to_raster_scan[CU_MAX_COUNT] =
 {
@@ -2980,7 +2927,7 @@ static const uint32_t md_scan_to_raster_scan[CU_MAX_COUNT] =
     20, 75, 76, 83, 84
 };
 
-static const uint32_t raster_scan_cu_parent_index[CU_MAX_COUNT] =
+static const uint32_t raster_scan_blk_parent_index[CU_MAX_COUNT] =
 {   0,
     0, 0,
     0, 0,
@@ -3000,7 +2947,7 @@ static const uint32_t raster_scan_cu_parent_index[CU_MAX_COUNT] =
 
 #define UNCOMPRESS_SAD(x) ( ((x) & 0x1FFF)<<(((x)>>13) & 7) )
 
-static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
+static const uint32_t md_scan_to_ois_32x32_scan[CU_MAX_COUNT] =
 {
     /*0  */0,
     /*1  */0,
@@ -3089,10 +3036,10 @@ static const uint32_t MD_SCAN_TO_OIS_32x32_SCAN[CU_MAX_COUNT] =
     /*84 */3,
 };
 
-typedef struct stat_struct_t
+typedef struct StatStruct
 {
     uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
-} stat_struct_t;
+} StatStruct;
 #define TWO_PASS_IR_THRSHLD 40  // Intra refresh threshold used to reduce the reference area.
                                 // If the periodic Intra refresh is less than the threshold,
                                 // the referenced area is normalized
@@ -3764,4 +3711,3 @@ typedef struct _EbThreadContext EbThreadContext;
 #endif
 #endif // EbDefinitions_h
 /* File EOF */
-// clang-format on

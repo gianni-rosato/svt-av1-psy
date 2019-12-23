@@ -72,7 +72,7 @@ TxType1D get_txfm1d_types(TxfmType txfm_type);
 void reference_txfm_2d(const double *in, double *out, TxType tx_type,
                        TxSize tx_size, double scale_factor);
 
-double get_scale_factor(Txfm2DFlipCfg &cfg, const int tx_width,
+double get_scale_factor(Txfm2dFlipCfg &cfg, const int tx_width,
                         const int tx_height);
 
 }  // namespace svt_av1_test_reference

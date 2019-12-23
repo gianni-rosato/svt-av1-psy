@@ -15,7 +15,7 @@
  * with every copy.
  *
  * To compute the message digest of a chunk of bytes, declare an
- * MD5Context structure, pass it to MD5Init, call MD5Update as
+ * Md5Context structure, pass it to MD5Init, call MD5Update as
  * needed on buffers full of bytes, and then call MD5Final, which
  * will fill a supplied 16-byte array with the digest.
  *
@@ -40,8 +40,7 @@
 #define F3(x, y, z) (x ^ y ^ z)
 #define F4(x, y, z) (y ^ (x | ~z))
 /* This is the central step in the MD5 algorithm. */;
-#define MD5STEP(f, w, x, y, z, in, s) \
-  (w += f(x, y, z) + in, w = (w << s | w >> (32 - s)) + x)
+#define MD5STEP(f, w, x, y, z, in, s) (w += f(x, y, z) + in, w = (w << s | w >> (32 - s)) + x)
 
 static void byte_swap(unsigned int *buf, unsigned words) {
     unsigned char *p;
@@ -54,8 +53,7 @@ static void byte_swap(unsigned int *buf, unsigned words) {
     p = (unsigned char *)buf;
 
     do {
-        *buf++ = (unsigned int)((unsigned)p[3] << 8 | p[2]) << 16 |
-            ((unsigned)p[1] << 8 | p[0]);
+        *buf++ = (unsigned int)((unsigned)p[3] << 8 | p[2]) << 16 | ((unsigned)p[1] << 8 | p[0]);
         p += 4;
     } while (--words);
 }
@@ -64,7 +62,7 @@ static void byte_swap(unsigned int *buf, unsigned words) {
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
  */
-void md5_init(MD5Context *ctx){
+void md5_init(Md5Context *ctx) {
     ctx->buf[0] = 0x67452301;
     ctx->buf[1] = 0xefcdab89;
     ctx->buf[2] = 0x98badcfe;
@@ -78,15 +76,14 @@ void md5_init(MD5Context *ctx){
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void md5_update(MD5Context *ctx, const unsigned char *buf, unsigned int len){
+void md5_update(Md5Context *ctx, const unsigned char *buf, unsigned int len) {
     unsigned int t;
 
     /* Update byte count */
 
     t = ctx->bytes[0];
 
-    if ((ctx->bytes[0] = t + len) < t)
-        ctx->bytes[1]++; /* Carry from low to high */
+    if ((ctx->bytes[0] = t + len) < t) ctx->bytes[1]++; /* Carry from low to high */
 
     t = 64 - (t & 0x3f); /* Space available in ctx->in (at least 1) */
 
@@ -119,9 +116,9 @@ void md5_update(MD5Context *ctx, const unsigned char *buf, unsigned int len){
  * Final wrapup - pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-void md5_final(unsigned char digest[16], MD5Context *ctx){
-    int count = ctx->bytes[0] & 0x3f; /* Number of bytes in ctx->in */
-    unsigned char *p = (unsigned char *)ctx->in + count;
+void md5_final(unsigned char digest[16], Md5Context *ctx) {
+    int            count = ctx->bytes[0] & 0x3f; /* Number of bytes in ctx->in */
+    unsigned char *p     = (unsigned char *)ctx->in + count;
 
     /* Set the first char of padding to 0x80.  There is always room. */
     *p++ = 0x80;
@@ -133,7 +130,7 @@ void md5_final(unsigned char digest[16], MD5Context *ctx){
         memset(p, 0, count + 8);
         byte_swap(ctx->in, 16);
         md5_transform(ctx->buf, ctx->in);
-        p = (unsigned char *)ctx->in;
+        p     = (unsigned char *)ctx->in;
         count = 56;
     }
 
@@ -155,9 +152,7 @@ void md5_final(unsigned char digest[16], MD5Context *ctx){
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void md5_transform(unsigned int buf[4],
-                   unsigned int const in[16])
-{
+void md5_transform(unsigned int buf[4], unsigned int const in[16]) {
     register unsigned int a, b, c, d;
 
     a = buf[0];
@@ -246,15 +241,15 @@ void print_md5(unsigned char digest[16]) {
     for (i = 0; i < 16; ++i) fprintf(stderr, "%02x", digest[i]);
 }
 
-void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5) {
-    EbSvtIOFormat* img = (EbSvtIOFormat*)recon_buffer->p_buffer;
+void write_md5(EbBufferHeaderType *recon_buffer, Md5Context *md5) {
+    EbSvtIOFormat *img = (EbSvtIOFormat *)recon_buffer->p_buffer;
 
-    const int bytes_per_sample = (img->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
-    uint32_t y = 0;
-    const uint8_t *buf = img->luma;
-    uint32_t w = img->width;
-    uint32_t h = img->height;
-    uint32_t stride = img->y_stride;
+    const int      bytes_per_sample = (img->bit_depth == EB_EIGHT_BIT) ? 1 : 2;
+    uint32_t       y                = 0;
+    const uint8_t *buf              = img->luma;
+    uint32_t       w                = img->width;
+    uint32_t       h                = img->height;
+    uint32_t       stride           = img->y_stride;
     //uint32_t b_size = w * h;
 
     //luma MD5 generation
@@ -267,8 +262,7 @@ void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5) {
         if (img->color_fmt == EB_YUV420) {
             w = (w + 1) >> 1;
             h = (h + 1) >> 1;
-        }
-        else if (img->color_fmt == EB_YUV422) {
+        } else if (img->color_fmt == EB_YUV422) {
             w = (w + 1) >> 1;
         }
         assert(img->color_fmt <= EB_YUV444);
@@ -283,7 +277,7 @@ void write_md5(EbBufferHeaderType *recon_buffer, MD5Context *md5) {
         }
 
         //cr MD5 generation
-        buf = img->cr;
+        buf    = img->cr;
         stride = img->cr_stride;
         for (y = 0; y < h; ++y) {
             md5_update(md5, buf, w * bytes_per_sample);

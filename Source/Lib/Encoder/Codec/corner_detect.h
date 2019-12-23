@@ -1,4 +1,3 @@
-// clang-format off
 /*
  * Copyright (c) 2016, Alliance for Open Media. All rights reserved
  *
@@ -17,8 +16,7 @@
 #include <stdlib.h>
 #include <memory.h>
 
-int av1_fast_corner_detect(unsigned char *buf, int width, int height,
-                           int stride, int *points, int max_points);
+int av1_fast_corner_detect(unsigned char *buf, int width, int height, int stride, int *points,
+                           int max_points);
 
-#endif  // AOM_AV1_ENCODER_CORNER_DETECT_H_
-// clang-format on
+#endif // AOM_AV1_ENCODER_CORNER_DETECT_H_

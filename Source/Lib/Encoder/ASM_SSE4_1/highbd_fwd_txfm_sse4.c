@@ -21,31 +21,22 @@
 #include "aom_dsp_rtcd.h"
 #include "emmintrin.h"
 #include "EbTransforms.h"
-#include "highbd_txfm_utility_sse4.h"
-
-#include "av1_txfm_sse4.h"
 
 static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
-    fwd_shift_4x4, fwd_shift_8x8, fwd_shift_16x16, fwd_shift_32x32,
-    fwd_shift_64x64, fwd_shift_4x8, fwd_shift_8x4, fwd_shift_8x16,
-    fwd_shift_16x8, fwd_shift_16x32, fwd_shift_32x16, fwd_shift_32x64,
-    fwd_shift_64x32, fwd_shift_4x16, fwd_shift_16x4, fwd_shift_8x32,
-    fwd_shift_32x8, fwd_shift_16x64, fwd_shift_64x16,
+    fwd_shift_4x4,   fwd_shift_8x8,   fwd_shift_16x16, fwd_shift_32x32, fwd_shift_64x64,
+    fwd_shift_4x8,   fwd_shift_8x4,   fwd_shift_8x16,  fwd_shift_16x8,  fwd_shift_16x32,
+    fwd_shift_32x16, fwd_shift_32x64, fwd_shift_64x32, fwd_shift_4x16,  fwd_shift_16x4,
+    fwd_shift_8x32,  fwd_shift_32x8,  fwd_shift_16x64, fwd_shift_64x16,
 };
 
-typedef void(*fwd_transform_1d_sse4_1)(__m128i *in, __m128i *out, int32_t bit,
-    const int32_t num_cols);
-
-static INLINE void load_buffer_4x4(const int16_t *input, __m128i *in,
-    int32_t stride, int32_t flipud, int32_t fliplr,
-    int32_t shift) {
+static INLINE void load_buffer_4x4(const int16_t *input, __m128i *in, int32_t stride,
+                                   int32_t flipud, int32_t fliplr, int32_t shift) {
     if (!flipud) {
         in[0] = _mm_loadl_epi64((const __m128i *)(input + 0 * stride));
         in[1] = _mm_loadl_epi64((const __m128i *)(input + 1 * stride));
         in[2] = _mm_loadl_epi64((const __m128i *)(input + 2 * stride));
         in[3] = _mm_loadl_epi64((const __m128i *)(input + 3 * stride));
-    }
-    else {
+    } else {
         in[0] = _mm_loadl_epi64((const __m128i *)(input + 3 * stride));
         in[1] = _mm_loadl_epi64((const __m128i *)(input + 2 * stride));
         in[2] = _mm_loadl_epi64((const __m128i *)(input + 1 * stride));
@@ -72,15 +63,15 @@ static INLINE void load_buffer_4x4(const int16_t *input, __m128i *in,
 
 static void fidtx4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t col_num) {
     (void)bit;
-    __m128i fact = _mm_set1_epi32(NewSqrt2);
-    __m128i offset = _mm_set1_epi32(1 << (NewSqrt2Bits - 1));
+    __m128i fact   = _mm_set1_epi32(new_sqrt2);
+    __m128i offset = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
     __m128i a_low;
     __m128i v[4];
 
     for (int32_t i = 0; i < 4; i++) {
-        a_low = _mm_mullo_epi32(in[i * col_num], fact);
-        a_low = _mm_add_epi32(a_low, offset);
-        out[i] = _mm_srai_epi32(a_low, NewSqrt2Bits);
+        a_low  = _mm_mullo_epi32(in[i * col_num], fact);
+        a_low  = _mm_add_epi32(a_low, offset);
+        out[i] = _mm_srai_epi32(a_low, new_sqrt2_bits);
     }
 
     // Transpose for 4x4
@@ -99,20 +90,19 @@ static void fidtx4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t col_
 // shift[0] is used in load_buffer_4x4()
 // shift[1] is used in txfm_func_col()
 // shift[2] is used in txfm_func_row()
-static void fdct4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit,
-    const int32_t num_col) {
-    const int32_t *cospi = cospi_arr(bit);
-    const __m128i cospi32 = _mm_set1_epi32(cospi[32]);
-    const __m128i cospi48 = _mm_set1_epi32(cospi[48]);
-    const __m128i cospi16 = _mm_set1_epi32(cospi[16]);
-    const __m128i rnding = _mm_set1_epi32(1 << (bit - 1));
-    __m128i s0, s1, s2, s3;
-    __m128i u0, u1, u2, u3;
-    __m128i v0, v1, v2, v3;
+static void fdct4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, const int32_t num_col) {
+    const int32_t *cospi   = cospi_arr(bit);
+    const __m128i  cospi32 = _mm_set1_epi32(cospi[32]);
+    const __m128i  cospi48 = _mm_set1_epi32(cospi[48]);
+    const __m128i  cospi16 = _mm_set1_epi32(cospi[16]);
+    const __m128i  rnding  = _mm_set1_epi32(1 << (bit - 1));
+    __m128i        s0, s1, s2, s3;
+    __m128i        u0, u1, u2, u3;
+    __m128i        v0, v1, v2, v3;
 
     int32_t endidx = 3 * num_col;
-    s0 = _mm_add_epi32(in[0], in[endidx]);
-    s3 = _mm_sub_epi32(in[0], in[endidx]);
+    s0             = _mm_add_epi32(in[0], in[endidx]);
+    s3             = _mm_sub_epi32(in[0], in[endidx]);
     endidx -= num_col;
     s1 = _mm_add_epi32(in[num_col], in[endidx]);
     s2 = _mm_sub_epi32(in[num_col], in[endidx]);
@@ -165,24 +155,23 @@ static INLINE void write_buffer_4x4(__m128i *res, int32_t *output) {
     _mm_store_si128((__m128i *)(output + 3 * 4), res[3]);
 }
 
-static void fadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit,
-    const int32_t num_col) {
-    const int32_t *sinpi = sinpi_arr(bit);
-    const __m128i rnding = _mm_set1_epi32(1 << (bit - 1));
-    const __m128i sinpi1 = _mm_set1_epi32((int32_t)sinpi[1]);
-    const __m128i sinpi2 = _mm_set1_epi32((int32_t)sinpi[2]);
-    const __m128i sinpi3 = _mm_set1_epi32((int32_t)sinpi[3]);
-    const __m128i sinpi4 = _mm_set1_epi32((int32_t)sinpi[4]);
-    __m128i t;
-    __m128i s0, s1, s2, s3, s4, s5, s6, s7;
-    __m128i x0, x1, x2, x3;
-    __m128i u0, u1, u2, u3;
-    __m128i v0, v1, v2, v3;
+static void fadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, const int32_t num_col) {
+    const int32_t *sinpi  = sinpi_arr(bit);
+    const __m128i  rnding = _mm_set1_epi32(1 << (bit - 1));
+    const __m128i  sinpi1 = _mm_set1_epi32((int32_t)sinpi[1]);
+    const __m128i  sinpi2 = _mm_set1_epi32((int32_t)sinpi[2]);
+    const __m128i  sinpi3 = _mm_set1_epi32((int32_t)sinpi[3]);
+    const __m128i  sinpi4 = _mm_set1_epi32((int32_t)sinpi[4]);
+    __m128i        t;
+    __m128i        s0, s1, s2, s3, s4, s5, s6, s7;
+    __m128i        x0, x1, x2, x3;
+    __m128i        u0, u1, u2, u3;
+    __m128i        v0, v1, v2, v3;
 
     int32_t idx = 0 * num_col;
-    s0 = _mm_mullo_epi32(in[idx], sinpi1);
-    s1 = _mm_mullo_epi32(in[idx], sinpi4);
-    t = _mm_add_epi32(in[idx], in[idx + num_col]);
+    s0          = _mm_mullo_epi32(in[idx], sinpi1);
+    s1          = _mm_mullo_epi32(in[idx], sinpi4);
+    t           = _mm_add_epi32(in[idx], in[idx + num_col]);
     idx += num_col;
     s2 = _mm_mullo_epi32(in[idx], sinpi2);
     s3 = _mm_mullo_epi32(in[idx], sinpi1);
@@ -193,17 +182,17 @@ static void fadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit,
     s6 = _mm_mullo_epi32(in[idx], sinpi2);
     s7 = _mm_sub_epi32(t, in[idx]);
 
-    t = _mm_add_epi32(s0, s2);
+    t  = _mm_add_epi32(s0, s2);
     x0 = _mm_add_epi32(t, s5);
     x1 = _mm_mullo_epi32(s7, sinpi3);
-    t = _mm_sub_epi32(s1, s3);
+    t  = _mm_sub_epi32(s1, s3);
     x2 = _mm_add_epi32(t, s6);
     x3 = s4;
 
     s0 = _mm_add_epi32(x0, x3);
     s1 = x1;
     s2 = _mm_sub_epi32(x2, x3);
-    t = _mm_sub_epi32(x2, x0);
+    t  = _mm_sub_epi32(x2, x0);
     s3 = _mm_add_epi32(t, x3);
 
     u0 = _mm_add_epi32(s0, rnding);
@@ -229,10 +218,10 @@ static void fadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit,
     out[3] = _mm_unpackhi_epi64(v1, v3);
 }
 
-void eb_av1_fwd_txfm2d_4x4_sse4_1(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t  bd)
-{
-    __m128i in[4];
-    const int8_t *shift = fwd_txfm_shift_ls[TX_4X4];
+void eb_av1_fwd_txfm2d_4x4_sse4_1(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type,
+                                  uint8_t bd) {
+    __m128i       in[4];
+    const int8_t *shift   = fwd_txfm_shift_ls[TX_4X4];
     const int32_t txw_idx = get_txw_idx(TX_4X4);
     const int32_t txh_idx = get_txh_idx(TX_4X4);
 

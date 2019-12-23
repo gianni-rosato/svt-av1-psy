@@ -252,10 +252,6 @@ PARAM_TEST(EncParamEncBitDepthTest);
 DEFINE_PARAM_TEST_CLASS(EncParamCompr10BitFmtTest, compressed_ten_bit_format);
 PARAM_TEST(EncParamCompr10BitFmtTest);
 
-/** Test case for frames_to_be_encoded*/
-DEFINE_PARAM_TEST_CLASS(EncParamFrame2EncTest, frames_to_be_encoded);
-PARAM_TEST(EncParamFrame2EncTest);
-
 /** Test case for sb_sz*/
 DEFINE_PARAM_TEST_CLASS(EncParamSbSizeTest, sb_sz);
 PARAM_TEST(EncParamSbSizeTest);
@@ -328,10 +324,6 @@ PARAM_TEST(EncParamSearchAreaHeightTest);
 /** Test case for enable_palette*/
 DEFINE_PARAM_TEST_CLASS(EncParamEnablePaletteTest, enable_palette);
 PARAM_TEST(EncParamEnablePaletteTest);
-
-/** Test case for constrained_intra*/
-DEFINE_PARAM_TEST_CLASS(EncParamConstrainedIntraTest, constrained_intra);
-PARAM_TEST(EncParamConstrainedIntraTest);
 
 /** Test case for rate_control_mode*/
 DEFINE_PARAM_TEST_CLASS(EncParamRateCtrlModeTest, rate_control_mode);

@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -14,38 +13,29 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
-EbErrorType picture_decision_context_ctor(
-    EbThreadContext     *thread_context_ptr,
-    const EbEncHandle   *enc_handle_ptr);
+EbErrorType picture_decision_context_ctor(EbThreadContext *  thread_context_ptr,
+                                          const EbEncHandle *enc_handle_ptr);
 
-extern void* picture_decision_kernel(void *input_ptr);
+extern void *picture_decision_kernel(void *input_ptr);
 
-void DownsampleDecimationInputPicture(
-    PictureParentControlSet *picture_control_set_ptr,
-    EbPictureBufferDesc     *inputPaddedPicturePtr,
-    EbPictureBufferDesc     *quarterDecimatedPicturePtr,
-    EbPictureBufferDesc     *sixteenthDecimatedPicturePtr);
+void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
+                                         EbPictureBufferDesc *    inputPaddedPicturePtr,
+                                         EbPictureBufferDesc *    quarterDecimatedPicturePtr,
+                                         EbPictureBufferDesc *    sixteenthDecimatedPicturePtr);
 
-void PadPictureToMultipleOfMinCuSizeDimensions(
-        SequenceControlSet            *sequence_control_set_ptr,
-        EbPictureBufferDesc           *input_picture_ptr);
-void PicturePreProcessingOperations(
-    PictureParentControlSet       *picture_control_set_ptr,
-    SequenceControlSet            *sequence_control_set_ptr,
-    uint32_t                       sb_total_count);
-void PadPictureToMultipleOfLcuDimensions(
-        EbPictureBufferDesc   *input_padded_picture_ptr);
+void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs_ptr,
+                                                        EbPictureBufferDesc *input_picture_ptr);
+void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
+                                       SequenceControlSet *scs_ptr, uint32_t sb_total_count);
+void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_picture_ptr);
 
-void GatheringPictureStatistics(
-        SequenceControlSet            *sequence_control_set_ptr,
-        PictureParentControlSet       *picture_control_set_ptr,
-        EbPictureBufferDesc           *input_picture_ptr,
-        EbPictureBufferDesc           *input_padded_picture_ptr,
-        EbPictureBufferDesc           *sixteenth_decimated_picture_ptr,
-        uint32_t                      sb_total_count);
+void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+                                  EbPictureBufferDesc *input_picture_ptr,
+                                  EbPictureBufferDesc *input_padded_picture_ptr,
+                                  EbPictureBufferDesc *sixteenth_decimated_picture_ptr,
+                                  uint32_t             sb_total_count);
 
-void DownSampleChroma(EbPictureBufferDesc* input_picture_ptr,
-                      EbPictureBufferDesc* outputPicturePtr);
+void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
+                        EbPictureBufferDesc *outputPicturePtr);
 
 #endif // EbPictureDecision_h
-// clang-format on

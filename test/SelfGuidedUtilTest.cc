@@ -199,7 +199,7 @@ class PixelProjErrorTest
 
         const uint64_t num_loop = 1000000;
 
-        EbStartTime(&start_time_seconds, &start_time_useconds);
+        eb_start_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             err_ref = ref_func_(src,
@@ -216,7 +216,7 @@ class PixelProjErrorTest
                                 &params);
         }
 
-        EbStartTime(&middle_time_seconds, &middle_time_useconds);
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             err_test = tst_func_(src,
@@ -233,16 +233,16 @@ class PixelProjErrorTest
                                  &params);
         }
 
-        EbStartTime(&finish_time_seconds, &finish_time_useconds);
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
 
         ASSERT_EQ(err_ref, err_test);
 
-        EbComputeOverallElapsedTimeMs(start_time_seconds,
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
                                       start_time_useconds,
                                       middle_time_seconds,
                                       middle_time_useconds,
                                       &time_c);
-        EbComputeOverallElapsedTimeMs(middle_time_seconds,
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
                                       middle_time_useconds,
                                       finish_time_seconds,
                                       finish_time_useconds,
@@ -413,7 +413,7 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
         }
 
         for (int32_t ep = 0; ep < SGRPROJ_PARAMS; ++ep) {
-            // apply selfguided filter to get A and B
+            // apply selfguided filter to get A and b
             for (k = 0; k < height; k += pu_height) {
                 for (j = 0; j < width; j += pu_width) {
                     int32_t w = AOMMIN(pu_width, width - j);

@@ -85,7 +85,7 @@ void eb_av1_iidentity32_c(const int32_t *input, int32_t *output, int8_t cos_bit,
 void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range);
 
-void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2DFlipCfg *cfg);
+void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
 typedef void (*Txfm1dFunc)(const int32_t *input, int32_t *output,
                            int8_t cos_bit, const int8_t *stage_range);

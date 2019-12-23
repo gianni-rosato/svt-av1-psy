@@ -83,7 +83,6 @@ void SvtAv1E2ETestFramework::setup_src_param(const VideoSource *source,
     config.source_height = source->get_height_with_padding();
     config.encoder_bit_depth = source->get_bit_depth();
     config.compressed_ten_bit_format = source->get_compressed_10bit_mode();
-    config.frames_to_be_encoded = source->get_frame_count();
 }
 
 SvtAv1E2ETestFramework::SvtAv1E2ETestFramework() : enc_setting(GetParam()) {
@@ -192,11 +191,11 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     // Output buffer
     av1enc_ctx_.output_stream_buffer = new EbBufferHeaderType;
     ASSERT_NE(av1enc_ctx_.output_stream_buffer, nullptr)
-        << "Malloc memory for outputStreamBuffer failed.";
+        << "Malloc memory for output_stream_buffer failed.";
     av1enc_ctx_.output_stream_buffer->p_buffer =
         new uint8_t[EB_OUTPUTSTREAMBUFFERSIZE_MACRO(width * height)];
     ASSERT_NE(av1enc_ctx_.output_stream_buffer->p_buffer, nullptr)
-        << "Malloc memory for outputStreamBuffer->p_buffer failed.";
+        << "Malloc memory for output_stream_buffer->p_buffer failed.";
     av1enc_ctx_.output_stream_buffer->size = sizeof(EbBufferHeaderType);
     av1enc_ctx_.output_stream_buffer->n_alloc_len =
         EB_OUTPUTSTREAMBUFFERSIZE_MACRO(width * height);
@@ -312,7 +311,7 @@ void SvtAv1E2ETestFramework::deinit_test() {
     delete psnr_src_;
     psnr_src_ = nullptr;
 
-    // close the bitstream file
+    // close the Bitstream file
     if (output_file_) {
         delete output_file_;
         output_file_ = nullptr;

@@ -1,4 +1,3 @@
-// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
@@ -7,10 +6,7 @@
 #include <stdlib.h>
 #include "EbPictureDemuxResults.h"
 
-EbErrorType picture_results_ctor(
-    PictureDemuxResults *object_ptr,
-    EbPtr object_init_data_ptr)
-{
+EbErrorType picture_results_ctor(PictureDemuxResults *object_ptr, EbPtr object_init_data_ptr) {
     object_ptr->picture_type = EB_PIC_INVALID;
 
     (void)object_init_data_ptr;
@@ -18,11 +14,8 @@ EbErrorType picture_results_ctor(
     return EB_ErrorNone;
 }
 
-EbErrorType picture_results_creator(
-    EbPtr *object_dbl_ptr,
-    EbPtr object_init_data_ptr)
-{
-    PictureDemuxResults* obj;
+EbErrorType picture_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+    PictureDemuxResults *obj;
 
     *object_dbl_ptr = NULL;
     EB_NEW(obj, picture_results_ctor, object_init_data_ptr);
@@ -30,4 +23,3 @@ EbErrorType picture_results_creator(
 
     return EB_ErrorNone;
 }
-// clang-format on

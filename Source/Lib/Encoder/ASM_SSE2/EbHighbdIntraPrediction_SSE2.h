@@ -13,17 +13,17 @@
 static INLINE __m128i dc_sum_4x32bit(const __m128i src) {
     __m128i sum, sum_hi;
     sum_hi = _mm_srli_si128(src, 8);
-    sum = _mm_add_epi32(src, sum_hi);
+    sum    = _mm_add_epi32(src, sum_hi);
     sum_hi = _mm_srli_si128(sum, 4);
     return _mm_add_epi32(sum, sum_hi);
 }
 
 static INLINE __m128i dc_sum_4x16bit(const __m128i src) {
-    __m128i sum, sum_hi;
+    __m128i       sum, sum_hi;
     const __m128i src_hi = _mm_srli_si128(src, 4);
-    sum = _mm_add_epi16(src, src_hi);
-    sum_hi = _mm_srli_si128(sum, 2);
-    sum = _mm_add_epi16(sum, sum_hi);
+    sum                  = _mm_add_epi16(src, src_hi);
+    sum_hi               = _mm_srli_si128(sum, 2);
+    sum                  = _mm_add_epi16(sum, sum_hi);
 
     return sum;
 }
@@ -36,13 +36,13 @@ static INLINE __m128i dc_sum_4x16bit_large(const __m128i src) {
 
 static INLINE __m128i dc_sum_8x16bit(const __m128i src) {
     const __m128i src_hi = _mm_srli_si128(src, 8);
-    const __m128i sum = _mm_add_epi16(src, src_hi);
+    const __m128i sum    = _mm_add_epi16(src, src_hi);
     return dc_sum_4x16bit(sum);
 }
 
 static INLINE __m128i dc_sum_8x16bit_large(const __m128i src) {
     const __m128i src_hi = _mm_srli_si128(src, 8);
-    const __m128i sum = _mm_add_epi16(src, src_hi);
+    const __m128i sum    = _mm_add_epi16(src, src_hi);
     return dc_sum_4x16bit_large(sum);
 }
 

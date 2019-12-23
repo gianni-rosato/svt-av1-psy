@@ -8,732 +8,790 @@
 #include "immintrin.h"
 #include "EbUtility.h"
 
-EB_EXTERN EB_ALIGN(16) const uint8_t filterType[] = {
-    1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4
+EB_EXTERN EB_ALIGN(16) const uint8_t filter_type[] = {
+    1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4};
+
+EB_EXTERN EB_ALIGN(16) const uint8_t weak_chroma_filter[2][32] = {
+    {2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4,
+     2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4},
+    {1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+     1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2},
 };
 
-EB_EXTERN EB_ALIGN(16) const uint8_t WeakChromafilter[2][32] = {
-        { 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4 },
-        { 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2 },
-};
+inline void luma_weak_filter_avx2_intrin(__m256i top, __m256i curr, __m256i bottom,
+                                         __m256i curr_prev, __m256i curr_next,
+                                         uint8_t *ptr_denoised, uint8_t *ptr_noise) {
+    __m256i top_first_half, bottom_first_half, filter_first_half, filter_second_half,
+        curr_next_first_half, curr_next_second_half, weights, curr_left_mid_first_half_weight,
+        curr_left_mid_first_halflo, curr_left_mid_first_halfhi, curr_prev_permutation,
+        curr_permutation, curr_next_permutation, top_permutation, bottom_permutation;
 
-inline void luma_weak_filter_avx2_intrin(
-    __m256i                        top,
-    __m256i                        curr,
-    __m256i                        bottom,
-    __m256i                        curr_prev,
-    __m256i                        curr_next,
-    uint8_t                       *ptr_denoised,
-    uint8_t                        *ptr_noise
-)
-{
-    __m256i  topFirstHalf, bottomFirstHalf,
-        filterFirstHalf, filterSecondHalf,
-        currNextFirstHalf, currNextSecondHalf,
-        weights, currLeftMidFirstHalfWeight,
-        currLeftMidFirstHalflo, currLeftMidFirstHalfhi, currPrevPermutation, currPermutation, currNextPermutation,
-        topPermutation, bottomPermutation;
+    curr_prev_permutation           = _mm256_permute4x64_epi64(curr_prev, 216);
+    curr_permutation                = _mm256_permute4x64_epi64(curr, 216);
+    curr_left_mid_first_halflo      = _mm256_unpacklo_epi8(curr_prev_permutation, curr_permutation);
+    weights                         = _mm256_loadu_si256((__m256i *)filter_type);
+    curr_left_mid_first_half_weight = _mm256_maddubs_epi16(curr_left_mid_first_halflo, weights);
+    curr_next_permutation           = _mm256_permute4x64_epi64(curr_next, 88);
+    curr_next_first_half = _mm256_unpacklo_epi8(curr_next_permutation, _mm256_setzero_si256());
+    curr_left_mid_first_halflo =
+        _mm256_add_epi16(curr_next_first_half, curr_left_mid_first_half_weight);
 
-    currPrevPermutation = _mm256_permute4x64_epi64(curr_prev, 216);
-    currPermutation = _mm256_permute4x64_epi64(curr, 216);
-    currLeftMidFirstHalflo = _mm256_unpacklo_epi8(currPrevPermutation, currPermutation);
-    weights = _mm256_loadu_si256((__m256i*)filterType);
-    currLeftMidFirstHalfWeight = _mm256_maddubs_epi16(currLeftMidFirstHalflo, weights);
-    currNextPermutation = _mm256_permute4x64_epi64(curr_next, 88);
-    currNextFirstHalf = _mm256_unpacklo_epi8(currNextPermutation, _mm256_setzero_si256());
-    currLeftMidFirstHalflo = _mm256_add_epi16(currNextFirstHalf, currLeftMidFirstHalfWeight);
+    curr_left_mid_first_halfhi      = _mm256_unpackhi_epi8(curr_prev_permutation, curr_permutation);
+    curr_left_mid_first_half_weight = _mm256_maddubs_epi16(curr_left_mid_first_halfhi, weights);
+    curr_next_permutation           = _mm256_permute4x64_epi64(curr_next, 216);
+    curr_next_second_half = _mm256_unpackhi_epi8(curr_next_permutation, _mm256_setzero_si256());
+    curr_left_mid_first_halfhi =
+        _mm256_add_epi16(curr_next_second_half, curr_left_mid_first_half_weight);
 
-    currLeftMidFirstHalfhi = _mm256_unpackhi_epi8(currPrevPermutation, currPermutation);
-    currLeftMidFirstHalfWeight = _mm256_maddubs_epi16(currLeftMidFirstHalfhi, weights);
-    currNextPermutation = _mm256_permute4x64_epi64(curr_next, 216);
-    currNextSecondHalf = _mm256_unpackhi_epi8(currNextPermutation, _mm256_setzero_si256());
-    currLeftMidFirstHalfhi = _mm256_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
+    top_permutation    = _mm256_permute4x64_epi64(top, 216);
+    top_first_half     = _mm256_unpacklo_epi8(top_permutation, _mm256_setzero_si256());
+    bottom_permutation = _mm256_permute4x64_epi64(bottom, 216);
+    bottom_first_half  = _mm256_unpacklo_epi8(bottom_permutation, _mm256_setzero_si256());
+    filter_first_half  = _mm256_adds_epi16(_mm256_adds_epi16(bottom_first_half, top_first_half),
+                                          curr_left_mid_first_halflo);
+    filter_first_half  = _mm256_srli_epi16(filter_first_half, 3);
 
-    topPermutation = _mm256_permute4x64_epi64(top, 216);
-    topFirstHalf = _mm256_unpacklo_epi8(topPermutation, _mm256_setzero_si256());
-    bottomPermutation = _mm256_permute4x64_epi64(bottom, 216);
-    bottomFirstHalf = _mm256_unpacklo_epi8(bottomPermutation, _mm256_setzero_si256());
-    filterFirstHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalflo);
-    filterFirstHalf = _mm256_srli_epi16(filterFirstHalf, 3);
+    top_first_half     = _mm256_unpackhi_epi8(top_permutation, _mm256_setzero_si256());
+    bottom_first_half  = _mm256_unpackhi_epi8(bottom_permutation, _mm256_setzero_si256());
+    filter_second_half = _mm256_adds_epi16(_mm256_adds_epi16(bottom_first_half, top_first_half),
+                                           curr_left_mid_first_halfhi);
+    filter_second_half = _mm256_srli_epi16(filter_second_half, 3);
 
-    topFirstHalf = _mm256_unpackhi_epi8(topPermutation, _mm256_setzero_si256());
-    bottomFirstHalf = _mm256_unpackhi_epi8(bottomPermutation, _mm256_setzero_si256());
-    filterSecondHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalfhi);
-    filterSecondHalf = _mm256_srli_epi16(filterSecondHalf, 3);
+    filter_first_half =
+        _mm256_permute4x64_epi64(_mm256_packus_epi16(filter_first_half, filter_second_half), 216);
+    _mm256_storeu_si256((__m256i *)(ptr_denoised), filter_first_half);
 
-    filterFirstHalf = _mm256_permute4x64_epi64(_mm256_packus_epi16(filterFirstHalf, filterSecondHalf), 216);
-    _mm256_storeu_si256((__m256i *)(ptr_denoised), filterFirstHalf);
-
-    _mm256_storeu_si256((__m256i *)(ptr_noise), _mm256_subs_epu8(curr, filterFirstHalf));
+    _mm256_storeu_si256((__m256i *)(ptr_noise), _mm256_subs_epu8(curr, filter_first_half));
 }
-inline void luma_weak_filter_128_avx2_intrin(
-    __m128i                        top,
-    __m128i                        curr,
-    __m128i                        bottom,
-    __m128i                        curr_prev,
-    __m128i                        curr_next,
-    uint8_t                       *ptr_denoised,
-    uint8_t                       *ptr_noise
-)
-{
-    __m128i topFirstHalf, bottomFirstHalf,
-        filterFirstHalf, filterSecondHalf,
-        currNextFirstHalf, currNextSecondHalf,
-        weights, currLeftMidFirstHalfWeight,
-        currLeftMidFirstHalflo, currLeftMidFirstHalfhi;
+inline void luma_weak_filter_128_avx2_intrin(__m128i top, __m128i curr, __m128i bottom,
+                                             __m128i curr_prev, __m128i curr_next,
+                                             uint8_t *ptr_denoised, uint8_t *ptr_noise) {
+    __m128i top_first_half, bottom_first_half, filter_first_half, filter_second_half,
+        curr_next_first_half, curr_next_second_half, weights, curr_left_mid_first_half_weight,
+        curr_left_mid_first_halflo, curr_left_mid_first_halfhi;
 
-    currLeftMidFirstHalflo = _mm_unpacklo_epi8(curr_prev, curr);
-    weights = _mm_loadu_si128((__m128i*)filterType);
-    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalflo, weights);
-    currNextFirstHalf = _mm_unpacklo_epi8(curr_next, _mm_setzero_si128());
-    currLeftMidFirstHalflo = _mm_add_epi16(currNextFirstHalf, currLeftMidFirstHalfWeight);
+    curr_left_mid_first_halflo      = _mm_unpacklo_epi8(curr_prev, curr);
+    weights                         = _mm_loadu_si128((__m128i *)filter_type);
+    curr_left_mid_first_half_weight = _mm_maddubs_epi16(curr_left_mid_first_halflo, weights);
+    curr_next_first_half            = _mm_unpacklo_epi8(curr_next, _mm_setzero_si128());
+    curr_left_mid_first_halflo =
+        _mm_add_epi16(curr_next_first_half, curr_left_mid_first_half_weight);
 
-    currLeftMidFirstHalfhi = _mm_unpackhi_epi8(curr_prev, curr);
-    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalfhi, weights);
-    currNextSecondHalf = _mm_unpackhi_epi8(curr_next, _mm_setzero_si128());
-    currLeftMidFirstHalfhi = _mm_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
+    curr_left_mid_first_halfhi      = _mm_unpackhi_epi8(curr_prev, curr);
+    curr_left_mid_first_half_weight = _mm_maddubs_epi16(curr_left_mid_first_halfhi, weights);
+    curr_next_second_half           = _mm_unpackhi_epi8(curr_next, _mm_setzero_si128());
+    curr_left_mid_first_halfhi =
+        _mm_add_epi16(curr_next_second_half, curr_left_mid_first_half_weight);
 
-    topFirstHalf = _mm_unpacklo_epi8(top, _mm_setzero_si128());
-    bottomFirstHalf = _mm_unpacklo_epi8(bottom, _mm_setzero_si128());
-    filterFirstHalf = _mm_adds_epi16(_mm_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalflo);
-    filterFirstHalf = _mm_srli_epi16(filterFirstHalf, 3);
+    top_first_half    = _mm_unpacklo_epi8(top, _mm_setzero_si128());
+    bottom_first_half = _mm_unpacklo_epi8(bottom, _mm_setzero_si128());
+    filter_first_half = _mm_adds_epi16(_mm_adds_epi16(bottom_first_half, top_first_half),
+                                       curr_left_mid_first_halflo);
+    filter_first_half = _mm_srli_epi16(filter_first_half, 3);
 
-    topFirstHalf = _mm_unpackhi_epi8(top, _mm_setzero_si128());
-    bottomFirstHalf = _mm_unpackhi_epi8(bottom, _mm_setzero_si128());
-    filterSecondHalf = _mm_adds_epi16(_mm_adds_epi16(bottomFirstHalf, topFirstHalf), currLeftMidFirstHalfhi);
-    filterSecondHalf = _mm_srli_epi16(filterSecondHalf, 3);
+    top_first_half     = _mm_unpackhi_epi8(top, _mm_setzero_si128());
+    bottom_first_half  = _mm_unpackhi_epi8(bottom, _mm_setzero_si128());
+    filter_second_half = _mm_adds_epi16(_mm_adds_epi16(bottom_first_half, top_first_half),
+                                        curr_left_mid_first_halfhi);
+    filter_second_half = _mm_srli_epi16(filter_second_half, 3);
 
-    filterFirstHalf = _mm_packus_epi16(filterFirstHalf, filterSecondHalf);
-    _mm_storel_epi64((__m128i*)(ptr_denoised), filterFirstHalf);
+    filter_first_half = _mm_packus_epi16(filter_first_half, filter_second_half);
+    _mm_storel_epi64((__m128i *)(ptr_denoised), filter_first_half);
 
-    _mm_storel_epi64((__m128i*)(ptr_noise), _mm_subs_epu8(curr, filterFirstHalf));
+    _mm_storel_epi64((__m128i *)(ptr_noise), _mm_subs_epu8(curr, filter_first_half));
 }
-inline void chroma_weak_luma_strong_filter_avx2_intrin(
-    __m256i                        top,
-    __m256i                        curr,
-    __m256i                        bottom,
-    __m256i                        curr_prev,
-    __m256i                        curr_next,
-    __m256i                        top_prev,
-    __m256i                        top_next,
-    __m256i                        bottom_prev,
-    __m256i                        bottom_next,
-    uint8_t                       *ptr_denoised
-)
-{
-    __m256i filterFirstHalf, filterSecondHalf,
-        currNextFirstHalf, currNextSecondHalf,
-        weights, currLeftMidFirstHalfWeight,
-        currLeftMidFirstHalflo, currLeftMidFirstHalfhi, currPrevPermutation, currPermutation, currNextPermutation,
-        topPermutation, bottomPermutation,
-        topPrevPermutation, topLeftMidFirstHalflo, topLeftMidFirstHalfWeight, topNextFirstHalf,
-        topNextPermutation, topLeftMidFirstHalfhi, topNextSecondHalf,
-        bottomPrevPermutation, bottomLeftMidFirstHalflo, bottomLeftMidFirstHalfWeight, bottomNextPermutation,
-        bottomNextFirstHalf, bottomLeftMidFirstHalfhi, bottomNextSecondHalf;
+inline void chroma_weak_luma_strong_filter_avx2_intrin(__m256i top, __m256i curr, __m256i bottom,
+                                                       __m256i curr_prev, __m256i curr_next,
+                                                       __m256i top_prev, __m256i top_next,
+                                                       __m256i bottom_prev, __m256i bottom_next,
+                                                       uint8_t *ptr_denoised) {
+    __m256i filter_first_half, filter_second_half, curr_next_first_half, curr_next_second_half,
+        weights, curr_left_mid_first_half_weight, curr_left_mid_first_halflo,
+        curr_left_mid_first_halfhi, curr_prev_permutation, curr_permutation, curr_next_permutation,
+        top_permutation, bottom_permutation, top_prev_permutation, top_left_mid_first_halflo,
+        top_left_mid_first_half_weight, top_next_first_half, top_next_permutation,
+        top_left_mid_first_halfhi, top_next_second_half, bottom_prev_permutation,
+        bottom_left_mid_first_halflo, bottom_left_mid_first_half_weight, bottom_next_permutation,
+        bottom_next_first_half, bottom_left_mid_first_halfhi, bottom_next_second_half;
 
     //  Curr
-    currPrevPermutation = _mm256_permute4x64_epi64(curr_prev, 216);
-    currPermutation = _mm256_permute4x64_epi64(curr, 216);
-    currLeftMidFirstHalflo = _mm256_unpacklo_epi8(currPrevPermutation, currPermutation);
-    weights = _mm256_loadu_si256((__m256i*)WeakChromafilter[0]);
-    currLeftMidFirstHalfWeight = _mm256_maddubs_epi16(currLeftMidFirstHalflo, weights);
-    currNextPermutation = _mm256_permute4x64_epi64(curr_next, 88);
-    currNextFirstHalf = _mm256_unpacklo_epi8(currNextPermutation, _mm256_setzero_si256());
-    currNextFirstHalf = _mm256_slli_epi16(currNextFirstHalf, 1);
-    currLeftMidFirstHalflo = _mm256_add_epi16(currNextFirstHalf, currLeftMidFirstHalfWeight);
+    curr_prev_permutation           = _mm256_permute4x64_epi64(curr_prev, 216);
+    curr_permutation                = _mm256_permute4x64_epi64(curr, 216);
+    curr_left_mid_first_halflo      = _mm256_unpacklo_epi8(curr_prev_permutation, curr_permutation);
+    weights                         = _mm256_loadu_si256((__m256i *)weak_chroma_filter[0]);
+    curr_left_mid_first_half_weight = _mm256_maddubs_epi16(curr_left_mid_first_halflo, weights);
+    curr_next_permutation           = _mm256_permute4x64_epi64(curr_next, 88);
+    curr_next_first_half = _mm256_unpacklo_epi8(curr_next_permutation, _mm256_setzero_si256());
+    curr_next_first_half = _mm256_slli_epi16(curr_next_first_half, 1);
+    curr_left_mid_first_halflo =
+        _mm256_add_epi16(curr_next_first_half, curr_left_mid_first_half_weight);
 
-    currLeftMidFirstHalfhi = _mm256_unpackhi_epi8(currPrevPermutation, currPermutation);
-    currLeftMidFirstHalfWeight = _mm256_maddubs_epi16(currLeftMidFirstHalfhi, weights);
-    currNextPermutation = _mm256_permute4x64_epi64(curr_next, 216);
-    currNextSecondHalf = _mm256_unpackhi_epi8(currNextPermutation, _mm256_setzero_si256());
-    currNextSecondHalf = _mm256_slli_epi16(currNextSecondHalf, 1);
-    currLeftMidFirstHalfhi = _mm256_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
+    curr_left_mid_first_halfhi      = _mm256_unpackhi_epi8(curr_prev_permutation, curr_permutation);
+    curr_left_mid_first_half_weight = _mm256_maddubs_epi16(curr_left_mid_first_halfhi, weights);
+    curr_next_permutation           = _mm256_permute4x64_epi64(curr_next, 216);
+    curr_next_second_half = _mm256_unpackhi_epi8(curr_next_permutation, _mm256_setzero_si256());
+    curr_next_second_half = _mm256_slli_epi16(curr_next_second_half, 1);
+    curr_left_mid_first_halfhi =
+        _mm256_add_epi16(curr_next_second_half, curr_left_mid_first_half_weight);
 
     // Top
-    topPrevPermutation = _mm256_permute4x64_epi64(top_prev, 216);
-    topPermutation = _mm256_permute4x64_epi64(top, 216);
-    topLeftMidFirstHalflo = _mm256_unpacklo_epi8(topPrevPermutation, topPermutation);
-    weights = _mm256_loadu_si256((__m256i*)WeakChromafilter[1]);
-    topLeftMidFirstHalfWeight = _mm256_maddubs_epi16(topLeftMidFirstHalflo, weights);
-    topNextPermutation = _mm256_permute4x64_epi64(top_next, 88);
-    topNextFirstHalf = _mm256_unpacklo_epi8(topNextPermutation, _mm256_setzero_si256());
-    topLeftMidFirstHalflo = _mm256_add_epi16(topNextFirstHalf, topLeftMidFirstHalfWeight);
+    top_prev_permutation           = _mm256_permute4x64_epi64(top_prev, 216);
+    top_permutation                = _mm256_permute4x64_epi64(top, 216);
+    top_left_mid_first_halflo      = _mm256_unpacklo_epi8(top_prev_permutation, top_permutation);
+    weights                        = _mm256_loadu_si256((__m256i *)weak_chroma_filter[1]);
+    top_left_mid_first_half_weight = _mm256_maddubs_epi16(top_left_mid_first_halflo, weights);
+    top_next_permutation           = _mm256_permute4x64_epi64(top_next, 88);
+    top_next_first_half = _mm256_unpacklo_epi8(top_next_permutation, _mm256_setzero_si256());
+    top_left_mid_first_halflo =
+        _mm256_add_epi16(top_next_first_half, top_left_mid_first_half_weight);
 
-    topLeftMidFirstHalfhi = _mm256_unpackhi_epi8(topPrevPermutation, topPermutation);
-    topLeftMidFirstHalfWeight = _mm256_maddubs_epi16(topLeftMidFirstHalfhi, weights);
-    topNextPermutation = _mm256_permute4x64_epi64(top_next, 216);
-    topNextSecondHalf = _mm256_unpackhi_epi8(topNextPermutation, _mm256_setzero_si256());
-    topLeftMidFirstHalfhi = _mm256_add_epi16(topNextSecondHalf, topLeftMidFirstHalfWeight);
+    top_left_mid_first_halfhi      = _mm256_unpackhi_epi8(top_prev_permutation, top_permutation);
+    top_left_mid_first_half_weight = _mm256_maddubs_epi16(top_left_mid_first_halfhi, weights);
+    top_next_permutation           = _mm256_permute4x64_epi64(top_next, 216);
+    top_next_second_half = _mm256_unpackhi_epi8(top_next_permutation, _mm256_setzero_si256());
+    top_left_mid_first_halfhi =
+        _mm256_add_epi16(top_next_second_half, top_left_mid_first_half_weight);
 
     // Bottom
-    bottomPrevPermutation = _mm256_permute4x64_epi64(bottom_prev, 216);
-    bottomPermutation = _mm256_permute4x64_epi64(bottom, 216);
-    bottomLeftMidFirstHalflo = _mm256_unpacklo_epi8(bottomPrevPermutation, bottomPermutation);
-    weights = _mm256_loadu_si256((__m256i*)WeakChromafilter[1]);
-    bottomLeftMidFirstHalfWeight = _mm256_maddubs_epi16(bottomLeftMidFirstHalflo, weights);
-    bottomNextPermutation = _mm256_permute4x64_epi64(bottom_next, 88);
-    bottomNextFirstHalf = _mm256_unpacklo_epi8(bottomNextPermutation, _mm256_setzero_si256());
-    bottomLeftMidFirstHalflo = _mm256_add_epi16(bottomNextFirstHalf, bottomLeftMidFirstHalfWeight);
+    bottom_prev_permutation = _mm256_permute4x64_epi64(bottom_prev, 216);
+    bottom_permutation      = _mm256_permute4x64_epi64(bottom, 216);
+    bottom_left_mid_first_halflo =
+        _mm256_unpacklo_epi8(bottom_prev_permutation, bottom_permutation);
+    weights                           = _mm256_loadu_si256((__m256i *)weak_chroma_filter[1]);
+    bottom_left_mid_first_half_weight = _mm256_maddubs_epi16(bottom_left_mid_first_halflo, weights);
+    bottom_next_permutation           = _mm256_permute4x64_epi64(bottom_next, 88);
+    bottom_next_first_half = _mm256_unpacklo_epi8(bottom_next_permutation, _mm256_setzero_si256());
+    bottom_left_mid_first_halflo =
+        _mm256_add_epi16(bottom_next_first_half, bottom_left_mid_first_half_weight);
 
-    bottomLeftMidFirstHalfhi = _mm256_unpackhi_epi8(bottomPrevPermutation, bottomPermutation);
-    bottomLeftMidFirstHalfWeight = _mm256_maddubs_epi16(bottomLeftMidFirstHalfhi, weights);
-    bottomNextPermutation = _mm256_permute4x64_epi64(bottom_next, 216);
-    bottomNextSecondHalf = _mm256_unpackhi_epi8(bottomNextPermutation, _mm256_setzero_si256());
-    bottomLeftMidFirstHalfhi = _mm256_add_epi16(bottomNextSecondHalf, bottomLeftMidFirstHalfWeight);
+    bottom_left_mid_first_halfhi =
+        _mm256_unpackhi_epi8(bottom_prev_permutation, bottom_permutation);
+    bottom_left_mid_first_half_weight = _mm256_maddubs_epi16(bottom_left_mid_first_halfhi, weights);
+    bottom_next_permutation           = _mm256_permute4x64_epi64(bottom_next, 216);
+    bottom_next_second_half = _mm256_unpackhi_epi8(bottom_next_permutation, _mm256_setzero_si256());
+    bottom_left_mid_first_halfhi =
+        _mm256_add_epi16(bottom_next_second_half, bottom_left_mid_first_half_weight);
 
-    filterFirstHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomLeftMidFirstHalflo, topLeftMidFirstHalflo), currLeftMidFirstHalflo);
-    filterFirstHalf = _mm256_srli_epi16(filterFirstHalf, 4);
-    filterSecondHalf = _mm256_adds_epi16(_mm256_adds_epi16(bottomLeftMidFirstHalfhi, topLeftMidFirstHalfhi), currLeftMidFirstHalfhi);
-    filterSecondHalf = _mm256_srli_epi16(filterSecondHalf, 4);
+    filter_first_half = _mm256_adds_epi16(
+        _mm256_adds_epi16(bottom_left_mid_first_halflo, top_left_mid_first_halflo),
+        curr_left_mid_first_halflo);
+    filter_first_half  = _mm256_srli_epi16(filter_first_half, 4);
+    filter_second_half = _mm256_adds_epi16(
+        _mm256_adds_epi16(bottom_left_mid_first_halfhi, top_left_mid_first_halfhi),
+        curr_left_mid_first_halfhi);
+    filter_second_half = _mm256_srli_epi16(filter_second_half, 4);
 
-    filterFirstHalf = _mm256_permute4x64_epi64(_mm256_packus_epi16(filterFirstHalf, filterSecondHalf), 216);
-    _mm256_storeu_si256((__m256i *)(ptr_denoised), filterFirstHalf);
+    filter_first_half =
+        _mm256_permute4x64_epi64(_mm256_packus_epi16(filter_first_half, filter_second_half), 216);
+    _mm256_storeu_si256((__m256i *)(ptr_denoised), filter_first_half);
 }
 
-inline void chroma_weak_luma_strong_filter_128_avx2_intrin(
-    __m128i                        top,
-    __m128i                        curr,
-    __m128i                        bottom,
-    __m128i                        curr_prev,
-    __m128i                        curr_next,
-    __m128i                        top_prev,
-    __m128i                        top_next,
-    __m128i                        bottom_prev,
-    __m128i                        bottom_next,
-    uint8_t                       *ptr_denoised
-)
-{
-    __m128i filterFirstHalf, filterSecondHalf,
-        currNextFirstHalf, currNextSecondHalf,
-        weights, currLeftMidFirstHalfWeight,
-        currLeftMidFirstHalflo, currLeftMidFirstHalfhi,
-        topLeftMidFirstHalflo, topLeftMidFirstHalfWeight, topNextFirstHalf,
-        topLeftMidFirstHalfhi, topNextSecondHalf,
-        bottomLeftMidFirstHalflo, bottomLeftMidFirstHalfWeight,
-        bottomNextFirstHalf, bottomLeftMidFirstHalfhi, bottomNextSecondHalf;
+inline void chroma_weak_luma_strong_filter_128_avx2_intrin(__m128i top, __m128i curr,
+                                                           __m128i bottom, __m128i curr_prev,
+                                                           __m128i curr_next, __m128i top_prev,
+                                                           __m128i top_next, __m128i bottom_prev,
+                                                           __m128i  bottom_next,
+                                                           uint8_t *ptr_denoised) {
+    __m128i filter_first_half, filter_second_half, curr_next_first_half, curr_next_second_half,
+        weights, curr_left_mid_first_half_weight, curr_left_mid_first_halflo,
+        curr_left_mid_first_halfhi, top_left_mid_first_halflo, top_left_mid_first_half_weight,
+        top_next_first_half, top_left_mid_first_halfhi, top_next_second_half,
+        bottom_left_mid_first_halflo, bottom_left_mid_first_half_weight, bottom_next_first_half,
+        bottom_left_mid_first_halfhi, bottom_next_second_half;
 
     //  Curr
-    currLeftMidFirstHalflo = _mm_unpacklo_epi8(curr_prev, curr);
-    weights = _mm_loadu_si128((__m128i*)WeakChromafilter[0]);
-    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalflo, weights);
-    currNextFirstHalf = _mm_unpacklo_epi8(curr_next, _mm_setzero_si128());
-    currNextFirstHalf = _mm_slli_epi16(currNextFirstHalf, 1);
-    currLeftMidFirstHalflo = _mm_add_epi16(currNextFirstHalf, currLeftMidFirstHalfWeight);
+    curr_left_mid_first_halflo      = _mm_unpacklo_epi8(curr_prev, curr);
+    weights                         = _mm_loadu_si128((__m128i *)weak_chroma_filter[0]);
+    curr_left_mid_first_half_weight = _mm_maddubs_epi16(curr_left_mid_first_halflo, weights);
+    curr_next_first_half            = _mm_unpacklo_epi8(curr_next, _mm_setzero_si128());
+    curr_next_first_half            = _mm_slli_epi16(curr_next_first_half, 1);
+    curr_left_mid_first_halflo =
+        _mm_add_epi16(curr_next_first_half, curr_left_mid_first_half_weight);
 
-    currLeftMidFirstHalfhi = _mm_unpackhi_epi8(curr_prev, curr);
-    currLeftMidFirstHalfWeight = _mm_maddubs_epi16(currLeftMidFirstHalfhi, weights);
-    currNextSecondHalf = _mm_unpackhi_epi8(curr_next, _mm_setzero_si128());
-    currNextSecondHalf = _mm_slli_epi16(currNextSecondHalf, 1);
-    currLeftMidFirstHalfhi = _mm_add_epi16(currNextSecondHalf, currLeftMidFirstHalfWeight);
+    curr_left_mid_first_halfhi      = _mm_unpackhi_epi8(curr_prev, curr);
+    curr_left_mid_first_half_weight = _mm_maddubs_epi16(curr_left_mid_first_halfhi, weights);
+    curr_next_second_half           = _mm_unpackhi_epi8(curr_next, _mm_setzero_si128());
+    curr_next_second_half           = _mm_slli_epi16(curr_next_second_half, 1);
+    curr_left_mid_first_halfhi =
+        _mm_add_epi16(curr_next_second_half, curr_left_mid_first_half_weight);
 
     // Top
-    topLeftMidFirstHalflo = _mm_unpacklo_epi8(top_prev, top);
-    weights = _mm_loadu_si128((__m128i*)WeakChromafilter[1]);
-    topLeftMidFirstHalfWeight = _mm_maddubs_epi16(topLeftMidFirstHalflo, weights);
-    topNextFirstHalf = _mm_unpacklo_epi8(top_next, _mm_setzero_si128());
-    topLeftMidFirstHalflo = _mm_add_epi16(topNextFirstHalf, topLeftMidFirstHalfWeight);
+    top_left_mid_first_halflo      = _mm_unpacklo_epi8(top_prev, top);
+    weights                        = _mm_loadu_si128((__m128i *)weak_chroma_filter[1]);
+    top_left_mid_first_half_weight = _mm_maddubs_epi16(top_left_mid_first_halflo, weights);
+    top_next_first_half            = _mm_unpacklo_epi8(top_next, _mm_setzero_si128());
+    top_left_mid_first_halflo = _mm_add_epi16(top_next_first_half, top_left_mid_first_half_weight);
 
-    topLeftMidFirstHalfhi = _mm_unpackhi_epi8(top_prev, top);
-    topLeftMidFirstHalfWeight = _mm_maddubs_epi16(topLeftMidFirstHalfhi, weights);
-    topNextSecondHalf = _mm_unpackhi_epi8(top_next, _mm_setzero_si128());
-    topLeftMidFirstHalfhi = _mm_add_epi16(topNextSecondHalf, topLeftMidFirstHalfWeight);
+    top_left_mid_first_halfhi      = _mm_unpackhi_epi8(top_prev, top);
+    top_left_mid_first_half_weight = _mm_maddubs_epi16(top_left_mid_first_halfhi, weights);
+    top_next_second_half           = _mm_unpackhi_epi8(top_next, _mm_setzero_si128());
+    top_left_mid_first_halfhi = _mm_add_epi16(top_next_second_half, top_left_mid_first_half_weight);
 
     // Bottom
-    bottomLeftMidFirstHalflo = _mm_unpacklo_epi8(bottom_prev, bottom);
-    weights = _mm_loadu_si128((__m128i*)WeakChromafilter[1]);
-    bottomLeftMidFirstHalfWeight = _mm_maddubs_epi16(bottomLeftMidFirstHalflo, weights);
-    bottomNextFirstHalf = _mm_unpacklo_epi8(bottom_next, _mm_setzero_si128());
-    bottomLeftMidFirstHalflo = _mm_add_epi16(bottomNextFirstHalf, bottomLeftMidFirstHalfWeight);
+    bottom_left_mid_first_halflo      = _mm_unpacklo_epi8(bottom_prev, bottom);
+    weights                           = _mm_loadu_si128((__m128i *)weak_chroma_filter[1]);
+    bottom_left_mid_first_half_weight = _mm_maddubs_epi16(bottom_left_mid_first_halflo, weights);
+    bottom_next_first_half            = _mm_unpacklo_epi8(bottom_next, _mm_setzero_si128());
+    bottom_left_mid_first_halflo =
+        _mm_add_epi16(bottom_next_first_half, bottom_left_mid_first_half_weight);
 
-    bottomLeftMidFirstHalfhi = _mm_unpackhi_epi8(bottom_prev, bottom);
-    bottomLeftMidFirstHalfWeight = _mm_maddubs_epi16(bottomLeftMidFirstHalfhi, weights);
-    bottomNextSecondHalf = _mm_unpackhi_epi8(bottom_next, _mm_setzero_si128());
-    bottomLeftMidFirstHalfhi = _mm_add_epi16(bottomNextSecondHalf, bottomLeftMidFirstHalfWeight);
+    bottom_left_mid_first_halfhi      = _mm_unpackhi_epi8(bottom_prev, bottom);
+    bottom_left_mid_first_half_weight = _mm_maddubs_epi16(bottom_left_mid_first_halfhi, weights);
+    bottom_next_second_half           = _mm_unpackhi_epi8(bottom_next, _mm_setzero_si128());
+    bottom_left_mid_first_halfhi =
+        _mm_add_epi16(bottom_next_second_half, bottom_left_mid_first_half_weight);
 
-    filterFirstHalf = _mm_adds_epi16(_mm_adds_epi16(bottomLeftMidFirstHalflo, topLeftMidFirstHalflo), currLeftMidFirstHalflo);
-    filterFirstHalf = _mm_srli_epi16(filterFirstHalf, 4);
-    filterSecondHalf = _mm_adds_epi16(_mm_adds_epi16(bottomLeftMidFirstHalfhi, topLeftMidFirstHalfhi), currLeftMidFirstHalfhi);
-    filterSecondHalf = _mm_srli_epi16(filterSecondHalf, 4);
+    filter_first_half =
+        _mm_adds_epi16(_mm_adds_epi16(bottom_left_mid_first_halflo, top_left_mid_first_halflo),
+                       curr_left_mid_first_halflo);
+    filter_first_half = _mm_srli_epi16(filter_first_half, 4);
+    filter_second_half =
+        _mm_adds_epi16(_mm_adds_epi16(bottom_left_mid_first_halfhi, top_left_mid_first_halfhi),
+                       curr_left_mid_first_halfhi);
+    filter_second_half = _mm_srli_epi16(filter_second_half, 4);
 
-    filterFirstHalf = _mm_packus_epi16(filterFirstHalf, filterSecondHalf);
-    _mm_storel_epi64((__m128i*)(ptr_denoised), filterFirstHalf);
+    filter_first_half = _mm_packus_epi16(filter_first_half, filter_second_half);
+    _mm_storel_epi64((__m128i *)(ptr_denoised), filter_first_half);
 }
 
-inline void chroma_strong_avx2_intrin(
-    __m256i                        top,
-    __m256i                        curr,
-    __m256i                        bottom,
-    __m256i                        curr_prev,
-    __m256i                        curr_next,
-    __m256i                        top_prev,
-    __m256i                        top_next,
-    __m256i                        bottom_prev,
-    __m256i                        bottom_next,
-    uint8_t                       *ptr_denoised
-)
-{
-    __m256i   currLeftMidFirstHalflo, currLeftMidFirstHalfhi, currPrevPermutation, currPermutation, currNextPermutation,
-        topPermutation, topPrevPermutation, topLeftMidFirstHalflo, topNextPermutation, topLeftMidFirstHalfhi,
-        bottomPermutation, bottomPrevPermutation, bottomLeftMidFirstHalflo, bottomNextPermutation, bottomLeftMidFirstHalfhi;
+inline void chroma_strong_avx2_intrin(__m256i top, __m256i curr, __m256i bottom, __m256i curr_prev,
+                                      __m256i curr_next, __m256i top_prev, __m256i top_next,
+                                      __m256i bottom_prev, __m256i bottom_next,
+                                      uint8_t *ptr_denoised) {
+    __m256i curr_left_mid_first_halflo, curr_left_mid_first_halfhi, curr_prev_permutation,
+        curr_permutation, curr_next_permutation, top_permutation, top_prev_permutation,
+        top_left_mid_first_halflo, top_next_permutation, top_left_mid_first_halfhi,
+        bottom_permutation, bottom_prev_permutation, bottom_left_mid_first_halflo,
+        bottom_next_permutation, bottom_left_mid_first_halfhi;
 
-    currPrevPermutation = _mm256_permute4x64_epi64(curr_prev, 216);
-    currPermutation = _mm256_permute4x64_epi64(curr, 216);
-    currNextPermutation = _mm256_permute4x64_epi64(curr_next, 216);
+    curr_prev_permutation = _mm256_permute4x64_epi64(curr_prev, 216);
+    curr_permutation      = _mm256_permute4x64_epi64(curr, 216);
+    curr_next_permutation = _mm256_permute4x64_epi64(curr_next, 216);
 
-    currLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(currPermutation, _mm256_setzero_si256()),
-        _mm256_unpacklo_epi8(currPrevPermutation, _mm256_setzero_si256()));
-    currLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(currNextPermutation, _mm256_setzero_si256()), currLeftMidFirstHalflo);
+    curr_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_unpacklo_epi8(curr_permutation, _mm256_setzero_si256()),
+                         _mm256_unpacklo_epi8(curr_prev_permutation, _mm256_setzero_si256()));
+    curr_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_unpacklo_epi8(curr_next_permutation, _mm256_setzero_si256()),
+                         curr_left_mid_first_halflo);
 
-    currLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(currPermutation, _mm256_setzero_si256()),
-        _mm256_unpackhi_epi8(currPrevPermutation, _mm256_setzero_si256()));
-    currLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(currNextPermutation, _mm256_setzero_si256()), currLeftMidFirstHalfhi);
+    curr_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_unpackhi_epi8(curr_permutation, _mm256_setzero_si256()),
+                         _mm256_unpackhi_epi8(curr_prev_permutation, _mm256_setzero_si256()));
+    curr_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_unpackhi_epi8(curr_next_permutation, _mm256_setzero_si256()),
+                         curr_left_mid_first_halfhi);
 
-    topPrevPermutation = _mm256_permute4x64_epi64(top_prev, 216);
-    topPermutation = _mm256_permute4x64_epi64(top, 216);
-    topNextPermutation = _mm256_permute4x64_epi64(top_next, 216);
+    top_prev_permutation = _mm256_permute4x64_epi64(top_prev, 216);
+    top_permutation      = _mm256_permute4x64_epi64(top, 216);
+    top_next_permutation = _mm256_permute4x64_epi64(top_next, 216);
 
-    topLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(topPermutation, _mm256_setzero_si256()),
-        _mm256_unpacklo_epi8(topPrevPermutation, _mm256_setzero_si256()));
-    topLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(topNextPermutation, _mm256_setzero_si256()), topLeftMidFirstHalflo);
+    top_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_unpacklo_epi8(top_permutation, _mm256_setzero_si256()),
+                         _mm256_unpacklo_epi8(top_prev_permutation, _mm256_setzero_si256()));
+    top_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_unpacklo_epi8(top_next_permutation, _mm256_setzero_si256()),
+                         top_left_mid_first_halflo);
 
-    topLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(topPermutation, _mm256_setzero_si256()),
-        _mm256_unpackhi_epi8(topPrevPermutation, _mm256_setzero_si256()));
-    topLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(topNextPermutation, _mm256_setzero_si256()), topLeftMidFirstHalfhi);
+    top_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_unpackhi_epi8(top_permutation, _mm256_setzero_si256()),
+                         _mm256_unpackhi_epi8(top_prev_permutation, _mm256_setzero_si256()));
+    top_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_unpackhi_epi8(top_next_permutation, _mm256_setzero_si256()),
+                         top_left_mid_first_halfhi);
 
-    bottomPrevPermutation = _mm256_permute4x64_epi64(bottom_prev, 216);
-    bottomPermutation = _mm256_permute4x64_epi64(bottom, 216);
-    bottomNextPermutation = _mm256_permute4x64_epi64(bottom_next, 216);
+    bottom_prev_permutation = _mm256_permute4x64_epi64(bottom_prev, 216);
+    bottom_permutation      = _mm256_permute4x64_epi64(bottom, 216);
+    bottom_next_permutation = _mm256_permute4x64_epi64(bottom_next, 216);
 
-    bottomLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(bottomPermutation, _mm256_setzero_si256()),
-        _mm256_unpacklo_epi8(bottomPrevPermutation, _mm256_setzero_si256()));
-    bottomLeftMidFirstHalflo = _mm256_add_epi16(_mm256_unpacklo_epi8(bottomNextPermutation, _mm256_setzero_si256()), bottomLeftMidFirstHalflo);
+    bottom_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_unpacklo_epi8(bottom_permutation, _mm256_setzero_si256()),
+                         _mm256_unpacklo_epi8(bottom_prev_permutation, _mm256_setzero_si256()));
+    bottom_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_unpacklo_epi8(bottom_next_permutation, _mm256_setzero_si256()),
+                         bottom_left_mid_first_halflo);
 
-    bottomLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(bottomPermutation, _mm256_setzero_si256()),
-        _mm256_unpackhi_epi8(bottomPrevPermutation, _mm256_setzero_si256()));
-    bottomLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_unpackhi_epi8(bottomNextPermutation, _mm256_setzero_si256()), bottomLeftMidFirstHalfhi);
+    bottom_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_unpackhi_epi8(bottom_permutation, _mm256_setzero_si256()),
+                         _mm256_unpackhi_epi8(bottom_prev_permutation, _mm256_setzero_si256()));
+    bottom_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_unpackhi_epi8(bottom_next_permutation, _mm256_setzero_si256()),
+                         bottom_left_mid_first_halfhi);
 
-    currLeftMidFirstHalflo = _mm256_add_epi16(_mm256_add_epi16(currLeftMidFirstHalflo, topLeftMidFirstHalflo), bottomLeftMidFirstHalflo);
-    currLeftMidFirstHalfhi = _mm256_add_epi16(_mm256_add_epi16(currLeftMidFirstHalfhi, topLeftMidFirstHalfhi), bottomLeftMidFirstHalfhi);
+    curr_left_mid_first_halflo =
+        _mm256_add_epi16(_mm256_add_epi16(curr_left_mid_first_halflo, top_left_mid_first_halflo),
+                         bottom_left_mid_first_halflo);
+    curr_left_mid_first_halfhi =
+        _mm256_add_epi16(_mm256_add_epi16(curr_left_mid_first_halfhi, top_left_mid_first_halfhi),
+                         bottom_left_mid_first_halfhi);
 
-    topLeftMidFirstHalflo = _mm256_unpacklo_epi16(currLeftMidFirstHalflo, _mm256_setzero_si256());
-    topLeftMidFirstHalflo = _mm256_mullo_epi32(topLeftMidFirstHalflo, _mm256_set1_epi32(7282));
-    topLeftMidFirstHalflo = _mm256_srli_epi32(topLeftMidFirstHalflo, 16);
-    bottomLeftMidFirstHalflo = _mm256_unpackhi_epi16(currLeftMidFirstHalflo, _mm256_setzero_si256());
-    bottomLeftMidFirstHalflo = _mm256_mullo_epi32(bottomLeftMidFirstHalflo, _mm256_set1_epi32(7282));
-    bottomLeftMidFirstHalflo = _mm256_srli_epi32(bottomLeftMidFirstHalflo, 16);
-    currLeftMidFirstHalflo = _mm256_packus_epi32(topLeftMidFirstHalflo, bottomLeftMidFirstHalflo);
+    top_left_mid_first_halflo =
+        _mm256_unpacklo_epi16(curr_left_mid_first_halflo, _mm256_setzero_si256());
+    top_left_mid_first_halflo =
+        _mm256_mullo_epi32(top_left_mid_first_halflo, _mm256_set1_epi32(7282));
+    top_left_mid_first_halflo = _mm256_srli_epi32(top_left_mid_first_halflo, 16);
+    bottom_left_mid_first_halflo =
+        _mm256_unpackhi_epi16(curr_left_mid_first_halflo, _mm256_setzero_si256());
+    bottom_left_mid_first_halflo =
+        _mm256_mullo_epi32(bottom_left_mid_first_halflo, _mm256_set1_epi32(7282));
+    bottom_left_mid_first_halflo = _mm256_srli_epi32(bottom_left_mid_first_halflo, 16);
+    curr_left_mid_first_halflo =
+        _mm256_packus_epi32(top_left_mid_first_halflo, bottom_left_mid_first_halflo);
 
-    currLeftMidFirstHalflo = _mm256_insertf128_si256(_mm256_setzero_si256(), _mm_packus_epi16(_mm256_extracti128_si256(currLeftMidFirstHalflo, 0), _mm256_extracti128_si256(currLeftMidFirstHalflo, 1)), 0);
+    curr_left_mid_first_halflo = _mm256_insertf128_si256(
+        _mm256_setzero_si256(),
+        _mm_packus_epi16(_mm256_extracti128_si256(curr_left_mid_first_halflo, 0),
+                         _mm256_extracti128_si256(curr_left_mid_first_halflo, 1)),
+        0);
 
-    topLeftMidFirstHalfhi = _mm256_unpacklo_epi16(currLeftMidFirstHalfhi, _mm256_setzero_si256());
-    topLeftMidFirstHalfhi = _mm256_mullo_epi32(topLeftMidFirstHalfhi, _mm256_set1_epi32(7282));
-    topLeftMidFirstHalfhi = _mm256_srli_epi32(topLeftMidFirstHalfhi, 16);
+    top_left_mid_first_halfhi =
+        _mm256_unpacklo_epi16(curr_left_mid_first_halfhi, _mm256_setzero_si256());
+    top_left_mid_first_halfhi =
+        _mm256_mullo_epi32(top_left_mid_first_halfhi, _mm256_set1_epi32(7282));
+    top_left_mid_first_halfhi = _mm256_srli_epi32(top_left_mid_first_halfhi, 16);
 
-    bottomLeftMidFirstHalfhi = _mm256_unpackhi_epi16(currLeftMidFirstHalfhi, _mm256_setzero_si256());
-    bottomLeftMidFirstHalfhi = _mm256_mullo_epi32(bottomLeftMidFirstHalfhi, _mm256_set1_epi32(7282));
-    bottomLeftMidFirstHalfhi = _mm256_srli_epi32(bottomLeftMidFirstHalfhi, 16);
-    currLeftMidFirstHalfhi = _mm256_packus_epi32(topLeftMidFirstHalfhi, bottomLeftMidFirstHalfhi);
+    bottom_left_mid_first_halfhi =
+        _mm256_unpackhi_epi16(curr_left_mid_first_halfhi, _mm256_setzero_si256());
+    bottom_left_mid_first_halfhi =
+        _mm256_mullo_epi32(bottom_left_mid_first_halfhi, _mm256_set1_epi32(7282));
+    bottom_left_mid_first_halfhi = _mm256_srli_epi32(bottom_left_mid_first_halfhi, 16);
+    curr_left_mid_first_halfhi =
+        _mm256_packus_epi32(top_left_mid_first_halfhi, bottom_left_mid_first_halfhi);
 
-    currLeftMidFirstHalflo = _mm256_insertf128_si256(currLeftMidFirstHalflo, _mm_packus_epi16(_mm256_extracti128_si256(currLeftMidFirstHalfhi, 0), _mm256_extracti128_si256(currLeftMidFirstHalfhi, 1)), 1);
-    _mm256_storeu_si256((__m256i *)(ptr_denoised), currLeftMidFirstHalflo);
+    curr_left_mid_first_halflo = _mm256_insertf128_si256(
+        curr_left_mid_first_halflo,
+        _mm_packus_epi16(_mm256_extracti128_si256(curr_left_mid_first_halfhi, 0),
+                         _mm256_extracti128_si256(curr_left_mid_first_halfhi, 1)),
+        1);
+    _mm256_storeu_si256((__m256i *)(ptr_denoised), curr_left_mid_first_halflo);
 }
 
-inline void chroma_strong_128_avx2_intrin(
-    __m128i                        top,
-    __m128i                        curr,
-    __m128i                        bottom,
-    __m128i                        curr_prev,
-    __m128i                        curr_next,
-    __m128i                        top_prev,
-    __m128i                        top_next,
-    __m128i                        bottom_prev,
-    __m128i                        bottom_next,
-    uint8_t                       *ptr_denoised
-)
-{
-    __m128i   currLeftMidFirstHalflo, currLeftMidFirstHalfhi, topLeftMidFirstHalflo, topLeftMidFirstHalfhi,
-              bottomLeftMidFirstHalflo, bottomLeftMidFirstHalfhi;
+inline void chroma_strong_128_avx2_intrin(__m128i top, __m128i curr, __m128i bottom,
+                                          __m128i curr_prev, __m128i curr_next, __m128i top_prev,
+                                          __m128i top_next, __m128i bottom_prev,
+                                          __m128i bottom_next, uint8_t *ptr_denoised) {
+    __m128i curr_left_mid_first_halflo, curr_left_mid_first_halfhi, top_left_mid_first_halflo,
+        top_left_mid_first_halfhi, bottom_left_mid_first_halflo, bottom_left_mid_first_halfhi;
 
-    currLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(curr, _mm_setzero_si128()),
-        _mm_unpacklo_epi8(curr_prev, _mm_setzero_si128()));
-    currLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(curr_next, _mm_setzero_si128()), currLeftMidFirstHalflo);
+    curr_left_mid_first_halflo = _mm_add_epi16(_mm_unpacklo_epi8(curr, _mm_setzero_si128()),
+                                               _mm_unpacklo_epi8(curr_prev, _mm_setzero_si128()));
+    curr_left_mid_first_halflo = _mm_add_epi16(_mm_unpacklo_epi8(curr_next, _mm_setzero_si128()),
+                                               curr_left_mid_first_halflo);
 
-    currLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(curr, _mm_setzero_si128()),
-        _mm_unpackhi_epi8(curr_prev, _mm_setzero_si128()));
-    currLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(curr_next, _mm_setzero_si128()), currLeftMidFirstHalfhi);
+    curr_left_mid_first_halfhi = _mm_add_epi16(_mm_unpackhi_epi8(curr, _mm_setzero_si128()),
+                                               _mm_unpackhi_epi8(curr_prev, _mm_setzero_si128()));
+    curr_left_mid_first_halfhi = _mm_add_epi16(_mm_unpackhi_epi8(curr_next, _mm_setzero_si128()),
+                                               curr_left_mid_first_halfhi);
 
-    topLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(top, _mm_setzero_si128()),
-        _mm_unpacklo_epi8(top_prev, _mm_setzero_si128()));
-    topLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(top_next, _mm_setzero_si128()), topLeftMidFirstHalflo);
+    top_left_mid_first_halflo = _mm_add_epi16(_mm_unpacklo_epi8(top, _mm_setzero_si128()),
+                                              _mm_unpacklo_epi8(top_prev, _mm_setzero_si128()));
+    top_left_mid_first_halflo =
+        _mm_add_epi16(_mm_unpacklo_epi8(top_next, _mm_setzero_si128()), top_left_mid_first_halflo);
 
-    topLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(top, _mm_setzero_si128()),
-        _mm_unpackhi_epi8(top_prev, _mm_setzero_si128()));
-    topLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(top_next, _mm_setzero_si128()), topLeftMidFirstHalfhi);
+    top_left_mid_first_halfhi = _mm_add_epi16(_mm_unpackhi_epi8(top, _mm_setzero_si128()),
+                                              _mm_unpackhi_epi8(top_prev, _mm_setzero_si128()));
+    top_left_mid_first_halfhi =
+        _mm_add_epi16(_mm_unpackhi_epi8(top_next, _mm_setzero_si128()), top_left_mid_first_halfhi);
 
-    bottomLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(bottom, _mm_setzero_si128()),
-        _mm_unpacklo_epi8(bottom_prev, _mm_setzero_si128()));
-    bottomLeftMidFirstHalflo = _mm_add_epi16(_mm_unpacklo_epi8(bottom_next, _mm_setzero_si128()), bottomLeftMidFirstHalflo);
+    bottom_left_mid_first_halflo =
+        _mm_add_epi16(_mm_unpacklo_epi8(bottom, _mm_setzero_si128()),
+                      _mm_unpacklo_epi8(bottom_prev, _mm_setzero_si128()));
+    bottom_left_mid_first_halflo = _mm_add_epi16(
+        _mm_unpacklo_epi8(bottom_next, _mm_setzero_si128()), bottom_left_mid_first_halflo);
 
-    bottomLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(bottom, _mm_setzero_si128()),
-        _mm_unpackhi_epi8(bottom_prev, _mm_setzero_si128()));
-    bottomLeftMidFirstHalfhi = _mm_add_epi16(_mm_unpackhi_epi8(bottom_next, _mm_setzero_si128()), bottomLeftMidFirstHalfhi);
+    bottom_left_mid_first_halfhi =
+        _mm_add_epi16(_mm_unpackhi_epi8(bottom, _mm_setzero_si128()),
+                      _mm_unpackhi_epi8(bottom_prev, _mm_setzero_si128()));
+    bottom_left_mid_first_halfhi = _mm_add_epi16(
+        _mm_unpackhi_epi8(bottom_next, _mm_setzero_si128()), bottom_left_mid_first_halfhi);
 
-    currLeftMidFirstHalflo = _mm_add_epi16(_mm_add_epi16(currLeftMidFirstHalflo, topLeftMidFirstHalflo), bottomLeftMidFirstHalflo);
-    currLeftMidFirstHalfhi = _mm_add_epi16(_mm_add_epi16(currLeftMidFirstHalfhi, topLeftMidFirstHalfhi), bottomLeftMidFirstHalfhi);
+    curr_left_mid_first_halflo =
+        _mm_add_epi16(_mm_add_epi16(curr_left_mid_first_halflo, top_left_mid_first_halflo),
+                      bottom_left_mid_first_halflo);
+    curr_left_mid_first_halfhi =
+        _mm_add_epi16(_mm_add_epi16(curr_left_mid_first_halfhi, top_left_mid_first_halfhi),
+                      bottom_left_mid_first_halfhi);
 
-    topLeftMidFirstHalflo = _mm_unpacklo_epi16(currLeftMidFirstHalflo, _mm_setzero_si128());
-    topLeftMidFirstHalflo = _mm_mullo_epi32(topLeftMidFirstHalflo, _mm_set1_epi32(7282));
-    topLeftMidFirstHalflo = _mm_srli_epi32(topLeftMidFirstHalflo, 16);
-    bottomLeftMidFirstHalflo = _mm_unpackhi_epi16(currLeftMidFirstHalflo, _mm_setzero_si128());
-    bottomLeftMidFirstHalflo = _mm_mullo_epi32(bottomLeftMidFirstHalflo, _mm_set1_epi32(7282));
-    bottomLeftMidFirstHalflo = _mm_srli_epi32(bottomLeftMidFirstHalflo, 16);
-    currLeftMidFirstHalflo = _mm_packus_epi32(topLeftMidFirstHalflo, bottomLeftMidFirstHalflo);
+    top_left_mid_first_halflo = _mm_unpacklo_epi16(curr_left_mid_first_halflo, _mm_setzero_si128());
+    top_left_mid_first_halflo = _mm_mullo_epi32(top_left_mid_first_halflo, _mm_set1_epi32(7282));
+    top_left_mid_first_halflo = _mm_srli_epi32(top_left_mid_first_halflo, 16);
+    bottom_left_mid_first_halflo =
+        _mm_unpackhi_epi16(curr_left_mid_first_halflo, _mm_setzero_si128());
+    bottom_left_mid_first_halflo =
+        _mm_mullo_epi32(bottom_left_mid_first_halflo, _mm_set1_epi32(7282));
+    bottom_left_mid_first_halflo = _mm_srli_epi32(bottom_left_mid_first_halflo, 16);
+    curr_left_mid_first_halflo =
+        _mm_packus_epi32(top_left_mid_first_halflo, bottom_left_mid_first_halflo);
 
-    currLeftMidFirstHalflo = _mm_packus_epi16(currLeftMidFirstHalflo, currLeftMidFirstHalflo);
+    curr_left_mid_first_halflo =
+        _mm_packus_epi16(curr_left_mid_first_halflo, curr_left_mid_first_halflo);
 
-    _mm_storel_epi64((__m128i*)(ptr_denoised), currLeftMidFirstHalflo);
+    _mm_storel_epi64((__m128i *)(ptr_denoised), curr_left_mid_first_halflo);
 }
 /*******************************************
 * noise_extract_luma_weak
 *  weak filter Luma and store noise.
 *******************************************/
-void noise_extract_luma_weak_avx2_intrin(
-    EbPictureBufferDesc       *input_picture_ptr,
-    EbPictureBufferDesc       *denoised_picture_ptr,
-    EbPictureBufferDesc       *noise_picture_ptr,
-    uint32_t                       sb_origin_y,
-    uint32_t                         sb_origin_x
-)
-{
-    uint32_t  ii, jj, kk;
-    uint32_t  picHeight, sb_height;
-    uint32_t  picWidth;
-    uint32_t  inputOriginIndex;
-    uint32_t  inputOriginIndexPad;
-    uint32_t  noiseOriginIndex;
+void noise_extract_luma_weak_avx2_intrin(EbPictureBufferDesc *input_picture_ptr,
+                                         EbPictureBufferDesc *denoised_picture_ptr,
+                                         EbPictureBufferDesc *noise_picture_ptr,
+                                         uint32_t sb_origin_y, uint32_t sb_origin_x) {
+    uint32_t ii, jj, kk;
+    uint32_t pic_height, sb_height;
+    uint32_t pic_width;
+    uint32_t input_origin_index;
+    uint32_t input_origin_index_pad;
+    uint32_t noise_origin_index;
 
-    uint8_t *ptrIn;
+    uint8_t *ptr_in;
     uint32_t stride_in;
-    uint8_t *ptr_denoised, *ptrDenoisedInterm;
+    uint8_t *ptr_denoised, *ptr_denoised_interm;
 
-    uint8_t *ptr_noise, *ptrNoiseInterm;
-    uint32_t strideOut;
+    uint8_t *ptr_noise, *ptr_noise_interm;
+    uint32_t stride_out;
 
-    __m256i top, curr, bottom, curr_prev, curr_next,
-        secondtop, secondcurr, secondbottom, secondcurrPrev, secondcurrNext;
-    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128,
-        secondtop_128, secondcurr_128, secondbottom_128, secondcurrPrev_128, secondcurrNext_128;
+    __m256i top, curr, bottom, curr_prev, curr_next, second_top, second_curr, second_bottom,
+        second_curr_prev, second_curr_next;
+    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, second_top_128,
+        second_curr_128, second_bottom_128, second_curr_prev_128, second_curr_next_128;
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
 
     //Luma
     {
-        picHeight = input_picture_ptr->height;
-        picWidth = input_picture_ptr->width;
-        sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
-        sb_height = ((sb_origin_y + BLOCK_SIZE_64 >= picHeight) || (sb_origin_y == 0)) ? sb_height - 1 : sb_height;
+        pic_height = input_picture_ptr->height;
+        pic_width  = input_picture_ptr->width;
+        sb_height  = MIN(BLOCK_SIZE_64, pic_height - sb_origin_y);
+        sb_height  = ((sb_origin_y + BLOCK_SIZE_64 >= pic_height) || (sb_origin_y == 0))
+                        ? sb_height - 1
+                        : sb_height;
         stride_in = input_picture_ptr->stride_y;
-        inputOriginIndex = input_picture_ptr->origin_x + (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y;
-        ptrIn = &(input_picture_ptr->buffer_y[inputOriginIndex]);
+        input_origin_index =
+            input_picture_ptr->origin_x +
+            (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y;
+        ptr_in = &(input_picture_ptr->buffer_y[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x + (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
-        strideOut = denoised_picture_ptr->stride_y;
-        ptr_denoised = &(denoised_picture_ptr->buffer_y[inputOriginIndexPad]);
-        ptrDenoisedInterm = ptr_denoised;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x +
+            (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
+        stride_out          = denoised_picture_ptr->stride_y;
+        ptr_denoised        = &(denoised_picture_ptr->buffer_y[input_origin_index_pad]);
+        ptr_denoised_interm = ptr_denoised;
 
-        noiseOriginIndex = noise_picture_ptr->origin_x + noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
-        ptr_noise = &(noise_picture_ptr->buffer_y[noiseOriginIndex]);
-        ptrNoiseInterm = ptr_noise;
+        noise_origin_index =
+            noise_picture_ptr->origin_x + noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
+        ptr_noise        = &(noise_picture_ptr->buffer_y[noise_origin_index]);
+        ptr_noise_interm = ptr_noise;
 
         ////Luma
         //a = (p[1] +
         //    p[0 + stride] + 4 * p[1 + stride] + p[2 + stride] +
         //    p[1 + 2 * stride]) / 8;
 
-        top = curr = secondtop = secondcurr = _mm256_setzero_si256();
+        top = curr = second_top = second_curr = _mm256_setzero_si256();
 
-        for (kk = idx; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in));
-                        secondtop = _mm256_loadu_si256((__m256i*)(ptrIn + kk + 32 + jj * stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in));
-                        secondcurr = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (1 + jj)*stride_in));
+        for (kk = idx; kk + BLOCK_SIZE_64 <= pic_width; kk += BLOCK_SIZE_64) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256((__m256i *)(ptr_in + kk + jj * stride_in));
+                        second_top =
+                            _mm256_loadu_si256((__m256i *)(ptr_in + kk + 32 + jj * stride_in));
+                        curr = _mm256_loadu_si256((__m256i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        second_curr = _mm256_loadu_si256(
+                            (__m256i *)((ptr_in + kk + 32) + (1 + jj) * stride_in));
                         _mm256_storeu_si256((__m256i *)(ptr_denoised + kk), top);
-                        _mm256_storeu_si256((__m256i *)(ptr_denoised + kk + 32), secondtop);
+                        _mm256_storeu_si256((__m256i *)(ptr_denoised + kk + 32), second_top);
                         _mm256_storeu_si256((__m256i *)(ptr_noise + kk), _mm256_setzero_si256());
-                        _mm256_storeu_si256((__m256i *)(ptr_noise + kk + 32), _mm256_setzero_si256());
+                        _mm256_storeu_si256((__m256i *)(ptr_noise + kk + 32),
+                                            _mm256_setzero_si256());
                     }
-                    curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in)));
-                    curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in)));
-                    secondcurrPrev = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) - 1 + ((1 + jj)*stride_in)));
-                    secondcurrNext = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + 1 + ((1 + jj)*stride_in)));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in));
-                    secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut);
-                    ptrNoiseInterm = ptr_noise + kk + ((1 + jj)*strideOut);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        secondtop = _mm256_loadu_si256((__m256i*)(ptrIn + kk + 32 + jj * stride_in - stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in - stride_in));
-                        secondcurr = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (1 + jj)*stride_in - stride_in));
+                    curr_prev =
+                        _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                    curr_next =
+                        _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                    second_curr_prev = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk + 32) - 1 + ((1 + jj) * stride_in)));
+                    second_curr_next = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk + 32) + 1 + ((1 + jj) * stride_in)));
+                    bottom = _mm256_loadu_si256((__m256i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    second_bottom =
+                        _mm256_loadu_si256((__m256i *)((ptr_in + kk + 32) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out);
+                    ptr_noise_interm    = ptr_noise + kk + ((1 + jj) * stride_out);
+                } else {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        second_top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + 32 + jj * stride_in - stride_in));
+                        curr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        second_curr = _mm256_loadu_si256(
+                            (__m256i *)((ptr_in + kk + 32) + (1 + jj) * stride_in - stride_in));
                     }
-                    curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                    curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                    secondcurrPrev = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) - 1 + ((1 + jj)*stride_in - stride_in)));
-                    secondcurrNext = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + 1 + ((1 + jj)*stride_in - stride_in)));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in - stride_in));
-                    secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut - strideOut);
-                    ptrNoiseInterm = ptr_noise + kk + jj * strideOut;
+                    curr_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                    curr_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                    second_curr_prev = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk + 32) - 1 + ((1 + jj) * stride_in - stride_in)));
+                    second_curr_next = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk + 32) + 1 + ((1 + jj) * stride_in - stride_in)));
+                    bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    second_bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk + 32) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
+                    ptr_noise_interm    = ptr_noise + kk + jj * stride_out;
                 }
 
                 luma_weak_filter_avx2_intrin(
-                    top,
-                    curr,
-                    bottom,
-                    curr_prev,
-                    curr_next,
-                    ptrDenoisedInterm,
-                    ptrNoiseInterm);
+                    top, curr, bottom, curr_prev, curr_next, ptr_denoised_interm, ptr_noise_interm);
 
-                luma_weak_filter_avx2_intrin(
-                    secondtop,
-                    secondcurr,
-                    secondbottom,
-                    secondcurrPrev,
-                    secondcurrNext,
-                    ptrDenoisedInterm + 32,
-                    ptrNoiseInterm + 32);
+                luma_weak_filter_avx2_intrin(second_top,
+                                             second_curr,
+                                             second_bottom,
+                                             second_curr_prev,
+                                             second_curr_next,
+                                             ptr_denoised_interm + 32,
+                                             ptr_noise_interm + 32);
 
-                top = curr;
-                curr = bottom;
-                secondtop = secondcurr;
-                secondcurr = secondbottom;
+                top         = curr;
+                curr        = bottom;
+                second_top  = second_curr;
+                second_curr = second_bottom;
             }
         }
 
-        for (; kk + 16 <= picWidth; kk += 16)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
-                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
-                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in));
-                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
-                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk + 8), secondtop_128);
-                        _mm_storel_epi64((__m128i*)(ptr_noise + kk), _mm_setzero_si128());
-                        _mm_storel_epi64((__m128i*)(ptr_noise + kk + 8), _mm_setzero_si128());
+        for (; kk + 16 <= pic_width; kk += 16) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top_128 = _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in));
+                        second_top_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + kk + 8 + jj * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        second_curr_128 =
+                            _mm_loadl_epi64((__m128i *)((ptr_in + kk + 8) + (1 + jj) * stride_in));
+                        _mm_storel_epi64((__m128i *)(ptr_denoised + kk), top_128);
+                        _mm_storel_epi64((__m128i *)(ptr_denoised + kk + 8), second_top_128);
+                        _mm_storel_epi64((__m128i *)(ptr_noise + kk), _mm_setzero_si128());
+                        _mm_storel_epi64((__m128i *)(ptr_noise + kk + 8), _mm_setzero_si128());
                     }
-                    curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
-                    curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
-                    secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) - 1 + ((1 + jj) * stride_in)));
-                    secondcurrNext_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + 1 + ((1 + jj) * stride_in)));
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
-                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
-                    ptrNoiseInterm = ptr_noise + kk + ((1 + jj) * strideOut);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in - stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
-                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in - stride_in));
+                    curr_prev_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                    curr_next_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                    second_curr_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk + 8) - 1 + ((1 + jj) * stride_in)));
+                    second_curr_next_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk + 8) + 1 + ((1 + jj) * stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    second_bottom_128 =
+                        _mm_loadl_epi64((__m128i *)((ptr_in + kk + 8) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out);
+                    ptr_noise_interm    = ptr_noise + kk + ((1 + jj) * stride_out);
+                } else {
+                    if (jj == 0) {
+                        top_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        second_top_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + kk + 8 + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        second_curr_128 = _mm_loadl_epi64(
+                            (__m128i *)((ptr_in + kk + 8) + (1 + jj) * stride_in - stride_in));
                     }
-                    curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                    curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                    secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) - 1 + ((1 + jj) * stride_in - stride_in)));
-                    secondcurrNext_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + 1 + ((1 + jj) * stride_in - stride_in)));
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
-                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
-                    ptrNoiseInterm = ptr_noise + kk + jj * strideOut;
+                    curr_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                    curr_next_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                    second_curr_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk + 8) - 1 + ((1 + jj) * stride_in - stride_in)));
+                    second_curr_next_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk + 8) + 1 + ((1 + jj) * stride_in - stride_in)));
+                    bottom_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    second_bottom_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk + 8) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
+                    ptr_noise_interm    = ptr_noise + kk + jj * stride_out;
                 }
 
-                luma_weak_filter_128_avx2_intrin(
-                    top_128,
-                    curr_128,
-                    bottom_128,
-                    curr_prev_128,
-                    curr_next_128,
-                    ptrDenoisedInterm,
-                    ptrNoiseInterm);
+                luma_weak_filter_128_avx2_intrin(top_128,
+                                                 curr_128,
+                                                 bottom_128,
+                                                 curr_prev_128,
+                                                 curr_next_128,
+                                                 ptr_denoised_interm,
+                                                 ptr_noise_interm);
 
-                luma_weak_filter_128_avx2_intrin(
-                    secondtop_128,
-                    secondcurr_128,
-                    secondbottom_128,
-                    secondcurrPrev_128,
-                    secondcurrNext_128,
-                    ptrDenoisedInterm + 8,
-                    ptrNoiseInterm + 8);
+                luma_weak_filter_128_avx2_intrin(second_top_128,
+                                                 second_curr_128,
+                                                 second_bottom_128,
+                                                 second_curr_prev_128,
+                                                 second_curr_next_128,
+                                                 ptr_denoised_interm + 8,
+                                                 ptr_noise_interm + 8);
 
-                top_128 = curr_128;
-                curr_128 = bottom_128;
-                secondtop_128 = secondcurr_128;
-                secondcurr_128 = secondbottom_128;
+                top_128         = curr_128;
+                curr_128        = bottom_128;
+                second_top_128  = second_curr_128;
+                second_curr_128 = second_bottom_128;
             }
         }
 
-        sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
+        sb_height = MIN(BLOCK_SIZE_64, pic_height - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
-            for (ii = 0; ii < picWidth; ii++) {
-                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1)) {
-                    ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                    ptr_noise[ii + jj * strideOut] = 0;
+            for (ii = 0; ii < pic_width; ii++) {
+                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < pic_height) && ii > 0 &&
+                      ii < pic_width - 1)) {
+                    ptr_denoised[ii + jj * stride_out] = ptr_in[ii + jj * stride_in];
+                    ptr_noise[ii + jj * stride_out]    = 0;
                 }
             }
         }
     }
 }
 
-void noise_extract_luma_weak_lcu_avx2_intrin(
-    EbPictureBufferDesc       *input_picture_ptr,
-    EbPictureBufferDesc       *denoised_picture_ptr,
-    EbPictureBufferDesc       *noise_picture_ptr,
-    uint32_t                       sb_origin_y,
-    uint32_t                         sb_origin_x
-)
-{
-    uint32_t  ii, jj;
-    uint32_t  picHeight, sb_height;
-    uint32_t  picWidth, sb_width;
-    uint32_t  inputOriginIndex;
-    uint32_t  inputOriginIndexPad;
-    uint32_t  noiseOriginIndex;
+void noise_extract_luma_weak_sb_avx2_intrin(EbPictureBufferDesc *input_picture_ptr,
+                                            EbPictureBufferDesc *denoised_picture_ptr,
+                                            EbPictureBufferDesc *noise_picture_ptr,
+                                            uint32_t sb_origin_y, uint32_t sb_origin_x) {
+    uint32_t ii, jj;
+    uint32_t pic_height, sb_height;
+    uint32_t pic_width, sb_width;
+    uint32_t input_origin_index;
+    uint32_t input_origin_index_pad;
+    uint32_t noise_origin_index;
 
-    uint8_t *ptrIn;
+    uint8_t *ptr_in;
     uint32_t stride_in;
-    uint8_t *ptr_denoised, *ptrDenoisedInterm;
+    uint8_t *ptr_denoised, *ptr_denoised_interm;
 
-    uint8_t *ptr_noise, *ptrNoiseInterm;
-    uint32_t strideOut;
+    uint8_t *ptr_noise, *ptr_noise_interm;
+    uint32_t stride_out;
 
-    __m256i top, curr, bottom, curr_prev, curr_next,
-        secondtop, secondcurr, secondbottom, secondcurrPrev, secondcurrNext;
+    __m256i top, curr, bottom, curr_prev, curr_next, second_top, second_curr, second_bottom,
+        second_curr_prev, second_curr_next;
     (void)sb_origin_x;
 
     //Luma
     {
-        picHeight = input_picture_ptr->height;
-        picWidth = input_picture_ptr->width;
-        sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
-        sb_width = MIN(BLOCK_SIZE_64, picWidth - sb_origin_x);
-        sb_height = ((sb_origin_y + BLOCK_SIZE_64 >= picHeight) || (sb_origin_y == 0)) ? sb_height - 1 : sb_height;
+        pic_height = input_picture_ptr->height;
+        pic_width  = input_picture_ptr->width;
+        sb_height  = MIN(BLOCK_SIZE_64, pic_height - sb_origin_y);
+        sb_width   = MIN(BLOCK_SIZE_64, pic_width - sb_origin_x);
+        sb_height  = ((sb_origin_y + BLOCK_SIZE_64 >= pic_height) || (sb_origin_y == 0))
+                        ? sb_height - 1
+                        : sb_height;
         stride_in = input_picture_ptr->stride_y;
-        inputOriginIndex = input_picture_ptr->origin_x + sb_origin_x + (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y;
-        ptrIn = &(input_picture_ptr->buffer_y[inputOriginIndex]);
+        input_origin_index =
+            input_picture_ptr->origin_x + sb_origin_x +
+            (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y;
+        ptr_in = &(input_picture_ptr->buffer_y[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x + sb_origin_x + (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
-        strideOut = denoised_picture_ptr->stride_y;
-        ptr_denoised = &(denoised_picture_ptr->buffer_y[inputOriginIndexPad]);
-        ptrDenoisedInterm = ptr_denoised;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x + sb_origin_x +
+            (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
+        stride_out          = denoised_picture_ptr->stride_y;
+        ptr_denoised        = &(denoised_picture_ptr->buffer_y[input_origin_index_pad]);
+        ptr_denoised_interm = ptr_denoised;
 
-        noiseOriginIndex = noise_picture_ptr->origin_x + sb_origin_x + noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
-        ptr_noise = &(noise_picture_ptr->buffer_y[noiseOriginIndex]);
-        ptrNoiseInterm = ptr_noise;
+        noise_origin_index = noise_picture_ptr->origin_x + sb_origin_x +
+                             noise_picture_ptr->origin_y * noise_picture_ptr->stride_y;
+        ptr_noise        = &(noise_picture_ptr->buffer_y[noise_origin_index]);
+        ptr_noise_interm = ptr_noise;
 
         ////Luma
         //a = (p[1] +
         //    p[0 + stride] + 4 * p[1 + stride] + p[2 + stride] +
         //    p[1 + 2 * stride]) / 8;
 
-        top = curr = secondtop = secondcurr = _mm256_setzero_si256();
+        top = curr = second_top = second_curr = _mm256_setzero_si256();
 
-        //for (kk = 0; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
+        //for (kk = 0; kk + BLOCK_SIZE_64 <= pic_width; kk += BLOCK_SIZE_64)
         {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + jj * stride_in));
-                        secondtop = _mm256_loadu_si256((__m256i*)(ptrIn + 32 + jj * stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + (1 + jj)*stride_in));
-                        secondcurr = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + (1 + jj)*stride_in));
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top        = _mm256_loadu_si256((__m256i *)(ptr_in + jj * stride_in));
+                        second_top = _mm256_loadu_si256((__m256i *)(ptr_in + 32 + jj * stride_in));
+                        curr       = _mm256_loadu_si256((__m256i *)(ptr_in + (1 + jj) * stride_in));
+                        second_curr =
+                            _mm256_loadu_si256((__m256i *)((ptr_in + 32) + (1 + jj) * stride_in));
                         _mm256_storeu_si256((__m256i *)(ptr_denoised), top);
-                        _mm256_storeu_si256((__m256i *)(ptr_denoised + 32), secondtop);
+                        _mm256_storeu_si256((__m256i *)(ptr_denoised + 32), second_top);
                         _mm256_storeu_si256((__m256i *)(ptr_noise), _mm256_setzero_si256());
                         _mm256_storeu_si256((__m256i *)(ptr_noise + 32), _mm256_setzero_si256());
                     }
-                    curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + ((1 + jj)*stride_in)));
-                    curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + ((1 + jj)*stride_in)));
-                    secondcurrPrev = _mm256_loadu_si256((__m256i*)((ptrIn + 32) - 1 + ((1 + jj)*stride_in)));
-                    secondcurrNext = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + 1 + ((1 + jj)*stride_in)));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn)+(2 + jj)* stride_in));
-                    secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + (2 + jj)* stride_in));
-                    ptrDenoisedInterm = ptr_denoised + ((1 + jj)*strideOut);
-                    ptrNoiseInterm = ptr_noise + ((1 + jj)*strideOut);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + jj * stride_in - stride_in));
-                        secondtop = _mm256_loadu_si256((__m256i*)(ptrIn + 32 + jj * stride_in - stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + (1 + jj)*stride_in - stride_in));
-                        secondcurr = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + (1 + jj)*stride_in - stride_in));
+                    curr_prev =
+                        _mm256_loadu_si256((__m256i *)(ptr_in - 1 + ((1 + jj) * stride_in)));
+                    curr_next =
+                        _mm256_loadu_si256((__m256i *)(ptr_in + 1 + ((1 + jj) * stride_in)));
+                    second_curr_prev =
+                        _mm256_loadu_si256((__m256i *)((ptr_in + 32) - 1 + ((1 + jj) * stride_in)));
+                    second_curr_next =
+                        _mm256_loadu_si256((__m256i *)((ptr_in + 32) + 1 + ((1 + jj) * stride_in)));
+                    bottom = _mm256_loadu_si256((__m256i *)((ptr_in) + (2 + jj) * stride_in));
+                    second_bottom =
+                        _mm256_loadu_si256((__m256i *)((ptr_in + 32) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + ((1 + jj) * stride_out);
+                    ptr_noise_interm    = ptr_noise + ((1 + jj) * stride_out);
+                } else {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256((__m256i *)(ptr_in + jj * stride_in - stride_in));
+                        second_top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 32 + jj * stride_in - stride_in));
+                        curr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + (1 + jj) * stride_in - stride_in));
+                        second_curr = _mm256_loadu_si256(
+                            (__m256i *)((ptr_in + 32) + (1 + jj) * stride_in - stride_in));
                     }
-                    curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + ((1 + jj)*stride_in - stride_in)));
-                    curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + ((1 + jj)*stride_in - stride_in)));
-                    secondcurrPrev = _mm256_loadu_si256((__m256i*)((ptrIn + 32) - 1 + ((1 + jj)*stride_in - stride_in)));
-                    secondcurrNext = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + 1 + ((1 + jj)*stride_in - stride_in)));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn)+(2 + jj)* stride_in - stride_in));
-                    secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + 32) + (2 + jj)* stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + ((1 + jj)*strideOut - strideOut);
-                    ptrNoiseInterm = ptr_noise + jj * strideOut;
+                    curr_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + ((1 + jj) * stride_in - stride_in)));
+                    curr_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + ((1 + jj) * stride_in - stride_in)));
+                    second_curr_prev = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + 32) - 1 + ((1 + jj) * stride_in - stride_in)));
+                    second_curr_next = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + 32) + 1 + ((1 + jj) * stride_in - stride_in)));
+                    bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in) + (2 + jj) * stride_in - stride_in));
+                    second_bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + 32) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + ((1 + jj) * stride_out - stride_out);
+                    ptr_noise_interm    = ptr_noise + jj * stride_out;
                 }
 
                 luma_weak_filter_avx2_intrin(
-                    top,
-                    curr,
-                    bottom,
-                    curr_prev,
-                    curr_next,
-                    ptrDenoisedInterm,
-                    ptrNoiseInterm);
+                    top, curr, bottom, curr_prev, curr_next, ptr_denoised_interm, ptr_noise_interm);
 
-                luma_weak_filter_avx2_intrin(
-                    secondtop,
-                    secondcurr,
-                    secondbottom,
-                    secondcurrPrev,
-                    secondcurrNext,
-                    ptrDenoisedInterm + 32,
-                    ptrNoiseInterm + 32);
+                luma_weak_filter_avx2_intrin(second_top,
+                                             second_curr,
+                                             second_bottom,
+                                             second_curr_prev,
+                                             second_curr_next,
+                                             ptr_denoised_interm + 32,
+                                             ptr_noise_interm + 32);
 
-                top = curr;
-                curr = bottom;
-                secondtop = secondcurr;
-                secondcurr = secondbottom;
+                top         = curr;
+                curr        = bottom;
+                second_top  = second_curr;
+                second_curr = second_bottom;
             }
         }
 
-        sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
+        sb_height = MIN(BLOCK_SIZE_64, pic_height - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
             for (ii = 0; ii < sb_width; ii++) {
-                if (!((jj > 0 || sb_origin_y > 0) && (jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && (ii > 0 || sb_origin_x > 0) && (ii + sb_origin_x) < picWidth - 1)) {
-                    ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                    ptr_noise[ii + jj * strideOut] = 0;
+                if (!((jj > 0 || sb_origin_y > 0) &&
+                      (jj < sb_height - 1 || sb_origin_y + sb_height < pic_height) &&
+                      (ii > 0 || sb_origin_x > 0) && (ii + sb_origin_x) < pic_width - 1)) {
+                    ptr_denoised[ii + jj * stride_out] = ptr_in[ii + jj * stride_in];
+                    ptr_noise[ii + jj * stride_out]    = 0;
                 }
             }
         }
@@ -743,275 +801,330 @@ void noise_extract_luma_weak_lcu_avx2_intrin(
 * noise_extract_luma_strong
 *  strong filter Luma.
 *******************************************/
-void noise_extract_luma_strong_avx2_intrin(
-    EbPictureBufferDesc       *input_picture_ptr,
-    EbPictureBufferDesc       *denoised_picture_ptr,
-    uint32_t                       sb_origin_y,
-    uint32_t                       sb_origin_x
-)
-{
-    uint32_t  ii, jj, kk;
-    uint32_t  picHeight, sb_height;
-    uint32_t  picWidth;
-    uint32_t  inputOriginIndex;
-    uint32_t  inputOriginIndexPad;
+void noise_extract_luma_strong_avx2_intrin(EbPictureBufferDesc *input_picture_ptr,
+                                           EbPictureBufferDesc *denoised_picture_ptr,
+                                           uint32_t sb_origin_y, uint32_t sb_origin_x) {
+    uint32_t ii, jj, kk;
+    uint32_t pic_height, sb_height;
+    uint32_t pic_width;
+    uint32_t input_origin_index;
+    uint32_t input_origin_index_pad;
 
-    uint8_t *ptrIn;
+    uint8_t *ptr_in;
     uint32_t stride_in;
-    uint8_t *ptr_denoised, *ptrDenoisedInterm;
+    uint8_t *ptr_denoised, *ptr_denoised_interm;
 
-    uint32_t strideOut;
-    __m256i top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
-        secondtop, secondcurr, secondcurrPrev, secondcurrNext, secondbottom, secondtopPrev, secondtopNext, secondbottomPrev, secondbottomNext;
+    uint32_t stride_out;
+    __m256i  top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
+        second_top, second_curr, second_curr_prev, second_curr_next, second_bottom, second_top_prev,
+        second_top_next, second_bottom_prev, second_bottom_next;
 
-    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128, bottom_prev_128, bottom_next_128,
-        secondtop_128, secondcurr_128, secondcurrPrev_128, secondcurrNext_128, secondbottom_128, secondtopPrev_128, secondtopNext_128,
-        secondbottomPrev_128, secondbottomNext_128;
+    __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128,
+        bottom_prev_128, bottom_next_128, second_top_128, second_curr_128, second_curr_prev_128,
+        second_curr_next_128, second_bottom_128, second_top_prev_128, second_top_next_128,
+        second_bottom_prev_128, second_bottom_next_128;
 
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
     //Luma
     {
-        picHeight = input_picture_ptr->height;
-        picWidth = input_picture_ptr->width;
-        sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
+        pic_height = input_picture_ptr->height;
+        pic_width  = input_picture_ptr->width;
+        sb_height  = MIN(BLOCK_SIZE_64, pic_height - sb_origin_y);
 
-        sb_height = ((sb_origin_y + BLOCK_SIZE_64 >= picHeight) || (sb_origin_y == 0)) ? sb_height - 1 : sb_height;
+        sb_height = ((sb_origin_y + BLOCK_SIZE_64 >= pic_height) || (sb_origin_y == 0))
+                        ? sb_height - 1
+                        : sb_height;
         stride_in = input_picture_ptr->stride_y;
-        inputOriginIndex = input_picture_ptr->origin_x + (input_picture_ptr->origin_y + sb_origin_y)* input_picture_ptr->stride_y;
-        ptrIn = &(input_picture_ptr->buffer_y[inputOriginIndex]);
+        input_origin_index =
+            input_picture_ptr->origin_x +
+            (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y;
+        ptr_in = &(input_picture_ptr->buffer_y[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x + (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
-        strideOut = denoised_picture_ptr->stride_y;
-        ptr_denoised = &(denoised_picture_ptr->buffer_y[inputOriginIndexPad]);
-        ptrDenoisedInterm = ptr_denoised;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x +
+            (denoised_picture_ptr->origin_y + sb_origin_y) * denoised_picture_ptr->stride_y;
+        stride_out          = denoised_picture_ptr->stride_y;
+        ptr_denoised        = &(denoised_picture_ptr->buffer_y[input_origin_index_pad]);
+        ptr_denoised_interm = ptr_denoised;
 
-        top = curr = secondtop = secondcurr = top_next = top_prev = curr_next = curr_prev = secondcurrPrev = secondcurrNext = secondtopPrev = secondtopNext = _mm256_setzero_si256();
-        for (kk = idx; kk + BLOCK_SIZE_64 <= picWidth; kk += BLOCK_SIZE_64)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in));
-                        secondtop = _mm256_loadu_si256((__m256i*)(ptrIn + kk + 32 + jj * stride_in));
+        top = curr = second_top = second_curr = top_next = top_prev = curr_next = curr_prev =
+            second_curr_prev = second_curr_next = second_top_prev = second_top_next =
+                _mm256_setzero_si256();
+        for (kk = idx; kk + BLOCK_SIZE_64 <= pic_width; kk += BLOCK_SIZE_64) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256((__m256i *)(ptr_in + kk + jj * stride_in));
+                        second_top =
+                            _mm256_loadu_si256((__m256i *)(ptr_in + kk + 32 + jj * stride_in));
 
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in));
-                        secondcurr = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (1 + jj)*stride_in));
+                        curr = _mm256_loadu_si256((__m256i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        second_curr = _mm256_loadu_si256(
+                            (__m256i *)((ptr_in + kk + 32) + (1 + jj) * stride_in));
 
-                        top_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
-                        secondtopPrev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + 32 + ((jj)*stride_in)));
+                        top_prev =
+                            _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((jj)*stride_in)));
+                        second_top_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + 32 + ((jj)*stride_in)));
 
-                        top_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
-                        secondtopNext = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + 32 + ((jj)*stride_in)));
+                        top_next =
+                            _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((jj)*stride_in)));
+                        second_top_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + 32 + ((jj)*stride_in)));
 
-                        curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in)));
-                        secondcurrPrev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + 32 + ((1 + jj)*stride_in)));
+                        curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                        second_curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + 32 + ((1 + jj) * stride_in)));
 
-                        curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in)));
-                        secondcurrNext = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + 32 + ((1 + jj)*stride_in)));
+                        curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                        second_curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + 32 + ((1 + jj) * stride_in)));
 
                         _mm256_storeu_si256((__m256i *)(ptr_denoised + kk), top);
-                        _mm256_storeu_si256((__m256i *)(ptr_denoised + kk + 32), secondtop);
+                        _mm256_storeu_si256((__m256i *)(ptr_denoised + kk + 32), second_top);
                     }
-                    bottom_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((2 + jj)*stride_in)));
-                    secondbottomPrev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + 32 + ((2 + jj)*stride_in)));
+                    bottom_prev =
+                        _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in)));
+                    second_bottom_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + kk + 32 + ((2 + jj) * stride_in)));
 
-                    bottom_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((2 + jj)*stride_in)));
-                    secondbottomNext = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + 32 + ((2 + jj)*stride_in)));
+                    bottom_next =
+                        _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in)));
+                    second_bottom_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + kk + 32 + ((2 + jj) * stride_in)));
 
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in));
-                    secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        secondtop = _mm256_loadu_si256((__m256i*)(ptrIn + kk + 32 + jj * stride_in - stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in - stride_in));
-                        secondcurr = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (1 + jj)*stride_in - stride_in));
-                        top_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
-                        secondtopPrev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + 32 + ((jj)*stride_in) - stride_in));
+                    bottom = _mm256_loadu_si256((__m256i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    second_bottom =
+                        _mm256_loadu_si256((__m256i *)((ptr_in + kk + 32) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out);
+                } else {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        second_top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + 32 + jj * stride_in - stride_in));
+                        curr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        second_curr = _mm256_loadu_si256(
+                            (__m256i *)((ptr_in + kk + 32) + (1 + jj) * stride_in - stride_in));
+                        top_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((jj)*stride_in) - stride_in));
+                        second_top_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + 32 + ((jj)*stride_in) - stride_in));
 
-                        top_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
-                        secondtopNext = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + 32 + ((jj)*stride_in) - stride_in));
+                        top_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((jj)*stride_in) - stride_in));
+                        second_top_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + 32 + ((jj)*stride_in) - stride_in));
 
-                        curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                        secondcurrPrev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + 32 + ((1 + jj)*stride_in - stride_in)));
+                        curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        second_curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + 32 + ((1 + jj) * stride_in - stride_in)));
 
-                        curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                        secondcurrNext = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + 32 + ((1 + jj)*stride_in - stride_in)));
+                        curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        second_curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + 32 + ((1 + jj) * stride_in - stride_in)));
                     }
-                    bottom_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((2 + jj)*stride_in) - stride_in));
-                    secondbottomPrev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + 32 + ((2 + jj)*stride_in - stride_in)));
+                    bottom_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    second_bottom_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + kk + 32 + ((2 + jj) * stride_in - stride_in)));
 
-                    bottom_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((2 + jj)*stride_in) - stride_in));
-                    secondbottomNext = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + 32 + ((2 + jj)*stride_in - stride_in)));
+                    bottom_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    second_bottom_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + kk + 32 + ((2 + jj) * stride_in - stride_in)));
 
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in - stride_in));
-                    secondbottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk + 32) + (2 + jj)* stride_in - stride_in));
+                    bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    second_bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk + 32) + (2 + jj) * stride_in - stride_in));
 
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut - strideOut);
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
                 }
 
-                chroma_weak_luma_strong_filter_avx2_intrin(
-                    top,
-                    curr,
-                    bottom,
-                    curr_prev,
-                    curr_next,
-                    top_prev,
-                    top_next,
-                    bottom_prev,
-                    bottom_next,
-                    ptrDenoisedInterm);
+                chroma_weak_luma_strong_filter_avx2_intrin(top,
+                                                           curr,
+                                                           bottom,
+                                                           curr_prev,
+                                                           curr_next,
+                                                           top_prev,
+                                                           top_next,
+                                                           bottom_prev,
+                                                           bottom_next,
+                                                           ptr_denoised_interm);
 
-                chroma_weak_luma_strong_filter_avx2_intrin(
-                    secondtop,
-                    secondcurr,
-                    secondbottom,
-                    secondcurrPrev,
-                    secondcurrNext,
-                    secondtopPrev,
-                    secondtopNext,
-                    secondbottomPrev,
-                    secondbottomNext,
-                    ptrDenoisedInterm + 32);
+                chroma_weak_luma_strong_filter_avx2_intrin(second_top,
+                                                           second_curr,
+                                                           second_bottom,
+                                                           second_curr_prev,
+                                                           second_curr_next,
+                                                           second_top_prev,
+                                                           second_top_next,
+                                                           second_bottom_prev,
+                                                           second_bottom_next,
+                                                           ptr_denoised_interm + 32);
 
-                top = curr;
-                curr = bottom;
-                top_prev = curr_prev;
-                top_next = curr_next;
-                curr_prev = bottom_prev;
-                curr_next = bottom_next;
-                secondtop = secondcurr;
-                secondcurr = secondbottom;
-                secondtopPrev = secondcurrPrev;
-                secondtopNext = secondcurrNext;
-                secondcurrPrev = secondbottomPrev;
-                secondcurrNext = secondbottomNext;
+                top              = curr;
+                curr             = bottom;
+                top_prev         = curr_prev;
+                top_next         = curr_next;
+                curr_prev        = bottom_prev;
+                curr_next        = bottom_next;
+                second_top       = second_curr;
+                second_curr      = second_bottom;
+                second_top_prev    = second_curr_prev;
+                second_top_next    = second_curr_next;
+                second_curr_prev = second_bottom_prev;
+                second_curr_next = second_bottom_next;
             }
         }
 
-        for (; kk + 16 <= picWidth; kk += 16)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
-                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in));
+        for (; kk + 16 <= pic_width; kk += 16) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top_128 = _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in));
+                        second_top_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + kk + 8 + jj * stride_in));
 
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
-                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        second_curr_128 =
+                            _mm_loadl_epi64((__m128i *)((ptr_in + kk + 8) + (1 + jj) * stride_in));
 
-                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
-                        secondtopPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((jj)*stride_in)));
+                        top_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((jj)*stride_in)));
+                        second_top_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + 8 + ((jj)*stride_in)));
 
-                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
-                        secondtopNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((jj)*stride_in)));
+                        top_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((jj)*stride_in)));
+                        second_top_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + 8 + ((jj)*stride_in)));
 
-                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
-                        secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((1 + jj) * stride_in)));
+                        curr_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                        second_curr_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + 8 + ((1 + jj) * stride_in)));
 
-                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
-                        secondcurrNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((1 + jj) * stride_in)));
+                        curr_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                        second_curr_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + 8 + ((1 + jj) * stride_in)));
 
-                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
-                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk + 8), secondtop_128);
+                        _mm_storel_epi64((__m128i *)(ptr_denoised + kk), top_128);
+                        _mm_storel_epi64((__m128i *)(ptr_denoised + kk + 8), second_top_128);
                     }
-                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in)));
-                    secondbottomPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((2 + jj) * stride_in)));
+                    bottom_prev_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in)));
+                    second_bottom_prev_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + 8 + ((2 + jj) * stride_in)));
 
-                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in)));
-                    secondbottomNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((2 + jj) * stride_in)));
+                    bottom_next_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in)));
+                    second_bottom_next_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + 8 + ((2 + jj) * stride_in)));
 
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
-                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        secondtop_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + 8 + jj * stride_in - stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
-                        secondcurr_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (1 + jj) * stride_in - stride_in));
-                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
-                        secondtopPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((jj)*stride_in) - stride_in));
+                    bottom_128 = _mm_loadl_epi64((__m128i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    second_bottom_128 =
+                        _mm_loadl_epi64((__m128i *)((ptr_in + kk + 8) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out);
+                } else {
+                    if (jj == 0) {
+                        top_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        second_top_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + kk + 8 + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        second_curr_128 = _mm_loadl_epi64(
+                            (__m128i *)((ptr_in + kk + 8) + (1 + jj) * stride_in - stride_in));
+                        top_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + ((jj)*stride_in) - stride_in));
+                        second_top_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + 8 + ((jj)*stride_in) - stride_in));
 
-                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
-                        secondtopNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((jj)*stride_in) - stride_in));
+                        top_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + ((jj)*stride_in) - stride_in));
+                        second_top_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + 8 + ((jj)*stride_in) - stride_in));
 
-                       curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                       secondcurrPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((1 + jj) * stride_in - stride_in)));
+                        curr_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        second_curr_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + 8 + ((1 + jj) * stride_in - stride_in)));
 
-                       curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                       secondcurrNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((1 + jj) * stride_in - stride_in)));
+                        curr_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        second_curr_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + 8 + ((1 + jj) * stride_in - stride_in)));
                     }
-                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in) - stride_in));
-                    secondbottomPrev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + 8 + ((2 + jj) * stride_in - stride_in)));
+                    bottom_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    second_bottom_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in - 1 + kk + 8 + ((2 + jj) * stride_in - stride_in)));
 
-                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in) - stride_in));
-                    secondbottomNext_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + 8 + ((2 + jj) * stride_in - stride_in)));
+                    bottom_next_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    second_bottom_next_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in + 1 + kk + 8 + ((2 + jj) * stride_in - stride_in)));
 
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
-                    secondbottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk + 8) + (2 + jj) * stride_in - stride_in));
+                    bottom_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    second_bottom_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk + 8) + (2 + jj) * stride_in - stride_in));
 
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
                 }
 
-                chroma_weak_luma_strong_filter_128_avx2_intrin(
-                    top_128,
-                    curr_128,
-                    bottom_128,
-                    curr_prev_128,
-                    curr_next_128,
-                    top_prev_128,
-                    top_next_128,
-                    bottom_prev_128,
-                    bottom_next_128,
-                    ptrDenoisedInterm);
+                chroma_weak_luma_strong_filter_128_avx2_intrin(top_128,
+                                                               curr_128,
+                                                               bottom_128,
+                                                               curr_prev_128,
+                                                               curr_next_128,
+                                                               top_prev_128,
+                                                               top_next_128,
+                                                               bottom_prev_128,
+                                                               bottom_next_128,
+                                                               ptr_denoised_interm);
 
-                 chroma_weak_luma_strong_filter_128_avx2_intrin(
-                    secondtop_128,
-                    secondcurr_128,
-                    secondbottom_128,
-                    secondcurrPrev_128,
-                    secondcurrNext_128,
-                    secondtopPrev_128,
-                    secondtopNext_128,
-                    secondbottomPrev_128,
-                    secondbottomNext_128,
-                    ptrDenoisedInterm + 8);
+                chroma_weak_luma_strong_filter_128_avx2_intrin(second_top_128,
+                                                               second_curr_128,
+                                                               second_bottom_128,
+                                                               second_curr_prev_128,
+                                                               second_curr_next_128,
+                                                               second_top_prev_128,
+                                                               second_top_next_128,
+                                                               second_bottom_prev_128,
+                                                               second_bottom_next_128,
+                                                               ptr_denoised_interm + 8);
 
-                top_128 = curr_128;
-                curr_128 = bottom_128;
-                top_prev_128 = curr_prev_128;
-                top_next_128 = curr_next_128;
-                curr_prev_128 = bottom_prev_128;
-                curr_next_128 = bottom_next_128;
-                secondtop_128 = secondcurr_128;
-                secondcurr_128 = secondbottom_128;
-                secondtopPrev_128 = secondcurrPrev_128;
-                secondtopNext_128 = secondcurrNext_128;
-                secondcurrPrev_128 = secondbottomPrev_128;
-                secondcurrNext_128 = secondbottomNext_128;
+                top_128              = curr_128;
+                curr_128             = bottom_128;
+                top_prev_128         = curr_prev_128;
+                top_next_128         = curr_next_128;
+                curr_prev_128        = bottom_prev_128;
+                curr_next_128        = bottom_next_128;
+                second_top_128       = second_curr_128;
+                second_curr_128      = second_bottom_128;
+                second_top_prev_128  = second_curr_prev_128;
+                second_top_next_128  = second_curr_next_128;
+                second_curr_prev_128 = second_bottom_prev_128;
+                second_curr_next_128 = second_bottom_next_128;
             }
         }
 
-        sb_height = MIN(BLOCK_SIZE_64, picHeight - sb_origin_y);
+        sb_height = MIN(BLOCK_SIZE_64, pic_height - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
-            for (ii = 0; ii < picWidth; ii++) {
-                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < picHeight) && ii > 0 && ii < picWidth - 1))
-                    ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
+            for (ii = 0; ii < pic_width; ii++) {
+                if (!((jj < sb_height - 1 || sb_origin_y + sb_height < pic_height) && ii > 0 &&
+                      ii < pic_width - 1))
+                    ptr_denoised[ii + jj * stride_out] = ptr_in[ii + jj * stride_in];
             }
         }
     }
@@ -1021,265 +1134,328 @@ void noise_extract_luma_strong_avx2_intrin(
 * noise_extract_chroma_strong
 *  strong filter chroma.
 *******************************************/
-void noise_extract_chroma_strong_avx2_intrin(
-    EbPictureBufferDesc       *input_picture_ptr,
-    EbPictureBufferDesc       *denoised_picture_ptr,
-    uint32_t                       sb_origin_y,
-    uint32_t                       sb_origin_x
-)
-{
-    uint32_t  ii, jj, kk;
-    uint32_t  picHeight, sb_height;
-    uint32_t  picWidth;
-    uint32_t  inputOriginIndex;
-    uint32_t  inputOriginIndexPad;
+void noise_extract_chroma_strong_avx2_intrin(EbPictureBufferDesc *input_picture_ptr,
+                                             EbPictureBufferDesc *denoised_picture_ptr,
+                                             uint32_t sb_origin_y, uint32_t sb_origin_x) {
+    uint32_t ii, jj, kk;
+    uint32_t pic_height, sb_height;
+    uint32_t pic_width;
+    uint32_t input_origin_index;
+    uint32_t input_origin_index_pad;
 
-    uint8_t *ptrIn, *ptrInCr;
-    uint32_t stride_in, strideInCr;
-    uint8_t *ptr_denoised, *ptrDenoisedInterm, *ptrDenoisedCr, *ptrDenoisedIntermCr;
+    uint8_t *ptr_in, *ptr_in_cr;
+    uint32_t stride_in, stride_in_cr;
+    uint8_t *ptr_denoised, *ptr_denoised_interm, *ptr_denoised_cr, *ptr_denoised_interm_cr;
 
-    uint32_t strideOut, strideOutCr;
-    __m256i top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
-        topCr, currCr, bottomCr, currPrevCr, currNextCr, topPrevCr, topNextCr, bottomPrevCr, bottomNextCr;
+    uint32_t stride_out, stride_out_cr;
+    __m256i  top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
+        top_cr, curr_cr, bottom_cr, curr_prev_cr, curr_next_cr, top_prev_cr, top_next_cr,
+        bottom_prev_cr, bottom_next_cr;
 
     __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128,
-        bottom_prev_128, bottom_next_128, topCr_128, currCr_128, bottomCr_128, currPrevCr_128,
-        currNextCr_128, topPrevCr_128, topNextCr_128, bottomPrevCr_128, bottomNextCr_128;
+        bottom_prev_128, bottom_next_128, top_cr_128, curr_cr_128, bottom_cr_128, curr_prev_cr_128,
+        curr_next_cr_128, top_prev_cr_128, top_next_cr_128, bottom_prev_cr_128, bottom_next_cr_128;
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
     {
-        picHeight = input_picture_ptr->height / 2;
-        picWidth = input_picture_ptr->width / 2;
-        sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
+        pic_height = input_picture_ptr->height / 2;
+        pic_width  = input_picture_ptr->width / 2;
+        sb_height  = MIN(BLOCK_SIZE_64 / 2, pic_height - sb_origin_y);
 
-        sb_height = ((sb_origin_y + BLOCK_SIZE_64 / 2 >= picHeight) || (sb_origin_y == 0)) ? sb_height - 1 : sb_height;
+        sb_height = ((sb_origin_y + BLOCK_SIZE_64 / 2 >= pic_height) || (sb_origin_y == 0))
+                        ? sb_height - 1
+                        : sb_height;
 
         stride_in = input_picture_ptr->stride_cb;
-        inputOriginIndex = input_picture_ptr->origin_x / 2 + (input_picture_ptr->origin_y / 2 + sb_origin_y)  * input_picture_ptr->stride_cb;
-        ptrIn = &(input_picture_ptr->buffer_cb[inputOriginIndex]);
+        input_origin_index =
+            input_picture_ptr->origin_x / 2 +
+            (input_picture_ptr->origin_y / 2 + sb_origin_y) * input_picture_ptr->stride_cb;
+        ptr_in = &(input_picture_ptr->buffer_cb[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x / 2 + (denoised_picture_ptr->origin_y / 2 + sb_origin_y)  * denoised_picture_ptr->stride_cb;
-        strideOut = denoised_picture_ptr->stride_cb;
-        ptr_denoised = &(denoised_picture_ptr->buffer_cb[inputOriginIndexPad]);
-        ptrDenoisedInterm = ptr_denoised;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x / 2 +
+            (denoised_picture_ptr->origin_y / 2 + sb_origin_y) * denoised_picture_ptr->stride_cb;
+        stride_out          = denoised_picture_ptr->stride_cb;
+        ptr_denoised        = &(denoised_picture_ptr->buffer_cb[input_origin_index_pad]);
+        ptr_denoised_interm = ptr_denoised;
 
-        strideInCr = input_picture_ptr->stride_cr;
-        inputOriginIndex = input_picture_ptr->origin_x / 2 + (input_picture_ptr->origin_y / 2 + sb_origin_y)  * input_picture_ptr->stride_cr;
-        ptrInCr = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
+        stride_in_cr = input_picture_ptr->stride_cr;
+        input_origin_index =
+            input_picture_ptr->origin_x / 2 +
+            (input_picture_ptr->origin_y / 2 + sb_origin_y) * input_picture_ptr->stride_cr;
+        ptr_in_cr = &(input_picture_ptr->buffer_cr[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x / 2 + (denoised_picture_ptr->origin_y / 2 + sb_origin_y)  * denoised_picture_ptr->stride_cr;
-        strideOutCr = denoised_picture_ptr->stride_cr;
-        ptrDenoisedCr = &(denoised_picture_ptr->buffer_cr[inputOriginIndexPad]);
-        ptrDenoisedIntermCr = ptrDenoisedCr;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x / 2 +
+            (denoised_picture_ptr->origin_y / 2 + sb_origin_y) * denoised_picture_ptr->stride_cr;
+        stride_out_cr          = denoised_picture_ptr->stride_cr;
+        ptr_denoised_cr        = &(denoised_picture_ptr->buffer_cr[input_origin_index_pad]);
+        ptr_denoised_interm_cr = ptr_denoised_cr;
         ////Chroma
         //a = (4 * p[0] + 4 * p[1] + 4 * p[2] +
         //    4 * p[0 + stride] + 4 * p[1 + stride] + 4 * p[2 + stride] +
         //    4 * p[0 + 2 * stride] + 4 * p[1 + 2 * stride] + 4 * p[2 + 2 * stride]) / 36;
 
-        top = curr = top_next = top_prev = curr_next = curr_prev = topCr = currCr = topNextCr = topPrevCr = currNextCr = currPrevCr = _mm256_setzero_si256();
+        top = curr = top_next = top_prev = curr_next = curr_prev = top_cr = curr_cr = top_next_cr =
+            top_prev_cr = curr_next_cr = curr_prev_cr = _mm256_setzero_si256();
 
-        for (kk = idx; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in));
-                        top_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
-                        top_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
-                        curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in)));
-                        curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in)));
-                        topCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + jj * strideInCr));
-                        currCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + (1 + jj)*strideInCr));
-                        topPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((jj)*strideInCr)));
-                        topNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((jj)*strideInCr)));
-                        currPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((1 + jj)*strideInCr)));
-                        currNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((1 + jj)*strideInCr)));
+        for (kk = idx; kk + BLOCK_SIZE_64 / 2 <= pic_width; kk += BLOCK_SIZE_64 / 2) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top  = _mm256_loadu_si256((__m256i *)(ptr_in + kk + jj * stride_in));
+                        curr = _mm256_loadu_si256((__m256i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        top_prev =
+                            _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((jj)*stride_in)));
+                        top_next =
+                            _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((jj)*stride_in)));
+                        curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                        curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                        top_cr =
+                            _mm256_loadu_si256((__m256i *)(ptr_in_cr + kk + jj * stride_in_cr));
+                        curr_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr));
+                        top_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr)));
+                        top_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr)));
+                        curr_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk + ((1 + jj) * stride_in_cr)));
+                        curr_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk + ((1 + jj) * stride_in_cr)));
                         _mm256_storeu_si256((__m256i *)(ptr_denoised + kk), top);
-                        _mm256_storeu_si256((__m256i *)(ptrDenoisedCr + kk), topCr);
+                        _mm256_storeu_si256((__m256i *)(ptr_denoised_cr + kk), top_cr);
                     }
-                    bottom_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((2 + jj)*stride_in)));
-                    bottom_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((2 + jj)*stride_in)));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in));
-                    bottomPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((2 + jj)*strideInCr)));
-                    bottomNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((2 + jj)*strideInCr)));
-                    bottomCr = _mm256_loadu_si256((__m256i*)((ptrInCr + kk) + (2 + jj)* strideInCr));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut);
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj)*strideOutCr);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in - stride_in));
-                        top_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
-                        top_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
-                        curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                        curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                        topCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + jj * strideInCr - strideInCr));
-                        currCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + (1 + jj)*strideInCr - strideInCr));
-                        topPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        topNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        currPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((1 + jj)*strideInCr - strideInCr)));
-                        currNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((1 + jj)*strideInCr - strideInCr)));
+                    bottom_prev =
+                        _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_next =
+                        _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in)));
+                    bottom = _mm256_loadu_si256((__m256i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    bottom_prev_cr = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_next_cr = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_cr =
+                        _mm256_loadu_si256((__m256i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr));
+                    ptr_denoised_interm    = ptr_denoised + kk + ((1 + jj) * stride_out);
+                    ptr_denoised_interm_cr = ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr);
+                } else {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        curr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        top_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((jj)*stride_in) - stride_in));
+                        top_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((jj)*stride_in) - stride_in));
+                        curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        top_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + kk + jj * stride_in_cr - stride_in_cr));
+                        curr_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr - stride_in_cr));
+                        top_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        top_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        curr_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk +
+                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
+                        curr_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk +
+                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
                     }
-                    bottom_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((2 + jj)*stride_in) - stride_in));
-                    bottom_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((2 + jj)*stride_in) - stride_in));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut - strideOut);
-                    bottomPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((2 + jj)*strideInCr) - strideInCr));
-                    bottomNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((2 + jj)*strideInCr) - strideInCr));
-                    bottomCr = _mm256_loadu_si256((__m256i*)((ptrInCr + kk) + (2 + jj)* strideInCr - strideInCr));
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj)*strideOutCr - strideOutCr);
+                    bottom_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
+                    bottom_prev_cr      = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_next_cr = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_cr = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr - stride_in_cr));
+                    ptr_denoised_interm_cr =
+                        ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr - stride_out_cr);
                 }
 
-                chroma_strong_avx2_intrin(
-                    top,
-                    curr,
-                    bottom,
-                    curr_prev,
-                    curr_next,
-                    top_prev,
-                    top_next,
-                    bottom_prev,
-                    bottom_next,
-                    ptrDenoisedInterm);
+                chroma_strong_avx2_intrin(top,
+                                          curr,
+                                          bottom,
+                                          curr_prev,
+                                          curr_next,
+                                          top_prev,
+                                          top_next,
+                                          bottom_prev,
+                                          bottom_next,
+                                          ptr_denoised_interm);
 
-                chroma_strong_avx2_intrin(
-                    topCr,
-                    currCr,
-                    bottomCr,
-                    currPrevCr,
-                    currNextCr,
-                    topPrevCr,
-                    topNextCr,
-                    bottomPrevCr,
-                    bottomNextCr,
-                    ptrDenoisedIntermCr);
+                chroma_strong_avx2_intrin(top_cr,
+                                          curr_cr,
+                                          bottom_cr,
+                                          curr_prev_cr,
+                                          curr_next_cr,
+                                          top_prev_cr,
+                                          top_next_cr,
+                                          bottom_prev_cr,
+                                          bottom_next_cr,
+                                          ptr_denoised_interm_cr);
 
-                top = curr;
-                curr = bottom;
-                top_prev = curr_prev;
-                top_next = curr_next;
-                curr_prev = bottom_prev;
-                curr_next = bottom_next;
-                topCr = currCr;
-                currCr = bottomCr;
-                topPrevCr = currPrevCr;
-                topNextCr = currNextCr;
-                currPrevCr = bottomPrevCr;
-                currNextCr = bottomNextCr;
+                top          = curr;
+                curr         = bottom;
+                top_prev     = curr_prev;
+                top_next     = curr_next;
+                curr_prev    = bottom_prev;
+                curr_next    = bottom_next;
+                top_cr       = curr_cr;
+                curr_cr      = bottom_cr;
+                top_prev_cr  = curr_prev_cr;
+                top_next_cr  = curr_next_cr;
+                curr_prev_cr = bottom_prev_cr;
+                curr_next_cr = bottom_next_cr;
             }
         }
 
-        for (; kk + 8 <= picWidth; kk += 8)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
-                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
-                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
-                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
-                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
-                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr));
-                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr));
-                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr)));
-                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr)));
-                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr)));
-                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr)));
-                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
-                        _mm_storel_epi64((__m128i*)(ptrDenoisedCr + kk), topCr_128);
+        for (; kk + 8 <= pic_width; kk += 8) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top_128  = _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        top_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((jj)*stride_in)));
+                        top_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((jj)*stride_in)));
+                        curr_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                        curr_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                        top_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + kk + jj * stride_in_cr));
+                        curr_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr));
+                        top_prev_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr)));
+                        top_next_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr)));
+                        curr_prev_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr - 1 + kk + ((1 + jj) * stride_in_cr)));
+                        curr_next_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + 1 + kk + ((1 + jj) * stride_in_cr)));
+                        _mm_storel_epi64((__m128i *)(ptr_denoised + kk), top_128);
+                        _mm_storel_epi64((__m128i *)(ptr_denoised_cr + kk), top_cr_128);
                     }
-                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in)));
-                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in)));
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
-                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr)));
-                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr)));
-                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
-                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
-                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
-                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr - strideInCr));
-                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr - strideInCr));
-                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
-                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
+                    bottom_prev_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_next_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    bottom_prev_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_next_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_cr_128 =
+                        _mm_loadl_epi64((__m128i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr));
+                    ptr_denoised_interm    = ptr_denoised + kk + ((1 + jj) * stride_out);
+                    ptr_denoised_interm_cr = ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr);
+                } else {
+                    if (jj == 0) {
+                        top_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        top_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + ((jj)*stride_in) - stride_in));
+                        top_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + ((jj)*stride_in) - stride_in));
+                        curr_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        curr_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        top_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + kk + jj * stride_in_cr - stride_in_cr));
+                        curr_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr - stride_in_cr));
+                        top_prev_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        top_next_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        curr_prev_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr - 1 + kk +
+                                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
+                        curr_next_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + 1 + kk +
+                                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
                     }
-                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in) - stride_in));
-                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in) - stride_in));
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
-                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
-                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
-                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr - strideInCr));
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr - strideOutCr);
+                    bottom_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_next_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
+                    bottom_prev_cr_128  = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_next_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr - stride_in_cr));
+                    ptr_denoised_interm_cr =
+                        ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr - stride_out_cr);
                 }
 
-                chroma_strong_128_avx2_intrin(
-                    top_128,
-                    curr_128,
-                    bottom_128,
-                    curr_prev_128,
-                    curr_next_128,
-                    top_prev_128,
-                    top_next_128,
-                    bottom_prev_128,
-                    bottom_next_128,
-                    ptrDenoisedInterm);
+                chroma_strong_128_avx2_intrin(top_128,
+                                              curr_128,
+                                              bottom_128,
+                                              curr_prev_128,
+                                              curr_next_128,
+                                              top_prev_128,
+                                              top_next_128,
+                                              bottom_prev_128,
+                                              bottom_next_128,
+                                              ptr_denoised_interm);
 
-                chroma_strong_128_avx2_intrin(
-                    topCr_128,
-                    currCr_128,
-                    bottomCr_128,
-                    currPrevCr_128,
-                    currNextCr_128,
-                    topPrevCr_128,
-                    topNextCr_128,
-                    bottomPrevCr_128,
-                    bottomNextCr_128,
-                    ptrDenoisedIntermCr);
+                chroma_strong_128_avx2_intrin(top_cr_128,
+                                              curr_cr_128,
+                                              bottom_cr_128,
+                                              curr_prev_cr_128,
+                                              curr_next_cr_128,
+                                              top_prev_cr_128,
+                                              top_next_cr_128,
+                                              bottom_prev_cr_128,
+                                              bottom_next_cr_128,
+                                              ptr_denoised_interm_cr);
 
-                top_128 = curr_128;
-                curr_128 = bottom_128;
-                top_prev_128 = curr_prev_128;
-                top_next_128 = curr_next_128;
-                curr_prev_128 = bottom_prev_128;
-                curr_next_128 = bottom_next_128;
-                topCr_128 = currCr_128;
-                currCr_128 = bottomCr_128;
-                topPrevCr_128 = currPrevCr_128;
-                topNextCr_128 = currNextCr_128;
-                currPrevCr_128 = bottomPrevCr_128;
-                currNextCr_128 = bottomNextCr_128;
+                top_128          = curr_128;
+                curr_128         = bottom_128;
+                top_prev_128     = curr_prev_128;
+                top_next_128     = curr_next_128;
+                curr_prev_128    = bottom_prev_128;
+                curr_next_128    = bottom_next_128;
+                top_cr_128       = curr_cr_128;
+                curr_cr_128      = bottom_cr_128;
+                top_prev_cr_128  = curr_prev_cr_128;
+                top_next_cr_128  = curr_next_cr_128;
+                curr_prev_cr_128 = bottom_prev_cr_128;
+                curr_next_cr_128 = bottom_next_cr_128;
             }
         }
 
-        sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
+        sb_height = MIN(BLOCK_SIZE_64 / 2, pic_height - sb_origin_y);
 
         for (jj = 0; jj < sb_height; jj++) {
-            for (ii = idx; ii < picWidth; ii++) {
-                if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)) {
-                    ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                    ptrDenoisedCr[ii + jj * strideOut] = ptrInCr[ii + jj * stride_in];
+            for (ii = idx; ii < pic_width; ii++) {
+                if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < pic_height) && ii > 0 &&
+                      ii < pic_width - 1)) {
+                    ptr_denoised[ii + jj * stride_out]    = ptr_in[ii + jj * stride_in];
+                    ptr_denoised_cr[ii + jj * stride_out] = ptr_in_cr[ii + jj * stride_in];
                 }
             }
         }
@@ -1290,31 +1466,28 @@ void noise_extract_chroma_strong_avx2_intrin(
 * noise_extract_chroma_weak
 *  weak filter chroma.
 *******************************************/
-void noise_extract_chroma_weak_avx2_intrin(
-    EbPictureBufferDesc       *input_picture_ptr,
-    EbPictureBufferDesc       *denoised_picture_ptr,
-    uint32_t                       sb_origin_y,
-    uint32_t                       sb_origin_x
-)
-{
-    uint32_t  ii, jj, kk;
-    uint32_t  picHeight, sb_height;
-    uint32_t  picWidth;
-    uint32_t  inputOriginIndex;
-    uint32_t  inputOriginIndexPad;
+void noise_extract_chroma_weak_avx2_intrin(EbPictureBufferDesc *input_picture_ptr,
+                                           EbPictureBufferDesc *denoised_picture_ptr,
+                                           uint32_t sb_origin_y, uint32_t sb_origin_x) {
+    uint32_t ii, jj, kk;
+    uint32_t pic_height, sb_height;
+    uint32_t pic_width;
+    uint32_t input_origin_index;
+    uint32_t input_origin_index_pad;
 
-    uint8_t *ptrIn, *ptrInCr;
-    uint32_t stride_in, strideInCr;
-    uint8_t *ptr_denoised, *ptrDenoisedInterm, *ptrDenoisedCr, *ptrDenoisedIntermCr;
+    uint8_t *ptr_in, *ptr_in_cr;
+    uint32_t stride_in, stride_in_cr;
+    uint8_t *ptr_denoised, *ptr_denoised_interm, *ptr_denoised_cr, *ptr_denoised_interm_cr;
 
-    uint32_t strideOut, strideOutCr;
+    uint32_t stride_out, stride_out_cr;
 
     __m256i top, curr, bottom, curr_prev, curr_next, top_prev, top_next, bottom_prev, bottom_next,
-        topCr, currCr, bottomCr, currPrevCr, currNextCr, topPrevCr, topNextCr, bottomPrevCr, bottomNextCr;
+        top_cr, curr_cr, bottom_cr, curr_prev_cr, curr_next_cr, top_prev_cr, top_next_cr,
+        bottom_prev_cr, bottom_next_cr;
 
     __m128i top_128, curr_128, bottom_128, curr_prev_128, curr_next_128, top_prev_128, top_next_128,
-        bottom_prev_128, bottom_next_128, topCr_128, currCr_128, bottomCr_128, currPrevCr_128,
-        currNextCr_128, topPrevCr_128, topNextCr_128, bottomPrevCr_128, bottomNextCr_128;
+        bottom_prev_128, bottom_next_128, top_cr_128, curr_cr_128, bottom_cr_128, curr_prev_cr_128,
+        curr_next_cr_128, top_prev_cr_128, top_next_cr_128, bottom_prev_cr_128, bottom_next_cr_128;
     uint32_t idx = (sb_origin_x + BLOCK_SIZE_64 > input_picture_ptr->width) ? sb_origin_x : 0;
     ////gaussian matrix(Chroma)
     //a = (1 * p[0] + 2 * p[1] + 1 * p[2] +
@@ -1322,233 +1495,299 @@ void noise_extract_chroma_weak_avx2_intrin(
     //    1 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] + 1 * p[2 + 2 * stride]) / 16;
 
     {
-        picHeight = input_picture_ptr->height / 2;
-        picWidth = input_picture_ptr->width / 2;
+        pic_height = input_picture_ptr->height / 2;
+        pic_width  = input_picture_ptr->width / 2;
 
-        sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
+        sb_height = MIN(BLOCK_SIZE_64 / 2, pic_height - sb_origin_y);
 
-        sb_height = ((sb_origin_y + BLOCK_SIZE_64 / 2 >= picHeight) || (sb_origin_y == 0)) ? sb_height - 1 : sb_height;
+        sb_height = ((sb_origin_y + BLOCK_SIZE_64 / 2 >= pic_height) || (sb_origin_y == 0))
+                        ? sb_height - 1
+                        : sb_height;
         stride_in = input_picture_ptr->stride_cb;
-        inputOriginIndex = input_picture_ptr->origin_x / 2 + (input_picture_ptr->origin_y / 2 + sb_origin_y)* input_picture_ptr->stride_cb;
-        ptrIn = &(input_picture_ptr->buffer_cb[inputOriginIndex]);
+        input_origin_index =
+            input_picture_ptr->origin_x / 2 +
+            (input_picture_ptr->origin_y / 2 + sb_origin_y) * input_picture_ptr->stride_cb;
+        ptr_in = &(input_picture_ptr->buffer_cb[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x / 2 + (denoised_picture_ptr->origin_y / 2 + sb_origin_y)* denoised_picture_ptr->stride_cb;
-        strideOut = denoised_picture_ptr->stride_cb;
-        ptr_denoised = &(denoised_picture_ptr->buffer_cb[inputOriginIndexPad]);
-        ptrDenoisedInterm = ptr_denoised;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x / 2 +
+            (denoised_picture_ptr->origin_y / 2 + sb_origin_y) * denoised_picture_ptr->stride_cb;
+        stride_out          = denoised_picture_ptr->stride_cb;
+        ptr_denoised        = &(denoised_picture_ptr->buffer_cb[input_origin_index_pad]);
+        ptr_denoised_interm = ptr_denoised;
 
-        strideInCr = input_picture_ptr->stride_cr;
-        inputOriginIndex = input_picture_ptr->origin_x / 2 + (input_picture_ptr->origin_y / 2 + sb_origin_y)  * input_picture_ptr->stride_cr;
-        ptrInCr = &(input_picture_ptr->buffer_cr[inputOriginIndex]);
+        stride_in_cr = input_picture_ptr->stride_cr;
+        input_origin_index =
+            input_picture_ptr->origin_x / 2 +
+            (input_picture_ptr->origin_y / 2 + sb_origin_y) * input_picture_ptr->stride_cr;
+        ptr_in_cr = &(input_picture_ptr->buffer_cr[input_origin_index]);
 
-        inputOriginIndexPad = denoised_picture_ptr->origin_x / 2 + (denoised_picture_ptr->origin_y / 2 + sb_origin_y)  * denoised_picture_ptr->stride_cr;
-        strideOutCr = denoised_picture_ptr->stride_cr;
-        ptrDenoisedCr = &(denoised_picture_ptr->buffer_cr[inputOriginIndexPad]);
-        ptrDenoisedIntermCr = ptrDenoisedCr;
+        input_origin_index_pad =
+            denoised_picture_ptr->origin_x / 2 +
+            (denoised_picture_ptr->origin_y / 2 + sb_origin_y) * denoised_picture_ptr->stride_cr;
+        stride_out_cr          = denoised_picture_ptr->stride_cr;
+        ptr_denoised_cr        = &(denoised_picture_ptr->buffer_cr[input_origin_index_pad]);
+        ptr_denoised_interm_cr = ptr_denoised_cr;
 
-        top = curr = top_next = top_prev = curr_next = curr_prev = topCr = currCr = topNextCr = topPrevCr = currNextCr = currPrevCr = _mm256_setzero_si256();
-        for (kk = idx; kk + BLOCK_SIZE_64 / 2 <= picWidth; kk += BLOCK_SIZE_64 / 2)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in));
-                        top_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
-                        top_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
-                        curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in)));
-                        curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in)));
+        top = curr = top_next = top_prev = curr_next = curr_prev = top_cr = curr_cr = top_next_cr =
+            top_prev_cr = curr_next_cr = curr_prev_cr = _mm256_setzero_si256();
+        for (kk = idx; kk + BLOCK_SIZE_64 / 2 <= pic_width; kk += BLOCK_SIZE_64 / 2) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top  = _mm256_loadu_si256((__m256i *)(ptr_in + kk + jj * stride_in));
+                        curr = _mm256_loadu_si256((__m256i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        top_prev =
+                            _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((jj)*stride_in)));
+                        top_next =
+                            _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((jj)*stride_in)));
+                        curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                        curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
                         _mm256_storeu_si256((__m256i *)(ptr_denoised + kk), top);
-                        topCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + jj * strideInCr));
-                        currCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + (1 + jj)*strideInCr));
-                        topPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((jj)*strideInCr)));
-                        topNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((jj)*strideInCr)));
-                        currPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((1 + jj)*strideInCr)));
-                        currNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((1 + jj)*strideInCr)));
-                        _mm256_storeu_si256((__m256i *)(ptrDenoisedCr + kk), topCr);
+                        top_cr =
+                            _mm256_loadu_si256((__m256i *)(ptr_in_cr + kk + jj * stride_in_cr));
+                        curr_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr));
+                        top_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr)));
+                        top_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr)));
+                        curr_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk + ((1 + jj) * stride_in_cr)));
+                        curr_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk + ((1 + jj) * stride_in_cr)));
+                        _mm256_storeu_si256((__m256i *)(ptr_denoised_cr + kk), top_cr);
                     }
-                    bottom_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((2 + jj)*stride_in)));
-                    bottom_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((2 + jj)*stride_in)));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut);
-                    bottomPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((2 + jj)*strideInCr)));
-                    bottomNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((2 + jj)*strideInCr)));
-                    bottomCr = _mm256_loadu_si256((__m256i*)((ptrInCr + kk) + (2 + jj)* strideInCr));
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj)*strideOutCr);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top = _mm256_loadu_si256((__m256i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        curr = _mm256_loadu_si256((__m256i*)(ptrIn + kk + (1 + jj)*stride_in - stride_in));
-                        top_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
-                        top_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
-                        curr_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                        curr_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((1 + jj)*stride_in - stride_in)));
-                        topCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + jj * strideInCr - strideInCr));
-                        currCr = _mm256_loadu_si256((__m256i*)(ptrInCr + kk + (1 + jj)*strideInCr - strideInCr));
-                        topPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        topNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        currPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((1 + jj)*strideInCr - strideInCr)));
-                        currNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((1 + jj)*strideInCr - strideInCr)));
+                    bottom_prev =
+                        _mm256_loadu_si256((__m256i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_next =
+                        _mm256_loadu_si256((__m256i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in)));
+                    bottom = _mm256_loadu_si256((__m256i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out);
+                    bottom_prev_cr      = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_next_cr = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_cr =
+                        _mm256_loadu_si256((__m256i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr));
+                    ptr_denoised_interm_cr = ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr);
+                } else {
+                    if (jj == 0) {
+                        top = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        curr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        top_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((jj)*stride_in) - stride_in));
+                        top_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((jj)*stride_in) - stride_in));
+                        curr_prev = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        curr_next = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        top_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + kk + jj * stride_in_cr - stride_in_cr));
+                        curr_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr - stride_in_cr));
+                        top_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        top_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        curr_prev_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr - 1 + kk +
+                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
+                        curr_next_cr = _mm256_loadu_si256(
+                            (__m256i *)(ptr_in_cr + 1 + kk +
+                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
                     }
-                    bottom_prev = _mm256_loadu_si256((__m256i*)(ptrIn - 1 + kk + ((2 + jj)*stride_in) - stride_in));
-                    bottom_next = _mm256_loadu_si256((__m256i*)(ptrIn + 1 + kk + ((2 + jj)*stride_in) - stride_in));
-                    bottom = _mm256_loadu_si256((__m256i*)((ptrIn + kk) + (2 + jj)* stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj)*strideOut - strideOut);
-                    bottomPrevCr = _mm256_loadu_si256((__m256i*)(ptrInCr - 1 + kk + ((2 + jj)*strideInCr) - strideInCr));
-                    bottomNextCr = _mm256_loadu_si256((__m256i*)(ptrInCr + 1 + kk + ((2 + jj)*strideInCr) - strideInCr));
-                    bottomCr = _mm256_loadu_si256((__m256i*)((ptrInCr + kk) + (2 + jj)* strideInCr - strideInCr));
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj)*strideOutCr - strideOutCr);
+                    bottom_prev = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_next = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
+                    bottom_prev_cr      = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_next_cr = _mm256_loadu_si256(
+                        (__m256i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_cr = _mm256_loadu_si256(
+                        (__m256i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr - stride_in_cr));
+                    ptr_denoised_interm_cr =
+                        ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr - stride_out_cr);
                 }
 
-                chroma_weak_luma_strong_filter_avx2_intrin(
-                    top,
-                    curr,
-                    bottom,
-                    curr_prev,
-                    curr_next,
-                    top_prev,
-                    top_next,
-                    bottom_prev,
-                    bottom_next,
-                    ptrDenoisedInterm);
+                chroma_weak_luma_strong_filter_avx2_intrin(top,
+                                                           curr,
+                                                           bottom,
+                                                           curr_prev,
+                                                           curr_next,
+                                                           top_prev,
+                                                           top_next,
+                                                           bottom_prev,
+                                                           bottom_next,
+                                                           ptr_denoised_interm);
 
-                chroma_weak_luma_strong_filter_avx2_intrin(
-                    topCr,
-                    currCr,
-                    bottomCr,
-                    currPrevCr,
-                    currNextCr,
-                    topPrevCr,
-                    topNextCr,
-                    bottomPrevCr,
-                    bottomNextCr,
-                    ptrDenoisedIntermCr);
+                chroma_weak_luma_strong_filter_avx2_intrin(top_cr,
+                                                           curr_cr,
+                                                           bottom_cr,
+                                                           curr_prev_cr,
+                                                           curr_next_cr,
+                                                           top_prev_cr,
+                                                           top_next_cr,
+                                                           bottom_prev_cr,
+                                                           bottom_next_cr,
+                                                           ptr_denoised_interm_cr);
 
-                top = curr;
-                curr = bottom;
-                top_prev = curr_prev;
-                top_next = curr_next;
-                curr_prev = bottom_prev;
-                curr_next = bottom_next;
-                topCr = currCr;
-                currCr = bottomCr;
-                topPrevCr = currPrevCr;
-                topNextCr = currNextCr;
-                currPrevCr = bottomPrevCr;
-                currNextCr = bottomNextCr;
+                top          = curr;
+                curr         = bottom;
+                top_prev     = curr_prev;
+                top_next     = curr_next;
+                curr_prev    = bottom_prev;
+                curr_next    = bottom_next;
+                top_cr       = curr_cr;
+                curr_cr      = bottom_cr;
+                top_prev_cr  = curr_prev_cr;
+                top_next_cr  = curr_next_cr;
+                curr_prev_cr = bottom_prev_cr;
+                curr_next_cr = bottom_next_cr;
             }
         }
 
-        for (; kk + 8 <= picWidth; kk += 8)
-        {
-            for (jj = 0; jj < sb_height; jj++)
-            {
-                if (sb_origin_y == 0)
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in));
-                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in)));
-                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in)));
-                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in)));
-                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in)));
-                        _mm_storel_epi64((__m128i*)(ptr_denoised + kk), top_128);
-                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr));
-                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr));
-                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr)));
-                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr)));
-                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr)));
-                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr)));
-                        _mm_storel_epi64((__m128i*)(ptrDenoisedCr + kk), topCr_128);
+        for (; kk + 8 <= pic_width; kk += 8) {
+            for (jj = 0; jj < sb_height; jj++) {
+                if (sb_origin_y == 0) {
+                    if (jj == 0) {
+                        top_128  = _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in));
+                        curr_128 = _mm_loadl_epi64((__m128i *)(ptr_in + kk + (1 + jj) * stride_in));
+                        top_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((jj)*stride_in)));
+                        top_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((jj)*stride_in)));
+                        curr_prev_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in)));
+                        curr_next_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in)));
+                        _mm_storel_epi64((__m128i *)(ptr_denoised + kk), top_128);
+                        top_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + kk + jj * stride_in_cr));
+                        curr_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr));
+                        top_prev_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr)));
+                        top_next_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr)));
+                        curr_prev_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr - 1 + kk + ((1 + jj) * stride_in_cr)));
+                        curr_next_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + 1 + kk + ((1 + jj) * stride_in_cr)));
+                        _mm_storel_epi64((__m128i *)(ptr_denoised_cr + kk), top_cr_128);
                     }
-                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in)));
-                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in)));
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut);
-                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr)));
-                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr)));
-                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr));
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr);
-                }
-                else
-                {
-                    if (jj == 0)
-                    {
-                        top_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + jj * stride_in - stride_in));
-                        curr_128 = _mm_loadl_epi64((__m128i*)(ptrIn + kk + (1 + jj) * stride_in - stride_in));
-                        top_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((jj)*stride_in) - stride_in));
-                        top_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((jj)*stride_in) - stride_in));
-                        curr_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                        curr_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((1 + jj) * stride_in - stride_in)));
-                        topCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + jj * strideInCr - strideInCr));
-                        currCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + kk + (1 + jj) * strideInCr - strideInCr));
-                        topPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        topNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((jj)*strideInCr) - strideInCr));
-                        currPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
-                        currNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((1 + jj) * strideInCr - strideInCr)));
+                    bottom_prev_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_next_128 =
+                        _mm_loadl_epi64((__m128i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in)));
+                    bottom_128 = _mm_loadl_epi64((__m128i *)((ptr_in + kk) + (2 + jj) * stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out);
+                    bottom_prev_cr_128  = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_next_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr)));
+                    bottom_cr_128 =
+                        _mm_loadl_epi64((__m128i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr));
+                    ptr_denoised_interm_cr = ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr);
+                } else {
+                    if (jj == 0) {
+                        top_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in + kk + jj * stride_in - stride_in));
+                        curr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + kk + (1 + jj) * stride_in - stride_in));
+                        top_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + ((jj)*stride_in) - stride_in));
+                        top_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + ((jj)*stride_in) - stride_in));
+                        curr_prev_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in - 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        curr_next_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in + 1 + kk + ((1 + jj) * stride_in - stride_in)));
+                        top_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + kk + jj * stride_in_cr - stride_in_cr));
+                        curr_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + kk + (1 + jj) * stride_in_cr - stride_in_cr));
+                        top_prev_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr - 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        top_next_cr_128 = _mm_loadl_epi64(
+                            (__m128i *)(ptr_in_cr + 1 + kk + ((jj)*stride_in_cr) - stride_in_cr));
+                        curr_prev_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr - 1 + kk +
+                                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
+                        curr_next_cr_128 =
+                            _mm_loadl_epi64((__m128i *)(ptr_in_cr + 1 + kk +
+                                                        ((1 + jj) * stride_in_cr - stride_in_cr)));
                     }
-                    bottom_prev_128 = _mm_loadl_epi64((__m128i*)(ptrIn - 1 + kk + ((2 + jj) * stride_in) - stride_in));
-                    bottom_next_128 = _mm_loadl_epi64((__m128i*)(ptrIn + 1 + kk + ((2 + jj) * stride_in) - stride_in));
-                    bottom_128 = _mm_loadl_epi64((__m128i*)((ptrIn + kk) + (2 + jj) * stride_in - stride_in));
-                    ptrDenoisedInterm = ptr_denoised + kk + ((1 + jj) * strideOut - strideOut);
-                    bottomPrevCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr - 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
-                    bottomNextCr_128 = _mm_loadl_epi64((__m128i*)(ptrInCr + 1 + kk + ((2 + jj) * strideInCr) - strideInCr));
-                    bottomCr_128 = _mm_loadl_epi64((__m128i*)((ptrInCr + kk) + (2 + jj) * strideInCr - strideInCr));
-                    ptrDenoisedIntermCr = ptrDenoisedCr + kk + ((1 + jj) * strideOutCr - strideOutCr);
+                    bottom_prev_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in - 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_next_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in + 1 + kk + ((2 + jj) * stride_in) - stride_in));
+                    bottom_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in + kk) + (2 + jj) * stride_in - stride_in));
+                    ptr_denoised_interm = ptr_denoised + kk + ((1 + jj) * stride_out - stride_out);
+                    bottom_prev_cr_128  = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr - 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_next_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)(ptr_in_cr + 1 + kk + ((2 + jj) * stride_in_cr) - stride_in_cr));
+                    bottom_cr_128 = _mm_loadl_epi64(
+                        (__m128i *)((ptr_in_cr + kk) + (2 + jj) * stride_in_cr - stride_in_cr));
+                    ptr_denoised_interm_cr =
+                        ptr_denoised_cr + kk + ((1 + jj) * stride_out_cr - stride_out_cr);
                 }
 
-                chroma_weak_luma_strong_filter_128_avx2_intrin(
-                    top_128,
-                    curr_128,
-                    bottom_128,
-                    curr_prev_128,
-                    curr_next_128,
-                    top_prev_128,
-                    top_next_128,
-                    bottom_prev_128,
-                    bottom_next_128,
-                    ptrDenoisedInterm);
+                chroma_weak_luma_strong_filter_128_avx2_intrin(top_128,
+                                                               curr_128,
+                                                               bottom_128,
+                                                               curr_prev_128,
+                                                               curr_next_128,
+                                                               top_prev_128,
+                                                               top_next_128,
+                                                               bottom_prev_128,
+                                                               bottom_next_128,
+                                                               ptr_denoised_interm);
 
-                chroma_weak_luma_strong_filter_128_avx2_intrin(
-                    topCr_128,
-                    currCr_128,
-                    bottomCr_128,
-                    currPrevCr_128,
-                    currNextCr_128,
-                    topPrevCr_128,
-                    topNextCr_128,
-                    bottomPrevCr_128,
-                    bottomNextCr_128,
-                    ptrDenoisedIntermCr);
+                chroma_weak_luma_strong_filter_128_avx2_intrin(top_cr_128,
+                                                               curr_cr_128,
+                                                               bottom_cr_128,
+                                                               curr_prev_cr_128,
+                                                               curr_next_cr_128,
+                                                               top_prev_cr_128,
+                                                               top_next_cr_128,
+                                                               bottom_prev_cr_128,
+                                                               bottom_next_cr_128,
+                                                               ptr_denoised_interm_cr);
 
-                top_128 = curr_128;
-                curr_128 = bottom_128;
-                top_prev_128 = curr_prev_128;
-                top_next_128 = curr_next_128;
-                curr_prev_128 = bottom_prev_128;
-                curr_next_128 = bottom_next_128;
-                topCr_128 = currCr_128;
-                currCr_128 = bottomCr_128;
-                topPrevCr_128 = currPrevCr_128;
-                topNextCr_128 = currNextCr_128;
-                currPrevCr_128 = bottomPrevCr_128;
-                currNextCr_128 = bottomNextCr_128;
+                top_128          = curr_128;
+                curr_128         = bottom_128;
+                top_prev_128     = curr_prev_128;
+                top_next_128     = curr_next_128;
+                curr_prev_128    = bottom_prev_128;
+                curr_next_128    = bottom_next_128;
+                top_cr_128       = curr_cr_128;
+                curr_cr_128      = bottom_cr_128;
+                top_prev_cr_128  = curr_prev_cr_128;
+                top_next_cr_128  = curr_next_cr_128;
+                curr_prev_cr_128 = bottom_prev_cr_128;
+                curr_next_cr_128 = bottom_next_cr_128;
             }
         }
 
-        sb_height = MIN(BLOCK_SIZE_64 / 2, picHeight - sb_origin_y);
+        sb_height = MIN(BLOCK_SIZE_64 / 2, pic_height - sb_origin_y);
         for (jj = 0; jj < sb_height; jj++) {
-            for (ii = idx; ii < picWidth; ii++) {
-                if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < picHeight) && ii > 0 && ii < picWidth - 1)) {
-                    ptr_denoised[ii + jj * strideOut] = ptrIn[ii + jj * stride_in];
-                    ptrDenoisedCr[ii + jj * strideOut] = ptrInCr[ii + jj * strideInCr];
+            for (ii = idx; ii < pic_width; ii++) {
+                if (!((jj < sb_height - 1 || (sb_origin_y + sb_height) < pic_height) && ii > 0 &&
+                      ii < pic_width - 1)) {
+                    ptr_denoised[ii + jj * stride_out]    = ptr_in[ii + jj * stride_in];
+                    ptr_denoised_cr[ii + jj * stride_out] = ptr_in_cr[ii + jj * stride_in_cr];
                 }
             }
         }

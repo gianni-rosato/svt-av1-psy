@@ -29,7 +29,7 @@ void uni_pred_averaging(
         uint32_t              pu_height,
         uint8_t               *firstRefInteger,
         uint8_t               *firstRefPosB,
-        uint8_t               *firstRefPosH,
+        uint8_t               *firstRefPosh_,
         uint8_t               *firstRefPosJ,
         uint32_t              refBufferStride,
         uint32_t              refBufferFullList0Stride,
@@ -37,7 +37,7 @@ void uni_pred_averaging(
         uint8_t               **comp_blk_ptr,
         uint32_t              *comp_blk_ptr_stride);
 
-void interpolate_search_region_AVC_chroma(
+void interpolate_search_region_avc_chroma(
         MeContext               *context_ptr,
         uint8_t                 *search_region_buffer_cb,
         uint8_t                 *search_region_buffer_cr,
@@ -50,8 +50,8 @@ void interpolate_search_region_AVC_chroma(
         uint32_t                search_area_height,
         uint32_t                input_bit_depth);
 
-    extern EbErrorType motion_estimate_lcu(
-        PictureParentControlSet   *picture_control_set_ptr,
+    extern EbErrorType motion_estimate_sb(
+        PictureParentControlSet   *pcs_ptr,
         uint32_t                       sb_index,
         uint32_t                       sb_origin_x,
         uint32_t                       sb_origin_y,
@@ -77,7 +77,7 @@ void interpolate_search_region_AVC_chroma(
         uint32_t                   decim_step);
 
     extern EbErrorType open_loop_intra_search_sb(
-        PictureParentControlSet   *picture_control_set_ptr,
+        PictureParentControlSet   *pcs_ptr,
         uint32_t                       sb_index,
         MotionEstimationContext_t   *context_ptr,
         EbPictureBufferDesc       *input_ptr);
@@ -325,29 +325,29 @@ void interpolate_search_region_AVC_chroma(
         uint32_t   src_stride,
         uint8_t   *ref,
         uint32_t   ref_stride,
-        uint32_t  *p_best_sad8x8,
+        uint32_t  *p_best_sad_8x8,
         uint32_t  *p_best_mv8x8,
-        uint32_t  *pBestSad16x16,
+        uint32_t  *p_best_sad_16x16,
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
         uint16_t  *p_sad16x16,
         EbBool     sub_sad);
 
     /*******************************************
-    Calcualte SAD for 32x32,64x64 from 16x16
+    Calculate SAD for 32x32,64x64 from 16x16
     and check if there is improvement, if yes keep
     the best SAD+MV
     *******************************************/
     extern void get_eight_horizontal_search_point_results_32x32_64x64_pu_c(
         uint16_t  *p_sad16x16,
-        uint32_t  *p_best_sad32x32,
-        uint32_t  *p_best_sad64x64,
+        uint32_t  *p_best_sad_32x32,
+        uint32_t  *p_best_sad_64x64,
         uint32_t  *p_best_mv32x32,
         uint32_t  *p_best_mv64x64,
         uint32_t   mv);
 
     /*******************************************
-    Calcualte SAD for 16x16 and its 8x8 sublcoks
+    Calculate SAD for 16x16 and its 8x8 sublcoks
     and check if there is improvment, if yes keep
     the best SAD+MV
     *******************************************/
@@ -356,8 +356,8 @@ void interpolate_search_region_AVC_chroma(
         uint32_t   src_stride,
         uint8_t   *ref,
         uint32_t   ref_stride,
-        uint32_t  *p_best_sad8x8,
-        uint32_t  *p_best_sad16x16,
+        uint32_t  *p_best_sad_8x8,
+        uint32_t  *p_best_sad_16x16,
         uint32_t  *p_best_mv8x8,
         uint32_t  *p_best_mv16x16,
         uint32_t   mv,
@@ -365,14 +365,14 @@ void interpolate_search_region_AVC_chroma(
         EbBool     sub_sad);
 
     /*******************************************
-    Calcualte SAD for 32x32,64x64 from 16x16
+    Calculate SAD for 32x32,64x64 from 16x16
     and check if there is improvment, if yes keep
     the best SAD+MV
     *******************************************/
     extern void sad_calculation_32x32_64x64_c(
         uint32_t  *p_sad16x16,
-        uint32_t  *p_best_sad32x32,
-        uint32_t  *p_best_sad64x64,
+        uint32_t  *p_best_sad_32x32,
+        uint32_t  *p_best_sad_64x64,
         uint32_t  *p_best_mv32x32,
         uint32_t  *p_best_mv64x64,
         uint32_t   mv);
@@ -383,52 +383,52 @@ void interpolate_search_region_AVC_chroma(
         uint8_t *ref,
         uint32_t ref_stride,
         uint32_t mv,
-        uint32_t *p_best_sad8x8,
-        uint32_t *p_best_sad16x16,
+        uint32_t *p_best_sad_8x8,
+        uint32_t *p_best_sad_16x16,
         uint32_t *p_best_mv8x8,
         uint32_t *p_best_mv16x16,
         uint32_t p_eight_sad16x16[16][8],
         uint32_t p_eight_sad8x8[64][8]);
 
     /****************************************************
-    Calcualte SAD for Rect H, V and H4, V4 partitions
+    Calculate SAD for Rect H, V and H4, V4 partitions
     and update its Motion info if the result SAD is better
     ****************************************************/
     extern void ext_eigth_sad_calculation_nsq_c(
         uint32_t p_sad8x8[64][8],
         uint32_t p_sad16x16[16][8],
         uint32_t p_sad32x32[4][8],
-        uint32_t *p_best_sad64x32,
+        uint32_t *p_best_sad_64x32,
         uint32_t *p_best_mv64x32,
-        uint32_t *p_best_sad32x16,
+        uint32_t *p_best_sad_32x16,
         uint32_t *p_best_mv32x16,
-        uint32_t *p_best_sad16x8,
+        uint32_t *p_best_sad_16x8,
         uint32_t *p_best_mv16x8,
-        uint32_t *p_best_sad32x64,
+        uint32_t *p_best_sad_32x64,
         uint32_t *p_best_mv32x64,
-        uint32_t *p_best_sad16x32,
+        uint32_t *p_best_sad_16x32,
         uint32_t *p_best_mv16x32,
-        uint32_t *p_best_sad8x16,
+        uint32_t *p_best_sad_8x16,
         uint32_t *p_best_mv8x16,
-        uint32_t *p_best_sad32x8,
+        uint32_t *p_best_sad_32x8,
         uint32_t *p_best_mv32x8,
-        uint32_t *p_best_sad8x32,
+        uint32_t *p_best_sad_8x32,
         uint32_t *p_best_mv8x32,
-        uint32_t *p_best_sad64x16,
+        uint32_t *p_best_sad_64x16,
         uint32_t *p_best_mv64x16,
-        uint32_t *p_best_sad16x64,
+        uint32_t *p_best_sad_16x64,
         uint32_t *p_best_mv16x64,
         uint32_t mv);
 
     /*******************************************
-    Calcualte SAD for 32x32,64x64 from 16x16
+    Calculate SAD for 32x32,64x64 from 16x16
     and check if there is improvment, if yes keep
     the best SAD+MV
     *******************************************/
     extern void ext_eight_sad_calculation_32x32_64x64_c(
         uint32_t p_sad16x16[16][8],
-        uint32_t *p_best_sad32x32,
-        uint32_t *p_best_sad64x64,
+        uint32_t *p_best_sad_32x32,
+        uint32_t *p_best_sad_64x64,
         uint32_t *p_best_mv32x32,
         uint32_t *p_best_mv64x64,
         uint32_t mv,
@@ -447,7 +447,7 @@ void interpolate_search_region_AVC_chroma(
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
     void half_pel_refinement_sb(
-        PictureParentControlSet *picture_control_set_ptr,
+        PictureParentControlSet *pcs_ptr,
         MeContext *context_ptr,  // input/output parameter, ME context Ptr, used
                                  // to get/update ME results
         uint8_t *refBuffer, uint32_t ref_stride,

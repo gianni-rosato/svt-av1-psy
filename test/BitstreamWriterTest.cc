@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 #include "random.h"
 /**
- * @brief Unit test for bitstream writer functions:
+ * @brief Unit test for Bitstream writer functions:
  * - aom_write
  * - aom_write_symbols
  * - aom_write_literal

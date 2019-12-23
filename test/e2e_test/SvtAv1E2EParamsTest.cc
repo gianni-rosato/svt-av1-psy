@@ -24,7 +24,7 @@
  *
  * Test strategy:
  * Config SVT-AV1 encoder with individual parameter, run the
- * conformance test and analyze the bitstream to check if the params
+ * conformance test and analyze the Bitstream to check if the params
  * take effect.
  *
  * Expected result:

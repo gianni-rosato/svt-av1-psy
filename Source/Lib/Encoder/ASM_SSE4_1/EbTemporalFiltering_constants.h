@@ -22,7 +22,7 @@
 // m * 1/2
 // m * 1/3
 //
-// By pairing the multiply with a down shift by 16 (_mm_mulhi_epu16):
+// by pairing the multiply with a down shift by 16 (_mm_mulhi_epu16):
 // m * C / 65536
 // we can create a C to replicate the division.
 //
@@ -42,193 +42,248 @@
 #define NEIGHBOR_CONSTANT_11 (int16_t)17874
 #define NEIGHBOR_CONSTANT_13 (int16_t)15124
 
-DECLARE_ALIGNED(16, static const int16_t, LEFT_CORNER_NEIGHBORS_PLUS_1[8]) = {
-NEIGHBOR_CONSTANT_5, NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7,
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7,
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7
-};
+DECLARE_ALIGNED(16, static const int16_t, left_corner_neighbors_plus1[8]) = {NEIGHBOR_CONSTANT_5,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7};
 
-DECLARE_ALIGNED(16, static const int16_t, RIGHT_CORNER_NEIGHBORS_PLUS_1[8]) = {
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7,
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7,
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_5
-};
+DECLARE_ALIGNED(16, static const int16_t, right_corner_neighbors_plus1[8]) = {NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_7,
+                                                                              NEIGHBOR_CONSTANT_5};
 
-DECLARE_ALIGNED(16, static const int16_t, LEFT_EDGE_NEIGHBORS_PLUS_1[8]) = {
-NEIGHBOR_CONSTANT_7,  NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const int16_t, left_edge_neighbors_plus1[8]) = {NEIGHBOR_CONSTANT_7,
+                                                                           NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const int16_t, RIGHT_EDGE_NEIGHBORS_PLUS_1[8]) = {
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_7
-};
+DECLARE_ALIGNED(16, static const int16_t, right_edge_neighbors_plus1[8]) = {NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_7};
 
-DECLARE_ALIGNED(16, static const int16_t, MIDDLE_EDGE_NEIGHBORS_PLUS_1[8]) = {
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7,
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7,
-NEIGHBOR_CONSTANT_7, NEIGHBOR_CONSTANT_7
-};
+DECLARE_ALIGNED(16, static const int16_t, middle_edge_neighbors_plus1[8]) = {NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7,
+                                                                             NEIGHBOR_CONSTANT_7};
 
-DECLARE_ALIGNED(16, static const int16_t, MIDDLE_CENTER_NEIGHBORS_PLUS_1[8]) = {
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const int16_t, middle_center_neighbors_plus1[8]) = {
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10,
+    NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const int16_t, LEFT_CORNER_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_6, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const int16_t, left_corner_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_6,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const int16_t, RIGHT_CORNER_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_6
-};
+DECLARE_ALIGNED(16, static const int16_t, right_corner_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_8,
+                                                                              NEIGHBOR_CONSTANT_6};
 
-DECLARE_ALIGNED(16, static const int16_t, LEFT_EDGE_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_8,  NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11
-};
+DECLARE_ALIGNED(16, static const int16_t, left_edge_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_8,
+                                                                           NEIGHBOR_CONSTANT_11,
+                                                                           NEIGHBOR_CONSTANT_11,
+                                                                           NEIGHBOR_CONSTANT_11,
+                                                                           NEIGHBOR_CONSTANT_11,
+                                                                           NEIGHBOR_CONSTANT_11,
+                                                                           NEIGHBOR_CONSTANT_11,
+                                                                           NEIGHBOR_CONSTANT_11};
 
-DECLARE_ALIGNED(16, static const int16_t, RIGHT_EDGE_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const int16_t, right_edge_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_11,
+                                                                            NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const int16_t, MIDDLE_EDGE_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const int16_t, middle_edge_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const int16_t, MIDDLE_CENTER_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11
-};
+DECLARE_ALIGNED(16, static const int16_t, middle_center_neighbors_plus2[8]) = {
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11,
+    NEIGHBOR_CONSTANT_11};
 
-DECLARE_ALIGNED(16, static const int16_t, TWO_CORNER_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_6, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_8,
-NEIGHBOR_CONSTANT_8, NEIGHBOR_CONSTANT_6
-};
+DECLARE_ALIGNED(16, static const int16_t, two_corner_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_6,
+                                                                            NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_6};
 
-DECLARE_ALIGNED(16, static const int16_t, TWO_EDGE_NEIGHBORS_PLUS_2[8]) = {
-NEIGHBOR_CONSTANT_8,  NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_11,
-NEIGHBOR_CONSTANT_11, NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const int16_t, two_edge_neighbors_plus2[8]) = {NEIGHBOR_CONSTANT_8,
+                                                                          NEIGHBOR_CONSTANT_11,
+                                                                          NEIGHBOR_CONSTANT_11,
+                                                                          NEIGHBOR_CONSTANT_11,
+                                                                          NEIGHBOR_CONSTANT_11,
+                                                                          NEIGHBOR_CONSTANT_11,
+                                                                          NEIGHBOR_CONSTANT_11,
+                                                                          NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const int16_t, LEFT_CORNER_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_8,  NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const int16_t, left_corner_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_8,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const int16_t, RIGHT_CORNER_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const int16_t, right_corner_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_10,
+                                                                              NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const int16_t, LEFT_EDGE_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13
-};
+DECLARE_ALIGNED(16, static const int16_t, left_edge_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_10,
+                                                                           NEIGHBOR_CONSTANT_13,
+                                                                           NEIGHBOR_CONSTANT_13,
+                                                                           NEIGHBOR_CONSTANT_13,
+                                                                           NEIGHBOR_CONSTANT_13,
+                                                                           NEIGHBOR_CONSTANT_13,
+                                                                           NEIGHBOR_CONSTANT_13,
+                                                                           NEIGHBOR_CONSTANT_13};
 
-DECLARE_ALIGNED(16, static const int16_t, RIGHT_EDGE_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const int16_t, right_edge_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_13,
+                                                                            NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const int16_t, MIDDLE_EDGE_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const int16_t, middle_edge_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10,
+                                                                             NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const int16_t, MIDDLE_CENTER_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13
-};
+DECLARE_ALIGNED(16, static const int16_t, middle_center_neighbors_plus4[8]) = {
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13,
+    NEIGHBOR_CONSTANT_13};
 
-DECLARE_ALIGNED(16, static const int16_t, TWO_CORNER_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_8,  NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_10,
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const int16_t, two_corner_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_8,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_10,
+                                                                            NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const int16_t, TWO_EDGE_NEIGHBORS_PLUS_4[8]) = {
-NEIGHBOR_CONSTANT_10, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_13,
-NEIGHBOR_CONSTANT_13, NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const int16_t, two_edge_neighbors_plus4[8]) = {NEIGHBOR_CONSTANT_10,
+                                                                          NEIGHBOR_CONSTANT_13,
+                                                                          NEIGHBOR_CONSTANT_13,
+                                                                          NEIGHBOR_CONSTANT_13,
+                                                                          NEIGHBOR_CONSTANT_13,
+                                                                          NEIGHBOR_CONSTANT_13,
+                                                                          NEIGHBOR_CONSTANT_13,
+                                                                          NEIGHBOR_CONSTANT_10};
 
-static const int16_t *const LUMA_LEFT_COLUMN_NEIGHBORS[2] = {
-        LEFT_CORNER_NEIGHBORS_PLUS_2, LEFT_EDGE_NEIGHBORS_PLUS_2
-};
+static const int16_t *const luma_left_column_neighbors[2] = {left_corner_neighbors_plus2,
+                                                             left_edge_neighbors_plus2};
 
-static const int16_t *const LUMA_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        MIDDLE_EDGE_NEIGHBORS_PLUS_2, MIDDLE_CENTER_NEIGHBORS_PLUS_2
-};
+static const int16_t *const luma_middle_column_neighbors[2] = {middle_edge_neighbors_plus2,
+                                                               middle_center_neighbors_plus2};
 
-static const int16_t *const LUMA_RIGHT_COLUMN_NEIGHBORS[2] = {
-        RIGHT_CORNER_NEIGHBORS_PLUS_2, RIGHT_EDGE_NEIGHBORS_PLUS_2
-};
+static const int16_t *const luma_right_column_neighbors[2] = {right_corner_neighbors_plus2,
+                                                              right_edge_neighbors_plus2};
 
-static const int16_t *const CHROMA_NO_SS_LEFT_COLUMN_NEIGHBORS[2] = {
-        LEFT_CORNER_NEIGHBORS_PLUS_1, LEFT_EDGE_NEIGHBORS_PLUS_1
-};
+static const int16_t *const chroma_no_ss_left_column_neighbors[2] = {left_corner_neighbors_plus1,
+                                                                     left_edge_neighbors_plus1};
 
-static const int16_t *const CHROMA_NO_SS_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        MIDDLE_EDGE_NEIGHBORS_PLUS_1, MIDDLE_CENTER_NEIGHBORS_PLUS_1
-};
+static const int16_t *const chroma_no_ss_middle_column_neighbors[2] = {
+    middle_edge_neighbors_plus1, middle_center_neighbors_plus1};
 
-static const int16_t *const CHROMA_NO_SS_RIGHT_COLUMN_NEIGHBORS[2] = {
-        RIGHT_CORNER_NEIGHBORS_PLUS_1, RIGHT_EDGE_NEIGHBORS_PLUS_1
-};
+static const int16_t *const chroma_no_ss_right_column_neighbors[2] = {right_corner_neighbors_plus1,
+                                                                      right_edge_neighbors_plus1};
 
-static const int16_t *const CHROMA_SINGLE_SS_LEFT_COLUMN_NEIGHBORS[2] = {
-        LEFT_CORNER_NEIGHBORS_PLUS_2, LEFT_EDGE_NEIGHBORS_PLUS_2
-};
+static const int16_t *const chroma_single_ss_left_column_neighbors[2] = {
+    left_corner_neighbors_plus2, left_edge_neighbors_plus2};
 
-static const int16_t *const CHROMA_SINGLE_SS_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        MIDDLE_EDGE_NEIGHBORS_PLUS_2, MIDDLE_CENTER_NEIGHBORS_PLUS_2
-};
+static const int16_t *const chroma_single_ss_middle_column_neighbors[2] = {
+    middle_edge_neighbors_plus2, middle_center_neighbors_plus2};
 
-static const int16_t *const CHROMA_SINGLE_SS_RIGHT_COLUMN_NEIGHBORS[2] = {
-        RIGHT_CORNER_NEIGHBORS_PLUS_2, RIGHT_EDGE_NEIGHBORS_PLUS_2
-};
+static const int16_t *const chroma_single_ss_right_column_neighbors[2] = {
+    right_corner_neighbors_plus2, right_edge_neighbors_plus2};
 
-static const int16_t *const CHROMA_SINGLE_SS_SINGLE_COLUMN_NEIGHBORS[2] = {
-        TWO_CORNER_NEIGHBORS_PLUS_2, TWO_EDGE_NEIGHBORS_PLUS_2
-};
+static const int16_t *const chroma_single_ss_single_column_neighbors[2] = {
+    two_corner_neighbors_plus2, two_edge_neighbors_plus2};
 
-static const int16_t *const CHROMA_DOUBLE_SS_LEFT_COLUMN_NEIGHBORS[2] = {
-        LEFT_CORNER_NEIGHBORS_PLUS_4, LEFT_EDGE_NEIGHBORS_PLUS_4
-};
+static const int16_t *const chroma_double_ss_left_column_neighbors[2] = {
+    left_corner_neighbors_plus4, left_edge_neighbors_plus4};
 
-static const int16_t *const CHROMA_DOUBLE_SS_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        MIDDLE_EDGE_NEIGHBORS_PLUS_4, MIDDLE_CENTER_NEIGHBORS_PLUS_4
-};
+static const int16_t *const chroma_double_ss_middle_column_neighbors[2] = {
+    middle_edge_neighbors_plus4, middle_center_neighbors_plus4};
 
-static const int16_t *const CHROMA_DOUBLE_SS_RIGHT_COLUMN_NEIGHBORS[2] = {
-        RIGHT_CORNER_NEIGHBORS_PLUS_4, RIGHT_EDGE_NEIGHBORS_PLUS_4
-};
+static const int16_t *const chroma_double_ss_right_column_neighbors[2] = {
+    right_corner_neighbors_plus4, right_edge_neighbors_plus4};
 
-static const int16_t *const CHROMA_DOUBLE_SS_SINGLE_COLUMN_NEIGHBORS[2] = {
-        TWO_CORNER_NEIGHBORS_PLUS_4, TWO_EDGE_NEIGHBORS_PLUS_4
-};
+static const int16_t *const chroma_double_ss_single_column_neighbors[2] = {
+    two_corner_neighbors_plus4, two_edge_neighbors_plus4};
 
 #define HIGHBD_NEIGHBOR_CONSTANT_4 (uint32_t)3221225472U
 #define HIGHBD_NEIGHBOR_CONSTANT_5 (uint32_t)2576980378U
@@ -240,160 +295,148 @@ static const int16_t *const CHROMA_DOUBLE_SS_SINGLE_COLUMN_NEIGHBORS[2] = {
 #define HIGHBD_NEIGHBOR_CONSTANT_11 (uint32_t)1171354718U
 #define HIGHBD_NEIGHBOR_CONSTANT_13 (uint32_t)991146300U
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_1[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_5, HIGHBD_NEIGHBOR_CONSTANT_7,
-HIGHBD_NEIGHBOR_CONSTANT_7, HIGHBD_NEIGHBOR_CONSTANT_7
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_left_corner_neighbours_plus_1[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_5,
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_1[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_7, HIGHBD_NEIGHBOR_CONSTANT_7,
-HIGHBD_NEIGHBOR_CONSTANT_7, HIGHBD_NEIGHBOR_CONSTANT_5
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_right_corner_neighbors_plus_1[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_5};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_1[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_7, HIGHBD_NEIGHBOR_CONSTANT_10,
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_left_edge_neighbours_plus_1[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_1[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10,
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_7
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_right_edge_neighbors_plus_1[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_7};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_1[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_7, HIGHBD_NEIGHBOR_CONSTANT_7,
-HIGHBD_NEIGHBOR_CONSTANT_7, HIGHBD_NEIGHBOR_CONSTANT_7
-};
+DECLARE_ALIGNED(16, static const uint32_t, high_middle_edge_neighbors_plus_1[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7,
+    HIGHBD_NEIGHBOR_CONSTANT_7};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_1[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10,
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_middle_center_neighbors_plus_1[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_2[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_6, HIGHBD_NEIGHBOR_CONSTANT_8,
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_left_corner_neighbours_plus_2[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_6,
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_2[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_8,
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_6
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_right_corner_neighbors_plus_2[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_6};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_2[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_11,
-HIGHBD_NEIGHBOR_CONSTANT_11, HIGHBD_NEIGHBOR_CONSTANT_11
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_left_edge_neighbours_plus_2[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_2[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_11, HIGHBD_NEIGHBOR_CONSTANT_11,
-HIGHBD_NEIGHBOR_CONSTANT_11, HIGHBD_NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_right_edge_neighbors_plus_2[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_2[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_8,
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const uint32_t, high_middle_edge_neighbors_plus_2[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_2[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_11, HIGHBD_NEIGHBOR_CONSTANT_11,
-HIGHBD_NEIGHBOR_CONSTANT_11, HIGHBD_NEIGHBOR_CONSTANT_11
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_middle_center_neighbors_plus_2[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11,
+    HIGHBD_NEIGHBOR_CONSTANT_11};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_4[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_8, HIGHBD_NEIGHBOR_CONSTANT_10,
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_left_corner_neighbours_plus_4[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_8,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_4[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10,
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_8
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_right_corner_neighbors_plus_4[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_8};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_4[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_13,
-HIGHBD_NEIGHBOR_CONSTANT_13, HIGHBD_NEIGHBOR_CONSTANT_13
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_left_edge_neighbours_plus_4[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_4[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_13, HIGHBD_NEIGHBOR_CONSTANT_13,
-HIGHBD_NEIGHBOR_CONSTANT_13, HIGHBD_NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_right_edge_neighbors_plus_4[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_4[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10,
-HIGHBD_NEIGHBOR_CONSTANT_10, HIGHBD_NEIGHBOR_CONSTANT_10
-};
+DECLARE_ALIGNED(16, static const uint32_t, high_middle_edge_neighbors_plus_4[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10,
+    HIGHBD_NEIGHBOR_CONSTANT_10};
 
-DECLARE_ALIGNED(16, static const uint32_t,
-HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_4[4]) = {
-HIGHBD_NEIGHBOR_CONSTANT_13, HIGHBD_NEIGHBOR_CONSTANT_13,
-HIGHBD_NEIGHBOR_CONSTANT_13, HIGHBD_NEIGHBOR_CONSTANT_13
-};
+DECLARE_ALIGNED(16, static const uint32_t, highbd_middle_center_neighbors_plus_4[4]) = {
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13,
+    HIGHBD_NEIGHBOR_CONSTANT_13};
 
-static const uint32_t *const HIGHBD_LUMA_LEFT_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_2, HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_2
-};
+static const uint32_t *const highbd_luma_left_column_neighbors[2] = {
+    highbd_left_corner_neighbours_plus_2, highbd_left_edge_neighbours_plus_2};
 
-static const uint32_t *const HIGHBD_LUMA_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_2, HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_2
-};
+static const uint32_t *const highbd_luma_middle_column_neighbors[2] = {
+    high_middle_edge_neighbors_plus_2, highbd_middle_center_neighbors_plus_2};
 
-static const uint32_t *const HIGHBD_LUMA_RIGHT_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_2, HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_2
-};
+static const uint32_t *const highbd_luma_right_column_neighbors[2] = {
+    highbd_right_corner_neighbors_plus_2, highbd_right_edge_neighbors_plus_2};
 
-static const uint32_t *const HIGHBD_CHROMA_NO_SS_LEFT_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_1, HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_1
-};
+static const uint32_t *const highbd_chroma_no_ss_left_column_neighbors[2] = {
+    highbd_left_corner_neighbours_plus_1, highbd_left_edge_neighbours_plus_1};
 
-static const uint32_t *const HIGHBD_CHROMA_NO_SS_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_1, HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_1
-};
+static const uint32_t *const highbd_chroma_no_ss_middle_column_neighbors[2] = {
+    high_middle_edge_neighbors_plus_1, highbd_middle_center_neighbors_plus_1};
 
-static const uint32_t *const HIGHBD_CHROMA_NO_SS_RIGHT_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_1, HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_1
-};
+static const uint32_t *const highbd_chroma_no_ss_right_column_neighbors[2] = {
+    highbd_right_corner_neighbors_plus_1, highbd_right_edge_neighbors_plus_1};
 
-static const uint32_t *const HIGHBD_CHROMA_SINGLE_SS_LEFT_COLUMN_NEIGHBORS[2] =
-        { HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_2, HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_2 };
+static const uint32_t *const highbd_chroma_single_ss_left_column_neighbors[2] = {
+    highbd_left_corner_neighbours_plus_2, highbd_left_edge_neighbours_plus_2};
 
-static const uint32_t
-        *const HIGHBD_CHROMA_SINGLE_SS_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_2, HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_2
-};
+static const uint32_t *const highbd_chroma_single_ss_middle_column_neighbors[2] = {
+    high_middle_edge_neighbors_plus_2, highbd_middle_center_neighbors_plus_2};
 
-static const uint32_t *const HIGHBD_CHROMA_SINGLE_SS_RIGHT_COLUMN_NEIGHBORS[2] =
-        { HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_2,
-          HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_2 };
+static const uint32_t *const highbd_chroma_single_ss_right_column_neighbors[2] = {
+    highbd_right_corner_neighbors_plus_2, highbd_right_edge_neighbors_plus_2};
 
-static const uint32_t *const HIGHBD_CHROMA_DOUBLE_SS_LEFT_COLUMN_NEIGHBORS[2] =
-        { HIGHBD_LEFT_CORNER_NEIGHBORS_PLUS_4, HIGHBD_LEFT_EDGE_NEIGHBORS_PLUS_4 };
+static const uint32_t *const highbd_chroma_double_ss_left_column_neighbors[2] = {
+    highbd_left_corner_neighbours_plus_4, highbd_left_edge_neighbours_plus_4};
 
-static const uint32_t
-        *const HIGHBD_CHROMA_DOUBLE_SS_MIDDLE_COLUMN_NEIGHBORS[2] = {
-        HIGHBD_MIDDLE_EDGE_NEIGHBORS_PLUS_4, HIGHBD_MIDDLE_CENTER_NEIGHBORS_PLUS_4
-};
+static const uint32_t *const highbd_chroma_double_ss_middle_column_neighbors[2] = {
+    high_middle_edge_neighbors_plus_4, highbd_middle_center_neighbors_plus_4};
 
-static const uint32_t *const HIGHBD_CHROMA_DOUBLE_SS_RIGHT_COLUMN_NEIGHBORS[2] =
-        { HIGHBD_RIGHT_CORNER_NEIGHBORS_PLUS_4,
-          HIGHBD_RIGHT_EDGE_NEIGHBORS_PLUS_4 };
+static const uint32_t *const highbd_chroma_double_ss_right_column_neighbors[2] = {
+    highbd_right_corner_neighbors_plus_4, highbd_right_edge_neighbors_plus_4};
 
 #define DIST_STRIDE ((BW) + 2)
