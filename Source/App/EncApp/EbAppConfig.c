@@ -717,7 +717,7 @@ void eb_config_dtor(EbConfig *config_ptr)
         config_ptr->recon_file = (FILE *)NULL;
     }
 
-    if (config_ptr->error_log_file) {
+    if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
         fclose(config_ptr->error_log_file);
         config_ptr->error_log_file = (FILE *) NULL;
     }
