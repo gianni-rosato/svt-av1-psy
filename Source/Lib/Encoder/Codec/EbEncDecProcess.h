@@ -63,11 +63,7 @@ extern "C" {
         // Since recon switches between reconPtr and referencePtr, the temporary buffers sizes used the referencePtr's which has padding,...
         EbPictureBufferDesc                 *inverse_quant_buffer;
         // Lambda
-#if ADD_DELTA_QP_SUPPORT
         uint16_t                               qp;
-#else
-        uint8_t                                qp;
-#endif
         uint8_t                                chroma_qp;
         uint32_t                               fast_lambda;
         uint32_t                               full_lambda;
@@ -92,11 +88,7 @@ extern "C" {
         EbBool                                 skip_qpm_flag;
         int8_t                                 non_moving_delta_qp;
         EbBool                                 backgorund_enhancement;
-#if ADD_DELTA_QP_SUPPORT
         uint16_t                               qpm_qp;
-#else
-        uint8_t                                qpm_qp;
-#endif
         EbPmCand                             pm_cand_buffer[5];
         uint16_t                               qp_index;
         uint64_t                               three_quad_energy;

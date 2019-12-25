@@ -35,14 +35,16 @@ extern "C" {
 
     // TODO(negge): Rename this AomProb once we remove vpxbool.
     typedef uint16_t AomCdfProb;
-
-#if PAL_SUP
     typedef struct {
         AomCdfProb *color_map_cdf;
         // TODO( use packed enum type if appropriate)
         uint8_t token;
     } TOKENEXTRA;
-#endif
+    typedef struct {
+        TOKENEXTRA *start;
+        TOKENEXTRA *stop;
+        unsigned int count;
+    } TOKENLIST;
 #define CDF_SIZE(x) ((x) + 1)
 #define CDF_PROB_BITS 15
 #define CDF_PROB_TOP (1 << CDF_PROB_BITS)

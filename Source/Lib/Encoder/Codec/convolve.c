@@ -220,8 +220,6 @@ void eb_av1_highbd_wiener_convolve_add_src_c(
         temp + MAX_SB_SIZE * (SUBPEL_TAPS / 2 - 1), MAX_SB_SIZE, dst, dst_stride,
         filters_y, y0_q4, y_step_q4, w, h, conv_params->round_1, bd);
 }
-#if OBMC_FLAG
-
 static INLINE int vert_scalar_product(const uint8_t *a, ptrdiff_t a_stride,
                                       const int16_t *b) {
   int sum = 0;
@@ -300,6 +298,5 @@ void aom_convolve8_vert_c(const uint8_t *src, ptrdiff_t src_stride,
     static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
         const InterpFilterParams filter_params, const int32_t subpel) ;
 
-
-#endif
 // clang-format on
+

@@ -98,10 +98,8 @@ void* set_me_hme_params_oq(
 {
     UNUSED(sequence_control_set_ptr);
     uint8_t  hmeMeLevel = sequence_control_set_ptr->use_output_stat_file ? picture_control_set_ptr->snd_pass_enc_mode : picture_control_set_ptr->enc_mode;
-#if PRESETS_OPT
     if (hmeMeLevel <= ENC_M1)
         hmeMeLevel = ENC_M0;
-#endif
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
@@ -167,11 +165,7 @@ EbErrorType signal_derivation_me_kernel_oq(
             context_ptr->me_context_ptr);
 
     if (picture_control_set_ptr->sc_content_detected)
-#if PRESETS_TUNE
         context_ptr->me_context_ptr->fractional_search_method = (enc_mode == ENC_M0) ? FULL_SAD_SEARCH : SUB_SAD_SEARCH;
-#else
-        context_ptr->me_context_ptr->fractional_search_method = SUB_SAD_SEARCH;
-#endif
     else
         if (enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
@@ -194,11 +188,7 @@ EbErrorType signal_derivation_me_kernel_oq(
     if (sequence_control_set_ptr->static_config.enable_subpel == DEFAULT)
         // Set the default settings of subpel
         if (picture_control_set_ptr->sc_content_detected)
-#if PRESETS_TUNE
             if (enc_mode <= ENC_M5)
-#else
-            if (enc_mode <= ENC_M1)
-#endif
                 context_ptr->me_context_ptr->use_subpel_flag = 1;
             else
                 context_ptr->me_context_ptr->use_subpel_flag = 0;
@@ -214,11 +204,7 @@ EbErrorType signal_derivation_me_kernel_oq(
     }
     else if (enc_mode == ENC_M0) {
         context_ptr->me_context_ptr->half_pel_mode =
-#if M0_OPT
-            picture_control_set_ptr->sc_content_detected ? REFINMENT_HP_MODE : EX_HP_MODE;
-#else
-            EX_HP_MODE;
-#endif
+            ((picture_control_set_ptr->sc_content_detected) && (!MR_MODE) )? REFINMENT_HP_MODE : EX_HP_MODE;
         context_ptr->me_context_ptr->quarter_pel_mode =
             REFINMENT_QP_MODE;
     }
@@ -249,42 +235,19 @@ EbErrorType signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
     else
-#if ENHANCED_M0_SETTINGS
         context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
-#else
-        context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
-#endif
-
     // ME Search Method
     if (picture_control_set_ptr->sc_content_detected)
-#if PRESETS_TUNE
         if (enc_mode <= ENC_M5)
-#else
-        if (enc_mode <= ENC_M3)
-#endif
             context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
         else
             context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
     else
-#if ENHANCED_M0_SETTINGS
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-#else
-#if PRESETS_TUNE
-        context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M4) ?
-#else
-        context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M1) ?
-#endif
-        FULL_SAD_SEARCH :
-        SUB_SAD_SEARCH;
-#endif
 
     if (sequence_control_set_ptr->static_config.enable_global_motion == EB_TRUE)
     {
-#if PRESETS_OPT
         if (enc_mode <= ENC_M1)
-#else
-        if (enc_mode == ENC_M0)
-#endif
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
         else
             context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
@@ -367,11 +330,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
 
     if (picture_control_set_ptr->sc_content_detected)
         if (enc_mode <= ENC_M1)
-#if M0_OPT
             context_ptr->me_context_ptr->fractional_search_method = (enc_mode == ENC_M0) ? FULL_SAD_SEARCH : SSD_SEARCH;
-#else
-            context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
-#endif
         else
             context_ptr->me_context_ptr->fractional_search_method = SUB_SAD_SEARCH;
     else
@@ -382,11 +341,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
 
     if (sequence_control_set_ptr->static_config.fract_search_64 == DEFAULT)
         if (picture_control_set_ptr->sc_content_detected)
-#if PRESETS_TUNE
             if (enc_mode <= ENC_M5)
-#else
-            if (enc_mode <= ENC_M1)
-#endif
                 context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
             else
                 context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
@@ -420,11 +375,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
     }
     else if (enc_mode == ENC_M0) {
         context_ptr->me_context_ptr->half_pel_mode =
-#if M0_OPT
-            picture_control_set_ptr->sc_content_detected ? REFINMENT_HP_MODE : EX_HP_MODE;
-#else
-            EX_HP_MODE;
-#endif
+            ((picture_control_set_ptr->sc_content_detected) && (!MR_MODE)) ? REFINMENT_HP_MODE : EX_HP_MODE;
         context_ptr->me_context_ptr->quarter_pel_mode =
             REFINMENT_QP_MODE;
     }
@@ -462,11 +413,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
         else
             context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
     else
-#if PRESETS_TUNE
         context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M4) ?
-#else
-        context_ptr->me_context_ptr->me_search_method = (enc_mode <= ENC_M1) ?
-#endif
         FULL_SAD_SEARCH :
         SUB_SAD_SEARCH;
     return return_error;
@@ -712,7 +659,7 @@ void* motion_estimation_kernel(void *input_ptr)
             // Global motion estimation
             // Compute only for the first fragment.
             // TODO: create an other kernel ?
-#if GM_OPT
+#if GLOBAL_WARPED_MOTION
         if (picture_control_set_ptr->gm_level == GM_FULL || picture_control_set_ptr->gm_level == GM_DOWN) {
 #endif
             if (context_ptr->me_context_ptr->compute_global_motion
@@ -720,7 +667,7 @@ void* motion_estimation_kernel(void *input_ptr)
                 global_motion_estimation(picture_control_set_ptr,
                                          context_ptr->me_context_ptr,
                                          input_picture_ptr);
-#if GM_OPT
+#if GLOBAL_WARPED_MOTION
         }
 #endif
 #endif

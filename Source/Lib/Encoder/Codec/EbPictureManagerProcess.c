@@ -62,12 +62,10 @@ static void ConfigurePictureEdges(
 
     return;
 }
-#if TWO_PASS
 void write_stat_to_file(
     SequenceControlSet    *sequence_control_set_ptr,
     stat_struct_t          stat_struct,
     uint64_t               ref_poc);
-#endif
 
 static void picture_manager_context_dctor(EbPtr p)
 {
@@ -768,16 +766,12 @@ void* picture_manager_kernel(void *input_ptr)
                         // Reset the Reference Lists
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
-
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint8_t));
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint8_t));
-
                         EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
                         EB_MEMSET(ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
-#if TWO_PASS
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_referenced_area_avg_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                         EB_MEMSET(ChildPictureControlSetPtr->ref_pic_referenced_area_avg_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
-#endif
                         int8_t max_temporal_index = -1, ref_index = 0;
                         // Configure List0
                         if ((entryPictureControlSetPtr->slice_type == P_SLICE) || (entryPictureControlSetPtr->slice_type == B_SLICE)) {
@@ -809,9 +803,7 @@ void* picture_manager_kernel(void *input_ptr)
                                     ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_0][refIdx] = referenceEntryPtr->reference_object_ptr;
                                     ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_0][refIdx] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
                                     ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_0][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
-#if TWO_PASS
                                     ChildPictureControlSetPtr->ref_pic_referenced_area_avg_array[REF_LIST_0][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->referenced_area_avg;
-#endif
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(
                                         referenceEntryPtr->reference_object_ptr,
@@ -858,12 +850,9 @@ void* picture_manager_kernel(void *input_ptr)
                                     }
                                     // Set the Reference Object
                                     ChildPictureControlSetPtr->ref_pic_ptr_array[REF_LIST_1][refIdx] = referenceEntryPtr->reference_object_ptr;
-
                                     ChildPictureControlSetPtr->ref_pic_qp_array[REF_LIST_1][refIdx] = (uint8_t)((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->qp;
                                     ChildPictureControlSetPtr->ref_slice_type_array[REF_LIST_1][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->slice_type;
-#if TWO_PASS
                                     ChildPictureControlSetPtr->ref_pic_referenced_area_avg_array[REF_LIST_1][refIdx] = ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->referenced_area_avg;
-#endif
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(
                                         referenceEntryPtr->reference_object_ptr,
@@ -948,14 +937,12 @@ void* picture_manager_kernel(void *input_ptr)
                     (referenceEntryPtr->reference_object_ptr))
                 {
                     // Release the nominal live_count value
-#if TWO_PASS
                     if (sequence_control_set_ptr->use_output_stat_file &&
                         referenceEntryPtr->reference_object_ptr->live_count == 1)
                         write_stat_to_file(
                             sequence_control_set_ptr,
                             ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->stat_struct,
                             ((EbReferenceObject*)referenceEntryPtr->reference_object_ptr->object_ptr)->ref_poc);
-#endif
                     eb_release_object(referenceEntryPtr->reference_object_ptr);
                     referenceEntryPtr->reference_object_ptr = (EbObjectWrapper*)EB_NULL;
                     referenceEntryPtr->reference_available = EB_FALSE;

@@ -24,7 +24,6 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbTransforms.h"
 #include "EbEntropyCodingProcess.h"
-#include "EbSegmentation.h"
 #include "EbCommonUtils.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
 #include "EbLog.h"
@@ -36,10 +35,8 @@
 #define S8  8*8
 #define S4  4*4
 
-#if PAL_SUP
 int svt_av1_allow_palette(int allow_palette,
     BlockSize sb_type);
-#endif
 int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,
     int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
@@ -56,11 +53,10 @@ int32_t is_inter_block(const BlockModeInfo *mbmi);
 #undef CHAR_BIT
 #define CHAR_BIT      8         /* number of bits in a char */
 #endif
-#if ADD_DELTA_QP_SUPPORT
 #define OD_CLZ0 (1)
 #define OD_CLZ(x) (-get_msb(x))
 #define OD_ILOG_NZ(x) (OD_CLZ0 - OD_CLZ(x))
-#endif
+
 
 int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane,
     int32_t mi_row, int32_t mi_col, BlockSize bsize,
@@ -1313,17 +1309,11 @@ static void EncodeSkipCoeffAv1(
 int av1_filter_intra_allowed(
  uint8_t   enable_filter_intra,
  BlockSize bsize,
-#if PAL_SUP
  uint8_t palette_size,
-#endif
  uint32_t  mode)
  {
   return  mode == DC_PRED &&
-#if PAL_SUP
       palette_size == 0 &&
-#else
-       //  mbmi->palette_mode_info.palette_size[0] == 0 &&
-#endif
          av1_filter_intra_allowed_bsize(enable_filter_intra,bsize);
 }
 
@@ -1550,48 +1540,6 @@ static INLINE int is_inter_mode(PredictionMode mode)
     return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
 }
 
-#if OBMC_FLAG
-#if !MULTI_PASS_PD
-MotionMode obmc_motion_mode_allowed(
-    const PictureControlSet         *picture_control_set_ptr,
-    const CodingUnit                *cu_ptr,
-    const BlockSize                 bsize,
-    MvReferenceFrame                rf0,
-    MvReferenceFrame                rf1,
-    PredictionMode                  mode)
-{
-
-    if(!picture_control_set_ptr->parent_pcs_ptr->pic_obmc_mode)
-        return SIMPLE_TRANSLATION;
-
-    FrameHeader *frm_hdr = &picture_control_set_ptr->parent_pcs_ptr->frm_hdr;
-
-    if (!frm_hdr->is_motion_mode_switchable)
-        return SIMPLE_TRANSLATION;
-
-    if (frm_hdr->force_integer_mv == 0) {
-        const TransformationType gm_type =
-            picture_control_set_ptr->parent_pcs_ptr->global_motion[rf0].wmtype;
-        if (is_global_mv_block(mode, bsize, gm_type))
-            return SIMPLE_TRANSLATION;
-    }
-
-    if (is_motion_variation_allowed_bsize(bsize) &&
-        is_inter_mode(mode) &&
-        rf1 != INTRA_FRAME &&
-        !(rf1 > INTRA_FRAME)) // is_motion_variation_allowed_compound
-    {
-        if (!has_overlappable_candidates(cu_ptr)) // check_num_overlappable_neighbors
-            return SIMPLE_TRANSLATION;
-
-        return OBMC_CAUSAL;
-    }
-    else
-        return SIMPLE_TRANSLATION;
-}
-#endif
-#endif
-
 MotionMode motion_mode_allowed(
     const PictureControlSet       *picture_control_set_ptr,
     const CodingUnit              *cu_ptr,
@@ -1655,11 +1603,7 @@ static void write_motion_mode(
     case OBMC_CAUSAL:
         aom_write_symbol(
             ec_writer,
-#if OBMC_FLAG
             motion_mode == OBMC_CAUSAL,
-#else
-            SIMPLE_TRANSLATION, // motion_mode == OBMC_CAUSAL, TODO: support OBMC
-#endif
             frame_context->obmc_cdf[bsize],
             2);
         break;
@@ -4425,7 +4369,6 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
     if (frm_hdr->quantization_params.base_q_idx > 0) {
         eb_aom_wb_write_bit(wb, frm_hdr->delta_q_params.delta_q_present);
         if (frm_hdr->delta_q_params.delta_q_present) {
-#if ADD_DELTA_QP_SUPPORT //PART 0
             eb_aom_wb_write_literal(wb, OD_ILOG_NZ(frm_hdr->delta_q_params.delta_q_res) - 1, 2);
             pcs_ptr->prev_qindex = frm_hdr->quantization_params.base_q_idx;
             if (frm_hdr->allow_intrabc)
@@ -4441,24 +4384,6 @@ static void WriteUncompressedHeaderObu(SequenceControlSet *scs_ptr/*Av1Comp *cpi
                 for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
                     pcs_ptr->prev_delta_lf[lf_id] = 0;
             }
-#else
-            SVT_LOG("ERROR[AN]: delta_q_present_flag not supported yet\n");
-#endif
-            //                eb_aom_wb_write_literal(wb, OD_ILOG_NZ(frm_hdr->delta_q_params.delta_q_res) - 1, 2);
-            //                xd->prev_qindex = frm_hdr->quantization_params.base_q_idx;
-            //                if (cm->allow_intrabc)
-            //                    assert(frm_hdr->delta_lf_params.delta_lf_present == 0);
-            //                else
-            //                    eb_aom_wb_write_bit(wb, frm_hdr->delta_lf_params.delta_lf_present);
-            //                if (frm_hdr->delta_lf_params.delta_lf_present) {
-            //                    eb_aom_wb_write_literal(wb, OD_ILOG_NZ(frm_hdr->delta_lf_params.delta_lf_res) - 1, 2);
-            //                    xd->prev_delta_lf_from_base = 0;
-            //                    eb_aom_wb_write_bit(wb, frm_hdr->delta_lf_params.delta_lf_multi);
-            //                    const int32_t frame_lf_count =
-            //                        av1_num_planes(cm) > 1 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
-            //                    for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
-            //                        xd->prev_delta_lf[lf_id] = 0;
-            //                }
         }
     }
     if (frm_hdr->all_lossless) {
@@ -4796,8 +4721,6 @@ EbErrorType encode_td_av1(
 
     return return_error;
 }
-
-#if ADD_DELTA_QP_SUPPORT
 static void Av1writeDeltaQindex(
     FRAME_CONTEXT *frameContext,
     int32_t           delta_qindex,
@@ -4821,8 +4744,6 @@ static void Av1writeDeltaQindex(
     if (abs > 0)
         aom_write_bit(w, sign);
 }
-#endif
-
 static void write_cdef(
     SequenceControlSet     *seqCSetPtr,
     PictureControlSet     *p_pcs_ptr,
@@ -5173,18 +5094,6 @@ EbErrorType ec_update_neighbors(
     }
     return return_error;
 }
-
-#if !PAL_SUP
-static INLINE int av1_allow_palette(int allow_screen_content_tools,
-    BlockSize sb_type) {
-    return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
-        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
-}
-
-static INLINE int av1_get_palette_bsize_ctx(BlockSize bsize) {
-    return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
-}
-#else
 int av1_allow_palette(int allow_screen_content_tools,
     BlockSize sb_type) {
     return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
@@ -5306,11 +5215,9 @@ static inline void pack_map_tokens(AomWriter *w, const TOKENEXTRA **tp,
     }
     *tp = p;
 }
-#endif
+
 static void write_palette_mode_info(
-#if PAL_SUP
     PictureParentControlSet     *ppcs,
-#endif
     FRAME_CONTEXT           *ec_ctx,
     CodingUnit            *cu_ptr,
     BlockSize bsize,
@@ -5319,10 +5226,7 @@ static void write_palette_mode_info(
 {
     const uint32_t intra_luma_mode = cu_ptr->pred_mode;
     uint32_t intra_chroma_mode = cu_ptr->prediction_unit_array->intra_chroma_mode;
-
     const int num_planes = 3;// av1_num_planes(cm);
-
-#if PAL_SUP
     const PaletteModeInfo *const pmi = &cu_ptr->palette_info.pmi;
     const int bsize_ctx = av1_get_palette_bsize_ctx(bsize);
     assert(bsize_ctx >= 0);
@@ -5340,37 +5244,14 @@ static void write_palette_mode_info(
         }
     }
 
-#else
-    //const BLOCK_SIZE bsize = mbmi->sb_type;
-    //assert(av1_allow_palette(cm->allow_screen_content_tools, bsize));
-   // const PALETTE_MODE_INFO *const pmi = &mbmi->palette_mode_info;
-    const int bsize_ctx = av1_get_palette_bsize_ctx(bsize);
-    assert(bsize_ctx >= 0);
-    if (intra_luma_mode == DC_PRED) {
-        const int n = 0;// pmi->palette_size[0];
-        const int palette_y_mode_ctx = 0;// av1_get_palette_mode_ctx(xd);
-        aom_write_symbol(
-            w, n > 0,
-            ec_ctx->palette_y_mode_cdf[bsize_ctx][palette_y_mode_ctx], 2);
-        if (n > 0) {
-            //aom_write_symbol(w, n - PALETTE_MIN_SIZE,
-            //    xd->tile_ctx->palette_y_size_cdf[bsize_ctx],
-            //    PALETTE_SIZES);
-            //write_palette_colors_y(xd, pmi, cm->seq_params.bit_depth, w);
-        }
-    }
-#endif
+
     const int uv_dc_pred =
         num_planes > 1 && intra_chroma_mode == UV_DC_PRED &&
         is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
     if (uv_dc_pred) {
         const int n = 0;// pmi->palette_size[1];
-#if PAL_SUP
         assert(pmi->palette_size[1] == 0);//remove when chroma is on
         const int palette_uv_mode_ctx =  (pmi->palette_size[0] > 0);
-#else
-        const int palette_uv_mode_ctx = 0;// (pmi->palette_size[0] > 0);
-#endif
         aom_write_symbol(w, n > 0,
             ec_ctx->palette_uv_mode_cdf[palette_uv_mode_ctx], 2);
         if (n > 0) {
@@ -6008,7 +5889,6 @@ void write_inter_segment_id(PictureControlSet *picture_control_set_ptr,
 
 }
 
-#if II_COMP_FLAG
 int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
 }
@@ -6027,7 +5907,6 @@ int is_interintra_allowed(const MbModeInfo *mbmi) {
 }
 
 int is_interintra_wedge_used(BlockSize sb_type);
-#endif
 
 EbErrorType write_modes_b(
     PictureControlSet     *picture_control_set_ptr,
@@ -6115,8 +5994,6 @@ assert(bsize < BlockSizeS_ALL);
             skipCoeff,
             blkOriginX >> MI_SIZE_LOG2,
             blkOriginY >> MI_SIZE_LOG2);
-
-#if ADD_DELTA_QP_SUPPORT //PART 1
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
             int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
             int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) &&
@@ -6140,7 +6017,7 @@ assert(bsize < BlockSizeS_ALL);
                 picture_control_set_ptr->parent_pcs_ptr->prev_qindex = current_q_index;
             }
         }
-#endif
+
 
         {
             const uint32_t intra_luma_mode = cu_ptr->pred_mode;
@@ -6183,20 +6060,15 @@ assert(bsize < BlockSizeS_ALL);
 
             if (cu_ptr->av1xd->use_intrabc == 0 && av1_allow_palette(frm_hdr->allow_screen_content_tools, blk_geom->bsize))
                 write_palette_mode_info(
-#if PAL_SUP
+
                     picture_control_set_ptr->parent_pcs_ptr,
-#endif
                     frameContext,
                     cu_ptr,
                     blk_geom->bsize,
                     blkOriginY >> MI_SIZE_LOG2,
                     blkOriginX >> MI_SIZE_LOG2,
                     ec_writer);
-#if PAL_SUP
     if (cu_ptr->av1xd->use_intrabc == 0 && av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra, bsize,cu_ptr->palette_info.pmi.palette_size[0], intra_luma_mode)) {
-#else
-            if (cu_ptr->av1xd->use_intrabc == 0 &&  av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra,bsize, intra_luma_mode)) {
-#endif
                 aom_write_symbol(ec_writer, cu_ptr->filter_intra_mode != FILTER_INTRA_MODES,
                     frameContext->filter_intra_cdfs[bsize], 2);
                 if (cu_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
@@ -6205,7 +6077,6 @@ assert(bsize < BlockSizeS_ALL);
                 }
             }
 
-#if PAL_SUP
         if(cu_ptr->av1xd->use_intrabc == 0)
         {
             assert(cu_ptr->palette_info.pmi.palette_size[1] == 0);
@@ -6229,7 +6100,6 @@ assert(bsize < BlockSizeS_ALL);
                 }
             }
         }
-#endif
             if (frm_hdr->tx_mode == TX_MODE_SELECT) {
                 code_tx_size(
                     picture_control_set_ptr,
@@ -6297,7 +6167,6 @@ assert(bsize < BlockSizeS_ALL);
             cu_ptr->skip_flag ? 1 : skipCoeff,
             blkOriginX >> MI_SIZE_LOG2,
             blkOriginY >> MI_SIZE_LOG2);
-#if ADD_DELTA_QP_SUPPORT//PART 2
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
             int32_t current_q_index = quantizer_to_qindex[cu_ptr->qp];
             int32_t super_block_upper_left = (((blkOriginY >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0) && (((blkOriginX >> 2) & (sequence_control_set_ptr->seq_header.sb_mi_size - 1)) == 0);
@@ -6311,8 +6180,6 @@ assert(bsize < BlockSizeS_ALL);
                 picture_control_set_ptr->parent_pcs_ptr->prev_qindex = current_q_index;
             }
         }
-
-#endif
         if (frm_hdr->tx_mode == TX_MODE_SELECT) {
             if (cu_ptr->skip_flag) {
                 code_tx_size(
@@ -6366,7 +6233,6 @@ assert(bsize < BlockSizeS_ALL);
                         intra_luma_mode,
                         intra_chroma_mode,
                         blk_geom->bwidth <= 32 && blk_geom->bheight <= 32);
-#if PAL_SUP
                 if ( av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, blk_geom->bsize))
                     write_palette_mode_info(
                         picture_control_set_ptr->parent_pcs_ptr,
@@ -6376,12 +6242,7 @@ assert(bsize < BlockSizeS_ALL);
                         blkOriginY >> MI_SIZE_LOG2,
                         blkOriginX >> MI_SIZE_LOG2,
                         ec_writer);
-#endif
-#if PAL_SUP
     if ( av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra, bsize, cu_ptr->palette_info.pmi.palette_size[0], intra_luma_mode)) {
-#else
-                if (av1_filter_intra_allowed(sequence_control_set_ptr->seq_header.enable_filter_intra,bsize, intra_luma_mode)) {
-#endif
                     aom_write_symbol(ec_writer, cu_ptr->filter_intra_mode != FILTER_INTRA_MODES,
                        frameContext->filter_intra_cdfs[bsize], 2);
                     if (cu_ptr->filter_intra_mode != FILTER_INTRA_MODES) {
@@ -6407,7 +6268,6 @@ assert(bsize < BlockSizeS_ALL);
                 const int32_t is_compound = (cu_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED);
 
                 // If segment skip is not enabled code the mode.
-                if (1) {
                     if (is_inter_compound_mode(inter_mode)) {
                         WriteInterCompoundMode(
                             frameContext,
@@ -6430,7 +6290,7 @@ assert(bsize < BlockSizeS_ALL);
                             ec_writer,
                             cu_ptr);
                     }
-                }
+
 
                 if (inter_mode == NEWMV || inter_mode == NEW_NEWMV) {
                     IntMv ref_mv;
@@ -6489,8 +6349,6 @@ assert(bsize < BlockSizeS_ALL);
                         nmvc,
                         frm_hdr->allow_high_precision_mv);
                 }
-#if II_COMP_FLAG
-
                 MbModeInfo *mbmi = &mi_ptr->mbmi;
 
                 if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.reference_mode != COMPOUND_REFERENCE &&
@@ -6522,7 +6380,7 @@ assert(bsize < BlockSizeS_ALL);
                   }
                 }
 
-#endif
+
                 if (frm_hdr->is_motion_mode_switchable
                     && rf[1] != INTRA_FRAME) {
                     write_motion_mode(
@@ -6538,9 +6396,6 @@ assert(bsize < BlockSizeS_ALL);
                 // First write idx to indicate current compound inter prediction mode group
                 // Group A (0): dist_wtd_comp, compound_average
                 // Group B (1): interintra, compound_diffwtd, wedge
-#if !II_COMP_FLAG
-                MbModeInfo *mbmi = &mi_ptr->mbmi;
-#endif
                 if (has_second_ref(mbmi)) {
 
                     const int masked_compound_used = is_any_masked_compound_used(bsize) &&
@@ -6615,7 +6470,6 @@ assert(bsize < BlockSizeS_ALL);
                     blkOriginY
                 );
             }
-#if PAL_SUP
             {
                 assert(cu_ptr->palette_info.pmi.palette_size[1] == 0);
                 TOKENEXTRA *tok = context_ptr->tok;
@@ -6637,7 +6491,7 @@ assert(bsize < BlockSizeS_ALL);
                     }
                 }
             }
-#endif
+
             if (frm_hdr->tx_mode == TX_MODE_SELECT) {
                 code_tx_size(
                     picture_control_set_ptr,
@@ -6684,13 +6538,12 @@ assert(bsize < BlockSizeS_ALL);
         bsize,
         coeff_ptr);
 
-#if PAL_SUP
     if (svt_av1_allow_palette(picture_control_set_ptr->parent_pcs_ptr->palette_mode, blk_geom->bsize)) {
         assert(cu_ptr->palette_info.color_idx_map != NULL && "free palette:Null");
         free(cu_ptr->palette_info.color_idx_map);
         cu_ptr->palette_info.color_idx_map = NULL;
     }
-#endif
+
     return return_error;
 }
 /**********************************************

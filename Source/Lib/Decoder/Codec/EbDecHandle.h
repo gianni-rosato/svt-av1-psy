@@ -107,7 +107,6 @@ typedef struct CurFrameBuf {
 #define FRAME_MI_MAP 1
 /* Frame level buffers */
 typedef struct FrameMiMap {
-#if FRAME_MI_MAP
     /* SBInfo pointers for entire frame */
     SBInfo      **pps_sb_info;
     /* ModeInfo offset wrt it's SB start */
@@ -119,14 +118,6 @@ typedef struct FrameMiMap {
     int32_t         mi_rows_algnsb;
     int32_t         sb_cols;
     int32_t         sb_rows;
-#else
-    /* For cur SB> Allocated worst case 128x128 SB => 128/4 = 32.
-      +1 for 1 top & left 4x4s */
-    int16_t      cur_sb_mi_map[33][33];
-
-    /* 2(for 4x4 chroma case) Top SB 4x4 row MI map */
-    int16_t      *top_sbrow_mi_map;
-#endif
     /*  number of MI in SB width,
         is same as number of MI in SB height */
     int32_t     num_mis_in_sb_wd;
@@ -244,10 +235,8 @@ typedef struct EbDecHandle {
     // Thread Handles
     EbHandle                    *decode_thread_handle_array;
     EbBool                      start_thread_process;
-#if SEM_CHANGE
     EbHandle        thread_semaphore;
     struct DecThreadCtxt   *thread_ctxt_pa;
-#endif
 }EbDecHandle;
 
 /* Thread level context data */
@@ -255,9 +244,7 @@ typedef struct DecThreadCtxt {
 
     /* Unique ID for the thread */
     uint32_t        thread_cnt;
-#if SEM_CHANGE
     EbHandle    thread_semaphore;
-#endif
     /* Pointer to the decode handle */
     EbDecHandle     *dec_handle_ptr;
 

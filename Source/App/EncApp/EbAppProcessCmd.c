@@ -15,11 +15,7 @@
 #include "EbAppConfig.h"
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbAppInputy4m.h"
-
 #include "EbTime.h"
-
-#define IVF_FRAME_HEADER_IN_LIB                     0
-
 /***************************************
  * Macros
  ***************************************/

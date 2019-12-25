@@ -31,10 +31,8 @@
 #define OUTPUT_RECON_TOKEN              "-o"
 #define ERROR_FILE_TOKEN                "-errlog"
 #define QP_FILE_TOKEN                   "-qp-file"
-#if TWO_PASS
 #define INPUT_STAT_FILE_TOKEN           "-input-stat-file"
 #define OUTPUT_STAT_FILE_TOKEN          "-output-stat-file"
-#endif
 #define STAT_FILE_TOKEN                 "-stat-file"
 #define WIDTH_TOKEN                     "-w"
 #define HEIGHT_TOKEN                    "-h"
@@ -434,10 +432,8 @@ config_entry_t config_entry[] = {
     { SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", SetCfgReconFile },
     { SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", SetCfgQpFile },
     { SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", SetCfgStatFile },
-#if TWO_PASS
     { SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file },
     { SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file },
-#endif
     // Picture Dimensions
     { SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", SetCfgSourceWidth },
     { SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", SetCfgSourceHeight },
@@ -735,7 +731,6 @@ void eb_config_dtor(EbConfig *config_ptr)
         fclose(config_ptr->stat_file);
         config_ptr->stat_file = (FILE *) NULL;
     }
-#if TWO_PASS
     if (config_ptr->input_stat_file) {
         fclose(config_ptr->input_stat_file);
         config_ptr->input_stat_file = (FILE *)NULL;
@@ -744,7 +739,6 @@ void eb_config_dtor(EbConfig *config_ptr)
         fclose(config_ptr->output_stat_file);
         config_ptr->output_stat_file = (FILE *)NULL;
     }
-#endif
     return;
 }
 

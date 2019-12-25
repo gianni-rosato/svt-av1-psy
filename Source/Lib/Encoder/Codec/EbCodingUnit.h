@@ -290,9 +290,7 @@ extern "C" {
         uint8_t inter_tx_size[INTER_TX_SIZE_BUF_LEN];
         uint8_t tx_depth;
         BlockModeInfo block_mi;
-#if PAL_SUP
         PaletteModeInfo palette_mode_info;
-#endif
     } MbModeInfo;
 
     typedef struct {
@@ -397,9 +395,7 @@ extern "C" {
         TXFM_CONTEXT *left_txfm_context;
         TXFM_CONTEXT left_txfm_context_buffer[MAX_MIB_SIZE];
         struct macroblockd_plane plane[MAX_MB_PLANE];
-#if OBMC_FLAG
         BlockSize sb_type;
-#endif
     } MacroBlockD;
 
     typedef struct Macroblock
@@ -450,15 +446,10 @@ extern "C" {
         unsigned                    prediction_mode_flag    : 2;
         unsigned                    block_has_coeff         : 1;
         unsigned                    split_flag_context      : 2;
-#if !ADD_DELTA_QP_SUPPORT
-        unsigned                    qp                      : 6;
-        signed                      delta_qp                : 8; // can be signed 8bits
-#else
         uint16_t                    qp;
         uint16_t                    ref_qp;
         int16_t                     delta_qp; // can be signed 8bits
         int16_t                     org_delta_qp;
-#endif
 
         // Coded Tree
         struct {
@@ -497,17 +488,13 @@ extern "C" {
         uint16_t                   *neigh_top_recon_16bit[3];
         uint32_t                    best_d1_blk;
         uint8_t                     tx_depth;
-#if II_COMP_FLAG
         INTERINTRA_MODE             interintra_mode;
         uint8_t                     is_interintra_used;
         uint8_t                     use_wedge_interintra;
         int32_t                     interintra_wedge_index;
         int32_t                     ii_wedge_sign;
-#endif
        uint8_t                      filter_intra_mode;
-#if PAL_SUP
        PaletteInfo                          palette_info;
-#endif
     } CodingUnit;
 
         typedef struct OisCandidate
@@ -547,30 +534,20 @@ extern "C" {
         //for memory free only
         MacroBlockD                  *av1xd;
         PartitionType                  *cu_partition_array;
-#if !ADD_DELTA_QP_SUPPORT
-        unsigned                        qp                      : 8;
-#endif
         unsigned                        picture_left_edge_flag  : 1;
         unsigned                        picture_top_edge_flag   : 1;
         unsigned                        picture_right_edge_flag : 1;
         unsigned                        index                   : 12;
         unsigned                        origin_x                : 12;
         unsigned                        origin_y                : 12;
-#if ADD_DELTA_QP_SUPPORT
         uint16_t                        qp;
         int16_t                         delta_qp;
         int16_t                         org_delta_qp;
-#endif
         uint32_t                        total_bits;
 
         // Quantized Coefficients
         EbPictureBufferDesc          *quantized_coeff;
-#if MDC_ADAPTIVE_LEVEL
-        uint8_t                       depth_ranking[NUMBER_OF_DEPTH];
-#endif
-#if MDC_ADAPTIVE_LEVEL || MULTI_PASS_PD
         uint64_t                      depth_cost[NUMBER_OF_DEPTH];
-#endif
         TileInfo tile_info;
     } SuperBlock;
 

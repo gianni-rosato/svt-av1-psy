@@ -1659,7 +1659,6 @@ void av1_build_compound_diffwtd_mask_d16_c(
 
 int is_masked_compound_type(COMPOUND_TYPE type);
 
-#if II_COMP_FLAG
 /* clang-format off */
 static const uint8_t ii_weights1d[MAX_SB_SIZE] = {
   60, 58, 56, 54, 52, 50, 48, 47, 45, 44, 42, 41, 39, 38, 37, 35, 34, 33, 32,
@@ -1717,7 +1716,7 @@ static void build_smooth_interintra_mask(uint8_t *mask, int stride,
       break;
   }
 }
-#endif
+
 static INLINE const uint8_t *av1_get_contiguous_soft_mask(int wedge_index,
     int wedge_sign,
     BlockSize sb_type) {
@@ -2294,11 +2293,7 @@ static void model_rd_with_curvfit(
 {
     (void)plane_bsize;
     const int dequant_shift = 3;
-#if 0
-    int32_t current_q_index = MAX(0, MIN(QINDEX_RANGE - 1, picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx));
-#else
     int32_t current_q_index = picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-#endif
     Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
     int16_t quantizer = dequants->y_dequant_Q3[current_q_index][1];
 
@@ -2529,14 +2524,8 @@ static int8_t estimate_wedge_sign(
     return (tl + br > 0);
 }
 // Choose the best wedge index the specified sign
-#if II_COMP_FLAG
 int64_t pick_wedge_fixed_sign(
-#else
-static int64_t pick_wedge_fixed_sign(
-#endif
-#if II_COMP_FLAG
     ModeDecisionCandidate        *candidate_ptr,
-#endif
     PictureControlSet                    *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
     //const AV1_COMP *const cpi,
@@ -2565,14 +2554,10 @@ static int64_t pick_wedge_fixed_sign(
     mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
     sse = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
     sse = ROUND_POWER_OF_TWO(sse, bd_round);
-
     model_rd_with_curvfit(picture_control_set_ptr,bsize, /*0,*/ sse, N,    &rate, &dist, context_ptr->full_lambda);
    // model_rd_sse_fn[MODELRD_TYPE_MASKED_COMPOUND](cpi, x, bsize, 0, sse, N, &rate, &dist);
-
    // rate += x->wedge_idx_cost[bsize][wedge_index];
-#if  II_COMP_FLAG
     rate  += candidate_ptr->md_rate_estimation_ptr->wedge_idx_fac_bits[bsize][wedge_index];
-#endif
     rd = RDCOST(/*x->rdmult*/context_ptr->full_lambda, rate, dist);
 
     if (rd < best_rd) {
@@ -2759,14 +2744,11 @@ void search_compound_diff_wedge(
             candidate_ptr->ref_frame_type,
             &mv_unit,
             0,//use_intrabc,
-#if OBMC_FLAG
             SIMPLE_TRANSLATION,
             0,
             0,
-#endif
             1,//compound_idx not used
             NULL,// interinter_comp not used
-#if II_COMP_FLAG
             NULL,
             NULL,
             NULL,
@@ -2775,7 +2757,6 @@ void search_compound_diff_wedge(
             0,
             0,
             0,
-#endif
             context_ptr->cu_origin_x,
             context_ptr->cu_origin_y,
             bwidth,
@@ -2800,14 +2781,11 @@ void search_compound_diff_wedge(
             candidate_ptr->ref_frame_type,
             &mv_unit,
             0,//use_intrabc,
-#if OBMC_FLAG
             SIMPLE_TRANSLATION,
             0,
             0,
-#endif
             1,//compound_idx not used
-            NULL,// interinter_comp not used
-#if II_COMP_FLAG
+            NULL,// interinter_comp not useds
             NULL,
             NULL,
             NULL,
@@ -2816,7 +2794,6 @@ void search_compound_diff_wedge(
             0,
             0,
             0,
-#endif
             context_ptr->cu_origin_x,
             context_ptr->cu_origin_y,
             bwidth,
@@ -2900,12 +2877,7 @@ int64_t aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b,
     }
     return sse;
 }
-
-#if II_COMP_FLAG
 void model_rd_for_sb_with_curvfit(
-#else
-static void model_rd_for_sb_with_curvfit(
-#endif
     PictureControlSet      *picture_control_set_ptr,
     ModeDecisionContext                  *context_ptr,
     BlockSize bsize, int bw, int bh,
@@ -3039,14 +3011,11 @@ void search_compound_avg_dist(
             candidate_ptr->ref_frame_type,
             &mv_unit,
             0,//use_intrabc,
-#if OBMC_FLAG
             SIMPLE_TRANSLATION,
             0,
             0,
-#endif
             candidate_ptr->compound_idx,
             &candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
             NULL,
             NULL,
             NULL,
@@ -3055,7 +3024,6 @@ void search_compound_avg_dist(
             0,
             0,
             0,
-#endif
             context_ptr->cu_origin_x,
             context_ptr->cu_origin_y,
             bwidth,
@@ -3096,7 +3064,6 @@ void search_compound_avg_dist(
 
 }
 
-#if II_COMP_FLAG
  void combine_interintra(INTERINTRA_MODE mode,
     int8_t use_wedge_interintra, int wedge_index,
     int wedge_sign, BlockSize bsize,
@@ -3127,8 +3094,7 @@ void search_compound_avg_dist(
             interstride, mask, bw, bw, bh, 0, 0);
     }
 }
-#endif
-#if II_COMP_FLAG
+
  extern void eb_av1_predict_intra_block(
     TileInfo * tile,
     STAGE       stage,
@@ -3140,9 +3106,7 @@ void search_compound_avg_dist(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
-#if PAL_SUP
      PaletteInfo  *palette_info,
-#endif
     FilterIntraMode filter_intra_mode,
     uint8_t* topNeighArray,
     uint8_t* leftNeighArray,
@@ -3168,9 +3132,7 @@ extern void eb_av1_predict_intra_block_16bit(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
-#if PAL_SUP
     PaletteInfo  *palette_info,
-#endif
     FilterIntraMode filter_intra_mode,
     uint16_t* topNeighArray,
     uint16_t* leftNeighArray,
@@ -3187,8 +3149,6 @@ extern void eb_av1_predict_intra_block_16bit(
     uint32_t bl_org_y_mb);
 
  #define INTERINTRA_WEDGE_SIGN 0
-#endif
-#if OBMC_FLAG
 
 struct build_prediction_hbd_ctxt {
     const AV1_COMMON *cm;
@@ -4711,7 +4671,7 @@ void precompute_obmc_data(
         dst_stride2[0]);
 
 }
-#endif
+
 EbErrorType av1_inter_prediction(
     PictureControlSet              *picture_control_set_ptr,
     uint32_t                        interp_filters,
@@ -4719,14 +4679,11 @@ EbErrorType av1_inter_prediction(
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
-#if OBMC_FLAG
     MotionMode                      motion_mode,
     uint8_t                         use_precomputed_obmc,
     struct ModeDecisionContext     *md_context,
-#endif
     uint8_t                         compound_idx,
     InterInterCompoundData         *interinter_comp,
-#if II_COMP_FLAG
     TileInfo                       * tile,
     NeighborArrayUnit              *luma_recon_neighbor_array,
     NeighborArrayUnit              *cb_recon_neighbor_array ,
@@ -4735,7 +4692,6 @@ EbErrorType av1_inter_prediction(
     INTERINTRA_MODE                 interintra_mode,
     uint8_t                         use_wedge_interintra,
     int32_t                         interintra_wedge_index,
-#endif
     uint16_t                        pu_origin_x,
     uint16_t                        pu_origin_y,
     uint8_t                         bwidth,
@@ -4768,12 +4724,10 @@ EbErrorType av1_inter_prediction(
 
     const BlockGeom * blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
 
-#if OBMC_FLAG
     if (motion_mode == OBMC_CAUSAL) {
         assert(is_compound == 0);
         assert(blk_geom->bwidth > 4 && blk_geom->bheight > 4);
     }
-#endif
     //special treatment for chroma in 4XN/NX4 blocks
     //if one of the neighbour blocks of the parent square is intra the chroma prediction will follow the normal path using the luma MV of the current nsq block which is the latest sub8x8.
     //for this case: only uniPred is allowed.
@@ -5261,7 +5215,6 @@ EbErrorType av1_inter_prediction(
                 &conv_params);
         }
     }
-#if II_COMP_FLAG
     if ( is_interintra_used ) {
         int32_t start_plane = 0;
         int32_t end_plane = perform_chroma && blk_geom->has_uv ? MAX_MB_PLANE: 1;
@@ -5351,9 +5304,7 @@ EbErrorType av1_inter_prediction(
                 interintra_to_intra_mode[interintra_mode],          //PredictionMode mode,
                 0,
                 0,                                                  //int32_t use_palette,
-#if PAL_SUP
                 NULL, //inter-intra
-#endif
                 FILTER_INTRA_MODES,                                 // FilterIntraMode filter_intra_mode,
                 topNeighArray + 1,
                 leftNeighArray + 1,
@@ -5387,8 +5338,7 @@ EbErrorType av1_inter_prediction(
 
         }
     }
-#endif
-#if OBMC_FLAG
+
     if (motion_mode == OBMC_CAUSAL)
     {
 
@@ -5465,7 +5415,7 @@ EbErrorType av1_inter_prediction(
             dst_stride2,
             0); // is16bit
     }
-#endif
+
     return return_error;
 }
 
@@ -5478,14 +5428,11 @@ EbErrorType av1_inter_prediction_hbd(
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
-#if OBMC_FLAG
     MotionMode                      motion_mode,
     uint8_t                         use_precomputed_obmc,
     struct ModeDecisionContext     *md_context,
-#endif
     uint8_t                         compound_idx,
     InterInterCompoundData         *interinter_comp,
-#if II_COMP_FLAG
     TileInfo                       * tile,
     NeighborArrayUnit              *luma_recon_neighbor_array,
     NeighborArrayUnit              *cb_recon_neighbor_array ,
@@ -5494,7 +5441,6 @@ EbErrorType av1_inter_prediction_hbd(
     INTERINTRA_MODE                 interintra_mode,
     uint8_t                         use_wedge_interintra,
     int32_t                         interintra_wedge_index,
-#endif
     uint16_t                        pu_origin_x,
     uint16_t                        pu_origin_y,
     uint8_t                         bwidth,
@@ -5525,13 +5471,10 @@ EbErrorType av1_inter_prediction_hbd(
     InterpFilterParams filter_params_x, filter_params_y;
 
     const BlockGeom * blk_geom = get_blk_geom_mds(cu_ptr->mds_idx);
-
-#if OBMC_FLAG
     if (motion_mode == OBMC_CAUSAL) {
         assert(is_compound == 0);
         assert(blk_geom->bwidth > 4 && blk_geom->bheight > 4);
     }
-#endif
     //special treatment for chroma in 4XN/NX4 blocks
    //if one of the neighbour blocks of the parent square is intra the chroma prediction will follow the normal path using the luma MV of the current nsq block which is the latest sub8x8.
    //for this case: only uniPred is allowed.
@@ -6111,9 +6054,7 @@ EbErrorType av1_inter_prediction_hbd(
                 interintra_to_intra_mode[interintra_mode],          //PredictionMode mode,
                 0,
                 0,                                                  //int32_t use_palette,
-#if PAL_SUP
                 NULL,
-#endif
                 FILTER_INTRA_MODES,                                 // FilterIntraMode filter_intra_mode,
                 topNeighArray + 1,
                 leftNeighArray + 1,
@@ -6148,8 +6089,6 @@ EbErrorType av1_inter_prediction_hbd(
                 bit_depth);
         }
     }
-
-    #if OBMC_FLAG
     if (motion_mode == OBMC_CAUSAL)
     {
 
@@ -6227,7 +6166,7 @@ EbErrorType av1_inter_prediction_hbd(
             1); // is16bit
 
     }
-#endif
+
     return return_error;
 }
 
@@ -7032,17 +6971,10 @@ void interpolation_filter_search(
     uint8_t bit_depth)
 {
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm;//&cpi->common;
-#if MULTI_PASS_PD
     EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND) ? EB_TRUE : EB_FALSE;
-#else
-    EbBool use_uv = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
-        picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND) ? EB_TRUE : EB_FALSE;
-#endif
     const int32_t num_planes = use_uv ? MAX_MB_PLANE : 1;
-
     int64_t rd = INT64_MAX;
     int32_t switchable_rate = 0;
-
     int32_t i;
     int32_t tmp_rate;
     int64_t tmp_dist;
@@ -7071,14 +7003,12 @@ void interpolation_filter_search(
         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
         &mv_unit,
         0,
-#if OBMC_FLAG
         SIMPLE_TRANSLATION,
         0,
         0,
-#endif
+
         candidate_buffer_ptr->candidate_ptr->compound_idx,
         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
         &md_context_ptr->sb_ptr->tile_info,
         md_context_ptr->luma_recon_neighbor_array,
         md_context_ptr->cb_recon_neighbor_array,
@@ -7087,7 +7017,6 @@ void interpolation_filter_search(
         candidate_buffer_ptr->candidate_ptr->interintra_mode,
         candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
         candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
-#endif
         md_context_ptr->cu_origin_x,
         md_context_ptr->cu_origin_y,
         md_context_ptr->blk_geom->bwidth,
@@ -7117,12 +7046,7 @@ void interpolation_filter_search(
             const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
             int32_t best_in_temp = 0;
             uint32_t best_filters = 0;// mbmi->interp_filters;
-#if MULTI_PASS_PD
             if (md_context_ptr->interpolation_search_level && picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_dual_filter) {
-#else
-            if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level &&
-                picture_control_set_ptr->parent_pcs_ptr->sequence_control_set_ptr->seq_header.enable_dual_filter) {
-#endif
                 int32_t tmp_rs;
                 int64_t tmp_rd;
 
@@ -7148,14 +7072,11 @@ void interpolation_filter_search(
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
                         0,
-#if OBMC_FLAG
                         SIMPLE_TRANSLATION,
                         0,
                         0,
-#endif
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
                         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
                         &md_context_ptr->sb_ptr->tile_info,
                         md_context_ptr->luma_recon_neighbor_array,
                         md_context_ptr->cb_recon_neighbor_array,
@@ -7164,7 +7085,6 @@ void interpolation_filter_search(
                         candidate_buffer_ptr->candidate_ptr->interintra_mode,
                         candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
                         candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -7216,14 +7136,11 @@ void interpolation_filter_search(
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
                         0,
-#if OBMC_FLAG
                         SIMPLE_TRANSLATION,
                         0,
                         0,
-#endif
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
                         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
                         &md_context_ptr->sb_ptr->tile_info,
                         md_context_ptr->luma_recon_neighbor_array,
                         md_context_ptr->cb_recon_neighbor_array,
@@ -7232,7 +7149,6 @@ void interpolation_filter_search(
                         candidate_buffer_ptr->candidate_ptr->interintra_mode,
                         candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
                         candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -7287,14 +7203,11 @@ void interpolation_filter_search(
                         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
                         &mv_unit,
                         0,
-#if OBMC_FLAG
                         SIMPLE_TRANSLATION,
                         0,
                         0,
-#endif
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
                         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
                         &md_context_ptr->sb_ptr->tile_info,
                         md_context_ptr->luma_recon_neighbor_array,
                         md_context_ptr->cb_recon_neighbor_array,
@@ -7303,7 +7216,6 @@ void interpolation_filter_search(
                         candidate_buffer_ptr->candidate_ptr->interintra_mode,
                         candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
                         candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
-#endif
                         md_context_ptr->cu_origin_x,
                         md_context_ptr->cu_origin_y,
                         md_context_ptr->blk_geom->bwidth,
@@ -7380,14 +7292,11 @@ EbErrorType inter_pu_prediction_av1(
             candidate_buffer_ptr->candidate_ptr->ref_frame_type,
             &mv_unit,
             1,//use_intrabc
-#if OBMC_FLAG
             SIMPLE_TRANSLATION,
             0,
             0,
-#endif
             1,//1 for avg
             &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
             NULL,
             NULL,
             NULL,
@@ -7396,7 +7305,6 @@ EbErrorType inter_pu_prediction_av1(
             0,
             0,
             0,
-#endif
             md_context_ptr->cu_origin_x,
             md_context_ptr->cu_origin_y,
             md_context_ptr->blk_geom->bwidth,
@@ -7481,12 +7389,7 @@ EbErrorType inter_pu_prediction_av1(
 
         return return_error;
     }
-
-#if MULTI_PASS_PD
     if (md_context_ptr->interpolation_search_level == IT_SEARCH_OFF)
-#else
-    if (picture_control_set_ptr->parent_pcs_ptr->interpolation_search_level == IT_SEARCH_OFF)
-#endif
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
     else {
 
@@ -7548,14 +7451,11 @@ EbErrorType inter_pu_prediction_av1(
         candidate_buffer_ptr->candidate_ptr->ref_frame_type,
         &mv_unit,
         candidate_buffer_ptr->candidate_ptr->use_intrabc,
-#if OBMC_FLAG
         candidate_buffer_ptr->candidate_ptr->motion_mode,//MD
         1,
         md_context_ptr,
-#endif
         candidate_buffer_ptr->candidate_ptr->compound_idx,
         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
-#if II_COMP_FLAG
         &md_context_ptr->sb_ptr->tile_info,
         luma_recon_neighbor_array,
         cb_recon_neighbor_array,
@@ -7564,7 +7464,6 @@ EbErrorType inter_pu_prediction_av1(
         candidate_ptr->interintra_mode,
         candidate_ptr->use_wedge_interintra,
         candidate_ptr->interintra_wedge_index,
-#endif
         md_context_ptr->cu_origin_x,
         md_context_ptr->cu_origin_y,
         md_context_ptr->blk_geom->bwidth,

@@ -25,16 +25,6 @@ typedef struct DecModCtxt {
 
     int32_t *iquant_cur_ptr;
 
-#if !FRAME_MI_MAP
-    /* TODO: cur SB row idx. Should be moved out */
-    int32_t         sb_row_mi;
-    /* TODO: cur SB col idx. Should be moved out */
-    int32_t         sb_col_mi;
-
-    /* Left and above SBInfo pointers */
-    SBInfo  *left_sb_info;
-    SBInfo  *above_sb_info;
-#endif
     /* TODO: Points to the cur coeff_buf in SB */
     int32_t *cur_coeff[MAX_MB_PLANE];
 
@@ -94,18 +84,10 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt,
 
 EbErrorType start_decode_tile(EbDecHandle *dec_handle_ptr,
     DecModCtxt *dec_mod_ctxt, TilesInfo *tiles_info, int32_t tile_num);
-
-#if !ENABLE_ROW_MT_DECODE
-EbErrorType decode_tile(
-    DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
-    DecMTParseReconTileInfo *parse_recon_tile_info_array,
-    int32_t tile_row, int32_t tile_col);
-#else
 EbErrorType decode_tile(
     DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
     DecMTParseReconTileInfo *parse_recon_tile_info_array,
     int32_t tile_col);
-#endif
 
 /* TODO: Should be moved out once decode tile is moved out from parse_tile */
 void cfl_init(CflCtx *cfl, EbColorConfig *cc);

@@ -3887,9 +3887,7 @@ void eb_av1_predict_intra_block(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
-#if PAL_SUP
     PaletteInfo  *palette_info,
-#endif
     FilterIntraMode filter_intra_mode,
     uint8_t* topNeighArray,
     uint8_t* leftNeighArray,
@@ -4021,8 +4019,6 @@ void eb_av1_predict_intra_block(
     const int32_t txhpx = tx_size_high[tx_size];
     const int32_t x = col_off << tx_size_wide_log2[0];
     const int32_t y = row_off << tx_size_high_log2[0];
-
-#if PAL_SUP
     if (use_palette) {
         int32_t r, c;
 
@@ -4037,31 +4033,7 @@ void eb_av1_predict_intra_block(
         }
         return;
     }
-#else
 
-    //if (use_palette) {
-    //  int32_t r, c;
-    //  const uint8_t *const map = xd->plane[plane != 0].color_index_map;
-    //  const uint16_t *const palette =
-    //      mbmi->palette_mode_info.palette_colors + plane * PALETTE_MAX_SIZE;
-    //  if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
-    //    uint16_t *dst16 = CONVERT_TO_SHORTPTR(dst);
-    //    for (r = 0; r < txhpx; ++r) {
-    //      for (c = 0; c < txwpx; ++c) {
-    //        dst16[r * dst_stride + c] = palette[map[(r + y) * wpx + c + x]];
-    //      }
-    //    }
-    //  } else {
-    //    for (r = 0; r < txhpx; ++r) {
-    //      for (c = 0; c < txwpx; ++c) {
-    //        dst[r * dst_stride + c] =
-    //            (uint8_t)palette[map[(r + y) * wpx + c + x]];
-    //      }
-    //    }
-    //  }
-    //  return;
-    //}
-#endif
     //CHKN BlockSize bsize = mbmi->sb_type;
     struct MacroblockdPlane  pd_s;
     struct MacroblockdPlane * pd = &pd_s;
@@ -4147,9 +4119,7 @@ void eb_av1_predict_intra_block_16bit(
     PredictionMode mode,
     int32_t angle_delta,
     int32_t use_palette,
-#if PAL_SUP
     PaletteInfo  *palette_info,
-#endif
     FilterIntraMode filter_intra_mode,
     uint16_t* topNeighArray,
     uint16_t* leftNeighArray,
@@ -4281,7 +4251,6 @@ void eb_av1_predict_intra_block_16bit(
     const int32_t txhpx = tx_size_high[tx_size];
     const int32_t x = col_off << tx_size_wide_log2[0];
     const int32_t y = row_off << tx_size_high_log2[0];
-#if PAL_SUP
     if (use_palette) {
         int32_t r, c;
         const uint8_t *const map = palette_info->color_idx_map;
@@ -4294,30 +4263,7 @@ void eb_av1_predict_intra_block_16bit(
         }
         return;
     }
-#else
-    //if (use_palette) {
-    //  int32_t r, c;
-    //  const uint8_t *const map = xd->plane[plane != 0].color_index_map;
-    //  const uint16_t *const palette =
-    //      mbmi->palette_mode_info.palette_colors + plane * PALETTE_MAX_SIZE;
-    //  if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
-    //    uint16_t *dst16 = CONVERT_TO_SHORTPTR(dst);
-    //    for (r = 0; r < txhpx; ++r) {
-    //      for (c = 0; c < txwpx; ++c) {
-    //        dst16[r * dst_stride + c] = palette[map[(r + y) * wpx + c + x]];
-    //      }
-    //    }
-    //  } else {
-    //    for (r = 0; r < txhpx; ++r) {
-    //      for (c = 0; c < txwpx; ++c) {
-    //        dst[r * dst_stride + c] =
-    //            (uint8_t)palette[map[(r + y) * wpx + c + x]];
-    //      }
-    //    }
-    //  }
-    //  return;
-    //}
-#endif
+
     //CHKN BlockSize bsize = mbmi->sb_type;
 
     struct MacroblockdPlane  pd_s;
@@ -4584,8 +4530,6 @@ EbErrorType eb_av1_intra_prediction_cl(
 
     return return_error;
 }
-
-#if II_COMP_FLAG
 EbErrorType  intra_luma_prediction_for_interintra(
     ModeDecisionContext         *md_context_ptr,
     PictureControlSet           *picture_control_set_ptr,
@@ -4640,9 +4584,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
             mode,                                                   //PredictionMode mode,
             0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
             0,                                                      //int32_t use_palette,
-#if PAL_SUP
             NULL,  //Inter-Intra
-#endif
             FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
             top_neigh_array + 1,
             left_neigh_array + 1,
@@ -4680,9 +4622,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
             mode,                                                   //PredictionMode mode,
             0,                                                      //candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
             0,                                                      //int32_t use_palette,
-#if PAL_SUP
             NULL,  //Inter-Intra
-#endif
             FILTER_INTRA_MODES,                                     //CHKN FilterIntraMode filter_intra_mode,
             top_neigh_array + 1,
             left_neigh_array + 1,
@@ -4702,7 +4642,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
 
     return return_error;
 }
-#endif
+
 
 EbErrorType update_neighbor_samples_array_open_loop(
         uint8_t                           *above_ref,

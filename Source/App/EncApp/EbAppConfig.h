@@ -172,20 +172,15 @@ typedef struct EbConfig
     FILE                    *error_log_file;
     FILE                    *stat_file;
     FILE                    *buffer_file;
-
     FILE                    *qp_file;
-#if TWO_PASS
     FILE                    *input_stat_file;
     FILE                    *output_stat_file;
     EbBool                  use_input_stat_file;
     EbBool                  use_output_stat_file;
-#endif
     EbBool                  y4m_input;
     unsigned char           y4m_buf[9];
-
     EbBool                  use_qp_file;
     uint8_t                  stat_report;
-
     uint32_t                 frame_rate;
     uint32_t                 frame_rate_numerator;
     uint32_t                 frame_rate_denominator;

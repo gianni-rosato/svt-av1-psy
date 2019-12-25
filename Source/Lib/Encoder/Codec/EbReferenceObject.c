@@ -130,9 +130,7 @@ static void eb_reference_object_dctor(EbPtr p)
     EB_DELETE(obj->reference_picture16bit);
     EB_DELETE(obj->reference_picture);
     EB_FREE_ALIGNED_ARRAY(obj->mvs);
-#if TWO_PASS
     EB_DESTROY_MUTEX(obj->referenced_area_mutex);
-#endif
 }
 
 
@@ -194,9 +192,7 @@ EbErrorType eb_reference_object_ctor(
         EB_CALLOC_ALIGNED_ARRAY(referenceObject->mvs, mem_size);
     }
     memset(&referenceObject->film_grain_params, 0, sizeof(referenceObject->film_grain_params));
-#if TWO_PASS
     EB_CREATE_MUTEX(referenceObject->referenced_area_mutex);
-#endif
     return EB_ErrorNone;
 }
 

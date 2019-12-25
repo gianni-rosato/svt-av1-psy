@@ -495,7 +495,7 @@ void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt,
             &blk_recon_buf, &recon_stride, sub_x, sub_y);
 
         svtav1_predict_inter_block_plane(dec_mod_ctxt, dec_hdl, part_info, plane,
-            0/*OBMC_FLAG*/, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf,
+            0, mi_col*MI_SIZE, mi_row*MI_SIZE, blk_recon_buf,
             recon_stride, some_use_intra, recon_picture_buf->bit_depth);
 
         if (is_interintra_pred(part_info->mi)) {

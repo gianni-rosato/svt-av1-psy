@@ -72,9 +72,7 @@ extern "C" {
         EbBool                                 merge_flag;
         uint16_t                               count_non_zero_coeffs;
         uint8_t                                type;
-#if PAL_SUP
         PaletteInfo                          palette_info;
-#endif
         // MD Rate Estimation Ptr
         MdRateEstimationContext             *md_rate_estimation_ptr; // 64 bits
         uint64_t                               fast_luma_rate;
@@ -138,13 +136,11 @@ extern "C" {
         uint8_t                                compound_idx;
         uint8_t                                comp_group_idx;
         CAND_CLASS                             cand_class;
-#if II_COMP_FLAG
         INTERINTRA_MODE                        interintra_mode;
         uint8_t                                is_interintra_used;
         uint8_t                                use_wedge_interintra;
         int32_t                                interintra_wedge_index;//inter_intra wedge index
         int32_t                                ii_wedge_sign;//inter_intra wedge sign=-1
-#endif
     } ModeDecisionCandidate;
 
     /**************************************
@@ -168,10 +164,8 @@ extern "C" {
         const BlockGeom                        *blk_geom,
         uint32_t                                miRow,
         uint32_t                                miCol,
-#if MULTI_PASS_PD
         uint8_t                                 enable_inter_intra,
         EbBool                                  full_cost_shut_fast_rate_flag,
-#endif
         uint8_t                                 md_pass,
         uint32_t                                left_neighbor_mode,
         uint32_t                                top_neighbor_mode);

@@ -208,7 +208,6 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx,
 
     // to-do access to wiener info that is currently part of PartitionInfo_t
     //clear_loop_restoration(num_planes, part_info);
-#if ENABLE_ROW_MT_DECODE // post after finish of tile sb_row parsing
     int32_t sb_row_tile_start = 0;
     if (is_mt) {
         DecMTParseReconTileInfo  *parse_recon_tile_info = &dec_handle_ptr->
@@ -218,7 +217,6 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx,
         sb_row_tile_start = (parse_recon_tile_info->tile_info.mi_row_start
             << MI_SIZE_LOG2) >> dec_handle_ptr->seq_header.sb_size_log2;
     }
-#endif
     for (uint32_t mi_row = tile_info->tile_row_start_mi[tile_row];
          mi_row < tile_info->tile_row_start_mi[tile_row + 1];
          mi_row += dec_handle_ptr->seq_header.sb_mi_size)
@@ -252,19 +250,8 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx,
 
             SBInfo  *sb_info = frame_buf->sb_info +
                     (sb_row * master_frame_buf->sb_cols) + sb_col;
-#if !FRAME_MI_MAP
-            SBInfo  *left_sb_info = NULL;
-            if(mi_col != tile_info->tile_col_start_mi[tile_col])
-                left_sb_info  = frame_buf->sb_info +
-                    (sb_row * master_frame_buf->sb_cols) + sb_col - 1;
-            SBInfo  *above_sb_info = NULL;
-            if (mi_row != tile_info->tile_row_start_mi[tile_row])
-                above_sb_info = frame_buf->sb_info +
-                    ((sb_row-1) * master_frame_buf->sb_cols) + sb_col;
-#else
             *(master_frame_buf->frame_mi_map.pps_sb_info + sb_row *
                 master_frame_buf->frame_mi_map.sb_cols + sb_col) = sb_info;
-#endif
             sb_info->sb_mode_info = frame_buf->mode_info +
                 (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) +
                  sb_col * num_mis_in_sb;
@@ -318,29 +305,14 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx,
             parse_ctx->cur_coeff_buf[AOM_PLANE_Y] = sb_info->sb_coeff[AOM_PLANE_Y];
             parse_ctx->cur_coeff_buf[AOM_PLANE_U] = sb_info->sb_coeff[AOM_PLANE_U];
             parse_ctx->cur_coeff_buf[AOM_PLANE_V] = sb_info->sb_coeff[AOM_PLANE_V];
-#if !FRAME_MI_MAP
-            parse_ctx->left_sb_info = left_sb_info;
-            parse_ctx->above_sb_info= above_sb_info;
-#endif
             parse_ctx->prev_blk_has_chroma = 1; //default at start of frame / tile
 
-#if !FRAME_MI_MAP
-            /* nbr updates before SB call */
-            update_nbrs_before_sb(&master_frame_buf->frame_mi_map, sb_col);
-#endif
             // Bit-stream parsing of the superblock
             parse_super_block(dec_handle_ptr, parse_ctx, mi_row, mi_col, sb_info);
 
             if (!is_mt) {
                 /* Init DecModCtxt */
                 DecModCtxt *dec_mod_ctxt = (DecModCtxt*)dec_handle_ptr->pv_dec_mod_ctxt;
-#if !FRAME_MI_MAP
-                dec_mod_ctxt->sb_row_mi = mi_row;
-                dec_mod_ctxt->sb_col_mi = mi_col;
-
-                dec_mod_ctxt->left_sb_info = left_sb_info;
-                dec_mod_ctxt->above_sb_info = above_sb_info;
-#endif
                 dec_mod_ctxt->cur_coeff[AOM_PLANE_Y] = sb_info->sb_coeff[AOM_PLANE_Y];
                 dec_mod_ctxt->cur_coeff[AOM_PLANE_U] = sb_info->sb_coeff[AOM_PLANE_U];
                 dec_mod_ctxt->cur_coeff[AOM_PLANE_V] = sb_info->sb_coeff[AOM_PLANE_V];
@@ -351,13 +323,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx,
                 // decoding of the superblock
                 decode_super_block(dec_mod_ctxt, mi_row, mi_col, sb_info);
             }
-#if !FRAME_MI_MAP
-            /* nbr updates at SB level */
-            update_nbrs_after_sb(&master_frame_buf->frame_mi_map, sb_col);
-#endif
         }
-
-#if ENABLE_ROW_MT_DECODE // post after finish of tile sb_row parsing
         if (is_mt) {
             DecMTFrameData  *dec_mt_frame_data = &dec_handle_ptr->master_frame_buf.
                 cur_frame_bufs[0].dec_mt_frame_data;   //multi frame Parallel 0 -> idx
@@ -365,7 +331,6 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx,
             dec_mt_frame_data->parse_recon_tile_info_array[tile_num].
                 sb_recon_row_parsed[sb_row - sb_row_tile_start] = 1;
         }
-#endif
     }
 
     return status;

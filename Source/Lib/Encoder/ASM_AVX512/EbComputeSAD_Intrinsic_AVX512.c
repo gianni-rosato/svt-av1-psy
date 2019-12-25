@@ -858,7 +858,6 @@ static INLINE void sad_loop_kernel_64_8sum_avx2(const uint8_t *const src, const 
     sums[6] = _mm256_adds_epu16(sums[6], _mm256_mpsadbw_epu8(rr3, ss1, (2 << 3) | 2)); // 010 010
     sums[7] = _mm256_adds_epu16(sums[7], _mm256_mpsadbw_epu8(rr3, ss1, (7 << 3) | 7)); // 111 111
 }
-
 #if 0
 // This is even slower. Don't call.
 static INLINE void overflow16(const __m256i sads256[2], const int32_t x,

@@ -12,13 +12,8 @@ extern "C" {
 
 #include "stdint.h"
 #include "EbSvtAv1.h"
-#if 1 //TWO_PASS
 #include <stdlib.h>
 #include <stdio.h>
-#endif
-#define TILES    1
-#define TWO_PASS                                    1
-#define ALT_REF_OVERLAY_APP                         1
     //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT         2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT            2
@@ -190,12 +185,10 @@ typedef struct EbSvtAv1EncConfiguration
     *
     * Default is 0.*/
     EbBool                   use_qp_file;
-#if 1 //TWO_PASS
     /* Input stats file */
     FILE                    *input_stat_file;
     /* output stats file */
     FILE                    *output_stat_file;
-#endif
     /* Enable picture QP scaling between hierarchical levels
     *
     * Default is null.*/

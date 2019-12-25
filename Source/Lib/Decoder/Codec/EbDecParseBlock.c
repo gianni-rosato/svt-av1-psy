@@ -1072,12 +1072,8 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
     if (is_mt) {
         volatile EbBool *start_motion_proj = &dec_mt_frame_data->start_motion_proj;
         while (*start_motion_proj != EB_TRUE)
-#if SEM_CHANGE
             eb_block_on_semaphore(NULL == thread_ctxt ?
                 dec_handle->thread_semaphore : thread_ctxt->thread_semaphore);
-#else
-            EbSleepMs(1);
-#endif
     }
 
     EbBool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||

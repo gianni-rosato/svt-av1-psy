@@ -504,11 +504,7 @@ static void Av1EncodeLoop(
             residual16bit->stride_y,
             context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr]);
-#if MULTI_PASS_PD
         uint8_t  tx_search_skip_flag = context_ptr->md_context->tx_search_level == TX_SEARCH_ENC_DEC ? get_skip_tx_search_flag(
-#else
-        uint8_t  tx_search_skip_flag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || cu_ptr->prediction_mode_flag == INTER_MODE)) ? get_skip_tx_search_flag(
-#endif
             context_ptr->blk_geom->sq_size,
             MAX_MODE_COST,
             0,
@@ -915,11 +911,7 @@ static void Av1EncodeLoop16bit(
                 residual16bit->stride_y,
                 context_ptr->blk_geom->tx_width[cu_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[cu_ptr->tx_depth][context_ptr->txb_itr]);
-#if MULTI_PASS_PD
             uint8_t  tx_search_skip_flag = context_ptr->md_context->tx_search_level == TX_SEARCH_ENC_DEC ? get_skip_tx_search_flag(
-#else
-            uint8_t  tx_search_skip_flag = (picture_control_set_ptr->parent_pcs_ptr->tx_search_level == TX_SEARCH_ENC_DEC && (picture_control_set_ptr->parent_pcs_ptr->atb_mode == 0 || cu_ptr->prediction_mode_flag == INTER_MODE)) ? get_skip_tx_search_flag(
-#endif
                 context_ptr->blk_geom->sq_size,
                 MAX_MODE_COST,
                 0,
@@ -1447,10 +1439,8 @@ void update_av1_mi_map(
     PictureControlSet *picture_control_set_ptr);
 
 void move_cu_data(
-#if PAL_SUP
     PictureControlSet  *pcs,
     EncDecContext      *context_ptr,
-#endif
     CodingUnit *src_cu,
     CodingUnit *dst_cu);
 
@@ -1585,12 +1575,8 @@ void perform_intra_coding_loop(
                 tx_size,
                 mode,
                 pu_ptr->angle_delta[PLANE_TYPE_Y],
-#if PAL_SUP
                 cu_ptr->palette_info.pmi.palette_size[0] > 0,
                 &cu_ptr->palette_info,
-#else
-                0,
-#endif
                 cu_ptr->filter_intra_mode,
                 topNeighArray + 1,
                 leftNeighArray + 1,
@@ -1851,12 +1837,8 @@ void perform_intra_coding_loop(
                     tx_size,
                     mode,
                     plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
-#if PAL_SUP
                     0, //chroma
                     &cu_ptr->palette_info,
-#else
-                    0,
-#endif
                     FILTER_INTRA_MODES,
                     topNeighArray + 1,
                     leftNeighArray + 1,
@@ -2247,7 +2229,6 @@ EB_EXTERN void av1_encode_pass(
     context_ptr->coded_area_sb = 0;
     context_ptr->coded_area_sb_uv = 0;
 
-#if AV1_LF
     if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1){
         if (tbAddr == 0) {
             eb_av1_loop_filter_init(picture_control_set_ptr);
@@ -2263,7 +2244,7 @@ EB_EXTERN void av1_encode_pass(
                 &picture_control_set_ptr->parent_pcs_ptr->lf_info, 0, 3);
         }
     }
-#endif
+
 
     uint8_t allow_update_cdf = picture_control_set_ptr->update_cdf;
     uint32_t final_cu_itr = 0;
@@ -2343,16 +2324,12 @@ EB_EXTERN void av1_encode_pass(
                     if (picture_control_set_ptr->slice_type != I_SLICE)
                         context_ptr->intra_coded_area_sb[tbAddr] += blk_geom->bwidth* blk_geom->bheight;
 
-
-
-#if PAL_SUP
                     if (sequence_control_set_ptr->static_config.encoder_bit_depth > EB_8BIT && picture_control_set_ptr->hbd_mode_decision==0 &&
                         cu_ptr->palette_info.pmi.palette_size[0] > 0){
                         //MD was done on 8bit, scale  palette colors to 10bit
                         for (uint8_t col = 0; col < cu_ptr->palette_info.pmi.palette_size[0]; col++)
                             cu_ptr->palette_info.pmi.palette_colors[col] *= 4;
                     }
-#endif
                     // *Note - Transforms are the same size as predictions
                     // Partition Loop
                     context_ptr->txb_itr = 0;
@@ -2508,14 +2485,11 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->prediction_unit_array->ref_frame_type,
                                     &context_ptr->mv_unit,
                                     1,// use_intrabc,
-#if OBMC_FLAG
                                     SIMPLE_TRANSLATION,
                                     0,
                                     0,
-#endif
                                     1,
                                     &cu_ptr->interinter_comp,
-#if II_COMP_FLAG
                                     &sb_ptr->tile_info,
                                     ep_luma_recon_neighbor_array,
                                     ep_cb_recon_neighbor_array ,
@@ -2524,8 +2498,6 @@ EB_EXTERN void av1_encode_pass(
                                     cu_ptr->interintra_mode,
                                     cu_ptr->use_wedge_interintra,
                                     cu_ptr->interintra_wedge_index,
-
-#endif
                                     context_ptr->cu_origin_x,
                                     context_ptr->cu_origin_y,
                                     blk_geom->bwidth,
@@ -3446,7 +3418,6 @@ EB_EXTERN void av1_encode_pass(
                             context_ptr->blk_geom->bheight_uv,
                             context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
                             is16bit);
-#if TWO_PASS
                     // Collect the referenced area per 64x64
                     if (sequence_control_set_ptr->use_output_stat_file) {
                         if (cu_ptr->prediction_unit_array->ref_frame_index_l0 >= 0) {
@@ -3546,7 +3517,7 @@ EB_EXTERN void av1_encode_pass(
                             eb_release_mutex(refObj1->referenced_area_mutex);
                         }
                     }
-#endif
+
                 }
                 else {
                     CHECK_REPORT_ERROR_NC(
@@ -3601,13 +3572,8 @@ EB_EXTERN void av1_encode_pass(
 
                 {
                     CodingUnit *src_cu = &context_ptr->md_context->md_cu_arr_nsq[d1_itr];
-
                     CodingUnit *dst_cu = &sb_ptr->final_cu_arr[final_cu_itr++];
-#if PAL_SUP
                     move_cu_data(picture_control_set_ptr, context_ptr,src_cu, dst_cu);
-#else
-                    move_cu_data(src_cu, dst_cu);
-#endif
                 }
                 if (sequence_control_set_ptr->mfmv_enabled && picture_control_set_ptr->slice_type != I_SLICE && picture_control_set_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
                     uint32_t mi_stride = picture_control_set_ptr->mi_stride;
@@ -3628,7 +3594,6 @@ EB_EXTERN void av1_encode_pass(
         else
             blk_it += d1_depth_offset[sequence_control_set_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
     } // CU Loop
-#if AV1_LF
     // First Pass Deblocking
     if (dlfEnableFlag && picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode == 1) {
         if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[0] || picture_control_set_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[1]) {
@@ -3644,7 +3609,7 @@ EB_EXTERN void av1_encode_pass(
                 LastCol);
         }
     }
-#endif
+
 
     return;
 }

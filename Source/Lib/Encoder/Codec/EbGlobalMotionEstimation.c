@@ -30,7 +30,7 @@ void global_motion_estimation(PictureParentControlSet *picture_control_set_ptr,
                               MeContext *context_ptr,
                               EbPictureBufferDesc *input_picture_ptr)
 {
-#if GM_OPT
+#if GLOBAL_WARPED_MOTION
     // Get downsampled pictures with a downsampling factor of 2 in each dimension
     EbPaReferenceObject *pa_reference_object;
     EbPictureBufferDesc *quarter_ref_pic_ptr;
@@ -72,7 +72,7 @@ void global_motion_estimation(PictureParentControlSet *picture_control_set_ptr,
                 referenceObject = (EbPaReferenceObject *)picture_control_set_ptr
                         ->ref_pa_pic_ptr_array[listIndex][ref_pic_index]->object_ptr;
 
-#if GM_OPT
+#if GLOBAL_WARPED_MOTION
             // Set the source and the reference picture to be used by the global motion search
             // based on the input search mode
             if (picture_control_set_ptr->gm_level == GM_DOWN) {

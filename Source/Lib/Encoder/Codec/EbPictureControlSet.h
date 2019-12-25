@@ -58,14 +58,8 @@ extern "C" {
 
 // BDP OFF
 #define MD_NEIGHBOR_ARRAY_INDEX                0
-#if MULTI_PASS_PD
 #define MULTI_STAGE_PD_NEIGHBOR_ARRAY_INDEX    4
-#endif
-#if MULTI_PASS_PD
 #define NEIGHBOR_ARRAY_TOTAL_COUNT             5
-#else
-#define NEIGHBOR_ARRAY_TOTAL_COUNT             4
-#endif
 #define AOM_QM_BITS                            5
 
 
@@ -226,24 +220,8 @@ extern "C" {
         uint32_t          tot_d1_blocks; //how many d1 bloks every parent square would have
         uint8_t           leaf_index;
         EbBool            split_flag;
-#if PREDICT_NSQ_SHAPE
-        //uint8_t           open_loop_ranking;
-        uint8_t           early_split_flag;
-#if COMBINE_MDC_NSQ_TABLE
-        uint8_t           ol_best_nsq_shape1;
-        uint8_t           ol_best_nsq_shape2;
-        uint8_t           ol_best_nsq_shape3;
-        uint8_t           ol_best_nsq_shape4;
-        uint8_t           ol_best_nsq_shape5;
-        uint8_t           ol_best_nsq_shape6;
-        uint8_t           ol_best_nsq_shape7;
-        uint8_t           ol_best_nsq_shape8;
-#endif
-#endif
-#if ADD_MDC_REFINEMENT_LOOP || MULTI_PASS_PD
         uint8_t           consider_block;
         uint8_t           refined_split_flag;
-#endif
     } EbMdcLeafData;
 
     typedef struct MdcLcuData
@@ -342,17 +320,12 @@ extern "C" {
 
         uint8_t                               ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
         EB_SLICE                              ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if TWO_PASS
         uint64_t                            ref_pic_referenced_area_avg_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
         // GOP
         uint64_t                              picture_number;
         uint8_t                               temporal_layer_index;
-
         EbColorFormat                         color_format;
-
         EncDecSegments                     *enc_dec_segment_ctrl;
-
         // Entropy Process Rows
         int8_t                                entropy_coding_current_available_row;
         EbBool                                entropy_coding_row_array[MAX_LCU_ROWS];
@@ -505,9 +478,7 @@ extern "C" {
         int8_t ref_frame_side[REF_FRAMES];
         TPL_MV_REF  *tpl_mvs;
         uint8_t pic_filter_intra_mode;
-#if PAL_SUP
         TOKENEXTRA *tile_tok[64][64];
-#endif
     } PictureControlSet;
 
     // To optimize based on the max input size
@@ -778,9 +749,6 @@ extern "C" {
 #if CONFIG_ENTROPY_STATS
         int32_t                               coef_cdf_category;
 #endif
-#if PREDICT_NSQ_SHAPE
-        uint16_t                              base_qindex;
-#endif
         int32_t                               separate_uv_delta_q;
 
         // Global quant matrix tables
@@ -803,13 +771,6 @@ extern "C" {
         uint64_t                              frame_offset;
         uint32_t                              large_scale_tile;
         int32_t                               nb_cdef_strengths;
-#if PREDICT_NSQ_SHAPE
-        ReferenceMode                         reference_mode;
-        int32_t                               delta_q_present_flag;
-        int32_t                               reduced_tx_set_used;
-#endif
-
-#if ADD_DELTA_QP_SUPPORT
         // Resolution of delta quant
         int32_t                               num_tg;
         int32_t                               monochrome;
@@ -839,7 +800,7 @@ extern "C" {
 //
         int32_t                               prev_delta_lf[FRAME_LF_COUNT];
         int32_t                               curr_delta_lf[FRAME_LF_COUNT];
-#endif
+
         // Resolution of delta quant
         // int32_t delta_q_res;
         int32_t                               allow_comp_inter_inter;
@@ -857,16 +818,8 @@ extern "C" {
         int32_t                               cdef_frame_strength;
         int32_t                               cdf_ref_frame_strenght;
         int32_t                               use_ref_frame_cdef_strength;
-#if !MULTI_PASS_PD
-        uint8_t                               tx_search_level;
-        uint64_t                              tx_weight;
-        uint8_t                               tx_search_reduced_set;
-        uint8_t                               interpolation_search_level;
-#endif
         uint8_t                               nsq_search_level;
-#if PAL_SUP
         uint8_t                               palette_mode;
-#endif
         uint8_t                               nsq_max_shapes_md; // max number of shapes to be tested in MD
         uint8_t                              sc_content_detected;
         uint8_t                              ibc_mode;
@@ -898,32 +851,17 @@ extern "C" {
                                                             // I Slice has the value of the next ALT_REF picture
         uint64_t                              filtered_sse_uv;
         FrameHeader                           frm_hdr;
-#if !MULTI_PASS_PD
-        MD_COMP_TYPE                          compound_types_to_try;
-#endif
         uint8_t                               compound_mode;
         uint8_t                               prune_unipred_at_me;
         uint8_t                               coeff_based_skip_atb;
         uint16_t*                             altref_buffer_highbd[3];
-#if II_COMP_FLAG
         uint8_t                              enable_inter_intra;
-#endif
-#if OBMC_FLAG
         uint8_t                              pic_obmc_mode;
-#endif
-#if TWO_PASS
         stat_struct_t*                       stat_struct_first_pass_ptr; // pointer to stat_struct in the first pass
         struct stat_struct_t                 stat_struct; // stat_struct used in the second pass
         uint64_t                             referenced_area_avg; // average referenced area per frame
         uint8_t                              referenced_area_has_non_zero;
-#endif
-#if PREDICT_NSQ_SHAPE && !MDC_ADAPTIVE_LEVEL
-        uint8_t                                mdc_depth_level;
-#endif
-#if MDC_ADAPTIVE_LEVEL
-        uint8_t                                enable_adaptive_ol_partitioning;
-#endif
-#if GM_OPT
+#if GLOBAL_WARPED_MOTION
         uint8_t                                gm_level;
 #endif
         uint8_t                                tx_size_early_exit;
@@ -941,9 +879,7 @@ extern "C" {
         EbBitDepthEnum                     bit_depth;
         EbColorFormat                      color_format;
         uint32_t                           sb_sz;
-#if PAL_SUP
         uint8_t                            cfg_palette;
-#endif
         uint32_t                           sb_size_pix;   //since we still have lot of code assuming 64x64 LCU, we add a new paramter supporting both128x128 and 64x64,
                                                           //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
         uint32_t                           max_depth;
@@ -966,229 +902,8 @@ extern "C" {
 
     typedef struct Av1Comp
     {
-        //    Quants quants;
-        //    ThreadData td;
-        //    MB_MODE_INFO_EXT *mbmi_ext_base;
-        //    CB_COEFF_BUFFER *coeff_buffer_base;
-        //    Dequants dequants;
-        //    Av1Common common;
-        //    AV1EncoderConfig oxcf;
-        //    struct lookahead_ctx *lookahead;
-        //    struct lookahead_entry *alt_ref_source;
-        //
-        //    int32_t optimize_speed_feature;
-        //    int32_t optimize_seg_arr[MAX_SEGMENTS];
-        //
-        //    Yv12BufferConfig *source;
-        //    Yv12BufferConfig *last_source;  // NULL for first frame and alt_ref frames
-        //    Yv12BufferConfig *unscaled_source;
-        //    Yv12BufferConfig scaled_source;
-        //    Yv12BufferConfig *unscaled_last_source;
-        //    Yv12BufferConfig scaled_last_source;
-        //
-        //    // For a still frame, this flag is set to 1 to skip partition search.
-        //    int32_t partition_search_skippable_frame;
-        //    double csm_rate_array[32];
-        //    double m_rate_array[32];
-        //    int32_t rate_size;
-        //    int32_t rate_index;
-        //    HashTable *previous_hash_table;
-        //    int32_t previous_index;
-        //    int32_t cur_poc;  // DebugInfo
-        //
-        //    int32_t scaled_ref_idx[REF_FRAMES];
-        //    int32_t ref_fb_idx[REF_FRAMES];
-        //    int32_t refresh_fb_idx;  // ref frame buffer index to refresh
-        //
-        //    int32_t last_show_frame_buf_idx;  // last show frame buffer index
-        //
-        //    int32_t refresh_last_frame;
-        //    int32_t refresh_golden_frame;
-        //    int32_t refresh_bwd_ref_frame;
-        //    int32_t refresh_alt2_ref_frame;
-        //    int32_t refresh_alt_ref_frame;
-        //
-        //    int32_t ext_refresh_frame_flags_pending;
-        //    int32_t ext_refresh_last_frame;
-        //    int32_t ext_refresh_golden_frame;
-        //    int32_t ext_refresh_bwd_ref_frame;
-        //    int32_t ext_refresh_alt2_ref_frame;
-        //    int32_t ext_refresh_alt_ref_frame;
-        //
-        //    int32_t ext_refresh_frame_context_pending;
-        //    int32_t ext_refresh_frame_context;
-        //    int32_t ext_use_ref_frame_mvs;
-        //    int32_t ext_use_error_resilient;
-        //    int32_t ext_use_s_frame;
-        //    int32_t ext_use_primary_ref_none;
-        //
-        //    Yv12BufferConfig last_frame_uf;
+
         Yv12BufferConfig trial_frame_rst;
-        //
-        //    // Ambient reconstruction err target for force key frames
-        //    int64_t ambient_err;
-        //
-        //    RD_OPT rd;
-        //
-        //    CODING_CONTEXT coding_context;
-        //
-        //    int32_t gmtype_cost[TRANS_TYPES];
-        //    int32_t gmparams_cost[REF_FRAMES];
-        //
-        //    int32_t nmv_costs[2][MV_VALS];
-        //    int32_t nmv_costs_hp[2][MV_VALS];
-        //
-        //    int64_t last_time_stamp_seen;
-        //    int64_t last_end_time_stamp_seen;
-        //    int64_t first_time_stamp_ever;
-        //
-        //    RATE_CONTROL rc;
-        //    double frame_rate;
-        //
-        //    // NOTE(zoeliu): Any inter frame allows maximum of REF_FRAMES inter
-        //    // references; Plus the currently coded frame itself, it is needed to allocate
-        //    // sufficient space to the size of the maximum possible number of frames.
-        //    int32_t interp_filter_selected[REF_FRAMES + 1][SWITCHABLE];
-        //
-        //    struct aom_codec_pkt_list *output_pkt_list;
-        //
-        //    MBGRAPH_FRAME_STATS mbgraph_stats[MAX_LAG_BUFFERS];
-        //    int32_t mbgraph_n_frames;  // number of frames filled in the above
-        //    int32_t static_mb_pct;     // % forced skip mbs by segmentation
-        //    int32_t ref_frame_flags;
-        //    int32_t ext_ref_frame_flags;
-        //    RATE_FACTOR_LEVEL frame_rf_level[FRAME_BUFFERS];
-        //
-        //    SpeedFeatures sf;
-        //
-        //    uint32_t max_mv_magnitude;
-        //    int32_t mv_step_param;
-        //
-        //    int32_t allow_comp_inter_inter;
-        //    int32_t all_one_sided_refs;
-        //
-        //    uint8_t *segmentation_map;
-        //
-        //    CYCLIC_REFRESH *cyclic_refresh;
-        //    ActiveMap active_map;
-        //
-        //    fractional_mv_step_fp *find_fractional_mv_step;
-        //    av1_diamond_search_fn_t diamond_search_sad;
-        //    aom_variance_fn_ptr_t fn_ptr[BlockSizeS_ALL];
-        //    uint64_t time_receive_data;
-        //    uint64_t time_compress_data;
-        //    uint64_t time_pick_lpf;
-        //    uint64_t time_encode_sb_row;
-        //
-        //#if CONFIG_FP_MB_STATS
-        //    int32_t use_fp_mb_stats;
-        //#endif
-        //
-        //    TWO_PASS twopass;
-        //
-        //    Yv12BufferConfig alt_ref_buffer;
-        //
-        //#if CONFIG_INTERNAL_STATS
-        //    uint32_t mode_chosen_counts[MAX_MODES];
-        //
-        //    int32_t count;
-        //    uint64_t total_sq_error;
-        //    uint64_t total_samples;
-        //    ImageStat psnr;
-        //
-        //    double total_blockiness;
-        //    double worst_blockiness;
-        //
-        //    int32_t bytes;
-        //    double summed_quality;
-        //    double summed_weights;
-        //    uint32_t tot_recode_hits;
-        //    double worst_ssim;
-        //
-        //    ImageStat fastssim;
-        //    ImageStat psnrhvs;
-        //
-        //    int32_t b_calculate_blockiness;
-        //    int32_t b_calculate_consistency;
-        //
-        //    double total_inconsistency;
-        //    double worst_consistency;
-        //    Ssimv *ssim_vars;
-        //    Metrics metrics;
-        //#endif
-        //    int32_t b_calculate_psnr;
-        //
-        //    int32_t droppable;
-        //
-        //    int32_t initial_width;
-        //    int32_t initial_height;
-        //    int32_t initial_mbs;  // Number of MBs in the full-size frame; to be used to
-        //    // normalize the firstpass stats. This will differ from the
-        //    // number of MBs in the current frame when the frame is
-        //    // scaled.
-        //
-        //    // When resize is triggered through external control, the desired width/height
-        //    // are stored here until use in the next frame coded. They are effective only
-        //    // for
-        //    // one frame and are reset after use.
-        //    int32_t resize_pending_width;
-        //    int32_t resize_pending_height;
-        //
-        //    int32_t frame_flags;
-        //
-        //    SearchSiteConfig ss_cfg;
-        //
-        //    int32_t multi_arf_allowed;
-        //
-        //    TileDataEnc *tile_data;
-        //    int32_t allocated_tiles;  // Keep track of memory allocated for tiles.
-        //
-        //    TOKENEXTRA *tile_tok[MAX_TILE_ROWS][MAX_TILE_COLS];
-        //    uint32_t tok_count[MAX_TILE_ROWS][MAX_TILE_COLS];
-        //
-        //    TileBufferEnc tile_buffers[MAX_TILE_ROWS][MAX_TILE_COLS];
-        //
-        //    int32_t resize_state;
-        //    int32_t resize_avg_qp;
-        //    int32_t resize_buffer_underflow;
-        //    int32_t resize_count;
-        //
-        //    // Sequence parameters have been transmitted already and locked
-        //    // or not. Once locked av1_change_config cannot change the seq
-        //    // parameters.
-        //    int32_t seq_params_locked;
-        //
-        //    // VARIANCE_AQ segment map refresh
-        //    int32_t vaq_refresh;
-        //
-        //    // Multi-threading
-        //    int32_t num_workers;
-        //    AVxWorker *workers;
-        //    struct EncWorkerData *tile_thr_data;
-        //    int32_t refresh_frame_mask;
-        //    int32_t existing_fb_idx_to_show;
-        //    int32_t is_arf_filter_off[MAX_EXT_ARFS + 1];
-        //    int32_t num_extra_arfs;
-        //    int32_t arf_map[MAX_EXT_ARFS + 1];
-        //    int32_t arf_pos_in_gf[MAX_EXT_ARFS + 1];
-        //    int32_t arf_pos_for_ovrly[MAX_EXT_ARFS + 1];
-        //    int32_t global_motion_search_done;
-        //    TranLow *tcoeff_buf[MAX_MB_PLANE];
-        //    int32_t extra_arf_allowed;
-        //    int32_t bwd_ref_allowed;
-        //    // A flag to indicate if intrabc is ever used in current frame.
-        //    int32_t intrabc_used;
-        //    int32_t dv_cost[2][MV_VALS];
-        //    // TODO(huisu@google.com): we can update dv_joint_cost per SB.
-        //    int32_t dv_joint_cost[MV_JOINTS];
-        //    int32_t has_lossless_segment;
-        //
-        //    // For frame refs short signaling:
-        //    //   A mapping of each reference frame from its encoder side value to the
-        //    //   decoder side value obtained following the short signaling procedure.
-        //    int32_t ref_conv[REF_FRAMES];
-        //
-        //    AV1LfSync lf_row_sync;
     } Av1Comp;
 
     /**************************************

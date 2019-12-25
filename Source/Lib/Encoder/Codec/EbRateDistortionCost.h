@@ -172,10 +172,8 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
-#if MULTI_PASS_PD
         uint8_t                  enable_inter_intra,
         EbBool                   full_cost_shut_fast_rate_flag,
-#endif
         uint8_t                  md_pass,
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
@@ -193,25 +191,11 @@ extern "C" {
         const BlockGeom         *blk_geom,
         uint32_t                 miRow,
         uint32_t                 miCol,
-#if MULTI_PASS_PD
         uint8_t                  enable_inter_intra,
         EbBool                   full_cost_shut_fast_rate_flag,
-#endif
         uint8_t                  md_pass,
         uint32_t                 left_neighbor_mode,
         uint32_t                 top_neighbor_mode);
-
-#if ADD_MDC_FULL_COST
-    uint64_t mdc_av1_inter_fast_cost(
-        CodingUnit             *cu_ptr,
-        ModeDecisionCandidate  *candidate_ptr,
-        uint64_t                 luma_distortion,
-        uint64_t                 lambda,
-        EbBool                   use_ssd,
-        PictureControlSet       *picture_control_set_ptr,
-        CandidateMv             *ref_mv_stack,
-        const BlockGeom         *blk_geom);
-#endif
 
     extern EbErrorType av1_intra_full_cost(
         PictureControlSet                    *picture_control_set_ptr,
@@ -240,17 +224,6 @@ extern "C" {
         uint64_t                                 *cb_coeff_bits,
         uint64_t                                 *cr_coeff_bits,
         BlockSize                                bsize);
-
-#if ADD_MDC_FULL_COST
-    int32_t av1_cost_skip_txb(
-        uint8_t                                 allow_update_cdf,
-        FRAME_CONTEXT                           *ec_ctx,
-        struct ModeDecisionCandidateBuffer    *candidate_buffer_ptr,
-        TxSize                                  transform_size,
-        PlaneType                               plane_type,
-        int16_t                                   txb_skip_ctx);
-#endif
-
     extern uint64_t get_tx_size_bits(
         ModeDecisionCandidateBuffer          *candidateBuffer,
         ModeDecisionContext                  *context_ptr,

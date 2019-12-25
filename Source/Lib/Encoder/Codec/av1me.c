@@ -19,10 +19,7 @@
 #include "EbSequenceControlSet.h"
 #include "EbComputeSAD.h"
 #include "aom_dsp_rtcd.h"
-#if OBMC_FLAG
 #include "EbModeDecisionProcess.h"
-#endif
-
 #include "EbAdaptiveMotionVectorPrediction.h"
 
 int av1_is_dv_valid(const MV dv,
@@ -71,7 +68,6 @@ void init_fn_ptr(void)
         BFP0(BLOCK_8X4, eb_aom_sad8x4, eb_aom_variance8x4, eb_aom_sad8x4x4d)
         BFP0(BLOCK_4X8, eb_aom_sad4x8, eb_aom_variance4x8, eb_aom_sad4x8x4d)
         BFP0(BLOCK_4X4, eb_aom_sad4x4, eb_aom_variance4x4, eb_aom_sad4x4x4d)
-#if OBMC_FLAG
      #define OBFP(BT, OSDF, OVF, OSVF) \
       mefn_ptr[BT].osdf = OSDF;    \
       mefn_ptr[BT].ovf = OVF;      \
@@ -120,7 +116,7 @@ void init_fn_ptr(void)
            aom_obmc_sub_pixel_variance16x64)
       OBFP(BLOCK_64X16, aom_obmc_sad64x16, aom_obmc_variance64x16,
            aom_obmc_sub_pixel_variance64x16)
-#endif
+
 }
 
 // #define NEW_DIAMOND_SEARCH
@@ -205,19 +201,6 @@ static INLINE int is_mv_in(const MvLimits *mv_limits, const MV *mv) {
   return (mv->col >= mv_limits->col_min) && (mv->col <= mv_limits->col_max) &&
          (mv->row >= mv_limits->row_min) && (mv->row <= mv_limits->row_max);
 }
-#if !OBMC_FLAG
-#define CHECK_BETTER                                                      \
-  {                                                                       \
-    if (thissad < bestsad) {                                              \
-      if (use_mvcost)                                                     \
-        thissad += mvsad_err_cost(x, &this_mv, &fcenter_mv, sad_per_bit); \
-      if (thissad < bestsad) {                                            \
-        bestsad = thissad;                                                \
-        best_site = i;                                                    \
-      }                                                                   \
-    }                                                                     \
-  }
-#endif
 #define MAX_PATTERN_SCALES 11
 #define MAX_PATTERN_CANDIDATES 8  // max number of canddiates per scale
 #define PATTERN_CANDIDATES_REF 3  // number of refinement candidates
@@ -675,7 +658,6 @@ int eb_av1_refining_search_sad(IntraBcContext  *x, MV *ref_mv, int error_per_bit
 
   return best_sad;
 }
-#if OBMC_FLAG
 static int get_obmc_mvpred_var(const IntraBcContext *x, const int32_t *wsrc,
                                const int32_t *mask, const MV *best_mv,
                                const MV *center_mv,
@@ -1077,7 +1059,7 @@ int av1_find_best_obmc_sub_pixel_tree_up(
 }
 
 
-#endif
+
 int eb_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext  *x, BlockSize bsize,
                           MV *mvp_full, int step_param, int method,
                           int run_mesh_search, int error_per_bit,

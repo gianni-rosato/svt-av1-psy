@@ -286,12 +286,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_compute_cdef_dist = compute_cdef_dist_avx2;
     eb_compute_cdef_dist_8bit = compute_cdef_dist_8bit_c;
     if (flags & HAS_AVX2) eb_compute_cdef_dist_8bit = compute_cdef_dist_8bit_avx2;
-
-#if PREDICT_NSQ_SHAPE
-    spatial_full_distortion = spatial_full_distortion_helper;
-    if (flags & HAS_AVX2) spatial_full_distortion = spatial_full_distortion_avx2_helper;
-#endif
-
     eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_c;
     if (flags & HAS_AVX2) eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_avx2;
 
@@ -522,12 +516,9 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
     eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
     if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
-
-#if II_COMP_FLAG
     aom_blend_a64_mask = aom_blend_a64_mask_c;
     if (flags & HAS_SSE4_1) aom_blend_a64_mask = aom_blend_a64_mask_sse4_1;
     if (flags & HAS_AVX2) aom_blend_a64_mask = aom_blend_a64_mask_avx2;
-#endif //II_COMP_FLAG
     aom_blend_a64_hmask = aom_blend_a64_hmask_c;
     if (flags & HAS_SSE4_1) aom_blend_a64_hmask = aom_blend_a64_hmask_sse4_1;
     aom_blend_a64_vmask = aom_blend_a64_vmask_c;
@@ -1088,7 +1079,6 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     }
 #endif // !NON_AVX512_SUPPORT
 
-#if OBMC_FLAG
     eb_aom_highbd_blend_a64_vmask = eb_aom_highbd_blend_a64_vmask_c;
     if (flags & HAS_SSE4_1) eb_aom_highbd_blend_a64_vmask = eb_aom_highbd_blend_a64_vmask_sse4_1;
     eb_aom_highbd_blend_a64_hmask = eb_aom_highbd_blend_a64_hmask_c;
@@ -1233,7 +1223,7 @@ void setup_rtcd_internal(CPU_FLAGS flags)
     if (flags & HAS_AVX2) aom_obmc_variance8x4 = aom_obmc_variance8x4_avx2;
     aom_obmc_variance8x8 = aom_obmc_variance8x8_c;
     if (flags & HAS_AVX2) aom_obmc_variance8x8 = aom_obmc_variance8x8_avx2;
-#endif
+
     //VARIANCE
     eb_aom_variance4x4 = eb_aom_variance4x4_c;
     if (flags & HAS_AVX2) eb_aom_variance4x4 = eb_aom_variance4x4_sse2;

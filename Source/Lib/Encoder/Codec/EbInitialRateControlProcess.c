@@ -226,13 +226,13 @@ void DetectGlobalMotion(
     PictureParentControlSet    *picture_control_set_ptr)
 {
 
-#if  INIT_GM_FIX
+#if  GLOBAL_WARPED_MOTION
     //initilize global motion to be OFF for all references frames.
     memset(picture_control_set_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
 #endif
 
 #if GLOBAL_WARPED_MOTION
-#if GM_OPT
+#if GLOBAL_WARPED_MOTION
     if (picture_control_set_ptr->gm_level <= GM_DOWN) {
 #endif
     uint32_t numOfListToSearch = (picture_control_set_ptr->slice_type == P_SLICE)
@@ -260,8 +260,8 @@ void DetectGlobalMotion(
         }
     }
 #endif
-#if GM_OPT && GLOBAL_WARPED_MOTION || !GLOBAL_WARPED_MOTION
-#if GM_OPT && GLOBAL_WARPED_MOTION
+#if GLOBAL_WARPED_MOTION && GLOBAL_WARPED_MOTION || !GLOBAL_WARPED_MOTION
+#if GLOBAL_WARPED_MOTION && GLOBAL_WARPED_MOTION
     }
     else {
 #endif
@@ -389,7 +389,7 @@ void DetectGlobalMotion(
             picture_control_set_ptr->tiltMvy = (int16_t)(yTiltMvSum / totalTiltLcus);
         }
     }
-#if GM_OPT && GLOBAL_WARPED_MOTION
+#if GLOBAL_WARPED_MOTION && GLOBAL_WARPED_MOTION
     }
 #endif
 #endif
@@ -1328,11 +1328,9 @@ void* initial_rate_control_kernel(void *input_ptr)
                                 ((PictureParentControlSet*)(queueEntryPtr->parent_pcs_wrapper_ptr->object_ptr))->reference_picture_wrapper_ptr,
                                 1);
                         }
-#if TWO_PASS
                         picture_control_set_ptr->stat_struct_first_pass_ptr = picture_control_set_ptr->is_used_as_reference_flag ? &((EbReferenceObject*)picture_control_set_ptr->reference_picture_wrapper_ptr->object_ptr)->stat_struct : &picture_control_set_ptr->stat_struct;
                         if (sequence_control_set_ptr->use_output_stat_file)
                             memset(picture_control_set_ptr->stat_struct_first_pass_ptr, 0, sizeof(stat_struct_t));
-#endif
                         // Get Empty Results Object
                         eb_get_empty_object(
                             context_ptr->initialrate_control_results_output_fifo_ptr,

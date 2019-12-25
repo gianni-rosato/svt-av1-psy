@@ -108,13 +108,8 @@ extern "C" {
         // Palette Mode
         int32_t palette_ysize_fac_bits[PALATTE_BSIZE_CTXS][CDF_SIZE(PALETTE_SIZES)];
         int32_t palette_uv_size_fac_bits[PALATTE_BSIZE_CTXS][CDF_SIZE(PALETTE_SIZES)];
-#if PAL_SUP
         int32_t palette_ycolor_fac_bitss[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][PALETTE_COLORS];
         int32_t palette_uv_color_fac_bits[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][PALETTE_COLORS];
-#else
-        int32_t palette_ycolor_fac_bitss[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][CDF_SIZE(PALETTE_COLORS)];
-        int32_t palette_uv_color_fac_bits[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][CDF_SIZE(PALETTE_COLORS)];
-#endif
         int32_t palette_ymode_fac_bits[PALATTE_BSIZE_CTXS][PALETTE_Y_MODE_CONTEXTS][CDF_SIZE(2)];
         int32_t palette_uv_mode_fac_bits[PALETTE_UV_MODE_CONTEXTS][CDF_SIZE(2)];
 

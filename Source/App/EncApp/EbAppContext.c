@@ -179,10 +179,8 @@ EbErrorType CopyConfigurationParameters(
     callback_data->eb_enc_parameters.enable_adaptive_quantization = (EbBool)config->enable_adaptive_quantization;
     callback_data->eb_enc_parameters.qp = config->qp;
     callback_data->eb_enc_parameters.use_qp_file = (EbBool)config->use_qp_file;
-#if TWO_PASS
     callback_data->eb_enc_parameters.input_stat_file = config->input_stat_file;
     callback_data->eb_enc_parameters.output_stat_file = config->output_stat_file;
-#endif
     callback_data->eb_enc_parameters.stat_report = (EbBool)config->stat_report;
     callback_data->eb_enc_parameters.disable_dlf_flag = (EbBool)config->disable_dlf_flag;
     callback_data->eb_enc_parameters.enable_warped_motion = (EbBool)config->enable_warped_motion;

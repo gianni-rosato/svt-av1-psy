@@ -383,12 +383,6 @@ EbErrorType load_default_buffer_configuration_settings(
     uint32_t encDecSegW = (sequence_control_set_ptr->static_config.super_block_size == 128) ?
         ((sequence_control_set_ptr->max_input_luma_width + 64) / 128) :
         ((sequence_control_set_ptr->max_input_luma_width + 32) / 64);
-
-#if CABAC_SERIAL
-    encDecSegH = 1;
-    encDecSegW = 1;
-#endif
-
     uint32_t meSegH     = (((sequence_control_set_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
     uint32_t meSegW     = (((sequence_control_set_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
 
@@ -1019,10 +1013,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         inputData.hbd_mode_decision = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->static_config.enable_hbd_mode_decision;
         inputData.cdf_mode = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->cdf_mode;
         inputData.mfmv = enc_handle_ptr->sequence_control_set_instance_array[instance_index]->sequence_control_set_ptr->mfmv_enabled;
-
-#if PAL_SUP
         inputData.cfg_palette = enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->static_config.screen_content_mode;
-#endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1532,7 +1523,6 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 
     // EncDec Contexts
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->enc_dec_context_ptr_array, enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count);
-
     for (processIndex = 0; processIndex < enc_handle_ptr->sequence_control_set_instance_array[0]->sequence_control_set_ptr->enc_dec_process_init_count; ++processIndex) {
         EB_NEW(
             enc_handle_ptr->enc_dec_context_ptr_array[processIndex],
@@ -1888,12 +1878,8 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     derive_input_resolution(
         sequence_control_set_ptr,
         sequence_control_set_ptr->seq_header.max_frame_width*sequence_control_set_ptr->seq_header.max_frame_height);
-#if TWO_PASS
     // In two pass encoding, the first pass uses sb size=64
     if (sequence_control_set_ptr->static_config.screen_content_mode == 1 || sequence_control_set_ptr->use_output_stat_file)
-#else
-    if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
-#endif
         sequence_control_set_ptr->static_config.super_block_size = 64;
     else
         sequence_control_set_ptr->static_config.super_block_size = (sequence_control_set_ptr->static_config.enc_mode <= ENC_M3 && sequence_control_set_ptr->input_resolution >= INPUT_SIZE_1080i_RANGE) ? 128 : 64;
@@ -1913,14 +1899,7 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
 
     //0: MRP Mode 0 (4,3)
     //1: MRP Mode 1 (2,2)
-#if PRESETS_OPT
     sequence_control_set_ptr->mrp_mode = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
-#elif PRESETS_TUNE
-    sequence_control_set_ptr->mrp_mode = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M2) ? 0 : 1;
-#else
-    sequence_control_set_ptr->mrp_mode = (uint8_t) (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 0 : 1;
-#endif
-
     //0: ON
     //1: OFF
     sequence_control_set_ptr->cdf_mode = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M6) ? 0 : 1;
@@ -1932,7 +1911,6 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
-#if PRESETS_TUNE
     if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
         if (sequence_control_set_ptr->static_config.enc_mode <= ENC_M4)
             sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
@@ -1943,50 +1921,28 @@ void SetParamBasedOnInput(SequenceControlSet *sequence_control_set_ptr)
             sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
-#else
-    if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
-        sequence_control_set_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
-    else
-        sequence_control_set_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
-#endif
+
 
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed
     // 1                            1: allowed
     if (sequence_control_set_ptr->static_config.over_bndry_blk == DEFAULT)
-#if PRESETS_TUNE
         if (sequence_control_set_ptr->static_config.enc_mode <= ENC_M5)
-#else
-        if (sequence_control_set_ptr->static_config.enc_mode == ENC_M0)
-#endif
             sequence_control_set_ptr->over_boundary_block_mode = 1;
         else
             sequence_control_set_ptr->over_boundary_block_mode = 0;
     else
         sequence_control_set_ptr->over_boundary_block_mode = sequence_control_set_ptr->static_config.over_bndry_blk;
-
     if (sequence_control_set_ptr->static_config.enable_mfmv == DEFAULT)
-#if PRESETS_TUNE
         if (sequence_control_set_ptr->static_config.screen_content_mode == 1)
             sequence_control_set_ptr->mfmv_enabled = 0;
         else
             sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
-#else
-#if M0_OPT
-        sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->static_config.screen_content_mode != 1) ? 1 : 0;
-#else
-        sequence_control_set_ptr->mfmv_enabled = (uint8_t)(sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
-#endif
-#endif
     else
         sequence_control_set_ptr->mfmv_enabled = sequence_control_set_ptr->static_config.enable_mfmv;
 
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
-#if PRESETS_TUNE
     if (sequence_control_set_ptr->static_config.encoder_bit_depth < 10)
-#else
-    if (sequence_control_set_ptr->static_config.enc_mode > ENC_M0 || sequence_control_set_ptr->static_config.encoder_bit_depth < 10)
-#endif
         sequence_control_set_ptr->static_config.enable_hbd_mode_decision = 0;
 }
 

@@ -295,10 +295,8 @@ EbErrorType copy_sequence_control_set(
     dst->tf_segment_row_count = src->tf_segment_row_count;
     dst->over_boundary_block_mode = src->over_boundary_block_mode;
     dst->mfmv_enabled = src->mfmv_enabled;
-#if TWO_PASS
     dst->use_input_stat_file = src->use_input_stat_file;
     dst->use_output_stat_file = src->use_output_stat_file;
-#endif
     dst->scd_delay = src->scd_delay;
     return EB_ErrorNone;
 }

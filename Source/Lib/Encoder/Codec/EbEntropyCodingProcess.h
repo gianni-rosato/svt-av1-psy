@@ -27,14 +27,7 @@ typedef struct EntropyCodingContext
     EbFifo                       *enc_dec_input_fifo_ptr;
     EbFifo                       *entropy_coding_output_fifo_ptr;  // to packetization
     EbFifo                       *rate_control_output_fifo_ptr; // feedback to rate control
-
     uint32_t                        sb_total_count;
-    // Lambda
-#if ADD_DELTA_QP_SUPPORT
-#else
-    uint8_t                         qp;
-    uint8_t                         chroma_qp;
-#endif
     // Coding Unit Workspace---------------------------
     EbPictureBufferDesc           *coeff_buffer_sb;                              //Used to hold quantized coeff for one TB in EncPass.
 
@@ -68,9 +61,7 @@ typedef struct EntropyCodingContext
     EbBool                            is16bit; //enable 10 bit encode in CL
     int32_t                           coded_area_sb;
     int32_t                           coded_area_sb_uv;
-#if PAL_SUP
     TOKENEXTRA *tok;
-#endif
 } EntropyCodingContext;
 
 /**************************************

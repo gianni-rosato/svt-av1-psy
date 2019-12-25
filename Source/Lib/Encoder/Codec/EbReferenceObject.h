@@ -18,11 +18,7 @@ typedef struct EbReferenceObject
     EbPictureBufferDesc          *reference_picture;
     EbPictureBufferDesc          *reference_picture16bit;
     uint64_t                        ref_poc;
-#if ADD_DELTA_QP_SUPPORT
     uint16_t                        qp;
-#else
-    uint8_t                         qp;
-#endif
     EB_SLICE                        slice_type;
     uint8_t                         intra_coded_area;//percentage of intra coded area 0-100%
     uint8_t                         intra_coded_area_sb[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];//percentage of intra coded area 0-100%
@@ -40,11 +36,9 @@ typedef struct EbReferenceObject
     FrameType                       frame_type;
     uint32_t                        order_hint;
     uint32_t                        ref_order_hint[7];
-#if TWO_PASS
     stat_struct_t                   stat_struct;
     EbHandle                        referenced_area_mutex;
     uint64_t                        referenced_area_avg;
-#endif
 } EbReferenceObject;
 
 typedef struct EbReferenceObjectDescInitData {

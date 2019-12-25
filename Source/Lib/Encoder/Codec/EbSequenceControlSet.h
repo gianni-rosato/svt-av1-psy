@@ -193,15 +193,6 @@ extern "C" {
         BitstreamLevel                          level[MAX_NUM_OPERATING_POINTS];
         int32_t                                 film_grain_denoise_strength;
         uint32_t                                reference_count;
-
-#if ADP_STATS_PER_LAYER
-        uint64_t                                total_count[5];
-        uint64_t                                sq_search_count[5];
-        uint64_t                                sq_non4_search_count[5];
-        uint64_t                                mdc_count[5];
-        uint64_t                                pred_count[5];
-        uint64_t                                pred1_nfl_count[5];
-#endif
         /* over_boundary_block (mm-signal; 0: No over boundary blk allowed, 1: over boundary blk allowed)
         *
         * Default is 0.
@@ -209,11 +200,8 @@ extern "C" {
         uint8_t                                 over_boundary_block_mode;
         SeqHeader                               seq_header;
         uint8_t                                 compound_mode;
-
-#if TWO_PASS
         EbBool                                  use_input_stat_file;
         EbBool                                  use_output_stat_file;
-#endif
     } SequenceControlSet;
 
     typedef struct EbSequenceControlSetInitData

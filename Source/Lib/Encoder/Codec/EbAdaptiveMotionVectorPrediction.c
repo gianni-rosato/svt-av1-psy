@@ -239,9 +239,7 @@ static void add_ref_mv_candidate(
     uint8_t ref_match_counts[MODE_CTX_REF_FRAMES],
     uint8_t newmv_counts[MODE_CTX_REF_FRAMES],
     CandidateMv ref_mv_stacks[][MAX_REF_MV_STACK_SIZE], int32_t len,
-#if USE_CUR_GM_REFMV
     IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
-#endif  // USE_CUR_GM_REFMV
     int32_t col, int32_t weight)
 {
     if (!is_inter_block(&candidate->block_mi)) return;  // for intrabc
@@ -259,13 +257,11 @@ static void add_ref_mv_candidate(
         for (ref = 0; ref < 2; ++ref) {
             if (candidate->block_mi.ref_frame[ref] == rf[0]) {
                 IntMv this_refmv;
-#if USE_CUR_GM_REFMV    //CHKN this should not be used for TRANSLATION ME model
                 if (is_global_mv_block(candidate->block_mi.mode,
                                        candidate->block_mi.sb_type,
                                        gm_params[rf[0]].wmtype))
                     this_refmv = gm_mv_candidates[0];
                 else
-#endif  // USE_CUR_GM_REFMV
                     this_refmv = get_sub_block_mv(candidate_mi, ref, col);
 
                 for (index = 0; index < *refmv_count; ++index)
@@ -297,13 +293,11 @@ static void add_ref_mv_candidate(
             IntMv this_refmv[2];
 
             for (ref = 0; ref < 2; ++ref) {
-#if USE_CUR_GM_REFMV
                 if (is_global_mv_block(candidate->block_mi.mode,
                                        candidate->block_mi.sb_type,
                                        gm_params[rf[ref]].wmtype))
                     this_refmv[ref] = gm_mv_candidates[ref];
                 else
-#endif  // USE_CUR_GM_REFMV
                     this_refmv[ref] = get_sub_block_mv(candidate_mi, ref, col);
         }
 
@@ -334,9 +328,7 @@ static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     uint8_t refmv_count[MODE_CTX_REF_FRAMES],
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
     uint8_t newmv_count[MODE_CTX_REF_FRAMES],
-#if USE_CUR_GM_REFMV
     IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
-#endif  // USE_CUR_GM_REFMV
     int32_t max_row_offset, int32_t *processed_rows) {
     int32_t end_mi = AOMMIN(xd->n8_w, cm->mi_cols - mi_col);
     end_mi = AOMMIN(end_mi, mi_size_wide[BLOCK_64X64]);
@@ -378,9 +370,7 @@ static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd,
 
         add_ref_mv_candidate(candidate_mi, candidate, rf, refmv_count,
             ref_match_count, newmv_count, ref_mv_stack, len,
-#if USE_CUR_GM_REFMV
             gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
             col_offset + i, weight);
 
         i += len;
@@ -394,9 +384,7 @@ static void scan_col_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     uint8_t refmv_count[MODE_CTX_REF_FRAMES],
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
     uint8_t newmv_count[MODE_CTX_REF_FRAMES],
-#if USE_CUR_GM_REFMV
     IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
-#endif  // USE_CUR_GM_REFMV
     int32_t max_col_offset, int32_t *processed_cols) {
     int32_t end_mi = AOMMIN(xd->n8_h, cm->mi_rows - mi_row);
     end_mi = AOMMIN(end_mi, mi_size_high[BLOCK_64X64]);
@@ -437,9 +425,7 @@ static void scan_col_mbmi(const Av1Common *cm, const MacroBlockD *xd,
 
         add_ref_mv_candidate(candidate_mi, candidate, rf, refmv_count,
             ref_match_count, newmv_count, ref_mv_stack, len,
-#if USE_CUR_GM_REFMV
             gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
             col_offset, weight);
 
         i += len;
@@ -453,9 +439,7 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd,
     CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
     uint8_t newmv_count[MODE_CTX_REF_FRAMES],
-#if USE_CUR_GM_REFMV
     IntMv *gm_mv_candidates, const EbWarpedMotionParams *gm_params,
-#endif  // USE_CUR_GM_REFMV
     uint8_t refmv_count[MODE_CTX_REF_FRAMES]) {
     const TileInfo *const tile = &xd->tile;
     Position mi_pos;
@@ -471,9 +455,7 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd,
 
         add_ref_mv_candidate(candidate_mi, candidate, rf, refmv_count,
             ref_match_count, newmv_count, ref_mv_stack, len,
-#if USE_CUR_GM_REFMV
             gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
             mi_pos.col, 2);
     }  // Analyze a single 8x8 block motion information.
 }
@@ -715,9 +697,7 @@ void setup_ref_mv_list(
     if (abs(max_row_offset) >= 1)
         scan_row_mbmi(cm, xd, mi_row, mi_col, rf, -1, ref_mv_stack, refmv_count,
             row_match_count, newmv_count,
-#if USE_CUR_GM_REFMV
             gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
             max_row_offset, &processed_rows);
 
     //CHKN-------------    COL-1
@@ -725,9 +705,7 @@ void setup_ref_mv_list(
     if (abs(max_col_offset) >= 1)
         scan_col_mbmi(cm, xd, mi_row, mi_col, rf, -1, ref_mv_stack, refmv_count,
             col_match_count, newmv_count,
-#if USE_CUR_GM_REFMV
             gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
             max_col_offset, &processed_cols);
 
     //CHKN-------------    TOP-RIGHT
@@ -736,9 +714,7 @@ void setup_ref_mv_list(
     if (has_tr)
         scan_blk_mbmi(cm, xd, mi_row, mi_col, rf, -1, xd->n8_w, ref_mv_stack,
             row_match_count, newmv_count,
-#if USE_CUR_GM_REFMV
             gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
             refmv_count);
 
     uint8_t nearest_match[MODE_CTX_REF_FRAMES];
@@ -806,9 +782,7 @@ void setup_ref_mv_list(
     // Scan the second outer area.
     scan_blk_mbmi(cm, xd, mi_row, mi_col, rf, -1, -1, ref_mv_stack,
         row_match_count, dummy_newmv_count,
-#if USE_CUR_GM_REFMV
         gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
         refmv_count);
 
     //CHKN-------------    ROW-3  COL-3     ROW-5   COL-5
@@ -820,18 +794,14 @@ void setup_ref_mv_list(
             abs(row_offset) > processed_rows)
             scan_row_mbmi(cm, xd, mi_row, mi_col, rf, row_offset, ref_mv_stack,
                 refmv_count, row_match_count, dummy_newmv_count,
-#if USE_CUR_GM_REFMV
                 gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
                 max_row_offset, &processed_rows);
 
         if (abs(col_offset) <= abs(max_col_offset) &&
             abs(col_offset) > processed_cols)
             scan_col_mbmi(cm, xd, mi_row, mi_col, rf, col_offset, ref_mv_stack,
                 refmv_count, col_match_count, dummy_newmv_count,
-#if USE_CUR_GM_REFMV
                 gm_mv_candidates, gm_params,
-#endif  // USE_CUR_GM_REFMV
                 max_col_offset, &processed_cols);
     }
 
@@ -1203,7 +1173,6 @@ IntMv gm_get_motion_vector_enc(
     }
     return res;
 }
-#if MULTI_PASS_PD
 void mvp_bypass_init(
     PictureControlSet   *picture_control_set_ptr,
     ModeDecisionContext *context_ptr)
@@ -1262,7 +1231,7 @@ void mvp_bypass_init(
     memset(context_ptr->cu_ptr->inter_mode_ctx, 0, sizeof(int16_t) * MODE_CTX_REF_FRAMES);
     memset(xd->ref_mv_count, 0, sizeof(int8_t) * MODE_CTX_REF_FRAMES);
 }
-#endif
+
 
 void generate_av1_mvp_table(
     TileInfo                         *tile,
@@ -1499,13 +1468,8 @@ void update_av1_mi_map(
                     miPtr[miX + miY * mi_stride].mbmi.tx_depth = cu_ptr->tx_depth;
                 }
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.use_intrabc = cu_ptr->av1xd->use_intrabc;
-
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
-#if II_COMP_FLAG
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.ref_frame[1] = cu_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
-#else
-                miPtr[miX + miY * mi_stride].mbmi.block_mi.ref_frame[1] = rf[1];
-#endif
                 if (cu_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
                     miPtr[miX + miY * mi_stride].mbmi.block_mi.mv[0].as_mv.col = cu_ptr->prediction_unit_array->mv[0].x;
                     miPtr[miX + miY * mi_stride].mbmi.block_mi.mv[0].as_mv.row = cu_ptr->prediction_unit_array->mv[0].y;
@@ -1523,20 +1487,13 @@ void update_av1_mi_map(
 
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.partition = from_shape_to_part[blk_geom->shape];// cu_ptr->part;
             }
-#if OBMC_FLAG
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interp_filters = cu_ptr->interp_filters;
-#endif
             miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.compound_idx = cu_ptr->compound_idx;
-#if II_COMP_FLAG
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_mode       = cu_ptr->interintra_mode;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.wedge_interintra      = cu_ptr->use_wedge_interintra;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_wedge_index                         = cu_ptr->interintra_wedge_index;//in
-#endif
-
-#if PAL_SUP
             memcpy( &miPtr[miX + miY * mi_stride].mbmi.palette_mode_info  , &cu_ptr->palette_info.pmi,sizeof(PaletteModeInfo));
-#endif
             //needed for CDEF
             miPtr[miX + miY * mi_stride].mbmi.block_mi.skip = cu_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.skip_mode = (int8_t)cu_ptr->skip_flag;
@@ -1592,11 +1549,7 @@ void update_mi_map(
                 }
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.use_intrabc = cu_ptr->av1xd->use_intrabc;
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
-#if II_COMP_FLAG
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.ref_frame[1] = cu_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
-#else
-                miPtr[miX + miY * mi_stride].mbmi.block_mi.ref_frame[1] = rf[1];
-#endif
                 if (cu_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
                     miPtr[miX + miY * mi_stride].mbmi.block_mi.mv[0].as_mv.col = cu_ptr->prediction_unit_array->mv[0].x;
                     miPtr[miX + miY * mi_stride].mbmi.block_mi.mv[0].as_mv.row = cu_ptr->prediction_unit_array->mv[0].y;
@@ -1619,19 +1572,13 @@ void update_mi_map(
             else
                 miPtr[miX + miY * mi_stride].mbmi.block_mi.skip = (cu_ptr->transform_unit_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
 
-#if OBMC_FLAG
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interp_filters = cu_ptr->interp_filters;
-#endif
             miPtr[miX + miY * mi_stride].mbmi.comp_group_idx = cu_ptr->comp_group_idx;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.compound_idx = cu_ptr->compound_idx;
-#if II_COMP_FLAG
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_mode          = cu_ptr->interintra_mode;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.wedge_interintra         = cu_ptr->use_wedge_interintra;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.interintra_mode_params.interintra_wedge_index   = cu_ptr->interintra_wedge_index;//in
-#endif
-#if PAL_SUP
             memcpy(&miPtr[miX + miY * mi_stride].mbmi.palette_mode_info, &cu_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
-#endif
             miPtr[miX + miY * mi_stride].mbmi.block_mi.skip_mode = (int8_t)cu_ptr->skip_flag;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.segment_id = cu_ptr->segment_id;
             miPtr[miX + miY * mi_stride].mbmi.block_mi.seg_id_predicted = cu_ptr->seg_id_predicted;

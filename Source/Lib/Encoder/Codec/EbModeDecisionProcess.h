@@ -29,20 +29,16 @@ extern "C" {
 #define DEPTH_ONE_STEP   21
 #define DEPTH_TWO_STEP    5
 #define DEPTH_THREE_STEP  1
-
-#if MULTI_PASS_PD
 #define PREDICTIVE_ME_MAX_MVP_CANIDATES  4
 #define PREDICTIVE_ME_DEVIATION_TH      50
 #define FULL_PEL_REF_WINDOW_WIDTH        7
 #define FULL_PEL_REF_WINDOW_HEIGHT       5
 #define HALF_PEL_REF_WINDOW              3
 #define QUARTER_PEL_REF_WINDOW           3
-#if M0_OPT
 #define FULL_PEL_REF_WINDOW_WIDTH_EXTENDED  15
 #define FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED 15
-#endif
 #define EIGHT_PEL_REF_WINDOW 3
-#endif
+
 
      /**************************************
       * Macros
@@ -67,12 +63,10 @@ extern "C" {
         uint16_t                    y_count_non_zero_coeffs[4];// Store nonzero CoeffNum, per TU. If one TU, stored in 0, otherwise 4 tus stored in 0 to 3
     } MdEncPassCuData;
 
-#if PAL_SUP
     typedef struct {
         uint8_t best_palette_color_map[MAX_PALETTE_SQUARE];
         int kmeans_data_buf[2 * MAX_PALETTE_SQUARE];
     } PALETTE_BUFFER;
-#endif
     typedef struct MdCodingUnit
     {
         unsigned                    tested_cu_flag                  : 1;   //tells whether this CU is tested in MD.
@@ -144,11 +138,7 @@ extern "C" {
         uint64_t                       *full_cost_skip_ptr;
         uint64_t                       *full_cost_merge_ptr;
         // Lambda
-#if ADD_DELTA_QP_SUPPORT
         uint16_t                        qp;
-#else
-        uint8_t                         qp;
-#endif
         uint8_t                         chroma_qp;
         uint32_t                        fast_lambda;
         uint32_t                        full_lambda;
@@ -163,10 +153,8 @@ extern "C" {
         const BlockGeom                *blk_geom;
         PredictionUnit               *pu_ptr;
         MvUnit                        mv_unit;
-#if PAL_SUP
         PALETTE_BUFFER            palette_buffer;
         PaletteInfo              palette_cand_array[MAX_PAL_CAND];
-#endif
         // Entropy Coder
         EntropyCoder                 *coeff_est_entropy_coder_ptr;
         MdEncPassCuData               *md_ep_pipe_sb;
@@ -243,9 +231,7 @@ extern "C" {
         uint8_t                         full_loop_escape;
         uint8_t                         global_mv_injection;
         uint8_t                         nx4_4xn_parent_mv_injection;
-#if MULTI_PASS_PD
         uint8_t                         new_nearest_injection;
-#endif
         uint8_t                         new_nearest_near_comb_injection;
         uint8_t                         warped_motion_injection;
         uint8_t                         unipred3x3_injection;
@@ -267,12 +253,9 @@ extern "C" {
         DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
     unsigned int prediction_mse ;
     EbBool      variance_ready;
-
     uint32_t                            cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
     uint8_t                             md_staging_mode;
-#if MULTI_PASS_PD
     uint8_t                             md_staging_count_level;
-#endif
     uint8_t                             bypass_md_stage_1[CAND_CLASS_TOTAL];
 
     uint32_t                            md_stage_0_count[CAND_CLASS_TOTAL];
@@ -297,10 +280,7 @@ extern "C" {
     EbBool                              md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
     EbBool                              md_staging_skip_full_chroma;
     EbBool                              md_staging_skip_rdoq;
-
-#if II_COMP_FLAG
     DECLARE_ALIGNED(16, uint8_t,      intrapred_buf[INTERINTRA_MODES][2 * 32 * 32]); //MAX block size for inter intra is 32x32
-#endif
     uint64_t                           *ref_best_cost_sq_table;
     uint32_t                           *ref_best_ref_sq_table;
     uint8_t                             edge_based_skip_angle_intra;
@@ -322,24 +302,11 @@ extern "C" {
     unsigned int pred_sse[REF_FRAMES];
     uint8_t                            *above_txfm_context;
     uint8_t                            *left_txfm_context;
-#if COMBINE_MDC_NSQ_TABLE
-    PART best_nsq_sahpe1;
-    PART best_nsq_sahpe2;
-    PART best_nsq_sahpe3;
-    PART best_nsq_sahpe4;
-    PART best_nsq_sahpe5;
-    PART best_nsq_sahpe6;
-    PART best_nsq_sahpe7;
-    PART best_nsq_sahpe8;
-#endif
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
 
     // signal for enabling shortcut to skip search depths
     uint8_t enable_auto_max_partition;
-
-
-#if MULTI_PASS_PD
     MD_COMP_TYPE compound_types_to_try;
     uint8_t best_me_cand_only_flag;
     uint8_t dc_cand_only_flag;
@@ -362,7 +329,7 @@ extern "C" {
 
     // Signal to control initial and final pass PD setting(s)
     PD_PASS pd_pass;
-#endif
+
     } ModeDecisionContext;
 
     typedef void(*EbAv1LambdaAssignFunc)(
@@ -393,9 +360,7 @@ extern "C" {
         EbFifo                    *mode_decision_configuration_input_fifo_ptr,
         EbFifo                    *mode_decision_output_fifo_ptr,
         uint8_t                    enable_hbd_mode_decision
-#if PAL_SUP
         ,uint8_t                 cfg_palette
-#endif
     );
 
     extern void reset_mode_decision_neighbor_arrays(

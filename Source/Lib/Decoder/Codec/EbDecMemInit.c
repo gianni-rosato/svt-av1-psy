@@ -269,7 +269,6 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
             lr_ctxt->lr_stride[plane] = sb_cols;
         }
     }
-#if FRAME_MI_MAP
     FrameMiMap *frame_mi_map = &master_frame_buf->frame_mi_map;
     frame_mi_map->sb_cols = sb_cols;
     frame_mi_map->sb_rows = sb_rows;
@@ -282,36 +281,8 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     EB_MALLOC_DEC(uint16_t*, frame_mi_map->p_mi_offset, frame_mi_map->
     mi_rows_algnsb * frame_mi_map->mi_cols_algnsb * sizeof(uint16_t), EB_N_PTR);
     frame_mi_map->sb_size_log2 = sb_size_log2;
-#else
-    /* Top SB 4x4 row MI map */
-    EB_MALLOC_DEC(int16_t*, frame_mi_map->top_sbrow_mi_map,
-        (sb_cols * (1 << (sb_size_log2 - MI_SIZE_LOG2)) * sizeof(int16_t)), EB_N_PTR);
-#endif
     frame_mi_map->num_mis_in_sb_wd = (1 << (sb_size_log2 - MI_SIZE_LOG2));
-#if 0
-    /* TODO: Recon Pic Buf. Should be generalized! */
-    EbPictureBufferDescInitData input_picture_buffer_desc_init_data;
-    // Init Picture Init data
-    input_picture_buffer_desc_init_data.max_width = seq_header->max_frame_width;
-    input_picture_buffer_desc_init_data.max_height = seq_header->max_frame_height;
-    input_picture_buffer_desc_init_data.bit_depth  = (EbBitDepthEnum)seq_header->color_config.bit_depth;
 
-    input_picture_buffer_desc_init_data.color_format    = dec_handle_ptr->
-                                                dec_config.max_color_format;
-    input_picture_buffer_desc_init_data.buffer_enable_mask =
-                                                PICTURE_BUFFER_DESC_FULL_MASK;
-
-    input_picture_buffer_desc_init_data.left_padding = PAD_VALUE;
-    input_picture_buffer_desc_init_data.right_padding = PAD_VALUE;
-    input_picture_buffer_desc_init_data.top_padding = PAD_VALUE;
-    input_picture_buffer_desc_init_data.bot_padding = PAD_VALUE;
-
-    input_picture_buffer_desc_init_data.split_mode = EB_FALSE;
-
-    return_error = dec_eb_recon_picture_buffer_desc_ctor(
-        (EbPtr*) &(dec_handle_ptr->recon_picture_buf[0]),
-        (EbPtr)&input_picture_buffer_desc_init_data);
-#endif
 
     master_frame_buf->tpl_mvs = NULL;
     master_frame_buf->tpl_mvs_size = 0;

@@ -1731,7 +1731,7 @@ void eb_av1_pick_filter_level(
     const int32_t num_planes = 3;
     (void)srcBuffer;
     struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
-    lf->sharpness_level = frm_hdr->frame_type == KEY_FRAME ? 0 : LF_SHARPNESS;
+    lf->sharpness_level = frm_hdr->frame_type == KEY_FRAME ? 0 : 0;
 
     if (method == LPF_PICK_MINIMAL_LPF) {
         lf->filter_level[0] = 0;

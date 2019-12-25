@@ -127,7 +127,6 @@ AOM_VAR_NO_LOOP_SSE2(8, 4, 5, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 8, 6, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 16, 7, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 32, 8, 256);
-#if OBMC_FLAG
 
     static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
         const InterpFilterParams filter_params, const int32_t subpel) {
@@ -330,4 +329,4 @@ void aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const cm,
                        kernel_y, 16, width, height);
   }
 }
-#endif
+

@@ -415,15 +415,9 @@ void ResetPcsAv1(
         frm_hdr->CDEF_params.cdef_uv_strength[i] = 0;
     }
     frm_hdr->CDEF_params.cdef_bits = 0;
-
-#if ADD_DELTA_QP_SUPPORT
     frm_hdr->delta_q_params.delta_q_present = 1;
     frm_hdr->delta_lf_params.delta_lf_present = 0;
     frm_hdr->delta_q_params.delta_q_res = DEFAULT_DELTA_Q_RES;
-#else
-    frm_hdr->delta_q_params.delta_q_present = 0;
-#endif
-
     frm_hdr->delta_lf_params.delta_lf_present = 0;
     frm_hdr->delta_lf_params.delta_lf_res = 0;
     frm_hdr->delta_lf_params.delta_lf_multi = 0;
@@ -584,8 +578,6 @@ static void CopyInputBuffer(
     if (src->p_buffer != NULL)
         copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
 }
-
-#if TWO_PASS
 /******************************************************
  * Read Stat from File
  * reads stat_struct_t per frame from the file and stores under picture_control_set_ptr
@@ -623,7 +615,7 @@ static void read_stat_from_file(
     picture_control_set_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
     eb_release_mutex(sequence_control_set_ptr->encode_context_ptr->stat_file_mutex);
 }
-#endif
+
 /***************************************
  * ResourceCoordination Kernel
  ***************************************/
@@ -738,33 +730,14 @@ void* resource_coordination_kernel(void *input_ptr)
 
             sb_params_init(sequence_control_set_ptr);
             sb_geom_init(sequence_control_set_ptr);
-
-#if PRESETS_TUNE // this should be updated to support hbd
             sequence_control_set_ptr->enable_altrefs = sequence_control_set_ptr->static_config.enable_altrefs ? EB_TRUE : EB_FALSE;
-#else
-            sequence_control_set_ptr->enable_altrefs = sequence_control_set_ptr->static_config.enable_altrefs &&
-                sequence_control_set_ptr->static_config.altref_nframes > 1 &&
-                ((sequence_control_set_ptr->static_config.encoder_bit_depth >= 8 && sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ||
-                    sequence_control_set_ptr->static_config.encoder_bit_depth == 8) ? EB_TRUE : EB_FALSE;
-#endif
 
             if (sequence_control_set_ptr->static_config.inter_intra_compound == DEFAULT) {
-#if II_COMP_FLAG
             // Set inter-intra mode      Settings
             // 0                 OFF
             // 1                 ON
-#if M0_OPT
-#if PRESETS_TUNE
                 sequence_control_set_ptr->seq_header.enable_interintra_compound = MR_MODE || (sequence_control_set_ptr->static_config.enc_mode <= ENC_M1 && sequence_control_set_ptr->static_config.screen_content_mode != 1) ? 1 : 0;
-#else
-                sequence_control_set_ptr->seq_header.enable_interintra_compound = MR_MODE || (sequence_control_set_ptr->static_config.enc_mode == ENC_M0 && sequence_control_set_ptr->static_config.screen_content_mode != 1) ? 1 : 0;
-#endif
-#else
-            sequence_control_set_ptr->seq_header.enable_interintra_compound = (sequence_control_set_ptr->static_config.enc_mode == ENC_M0) ? 1 : 0;
-#endif
 
-
-#endif
             } else
                 sequence_control_set_ptr->seq_header.enable_interintra_compound = sequence_control_set_ptr->static_config.inter_intra_compound;
             // Set filter intra mode      Settings
@@ -948,7 +921,6 @@ void* resource_coordination_kernel(void *input_ptr)
             else
                 picture_control_set_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             ResetPcsAv1(picture_control_set_ptr);
-#if TWO_PASS
             if (sequence_control_set_ptr->use_input_stat_file && !end_of_sequence_flag)
                 read_stat_from_file(
                     picture_control_set_ptr,
@@ -956,7 +928,6 @@ void* resource_coordination_kernel(void *input_ptr)
             else {
                 memset(&picture_control_set_ptr->stat_struct, 0, sizeof(stat_struct_t));
             }
-#endif
             sequence_control_set_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
             // Get Empty Reference Picture Object

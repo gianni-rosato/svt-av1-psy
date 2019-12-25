@@ -44,13 +44,9 @@ extern "C" {
         uint32_t  picture_width,
         uint32_t  picture_height,
         uint32_t  tb_size);
-
-#if MULTI_PASS_PD
     void mvp_bypass_init(
         PictureControlSet          *picture_control_set_ptr,
         struct ModeDecisionContext *context_ptr);
-#endif
-
     void generate_av1_mvp_table(
         TileInfo                   *tile,
         struct ModeDecisionContext *context_ptr,

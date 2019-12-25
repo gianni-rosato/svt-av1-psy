@@ -183,7 +183,6 @@ void av1_estimate_syntax_rate(
     av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
 
     if (!is_i_slice) { // NM - Hardcoded to true
-    //if (1){
         for (i = 0; i < COMP_INTER_CONTEXTS; ++i)
             av1_get_syntax_rate_from_cdf(md_rate_estimation_array->comp_inter_fac_bits[i], fc->comp_inter_cdf[i], NULL);
         for (i = 0; i < REF_CONTEXTS; ++i) {
@@ -532,9 +531,7 @@ extern int av1_allow_intrabc(const Av1Common *const cm);
 int av1_filter_intra_allowed(
     uint8_t   enable_filter_intra,
     BlockSize bsize,
-#if PAL_SUP
     uint8_t palette_size,
-#endif
     uint32_t  mode);
 
 INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,

@@ -29,7 +29,6 @@
 #endif
 #define RC_PRINTS                   0
 #define ADAPTIVE_PERCENTAGE         1
-#define RC_UPDATE_TARGET_RATE       1
 
 #define RC_QPMOD_MAXQP             54
 

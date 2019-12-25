@@ -16,8 +16,6 @@
 #include "EbModeDecisionProcess.h"
 #include "aom_dsp_rtcd.h"
 
-#if PAL_SUP
-
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
 // Generate a random number in the range [0, 32768).
@@ -777,5 +775,7 @@ int av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols,
      return cost_and_tokenize_map(&color_map_params, NULL, plane, 1, 0,
          map_pb_cdf);
  }
-#endif
 // clang-format on
+
+
+

@@ -49,7 +49,6 @@ extern "C" {
 #define BETA_OFFSET_VALUE                   12 // range -12 to 12
 #define TC_OFFSET_VALUE                     12//12 // range -12 to 12
 
-#if AV1_LF
     typedef enum LpfPickMethod
     {
         // Try the full image with different values.
@@ -61,8 +60,6 @@ extern "C" {
         // Pick 0 to disable LPF if LPF was enabled last frame
         LPF_PICK_MINIMAL_LPF
     } LpfPickMethod;
-#endif
-
     typedef enum EDGE_DIR { VERT_EDGE = 0, HORZ_EDGE = 1, NUM_EDGE_DIRS } EDGE_DIR;
 
     typedef struct AV1_DEBLOCKING_PARAMETERS {
