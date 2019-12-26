@@ -68,6 +68,10 @@ uint32_t lib_malloc_count    = 0;
 uint32_t lib_semaphore_count = 0;
 uint32_t lib_mutex_count     = 0;
 
+/* Track address for memory during change in resoultion*/
+EbMemoryMapEntry                *memory_map_start_address;
+EbMemoryMapEntry                *memory_map_end_address;
+
 void        asm_set_convolve_asm_table(void);
 void        init_intra_dc_predictors_c_internal(void);
 void        asm_set_convolve_hbd_asm_table(void);
@@ -112,6 +116,8 @@ static EbErrorType eb_dec_handle_ctor(EbDecHandle **decHandleDblPtr, EbComponent
     svt_dec_lib_malloc_count = 0;
 
     dec_handle_ptr->start_thread_process = EB_FALSE;
+    memory_map_start_address = NULL;
+    memory_map_end_address = NULL;
 
     return return_error;
 }
@@ -475,6 +481,7 @@ eb_init_decoder(EbComponentType *svt_dec_component) {
     dec_handle_ptr->show_existing_frame = 0;
     dec_handle_ptr->show_frame          = 0;
     dec_handle_ptr->showable_frame      = 0;
+    dec_handle_ptr->seq_header.sb_size = 0;
 
     setup_common_rtcd_internal(cpu_flags);
     setup_rtcd_internal(cpu_flags);

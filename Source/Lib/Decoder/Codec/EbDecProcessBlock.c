@@ -236,6 +236,48 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col, Bloc
     part_info.subsampling_y    = color_config->subsampling_y;
     part_info.ps_global_motion = dec_handle->master_frame_buf.cur_frame_bufs[0].global_motion_warp;
 
+    /* Wait until reference block's recon is complete for intrabc blocks */
+    if (dec_handle->dec_config.threads > 1 && mode_info->use_intrabc) {
+        assert(mode_info->ref_frame[1] == NONE_FRAME);
+        const MV mv = mode_info->mv[0].as_mv;
+
+        /* A negative mv.col will have ensured
+        reference recon due to top sync */
+        if (mv.col > 0) {
+            /* mv.row is in (SUBPEL_BITS-1) Q format */
+            int32_t ref_row = mi_row +
+                (mv.row >> (SUBPEL_BITS-1 + MI_SIZE_LOG2));
+
+            int32_t sb_size_log2 = dec_handle->seq_header.sb_size_log2;
+
+            int32_t ref_sb_tile_row =
+                (AOMMAX(ref_row - tile->mi_row_start, 0)) >>
+                (sb_size_log2 - MI_SIZE_LOG2);
+            int32_t cur_sb_tile_row = (mi_row - tile->mi_row_start) >>
+                (sb_size_log2 - MI_SIZE_LOG2);
+
+            if (ref_sb_tile_row != cur_sb_tile_row) {
+                /* mv.col is in (SUBPEL_BITS-1) Q format */
+                int32_t ref_col = mi_col + (mv.col >>
+                    (SUBPEL_BITS-1 + MI_SIZE_LOG2));
+                DecMtFrameData *dec_mt_frame_data = &dec_handle->
+                    master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+
+                int32_t ref_sb_tile_col = AOMMIN(ref_col, tile->mi_col_end) >>
+                    (sb_size_log2 - MI_SIZE_LOG2);
+
+                int32_t tiles_ctr = (tile->tile_row * dec_handle->
+                    frame_header.tiles_info.tile_cols) + tile->tile_col;
+
+                volatile int32_t *ref_sb_completed =
+                    (volatile int32_t*) &dec_mt_frame_data->
+                    parse_recon_tile_info_array[tiles_ctr].
+                    sb_recon_completed_in_row[ref_sb_tile_row];
+                while (*ref_sb_completed < ref_sb_tile_col + 1);
+            }
+        }
+    }
+
     /* Derive warped params for local warp mode*/
     if (inter_block) {
         if (WARPED_CAUSAL == mode_info->motion_mode) {

@@ -254,6 +254,10 @@ typedef struct DecThreadCtxt {
 
     /* Loop filter information */
     LoopFilterInfoN lf_info;
+
+    /* Temporary block level scratch buffer to
+       store LR output of [SB_Size x 64] block */
+    uint8_t *dst;
 } DecThreadCtxt;
 
 #ifdef __cplusplus

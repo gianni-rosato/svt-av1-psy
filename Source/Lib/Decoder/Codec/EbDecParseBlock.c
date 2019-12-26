@@ -975,12 +975,33 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     EbBool is_mt = dec_handle->dec_config.threads > 1;
+    EbBool do_memset = EB_TRUE;
 
     if (is_mt) {
         volatile EbBool *start_motion_proj = &dec_mt_frame_data->start_motion_proj;
+
         while (*start_motion_proj != EB_TRUE)
             eb_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
                                                       : thread_ctxt->thread_semaphore);
+
+        DecMtMotionProjInfo *motion_proj_info =
+            &dec_mt_frame_data->motion_proj_info;
+        do_memset = EB_FALSE;
+        //lock mutex
+        eb_block_on_mutex(motion_proj_info->motion_proj_mutex);
+        //Check memset needed
+        if (motion_proj_info->motion_proj_init_done == EB_FALSE) {
+            do_memset = EB_TRUE;
+            motion_proj_info->motion_proj_init_done = EB_TRUE;
+        }
+        //unlock mutex
+        eb_release_mutex(motion_proj_info->motion_proj_mutex);
+    }
+
+    if (do_memset) {
+        memset(dec_handle->master_frame_buf.ref_frame_side,
+               0,
+               sizeof(dec_handle->master_frame_buf.ref_frame_side));
     }
 
     EbBool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||
@@ -989,9 +1010,6 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
     if (!no_proj_flag) {
         OrderHintInfo *order_hint_info = &dec_handle->seq_header.order_hint_info;
 
-        memset(dec_handle->master_frame_buf.ref_frame_side,
-               0,
-               sizeof(dec_handle->master_frame_buf.ref_frame_side));
         if (!order_hint_info->enable_order_hint) return;
 
         const int cur_order_hint = dec_handle->cur_pic_buf[0]->order_hint;

@@ -377,11 +377,32 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     LrCtxt *lr_ctxt = (LrCtxt*)dec_handle_ptr->pv_lr_ctxt;
     lr_ctxt->dec_handle_ptr = (void *)dec_handle_ptr;
 
-    EB_MALLOC_DEC(RestorationLineBuffers *, lr_ctxt->rlbs,
-                  sizeof(RestorationLineBuffers), EB_N_PTR)
-    EB_MALLOC_DEC(int32_t *, lr_ctxt->rst_tmpbuf,
-                  RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+    int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
+    uint32_t picture_height_in_sb = (dec_handle_ptr->seq_header.
+        max_frame_height + sb_size_h - 1) / sb_size_h;
+    EbBool is_mt = dec_handle_ptr->dec_config.threads > 1;
 
+    picture_height_in_sb = (is_mt == 0) ? 1 : picture_height_in_sb;
+    const int32_t num_planes = av1_num_planes(&dec_handle_ptr->seq_header.
+        color_config);
+
+    EB_MALLOC_DEC(RestorationLineBuffers ***, lr_ctxt->rlbs,
+        picture_height_in_sb * sizeof(RestorationLineBuffers**), EB_N_PTR)
+    EB_MALLOC_DEC(int32_t **, lr_ctxt->rst_tmpbuf,
+        picture_height_in_sb * RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+
+    for (uint32_t i = 0; i < picture_height_in_sb; i++) {
+        RestorationLineBuffers **p_rlbs;
+        EB_MALLOC_DEC(RestorationLineBuffers**, lr_ctxt->rlbs[i],
+            num_planes * sizeof(RestorationLineBuffers**), EB_N_PTR);
+        p_rlbs = lr_ctxt->rlbs[i];
+        for (int32_t pli = 0; pli < num_planes; pli++) {
+            EB_MALLOC_DEC(RestorationLineBuffers *, p_rlbs[pli],
+                sizeof(RestorationLineBuffers), EB_N_PTR)
+        }
+        EB_MALLOC_DEC(int32_t *, lr_ctxt->rst_tmpbuf[i],
+            RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+    }
     int frame_width = dec_handle_ptr->seq_header.max_frame_width;
     int frame_height = dec_handle_ptr->seq_header.max_frame_height;
     int sub_x = dec_handle_ptr->seq_header.color_config.subsampling_x;
@@ -390,7 +411,6 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     const int ext_h = RESTORATION_UNIT_OFFSET + frame_height;
     const int num_stripes = (ext_h + 63) / 64;
     int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > 8);
-    const int num_planes = av1_num_planes(&dec_handle_ptr->seq_header.color_config);
 
     for (int plane = 0; plane < num_planes; plane++)
     {
@@ -408,14 +428,8 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
         boundaries->stripe_boundary_size = buf_size;
         boundaries->stripe_boundary_stride = stride;
     }
-
-    // Align dst_width to 16 multiple as wiener(leaf level function)
-    // expects width to be multiple of 16 for filtering.
-    lr_ctxt->dst_stride = ALIGN_POWER_OF_TWO(frame_width, 4);
-
-    EB_MALLOC_DEC(uint8_t *, lr_ctxt->dst, lr_ctxt->dst_stride *
-        (frame_height) * sizeof(uint8_t) << use_highbd, EB_N_PTR);
-
+    EB_MALLOC_DEC(uint8_t *, lr_ctxt->dst, (MAX_SB_SIZE + 8) *
+        RESTORATION_PROC_UNIT_SIZE * sizeof(uint8_t) << use_highbd, EB_N_PTR);
     return return_error;
 }
 

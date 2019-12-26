@@ -140,6 +140,8 @@ int32_t main(int32_t argc, char *argv[]) {
     cli.enable_md5  = 0;
     cli.fps_frm     = 0;
     cli.fps_summary = 0;
+    cli.width = 0;
+    cli.height = 0;
 
     DecInputContext    input   = {NULL, NULL};
     ObuDecInputContext obu_ctx = {NULL, 0, 0, 0, 0};

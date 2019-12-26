@@ -240,30 +240,6 @@ static EbErrorType eb_muxing_queue_assignation(EbMuxingQueue *queue_ptr) {
     return return_error;
 }
 
-static EbErrorType eb_muxing_queue_assignation_non_blocking(EbMuxingQueue *queue_ptr) {
-    EbErrorType      return_error = EB_ErrorNone;
-    EbFifo *         process_fifo_ptr;
-    EbObjectWrapper *wrapper_ptr;
-
-    // while loop
-    while ((eb_circular_buffer_empty_check(queue_ptr->object_queue) == EB_FALSE) &&
-           (eb_circular_buffer_empty_check(queue_ptr->process_queue) == EB_FALSE)) {
-        // Get the next process
-        eb_circular_buffer_pop_front(queue_ptr->process_queue, (void **)&process_fifo_ptr);
-
-        // Get the next object
-        eb_circular_buffer_pop_front(queue_ptr->object_queue, (void **)&wrapper_ptr);
-
-        // Put the object on the fifo
-        eb_fifo_push_back(process_fifo_ptr, wrapper_ptr);
-
-        // Post the semaphore
-        eb_post_semaphore(process_fifo_ptr->counting_semaphore);
-    }
-
-    return return_error;
-}
-
 /**************************************
  * eb_muxing_queue_object_push_back
  **************************************/
@@ -510,20 +486,6 @@ static EbErrorType eb_release_process(EbFifo *process_fifo_ptr) {
     return return_error;
 }
 
-static EbErrorType eb_release_process_non_blocking(EbFifo *process_fifo_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    eb_block_on_mutex(process_fifo_ptr->queue_ptr->lockout_mutex);
-
-    eb_circular_buffer_push_front(process_fifo_ptr->queue_ptr->process_queue, process_fifo_ptr);
-
-    eb_muxing_queue_assignation_non_blocking(process_fifo_ptr->queue_ptr);
-
-    eb_release_mutex(process_fifo_ptr->queue_ptr->lockout_mutex);
-
-    return return_error;
-}
-
 /*********************************************************************
  * EbSystemResourcePostObject
  *   Queues a full EbObjectWrapper to the SystemResource. This
@@ -658,21 +620,6 @@ EbErrorType eb_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_
     return return_error;
 }
 
-EbErrorType eb_get_non_blocking_full_object(EbFifo *          full_fifo_ptr,
-                                            EbObjectWrapper **wrapper_dbl_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    // Queue the Fifo requesting the full fifo
-    eb_release_process_non_blocking(full_fifo_ptr);
-
-    if (full_fifo_ptr->first_ptr == NULL)
-        *wrapper_dbl_ptr = NULL;
-    else
-        eb_fifo_pop_front(full_fifo_ptr, wrapper_dbl_ptr);
-
-    return return_error;
-}
-
 /**************************************
 * eb_fifo_pop_front
 **************************************/
@@ -684,32 +631,10 @@ static EbBool eb_fifo_peak_front(EbFifo *fifoPtr) {
         return EB_FALSE;
 }
 
-/* NonBlocking Get Object Modified for Faster Row Level Jobs of Decoder */
-EbErrorType eb_dec_get_full_object_non_blocking(EbFifo *          full_fifo_ptr,
-                                                EbObjectWrapper **wrapper_dbl_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-    EbBool      fifo_empty;
-    // Queue the Fifo requesting the full fifo
-    eb_release_process_non_blocking(full_fifo_ptr);
-
-    // Acquire lockout Mutex
-    eb_block_on_mutex(full_fifo_ptr->lockout_mutex);
-
-    fifo_empty = eb_fifo_peak_front(full_fifo_ptr);
-
-    // Release Mutex
-    eb_release_mutex(full_fifo_ptr->lockout_mutex);
-
-    if (fifo_empty == EB_FALSE)
-        eb_get_non_blocking_full_object(full_fifo_ptr, wrapper_dbl_ptr);
-    else
-        *wrapper_dbl_ptr = (EbObjectWrapper *)EB_NULL;
-
-    return return_error;
-}
-
-EbErrorType eb_get_full_object_non_blocking(EbFifo *          full_fifo_ptr,
-                                            EbObjectWrapper **wrapper_dbl_ptr) {
+EbErrorType eb_get_full_object_non_blocking(
+    EbFifo   *full_fifo_ptr,
+    EbObjectWrapper **wrapper_dbl_ptr)
+{
     EbErrorType return_error = EB_ErrorNone;
     EbBool      fifo_empty;
     // Queue the Fifo requesting the full fifo

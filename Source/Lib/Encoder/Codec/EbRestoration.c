@@ -269,7 +269,7 @@ static void copy_tile_highbd(int32_t width, int32_t height, const uint16_t *src,
         memcpy(dst + i * dst_stride, src + i * src_stride, width * sizeof(*dst));
 }
 
-static void copy_tile(int32_t width, int32_t height, const uint8_t *src, int32_t src_stride,
+void copy_tile(int32_t width, int32_t height, const uint8_t *src, int32_t src_stride,
                       uint8_t *dst, int32_t dst_stride, int32_t highbd) {
     if (highbd)
         copy_tile_highbd(width,
@@ -316,7 +316,7 @@ static void copy_tile(int32_t width, int32_t height, const uint8_t *src, int32_t
 // The distinction between the latter two cases is handled by the
 // eb_av1_loop_restoration_save_boundary_lines() function, so here we just need
 // to decide if we're overwriting the above/below boundary pixels or not.
-static void get_stripe_boundary_info(const RestorationTileLimits *limits,
+void get_stripe_boundary_info(const RestorationTileLimits *limits,
                                      const Av1PixelRect *tile_rect, int32_t ss_y,
                                      int32_t *copy_above, int32_t *copy_below) {
     *copy_above = 1;
@@ -347,7 +347,7 @@ static void get_stripe_boundary_info(const RestorationTileLimits *limits,
 // tile_rect is the limits of the current tile and tile_stripe0 is the index of
 // the first stripe in this tile (needed to convert the tile-relative stripe
 // index we get from limits into something we can look up in rsb).
-static void setup_processing_stripe_boundary(const RestorationTileLimits *      limits,
+void setup_processing_stripe_boundary(const RestorationTileLimits *      limits,
                                              const RestorationStripeBoundaries *rsb,
                                              int32_t rsb_row, int32_t use_highbd, int32_t h,
                                              uint8_t *data8, int32_t data_stride,
@@ -450,7 +450,7 @@ static void setup_processing_stripe_boundary(const RestorationTileLimits *      
 // Everything works out fine as long as we make sure to reverse the order
 // when restoring, ie. we need to restore the left/right borders followed
 // by the top/bottom borders.
-static void restore_processing_stripe_boundary(const RestorationTileLimits * limits,
+void restore_processing_stripe_boundary(const RestorationTileLimits * limits,
                                                const RestorationLineBuffers *rlbs,
                                                int32_t use_highbd, int32_t h, uint8_t *data8,
                                                int32_t data_stride, int32_t copy_above,
@@ -504,7 +504,7 @@ static void restore_processing_stripe_boundary(const RestorationTileLimits * lim
     }
 }
 
-static void wiener_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe_width,
+void wiener_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe_width,
                                  int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
                                  int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                                  int32_t *tmpbuf, int32_t bit_depth) {
@@ -1079,7 +1079,7 @@ void eb_apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int32
     }
 }
 
-static void sgrproj_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe_width,
+void sgrproj_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe_width,
                                   int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
                                   int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                                   int32_t *tmpbuf, int32_t bit_depth) {
@@ -1103,7 +1103,7 @@ static void sgrproj_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe
     }
 }
 
-static void wiener_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe_width,
+void wiener_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe_width,
                                         int32_t stripe_height, int32_t procunit_width,
                                         const uint8_t *src8, int32_t src_stride, uint8_t *dst8,
                                         int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth) {
@@ -1127,7 +1127,7 @@ static void wiener_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t 
     }
 }
 
-static void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe_width,
+void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe_width,
                                          int32_t stripe_height, int32_t procunit_width,
                                          const uint8_t *src8, int32_t src_stride, uint8_t *dst8,
                                          int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth) {
@@ -1148,13 +1148,6 @@ static void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t
                                         1);
     }
 }
-
-typedef void (*StripeFilterFun)(const RestorationUnitInfo *rui, int32_t stripe_width,
-                                int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
-                                int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-                                int32_t *tmpbuf, int32_t bit_depth);
-
-#define NUM_STRIPE_FILTERS 4
 
 static const StripeFilterFun stripe_filters[NUM_STRIPE_FILTERS] = {wiener_filter_stripe,
                                                                    sgrproj_filter_stripe,
