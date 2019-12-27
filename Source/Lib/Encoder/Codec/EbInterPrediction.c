@@ -1239,36 +1239,26 @@ int32_t is_inter_block(const BlockModeInfo *mbmi);
 BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
     int32_t subsampling_y);
 
-// A special 2-tap bilinear filter for IntraBC chroma. IntraBC uses full pixel
-// MV for luma. If sub-sampling exists, chroma may possibly use half-pel MV.
-DECLARE_ALIGNED(256, static const int16_t, av1_intrabc_bilinear_filter[2]) = {
-  64,
-  64,
-};
-
-static const InterpFilterParams av1_intrabc_filter_params = {
-  av1_intrabc_bilinear_filter, 2, 0, BILINEAR
-};
 static void convolve_2d_for_intrabc(const uint8_t *src, int src_stride,
     uint8_t *dst, int dst_stride, int w, int h,
     int subpel_x_q4, int subpel_y_q4,
     ConvolveParams *conv_params)
 {
     const InterpFilterParams *filter_params_x =
-        subpel_x_q4 ? &av1_intrabc_filter_params : NULL;
+        subpel_x_q4 ? &av1_interp_filter_params_list[BILINEAR] : NULL;
     const InterpFilterParams *filter_params_y =
-        subpel_y_q4 ? &av1_intrabc_filter_params : NULL;
+        subpel_y_q4 ? &av1_interp_filter_params_list[BILINEAR] : NULL;
     if (subpel_x_q4 != 0 && subpel_y_q4 != 0) {
-        eb_av1_convolve_2d_sr_c(src, src_stride, dst, dst_stride, w, h,
-            (InterpFilterParams *)filter_params_x, (InterpFilterParams *)filter_params_y, 0, 0, conv_params);
+        eb_av1_convolve_2d_sr(src, src_stride, dst, dst_stride, w, h,
+            (InterpFilterParams *)filter_params_x, (InterpFilterParams *)filter_params_y, 8, 8, conv_params);
     }
     else if (subpel_x_q4 != 0) {
-        eb_av1_convolve_x_sr_c(src, src_stride, dst, dst_stride, w, h, (InterpFilterParams *)filter_params_x,
-            (InterpFilterParams *)filter_params_y, 0, 0, conv_params);
+        eb_av1_convolve_x_sr(src, src_stride, dst, dst_stride, w, h, (InterpFilterParams *)filter_params_x,
+            (InterpFilterParams *)filter_params_y, 8, 0, conv_params);
     }
     else {
-        eb_av1_convolve_y_sr_c(src, src_stride, dst, dst_stride, w, h, (InterpFilterParams *)filter_params_x,
-            (InterpFilterParams *)filter_params_y, 0, 0, conv_params);
+        eb_av1_convolve_y_sr(src, src_stride, dst, dst_stride, w, h, (InterpFilterParams *)filter_params_x,
+            (InterpFilterParams *)filter_params_y, 0, 8, conv_params);
     }
 }
 static void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride,
@@ -1278,22 +1268,22 @@ static void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride,
     ConvolveParams *conv_params,
     int bd) {
     const InterpFilterParams *filter_params_x =
-        subpel_x_q4 ? &av1_intrabc_filter_params : NULL;
+        subpel_x_q4 ? &av1_interp_filter_params_list[BILINEAR] : NULL;
     const InterpFilterParams *filter_params_y =
-        subpel_y_q4 ? &av1_intrabc_filter_params : NULL;
+        subpel_y_q4 ? &av1_interp_filter_params_list[BILINEAR] : NULL;
     if (subpel_x_q4 != 0 && subpel_y_q4 != 0) {
-        eb_av1_highbd_convolve_2d_sr_c(src, src_stride, dst, dst_stride, w, h,
-            filter_params_x, filter_params_y, 0, 0,
+        eb_av1_highbd_convolve_2d_sr(src, src_stride, dst, dst_stride, w, h,
+            filter_params_x, filter_params_y, 8, 8,
             conv_params, bd);
     }
     else if (subpel_x_q4 != 0) {
-        eb_av1_highbd_convolve_x_sr_c(src, src_stride, dst, dst_stride, w, h,
-            filter_params_x, filter_params_y, 0, 0,
+        eb_av1_highbd_convolve_x_sr(src, src_stride, dst, dst_stride, w, h,
+            filter_params_x, filter_params_y, 8, 0,
             conv_params, bd);
     }
     else {
-        eb_av1_highbd_convolve_y_sr_c(src, src_stride, dst, dst_stride, w, h,
-            filter_params_x, filter_params_y, 0, 0,
+        eb_av1_highbd_convolve_y_sr(src, src_stride, dst, dst_stride, w, h,
+            filter_params_x, filter_params_y, 0, 8,
             conv_params, bd);
     }
 }
