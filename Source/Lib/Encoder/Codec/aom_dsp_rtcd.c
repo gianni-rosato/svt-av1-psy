@@ -1078,6 +1078,48 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_variance128x128 = eb_aom_variance128x128_c;
     if (flags & HAS_AVX2) eb_aom_variance128x128 = eb_aom_variance128x128_avx2;
 
+    // VARIANCE HBP
+    eb_aom_highbd_10_variance4x4 = eb_aom_highbd_10_variance4x4_c;
+    eb_aom_highbd_10_variance4x8 = eb_aom_highbd_10_variance4x8_c;
+    eb_aom_highbd_10_variance4x16 = eb_aom_highbd_10_variance4x16_c;
+    eb_aom_highbd_10_variance8x4 = eb_aom_highbd_10_variance8x4_c;
+    eb_aom_highbd_10_variance8x8 = eb_aom_highbd_10_variance8x8_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance8x8 = eb_aom_highbd_10_variance8x8_sse2;
+    eb_aom_highbd_10_variance8x16 = eb_aom_highbd_10_variance8x16_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance8x16 = eb_aom_highbd_10_variance8x16_sse2;
+    eb_aom_highbd_10_variance8x32 = eb_aom_highbd_10_variance8x32_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance8x32 = eb_aom_highbd_10_variance8x32_sse2;
+    eb_aom_highbd_10_variance16x4 = eb_aom_highbd_10_variance16x4_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance16x4 = eb_aom_highbd_10_variance16x4_avx2;
+    eb_aom_highbd_10_variance16x8 = eb_aom_highbd_10_variance16x8_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance16x8 = eb_aom_highbd_10_variance16x8_avx2;
+    eb_aom_highbd_10_variance16x16 = eb_aom_highbd_10_variance16x16_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance16x16 = eb_aom_highbd_10_variance16x16_avx2;
+    eb_aom_highbd_10_variance16x32 = eb_aom_highbd_10_variance16x32_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance16x32 = eb_aom_highbd_10_variance16x32_avx2;
+    eb_aom_highbd_10_variance16x64 = eb_aom_highbd_10_variance16x64_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance16x64 = eb_aom_highbd_10_variance16x64_avx2;
+    eb_aom_highbd_10_variance32x8 = eb_aom_highbd_10_variance32x8_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance32x8 = eb_aom_highbd_10_variance32x8_avx2;
+    eb_aom_highbd_10_variance32x16 = eb_aom_highbd_10_variance32x16_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance32x16 = eb_aom_highbd_10_variance32x16_avx2;
+    eb_aom_highbd_10_variance32x32 = eb_aom_highbd_10_variance32x32_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance32x32 = eb_aom_highbd_10_variance32x32_avx2;
+    eb_aom_highbd_10_variance32x64 = eb_aom_highbd_10_variance32x64_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance32x64 = eb_aom_highbd_10_variance32x64_avx2;
+    eb_aom_highbd_10_variance64x16 = eb_aom_highbd_10_variance64x16_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance64x16 = eb_aom_highbd_10_variance64x16_avx2;
+    eb_aom_highbd_10_variance64x32 = eb_aom_highbd_10_variance64x32_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance64x32 = eb_aom_highbd_10_variance64x32_avx2;
+    eb_aom_highbd_10_variance64x64 = eb_aom_highbd_10_variance64x64_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance64x64 = eb_aom_highbd_10_variance64x64_avx2;
+    eb_aom_highbd_10_variance64x128 = eb_aom_highbd_10_variance64x128_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance64x128 = eb_aom_highbd_10_variance64x128_avx2;
+    eb_aom_highbd_10_variance128x64 = eb_aom_highbd_10_variance128x64_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance128x64 = eb_aom_highbd_10_variance128x64_avx2;
+    eb_aom_highbd_10_variance128x128 = eb_aom_highbd_10_variance128x128_c;
+    if (flags & HAS_AVX2) eb_aom_highbd_10_variance128x128 = eb_aom_highbd_10_variance128x128_avx2;
+
     //QIQ
     eb_aom_quantize_b_64x64 = eb_aom_quantize_b_64x64_c_ii;
     if (flags & HAS_AVX2) eb_aom_quantize_b_64x64 = eb_aom_quantize_b_64x64_avx2;

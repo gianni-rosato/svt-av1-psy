@@ -67,6 +67,7 @@ typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride, const uint8_t *co
 typedef struct aom_variance_vtable {
     AomSadFn                 sdf;
     AomVarianceFn            vf;
+    AomVarianceFn        vf_hbd_10;
     AomSadMultiDFn         sdx4df;
     AomObmcSadFn            osdf;
     AomObmcVarianceFn       ovf;
