@@ -24,13 +24,13 @@ static const uint8_t  depth_offset[4]   = {85, 21, 5, 1};
 static const uint32_t ns_blk_offset[10] = {0, 1, 3, 25, 5, 8, 11, 14, 17, 21};
 static const uint32_t ns_blk_num[10]    = {1, 2, 2, 4, 3, 3, 3, 3, 4, 4};
 
-typedef struct MdcpLocalCodingUnit {
+typedef struct MdcpLocalBlkStruct {
     uint64_t early_cost;
     EbBool   early_split_flag;
     uint32_t split_context;
     EbBool   selected_cu;
     EbBool   stop_split;
-} MdcpLocalCodingUnit;
+} MdcpLocalBlkStruct;
 
 typedef struct ModeDecisionConfigurationContext {
     EbFifo *                 rate_control_input_fifo_ptr;
@@ -39,7 +39,7 @@ typedef struct ModeDecisionConfigurationContext {
     EbBool                   is_md_rate_estimation_ptr_owner;
     uint8_t                  qp;
     uint64_t                 lambda;
-    MdcpLocalCodingUnit      local_blk_array[CU_MAX_COUNT];
+    MdcpLocalBlkStruct      local_blk_array[CU_MAX_COUNT];
 
     // Inter depth decision
     uint8_t  group_of8x8_blocks_count;
@@ -67,7 +67,7 @@ typedef struct ModeDecisionConfigurationContext {
     const BlockGeom *      blk_geom;
     ModeDecisionCandidate *mdc_candidate_ptr;
     CandidateMv *          mdc_ref_mv_stack;
-    CodingUnit *           mdc_blk_ptr;
+    BlkStruct *           mdc_blk_ptr;
     uint8_t                qp_index;
 
     // Multi - Mode signal(s)

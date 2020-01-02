@@ -41,11 +41,6 @@ static void eb_get_mv(PictureParentControlSet *pcs_ptr, uint32_t sb_index, int32
         }
     }
 }
-
-void get_me_dist(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint32_t *distortion) {
-    *distortion = (uint32_t)pcs_ptr->me_results[sb_index]->me_candidate[0][0].distortion;
-}
-
 EbBool check_mv_for_pan_high_amp(uint32_t hierarchical_levels, uint32_t temporal_layer_index,
                                  int32_t *x_current_mv, int32_t *x_candidate_mv) {
     if (*x_current_mv * *x_candidate_mv >
@@ -510,219 +505,6 @@ void me_based_global_motion_detection(PictureParentControlSet *pcs_ptr) {
         check_for_non_uniform_motion_vector_field(pcs_ptr);
     return;
 }
-
-void stationary_edge_count_sb(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-                              PictureParentControlSet *temporalPictureControlSetPtr,
-                              uint32_t                 total_sb_count) {
-    uint32_t sb_index;
-    for (sb_index = 0; sb_index < total_sb_count; sb_index++) {
-        SbParams sb_params   = scs_ptr->sb_params_array[sb_index];
-        SbStat * sb_stat_ptr = &pcs_ptr->sb_stat_array[sb_index];
-        if (sb_params.potential_logo_sb && sb_params.is_complete_sb &&
-            sb_stat_ptr->check1_for_logo_stationary_edge_over_time_flag &&
-            sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag) {
-            SbStat * temp_sb_stat_ptr = &temporalPictureControlSetPtr->sb_stat_array[sb_index];
-            uint32_t raster_scan_blk_index;
-
-            if (temp_sb_stat_ptr->check1_for_logo_stationary_edge_over_time_flag) {
-                for (raster_scan_blk_index = RASTER_SCAN_CU_INDEX_16x16_0;
-                     raster_scan_blk_index <= RASTER_SCAN_CU_INDEX_16x16_15;
-                     raster_scan_blk_index++)
-                    sb_stat_ptr->cu_stat_array[raster_scan_blk_index].similar_edge_count +=
-                        temp_sb_stat_ptr->cu_stat_array[raster_scan_blk_index].edge_cu;
-            }
-        }
-    }
-}
-
-void stationary_edge_over_update_over_time_sb_part1(SequenceControlSet *     scs_ptr,
-                                                    PictureParentControlSet *pcs_ptr) {
-    uint32_t sb_index;
-    int32_t  x_current_mv = 0;
-    int32_t  y_current_mv = 0;
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; sb_index++) {
-        SbParams sb_params   = scs_ptr->sb_params_array[sb_index];
-        SbStat * sb_stat_ptr = &pcs_ptr->sb_stat_array[sb_index];
-
-        if (sb_params.potential_logo_sb && sb_params.is_complete_sb) {
-            // Current MV
-            if (pcs_ptr->temporal_layer_index > 0)
-                eb_get_mv(pcs_ptr, sb_index, &x_current_mv, &y_current_mv);
-
-            EbBool low_motion =
-                pcs_ptr->temporal_layer_index == 0
-                    ? EB_TRUE
-                    : (ABS(x_current_mv) < 16) && (ABS(y_current_mv) < 16) ? EB_TRUE : EB_FALSE;
-            uint16_t *y_variance_ptr = pcs_ptr->variance[sb_index];
-            uint64_t  var0           = y_variance_ptr[ME_TIER_ZERO_PU_32x32_0];
-            uint64_t  var1           = y_variance_ptr[ME_TIER_ZERO_PU_32x32_1];
-            uint64_t  var2           = y_variance_ptr[ME_TIER_ZERO_PU_32x32_2];
-            uint64_t  var3           = y_variance_ptr[ME_TIER_ZERO_PU_32x32_3];
-
-            uint64_t average_var = (var0 + var1 + var2 + var3) >> 2;
-            uint64_t var_of_var =
-                (((int32_t)(var0 - average_var) * (int32_t)(var0 - average_var)) +
-                 ((int32_t)(var1 - average_var) * (int32_t)(var1 - average_var)) +
-                 ((int32_t)(var2 - average_var) * (int32_t)(var2 - average_var)) +
-                 ((int32_t)(var3 - average_var) * (int32_t)(var3 - average_var))) >>
-                2;
-
-            if ((var_of_var <= 50000) || !low_motion)
-                sb_stat_ptr->check1_for_logo_stationary_edge_over_time_flag = 0;
-            else
-                sb_stat_ptr->check1_for_logo_stationary_edge_over_time_flag = 1;
-            if ((var_of_var <= 1000))
-                sb_stat_ptr->pm_check1_for_logo_stationary_edge_over_time_flag = 0;
-            else
-                sb_stat_ptr->pm_check1_for_logo_stationary_edge_over_time_flag = 1;
-        } else {
-            sb_stat_ptr->check1_for_logo_stationary_edge_over_time_flag = 0;
-
-            sb_stat_ptr->pm_check1_for_logo_stationary_edge_over_time_flag = 0;
-        }
-    }
-}
-
-void stationary_edge_over_update_over_time_sb_part2(SequenceControlSet *     scs_ptr,
-                                                    PictureParentControlSet *pcs_ptr) {
-    uint32_t sb_index;
-
-    uint32_t low_sad_th = (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) ? 5 : 2;
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; sb_index++) {
-        SbParams sb_params   = scs_ptr->sb_params_array[sb_index];
-        SbStat * sb_stat_ptr = &pcs_ptr->sb_stat_array[sb_index];
-
-        if (sb_params.potential_logo_sb && sb_params.is_complete_sb) {
-            uint32_t me_dist = 0;
-
-            EbBool low_sad = EB_FALSE;
-
-            if (pcs_ptr->slice_type == B_SLICE) get_me_dist(pcs_ptr, sb_index, &me_dist);
-            low_sad = (pcs_ptr->slice_type != B_SLICE)
-                          ?
-
-                          EB_FALSE
-                          : (me_dist < 64 * 64 * low_sad_th) ? EB_TRUE : EB_FALSE;
-
-            if (low_sad) {
-                sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag = 0;
-                sb_stat_ptr->low_dist_logo                                  = 1;
-            } else {
-                sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag = 1;
-
-                sb_stat_ptr->low_dist_logo = 0;
-            }
-        } else {
-            sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag = 0;
-
-            sb_stat_ptr->low_dist_logo = 0;
-        }
-        sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag = 1;
-    }
-}
-
-void stationary_edge_over_update_over_time_sb(SequenceControlSet *     scs_ptr,
-                                              uint32_t                 total_checked_pictures,
-                                              PictureParentControlSet *pcs_ptr,
-                                              uint32_t                 total_sb_count) {
-    uint32_t       sb_index;
-    const uint32_t slide_window_th = ((total_checked_pictures / 4) - 1);
-
-    for (sb_index = 0; sb_index < total_sb_count; sb_index++) {
-        SbParams sb_params = scs_ptr->sb_params_array[sb_index];
-
-        SbStat *sb_stat_ptr                         = &pcs_ptr->sb_stat_array[sb_index];
-        sb_stat_ptr->stationary_edge_over_time_flag = EB_FALSE;
-        if (sb_params.potential_logo_sb && sb_params.is_complete_sb &&
-            sb_stat_ptr->check1_for_logo_stationary_edge_over_time_flag &&
-            sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag) {
-            uint32_t raster_scan_blk_index;
-            uint32_t similar_edge_count_sb = 0;
-            // CU Loop
-            for (raster_scan_blk_index = RASTER_SCAN_CU_INDEX_16x16_0;
-                 raster_scan_blk_index <= RASTER_SCAN_CU_INDEX_16x16_15;
-                 raster_scan_blk_index++)
-                similar_edge_count_sb +=
-                    (sb_stat_ptr->cu_stat_array[raster_scan_blk_index].similar_edge_count >
-                     slide_window_th)
-                        ? 1
-                        : 0;
-            sb_stat_ptr->stationary_edge_over_time_flag =
-                (similar_edge_count_sb >= 4) ? EB_TRUE : EB_FALSE;
-        }
-    }
-
-    {
-        uint32_t sb_index;
-        uint32_t sb_x, sb_y;
-        uint32_t count_of_neighbors = 0;
-        int32_t  sb_hor, sb_ver, sb_ver_offset;
-        int32_t  sb_hor_s, sb_ver_s, sb_hor_e, sb_ver_e;
-        uint32_t pic_width_in_sb      = scs_ptr->pic_width_in_sb;
-        uint32_t picture_height_in_sb = scs_ptr->picture_height_in_sb;
-
-        for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-            SbParams sb_params   = scs_ptr->sb_params_array[sb_index];
-            SbStat * sb_stat_ptr = &pcs_ptr->sb_stat_array[sb_index];
-
-            sb_x = sb_params.horizontal_index;
-            sb_y = sb_params.vertical_index;
-
-            {
-                if (sb_stat_ptr->stationary_edge_over_time_flag == 0 &&
-                    sb_params.potential_logo_sb &&
-                    (sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag ||
-                     !sb_params.is_complete_sb)) {
-                    sb_hor_s           = (sb_x > 0) ? -1 : 0;
-                    sb_hor_e           = (sb_x < pic_width_in_sb - 1) ? 1 : 0;
-                    sb_ver_s           = (sb_y > 0) ? -1 : 0;
-                    sb_ver_e           = (sb_y < picture_height_in_sb - 1) ? 1 : 0;
-                    count_of_neighbors = 0;
-                    for (sb_ver = sb_ver_s; sb_ver <= sb_ver_e; sb_ver++) {
-                        sb_ver_offset = sb_ver * (int32_t)pic_width_in_sb;
-                        for (sb_hor = sb_hor_s; sb_hor <= sb_hor_e; sb_hor++)
-                            count_of_neighbors +=
-                                (pcs_ptr->sb_stat_array[sb_index + sb_ver_offset + sb_hor]
-                                     .stationary_edge_over_time_flag == 1);
-                    }
-                    if (count_of_neighbors > 0) sb_stat_ptr->stationary_edge_over_time_flag = 2;
-                }
-            }
-        }
-
-        for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-            SbParams sb_params   = scs_ptr->sb_params_array[sb_index];
-            SbStat * sb_stat_ptr = &pcs_ptr->sb_stat_array[sb_index];
-
-            sb_x = sb_params.horizontal_index;
-            sb_y = sb_params.vertical_index;
-
-            {
-                if (sb_stat_ptr->stationary_edge_over_time_flag == 0 &&
-                    sb_params.potential_logo_sb &&
-                    (sb_stat_ptr->check2_for_logo_stationary_edge_over_time_flag ||
-                     !sb_params.is_complete_sb)) {
-                    sb_hor_s           = (sb_x > 0) ? -1 : 0;
-                    sb_hor_e           = (sb_x < pic_width_in_sb - 1) ? 1 : 0;
-                    sb_ver_s           = (sb_y > 0) ? -1 : 0;
-                    sb_ver_e           = (sb_y < picture_height_in_sb - 1) ? 1 : 0;
-                    count_of_neighbors = 0;
-                    for (sb_ver = sb_ver_s; sb_ver <= sb_ver_e; sb_ver++) {
-                        sb_ver_offset = sb_ver * (int32_t)pic_width_in_sb;
-                        for (sb_hor = sb_hor_s; sb_hor <= sb_hor_e; sb_hor++)
-                            count_of_neighbors +=
-                                (pcs_ptr->sb_stat_array[sb_index + sb_ver_offset + sb_hor]
-                                     .stationary_edge_over_time_flag == 2);
-                    }
-                    if (count_of_neighbors > 3) sb_stat_ptr->stationary_edge_over_time_flag = 3;
-                }
-            }
-        }
-    }
-}
-
 /************************************************
 * Global Motion Detection Based on Lookahead
 ** Mark pictures for pan
@@ -892,10 +674,6 @@ void update_motion_field_uniformity_over_time(EncodeContext *          encode_co
     uint32_t                        no_frames_to_check;
     uint32_t                        frames_to_check_index;
     //SVT_LOG("To update POC %d\tframesInSw = %d\n", pcs_ptr->picture_number, pcs_ptr->frames_in_sw);
-
-    //Check conditions for statinary edge over time
-    stationary_edge_over_update_over_time_sb_part2(scs_ptr, pcs_ptr);
-
     // Determine number of frames to check N
     no_frames_to_check =
         MIN(MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
@@ -914,17 +692,11 @@ void update_motion_field_uniformity_over_time(EncodeContext *          encode_co
             ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
 
         if (temp_pcs_ptr->end_of_sequence_flag) break;
-        // The values are calculated for every 4th frame
-        if ((temp_pcs_ptr->picture_number & 3) == 0) {
-            stationary_edge_count_sb(scs_ptr, pcs_ptr, temp_pcs_ptr, pcs_ptr->sb_total_count);
-        }
         // Increment the input_queue_index Iterator
         input_queue_index = (input_queue_index == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
                                 ? 0
                                 : input_queue_index + 1;
     }
-    stationary_edge_over_update_over_time_sb(
-        scs_ptr, no_frames_to_check, pcs_ptr, pcs_ptr->sb_total_count);
     return;
 }
 InitialRateControlReorderEntry *determine_picture_offset_in_queue(
@@ -1119,11 +891,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
             pcs_ptr->frames_in_sw          = 0;
             pcs_ptr->historgram_life_count = 0;
             pcs_ptr->scene_change_in_gop   = EB_FALSE;
-
-            //Check conditions for statinary edge over time
-
-            stationary_edge_over_update_over_time_sb_part1(scs_ptr, pcs_ptr);
-
             move_slide_window_flag = EB_TRUE;
             while (move_slide_window_flag) {
                 // Check if the sliding window condition is valid

@@ -53,7 +53,6 @@ typedef struct EncodeContext {
     // Output Buffer Fifos
     EbFifo *stream_output_fifo_ptr;
     EbFifo *recon_output_fifo_ptr;
-    EbFifo *statistics_output_fifo_ptr;
 
     // Picture Buffer Fifos
     EbFifo *reference_picture_pool_fifo_ptr;

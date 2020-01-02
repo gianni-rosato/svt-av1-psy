@@ -21,35 +21,6 @@
 extern "C" {
 #endif
 
-void uni_pred_averaging(
-        uint32_t              pu_index,
-        EbBool                chroma,
-        uint8_t               firstFracPos,
-        uint32_t              pu_width,
-        uint32_t              pu_height,
-        uint8_t               *firstRefInteger,
-        uint8_t               *firstRefPosB,
-        uint8_t               *firstRefPosh_,
-        uint8_t               *firstRefPosJ,
-        uint32_t              refBufferStride,
-        uint32_t              refBufferFullList0Stride,
-        uint8_t               *firstRefTempDst,
-        uint8_t               **comp_blk_ptr,
-        uint32_t              *comp_blk_ptr_stride);
-
-void interpolate_search_region_avc_chroma(
-        MeContext               *context_ptr,
-        uint8_t                 *search_region_buffer_cb,
-        uint8_t                 *search_region_buffer_cr,
-        uint8_t                 **pos_b_buffer_ch,
-        uint8_t                 **pos_h_buffer_ch,
-        uint8_t                 **pos_j_buffer_ch,
-        uint32_t                interpolated_stride_ch,
-        uint32_t                interpolated_full_stride_ch,
-        uint32_t                search_area_width,
-        uint32_t                search_area_height,
-        uint32_t                input_bit_depth);
-
     extern EbErrorType motion_estimate_sb(
         PictureParentControlSet   *pcs_ptr,
         uint32_t                       sb_index,
@@ -82,7 +53,6 @@ void interpolate_search_region_avc_chroma(
         MotionEstimationContext_t   *context_ptr,
         EbPictureBufferDesc       *input_ptr);
 
-    int8_t sort_3_elements(uint32_t a, uint32_t b, uint32_t c);
 #define a_b_c  0
 #define a_c_b  1
 #define b_a_c  2

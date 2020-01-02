@@ -278,7 +278,7 @@ static void encode_pass_update_recon_sample_neighbour_arrays(
 /************************************************************
 * Update Intra Luma Neighbor Modes
 ************************************************************/
-void generate_pu_intra_luma_neighbor_nodes(CodingUnit *blk_ptr, uint32_t pu_origin_x,
+void generate_pu_intra_luma_neighbor_nodes(BlkStruct *blk_ptr, uint32_t pu_origin_x,
                                            uint32_t pu_origin_y, uint32_t sb_sz,
                                            NeighborArrayUnit *intraLumaNeighborArray,
                                            NeighborArrayUnit *intraChromaNeighborArray,
@@ -376,7 +376,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
     (void)cb_qp;
 
     //    uint32_t                 chroma_qp = cb_qp;
-    CodingUnit *   blk_ptr = context_ptr->blk_ptr;
+    BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
     //    EB_SLICE               slice_type = sb_ptr->pcs_ptr->slice_type;
     //    uint32_t                 temporal_layer_index = sb_ptr->pcs_ptr->temporal_layer_index;
@@ -807,7 +807,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
 {
     (void)cb_qp;
 
-    CodingUnit *   blk_ptr = context_ptr->blk_ptr;
+    BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
     //    EB_SLICE               slice_type = sb_ptr->pcs_ptr->slice_type;
     //    uint32_t                 temporal_layer_index = sb_ptr->pcs_ptr->temporal_layer_index;
@@ -1164,7 +1164,7 @@ static void av1_encode_generate_recon(EncDecContext *context_ptr, uint32_t origi
                                       uint16_t *eob) {
     uint32_t       pred_luma_offset;
     uint32_t       pred_chroma_offset;
-    CodingUnit *   blk_ptr = context_ptr->blk_ptr;
+    BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
 
     // *Note - The prediction is built in-place in the Recon buffer. It is overwritten with Reconstructed
@@ -1281,7 +1281,7 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
     uint32_t pred_luma_offset;
     uint32_t pred_chroma_offset;
 
-    CodingUnit *   blk_ptr = context_ptr->blk_ptr;
+    BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
 
     (void)transform_scratch_buffer;
@@ -1418,14 +1418,14 @@ void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, Picture
                sb_w * 2);
 }
 
-void update_av1_mi_map(CodingUnit *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                        const BlockGeom *blk_geom, PictureControlSet *pcs_ptr);
 
-void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, CodingUnit *src_cu,
-                   CodingUnit *dst_cu);
+void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct *src_cu,
+                   BlkStruct *dst_cu);
 
 void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint32_t sb_addr,
-                               CodingUnit *blk_ptr, PredictionUnit *pu_ptr,
+                               BlkStruct *blk_ptr, PredictionUnit *pu_ptr,
                                EncDecContext *context_ptr) {
     EbBool is_16bit = context_ptr->is_16bit;
 
@@ -1711,16 +1711,16 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
             context_ptr->blk_origin_y +
             context_ptr->blk_geom->tx_boff_y[blk_ptr->tx_depth][context_ptr->txb_itr];
 
-        uint32_t cu_originx_uv = (context_ptr->blk_origin_x >> 3 << 3) >> 1;
-        uint32_t cu_originy_uv = (context_ptr->blk_origin_y >> 3 << 3) >> 1;
+        uint32_t blk_originx_uv = (context_ptr->blk_origin_x >> 3 << 3) >> 1;
+        uint32_t blk_originy_uv = (context_ptr->blk_origin_y >> 3 << 3) >> 1;
 
         context_ptr->md_context->cb_txb_skip_context = 0;
         context_ptr->md_context->cb_dc_sign_context  = 0;
         get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
                     COMPONENT_CHROMA,
                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
-                    cu_originx_uv,
-                    cu_originy_uv,
+                    blk_originx_uv,
+                    blk_originy_uv,
                     context_ptr->blk_geom->bsize_uv,
                     context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                     &context_ptr->md_context->cb_txb_skip_context,
@@ -1732,8 +1732,8 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
             pcs_ptr->parent_pcs_ptr->scs_ptr,
             COMPONENT_CHROMA,
             pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
-            cu_originx_uv,
-            cu_originy_uv,
+            blk_originx_uv,
+            blk_originy_uv,
             context_ptr->blk_geom->bsize_uv,
             context_ptr->blk_geom->txsize_uv[context_ptr->blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->md_context->cr_txb_skip_context,
@@ -1753,31 +1753,31 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                         : context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr];
 
                 if (plane == 1) {
-                    if (cu_originy_uv != 0)
+                    if (blk_originy_uv != 0)
                         memcpy(top_neigh_array + 1,
-                               (uint16_t *)(ep_cb_recon_neighbor_array->top_array) + cu_originx_uv,
+                               (uint16_t *)(ep_cb_recon_neighbor_array->top_array) + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
-                    if (cu_originx_uv != 0)
+                    if (blk_originx_uv != 0)
                         memcpy(left_neigh_array + 1,
-                               (uint16_t *)(ep_cb_recon_neighbor_array->left_array) + cu_originy_uv,
+                               (uint16_t *)(ep_cb_recon_neighbor_array->left_array) + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
-                    if (cu_originy_uv != 0 && cu_originx_uv != 0)
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ((uint16_t *)(ep_cb_recon_neighbor_array->top_left_array) +
-                             MAX_PICTURE_HEIGHT_SIZE / 2 + cu_originx_uv - cu_originy_uv)[0];
+                             MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv - blk_originy_uv)[0];
                 } else if (plane == 2) {
-                    if (cu_originy_uv != 0)
+                    if (blk_originy_uv != 0)
                         memcpy(top_neigh_array + 1,
-                               (uint16_t *)(ep_cr_recon_neighbor_array->top_array) + cu_originx_uv,
+                               (uint16_t *)(ep_cr_recon_neighbor_array->top_array) + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
-                    if (cu_originx_uv != 0)
+                    if (blk_originx_uv != 0)
                         memcpy(left_neigh_array + 1,
-                               (uint16_t *)(ep_cr_recon_neighbor_array->left_array) + cu_originy_uv,
+                               (uint16_t *)(ep_cr_recon_neighbor_array->left_array) + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
-                    if (cu_originy_uv != 0 && cu_originx_uv != 0)
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ((uint16_t *)(ep_cr_recon_neighbor_array->top_left_array) +
-                             MAX_PICTURE_HEIGHT_SIZE / 2 + cu_originx_uv - cu_originy_uv)[0];
+                             MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv - blk_originy_uv)[0];
                 }
 
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED)
@@ -1832,37 +1832,37 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                         : context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr];
 
                 if (plane == 1) {
-                    if (cu_originy_uv != 0)
+                    if (blk_originy_uv != 0)
                         memcpy(top_neigh_array + 1,
-                               ep_cb_recon_neighbor_array->top_array + cu_originx_uv,
+                               ep_cb_recon_neighbor_array->top_array + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2);
 
-                    if (cu_originx_uv != 0)
+                    if (blk_originx_uv != 0)
                         memcpy(left_neigh_array + 1,
-                               ep_cb_recon_neighbor_array->left_array + cu_originy_uv,
+                               ep_cb_recon_neighbor_array->left_array + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2);
 
-                    if (cu_originy_uv != 0 && cu_originx_uv != 0)
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ep_cb_recon_neighbor_array
-                                ->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + cu_originx_uv -
-                                                 cu_originy_uv];
+                                ->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv -
+                                                 blk_originy_uv];
                 } else {
-                    if (cu_originy_uv != 0)
+                    if (blk_originy_uv != 0)
                         memcpy(top_neigh_array + 1,
-                               ep_cr_recon_neighbor_array->top_array + cu_originx_uv,
+                               ep_cr_recon_neighbor_array->top_array + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2);
 
-                    if (cu_originx_uv != 0)
+                    if (blk_originx_uv != 0)
                         memcpy(left_neigh_array + 1,
-                               ep_cr_recon_neighbor_array->left_array + cu_originy_uv,
+                               ep_cr_recon_neighbor_array->left_array + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2);
 
-                    if (cu_originy_uv != 0 && cu_originx_uv != 0)
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ep_cr_recon_neighbor_array
-                                ->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + cu_originx_uv -
-                                                 cu_originy_uv];
+                                ->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv -
+                                                 blk_originy_uv];
                 }
 
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED)
@@ -2108,8 +2108,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     md_context_ptr = context_ptr->md_context;
     input_picture  = context_ptr->input_samples =
         (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-
-    SbStat *sb_stat_ptr = &(pcs_ptr->parent_pcs_ptr->sb_stat_array[sb_addr]);
     // SB Stats
     uint32_t sb_width =
         MIN(scs_ptr->sb_size_pix, scs_ptr->seq_header.max_frame_width - sb_origin_x);
@@ -2285,8 +2283,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
     if ((scs_ptr->input_resolution == INPUT_SIZE_4K_RANGE) &&
         !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-        if (!((sb_stat_ptr->stationary_edge_over_time_flag) ||
-              (pcs_ptr->parent_pcs_ptr->logo_pic_flag))) {
             if (pcs_ptr->slice_type == B_SLICE) {
                 EbReferenceObject *ref_obj_l0 =
                     (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
@@ -2299,7 +2295,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                     high_intra_ref = EB_TRUE;
             }
             if (high_intra_ref == EB_FALSE) check_zero_luma_cbf = EB_TRUE;
-        }
     }
     context_ptr->intra_coded_area_sb[sb_addr] = 0;
     context_ptr->coded_area_sb                = 0;
@@ -2325,7 +2320,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     // CU Loop
     uint32_t blk_it = 0;
     while (blk_it < scs_ptr->max_block_cnt) {
-        CodingUnit *blk_ptr = context_ptr->blk_ptr =
+        BlkStruct *blk_ptr = context_ptr->blk_ptr =
             &context_ptr->md_context->md_blk_arr_nsq[blk_it];
         PartitionType part = blk_ptr->part;
 
@@ -2360,7 +2355,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                 int16_t *transform_inner_array_ptr = context_ptr->transform_inner_array_ptr;
 
-                CodingUnit *blk_ptr = context_ptr->blk_ptr =
+                BlkStruct *blk_ptr = context_ptr->blk_ptr =
                     &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
 
                 context_ptr->blk_origin_x = (uint16_t)(sb_origin_x + blk_geom->origin_x);
@@ -2465,8 +2460,8 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                             ep_mode_type_neighbor_array);
 
                         {
-                            uint32_t cu_originy_uv = (context_ptr->blk_origin_y >> 3 << 3) >> 1;
-                            uint32_t cu_originx_uv = (context_ptr->blk_origin_x >> 3 << 3) >> 1;
+                            uint32_t blk_originy_uv = (context_ptr->blk_origin_y >> 3 << 3) >> 1;
+                            uint32_t blk_originx_uv = (context_ptr->blk_origin_x >> 3 << 3) >> 1;
 
                             context_ptr->md_context->luma_txb_skip_context = 0;
                             context_ptr->md_context->luma_dc_sign_context  = 0;
@@ -2486,8 +2481,8 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
                                             COMPONENT_CHROMA,
                                             pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array,
-                                            cu_originx_uv,
-                                            cu_originy_uv,
+                                            blk_originx_uv,
+                                            blk_originy_uv,
                                             context_ptr->blk_geom->bsize_uv,
                                             context_ptr->blk_geom->txsize_uv[0][0],
                                             &context_ptr->md_context->cb_txb_skip_context,
@@ -2498,8 +2493,8 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 get_txb_ctx(pcs_ptr->parent_pcs_ptr->scs_ptr,
                                             COMPONENT_CHROMA,
                                             pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array,
-                                            cu_originx_uv,
-                                            cu_originy_uv,
+                                            blk_originx_uv,
+                                            blk_originy_uv,
                                             context_ptr->blk_geom->bsize_uv,
                                             context_ptr->blk_geom->txsize_uv[0][0],
                                             &context_ptr->md_context->cr_txb_skip_context,
@@ -3846,8 +3841,8 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
         }
 
         {
-            CodingUnit *src_cu = &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
-            CodingUnit *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr++];
+            BlkStruct *src_cu = &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
+            BlkStruct *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr++];
             move_blk_data(pcs_ptr, context_ptr, src_cu, dst_cu);
         }
         if (scs_ptr->mfmv_enabled && pcs_ptr->slice_type != I_SLICE &&
@@ -3907,7 +3902,7 @@ EB_EXTERN void no_enc_dec_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     uint32_t blk_it = 0;
 
     while (blk_it < scs_ptr->max_block_cnt) {
-        CodingUnit *blk_ptr = context_ptr->blk_ptr =
+        BlkStruct *blk_ptr = context_ptr->blk_ptr =
             &context_ptr->md_context->md_blk_arr_nsq[blk_it];
         PartitionType    part     = blk_ptr->part;
         const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_it);
@@ -3922,17 +3917,16 @@ EB_EXTERN void no_enc_dec_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
             for (int32_t d1_itr = blk_it + offset_d1; d1_itr < blk_it + offset_d1 + num_d1_block;
                  d1_itr++) {
                 const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(d1_itr);
-                CodingUnit *     blk_ptr                          = context_ptr->blk_ptr =
+                BlkStruct *     blk_ptr                          = context_ptr->blk_ptr =
                     &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
 
                 blk_ptr->delta_qp     = 0;
                 blk_ptr->qp           = pcs_ptr->picture_qp;
                 sb_ptr->qp            = pcs_ptr->picture_qp;
-                blk_ptr->org_delta_qp = blk_ptr->delta_qp;
 
                 {
-                    CodingUnit *src_cu = &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
-                    CodingUnit *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr++];
+                    BlkStruct *src_cu = &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
+                    BlkStruct *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr++];
 
                     move_blk_data(src_cu, dst_cu);
                 }

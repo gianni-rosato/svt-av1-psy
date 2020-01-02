@@ -2985,156 +2985,6 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
 
 int  get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_frame_index,
                                 int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
-void search_compound_avg_dist(PictureControlSet *    picture_control_set_ptr,
-                              ModeDecisionContext *  context_ptr,
-                              ModeDecisionCandidate *candidate_ptr) {
-    int64_t est_rd[2];
-
-    MbModeInfo *const mbmi = &context_ptr->blk_ptr->av1xd->mi[0]->mbmi;
-    MvReferenceFrame  rf[2];
-    av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
-    mbmi->block_mi.ref_frame[0] = rf[0];
-    mbmi->block_mi.ref_frame[1] = rf[1];
-    const int comp_index_ctx    = get_comp_index_context_enc(
-        picture_control_set_ptr->parent_pcs_ptr,
-        picture_control_set_ptr->parent_pcs_ptr->cur_order_hint,
-        picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1],
-        picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[1] - 1],
-        context_ptr->blk_ptr->av1xd);
-
-    //COMPOUND AVERAGE
-    COMPOUND_TYPE comp_i;
-
-    for (comp_i = COMPOUND_AVERAGE; comp_i <= COMPOUND_DISTWTD; comp_i++) {
-        //assign compound type temporary for RD test
-        candidate_ptr->interinter_comp.type = comp_i;
-        candidate_ptr->comp_group_idx       = 0;
-        candidate_ptr->compound_idx         = (comp_i == COMPOUND_AVERAGE) ? 1 : 0;
-
-        EbPictureBufferDesc *src_pic =
-            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-        uint8_t *src_buf = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
-                           (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
-
-        uint32_t            bwidth  = context_ptr->blk_geom->bwidth;
-        uint32_t            bheight = context_ptr->blk_geom->bheight;
-        EbPictureBufferDesc pred_desc;
-        pred_desc.origin_x = pred_desc.origin_y = 0;
-        pred_desc.stride_y                      = bwidth;
-        pred_desc.buffer_y                      = context_ptr->pred0;
-
-        EbPictureBufferDesc *ref_pic_list0;
-        EbPictureBufferDesc *ref_pic_list1 = NULL;
-        Mv                   mv_0;
-        Mv                   mv_1;
-        mv_0.x = candidate_ptr->motion_vector_xl0;
-        mv_0.y = candidate_ptr->motion_vector_yl0;
-        mv_1.x = candidate_ptr->motion_vector_xl1;
-        mv_1.y = candidate_ptr->motion_vector_yl1;
-        MvUnit mv_unit;
-        mv_unit.mv[0]               = mv_0;
-        mv_unit.mv[1]               = mv_1;
-        mv_unit.pred_direction      = BI_PRED;
-        int8_t           ref_idx_l0 = candidate_ptr->ref_frame_index_l0;
-        int8_t           ref_idx_l1 = candidate_ptr->ref_frame_index_l1;
-        MvReferenceFrame rf[2];
-        av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
-        uint8_t list_idx0, list_idx1;
-        list_idx0 = get_list_idx(rf[0]);
-        if (rf[1] == NONE_FRAME)
-            list_idx1 = get_list_idx(rf[0]);
-        else
-            list_idx1 = get_list_idx(rf[1]);
-        assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST);
-        assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
-        if (ref_idx_l0 >= 0)
-            ref_pic_list0 = ((EbReferenceObject *)picture_control_set_ptr
-                                 ->ref_pic_ptr_array[list_idx0][ref_idx_l0]
-                                 ->object_ptr)
-                                ->reference_picture;
-        else
-            ref_pic_list0 = (EbPictureBufferDesc *)EB_NULL;
-        if (ref_idx_l1 >= 0)
-            ref_pic_list1 = ((EbReferenceObject *)picture_control_set_ptr
-                                 ->ref_pic_ptr_array[list_idx1][ref_idx_l1]
-                                 ->object_ptr)
-                                ->reference_picture;
-        else
-            ref_pic_list1 = (EbPictureBufferDesc *)EB_NULL;
-
-        av1_inter_prediction_function_table[context_ptr->hbd_mode_decision > EB_8_BIT_MD](
-            picture_control_set_ptr,
-            0, //fixed interpolation filter for compound search
-            context_ptr->blk_ptr,
-            candidate_ptr->ref_frame_type,
-            &mv_unit,
-            0, //use_intrabc,
-            SIMPLE_TRANSLATION,
-            0,
-            0,
-            candidate_ptr->compound_idx,
-            &candidate_ptr->interinter_comp,
-            NULL,
-            NULL,
-            NULL,
-            NULL,
-            0,
-            0,
-            0,
-            0,
-            context_ptr->blk_origin_x,
-            context_ptr->blk_origin_y,
-            bwidth,
-            bheight,
-            ref_pic_list0,
-            ref_pic_list1,
-            &pred_desc, //output
-            0, //output origin_x,
-            0, //output origin_y,
-            0, //do chroma
-            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
-
-        int32_t est_rate;
-        int64_t est_dist;
-
-        model_rd_for_sb_with_curvfit(picture_control_set_ptr,
-                                     context_ptr,
-                                     context_ptr->blk_geom->bsize,
-                                     bwidth,
-                                     bheight,
-                                     src_buf,
-                                     src_pic->stride_y,
-                                     pred_desc.buffer_y,
-                                     pred_desc.stride_y,
-                                     0,
-                                     0,
-                                     0,
-                                     0,
-                                     &est_rate,
-                                     &est_dist,
-                                     NULL,
-                                     NULL,
-                                     NULL,
-                                     NULL,
-                                     NULL);
-
-        est_rate += candidate_ptr->md_rate_estimation_ptr
-                        ->comp_idx_fac_bits[comp_index_ctx][candidate_ptr->compound_idx];
-
-        est_rd[comp_i] = RDCOST(context_ptr->full_lambda, est_rate, est_dist);
-    }
-
-    //assign the best compound type
-    if (est_rd[COMPOUND_AVERAGE] <= est_rd[COMPOUND_DISTWTD]) {
-        candidate_ptr->interinter_comp.type = COMPOUND_AVERAGE;
-        candidate_ptr->comp_group_idx       = 0;
-        candidate_ptr->compound_idx         = 1;
-    } else {
-        candidate_ptr->interinter_comp.type = COMPOUND_DISTWTD;
-        candidate_ptr->comp_group_idx       = 0;
-        candidate_ptr->compound_idx         = 0;
-    }
-}
 
 void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
                         int wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred,
@@ -4615,7 +4465,7 @@ void precompute_obmc_data(PictureControlSet *  picture_control_set_ptr,
 }
 
 EbErrorType av1_inter_prediction(
-    PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, CodingUnit *blk_ptr,
+    PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, BlkStruct *blk_ptr,
     uint8_t ref_frame_type, MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode,
     uint8_t use_precomputed_obmc, struct ModeDecisionContext *md_context, uint8_t compound_idx,
     InterInterCompoundData *interinter_comp, TileInfo *tile,
@@ -5480,7 +5330,7 @@ EbErrorType av1_inter_prediction(
 }
 
 EbErrorType av1_inter_prediction_hbd(
-    PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, CodingUnit *blk_ptr,
+    PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, BlkStruct *blk_ptr,
     uint8_t ref_frame_type, MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode,
     uint8_t use_precomputed_obmc, struct ModeDecisionContext *md_context, uint8_t compound_idx,
     InterInterCompoundData *interinter_comp, TileInfo *tile,
@@ -6350,7 +6200,7 @@ EbErrorType av1_inter_prediction_hbd(
 }
 
 static void chroma_plane_warped_motion_prediction_sub8x8(
-    PictureControlSet *picture_control_set_ptr, uint8_t compound_idx, CodingUnit *blk_ptr,
+    PictureControlSet *picture_control_set_ptr, uint8_t compound_idx, BlkStruct *blk_ptr,
     const BlockGeom *blk_geom, uint8_t bwidth, uint8_t bheight, uint8_t is_compound,
     uint8_t bit_depth, int32_t src_stride, int32_t dst_stride, uint8_t *src_ptr_l0,
     uint8_t *src_ptr_l1, uint8_t *dst_ptr, MvReferenceFrame rf[2], MvUnit *mv_unit) {
@@ -6575,7 +6425,7 @@ static void plane_warped_motion_prediction(
 EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr, MvUnit *mv_unit,
                                      uint8_t ref_frame_type, uint8_t compound_idx,
                                      InterInterCompoundData *interinter_comp, uint16_t pu_origin_x,
-                                     uint16_t pu_origin_y, CodingUnit *blk_ptr,
+                                     uint16_t pu_origin_y, BlkStruct *blk_ptr,
                                      const BlockGeom *blk_geom, EbPictureBufferDesc *ref_pic_list0,
                                      EbPictureBufferDesc *ref_pic_list1,
                                      EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
@@ -7635,204 +7485,6 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
             md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
         hbd_mode_decision ? EB_10BIT : EB_8BIT);
-
-    return return_error;
-}
-
-/** choose_mvp_idx_v2 function is used to choose the best AMVP candidate.
-    @param *candidate_ptr(output)
-        candidate_ptr points to the prediction result.
-    @param blk_ptr(input)
-        pointer to the CU where the target PU belongs to.
-    @param *pu_index(input)
-        the index of the PU inside a CU
-    @param ref0AMVPCandArray(input)
-    @param ref0_num_available_amvp_cand(input)
-    @param ref1AMVPCandArray(input)
-    @param ref1NumAvailableAMVPCand(input)
- */
-EbErrorType choose_mvp_idx_v2(ModeDecisionCandidate *candidate_ptr, uint32_t blk_origin_x,
-                              uint32_t blk_origin_y, uint32_t pu_index, uint32_t tb_size,
-                              int16_t *ref0_amvp_cand_array_x, int16_t *ref0_amvp_cand_array_y,
-                              uint32_t ref0_num_available_amvp_cand,
-                              int16_t *ref1_amvp_cand_array_x, int16_t *ref1_amvp_cand_array_y,
-                              uint32_t           ref1NumAvailableAMVPCand,
-                              PictureControlSet *picture_control_set_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-    uint8_t     mvpRef0Idx;
-    uint8_t     mvpRef1Idx;
-
-    uint32_t picture_width =
-        ((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
-            ->seq_header.max_frame_width;
-    uint32_t picture_height =
-        ((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
-            ->seq_header.max_frame_height;
-
-    uint32_t mvd0, mvd1;
-
-    switch (candidate_ptr->prediction_direction[pu_index]) {
-    case UNI_PRED_LIST_0:
-        // Clip the input MV
-        clip_mv(blk_origin_x,
-                blk_origin_y,
-                &candidate_ptr->motion_vector_xl0,
-                &candidate_ptr->motion_vector_yl0,
-                picture_width,
-                picture_height,
-                tb_size);
-
-        // Choose the AMVP candidate
-        switch (ref0_num_available_amvp_cand) {
-        case 0:
-        case 1:
-            //mvpRef0Idx = 0;
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = 0;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_0]   = ref0_amvp_cand_array_x[0];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_0]   = ref0_amvp_cand_array_y[0];
-            break;
-        case 2:
-
-            mvd0 = EB_ABS_DIFF(ref0_amvp_cand_array_x[0], candidate_ptr->motion_vector_xl0) +
-                   EB_ABS_DIFF(ref0_amvp_cand_array_y[0], candidate_ptr->motion_vector_yl0);
-
-            mvd1 = EB_ABS_DIFF(ref0_amvp_cand_array_x[1], candidate_ptr->motion_vector_xl0) +
-                   EB_ABS_DIFF(ref0_amvp_cand_array_y[1], candidate_ptr->motion_vector_yl0);
-
-            mvpRef0Idx = ((mvd0) <= (mvd1)) ? 0 : 1;
-
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = mvpRef0Idx;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_0]   = ref0_amvp_cand_array_x[mvpRef0Idx];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_0]   = ref0_amvp_cand_array_y[mvpRef0Idx];
-            break;
-        default: break;
-        }
-
-        break;
-
-    case UNI_PRED_LIST_1:
-
-        // Clip the input MV
-        clip_mv(blk_origin_x,
-                blk_origin_y,
-                &candidate_ptr->motion_vector_xl1,
-                &candidate_ptr->motion_vector_yl1,
-                picture_width,
-                picture_height,
-                tb_size);
-
-        // Choose the AMVP candidate
-        switch (ref1NumAvailableAMVPCand) {
-        case 0:
-        case 1:
-            //mvpRef1Idx = 0;
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_1] = 0;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_1]   = ref1_amvp_cand_array_x[0];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_1]   = ref1_amvp_cand_array_y[0];
-            break;
-        case 2:
-
-            mvd0 = EB_ABS_DIFF(ref1_amvp_cand_array_x[0], candidate_ptr->motion_vector_xl1) +
-                   EB_ABS_DIFF(ref1_amvp_cand_array_y[0], candidate_ptr->motion_vector_yl1);
-
-            mvd1 = EB_ABS_DIFF(ref1_amvp_cand_array_x[1], candidate_ptr->motion_vector_xl1) +
-                   EB_ABS_DIFF(ref1_amvp_cand_array_y[1], candidate_ptr->motion_vector_yl1);
-
-            mvpRef1Idx = ((mvd0) <= (mvd1)) ? 0 : 1;
-
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_1] = mvpRef1Idx;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_1]   = ref1_amvp_cand_array_x[mvpRef1Idx];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_1]   = ref1_amvp_cand_array_y[mvpRef1Idx];
-            break;
-        default: break;
-        }
-
-        // MVP in ref_pic_list0
-        //mvpRef0Idx = 0;
-        //candidate_ptr->motion_vector_pred_idx[REF_LIST_0][pu_index] = mvpRef0Idx;
-        //candidate_ptr->motion_vector_pred_x[REF_LIST_0][pu_index]  = 0;
-        //candidate_ptr->motion_vector_pred_y[REF_LIST_0][pu_index]  = 0;
-
-        break;
-
-    case BI_PRED:
-
-        // Choose the MVP in list0
-        // Clip the input MV
-        clip_mv(blk_origin_x,
-                blk_origin_y,
-                &candidate_ptr->motion_vector_xl0,
-                &candidate_ptr->motion_vector_yl0,
-                picture_width,
-                picture_height,
-                tb_size);
-
-        // Choose the AMVP candidate
-        switch (ref0_num_available_amvp_cand) {
-        case 0:
-        case 1:
-            //mvpRef0Idx = 0;
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = 0;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_0]   = ref0_amvp_cand_array_x[0];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_0]   = ref0_amvp_cand_array_y[0];
-            break;
-        case 2:
-
-            mvd0 = EB_ABS_DIFF(ref0_amvp_cand_array_x[0], candidate_ptr->motion_vector_xl0) +
-                   EB_ABS_DIFF(ref0_amvp_cand_array_y[0], candidate_ptr->motion_vector_yl0);
-
-            mvd1 = EB_ABS_DIFF(ref0_amvp_cand_array_x[1], candidate_ptr->motion_vector_xl0) +
-                   EB_ABS_DIFF(ref0_amvp_cand_array_y[1], candidate_ptr->motion_vector_yl0);
-
-            mvpRef0Idx = ((mvd0) <= (mvd1)) ? 0 : 1;
-
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_0] = mvpRef0Idx;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_0]   = ref0_amvp_cand_array_x[mvpRef0Idx];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_0]   = ref0_amvp_cand_array_y[mvpRef0Idx];
-            break;
-        default: break;
-        }
-
-        // Choose the MVP in list1
-        // Clip the input MV
-        clip_mv(blk_origin_x,
-                blk_origin_y,
-                &candidate_ptr->motion_vector_xl1,
-                &candidate_ptr->motion_vector_yl1,
-                picture_width,
-                picture_height,
-                tb_size);
-
-        // Choose the AMVP candidate
-        switch (ref1NumAvailableAMVPCand) {
-        case 0:
-        case 1:
-            //mvpRef1Idx = 0;
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_1] = 0;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_1]   = ref1_amvp_cand_array_x[0];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_1]   = ref1_amvp_cand_array_y[0];
-            break;
-        case 2:
-
-            mvd0 = EB_ABS_DIFF(ref1_amvp_cand_array_x[0], candidate_ptr->motion_vector_xl1) +
-                   EB_ABS_DIFF(ref1_amvp_cand_array_y[0], candidate_ptr->motion_vector_yl1);
-
-            mvd1 = EB_ABS_DIFF(ref1_amvp_cand_array_x[1], candidate_ptr->motion_vector_xl1) +
-                   EB_ABS_DIFF(ref1_amvp_cand_array_y[1], candidate_ptr->motion_vector_yl1);
-
-            mvpRef1Idx = ((mvd0) <= (mvd1)) ? 0 : 1;
-
-            candidate_ptr->motion_vector_pred_idx[REF_LIST_1] = mvpRef1Idx;
-            candidate_ptr->motion_vector_pred_x[REF_LIST_1]   = ref1_amvp_cand_array_x[mvpRef1Idx];
-            candidate_ptr->motion_vector_pred_y[REF_LIST_1]   = ref1_amvp_cand_array_y[mvpRef1Idx];
-            break;
-        default: break;
-        }
-
-        break;
-
-    default: break;
-    }
 
     return return_error;
 }

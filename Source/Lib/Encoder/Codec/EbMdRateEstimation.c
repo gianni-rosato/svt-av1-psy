@@ -522,7 +522,7 @@ int         get_comp_group_idx_context_enc(const MacroBlockD *xd);
 int     get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_frame_index,
                                    int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 int32_t is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1,
-                                     CodingUnit *blk_ptr, BlockSize sb_type,
+                                     BlkStruct *blk_ptr, BlockSize sb_type,
                                      PictureParentControlSet *pcs_ptr);
 
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
@@ -724,7 +724,7 @@ static AOM_INLINE void update_inter_mode_stats(FRAME_CONTEXT *fc, PredictionMode
  * Updates all the palette stats/CDF for the current block
  ******************************************************************************/
 static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *const mbmi,
-                                          CodingUnit *blk_ptr, const int mi_row, const int mi_col) {
+                                          BlkStruct *blk_ptr, const int mi_row, const int mi_col) {
     FRAME_CONTEXT *              fc                = xd->tile_ctx;
     const BlockGeom *            blk_geom          = get_blk_geom_mds(blk_ptr->mds_idx);
     const BlockSize              bsize             = blk_geom->bsize;
@@ -758,7 +758,7 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
 /*******************************************************************************
  * Updates all the Intra stats/CDF for the current block
  ******************************************************************************/
-static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, CodingUnit *blk_ptr,
+static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                        const MbModeInfo *above_mi, const MbModeInfo *left_mi,
                                        const int intraonly, const int mi_row, const int mi_col) {
     MacroBlockD *           xd       = blk_ptr->av1xd;
@@ -820,7 +820,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, CodingUnit *b
 /*******************************************************************************
  * Updates all the syntax stats/CDF for the current block
  ******************************************************************************/
-void update_stats(PictureControlSet *pcs_ptr, CodingUnit *blk_ptr, int mi_row, int mi_col) {
+void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, int mi_col) {
     const AV1_COMMON *const cm   = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *           xd   = blk_ptr->av1xd;
     const MbModeInfo *const mbmi = &xd->mi[0]->mbmi;
@@ -1069,7 +1069,7 @@ void update_stats(PictureControlSet *pcs_ptr, CodingUnit *blk_ptr, int mi_row, i
 /*******************************************************************************
  * Updates the partition stats/CDF for the current block
  ******************************************************************************/
-void update_part_stats(PictureControlSet *pcs_ptr, CodingUnit *blk_ptr, int mi_row, int mi_col) {
+void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, int mi_col) {
     const AV1_COMMON *const cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *           xd       = blk_ptr->av1xd;
     const BlockGeom *       blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);

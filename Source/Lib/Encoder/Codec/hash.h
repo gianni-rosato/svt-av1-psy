@@ -30,16 +30,6 @@ typedef struct _crc_calculator {
 // calling av1_get_crc_value().
 void av1_crc_calculator_init(CRC_CALCULATOR *p_crc_calculator, uint32_t bits, uint32_t truncPoly);
 uint32_t av1_get_crc_value(void *crc_calculator, uint8_t *p, int length);
-
-// CRC32C: POLY = 0x82f63b78;
-typedef struct _CRC32C {
-    /* Table for a quadword-at-a-time software crc. */
-    uint32_t table[8][256];
-} CRC32C;
-
-// init table for software version crc32c
-void av1_crc32c_calculator_init(CRC32C *p_crc32c);
-
 #define AOM_BUFFER_SIZE_FOR_BLOCK_HASH (4096)
 
 #ifdef __cplusplus

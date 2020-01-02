@@ -267,7 +267,6 @@ typedef struct MeTierZero {
 
 typedef struct IntraReferenceSamplesOpenLoop {
     EbDctor  dctor;
-    uint8_t *y_intra_reference_array;
     uint8_t *y_intra_reference_array_reverse;
 
     // Scratch buffers used in the interpolaiton process

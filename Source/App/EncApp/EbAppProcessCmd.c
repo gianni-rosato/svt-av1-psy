@@ -183,7 +183,7 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 
     case EB_ENC_EC_ERROR2:
         fprintf(error_log_file,
-                "Error: copy_rbsp_bitstream_to_payload: output buffer too small!\n");
+                "Error: copy_payload: output buffer too small!\n");
         break;
 
     case EB_ENC_EC_ERROR3: fprintf(error_log_file, "Error: encode_sb: Unknown mode type!\n"); break;
@@ -627,76 +627,6 @@ void log_error_output(FILE *error_log_file, uint32_t error_code) {
 
     return;
 }
-
-/******************************************************
-* Copy fields from the stream to the input buffer
-    Input   : stream
-    Output  : valid input buffer
-******************************************************/
-void process_input_field_standard_mode(EbConfig *config, EbBufferHeaderType *header_ptr,
-                                       FILE *input_file, uint8_t *luma_input_ptr,
-                                       uint8_t *cb_input_ptr, uint8_t *cr_input_ptr,
-                                       uint8_t is_16bit) {
-    const int64_t  input_padded_width     = config->input_padded_width;
-    const int64_t  input_padded_height    = config->input_padded_height;
-    const uint8_t  color_format           = config->encoder_color_format;
-    const uint8_t  subsampling_x          = (color_format == EB_YUV444 ? 1 : 2) - 1;
-    const uint8_t  subsampling_y          = (color_format >= EB_YUV422 ? 1 : 2) - 1;
-    const uint64_t source_luma_row_size   = (uint64_t)(input_padded_width << is_16bit);
-    const uint64_t source_chroma_row_size = source_luma_row_size >> subsampling_x;
-    uint8_t *      eb_input_ptr;
-    uint32_t       input_row_index;
-
-    // Y
-    eb_input_ptr = luma_input_ptr;
-    // Skip 1 luma row if bottom field (point to the bottom field)
-    if (config->processed_frame_count % 2 != 0)
-        fseeko(input_file, (long)source_luma_row_size, SEEK_CUR);
-
-    for (input_row_index = 0; input_row_index < input_padded_height; input_row_index++) {
-        header_ptr->n_filled_len +=
-            (uint32_t)fread(eb_input_ptr, 1, source_luma_row_size, input_file);
-        // Skip 1 luma row (only fields)
-        fseeko(input_file, (long)source_luma_row_size, SEEK_CUR);
-        eb_input_ptr += source_luma_row_size;
-    }
-
-    // U
-    eb_input_ptr = cb_input_ptr;
-    // Step back 1 luma row if bottom field (undo the previous jump), and skip 1 chroma row if bottom field (point to the bottom field)
-    if (config->processed_frame_count % 2 != 0) {
-        fseeko(input_file, -(long)source_luma_row_size, SEEK_CUR);
-        fseeko(input_file, (long)source_chroma_row_size, SEEK_CUR);
-    }
-
-    for (input_row_index = 0; input_row_index<input_padded_height >> subsampling_y;
-         input_row_index++) {
-        header_ptr->n_filled_len +=
-            (uint32_t)fread(eb_input_ptr, 1, source_chroma_row_size, input_file);
-        // Skip 1 chroma row (only fields)
-        fseeko(input_file, (long)source_chroma_row_size, SEEK_CUR);
-        eb_input_ptr += source_chroma_row_size;
-    }
-
-    // V
-    eb_input_ptr = cr_input_ptr;
-    // Step back 1 chroma row if bottom field (undo the previous jump), and skip 1 chroma row if bottom field (point to the bottom field)
-    // => no action
-
-    for (input_row_index = 0; input_row_index<input_padded_height >> subsampling_y;
-         input_row_index++) {
-        header_ptr->n_filled_len +=
-            (uint32_t)fread(eb_input_ptr, 1, source_chroma_row_size, input_file);
-        // Skip 1 chroma row (only fields)
-        fseeko(input_file, (long)source_chroma_row_size, SEEK_CUR);
-        eb_input_ptr += source_chroma_row_size;
-    }
-
-    // Step back 1 chroma row if bottom field (undo the previous jump)
-    if (config->processed_frame_count % 2 != 0)
-        fseeko(input_file, -(long)source_chroma_row_size, SEEK_CUR);
-}
-
 //************************************/
 // get_next_qp_from_qp_file
 // Reads and extracts one qp from the qp_file

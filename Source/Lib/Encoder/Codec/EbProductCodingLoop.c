@@ -83,8 +83,8 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
     uint32_t origin_y = context_ptr->blk_origin_y;
     (void)intra4x4Selected;
 
-    uint32_t cu_origin_x_uv = context_ptr->round_origin_x >> 1;
-    uint32_t cu_origin_y_uv = context_ptr->round_origin_y >> 1;
+    uint32_t blk_origin_x_uv = context_ptr->round_origin_x >> 1;
+    uint32_t blk_origin_y_uv = context_ptr->round_origin_y >> 1;
     uint32_t bwdith_uv      = context_ptr->blk_geom->bwidth_uv;
     uint32_t bwheight_uv    = context_ptr->blk_geom->bheight_uv;
 
@@ -132,16 +132,6 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        bwdith,
                                        bheight,
                                        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (pcs_ptr->parent_pcs_ptr->skip_sub_blks)
-            // Intra Luma Mode Update
-            neighbor_array_unit_mode_write(
-                context_ptr->leaf_depth_neighbor_array,
-                (uint8_t *)&context_ptr->blk_geom->bsize, //(uint8_t*)luma_mode,
-                origin_x,
-                origin_y,
-                bwdith,
-                bheight,
-                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
         // Intra Luma Mode Update
         neighbor_array_unit_mode_write(context_ptr->intra_luma_mode_neighbor_array,
                                        &intra_luma_mode, //(uint8_t*)luma_mode,
@@ -185,8 +175,8 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
         // Intra Chroma Mode Update
         neighbor_array_unit_mode_write(context_ptr->intra_chroma_mode_neighbor_array,
                                        &chroma_mode,
-                                       cu_origin_x_uv,
-                                       cu_origin_y_uv,
+                                       blk_origin_x_uv,
+                                       blk_origin_y_uv,
                                        bwdith_uv,
                                        bwheight_uv,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
@@ -206,8 +196,8 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->blk_ptr->quantized_dc[1][0];
             neighbor_array_unit_mode_write(context_ptr->cb_dc_sign_level_coeff_neighbor_array,
                                            (uint8_t *)&dc_sign_level_coeff,
-                                           cu_origin_x_uv,
-                                           cu_origin_y_uv,
+                                           blk_origin_x_uv,
+                                           blk_origin_y_uv,
                                            bwdith_uv,
                                            bwheight_uv,
                                            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
@@ -218,8 +208,8 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->blk_ptr->quantized_dc[2][0];
             neighbor_array_unit_mode_write(context_ptr->cr_dc_sign_level_coeff_neighbor_array,
                                            (uint8_t *)&dc_sign_level_coeff,
-                                           cu_origin_x_uv,
-                                           cu_origin_y_uv,
+                                           blk_origin_x_uv,
+                                           blk_origin_y_uv,
                                            bwdith_uv,
                                            bwheight_uv,
                                            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
@@ -274,7 +264,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                         origin_y,
                                         context_ptr->blk_geom->bwidth,
                                         context_ptr->blk_geom->bheight);
-            if (context_ptr->md_atb_mode) {
+            if (context_ptr->md_tx_size_search_mode) {
                 update_recon_neighbor_array(
                     pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX],
                     context_ptr->blk_ptr->neigh_top_recon[0],
@@ -291,15 +281,15 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                 update_recon_neighbor_array(context_ptr->cb_recon_neighbor_array,
                                             context_ptr->blk_ptr->neigh_top_recon[1],
                                             context_ptr->blk_ptr->neigh_left_recon[1],
-                                            cu_origin_x_uv,
-                                            cu_origin_y_uv,
+                                            blk_origin_x_uv,
+                                            blk_origin_y_uv,
                                             bwdith_uv,
                                             bwheight_uv);
                 update_recon_neighbor_array(context_ptr->cr_recon_neighbor_array,
                                             context_ptr->blk_ptr->neigh_top_recon[2],
                                             context_ptr->blk_ptr->neigh_left_recon[2],
-                                            cu_origin_x_uv,
-                                            cu_origin_y_uv,
+                                            blk_origin_x_uv,
+                                            blk_origin_y_uv,
                                             bwdith_uv,
                                             bwheight_uv);
             }
@@ -313,7 +303,7 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                              origin_y,
                                              context_ptr->blk_geom->bwidth,
                                              context_ptr->blk_geom->bheight);
-        if (context_ptr->md_atb_mode) {
+        if (context_ptr->md_tx_size_search_mode) {
             update_recon_neighbor_array16bit(
                 pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[MD_NEIGHBOR_ARRAY_INDEX],
                 context_ptr->blk_ptr->neigh_top_recon_16bit[0],
@@ -329,15 +319,15 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
             update_recon_neighbor_array16bit(context_ptr->cb_recon_neighbor_array16bit,
                                              context_ptr->blk_ptr->neigh_top_recon_16bit[1],
                                              context_ptr->blk_ptr->neigh_left_recon_16bit[1],
-                                             cu_origin_x_uv,
-                                             cu_origin_y_uv,
+                                             blk_origin_x_uv,
+                                             blk_origin_y_uv,
                                              bwdith_uv,
                                              bwheight_uv);
             update_recon_neighbor_array16bit(context_ptr->cr_recon_neighbor_array16bit,
                                              context_ptr->blk_ptr->neigh_top_recon_16bit[2],
                                              context_ptr->blk_ptr->neigh_left_recon_16bit[2],
-                                             cu_origin_x_uv,
-                                             cu_origin_y_uv,
+                                             blk_origin_x_uv,
+                                             blk_origin_y_uv,
                                              bwdith_uv,
                                              bwheight_uv);
         }
@@ -419,7 +409,7 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
                        blk_geom->bwidth,
                        blk_geom->bheight,
                        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (context_ptr->md_atb_mode) {
+        if (context_ptr->md_tx_size_search_mode) {
             copy_neigh_arr(pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array[src_idx],
                            pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array[dst_idx],
                            blk_org_x,
@@ -453,7 +443,7 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
                        blk_geom->bwidth,
                        blk_geom->bheight,
                        NEIGHBOR_ARRAY_UNIT_FULL_MASK);
-        if (context_ptr->md_atb_mode) {
+        if (context_ptr->md_tx_size_search_mode) {
             copy_neigh_arr(pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[src_idx],
                            pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[dst_idx],
                            blk_org_x,
@@ -806,7 +796,7 @@ void av1_perform_inverse_transform_recon_luma(PictureControlSet *          pcs_p
 void av1_perform_inverse_transform_recon(PictureControlSet *          pcs_ptr,
                                          ModeDecisionContext *        context_ptr,
                                          ModeDecisionCandidateBuffer *candidate_buffer,
-                                         CodingUnit *blk_ptr, const BlockGeom *blk_geom) {
+                                         BlkStruct *blk_ptr, const BlockGeom *blk_geom) {
     uint32_t       txb_width;
     uint32_t       txb_height;
     uint32_t       txb_origin_x;
@@ -1000,7 +990,7 @@ void product_coding_loop_init_fast_loop(ModeDecisionContext *context_ptr,
 void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureControlSet *pcs_ptr,
                     ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
                     uint32_t input_origin_index, uint32_t input_cb_origin_in_index,
-                    uint32_t input_cr_origin_in_index, CodingUnit *blk_ptr,
+                    uint32_t input_cr_origin_in_index, BlkStruct *blk_ptr,
                     uint32_t cu_origin_index, uint32_t cu_chroma_origin_index, EbBool use_ssd) {
     uint64_t luma_fast_distortion;
     uint64_t chroma_fast_distortion;
@@ -1657,23 +1647,6 @@ static INLINE void sort_array_index_fast_cost_ptr(ModeDecisionCandidateBuffer **
         heap_sort_stage_max_node_fast_cost_ptr(buffer_ptr, sort_index, 0, i - 1);
     }
 }
-
-void sort_stage1_fast_candidates(struct ModeDecisionContext *context_ptr,
-                                 uint32_t num_of_cand_to_sort, uint32_t *cand_buff_indices) {
-    uint32_t                      i, j, index;
-    ModeDecisionCandidateBuffer **buffer_ptr_array = context_ptr->candidate_buffer_ptr_array;
-
-    for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
-        for (j = i + 1; j < num_of_cand_to_sort; ++j) {
-            if (*(buffer_ptr_array[cand_buff_indices[j]]->fast_cost_ptr) <
-                *(buffer_ptr_array[cand_buff_indices[i]]->fast_cost_ptr)) {
-                index                = cand_buff_indices[i];
-                cand_buff_indices[i] = (uint32_t)cand_buff_indices[j];
-                cand_buff_indices[j] = (uint32_t)index;
-            }
-        }
-    }
-}
 void sort_stage1_candidates(struct ModeDecisionContext *context_ptr, uint32_t num_of_cand_to_sort,
                             uint32_t *cand_buff_indices) {
     uint32_t                      i, j, index;
@@ -1765,16 +1738,16 @@ void md_stage_0(
     ModeDecisionCandidate *fast_candidate_array, int32_t fast_candidate_start_index,
     int32_t fast_candidate_end_index, EbPictureBufferDesc *input_picture_ptr,
     uint32_t input_origin_index, uint32_t input_cb_origin_in_index,
-    uint32_t input_cr_origin_in_index, CodingUnit *blk_ptr, uint32_t blk_origin_index,
+    uint32_t input_cr_origin_in_index, BlkStruct *blk_ptr, uint32_t blk_origin_index,
     uint32_t blk_chroma_origin_index, uint32_t candidate_buffer_start_index, uint32_t max_buffers,
-    EbBool scratch_buffer_pesent_flag, EbBool use_ssd) {
+    EbBool scratch_buffer_pesent_flag) {
     int32_t  fast_loop_cand_index;
     uint64_t luma_fast_distortion;
     uint32_t highest_cost_index;
     uint64_t highest_cost;
     uint64_t best_first_fast_cost_search_candidate_cost  = MAX_CU_COST;
     int32_t  best_first_fast_cost_search_candidate_index = INVALID_FAST_CANDIDATE_INDEX;
-
+    EbBool   use_ssd = EB_FALSE;
     // Set MD Staging fast_loop_core settings
     context_ptr->md_staging_skip_interpolation_search =
         (context_ptr->md_staging_mode == MD_STAGING_MODE_1)
@@ -4022,7 +3995,7 @@ void set_mi_row_col(PictureControlSet *pcs_ptr, MacroBlockD *xd, TileInfo *tile,
 
 uint64_t estimate_tx_size_bits(PictureControlSet *pcsPtr, ModeDecisionContext *context_ptr,
                                ModeDecisionCandidate *candidate_ptr, EbBool skip_flag,
-                               uint32_t blk_origin_x, uint32_t blk_origin_y, CodingUnit *blk_ptr,
+                               uint32_t blk_origin_x, uint32_t blk_origin_y, BlkStruct *blk_ptr,
                                const BlockGeom *blk_geom, NeighborArrayUnit *txfm_context_array,
                                uint8_t tx_depth, MdRateEstimationContext *md_rate_estimation_ptr) {
     uint32_t txfm_context_left_index =
@@ -4331,7 +4304,7 @@ void tx_partitioning_path(ModeDecisionCandidateBuffer *candidate_buffer,
     }
 }
 
-void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *blk_ptr,
+void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                     ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                     ModeDecisionCandidate *candidate_ptr, EbPictureBufferDesc *input_picture_ptr,
                     uint32_t input_origin_index, uint32_t input_cb_origin_in_index,
@@ -4394,7 +4367,8 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *
     else
         end_tx_depth = 0;
     // Transform partitioning path (INTRA Luma)
-    if (context_ptr->md_atb_mode && context_ptr->md_staging_skip_atb == EB_FALSE && end_tx_depth &&
+    if (context_ptr->md_tx_size_search_mode && context_ptr->md_staging_skip_atb == EB_FALSE &&
+        end_tx_depth &&
         candidate_buffer->candidate_ptr->use_intrabc == 0) {
         int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                             candidate_buffer->candidate_ptr->use_intrabc)
@@ -4613,7 +4587,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *
                                                           &cr_coeff_bits,
                                                           context_ptr->blk_geom->bsize);
 }
-void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *blk_ptr,
+void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                 ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
                 uint32_t input_origin_index, uint32_t input_cb_origin_in_index,
                 uint32_t blk_origin_index, uint32_t blk_chroma_origin_index,
@@ -4659,7 +4633,7 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *blk_
                        ref_fast_cost);
     }
 }
-void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *blk_ptr,
+void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                 ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
                 uint32_t input_origin_index, uint32_t input_cb_origin_in_index,
                 uint32_t blk_origin_index, uint32_t blk_chroma_origin_index,
@@ -4733,8 +4707,8 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, CodingUnit *blk_
     }
 }
 
-void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, CodingUnit *src_cu,
-                   CodingUnit *dst_cu) {
+void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct *src_cu,
+                   BlkStruct *dst_cu) {
     memcpy(&dst_cu->palette_info.pmi, &src_cu->palette_info.pmi, sizeof(PaletteModeInfo));
     if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize)) {
         dst_cu->palette_info.color_idx_map = (uint8_t *)malloc(MAX_PALETTE_SQUARE);
@@ -4828,11 +4802,10 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, CodingUni
     dst_cu->filter_intra_mode = src_cu->filter_intra_mode;
 }
 void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
-                          CodingUnit *src_cu, CodingUnit *dst_cu) {
+                          BlkStruct *src_cu, BlkStruct *dst_cu) {
     dst_cu->segment_id       = src_cu->segment_id;
     dst_cu->seg_id_predicted = src_cu->seg_id_predicted;
     dst_cu->ref_qp           = src_cu->ref_qp;
-    dst_cu->org_delta_qp     = src_cu->org_delta_qp;
 
     memcpy(&dst_cu->palette_info.pmi, &src_cu->palette_info.pmi, sizeof(PaletteModeInfo));
     if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
@@ -4948,25 +4921,6 @@ EbBool allowed_ns_cu(EbBool is_nsq_table_used, uint8_t nsq_max_shapes_md,
     }
 
     return ret;
-}
-
-void init_candidate_buffer(ModeDecisionCandidate *candidate_ptr,
-                           uint32_t               count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU]) {
-    candidate_ptr->y_has_coeff = 0;
-    candidate_ptr->u_has_coeff = 0;
-    candidate_ptr->v_has_coeff = 0;
-
-    candidate_ptr->full_distortion = 0;
-
-    memset(candidate_ptr->eob[0], 0, sizeof(uint16_t) * MAX_TXB_COUNT);
-    memset(count_non_zero_coeffs[0], 0, sizeof(uint32_t) * MAX_NUM_OF_TU_PER_CU);
-
-    candidate_ptr->chroma_distortion             = 0;
-    candidate_ptr->chroma_distortion_inter_depth = 0;
-    memset(candidate_ptr->eob[1], 0, sizeof(uint16_t) * MAX_TXB_COUNT);
-    memset(count_non_zero_coeffs[1], 0, sizeof(uint32_t) * MAX_NUM_OF_TU_PER_CU);
-    memset(candidate_ptr->eob[2], 0, sizeof(uint16_t) * MAX_TXB_COUNT);
-    memset(count_non_zero_coeffs[2], 0, sizeof(uint32_t) * MAX_NUM_OF_TU_PER_CU);
 }
 
 /****************************************************
@@ -5237,23 +5191,6 @@ void order_nsq_table(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
         }
     }
 }
-uint8_t check_skip_sub_blks(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                            CodingUnit *blk_ptr, uint8_t is_complete_sb, uint32_t sb_index) {
-    uint8_t skip_sub_blocks = 0;
-    if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_OPEN_LOOP_DEPTH_MODE ||
-        (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE &&
-         pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] >= SB_OPEN_LOOP_DEPTH_MODE))
-        if (is_complete_sb)
-            if ((context_ptr->md_local_blk_unit[blk_ptr->mds_idx].top_neighbor_depth ==
-                 context_ptr->blk_geom->bsize) &&
-                (context_ptr->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_depth ==
-                 context_ptr->blk_geom->bsize)) {
-                skip_sub_blocks                                                        = 1;
-                context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].split_flag = 0;
-            }
-    return skip_sub_blocks;
-}
-
 void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                      EbPictureBufferDesc *input_picture_ptr,
                                      uint32_t             input_cb_origin_in_index,
@@ -5638,7 +5575,7 @@ void interintra_class_pruning_2(ModeDecisionContext *context_ptr, uint64_t best_
 
 void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                      ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
-                     uint8_t *skip_sub_blocks, uint32_t sb_addr,
+                     uint32_t sb_addr,
                      ModeDecisionCandidateBuffer *bestcandidate_buffers[5]) {
     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
         context_ptr->candidate_buffer_ptr_array;
@@ -5660,7 +5597,7 @@ void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     const uint32_t blk_origin_index = blk_geom->origin_x + blk_geom->origin_y * SB_STRIDE_Y;
     const uint32_t blk_chroma_origin_index =
         ROUND_UV(blk_geom->origin_x) / 2 + ROUND_UV(blk_geom->origin_y) / 2 * SB_STRIDE_UV;
-    CodingUnit *blk_ptr        = context_ptr->blk_ptr;
+    BlkStruct *blk_ptr        = context_ptr->blk_ptr;
     candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
     for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
         context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
@@ -5714,10 +5651,6 @@ void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                            context_ptr->mode_type_neighbor_array,
                                            context_ptr->leaf_depth_neighbor_array,
                                            context_ptr->leaf_partition_neighbor_array);
-        // Skip sub blocks if the current block has the same depth as the left block and above block
-        if (pcs_ptr->parent_pcs_ptr->skip_sub_blks)
-            *skip_sub_blocks =
-                check_skip_sub_blks(pcs_ptr, context_ptr, blk_ptr, is_complete_sb, sb_addr);
 
         // Initialize uv_search_path
         context_ptr->uv_search_path = EB_FALSE;
@@ -5847,8 +5780,7 @@ void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                            buffer_count_for_curr_class,
                            context_ptr->md_stage_0_count[cand_class_it] >
                                context_ptr->md_stage_1_count
-                                   [cand_class_it], //is there need to max the temp buffer
-                           0);
+                                   [cand_class_it]); //is there need to max the temp buffer
 
                 //Sort:  md_stage_1_count[cand_class_it]
                 memset(context_ptr->cand_buff_indices[cand_class_it],
@@ -6292,7 +6224,7 @@ void av1_get_max_min_partition_features(SequenceControlSet *scs_ptr, PictureCont
                                        ? (uint8_t)EB_FALSE
                                        : (uint8_t)EB_TRUE;
 
-                CodingUnit  blk_ptr;
+                BlkStruct  blk_ptr;
                 MacroBlockD av1xd;
                 blk_ptr.av1xd   = &av1xd;
                 uint32_t mirow  = blk_origin_y >> MI_SIZE_LOG2;
@@ -6479,7 +6411,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                        ModeDecisionContext *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    uint32_t                     cu_idx;
+    uint32_t                     blk_index;
     ModeDecisionCandidateBuffer *bestcandidate_buffers[5];
     // Pre Intra Search
     uint32_t                   leaf_count      = mdcResultTbPtr->leaf_count;
@@ -6628,7 +6560,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         }
 
     //CU Loop
-    cu_idx           = 0; //index over mdc array
+    blk_index        = 0; //index over mdc array
     uint64_t sq_cost = 0;
     uint64_t h_cost;
     uint64_t v_cost;
@@ -6638,7 +6570,6 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     int      skip_next_nsq             = 0;
     int      skip_next_sq              = 0;
     uint32_t next_non_skip_blk_idx_mds = 0;
-    uint8_t  skip_sub_blocks;
     int64_t  depth_cost[NUMBER_OF_DEPTH]       = {-1, -1, -1, -1, -1, -1};
     uint64_t nsq_cost[NUMBER_OF_SHAPES]        = {MAX_CU_COST,
                                            MAX_CU_COST,
@@ -6653,17 +6584,16 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     Part     nsq_shape_table[NUMBER_OF_SHAPES] = {
         PART_N, PART_H, PART_V, PART_HA, PART_HB, PART_VA, PART_VB, PART_H4, PART_V4, PART_S};
     do {
-        skip_sub_blocks = 0;
-        blk_idx_mds     = leaf_data_array[cu_idx].mds_idx;
+        blk_idx_mds = leaf_data_array[blk_index].mds_idx;
 
         const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_idx_mds);
-        CodingUnit *     blk_ptr = context_ptr->blk_ptr = &context_ptr->md_blk_arr_nsq[blk_idx_mds];
+        BlkStruct *     blk_ptr = context_ptr->blk_ptr = &context_ptr->md_blk_arr_nsq[blk_idx_mds];
 
         context_ptr->cu_size_log2 = blk_geom->bwidth_log2;
         context_ptr->blk_origin_x = sb_origin_x + blk_geom->origin_x;
         context_ptr->blk_origin_y = sb_origin_y + blk_geom->origin_y;
 
-        const EbMdcLeafData *const leaf_data_ptr = &mdcResultTbPtr->leaf_data_array[cu_idx];
+        const EbMdcLeafData *const leaf_data_ptr = &mdcResultTbPtr->leaf_data_array[blk_index];
         context_ptr->sb_sz                       = BLOCK_SIZE_64;
         context_ptr->round_origin_x              = ((context_ptr->blk_origin_x >> 3) << 3);
         context_ptr->round_origin_y              = ((context_ptr->blk_origin_y >> 3) << 3);
@@ -6720,12 +6650,12 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
         if (redundant_blk_avail && context_ptr->redundant_blk) {
             // Copy results
-            CodingUnit *src_cu = &context_ptr->md_blk_arr_nsq[redundant_blk_mds];
-            CodingUnit *dst_cu = blk_ptr;
+            BlkStruct *src_cu = &context_ptr->md_blk_arr_nsq[redundant_blk_mds];
+            BlkStruct *dst_cu = blk_ptr;
             move_blk_data_redund(pcs_ptr, context_ptr, src_cu, dst_cu);
             memcpy(&context_ptr->md_local_blk_unit[blk_ptr->mds_idx],
                    &context_ptr->md_local_blk_unit[redundant_blk_mds],
-                   sizeof(MdCodingUnit));
+                   sizeof(MdBlkStruct));
 
             if (!context_ptr->hbd_mode_decision) {
                 memcpy(dst_cu->neigh_left_recon[0], src_cu->neigh_left_recon[0], 128);
@@ -6817,7 +6747,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             EbBool auto_max_partition_block_skip =
                 (context_ptr->blk_geom->bwidth > block_size_wide[max_bsize] ||
                  context_ptr->blk_geom->bheight > block_size_high[max_bsize]) &&
-                (mdcResultTbPtr->leaf_data_array[cu_idx].split_flag == EB_TRUE);
+                (mdcResultTbPtr->leaf_data_array[blk_index].split_flag == EB_TRUE);
 
             if (pcs_ptr->parent_pcs_ptr->scs_ptr->sb_geom[sb_addr]
                     .block_is_allowed[blk_ptr->mds_idx] &&
@@ -6826,7 +6756,6 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                 pcs_ptr,
                                 context_ptr,
                                 input_picture_ptr,
-                                &skip_sub_blocks,
                                 sb_addr,
                                 bestcandidate_buffers);
 
@@ -6934,19 +6863,8 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             }
         } else if (d1_first_block)
             d1_first_block = 0;
-        if (skip_sub_blocks && leaf_data_array[cu_idx].split_flag) {
-            cu_idx++;
-            while (cu_idx < leaf_count) {
-                const BlockGeom *next_blk_geom = get_blk_geom_mds(leaf_data_array[cu_idx].mds_idx);
-                if ((next_blk_geom->origin_x < blk_geom->origin_x + blk_geom->bwidth) &&
-                    (next_blk_geom->origin_y < blk_geom->origin_y + blk_geom->bheight))
-                    cu_idx++;
-                else
-                    break;
-            }
-        } else
-            cu_idx++;
-    } while (cu_idx < leaf_count); // End of CU loop
+        blk_index++;
+    } while (blk_index < leaf_count); // End of CU loop
 
     if (scs_ptr->seq_header.sb_size == BLOCK_64X64) depth_cost[0] = MAX_CU_COST;
 

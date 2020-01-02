@@ -458,7 +458,7 @@ void *packetization_kernel(void *input_ptr) {
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
 
         // Copy Slice Header to the Output Bitstream
-        copy_rbsp_bitstream_to_payload(pcs_ptr->bitstream_ptr,
+        copy_payload(pcs_ptr->bitstream_ptr,
                                        output_stream_ptr->p_buffer,
                                        (uint32_t *)&(output_stream_ptr->n_filled_len),
                                        (uint32_t *)&(output_stream_ptr->n_alloc_len),
@@ -469,7 +469,7 @@ void *packetization_kernel(void *input_ptr) {
             write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 1);
 
             // Copy Slice Header to the Output Bitstream
-            copy_rbsp_bitstream_to_payload(pcs_ptr->bitstream_ptr,
+            copy_payload(pcs_ptr->bitstream_ptr,
                                            output_stream_ptr->p_buffer,
                                            (uint32_t *)&(output_stream_ptr->n_filled_len),
                                            (uint32_t *)&(output_stream_ptr->n_alloc_len),

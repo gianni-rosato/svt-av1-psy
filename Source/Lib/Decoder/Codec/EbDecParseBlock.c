@@ -562,29 +562,6 @@ int intra_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionIn
     return segment_id;
 }
 
-PredictionMode get_mode(PredictionMode yMode, int refList) {
-    PredictionMode comp_mode = GLOBALMV;
-    if (yMode == NEW_NEWMV) comp_mode = NEWMV;
-    if (refList == 0) {
-        if (yMode < NEAREST_NEARESTMV)
-            comp_mode = yMode;
-        else if (yMode == NEW_NEARESTMV || yMode == NEW_NEARMV)
-            comp_mode = NEWMV;
-        else if (yMode == NEAREST_NEARESTMV || yMode == NEAREST_NEWMV)
-            comp_mode = NEARESTMV;
-        else if (yMode == NEAR_NEARMV || yMode == NEAR_NEWMV)
-            comp_mode = NEARMV;
-    } else {
-        if (yMode == NEAREST_NEWMV || yMode == NEAR_NEWMV)
-            comp_mode = NEWMV;
-        else if (yMode == NEAREST_NEARESTMV || yMode == NEW_NEARESTMV)
-            comp_mode = NEARESTMV;
-        else if (yMode == NEAR_NEARMV || yMode == NEW_NEARMV)
-            comp_mode = NEARMV;
-    }
-    return comp_mode;
-}
-
 static INLINE void update_palette_context(ParseCtxt *parse_ctx, int mi_row, int mi_col,
                                           BlockModeInfo *mi) {
     BlockSize             bsize     = mi->sb_type;

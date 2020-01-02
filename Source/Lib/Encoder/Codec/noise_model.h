@@ -47,13 +47,6 @@ int32_t eb_aom_noise_strength_lut_init(AomNoiseStrengthLut *lut, int32_t num_poi
 /*!\brief Frees the noise strength lut. */
 void eb_aom_noise_strength_lut_free(AomNoiseStrengthLut *lut);
 
-/*!\brief Evaluate the lut at the point x.
-     *
-     * \param[in] lut  The lut data.
-     * \param[in] x    The coordinate to evaluate the lut.
-     */
-double eb_aom_noise_strength_lut_eval(const AomNoiseStrengthLut *lut, double x);
-
 /*!\brief Helper struct to model noise strength as a function of intensity.
      *
      * Internally, this structure holds a representation of a linear system

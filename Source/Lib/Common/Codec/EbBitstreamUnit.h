@@ -96,7 +96,6 @@ static INLINE int32_t get_msb(uint32_t n) {
 #endif
 /********************************************************************************************************************************/
 //odintrin.h
-typedef int32_t OdCoeff;
 
 #define OD_DIVU_DMAX (1024)
 

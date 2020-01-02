@@ -28,8 +28,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // ransac
 typedef int (*IsDegenerateFunc)(double *p);
-typedef void (*NormalizeFunc)(double *p, int np, double *T);
-typedef void (*DenormalizeFunc)(double *params, double *t1, double *t2);
 typedef int (*FindTransformationFunc)(int points, double *points1, double *points2, double *params);
 typedef void (*ProjectPointsDoubleFunc)(double *mat, double *points, double *proj, int n,
                                         int stride_points, int stride_proj);

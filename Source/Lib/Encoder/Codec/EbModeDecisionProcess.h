@@ -68,7 +68,7 @@ typedef struct {
     uint8_t best_palette_color_map[MAX_PALETTE_SQUARE];
     int     kmeans_data_buf[2 * MAX_PALETTE_SQUARE];
 } PALETTE_BUFFER;
-typedef struct MdCodingUnit {
+typedef struct MdBlkStruct {
     unsigned             tested_blk_flag : 1; //tells whether this CU is tested in MD.
     unsigned             mdc_array_index : 7;
     unsigned             count_non_zero_coeffs : 11;
@@ -85,7 +85,7 @@ typedef struct MdCodingUnit {
     CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
     uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
-} MdCodingUnit;
+} MdBlkStruct;
 
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
@@ -100,8 +100,8 @@ typedef struct ModeDecisionContext {
     MdRateEstimationContext *     md_rate_estimation_ptr;
     EbBool                        is_md_rate_estimation_ptr_owner;
     InterPredictionContext *      inter_prediction_context;
-    MdCodingUnit *                md_local_blk_unit;
-    CodingUnit *                  md_blk_arr_nsq;
+    MdBlkStruct *                md_local_blk_unit;
+    BlkStruct *                  md_blk_arr_nsq;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
     NeighborArrayUnit *intra_chroma_mode_neighbor_array;
@@ -154,7 +154,7 @@ typedef struct ModeDecisionContext {
     //  Context Variables---------------------------------
     SuperBlock *     sb_ptr;
     TransformUnit *  txb_ptr;
-    CodingUnit *     blk_ptr;
+    BlkStruct *     blk_ptr;
     const BlockGeom *blk_geom;
     PredictionUnit * pu_ptr;
     MvUnit           mv_unit;
@@ -190,8 +190,6 @@ typedef struct ModeDecisionContext {
     uint64_t         fast_luma_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     uint64_t         fast_chroma_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     // Needed for DC prediction
-    EbBool  is_left_availble;
-    EbBool  is_above_availble;
     int32_t is_inter_ctx;
     uint8_t intra_luma_left_mode;
     uint8_t intra_luma_top_mode;
@@ -339,7 +337,7 @@ typedef struct ModeDecisionContext {
     uint8_t      tx_search_reduced_set;
     uint8_t      interpolation_search_level;
     EbBool       rdoq_quantize_fp;
-    uint8_t      md_atb_mode;
+    uint8_t      md_tx_size_search_mode;
     uint8_t      md_pic_obmc_mode;
     uint8_t      md_enable_inter_intra;
     uint8_t      md_filter_intra_mode;

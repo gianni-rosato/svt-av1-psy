@@ -60,7 +60,7 @@ extern "C" {
 typedef EbErrorType(*EbAv1InterPredictionFuncPtr)(
     PictureControlSet              *pcs_ptr,
     uint32_t                        interp_filters,
-    CodingUnit                     *blk_ptr,
+    BlkStruct                     *blk_ptr,
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
@@ -94,7 +94,7 @@ typedef EbErrorType(*EbAv1InterPredictionFuncPtr)(
     EbErrorType av1_inter_prediction(
     PictureControlSet              *pcs_ptr,
     uint32_t                        interp_filters,
-    CodingUnit                     *blk_ptr,
+    BlkStruct                     *blk_ptr,
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
@@ -127,7 +127,7 @@ typedef EbErrorType(*EbAv1InterPredictionFuncPtr)(
 EbErrorType av1_inter_prediction_hbd(
     PictureControlSet              *pcs_ptr,
     uint32_t                        interp_filters,
-    CodingUnit                     *blk_ptr,
+    BlkStruct                     *blk_ptr,
     uint8_t                         ref_frame_type,
     MvUnit                         *mv_unit,
     uint8_t                         use_intrabc,
@@ -159,10 +159,6 @@ EbErrorType av1_inter_prediction_hbd(
     void search_compound_diff_wedge(
         PictureControlSet                    *pcs_ptr,
         struct ModeDecisionContext                  *context_ptr,
-        ModeDecisionCandidate                *candidate_ptr);
-    void search_compound_avg_dist(
-        PictureControlSet                    *pcs_ptr,
-        struct ModeDecisionContext                    *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
 
     void av1_dist_wtd_comp_weight_assign(
@@ -236,21 +232,6 @@ EbErrorType av1_inter_prediction_hbd(
         PictureControlSet                    *pcs_ptr,
         ModeDecisionCandidateBuffer          *candidate_buffer_ptr);
 
-
-    EbErrorType choose_mvp_idx_v2(
-        ModeDecisionCandidate               *candidate_ptr,
-        uint32_t                               blk_origin_x,
-        uint32_t                               blk_origin_y,
-        uint32_t                               pu_index,
-        uint32_t                               tb_size,
-        int16_t                               *ref0_amvp_cand_array_x,
-        int16_t                               *ref0_amvp_cand_array_y,
-        uint32_t                               ref0_num_available_amvp_cand,
-        int16_t                               *ref1_amvp_cand_array_x,
-        int16_t                               *ref1_amvp_cand_array_y,
-        uint32_t                               ref1_num_available_amvp_cand,
-        PictureControlSet                   *pcs_ptr);
-
     EbErrorType warped_motion_prediction(
         PictureControlSet                    *pcs_ptr,
         MvUnit                               *mv_unit,
@@ -259,7 +240,7 @@ EbErrorType av1_inter_prediction_hbd(
         InterInterCompoundData               *interinter_comp,
         uint16_t                              pu_origin_x,
         uint16_t                              pu_origin_y,
-        CodingUnit                           *blk_ptr,
+        BlkStruct                           *blk_ptr,
         const BlockGeom                      *blk_geom,
         EbPictureBufferDesc                  *ref_pic_list0,
         EbPictureBufferDesc                  *ref_pic_list1,

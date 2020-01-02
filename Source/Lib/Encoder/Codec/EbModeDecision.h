@@ -151,7 +151,7 @@ typedef EbErrorType (*EbPredictionFunc)(uint8_t                             hbd_
                                         struct ModeDecisionContext *        context_ptr,
                                         PictureControlSet *                 pcs_ptr,
                                         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-typedef uint64_t (*EbFastCostFunc)(CodingUnit *                  blk_ptr,
+typedef uint64_t (*EbFastCostFunc)(BlkStruct *                  blk_ptr,
                                    struct ModeDecisionCandidate *candidate_buffer, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
                                    uint64_t lambda, EbBool use_ssd, PictureControlSet *pcs_ptr,
@@ -161,19 +161,19 @@ typedef uint64_t (*EbFastCostFunc)(CodingUnit *                  blk_ptr,
                                    uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
 typedef EbErrorType (*EB_FULL_COST_FUNC)(
-    SuperBlock *sb_ptr, CodingUnit *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
+    SuperBlock *sb_ptr, BlkStruct *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t qp, uint64_t *y_distortion,
     uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda, uint64_t lambda_chroma,
     uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
     uint32_t transform_size, uint32_t transform_chroma_size, PictureControlSet *pcs_ptr);
 typedef EbErrorType (*EbAv1FullCostFunc)(
     PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
-    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, CodingUnit *blk_ptr,
+    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, BlkStruct *blk_ptr,
     uint64_t *y_distortion, uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda,
     uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, BlockSize bsize);
 
 typedef EbErrorType (*EB_FULL_LUMA_COST_FUNC)(
-    CodingUnit *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
+    BlkStruct *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
     struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint64_t *y_distortion,
     uint64_t lambda, uint64_t *y_coeff_bits, uint32_t transform_size);
 /**************************************
@@ -225,7 +225,7 @@ extern EbErrorType mode_decision_candidate_buffer_ctor(
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth);
 
-uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
                                     uint32_t                      candidate_total_count,
                                     uint32_t *                    best_candidate_index_array,

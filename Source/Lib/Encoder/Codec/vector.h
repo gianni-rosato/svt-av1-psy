@@ -59,101 +59,34 @@ typedef struct Iterator {
 /* Constructor */
 int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size);
 
-/* Copy Constructor */
-int eb_aom_vector_copy(Vector *destination, Vector *source);
-
-/* Copy Assignment */
-int eb_aom_vector_copy_assign(Vector *destination, Vector *source);
-
-/* Move Constructor */
-int eb_aom_vector_move(Vector *destination, Vector *source);
-
-/* Move Assignment */
-int eb_aom_vector_move_assign(Vector *destination, Vector *source);
-
-int eb_aom_vector_swap(Vector *destination, Vector *source);
-
 /* Destructor */
 int eb_aom_vector_destroy(Vector *vector);
 
 /* Insertion */
 int eb_aom_vector_push_back(Vector *vector, void *element);
-int eb_aom_vector_push_front(Vector *vector, void *element);
-int eb_aom_vector_insert(Vector *vector, size_t index, void *element);
-int eb_aom_vector_assign(Vector *vector, size_t index, void *element);
-
-/* Deletion */
-int eb_aom_vector_pop_back(Vector *vector);
-int eb_aom_vector_pop_front(Vector *vector);
-int eb_aom_vector_erase(Vector *vector, size_t index);
-int eb_aom_vector_clear(Vector *vector);
-
-/* Lookup */
-void *      eb_aom_vector_get(Vector *vector, size_t index);
-const void *eb_aom_vector_const_get(const Vector *vector, size_t index);
-void *      eb_aom_vector_front(Vector *vector);
-void *      eb_aom_vector_back(Vector *vector);
-#define VECTOR_GET_AS(type, aom_vector_pointer, index) \
-    *((type *)eb_aom_vector_get((aom_vector_pointer), (index)))
 
 /* Information */
-bool   eb_aom_vector_is_initialized(const Vector *vector);
 size_t eb_aom_vector_byte_size(const Vector *vector);
-size_t eb_aom_vector_free_space(const Vector *vector);
-bool   eb_aom_vector_is_empty(const Vector *vector);
-
-/* Memory management */
-int eb_aom_vector_resize(Vector *vector, size_t new_size);
-int eb_aom_vector_reserve(Vector *vector, size_t minimum_capacity);
-int eb_aom_vector_shrink_to_fit(Vector *vector);
 
 /* Iterators */
 Iterator eb_aom_vector_begin(Vector *vector);
-Iterator eb_aom_vector_end(Vector *vector);
 Iterator eb_aom_vector_iterator(Vector *vector, size_t index);
 
 void *iterator_get(Iterator *iterator);
 #define ITERATOR_GET_AS(type, iterator) *((type *)iterator_get((iterator)))
 
-int iterator_erase(Vector *vector, Iterator *iterator);
-
 void iterator_increment(Iterator *iterator);
-void iterator_decrement(Iterator *iterator);
-
-void *iterator_next(Iterator *iterator);
-void *iterator_previous(Iterator *iterator);
-
-bool iterator_equals(Iterator *first, Iterator *second);
-bool iterator_is_before(Iterator *first, Iterator *second);
-bool iterator_is_after(Iterator *first, Iterator *second);
-
-size_t iterator_index(Vector *vector, Iterator *iterator);
-
-#define VECTOR_FOR_EACH(aom_vector_pointer, iterator_name)                    \
-    for (Iterator(iterator_name) = eb_aom_vector_begin((aom_vector_pointer)), \
-        end                      = eb_aom_vector_end((aom_vector_pointer));   \
-         !iterator_equals(&(iterator_name), &end);                            \
-         iterator_increment(&(iterator_name)))
 
 /***** PRIVATE *****/
 
 //#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 bool _vector_should_grow(Vector *vector);
-bool _vector_should_shrink(Vector *vector);
 
-size_t      _vector_free_bytes(const Vector *vector);
 void *      _vector_offset(Vector *vector, size_t index);
-const void *_vector_const_offset(const Vector *vector, size_t index);
-
 void _vector_assign(Vector *vector, size_t index, void *element);
-
-int  _vector_move_right(Vector *vector, size_t index);
-void _vector_move_left(Vector *vector, size_t index);
-
 int _vector_adjust_capacity(Vector *vector);
 int _vector_reallocate(Vector *vector, size_t new_capacity);
 
-void _vector_swap(size_t *first, size_t *second);
 
 #endif /* VECTOR_H */

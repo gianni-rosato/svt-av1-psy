@@ -65,27 +65,6 @@ static PartitionType from_shape_to_part[] = {PARTITION_NONE,
                                              PARTITION_HORZ_4,
                                              PARTITION_VERT_4,
                                              PARTITION_SPLIT};
-EbErrorType clip_mv(uint32_t blk_origin_x, uint32_t blk_origin_y, int16_t *mvx, int16_t *mvy,
-                    uint32_t picture_width, uint32_t picture_height, uint32_t tb_size) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    // horizontal clipping
-    (*mvx) = CLIP3(((int16_t)((1 - blk_origin_x - 8 - tb_size) << 2)),
-                   ((int16_t)((picture_width + 8 - blk_origin_x - 1) << 2)),
-                   (*mvx));
-    // vertical clipping
-    (*mvy)                  = CLIP3(((int16_t)((1 - blk_origin_y - 8 - tb_size) << 2)),
-                   ((int16_t)((picture_height + 8 - blk_origin_y - 1) << 2)),
-                   (*mvy));
-    const int32_t clamp_max = MV_UPP - 1;
-    const int32_t clamp_min = MV_LOW + 1;
-    // horizontal clipping
-    (*mvx) = CLIP3(clamp_min, clamp_max, (*mvx));
-    // vertical clipping
-    (*mvy) = CLIP3(clamp_min, clamp_max, (*mvy));
-
-    return return_error;
-}
 
 #define MVREF_ROWS 3
 #define MVREF_COLS 3
@@ -1298,7 +1277,7 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     memset(xd->ref_mv_count, 0, sizeof(int8_t) * MODE_CTX_REF_FRAMES);
 }
 
-void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                             const BlockGeom *blk_geom, uint16_t blk_origin_x, uint16_t blk_origin_y,
                             MvReferenceFrame *ref_frames, uint32_t tot_refs,
                             PictureControlSet *pcs_ptr) {
@@ -1405,7 +1384,7 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Co
                           blk_ptr->inter_mode_ctx);
     }
 }
-void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                          MvReferenceFrame ref_frame, uint8_t is_compound, PredictionMode mode,
                          uint8_t drl_index, //valid value of drl_index
                          IntMv nearestmv[2], IntMv nearmv[2], IntMv ref_mv[2]) {
@@ -1468,7 +1447,7 @@ void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
     }
 }
 
-void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, CodingUnit *blk_ptr,
+void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, BlkStruct *blk_ptr,
                           const BlockGeom *blk_geom, uint16_t blk_origin_x, uint16_t blk_origin_y,
                           PictureControlSet *pcs_ptr, MvReferenceFrame ref_frame,
                           uint8_t is_compound, PredictionMode mode,
@@ -1499,7 +1478,7 @@ void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, C
                         ref_mv);
 }
 
-void update_av1_mi_map(CodingUnit *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                        const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
     uint32_t mi_stride = pcs_ptr->mi_stride;
     int32_t  mi_row    = blk_origin_y >> MI_SIZE_LOG2;
@@ -1595,7 +1574,7 @@ void update_av1_mi_map(CodingUnit *blk_ptr, uint32_t blk_origin_x, uint32_t blk_
     }
 }
 
-void update_mi_map(struct ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                    uint32_t blk_origin_x, uint32_t blk_origin_y, const BlockGeom *blk_geom,
                    PictureControlSet *pcs_ptr) {
     uint32_t mi_stride = pcs_ptr->mi_stride;
@@ -1888,7 +1867,7 @@ int av1_find_samples(const Av1Common *cm, MacroBlockD *xd, int mi_row, int mi_co
     return np;
 }
 
-void wm_count_samples(CodingUnit *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
+void wm_count_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                       uint16_t blk_origin_y, uint8_t ref_frame_type, PictureControlSet *pcs_ptr,
                       uint16_t *num_samples) {
     Av1Common *  cm = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -2012,7 +1991,7 @@ void wm_count_samples(CodingUnit *blk_ptr, const BlockGeom *blk_geom, uint16_t b
     *num_samples = np;
 }
 
-uint16_t wm_find_samples(CodingUnit *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
+uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                          uint16_t blk_origin_y, MvReferenceFrame rf0, PictureControlSet *pcs_ptr,
                          int32_t *pts, int32_t *pts_inref) {
     Av1Common *  cm = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -2027,7 +2006,7 @@ uint16_t wm_find_samples(CodingUnit *blk_ptr, const BlockGeom *blk_geom, uint16_
     return (uint16_t)av1_find_samples(cm, xd, mi_row, mi_col, rf0, pts, pts_inref);
 }
 
-EbBool warped_motion_parameters(PictureControlSet *pcs_ptr, CodingUnit *blk_ptr, MvUnit *mv_unit,
+EbBool warped_motion_parameters(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, MvUnit *mv_unit,
                                 const BlockGeom *blk_geom, uint16_t blk_origin_x,
                                 uint16_t blk_origin_y, uint8_t ref_frame_type,
                                 EbWarpedMotionParams *wm_params, uint16_t *num_samples) {
@@ -2123,7 +2102,7 @@ int count_overlappable_nb_left(const Av1Common *cm, MacroBlockD *xd, int32_t mi_
     return nb_count;
 }
 
-void eb_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, CodingUnit *blk_ptr,
+void eb_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                          const BlockSize bsize, int32_t mi_row, int32_t mi_col) {
     Av1Common *  cm                                             = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd                                             = blk_ptr->av1xd;

@@ -629,18 +629,3 @@ eb_dec_deinit_handle(EbComponentType *svt_dec_component) {
         return_error = EB_ErrorInvalidComponent;
     return return_error;
 }
-
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
-EB_API EbErrorType
-eb_dec_set_frame_buffer_callbacks(EbComponentType *     svt_dec_component,
-                                  EbAllocateFrameBuffer allocate_buffer,
-                                  EbReleaseFrameBuffer release_buffer, void *priv_data) {
-    (void)svt_dec_component;
-    (void)allocate_buffer;
-    (void)release_buffer;
-    (void)priv_data;
-
-    return EB_ErrorNone;
-}

@@ -624,6 +624,7 @@ EB_API EbErrorType eb_svt_enc_stream_header(EbComponentType *    svt_enc_compone
      * @ *stream_header_ptr  stream header buffer. */
 EB_API EbErrorType eb_svt_release_enc_stream_header(EbBufferHeaderType *stream_header_ptr);
 
+
 /* OPTIONAL: Get the end of sequence Network Abstraction Layer.
      *
      * Parameter:

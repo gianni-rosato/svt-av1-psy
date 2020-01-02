@@ -71,10 +71,7 @@ enum {
 } UENUM1BYTE(AV1_LEVEL);
 
 int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);
-
 void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt);
-
-EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, uint8_t *data, uint32_t data_size);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, size_t data_size,
                                 uint32_t is_annexb);
 

@@ -219,7 +219,6 @@ typedef struct CandidateMv {
     int32_t weight;
 } CandidateMv;
 
-#define INTER_TX_SIZE_BUF_LEN 16
 #define TXK_TYPE_BUF_LEN 64
 
 typedef struct FilterIntraModeInfo {
@@ -337,7 +336,6 @@ typedef struct MbModeInfo {
 
     int8_t          cdef_strength;
     TxSize          tx_size;
-    uint8_t         inter_tx_size[INTER_TX_SIZE_BUF_LEN];
     uint8_t         tx_depth;
     BlockModeInfo   block_mi;
     PaletteModeInfo palette_mode_info;
@@ -432,7 +430,6 @@ typedef struct MacroBlockD {
     FRAME_CONTEXT *          tile_ctx;
     TXFM_CONTEXT *           above_txfm_context;
     TXFM_CONTEXT *           left_txfm_context;
-    TXFM_CONTEXT             left_txfm_context_buffer[MAX_MIB_SIZE];
     struct macroblockd_plane plane[MAX_MB_PLANE];
     BlockSize                sb_type;
 } MacroBlockD;
@@ -472,7 +469,7 @@ typedef struct IntraBcContext {
     CRC_CALCULATOR crc_calculator2;
 } IntraBcContext;
 
-typedef struct CodingUnit {
+typedef struct BlkStruct {
     TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
     PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // 35-bytes * 4 = 140 bytes
     InterInterCompoundData interinter_comp;
@@ -485,7 +482,6 @@ typedef struct CodingUnit {
     uint16_t               qp;
     uint16_t               ref_qp;
     int16_t                delta_qp; // can be signed 8bits
-    int16_t                org_delta_qp;
 
     // Coded Tree
     struct {
@@ -532,7 +528,7 @@ typedef struct CodingUnit {
     int32_t        ii_wedge_sign;
     uint8_t        filter_intra_mode;
     PaletteInfo    palette_info;
-} CodingUnit;
+} BlkStruct;
 
 typedef struct OisCandidate {
     union {
@@ -557,8 +553,7 @@ typedef struct SuperBlock {
     EbDctor                   dctor;
     struct PictureControlSet *pcs_ptr;
 
-    CodingUnit *final_blk_arr;
-    uint32_t    final_blk_count;
+    BlkStruct   *final_blk_arr;
     //for memory free only
     MacroBlockD *  av1xd;
     PartitionType *cu_partition_array;
@@ -570,7 +565,6 @@ typedef struct SuperBlock {
     unsigned       origin_y : 12;
     uint16_t       qp;
     int16_t        delta_qp;
-    int16_t        org_delta_qp;
     uint32_t       total_bits;
 
     // Quantized Coefficients

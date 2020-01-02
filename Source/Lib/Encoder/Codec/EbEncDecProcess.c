@@ -36,9 +36,6 @@ void eb_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
 
 void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                  int32_t after_cdef);
-void eb_av1_pick_filter_restoration(const Yv12BufferConfig *src,
-                                    Yv12BufferConfig *      trial_frame_rst /*Av1Comp *cpi*/,
-                                    Macroblock *x, Av1Common *const cm);
 void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                           int32_t optimized_lr);
 
@@ -1430,7 +1427,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else if (context_ptr->pd_pass == PD_PASS_1)
         context_ptr->new_nearest_near_comb_injection = 0;
     else if (scs_ptr->static_config.new_nearest_comb_inject == DEFAULT)
-#if !MR_MODE //omran
+#if !MR_MODE
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
             context_ptr->new_nearest_near_comb_injection = 0;
         else
@@ -1883,11 +1880,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
 
     // Set md_atb_mode @ MD
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_atb_mode = 0;
+        context_ptr->md_tx_size_search_mode = 0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_atb_mode = 0;
+        context_ptr->md_tx_size_search_mode = 0;
     else
-        context_ptr->md_atb_mode = pcs_ptr->parent_pcs_ptr->atb_mode;
+        context_ptr->md_tx_size_search_mode = pcs_ptr->parent_pcs_ptr->tx_size_search_mode;
 
     // Set md_filter_intra_mode @ MD
     if (context_ptr->pd_pass == PD_PASS_0)

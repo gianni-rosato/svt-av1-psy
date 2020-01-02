@@ -8,12 +8,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef enum NalRefIdc {
-    NAL_REF_IDC_PRIORITY_LOWEST = 0,
-    NAL_REF_IDC_PRIORITY_LOW,
-    NAL_REF_IDC_PRIORITY_HIGH,
-    NAL_REF_IDC_PRIORITY_HIGHEST
-} NalRefIdc;
 
 #define EB_INTRA_PLANAR 0
 #define EB_INTRA_DC 1

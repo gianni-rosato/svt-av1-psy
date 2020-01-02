@@ -1,9 +1,7 @@
 /******************************************************************************
  * @file EbSatdTest.cc
  *
- * @brief Unit test for compute8x8_satd_u8 function:
- * - compute8x8_satd_u8_c
- *   compute8x8_satd_u8_sse4
+
  *
  * @author tszumski@intel.com
  *
@@ -23,7 +21,6 @@
 #endif
 
 #include "EbIntraPrediction.h"
-#include "EbHmCode.h"
 #include "EbDefinitions.h"
 #include "random.h"
 #include "util.h"
@@ -86,14 +83,7 @@ class Compute8x8SatdTest : public ::testing::Test {
     }
 
     void run_min_test() {
-        uint64_t res1, res2;
         prepare_data(MIN);
-
-        res1 = compute8x8_satd_u8_c(_src_, _dcValue1_, _stride_);
-        res2 = compute8x8_satd_u8_sse4(_src_, _dcValue2_, _stride_);
-
-        EXPECT_EQ(res1, res2) << "return value fail";
-
         int fail_pixel_count = 0;
         for (uint16_t j = 0; j < _dcSize_; j++) {
             if (_dcValue1_[j] != _dcValue2_[j])
@@ -104,14 +94,7 @@ class Compute8x8SatdTest : public ::testing::Test {
     }
 
     void run_max_test() {
-        uint64_t res1, res2;
         prepare_data(MAX);
-
-        res1 = compute8x8_satd_u8_c(_src_, _dcValue1_, _stride_);
-        res2 = compute8x8_satd_u8_sse4(_src_, _dcValue2_, _stride_);
-
-        EXPECT_EQ(res1, res2) << "return value fail";
-
         int fail_pixel_count = 0;
         for (uint16_t j = 0; j < _dcSize_; j++) {
             if (_dcValue1_[j] != _dcValue2_[j])
@@ -122,15 +105,8 @@ class Compute8x8SatdTest : public ::testing::Test {
     }
 
     void run_rnd_test() {
-        uint64_t res1, res2;
         for (int i = 0; i < 500; i++) {
             prepare_data(RANDOM);
-
-            res1 = compute8x8_satd_u8_c(_src_, _dcValue1_, _stride_);
-            res2 = compute8x8_satd_u8_sse4(_src_, _dcValue2_, _stride_);
-
-            EXPECT_EQ(res1, res2) << "return value fail";
-
             int fail_pixel_count = 0;
             for (uint16_t j = 0; j < _dcSize_; j++) {
                 if (_dcValue1_[j] != _dcValue2_[j])

@@ -33,7 +33,6 @@
 #include "EbComputeMean_SSE2.h"
 #include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeMean.h"
-#include "EbHmCode.h"
 #include "EbMeSadCalculation.h"
 #include "EbAvcStyleMcp.h"
 
@@ -2053,7 +2052,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin);
     SET_SSE2(
         initialize_buffer_32bits, initialize_buffer_32bits_c, initialize_buffer_32bits_sse2_intrin);
-    SET_SSE41(compute8x8_satd_u8, compute8x8_satd_u8_c, compute8x8_satd_u8_sse4);
     SET_AVX2(nxm_sad_kernel_sub_sampled,
              nxm_sad_kernel_helper_c,
              nxm_sad_kernel_sub_sampled_helper_avx2);

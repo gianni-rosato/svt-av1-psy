@@ -227,14 +227,6 @@ static void get_memory_usage_and_scale(uint64_t amount, double* usage, char* sca
 //if we use a static array here, this size + sizeof(g_mem_entry) will exceed max size allowed on windows.
 static MemoryEntry* g_profile_entry;
 
-uint32_t hash_location(FILE* f, int line) {
-#define MASK32 ((((uint64_t)1) << 32) - 1)
-
-    uint64_t v     = (uint64_t)f;
-    uint64_t low32 = v & MASK32;
-    return (uint32_t)((v >> 32) + low32 + line);
-}
-
 static EbBool add_location(MemoryEntry* e, void* param) {
     MemoryEntry* new_item = (MemoryEntry*)param;
     if (!e->ptr) {

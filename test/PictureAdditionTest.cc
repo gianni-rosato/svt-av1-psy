@@ -9,7 +9,6 @@
  * @brief Unit test for Residual functions:
  * - picture_addition_kernel{m}x{n}_{sse,sse2}_intrin
  * - picture_addition_kernel{m}x{n}_av1_sse2_intrin
- * - picture_addition_kernel16bit_sse2_intrin
  *
  * @author Cidana-Ivy
  *
@@ -65,7 +64,6 @@ typedef std::tuple<PictureAdditionTestParam, TestPattern> TestParam;
  * @brief Unit test for Picture Addition functions include:
  *  - picture_addition_kernel{m}x{n}_{sse,sse2}_intrin
  *  - picture_addition_kernel{m}x{n}_av1_sse2_intrin
- *  - picture_addition_kernel16bit_sse2_intrin
  *
  * Test strategy:
  * This test case combines different AreaSize and
@@ -303,14 +301,6 @@ class PictureAdditionTest : public ::testing::Test,
 
     void run_16bit_test() {
         prepare_16bit_data();
-        picture_addition_kernel16bit_sse2_intrin(pred16bit_,
-                                                 pred_stride_,
-                                                 residual_,
-                                                 residual_stride_,
-                                                 recon1_16bit_,
-                                                 recon_stride_,
-                                                 area_width_,
-                                                 area_height_);
         picture_addition_kernel16_bit(pred16bit_,
                                       pred_stride_,
                                       residual_int32_,

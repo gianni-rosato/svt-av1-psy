@@ -1208,7 +1208,7 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
 
-    CodingUnit  blk_ptr;
+    BlkStruct  blk_ptr;
     MacroBlockD av1xd;
     blk_ptr.av1xd = &av1xd;
     MvUnit mv_unit;

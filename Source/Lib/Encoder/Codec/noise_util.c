@@ -122,17 +122,6 @@ void eb_aom_noise_tx_free(struct aom_noise_tx_t *noise_tx) {
     free(noise_tx);
 }
 
-double eb_aom_normalized_cross_correlation(const double *a, const double *b, int32_t n) {
-    double c     = 0;
-    double a_len = 0;
-    double b_len = 0;
-    for (int32_t i = 0; i < n; ++i) {
-        a_len += a[i] * a[i];
-        b_len += b[i] * b[i];
-        c += a[i] * b[i];
-    }
-    return c / (sqrt(a_len) * sqrt(b_len));
-}
 
 #define OD_DIVU_DMAX (1024)
 uint32_t od_divu_small_consts[OD_DIVU_DMAX][2] = {

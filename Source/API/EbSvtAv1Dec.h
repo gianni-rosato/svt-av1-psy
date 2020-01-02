@@ -247,19 +247,6 @@ EB_API EbErrorType eb_dec_deinit_handle(EbComponentType *svt_dec_component);
      */
 EB_API EbErrorType eb_dec_flush(EbComponentType *svt_dec_component);
 
-/* Initialize callback functions.
-     *
-     * Parameter:
-     * @ *svt_dec_component     Decoder handle
-     * @ allocate_buffer        callback function to allocate frame buffer
-     * @ release_buffer         callback function to release frame buffer
-     * @ priv_data              private data used by the allocator */
-
-EB_API EbErrorType eb_dec_set_frame_buffer_callbacks(EbComponentType *     svt_dec_component,
-                                                     EbAllocateFrameBuffer allocate_buffer,
-                                                     EbReleaseFrameBuffer  release_buffer,
-                                                     void *                priv_data);
-
 /* Returns information about the bitstream and
      * the last decoded frame.
      *

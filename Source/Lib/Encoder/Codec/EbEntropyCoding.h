@@ -66,7 +66,7 @@ extern EbErrorType av1_txb_estimate_coeff_bits(
     TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
     COMPONENT_TYPE component_type);
 
-extern EbErrorType copy_rbsp_bitstream_to_payload(Bitstream *bitstream_ptr, EbByte output_buffer,
+extern EbErrorType copy_payload(Bitstream *bitstream_ptr, EbByte output_buffer,
                                                   uint32_t *     output_buffer_index,
                                                   uint32_t *     output_buffer_size,
                                                   EncodeContext *encode_context_ptr);
@@ -184,9 +184,6 @@ int32_t  eb_aom_wb_is_byte_aligned(const struct AomWriteBitBuffer *wb);
 uint32_t eb_aom_wb_bytes_written(const struct AomWriteBitBuffer *wb);
 
 void eb_aom_wb_write_bit(struct AomWriteBitBuffer *wb, int32_t bit);
-
-void eb_aom_wb_overwrite_bit(struct AomWriteBitBuffer *wb, int32_t bit);
-
 void eb_aom_wb_write_literal(struct AomWriteBitBuffer *wb, int32_t data, int32_t bits);
 
 void eb_aom_wb_write_inv_signed_literal(struct AomWriteBitBuffer *wb, int32_t data, int32_t bits);
@@ -284,7 +281,7 @@ extern EbErrorType encode_sps_av1(Bitstream *bitstream_ptr, SequenceControlSet *
 
 //*******************************************************************************************//
 
-MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const CodingUnit *blk_ptr,
+MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct *blk_ptr,
                                const BlockSize bsize, MvReferenceFrame rf0, MvReferenceFrame rf1,
                                PredictionMode mode);
 

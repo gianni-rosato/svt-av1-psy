@@ -39,18 +39,10 @@ int  eb_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cach
 int  av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache, int n_cache,
                               int bit_depth);
 int  av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
-                        CodingUnit *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
+                        BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
-
-BlockSize get_block_size(uint8_t cu_size) {
-    return (cu_size == 64 ? BLOCK_64X64
-                          : cu_size == 32 ? BLOCK_32X32
-                                          : cu_size == 16 ? BLOCK_16X16
-                                                          : cu_size == 8 ? BLOCK_8X8 : BLOCK_4X4);
-}
-
 int av1_allow_intrabc(const Av1Common *const cm);
 
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
@@ -563,7 +555,7 @@ int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8
                                   //int32_t plane,
                                   uint64_t sse, uint32_t *rate, uint64_t *dist);
 
-uint64_t av1_intra_fast_cost(CodingUnit *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
+uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
                              EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
@@ -823,7 +815,7 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
 
 // This function encodes the reference frame
 uint64_t estimate_ref_frames_num_bits(PictureControlSet *    pcs_ptr,
-                                      ModeDecisionCandidate *candidate_ptr, CodingUnit *blk_ptr,
+                                      ModeDecisionCandidate *candidate_ptr, BlkStruct *blk_ptr,
                                       uint32_t bwidth, uint32_t bheight, uint8_t ref_frame_type,
                                       uint8_t md_pass, EbBool is_compound) {
     FrameHeader *frm_hdr       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1242,7 +1234,7 @@ int      get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_fr
 int      get_comp_group_idx_context_enc(const MacroBlockD *xd);
 int      is_any_masked_compound_used(BlockSize sb_type);
 uint32_t get_compound_mode_rate(uint8_t md_pass, ModeDecisionCandidate *candidate_ptr,
-                                CodingUnit *blk_ptr, uint8_t ref_frame_type, BlockSize bsize,
+                                BlkStruct *blk_ptr, uint8_t ref_frame_type, BlockSize bsize,
                                 SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
     uint32_t comp_rate = 0;
     if (md_pass == 0) return 0;
@@ -1361,7 +1353,7 @@ void two_pass_cost_update_64bit(PictureControlSet *pcs_ptr, ModeDecisionCandidat
     }
 }
 
-uint64_t av1_inter_fast_cost(CodingUnit *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
+uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
                              EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
@@ -1837,7 +1829,7 @@ EbErrorType av1_txb_estimate_coeff_bits(
 **********************************************************************************/
 EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                           struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                          CodingUnit *blk_ptr, uint64_t *y_distortion, uint64_t *cb_distortion,
+                          BlkStruct *blk_ptr, uint64_t *y_distortion, uint64_t *cb_distortion,
                           uint64_t *cr_distortion, uint64_t lambda, uint64_t *y_coeff_bits,
                           uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, BlockSize bsize) {
     UNUSED(pcs_ptr);
@@ -1968,7 +1960,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 **********************************************************************************/
 EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                      struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                     CodingUnit *blk_ptr, uint64_t *y_distortion,
+                                     BlkStruct *blk_ptr, uint64_t *y_distortion,
                                      uint64_t *cb_distortion, uint64_t *cr_distortion,
                                      uint64_t lambda, uint64_t *y_coeff_bits,
                                      uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
@@ -2136,7 +2128,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
 **********************************************************************************/
 EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                 struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                CodingUnit *blk_ptr, uint64_t *y_distortion,
+                                BlkStruct *blk_ptr, uint64_t *y_distortion,
                                 uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda,
                                 uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits,
                                 uint64_t *cr_coeff_bits, BlockSize bsize)
@@ -2177,7 +2169,7 @@ EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
 **********************************************************************************/
 EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                 struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                CodingUnit *blk_ptr, uint64_t *y_distortion,
+                                BlkStruct *blk_ptr, uint64_t *y_distortion,
                                 uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda,
                                 uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits,
                                 uint64_t *cr_coeff_bits, BlockSize bsize) {
@@ -2216,7 +2208,7 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
 /************************************************************
 * Coding Loop Context Generation
 ************************************************************/
-void coding_loop_context_generation(ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     uint32_t blk_origin_x, uint32_t blk_origin_y, uint32_t sb_sz,
                                     NeighborArrayUnit *skip_coeff_neighbor_array,
                                     NeighborArrayUnit *inter_pred_dir_neighbor_array,
@@ -2530,7 +2522,7 @@ EbErrorType av1_txb_calc_cost_luma(
 *       md_rate_estimation_ptr is pointer to MD rate Estimation Tables
 **********************************************************************************/
 EbErrorType av1_split_flag_rate(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
-                                CodingUnit *blk_ptr, uint32_t leaf_index,
+                                BlkStruct *blk_ptr, uint32_t leaf_index,
                                 PartitionType partitionType, uint64_t *split_rate, uint64_t lambda,
                                 MdRateEstimationContext *md_rate_estimation_ptr,
                                 uint32_t                 tb_max_depth) {
@@ -2605,7 +2597,7 @@ EbErrorType av1_split_flag_rate(SequenceControlSet *scs_ptr, ModeDecisionContext
 EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count_non_zero_coeffs,
                                      uint64_t  y_txb_distortion[DIST_CALC_TOTAL],
                                      uint64_t *y_txb_coeff_bits, uint32_t component_mask) {
-    CodingUnit *             blk_ptr                  = context_ptr->blk_ptr;
+    BlkStruct *             blk_ptr                  = context_ptr->blk_ptr;
     uint32_t                 txb_index                = context_ptr->txb_itr;
     MdRateEstimationContext *md_rate_estimation_ptr   = context_ptr->md_rate_estimation_ptr;
     uint64_t                 lambda                   = context_ptr->full_lambda;
@@ -2678,13 +2670,4 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
     blk_ptr->txb_array[txb_index].v_has_coeff = cr_count_non_zero_coeffs != 0 ? EB_TRUE : EB_FALSE;
 
     return return_error;
-}
-
-uint64_t get_pm_cost(uint64_t lambda, uint64_t tuDistortion, uint64_t y_txb_coeff_bits) {
-    uint64_t y_non_zero_cbf_distortion = LUMA_WEIGHT * (tuDistortion << COST_PRECISION);
-    uint64_t y_non_zero_cbf_rate       = (y_txb_coeff_bits);
-    uint64_t y_non_zero_cbf_cost =
-        y_non_zero_cbf_distortion + (((lambda * y_non_zero_cbf_rate) + MD_OFFSET) >> MD_SHIFT);
-
-    return y_non_zero_cbf_cost;
 }

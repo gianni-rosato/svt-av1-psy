@@ -86,15 +86,6 @@ static int hash_block_size_to_index(int block_size) {
     }
 }
 
-//void av1_hash_table_init(HashTable *p_hash_table, MACROBLOCK *x) {
-//  if (x->g_crc_initialized == 0) {
-//    av1_crc_calculator_init(&x->crc_calculator1, 24, 0x5D6DCB);
-//    av1_crc_calculator_init(&x->crc_calculator2, 24, 0x864CFB);
-//    x->g_crc_initialized = 1;
-//  }
-//  p_hash_table->p_lookup_table = NULL;
-//}
-
 void av1_hash_table_destroy(HashTable *p_hash_table) {
     hash_table_clear_all(p_hash_table);
     EB_FREE_ARRAY(p_hash_table->p_lookup_table);
@@ -139,16 +130,6 @@ int32_t av1_hash_table_count(const HashTable *p_hash_table, uint32_t hash_value)
 Iterator av1_hash_get_first_iterator(HashTable *p_hash_table, uint32_t hash_value) {
     assert(av1_hash_table_count(p_hash_table, hash_value) > 0);
     return eb_aom_vector_begin(p_hash_table->p_lookup_table[hash_value]);
-}
-
-int32_t av1_has_exact_match(HashTable *p_hash_table, uint32_t hash_value1, uint32_t hash_value2) {
-    if (p_hash_table->p_lookup_table[hash_value1] == NULL) return 0;
-    Iterator iterator = eb_aom_vector_begin(p_hash_table->p_lookup_table[hash_value1]);
-    Iterator last     = eb_aom_vector_end(p_hash_table->p_lookup_table[hash_value1]);
-    for (; !iterator_equals(&iterator, &last); iterator_increment(&iterator)) {
-        if ((*(BlockHash *)iterator_get(&iterator)).hash_value2 == hash_value2) return 1;
-    }
-    return 0;
 }
 
 void av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture, uint32_t *pic_block_hash[2],
@@ -294,53 +275,6 @@ void av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table, uint32
             }
         }
     }
-}
-
-int av1_hash_is_horizontal_perfect(const Yv12BufferConfig *picture, int block_size, int x_start,
-                                   int y_start) {
-    const int      stride = picture->y_stride;
-    const uint8_t *p      = picture->y_buffer + y_start * stride + x_start;
-
-    if (picture->flags & YV12_FLAG_HIGHBITDEPTH) {
-        const uint16_t *p16 = CONVERT_TO_SHORTPTR(p);
-        for (int i = 0; i < block_size; i++) {
-            for (int j = 1; j < block_size; j++) {
-                if (p16[j] != p16[0]) return 0;
-            }
-            p16 += stride;
-        }
-    } else {
-        for (int i = 0; i < block_size; i++) {
-            for (int j = 1; j < block_size; j++) {
-                if (p[j] != p[0]) return 0;
-            }
-            p += stride;
-        }
-    }
-
-    return 1;
-}
-
-int av1_hash_is_vertical_perfect(const Yv12BufferConfig *picture, int block_size, int x_start,
-                                 int y_start) {
-    const int      stride = picture->y_stride;
-    const uint8_t *p      = picture->y_buffer + y_start * stride + x_start;
-
-    if (picture->flags & YV12_FLAG_HIGHBITDEPTH) {
-        const uint16_t *p16 = CONVERT_TO_SHORTPTR(p);
-        for (int i = 0; i < block_size; i++) {
-            for (int j = 1; j < block_size; j++) {
-                if (p16[j * stride + i] != p16[i]) return 0;
-            }
-        }
-    } else {
-        for (int i = 0; i < block_size; i++) {
-            for (int j = 1; j < block_size; j++) {
-                if (p[j * stride + i] != p[i]) return 0;
-            }
-        }
-    }
-    return 1;
 }
 
 void av1_get_block_hash_value(uint8_t *y_src, int stride, int block_size, uint32_t *hash_value1,

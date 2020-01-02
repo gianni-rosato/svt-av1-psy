@@ -10,7 +10,6 @@
  * - residual_kernel_avx2
  * - residual_kernel16bit_sse2_intrin
  * - residual_kernel_sub_sampled{w}x{h}_sse_intrin
- * - sum_residual8bit_avx2_intrin
  *
  * @author Cidana-Ivy, Cidana-Wenyao
  *
@@ -354,15 +353,6 @@ class ResidualSubSampledTest
                                area_width_,
                                area_height_,
                                false);
-        residual_kernel_subsampled(input_,
-                                   input_stride_,
-                                   pred_,
-                                   pred_stride_,
-                                   residual2_,
-                                   residual_stride_,
-                                   area_width_,
-                                   area_height_,
-                                   false);
 
         check_residuals(area_width_, area_height_);
     }

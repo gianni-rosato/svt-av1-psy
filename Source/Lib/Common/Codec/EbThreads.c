@@ -320,23 +320,6 @@ EbErrorType eb_block_on_mutex(EbHandle mutex_handle) {
 }
 
 /***************************************
- * eb_block_on_mutex_timeout
- ***************************************/
-EbErrorType eb_block_on_mutex_timeout(EbHandle mutex_handle, uint32_t timeout) {
-    EbErrorType return_error = EB_ErrorNone;
-
-#ifdef _WIN32
-    WaitForSingleObject((HANDLE)mutex_handle, timeout);
-#else
-    return_error = pthread_mutex_lock((pthread_mutex_t *)mutex_handle) ? EB_ErrorMutexUnresponsive
-                                                                       : EB_ErrorNone;
-    (void)timeout;
-#endif // _WIN32
-
-    return return_error;
-}
-
-/***************************************
  * eb_destroy_mutex
  ***************************************/
 EbErrorType eb_destroy_mutex(EbHandle mutex_handle) {

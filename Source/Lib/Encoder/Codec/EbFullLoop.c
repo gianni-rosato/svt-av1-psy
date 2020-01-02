@@ -2372,7 +2372,7 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
     UNUSED(count_non_zero_coeffs);
     UNUSED(component_mask);
 
-    CodingUnit *   blk_ptr        = context_ptr->blk_ptr;
+    BlkStruct *   blk_ptr        = context_ptr->blk_ptr;
     TransformUnit *txb_ptr        = &blk_ptr->txb_array[context_ptr->txb_itr];
     uint32_t       qp             = blk_ptr->qp;
     const uint32_t coeff1d_offset = context_ptr->coded_area_sb;
@@ -2559,7 +2559,7 @@ void encode_pass_tx_search_hbd(
     UNUSED(component_mask);
     UNUSED(count_non_zero_coeffs);
 
-    CodingUnit *   blk_ptr = context_ptr->blk_ptr;
+    BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
     uint32_t       qp      = blk_ptr->qp;
     const uint32_t scratch_luma_offset =
@@ -3235,8 +3235,8 @@ void cu_full_distortion_fast_txb_mode_r(
  ***************************************/
 EbBool merge_1d_inter_block(ModeDecisionContext *context_ptr, uint32_t sq_idx, uint32_t nsq_idx) {
     EbBool      merge_blocks   = EB_FALSE;
-    CodingUnit *parent_blk_ptr = &context_ptr->md_blk_arr_nsq[sq_idx];
-    CodingUnit *child_blk_ptr  = &context_ptr->md_blk_arr_nsq[nsq_idx];
+    BlkStruct *parent_blk_ptr = &context_ptr->md_blk_arr_nsq[sq_idx];
+    BlkStruct *child_blk_ptr  = &context_ptr->md_blk_arr_nsq[nsq_idx];
     int parent_diriction  = parent_blk_ptr->prediction_unit_array[0].inter_pred_direction_index;
     int parent_mv_l0      = parent_blk_ptr->prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     int parent_mv_l1      = parent_blk_ptr->prediction_unit_array[0].mv[REF_LIST_1].mv_union;

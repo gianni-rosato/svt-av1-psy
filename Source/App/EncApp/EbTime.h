@@ -19,9 +19,6 @@ void finish_time(uint64_t *finish_seconds, uint64_t *finish_u_seconds);
 void compute_overall_elapsed_time(uint64_t start_seconds, uint64_t start_u_seconds,
                                   uint64_t finish_seconds, uint64_t finish_u_seconds,
                                   double *duration);
-void compute_overall_elapsed_time_ms(uint64_t start_seconds, uint64_t start_u_seconds,
-                                     uint64_t finish_seconds, uint64_t finish_u_seconds,
-                                     double *duration);
 void injector(uint64_t processed_frame_count, uint32_t injector_frame_rate);
 
 #ifdef __cplusplus

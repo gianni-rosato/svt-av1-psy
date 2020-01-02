@@ -45,15 +45,9 @@ extern EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle);
      * Mutex
      **************************************/
 extern EbHandle eb_create_mutex(void);
-
 extern EbErrorType eb_release_mutex(EbHandle mutex_handle);
-
 extern EbErrorType eb_block_on_mutex(EbHandle mutex_handle);
-
-extern EbErrorType eb_block_on_mutex_timeout(EbHandle mutex_handle, uint32_t timeout);
-
 extern EbErrorType eb_destroy_mutex(EbHandle mutex_handle);
-
 extern EbMemoryMapEntry *memory_map; // library Memory table
 extern uint32_t *        memory_map_index; // library memory index
 extern uint64_t *        total_lib_memory; // library Memory malloc'd

@@ -153,9 +153,6 @@ extern void neighbor_array_unit_mode_write(NeighborArrayUnit *na_unit_ptr, uint8
                                            uint32_t origin_x, uint32_t origin_y,
                                            uint32_t block_width, uint32_t block_height,
                                            uint32_t neighbor_array_type_mask);
-
-extern void neighbor_array_unit_mv_write(NeighborArrayUnit *na_unit_ptr, uint8_t *value,
-                                         uint32_t origin_x, uint32_t origin_y, uint32_t BlockSize);
 #ifdef __cplusplus
 }
 #endif

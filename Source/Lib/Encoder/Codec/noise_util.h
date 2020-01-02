@@ -48,10 +48,6 @@ void eb_aom_noise_tx_inverse(struct aom_noise_tx_t *aom_noise_tx, float *data);
 // be removed. A value of about 2.5 can be used for moderate denoising,
 // where a value of 5.0 can be used for a high level of denoising.
 float eb_aom_noise_psd_get_default_value(int32_t block_size, float factor);
-
-// Computes normalized cross correlation of two vectors a and b of length n.
-double eb_aom_normalized_cross_correlation(const double *a, const double *b, int32_t n);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

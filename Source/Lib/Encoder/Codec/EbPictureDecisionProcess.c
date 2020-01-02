@@ -226,24 +226,6 @@ void eb_av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
     //5 :ALT2
     //6 :ALT
 }
-
-uint8_t  circ_dec(uint8_t max, uint8_t off, uint8_t input)
-{
-    int8_t x = input;
-
-    x--;
-    if (x < 0)
-        x = max;
-
-    if (off == 2)
-    {
-        x--;
-        if (x < 0)
-            x = max;
-    }
-
-    return x;
-}
 uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 {
     input++;
@@ -762,18 +744,6 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
     return return_error;
 }
 
-EbBool is_supposedly_4l_reference_frame(
-    PictureDecisionContext        *context_ptr,
-    uint32_t                         MinigopIndex,
-    uint32_t                        picture_index) {
-    if ((context_ptr->mini_gop_hierarchical_levels[MinigopIndex] == 4 && context_ptr->mini_gop_length[MinigopIndex] == 16 && (picture_index == 7 || picture_index == 23)) ||    // supposedly a 4L reference frame for 5L prediction structure
-        (context_ptr->mini_gop_hierarchical_levels[MinigopIndex] == 5 && context_ptr->mini_gop_length[MinigopIndex] == 32 && (picture_index == 7 || picture_index == 23))) { // supposedly a 4L reference frame for 6L prediction structure
-        return(EB_TRUE);
-    }
-    else
-        return(EB_FALSE);
-}
-
 /***************************************************************************************************
 * Generates mini GOP RPSs
 *
@@ -1120,33 +1090,28 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->intra_pred_mode = 4;
     }
 
-    if (MR_MODE)
-        pcs_ptr->intra_pred_mode = 0;
-
-    // Skip sub blk based on neighbors depth        Settings
-    // 0                                            OFF
-    // 1                                            ON
-    pcs_ptr->skip_sub_blks =   0;
+        if (MR_MODE)
+            pcs_ptr->intra_pred_mode = 0;
 
         if (pcs_ptr->sc_content_detected)
             pcs_ptr->cu8x8_mode = (pcs_ptr->temporal_layer_index > 0) ?
             CU_8x8_MODE_1 :
             CU_8x8_MODE_0;
         else
-        if (pcs_ptr->enc_mode <= ENC_M8)
-            pcs_ptr->cu8x8_mode = CU_8x8_MODE_0;
-        else
-            pcs_ptr->cu8x8_mode = (pcs_ptr->temporal_layer_index > 0) ?
-            CU_8x8_MODE_1 :
-            CU_8x8_MODE_0;
+            if (pcs_ptr->enc_mode <= ENC_M8)
+                pcs_ptr->cu8x8_mode = CU_8x8_MODE_0;
+            else
+                pcs_ptr->cu8x8_mode = (pcs_ptr->temporal_layer_index > 0) ?
+                CU_8x8_MODE_1 :
+                CU_8x8_MODE_0;
 
-        // Set atb mode      Settings
+        // Set tx size search mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
         if (pcs_ptr->enc_mode <= ENC_M2)
-            pcs_ptr->atb_mode = (MR_MODE || pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
+            pcs_ptr->tx_size_search_mode = (MR_MODE || pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
         else
-            pcs_ptr->atb_mode = 0;
+            pcs_ptr->tx_size_search_mode = 0;
 
         // Set skip atb                          Settings
         // 0                                     OFF
@@ -3305,7 +3270,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     pcs_ptr);
 
                             // Set tx_mode
-                            frm_hdr->tx_mode = (pcs_ptr->atb_mode) ?
+                            frm_hdr->tx_mode = (pcs_ptr->tx_size_search_mode) ?
                                 TX_MODE_SELECT :
                                 TX_MODE_LARGEST;
 

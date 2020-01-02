@@ -2130,13 +2130,6 @@ EbErrorType read_frame_header_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuH
     return status;
 }
 
-void clear_loop_restoration(int num_planes, PartitionInfo *part_info) {
-    for (int p = 0; p < num_planes; ++p) {
-        set_default_wiener(part_info->wiener_info + p);
-        set_default_sgrproj(part_info->sgrproj_info + p);
-    }
-}
-
 // Read Tile group information
 EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info,
                                 ObuHeader *obu_header, int *is_last_tg) {
@@ -2380,14 +2373,6 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     pad_pic(dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf, &dec_handle_ptr->frame_header, 1);
     return status;
 }
-
-EbErrorType decode_obu(EbDecHandle *dec_handle_ptr, unsigned char *data, unsigned int data_size) {
-    (void)dec_handle_ptr;
-    (void)data;
-    (void)data_size;
-    return 0;
-}
-
 // Decode all OBUs in a Frame
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, size_t data_size,
                                 uint32_t is_annexb) {

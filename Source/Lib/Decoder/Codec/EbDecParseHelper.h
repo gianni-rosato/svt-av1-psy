@@ -16,7 +16,6 @@
 typedef struct MvCount {
     uint8_t newmv_count;
     uint8_t num_mv_found[MODE_CTX_REF_FRAMES];
-    uint8_t found_match;
     uint8_t found_above_match;
     uint8_t found_left_match;
 } MvCount;

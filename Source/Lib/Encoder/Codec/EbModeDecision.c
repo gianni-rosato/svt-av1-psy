@@ -515,7 +515,7 @@ void determine_compound_mode(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 
 void choose_best_av1_mv_pred(ModeDecisionContext *           context_ptr,
                              struct MdRateEstimationContext *md_rate_estimation_ptr,
-                             CodingUnit *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
+                             BlkStruct *blk_ptr, MvReferenceFrame ref_frame, uint8_t is_compound,
                              PredictionMode mode, //NEW or NEW_NEW
                              int16_t mv0x, int16_t mv0y, int16_t mv1x, int16_t mv1y,
                              uint8_t *bestDrlIndex, // output
@@ -1583,7 +1583,7 @@ BIPred     : NEARST_NEARST  + upto 3x NEAR_NEAR
 **********************************************************************
 **********************************************************************/
 void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
-                              CodingUnit *blk_ptr, MvReferenceFrame ref_pair,
+                              BlkStruct *blk_ptr, MvReferenceFrame ref_pair,
                               uint32_t *candTotCnt) {
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     EbBool       allow_compound =
@@ -2540,7 +2540,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 }
 
 void inject_warped_motion_candidates(PictureControlSet *         pcs_ptr,
-                                     struct ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+                                     struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                      uint32_t *candTotCnt, MeSbResults *meResult) {
     uint32_t               cand_idx   = *candTotCnt;
     ModeDecisionCandidate *cand_array = context_ptr->fast_candidate_array;
@@ -4584,7 +4584,7 @@ void assert_release(int statement) {
 }
 
 void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
-                     const SequenceControlSet *scs, CodingUnit *blk_ptr, MV *dv_cand,
+                     const SequenceControlSet *scs, BlkStruct *blk_ptr, MV *dv_cand,
                      uint8_t *num_dv_cand) {
     IntraBcContext  x_st;
     IntraBcContext *x = &x_st;
@@ -4750,7 +4750,7 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
 }
 
 void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                                const SequenceControlSet *scs_ptr, CodingUnit *blk_ptr,
+                                const SequenceControlSet *scs_ptr, BlkStruct *blk_ptr,
                                 uint32_t *cand_cnt) {
     MV      dv_cand[2];
     uint8_t num_dv_cand = 0;
@@ -5483,7 +5483,7 @@ EbErrorType generate_md_stage_0_cand(
 ***************************************/
 uint32_t product_full_mode_decision(
     struct ModeDecisionContext   *context_ptr,
-    CodingUnit                   *blk_ptr,
+    BlkStruct                   *blk_ptr,
     ModeDecisionCandidateBuffer **buffer_ptr_array,
     uint32_t                      candidate_total_count,
     uint32_t                     *best_candidate_index_array,

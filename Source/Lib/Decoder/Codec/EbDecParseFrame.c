@@ -192,7 +192,6 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
     }
 
     // to-do access to wiener info that is currently part of PartitionInfo
-    //clear_loop_restoration(num_planes, part_info);
     int32_t sb_row_tile_start = 0;
     if (is_mt) {
         DecMtParseReconTileInfo *parse_recon_tile_info =

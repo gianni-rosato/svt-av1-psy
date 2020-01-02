@@ -47,10 +47,6 @@ typedef struct SearchSiteConfig {
     int        searches_per_step;
 } SearchSiteConfig;
 
-typedef struct {
-    MV  coord;
-    int coord_offset;
-} SearchNeighbors;
 typedef unsigned int (*AomObmcSadFn)(const uint8_t *pred, int pred_stride, const int32_t *wsrc,
                                           const int32_t *msk);
 typedef unsigned int (*AomObmcVarianceFn)(const uint8_t *pred, int pred_stride,

@@ -8,7 +8,6 @@
 
 #include "EbPictureOperators_C.h"
 #include "EbPictureOperators_SSE2.h"
-#include "EbPictureOperators_SSE4_1.h"
 #include "EbPictureOperators_AVX2.h"
 #include "EbPictureOperators_AVX512.h"
 #include "EbDefinitions.h"
@@ -26,21 +25,11 @@ extern EbErrorType picture_full_distortion32_bits(
     uint64_t cr_distortion[DIST_CALC_TOTAL], uint32_t y_count_non_zero_coeffs,
     uint32_t cb_count_non_zero_coeffs, uint32_t cr_count_non_zero_coeffs,
     COMPONENT_TYPE component_type);
-
-extern uint64_t compute_nx_m_satd_sad_sb(uint8_t *src, // input parameter, source samples Ptr
-                                         uint32_t src_stride, // input parameter, source stride
-                                         uint32_t width, // input parameter, block width (N)
-                                         uint32_t height); // input parameter, block height (M)
-
 //Residual Data
 
 void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                         uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
                         uint32_t width, uint32_t height);
-
-void conv2b_to_c_pack_sb(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
-                         uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint8_t *local_cache,
-                         uint32_t width, uint32_t height);
 
 void pack2d_src(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                 uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
@@ -49,25 +38,6 @@ void pack2d_src(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_b
 void un_pack2d(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer,
                uint32_t out8_stride, uint8_t *outn_bit_buffer, uint32_t outn_stride, uint32_t width,
                uint32_t height);
-
-void extract_8bit_data(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer,
-                       uint32_t out8_stride, uint32_t width, uint32_t height);
-
-void unpack_l0l1_avg(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
-                     uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride, uint32_t width,
-                     uint32_t height);
-
-void extract8_bitdata_safe_sub(uint16_t *in16_bit_buffer, uint32_t in_stride,
-                               uint8_t *out8_bit_buffer, uint32_t out8_stride, uint32_t width,
-                               uint32_t height, EbBool sub_pred);
-
-void unpack_l0l1_avg_safe_sub(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
-                              uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
-                              uint32_t width, uint32_t height, EbBool sub_pred);
-
-void memcpy16bit(uint16_t *out_ptr, uint16_t *in_ptr, uint64_t num_of_elements);
-
-void memcpy32bit(uint32_t *out_ptr, uint32_t *in_ptr, uint64_t num_of_elements);
 
 static INLINE void memset16bit(uint16_t *in_ptr, uint16_t value, uint64_t num_of_elements) {
     uint64_t i;
@@ -80,8 +50,6 @@ static INLINE void memset32bit(uint32_t *in_ptr, uint32_t value, uint64_t num_of
 
     for (i = 0; i < num_of_elements; i++) in_ptr[i] = value;
 }
-
-void memset16bit_block(int16_t *in_ptr, uint32_t stride_in, uint32_t size, int16_t value);
 
 void full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff_stride,
                                               int32_t *recon_coeff, uint32_t recon_coeff_stride,
@@ -105,10 +73,6 @@ void residual_kernel16bit_c(uint16_t *input, uint32_t input_stride, uint16_t *pr
 void residual_kernel8bit_c(uint8_t *input, uint32_t input_stride, uint8_t *pred,
                            uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,
                            uint32_t area_width, uint32_t area_height);
-
-void residual_kernel_subsampled(uint8_t *input, uint32_t input_stride, uint8_t *pred,
-                                uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,
-                                uint32_t area_width, uint32_t area_height, uint8_t last_line);
 
 void picture_addition_kernel16_bit(uint16_t *pred_ptr, uint32_t pred_stride, int32_t *residual_ptr,
                                    uint32_t residual_stride, uint16_t *recon_ptr,

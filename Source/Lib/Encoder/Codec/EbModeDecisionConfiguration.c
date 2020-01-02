@@ -106,7 +106,7 @@ mdcSetDepth : set depth to be tested
 #define REFINEMENT_Pm3      0x40
 
 EbErrorType mdc_refinement(
-    MdcpLocalCodingUnit                   *local_blk_array,
+    MdcpLocalBlkStruct                   *local_blk_array,
     uint32_t                                  blk_index,
     uint32_t                                  depth,
     uint8_t                                   refinement_level,
@@ -253,7 +253,7 @@ void refinement_prediction_loop(
     uint32_t                              sb_index,
     ModeDecisionConfigurationContext     *context_ptr)
 {
-    MdcpLocalCodingUnit    *local_blk_array         = context_ptr->local_blk_array;
+    MdcpLocalBlkStruct    *local_blk_array         = context_ptr->local_blk_array;
     SbParams               *sb_params            = &scs_ptr->sb_params_array[sb_index];
     uint32_t                  blk_index             = 0;
     while (blk_index < CU_MAX_COUNT)
@@ -313,7 +313,7 @@ void forward_blk_to_mode_decision(
     EbBool                 split_flag = EB_TRUE;
     MdcSbData           *results_ptr = &pcs_ptr->mdc_sb_array[sb_index];
     SbParams            *sb_params = &scs_ptr->sb_params_array[sb_index];
-    MdcpLocalCodingUnit  *local_blk_array = context_ptr->local_blk_array;
+    MdcpLocalBlkStruct  *local_blk_array = context_ptr->local_blk_array;
     EB_SLICE                slice_type = pcs_ptr->slice_type;
 
     // CU Loop
@@ -444,7 +444,7 @@ void mdc_inter_depth_decision(
     uint64_t               depth_n_plus_1_rate = 0;
     uint64_t               depth_n_cost = 0;
     uint64_t               depth_n_plus_1_cost = 0;
-    MdcpLocalCodingUnit *local_blk_array = context_ptr->local_blk_array;
+    MdcpLocalBlkStruct *local_blk_array = context_ptr->local_blk_array;
     /*** Stage 0: Inter depth decision: depth 2 vs depth 3 ***/
     // Walks to the last coded 8x8 block for merging
     uint8_t  group_of8x8_blocks_count = context_ptr->group_of8x8_blocks_count;
@@ -586,8 +586,8 @@ void prediction_partition_loop(
     uint32_t                                start_depth,
     uint32_t                                end_depth,
     ModeDecisionConfigurationContext     *context_ptr){
-    MdcpLocalCodingUnit *local_blk_array = context_ptr->local_blk_array;
-    MdcpLocalCodingUnit   *blk_ptr;
+    MdcpLocalBlkStruct *local_blk_array = context_ptr->local_blk_array;
+    MdcpLocalBlkStruct   *blk_ptr;
 
     SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
     uint32_t      raster_scan_blk_index;

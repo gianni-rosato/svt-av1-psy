@@ -102,7 +102,7 @@ uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) 
 }
 
 void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs_ptr,
-                                           SuperBlock *sb_ptr, CodingUnit *blk_ptr) {
+                                           SuperBlock *sb_ptr, BlkStruct *blk_ptr) {
     uint16_t *          variance_ptr        = pcs_ptr->parent_pcs_ptr->variance[sb_ptr->index];
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     uint16_t            variance            = get_variance_for_cu(blk_geom, variance_ptr);

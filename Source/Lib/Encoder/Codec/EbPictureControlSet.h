@@ -469,7 +469,6 @@ typedef struct SbParams {
     uint8_t  height;
     uint8_t  is_complete_sb;
     EbBool   raster_scan_blk_validity[CU_MAX_COUNT];
-    uint8_t  potential_logo_sb;
     uint8_t  is_edge_sb;
     uint32_t tile_start_x;
     uint32_t tile_start_y;
@@ -489,22 +488,7 @@ typedef struct SbGeom {
     EbBool   block_is_allowed[BLOCK_MAX_COUNT_SB_128];
 } SbGeom;
 
-typedef struct CuStat {
-    uint16_t edge_cu;
-    uint16_t similar_edge_count;
-    uint16_t pm_similar_edge_count;
-    uint32_t grad;
-} CuStat;
 
-typedef struct SbStat {
-    CuStat  cu_stat_array[CU_MAX_COUNT];
-    uint8_t stationary_edge_over_time_flag;
-    uint8_t pm_stationary_edge_over_time_flag;
-    uint8_t pm_check1_for_logo_stationary_edge_over_time_flag;
-    uint8_t check1_for_logo_stationary_edge_over_time_flag;
-    uint8_t check2_for_logo_stationary_edge_over_time_flag;
-    uint8_t low_dist_logo;
-} SbStat;
 
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
@@ -609,20 +593,16 @@ typedef struct PictureParentControlSet {
     // Non moving index array
     uint8_t *non_moving_index_array;
     int      kf_zeromotion_pct; // percent of zero motion blocks
-
     uint8_t  fade_out_from_black;
     uint8_t  fade_in_to_black;
     EbBool   is_pan;
     EbBool   is_tilt;
     uint8_t *sb_flat_noise_array;
-    uint8_t *sharp_edge_sb_flag;
-    EbBool   logo_pic_flag; // used by EncDecProcess()
     uint16_t non_moving_index_average; // used by ModeDecisionConfigurationProcess()
     int16_t  non_moving_index_min_distance;
     int16_t  non_moving_index_max_distance;
     uint16_t qp_scaling_average_complexity;
     EbBool   dark_back_groundlight_fore_ground;
-    SbStat * sb_stat_array;
     uint8_t  very_low_var_pic_flag;
     uint32_t intra_complexity_min[4];
     uint32_t intra_complexity_max[4];
@@ -703,8 +683,7 @@ typedef struct PictureParentControlSet {
     EbPictureDepthMode pic_depth_mode;
     uint8_t            loop_filter_mode;
     uint8_t            intra_pred_mode;
-    uint8_t            skip_sub_blks;
-    uint8_t            atb_mode;
+    uint8_t            tx_size_search_mode;
     uint8_t            frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;

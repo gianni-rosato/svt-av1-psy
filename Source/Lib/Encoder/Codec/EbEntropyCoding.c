@@ -493,7 +493,7 @@ void get_txb_ctx(SequenceControlSet *scs_ptr, const int32_t plane,
 }
 
 void av1_write_tx_type(PictureParentControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,
-                       AomWriter *ec_writer, CodingUnit *blk_ptr, uint32_t intraDir, TxType tx_type,
+                       AomWriter *ec_writer, BlkStruct *blk_ptr, uint32_t intraDir, TxType tx_type,
                        TxSize tx_size) {
     FrameHeader * frm_hdr = &pcs_ptr->frm_hdr;
     const int32_t is_inter =
@@ -539,7 +539,7 @@ static INLINE void set_dc_sign(int32_t *cul_level, int32_t dc_val) {
 
 int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *parent_pcs_ptr,
                                 FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                CodingUnit *blk_ptr, TxSize tx_size, uint32_t pu_index,
+                                BlkStruct *blk_ptr, TxSize tx_size, uint32_t pu_index,
                                 uint32_t txb_index, uint32_t intraLumaDir,
                                 int32_t *coeff_buffer_ptr, const uint16_t coeff_stride,
                                 COMPONENT_TYPE component_type, int16_t txb_skip_ctx,
@@ -706,7 +706,7 @@ int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *parent_pcs_ptr,
 
 static EbErrorType av1_encode_tx_coef_y(
     PictureControlSet *pcs_ptr, EntropyCodingContext *context_ptr, FRAME_CONTEXT *frame_context,
-    AomWriter *ec_writer, CodingUnit *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+    AomWriter *ec_writer, BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
     uint32_t intraLumaDir, BlockSize plane_bsize, EbPictureBufferDesc *coeff_ptr,
     NeighborArrayUnit *luma_dc_sign_level_coeff_neighbor_array) {
     EbErrorType return_error = EB_ErrorNone;
@@ -783,7 +783,7 @@ static EbErrorType av1_encode_tx_coef_y(
 static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *   pcs_ptr,
                                          EntropyCodingContext *context_ptr,
                                          FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                         CodingUnit *blk_ptr, uint32_t blk_origin_x,
+                                         BlkStruct *blk_ptr, uint32_t blk_origin_x,
                                          uint32_t blk_origin_y, uint32_t intraLumaDir,
                                          EbPictureBufferDesc *coeff_ptr,
                                          NeighborArrayUnit *  cr_dc_sign_level_coeff_neighbor_array,
@@ -937,7 +937,7 @@ static EbErrorType av1_encode_tx_coef_uv(PictureControlSet *   pcs_ptr,
 static EbErrorType av1_encode_coeff_1d(PictureControlSet *   pcs_ptr,
                                        EntropyCodingContext *context_ptr,
                                        FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                       CodingUnit *blk_ptr, uint32_t blk_origin_x,
+                                       BlkStruct *blk_ptr, uint32_t blk_origin_x,
                                        uint32_t blk_origin_y, uint32_t intraLumaDir,
                                        BlockSize plane_bsize, EbPictureBufferDesc *coeff_ptr,
                                        NeighborArrayUnit *luma_dc_sign_level_coeff_neighbor_array,
@@ -1286,7 +1286,7 @@ int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8
 *   Encodes the Intra Luma Mode
 *********************************************************************/
 static void encode_intra_luma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                       CodingUnit *blk_ptr, uint32_t blk_origin_x,
+                                       BlkStruct *blk_ptr, uint32_t blk_origin_x,
                                        uint32_t blk_origin_y, BlockSize bsize, uint32_t luma_mode,
                                        NeighborArrayUnit *mode_type_neighbor_array,
                                        NeighborArrayUnit *intra_luma_mode_neighbor_array) {
@@ -1333,7 +1333,7 @@ static void encode_intra_luma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *
 *   Encodes the Intra Luma Mode for non Key frames
 *********************************************************************/
 static void encode_intra_luma_mode_nonkey_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                              CodingUnit *blk_ptr, BlockSize bsize,
+                                              BlkStruct *blk_ptr, BlockSize bsize,
                                               uint32_t luma_mode) {
     aom_write_symbol(
         ec_writer, luma_mode, frame_context->y_mode_cdf[size_group_lookup[bsize]], INTRA_MODES);
@@ -1369,7 +1369,7 @@ static void write_cfl_alphas(FRAME_CONTEXT *const ec_ctx, int32_t idx, int32_t j
 *   Encodes the Intra Chroma Mode
 *********************************************************************/
 static void encode_intra_chroma_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                         CodingUnit *blk_ptr, BlockSize bsize, uint32_t luma_mode,
+                                         BlkStruct *blk_ptr, BlockSize bsize, uint32_t luma_mode,
                                          uint32_t chroma_mode, uint8_t cflAllowed) {
     aom_write_symbol(ec_writer,
                      chroma_mode,
@@ -1490,7 +1490,7 @@ static INLINE int is_inter_mode(PredictionMode mode) {
     return mode >= SINGLE_INTER_MODE_START && mode < SINGLE_INTER_MODE_END;
 }
 
-MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const CodingUnit *blk_ptr,
+MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct *blk_ptr,
                                const BlockSize bsize, MvReferenceFrame rf0, MvReferenceFrame rf1,
                                PredictionMode mode) {
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1525,7 +1525,7 @@ MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const CodingUni
 *********************************************************************/
 static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlockSize bsize,
                               MotionMode motion_mode, MvReferenceFrame rf0, MvReferenceFrame rf1,
-                              CodingUnit *blk_ptr, PictureControlSet *pcs_ptr) {
+                              BlkStruct *blk_ptr, PictureControlSet *pcs_ptr) {
     const PredictionMode mode = blk_ptr->prediction_unit_array[0].inter_mode;
 
     MotionMode last_motion_mode_allowed =
@@ -1594,7 +1594,7 @@ EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr, EntropyCoder 
     return return_error;
 }
 
-EbErrorType copy_rbsp_bitstream_to_payload(Bitstream *bitstream_ptr, EbByte output_buffer,
+EbErrorType copy_payload(Bitstream *bitstream_ptr, EbByte output_buffer,
                                            uint32_t *     output_buffer_index,
                                            uint32_t *     output_buffer_size,
                                            EncodeContext *encode_context_ptr) {
@@ -1730,16 +1730,6 @@ void eb_aom_wb_write_bit(struct AomWriteBitBuffer *wb, int32_t bit) {
     wb->bit_offset = off + 1;
 }
 
-void eb_aom_wb_overwrite_bit(struct AomWriteBitBuffer *wb, int32_t bit) {
-    // Do not zero bytes but overwrite exisiting values
-    const int32_t off = (int32_t)wb->bit_offset;
-    const int32_t p   = off / CHAR_BIT;
-    const int32_t q   = CHAR_BIT - 1 - off % CHAR_BIT;
-    wb->bit_buffer[p] &= ~(1 << q);
-    wb->bit_buffer[p] |= bit << q;
-    wb->bit_offset = off + 1;
-}
-
 void eb_aom_wb_write_literal(struct AomWriteBitBuffer *wb, int32_t data, int32_t bits) {
     int32_t bit;
     for (bit = bits - 1; bit >= 0; bit--) eb_aom_wb_write_bit(wb, (data >> bit) & 1);
@@ -1775,7 +1765,7 @@ static void write_inter_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
 //extern INLINE int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 extern uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 
-void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, CodingUnit *blk_ptr) {
+void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct *blk_ptr) {
     //uint8_t ref_frame_type = av1_ref_frame_type(mbmi->ref_frame);
     uint8_t      ref_frame_type = blk_ptr->prediction_unit_array[0].ref_frame_type;
     MacroBlockD *xd             = blk_ptr->av1xd;
@@ -1959,7 +1949,7 @@ int32_t eb_av1_get_pred_context_switchable_interp(
 }
 
 /*INLINE*/ int32_t is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1,
-                                                CodingUnit *blk_ptr, BlockSize sb_type,
+                                                BlkStruct *blk_ptr, BlockSize sb_type,
                                                 PictureParentControlSet *pcs_ptr) {
     int32_t ref;
 
@@ -1974,7 +1964,7 @@ int32_t eb_av1_get_pred_context_switchable_interp(
     }
     return 1;
 }
-static int32_t av1_is_interp_needed(MvReferenceFrame rf0, MvReferenceFrame rf1, CodingUnit *blk_ptr,
+static int32_t av1_is_interp_needed(MvReferenceFrame rf0, MvReferenceFrame rf1, BlkStruct *blk_ptr,
                                     BlockSize bsize, PictureParentControlSet *pcs_ptr) {
     if (blk_ptr->skip_flag) return 0;
 
@@ -1988,7 +1978,7 @@ static int32_t av1_is_interp_needed(MvReferenceFrame rf0, MvReferenceFrame rf1, 
 void write_mb_interp_filter(NeighborArrayUnit *ref_frame_type_neighbor_array, BlockSize bsize,
                             MvReferenceFrame rf0, MvReferenceFrame rf1,
                             PictureParentControlSet *pcs_ptr, AomWriter *ec_writer,
-                            CodingUnit *blk_ptr, EntropyCoder *entropy_coder_ptr,
+                            BlkStruct *blk_ptr, EntropyCoder *entropy_coder_ptr,
                             NeighborArrayUnit32 *interpolation_type_neighbor_array,
                             uint32_t blk_origin_x, uint32_t blk_origin_y) {
     Av1Common *const cm = pcs_ptr->av1_cm; //&cpi->common;
@@ -3477,10 +3467,6 @@ static uint16_t recenter_finite_nonneg(uint16_t n, uint16_t r, uint16_t v) {
         return recenter_nonneg(n - 1 - r, n - 1 - v);
 }
 
-int32_t eb_aom_count_primitive_symmetric(int16_t v, uint32_t abs_bits) {
-    return (v == 0 ? 1 : abs_bits + 2);
-}
-
 // Encodes a value v in [0, n-1] quasi-uniformly
 void eb_aom_write_primitive_quniform(AomWriter *w, uint16_t n, uint16_t v) {
     if (n <= 1) return;
@@ -4611,7 +4597,7 @@ static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, F
 }
 
 EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext *context_ptr,
-                                uint32_t blk_origin_x, uint32_t blk_origin_y, CodingUnit *blk_ptr,
+                                uint32_t blk_origin_x, uint32_t blk_origin_y, BlkStruct *blk_ptr,
                                 BlockSize bsize, EbPictureBufferDesc *coeff_ptr) {
     UNUSED(coeff_ptr);
     EbErrorType        return_error                     = EB_ErrorNone;
@@ -4762,7 +4748,7 @@ int av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
 int av1_get_palette_bsize_ctx(BlockSize bsize) {
     return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
 }
-void av1_tokenize_color_map(FRAME_CONTEXT *frame_context, CodingUnit *blk_ptr, int plane,
+void av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
                             TOKENEXTRA **t, BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
                             int allow_update_cdf);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
@@ -4868,7 +4854,7 @@ static inline void pack_map_tokens(AomWriter *w, const TOKENEXTRA **tp, int n, i
 }
 
 static void write_palette_mode_info(PictureParentControlSet *ppcs, FRAME_CONTEXT *ec_ctx,
-                                    CodingUnit *blk_ptr, BlockSize bsize, int mi_row, int mi_col,
+                                    BlkStruct *blk_ptr, BlockSize bsize, int mi_row, int mi_col,
                                     AomWriter *w) {
     const uint32_t intra_luma_mode         = blk_ptr->pred_mode;
     uint32_t       intra_chroma_mode       = blk_ptr->prediction_unit_array->intra_chroma_mode;
@@ -4924,7 +4910,7 @@ int av1_allow_intrabc(const Av1Common *const cm) {
             cm->p_pcs_ptr->frm_hdr.allow_intrabc);
 }
 
-static void write_intrabc_info(FRAME_CONTEXT *ec_ctx, CodingUnit *blk_ptr, AomWriter *w) {
+static void write_intrabc_info(FRAME_CONTEXT *ec_ctx, BlkStruct *blk_ptr, AomWriter *w) {
     int use_intrabc = blk_ptr->av1xd->use_intrabc;
     aom_write_symbol(w, use_intrabc, ec_ctx->intrabc_cdf, 2);
     if (use_intrabc) {
@@ -5216,7 +5202,7 @@ void set_mi_row_col(PictureControlSet *pcs_ptr, MacroBlockD *xd, TileInfo *tile,
 }
 
 void code_tx_size(PictureControlSet *pcsPtr, uint32_t blk_origin_x, uint32_t blk_origin_y,
-                  CodingUnit *blk_ptr, const BlockGeom *blk_geom,
+                  BlkStruct *blk_ptr, const BlockGeom *blk_geom,
                   NeighborArrayUnit *txfm_context_array, FRAME_CONTEXT *ec_ctx, AomWriter *w,
                   uint8_t skip) {
     uint32_t txfm_context_left_index =
@@ -5326,28 +5312,6 @@ int eb_av1_neg_interleave(int x, int ref, int max) {
     }
 }
 
-int av1_get_pred_context_seg_id(PictureControlSet *pcs_ptr, CodingUnit *blk_ptr,
-                                uint32_t blk_origin_x, uint32_t blk_origin_y) {
-    NeighborArrayUnit *seg_id_pred_neighbor_array = pcs_ptr->segmentation_id_pred_array;
-    uint32_t top_idx = get_neighbor_array_unit_top_index(seg_id_pred_neighbor_array, blk_origin_x);
-    uint32_t left_idx =
-        get_neighbor_array_unit_left_index(seg_id_pred_neighbor_array, blk_origin_y);
-
-    const int above_pred =
-        blk_ptr->av1xd->up_available ? seg_id_pred_neighbor_array->top_array[top_idx] : 0;
-    const int left_pred =
-        blk_ptr->av1xd->left_available ? seg_id_pred_neighbor_array->left_array[left_idx] : 0;
-    return above_pred + left_pred;
-}
-
-AomCdfProb *av1_get_pred_cdf_seg_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,
-                                    CodingUnit *blk_ptr, uint32_t blk_origin_x,
-                                    uint32_t blk_origin_y) {
-    struct segmentation_probs *segp = &frame_context->seg;
-    return segp->spatial_pred_seg_cdf[av1_get_pred_context_seg_id(
-        pcs_ptr, blk_ptr, blk_origin_x, blk_origin_y)];
-}
-
 static INLINE void update_segmentation_map(PictureControlSet *pcs_ptr, BlockSize bsize,
                                            uint32_t blk_origin_x, uint32_t blk_origin_y,
                                            uint8_t segment_id) {
@@ -5368,7 +5332,7 @@ static INLINE void update_segmentation_map(PictureControlSet *pcs_ptr, BlockSize
 
 void write_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context, AomWriter *ecWriter,
                       BlockSize bsize, uint32_t blk_origin_x, uint32_t blk_origin_y,
-                      CodingUnit *blk_ptr, EbBool skip_coeff) {
+                      BlkStruct *blk_ptr, EbBool skip_coeff) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled) return;
     int       cdf_num;
@@ -5390,7 +5354,7 @@ void write_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context, 
 
 void write_inter_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,
                             AomWriter *ecWriter, const BlockGeom *blockGeom, uint32_t blk_origin_x,
-                            uint32_t blk_origin_y, CodingUnit *blk_ptr, EbBool skip, int pre_skip) {
+                            uint32_t blk_origin_y, BlkStruct *blk_ptr, EbBool skip, int pre_skip) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled) return;
 
@@ -5420,23 +5384,6 @@ void write_inter_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_con
         if (segmentation_params->segmentation_temporal_update) {
             SVT_LOG("ERROR: Temporal update is not supported yet! \n");
             assert(0);
-            //            const int pred_flag = blk_ptr->seg_id_predicted;
-            //            aom_cdf_prob *pred_cdf = av1_get_pred_cdf_seg_id(pcs_ptr, frame_context, blk_ptr, blk_origin_x, blk_origin_y);
-            //            aom_write_symbol(ecWriter, pred_flag, pred_cdf, 2);
-            //            if (!pred_flag) {
-            //                WriteSegmentId(pcs_ptr, frame_context, ecWriter, blockGeom->bsize, blk_origin_x, blk_origin_y, blk_ptr, 0);
-            //            }
-            //            if (pred_flag) {2
-            //                update_segmentation_map(pcs_ptr, blockGeom->bsize, blk_origin_x, blk_origin_y, blk_ptr->segment_id);
-            //            }
-            //            neighbor_array_unit_mode_write(
-            //                    pcs_ptr->segmentation_id_pred_array,
-            //                    &(blk_ptr->segment_id),
-            //                    blk_origin_x,
-            //                    blk_origin_y,
-            //                    blockGeom->bwidth,
-            //                    blockGeom->bheight,
-            //                    NEIGHBOR_ARRAY_UNIT_FULL_MASK);
 
         } else {
             write_segment_id(pcs_ptr,
@@ -5471,7 +5418,7 @@ int is_interintra_allowed(const MbModeInfo *mbmi) {
 int is_interintra_wedge_used(BlockSize sb_type);
 
 EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *context_ptr,
-                          EntropyCoder *entropy_coder_ptr, SuperBlock *tb_ptr, CodingUnit *blk_ptr,
+                          EntropyCoder *entropy_coder_ptr, SuperBlock *tb_ptr, BlkStruct *blk_ptr,
                           EbPictureBufferDesc *coeff_ptr) {
     UNUSED(tb_ptr);
     EbErrorType         return_error  = EB_ErrorNone;
@@ -6135,7 +6082,7 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
 
     // CU Varaiables
     const BlockGeom *blk_geom;
-    CodingUnit *     blk_ptr;
+    BlkStruct *     blk_ptr;
     uint32_t         blk_index       = 0;
     uint32_t         final_blk_index = 0;
     uint32_t         blk_origin_x;

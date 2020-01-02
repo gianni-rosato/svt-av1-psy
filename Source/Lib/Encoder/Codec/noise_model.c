@@ -253,20 +253,6 @@ void eb_aom_noise_strength_lut_free(AomNoiseStrengthLut *lut) {
     memset(lut, 0, sizeof(*lut));
 }
 
-double eb_aom_noise_strength_lut_eval(const AomNoiseStrengthLut *lut, double x) {
-    int32_t i = 0;
-    // Constant extrapolation for x <  x_0.
-    if (x < lut->points[0][0]) return lut->points[0][1];
-    for (i = 0; i < lut->num_points - 1; ++i) {
-        if (x >= lut->points[i][0] && x <= lut->points[i + 1][0]) {
-            const double a = (x - lut->points[i][0]) / (lut->points[i + 1][0] - lut->points[i][0]);
-            return lut->points[i + 1][1] * a + lut->points[i][1] * (1.0 - a);
-        }
-    }
-    // Constant extrapolation for x > x_{n-1}
-    return lut->points[lut->num_points - 1][1];
-}
-
 static double noise_strength_solver_get_bin_index(const AomNoiseStrengthSolver *solver,
                                                   double                        value) {
     const double val   = fclamp(value, solver->min_intensity, solver->max_intensity);
@@ -925,48 +911,6 @@ static void add_noise_std_observations(AomNoiseModel *noise_model, int32_t c, co
         }
     }
 }
-
-// Return true if the noise estimate appears to be different from the combined
-// (multi-frame) estimate. The difference is measured by checking whether the
-// AR coefficients have diverged (using a threshold on normalized cross
-// correlation), or whether the noise strength has changed.
-/*
-static int32_t is_noise_model_different(AomNoiseModel *const noise_model) {
-  // These thresholds are kind of arbitrary and will likely need further tuning
-  // (or exported as parameters). The threshold on noise strength is a weighted
-  // difference between the noise strength histograms
-  const double kCoeffThreshold = 0.9;
-  const double kStrengthThreshold =
-      0.005 * (1 << (noise_model->params.bit_depth - 8));
-  for (int32_t c = 0; c < 1; ++c) {
-    const double corr =
-        eb_aom_normalized_cross_correlation(noise_model->latest_state[c].eqns.x,
-                                         noise_model->combined_state[c].eqns.x,
-                                         noise_model->combined_state[c].eqns.n);
-    if (corr < kCoeffThreshold) return 1;
-
-    const double dx =
-        1.0 / noise_model->latest_state[c].strength_solver.num_bins;
-
-    const AomEquationSystem *latest_eqns =
-        &noise_model->latest_state[c].strength_solver.eqns;
-    const AomEquationSystem *combined_eqns =
-        &noise_model->combined_state[c].strength_solver.eqns;
-    double diff = 0;
-    double total_weight = 0;
-    for (int32_t j = 0; j < latest_eqns->n; ++j) {
-      double weight = 0;
-      for (int32_t i = 0; i < latest_eqns->n; ++i)
-        weight += latest_eqns->A[i * latest_eqns->n + j];
-      weight = sqrt(weight);
-      diff += weight * fabs(latest_eqns->x[j] - combined_eqns->x[j]);
-      total_weight += weight;
-    }
-    if (diff * dx / total_weight > kStrengthThreshold) return 1;
-  }
-  return 0;
-}
-*/
 
 static int32_t ar_equation_system_solve(AomNoiseState *state, int32_t is_chroma) {
     const int32_t ret = equation_system_solve(&state->eqns);

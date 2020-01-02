@@ -28,7 +28,7 @@ extern uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *
                                        int16_t dc_sign_ctx, EbBool reduced_transform_set_flag);
 
 extern void coding_loop_context_generation(
-    ModeDecisionContext *context_ptr, CodingUnit *blk_ptr, uint32_t blk_origin_x,
+    ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
     uint32_t blk_origin_y, uint32_t sb_sz, NeighborArrayUnit *skip_coeff_neighbor_array,
     NeighborArrayUnit *inter_pred_dir_neighbor_array,
     NeighborArrayUnit *ref_frame_type_neighbor_array,
@@ -80,19 +80,19 @@ extern EbErrorType av1_txb_calc_cost_luma(
     uint64_t *y_full_cost,
     uint64_t  lambda); // input parameter, lambda for Luma
 
-extern EbErrorType intra_luma_mode_context(CodingUnit *blk_ptr, uint32_t luma_mode,
+extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
 extern EbErrorType intra2_nx2_n_fast_cost_islice(
-    CodingUnit *blk_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t qp,
+    BlkStruct *blk_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t qp,
     uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
     PictureControlSet *pcs_ptr);
 extern EbErrorType merge_skip_full_cost(
-    SuperBlock *sb_ptr, CodingUnit *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
+    SuperBlock *sb_ptr, BlkStruct *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
     ModeDecisionCandidateBuffer *candidate_buffer_ptr, uint32_t qp, uint64_t *y_distortion,
     uint64_t *cb_distortion, uint64_t *cr_distortion, uint64_t lambda, uint64_t lambda_chroma,
     uint64_t *y_coeff_bits, uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
     uint32_t transform_size, uint32_t transform_chroma_size, PictureControlSet *pcs_ptr);
-extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                    uint32_t split_flag, uint64_t *split_rate, uint64_t lambda,
                                    MdRateEstimationContext *md_rate_estimation_ptr,
                                    uint32_t                 tb_max_depth);
@@ -103,7 +103,7 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, CodingUnit 
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))
 
 extern EbErrorType av1_split_flag_rate(SequenceControlSet * scs_ptr,
-                                       ModeDecisionContext *context_ptr, CodingUnit *blk_ptr,
+                                       ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                        uint32_t leaf_index, PartitionType partitionType,
                                        uint64_t *split_rate, uint64_t lambda,
                                        MdRateEstimationContext *md_rate_estimation_ptr,
@@ -114,7 +114,7 @@ extern EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr,
                                             uint64_t       y_txb_distortion[DIST_CALC_TOTAL],
                                             uint64_t *y_txb_coeff_bits, uint32_t component_mask);
 
-extern uint64_t av1_intra_fast_cost(CodingUnit *blk_ptr, ModeDecisionCandidate *candidate_ptr,
+extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
                                     uint64_t chroma_distortion, uint64_t lambda, EbBool use_ssd,
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
@@ -123,7 +123,7 @@ extern uint64_t av1_intra_fast_cost(CodingUnit *blk_ptr, ModeDecisionCandidate *
                                     EbBool full_cost_shut_fast_rate_flag, uint8_t md_pass,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
-extern uint64_t av1_inter_fast_cost(CodingUnit *blk_ptr, ModeDecisionCandidate *candidate_ptr,
+extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
                                     uint32_t qp, uint64_t luma_distortion,
                                     uint64_t chroma_distortion, uint64_t lambda, EbBool use_ssd,
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
@@ -134,7 +134,7 @@ extern uint64_t av1_inter_fast_cost(CodingUnit *blk_ptr, ModeDecisionCandidate *
 
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                       CodingUnit *blk_ptr, uint64_t *y_distortion,
+                                       BlkStruct *blk_ptr, uint64_t *y_distortion,
                                        uint64_t *cb_distortion, uint64_t *cr_distortion,
                                        uint64_t lambda, uint64_t *y_coeff_bits,
                                        uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,
@@ -142,7 +142,7 @@ extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionC
 
 extern EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-                                       CodingUnit *blk_ptr, uint64_t *y_distortion,
+                                       BlkStruct *blk_ptr, uint64_t *y_distortion,
                                        uint64_t *cb_distortion, uint64_t *cr_distortion,
                                        uint64_t lambda, uint64_t *y_coeff_bits,
                                        uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits,

@@ -41,88 +41,6 @@ int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
     return vector->data == NULL ? VECTOR_ERROR : VECTOR_SUCCESS;
 }
 
-int eb_aom_vector_copy(Vector *destination, Vector *source) {
-    assert(destination != NULL);
-    assert(source != NULL);
-    assert(eb_aom_vector_is_initialized(source));
-    assert(!eb_aom_vector_is_initialized(destination));
-
-    if (destination == NULL) return VECTOR_ERROR;
-    if (source == NULL) return VECTOR_ERROR;
-    if (eb_aom_vector_is_initialized(destination)) return VECTOR_ERROR;
-    if (!eb_aom_vector_is_initialized(source)) return VECTOR_ERROR;
-
-    /* Copy ALL the data */
-    destination->size         = source->size;
-    destination->capacity     = source->size * 2;
-    destination->element_size = source->element_size;
-
-    /* Note that we are not necessarily allocating the same capacity */
-    destination->data = malloc(destination->capacity * source->element_size);
-    if (destination->data == NULL) return VECTOR_ERROR;
-
-    memcpy(destination->data, source->data, eb_aom_vector_byte_size(source));
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_copy_assign(Vector *destination, Vector *source) {
-    assert(destination != NULL);
-    assert(source != NULL);
-    assert(eb_aom_vector_is_initialized(source));
-    assert(eb_aom_vector_is_initialized(destination));
-
-    if (destination == NULL) return VECTOR_ERROR;
-    if (source == NULL) return VECTOR_ERROR;
-    if (!eb_aom_vector_is_initialized(destination)) return VECTOR_ERROR;
-    if (!eb_aom_vector_is_initialized(source)) return VECTOR_ERROR;
-
-    eb_aom_vector_destroy(destination);
-
-    return eb_aom_vector_copy(destination, source);
-}
-
-int eb_aom_vector_move(Vector *destination, Vector *source) {
-    assert(destination != NULL);
-    assert(source != NULL);
-
-    if (destination == NULL) return VECTOR_ERROR;
-    if (source == NULL) return VECTOR_ERROR;
-
-    *destination = *source;
-    source->data = NULL;
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_move_assign(Vector *destination, Vector *source) {
-    eb_aom_vector_swap(destination, source);
-    return eb_aom_vector_destroy(source);
-}
-
-int eb_aom_vector_swap(Vector *destination, Vector *source) {
-    void *temp;
-
-    assert(destination != NULL);
-    assert(source != NULL);
-    assert(eb_aom_vector_is_initialized(source));
-    assert(eb_aom_vector_is_initialized(destination));
-
-    if (destination == NULL) return VECTOR_ERROR;
-    if (source == NULL) return VECTOR_ERROR;
-    if (!eb_aom_vector_is_initialized(destination)) return VECTOR_ERROR;
-    if (!eb_aom_vector_is_initialized(source)) return VECTOR_ERROR;
-
-    _vector_swap(&destination->size, &source->size);
-    _vector_swap(&destination->capacity, &source->capacity);
-    _vector_swap(&destination->element_size, &source->element_size);
-
-    temp              = destination->data;
-    destination->data = source->data;
-    source->data      = temp;
-
-    return VECTOR_SUCCESS;
-}
 
 int eb_aom_vector_destroy(Vector *vector) {
     assert(vector != NULL);
@@ -151,155 +69,12 @@ int eb_aom_vector_push_back(Vector *vector, void *element) {
     return VECTOR_SUCCESS;
 }
 
-int eb_aom_vector_push_front(Vector *vector, void *element) {
-    return eb_aom_vector_insert(vector, 0, element);
-}
-
-int eb_aom_vector_insert(Vector *vector, size_t index, void *element) {
-    void *offset;
-
-    assert(vector != NULL);
-    assert(element != NULL);
-    assert(index <= vector->size);
-
-    if (vector == NULL) return VECTOR_ERROR;
-    if (element == NULL) return VECTOR_ERROR;
-    if (vector->element_size == 0) return VECTOR_ERROR;
-    if (index > vector->size) return VECTOR_ERROR;
-
-    if (_vector_should_grow(vector)) {
-        if (_vector_adjust_capacity(vector) == VECTOR_ERROR) return VECTOR_ERROR;
-    }
-
-    /* Move other elements to the right */
-    if (_vector_move_right(vector, index) == VECTOR_ERROR) return VECTOR_ERROR;
-    /* Insert the element */
-    offset = _vector_offset(vector, index);
-    memcpy(offset, element, vector->element_size);
-    ++vector->size;
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_assign(Vector *vector, size_t index, void *element) {
-    assert(vector != NULL);
-    assert(element != NULL);
-    assert(index < vector->size);
-
-    if (vector == NULL) return VECTOR_ERROR;
-    if (element == NULL) return VECTOR_ERROR;
-    if (vector->element_size == 0) return VECTOR_ERROR;
-    if (index >= vector->size) return VECTOR_ERROR;
-
-    _vector_assign(vector, index, element);
-
-    return VECTOR_SUCCESS;
-}
-
-/* Deletion */
-int eb_aom_vector_pop_back(Vector *vector) {
-    assert(vector != NULL);
-    assert(vector->size > 0);
-
-    if (vector == NULL) return VECTOR_ERROR;
-    if (vector->element_size == 0) return VECTOR_ERROR;
-
-    --vector->size;
-
-#ifndef VECTOR_NO_SHRINK
-    if (_vector_should_shrink(vector)) _vector_adjust_capacity(vector);
-#endif
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_pop_front(Vector *vector) { return eb_aom_vector_erase(vector, 0); }
-
-int eb_aom_vector_erase(Vector *vector, size_t index) {
-    assert(vector != NULL);
-    assert(index < vector->size);
-
-    if (vector == NULL) return VECTOR_ERROR;
-    if (vector->element_size == 0) return VECTOR_ERROR;
-    if (index >= vector->size) return VECTOR_ERROR;
-
-    /* Just overwrite */
-    _vector_move_left(vector, index);
-
-#ifndef VECTOR_NO_SHRINK
-    if (--vector->size == vector->capacity / 4) _vector_adjust_capacity(vector);
-#endif
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_clear(Vector *vector) { return eb_aom_vector_resize(vector, 0); }
-
-/* Lookup */
-void *eb_aom_vector_get(Vector *vector, size_t index) {
-    assert(vector != NULL);
-    assert(index < vector->size);
-
-    if (vector == NULL) return NULL;
-    if (vector->element_size == 0) return NULL;
-    if (index >= vector->size) return NULL;
-
-    return _vector_offset(vector, index);
-}
-
-const void *eb_aom_vector_const_get(const Vector *vector, size_t index) {
-    assert(vector != NULL);
-    assert(index < vector->size);
-
-    if (vector == NULL) return NULL;
-    if (vector->element_size == 0) return NULL;
-    if (index >= vector->size) return NULL;
-
-    return _vector_const_offset(vector, index);
-}
-
-void *eb_aom_vector_front(Vector *vector) { return eb_aom_vector_get(vector, 0); }
-
-void *eb_aom_vector_back(Vector *vector) { return eb_aom_vector_get(vector, vector->size - 1); }
-
 /* Information */
-
-bool eb_aom_vector_is_initialized(const Vector *vector) { return vector->data != NULL; }
 
 size_t eb_aom_vector_byte_size(const Vector *vector) { return vector->size * vector->element_size; }
 
-size_t eb_aom_vector_free_space(const Vector *vector) { return vector->capacity - vector->size; }
-
-bool eb_aom_vector_is_empty(const Vector *vector) { return vector->size == 0; }
-
-/* Memory management */
-int eb_aom_vector_resize(Vector *vector, size_t new_size) {
-    if (new_size <= vector->capacity * VECTOR_SHRINK_THRESHOLD) {
-        vector->size = new_size;
-        if (_vector_reallocate(vector, new_size * VECTOR_GROWTH_FACTOR) == -1) return VECTOR_ERROR;
-    } else if (new_size > vector->capacity) {
-        if (_vector_reallocate(vector, new_size * VECTOR_GROWTH_FACTOR) == -1) return VECTOR_ERROR;
-    }
-
-    vector->size = new_size;
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_reserve(Vector *vector, size_t minimum_capacity) {
-    if (minimum_capacity > vector->capacity) {
-        if (_vector_reallocate(vector, minimum_capacity) == VECTOR_ERROR) return VECTOR_ERROR;
-    }
-
-    return VECTOR_SUCCESS;
-}
-
-int eb_aom_vector_shrink_to_fit(Vector *vector) { return _vector_reallocate(vector, vector->size); }
-
 /* Iterators */
 Iterator eb_aom_vector_begin(Vector *vector) { return eb_aom_vector_iterator(vector, 0); }
-
-Iterator eb_aom_vector_end(Vector *vector) { return eb_aom_vector_iterator(vector, vector->size); }
 
 Iterator eb_aom_vector_iterator(Vector *vector, size_t index) {
     Iterator iterator = {NULL, 0};
@@ -318,64 +93,12 @@ Iterator eb_aom_vector_iterator(Vector *vector, size_t index) {
 }
 
 void *iterator_get(Iterator *iterator) { return iterator->pointer; }
-
-int iterator_erase(Vector *vector, Iterator *iterator) {
-    size_t index = iterator_index(vector, iterator);
-
-    if (eb_aom_vector_erase(vector, index) == VECTOR_ERROR) return VECTOR_ERROR;
-    *iterator = eb_aom_vector_iterator(vector, index);
-
-    return VECTOR_SUCCESS;
-}
-
 void iterator_increment(Iterator *iterator) {
     assert(iterator != NULL);
     // iterator->pointer += iterator->element_size;
     iterator->pointer = (unsigned char *)iterator->pointer + iterator->element_size;
 }
 
-void iterator_decrement(Iterator *iterator) {
-    assert(iterator != NULL);
-    // iterator->pointer -= iterator->element_size;
-    iterator->pointer = (unsigned char *)iterator->pointer - iterator->element_size;
-}
-
-void *iterator_next(Iterator *iterator) {
-    void *current = iterator->pointer;
-    iterator_increment(iterator);
-
-    return current;
-}
-
-void *iterator_previous(Iterator *iterator) {
-    void *current = iterator->pointer;
-    iterator_decrement(iterator);
-
-    return current;
-}
-
-bool iterator_equals(Iterator *first, Iterator *second) {
-    assert(first->element_size == second->element_size);
-    return first->pointer == second->pointer;
-}
-
-bool iterator_is_before(Iterator *first, Iterator *second) {
-    assert(first->element_size == second->element_size);
-    return first->pointer < second->pointer;
-}
-
-bool iterator_is_after(Iterator *first, Iterator *second) {
-    assert(first->element_size == second->element_size);
-    return first->pointer > second->pointer;
-}
-
-size_t iterator_index(Vector *vector, Iterator *iterator) {
-    assert(vector != NULL);
-    assert(iterator != NULL);
-    // return (iterator->pointer - vector->data) / vector->element_size;
-    return ((unsigned char *)iterator->pointer - (unsigned char *)vector->data) /
-           vector->element_size;
-}
 
 /***** PRIVATE *****/
 
@@ -384,73 +107,14 @@ bool _vector_should_grow(Vector *vector) {
     return vector->size == vector->capacity;
 }
 
-bool _vector_should_shrink(Vector *vector) {
-    assert(vector->size <= vector->capacity);
-    return vector->size == vector->capacity * VECTOR_SHRINK_THRESHOLD;
-}
-
-size_t _vector_free_bytes(const Vector *vector) {
-    return eb_aom_vector_free_space(vector) * vector->element_size;
-}
-
 void *_vector_offset(Vector *vector, size_t index) {
     // return vector->data + (index * vector->element_size);
     return (unsigned char *)vector->data + (index * vector->element_size);
 }
-
-const void *_vector_const_offset(const Vector *vector, size_t index) {
-    // return vector->data + (index * vector->element_size);
-    return (unsigned char *)vector->data + (index * vector->element_size);
-}
-
 void _vector_assign(Vector *vector, size_t index, void *element) {
     /* Insert the element */
     void *offset = _vector_offset(vector, index);
     memcpy(offset, element, vector->element_size);
-}
-
-int _vector_move_right(Vector *vector, size_t index) {
-    assert(vector->size < vector->capacity);
-
-    /* The location where to start to move from. */
-    void *offset = _vector_offset(vector, index);
-
-    /* How many to move to the right. */
-    size_t elements_in_bytes = (vector->size - index) * vector->element_size;
-
-#ifdef __STDC_LIB_EXT1__
-    size_t right_capacity_in_bytes = (vector->capacity - (index + 1)) * vector->element_size;
-
-    /* clang-format off */
-    int return_code =  memmove_s(
-        offset + vector->element_size,
-        right_capacity_in_bytes,
-        offset,
-        elements_in_bytes);
-
-    /* clang-format on */
-
-    return return_code == 0 ? VECTOR_SUCCESS : VECTOR_ERROR;
-
-#else
-    // memmove(offset + vector->element_size, offset, elements_in_bytes);
-    memmove((unsigned char *)offset + vector->element_size, offset, elements_in_bytes);
-    return VECTOR_SUCCESS;
-#endif
-}
-
-void _vector_move_left(Vector *vector, size_t index) {
-    size_t right_elements_in_bytes;
-    void * offset;
-
-    /* The offset into the memory */
-    offset = _vector_offset(vector, index);
-
-    /* How many to move to the left */
-    right_elements_in_bytes = (vector->size - index - 1) * vector->element_size;
-
-    // memmove(offset, offset + vector->element_size, right_elements_in_bytes);
-    memmove(offset, (unsigned char *)offset + vector->element_size, right_elements_in_bytes);
 }
 
 int _vector_adjust_capacity(Vector *vector) {
@@ -493,10 +157,4 @@ int _vector_reallocate(Vector *vector, size_t new_capacity) {
     free(old);
 
     return VECTOR_SUCCESS;
-}
-
-void _vector_swap(size_t *first, size_t *second) {
-    size_t temp = *first;
-    *first      = *second;
-    *second     = temp;
 }

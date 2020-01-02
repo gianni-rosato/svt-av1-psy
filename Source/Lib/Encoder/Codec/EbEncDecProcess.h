@@ -60,7 +60,7 @@ typedef struct EncDecContext {
     uint32_t full_chroma_lambda_sao;
 
     //  Context Variables---------------------------------
-    CodingUnit *blk_ptr;
+    BlkStruct *blk_ptr;
     //const CodedBlockStats                *cu_stats;
     uint16_t      blk_origin_x; // within the picture
     uint16_t      blk_origin_y; // within the picture
@@ -73,20 +73,12 @@ typedef struct EncDecContext {
     uint64_t      tot_intra_coded_area;
     uint8_t       intra_coded_area_sb
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
-    int8_t   non_moving_delta_qp;
-    EbBool   backgorund_enhancement;
-    uint16_t qpm_qp;
     uint16_t qp_index;
     uint64_t three_quad_energy;
 
     // Needed for DC prediction
-    EbBool  is_left_availble;
-    EbBool  is_above_availble;
     uint8_t upsample_left;
     uint8_t upsample_above;
-    uint8_t upsample_left_chroma;
-    uint8_t upsample_above_chroma;
-
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
 

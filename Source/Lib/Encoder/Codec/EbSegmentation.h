@@ -24,7 +24,7 @@
 #include "EbUtility.h"
 
 void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureControlSet *pcs_ptr,
-                                           SuperBlock *sb_ptr, CodingUnit *blk_ptr);
+                                           SuperBlock *sb_ptr, BlkStruct *blk_ptr);
 
 void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                         RateControlLayerContext *rateControlLayerPtr);

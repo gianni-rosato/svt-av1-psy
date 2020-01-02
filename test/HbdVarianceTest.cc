@@ -280,10 +280,8 @@ static const HbdVarianceParam HbdTestVector[] = {
 
 INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
                         ::testing::ValuesIn(HbdTestVector));
-
 #define eb_aom_highbd_8_get8x8var_sse2 eb_aom_highbd_get8x8var_sse2
 #define eb_aom_highbd_8_get16x16var_sse2 eb_aom_highbd_get16x16var_sse2
-
 #define GEN_GET_VAR_FUNC_(S, bd) eb_aom_highbd_##bd##_get##S##x##S##var_sse2
 #define GEN_SQUARE_VAR_PARAM_(S, bd) \
     HbdSquareVarianceParam(S, bd, GEN_GET_VAR_FUNC_(S, bd))

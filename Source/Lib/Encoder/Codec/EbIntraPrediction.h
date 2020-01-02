@@ -29,7 +29,6 @@ typedef void (*IntraHighPredFn)(uint16_t *dst, ptrdiff_t stride, const uint16_t 
 
 typedef struct IntraReferenceSamples {
     EbDctor  dctor;
-    uint8_t *y_intra_reference_array;
     uint8_t *cb_intra_reference_array;
     uint8_t *cr_intra_reference_array;
     uint8_t *y_intra_filtered_reference_array;
@@ -58,7 +57,6 @@ typedef struct IntraReferenceSamples {
 
 typedef struct IntraReference16bitSamples {
     EbDctor   dctor;
-    uint16_t *y_intra_reference_array;
     uint16_t *cb_intra_reference_array;
     uint16_t *cr_intra_reference_array;
     uint16_t *y_intra_filtered_reference_array;
@@ -161,9 +159,6 @@ extern EbErrorType eb_av1_intra_prediction_cl(uint8_t                      hbd_m
                                               PictureControlSet *          pcs_ptr,
                                               ModeDecisionCandidateBuffer *candidate_buffer_ptr);
 
-extern EbErrorType intra_open_loop_reference_samples_ctor(
-    IntraReferenceSamplesOpenLoop *context_ptr);
-
 extern EbErrorType update_neighbor_samples_array_open_loop(uint8_t *above_ref, uint8_t *left_ref,
                                                            EbPictureBufferDesc *input_ptr,
                                                            uint32_t stride, uint32_t srcOriginX,
@@ -178,7 +173,6 @@ typedef void (*EB_INTRA_NOANG_TYPE)(const uint32_t size, uint8_t *ref_samples,
                                     uint8_t *      prediction_ptr,
                                     const uint32_t prediction_buffer_stride, const EbBool skip);
 typedef void (*EB_INTRA_DC_AV1_TYPE)(
-    EbBool is_left_availble, EbBool is_above_availble,
     const uint32_t size, //input parameter, denotes the size of the current PU
     uint8_t *      ref_samples, //input parameter, pointer to the reference samples
     uint8_t *      dst, //output parameter, pointer to the prediction
@@ -203,60 +197,7 @@ typedef void (*EB_INTRA_ANG_16BIT_TYPE)(
     uint16_t *prediction_ptr, //output parameter, pointer to the prediction
     uint32_t  prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
     const EbBool skip, int32_t intra_pred_angle);
-extern void intra_mode_planar(
-    const uint32_t size, //input parameter, denotes the size of the current PU
-    uint8_t *      ref_samples, //input parameter, pointer to the reference samples
-    uint8_t *      dst, //output parameter, pointer to the prediction
-    const uint32_t
-                 prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip);
-extern void ebav1_smooth_v_predictor(
-    const uint32_t size, //input parameter, denotes the size of the current PU
-    uint8_t *      ref_samples, //input parameter, pointer to the reference samples
-    uint8_t *      dst, //output parameter, pointer to the prediction
-    const uint32_t
-                 prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip);
-extern void ebav1_smooth_h_predictor(
-    const uint32_t size, //input parameter, denotes the size of the current PU
-    uint8_t *      ref_samples, //input parameter, pointer to the reference samples
-    uint8_t *      dst, //output parameter, pointer to the prediction
-    const uint32_t
-                 prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip);
 
-void intra_mode_angular_av1_z1_16bit(
-    const uint32_t size, //input parameter, denotes the size of the current PU
-    uint16_t *     ref_samples, //input parameter, pointer to the reference samples
-    uint16_t *     dst, //output parameter, pointer to the prediction
-    const uint32_t
-                 prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip,
-    uint16_t     dx, //output parameter, pointer to the prediction
-    uint16_t     dy, //output parameter, pointer to the prediction
-    uint16_t     bd);
-
-void intra_mode_angular_av1_z2_16bit(
-    const uint32_t size, //input parameter, denotes the size of the current PU
-    uint16_t *     ref_samples, //input parameter, pointer to the reference samples
-    uint16_t *     dst, //output parameter, pointer to the prediction
-    const uint32_t
-                 prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip,
-    uint16_t     dx, //output parameter, pointer to the prediction
-    uint16_t     dy, //output parameter, pointer to the prediction
-    uint16_t     bd);
-
-void intra_mode_angular_av1_z3_16bit(
-    const uint32_t size, //input parameter, denotes the size of the current PU
-    uint16_t *     ref_samples, //input parameter, pointer to the reference samples
-    uint16_t *     dst, //output parameter, pointer to the prediction
-    const uint32_t
-                 prediction_buffer_stride, //input parameter, denotes the stride for the prediction ptr
-    const EbBool skip,
-    uint16_t     dx, //output parameter, pointer to the prediction
-    uint16_t     dy, //output parameter, pointer to the prediction
-    uint16_t     bd);
 
 typedef struct CflCtx {
     // Q3 reconstructed luma pixels (only Q2 is required, but Q3 is used to avoid

@@ -505,7 +505,7 @@ static AOM_INLINE void avg_cdf_symbols(FRAME_CONTEXT *ctx_left,
  ******************************************************************************/
 void update_stats(
     struct PictureControlSet   *pcs_ptr,
-    struct CodingUnit          *blk_ptr,
+    struct BlkStruct          *blk_ptr,
     int                         mi_row,
     int                         mi_col);
 /*******************************************************************************
@@ -513,7 +513,7 @@ void update_stats(
  ******************************************************************************/
 void update_part_stats(
     struct PictureControlSet   *pcs_ptr,
-    struct CodingUnit          *blk_ptr,
+    struct BlkStruct          *blk_ptr,
     int                         mi_row,
     int                         mi_col);
 

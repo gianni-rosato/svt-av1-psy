@@ -48,8 +48,6 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
 
     uint32_t cu_i;
     uint32_t tot_blk_num                    = sb_size_pix == 128 ? 1024 : 256;
-    larget_coding_unit_ptr->final_blk_count = tot_blk_num;
-
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->final_blk_arr, tot_blk_num);
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->av1xd, tot_blk_num);
 
