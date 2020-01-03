@@ -26,7 +26,7 @@ typedef struct InitialRateControlContext {
 #define PAN_SB_PERCENTAGE 75
 #define LOW_AMPLITUDE_TH 16
 
-void get_mv(PictureParentControlSet *pcs_ptr, uint32_t sb_index, int32_t *x_current_mv,
+static void eb_get_mv(PictureParentControlSet *pcs_ptr, uint32_t sb_index, int32_t *x_current_mv,
             int32_t *y_current_mv) {
     uint32_t me_candidate_index;
 
@@ -159,14 +159,14 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
         if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
             ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
             // Current MV
-            get_mv(pcs_ptr, sb_count, &x_current_mv, &y_current_mv);
+            eb_get_mv(pcs_ptr, sb_count, &x_current_mv, &y_current_mv);
 
             // Left MV
             if (sb_origin_x == 0) {
                 x_left_mv = 0;
                 y_left_mv = 0;
             } else
-                get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
+                eb_get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
             count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
                 &x_current_mv, &y_current_mv, &x_left_mv, &y_left_mv);
 
@@ -175,7 +175,7 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 x_top_mv = 0;
                 y_top_mv = 0;
             } else
-                get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
+                eb_get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
             count_of_non_uniform_neighbors +=
                 check_mv_for_non_uniform_motion(&x_current_mv, &y_current_mv, &x_top_mv, &y_top_mv);
 
@@ -184,7 +184,7 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 x_right_mv = 0;
                 y_right_mv   = 0;
             } else
-                get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
+                eb_get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
             count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
                 &x_current_mv, &y_current_mv, &x_right_mv, &y_right_mv);
 
@@ -193,7 +193,7 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 x_bottom_mv = 0;
                 y_bottom_mv = 0;
             } else
-                get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
+                eb_get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
             count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
                 &x_current_mv, &y_current_mv, &x_bottom_mv, &y_bottom_mv);
         }
@@ -272,32 +272,32 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
             if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
                 ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
                 // Current MV
-                get_mv(pcs_ptr, sb_count, &x_current_mv, &y_current_mv);
+                eb_get_mv(pcs_ptr, sb_count, &x_current_mv, &y_current_mv);
 
                 // Left MV
                 if (sb_origin_x == 0) {
                     x_left_mv = 0;
                     y_left_mv = 0;
                 } else
-                    get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
+                    eb_get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
                 // Top MV
                 if (sb_origin_y == 0) {
                     x_top_mv = 0;
                     y_top_mv = 0;
                 } else
-                    get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
+                    eb_get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
                 // Right MV
                 if ((sb_origin_x + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->width) {
                     x_right_mv = 0;
                     y_right_mv   = 0;
                 } else
-                    get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
+                    eb_get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
                 // Bottom MV
                 if ((sb_origin_y + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->height) {
                     x_bottom_mv = 0;
                     y_bottom_mv = 0;
                 } else
-                    get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
+                    eb_get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
                 total_checked_sbs++;
 
                 if ((EbBool)(check_mv_for_pan(pcs_ptr->hierarchical_levels,
@@ -548,7 +548,7 @@ void stationary_edge_over_update_over_time_sb_part1(SequenceControlSet *     scs
         if (sb_params.potential_logo_sb && sb_params.is_complete_sb) {
             // Current MV
             if (pcs_ptr->temporal_layer_index > 0)
-                get_mv(pcs_ptr, sb_index, &x_current_mv, &y_current_mv);
+                eb_get_mv(pcs_ptr, sb_index, &x_current_mv, &y_current_mv);
 
             EbBool low_motion =
                 pcs_ptr->temporal_layer_index == 0
