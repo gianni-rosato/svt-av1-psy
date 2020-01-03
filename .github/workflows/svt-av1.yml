@@ -44,3 +44,64 @@ jobs:
       run: |
         ./Build/linux/build.sh release
         ./Bin/Release/SvtAv1EncApp -help
+    - name: Compress SVT-AV1 binaries
+      if: matrix.compiler == 'gcc-9'
+      run: tar czf ./svtav1.tar.gz ./Bin/Release/*
+    - name: Upload SVT-AV1 binaries
+      if: matrix.compiler == 'gcc-9'
+      uses: actions/upload-artifact@v1
+      with:
+        name: svtav1
+        path: ./svtav1.tar.gz
+
+  binary-identical-test:
+    runs-on: ubuntu-18.04
+    needs: [build]
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-9 g++-9 nasm yasm cmake
+    - uses: actions/checkout@v2
+      with:
+        ref: master
+    - name: Setup SVT-AV1 (master)
+      run: |
+        ./Build/linux/build.sh release
+        mkdir $HOME/master
+        mv -t $HOME/master/ ./Bin/Release/*
+    - name: Download SVT-AV1 binaries
+      uses: actions/download-artifact@v1
+      with:
+        name: svtav1
+    - name: Setup SVT-AV1 (current)
+      run: tar xf svtav1/svtav1.tar.gz
+    - name: Download videos
+      run: |
+        wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
+        tar xf video.tar.gz
+    - name: Encode videos (current)
+      run: |
+        mv -t $HOME akiyo_cif.y4m
+        mv -t $HOME Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+        ./Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-pr-8bit-m8.ivf
+        ./Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-pr-8bit-m0.ivf
+        ./Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-pr-10bit-m8.ivf
+        ./Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-pr-10bit-m0.ivf
+    - name: Encode videos (master)
+      run: |
+        cd $HOME
+        ./master/SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b $HOME/test-master-8bit-m8.ivf
+        ./master/SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b $HOME/test-master-8bit-m0.ivf
+        ./master/SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-master-10bit-m8.ivf
+        ./master/SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-master-10bit-m0.ivf
+    - name: Binary compare
+      run: |
+        echo Comparing 8-bit M8: akiyo_cif.y4m
+        diff $HOME/test-pr-8bit-m8.ivf $HOME/test-master-8bit-m8.ivf
+        echo Comparing 8-bit M0: akiyo_cif.y4m
+        diff $HOME/test-pr-8bit-m0.ivf $HOME/test-master-8bit-m0.ivf
+        echo Comparing 10-bit M8: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+        diff $HOME/test-pr-10bit-m8.ivf $HOME/test-master-10bit-m8.ivf
+        echo Comparing 10-bit M0: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+        diff $HOME/test-pr-10bit-m0.ivf $HOME/test-master-10bit-m0.ivf
