@@ -14,12 +14,14 @@ static void mode_decision_context_dctor(EbPtr p) {
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
         if (obj->palette_cand_array[cd].color_idx_map)
             EB_FREE_ARRAY(obj->palette_cand_array[cd].color_idx_map);
-    for (uint32_t cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT; ++cand_index)
+    for (uint32_t cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT; ++cand_index) {
         if (obj->fast_candidate_ptr_array[cand_index]->palette_info.color_idx_map)
             for (uint32_t coded_leaf_index = 0; coded_leaf_index < BLOCK_MAX_COUNT_SB_128;
                  ++coded_leaf_index)
                 if (obj->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map)
                     EB_FREE_ARRAY(obj->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map);
+        EB_FREE_ARRAY(obj->fast_candidate_ptr_array[cand_index]->palette_info.color_idx_map);
+    }
     EB_FREE_ARRAY(obj->ref_best_ref_sq_table);
     EB_FREE_ARRAY(obj->ref_best_cost_sq_table);
     EB_FREE_ARRAY(obj->above_txfm_context);
