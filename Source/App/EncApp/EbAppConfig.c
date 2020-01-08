@@ -14,6 +14,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <io.h>
 #else
 #include <unistd.h>
 #endif
@@ -176,7 +177,10 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
     if (cfg->input_file == NULL) { return; }
 
 #ifdef _WIN32
-    cfg->input_file_is_fifo = GetFileType(cfg->input_file) == FILE_TYPE_PIPE;
+    HANDLE handle = (HANDLE)_get_osfhandle(_fileno(cfg->input_file));
+    if (handle == INVALID_HANDLE_VALUE)
+        return;
+    cfg->input_file_is_fifo = GetFileType(handle) == FILE_TYPE_PIPE;
 #else
     int         fd = fileno(cfg->input_file);
     struct stat statbuf;
