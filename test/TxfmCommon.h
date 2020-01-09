@@ -171,15 +171,14 @@ static INLINE int get_txfm1d_size(TxfmType txfm_type) {
 
 static INLINE bool is_txfm_allowed(TxType tx_type, TxSize tx_size) {
 
-    int all_types[] = {DCT_DCT, ADST_DCT, DCT_ADST, ADST_ADST, FLIPADST_DCT,
+    int support_types[] = {DCT_DCT, ADST_DCT, DCT_ADST, ADST_ADST, FLIPADST_DCT,
         DCT_FLIPADST, FLIPADST_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, IDTX,
         V_DCT, H_DCT, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST, TX_TYPES, -1 };
-    int *support_types = all_types;
 
     switch (tx_size) {
         case TX_32X32: {
             int types[] = {DCT_DCT, IDTX, V_DCT, H_DCT, -1};
-            support_types = types;
+            memcpy(support_types, types,sizeof(types));
             break;
         }
         case TX_32X64:
@@ -187,7 +186,7 @@ static INLINE bool is_txfm_allowed(TxType tx_type, TxSize tx_size) {
         case TX_16X64:
         case TX_64X16: {
             int types[] = {DCT_DCT, -1};
-            support_types = types;
+            memcpy(support_types, types,sizeof(types));
             break;
         }
         case TX_16X32:
@@ -196,18 +195,19 @@ static INLINE bool is_txfm_allowed(TxType tx_type, TxSize tx_size) {
         case TX_8X32:
         case TX_32X8: {
             int types[] = {DCT_DCT, IDTX, -1};
-            support_types = types;
+            memcpy(support_types, types,sizeof(types));
             break;
         }
         default:
             break;
     }
+    int *ptr =support_types;
 
-    while (*support_types > -1) {
-        if (*support_types == tx_type) {
+    while (*ptr > -1) {
+        if (*ptr == tx_type) {
             return true;
         }
-        ++support_types;
+        ++ptr;
     }
 
     return false;

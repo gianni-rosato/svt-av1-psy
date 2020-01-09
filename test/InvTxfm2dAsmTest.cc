@@ -112,7 +112,7 @@ static const InvSqrTxfmFuncPair inv_txfm_c_sse4_1_func_pairs[TX_64X64 + 1] = {
 };
 
 // from TX_4X8 to TX_SIZES_ALL
-static const InvRectTxfm2dType1Func rect_type1_ref_funcs[TX_SIZES_ALL] = {
+static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     // square transform
     nullptr,
     nullptr,
@@ -133,6 +133,29 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs[TX_SIZES_ALL] = {
     eb_av1_inv_txfm2d_add_32x8_c,
     eb_av1_inv_txfm2d_add_16x64_c,
     eb_av1_inv_txfm2d_add_64x16_c};
+
+#ifndef NON_AVX512_SUPPORT
+static const InvRectTxfm2dType1Func rect_type1_ref_funcs_avx512[TX_SIZES_ALL] = {
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,  // 4x8 and 8x4
+    nullptr,
+    nullptr,
+    eb_av1_inv_txfm2d_add_16x32_avx512,
+    eb_av1_inv_txfm2d_add_32x16_avx512,
+    eb_av1_inv_txfm2d_add_32x64_avx512,
+    eb_av1_inv_txfm2d_add_64x32_avx512,
+    nullptr,
+    nullptr,  // 4x16 and 16x4
+    nullptr,
+    nullptr,
+    eb_av1_inv_txfm2d_add_16x64_avx512,
+    eb_av1_inv_txfm2d_add_64x16_avx512};
+#endif
 
 static const InvRectType2TxfmFuncPair inv_4x8{eb_av1_inv_txfm2d_add_4x8_c,
                                               eb_av1_inv_txfm2d_add_4x8_sse4_1};
@@ -258,13 +281,13 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         }
     }
 
-    void run_rect_type1_txfm_match_test(const TxSize tx_size) {
+    void run_rect_type1_txfm_match_test(const TxSize tx_size, const InvRectTxfm2dType1Func *function_arr) {
         const int width = tx_size_wide[tx_size];
         const int height = tx_size_high[tx_size];
         const int max_eob = av1_get_max_eob(tx_size);
 
         const InvRectTxfm2dType1Func test_func = eb_av1_highbd_inv_txfm_add_avx2;
-        const InvRectTxfm2dType1Func ref_func = rect_type1_ref_funcs[tx_size];
+        const InvRectTxfm2dType1Func ref_func = function_arr[tx_size];
         if (ref_func == nullptr)
             return;
 
@@ -655,8 +678,17 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
 TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
     for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
         const TxSize tx_size = static_cast<TxSize>(i);
-        run_rect_type1_txfm_match_test(tx_size);
+        run_rect_type1_txfm_match_test(tx_size,rect_type1_ref_funcs_c);
     }
+
+#ifndef NON_AVX512_SUPPORT
+    if (get_cpu_flags_to_use() & CPU_FLAGS_AVX512F) {
+        for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
+            const TxSize tx_size = static_cast<TxSize>(i);
+            run_rect_type1_txfm_match_test(tx_size,rect_type1_ref_funcs_avx512);
+        }
+    }
+#endif
 }
 
 TEST_P(InvTxfm2dAsmTest, rect_type2_txfm_match_test) {
