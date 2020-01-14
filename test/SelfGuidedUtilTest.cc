@@ -318,7 +318,7 @@ TEST_P(PixelProjErrorLbdTest, MatchTestWithRandomSizeAndValue) {
 TEST_P(PixelProjErrorLbdTest, MatchTestWithExtremeValue) {
     run_extreme_test();
 }
-TEST_P(PixelProjErrorLbdTest, /*DISABLED_*/ SpeedTest) {
+TEST_P(PixelProjErrorLbdTest, DISABLED_SpeedTest) {
     run_speed_test(256, 1, 1);
     run_speed_test(256, 1, 0);
     run_speed_test(256, 0, 0);

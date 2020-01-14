@@ -455,7 +455,7 @@ TEST_P(AV1WienerConvolveLbdTest, random_test) {
     run_random_test(1000);
 }
 
-TEST_P(AV1WienerConvolveLbdTest, speed_test) {
+TEST_P(AV1WienerConvolveLbdTest, DISABLED_speed_test) {
     run_speed_test();
 }
 
@@ -468,7 +468,7 @@ TEST_P(AV1WienerConvolveHbdTest, random_test) {
     run_random_test(1000);
 }
 
-TEST_P(AV1WienerConvolveHbdTest, speed_test) {
+TEST_P(AV1WienerConvolveHbdTest, DISABLED_speed_test) {
     run_speed_test();
 }
 

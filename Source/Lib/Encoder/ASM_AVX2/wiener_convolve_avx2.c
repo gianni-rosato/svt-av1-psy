@@ -906,7 +906,13 @@ void eb_av1_highbd_wiener_convolve_add_src_avx2(
                     _mm256_min_epi16(_mm256_max_epi16(res_16bit, clamp_low), clamp_high);
 
                 // Store in the dst array
-                yy_storeu_256(dst16 + i * dst_stride + j, res_16bit_clamped);
+                if (j + 8 < w) {
+                    yy_storeu_256(dst16 + i * dst_stride + j, res_16bit_clamped);
+                }
+                else {
+                    _mm_storeu_si128((__m128i*)(dst16 + i * dst_stride + j),
+                                     _mm256_extracti128_si256(res_16bit_clamped, 0));
+                }
             }
         }
     }
