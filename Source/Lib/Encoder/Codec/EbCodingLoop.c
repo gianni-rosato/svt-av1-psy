@@ -3853,9 +3853,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
             int32_t            mi_col    = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
             const int32_t      offset    = mi_row * mi_stride + mi_col;
             ModeInfo *         mi_ptr    = *(pcs_ptr->mi_grid_base + offset);
-            const int          x_mis     = AOMMIN(context_ptr->blk_geom->bwidth,
+            const int          x_mis     = AOMMIN(context_ptr->blk_geom->bwidth >> MI_SIZE_LOG2,
                                      pcs_ptr->parent_pcs_ptr->av1_cm->mi_cols - mi_col);
-            const int          y_mis     = AOMMIN(context_ptr->blk_geom->bheight,
+            const int          y_mis     = AOMMIN(context_ptr->blk_geom->bheight >> MI_SIZE_LOG2,
                                      pcs_ptr->parent_pcs_ptr->av1_cm->mi_rows - mi_row);
             EbReferenceObject *obj_l0 =
                 (EbReferenceObject *)
