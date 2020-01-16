@@ -52,7 +52,7 @@ for:
       - make -j 10
       - ffmpeg -i ../akiyo_cif.y4m -c:v libsvt_av1 akiyo.mp4
       - cd ..
-      - ps: if ($env:APPVEYOR_REPO_BRANCH -eq "master" -and $null -ne $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { Push-AppveyorArtifact -FileName ffmpeg.exe $(Get-ChildItem "ffmpeg\ffmpeg.exe").FullName }
+      - ps: if ($env:APPVEYOR_REPO_BRANCH -eq "master" -and $null -eq $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { Push-AppveyorArtifact -FileName ffmpeg.exe $(Get-ChildItem "ffmpeg\ffmpeg.exe").FullName }
 
   - branches:
       only:
