@@ -45,9 +45,16 @@ extern "C" {
      * Extern Function Declarations
      **************************************/
 struct EntropyCodingContext;
+#if TILES_PARALLEL
+extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
+                            PictureControlSet *pcs_ptr, uint16_t tile_idx,
+                            EntropyCoder *entropy_coder_ptr,
+                            EbPictureBufferDesc *coeff_ptr);
+#else
 extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
                             PictureControlSet *pcs_ptr, EntropyCoder *entropy_coder_ptr,
                             EbPictureBufferDesc *coeff_ptr);
+#endif
 
 extern EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr);
 

@@ -1069,7 +1069,12 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
 /*******************************************************************************
  * Updates the partition stats/CDF for the current block
  ******************************************************************************/
+#if TILES_PARALLEL
+void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
+                       uint16_t tile_idx, int mi_row, int mi_col) {
+#else
 void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, int mi_col) {
+#endif
     const AV1_COMMON *const cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *           xd       = blk_ptr->av1xd;
     const BlockGeom *       blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
@@ -1084,7 +1089,11 @@ void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_ro
         int                 ctx;
 
         NeighborArrayUnit *partition_context_neighbor_array =
+#if TILES_PARALLEL
+            pcs_ptr->ep_partition_context_neighbor_array[tile_idx];
+#else
             pcs_ptr->ep_partition_context_neighbor_array;
+#endif
         uint32_t partition_context_left_neighbor_index = get_neighbor_array_unit_left_index(
             partition_context_neighbor_array, (mi_row << MI_SIZE_LOG2));
         uint32_t partition_context_top_neighbor_index = get_neighbor_array_unit_top_index(

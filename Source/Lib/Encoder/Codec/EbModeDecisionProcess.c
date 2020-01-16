@@ -245,6 +245,51 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 /**************************************************
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
+#if TILES_PARALLEL
+void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t tile_idx) {
+    uint8_t depth;
+    for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
+        neighbor_array_unit_reset(pcs_ptr->md_intra_luma_mode_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_intra_chroma_mode_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_mv_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_skip_flag_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_mode_type_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_leaf_depth_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->mdleaf_partition_neighbor_array[depth][tile_idx]);
+        if (pcs_ptr->hbd_mode_decision != EB_10_BIT_MD) {
+            neighbor_array_unit_reset(pcs_ptr->md_luma_recon_neighbor_array[depth][tile_idx]);
+            neighbor_array_unit_reset(
+                pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth][tile_idx]);
+            neighbor_array_unit_reset(pcs_ptr->md_cb_recon_neighbor_array[depth][tile_idx]);
+            neighbor_array_unit_reset(pcs_ptr->md_cr_recon_neighbor_array[depth][tile_idx]);
+        }
+        if (pcs_ptr->hbd_mode_decision > EB_8_BIT_MD) {
+            neighbor_array_unit_reset(pcs_ptr->md_luma_recon_neighbor_array16bit[depth][tile_idx]);
+            neighbor_array_unit_reset(
+                pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[depth][tile_idx]);
+            neighbor_array_unit_reset(pcs_ptr->md_cb_recon_neighbor_array16bit[depth][tile_idx]);
+            neighbor_array_unit_reset(pcs_ptr->md_cr_recon_neighbor_array16bit[depth][tile_idx]);
+        }
+
+        neighbor_array_unit_reset(pcs_ptr->md_skip_coeff_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(
+            pcs_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(
+            pcs_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(
+            pcs_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(
+            pcs_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_txfm_context_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_inter_pred_dir_neighbor_array[depth][tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->md_ref_frame_type_neighbor_array[depth][tile_idx]);
+
+        neighbor_array_unit_reset32(pcs_ptr->md_interpolation_type_neighbor_array[depth][tile_idx]);
+    }
+
+    return;
+}
+#else
 void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr) {
     uint8_t depth;
     for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
@@ -283,6 +328,7 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr) {
 
     return;
 }
+#endif
 
 extern void lambda_assign_low_delay(uint32_t *fast_lambda, uint32_t *full_lambda,
                                     uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
@@ -389,8 +435,14 @@ const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4] = {
     av1_lambda_assign,
 };
 
+#if TILES_PARALLEL
+void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
+                         PictureControlSet *pcs_ptr, uint16_t tile_group_idx,
+                         uint32_t segment_index) {
+#else
 void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                          PictureControlSet *pcs_ptr, uint32_t segment_index) {
+#endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     // QP
     uint16_t picture_qp   = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
@@ -423,7 +475,22 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
 
     // Reset Neighbor Arrays at start of new Segment / Picture
     if (segment_index == 0) {
+#if TILES_PARALLEL
+        for (uint16_t r =
+                 pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx].tile_group_tile_start_y;
+             r < pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx].tile_group_tile_end_y;
+             r++) {
+            for (uint16_t c = pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx]
+                                  .tile_group_tile_start_x;
+                 c < pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx].tile_group_tile_end_x;
+                 c++) {
+                uint16_t tile_idx = c + r * pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
+                reset_mode_decision_neighbor_arrays(pcs_ptr, tile_idx);
+            }
+        }
+#else
         reset_mode_decision_neighbor_arrays(pcs_ptr);
+#endif
         (void)scs_ptr;
     }
     return;

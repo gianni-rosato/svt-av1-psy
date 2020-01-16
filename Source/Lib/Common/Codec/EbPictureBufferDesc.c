@@ -229,8 +229,6 @@ void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
     }
 }
 
-//Jing: TODO
-//Change here later
 void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc) {
     //NOTe:  Not all fileds are connected. add more connections as needed.
     if (picBuffDsc->bit_depth == EB_8BIT) {

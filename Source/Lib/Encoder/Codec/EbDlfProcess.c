@@ -39,7 +39,7 @@ static void dlf_context_dctor(EbPtr p) {
  ******************************************************/
 EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHandle *enc_handle_ptr,
                              int index) {
-    const SequenceControlSet *scs_ptr      = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
+    const SequenceControlSet *scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
     EbBool        is_16bit     = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format = scs_ptr->static_config.encoder_color_format;
 
@@ -114,7 +114,16 @@ void *dlf_kernel(void *input_ptr) {
         EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
         EbBool dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
+#if TILES_PARALLEL
+        uint16_t total_tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
+                                  pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
+        // Jing: Move sb level lf to here if tile_parallel
+        if ((dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode >= 2) ||
+            (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 &&
+             total_tile_cnt > 1)) {
+#else
         if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode >= 2) {
+#endif
             EbPictureBufferDesc *recon_buffer =
                 is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
 

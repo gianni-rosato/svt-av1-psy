@@ -514,6 +514,9 @@ void update_stats(
 void update_part_stats(
     struct PictureControlSet   *pcs_ptr,
     struct BlkStruct          *blk_ptr,
+#if TILES_PARALLEL
+    uint16_t                    tile_idx,
+#endif
     int                         mi_row,
     int                         mi_col);
 

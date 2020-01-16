@@ -24,7 +24,11 @@
 #include "EbCabacContextModel.h"
 #include "EbLog.h"
 #define AV1_MIN_TILE_SIZE_BYTES 1
-void eb_av1_reset_loop_restoration(PictureControlSet *piCSetPtr);
+#if TILES_PARALLEL
+void eb_av1_reset_loop_restoration(PictureControlSet *piCSetPtr, uint16_t tile_idx);
+#else
+void        eb_av1_reset_loop_restoration(PictureControlSet *piCSetPtr);
+#endif
 
 static void rest_context_dctor(EbPtr p) {
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)p;
@@ -61,6 +65,28 @@ EbErrorType entropy_coding_context_ctor(EbThreadContext *  thread_context_ptr,
 /***********************************************
  * Entropy Coding Reset Neighbor Arrays
  ***********************************************/
+#if TILES_PARALLEL
+static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t tile_idx) {
+    neighbor_array_unit_reset(pcs_ptr->mode_type_neighbor_array[tile_idx]);
+
+    neighbor_array_unit_reset(pcs_ptr->partition_context_neighbor_array[tile_idx]);
+
+    neighbor_array_unit_reset(pcs_ptr->skip_flag_neighbor_array[tile_idx]);
+
+    neighbor_array_unit_reset(pcs_ptr->skip_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->inter_pred_dir_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ref_frame_type_neighbor_array[tile_idx]);
+
+    neighbor_array_unit_reset(pcs_ptr->intra_luma_mode_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset32(pcs_ptr->interpolation_type_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->txfm_context_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->segmentation_id_pred_array[tile_idx]);
+    return;
+}
+#else
 static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs_ptr) {
     neighbor_array_unit_reset(pcs_ptr->mode_type_neighbor_array);
 
@@ -81,6 +107,7 @@ static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs_ptr) {
     neighbor_array_unit_reset(pcs_ptr->segmentation_id_pred_array);
     return;
 }
+#endif
 
 void av1_get_syntax_rate_from_cdf(int32_t *costs, const AomCdfProb *cdf, const int32_t *inv_map);
 
@@ -166,6 +193,70 @@ void eb_av1_build_nmv_cost_table(int32_t *mvjoint, int32_t *mvcost[2], const Nmv
 /**************************************************
  * Reset Entropy Coding Picture
  **************************************************/
+#if TILES_PARALLEL
+static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
+                                         PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
+    uint16_t tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows *
+                        pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
+    uint16_t tile_idx = 0;
+    for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
+        reset_bitstream(entropy_coder_get_bitstream_ptr(
+            pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr));
+    }
+
+    uint32_t entropy_coding_qp;
+
+    context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
+    entropy_coding_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+
+    for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
+        pcs_ptr->parent_pcs_ptr->prev_qindex[tile_idx] =
+            pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+    }
+    if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
+        assert(pcs_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present == 0);
+    if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_lf_params.delta_lf_present) {
+        pcs_ptr->parent_pcs_ptr->prev_delta_lf_from_base = 0;
+        const int32_t frame_lf_count =
+            pcs_ptr->parent_pcs_ptr->monochrome == 0 ? FRAME_LF_COUNT : FRAME_LF_COUNT - 2;
+        for (int32_t lf_id = 0; lf_id < frame_lf_count; ++lf_id)
+            pcs_ptr->parent_pcs_ptr->prev_delta_lf[lf_id] = 0;
+    }
+
+    // pass the ent
+    for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
+        OutputBitstreamUnit *output_bitstream_ptr =
+            (OutputBitstreamUnit *)(pcs_ptr->entropy_coding_info[tile_idx]
+                                        ->entropy_coder_ptr->ec_output_bitstream_ptr);
+        //****************************************************************//
+        uint8_t *data = output_bitstream_ptr->buffer_av1;
+        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
+            !pcs_ptr->parent_pcs_ptr->large_scale_tile;
+        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
+            pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf &&
+            !frm_hdr->disable_cdf_update;
+
+        aom_start_encode(&pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
+                         data);
+
+        // ADD Reset here
+        if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+            memcpy(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc,
+                   &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
+                   sizeof(FRAME_CONTEXT));
+        else
+            reset_entropy_coder(scs_ptr->encode_context_ptr,
+                                pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr,
+                                entropy_coding_qp,
+                                pcs_ptr->slice_type);
+
+        entropy_coding_reset_neighbor_arrays(pcs_ptr, tile_idx);
+    }
+    return;
+}
+#else
 static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
                                          PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     reset_bitstream(entropy_coder_get_bitstream_ptr(pcs_ptr->entropy_coder_ptr));
@@ -214,7 +305,9 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
 
     return;
 }
+#endif
 
+#if !TILES_PARALLEL
 static void reset_ec_tile(uint32_t total_size, uint32_t is_last_tile_in_tg,
                           EntropyCodingContext *context_ptr, PictureControlSet *pcs_ptr,
                           SequenceControlSet *scs_ptr) {
@@ -265,6 +358,7 @@ static void reset_ec_tile(uint32_t total_size, uint32_t is_last_tile_in_tg,
 
     return;
 }
+#endif
 
 /******************************************************
  * Update Entropy Coding Rows
@@ -304,6 +398,53 @@ static void reset_ec_tile(uint32_t total_size, uint32_t is_last_tile_in_tg,
  *   of the segment-row (b) as this would block other
  *   threads from performing an update (A).
  ******************************************************/
+#if TILES_PARALLEL
+static EbBool update_entropy_coding_rows(PictureControlSet *pcs_ptr, uint32_t *row_index,
+                                         uint32_t row_count, uint16_t tile_idx,
+                                         EbBool *initial_process_call) {
+    EbBool process_next_row = EB_FALSE;
+
+    EntropyTileInfo *ec_ptr = pcs_ptr->entropy_coding_info[tile_idx];
+
+    // Note, any writes & reads to status variables (e.g. in_progress) in MD-CTRL must be thread-safe
+    eb_block_on_mutex(ec_ptr->entropy_coding_mutex);
+
+    // Update availability mask
+    if (*initial_process_call == EB_TRUE) {
+        unsigned i;
+
+        for (i = *row_index; i < *row_index + row_count; ++i)
+            ec_ptr->entropy_coding_row_array[i] = EB_TRUE;
+
+        while (ec_ptr->entropy_coding_row_array[ec_ptr->entropy_coding_current_available_row] ==
+                   EB_TRUE &&
+               ec_ptr->entropy_coding_current_available_row < ec_ptr->entropy_coding_row_count) {
+            ++ec_ptr->entropy_coding_current_available_row;
+        }
+    }
+
+    // Release in_progress token
+    if (*initial_process_call == EB_FALSE && ec_ptr->entropy_coding_in_progress == EB_TRUE)
+        ec_ptr->entropy_coding_in_progress = EB_FALSE;
+    // Test if the picture is not already complete AND not currently being worked on by another ENCDEC process
+    if (ec_ptr->entropy_coding_current_row < ec_ptr->entropy_coding_row_count &&
+        ec_ptr->entropy_coding_row_array[ec_ptr->entropy_coding_current_row] == EB_TRUE &&
+        ec_ptr->entropy_coding_in_progress == EB_FALSE) {
+        // Test if the next SB-row is ready to go
+        if (ec_ptr->entropy_coding_current_row <= ec_ptr->entropy_coding_current_available_row) {
+            ec_ptr->entropy_coding_in_progress = EB_TRUE;
+            *row_index                         = ec_ptr->entropy_coding_current_row++;
+            process_next_row                   = EB_TRUE;
+        }
+    }
+
+    *initial_process_call = EB_FALSE;
+
+    eb_release_mutex(ec_ptr->entropy_coding_mutex);
+
+    return process_next_row;
+}
+#else
 static EbBool update_entropy_coding_rows(PictureControlSet *pcs_ptr, uint32_t *row_index,
                                          uint32_t row_count, EbBool *initial_process_call) {
     EbBool process_next_row = EB_FALSE;
@@ -345,6 +486,7 @@ static EbBool update_entropy_coding_rows(PictureControlSet *pcs_ptr, uint32_t *r
 
     return process_next_row;
 }
+#endif
 /******************************************************
  * Write Stat to File
  * write stat_struct per frame in the first pass
@@ -369,8 +511,13 @@ void *entropy_coding_kernel(void *input_ptr) {
     SequenceControlSet *  scs_ptr;
 
     // Input
+#if TILES_PARALLEL
+    EbObjectWrapper *rest_results_wrapper_ptr;
+    RestResults *    rest_results_ptr;
+#else
     EbObjectWrapper *enc_dec_results_wrapper_ptr;
     EncDecResults *  enc_dec_results_ptr;
+#endif
 
     // Output
     EbObjectWrapper *     entropy_coding_results_wrapper_ptr;
@@ -390,10 +537,16 @@ void *entropy_coding_kernel(void *input_ptr) {
     EbBool initial_process_call;
     for (;;) {
         // Get Mode Decision Results
+#if TILES_PARALLEL
+        eb_get_full_object(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper_ptr);
+        rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
+        pcs_ptr          = (PictureControlSet *)rest_results_ptr->pcs_wrapper_ptr->object_ptr;
+#else
         eb_get_full_object(context_ptr->enc_dec_input_fifo_ptr, &enc_dec_results_wrapper_ptr);
         enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
-        pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr             = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        pcs_ptr = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
+#endif
+        scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         // SB Constants
 
         sb_sz = (uint8_t)scs_ptr->sb_size_pix;
@@ -401,6 +554,194 @@ void *entropy_coding_kernel(void *input_ptr) {
         sb_size_log2       = (uint8_t)Log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
         pic_width_in_sb    = (scs_ptr->seq_header.max_frame_width + sb_sz - 1) >> sb_size_log2;
+#if TILES_PARALLEL
+        uint16_t         tile_idx = rest_results_ptr->tile_index;
+        Av1Common *const cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
+        const uint16_t   tile_cnt = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
+        const uint16_t   tile_col = tile_idx % cm->tiles_info.tile_cols;
+        const uint16_t   tile_row = tile_idx / cm->tiles_info.tile_cols;
+        const uint16_t   tile_sb_start_x =
+            cm->tiles_info.tile_col_start_mi[tile_col] >> scs_ptr->seq_header.sb_size_log2;
+        const uint16_t tile_sb_start_y =
+            cm->tiles_info.tile_row_start_mi[tile_row] >> scs_ptr->seq_header.sb_size_log2;
+        uint16_t tile_width_in_sb = (cm->tiles_info.tile_col_start_mi[tile_col + 1] -
+                                     cm->tiles_info.tile_col_start_mi[tile_col]) >>
+                                    scs_ptr->seq_header.sb_size_log2;
+
+        {
+            initial_process_call = EB_TRUE;
+            y_sb_index           = rest_results_ptr->completed_sb_row_index_start;
+
+            // SB-loops
+            while (update_entropy_coding_rows(pcs_ptr,
+                                              &y_sb_index,
+                                              rest_results_ptr->completed_sb_row_count,
+                                              tile_idx,
+                                              &initial_process_call) == EB_TRUE) {
+                uint32_t row_total_bits = 0;
+
+                if (y_sb_index == 0) {
+                    eb_block_on_mutex(pcs_ptr->entropy_coding_pic_mutex);
+                    if (pcs_ptr->entropy_coding_pic_reset_flag) {
+                        pcs_ptr->entropy_coding_pic_reset_flag = EB_FALSE;
+
+                        reset_entropy_coding_picture(context_ptr, pcs_ptr, scs_ptr);
+                    }
+                    eb_release_mutex(pcs_ptr->entropy_coding_pic_mutex);
+                    pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = EB_FALSE;
+                }
+
+                for (x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
+                    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
+                                          (y_sb_index + tile_sb_start_y) * pic_width_in_sb);
+                    sb_ptr   = pcs_ptr->sb_ptr_array[sb_index];
+
+                    sb_origin_x = x_sb_index << sb_size_log2;
+                    sb_origin_y = y_sb_index << sb_size_log2;
+
+                    sb_origin_x = (x_sb_index + tile_sb_start_x) << sb_size_log2;
+                    sb_origin_y = (y_sb_index + tile_sb_start_y) << sb_size_log2;
+
+                    context_ptr->sb_origin_x = sb_origin_x;
+                    context_ptr->sb_origin_y = sb_origin_y;
+                    if (x_sb_index == 0 && y_sb_index == 0)
+                        eb_av1_reset_loop_restoration(pcs_ptr, tile_idx);
+
+                    if (x_sb_index == 0 && y_sb_index == 0) {
+                        context_ptr->tok = pcs_ptr->tile_tok[tile_row][tile_col];
+                    }
+                    sb_ptr->total_bits = 0;
+                    uint32_t prev_pos =
+                        (x_sb_index == 0 && y_sb_index == 0)
+                            ? 0
+                            : pcs_ptr->entropy_coding_info[tile_idx]
+                                  ->entropy_coder_ptr->ec_writer.ec.offs; //residual_bc.pos
+
+                    EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;
+                    write_sb(context_ptr,
+                             sb_ptr,
+                             pcs_ptr,
+                             tile_idx,
+                             pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr,
+                             coeff_picture_ptr);
+                    sb_ptr->total_bits = (pcs_ptr->entropy_coding_info[tile_idx]
+                                              ->entropy_coder_ptr->ec_writer.ec.offs -
+                                          prev_pos)
+                                         << 3;
+
+                    pcs_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->total_bits;
+                    row_total_bits += sb_ptr->total_bits;
+                }
+
+                // At the end of each SB-row, send the updated bit-count to Entropy Coding
+                {
+                    EbObjectWrapper * rate_control_task_wrapper_ptr;
+                    RateControlTasks *rate_control_task_ptr;
+
+                    // Get Empty EncDec Results
+                    eb_get_empty_object(context_ptr->rate_control_output_fifo_ptr,
+                                        &rate_control_task_wrapper_ptr);
+                    rate_control_task_ptr =
+                        (RateControlTasks *)rate_control_task_wrapper_ptr->object_ptr;
+                    rate_control_task_ptr->task_type      = RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT;
+                    rate_control_task_ptr->picture_number = pcs_ptr->picture_number;
+                    rate_control_task_ptr->row_number     = y_sb_index;
+                    rate_control_task_ptr->bit_count      = row_total_bits;
+
+                    rate_control_task_ptr->pcs_wrapper_ptr = 0;
+                    rate_control_task_ptr->segment_index   = ~0u;
+
+                    // Post EncDec Results
+                    eb_post_full_object(rate_control_task_wrapper_ptr);
+                }
+
+                eb_block_on_mutex(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_mutex);
+                if (pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done == EB_FALSE) {
+                    // If the picture is complete, terminate the slice
+                    if (pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_current_row ==
+                        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_row_count) {
+                        uint32_t ref_idx;
+
+                        EbBool pic_ready = EB_TRUE;
+
+                        // Current tile ready
+                        encode_slice_finish(
+                            pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr);
+
+                        eb_block_on_mutex(pcs_ptr->entropy_coding_pic_mutex);
+                        pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = EB_TRUE;
+                        for (uint16_t i = 0; i < tile_cnt; i++) {
+                            if (pcs_ptr->entropy_coding_info[i]->entropy_coding_tile_done ==
+                                EB_FALSE) {
+                                pic_ready = EB_FALSE;
+                                break;
+                            }
+                        }
+                        eb_release_mutex(pcs_ptr->entropy_coding_pic_mutex);
+
+                        //Jing, two pass doesn't work with multi-tile right now
+                        // for Non Reference frames
+                        if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                            !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+                            write_stat_to_file(scs_ptr,
+                                               *pcs_ptr->parent_pcs_ptr->stat_struct_first_pass_ptr,
+                                               pcs_ptr->parent_pcs_ptr->picture_number);
+                        if (pic_ready) {
+                            // Release the List 0 Reference Pictures
+                            for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
+                                 ++ref_idx) {
+                                if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                                    pcs_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL &&
+                                    pcs_ptr->ref_pic_ptr_array[0][ref_idx]->live_count == 1)
+                                    write_stat_to_file(
+                                        scs_ptr,
+                                        ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
+                                             ->object_ptr)
+                                            ->stat_struct,
+                                        ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
+                                             ->object_ptr)
+                                            ->ref_poc);
+                                if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != EB_NULL) {
+                                    eb_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                                }
+                            }
+
+                            // Release the List 1 Reference Pictures
+                            for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
+                                 ++ref_idx) {
+                                if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                                    pcs_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL &&
+                                    pcs_ptr->ref_pic_ptr_array[1][ref_idx]->live_count == 1)
+                                    write_stat_to_file(
+                                        scs_ptr,
+                                        ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]
+                                             ->object_ptr)
+                                            ->stat_struct,
+                                        ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]
+                                             ->object_ptr)
+                                            ->ref_poc);
+                                if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != EB_NULL)
+                                    eb_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                            }
+
+                            // Get Empty Entropy Coding Results
+                            eb_get_empty_object(context_ptr->entropy_coding_output_fifo_ptr,
+                                                &entropy_coding_results_wrapper_ptr);
+                            entropy_coding_results_ptr =
+                                (EntropyCodingResults *)
+                                    entropy_coding_results_wrapper_ptr->object_ptr;
+                            entropy_coding_results_ptr->pcs_wrapper_ptr =
+                                rest_results_ptr->pcs_wrapper_ptr;
+
+                            // Post EntropyCoding Results
+                            eb_post_full_object(entropy_coding_results_wrapper_ptr);
+                        }
+                    } // End if(PictureCompleteFlag)
+                }
+                eb_release_mutex(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_mutex);
+            }
+        }
+#else
         if (pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
                 pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows ==
             1)
@@ -638,9 +979,13 @@ void *entropy_coding_kernel(void *input_ptr) {
                 eb_post_full_object(entropy_coding_results_wrapper_ptr);
             }
         }
-
+#endif
         // Release Mode Decision Results
+#if TILES_PARALLEL
+        eb_release_object(rest_results_wrapper_ptr);
+#else
         eb_release_object(enc_dec_results_wrapper_ptr);
+#endif
     }
 
     return EB_NULL;

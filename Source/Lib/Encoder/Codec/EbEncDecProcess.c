@@ -177,6 +177,32 @@ static void reset_segmentation_map(SegmentationNeighborMap *segmentation_map) {
 /**************************************************
  * Reset Mode Decision Neighbor Arrays
  *************************************************/
+#if TILES_PARALLEL
+static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t tile_idx) {
+    neighbor_array_unit_reset(pcs_ptr->ep_intra_luma_mode_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_intra_chroma_mode_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_mv_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_skip_flag_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_mode_type_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_leaf_depth_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
+    neighbor_array_unit_reset(pcs_ptr->ep_partition_context_neighbor_array[tile_idx]);
+    // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is_16bit==0?
+    EbBool is_16bit =
+        (EbBool)(pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    if (is_16bit) {
+        neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array16bit[tile_idx]);
+        neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array16bit[tile_idx]);
+    }
+    return;
+}
+#else
 static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr) {
     neighbor_array_unit_reset(pcs_ptr->ep_intra_luma_mode_neighbor_array);
     neighbor_array_unit_reset(pcs_ptr->ep_intra_chroma_mode_neighbor_array);
@@ -201,6 +227,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr) {
     }
     return;
 }
+#endif
 
 /**************************************************
  * Reset Coding Loop
@@ -209,7 +236,10 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
                           SequenceControlSet *scs_ptr, uint32_t segment_index) {
     context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     uint16_t picture_qp   = pcs_ptr->picture_qp;
-    context_ptr->qp       = picture_qp;
+#if TILES_PARALLEL
+    uint16_t tile_group_idx = context_ptr->tile_group_index;
+#endif
+    context_ptr->qp = picture_qp;
     context_ptr->qp_index =
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
             ? (uint8_t)quantizer_to_qindex[context_ptr->qp]
@@ -217,7 +247,6 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
-
     // Lambda Assignement
     context_ptr->qp_index =
         (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
@@ -236,8 +265,27 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
     }
     context_ptr->md_rate_estimation_ptr = pcs_ptr->md_rate_estimation_array;
     if (segment_index == 0) {
+#if TILES_PARALLEL
+        if (context_ptr->tile_group_index == 0) {
+            reset_segmentation_map(pcs_ptr->segmentation_neighbor_map);
+        }
+
+        for (uint16_t r =
+                 pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx].tile_group_tile_start_y;
+             r < pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx].tile_group_tile_end_y;
+             r++) {
+            for (uint16_t c = pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx]
+                                  .tile_group_tile_start_x;
+                 c < pcs_ptr->parent_pcs_ptr->tile_group_info[tile_group_idx].tile_group_tile_end_x;
+                 c++) {
+                uint16_t tile_idx = c + r * pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
+                reset_encode_pass_neighbor_arrays(pcs_ptr, tile_idx);
+            }
+        }
+#else
         reset_encode_pass_neighbor_arrays(pcs_ptr);
         reset_segmentation_map(pcs_ptr->segmentation_neighbor_map);
+#endif
     }
 
     return;
@@ -424,6 +472,9 @@ EbBool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOu
             feedback_task_ptr->input_type          = ENCDEC_TASKS_ENCDEC_INPUT;
             feedback_task_ptr->enc_dec_segment_row = feedback_row_index;
             feedback_task_ptr->pcs_wrapper_ptr     = taskPtr->pcs_wrapper_ptr;
+#if TILES_PARALLEL
+            feedback_task_ptr->tile_group_index = taskPtr->tile_group_index;
+#endif
             eb_post_full_object(wrapper_ptr);
         }
 
@@ -736,14 +787,14 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         uint16_t *recon_coeff_buffer;
 
         if (scs_ptr->static_config.ten_bit_format == 1) {
-            const uint32_t luma_width       = scs_ptr->seq_header.max_frame_width;
-            const uint32_t luma_height      = scs_ptr->seq_header.max_frame_height;
-            const uint32_t chroma_width     = scs_ptr->chroma_width;
-            const uint32_t pic_width_in_sb  = (luma_width + 64 - 1) / 64;
-            const uint32_t pic_height_in_sb = (luma_height + 64 - 1) / 64;
-            const uint32_t luma_2bit_width  = luma_width / 4;
-            const uint32_t chroma_height    = luma_height / 2;
-            const uint32_t chroma_2bit_width  = luma_width / 8;
+            const uint32_t luma_width        = scs_ptr->seq_header.max_frame_width;
+            const uint32_t luma_height       = scs_ptr->seq_header.max_frame_height;
+            const uint32_t chroma_width      = scs_ptr->chroma_width;
+            const uint32_t pic_width_in_sb   = (luma_width + 64 - 1) / 64;
+            const uint32_t pic_height_in_sb  = (luma_height + 64 - 1) / 64;
+            const uint32_t luma_2bit_width   = luma_width / 4;
+            const uint32_t chroma_height     = luma_height / 2;
+            const uint32_t chroma_2bit_width = luma_width / 8;
             uint32_t       sb_num_in_height, sb_num_in_width;
 
             EbByte input_buffer_org =
@@ -2526,6 +2577,10 @@ void *enc_dec_kernel(void *input_ptr) {
     uint32_t        segment_band_size;
     EncDecSegments *segments_ptr;
 
+#if TILES_PARALLEL
+    uint16_t tile_group_width_in_sb;
+#endif
+
     segment_index = 0;
 
     for (;;) {
@@ -2535,9 +2590,15 @@ void *enc_dec_kernel(void *input_ptr) {
         enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
         pcs_ptr           = (PictureControlSet *)enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        segments_ptr      = pcs_ptr->enc_dec_segment_ctrl;
-        last_sb_flag      = EB_FALSE;
-        is_16bit          = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+#if TILES_PARALLEL
+        context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
+        context_ptr->coded_sb_count   = 0;
+        segments_ptr = pcs_ptr->enc_dec_segment_ctrl[context_ptr->tile_group_index];
+#else
+        segments_ptr                     = pcs_ptr->enc_dec_segment_ctrl;
+#endif
+        last_sb_flag = EB_FALSE;
+        is_16bit     = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         (void)is_16bit;
         (void)end_of_row_flag;
         // SB Constants
@@ -2545,6 +2606,11 @@ void *enc_dec_kernel(void *input_ptr) {
         sb_size_log2       = (uint8_t)Log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
         pic_width_in_sb    = (scs_ptr->seq_header.max_frame_width + sb_sz - 1) >> sb_size_log2;
+#if TILES_PARALLEL
+        tile_group_width_in_sb =
+            pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
+                .tile_group_width_in_sb;
+#endif
         end_of_row_flag    = EB_FALSE;
         sb_row_index_start = sb_row_index_count = 0;
         context_ptr->tot_intra_coded_area       = 0;
@@ -2556,7 +2622,11 @@ void *enc_dec_kernel(void *input_ptr) {
                                        context_ptr->enc_dec_feedback_fifo_ptr) == EB_TRUE) {
             x_sb_start_index = segments_ptr->x_start_array[segment_index];
             y_sb_start_index = segments_ptr->y_start_array[segment_index];
-            sb_start_index   = y_sb_start_index * pic_width_in_sb + x_sb_start_index;
+#if TILES_PARALLEL
+            sb_start_index = y_sb_start_index * tile_group_width_in_sb + x_sb_start_index;
+#else
+            sb_start_index = y_sb_start_index * pic_width_in_sb + x_sb_start_index;
+#endif
             sb_segment_count = segments_ptr->valid_sb_count_array[segment_index];
 
             segment_row_index = segment_index / segments_ptr->segment_band_count;
@@ -2567,7 +2637,15 @@ void *enc_dec_kernel(void *input_ptr) {
                                 segments_ptr->segment_band_count;
 
             // Reset Coding Loop State
+#if TILES_PARALLEL
+            reset_mode_decision(scs_ptr,
+                                context_ptr->md_context,
+                                pcs_ptr,
+                                context_ptr->tile_group_index,
+                                segment_index);
+#else
             reset_mode_decision(scs_ptr, context_ptr->md_context, pcs_ptr, segment_index);
+#endif
 
             // Reset EncDec Coding State
             reset_enc_dec( // HT done
@@ -2584,10 +2662,44 @@ void *enc_dec_kernel(void *input_ptr) {
                  sb_segment_index < sb_start_index + sb_segment_count;
                  ++y_sb_index) {
                 for (x_sb_index = x_sb_start_index;
+#if TILES_PARALLEL
+                     x_sb_index < tile_group_width_in_sb &&
+#else
                      x_sb_index < pic_width_in_sb &&
+#endif
                      (x_sb_index + y_sb_index < segment_band_size) &&
                      sb_segment_index < sb_start_index + sb_segment_count;
                      ++x_sb_index, ++sb_segment_index) {
+#if TILES_PARALLEL
+                    uint16_t tile_group_y_sb_start =
+                        pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
+                            .tile_group_sb_start_y;
+                    uint16_t tile_group_x_sb_start =
+                        pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
+                            .tile_group_sb_start_x;
+                    sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
+                                          x_sb_index + tile_group_x_sb_start);
+                    sb_ptr   = pcs_ptr->sb_ptr_array[sb_index];
+                    sb_origin_x = (x_sb_index + tile_group_x_sb_start) << sb_size_log2;
+                    sb_origin_y = (y_sb_index + tile_group_y_sb_start) << sb_size_log2;
+                    //printf("[%ld]:ED sb index %d, (%d, %d), encoded total sb count %d, ctx coded sb count %d\n",
+                    //        pcs_ptr->picture_number,
+                    //        sb_index, sb_origin_x, sb_origin_y,
+                    //        pcs_ptr->enc_dec_coded_sb_count,
+                    //        context_ptr->coded_sb_count);
+                    context_ptr->tile_index             = sb_ptr->tile_info.tile_rs_index;
+                    context_ptr->md_context->tile_index = sb_ptr->tile_info.tile_rs_index;
+
+                    end_of_row_flag =
+                        (x_sb_index + 1 == tile_group_width_in_sb) ? EB_TRUE : EB_FALSE;
+                    sb_row_index_start =
+                        (x_sb_index + 1 == tile_group_width_in_sb && sb_row_index_count == 0)
+                            ? y_sb_index
+                            : sb_row_index_start;
+                    sb_row_index_count = (x_sb_index + 1 == tile_group_width_in_sb)
+                                             ? sb_row_index_count + 1
+                                             : sb_row_index_count;
+#else
                     sb_index        = (uint16_t)(y_sb_index * pic_width_in_sb + x_sb_index);
                     sb_ptr          = pcs_ptr->sb_ptr_array[sb_index];
                     sb_origin_x     = x_sb_index << sb_size_log2;
@@ -2601,6 +2713,7 @@ void *enc_dec_kernel(void *input_ptr) {
                     sb_row_index_count = (x_sb_index == pic_width_in_sb - 1)
                                              ? sb_row_index_count + 1
                                              : sb_row_index_count;
+#endif
                     mdc_ptr               = &pcs_ptr->mdc_sb_array[sb_index];
                     context_ptr->sb_index = sb_index;
 
@@ -2790,6 +2903,9 @@ void *enc_dec_kernel(void *input_ptr) {
                         scs_ptr, pcs_ptr, sb_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr);
 #endif
 
+#if TILES_PARALLEL
+                    context_ptr->coded_sb_count++;
+#endif
                     if (pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL)
                         ((EbReferenceObject *)
                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
@@ -2802,6 +2918,10 @@ void *enc_dec_kernel(void *input_ptr) {
 
         eb_block_on_mutex(pcs_ptr->intra_mutex);
         pcs_ptr->intra_coded_area += (uint32_t)context_ptr->tot_intra_coded_area;
+#if TILES_PARALLEL
+        pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
+        last_sb_flag = (scs_ptr->sb_tot_cnt == pcs_ptr->enc_dec_coded_sb_count);
+#endif
         eb_release_mutex(pcs_ptr->intra_mutex);
 
         if (last_sb_flag) {

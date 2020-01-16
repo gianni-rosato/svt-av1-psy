@@ -263,6 +263,9 @@ typedef struct ModeDecisionContext {
     int16_t              best_spatial_pred_mv[2][4][2];
     int8_t               valid_refined_mv[2][4];
     EbPictureBufferDesc *input_sample16bit_buffer;
+#if TILES_PARALLEL
+    uint16_t             tile_index;
+#endif
     DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
@@ -371,7 +374,9 @@ extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
                                               uint8_t enable_hbd_mode_decision,
                                               uint8_t cfg_palette);
 
+#if !TILES_PARALLEL
 extern void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr);
+#endif
 
 extern void lambda_assign_low_delay(uint32_t *fast_lambda, uint32_t *full_lambda,
                                     uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
@@ -396,8 +401,13 @@ static const uint8_t quantizer_to_qindex[] = {
     128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 176, 180, 184, 188,
     192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255};
 
+#if TILES_PARALLEL
+extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
+                                PictureControlSet *pcs_ptr, uint16_t tile_row_idx, uint32_t segment_index);
+#else
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                                 PictureControlSet *pcs_ptr, uint32_t segment_index);
+#endif
 
 extern void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                        uint8_t sb_qp);

@@ -37,6 +37,12 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+#define TILES_PARALLEL 1
+
+#if TILES_PARALLEL
+#define MAX_TILE_CNTS 128 // Annex A.3
+#endif
+
 #define MR_MODE 0
 
 #define HIGH_PRECISION_MV_QTHRESH 150
@@ -177,6 +183,7 @@ enum {
 // Maximum number of tile rows and tile columns
 #define MAX_TILE_ROWS 64
 #define MAX_TILE_COLS 64
+
 #define MAX_VARTX_DEPTH 2
 #define MI_SIZE_64X64 (64 >> MI_SIZE_LOG2)
 #define MI_SIZE_128X128 (128 >> MI_SIZE_LOG2)
@@ -353,6 +360,16 @@ static __inline void mem_put_le16(void *vmem, MEM_VALUE_T val) {
     mem[0] = (MAU_T)((val >> 0) & 0xff);
     mem[1] = (MAU_T)((val >> 8) & 0xff);
 }
+
+#if TILES_PARALLEL
+static __inline void mem_put_le24(void *vmem, MEM_VALUE_T val) {
+    MAU_T *mem = (MAU_T *)vmem;
+
+    mem[0] = (MAU_T)((val >>  0) & 0xff);
+    mem[1] = (MAU_T)((val >>  8) & 0xff);
+    mem[2] = (MAU_T)((val >> 16) & 0xff);
+}
+#endif
 
 static __inline void mem_put_le32(void *vmem, MEM_VALUE_T val) {
     MAU_T *mem = (MAU_T *)vmem;

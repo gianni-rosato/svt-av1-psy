@@ -1961,6 +1961,23 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             pcs_ptr);
 
         // Post the results to the MD processes
+#if TILES_PARALLEL
+
+        uint16_t tg_count =
+            pcs_ptr->parent_pcs_ptr->tile_group_cols * pcs_ptr->parent_pcs_ptr->tile_group_rows;
+        for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
+            eb_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
+                                &enc_dec_tasks_wrapper_ptr);
+
+            enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
+            enc_dec_tasks_ptr->pcs_wrapper_ptr  = rate_control_results_ptr->pcs_wrapper_ptr;
+            enc_dec_tasks_ptr->input_type       = ENCDEC_TASKS_MDC_INPUT;
+            enc_dec_tasks_ptr->tile_group_index = tile_group_idx;
+
+            // Post the Full Results Object
+            eb_post_full_object(enc_dec_tasks_wrapper_ptr);
+        }
+#else
         eb_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
                             &enc_dec_tasks_wrapper_ptr);
 
@@ -1970,6 +1987,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         // Post the Full Results Object
         eb_post_full_object(enc_dec_tasks_wrapper_ptr);
+#endif
 
         // Release Rate Control Results
         eb_release_object(rate_control_results_wrapper_ptr);

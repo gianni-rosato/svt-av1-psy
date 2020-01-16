@@ -100,6 +100,12 @@ typedef struct SequenceControlSet {
     uint32_t picture_analysis_number_of_regions_per_width;
     uint32_t picture_analysis_number_of_regions_per_height;
 
+#if TILES_PARALLEL
+    // Tile Group
+    uint8_t tile_group_col_count_array[MAX_TEMPORAL_LAYERS];
+    uint8_t tile_group_row_count_array[MAX_TEMPORAL_LAYERS];
+#endif
+
     // Segments
     uint32_t me_segment_column_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t me_segment_row_count_array[MAX_TEMPORAL_LAYERS];

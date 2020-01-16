@@ -87,6 +87,12 @@ typedef struct EncDecContext {
     EbBool
             evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
     uint8_t md_skip_blk;
+
+#if TILES_PARALLEL
+    uint16_t tile_group_index;
+    uint16_t tile_index;
+    uint32_t coded_sb_count;
+#endif
 } EncDecContext;
 
 /**************************************
