@@ -614,6 +614,8 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
     do {
         const BlockGeom *blk_geom                              = get_blk_geom_mds(blk_idx);
         context_ptr->md_local_blk_unit[blk_idx].avail_blk_flag = EB_FALSE;
+        context_ptr->md_local_blk_unit[blk_idx].left_neighbor_partition = INVALID_NEIGHBOR_DATA;
+        context_ptr->md_local_blk_unit[blk_idx].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
         if (blk_geom->shape == PART_N) {
             context_ptr->md_blk_arr_nsq[blk_idx].split_flag         = EB_TRUE;
             context_ptr->md_blk_arr_nsq[blk_idx].part               = PARTITION_SPLIT;
@@ -629,6 +631,8 @@ void init_sq_non4_block(SequenceControlSet *scs_ptr, ModeDecisionContext *contex
     }
     for (uint32_t blk_idx = 0; blk_idx < scs_ptr->max_block_cnt; ++blk_idx) {
         context_ptr->md_local_blk_unit[blk_idx].avail_blk_flag = EB_FALSE;
+        context_ptr->md_local_blk_unit[blk_idx].left_neighbor_partition = INVALID_NEIGHBOR_DATA;
+        context_ptr->md_local_blk_unit[blk_idx].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
     }
 }
 static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
