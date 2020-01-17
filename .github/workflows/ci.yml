@@ -1,4 +1,4 @@
-name: svt-av1
+name: CI
 on: [push, pull_request]
 
 jobs:
@@ -117,3 +117,22 @@ jobs:
       with:
         name: svtav1-master
         path: ./svtav1-master.tar.gz
+
+  # Compile and run tests in shards with only one compiler
+  quicktest:
+    runs-on: ubuntu-18.04
+    env: { 'CC': 'gcc-9', 'CXX': 'g++-9' }
+    strategy:
+      matrix:
+        index: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
+    name: 'Tests (Ubuntu 18.04, GCC 9.x) Shard ${{ matrix.index }}'
+    steps:
+      - name: Install dependencies
+        run: sudo apt-get install -y nasm yasm cmake gcc-9 g++-9
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - name: Compile SVT-AV1 (Release, Tests)
+        run: ./Build/linux/build.sh release test
+      - name: Run unit tests shard
+        run: env GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Bin/Release/SvtAv1UnitTests
