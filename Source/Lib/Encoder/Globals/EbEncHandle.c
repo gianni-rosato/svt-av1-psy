@@ -3041,6 +3041,10 @@ EB_API EbErrorType eb_svt_enc_stream_header(
     EbBufferHeaderType        **output_stream_ptr)
 {
     EbErrorType              return_error = EB_ErrorNone;
+
+    if(!svt_enc_component)
+        return EB_ErrorBadParameter;
+
     EbEncHandle             *enc_handle  = (EbEncHandle*)svt_enc_component->p_component_private;
     SequenceControlSet      *scs_ptr = enc_handle->scs_instance_array[0]->scs_ptr;
     Bitstream                bitstream;

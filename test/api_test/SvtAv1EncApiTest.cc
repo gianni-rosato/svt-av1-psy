@@ -43,7 +43,8 @@ TEST(EncApiDeathTest, set_parameter_null_pointer) {
     EXPECT_EQ(EB_ErrorBadParameter,
               eb_init_handle(&context.enc_handle, nullptr, nullptr));
     // watch out, function down
-    ASSERT_DEATH(eb_svt_enc_set_parameter(context.enc_handle, nullptr), "");
+    EXPECT_EQ(EB_ErrorBadParameter,
+              eb_svt_enc_set_parameter(context.enc_handle, nullptr));
     // destory encoder handle
     EXPECT_EQ(EB_ErrorInvalidComponent, eb_deinit_handle(nullptr));
     SUCCEED();
@@ -85,7 +86,7 @@ TEST(EncApiTest, check_null_pointer) {
     // get stream header with null pointer
     EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_stream_header(nullptr, nullptr));
     // get end of sequence NAL with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_eos_nal(nullptr, nullptr));
+    //EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_eos_nal(nullptr, nullptr));
     // EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_send_picture(nullptr,
     // nullptr)); EXPECT_EQ(EB_ErrorBadParameter, eb_svt_get_packet(nullptr,
     // nullptr, 0)); EXPECT_EQ(EB_ErrorBadParameter, eb_svt_get_recon(nullptr,
