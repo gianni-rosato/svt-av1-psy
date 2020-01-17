@@ -11,7 +11,7 @@
 #include <immintrin.h>
 
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 static INLINE __m256i predict_unclipped(const __m256i *input, __m256i alpha_q12, __m256i alpha_sign,
                                         __m256i dc_q0) {

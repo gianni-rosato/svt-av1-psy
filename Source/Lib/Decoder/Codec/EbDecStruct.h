@@ -7,7 +7,8 @@
 #define EbDecStruct_h
 
 #include "EbPictureBufferDesc.h"
-#include "../../Encoder/Codec/EbPictureControlSet.h"
+//#include "../../Encoder/Codec/EbPictureControlSet.h"
+#include "EbBlockStructures.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbAv1Structs.h"

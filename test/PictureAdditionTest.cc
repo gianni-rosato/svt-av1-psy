@@ -36,8 +36,6 @@ using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {
 typedef enum { PRED_MIN, PRED_MAX, ALL_MIN, ALL_MAX, ALL_RANDOM } TestPattern;
-TestPattern TEST_PATTERNS[] = {
-    PRED_MIN, PRED_MAX, ALL_MIN, ALL_MAX, ALL_RANDOM};
 
 typedef std::tuple<uint32_t, uint32_t> AreaSize;
 

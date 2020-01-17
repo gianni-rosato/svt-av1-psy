@@ -5,7 +5,7 @@
 
 #include "EbDefinitions.h"
 #include "smmintrin.h"
-#include "aom_dsp_rtcd.h"
+
 void eb_av1_filter_intra_edge_sse4_1(uint8_t *p, int32_t sz, int32_t strength) {
     if (!strength) return;
 

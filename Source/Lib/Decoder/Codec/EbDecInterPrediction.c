@@ -15,9 +15,6 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
-
-#include "../../Encoder/Codec/EbInterPrediction.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
@@ -29,10 +26,11 @@
 #include "EbDecUtils.h"
 #include "EbDecObmc.h"
 
-#include "../../Encoder/Codec/aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 #include "EbDecProcessFrame.h"
 #include "EbDecIntraPrediction.h"
+//#include "../../Encoder/Codec/EbRestoration.h"
 
 static INLINE void dec_clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
                                 int32_t max_row) {

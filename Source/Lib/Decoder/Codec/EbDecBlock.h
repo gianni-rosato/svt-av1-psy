@@ -6,7 +6,6 @@
 #ifndef EbDecBlock_h
 #define EbDecBlock_h
 
-#include "../../Encoder/Codec/EbCodingUnit.h"
 #include "EbDefinitions.h"
 #include "../../Encoder/Codec/EbRestoration.h"
 

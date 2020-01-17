@@ -199,20 +199,6 @@ typedef void (*EB_INTRA_ANG_16BIT_TYPE)(
     const EbBool skip, int32_t intra_pred_angle);
 
 
-typedef struct CflCtx {
-    // Q3 reconstructed luma pixels (only Q2 is required, but Q3 is used to avoid
-    // shifts)
-    EB_ALIGN(64) int16_t recon_buf_q3[CFL_BUF_SQUARE];
-
-    // Height and width currently used in the CfL prediction buffer.
-    int32_t buf_height, buf_width;
-
-    int32_t are_parameters_computed;
-
-    // Chroma subsampling
-    int32_t subsampling_x, subsampling_y;
-} CflCtx;
-
 extern void cfl_luma_subsampling_420_lbd_c(const uint8_t *input, // AMIR-> Changed to 8 bit
                                            int32_t input_stride, int16_t *output_q3, int32_t width,
                                            int32_t height);
@@ -221,13 +207,7 @@ extern void cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_
 extern void eb_subtract_average_c(int16_t *pred_buf_q3, int32_t width, int32_t height,
                                   int32_t round_offset, int32_t num_pel_log2);
 
-#define ROUND_POWER_OF_TWO_SIGNED(value, n) \
-    (((value) < 0) ? -ROUND_POWER_OF_TWO(-(value), (n)) : ROUND_POWER_OF_TWO((value), (n)))
 
-static INLINE int32_t get_scaled_luma_q0(int32_t alpha_q3, int16_t pred_buf_q3) {
-    int32_t scaled_luma_q6 = alpha_q3 * pred_buf_q3;
-    return ROUND_POWER_OF_TWO_SIGNED(scaled_luma_q6, 6);
-}
 
 //CFL_PREDICT_FN(c, lbd)
 

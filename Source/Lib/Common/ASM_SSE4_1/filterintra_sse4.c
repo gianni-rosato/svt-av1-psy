@@ -10,7 +10,7 @@
  */
 
 #include <smmintrin.h>
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "synonyms.h"
 
 extern const int8_t eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8][8];

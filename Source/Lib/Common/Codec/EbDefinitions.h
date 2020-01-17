@@ -884,6 +884,8 @@ typedef enum ATTRIBUTE_PACKED {
     INTRA_MODE_4x4
 } PredictionMode;
 
+#define MAX_UPSAMPLE_SZ 16
+
 // TODO(ltrudeau) Do we really want to pack this?
 // TODO(ltrudeau) Do we match with PredictionMode?
 typedef enum ATTRIBUTE_PACKED {

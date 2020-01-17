@@ -16,7 +16,7 @@
 #include "EbDecHandle.h"
 
 #include "EbDecParseHelper.h"
-#include "../../Encoder/Codec/EbCommonUtils.h"
+#include "EbCommonUtils.h"
 
 #include "EbDecInverseQuantize.h"
 #include "EbDecProcessFrame.h"
@@ -27,7 +27,8 @@
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
 
-#include "../../Encoder/Codec/EbTransforms.h"
+#include "EbInvTransforms.h"
+
 #include "EbDecLF.h"
 #include "EbDecPicMgr.h"
 

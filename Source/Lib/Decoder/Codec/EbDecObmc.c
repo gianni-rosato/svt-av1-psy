@@ -14,8 +14,7 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#include "../../Encoder/Codec/EbCodingUnit.h"
-#include "../../Encoder/Codec/EbInterPrediction.h"
+#include <stdlib.h>
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
@@ -25,7 +24,7 @@
 #include "EbDecNbr.h"
 #include "EbDecUtils.h"
 #include "EbDecInterPrediction.h"
-#include "../../Encoder/Codec/aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "EbLog.h"
 
 //This function is present in encoder also, but encoder structures & decoder structures are different.

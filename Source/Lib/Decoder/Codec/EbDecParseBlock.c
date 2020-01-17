@@ -23,7 +23,7 @@
 #include "EbObuParse.h"
 
 #include "EbDecParseHelper.h"
-#include "../../Encoder/Codec/EbTransforms.h"
+#include "EbInvTransforms.h"
 
 #include "EbDecNbr.h"
 #include "EbDecPicMgr.h"
@@ -32,7 +32,8 @@
 #include "EbDecParseInterBlock.h"
 #include "EbDecProcessFrame.h"
 #include "../../Encoder/Codec/EbEntropyCoding.h"
-#include "../../Encoder/Codec/EbFullLoop.h"
+#include "EbCommonUtils.h"
+#include "EbCoefficients.h"
 
 #include "EbLog.h"
 

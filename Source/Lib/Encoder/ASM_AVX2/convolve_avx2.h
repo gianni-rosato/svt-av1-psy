@@ -2765,11 +2765,6 @@ static INLINE __m256i highbd_comp_avg(const __m256i *const data_ref_0,
     }
     return res;
 }
-static INLINE __m256i yy_loadu2_128(const void *hi, const void *lo) {
-    __m128i mhi = _mm_loadu_si128((__m128i *)(hi));
-    __m128i mlo = _mm_loadu_si128((__m128i *)(lo));
-    return yy_set_m128i(mhi, mlo);
-}
 
 static INLINE __m256i highbd_convolve_rounding(const __m256i *const res_unsigned,
                                                const __m256i *const offset_const,

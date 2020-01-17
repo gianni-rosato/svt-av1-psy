@@ -66,10 +66,6 @@ extern "C" {
 #define NEIGHBOR_ARRAY_TOTAL_COUNT 5
 #define AOM_QM_BITS 5
 
-static const int32_t tx_size_2d[TX_SIZES_ALL + 1] = {
-    16, 64, 256, 1024, 4096, 32, 32, 128, 128, 512, 512, 2048, 2048, 64, 64, 256, 256, 1024, 1024,
-};
-
 typedef struct MacroblockPlane {
     // Quantizer setings
     // These are used/accessed only in the quantization process

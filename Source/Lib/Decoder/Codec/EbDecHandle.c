@@ -32,6 +32,7 @@
 #endif
 
 #include "../../Encoder/Codec/aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 #include "EbLog.h"
 
@@ -475,6 +476,7 @@ eb_init_decoder(EbComponentType *svt_dec_component) {
     dec_handle_ptr->show_frame          = 0;
     dec_handle_ptr->showable_frame      = 0;
 
+    setup_common_rtcd_internal(cpu_flags);
     setup_rtcd_internal(cpu_flags);
     asm_set_convolve_asm_table();
 

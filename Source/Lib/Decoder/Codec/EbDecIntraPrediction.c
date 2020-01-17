@@ -16,15 +16,13 @@
 
 #include <string.h>
 
-#include "../../Encoder/Codec/EbIntraPrediction.h"
-#include "../../Encoder/Codec/EbCodingUnit.h"
-#include "../../Encoder/Codec/aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
 #include "EbDecParseHelper.h"
 #include "EbDecProcessFrame.h"
-#include "../../Encoder/Codec/EbCommonUtils.h"
+#include "EbCommonUtils.h"
 
 /* Avoid 12-bit output mismatch by intra pred intrinsic kernel */
 void dec_init_intra_predictors_12b_internal(void) {

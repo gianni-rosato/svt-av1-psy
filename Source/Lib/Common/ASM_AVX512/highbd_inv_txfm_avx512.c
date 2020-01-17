@@ -9,8 +9,8 @@
 
 #include <assert.h>
 #include <immintrin.h>
-#include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
+#include "common_dsp_rtcd.h"
+#include "EbInvTransforms.h"
 #include "synonyms_avx512.h"
 
 extern const int8_t *eb_inv_txfm_shift_ls[];

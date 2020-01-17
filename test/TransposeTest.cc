@@ -187,13 +187,6 @@ static void transpose_xbit_wxh_c(uint32_t width, uint32_t height,
  * functions have no address, can not be passed as
  * function pointer.
  */
-static __m128i m128_pack(const __m128i *p) {
-    return _mm_loadu_si128(p);
-}
-
-static void m128_unpack(__m128i *p, __m128i b) {
-    _mm_storeu_si128(p, b);
-}
 
 static __m256i m256_pack(const __m256i *p) {
     return _mm256_loadu_si256(p);

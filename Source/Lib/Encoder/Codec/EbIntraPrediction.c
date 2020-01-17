@@ -182,8 +182,6 @@ int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int3
     return strength;
 }
 
-#define MAX_UPSAMPLE_SZ 16
-
 const uint16_t eb_dr_intra_derivative[90] = {
     // More evenly spread out angles and limited to 10-bit
     // Values that are 0 will never be used
@@ -416,46 +414,7 @@ void eb_subtract_average_c(
 
 CFL_SUB_AVG_FN(c)
 
-void eb_cfl_predict_lbd_c(
-    const int16_t *pred_buf_q3,
-    uint8_t *pred,// AMIR ADDED
-    int32_t pred_stride,
-    uint8_t *dst,// AMIR changed to 8 bit
-    int32_t dst_stride,
-    int32_t alpha_q3,
-    int32_t bit_depth,
-    int32_t width,
-    int32_t height) {
-    for (int32_t j = 0; j < height; j++) {
-        for (int32_t i = 0; i < width; i++) {
-            dst[i] = (uint8_t)clip_pixel_highbd(
-                get_scaled_luma_q0(alpha_q3, pred_buf_q3[i]) + (int16_t)pred[i], bit_depth);
-        }
-        dst += dst_stride;
-        pred += pred_stride;
-        pred_buf_q3 += CFL_BUF_LINE;
-    }
-}
-void eb_cfl_predict_hbd_c(
-    const int16_t *pred_buf_q3,
-    uint16_t *pred,// AMIR ADDED
-    int32_t pred_stride,
-    uint16_t *dst,// AMIR changed to 8 bit
-    int32_t dst_stride,
-    int32_t alpha_q3,
-    int32_t bit_depth,
-    int32_t width,
-    int32_t height) {
-    for (int32_t j = 0; j < height; j++) {
-        for (int32_t i = 0; i < width; i++) {
-            dst[i] = clip_pixel_highbd(
-                get_scaled_luma_q0(alpha_q3, pred_buf_q3[i]) + (int16_t)pred[i], bit_depth);
-        }
-        dst += dst_stride;
-        pred += pred_stride;
-        pred_buf_q3 += CFL_BUF_LINE;
-    }
-}
+
 
 const uint8_t extend_modes[INTRA_MODES] = {
     NEED_ABOVE | NEED_LEFT,                   // DC
@@ -2467,41 +2426,6 @@ void eb_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     }
 }
 
-// Directional prediction, zone 3: 180 < angle < 270
-void eb_av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int32_t bw,
-    int32_t bh, const uint16_t *above,
-    const uint16_t *left, int32_t upsample_left,
-    int32_t dx, int32_t dy, int32_t bd) {
-    int32_t r, c, y, base, shift, val;
-
-    (void)above;
-    (void)dx;
-    (void)bd;
-    assert(dx == 1);
-    assert(dy > 0);
-
-    const int32_t max_base_y = (bw + bh - 1) << upsample_left;
-    const int32_t frac_bits = 6 - upsample_left;
-    const int32_t base_inc = 1 << upsample_left;
-    y = dy;
-    for (c = 0; c < bw; ++c, y += dy) {
-        base = y >> frac_bits;
-        shift = ((y << upsample_left) & 0x3F) >> 1;
-
-        for (r = 0; r < bh; ++r, base += base_inc) {
-            if (base < max_base_y) {
-                val = left[base] * (32 - shift) + left[base + 1] * shift;
-                val = ROUND_POWER_OF_TWO(val, 5);
-                dst[r * stride + c] = (uint16_t)clip_pixel_highbd(val, bd);
-            }
-            else {
-                for (; r < bh; ++r) dst[r * stride + c] = left[max_base_y];
-                break;
-            }
-        }
-    }
-}
-
 void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride,
     TxSize tx_size, const uint16_t *above,
     const uint16_t *left, int32_t upsample_above,
@@ -2563,50 +2487,6 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
     p_left[-1] = (uint16_t)s;
 }
 
-void eb_av1_upsample_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t bd) {
-    // interpolate half-sample positions
-    assert(sz <= MAX_UPSAMPLE_SZ);
-
-    uint16_t in[MAX_UPSAMPLE_SZ + 3];
-    // copy p[-1..(sz-1)] and extend first and last samples
-    in[0] = p[-1];
-    in[1] = p[-1];
-    for (int32_t i = 0; i < sz; i++)
-        in[i + 2] = p[i];
-    in[sz + 2] = p[sz - 1];
-
-    // interpolate half-sample edge positions
-    p[-2] = in[0];
-    for (int32_t i = 0; i < sz; i++) {
-        int32_t s = -in[i] + (9 * in[i + 1]) + (9 * in[i + 2]) - in[i + 3];
-        s = (s + 8) >> 4;
-        s = clip_pixel_highbd(s, bd);
-        p[2 * i - 1] = (uint16_t)s;
-        p[2 * i] = in[i + 2];
-    }
-}
-
-void eb_av1_upsample_intra_edge_c(uint8_t *p, int32_t sz) {
-    // interpolate half-sample positions
-    assert(sz <= MAX_UPSAMPLE_SZ);
-
-    uint8_t in[MAX_UPSAMPLE_SZ + 3];
-    // copy p[-1..(sz-1)] and extend first and last samples
-    in[0] = p[-1];
-    in[1] = p[-1];
-    for (int32_t i = 0; i < sz; i++)
-        in[i + 2] = p[i];
-    in[sz + 2] = p[sz - 1];
-
-    // interpolate half-sample edge positions
-    p[-2] = in[0];
-    for (int32_t i = 0; i < sz; i++) {
-        int32_t s = -in[i] + (9 * in[i + 1]) + (9 * in[i + 2]) - in[i + 3];
-        s = clip_pixel((s + 8) >> 4);
-        p[2 * i - 1] = (uint8_t)s;
-        p[2 * i] = in[i + 2];
-    }
-}
 /*static INLINE*/ BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
     int32_t subsampling_y) {
     BlockSize bs = bsize;
@@ -2658,108 +2538,7 @@ void eb_av1_upsample_intra_edge_c(uint8_t *p, int32_t sz) {
 
 ////////////########...........Recurssive intra prediction starting...........#########
 
-DECLARE_ALIGNED(16, const int8_t,
-                eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8][8]) = {
-  {
-      { -6, 10, 0, 0, 0, 12, 0, 0 },
-      { -5, 2, 10, 0, 0, 9, 0, 0 },
-      { -3, 1, 1, 10, 0, 7, 0, 0 },
-      { -3, 1, 1, 2, 10, 5, 0, 0 },
-      { -4, 6, 0, 0, 0, 2, 12, 0 },
-      { -3, 2, 6, 0, 0, 2, 9, 0 },
-      { -3, 2, 2, 6, 0, 2, 7, 0 },
-      { -3, 1, 2, 2, 6, 3, 5, 0 },
-  },
-  {
-      { -10, 16, 0, 0, 0, 10, 0, 0 },
-      { -6, 0, 16, 0, 0, 6, 0, 0 },
-      { -4, 0, 0, 16, 0, 4, 0, 0 },
-      { -2, 0, 0, 0, 16, 2, 0, 0 },
-      { -10, 16, 0, 0, 0, 0, 10, 0 },
-      { -6, 0, 16, 0, 0, 0, 6, 0 },
-      { -4, 0, 0, 16, 0, 0, 4, 0 },
-      { -2, 0, 0, 0, 16, 0, 2, 0 },
-  },
-  {
-      { -8, 8, 0, 0, 0, 16, 0, 0 },
-      { -8, 0, 8, 0, 0, 16, 0, 0 },
-      { -8, 0, 0, 8, 0, 16, 0, 0 },
-      { -8, 0, 0, 0, 8, 16, 0, 0 },
-      { -4, 4, 0, 0, 0, 0, 16, 0 },
-      { -4, 0, 4, 0, 0, 0, 16, 0 },
-      { -4, 0, 0, 4, 0, 0, 16, 0 },
-      { -4, 0, 0, 0, 4, 0, 16, 0 },
-  },
-  {
-      { -2, 8, 0, 0, 0, 10, 0, 0 },
-      { -1, 3, 8, 0, 0, 6, 0, 0 },
-      { -1, 2, 3, 8, 0, 4, 0, 0 },
-      { 0, 1, 2, 3, 8, 2, 0, 0 },
-      { -1, 4, 0, 0, 0, 3, 10, 0 },
-      { -1, 3, 4, 0, 0, 4, 6, 0 },
-      { -1, 2, 3, 4, 0, 4, 4, 0 },
-      { -1, 2, 2, 3, 4, 3, 3, 0 },
-  },
-  {
-      { -12, 14, 0, 0, 0, 14, 0, 0 },
-      { -10, 0, 14, 0, 0, 12, 0, 0 },
-      { -9, 0, 0, 14, 0, 11, 0, 0 },
-      { -8, 0, 0, 0, 14, 10, 0, 0 },
-      { -10, 12, 0, 0, 0, 0, 14, 0 },
-      { -9, 1, 12, 0, 0, 0, 12, 0 },
-      { -8, 0, 0, 12, 0, 1, 11, 0 },
-      { -7, 0, 0, 1, 12, 1, 9, 0 },
-  },
-};
 
-void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
-                                  TxSize tx_size,
-                                  const uint8_t *above,
-                                  const uint8_t *left, int32_t mode) {
-  int r, c;
-  uint8_t buffer[33][33];
-  const int bw = tx_size_wide[tx_size];
-  const int bh = tx_size_high[tx_size];
-
-  assert(bw <= 32 && bh <= 32);
-
-  // The initialization is just for silencing Jenkins static analysis warnings
-  for (r = 0; r < bh + 1; ++r)
-    memset(buffer[r], 0, (bw + 1) * sizeof(buffer[0][0]));
-
-  for (r = 0; r < bh; ++r) buffer[r + 1][0] = left[r];
-  memcpy(buffer[0], &above[-1], (bw + 1) * sizeof(uint8_t));
-
-  for (r = 1; r < bh + 1; r += 2)
-    for (c = 1; c < bw + 1; c += 4) {
-      const uint8_t p0 = buffer[r - 1][c - 1];
-      const uint8_t p1 = buffer[r - 1][c];
-      const uint8_t p2 = buffer[r - 1][c + 1];
-      const uint8_t p3 = buffer[r - 1][c + 2];
-      const uint8_t p4 = buffer[r - 1][c + 3];
-      const uint8_t p5 = buffer[r][c - 1];
-      const uint8_t p6 = buffer[r + 1][c - 1];
-      for (int k = 0; k < 8; ++k) {
-        int r_offset = k >> 2;
-        int c_offset = k & 0x03;
-        buffer[r + r_offset][c + c_offset] =
-            clip_pixel(ROUND_POWER_OF_TWO_SIGNED(
-                eb_av1_filter_intra_taps[mode][k][0] * p0 +
-                    eb_av1_filter_intra_taps[mode][k][1] * p1 +
-                    eb_av1_filter_intra_taps[mode][k][2] * p2 +
-                    eb_av1_filter_intra_taps[mode][k][3] * p3 +
-                    eb_av1_filter_intra_taps[mode][k][4] * p4 +
-                    eb_av1_filter_intra_taps[mode][k][5] * p5 +
-                    eb_av1_filter_intra_taps[mode][k][6] * p6,
-                FILTER_INTRA_SCALE_BITS));
-      }
-    }
-
-  for (r = 0; r < bh; ++r) {
-    memcpy(dst, &buffer[r + 1][1], bw * sizeof(uint8_t));
-    dst += stride;
-  }
-}
 
  void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
                                           TxSize tx_size,
@@ -3219,6 +2998,9 @@ void eb_av1_predict_intra_block(
     MacroBlockD xd_s;
     MacroBlockD *xd = &xd_s;
 
+    xd_s.chroma_left_mbmi = 0;
+    xd_s.chroma_above_mbmi = 0;
+
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
 
@@ -3450,6 +3232,9 @@ void eb_av1_predict_intra_block_16bit(
     (void)use_palette;
     MacroBlockD xd_s;
     MacroBlockD *xd = &xd_s;
+
+    xd_s.chroma_left_mbmi = 0;
+    xd_s.chroma_above_mbmi = 0;
 
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;

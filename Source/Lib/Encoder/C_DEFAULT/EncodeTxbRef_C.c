@@ -11,6 +11,8 @@
 
 #include "EncodeTxbRef_C.h"
 #include "EbCommonUtils.h"
+#include "EbCoefficients.h"
+/*
 const int8_t av1_nz_map_ctx_offset_4x4[16] = {
     0,
     1,
@@ -324,6 +326,7 @@ static const uint8_t clip_max3[256] = {
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
 
+
 static AOM_FORCE_INLINE int get_nz_mag(const uint8_t* const levels, const int bwl,
                                        const TxClass tx_class) {
     int mag;
@@ -348,12 +351,13 @@ static AOM_FORCE_INLINE int get_nz_mag(const uint8_t* const levels, const int bw
 
     return mag;
 }
+*/
 
 #define SIG_COEF_CONTEXTS_2D 26
 #define NZ_MAP_CTX_0 SIG_COEF_CONTEXTS_2D
 #define NZ_MAP_CTX_5 (NZ_MAP_CTX_0 + 5)
 #define NZ_MAP_CTX_10 (NZ_MAP_CTX_0 + 10)
-
+/*
 static const int nz_map_ctx_offset_1d[32] = {
     NZ_MAP_CTX_0,  NZ_MAP_CTX_5,  NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
     NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10, NZ_MAP_CTX_10,
@@ -399,7 +403,7 @@ static AOM_FORCE_INLINE int get_nz_map_ctx_from_stats(const int stats,
     }
     return 0;
 }
-
+*/
 static INLINE int get_nz_map_ctx(const uint8_t* const levels, const int coeff_idx, const int bwl,
                                  const int height, const int scan_idx, const int is_eob,
                                  const TxSize tx_size, const TxClass tx_class) {

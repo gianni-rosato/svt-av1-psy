@@ -30,6 +30,7 @@
 #include "partition_model_weights.h"
 #include "ml.h"
 #include "EbLog.h"
+#include "EbCommonUtils.h"
 
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                                      uint32_t *         fast_candidate_total_count,

@@ -18,10 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "EbDecCdef.h"
-//#include "EbDecInverseQuantize.h"
 #include "EbDecUtils.h"
-#include "../../Encoder/Codec/EbCdef.h"
 #include "EbDecNbr.h"
 #include "EbUtility.h"
 

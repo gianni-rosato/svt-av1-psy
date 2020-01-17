@@ -1615,36 +1615,6 @@ void av1_init_wedge_masks() {
     init_wedge_masks();
 }
 
-static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base,
-                             const CONV_BUF_TYPE *src0, int src0_stride, const CONV_BUF_TYPE *src1,
-                             int src1_stride, int h, int w, ConvolveParams *conv_params, int bd) {
-    int round = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1 + (bd - 8);
-    int i, j, m, diff;
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
-            diff            = abs(src0[i * src0_stride + j] - src1[i * src1_stride + j]);
-            diff            = ROUND_POWER_OF_TWO(diff, round);
-            m               = clamp(mask_base + (diff / DIFF_FACTOR), 0, AOM_BLEND_A64_MAX_ALPHA);
-            mask[i * w + j] = which_inverse ? AOM_BLEND_A64_MAX_ALPHA - m : m;
-        }
-    }
-}
-
-void av1_build_compound_diffwtd_mask_d16_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                           const CONV_BUF_TYPE *src0, int src0_stride,
-                                           const CONV_BUF_TYPE *src1, int src1_stride, int h, int w,
-                                           ConvolveParams *conv_params, int bd) {
-    switch (mask_type) {
-    case DIFFWTD_38:
-        diffwtd_mask_d16(mask, 0, 38, src0, src0_stride, src1, src1_stride, h, w, conv_params, bd);
-        break;
-    case DIFFWTD_38_INV:
-        diffwtd_mask_d16(mask, 1, 38, src0, src0_stride, src1, src1_stride, h, w, conv_params, bd);
-        break;
-    default: assert(0);
-    }
-}
-
 int is_masked_compound_type(COMPOUND_TYPE type);
 
 /* clang-format off */
@@ -3994,31 +3964,6 @@ void eb_aom_highbd_blend_a64_hmask_c(uint16_t *dst, uint32_t dst_stride, const u
         for (j = 0; j < w; ++j) {
             dst[i * dst_stride + j] =
                 AOM_BLEND_A64(mask[j], src0[i * src0_stride + j], src1[i * src1_stride + j]);
-        }
-    }
-}
-void eb_aom_highbd_blend_a64_vmask_c(uint16_t *dst, uint32_t dst_stride, const uint16_t *src0,
-                                     uint32_t src0_stride, const uint16_t *src1,
-                                     uint32_t src1_stride, const uint8_t *mask, int w, int h,
-                                     int bd) {
-    (void)bd;
-    int i, j;
-
-    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
-    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
-
-    assert(h >= 1);
-    assert(w >= 1);
-    assert(IS_POWER_OF_TWO(h));
-    assert(IS_POWER_OF_TWO(w));
-
-    assert(bd == 8 || bd == 10 || bd == 12);
-
-    for (i = 0; i < h; ++i) {
-        const int m = mask[i];
-        for (j = 0; j < w; ++j) {
-            dst[i * dst_stride + j] =
-                AOM_BLEND_A64(m, src0[i * src0_stride + j], src1[i * src1_stride + j]);
         }
     }
 }

@@ -18,7 +18,7 @@
 #include "smmintrin.h"
 #include "EbDefinitions.h"
 #include "EbBlend_sse4.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // No sub-sampling

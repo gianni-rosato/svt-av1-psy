@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include "EbDecUtils.h"
 #include "EbDefinitions.h"
-#include "../../Encoder/Codec/EbEntropyCoding.h"
+#include "EbMcp.h"
 #include "EbDecBlock.h"
 #include "EbDecMemInit.h"
 

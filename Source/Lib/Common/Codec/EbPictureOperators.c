@@ -20,7 +20,7 @@
 
 #include "EbPictureOperators.h"
 #include "EbPackUnPack.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "EbUtility.h"
 
 #define VARIANCE_PRECISION 16

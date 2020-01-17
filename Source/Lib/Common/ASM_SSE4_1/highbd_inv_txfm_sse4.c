@@ -18,10 +18,10 @@
 #include <smmintrin.h> /* SSE4.1 */
 
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 #include "highbd_txfm_utility_sse4.h"
-#include "EbTransforms.h"
+#include "EbInvTransforms.h"
 
 typedef enum ATTRIBUTE_PACKED {
     IDCT_1D,

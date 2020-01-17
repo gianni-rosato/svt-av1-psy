@@ -10,7 +10,6 @@
 #include "EbCabacContextModel.h" //for ENTROPY_CONTEXT
 #include "EbDecBitstream.h"
 #include "EbDecBitReader.h"
-#include "../../Encoder/Codec/EbCodingUnit.h"
 #include "../../Encoder/Codec/EbEntropyCoding.h"
 
 #define HEADER_DUMP 0

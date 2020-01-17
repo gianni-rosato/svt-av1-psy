@@ -18,11 +18,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "../../Encoder/Codec/EbCdef.h"
 #include "EbDecRestoration.h"
 #include "EbDecUtils.h"
 #include "EbDecMemInit.h"
-#include "../../Encoder/Codec/EbInterPrediction.h"
+
 
 void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                 uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);

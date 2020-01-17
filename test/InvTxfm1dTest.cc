@@ -37,7 +37,6 @@
 #include "TxfmCommon.h"
 
 using svt_av1_test_tool::SVTRandom;
-using svt_av1_test_tool::round_shift;
 namespace {
 
 using InvTxfm1dParam = std::tuple<TxfmType, int>;
@@ -109,7 +108,7 @@ class AV1InvTxfm1dTest : public ::testing::TestWithParam<InvTxfm1dParam> {
             for (int ni = 0; ni < txfm_size_; ++ni) {
                 EXPECT_LE(
                     abs(input_[ni] -
-                        round_shift(inv_output_[ni], get_msb(txfm_size_) - 1)),
+                    svt_av1_test_tool::round_shift(inv_output_[ni], get_msb(txfm_size_) - 1)),
                     max_error_)
                     << "inv txfm type " << txfm_type_ << " size " << txfm_size_
                     << " loop: " << ti;

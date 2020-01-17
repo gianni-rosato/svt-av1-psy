@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#include "../../Encoder/Codec/EbIntraPrediction.h"
+#include "EbIntraCommon.h"
 #include "EbDecObmc.h"
 
 typedef struct DecModCtxt {

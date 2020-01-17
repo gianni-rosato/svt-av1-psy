@@ -30,6 +30,6 @@ file(GLOB asm_includes
     "x64inc.asm"
     "x86inc.asm")
 
-list(REMOVE_ITEM all_files ${asm_includes})
+#list(REMOVE_ITEM all_files ${asm_includes})
 
 add_library(COMMON_ASM_SSE2 OBJECT ${all_files})

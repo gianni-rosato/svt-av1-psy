@@ -3,7 +3,7 @@
 ; SPDX - License - Identifier: BSD - 2 - Clause - Patent
 ;
 
-%include "x64inc.asm"
+%include "../../Common/ASM_SSE2/x64inc.asm"
 
 section .text
 

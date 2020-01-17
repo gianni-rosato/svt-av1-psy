@@ -6,7 +6,6 @@
 #ifndef EBMCP_H
 #define EBMCP_H
 
-#include "EbMotionEstimationContext.h"
 
 #ifdef __cplusplus
 extern "C" {

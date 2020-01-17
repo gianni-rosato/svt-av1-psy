@@ -26,9 +26,10 @@
 #include "EbReferenceObject.h"
 #include "EbModeDecisionProcess.h"
 #include "av1me.h"
-#include "EbCommonUtils.h"
 #include "EbQMatrices.h"
 #include "EbLog.h"
+#include "EbCoefficients.h"
+#include "EbCommonUtils.h"
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {

@@ -9,7 +9,9 @@
 include_directories(../../../API
         ../../Encoder/Codec
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/)
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
+     )
 
 set(flags_to_test -msse2)
 

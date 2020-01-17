@@ -24,6 +24,9 @@ extern "C" {
 #include "EbDecStruct.h"
 #include "EbDecBlock.h"
 #include "EbDecProcess.h"
+#include "EbCabacContextModel.h"
+
+#include "../../Encoder/Codec/EbPictureControlSet.h"
 
 /* Maximum number of frames in parallel */
 #define DEC_MAX_NUM_FRM_PRLL 1

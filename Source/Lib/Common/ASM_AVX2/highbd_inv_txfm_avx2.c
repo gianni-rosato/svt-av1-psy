@@ -11,8 +11,8 @@
 #include <assert.h>
 #include <immintrin.h>
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
-#include "EbTransforms.h"
+#include "common_dsp_rtcd.h"
+#include "EbInvTransforms.h"
 #include "av1_inv_txfm_ssse3.h"
 #include "txfm_common_avx2.h"
 

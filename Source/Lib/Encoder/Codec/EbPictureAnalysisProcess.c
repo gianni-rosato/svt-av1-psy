@@ -21,6 +21,7 @@
 #include "EbReferenceObject.h"
 #include "EbComputeMean_SSE2.h"
 #include "EbUtility.h"
+#include "EbMotionEstimationContext.h"
 
 #define VARIANCE_PRECISION 16
 #define SB_LOW_VAR_TH 5
