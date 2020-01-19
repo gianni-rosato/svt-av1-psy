@@ -56,11 +56,12 @@ extern "C" void ext_eigth_sad_calculation_nsq_c(
     uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8],
     uint32_t p_sad32x32[4][8], uint32_t *p_best_sad_64x32,
     uint32_t *p_best_mv64x32, uint32_t *p_best_sad_32x16,
-    uint32_t *p_best_mv32x16, uint32_t *p_best_sad_16x8, uint32_t *p_best_mv16x8,
-    uint32_t *p_best_sad_32x64, uint32_t *p_best_mv32x64,
-    uint32_t *p_best_sad_16x32, uint32_t *p_best_mv16x32,
-    uint32_t *p_best_sad_8x16, uint32_t *p_best_mv8x16, uint32_t *p_best_sad_32x8,
-    uint32_t *p_best_mv32x8, uint32_t *p_best_sad_8x32, uint32_t *p_best_mv8x32,
+    uint32_t *p_best_mv32x16, uint32_t *p_best_sad_16x8,
+    uint32_t *p_best_mv16x8, uint32_t *p_best_sad_32x64,
+    uint32_t *p_best_mv32x64, uint32_t *p_best_sad_16x32,
+    uint32_t *p_best_mv16x32, uint32_t *p_best_sad_8x16,
+    uint32_t *p_best_mv8x16, uint32_t *p_best_sad_32x8, uint32_t *p_best_mv32x8,
+    uint32_t *p_best_sad_8x32, uint32_t *p_best_mv8x32,
     uint32_t *p_best_sad_64x16, uint32_t *p_best_mv64x16,
     uint32_t *p_best_sad_16x64, uint32_t *p_best_mv16x64, uint32_t mv);
 extern "C" void ext_eight_sad_calculation_32x32_64x64_c(
@@ -255,6 +256,14 @@ class SADTestBase : public ::testing::Test {
             fill_buf_with_value(&sad16x16_32b[0][0], 16 * 8, 0);
             break;
         }
+        case BUF_SMALL: {
+            const int32_t mask = 256;
+            SVTRandom rnd_small(0, mask);
+            for (int i = 0; i < 16; i++)
+                for (int j = 0; j < 8; j++)
+                    sad16x16_32b[i][j] = rnd_small.random();
+            break;
+        }
         case BUF_RANDOM: {
             for (int i = 0; i < 16; i++)
                 for (int j = 0; j < 8; j++)
@@ -279,6 +288,22 @@ class SADTestBase : public ::testing::Test {
             fill_buf_with_value(&sad8x8[0][0], 64 * 8, 0);
             fill_buf_with_value(&sad16x16_32b[0][0], 16 * 8, 0);
             fill_buf_with_value(&sad32x32[0][0], 4 * 8, 0);
+            break;
+        }
+        case BUF_SMALL: {
+            const int32_t mask = 256;
+            SVTRandom rnd_small(0, mask);
+            for (int i = 0; i < 64; i++)
+                for (int j = 0; j < 8; j++)
+                    sad8x8[i][j] = rnd_small.random();
+
+            for (int i = 0; i < 16; i++)
+                for (int j = 0; j < 8; j++)
+                    sad16x16_32b[i][j] = rnd_small.random();
+
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 8; j++)
+                    sad32x32[i][j] = rnd_small.random();
             break;
         }
         case BUF_RANDOM: {
@@ -374,7 +399,6 @@ class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param>,
 
   protected:
     void check_sad() {
-
         uint32_t ref_sad = 0;
         uint32_t non_avx2_sad = 0;
         uint32_t avx2_sad = 0;
@@ -382,25 +406,21 @@ class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param>,
         prepare_data();
 
         ref_sad = reference_sad();
-        non_avx2_sad = nxm_sad_kernel_helper_c(
-                                         src_aligned_,
-                                         src_stride_,
-                                         ref1_aligned_,
-                                         ref1_stride_,
-                                         height_,
-                                         width_);
-
-        avx2_sad = nxm_sad_kernel_sub_sampled_helper_avx2(
-                                 src_aligned_,
-                                 src_stride_,
-                                 ref1_aligned_,
-                                 ref1_stride_,
-                                 height_,
-                                 width_);
-
+        non_avx2_sad = nxm_sad_kernel_helper_c(src_aligned_,
+                                               src_stride_,
+                                               ref1_aligned_,
+                                               ref1_stride_,
+                                               height_,
+                                               width_);
+        avx2_sad = nxm_sad_kernel_sub_sampled_helper_avx2(src_aligned_,
+                                                          src_stride_,
+                                                          ref1_aligned_,
+                                                          ref1_stride_,
+                                                          height_,
+                                                          width_);
         EXPECT_EQ(non_avx2_sad, avx2_sad)
-            << "compare non_avx2 and non_avx2 error";
-
+            << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
+            << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
 
@@ -454,23 +474,21 @@ class SADTest : public ::testing::WithParamInterface<Testsad_Param>,
         prepare_data();
 
         ref_sad = reference_sad();
-
         non_avx2_sad = nxm_sad_kernel_helper_c(src_aligned_,
-                                        src_stride_,
-                                        ref1_aligned_,
-                                        ref1_stride_,
-                                        height_,
-                                        width_);
-
+                                               src_stride_,
+                                               ref1_aligned_,
+                                               ref1_stride_,
+                                               height_,
+                                               width_);
         avx2_sad = nxm_sad_kernel_helper_avx2(src_aligned_,
-                                        src_stride_,
-                                        ref1_aligned_,
-                                        ref1_stride_,
-                                        height_,
-                                        width_);
-
+                                              src_stride_,
+                                              ref1_aligned_,
+                                              ref1_stride_,
+                                              height_,
+                                              width_);
         EXPECT_EQ(non_avx2_sad, avx2_sad)
-                << "compare non_avx2 and non_avx2 error";
+            << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
+            << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
 
@@ -523,26 +541,24 @@ class SADAvgTest : public ::testing::WithParamInterface<Testsad_Param>,
 
         ref_sad = reference_sad_avg();
         non_avx2_sad = nxm_sad_avg_kernel_helper_c(src_aligned_,
-                                        src_stride_,
-                                        ref1_aligned_,
-                                        ref1_stride_,
-                                        ref2_aligned_,
-                                        ref2_stride_,
-                                        height_,
-                                        width_);
-
+                                                   src_stride_,
+                                                   ref1_aligned_,
+                                                   ref1_stride_,
+                                                   ref2_aligned_,
+                                                   ref2_stride_,
+                                                   height_,
+                                                   width_);
         avx2_sad = nxm_sad_avg_kernel_helper_avx2(src_aligned_,
-                                 src_stride_,
-                                 ref1_aligned_,
-                                 ref1_stride_,
-                                 ref2_aligned_,
-                                 ref2_stride_,
-                                 height_,
-                                 width_);
-
+                                                  src_stride_,
+                                                  ref1_aligned_,
+                                                  ref1_stride_,
+                                                  ref2_aligned_,
+                                                  ref2_stride_,
+                                                  height_,
+                                                  width_);
         EXPECT_EQ(non_avx2_sad, avx2_sad)
-                << "compare non_avx2 and non_avx2 error";
-
+            << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
+            << avx2_sad << ") error, ref: " << ref_sad;
     }
 };
 
@@ -609,7 +625,8 @@ FuncPair TEST_HME_FUNC_PAIRS[] = {
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1_hme_l0_intrin),
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx2_hme_l0_intrin)};
 
-typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair> sad_LoopTestParam;
+typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair>
+    sad_LoopTestParam;
 
 /**
  * @brief Unit test for SAD loop (sparse, hme) functions include:
@@ -634,7 +651,7 @@ typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair> sad_LoopTestParam
  *
  */
 class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
-                    public SADTestBase {
+                     public SADTestBase {
   public:
     sad_LoopTest()
         : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),
@@ -770,15 +787,15 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
             << search_area_height_ << "]";
 
         eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
+                                           start_time_useconds,
+                                           middle_time_seconds,
+                                           middle_time_useconds,
+                                           &time_c);
         eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+                                           middle_time_useconds,
+                                           finish_time_seconds,
+                                           finish_time_useconds,
+                                           &time_o);
 
         printf("    sad_loop_kernel(%dx%d) search area[%dx%d]: %5.2fx)\n",
                width_,
@@ -870,7 +887,7 @@ typedef std::tuple<TestPattern, SADPattern> sad_CalTestParam;
  *
  */
 class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
-                        public SADTestBase {
+                         public SADTestBase {
   public:
     GetEightsad_Test()
         : SADTestBase(16, 16, TEST_GET_PARAM(0), TEST_GET_PARAM(1)) {
@@ -901,8 +918,8 @@ class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
                 sad16x16_1,
                 false);
 
-            for (int j = 0; j < (int) (sizeof(get_eight_sad_8_16_func_table) /
-                                    sizeof(*get_eight_sad_8_16_func_table));
+            for (int j = 0; j < (int)(sizeof(get_eight_sad_8_16_func_table) /
+                                      sizeof(*get_eight_sad_8_16_func_table));
                  j++) {
                 uint32_t best_sad8x8_2[4] = {BEST_SAD_MAX, 0, BEST_SAD_MAX, 0};
                 uint32_t best_mv8x8_2[4] = {
@@ -972,13 +989,13 @@ class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
 
         eb_start_time(&middle_time_seconds, &middle_time_useconds);
         eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
+                                           start_time_useconds,
+                                           middle_time_seconds,
+                                           middle_time_useconds,
+                                           &time_c);
 
-        for (int i = 0; i < (int) (sizeof(get_eight_sad_8_16_func_table) /
-                                sizeof(*get_eight_sad_8_16_func_table));
+        for (int i = 0; i < (int)(sizeof(get_eight_sad_8_16_func_table) /
+                                  sizeof(*get_eight_sad_8_16_func_table));
              i++) {
             uint32_t best_sad8x8_2[4] = {BEST_SAD_MAX, 0, BEST_SAD_MAX, 0};
             uint32_t best_mv8x8_2[4] = {
@@ -1018,10 +1035,10 @@ class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
                 << "compare sad16x16 error";
 
             eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                          middle_time_useconds,
-                                          finish_time_seconds,
-                                          finish_time_useconds,
-                                          &time_o);
+                                               middle_time_useconds,
+                                               finish_time_seconds,
+                                               finish_time_useconds,
+                                               &time_o);
 
             printf(
                 "get_eight_horizontal_search_point_results_8x8_16x16_pu(%d): "
@@ -1065,8 +1082,8 @@ class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
                 &best_mv64x64_1,
                 mv);
 
-            for (int j = 0; j < (int) (sizeof(get_eight_sad_32_64_func_table) /
-                                    sizeof(*get_eight_sad_32_64_func_table));
+            for (int j = 0; j < (int)(sizeof(get_eight_sad_32_64_func_table) /
+                                      sizeof(*get_eight_sad_32_64_func_table));
                  j++) {
                 memcpy(best_sad32x32_2, best_sad32x32, sizeof(best_sad32x32));
 
@@ -1128,13 +1145,13 @@ class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
 
         eb_start_time(&middle_time_seconds, &middle_time_useconds);
         eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
+                                           start_time_useconds,
+                                           middle_time_seconds,
+                                           middle_time_useconds,
+                                           &time_c);
 
-        for (int i = 0; i < (int) (sizeof(get_eight_sad_32_64_func_table) /
-                                sizeof(*get_eight_sad_32_64_func_table));
+        for (int i = 0; i < (int)(sizeof(get_eight_sad_32_64_func_table) /
+                                  sizeof(*get_eight_sad_32_64_func_table));
              i++) {
             uint32_t best_mv32x32_2[4] = {
                 0x00010002, 0x0003FFF4, 0xFFF70008, 0xFFF9FFF1};
@@ -1169,10 +1186,10 @@ class GetEightsad_Test : public ::testing::WithParamInterface<sad_CalTestParam>,
                 << "compare best_mv64x64 error";
 
             eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                          middle_time_useconds,
-                                          finish_time_seconds,
-                                          finish_time_useconds,
-                                          &time_o);
+                                               middle_time_useconds,
+                                               finish_time_seconds,
+                                               finish_time_useconds,
+                                               &time_o);
 
             printf(
                 "get_eight_horizontal_search_point_results_32x32_64x64_pu(%d): "
@@ -1870,8 +1887,8 @@ class SSDAvgTest : public ::testing::WithParamInterface<Testsad_Param>,
                                                            height_,
                                                            width_);
 
-        for (int i = 0; i < (int) (sizeof(combined_averaging_ssd_func_table) /
-                                sizeof(*combined_averaging_ssd_func_table));
+        for (int i = 0; i < (int)(sizeof(combined_averaging_ssd_func_table) /
+                                  sizeof(*combined_averaging_ssd_func_table));
              i++) {
             const uint32_t sum1_ssd =
                 combined_averaging_ssd_func_table[i](src_aligned_,
@@ -1915,13 +1932,13 @@ class SSDAvgTest : public ::testing::WithParamInterface<Testsad_Param>,
 
         eb_start_time(&middle_time_seconds, &middle_time_useconds);
         eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
+                                           start_time_useconds,
+                                           middle_time_seconds,
+                                           middle_time_useconds,
+                                           &time_c);
 
-        for (int i = 0; i < (int) (sizeof(combined_averaging_ssd_func_table) /
-                                sizeof(*combined_averaging_ssd_func_table));
+        for (int i = 0; i < (int)(sizeof(combined_averaging_ssd_func_table) /
+                                  sizeof(*combined_averaging_ssd_func_table));
              i++) {
             uint32_t sum1_ssd;
 
@@ -1940,10 +1957,10 @@ class SSDAvgTest : public ::testing::WithParamInterface<Testsad_Param>,
 
             eb_start_time(&finish_time_seconds, &finish_time_useconds);
             eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                          middle_time_useconds,
-                                          finish_time_seconds,
-                                          finish_time_useconds,
-                                          &time_o);
+                                               middle_time_useconds,
+                                               finish_time_seconds,
+                                               finish_time_useconds,
+                                               &time_o);
 
             EXPECT_EQ(sum0_ssd, sum1_ssd)
                 << "compare sum combined averaging ssd error"
@@ -2019,12 +2036,13 @@ INSTANTIATE_TEST_CASE_P(InitializeBuffer32, InitializeBuffer32,
                         ::testing::Combine(::testing::Values(2, 3, 4),
                                            ::testing::Values(1, 2, 3)));
 /**
- * @Brief Base class for SAD test. SADTestBasesad_16Bit handle test vector in memory,
- * provide SAD and SAD avg reference function
+ * @Brief Base class for SAD test. SADTestBasesad_16Bit handle test vector in
+ * memory, provide SAD and SAD avg reference function
  */
 class SADTestBase16bit : public ::testing::Test {
   public:
-    SADTestBase16bit(const int width, const int height, TestPattern test_pattern) {
+    SADTestBase16bit(const int width, const int height,
+                     TestPattern test_pattern) {
         width_ = width;
         height_ = height;
         src_stride_ = MAX_SB_SIZE;
@@ -2123,17 +2141,17 @@ class SADTestBase16bit : public ::testing::Test {
  * sad_16bit_kernel_avx2.
  *
  * Test cases:
- *  Width {4, 8, 16, 24, 32, 48, 64, 128} x height{ 4, 8, 16, 24, 32, 48, 64, 128)
- *  Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
+ *  Width {4, 8, 16, 24, 32, 48, 64, 128} x height{ 4, 8, 16, 24, 32, 48, 64,
+ * 128) Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
  *
  */
 class SADTestSubSample16bit
     : public ::testing::WithParamInterface<Testsad_Param>,
-                         public SADTestBase16bit {
+      public SADTestBase16bit {
   public:
     SADTestSubSample16bit()
         : SADTestBase16bit(std::get<0>(TEST_GET_PARAM(1)),
-                      std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0)) {
+                           std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0)) {
     }
 
   protected:
@@ -2156,12 +2174,13 @@ class SADTestSubSample16bit
                 src_, src_stride_, ref_, ref_stride_, height_, width_);
 
             EXPECT_EQ(sad_c, sad_avx2)
-                << "compare sad_16b_kernel_c and sad_16bit_kernel_avx2 error, repeat: " << i;
+                << "compare sad_16b_kernel_c and sad_16bit_kernel_avx2 error, "
+                   "repeat: "
+                << i;
         }
-
     }
 
-void RunSpeedTest() {
+    void RunSpeedTest() {
         uint32_t sad_c = 0;
         uint32_t sad_avx2 = 0;
 
@@ -2193,15 +2212,15 @@ void RunSpeedTest() {
             EXPECT_EQ(sad_c, sad_avx2) << area_width << "x" << area_height;
 
             eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                          start_time_useconds,
-                                          middle_time_seconds,
-                                          middle_time_useconds,
-                                          &time_c);
+                                               start_time_useconds,
+                                               middle_time_seconds,
+                                               middle_time_useconds,
+                                               &time_c);
             eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                          middle_time_useconds,
-                                          finish_time_seconds,
-                                          finish_time_useconds,
-                                          &time_o);
+                                               middle_time_useconds,
+                                               finish_time_seconds,
+                                               finish_time_useconds,
+                                               &time_o);
             printf("Average Nanoseconds per Function Call\n");
             printf("    sad_16b_kernel_c  (%dx%d) : %6.2f\n",
                    area_width,
