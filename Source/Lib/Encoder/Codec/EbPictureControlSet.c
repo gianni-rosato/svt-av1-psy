@@ -46,7 +46,7 @@ static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx,
     rst[2].restoration_unit_size = rst[1].restoration_unit_size;
 }
 
-void segmentation_map_dctor(EbPtr p) {
+static void segmentation_map_dctor(EbPtr p) {
     SegmentationNeighborMap *obj = (SegmentationNeighborMap *)p;
     EB_FREE_ARRAY(obj->data);
 }
@@ -357,7 +357,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     // Packetization process Bitstream
     EB_NEW(object_ptr->bitstream_ptr, bitstream_ctor, PACKETIZATION_PROCESS_BUFFER_SIZE);
 
-    if (return_error == EB_ErrorInsufficientResources) return EB_ErrorInsufficientResources;
     // Rate estimation entropy coder
     EB_NEW(
         object_ptr->coeff_est_entropy_coder_ptr, entropy_coder_ctor, SEGMENT_ENTROPY_BUFFER_SIZE);

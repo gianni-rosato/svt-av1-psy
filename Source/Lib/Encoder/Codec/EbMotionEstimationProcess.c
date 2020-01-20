@@ -454,7 +454,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     return return_error;
 };
 
-void motion_estimation_context_dctor(EbPtr p) {
+static void motion_estimation_context_dctor(EbPtr p) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)p;
     MotionEstimationContext_t *obj = (MotionEstimationContext_t *)thread_context_ptr->priv;
     EB_DELETE(obj->me_context_ptr);

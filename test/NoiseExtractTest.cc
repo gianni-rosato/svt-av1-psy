@@ -29,7 +29,7 @@ extern "C" {
 #include "EbPictureAnalysisProcess.h"
 }
 
-void eb_picture_buffer_desc_dctor(EbPtr p) {
+static void eb_picture_buffer_desc_dctor(EbPtr p) {
     EbPictureBufferDesc *obj = (EbPictureBufferDesc *)p;
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_y);

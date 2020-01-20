@@ -39,7 +39,6 @@ static void dlf_context_dctor(EbPtr p) {
  ******************************************************/
 EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHandle *enc_handle_ptr,
                              int index) {
-    EbErrorType               return_error = EB_ErrorNone;
     const SequenceControlSet *scs_ptr      = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
     EbBool        is_16bit     = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format = scs_ptr->static_config.encoder_color_format;
@@ -82,7 +81,7 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
                (EbPtr)&temp_lf_recon_desc_init_data);
     }
 
-    return return_error;
+    return EB_ErrorNone;
 }
 
 /******************************************************

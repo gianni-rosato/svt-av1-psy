@@ -1440,7 +1440,7 @@ EbErrorType eb_aom_denoise_and_model_alloc(AomDenoiseAndModel *ctx, int32_t bit_
     return EB_ErrorNone;
 }
 
-void denoise_and_model_dctor(EbPtr p) {
+static void denoise_and_model_dctor(EbPtr p) {
     AomDenoiseAndModel *obj = (AomDenoiseAndModel *)p;
 
     free(obj->flat_blocks);

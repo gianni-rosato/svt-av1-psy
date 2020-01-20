@@ -1620,7 +1620,6 @@ static void bitstream_dctor(EbPtr p) {
 }
 
 EbErrorType bitstream_ctor(Bitstream *bitstream_ptr, uint32_t buffer_size) {
-    EbErrorType          return_error = EB_ErrorNone;
     OutputBitstreamUnit *output_bitstream_ptr;
 
     bitstream_ptr->dctor = bitstream_dctor;
@@ -1628,7 +1627,7 @@ EbErrorType bitstream_ctor(Bitstream *bitstream_ptr, uint32_t buffer_size) {
     EB_NEW(output_bitstream_ptr, output_bitstream_unit_ctor, buffer_size);
     bitstream_ptr->output_bitstream_ptr = output_bitstream_ptr;
 
-    return return_error;
+    return EB_ErrorNone;
 }
 
 static void entropy_coder_dctor(EbPtr p) {
@@ -1646,7 +1645,6 @@ static void entropy_coder_dctor(EbPtr p) {
     EB_FREE(obj->cabac_encode_context_ptr);
 }
 EbErrorType entropy_coder_ctor(EntropyCoder *entropy_coder_ptr, uint32_t buffer_size) {
-    EbErrorType          return_error = EB_ErrorNone;
     OutputBitstreamUnit *output_bitstream_ptr;
 
     entropy_coder_ptr->dctor = entropy_coder_dctor;
@@ -1662,7 +1660,7 @@ EbErrorType entropy_coder_ctor(EntropyCoder *entropy_coder_ptr, uint32_t buffer_
     EB_NEW(output_bitstream_ptr, output_bitstream_unit_ctor, buffer_size);
     ((CabacEncodeContext *)entropy_coder_ptr->cabac_encode_context_ptr)
         ->bac_enc_context.m_pc_t_com_bit_if = output_bitstream_ptr;
-    return return_error;
+    return EB_ErrorNone;
 }
 
 EbPtr entropy_coder_get_bitstream_ptr(EntropyCoder *entropy_coder_ptr) {

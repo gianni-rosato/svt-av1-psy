@@ -257,7 +257,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 
 #define WTH 64
 #define OTH 64
-void picture_decision_context_dctor(EbPtr p)
+static void picture_decision_context_dctor(EbPtr p)
 {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     PictureDecisionContext* obj = (PictureDecisionContext*)thread_context_ptr->priv;

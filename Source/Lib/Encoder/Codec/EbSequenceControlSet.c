@@ -392,18 +392,18 @@ static void eb_sequence_control_set_instance_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->config_mutex);
 }
 
-EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_dbl_ptr) {
+EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr) {
     EbSequenceControlSetInitData scs_init_data;
 
-    object_dbl_ptr->dctor = eb_sequence_control_set_instance_dctor;
+    object_ptr->dctor = eb_sequence_control_set_instance_dctor;
 
-    EB_NEW(object_dbl_ptr->encode_context_ptr, encode_context_ctor, EB_NULL);
-    scs_init_data.encode_context_ptr = object_dbl_ptr->encode_context_ptr;
+    EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, EB_NULL);
+    scs_init_data.encode_context_ptr = object_ptr->encode_context_ptr;
 
     scs_init_data.sb_size = 64;
 
-    EB_NEW(object_dbl_ptr->scs_ptr, eb_sequence_control_set_ctor, (void *)&scs_init_data);
-    EB_CREATE_MUTEX(object_dbl_ptr->config_mutex);
+    EB_NEW(object_ptr->scs_ptr, eb_sequence_control_set_ctor, (void *)&scs_init_data);
+    EB_CREATE_MUTEX(object_ptr->config_mutex);
 
     return EB_ErrorNone;
 }

@@ -310,7 +310,7 @@ double randn(libaom_test::ACMRandom *random, double sigma) {
     return 0;
 }
 
-void denoise_and_model_dctor(EbPtr p) {
+static void denoise_and_model_dctor(EbPtr p) {
     AomDenoiseAndModel *obj = (AomDenoiseAndModel *)p;
 
     free(obj->flat_blocks);

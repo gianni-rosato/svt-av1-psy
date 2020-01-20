@@ -58,7 +58,7 @@ typedef struct ResourceCoordinationContext {
 } ResourceCoordinationContext;
 
 void set_tile_info(PictureParentControlSet *pcs_ptr);
-void resource_coordination_context_dctor(EbPtr p) {
+static void resource_coordination_context_dctor(EbPtr p) {
     EbThreadContext *thread_contxt_ptr = (EbThreadContext *)p;
     if (thread_contxt_ptr->priv) {
         ResourceCoordinationContext *obj = (ResourceCoordinationContext *)thread_contxt_ptr->priv;

@@ -9,7 +9,7 @@
 #include "EbTransformUnit.h"
 #include "EbPictureControlSet.h"
 
-void largest_coding_unit_dctor(EbPtr p) {
+static void largest_coding_unit_dctor(EbPtr p) {
     SuperBlock *obj = (SuperBlock *)p;
     EB_DELETE(obj->quantized_coeff);
     EB_FREE_ARRAY(obj->av1xd);

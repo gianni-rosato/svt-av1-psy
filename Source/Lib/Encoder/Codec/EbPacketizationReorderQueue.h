@@ -40,7 +40,7 @@ typedef struct PacketizationReorderEntry {
     uint8_t    is_alt_ref;
 } PacketizationReorderEntry;
 
-extern EbErrorType packetization_reorder_entry_ctor(PacketizationReorderEntry *entry_dbl_ptr,
+extern EbErrorType packetization_reorder_entry_ctor(PacketizationReorderEntry *entry_ptr,
                                                     uint32_t                   picture_number);
 
 #ifdef __cplusplus

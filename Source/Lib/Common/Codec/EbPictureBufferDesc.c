@@ -127,7 +127,7 @@ EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPt
     return EB_ErrorNone;
 }
 
-void eb_recon_picture_buffer_desc_dctor(EbPtr p) {
+static void eb_recon_picture_buffer_desc_dctor(EbPtr p) {
     EbPictureBufferDesc *obj = (EbPictureBufferDesc *)p;
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG)

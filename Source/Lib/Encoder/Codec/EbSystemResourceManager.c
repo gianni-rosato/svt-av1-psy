@@ -9,7 +9,7 @@
 #include "EbDefinitions.h"
 #include "EbThreads.h"
 
-void eb_fifo_dctor(EbPtr p) {
+static void eb_fifo_dctor(EbPtr p) {
     EbFifo *obj = (EbFifo *)p;
     EB_DESTROY_SEMAPHORE(obj->counting_semaphore);
     EB_DESTROY_MUTEX(obj->lockout_mutex);
@@ -76,7 +76,7 @@ static EbErrorType eb_fifo_pop_front(EbFifo *fifoPtr, EbObjectWrapper **wrapper_
     return return_error;
 }
 
-void eb_circular_buffer_dctor(EbPtr p) {
+static void eb_circular_buffer_dctor(EbPtr p) {
     EbCircularBuffer *obj = (EbCircularBuffer *)p;
     EB_FREE(obj->array_ptr);
 }

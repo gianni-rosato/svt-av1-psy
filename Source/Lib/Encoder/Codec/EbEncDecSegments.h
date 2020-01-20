@@ -74,7 +74,7 @@ typedef struct EncDecSegments {
 /**************************************
      * Extern Function Declarations
      **************************************/
-extern EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_dbl_ptr,
+extern EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_ptr,
                                          uint32_t segment_col_count, uint32_t segment_row_count);
 
 extern void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t col_count,

@@ -87,9 +87,9 @@ typedef struct RcFeedbackQueueEntry {
     uint32_t gop_index;
 } RcFeedbackQueueEntry;
 
-extern EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_dbl_ptr);
+extern EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr);
 
-extern EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_dbl_ptr);
+extern EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr);
 
 #ifdef __cplusplus
 }

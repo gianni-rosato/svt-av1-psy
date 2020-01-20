@@ -339,7 +339,7 @@ EbErrorType rate_control_layer_context_ctor(RateControlLayerContext *entry_ptr) 
     return EB_ErrorNone;
 }
 
-void rate_control_interval_param_context_dctor(EbPtr p) {
+static void rate_control_interval_param_context_dctor(EbPtr p) {
     RateControlIntervalParamContext *obj = (RateControlIntervalParamContext *)p;
     EB_DELETE_PTR_ARRAY(obj->rate_control_layer_array, EB_MAX_TEMPORAL_LAYERS);
 }
@@ -369,7 +369,7 @@ EbErrorType rate_control_coded_frames_stats_context_ctor(CodedFramesStatsEntry *
     return EB_ErrorNone;
 }
 
-void rate_control_context_dctor(EbPtr p) {
+static void rate_control_context_dctor(EbPtr p) {
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)p;
     RateControlContext *obj                = (RateControlContext *)thread_context_ptr->priv;
 #if OVERSHOOT_STAT_PRINT

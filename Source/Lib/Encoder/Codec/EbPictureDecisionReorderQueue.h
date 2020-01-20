@@ -19,7 +19,7 @@ typedef struct PictureDecisionReorderEntry {
     EbObjectWrapper *parent_pcs_wrapper_ptr;
 } PictureDecisionReorderEntry;
 
-extern EbErrorType picture_decision_reorder_entry_ctor(PictureDecisionReorderEntry *entry_dbl_ptr,
+extern EbErrorType picture_decision_reorder_entry_ctor(PictureDecisionReorderEntry *entry_ptr,
                                                        uint32_t                     picture_number);
 
 #endif //EbPictureDecisionReorderQueue_h
