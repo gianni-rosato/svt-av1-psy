@@ -409,8 +409,9 @@ void *packetization_kernel(void *input_ptr) {
                 : 0;
         output_stream_ptr->n_filled_len = 0;
         output_stream_ptr->pts          = pcs_ptr->parent_pcs_ptr->input_ptr->pts;
+        //minus (1 << MAX_HIERARCHICAL_LEVEL) to make sure the dts never larger than pts.
         output_stream_ptr->dts          = pcs_ptr->parent_pcs_ptr->decode_order -
-                                 (uint64_t)(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels) + 1;
+                                 (uint64_t)(1 << MAX_HIERARCHICAL_LEVEL) + 1;
         output_stream_ptr->pic_type =
             pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
                 ? pcs_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE : pcs_ptr->slice_type
