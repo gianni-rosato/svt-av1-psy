@@ -266,8 +266,8 @@ void eb_dec_av1_loop_restoration_filter_unit(uint8_t need_bounadaries,
 }
 
 void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row,
-                                        uint8_t **rec_buff, int *rec_stride,
-                                        Av1PixelRect *tile_rect, int optimized_lr, uint8_t *dst)
+                                         uint8_t **rec_buff, int *rec_stride, Av1PixelRect *tile_rect,
+                                         int optimized_lr, uint8_t *dst, int thread_cnt)
 {
     RestorationTileLimits tile_limit;
     RestorationUnitInfo *lr_unit;
@@ -286,6 +286,7 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
     EbBool is_mt = dec_handle->dec_config.threads > 1;
 
     int32_t sb_row_idx = (is_mt == 0) ? 0 : sb_row;
+    int32_t index = lr_ctxt->is_thread_min ? thread_cnt : sb_row_idx;
 
     if (is_mt) {
         DecMtFrameData *dec_mt_frame_data = &dec_handle->master_frame_buf.
@@ -380,10 +381,10 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
                 (unit_row * lr_ctxt->lr_stride[plane]) + unit_col;
 
             uint8_t *bdry_cdef =
-                (uint8_t *)lr_ctxt->rlbs[sb_row_idx][plane]->tmp_save_cdef;
+                (uint8_t *)lr_ctxt->rlbs[index][plane]->tmp_save_cdef;
             uint8_t *bdry_cdef_ptr = bdry_cdef;
             uint8_t *bdry_lr =
-                (uint8_t *)lr_ctxt->rlbs[sb_row_idx][plane]->tmp_save_lr;
+                (uint8_t *)lr_ctxt->rlbs[index][plane]->tmp_save_lr;
             uint8_t *bdry_lr_ptr = bdry_lr;
             int width = RESTORATION_EXTRA_HORZ << use_highbd;
             int height = tile_limit.v_end - tile_limit.v_start;
@@ -406,17 +407,17 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
 
             if (!use_highbd)
                 eb_dec_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
-                    &lr_ctxt->boundaries[plane], lr_ctxt->rlbs[sb_row_idx][plane],
+                    &lr_ctxt->boundaries[plane], lr_ctxt->rlbs[index][plane],
                     &tile_rect[plane], tile_stripe0, sx, sy, use_highbd, bit_depth,
                     src, src_stride, dst, dst_stride,
-                    lr_ctxt->rst_tmpbuf[sb_row_idx], optimized_lr);
+                    lr_ctxt->rst_tmpbuf[index], optimized_lr);
             else
                 eb_dec_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
-                    &lr_ctxt->boundaries[plane], lr_ctxt->rlbs[sb_row_idx][plane],
+                    &lr_ctxt->boundaries[plane], lr_ctxt->rlbs[index][plane],
                     &tile_rect[plane],
                     tile_stripe0, sx, sy, use_highbd, bit_depth,
                     CONVERT_TO_BYTEPTR(src), src_stride, CONVERT_TO_BYTEPTR(dst),
-                    dst_stride, lr_ctxt->rst_tmpbuf[sb_row_idx], optimized_lr);
+                    dst_stride, lr_ctxt->rst_tmpbuf[index], optimized_lr);
             src_ptr = src_proc - proc_width;
             // restore LR_data of previous block
             if (col)
@@ -499,7 +500,8 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
                                             &curr_recon_stride[AOM_PLANE_Y],
                                             tile_rect,
                                             optimized_lr,
-                                            dst);
+                                            dst,
+                                            0);
     }
 }
 

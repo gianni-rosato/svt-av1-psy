@@ -69,13 +69,14 @@ uint32_t lib_semaphore_count = 0;
 uint32_t lib_mutex_count     = 0;
 
 /* Track address for memory during change in resoultion*/
-EbMemoryMapEntry                *memory_map_start_address;
-EbMemoryMapEntry                *memory_map_end_address;
+EbMemoryMapEntry    *memory_map_start_address;
+EbMemoryMapEntry    *memory_map_end_address;
 
 void        asm_set_convolve_asm_table(void);
 void        init_intra_dc_predictors_c_internal(void);
 void        asm_set_convolve_hbd_asm_table(void);
 void        init_intra_predictors_internal(void);
+
 extern void av1_init_wedge_masks(void);
 void        dec_sync_all_threads(EbDecHandle *dec_handle_ptr);
 

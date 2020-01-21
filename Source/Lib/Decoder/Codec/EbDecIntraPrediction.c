@@ -129,26 +129,47 @@ void cfl_luma_subsampling_444_hbd_c(const uint16_t *input, int32_t input_stride,
     }
 }
 
-CFL_GET_SUBSAMPLE_FUNCTION(c)
-
-static INLINE cfl_subsample_hbd_fn cfl_subsampling_hbd(TxSize tx_size, int32_t sub_x,
-                                                       int32_t sub_y) {
-    if (sub_x == 1) {
-        if (sub_y == 1) return cfl_get_luma_subsampling_420_hbd(tx_size);
-        return cfl_get_luma_subsampling_422_hbd(tx_size);
+static void cfl_subsampling_highbd(TxSize tx_size, int32_t sub_x, int32_t sub_y,
+                                  const uint16_t *input, int32_t input_stride,
+                                  int16_t *recon_buf_q3)
+{
+    int32_t width  = tx_size_wide[tx_size];
+    int32_t height = tx_size_high[tx_size];
+    assert(width != 64 || height != 64);
+    if (sub_x == 1 && sub_y == 1) {
+        cfl_luma_subsampling_420_hbd_c(input, input_stride, recon_buf_q3,
+            width, height);
     }
-    return cfl_get_luma_subsampling_444_hbd(tx_size);
+    else if (sub_x == 1 && sub_y == 0) {
+        cfl_luma_subsampling_422_hbd_c(input, input_stride, recon_buf_q3,
+            width, height);
+}
+    else {
+        cfl_luma_subsampling_444_hbd_c(input, input_stride, recon_buf_q3,
+            width, height);
+    }
 }
 
-static INLINE cfl_subsample_lbd_fn cfl_subsampling_lbd(TxSize tx_size, int32_t sub_x,
-                                                       int32_t sub_y) {
-    if (sub_x == 1) {
-        if (sub_y == 1) return cfl_get_luma_subsampling_420_lbd(tx_size);
-        return cfl_get_luma_subsampling_422_lbd(tx_size);
+static void cfl_subsampling_lowbd(TxSize tx_size, int32_t sub_x, int32_t sub_y,
+                                  const uint8_t *input, int32_t input_stride,
+                                  int16_t *recon_buf_q3)
+{
+    int32_t width  = tx_size_wide[tx_size];
+    int32_t height = tx_size_high[tx_size];
+    assert(width != 64 || height != 64);
+    if (sub_x == 1 && sub_y == 1) {
+        cfl_luma_subsampling_420_lbd_c(input, input_stride, recon_buf_q3,
+            width, height);
     }
-    return cfl_get_luma_subsampling_444_lbd(tx_size);
+    else if (sub_x == 1 && sub_y == 0) {
+        cfl_luma_subsampling_422_lbd_c(input, input_stride, recon_buf_q3,
+            width, height);
+    }
+    else {
+        cfl_luma_subsampling_444_lbd_c(input, input_stride, recon_buf_q3,
+            width, height);
+    }
 }
-
 //######...........Ending for CFL.................#####//
 
 //####...Wrapper funtion calling CFL leaf level functions...####//
@@ -251,9 +272,11 @@ static void cfl_store(CflCtx *cfl_ctx, const uint8_t *input, int input_stride, i
     int16_t *recon_buf_q3 = cfl_ctx->recon_buf_q3 + (store_row * CFL_BUF_LINE + store_col);
 
     if (use_hbd) {
-        cfl_subsampling_hbd(tx_size, sub_x, sub_y)((uint16_t *)input, input_stride, recon_buf_q3);
+        cfl_subsampling_highbd(tx_size, sub_x, sub_y, (uint16_t *)input,
+            input_stride, recon_buf_q3);
     } else {
-        cfl_subsampling_lbd(tx_size, sub_x, sub_y)(input, input_stride, recon_buf_q3);
+        cfl_subsampling_lowbd(tx_size, sub_x, sub_y ,input,
+            input_stride, recon_buf_q3);
     }
 }
 

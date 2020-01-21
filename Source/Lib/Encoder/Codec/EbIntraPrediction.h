@@ -236,104 +236,10 @@ static INLINE int32_t cfl_idx_to_alpha(int32_t alpha_idx, int32_t joint_sign,
 }
 
 /* Function pointers return by CfL functions */
-
-typedef void (*cfl_subsample_lbd_fn)(const uint8_t *input, int input_stride, int16_t *output_q3);
-
-typedef void (*cfl_subsample_hbd_fn)(const uint16_t *input, int input_stride, int16_t *output_q3);
-
 typedef void (*CflSubtractAverageFn)(int16_t *dst);
-
-#define cfl_get_luma_subsampling_420_hbd cfl_get_luma_subsampling_420_hbd_c
-cfl_subsample_hbd_fn cfl_get_luma_subsampling_420_hbd_c(TxSize tx_size);
-
-#define cfl_get_luma_subsampling_420_lbd cfl_get_luma_subsampling_420_lbd_c
-cfl_subsample_lbd_fn cfl_get_luma_subsampling_420_lbd_c(TxSize tx_size);
-
-#define cfl_get_luma_subsampling_422_hbd cfl_get_luma_subsampling_422_hbd_c
-cfl_subsample_hbd_fn cfl_get_luma_subsampling_422_hbd_c(TxSize tx_size);
-
-#define cfl_get_luma_subsampling_422_lbd cfl_get_luma_subsampling_422_lbd_c
-cfl_subsample_lbd_fn cfl_get_luma_subsampling_422_lbd_c(TxSize tx_size);
-
-#define cfl_get_luma_subsampling_444_hbd cfl_get_luma_subsampling_444_hbd_c
-cfl_subsample_hbd_fn cfl_get_luma_subsampling_444_hbd_c(TxSize tx_size);
-
-#define cfl_get_luma_subsampling_444_lbd cfl_get_luma_subsampling_444_lbd_c
-cfl_subsample_lbd_fn cfl_get_luma_subsampling_444_lbd_c(TxSize tx_size);
 
 CflSubtractAverageFn eb_get_subtract_average_fn_c(TxSize tx_size);
 #define get_subtract_average_fn eb_get_subtract_average_fn_c
-
-// Allows the CFL_SUBSAMPLE function to switch types depending on the bitdepth.
-#define CFL_lbd_TYPE uint8_t *cfl_type
-#define CFL_hbd_TYPE uint16_t *cfl_type
-
-// Declare a size-specific wrapper for the size-generic function. The compiler
-// will inline the size generic function in here, the advantage is that the size
-// will be constant allowing for loop unrolling and other constant propagated
-// goodness.
-#define CFL_SUBSAMPLE(arch, sub, bd, width, height)                    \
-    void subsample_##bd##_##sub##_##width##x##height##_##arch(         \
-        const CFL_##bd##_TYPE, int input_stride, int16_t *output_q3) { \
-        cfl_luma_subsampling_##sub##_##bd##_##arch(                    \
-            cfl_type, input_stride, output_q3, width, height);         \
-    }
-
-// Declare size-specific wrappers for all valid CfL sizes.
-#define CFL_SUBSAMPLE_FUNCTIONS(arch, sub, bd)                                               \
-    CFL_SUBSAMPLE(arch, sub, bd, 4, 4)                                                       \
-    CFL_SUBSAMPLE(arch, sub, bd, 8, 8)                                                       \
-    CFL_SUBSAMPLE(arch, sub, bd, 16, 16)                                                     \
-    CFL_SUBSAMPLE(arch, sub, bd, 32, 32)                                                     \
-    CFL_SUBSAMPLE(arch, sub, bd, 4, 8)                                                       \
-    CFL_SUBSAMPLE(arch, sub, bd, 8, 4)                                                       \
-    CFL_SUBSAMPLE(arch, sub, bd, 8, 16)                                                      \
-    CFL_SUBSAMPLE(arch, sub, bd, 16, 8)                                                      \
-    CFL_SUBSAMPLE(arch, sub, bd, 16, 32)                                                     \
-    CFL_SUBSAMPLE(arch, sub, bd, 32, 16)                                                     \
-    CFL_SUBSAMPLE(arch, sub, bd, 4, 16)                                                      \
-    CFL_SUBSAMPLE(arch, sub, bd, 16, 4)                                                      \
-    CFL_SUBSAMPLE(arch, sub, bd, 8, 32)                                                      \
-    CFL_SUBSAMPLE(arch, sub, bd, 32, 8)                                                      \
-    cfl_subsample_##bd##_fn cfl_get_luma_subsampling_##sub##_##bd##_##arch(TxSize tx_size) { \
-        CFL_SUBSAMPLE_FUNCTION_ARRAY(arch, sub, bd)                                          \
-        return subfn_##sub[tx_size];                                                         \
-    }
-
-// Declare an architecture-specific array of function pointers for size-specific
-// wrappers.
-#define CFL_SUBSAMPLE_FUNCTION_ARRAY(arch, sub, bd)             \
-    const cfl_subsample_##bd##_fn subfn_##sub[TX_SIZES_ALL] = { \
-        subsample_##bd##_##sub##_4x4_##arch, /* 4x4 */          \
-        subsample_##bd##_##sub##_8x8_##arch, /* 8x8 */          \
-        subsample_##bd##_##sub##_16x16_##arch, /* 16x16 */      \
-        subsample_##bd##_##sub##_32x32_##arch, /* 32x32 */      \
-        NULL, /* 64x64 (invalid CFL size) */                    \
-        subsample_##bd##_##sub##_4x8_##arch, /* 4x8 */          \
-        subsample_##bd##_##sub##_8x4_##arch, /* 8x4 */          \
-        subsample_##bd##_##sub##_8x16_##arch, /* 8x16 */        \
-        subsample_##bd##_##sub##_16x8_##arch, /* 16x8 */        \
-        subsample_##bd##_##sub##_16x32_##arch, /* 16x32 */      \
-        subsample_##bd##_##sub##_32x16_##arch, /* 32x16 */      \
-        NULL, /* 32x64 (invalid CFL size) */                    \
-        NULL, /* 64x32 (invalid CFL size) */                    \
-        subsample_##bd##_##sub##_4x16_##arch, /* 4x16  */       \
-        subsample_##bd##_##sub##_16x4_##arch, /* 16x4  */       \
-        subsample_##bd##_##sub##_8x32_##arch, /* 8x32  */       \
-        subsample_##bd##_##sub##_32x8_##arch, /* 32x8  */       \
-        NULL, /* 16x64 (invalid CFL size) */                    \
-        NULL, /* 64x16 (invalid CFL size) */                    \
-    };
-
-// The RTCD script does not support passing in an array, so we wrap it in this
-// function.
-#define CFL_GET_SUBSAMPLE_FUNCTION(arch)    \
-    CFL_SUBSAMPLE_FUNCTIONS(arch, 420, lbd) \
-    CFL_SUBSAMPLE_FUNCTIONS(arch, 422, lbd) \
-    CFL_SUBSAMPLE_FUNCTIONS(arch, 444, lbd) \
-    CFL_SUBSAMPLE_FUNCTIONS(arch, 420, hbd) \
-    CFL_SUBSAMPLE_FUNCTIONS(arch, 422, hbd) \
-    CFL_SUBSAMPLE_FUNCTIONS(arch, 444, hbd)
 
 // Declare a size-specific wrapper for the size-generic function. The compiler
 // will inline the size generic function in here, the advantage is that the size

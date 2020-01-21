@@ -1517,6 +1517,7 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *    dec_h
     TilesInfo tiles_info = dec_handle_ptr->frame_header.tiles_info;
     int       num_tiles  = tiles_info.tile_cols * tiles_info.tile_rows;
     int32_t   num_ctx    = num_instances == 1 ? 1 : num_tiles;
+    if (num_instances == 1) master_parse_ctx->context_count = num_tiles;
 
     /* TO-DO this memory will be freed at the end of decode.
        Can be optimized by reallocating the memory when
@@ -2076,24 +2077,21 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
 
     if (dec_handle_ptr->dec_config.threads > 1) {
         /* Call System Resource Init only once */
-        if (EB_FALSE == dec_handle_ptr->start_thread_process)
+        if (EB_FALSE == dec_handle_ptr->start_thread_process) {
             dec_system_resource_init(dec_handle_ptr, &tiles_info);
+            dec_handle_ptr->start_thread_process = EB_TRUE;
+        }
         check_mt_support(dec_handle_ptr);
     }
-    int       num_tiles = tiles_info.tile_cols * tiles_info.tile_rows;
-    int       num_instances = MIN((int32_t)dec_handle_ptr->dec_config.threads, num_tiles);
 
-    if (num_instances != master_parse_ctx->context_count) {
-        if (dec_handle_ptr->dec_config.threads == 1) {
-            /* For single thread case, allocate memory for one
-               frame row above and one sb column for the left context. */
-            reallocate_parse_context_memory(dec_handle_ptr, master_parse_ctx, 1);
-        } else {
-            reallocate_parse_context_memory(dec_handle_ptr, master_parse_ctx, num_instances);
-        }
-    }
-    if (num_tiles != master_parse_ctx->num_tiles)
-        reallocate_parse_tile_data(master_parse_ctx, num_tiles);
+    int       num_tiles = tiles_info.tile_cols * tiles_info.tile_rows;
+    int       num_instances = num_tiles;
+
+    if(dec_handle_ptr->dec_config.threads != 1)
+        num_instances = MIN((int32_t)dec_handle_ptr->dec_config.threads, num_tiles);
+
+    if (num_instances != master_parse_ctx->context_count)
+        realloc_parse_memory(dec_handle_ptr);
 
     frame_info->coded_lossless = 1;
     for (int i = 0; i < MAX_SEGMENTS; ++i) {
@@ -2269,6 +2267,29 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
 
     uint32_t num_threads = dec_handle_ptr->dec_config.threads;
     int      is_mt       = num_threads != 1;
+
+    /* PPF flags derivation */
+    EbBool no_ibc = !dec_handle_ptr->frame_header.allow_intrabc;
+    /* LF */
+    EbBool do_lf_flag =
+        no_ibc && (dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
+            dec_handle_ptr->frame_header.loop_filter_params.filter_level[1]);
+    /* CDEF */
+    EbBool do_cdef = no_ibc && (!frame_header->coded_lossless &&
+        (frame_header->cdef_params.cdef_bits ||
+            frame_header->cdef_params.cdef_y_strength[0] ||
+            frame_header->cdef_params.cdef_uv_strength[0]));
+
+    EbBool do_upscale = no_ibc &&
+        !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
+    /* LR */
+    //EbBool opt_lr = !do_cdef && !do_upscale;
+    LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
+    EbBool    do_lr = no_ibc &&
+        (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
+        lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
+        lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
+
     /* Set Parse Jobs */
     if (is_mt) {
         svt_av1_scan_tiles(dec_handle_ptr, tiles_info, obu_header, bs, tg_start, tg_end);
@@ -2326,7 +2347,8 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         eb_release_mutex(dec_mt_frame_data->temp_mutex);
         eb_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
-                eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+            eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+
         svt_av1_queue_lf_jobs(dec_handle_ptr);
         svt_av1_queue_cdef_jobs(dec_handle_ptr);
         eb_block_on_mutex(dec_mt_frame_data->temp_mutex);
@@ -2341,6 +2363,8 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
             eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
         eb_release_mutex(dec_mt_frame_data->temp_mutex);
+
+        if(!do_upscale) svt_av1_queue_lr_jobs(dec_handle_ptr);
 
         parse_frame_tiles(dec_handle_ptr, 0);
 
@@ -2374,25 +2398,6 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     }
 
     if ((tg_end + 1) != num_tiles) return 0;
-
-    /* PPF flags derivation */
-    EbBool no_ibc = !dec_handle_ptr->frame_header.allow_intrabc;
-    /* LF */
-    EbBool do_lf_flag =
-        no_ibc && (dec_handle_ptr->frame_header.loop_filter_params.filter_level[0] ||
-                   dec_handle_ptr->frame_header.loop_filter_params.filter_level[1]);
-    /* CDEF */
-    EbBool do_cdef = no_ibc && (!frame_header->coded_lossless &&
-                                (frame_header->cdef_params.cdef_bits ||
-                                 frame_header->cdef_params.cdef_y_strength[0] ||
-                                 frame_header->cdef_params.cdef_uv_strength[0]));
-
-    EbBool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
-    /* LR */
-    LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
-    EbBool    do_lr    = no_ibc && (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
-                              lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
-                              lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
 
     if (is_mt) {
         dec_av1_loop_filter_frame_mt(dec_handle_ptr,
@@ -2429,10 +2434,11 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         dec_handle_ptr->cm.frm_size.frame_width =
             dec_handle_ptr->frame_header.frame_size.frame_width;
 
-    if (do_lr) dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 1);
+    if (do_lr && (!is_mt || do_upscale))
+        dec_av1_loop_restoration_save_boundary_lines(dec_handle_ptr, 1);
 
     if (is_mt) {
-        svt_av1_queue_lr_jobs(dec_handle_ptr);
+        if (do_upscale) svt_av1_queue_lr_jobs(dec_handle_ptr);
         DecMtFrameData *dec_mt_frame_data =
             &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
         dec_mt_frame_data->start_lr_frame = EB_TRUE;

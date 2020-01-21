@@ -1685,7 +1685,7 @@ void save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t s
                  use_highbd);
 }
 
-static void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
+void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
                                      const Av1Common *cm, int32_t plane, int32_t row,
                                      int32_t stripe, int32_t use_highbd, int32_t is_above,
                                      RestorationStripeBoundaries *boundaries) {

@@ -27,7 +27,7 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
 void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle,
                                          int32_t sb_row, uint8_t **rec_buff,
                                          int *rec_stride, Av1PixelRect *tile_rect,
-                                         int optimized_lr, uint8_t *dst);
+                                         int optimized_lr, uint8_t *dst, int thread_cnt);
 #ifdef __cplusplus
 }
 #endif

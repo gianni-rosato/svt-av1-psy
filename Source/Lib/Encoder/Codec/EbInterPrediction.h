@@ -39,7 +39,14 @@ extern "C" {
         int32_t subpel_x;
         int32_t subpel_y;
     } SubpelParams;
-
+#if MC_DYNAMIC_PAD
+    typedef struct PadBlock {
+        int x0;
+        int x1;
+        int y0;
+        int y1;
+    } PadBlock;
+#endif
     struct ModeDecisionContext;
 
     typedef struct InterPredictionContext {

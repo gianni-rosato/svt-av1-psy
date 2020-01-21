@@ -449,10 +449,6 @@ typedef struct RestUnitSearchInfo {
         int32_t src_stride, uint8_t *dst, int32_t dst_stride,
         int32_t *tmpbuf, int32_t bit_depth);
 
-    void copy_tile_lowbd(int32_t width, int32_t height, const uint8_t *src,
-        int32_t src_stride, uint8_t *dst, int32_t dst_stride);
-    void copy_tile_highbd(int32_t width, int32_t height, const uint16_t *src,
-        int32_t src_stride, uint16_t *dst, int32_t dst_stride);
     void copy_tile(int32_t width, int32_t height,
         const uint8_t *src, int32_t src_stride,
         uint8_t *dst, int32_t dst_stride, int32_t highbd);

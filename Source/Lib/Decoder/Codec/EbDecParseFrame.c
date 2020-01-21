@@ -244,28 +244,28 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
                 ((sb_row * num_mis_in_sb * master_frame_buf->sb_cols >> sy) +
                  (sb_col * num_mis_in_sb >> sx)) *
                     2;
-#if SINGLE_THRD_COEFF_BUF_OPT
-            /*TODO : Change to macro */
-            sb_info->sb_coeff[AOM_PLANE_Y] = frame_buf->coeff[AOM_PLANE_Y];
-            sb_info->sb_coeff[AOM_PLANE_U] = frame_buf->coeff[AOM_PLANE_U];
-            sb_info->sb_coeff[AOM_PLANE_V] = frame_buf->coeff[AOM_PLANE_V];
-#else
-            /*TODO : Change to macro */
-            sb_info->sb_coeff[AOM_PLANE_Y] =
-                frame_buf->coeff[AOM_PLANE_Y] +
-                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1)) +
-                sb_col * num_mis_in_sb * (16 + 1);
-            /*TODO : Change to macro */
-            sb_info->sb_coeff[AOM_PLANE_U] =
-                frame_buf->coeff[AOM_PLANE_U] +
-                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1) >> (sy + sx)) +
-                (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
-            sb_info->sb_coeff[AOM_PLANE_V] =
-                frame_buf->coeff[AOM_PLANE_V] +
-                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1) >> (sy + sx)) +
-                (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
-#endif
-
+            if (dec_handle_ptr->dec_config.threads == 1) {
+                /*TODO : Change to macro */
+                sb_info->sb_coeff[AOM_PLANE_Y] = frame_buf->coeff[AOM_PLANE_Y];
+                sb_info->sb_coeff[AOM_PLANE_U] = frame_buf->coeff[AOM_PLANE_U];
+                sb_info->sb_coeff[AOM_PLANE_V] = frame_buf->coeff[AOM_PLANE_V];
+            }
+            else {
+                /*TODO : Change to macro */
+                sb_info->sb_coeff[AOM_PLANE_Y] =
+                    frame_buf->coeff[AOM_PLANE_Y] +
+                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1))
+                        + sb_col * num_mis_in_sb* (16 + 1);
+                /*TODO : Change to macro */
+                sb_info->sb_coeff[AOM_PLANE_U] =
+                    frame_buf->coeff[AOM_PLANE_U] +
+                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
+                        + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
+                sb_info->sb_coeff[AOM_PLANE_V] =
+                    frame_buf->coeff[AOM_PLANE_V] +
+                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
+                        + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
+            }
             int cdef_factor = dec_handle_ptr->seq_header.use_128x128_superblock ? 4 : 1;
             sb_info->sb_cdef_strength =
                 frame_buf->cdef_strength +
