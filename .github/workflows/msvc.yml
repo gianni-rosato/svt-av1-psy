@@ -1,0 +1,34 @@
+name: MSVC builds
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration:
+          - Debug
+          - Release
+    env:
+      generator: Visual Studio 16 2019
+      MSVC: 2019
+      configuration: ${{ matrix.configuration }}
+
+    steps:
+      - name: Install dependencies
+        run: |
+          choco install -y nasm
+          cmake --version
+
+      - uses: actions/checkout@v2.0.0
+        with:
+          fetch-depth: 1
+
+      - name: Configure SVT-AV1
+        run: |
+          & "$( & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere" -latest -find "VC/Auxiliary/Build/vcvarsall.bat")" x64
+          cmake -S . -B Build -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=C:/SVT-AV1 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=ON
+
+      - name: Build SVT-AV1
+        run: cmake --build Build --target Install --config $env:configuration
