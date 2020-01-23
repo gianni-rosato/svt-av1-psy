@@ -1594,8 +1594,7 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mode = blk_ptr->pred_mode;
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.uv_mode =
                     blk_ptr->prediction_unit_array->intra_chroma_mode;
-                if (blk_ptr->prediction_unit_array->ref_frame_type > 0 &&
-                    blk_ptr->prediction_mode_flag == INTRA_MODE &&
+                if (blk_ptr->prediction_mode_flag == INTRA_MODE &&
                     blk_ptr->pred_mode == INTRA_MODE_4x4) {
                     mi_ptr[mi_x + mi_y * mi_stride].mbmi.tx_size          = 0;
                     mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.sb_type = BLOCK_4X4;
@@ -1612,53 +1611,42 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                     blk_ptr->av1xd->use_intrabc;
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[1] =
-                    blk_ptr->prediction_unit_array->ref_frame_type > 0 &&
-                    blk_ptr->is_interintra_used ?
-                    INTRA_FRAME : rf[1];
-
-                if (blk_ptr->prediction_unit_array->ref_frame_type > 0)
-                {
-                    if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.col =
-                            blk_ptr->prediction_unit_array->mv[0].x;
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.row =
-                            blk_ptr->prediction_unit_array->mv[0].y;
-                    } else if (blk_ptr->prediction_unit_array->inter_pred_direction_index ==
-                               UNI_PRED_LIST_1) {
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.col =
-                            blk_ptr->prediction_unit_array->mv[1].x;
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.row =
-                            blk_ptr->prediction_unit_array->mv[1].y;
-                    } else {
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.col =
-                            blk_ptr->prediction_unit_array->mv[0].x;
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.row =
-                            blk_ptr->prediction_unit_array->mv[0].y;
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[1].as_mv.col =
-                            blk_ptr->prediction_unit_array->mv[1].x;
-                        mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[1].as_mv.row =
-                            blk_ptr->prediction_unit_array->mv[1].y;
-                    }
+                    blk_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
+                if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.col =
+                        blk_ptr->prediction_unit_array->mv[0].x;
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.row =
+                        blk_ptr->prediction_unit_array->mv[0].y;
+                } else if (blk_ptr->prediction_unit_array->inter_pred_direction_index ==
+                           UNI_PRED_LIST_1) {
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.col =
+                        blk_ptr->prediction_unit_array->mv[1].x;
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.row =
+                        blk_ptr->prediction_unit_array->mv[1].y;
+                } else {
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.col =
+                        blk_ptr->prediction_unit_array->mv[0].x;
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[0].as_mv.row =
+                        blk_ptr->prediction_unit_array->mv[0].y;
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[1].as_mv.col =
+                        blk_ptr->prediction_unit_array->mv[1].x;
+                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mv[1].as_mv.row =
+                        blk_ptr->prediction_unit_array->mv[1].y;
                 }
 
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.partition =
                     from_shape_to_part[blk_geom->shape]; // blk_ptr->part;
             }
-
-            if (blk_ptr->prediction_unit_array->ref_frame_type == 0)
-                mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip = EB_TRUE;
-            else {
-                if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1)
-                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip =
-                        (blk_ptr->txb_array[0].y_has_coeff == 0 &&
-                         blk_ptr->txb_array[0].v_has_coeff == 0 &&
-                         blk_ptr->txb_array[0].u_has_coeff == 0)
-                            ? EB_TRUE
-                            : EB_FALSE;
-                else
-                    mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip =
-                        (blk_ptr->txb_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
-            }
+            if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1)
+                mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip =
+                    (blk_ptr->txb_array[0].y_has_coeff == 0 &&
+                     blk_ptr->txb_array[0].v_has_coeff == 0 &&
+                     blk_ptr->txb_array[0].u_has_coeff == 0)
+                        ? EB_TRUE
+                        : EB_FALSE;
+            else
+                mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip =
+                    (blk_ptr->txb_array[0].y_has_coeff == 0) ? EB_TRUE : EB_FALSE;
 
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.interp_filters = blk_ptr->interp_filters;
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.comp_group_idx          = blk_ptr->comp_group_idx;

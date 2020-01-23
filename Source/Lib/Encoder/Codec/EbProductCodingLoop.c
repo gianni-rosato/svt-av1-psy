@@ -7008,11 +7008,9 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 else
                     context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost =
                         (MAX_MODE_COST >> 10);
-                blk_ptr->prediction_unit_array->ref_frame_type = 0;
             } else if (skip_next_sq) {
                 context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost =
                     (MAX_MODE_COST >> 10);
-                blk_ptr->prediction_unit_array->ref_frame_type = 0;
             } else {
                 // If the block is out of the boundaries, md is not performed.
                 // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
@@ -7023,7 +7021,6 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                         (MAX_MODE_COST >> 4);
                 else
                     context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost = 0;
-                blk_ptr->prediction_unit_array->ref_frame_type = 0;
             }
         }
         skip_next_nsq = 0;
