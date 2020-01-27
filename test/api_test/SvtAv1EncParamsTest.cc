@@ -354,9 +354,9 @@ DEFINE_PARAM_TEST_CLASS(EncParamHighDynamicRangeInputTest,
                         high_dynamic_range_input);
 PARAM_TEST(EncParamHighDynamicRangeInputTest);
 
-/** Test case for profile*/
-DEFINE_PARAM_TEST_CLASS(EncParamProfileTest, profile);
-PARAM_TEST(EncParamProfileTest);
+/** Test case for profile, requiure YUV 422 or 444 which is unsupported now */
+//DEFINE_PARAM_TEST_CLASS(EncParamProfileTest, profile);
+//PARAM_TEST(EncParamProfileTest);
 
 /** Test case for tier*/
 DEFINE_PARAM_TEST_CLASS(EncParamTierTest, tier);

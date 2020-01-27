@@ -2580,6 +2580,11 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->encoder_color_format != EB_YUV420) {
+        SVT_LOG("Error instance %u: Only support 420 now \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->profile == 0 && config->encoder_color_format > EB_YUV420) {
         SVT_LOG("Error instance %u: Non 420 color format requires profile 1 or 2\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;

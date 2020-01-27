@@ -137,9 +137,9 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // test constrained intra, default is 0
     {"ConstrainIntraTest1", {{"ConstrainedIntra", "1"}}, default_test_vectors},
 
-    // test rate control modes, default is 0, 1 is not supported
+    // test rate control modes, default is 0, 1 and 2 is supported
     {"RateControlTest1", {{"RateControlMode", "2"}}, default_test_vectors},
-    {"RateControlTest2", {{"RateControlMode", "3"}}, default_test_vectors},
+    {"RateControlTest2", {{"RateControlMode", "1"}}, default_test_vectors},
 
     // test scene change detection, default is 1
     {"SCDTest1", {{"SceneChangeDetection", "0"}}, default_test_vectors},
@@ -202,8 +202,10 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
-    {"DummySrcTest2", {{"EncoderMode", "8"}, {"Profile", "2"}}, dummy_422_test_vectors},
-    {"DummySrcTest3", {{"EncoderMode", "8"}, {"Profile", "1"}}, dummy_444_test_vectors},
+
+    // only 420 input is supported
+    //{"DummySrcTest2", {{"EncoderMode", "8"}, {"Profile", "2"}}, dummy_422_test_vectors},
+    //{"DummySrcTest3", {{"EncoderMode", "8"}, {"Profile", "1"}}, dummy_444_test_vectors},
 };
 
 /* clang-format on */

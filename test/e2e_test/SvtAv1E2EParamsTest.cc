@@ -98,13 +98,13 @@ static const std::vector<EncTestSetting> default_enc_settings = {
      {{"RateControlMode", "2"}, {"TargetBitRate", "500000"}},
      res_480p_test_vectors},
     {"RcTest4",
-     {{"RateControlMode", "3"}, {"TargetBitRate", "1000000"}},
+     {{"RateControlMode", "1"}, {"TargetBitRate", "1000000"}},
      res_480p_test_vectors},
     {"RcTest5",
-     {{"RateControlMode", "3"}, {"TargetBitRate", "750000"}},
+     {{"RateControlMode", "1"}, {"TargetBitRate", "750000"}},
      res_480p_test_vectors},
     {"RcTest6",
-     {{"RateControlMode", "3"}, {"TargetBitRate", "500000"}},
+     {{"RateControlMode", "1"}, {"TargetBitRate", "500000"}},
      res_480p_test_vectors},
 
     // test high bitrate with big min_qp, or low bitrate with small max_qp
@@ -118,13 +118,13 @@ static const std::vector<EncTestSetting> default_enc_settings = {
      {{"RateControlMode", "2"}, {"TargetBitRate", "750000"}, {"MaxQpAllowed", "50"}, {"MinQpAllowed", "20"}},
      res_480p_test_vectors},
     {"RcQpTest4",
-     {{"RateControlMode", "3"}, {"TargetBitRate", "1000000"}, {"MinQpAllowed", "20"}},
+     {{"RateControlMode", "1"}, {"TargetBitRate", "1000000"}, {"MinQpAllowed", "20"}},
      res_480p_test_vectors},
     {"RcQpTest5",
-     {{"RateControlMode", "3"}, {"TargetBitRate", "500000"}, {"MaxQpAllowed", "50"}},
+     {{"RateControlMode", "1"}, {"TargetBitRate", "500000"}, {"MaxQpAllowed", "50"}},
      res_480p_test_vectors},
     {"RcQpTest6",
-     {{"RateControlMode", "3"}, {"TargetBitRate", "750000"}, {"MaxQpAllowed", "50"}, {"MinQpAllowed", "20"}},
+     {{"RateControlMode", "1"}, {"TargetBitRate", "750000"}, {"MaxQpAllowed", "50"}, {"MinQpAllowed", "20"}},
      res_480p_test_vectors},
 };
 /* clang-format on */
