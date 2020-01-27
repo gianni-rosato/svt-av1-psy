@@ -5,21 +5,27 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 1
       - name: Tab check
+        if: always()
         run: |
           ! git grep -InP --heading "\t" -- . ':!third_party/**/*'
       - name: Carriage Return check
+        if: always()
         run: |
           ! git grep -InP --heading "\r" -- . ':!third_party/**/*'
       - name: Trailing spaces
+        if: always()
         run: |
           ! git grep -InP --heading " $" -- . ':!third_party/**/*'
       - name: Fetch upstream
-        run: git fetch -q https://github.com/OpenVisualCloud/SVT-AV1.git master
+        if: always()
+        run: |
+          git fetch -q https://github.com/OpenVisualCloud/SVT-AV1.git master
       - name: newline at EOF check
+        if: always()
         run: |
           for file in $(git diff --name-only --diff-filter=d FETCH_HEAD  -- . ':!third_party' ':!test/e2e_test/test_vector_list.txt' ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' ':!*.png'); do
             if [ -n "$(tail -c1 "$file")" ]; then
@@ -28,6 +34,7 @@ jobs:
             fi
           done
       - name: Check commit message
+        if: always()
         run: |
           for i in $(git rev-list HEAD ^FETCH_HEAD); do
             echo "Checking commit message of $i"

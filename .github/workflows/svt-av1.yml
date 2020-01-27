@@ -6,6 +6,7 @@ jobs:
     runs-on: ubuntu-18.04
 
     strategy:
+      fail-fast: false
       matrix:
         compiler: ['gcc-7', 'gcc-8', 'gcc-9', 'clang-6', 'clang-10']
         include:
@@ -31,13 +32,13 @@ jobs:
     - name: Add Clang apt repository
       if: matrix.compiler == 'clang-10'
       run: |
-        echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main" \
+        echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main" \
         | sudo tee -a /etc/apt/sources.list.d/llvm.list
         curl -L https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo apt-get update
     - name: Install dependencies
       run: sudo apt-get install -y ${{ matrix.packages }} nasm yasm cmake
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
       with:
         fetch-depth: 1
     - name: Compile SVT-AV1
