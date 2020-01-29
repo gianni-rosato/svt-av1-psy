@@ -1214,10 +1214,16 @@ void *picture_manager_kernel(void *input_ptr) {
                                                 LAST_FRAME;
                                             for (int frame = LAST_FRAME; frame <= ALTREF_FRAME;
                                                  ++frame)
+                                            {
+                                                EbReferenceObject *ref =
+                                                    (EbReferenceObject *)reference_entry_ptr
+                                                     ->reference_object_ptr->object_ptr;
+
                                                 child_pcs_ptr->ref_global_motion[frame] =
-                                                    ((EbReferenceObject *)reference_entry_ptr
-                                                         ->reference_object_ptr->object_ptr)
-                                                        ->global_motion[frame];
+                                                        ref->slice_type != I_SLICE ?
+                                                        ref->global_motion[frame] :
+                                                        default_warp_params;
+                                            }
                                         }
                                     }
                                     // Set the Reference Object
@@ -1293,10 +1299,16 @@ void *picture_manager_kernel(void *input_ptr) {
                                                 LAST_FRAME;
                                             for (int frame = LAST_FRAME; frame <= ALTREF_FRAME;
                                                  ++frame)
+                                            {
+                                                EbReferenceObject *ref =
+                                                    (EbReferenceObject *)reference_entry_ptr
+                                                     ->reference_object_ptr->object_ptr;
+
                                                 child_pcs_ptr->ref_global_motion[frame] =
-                                                    ((EbReferenceObject *)reference_entry_ptr
-                                                         ->reference_object_ptr->object_ptr)
-                                                        ->global_motion[frame];
+                                                        ref->slice_type != I_SLICE ?
+                                                        ref->global_motion[frame] :
+                                                        default_warp_params;
+                                            }
                                         }
                                     }
                                     // Set the Reference Object
