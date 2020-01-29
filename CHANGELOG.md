@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.1] - 2019-01-28
+
+Encoder
+- Palette support for 10-bit
+- Added the first batch of detailed documentation to help developers
+
+Encoder and Decoder
+- Code cleanup and refactoring
+
+Build and Testing
+- Bug fixes
+- Improve CI
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+
+
 ## [0.8.0] - 2019-12-20
 
 Encoder

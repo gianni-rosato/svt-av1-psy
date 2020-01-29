@@ -16,7 +16,7 @@ extern "C" {
 // API Version
 #define SVT_VERSION_MAJOR 0
 #define SVT_VERSION_MINOR 8
-#define SVT_VERSION_PATCHLEVEL 0
+#define SVT_VERSION_PATCHLEVEL 1
 
 #ifdef _WIN32
 #define EB_API __declspec(dllexport)
