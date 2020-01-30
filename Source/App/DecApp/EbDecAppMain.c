@@ -116,7 +116,7 @@ void write_frame(EbBufferHeaderType *recon_buffer, CliInput *cli) {
 
 static void show_progress(int in_frame, uint64_t dx_time) {
     fprintf(stderr,
-            "\n%d frames decoded in %" PRId64 " us (%.2f fps)\r",
+            "%d frames decoded in %" PRId64 " us (%.2f fps)\r",
             in_frame,
             dx_time,
             (double)in_frame * 1000000.0 / (double)dx_time);
@@ -200,6 +200,7 @@ int32_t main(int32_t argc, char *argv[]) {
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->luma = (uint8_t *)malloc(size);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb   = (uint8_t *)malloc(size >> 2);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cr   = (uint8_t *)malloc(size >> 2);
+
         if (!init_pic_buffer((EbSvtIOFormat *)recon_buffer->p_buffer, &cli, config_ptr)) {
             fprintf(stderr, "Decoding \n");
             EbAV1StreamInfo *stream_info = (EbAV1StreamInfo *)malloc(sizeof(EbAV1StreamInfo));
@@ -252,9 +253,11 @@ int32_t main(int32_t argc, char *argv[]) {
             free(frame_info);
             free(stream_info);
         }
+
         free(((EbSvtIOFormat *)recon_buffer->p_buffer)->cr);
         free(((EbSvtIOFormat *)recon_buffer->p_buffer)->cb);
         free(((EbSvtIOFormat *)recon_buffer->p_buffer)->luma);
+
         free(recon_buffer->p_buffer);
         free(recon_buffer);
         free(buf);

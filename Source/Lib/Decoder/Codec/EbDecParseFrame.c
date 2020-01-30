@@ -291,6 +291,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
             parse_ctx->cur_coeff_buf[AOM_PLANE_V]    = sb_info->sb_coeff[AOM_PLANE_V];
             parse_ctx->prev_blk_has_chroma           = 1; //default at start of frame / tile
 
+            sb_info->num_block = 0;
             // Bit-stream parsing of the superblock
             parse_super_block(dec_handle_ptr, parse_ctx, mi_row, mi_col, sb_info);
 

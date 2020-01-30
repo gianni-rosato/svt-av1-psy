@@ -25,14 +25,6 @@ static const SEG_LVL_FEATURES seg_lvl_lf_lut[MAX_MB_PLANE][2] = {
         {SEG_LVL_ALT_LF_U, SEG_LVL_ALT_LF_U},
         {SEG_LVL_ALT_LF_V, SEG_LVL_ALT_LF_V}};
 
-
-const int32_t mode_lf_lut[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // INTRA_MODES
-        1, 1, 0, 1, // INTER_MODES (GLOBALMV == 0)
-        1, 1, 1, 1, 1, 1, 0, 1 // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
-};
-
-
 static int seg_feature_active(SegmentationParams *seg, int segment_id,
                               SEG_LVL_FEATURES feature_id) {
     return seg->segmentation_enabled && seg->feature_enabled[segment_id][feature_id];
@@ -49,50 +41,48 @@ static INLINE int16_t signed_char_clamp_high(int32_t t, int32_t bd) {
     }
 }
 
-uint8_t get_filter_level(FrameHeader *frm_hdr, const LoopFilterInfoN *lfi_n, const int32_t dir_idx,
-                         int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
-                         PredictionMode pred_mode, MvReferenceFrame ref_frame_0) {
-    const int32_t segment_id =
-            seg_id; /* const int32_t segment_id =  0; might cause encoder problem */
-    PredictionMode mode; // Added to address 4x4 problem
-    mode = (pred_mode == INTRA_MODE_4x4) ? DC_PRED : pred_mode;
-    if (frm_hdr->delta_lf_params.delta_lf_present) {
-        SVT_LOG("ERROR[AN]: delta_lf_present not supported yet\n");
-        int32_t delta_lf = -1;
-        if (frm_hdr->delta_lf_params.delta_lf_multi) {
-            const int32_t delta_lf_idx = delta_lf_id_lut[plane][dir_idx];
-            delta_lf                   = sb_delta_lf[delta_lf_idx];
-        } else {
-            delta_lf = sb_delta_lf[0];
-        }
-        int32_t base_level;
-        if (plane == 0)
-            base_level = frm_hdr->loop_filter_params.filter_level[dir_idx];
-        else if (plane == 1)
-            base_level = frm_hdr->loop_filter_params.filter_level_u;
-        else
-            base_level = frm_hdr->loop_filter_params.filter_level_v;
-        int32_t lvl_seg = clamp(delta_lf + base_level, 0, MAX_LOOP_FILTER);
-        assert(plane >= 0 && plane <= 2);
-        const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir_idx];
-        if (seg_feature_active(&frm_hdr->segmentation_params, segment_id, seg_lf_feature_id)) {
-            const int32_t data =
-                    get_segdata(&frm_hdr->segmentation_params, segment_id, seg_lf_feature_id);
-            lvl_seg = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
-        }
-
-        if (frm_hdr->loop_filter_params.mode_ref_delta_enabled) {
-            const int32_t scale = 1 << (lvl_seg >> 5);
-            lvl_seg += frm_hdr->loop_filter_params.ref_deltas[ref_frame_0] * scale;
-            if (ref_frame_0 > INTRA_FRAME)
-                lvl_seg += frm_hdr->loop_filter_params.mode_deltas[mode_lf_lut[mode]] * scale;
-            lvl_seg = clamp(lvl_seg, 0, MAX_LOOP_FILTER);
-        }
-        return lvl_seg;
+uint8_t get_filter_level_delta_lf(FrameHeader* frm_hdr,
+                                  const int32_t dir_idx,
+                                  int32_t plane,
+                                  int32_t *sb_delta_lf,
+                                  uint8_t seg_id,
+                                  PredictionMode pred_mode,
+                                  MvReferenceFrame ref_frame_0) {
+    //printf("ERROR[AN]: delta_lf_present not supported yet\n");
+    int32_t delta_lf = -1;
+    if (frm_hdr->delta_lf_params.delta_lf_multi) {
+        const int32_t delta_lf_idx = delta_lf_id_lut[plane][dir_idx];
+        delta_lf = sb_delta_lf[delta_lf_idx];
     } else {
-        ASSERT(mode < MB_MODE_COUNT);
-        return lfi_n->lvl[plane][segment_id][dir_idx][ref_frame_0][mode_lf_lut[mode]];
+        delta_lf = sb_delta_lf[0];
     }
+    int32_t base_level;
+    if (plane == 0)
+        base_level = frm_hdr->loop_filter_params.filter_level[dir_idx];
+    else if (plane == 1)
+        base_level = frm_hdr->loop_filter_params.filter_level_u;
+    else
+        base_level = frm_hdr->loop_filter_params.filter_level_v;
+    int32_t lvl_seg = clamp(delta_lf + base_level, 0, MAX_LOOP_FILTER);
+    assert(plane >= 0 && plane <= 2);
+    const int32_t seg_lf_feature_id = seg_lvl_lf_lut[plane][dir_idx];
+    if (seg_feature_active(&frm_hdr->segmentation_params, seg_id,
+                           seg_lf_feature_id))
+    {
+        const int32_t data = get_segdata(&frm_hdr->segmentation_params,
+                                         seg_id, seg_lf_feature_id);
+        lvl_seg = clamp(lvl_seg + data, 0, MAX_LOOP_FILTER);
+    }
+
+    if (frm_hdr->loop_filter_params.mode_ref_delta_enabled) {
+        const int32_t scale = 1 << (lvl_seg >> 5);
+        lvl_seg += frm_hdr->loop_filter_params.ref_deltas[ref_frame_0] * scale;
+        if (ref_frame_0 > INTRA_FRAME)
+            lvl_seg += frm_hdr->loop_filter_params.
+                       mode_deltas[mode_lf_lut[pred_mode]] * scale;
+        lvl_seg = clamp(lvl_seg, 0, MAX_LOOP_FILTER);
+    }
+    return lvl_seg;
 }
 
 // Update the loop filter for the current frame.

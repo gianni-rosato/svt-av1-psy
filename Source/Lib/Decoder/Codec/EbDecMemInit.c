@@ -401,14 +401,13 @@ static EbErrorType init_lf_ctxt(EbDecHandle  *dec_handle_ptr) {
     EB_MALLOC_DEC(void *, dec_handle_ptr->pv_lf_ctxt, sizeof(LfCtxt), EB_N_PTR);
 
     LfCtxt *lf_ctxt = (LfCtxt *)dec_handle_ptr->pv_lf_ctxt;
-
     /*Mem allocation for luma parmas 4x4 unit*/
-    EB_MALLOC_DEC(LfBlockParamL *, lf_ctxt->lf_block_luma,
-        mi_rows * mi_cols * sizeof(LfBlockParamL), EB_N_PTR);
+    EB_MALLOC_DEC(TxSize *, lf_ctxt->tx_size_l,
+        mi_rows * mi_cols * sizeof(TxSize), EB_N_PTR);
 
     /*Allocation of chroma params at 4x4 luma unit, can be optimized */
-    EB_MALLOC_DEC(LfBlockParamUv *, lf_ctxt->lf_block_uv,
-        mi_rows * mi_cols * sizeof(LfBlockParamUv), EB_N_PTR);
+    EB_MALLOC_DEC(TxSize *, lf_ctxt->tx_size_uv,
+        mi_rows * mi_cols * sizeof(TxSize), EB_N_PTR);
 
     return return_error;
 }

@@ -36,8 +36,10 @@ void *dec_all_stage_kernel(void *input_ptr);
 /*ToDo : Remove all these replications */
 void eb_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,
                                    int32_t plane_end);
-void dec_loop_filter_row(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
-                         LfCtxt *lf_ctxt, LoopFilterInfoN *lf_info, uint32_t y_sb_index,
+void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
+                         EbPictureBufferDesc *recon_picture_buf,
+                         LfCtxt *lf_ctxt,
+                         uint32_t y_sb_index,
                          int32_t plane_start, int32_t plane_end);
 void save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
                                  int32_t src_height, const Av1Common *cm, int32_t plane,
@@ -628,7 +630,7 @@ void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr) {
     EB_MEMSET(dec_mt_frame_data->lf_row_map, 0, picture_height_in_sb * sizeof(uint32_t));
 
     memset(lf_frame_info->sb_lf_completed_in_row, -1, picture_height_in_sb * sizeof(int32_t));
-
+    lf_frame_info->lf_info_init_done = EB_FALSE;
     lf_frame_info->lf_sb_row_info.sb_row_to_process = 0;
 }
 
@@ -753,9 +755,12 @@ static INLINE void dec_save_CDEF_boundary_lines_SB_row(
 }
 
 /*Frame level function to trigger loop filter for each superblock*/
-void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *recon_picture_buf,
-                                  LfCtxt *lf_ctxt, LoopFilterInfoN *lf_info, int32_t plane_start,
-                                  int32_t plane_end, DecThreadCtxt *thread_ctxt) {
+void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
+                                  EbPictureBufferDesc *recon_picture_buf,
+                                  LfCtxt *lf_ctxt,
+                                  int32_t plane_start,
+                                  int32_t plane_end,
+                                  DecThreadCtxt *thread_ctxt) {
     int32_t         sb_row;
     DecMtFrameData *dec_mt_frame_data1 =
         &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
@@ -778,11 +783,25 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
 
     lf_ctxt->delta_lf_stride = dec_handle->master_frame_buf.sb_cols * FRAME_LF_COUNT;
     frm_hdr->loop_filter_params.combine_vert_horz_lf = 1;
-    /*init hev threshold const vectors*/
-    for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
-        memset(lf_info->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
 
-    eb_av1_loop_filter_frame_init(frm_hdr, lf_info, plane_start, plane_end);
+    DecMtlfFrameInfo *dec_mt_lf_frame_info = &dec_mt_frame_data1->lf_frame_info;
+    //lock mutex
+    eb_block_on_mutex(dec_mt_lf_frame_info->lf_sb_row_info.sbrow_mutex);
+    //Check lf_info init done or not
+    if (dec_mt_lf_frame_info->lf_info_init_done == EB_FALSE) {
+        /*init hev threshold const vectors*/
+        for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
+             memset(lf_ctxt->lf_info.lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
+
+        eb_av1_loop_filter_frame_init(frm_hdr,
+                                      &lf_ctxt->lf_info,
+                                      plane_start,
+                                      plane_end);
+
+        dec_mt_lf_frame_info->lf_info_init_done = EB_TRUE;
+    }
+    //unlock mutex
+    eb_release_mutex(dec_mt_lf_frame_info->lf_sb_row_info.sbrow_mutex);
 
     set_lbd_lf_filter_tap_functions();
     set_hbd_lf_filter_tap_functions();
@@ -853,7 +872,6 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *
                     dec_loop_filter_row(dec_handle,
                                         recon_picture_buf,
                                         lf_ctxt,
-                                        lf_info,
                                         sb_row,
                                         plane_start,
                                         plane_end);
@@ -1327,7 +1345,6 @@ void *dec_all_stage_kernel(void *input_ptr) {
         dec_av1_loop_filter_frame_mt(dec_handle_ptr,
                                      dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
                                      dec_handle_ptr->pv_lf_ctxt,
-                                     &thread_ctxt->lf_info,
                                      AOM_PLANE_Y,
                                      MAX_MB_PLANE,
                                      thread_ctxt);

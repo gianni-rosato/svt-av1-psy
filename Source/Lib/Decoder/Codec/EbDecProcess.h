@@ -133,6 +133,10 @@ typedef struct DecMtRowInfo {
 } DecMtRowInfo;
 
 typedef struct DecMtlfFrameInfo {
+    /* Flag to check lf_info initialization done or not.
+       First thread entering LF stage should do the init */
+    EbBool lf_info_init_done;
+
     /* Array to store SBs completed in every SB row of LF stage.
        Used for top sync */
     int32_t    *sb_lf_completed_in_row;

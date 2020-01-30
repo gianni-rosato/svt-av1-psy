@@ -87,7 +87,7 @@ static INLINE EbErrorType mvs_8x8_memory_alloc(TemporalMvRef **mvs, FrameHeader 
     const int frame_mvs_rows   = ROUND_POWER_OF_TWO(frame_info->mi_rows, 1);
     const int mvs_buff_size    = frame_mvs_stride * frame_mvs_rows;
 
-    EB_MALLOC_DEC(TemporalMvRef *, *mvs, mvs_buff_size * sizeof(*mvs), EB_N_PTR);
+    EB_MALLOC_DEC(TemporalMvRef *, *mvs, mvs_buff_size * sizeof(TemporalMvRef), EB_N_PTR);
 
     return EB_ErrorNone;
 }

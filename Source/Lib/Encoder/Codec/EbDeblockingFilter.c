@@ -175,6 +175,9 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                                  const MacroBlockD *const xd, const EdgeDir edge_dir,
                                  const uint32_t x, const uint32_t y, const int32_t plane,
                                  const struct MacroblockdPlane *const plane_ptr) {
+    FrameHeader* frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    const LoopFilterInfoN *lfi_n = &pcs_ptr->parent_pcs_ptr->lf_info;
+
     // reset to initial values
     params->filter_length = 0;
 
@@ -206,8 +209,8 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
     // it not set up.
     if (mbmi == NULL) return TX_INVALID;
 
-    const TxSize ts =
-        get_transform_size(xd, mbmi /*mi[0]*/, edge_dir, mi_row, mi_col, plane, plane_ptr);
+    const TxSize ts = get_transform_size(xd, mbmi /*mi[0]*/, edge_dir,
+                                         mi_row, mi_col, plane, plane_ptr);
     assert(ts < TX_SIZES_ALL);
 
     {
@@ -220,17 +223,21 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
 
         // prepare outer edge parameters. deblock the edge if it's an edge of a TU
         {
-            const uint32_t curr_level = get_filter_level(&pcs_ptr->parent_pcs_ptr->frm_hdr,
-                                                         &pcs_ptr->parent_pcs_ptr->lf_info,
-                                                         edge_dir,
-                                                         plane,
-                                                         pcs_ptr->parent_pcs_ptr->curr_delta_lf,
-                                                         0 /*segment_id*/,
-                                                         mbmi->block_mi.mode,
-                                                         mbmi->block_mi.ref_frame[0]);
+            uint32_t curr_level; // Added to address 4x4 problem
+            PredictionMode mode = (mbmi->block_mi.mode == INTRA_MODE_4x4)
+                                  ? DC_PRED : mbmi->block_mi.mode;
+            if (frm_hdr->delta_lf_params.delta_lf_present)
+                curr_level = get_filter_level_delta_lf(frm_hdr, edge_dir, plane,
+                                                       pcs_ptr->parent_pcs_ptr->curr_delta_lf,
+                                                       0 /*segment_id*/,
+                                                       mode, mbmi->block_mi.ref_frame[0]);
+            else
+                curr_level = lfi_n->lvl[plane][0/*segment_id*/][edge_dir]
+                             [mbmi->block_mi.ref_frame[0]][mode_lf_lut[mode]];
 
             const int32_t curr_skipped =
                 mbmi->block_mi.skip && is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0]);
+
             uint32_t level = curr_level;
             if (coord) {
                 {
@@ -245,14 +252,20 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                         (VERT_EDGE == edge_dir) ? (mi_col - (1 << scale_horz)) : (mi_col);
                     const TxSize pv_ts =
                         get_transform_size(xd, mi_prev, edge_dir, pv_row, pv_col, plane, plane_ptr);
-                    const uint32_t pv_lvl = get_filter_level(&pcs_ptr->parent_pcs_ptr->frm_hdr,
-                                                             &pcs_ptr->parent_pcs_ptr->lf_info,
-                                                             edge_dir,
-                                                             plane,
-                                                             pcs_ptr->parent_pcs_ptr->curr_delta_lf,
-                                                             0 /*segment_id*/,
-                                                             mi_prev->block_mi.mode,
-                                                             mi_prev->block_mi.ref_frame[0]);
+
+                    uint32_t pv_lvl;
+                    mode = (mi_prev->block_mi.mode == INTRA_MODE_4x4)
+                           ? DC_PRED : mi_prev->block_mi.mode;
+                    if (frm_hdr->delta_lf_params.delta_lf_present)
+                        pv_lvl = get_filter_level_delta_lf(frm_hdr,
+                                                           edge_dir, plane,
+                                                           pcs_ptr->parent_pcs_ptr->curr_delta_lf,
+                                                           0 /*segment_id*/,
+                                                           mi_prev->block_mi.mode,
+                                                           mi_prev->block_mi.ref_frame[0]);
+                    else
+                        pv_lvl = lfi_n->lvl[plane][0/*segment_id*/][edge_dir]
+                                [mi_prev->block_mi.ref_frame[0]][mode_lf_lut[mode]];
 
                     const int32_t pv_skip =
                         mi_prev->block_mi.skip &&
@@ -442,17 +455,16 @@ void eb_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
             Av1DeblockingParameters params;
             memset(&params, 0, sizeof(params));
 
-            tx_size =
-                set_lpf_parameters(&params,
-                                   //(pcs_ptr->parent_pcs_ptr->av1_cm->mi_stride << scale_vert),
-                                   (mi_stride << scale_vert),
-                                   pcs_ptr,
-                                   xd,
-                                   HORZ_EDGE,
-                                   curr_x,
-                                   curr_y,
-                                   plane,
-                                   plane_ptr);
+            tx_size = set_lpf_parameters(&params,
+                                         //(pcs_ptr->parent_pcs_ptr->av1_cm->mi_stride << scale_vert),
+                                         (mi_stride << scale_vert),
+                                         pcs_ptr,
+                                         xd,
+                                         HORZ_EDGE,
+                                         curr_x,
+                                         curr_y,
+                                         plane,
+                                         plane_ptr);
             if (tx_size == TX_INVALID) {
                 params.filter_length = 0;
                 tx_size              = TX_4X4;

@@ -68,9 +68,15 @@ typedef struct Av1DeblockingParameters {
     const uint8_t *hev_thr;
 } Av1DeblockingParameters;
 
-uint8_t get_filter_level(FrameHeader *frm_hdr, const LoopFilterInfoN *lfi_n, const int32_t dir_idx,
-                         int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
-                         PredictionMode pred_mode, MvReferenceFrame ref_frame_0);
+static const int32_t mode_lf_lut[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // INTRA_MODES
+        1, 1, 0, 1, // INTER_MODES (GLOBALMV == 0)
+        1, 1, 1, 1, 1, 1, 0, 1 // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
+};
+
+uint8_t get_filter_level_delta_lf(FrameHeader* frm_hdr, const int32_t dir_idx,
+                                  int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
+                                  PredictionMode pred_mode, MvReferenceFrame ref_frame_0);
 
 static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
     return /*is_intrabc_block(mbmi) ||*/ ref_frame_0 > INTRA_FRAME;

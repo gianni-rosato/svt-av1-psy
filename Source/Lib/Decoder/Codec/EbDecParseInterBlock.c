@@ -681,11 +681,11 @@ static int add_tpl_ref_mv(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_
         // Process compound inter mode
         int                      cur_frame_index = dec_handle->cur_pic_buf[0]->order_hint;
         const EbDecPicBuf *const buf_0           = get_ref_frame_buf(dec_handle, rf[0]);
-        int                      frame0_index    = buf_0->order_hint;
+        int                      frame0_index = buf_0->order_hint;
 
         int cur_offset_0 = get_relative_dist(
             &dec_handle->seq_header.order_hint_info, cur_frame_index, frame0_index);
-        const EbDecPicBuf *const buf_1        = get_ref_frame_buf(dec_handle, rf[1]);
+        const EbDecPicBuf *const buf_1 = get_ref_frame_buf(dec_handle, rf[1]);
         int                      frame1_index = buf_1->order_hint;
         int                      cur_offset_1 = get_relative_dist(
             &dec_handle->seq_header.order_hint_info, cur_frame_index, frame1_index);

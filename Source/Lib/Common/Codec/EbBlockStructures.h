@@ -147,6 +147,10 @@ typedef struct BlockModeInfo {
     // Number of base colors for Y (0) and UV (1)
     uint8_t palette_size[MAX_MB_PLANE - 1];
 
+    /*mi_row & mi_col wrt a super block*/
+    int8_t mi_row_in_sb;
+    int8_t mi_col_in_sb;
+
 #if MODE_INFO_DBG
     int32_t mi_row;
     int32_t mi_col;

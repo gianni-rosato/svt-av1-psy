@@ -259,9 +259,6 @@ typedef struct DecThreadCtxt {
     /* Pointer to the decode context */
     void *dec_mod_ctxt;
 
-    /* Loop filter information */
-    LoopFilterInfoN lf_info;
-
     /* Temporary block level scratch buffer to
        store LR output of [SB_Size x 64] block */
     uint8_t *dst;

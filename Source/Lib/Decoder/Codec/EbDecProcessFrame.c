@@ -21,85 +21,36 @@
 #include "EbDecNbr.h"
 
 /* decode partition */
-static void decode_partition(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col,
-                             BlockSize bsize, SBInfo *sb_info) {
+static void decode_partition(DecModCtxt *dec_mod_ctxt,
+                             uint32_t mi_row, uint32_t mi_col,
+                             SBInfo *sb_info) {
     BlockSize     subsize;
-    PartitionType partition;
 
-    uint8_t  num4x4            = mi_size_wide[bsize];
-    uint32_t half_block_4x4    = (uint32_t)num4x4 >> 1;
-    uint32_t quarter_block_4x4 = half_block_4x4 >> 1;
-
-    uint32_t has_rows = (mi_row + half_block_4x4) < dec_mod_ctxt->frame_header->mi_rows;
-    uint32_t has_cols = (mi_col + half_block_4x4) < dec_mod_ctxt->frame_header->mi_cols;
+    EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
 
     if (mi_row >= dec_mod_ctxt->frame_header->mi_rows ||
         mi_col >= dec_mod_ctxt->frame_header->mi_cols)
         return;
 
-    partition =
-        get_partition(dec_mod_ctxt, dec_mod_ctxt->frame_header, mi_row, mi_col, sb_info, bsize);
+    BlockModeInfo *mode_info = get_cur_mode_info(dec_handle,
+                                                 mi_row, mi_col, sb_info);
 
-    subsize              = partition_subsize[partition][bsize];
-    BlockSize split_size = partition_subsize[PARTITION_SPLIT][bsize];
+    int n_blocks = sb_info->num_block;
+    int sub_mi_row = 0;
+    int sub_mi_col = 0;
 
-#define DECODE_BLOCK(db_r, db_c, db_subsize) \
-    decode_block(dec_mod_ctxt, db_r, db_c, db_subsize, &dec_mod_ctxt->cur_tile_info, sb_info)
-
-#define DECODE_PARTITION(db_r, db_c, db_subsize) \
-    decode_partition(dec_mod_ctxt, (db_r), (db_c), (db_subsize), sb_info)
-
-    switch ((int)partition) {
-    case PARTITION_NONE: DECODE_BLOCK(mi_row, mi_col, subsize); break;
-    case PARTITION_HORZ:
-        DECODE_BLOCK(mi_row, mi_col, subsize);
-        if (has_rows) DECODE_BLOCK(mi_row + half_block_4x4, mi_col, subsize);
-        break;
-    case PARTITION_VERT:
-        DECODE_BLOCK(mi_row, mi_col, subsize);
-        if (has_cols) DECODE_BLOCK(mi_row, mi_col + half_block_4x4, subsize);
-        break;
-    case PARTITION_SPLIT:
-        DECODE_PARTITION(mi_row, mi_col, subsize);
-        DECODE_PARTITION(mi_row, mi_col + half_block_4x4, subsize);
-        DECODE_PARTITION(mi_row + half_block_4x4, mi_col, subsize);
-        DECODE_PARTITION(mi_row + half_block_4x4, mi_col + half_block_4x4, subsize);
-        break;
-    case PARTITION_HORZ_A:
-        DECODE_BLOCK(mi_row, mi_col, split_size);
-        DECODE_BLOCK(mi_row, mi_col + half_block_4x4, split_size);
-        DECODE_BLOCK(mi_row + half_block_4x4, mi_col, subsize);
-        break;
-    case PARTITION_HORZ_B:
-        DECODE_BLOCK(mi_row, mi_col, subsize);
-        DECODE_BLOCK(mi_row + half_block_4x4, mi_col, split_size);
-        DECODE_BLOCK(mi_row + half_block_4x4, mi_col + half_block_4x4, split_size);
-        break;
-    case PARTITION_VERT_A:
-        DECODE_BLOCK(mi_row, mi_col, split_size);
-        DECODE_BLOCK(mi_row + half_block_4x4, mi_col, split_size);
-        DECODE_BLOCK(mi_row, mi_col + half_block_4x4, subsize);
-        break;
-    case PARTITION_VERT_B:
-        DECODE_BLOCK(mi_row, mi_col, subsize);
-        DECODE_BLOCK(mi_row, mi_col + half_block_4x4, split_size);
-        DECODE_BLOCK(mi_row + half_block_4x4, mi_col + half_block_4x4, split_size);
-        break;
-    case PARTITION_HORZ_4:
-        for (int i = 0; i < 4; ++i) {
-            uint32_t this_mi_row = mi_row + (i * quarter_block_4x4);
-            if (i > 0 && this_mi_row >= dec_mod_ctxt->frame_header->mi_rows) break;
-            DECODE_BLOCK(this_mi_row, mi_col, subsize);
-        }
-        break;
-    case PARTITION_VERT_4:
-        for (int i = 0; i < 4; ++i) {
-            uint32_t this_mi_col = mi_col + (i * quarter_block_4x4);
-            if (i > 0 && this_mi_col >= dec_mod_ctxt->frame_header->mi_cols) break;
-            DECODE_BLOCK(mi_row, this_mi_col, subsize);
-        }
-        break;
-    default: assert(0 && "Invalid partition type");
+    for (int i = 0; i < n_blocks; i++) {
+        sub_mi_row = mode_info->mi_row_in_sb;
+        sub_mi_col = mode_info->mi_col_in_sb;
+        subsize = mode_info->sb_type;
+        decode_block(dec_mod_ctxt,
+                     mode_info,
+                     mi_row + sub_mi_row,
+                     mi_col + sub_mi_col,
+                     subsize,
+                     &dec_mod_ctxt->cur_tile_info,
+                     sb_info);
+        mode_info++;
     }
 }
 
@@ -112,7 +63,7 @@ void decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_c
     update_dequant(dec_mod_ctxt, sb_info);
 
     /* Decode partition */
-    decode_partition(dec_mod_ctxt, mi_row, mi_col, dec_mod_ctxt->seq_header->sb_size, sb_info);
+    decode_partition(dec_mod_ctxt, mi_row, mi_col, sb_info);
 }
 
 EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,

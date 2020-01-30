@@ -901,9 +901,7 @@ int motion_field_projection_row(EbDecHandle *dec_handle, MvReferenceFrame start_
 
                 if (pos_valid) {
                     const int mi_offset = mi_r * (frame_info->mi_stride >> 1) + mi_c;
-
-                    tpl_mvs_base[mi_offset].mf_mv0.as_mv.row = fwd_mv.row;
-                    tpl_mvs_base[mi_offset].mf_mv0.as_mv.col = fwd_mv.col;
+                    tpl_mvs_base[mi_offset].mf_mv0.as_int = mv_ref->mf_mv0.as_int;/*Same as fwd_mv*/
                     tpl_mvs_base[mi_offset].ref_frame_offset = ref_frame_offset;
                 }
             }
@@ -2418,6 +2416,11 @@ void parse_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, uint32_t mi_row,
     mode->mi_row = mi_row;
     mode->mi_col = mi_col;
 #endif
+
+    sb_info->num_block++;
+    mode->mi_row_in_sb = mi_row - parse_ctx->sb_row_mi;
+    mode->mi_col_in_sb = mi_col - parse_ctx->sb_col_mi;
+
     /* TODO : tile->tile_rows boundary condn check is wrong */
     part_info.up_available      = ((int32_t)mi_row > tile->mi_row_start);
     part_info.left_available    = ((int32_t)mi_col > tile->mi_col_start);

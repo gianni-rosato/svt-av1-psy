@@ -133,8 +133,8 @@ PartitionType get_partition(DecModCtxt *dec_mod_ctxt, FrameHeader *frame_header,
     return base_partitions[split_idx];
 }
 
-void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col, BlockSize bsize,
-                  TileInfo *tile, SBInfo *sb_info) {
+void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi_row, int32_t mi_col,
+                   BlockSize bsize, TileInfo *tile, SBInfo *sb_info) {
     EbDecHandle *        dec_handle        = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     EbColorConfig *      color_config      = &dec_mod_ctxt->seq_header->color_config;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
@@ -143,8 +143,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col, Bloc
 
     int num_planes = av1_num_planes(color_config);
 
-    BlockModeInfo *mode_info =
-        get_cur_mode_info(dec_mod_ctxt->dec_handle_ptr, mi_row, mi_col, sb_info);
     bool inter_block = is_inter_block(mode_info);
 
 #if MODE_INFO_DBG
@@ -343,8 +341,6 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col, Bloc
 
     LfCtxt *               lf_ctxt     = (LfCtxt *)dec_handle->pv_lf_ctxt;
     int32_t                lf_stride   = dec_mod_ctxt->frame_header->mi_stride;
-    struct LfBlockParamL * lf_block_l  = lf_ctxt->lf_block_luma;
-    struct LfBlockParamUv *lf_block_uv = lf_ctxt->lf_block_uv;
 
     for (int plane = 0; plane < num_planes; ++plane) {
         sub_x = (plane > 0) ? color_config->subsampling_x : 0;
@@ -389,22 +385,13 @@ void decode_block(DecModCtxt *dec_mod_ctxt, int32_t mi_row, int32_t mi_col, Bloc
             txb_recon_buf = (void *)((uint8_t *)blk_recon_buf + (txb_offset << hbd));
 
             if (dec_handle->is_lf_enabled) {
-                if (plane == 0) /*Populate the LF luma params for current block*/
-                    fill_4x4_param_luma(lf_block_l,
-                                        mi_col + trans_info->txb_x_offset,
-                                        mi_row + trans_info->txb_y_offset,
-                                        lf_stride,
-                                        tx_size,
-                                        mode_info);
-                else if (plane == 1)
-                    /*Chroma population is done at luma unit, not the chroma unit*/
-                    fill_4x4_param_uv(lf_block_uv,
-                                      (mi_col & (~sub_x)) + (trans_info->txb_x_offset << sub_x),
-                                      (mi_row & (~sub_y)) + (trans_info->txb_y_offset << sub_y),
-                                      lf_stride,
-                                      tx_size,
-                                      sub_x,
-                                      sub_y);
+                if(plane != 2)
+                    fill_4x4_lf_param(lf_ctxt,
+                                     (mi_col & (~sub_x)) +
+                                     (trans_info->txb_x_offset << sub_x),
+                                     (mi_row & (~sub_y)) +
+                                     (trans_info->txb_y_offset << sub_y),
+                                     lf_stride, tx_size, sub_x, sub_y, plane);
             }
 
             if (!inter_block)

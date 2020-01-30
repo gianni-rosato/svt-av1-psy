@@ -39,8 +39,10 @@
 #include "EbLog.h"
 
 void dec_av1_loop_filter_frame_mt(EbDecHandle *        dec_handle_ptr,
-                                  EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
-                                  LoopFilterInfoN *lf_info, int32_t plane_start, int32_t plane_end,
+                                  EbPictureBufferDesc *recon_picture_buf,
+                                  LfCtxt *lf_ctxt,
+                                  int32_t plane_start,
+                                  int32_t plane_end,
                                   DecThreadCtxt *thread_ctxt);
 
 EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info);
@@ -2156,7 +2158,8 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
 
     /* TODO: Should be moved to caller */
     if (dec_handle_ptr->dec_config.threads == 1) {
-        if (!frame_info->show_existing_frame) svt_setup_motion_field(dec_handle_ptr, NULL);
+        if (!frame_info->show_existing_frame && frame_info->use_ref_frame_mvs)
+            svt_setup_motion_field(dec_handle_ptr, NULL);
     }
 }
 
@@ -2403,7 +2406,6 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         dec_av1_loop_filter_frame_mt(dec_handle_ptr,
                                      dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
                                      dec_handle_ptr->pv_lf_ctxt,
-                                     &((LfCtxt *)dec_handle_ptr->pv_lf_ctxt)->lf_info,
                                      AOM_PLANE_Y,
                                      MAX_MB_PLANE,
                                      NULL);
