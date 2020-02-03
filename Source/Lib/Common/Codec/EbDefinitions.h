@@ -57,6 +57,7 @@ extern "C" {
 
 #define FASTER_RDOQ 1 // Perform a fast RDOQ stage to reduce non-zero coeffs before the main/complex RDOQ stage for inter and chroma blocks
 #define FP_QUANT_BOTH_INTRA_INTER 1 // Add quantize_fp for INTER blocks
+#define ENHANCED_SQ_WEIGHT 1 // tune sq_weight threshold based on block properties
 
 #define HIGH_PRECISION_MV_QTHRESH 150
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
@@ -86,6 +87,22 @@ typedef enum GM_LEVEL {
     GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
     GM_TRAN_ONLY = 2 // Translation only using ME MV.
 } GM_LEVEL;
+#endif
+#if ENHANCED_SQ_WEIGHT
+typedef enum SqWeightOffsets {
+    CONSERVATIVE_OFFSET_0 =   5,
+    CONSERVATIVE_OFFSET_1 =  10,
+    AGGRESSIVE_OFFSET_0   =  -5,
+    AGGRESSIVE_OFFSET_1   = -10
+} SqWeightOffsets;
+
+typedef enum Qp {
+    QP_20 = 20,
+    QP_32 = 32,
+    QP_43 = 43,
+    QP_55 = 55,
+    QP_63 = 63
+} Qp;
 #endif
 struct Buf2D {
     uint8_t *buf;

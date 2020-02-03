@@ -1882,12 +1882,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         context_ptr->sq_weight = (uint32_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
         context_ptr->sq_weight = 100;
-    else
-
-        if (MR_MODE)
+    else if (MR_MODE)
         context_ptr->sq_weight = (uint32_t)~0;
+#if ENHANCED_SQ_WEIGHT
+    else if (pcs_ptr->enc_mode <= ENC_M1)
+        context_ptr->sq_weight = scs_ptr->static_config.sq_weight + 5;
+    else if (pcs_ptr->enc_mode <= ENC_M2)
+        context_ptr->sq_weight = scs_ptr->static_config.sq_weight;
+    else
+        context_ptr->sq_weight = scs_ptr->static_config.sq_weight - 5;
+#else
     else
         context_ptr->sq_weight = scs_ptr->static_config.sq_weight;
+#endif
 
     // Set pred ME full search area
     if (context_ptr->pd_pass == PD_PASS_0) {

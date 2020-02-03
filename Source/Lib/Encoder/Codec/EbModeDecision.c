@@ -5549,6 +5549,9 @@ uint32_t product_full_mode_decision(
     candidate_ptr = buffer_ptr_array[lowest_cost_index]->candidate_ptr;
 
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
+#if ENHANCED_SQ_WEIGHT
+    context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost - buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion) + buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_merge_ptr;
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_skip_ptr;

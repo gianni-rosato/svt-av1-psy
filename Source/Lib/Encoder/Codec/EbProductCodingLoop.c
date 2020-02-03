@@ -6491,9 +6491,120 @@ void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
     } else {
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = MAX_MODE_COST;
+#if ENHANCED_SQ_WEIGHT
+        context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = MAX_MODE_COST;
+#endif
+        blk_ptr->prediction_unit_array->ref_frame_type = 0;
     }
 }
 
+#if ENHANCED_SQ_WEIGHT
+/*
+ * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
+ * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
+ * determines how likely it is to skip blocks, and is a function of the qp, block shape,
+ * prediction mode, block coeffs, and encode mode.
+ *
+ * skip HA, HB and H4 if (valid SQ and H) and (H_COST > (SQ_WEIGHT * SQ_COST) / 100)
+ * skip VA, VB and V4 if (valid SQ and V) and (V_COST > (SQ_WEIGHT * SQ_COST) / 100)
+ *
+ * Returns TRUE if the blocks should be skipped; FALSE otherwise.
+ */
+uint8_t update_skip_nsq_shapes(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+                               ModeDecisionContext *context_ptr) {
+    uint8_t skip_nsq = 0;
+    uint32_t sq_weight = context_ptr->sq_weight;
+
+    // return immediately if the skip nsq threshold is infinite
+    if (sq_weight == (uint32_t)~0) return skip_nsq;
+
+    // use an aggressive threshold for QP 20
+    if (scs_ptr->static_config.qp <= QP_20) sq_weight += AGGRESSIVE_OFFSET_1;
+
+    // use a conservative threshold for H4, V4 blocks
+    if (context_ptr->blk_geom->shape == PART_H4 || context_ptr->blk_geom->shape == PART_V4)
+        sq_weight += CONSERVATIVE_OFFSET_0;
+
+    if (context_ptr->blk_geom->shape == PART_HA || context_ptr->blk_geom->shape == PART_HB || context_ptr->blk_geom->shape == PART_H4) {
+        if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag &&
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 1].avail_blk_flag &&
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 2].avail_blk_flag) {
+
+            // Use aggressive thresholds for inter blocks
+            if (pcs_ptr->slice_type != I_SLICE) {
+                if (context_ptr->blk_geom->shape == PART_HA) {
+                    if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 1].prediction_mode_flag == INTRA_MODE)
+                        sq_weight += CONSERVATIVE_OFFSET_0;
+                }
+                if (context_ptr->blk_geom->shape == PART_HB) {
+                    if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 2].prediction_mode_flag == INTRA_MODE)
+                        sq_weight += CONSERVATIVE_OFFSET_0;
+                }
+            }
+
+            // Use aggressive thresholds for blocks without coeffs
+            if (context_ptr->blk_geom->shape == PART_HA) {
+                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 1].block_has_coeff)
+                    sq_weight += AGGRESSIVE_OFFSET_1;
+            }
+            if (context_ptr->blk_geom->shape == PART_HB) {
+                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 2].block_has_coeff)
+                    sq_weight += AGGRESSIVE_OFFSET_1;
+            }
+
+            // compute the cost of the SQ block and H block
+            uint64_t sq_cost =
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost;
+            uint64_t h_cost =
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 1].default_cost +
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 2].default_cost;
+
+            // Determine if nsq shapes can be skipped based on the relative cost of SQ and H blocks
+            skip_nsq = (h_cost > ((sq_cost * sq_weight) / 100));
+        }
+    }
+    if (context_ptr->blk_geom->shape == PART_VA || context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
+        if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag &&
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 3].avail_blk_flag &&
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 4].avail_blk_flag) {
+
+            // Use aggressive thresholds for inter blocks
+            if (pcs_ptr->slice_type != I_SLICE) {
+                if (context_ptr->blk_geom->shape == PART_VA) {
+                    if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 3].prediction_mode_flag == INTRA_MODE)
+                        sq_weight += CONSERVATIVE_OFFSET_0;
+                }
+                if (context_ptr->blk_geom->shape == PART_VB) {
+                    if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 4].prediction_mode_flag == INTRA_MODE)
+                        sq_weight += CONSERVATIVE_OFFSET_0;
+                }
+            }
+
+            // Use aggressive thresholds for blocks without coeffs
+            if (context_ptr->blk_geom->shape == PART_VA) {
+                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 3].block_has_coeff)
+                    sq_weight += AGGRESSIVE_OFFSET_1;
+            }
+            if (context_ptr->blk_geom->shape == PART_VB) {
+                if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 4].block_has_coeff)
+                    sq_weight += AGGRESSIVE_OFFSET_1;
+            }
+
+            // compute the cost of the SQ block and V block
+            uint64_t sq_cost =
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].default_cost;
+            uint64_t v_cost =
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 3].default_cost +
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds + 4].default_cost;
+
+            // Determine if nsq shapes can be skipped based on the relative cost of SQ and V blocks
+            skip_nsq = (v_cost > ((sq_cost * sq_weight) / 100));
+        }
+    }
+
+    return skip_nsq;
+}
+#else
 void update_skip_next_nsq_for_a_b_shapes(ModeDecisionContext *context_ptr, uint64_t *sq_cost,
                                          uint64_t *h_cost, uint64_t *v_cost, int *skip_next_nsq) {
     switch (context_ptr->blk_geom->d1i) {
@@ -6542,6 +6653,7 @@ void update_skip_next_nsq_for_a_b_shapes(ModeDecisionContext *context_ptr, uint6
         break;
     }
 }
+#endif
 
 #define FLT_MAX 3.402823466e+38F // max value
 #define FEATURE_SIZE_MAX_MIN_PART_PRED 13
@@ -7019,9 +7131,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
     //CU Loop
     blk_index        = 0; //index over mdc array
+#if !ENHANCED_SQ_WEIGHT
     uint64_t sq_cost = 0;
     uint64_t h_cost;
     uint64_t v_cost;
+#endif
 
     uint32_t blk_idx_mds               = 0;
     uint32_t d1_blocks_accumlated      = 0;
@@ -7203,31 +7317,53 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             // skip until we reach the next block @ the parent block depth
             if (blk_ptr->mds_idx >= next_non_skip_blk_idx_mds && skip_next_sq == 1)
                 skip_next_sq = 0;
+
+#if ENHANCED_SQ_WEIGHT
+            uint8_t sq_weight_based_nsq_skip = update_skip_nsq_shapes(scs_ptr, pcs_ptr, context_ptr);
+#endif
+
             EbBool auto_max_partition_block_skip =
                 (context_ptr->blk_geom->bwidth > block_size_wide[max_bsize] ||
                  context_ptr->blk_geom->bheight > block_size_high[max_bsize]) &&
                 (mdcResultTbPtr->leaf_data_array[blk_index].split_flag == EB_TRUE);
 
-            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr]
-                    .block_is_allowed[blk_ptr->mds_idx] &&
+#if ENHANCED_SQ_WEIGHT
+            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&
+                !skip_next_nsq && !skip_next_sq && !auto_max_partition_block_skip &&
+                !sq_weight_based_nsq_skip) {
+#else
+            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&
                 !skip_next_nsq && !skip_next_sq && !auto_max_partition_block_skip) {
+#endif
                 md_encode_block(scs_ptr,
                                 pcs_ptr,
                                 context_ptr,
                                 input_picture_ptr,
                                 sb_addr,
                                 bestcandidate_buffers);
-
-            } else if (auto_max_partition_block_skip) {
+            }
+#if ENHANCED_SQ_WEIGHT
+            else if (auto_max_partition_block_skip || sq_weight_based_nsq_skip) {
+#else
+            else if (auto_max_partition_block_skip) {
+#endif
                 if (context_ptr->blk_geom->shape != PART_N)
                     context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost =
                         (MAX_MODE_COST >> 4);
                 else
                     context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost =
                         (MAX_MODE_COST >> 10);
+#if ENHANCED_SQ_WEIGHT
+                context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].default_cost =
+                    MAX_MODE_COST;
+#endif
             } else if (skip_next_sq) {
                 context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost =
                     (MAX_MODE_COST >> 10);
+#if ENHANCED_SQ_WEIGHT
+                context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].default_cost =
+                    MAX_MODE_COST;
+#endif
             } else {
                 // If the block is out of the boundaries, md is not performed.
                 // - For square blocks, since the blocks can be further splitted, they are considered in d2_inter_depth_block_decision with cost of zero.
@@ -7238,6 +7374,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                         (MAX_MODE_COST >> 4);
                 else
                     context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].cost = 0;
+#if ENHANCED_SQ_WEIGHT
+                if (context_ptr->blk_geom->shape != PART_N)
+                    context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].default_cost =
+                        MAX_MODE_COST;
+                else
+                    context_ptr->md_local_blk_unit[context_ptr->blk_ptr->mds_idx].default_cost = 0;
+#endif
             }
         }
         skip_next_nsq = 0;
@@ -7257,10 +7400,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)
                 skip_next_nsq = 1;
         }
+#if !ENHANCED_SQ_WEIGHT
         if (context_ptr->sq_weight != (uint32_t)~0 && blk_geom->bsize > BLOCK_8X8)
             update_skip_next_nsq_for_a_b_shapes(
                 context_ptr, &sq_cost, &h_cost, &v_cost, &skip_next_nsq);
-
+#endif
         if (blk_geom->shape != PART_N) {
             if (blk_geom->nsi + 1 < blk_geom->totns)
                 md_update_all_neighbour_arrays(
