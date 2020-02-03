@@ -1938,16 +1938,25 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         }
     }
 
-    EB_MALLOC_2D(object_ptr->ois_sb_results, object_ptr->sb_total_count, 1);
-    EB_MALLOC_2D(
-        object_ptr->ois_candicate, object_ptr->sb_total_count, MAX_OIS_CANDIDATES * CU_MAX_COUNT);
+#if OIS_MEM
+    if (init_data_ptr->allocate_ois_struct) {
+#endif
+        EB_MALLOC_2D(object_ptr->ois_sb_results, object_ptr->sb_total_count, 1);
+        EB_MALLOC_2D(
+            object_ptr->ois_candicate, object_ptr->sb_total_count, MAX_OIS_CANDIDATES * CU_MAX_COUNT);
 
-    for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
-        uint32_t cu_idx;
-        for (cu_idx = 0; cu_idx < CU_MAX_COUNT; ++cu_idx)
-            object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cu_idx] =
+        for (sb_index = 0; sb_index < object_ptr->sb_total_count; ++sb_index) {
+            uint32_t cu_idx;
+            for (cu_idx = 0; cu_idx < CU_MAX_COUNT; ++cu_idx)
+                object_ptr->ois_sb_results[sb_index]->ois_candidate_array[cu_idx] =
                 &object_ptr->ois_candicate[sb_index][cu_idx * MAX_OIS_CANDIDATES];
+        }
+#if OIS_MEM
     }
+    else {
+        object_ptr->ois_sb_results = NULL;
+    }
+#endif
 
     object_ptr->max_number_of_candidates_per_block =
         (init_data_ptr->mrp_mode == 0)

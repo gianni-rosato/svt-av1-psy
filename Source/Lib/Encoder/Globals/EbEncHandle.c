@@ -1000,6 +1000,9 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
         input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
 #endif
+#if OIS_MEM
+        input_data.allocate_ois_struct = 0;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,

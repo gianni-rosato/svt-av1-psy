@@ -1005,6 +1005,9 @@ typedef struct PictureControlSetInitData {
     uint8_t log2_tile_cols;
     uint8_t log2_sb_sz; //in mi unit
 #endif
+#if OIS_MEM
+    uint8_t allocate_ois_struct; //allocate ois results
+#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

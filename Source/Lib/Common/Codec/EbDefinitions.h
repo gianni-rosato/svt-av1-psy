@@ -32,6 +32,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define OIS_MEM              1 //reduce memory consumption due to ois struct
+
+
 #define MC_DYNAMIC_PAD              1
 #define GLOBAL_WARPED_MOTION 1 // Global warped motion detection and insertion
 #ifndef NON_AVX512_SUPPORT
