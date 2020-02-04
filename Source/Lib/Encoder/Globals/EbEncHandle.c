@@ -377,6 +377,7 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
 EbErrorType load_default_buffer_configuration_settings(
     SequenceControlSet       *scs_ptr){
     EbErrorType           return_error = EB_ErrorNone;
+#if !MD_RATE_EST_ENH
     uint32_t enc_dec_seg_h = (scs_ptr->static_config.super_block_size == 128) ?
         ((scs_ptr->max_input_luma_height + 64) / 128) :
         ((scs_ptr->max_input_luma_height + 32) / 64);
@@ -385,7 +386,7 @@ EbErrorType load_default_buffer_configuration_settings(
         ((scs_ptr->max_input_luma_width + 32) / 64);
     uint32_t me_seg_h     = (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
     uint32_t me_seg_w     = (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
-
+#endif
     unsigned int lp_count   = get_num_processors();
     unsigned int core_count = lp_count;
 #if defined(_WIN32) || defined(__linux__)
@@ -417,7 +418,20 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD + scs_ptr->static_config.look_ahead_distance;
     scs_ptr->output_stream_buffer_fifo_init_count =
         scs_ptr->input_buffer_fifo_init_count + 4;
-
+#if MD_RATE_EST_ENH
+    uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (scs_ptr->static_config.super_block_size == 128) ?
+        ((scs_ptr->max_input_luma_height + 64) / 128) :
+        ((scs_ptr->max_input_luma_height + 32) / 64);
+    uint32_t enc_dec_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (scs_ptr->static_config.super_block_size == 128) ?
+        ((scs_ptr->max_input_luma_width + 64) / 128) :
+        ((scs_ptr->max_input_luma_width + 32) / 64);
+    uint32_t me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 6;
+    uint32_t me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 10;
+#endif
     // ME segments
     scs_ptr->me_segment_row_count_array[0] = me_seg_h;
     scs_ptr->me_segment_row_count_array[1] = me_seg_h;

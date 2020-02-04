@@ -48,6 +48,7 @@ extern "C" {
 #define MAX_TILE_CNTS 128 // Annex A.3
 #endif
 
+#define MD_RATE_EST_ENH 1 // MD rate estimation enhancement. Active for LP =1 for now
 #define MR_MODE 0
 
 #define HIGH_PRECISION_MV_QTHRESH 150

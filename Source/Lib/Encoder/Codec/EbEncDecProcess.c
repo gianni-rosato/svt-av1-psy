@@ -2722,6 +2722,38 @@ void *enc_dec_kernel(void *input_ptr) {
 
                     if (pcs_ptr->update_cdf) {
                         pcs_ptr->rate_est_array[sb_index] = *pcs_ptr->md_rate_estimation_array;
+#if MD_RATE_EST_ENH
+                        if (scs_ptr->enc_dec_segment_row_count_array[pcs_ptr->temporal_layer_index] == 1 &&
+                            scs_ptr->enc_dec_segment_col_count_array[pcs_ptr->temporal_layer_index] == 1) {
+                            if (sb_index == 0)
+                                pcs_ptr->ec_ctx_array[sb_index] = *pcs_ptr->coeff_est_entropy_coder_ptr->fc;
+                            else
+                                pcs_ptr->ec_ctx_array[sb_index] = pcs_ptr->ec_ctx_array[sb_index - 1];
+                        }
+                        else {
+                            // Use the latest available CDF for the current SB
+                            // Use the weighted average of left (3x) and top (1x) if available.
+                            int8_t up_available = ((int32_t)(sb_origin_y >> MI_SIZE_LOG2) >
+                                sb_ptr->tile_info.mi_row_start);
+                            int8_t left_available = ((int32_t)(sb_origin_x >> MI_SIZE_LOG2) >
+                                sb_ptr->tile_info.mi_col_start);
+                            if (!left_available && !up_available)
+                                pcs_ptr->ec_ctx_array[sb_index] =
+                                *pcs_ptr->coeff_est_entropy_coder_ptr->fc;
+                            else if (!left_available)
+                                pcs_ptr->ec_ctx_array[sb_index] =
+                                pcs_ptr->ec_ctx_array[sb_index - pic_width_in_sb];
+                            else if (!up_available)
+                                pcs_ptr->ec_ctx_array[sb_index] = pcs_ptr->ec_ctx_array[sb_index - 1];
+                            else {
+                                pcs_ptr->ec_ctx_array[sb_index] = pcs_ptr->ec_ctx_array[sb_index - 1];
+                                avg_cdf_symbols(&pcs_ptr->ec_ctx_array[sb_index],
+                                    &pcs_ptr->ec_ctx_array[sb_index - pic_width_in_sb],
+                                    AVG_CDF_WEIGHT_LEFT,
+                                    AVG_CDF_WEIGHT_TOP);
+                            }
+                        }
+#else
                         // Use the latest available CDF for the current SB
                         // Use the weighted average of left (3x) and top (1x) if available.
                         int8_t up_available   = ((int32_t)(sb_origin_y >> MI_SIZE_LOG2) >
@@ -2743,6 +2775,7 @@ void *enc_dec_kernel(void *input_ptr) {
                                             AVG_CDF_WEIGHT_LEFT,
                                             AVG_CDF_WEIGHT_TOP);
                         }
+#endif
 
                         // Initial Rate Estimation of the syntax elements
                         av1_estimate_syntax_rate(&pcs_ptr->rate_est_array[sb_index],
