@@ -1953,9 +1953,13 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
     // unsuccessful and therefore keep the strength as it was set
     if (noise_level > 0) {
         int noiselevel_adj;
+#if ALTREF_IMPROVEMENT
+        if (noise_level < 1.2)
+#else
         if (noise_level < 0.75)
             noiselevel_adj = -2;
         else if (noise_level < 1.75)
+#endif
             noiselevel_adj = -1;
         else if (noise_level < 4.0)
             noiselevel_adj = 0;
@@ -1981,7 +1985,12 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
         strength = adj_strength;
     else
         strength = 0;
-
+#if ALTREF_IMPROVEMENT
+    // Decrease the filter strength for low QPs
+    if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH){
+        strength = strength - 1;
+    }
+#endif
     // if highbd, adjust filter strength strength = strength + 2*(bit depth - 8)
     if (is_highbd) strength = strength + 2 * (encoder_bit_depth - 8);
 

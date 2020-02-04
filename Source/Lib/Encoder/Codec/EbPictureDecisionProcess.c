@@ -3403,7 +3403,17 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
+#if ALTREF_IMPROVEMENT
+                            uint8_t perform_filtering =
+                                (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
+                                 scs_ptr->static_config.hierarchical_levels >= 2) &&
+                                ( (pcs_ptr->slice_type == I_SLICE && pcs_ptr->sc_content_detected == 0) ||
+                                  (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0) ||
+                                  (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3 && pcs_ptr->sc_content_detected == 0))
+                                ? 1 : 0;
 
+                            if (perform_filtering){
+#else
                             if ((scs_ptr->enable_altrefs == EB_TRUE &&
                                     scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
                                     scs_ptr->static_config.hierarchical_levels >=2) &&
@@ -3412,6 +3422,7 @@ void* picture_decision_kernel(void *input_ptr)
                                   (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)
                                     || (scs_ptr->use_input_stat_file && pcs_ptr->temporal_layer_index == 1 && pcs_ptr->sc_content_detected == 0)
                                     ) ) {
+#endif
                                 int altref_nframes = pcs_ptr->scs_ptr->static_config.altref_nframes;
                                 if (pcs_ptr->idr_flag) {
 
@@ -3462,8 +3473,13 @@ void* picture_decision_kernel(void *input_ptr)
                                 //initilize list
                                 for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
                                     pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+#if ALTREF_IMPROVEMENT
+                                // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
+                                num_past_pics = MIN(MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count - 1), (int)out_stride_diff64);
+#else
                                 // Jing: Intra CRA case
-                                num_past_pics = MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count -1);
+                                num_past_pics = MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count - 1);
+#endif
 
                                 //get previous+current pictures from the the pre-assign buffer
                                 for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
