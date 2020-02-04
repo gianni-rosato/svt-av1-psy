@@ -2943,7 +2943,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->unrestricted_motion_vector = EB_TRUE;
 
     config_ptr->high_dynamic_range_input = 0;
-    config_ptr->screen_content_mode = 2;
+    config_ptr->screen_content_mode = 0;
 
     // Annex A parameters
     config_ptr->profile = 0;
