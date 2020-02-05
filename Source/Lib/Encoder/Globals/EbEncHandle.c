@@ -2258,6 +2258,36 @@ void copy_api_from_app(
     scs_ptr->static_config.md_stage_2_cand_prune_th = config_struct->md_stage_2_cand_prune_th;
     scs_ptr->static_config.md_stage_2_class_prune_th = config_struct->md_stage_2_class_prune_th;
 
+    // Prediction Structure
+    scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
+    if(scs_ptr->static_config.enable_manual_pred_struct){
+        scs_ptr->static_config.manual_pred_struct_entry_num = config_struct->manual_pred_struct_entry_num;
+        memcpy(&scs_ptr->static_config.pred_struct[0], &config_struct->pred_struct[0],config_struct->manual_pred_struct_entry_num*sizeof(PredictionStructureConfigEntry));
+        switch (scs_ptr->static_config.manual_pred_struct_entry_num) {
+            case 1:
+                scs_ptr->static_config.hierarchical_levels =  0;
+                break;
+            case 2:
+                scs_ptr->static_config.hierarchical_levels =  1;
+                break;
+            case 4:
+                scs_ptr->static_config.hierarchical_levels =  2;
+                break;
+            case 8:
+                scs_ptr->static_config.hierarchical_levels =  3;
+                break;
+            case 16:
+                scs_ptr->static_config.hierarchical_levels =  4;
+                break;
+            case 32:
+                scs_ptr->static_config.hierarchical_levels =  5;
+                break;
+            default:
+                scs_ptr->static_config.hierarchical_levels =  0;
+                break;
+        }
+    }
+
     return;
 }
 
@@ -2756,6 +2786,48 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Invalid OLPD Refinement mode for M%d [0], your input: %i\n", channel_number + 1, config->enc_mode, config->olpd_refinement);
         return_error = EB_ErrorBadParameter;
     }
+    // prediction structure
+    if(config->enable_manual_pred_struct) {
+        if(config->manual_pred_struct_entry_num > (1<<(MAX_HIERARCHICAL_LEVEL-1))){
+            SVT_LOG("Error instance %u: Invalid manual prediction structure entry number [1 - 32], your input: %d\n", channel_number + 1, config->manual_pred_struct_entry_num);
+            return_error = EB_ErrorBadParameter;
+        }
+        else {
+            for(int32_t i = 0; i < config->manual_pred_struct_entry_num; i++) {
+                config->pred_struct[i].ref_list1[REF_LIST_MAX_DEPTH-1] = 0;
+                if(config->pred_struct[i].decode_order >= (1<<(MAX_HIERARCHICAL_LEVEL-1))){
+                    SVT_LOG("Error instance %u: Invalid decode order for manual prediction structure [0 - 31], your input: %d\n", channel_number + 1, config->pred_struct[i].decode_order);
+                    return_error = EB_ErrorBadParameter;
+                }
+                if(config->pred_struct[i].temporal_layer_index >= (1<<(MAX_HIERARCHICAL_LEVEL-1))){
+                    SVT_LOG("Error instance %u: Invalid temporal layer index for manual prediction structure [0 - 31], your input: %d\n", channel_number + 1, config->pred_struct[i].temporal_layer_index);
+                    return_error = EB_ErrorBadParameter;
+                }
+                EbBool have_ref_frame_within_minigop_in_list0 = EB_FALSE;
+                int32_t entry_idx = i + 1;
+                for(int32_t j = 0; j < REF_LIST_MAX_DEPTH; j++) {
+                    if((entry_idx - config->pred_struct[i].ref_list1[j] > config->manual_pred_struct_entry_num)) {
+                        SVT_LOG("Error instance %u: Invalid ref frame %d in list1 entry%d for manual prediction structure, all ref frames in list1 should not exceed minigop end\n",
+                        channel_number + 1, config->pred_struct[i].ref_list1[j], i);
+                        return_error = EB_ErrorBadParameter;
+                    }
+                    if(config->pred_struct[i].ref_list0[j] < 0) {
+                        SVT_LOG("Error instance %u: Invalid ref frame %d in list0 entry%d for manual prediction structure, only forward frames can be in list0\n",
+                        channel_number + 1, config->pred_struct[i].ref_list0[j], i);
+                        return_error = EB_ErrorBadParameter;
+                    }
+                    if(!have_ref_frame_within_minigop_in_list0 && config->pred_struct[i].ref_list0[j] && entry_idx - config->pred_struct[i].ref_list0[j] >= 0 ) {
+                        have_ref_frame_within_minigop_in_list0 = EB_TRUE;
+                    }
+                }
+                if(!have_ref_frame_within_minigop_in_list0) {
+                    SVT_LOG("Error instance %u: Invalid ref frame in list0 entry%d for manual prediction structure,there should be at least one frame within minigop \n",
+                    channel_number + 1, i);
+                    return_error = EB_ErrorBadParameter;
+                }
+            }
+        }
+    }
 
     if (config->superres_mode > 2) {
         SVT_LOG("Error instance %u: invalid superres-mode %d, should be in the range [%d - %d], "
@@ -3064,7 +3136,8 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
-        enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.base_layer_switch_mode);
+        enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.base_layer_switch_mode,
+        &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         eb_release_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
         return EB_ErrorInsufficientResources;

@@ -60,19 +60,6 @@ typedef struct DependentList {
 } DependentList;
 
 /************************************************
-     * Prediction Structure Config Entry
-     *   Contains the basic reference lists and
-     *   configurations for each Prediction Structure
-     *   Config Entry.
-     ************************************************/
-typedef struct PredictionStructureConfigEntry {
-    uint32_t temporal_layer_index;
-    uint32_t decode_order;
-    int32_t  ref_list0[REF_LIST_MAX_DEPTH];
-    int32_t  ref_list1[REF_LIST_MAX_DEPTH];
-} PredictionStructureConfigEntry;
-
-/************************************************
      * Prediction Structure Config
      *   Contains a collection of basic control data
      *   for the basic prediction structure.
@@ -192,7 +179,8 @@ typedef struct PredictionStructureGroup {
      ************************************************/
 extern EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
                                                    uint8_t                   enc_mode,
-                                                   uint32_t base_layer_switch_mode);
+                                                   uint32_t base_layer_switch_mode,
+                                                   EbSvtAv1EncConfiguration *config);
 
 extern PredictionStructure *get_prediction_structure(
     PredictionStructureGroup *prediction_structure_group_ptr, EbPred pred_structure,

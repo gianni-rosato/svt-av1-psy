@@ -575,7 +575,7 @@ static PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
 /************************************************
  * Prediction Structure Config Array
  ************************************************/
-static const PredictionStructureConfig prediction_structure_config_array[] = {
+static PredictionStructureConfig prediction_structure_config_array[] = {
     {1, flat_pred_struct},
     {2, two_level_hierarchical_pred_struct},
     {4, three_level_hierarchical_pred_struct},
@@ -1981,7 +1981,8 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-                                            uint8_t enc_mode, uint32_t baseLayerSwitchMode) {
+                                            uint8_t enc_mode, uint32_t baseLayerSwitchMode,
+                                            EbSvtAv1EncConfiguration *config) {
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;
     uint32_t hierarchical_level_idx;
@@ -1991,18 +1992,31 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
     uint8_t ref_count_used       = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
 
+    // Insert manual prediction structure into array
+    if (config->enable_manual_pred_struct) {
+        prediction_structure_config_array[config->hierarchical_levels].entry_count = config->manual_pred_struct_entry_num;
+        EB_MEMCPY(prediction_structure_config_array[config->hierarchical_levels].entry_array,
+          &config->pred_struct[config->manual_pred_struct_entry_num - 1],
+          sizeof(PredictionStructureConfigEntry));
+        if (config->manual_pred_struct_entry_num > 1) {
+            EB_MEMCPY(prediction_structure_config_array[config->hierarchical_levels].entry_array + 1,
+              &config->pred_struct[0],
+              (config->manual_pred_struct_entry_num - 1) * sizeof(PredictionStructureConfigEntry));
+        }
+    }
+
     if (ref_count_used > 0 && ref_count_used < MAX_REF_IDX) {
         for (int gop_i = 1; gop_i < 8; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
-                four_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
-                four_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
+                prediction_structure_config_array[3].entry_array[gop_i].ref_list0[i] = 0;
+                prediction_structure_config_array[3].entry_array[gop_i].ref_list1[i] = 0;
             }
         }
 
         for (int gop_i = 1; gop_i < 16; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
-                five_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
-                five_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
+                prediction_structure_config_array[4].entry_array[gop_i].ref_list0[i] = 0;
+                prediction_structure_config_array[4].entry_array[gop_i].ref_list1[i] = 0;
             }
         }
     }

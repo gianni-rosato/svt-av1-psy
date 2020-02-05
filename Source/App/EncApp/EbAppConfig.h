@@ -159,6 +159,7 @@ typedef struct EbConfig {
     FILE *        qp_file;
     FILE *        input_stat_file;
     FILE *        output_stat_file;
+    FILE *        input_pred_struct_file;
     EbBool        use_input_stat_file;
     EbBool        use_output_stat_file;
     EbBool        y4m_input;
@@ -464,6 +465,10 @@ typedef struct EbConfig {
     // signal for enabling shortcut to skip search depths
     uint8_t enable_auto_max_partition;
 
+    // prediction structure
+    PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
+    EbBool enable_manual_pred_struct;
+    int32_t manual_pred_struct_entry_num;
 } EbConfig;
 
 extern void eb_config_ctor(EbConfig *config_ptr);

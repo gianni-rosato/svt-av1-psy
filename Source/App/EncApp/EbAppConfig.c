@@ -34,6 +34,7 @@
 #define INPUT_STAT_FILE_TOKEN "-input-stat-file"
 #define OUTPUT_STAT_FILE_TOKEN "-output-stat-file"
 #define STAT_FILE_TOKEN "-stat-file"
+#define INPUT_PREDSTRUCT_FILE_TOKEN "-pred-struct-file"
 #define WIDTH_TOKEN "-w"
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
@@ -195,6 +196,12 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 #endif
 
     cfg->y4m_input = check_if_y4m(cfg);
+};
+
+static void set_pred_struct_file(const char *value, EbConfig *cfg) {
+    if (cfg->input_pred_struct_file) { fclose(cfg->input_pred_struct_file); }
+    FOPEN(cfg->input_pred_struct_file,value, "rb");
+    cfg->enable_manual_pred_struct = EB_TRUE;
 };
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
@@ -640,6 +647,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
     {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file},
     {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file},
+    { SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "pred_struct_file", set_pred_struct_file },
     // Picture Dimensions
     {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
@@ -1407,6 +1415,170 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     return frame_count;
 }
 
+/**********************************
+* Parse Pred Struct File
+**********************************/
+static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t size) {
+    uint32_t argc;
+    char *argv[CONFIG_FILE_MAX_ARG_COUNT];
+    uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
+
+    char var_name[CONFIG_FILE_MAX_VAR_LEN];
+    char var_value[CONFIG_FILE_MAX_ARG_COUNT][CONFIG_FILE_MAX_VAR_LEN];
+
+    uint32_t value_index;
+
+    uint32_t comment_section_flag = 0;
+    uint32_t new_line_flag = 0;
+    int32_t  entry_num = 0;
+    int32_t  display_order = 0, num_ref_list0 = 0, num_ref_list1 = 0;
+    int32_t  idx_ref_list0 = 0, idx_ref_list1 = 0;
+
+    // Keep looping until we process the entire file
+    while(size--) {
+        comment_section_flag =
+            ((*buffer == CONFIG_FILE_COMMENT_CHAR) || (comment_section_flag != 0))
+                                   ? 1
+                : comment_section_flag;
+
+        // At the beginning of each line
+        if ((new_line_flag == 1) && (comment_section_flag == 0)) {
+            // Do an argc/argv split for the line
+            line_split(&argc, argv, arg_len, buffer);
+
+            if ((argc > 2) && (*argv[1] == CONFIG_FILE_VALUE_SPLIT)) {
+                // ***NOTE - We're assuming that the variable name is the first arg and
+                // the variable value is the third arg.
+
+                // Cap the length of the variable name
+                arg_len[0] = (arg_len[0] > CONFIG_FILE_MAX_VAR_LEN - 1)
+                                 ? CONFIG_FILE_MAX_VAR_LEN - 1
+                                 : arg_len[0];
+                // Copy the variable name
+                EB_STRNCPY(var_name, CONFIG_FILE_MAX_VAR_LEN, argv[0], arg_len[0]);
+                // Null terminate the variable name
+                var_name[arg_len[0]] = CONFIG_FILE_NULL_CHAR;
+                if (EB_STRCMP(var_name, "PredStructEntry")) {
+                  continue;
+                }
+
+                ++entry_num;
+                idx_ref_list0 = idx_ref_list1 = num_ref_list0 = num_ref_list1 = 0;
+
+                for (value_index = 0;
+                     (value_index < CONFIG_FILE_MAX_ARG_COUNT - 2) && (value_index < (argc - 2));
+                     ++value_index) {
+                    // Cap the length of the variable
+                    arg_len[value_index + 2] =
+                        (arg_len[value_index + 2] > CONFIG_FILE_MAX_VAR_LEN - 1)
+                                                  ? CONFIG_FILE_MAX_VAR_LEN - 1
+                            : arg_len[value_index + 2];
+                    // Copy the variable name
+                    EB_STRNCPY(var_value[value_index],
+                               CONFIG_FILE_MAX_VAR_LEN,
+                               argv[value_index + 2],
+                               arg_len[value_index + 2]);
+                    // Null terminate the variable name
+                    var_value[value_index][arg_len[value_index + 2]] = CONFIG_FILE_NULL_CHAR;
+
+                    switch (value_index) {
+                    case 0:
+                        display_order = strtoul(var_value[value_index], NULL, 0);
+                        if(display_order >= (1<<(MAX_HIERARCHICAL_LEVEL-1))){
+                          return -1;
+                        }
+                        break;
+                    case 1:
+                        config->pred_struct[display_order].decode_order =
+                            strtoul(var_value[value_index], NULL, 0);
+                        if(config->pred_struct[display_order].decode_order >= (1<<(MAX_HIERARCHICAL_LEVEL-1))){
+                          return -1;
+                        }
+                        break;
+                    case 2:
+                        config->pred_struct[display_order].temporal_layer_index =
+                            strtoul(var_value[value_index], NULL, 0);
+                        break;
+                    case 3: num_ref_list0 = strtoul(var_value[value_index], NULL, 0);
+                        break;
+                    case 4: num_ref_list1 = strtoul(var_value[value_index], NULL, 0);
+                        break;
+                    default:
+                        if (idx_ref_list0 < num_ref_list0) {
+                            if (idx_ref_list0 < REF_LIST_MAX_DEPTH) {
+                                config->pred_struct[display_order].ref_list0[idx_ref_list0] =
+                                    strtoul(var_value[value_index], NULL, 0);
+                            }
+                            ++idx_ref_list0;
+                        }
+                        else if(idx_ref_list1 < num_ref_list1) {
+                            if (idx_ref_list1 < REF_LIST_MAX_DEPTH - 1) {
+                                config->pred_struct[display_order].ref_list1[idx_ref_list1] =
+                                    strtoul(var_value[value_index], NULL, 0);
+                            }
+                            ++idx_ref_list1;
+                        }
+                        break;
+                    }
+                }
+                for (; num_ref_list0 < REF_LIST_MAX_DEPTH; ++num_ref_list0) {
+                    config->pred_struct[display_order].ref_list0[num_ref_list0] = 0;
+                }
+                for (; num_ref_list1 < REF_LIST_MAX_DEPTH - 1; ++num_ref_list1) {
+                    config->pred_struct[display_order].ref_list1[num_ref_list1] = 0;
+                }
+            }
+        }
+
+        comment_section_flag = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 0 : comment_section_flag;
+        new_line_flag        = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 1 : 0;
+        ++buffer;
+    }
+    config->manual_pred_struct_entry_num = entry_num;
+
+    return 0;
+}
+
+
+/**********************************
+* Read Prediction Structure File
+**********************************/
+static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath, uint32_t instance_idx) {
+    int32_t return_error = 0;
+
+    // Open the config file
+    FOPEN(config->input_pred_struct_file, PredStructPath, "rb");
+
+    if (config->input_pred_struct_file != (FILE*) NULL) {
+        int32_t config_file_size = find_file_size(config->input_pred_struct_file);
+        char *  config_file_buffer = (char *)malloc(config_file_size);
+
+        if (config_file_buffer != (char *)NULL) {
+            int32_t result_size = (int32_t)fread(
+                config_file_buffer, 1, config_file_size, config->input_pred_struct_file);
+
+            if (result_size == config_file_size) {
+                parse_pred_struct_file(config, config_file_buffer, config_file_size);
+            } else {
+                fprintf(stderr, "Error channel %u: File Read Failed\n",instance_idx+1);
+                return_error = -1;
+            }
+        } else {
+            fprintf(stderr, "Error channel %u: Memory Allocation Failed\n",instance_idx+1);
+            return_error = -1;
+        }
+
+        free(config_file_buffer);
+        fclose(config->input_pred_struct_file);
+        config->input_pred_struct_file = (FILE*) NULL;
+    } else {
+        fprintf(stderr, "Error channel %u: Couldn't open Manual Prediction Structure File: %s\n", instance_idx+1,PredStructPath);
+        return_error = -1;
+    }
+
+    return return_error;
+}
+
 /******************************************
 * Read Command Line
 ******************************************/
@@ -1487,6 +1659,28 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
             if (ret_y4m == EB_ErrorBadParameter) {
                 fprintf(stderr, "Error found when reading the y4m file parameters.\n");
                 return EB_ErrorBadParameter;
+            }
+        }
+    }
+
+    /***************************************************************************************************/
+    /*******************************   Parse manual prediction structure  ******************************/
+    /***************************************************************************************************/
+    for (index = 0; index < num_channels; ++index) {
+        if ((configs[index])->enable_manual_pred_struct == EB_TRUE){
+            if (find_token_multiple_inputs(
+                    argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_strings) == 0) {
+                mark_token_as_read(INPUT_PREDSTRUCT_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
+                return_errors[index] = (EbErrorType)read_pred_struct_file(configs[index], config_strings[index], index);
+                return_error = (EbErrorType)(return_error &  return_errors[index]);
+            }
+            else {
+                if (find_token(argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_string) == 0) {
+                    fprintf(stderr, "Error: Manual Prediction Structure File Token Not Found\n");
+                    return EB_ErrorBadParameter;
+                }
+                else
+                    return_error = EB_ErrorNone;
             }
         }
     }

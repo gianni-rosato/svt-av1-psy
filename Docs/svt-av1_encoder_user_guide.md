@@ -129,6 +129,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **EncoderMode2p** | -enc-mode-2p | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed. Passed to encoder's first pass to use the ME settings of the second pass to achieve better bdRate|
 | **InputStatFile** | -input-stat-file | any string | Null | Input stat file for second pass|
 | **OutputStatFile** | -output-stat-file | any string | Null | Output stat file for first pass|
+| **PredStructFile** | -pred-struct-file | any string | Null | Manual prediction structure file path,refer to the comments in the Config/PredStruct_level0~5.cfg for specific details|
 | **EncoderMode** | -enc-mode | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
 | **EncoderBitDepth** | -bit-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **CompressedTenBitFormat** | -compressed-ten-bit-format | [0 - 1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |

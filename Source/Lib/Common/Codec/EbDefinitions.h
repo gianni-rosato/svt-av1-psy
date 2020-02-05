@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stddef.h>
 #include "EbSvtAv1.h"
+#include "EbSvtAv1Enc.h"
 #ifdef _WIN32
 #define inline __inline
 #elif __GNUC__
@@ -2404,9 +2405,7 @@ void(*error_handler)(
 #define MAX_SUPERRES_DENOM                          16
 
 //***Prediction Structure***
-#define REF_LIST_MAX_DEPTH                          4 // NM - To be specified
 #define MAX_TEMPORAL_LAYERS                         6
-#define MAX_HIERARCHICAL_LEVEL                      6
 #define MAX_REF_IDX                                 4
 #define INVALID_POC                                 (((uint32_t) (~0)) - (((uint32_t) (~0)) >> 1))
 #define MAX_ELAPSED_IDR_COUNT                       1024

@@ -634,7 +634,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
     pcs_ptr->hierarchical_layers_diff = (uint8_t)(encode_context_ptr->previous_mini_gop_hierarchical_levels - pcs_ptr->hierarchical_levels);
 
     // Set init_pred_struct_position_flag to TRUE if mini GOP switch
-    pcs_ptr->init_pred_struct_position_flag = (pcs_ptr->hierarchical_layers_diff != 0) ?
+    pcs_ptr->init_pred_struct_position_flag = encode_context_ptr->is_mini_gop_changed = (pcs_ptr->hierarchical_layers_diff != 0) ?
         EB_TRUE :
         EB_FALSE;
 
@@ -2495,6 +2495,423 @@ static void  av1_generate_rps_info(
     }
 }
 
+static EbErrorType av1_generate_rps_info_from_user_config(
+    PictureParentControlSet       *picture_control_set_ptr,
+    EncodeContext                 *encode_context_ptr
+)
+{
+    Av1RpsNode *av1_rps = &picture_control_set_ptr->av1_ref_signal;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
+    PredictionStructureEntry *pred_position_ptr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
+    DPBInfo *dpb_list_ptr = &encode_context_ptr->dpb_list[0];
+    int32_t dpb_list_idx = 0;
+    uint64_t ref_poc = 0;
+    uint32_t dep_idx = 0;
+    uint8_t  ref_idx = 0;
+
+    if (frm_hdr->frame_type == KEY_FRAME) {
+        frm_hdr->show_frame = EB_TRUE;
+        picture_control_set_ptr->has_show_existing = EB_FALSE;
+        EB_MEMSET(dpb_list_ptr, 0, sizeof(DPBInfo)*REF_FRAMES);
+        encode_context_ptr->display_picture_number = picture_control_set_ptr->picture_number;
+        dpb_list_ptr[dpb_list_idx].is_used = EB_TRUE;
+        dpb_list_ptr[dpb_list_idx].picture_number = picture_control_set_ptr->picture_number;
+        dpb_list_ptr[dpb_list_idx].is_displayed = EB_TRUE;
+        dpb_list_ptr[dpb_list_idx].temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
+
+        // Construct dependent lists
+        dpb_list_ptr[dpb_list_idx].dep_list0.list_count = 0;
+        for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list0.list_count; ++dep_idx) {
+            if (pred_position_ptr->dep_list0.list[dep_idx] >= 0){
+                dpb_list_ptr[dpb_list_idx].dep_list0.list[dpb_list_ptr[dpb_list_idx].dep_list0.list_count++] = pred_position_ptr->dep_list0.list[dep_idx];
+            }
+        }
+        dpb_list_ptr[dpb_list_idx].dep_list1.list_count = pred_position_ptr->dep_list1.list_count;
+        for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list1.list_count; ++dep_idx) {
+            dpb_list_ptr[dpb_list_idx].dep_list1.list[dep_idx] = pred_position_ptr->dep_list1.list[dep_idx];
+        }
+        dpb_list_ptr[dpb_list_idx].dep_list0_count = dpb_list_ptr[dpb_list_idx].dep_list0.list_count;
+        dpb_list_ptr[dpb_list_idx].dep_list1_count = dpb_list_ptr[dpb_list_idx].dep_list1.list_count;
+        dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count + dpb_list_ptr[dpb_list_idx].dep_list1_count;
+        return EB_ErrorNone;
+    }
+
+    // If there was an I-frame or Scene Change, then cleanup the Reference Queue's Dependent Counts
+    if (picture_control_set_ptr->slice_type == I_SLICE)
+    {
+        dpb_list_idx = 0;
+        while (dpb_list_idx < REF_FRAMES) {
+            DPBInfo *referenceEntryPtr = &dpb_list_ptr[dpb_list_idx];
+
+            // Modify Dependent List0
+            for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list0.list_count; ++dep_idx) {
+                uint64_t depPoc = POC_CIRCULAR_ADD(
+                referenceEntryPtr->picture_number,
+                referenceEntryPtr->dep_list0.list[dep_idx]);
+
+                if (depPoc >= picture_control_set_ptr->picture_number && referenceEntryPtr->dep_list0.list[dep_idx]) {
+                    referenceEntryPtr->dep_list0.list[dep_idx] = 0;
+                    --referenceEntryPtr->dep_count;
+                    if (referenceEntryPtr->dep_count < 0) {
+                        return EB_Corrupt_Frame;
+                    }
+                }
+            }
+
+            // Modify Dependent List1
+            for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list1.list_count; ++dep_idx) {
+                uint64_t depPoc = POC_CIRCULAR_ADD(
+                referenceEntryPtr->picture_number,
+                referenceEntryPtr->dep_list1.list[dep_idx]);
+
+                if (((depPoc >= picture_control_set_ptr->picture_number)
+                || (((picture_control_set_ptr->pre_assignment_buffer_count != picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
+                || (picture_control_set_ptr->idr_flag == EB_TRUE))
+                && (depPoc > (picture_control_set_ptr->picture_number - picture_control_set_ptr->pre_assignment_buffer_count))))
+                && referenceEntryPtr->dep_list1.list[dep_idx]) {
+                    referenceEntryPtr->dep_list1.list[dep_idx] = 0;
+                    --referenceEntryPtr->dep_count;
+                    if (referenceEntryPtr->dep_count < 0) {
+                        return EB_Corrupt_Frame;
+                    }
+                }
+            }
+            ++dpb_list_idx;
+        }
+    }
+
+    // Construct dpb index mapping for ref list0
+    if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
+        for (ref_idx = LAST; ref_idx < LAST + picture_control_set_ptr->ref_list0_count; ++ref_idx) {
+            if (picture_control_set_ptr->is_overlay) {
+                ref_poc = picture_control_set_ptr->picture_number;
+            }
+            else {
+                ref_poc = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list0.reference_list[ref_idx-LAST];
+            }
+            dpb_list_idx = 0;
+            do {
+                if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE && dpb_list_ptr[dpb_list_idx].picture_number == ref_poc) {
+                    if (dpb_list_ptr[dpb_list_idx].temporal_layer_index > picture_control_set_ptr->temporal_layer_index) {
+                        return EB_Corrupt_Frame;
+                    }
+                    else {
+                        break;
+                    }
+                }
+            } while (++dpb_list_idx < REF_FRAMES);
+            if (dpb_list_idx < REF_FRAMES) {
+                av1_rps->ref_dpb_index[ref_idx] = dpb_list_idx;
+                --dpb_list_ptr[dpb_list_idx].dep_count;
+                if(dpb_list_ptr[dpb_list_idx].dep_count < 0){
+                    SVT_LOG("Error: dep_count error in dpb list0\n");
+                    return EB_Corrupt_Frame;
+                }
+            }
+            else {
+                SVT_LOG("Error: can't find ref frame in dpb list0\n");
+                return EB_Corrupt_Frame;
+            }
+        }
+        for (; ref_idx <= GOLD; ++ref_idx) {
+            av1_rps->ref_dpb_index[ref_idx] = av1_rps->ref_dpb_index[LAST];
+        }
+
+        // Construct dpb index mapping for ref list1
+        if (picture_control_set_ptr->slice_type == B_SLICE) {
+            for (ref_idx = BWD; ref_idx < BWD + picture_control_set_ptr->ref_list1_count; ++ref_idx) {
+                ref_poc = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list1.reference_list[ref_idx-BWD];
+                dpb_list_idx = 0;
+                do {
+                    if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE && dpb_list_ptr[dpb_list_idx].picture_number == ref_poc) {
+                        if (dpb_list_ptr[dpb_list_idx].temporal_layer_index > picture_control_set_ptr->temporal_layer_index) {
+                            return EB_Corrupt_Frame;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                } while (++dpb_list_idx < REF_FRAMES);
+
+                if (dpb_list_idx < REF_FRAMES) {
+                    av1_rps->ref_dpb_index[ref_idx] = dpb_list_idx;
+                    --dpb_list_ptr[dpb_list_idx].dep_count;
+                    if(dpb_list_ptr[dpb_list_idx].dep_count < 0){
+                        SVT_LOG("Error: dep_count error in dpb list1\n");
+                        return EB_Corrupt_Frame;
+                    }
+                }
+                else {
+                    SVT_LOG("Error: can't find ref frame in dpb list1\n");
+                    return EB_Corrupt_Frame;
+                }
+            }
+            for (; ref_idx <= ALT; ++ref_idx) {
+                av1_rps->ref_dpb_index[ref_idx] = av1_rps->ref_dpb_index[BWD];
+            }
+        }
+        else{
+            av1_rps->ref_dpb_index[BWD] = av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[LAST];
+        }
+    }
+
+    // Release unused positions in dpb list
+    dpb_list_idx = 0;
+    do {
+        if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE
+        && dpb_list_ptr[dpb_list_idx].is_displayed == EB_TRUE
+        && dpb_list_ptr[dpb_list_idx].dep_count == 0) {
+            dpb_list_ptr[dpb_list_idx].is_used = EB_FALSE;
+            dpb_list_ptr[dpb_list_idx].is_displayed = EB_FALSE;
+        }
+    } while (++dpb_list_idx < REF_FRAMES);
+
+    // Insert current frame into dpb list
+    if (picture_control_set_ptr->picture_number == encode_context_ptr->display_picture_number + 1
+    && picture_control_set_ptr->is_used_as_reference_flag == 0 ) {
+        frm_hdr->show_frame = EB_TRUE;
+        ++encode_context_ptr->display_picture_number;
+        av1_rps->refresh_frame_mask = 0;
+    }
+    else {
+        frm_hdr->show_frame = EB_FALSE;
+        dpb_list_idx = 0;
+        do {
+            if (dpb_list_ptr[dpb_list_idx].is_used == EB_FALSE) {
+                break;
+            }
+        } while (++dpb_list_idx < REF_FRAMES);
+        if (dpb_list_idx < REF_FRAMES) {
+            av1_rps->refresh_frame_mask = 1 << dpb_list_idx;
+            dpb_list_ptr[dpb_list_idx].is_used = EB_TRUE;
+            dpb_list_ptr[dpb_list_idx].picture_number = picture_control_set_ptr->picture_number;
+            dpb_list_ptr[dpb_list_idx].is_alt_ref = picture_control_set_ptr->is_alt_ref;
+            dpb_list_ptr[dpb_list_idx].temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
+            if (picture_control_set_ptr->is_alt_ref) {
+                dpb_list_ptr[dpb_list_idx].is_displayed = EB_TRUE;
+            }
+            // Construct dependent lists
+            dpb_list_ptr[dpb_list_idx].dep_list0.list_count = 0;
+            for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list0.list_count; ++dep_idx) {
+                if (pred_position_ptr->dep_list0.list[dep_idx] >= 0){
+                    dpb_list_ptr[dpb_list_idx].dep_list0.list[dpb_list_ptr[dpb_list_idx].dep_list0.list_count++] = pred_position_ptr->dep_list0.list[dep_idx];
+                }
+            }
+            dpb_list_ptr[dpb_list_idx].dep_list1.list_count = pred_position_ptr->dep_list1.list_count;
+            for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list1.list_count; ++dep_idx) {
+                dpb_list_ptr[dpb_list_idx].dep_list1.list[dep_idx] = pred_position_ptr->dep_list1.list[dep_idx];
+            }
+            dpb_list_ptr[dpb_list_idx].dep_list0_count = (picture_control_set_ptr->is_alt_ref) ? dpb_list_ptr[dpb_list_idx].dep_list0.list_count + 1 : dpb_list_ptr[dpb_list_idx].dep_list0.list_count;
+            dpb_list_ptr[dpb_list_idx].dep_list1_count = dpb_list_ptr[dpb_list_idx].dep_list1.list_count;
+            dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count + dpb_list_ptr[dpb_list_idx].dep_list1_count;
+        }
+        else {
+            SVT_LOG("Error: can't find unused dpb to hold current frame\n");
+            return EB_Corrupt_Frame;
+        }
+    }
+
+    // Calculate output flag
+    picture_control_set_ptr->has_show_existing = EB_FALSE;
+    do {
+        dpb_list_idx = 0;
+        do {
+            if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE
+            && dpb_list_ptr[dpb_list_idx].is_displayed == EB_FALSE
+            && dpb_list_ptr[dpb_list_idx].picture_number == encode_context_ptr->display_picture_number + 1) {
+                break;
+            }
+        } while (++dpb_list_idx < REF_FRAMES);
+        if (dpb_list_idx < REF_FRAMES) {
+            dpb_list_ptr[dpb_list_idx].is_displayed = EB_TRUE;
+            ++encode_context_ptr->display_picture_number;
+            if (encode_context_ptr->display_picture_number == picture_control_set_ptr->picture_number) {
+                frm_hdr->show_frame = EB_TRUE;
+            }
+            else {
+                picture_control_set_ptr->has_show_existing = EB_TRUE;
+                frm_hdr->show_existing_frame = dpb_list_idx;
+                break;
+            }
+        }
+        else {
+            break;
+        }
+    } while (1);
+
+    return EB_ErrorNone;
+}
+
+static EbErrorType av1_generate_minigop_rps_info_from_user_config(
+    PictureParentControlSet       *picture_control_set_ptr,
+    EncodeContext                 *encode_context_ptr,
+    PictureDecisionContext        *context_ptr,
+    uint32_t                       mini_gop_index
+)
+{
+    if (encode_context_ptr->is_mini_gop_changed) {
+        PredictionStructure          *next_pred_struct_ptr;
+        PredictionStructureEntry     *next_base_layer_pred_position_ptr;
+        uint32_t                      dependant_list_removed_entries, dep_idx = 0;
+        int32_t                       dpb_list_idx = 0;
+        DPBInfo                      *dpb_list_ptr = &encode_context_ptr->dpb_list[0];
+
+        picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[0]->object_ptr;
+        while (dpb_list_idx < REF_FRAMES) {
+            DPBInfo *referenceEntryPtr = &dpb_list_ptr[dpb_list_idx];
+
+            if (referenceEntryPtr->picture_number == (picture_control_set_ptr->picture_number - 1)) {
+
+                next_pred_struct_ptr = picture_control_set_ptr->pred_struct_ptr;
+
+                next_base_layer_pred_position_ptr = next_pred_struct_ptr->pred_struct_entry_ptr_array[next_pred_struct_ptr->pred_struct_entry_count - 1];
+
+                // Remove all positive entries from the dependant lists
+                int32_t dependant_list_positive_entries = 0;
+                for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list0.list_count; ++dep_idx) {
+                    if (referenceEntryPtr->dep_list0.list[dep_idx] >= 0) {
+                        dependant_list_positive_entries++;
+                    }
+                }
+                referenceEntryPtr->dep_list0.list_count = referenceEntryPtr->dep_list0.list_count - dependant_list_positive_entries;
+
+                dependant_list_positive_entries = 0;
+                for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list1.list_count; ++dep_idx) {
+                    if (referenceEntryPtr->dep_list1.list[dep_idx] >= 0) {
+                        dependant_list_positive_entries++;
+                    }
+                }
+                referenceEntryPtr->dep_list1.list_count = referenceEntryPtr->dep_list1.list_count - dependant_list_positive_entries;
+
+                for (dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list0.list_count; ++dep_idx) {
+                    if (next_base_layer_pred_position_ptr->dep_list0.list[dep_idx] >= 0) {
+                        referenceEntryPtr->dep_list0.list[referenceEntryPtr->dep_list0.list_count++] = next_base_layer_pred_position_ptr->dep_list0.list[dep_idx];
+                    }
+                }
+
+                for (dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list1.list_count; ++dep_idx) {
+                    if (next_base_layer_pred_position_ptr->dep_list1.list[dep_idx] >= 0) {
+                        referenceEntryPtr->dep_list1.list[referenceEntryPtr->dep_list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[dep_idx];
+                    }
+                }
+
+                // Update the dependant count update
+                dependant_list_removed_entries = referenceEntryPtr->dep_list0_count + referenceEntryPtr->dep_list1_count - referenceEntryPtr->dep_count;
+                referenceEntryPtr->dep_list0_count = (referenceEntryPtr->is_alt_ref) ? referenceEntryPtr->dep_list0.list_count + 1 : referenceEntryPtr->dep_list0.list_count;
+                referenceEntryPtr->dep_list1_count = referenceEntryPtr->dep_list1.list_count;
+                referenceEntryPtr->dep_count = referenceEntryPtr->dep_list0_count + referenceEntryPtr->dep_list1_count - dependant_list_removed_entries;
+            }
+            else {
+                // Modify Dependent List0
+                for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list0.list_count; ++dep_idx) {
+                    uint64_t depPoc = POC_CIRCULAR_ADD(
+                    referenceEntryPtr->picture_number,
+                    referenceEntryPtr->dep_list0.list[dep_idx]);
+
+                    if (depPoc >= picture_control_set_ptr->picture_number && referenceEntryPtr->dep_list0.list[dep_idx]) {
+                        referenceEntryPtr->dep_list0.list[dep_idx] = 0;
+
+                        --referenceEntryPtr->dep_count;
+
+                        if (referenceEntryPtr->dep_count < 0) {
+                            return EB_Corrupt_Frame;
+                        }
+                    }
+                }
+
+                // Modify Dependent List1
+                for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list1.list_count; ++dep_idx) {
+                    uint64_t depPoc = POC_CIRCULAR_ADD(
+                    referenceEntryPtr->picture_number,
+                    referenceEntryPtr->dep_list1.list[dep_idx]);
+
+                    if ((depPoc >= picture_control_set_ptr->picture_number) && referenceEntryPtr->dep_list1.list[dep_idx]) {
+                        referenceEntryPtr->dep_list1.list[dep_idx] = 0;
+
+                        --referenceEntryPtr->dep_count;
+
+                        if (referenceEntryPtr->dep_count < 0) {
+                            return EB_Corrupt_Frame;
+                        }
+                    }
+                }
+            }
+            ++dpb_list_idx;
+        }
+    }
+
+    // Add 1 to the loop for the overlay picture. If the last picture is alt ref, increase the loop by 1 to add the overlay picture
+    uint32_t has_overlay = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->is_alt_ref ? 1 : 0;
+    for (uint32_t decode_order = 0,pictureIndex = context_ptr->mini_gop_start_index[mini_gop_index]; pictureIndex <= context_ptr->mini_gop_end_index[mini_gop_index]+has_overlay; ++pictureIndex, ++decode_order) {
+        if (has_overlay && pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
+            picture_control_set_ptr = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->overlay_ppcs_ptr;
+        }
+        else if (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period) {
+            uint32_t pic_idx = context_ptr->mini_gop_start_index[mini_gop_index];
+            do {
+                picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_idx]->object_ptr;
+                if (decode_order == picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index]->decode_order) {
+                    break;
+                }
+            } while (++pic_idx <= context_ptr->mini_gop_end_index[mini_gop_index]);
+            if (pic_idx > context_ptr->mini_gop_end_index[mini_gop_index]) {
+                return EB_Corrupt_Frame;
+            }
+        }
+        else {
+            picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pictureIndex]->object_ptr;
+        }
+        EbErrorType ret = av1_generate_rps_info_from_user_config(picture_control_set_ptr, encode_context_ptr);
+        if (ret != EB_ErrorNone) {
+            return EB_Corrupt_Frame;
+        }
+    }
+    return EB_ErrorNone;
+}
+
+static void av1_generate_rps_ref_poc_from_user_config(PictureParentControlSet *picture_control_set_ptr)
+{
+    Av1RpsNode *av1_rps = &picture_control_set_ptr->av1_ref_signal;
+    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
+    PredictionStructureEntry *pred_position_ptr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
+    uint32_t ref_idx = 0;
+
+    if (picture_control_set_ptr->slice_type == I_SLICE)
+        frm_hdr->frame_type = picture_control_set_ptr->idr_flag ? KEY_FRAME : INTRA_ONLY_FRAME;
+    else
+        frm_hdr->frame_type = INTER_FRAME;
+
+    picture_control_set_ptr->intra_only = picture_control_set_ptr->slice_type == I_SLICE ? 1 : 0;
+
+    if (picture_control_set_ptr->is_overlay) {
+        for (ref_idx = LAST; ref_idx <= ALT; ++ref_idx) {
+            av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number;
+        }
+    }
+    else {
+        if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
+            for (ref_idx = LAST; ref_idx < LAST + pred_position_ptr->ref_list0.reference_list_count; ++ref_idx) {
+                av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list0.reference_list[ref_idx-LAST];
+            }
+            for (; ref_idx <= GOLD; ++ref_idx) {
+                av1_rps->ref_poc_array[ref_idx] = av1_rps->ref_poc_array[LAST];
+            }
+            if (picture_control_set_ptr->slice_type == B_SLICE) {
+                for (ref_idx = BWD; ref_idx < BWD + pred_position_ptr->ref_list1.reference_list_count; ++ref_idx) {
+                  av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list1.reference_list[ref_idx-BWD];
+                }
+                for (; ref_idx <= ALT; ++ref_idx) {
+                  av1_rps->ref_poc_array[ref_idx] = av1_rps->ref_poc_array[BWD];
+                }
+            }
+            else {
+                av1_rps->ref_poc_array[BWD] = av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[LAST];
+            }
+        }
+    }
+    return;
+}
+
 /***************************************************************************************************
 // Perform Required Picture Analysis Processing for the Overlay frame
 ***************************************************************************************************/
@@ -2978,6 +3395,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                     for (mini_gop_index = 0; mini_gop_index < context_ptr->total_number_of_mini_gops; ++mini_gop_index) {
                         pre_assignment_buffer_first_pass_flag = EB_TRUE;
+                        encode_context_ptr->is_mini_gop_changed = EB_FALSE;
                         {
                             update_base_layer_reference_queue_dependent_count(
                                 context_ptr,
@@ -3211,13 +3629,17 @@ void* picture_decision_kernel(void *input_ptr)
                                             (uint32_t)((pcs_ptr->picture_number - 1) % pcs_ptr->pred_struct_ptr->pred_struct_period);
                                     }
                                 }
-
-                                av1_generate_rps_info(
-                                    pcs_ptr,
-                                    encode_context_ptr,
-                                    context_ptr,
-                                    pic_index,
-                                    mini_gop_index);
+                                if(scs_ptr->static_config.enable_manual_pred_struct){
+                                    av1_generate_rps_ref_poc_from_user_config(pcs_ptr);
+                                }
+                                else{
+                                    av1_generate_rps_info(
+                                        pcs_ptr,
+                                        encode_context_ptr,
+                                        context_ptr,
+                                        pic_index,
+                                        mini_gop_index);
+                                }
                                 pcs_ptr->allow_comp_inter_inter = 0;
                                 pcs_ptr->is_skip_mode_allowed = 0;
 
@@ -3585,7 +4007,14 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
 
                         }
-
+                        if(scs_ptr->static_config.enable_manual_pred_struct){
+                            EbErrorType ret = av1_generate_minigop_rps_info_from_user_config(pcs_ptr,encode_context_ptr,context_ptr,mini_gop_index);
+                            if (ret != EB_ErrorNone) {
+                                CHECK_REPORT_ERROR_NC(
+                                    encode_context_ptr->app_callback_ptr,
+                                    EB_ENC_PD_ERROR9);
+                            }
+                        }
                         // Add 1 to the loop for the overlay picture. If the last picture is alt ref, increase the loop by 1 to add the overlay picture
                         uint32_t has_overlay = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->is_alt_ref ? 1 : 0;
                         for (out_stride_diff64 = context_ptr->mini_gop_start_index[mini_gop_index]; out_stride_diff64 <= context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay; ++out_stride_diff64) {

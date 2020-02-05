@@ -17,6 +17,8 @@ extern "C" {
 //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT 2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
+#define MAX_HIERARCHICAL_LEVEL 6
+#define REF_LIST_MAX_DEPTH 4
 
 #define MAX_ENC_PRESET 8
 
@@ -29,6 +31,19 @@ extern "C" {
 #define EB_BUFFERFLAG_IS_ALT_REF 0x00000008 // signals that the packet contains an ALT_REF frame
 #define EB_BUFFERFLAG_ERROR_MASK \
     0xFFFFFFF0 // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
+
+/************************************************
+ * Prediction Structure Config Entry
+ *   Contains the basic reference lists and
+ *   configurations for each Prediction Structure
+ *   Config Entry.
+ ************************************************/
+typedef struct PredictionStructureConfigEntry {
+  uint32_t temporal_layer_index;
+  uint32_t decode_order;
+  int32_t ref_list0[REF_LIST_MAX_DEPTH];
+  int32_t ref_list1[REF_LIST_MAX_DEPTH];
+} PredictionStructureConfigEntry;
 
 // super-res modes
 typedef enum {
@@ -595,6 +610,17 @@ typedef struct EbSvtAv1EncConfiguration {
     // signal for automax_partition; on by default
     uint8_t enable_auto_max_partition;
 
+  /* Prediction Structure user defined
+   */
+  PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
+  /* Flag to enable use prediction structure user defined
+   *
+   * Default is false. */
+  EbBool enable_manual_pred_struct;
+  /* The minigop size of prediction structure user defined
+   *
+   * Default is 0. */
+  int32_t manual_pred_struct_entry_num;
 } EbSvtAv1EncConfiguration;
 
 /* STEP 1: Call the library to construct a Component Handle.

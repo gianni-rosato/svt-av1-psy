@@ -8,6 +8,7 @@
  ***************************************/
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
@@ -229,6 +230,13 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.md_stage_1_class_prune_th = config->md_stage_1_class_prune_th;
     callback_data->eb_enc_parameters.md_stage_2_cand_prune_th  = config->md_stage_2_cand_prune_th;
     callback_data->eb_enc_parameters.md_stage_2_class_prune_th = config->md_stage_2_class_prune_th;
+
+    // Prediction Structure
+    callback_data->eb_enc_parameters.enable_manual_pred_struct    = config->enable_manual_pred_struct;
+    if (callback_data->eb_enc_parameters.enable_manual_pred_struct) {
+        callback_data->eb_enc_parameters.manual_pred_struct_entry_num = config->manual_pred_struct_entry_num;
+        memcpy(&callback_data->eb_enc_parameters.pred_struct[0], &config->pred_struct[0],config->manual_pred_struct_entry_num*sizeof(PredictionStructureConfigEntry));
+    }
 
     return return_error;
 }

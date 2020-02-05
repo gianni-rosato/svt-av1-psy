@@ -40,6 +40,24 @@
 #define RC_GROUP_IN_GOP_MAX_NUMBER 512
 #define PICTURE_IN_RC_GROUP_MAX_NUMBER 64
 
+typedef struct DpbDependentList
+{
+    int32_t                              list[1 << MAX_TEMPORAL_LAYERS];
+    uint32_t                             list_count;
+} DpbDependentList;
+
+typedef struct DPBInfo {
+    uint64_t picture_number;
+    int32_t dep_count;
+    int32_t dep_list0_count;
+    int32_t dep_list1_count;
+    uint8_t temporal_layer_index;
+    EbBool  is_displayed;
+    EbBool  is_used;
+    EbBool  is_alt_ref;
+    DpbDependentList dep_list0;
+    DpbDependentList dep_list1;
+} DPBInfo;
 typedef struct EncodeContext {
     EbDctor dctor;
     // Callback Functions
@@ -143,6 +161,10 @@ typedef struct EncodeContext {
     EbHandle         shared_reference_mutex;
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
     EbHandle stat_file_mutex;
+    //DPB list management
+    DPBInfo dpb_list[REF_FRAMES];
+    uint64_t display_picture_number;
+    EbBool  is_mini_gop_changed;
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

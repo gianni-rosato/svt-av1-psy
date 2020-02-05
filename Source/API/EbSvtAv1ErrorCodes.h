@@ -222,6 +222,7 @@ typedef enum ENCODER_ERROR_CODES {
     EB_ENC_PD_ERROR6 = 0x2105,
     EB_ENC_PD_ERROR7 = 0x2106,
     EB_ENC_PD_ERROR8 = 0x2107,
+    EB_ENC_PD_ERROR9 = 0x2108,
 } ENCODER_ERROR_CODES;
 
 #ifdef __cplusplus
