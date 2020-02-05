@@ -1521,9 +1521,9 @@ MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct
         if (!has_overlappable_candidates(blk_ptr)) // check_num_overlappable_neighbors
             return SIMPLE_TRANSLATION;
 
-        if (blk_ptr->prediction_unit_array[0].num_proj_ref >= 1 &&
-            (frm_hdr
-                 ->allow_warped_motion)) // TODO(JS): when scale is added, put: && !av1_is_scaled(&(xd->block_refs[0]->sf))
+        if (frm_hdr->allow_warped_motion &&
+            /* TODO(JS): when scale is added, put: !av1_is_scaled(&(xd->block_refs[0]->sf)) && */
+            blk_ptr->prediction_unit_array[0].num_proj_ref >= 1)
         {
             if (frm_hdr->force_integer_mv) return OBMC_CAUSAL;
             return WARPED_CAUSAL;

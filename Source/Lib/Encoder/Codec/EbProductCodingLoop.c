@@ -697,6 +697,7 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     context_ptr->round_origin_y = ((context_ptr->blk_origin_y >> 3) << 3);
 
     context_ptr->blk_ptr = &context_ptr->md_blk_arr_nsq[last_blk_index_mds];
+    uint8_t avail_blk_flag = context_ptr->md_local_blk_unit[last_blk_index_mds].avail_blk_flag;
 
     mode_decision_update_neighbor_arrays(
         pcs_ptr, context_ptr, last_blk_index_mds, pcs_ptr->intra_md_open_loop_flag, EB_FALSE);
@@ -706,6 +707,7 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
                   context_ptr->blk_origin_x,
                   context_ptr->blk_origin_y,
                   context_ptr->blk_geom,
+                  avail_blk_flag,
                   pcs_ptr);
 }
 
@@ -6261,7 +6263,6 @@ void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
     } else {
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = MAX_MODE_COST;
-        blk_ptr->prediction_unit_array->ref_frame_type        = 0;
     }
 }
 

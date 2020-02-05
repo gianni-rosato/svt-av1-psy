@@ -3236,11 +3236,13 @@ EbBool merge_1d_inter_block(ModeDecisionContext *context_ptr, uint32_t sq_idx, u
     int parent_diriction  = parent_blk_ptr->prediction_unit_array[0].inter_pred_direction_index;
     int parent_mv_l0      = parent_blk_ptr->prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     int parent_mv_l1      = parent_blk_ptr->prediction_unit_array[0].mv[REF_LIST_1].mv_union;
+    int child_avail_flag  = context_ptr->md_local_blk_unit[nsq_idx].avail_blk_flag;
     int child_0_diriction = child_blk_ptr->prediction_unit_array[0].inter_pred_direction_index;
     int child_0_mv_l0     = child_blk_ptr->prediction_unit_array[0].mv[REF_LIST_0].mv_union;
     int child_0_mv_l1     = child_blk_ptr->prediction_unit_array[0].mv[REF_LIST_1].mv_union;
     int child_eob         = child_blk_ptr->block_has_coeff;
-    if (parent_diriction == child_0_diriction && child_eob == 0) {
+
+    if (child_avail_flag && parent_diriction == child_0_diriction && child_eob == 0) {
         switch (parent_diriction) {
         case UNI_PRED_LIST_0:
             if (parent_mv_l0 == child_0_mv_l0) merge_blocks = EB_TRUE;
