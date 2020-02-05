@@ -3989,6 +3989,18 @@ uint32_t eb_compute64x_m_sad_avx2_intrin(
     return compute64x_m_sad_avx2(src, src_stride, ref, ref_stride, height);
 }
 
+uint32_t eb_compute128x_m_sad_avx2_intrin(
+    const uint8_t *src, // input parameter, source samples Ptr
+    uint32_t       src_stride, // input parameter, source stride
+    const uint8_t *ref, // input parameter, reference samples Ptr
+    uint32_t       ref_stride, // input parameter, reference stride
+    uint32_t       height, // input parameter, block height (M)
+    uint32_t       width) // input parameter, block width (N)
+{
+    (void)width;
+    return compute128x_m_sad_avx2(src, src_stride, ref, ref_stride, height);
+}
+
 static INLINE void sad_eight_8x2x2_avx2(const uint8_t *src, const uint32_t src_stride,
                                         const uint8_t *ref, const uint32_t ref_stride,
                                         __m256i d[2]) {
@@ -6815,19 +6827,19 @@ uint32_t nxm_sad_kernel_sub_sampled_helper_avx2(const uint8_t *src, uint32_t src
         nxm_sad = eb_compute16x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width);
         break;
     case 24:
-        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width);
+        nxm_sad = eb_compute24x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width);
         break;
     case 32:
         nxm_sad = eb_compute32x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width);
         break;
     case 48:
-        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width);
+        nxm_sad = eb_compute48x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width);
         break;
     case 64:
         nxm_sad = eb_compute64x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width);
         break;
     case 128:
-        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width);
+        nxm_sad = eb_compute128x_m_sad_avx2_intrin(src, src_stride, ref, ref_stride, height, width);
         break;
     default: assert(0);
     }
