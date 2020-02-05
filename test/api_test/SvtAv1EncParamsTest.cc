@@ -227,11 +227,6 @@ PARAM_TEST(EncParamHierarchicalLvlTest);
 DEFINE_PARAM_TEST_CLASS(EncParamPredStructTest, pred_structure);
 PARAM_TEST(EncParamPredStructTest);
 
-/** Test case for base_layer_switch_mode*/
-DEFINE_PARAM_TEST_CLASS(EncParamBaseLayerSwitchModeTest,
-                        base_layer_switch_mode);
-PARAM_TEST(EncParamBaseLayerSwitchModeTest);
-
 /** Test case for source_width*/
 DEFINE_PARAM_TEST_CLASS(EncParamSrcWidthTest, source_width);
 PARAM_TEST(EncParamSrcWidthTest);

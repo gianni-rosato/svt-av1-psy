@@ -151,7 +151,7 @@ index 0000000000..4984816830
 +    int level;
 +    int profile;
 +
-+    int base_layer_switch_mode;
++
 +} SvtContext;
 +
 +static const struct {
@@ -286,7 +286,7 @@ index 0000000000..4984816830
 +    param->level                  = svt_enc->level;
 +    param->rate_control_mode        = svt_enc->rc_mode;
 +    param->scene_change_detection   = svt_enc->scd;
-+    param->base_layer_switch_mode    = svt_enc->base_layer_switch_mode;
++
 +    param->qp                     = svt_enc->qp;
 +
 +
@@ -568,8 +568,8 @@ index 0000000000..4984816830
 +    { "sc_detection", "Scene change detection", OFFSET(scd),
 +      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
 +
-+    { "bl_mode", "Random Access Prediction Structure type setting", OFFSET(base_layer_switch_mode),
-+      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
++
++
 +
 +    { "forced-idr", "If forcing keyframes, force them as IDR frames.", OFFSET(forced_idr),
 +      AV_OPT_TYPE_BOOL,   { .i64 = 0 }, 0, 1, VE },

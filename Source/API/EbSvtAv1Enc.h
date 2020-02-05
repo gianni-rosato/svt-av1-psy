@@ -113,13 +113,6 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 2. */
     uint8_t pred_structure;
-    /* Decides whether to use B picture or P picture in the base layer.
-     *
-     * 0 = B Picture.
-     * 1 = P Picture.
-     *
-     * Default is 0. */
-    uint32_t base_layer_switch_mode;
 
     // Input Info
     /* The width of input source in units of picture luma pixels.

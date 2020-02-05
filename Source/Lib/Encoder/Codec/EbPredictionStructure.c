@@ -1981,7 +1981,7 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-                                            uint8_t enc_mode, uint32_t baseLayerSwitchMode,
+                                            uint8_t enc_mode,
                                             EbSvtAv1EncConfiguration *config) {
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;
@@ -2041,7 +2041,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
         // Get Random Access + P for temporal ID 0
         if (prediction_structure_config_array[pred_struct_index]
                     .entry_array->temporal_layer_index == 0 &&
-            baseLayerSwitchMode) {
+            0) {
             for (ref_idx = 0; ref_idx < REF_LIST_MAX_DEPTH; ++ref_idx)
                 prediction_structure_config_array[pred_struct_index]
                     .entry_array->ref_list1[ref_idx] = 0;

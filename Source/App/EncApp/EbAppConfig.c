@@ -1,4 +1,4 @@
-/*
+﻿/*
 * Copyright(c) 2019 Intel Corporation
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
@@ -185,8 +185,7 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 
 #ifdef _WIN32
     HANDLE handle = (HANDLE)_get_osfhandle(_fileno(cfg->input_file));
-    if (handle == INVALID_HANDLE_VALUE)
-        return;
+    if (handle == INVALID_HANDLE_VALUE) return;
     cfg->input_file_is_fifo = GetFileType(handle) == FILE_TYPE_PIPE;
 #else
     int         fd = fileno(cfg->input_file);
@@ -200,7 +199,7 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 
 static void set_pred_struct_file(const char *value, EbConfig *cfg) {
     if (cfg->input_pred_struct_file) { fclose(cfg->input_pred_struct_file); }
-    FOPEN(cfg->input_pred_struct_file,value, "rb");
+    FOPEN(cfg->input_pred_struct_file, value, "rb");
     cfg->enable_manual_pred_struct = EB_TRUE;
 };
 
@@ -273,9 +272,6 @@ static void set_encoder_color_format(const char *value, EbConfig *cfg) {
 static void set_compressed_ten_bit_format(const char *value, EbConfig *cfg) {
     cfg->compressed_ten_bit_format = strtoul(value, NULL, 0);
 }
-static void set_base_layer_switch_mode(const char *value, EbConfig *cfg) {
-    cfg->base_layer_switch_mode = (EbBool)strtoul(value, NULL, 0);
-};
 static void set_enc_mode(const char *value, EbConfig *cfg) {
     cfg->enc_mode = (uint8_t)strtoul(value, NULL, 0);
 };
@@ -637,6 +633,389 @@ typedef struct config_entry_s {
 /**********************************
  * Config Entry Array
  **********************************/
+ConfigEntry config_entry_options[] = {
+    // File I/O
+    {SINGLE_INPUT, HELP_TOKEN, "Show usage options and exit", set_cfg_input_file},
+    {SINGLE_INPUT, INPUT_FILE_TOKEN, "Input filename", set_cfg_input_file},
+    {SINGLE_INPUT, OUTPUT_BITSTREAM_TOKEN, "Output filename", set_cfg_stream_file},
+    {SINGLE_INPUT, ERROR_FILE_TOKEN, "Error filename", set_cfg_error_file},
+    {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "Recon filename", set_cfg_recon_file},
+    {SINGLE_INPUT, STAT_FILE_TOKEN, "Stat filename", set_cfg_stat_file},
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+
+ConfigEntry config_entry_global_options[] = {
+    // Picture Dimensions
+    {SINGLE_INPUT, WIDTH_TOKEN, "Frame width", set_cfg_source_width},
+    {SINGLE_INPUT, HEIGHT_TOKEN, "Frame height", set_cfg_source_height},
+    {SINGLE_INPUT,
+     NUMBER_OF_PICTURES_TOKEN,
+     "Stop encoding after n input frames",
+     set_cfg_frames_to_be_encoded},
+    {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "Buffer n input frames", set_buffered_input},
+    {SINGLE_INPUT,
+     ENCODER_COLOR_FORMAT,
+     "Set encoder color format(EB_YUV400, EB_YUV420, EB_YUV422, EB_YUV444)",
+     set_encoder_color_format},
+    {SINGLE_INPUT,
+     PROFILE_TOKEN,
+     "Bitstream profile number to use(0: main profile[default], 1: high profile, 2: professional "
+     "profile) ",
+     set_profile},
+    {SINGLE_INPUT, FRAME_RATE_TOKEN, "Stream frame rate (rate/scale)", set_frame_rate},
+    {SINGLE_INPUT,
+     FRAME_RATE_NUMERATOR_TOKEN,
+     "Stream frame rate numerator",
+     set_frame_rate_numerator},
+    {SINGLE_INPUT,
+     FRAME_RATE_DENOMINATOR_TOKEN,
+     "Stream frame rate denominator",
+     set_frame_rate_denominator},
+    {SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
+    //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
+    {SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "Set hierarchical levels(3 or 4[default])", set_hierarchical_levels},
+    {SINGLE_INPUT,
+     PRED_STRUCT_TOKEN,
+     "Set prediction structure( 0: low delay P, 1: low delay B, 2: random access [default])",
+     set_cfg_pred_structure},
+    {SINGLE_INPUT, HDR_INPUT_TOKEN, "Enable high dynamic range(0: OFF[default], ON: 1)", set_high_dynamic_range_input},
+    // Asm Type
+    {SINGLE_INPUT,
+     ASM_TYPE_TOKEN,
+     "Assembly instruction set (0: Automatically select lowest assembly instruction set supported, "
+     "1: Automatically select highest assembly instruction set supported)",
+     set_asm_type},
+    {SINGLE_INPUT, THREAD_MGMNT, "number of logical processors to be used", set_logical_processors},
+    {SINGLE_INPUT,
+     UNPIN_LP1_TOKEN,
+     "allows the execution of multiple encodes on the CPU without having to pin them to a "
+     "specific mask( 0: OFF ,1: ON[default]) ",
+     set_unpin_single_core_execution},
+    {SINGLE_INPUT, TARGET_SOCKET, "Specify  which socket the encoder runs on", set_target_socket},
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+
+ConfigEntry config_entry_rc[] = {
+    // Rate Control
+    {SINGLE_INPUT,
+     RATE_CONTROL_ENABLE_TOKEN,
+     "Rate control mode(0 = CQP , 1 = VBR , 2 = CVBR)",
+     set_rate_control_mode},
+    {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
+    {SINGLE_INPUT,
+     USE_QP_FILE_TOKEN,
+     "Overwrite QP assignment using qp values in QP file",
+     set_cfg_use_qp_file},
+    {SINGLE_INPUT, QP_FILE_TOKEN, "Path to Qp file", set_cfg_qp_file},
+    {SINGLE_INPUT, MAX_QP_TOKEN, "Maximum (worst) quantizer[0-63]", set_max_qp_allowed},
+    {SINGLE_INPUT, MIN_QP_TOKEN, "Minimum (best) quantizer[0-63]", set_min_qp_allowed},
+    {SINGLE_INPUT,
+     ADAPTIVE_QP_ENABLE_TOKEN,
+     "Set adaptive QP level(0: OFF ,1: variance base using segments ,2: Deltaq pred efficiency)",
+     set_adaptive_quantization},
+    {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBV buffer size", set_vbv_buf_size},
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+ConfigEntry config_entry_2p[] = {
+    // 2 pass
+    {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "First pass stat file output", set_output_stat_file},
+    {SINGLE_INPUT,
+     INPUT_STAT_FILE_TOKEN,
+     "Input the first pass output to the second pass",
+     set_input_stat_file},
+    {SINGLE_INPUT,
+     ENCMODE2P_TOKEN,
+     "Use Hme/Me settings of the second pass'encoder mode in the first pass",
+     set_snd_pass_enc_mode},
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+ConfigEntry config_entry_intra_refresh[] = {
+    // File I/O
+    {SINGLE_INPUT,
+     INTRA_PERIOD_TOKEN,
+     "Intra period interval(frames) (-2: No intra update, -1: default intra period or [0-255])",
+     set_cfg_intra_period},
+    {SINGLE_INPUT,
+     INTRA_REFRESH_TYPE_TOKEN,
+     "Intra refresh type (1: CRA (Open GOP)2: IDR (Closed GOP))",
+     set_tile_row},
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+ConfigEntry config_entry_specific[] = {
+    // Prediction Structure
+    {SINGLE_INPUT, ENCMODE_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
+    {SINGLE_INPUT,
+     INPUT_COMPRESSED_TEN_BIT_FORMAT,
+     "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
+     set_compressed_ten_bit_format},
+    {SINGLE_INPUT, TILE_ROW_TOKEN, "Number of tile rows to use, log2[0-6]", set_tile_row},
+    {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, log2[0-6]", set_tile_col},
+    {SINGLE_INPUT, QP_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
+    {SINGLE_INPUT,
+     LOOK_AHEAD_DIST_TOKEN,
+     "When RC is ON , it is best to set this parameter to be equal to the intra period value",
+     set_look_ahead_distance},
+    // DLF
+    {SINGLE_INPUT,
+     LOOP_FILTER_DISABLE_TOKEN,
+     "Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled)",
+     set_disable_dlf_flag},
+    // RESTORATION
+    {SINGLE_INPUT,
+     RESTORATION_ENABLE_TOKEN,
+     "Enable the loop restoration filter(0: OFF ,1: ON ,-1:DEFAULT)",
+     set_enable_restoration_filter_flag},
+    {SINGLE_INPUT,
+     MFMV_ENABLE_TOKEN,
+     "Enable motion field motion vector( 0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_mfmv_flag},
+    {SINGLE_INPUT,
+     REDUNDANT_BLK_TOKEN,
+     "Use the same md results(mode, residual , cost,etc..)as the previously processed identical "
+     "block(0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_redundant_blk_flag},
+    {SINGLE_INPUT,
+     TRELLIS_ENABLE_TOKEN,
+     "Disable trellis optimization of quantized coefficients (0: OFF 1: ON  2: ON for rd "
+     "search 3: ON for estimate yrd serch (default))",
+     set_enable_trellis_flag},
+    {SINGLE_INPUT,
+     SPATIAL_SSE_FL_TOKEN,
+     "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
+     set_spatial_sse_fl_flag},
+    {SINGLE_INPUT,
+     SUBPEL_TOKEN,
+     "Enable subpel(0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_sub_pel_flag},
+    {SINGLE_INPUT,
+     OVR_BNDRY_BLK_TOKEN,
+     "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
+     set_over_bndry_blk_flag},
+    {SINGLE_INPUT,
+     NEW_NEAREST_COMB_INJECT_TOKEN,
+     "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
+     set_new_nearest_comb_inject_flag},
+    {SINGLE_INPUT,
+     NX4_4XN_MV_INJECT_TOKEN,
+     "Enable nx4 4xn parent mv injection (0: OFF, 1: ON, -1: DEFAULT)",
+     set_nx4_4xn_parent_mv_inject_flag},
+    {SINGLE_INPUT,
+     PRUNE_UNIPRED_ME_TOKEN,
+     "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
+     set_prune_unipred_me_flag},
+    {SINGLE_INPUT,
+     PRUNE_REF_REC_PART_TOKEN,
+     "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
+     set_prune_ref_rec_part_flag},
+    {SINGLE_INPUT,
+     NSQ_TABLE_TOKEN,
+     "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
+     set_nsq_table_flag},
+    {SINGLE_INPUT,
+     FRAME_END_CDF_UPDATE_TOKEN,
+     "Enable frame end cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
+     set_frame_end_cdf_update_flag},
+
+    // CHROMA
+    {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
+    // LOCAL WARPED MOTION
+    {SINGLE_INPUT,
+     LOCAL_WARPED_ENABLE_TOKEN,
+     "Enable local warped motion (0: OFF, 1: ON [default])",
+     set_enable_local_warped_motion_flag},
+    // GLOBAL MOTION
+    {SINGLE_INPUT,
+     GLOBAL_MOTION_ENABLE_TOKEN,
+     "Enable global motion (0: OFF, 1: ON [default])",
+     set_enable_global_motion_flag},
+
+    // CLASS 12
+    {SINGLE_INPUT,
+     CLASS_12_TOKEN,
+     "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
+     set_class_12_flag},
+    // EDGE SKIP ANGLE INTRA
+    {SINGLE_INPUT,
+     EDGE_SKIP_ANGLE_INTRA_TOKEN,
+     "Enable intra edge filtering (0: OFF, 1: ON (default))",
+     set_edge_skip_angle_intra_flag},
+    // INTER INTRA COMPOUND
+    {SINGLE_INPUT,
+     INTER_INTRA_COMPOUND_TOKEN,
+     "Enable interintra compound (0: OFF, 1: ON (default))",
+     set_interintra_compound_flag},
+    // FRACTIONAL SEARCH 64x64
+    {SINGLE_INPUT,
+     FRAC_SEARCH_64_TOKEN,
+     "Enable fractional search for 64x64 (0: OFF, 1: ON, -1: DEFAULT)",
+     set_fractional_search_64_flag},
+
+    // OBMC
+    {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
+    // RDOQ
+    {SINGLE_INPUT, RDOQ_TOKEN, "Enable RDOQ (0: OFF, 1: ON, -1: DEFAULT)", set_enable_rdoq_flag},
+
+    // Filter Intra
+    {SINGLE_INPUT,
+     FILTER_INTRA_TOKEN,
+     "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
+     set_enable_filter_intra_flag},
+
+    // PREDICTIVE ME
+    {SINGLE_INPUT,
+     PRED_ME_TOKEN,
+     "Set predictive motion estimation level(-1: default, [0-5])",
+     set_predictive_me_flag},
+    // BIPRED 3x3 INJECTION
+    {SINGLE_INPUT,
+     BIPRED_3x3_TOKEN,
+     "Set bipred3x3 injection (0: OFF, 1: ON FULL, 2: Reduced set, -1: DEFAULT)",
+     set_bipred3x3inject_flag},
+    // COMPOUND MODE
+    {SINGLE_INPUT,
+     COMPOUND_LEVEL_TOKEN,
+     "Enable compound mode(0: OFF, 1:ON[AVG/DIST/DIFF], 2: ON[AVG/DIST/DIFF/WEDGE], -1: default)",
+     set_compound_level_flag},
+    // ME Tools
+    {SINGLE_INPUT,
+     USE_DEFAULT_ME_HME_TOKEN,
+     "Use default motion estimation/hierarchical motion estimation settings(0: OFF, 1: "
+     "ON[default])",
+     set_cfg_use_default_me_hme},
+    {SINGLE_INPUT,
+     HME_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation(0: OFF, 1: ON)",
+     set_enable_hme_flag},
+    {SINGLE_INPUT,
+     HME_L0_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation Level 0 (0: OFF, 1: ON)",
+     set_enable_hme_level_0_flag},
+    {SINGLE_INPUT,
+     HME_L1_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation Level 1 (0: OFF, 1: ON)",
+     set_enable_hme_level_1_flag},
+    {SINGLE_INPUT,
+     HME_L2_ENABLE_TOKEN,
+     "Enable hierarchical motion estimation Level 2 (0: OFF, 1: ON)",
+     set_enable_hme_level_2_flag},
+    {SINGLE_INPUT,
+     EXT_BLOCK,
+     "Enable the rectangular and asymetric block (0: OFF, 1: ON)",
+     set_enable_ext_block_flag},
+    // ME Parameters
+    {SINGLE_INPUT,
+     SEARCH_AREA_WIDTH_TOKEN,
+     "Set search area in width[1-256]",
+     set_cfg_search_area_width},
+    {SINGLE_INPUT,
+     SEARCH_AREA_HEIGHT_TOKEN,
+     "Set search area in height[1-256]",
+     set_cfg_search_area_height},
+    // HME Parameters
+    {SINGLE_INPUT,
+     NUM_HME_SEARCH_WIDTH_TOKEN,
+     "Set hierarchical motion estimation search region in Width",
+     set_cfg_number_hme_search_region_in_width},
+    {SINGLE_INPUT,
+     NUM_HME_SEARCH_HEIGHT_TOKEN,
+     "Set hierarchical motion estimation search region in height",
+     set_cfg_number_hme_search_region_in_height},
+    {SINGLE_INPUT,
+     HME_SRCH_T_L0_WIDTH_TOKEN,
+     "Set hierarchical motion estimation level0 total search area in Width",
+     set_cfg_hme_level_0_total_search_area_width},
+    {SINGLE_INPUT,
+     HME_SRCH_T_L0_HEIGHT_TOKEN,
+     "Set hierarchical motion estimation level0 total search area in height",
+     set_cfg_hme_level_0_total_search_area_height},
+    // MD Parameters
+    {SINGLE_INPUT,
+     SCREEN_CONTENT_TOKEN,
+     "Set screen content detection level([0-2], 2: DEFAULT)",
+     set_screen_content_mode},
+    {SINGLE_INPUT,
+     HBD_MD_ENABLE_TOKEN,
+     "Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON)",
+     set_enable_hbd_mode_decision},
+    {SINGLE_INPUT,
+     PALETTE_TOKEN,
+     "Set palette prediction mode(-1: default or [0-6])",
+     set_enable_palette},
+    // Optional Features
+    {SINGLE_INPUT,
+     UNRESTRICTED_MOTION_VECTOR,
+     "Allow motion vectors to reach outside of the picture boundary(O: OFF, 1: ON[default])",
+     set_unrestricted_motion_vector},
+
+    //    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
+    // Latency
+    {SINGLE_INPUT,
+     INJECTOR_TOKEN,
+     "Inject pictures at defined frame rate(0: OFF[default],1: ON)",
+     set_injector},
+    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "Set injector frame rate", set_injector_frame_rate},
+    {SINGLE_INPUT,
+     SPEED_CONTROL_TOKEN,
+     "Enable speed control(0: OFF[default], 1: ON)",
+     speed_control_flag},
+    // Annex A parameters
+    {SINGLE_INPUT,
+     FILM_GRAIN_TOKEN,
+     "Enable film grain(0: OFF[default], 1: ON)",
+     set_cfg_film_grain},
+    // HME
+    {ARRAY_INPUT,
+     HME_LEVEL0_WIDTH,
+     "Set hierarchical motion estimation level0 search area in Width",
+     set_hme_level_0_search_area_in_width_array},
+    {ARRAY_INPUT,
+     HME_LEVEL0_HEIGHT,
+     "Set hierarchical motion estimation level0 search area in height",
+     set_hme_level_0_search_area_in_height_array},
+    {ARRAY_INPUT,
+     HME_LEVEL1_WIDTH,
+     "Set hierarchical motion estimation level1 search area in Width",
+     set_hme_level_1_search_area_in_width_array},
+    {ARRAY_INPUT,
+     HME_LEVEL1_HEIGHT,
+     "Set hierarchical motion estimation level1 search area in height",
+     set_hme_level_1_search_area_in_height_array},
+    {ARRAY_INPUT,
+     HME_LEVEL2_WIDTH,
+     "Set hierarchical motion estimation level2 search area in Width",
+     set_hme_level_2_search_area_in_width_array},
+    {ARRAY_INPUT,
+     HME_LEVEL2_HEIGHT,
+     "Set hierarchical motion estimation level2 search area in height",
+     set_hme_level_2_search_area_in_height_array},
+    // --- start: ALTREF_FILTERING_SUPPORT
+    {SINGLE_INPUT, ENABLE_ALTREFS, "Enable automatic alt reference frames(0: OFF, 1: ON[default])", set_enable_altrefs},
+    {SINGLE_INPUT, ALTREF_STRENGTH, "AltRef filter strength([0-6], default: 5)", set_altref_strength},
+    {SINGLE_INPUT, ALTREF_NFRAMES, "AltRef max frames([0-10], default: 7)", set_altref_n_frames},
+    {SINGLE_INPUT, ENABLE_OVERLAYS, "Enable the insertion of an extra picture called overlayer picture which will be used as an extra reference frame for the base-layer picture(0: OFF[default], 1: ON)", set_enable_overlays},
+    // --- end: ALTREF_FILTERING_SUPPORT
+
+    {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H and V shapes([75-100], default: 100)", set_square_weight},
+    {SINGLE_INPUT, ENABLE_AMP_TOKEN, "Auto max partition: Decide whether to skip 128x128 or not(0: OFF, 1: ON[default])", set_enable_auto_max_partition},
+
+    {SINGLE_INPUT,
+     MD_FAST_PRUNE_C_TH,
+     "Set MD fast prune class threshold[5-200]",
+     set_md_fast_cost_class_prune_th},
+    {SINGLE_INPUT,
+     MD_FAST_PRUNE_S_TH,
+     "Set MD fast prune candidate threshold[5,150]",
+     set_md_fast_cost_cand_prune_th},
+    {SINGLE_INPUT,
+     MD_FULL_PRUNE_C_TH,
+     "Set MD full prune class threshold[5,100]",
+     set_md_full_cost_class_prune_th},
+    {SINGLE_INPUT,
+     MD_FULL_PRUNE_S_TH,
+     "Set MD full prune candidate threshold[5,50]",
+     set_md_full_cost_cand_prune_th},
+
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
 ConfigEntry config_entry[] = {
     // File I/O
     {SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", set_cfg_input_file},
@@ -647,21 +1026,23 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
     {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file},
     {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file},
-    { SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "pred_struct_file", set_pred_struct_file },
+    {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "pred_struct_file", set_pred_struct_file},
     // Picture Dimensions
     {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
     // Prediction Structure
     {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", set_buffered_input},
-    {SINGLE_INPUT, BASE_LAYER_SWITCH_MODE_TOKEN, "BaseLayerSwitchMode", set_base_layer_switch_mode},
     {SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", set_enc_mode},
     {SINGLE_INPUT, ENCMODE2P_TOKEN, "EncoderMode2p", set_snd_pass_enc_mode},
     {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
     {SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", set_cfg_intra_refresh_type},
     {SINGLE_INPUT, FRAME_RATE_TOKEN, "FrameRate", set_frame_rate},
     {SINGLE_INPUT, FRAME_RATE_NUMERATOR_TOKEN, "FrameRateNumerator", set_frame_rate_numerator},
-    {SINGLE_INPUT, FRAME_RATE_DENOMINATOR_TOKEN, "FrameRateDenominator", set_frame_rate_denominator},
+    {SINGLE_INPUT,
+     FRAME_RATE_DENOMINATOR_TOKEN,
+     "FrameRateDenominator",
+     set_frame_rate_denominator},
     {SINGLE_INPUT, ENCODER_BIT_DEPTH, "EncoderBitDepth", set_encoder_bit_depth},
     {SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", set_encoder_color_format},
     {SINGLE_INPUT,
@@ -801,7 +1182,7 @@ ConfigEntry config_entry[] = {
     // Latency
     {SINGLE_INPUT, INJECTOR_TOKEN, "Injector", set_injector},
     {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "InjectorFrameRate", set_injector_frame_rate},
-    {SINGLE_INPUT, SPEED_CONTROL_TOKEN, "speed_control_flag", speed_control_flag},
+    {SINGLE_INPUT, SPEED_CONTROL_TOKEN, "SpeedControlFlag", speed_control_flag},
     // Annex A parameters
     {SINGLE_INPUT, PROFILE_TOKEN, "Profile", set_profile},
     {SINGLE_INPUT, TIER_TOKEN, "Tier", set_tier},
@@ -842,10 +1223,10 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
     // Super-resolution support
-    { SINGLE_INPUT, SUPERRES_MODE_INPUT, "SuperresMode", set_superres_mode },
-    { SINGLE_INPUT, SUPERRES_DENOM, "SuperresDenom", set_superres_denom },
-    { SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom },
-    { SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres },
+    {SINGLE_INPUT, SUPERRES_MODE_INPUT, "SuperresMode", set_superres_mode},
+    {SINGLE_INPUT, SUPERRES_DENOM, "SuperresDenom", set_superres_denom},
+    {SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom},
+    {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
 
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
     {SINGLE_INPUT, ENABLE_AMP_TOKEN, "AutomaxPartition", set_enable_auto_max_partition},
@@ -950,10 +1331,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // --- end: ALTREF_FILTERING_SUPPORT
 
     // start - super-resolution support
-    config_ptr->superres_mode = SUPERRES_NONE; // disabled
-    config_ptr->superres_denom = 8; // no scaling
+    config_ptr->superres_mode     = SUPERRES_NONE; // disabled
+    config_ptr->superres_denom    = 8; // no scaling
     config_ptr->superres_kf_denom = 8; // no scaling
-    config_ptr->superres_qthres = 43; // random threshold for now
+    config_ptr->superres_qthres   = 43; // random threshold for now
     // end - super-resolution support
 
     config_ptr->sq_weight                 = 100;
@@ -1327,24 +1708,84 @@ int32_t find_token_multiple_inputs(int32_t argc, char *const argv[], const char 
 
     return return_error;
 }
-
 uint32_t get_help(int32_t argc, char *const argv[]) {
     char config_string[COMMAND_LINE_MAX_SIZE];
     if (find_token(argc, argv, HELP_TOKEN, config_string) == 0) {
-        int32_t token_index = -1;
-
-        fprintf(stderr, "\n%-25s\t%-25s\t%s\n\n", "TOKEN", "DESCRIPTION", "INPUT TYPE");
-        fprintf(stderr, "%-25s\t%-25s\t%s\n", "-nch", "NumberOfChannels", "Single input");
-        while (config_entry[++token_index].token != NULL)
+        int32_t options_token_index        = -1;
+        int32_t global_options_token_index = -1;
+        int32_t rc_token_index             = -1;
+        int32_t two_p_token_index          = -1;
+        int32_t kf_token_index             = -1;
+        int32_t sp_token_index             = -1;
+        //fprintf(stderr, "\n%-25s\t%-25s\n", "TOKEN", "DESCRIPTION");
+        //fprintf(stderr, "%-25s\t%-25s\n", "-nch", "NumberOfChannels");
+        const char *token_options_format = "\t%-25s\t%-25s\n";
+        fprintf(stderr,
+                "\n%-25s\n",
+                "Usage: SvtAv1EncApp.exe <options> -b dst_filename -i src_filename");
+        fprintf(stderr, "\n%-25s\n", "Options:");
+        while (config_entry_options[++options_token_index].token != NULL) {
             fprintf(stderr,
-                    "%-25s\t%-25s\t%s\n",
-                    config_entry[token_index].token,
-                    config_entry[token_index].name,
-                    config_entry[token_index].type ? "Array input" : "Single input");
+                    token_options_format,
+                    config_entry_options[options_token_index].token,
+                    config_entry_options[options_token_index].name);
+        }
+        fprintf(stderr, "\n%-25s\n", "Encoder Global Options:");
+        while (config_entry_global_options[++global_options_token_index].token != NULL) {
+            fprintf(stderr,
+                    token_options_format,
+                    config_entry_global_options[global_options_token_index].token,
+                    config_entry_global_options[global_options_token_index].name);
+        }
+        fprintf(stderr, "\n%-25s\n", "Rate Control Options:");
+        while (config_entry_rc[++rc_token_index].token != NULL) {
+            fprintf(stderr,
+                    token_options_format,
+                    config_entry_rc[rc_token_index].token,
+                    config_entry_rc[rc_token_index].name);
+        }
+        fprintf(stderr, "\n%-25s\n", "Twopass Options:");
+        while (config_entry_2p[++two_p_token_index].token != NULL) {
+            fprintf(stderr,
+                    token_options_format,
+                    config_entry_2p[two_p_token_index].token,
+                    config_entry_2p[two_p_token_index].name);
+        }
+        fprintf(stderr, "\n%-25s\n", "Keyframe Placement Options:");
+        while (config_entry_intra_refresh[++kf_token_index].token != NULL) {
+            fprintf(stderr,
+                    token_options_format,
+                    config_entry_intra_refresh[kf_token_index].token,
+                    config_entry_intra_refresh[kf_token_index].name);
+        }
+        fprintf(stderr, "\n%-25s\n", "AV1 Specific Options:");
+        while (config_entry_specific[++sp_token_index].token != NULL) {
+            fprintf(stderr,
+                    token_options_format,
+                    config_entry_specific[sp_token_index].token,
+                    config_entry_specific[sp_token_index].name);
+        }
         return 1;
     } else
         return 0;
 }
+//uint32_t get_help(int32_t argc, char *const argv[]) {
+//    char config_string[COMMAND_LINE_MAX_SIZE];
+//    if (find_token(argc, argv, HELP_TOKEN, config_string) == 0) {
+//        int32_t token_index = -1;
+//
+//        fprintf(stderr, "\n%-25s\t%-25s\t%s\n\n", "TOKEN", "DESCRIPTION", "INPUT TYPE");
+//        fprintf(stderr, "%-25s\t%-25s\t%s\n", "-nch", "NumberOfChannels", "Single input");
+//        while (config_entry[++token_index].token != NULL)
+//            fprintf(stderr,
+//                    "%-25s\t%-25s\t%s\n",
+//                    config_entry[token_index].token,
+//                    config_entry[token_index].name,
+//                    config_entry[token_index].type ? "Array input" : "Single input");
+//        return 1;
+//    } else
+//        return 0;
+//}
 
 /******************************************************
 * Get the number of channels and validate it with input
@@ -1420,7 +1861,7 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
 **********************************/
 static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t size) {
     uint32_t argc;
-    char *argv[CONFIG_FILE_MAX_ARG_COUNT];
+    char *   argv[CONFIG_FILE_MAX_ARG_COUNT];
     uint32_t arg_len[CONFIG_FILE_MAX_ARG_COUNT];
 
     char var_name[CONFIG_FILE_MAX_VAR_LEN];
@@ -1429,16 +1870,16 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
     uint32_t value_index;
 
     uint32_t comment_section_flag = 0;
-    uint32_t new_line_flag = 0;
-    int32_t  entry_num = 0;
+    uint32_t new_line_flag        = 0;
+    int32_t  entry_num            = 0;
     int32_t  display_order = 0, num_ref_list0 = 0, num_ref_list1 = 0;
     int32_t  idx_ref_list0 = 0, idx_ref_list1 = 0;
 
     // Keep looping until we process the entire file
-    while(size--) {
+    while (size--) {
         comment_section_flag =
             ((*buffer == CONFIG_FILE_COMMENT_CHAR) || (comment_section_flag != 0))
-                                   ? 1
+                ? 1
                 : comment_section_flag;
 
         // At the beginning of each line
@@ -1458,9 +1899,7 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                 EB_STRNCPY(var_name, CONFIG_FILE_MAX_VAR_LEN, argv[0], arg_len[0]);
                 // Null terminate the variable name
                 var_name[arg_len[0]] = CONFIG_FILE_NULL_CHAR;
-                if (EB_STRCMP(var_name, "PredStructEntry")) {
-                  continue;
-                }
+                if (EB_STRCMP(var_name, "PredStructEntry")) { continue; }
 
                 ++entry_num;
                 idx_ref_list0 = idx_ref_list1 = num_ref_list0 = num_ref_list1 = 0;
@@ -1471,7 +1910,7 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                     // Cap the length of the variable
                     arg_len[value_index + 2] =
                         (arg_len[value_index + 2] > CONFIG_FILE_MAX_VAR_LEN - 1)
-                                                  ? CONFIG_FILE_MAX_VAR_LEN - 1
+                            ? CONFIG_FILE_MAX_VAR_LEN - 1
                             : arg_len[value_index + 2];
                     // Copy the variable name
                     EB_STRNCPY(var_value[value_index],
@@ -1484,25 +1923,22 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                     switch (value_index) {
                     case 0:
                         display_order = strtoul(var_value[value_index], NULL, 0);
-                        if(display_order >= (1<<(MAX_HIERARCHICAL_LEVEL-1))){
-                          return -1;
-                        }
+                        if (display_order >= (1 << (MAX_HIERARCHICAL_LEVEL - 1))) { return -1; }
                         break;
                     case 1:
                         config->pred_struct[display_order].decode_order =
                             strtoul(var_value[value_index], NULL, 0);
-                        if(config->pred_struct[display_order].decode_order >= (1<<(MAX_HIERARCHICAL_LEVEL-1))){
-                          return -1;
+                        if (config->pred_struct[display_order].decode_order >=
+                            (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
+                            return -1;
                         }
                         break;
                     case 2:
                         config->pred_struct[display_order].temporal_layer_index =
                             strtoul(var_value[value_index], NULL, 0);
                         break;
-                    case 3: num_ref_list0 = strtoul(var_value[value_index], NULL, 0);
-                        break;
-                    case 4: num_ref_list1 = strtoul(var_value[value_index], NULL, 0);
-                        break;
+                    case 3: num_ref_list0 = strtoul(var_value[value_index], NULL, 0); break;
+                    case 4: num_ref_list1 = strtoul(var_value[value_index], NULL, 0); break;
                     default:
                         if (idx_ref_list0 < num_ref_list0) {
                             if (idx_ref_list0 < REF_LIST_MAX_DEPTH) {
@@ -1510,8 +1946,7 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                                     strtoul(var_value[value_index], NULL, 0);
                             }
                             ++idx_ref_list0;
-                        }
-                        else if(idx_ref_list1 < num_ref_list1) {
+                        } else if (idx_ref_list1 < num_ref_list1) {
                             if (idx_ref_list1 < REF_LIST_MAX_DEPTH - 1) {
                                 config->pred_struct[display_order].ref_list1[idx_ref_list1] =
                                     strtoul(var_value[value_index], NULL, 0);
@@ -1539,18 +1974,18 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
     return 0;
 }
 
-
 /**********************************
 * Read Prediction Structure File
 **********************************/
-static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath, uint32_t instance_idx) {
+static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
+                                     uint32_t instance_idx) {
     int32_t return_error = 0;
 
     // Open the config file
     FOPEN(config->input_pred_struct_file, PredStructPath, "rb");
 
-    if (config->input_pred_struct_file != (FILE*) NULL) {
-        int32_t config_file_size = find_file_size(config->input_pred_struct_file);
+    if (config->input_pred_struct_file != (FILE *)NULL) {
+        int32_t config_file_size   = find_file_size(config->input_pred_struct_file);
         char *  config_file_buffer = (char *)malloc(config_file_size);
 
         if (config_file_buffer != (char *)NULL) {
@@ -1560,19 +1995,22 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath, uin
             if (result_size == config_file_size) {
                 parse_pred_struct_file(config, config_file_buffer, config_file_size);
             } else {
-                fprintf(stderr, "Error channel %u: File Read Failed\n",instance_idx+1);
+                fprintf(stderr, "Error channel %u: File Read Failed\n", instance_idx + 1);
                 return_error = -1;
             }
         } else {
-            fprintf(stderr, "Error channel %u: Memory Allocation Failed\n",instance_idx+1);
+            fprintf(stderr, "Error channel %u: Memory Allocation Failed\n", instance_idx + 1);
             return_error = -1;
         }
 
         free(config_file_buffer);
         fclose(config->input_pred_struct_file);
-        config->input_pred_struct_file = (FILE*) NULL;
+        config->input_pred_struct_file = (FILE *)NULL;
     } else {
-        fprintf(stderr, "Error channel %u: Couldn't open Manual Prediction Structure File: %s\n", instance_idx+1,PredStructPath);
+        fprintf(stderr,
+                "Error channel %u: Couldn't open Manual Prediction Structure File: %s\n",
+                instance_idx + 1,
+                PredStructPath);
         return_error = -1;
     }
 
@@ -1667,19 +2105,18 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /*******************************   Parse manual prediction structure  ******************************/
     /***************************************************************************************************/
     for (index = 0; index < num_channels; ++index) {
-        if ((configs[index])->enable_manual_pred_struct == EB_TRUE){
+        if ((configs[index])->enable_manual_pred_struct == EB_TRUE) {
             if (find_token_multiple_inputs(
                     argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_strings) == 0) {
                 mark_token_as_read(INPUT_PREDSTRUCT_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
-                return_errors[index] = (EbErrorType)read_pred_struct_file(configs[index], config_strings[index], index);
-                return_error = (EbErrorType)(return_error &  return_errors[index]);
-            }
-            else {
+                return_errors[index] = (EbErrorType)read_pred_struct_file(
+                    configs[index], config_strings[index], index);
+                return_error = (EbErrorType)(return_error & return_errors[index]);
+            } else {
                 if (find_token(argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_string) == 0) {
                     fprintf(stderr, "Error: Manual Prediction Structure File Token Not Found\n");
                     return EB_ErrorBadParameter;
-                }
-                else
+                } else
                     return_error = EB_ErrorNone;
             }
         }

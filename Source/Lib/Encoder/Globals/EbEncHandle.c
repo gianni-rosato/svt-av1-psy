@@ -2049,7 +2049,6 @@ void copy_api_from_app(
         scs_ptr->cropping_bottom_offset = 0;
     scs_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)config_struct)->intra_period_length;
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
-    scs_ptr->static_config.base_layer_switch_mode = ((EbSvtAv1EncConfiguration*)config_struct)->base_layer_switch_mode;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
     scs_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->snd_pass_enc_mode;
@@ -2360,11 +2359,6 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Pred Structure must be [2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
-    if (config->base_layer_switch_mode == 1 && config->pred_structure != 2) {
-        SVT_LOG("Error Instance %u: Base Layer Switch Mode 1 only when Prediction Structure is Random Access\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
     if (scs_ptr->max_input_luma_width % 8 && scs_ptr->static_config.compressed_ten_bit_format == 1) {
         SVT_LOG("Error Instance %u: Only multiple of 8 width is supported for compressed 10-bit inputs \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2405,10 +2399,6 @@ static EbErrorType verify_settings(
 
     if (config->intra_refresh_type > 2 || config->intra_refresh_type < 1) {
         SVT_LOG("Error Instance %u: Invalid intra Refresh Type [1-2]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->base_layer_switch_mode > 1) {
-        SVT_LOG("Error Instance %u: Invalid Base Layer Switch Mode [0-1] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2896,7 +2886,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 10;
-    config_ptr->base_layer_switch_mode = 0;
     config_ptr->enc_mode = MAX_ENC_PRESET;
     config_ptr->snd_pass_enc_mode = MAX_ENC_PRESET + 1;
     config_ptr->intra_period_length = -2;
@@ -3053,7 +3042,7 @@ static void print_lib_params(
             config->intra_refresh_type);
     else
         SVT_LOG("\nSVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d ", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
-    SVT_LOG("\nSVT [config]: HierarchicalLevels / BaseLayerSwitchMode / PredStructure\t\t: %d / %d / %d ", config->hierarchical_levels, config->base_layer_switch_mode, config->pred_structure);
+    SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t: %d / %d / %d ", config->hierarchical_levels, config->pred_structure);
     if (config->rate_control_mode == 1)
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
     else if (config->rate_control_mode == 2)
@@ -3141,7 +3130,6 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
-        enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.base_layer_switch_mode,
         &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         eb_release_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);

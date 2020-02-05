@@ -93,7 +93,6 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.render_height          = config->input_padded_height;
     callback_data->eb_enc_parameters.intra_period_length    = config->intra_period;
     callback_data->eb_enc_parameters.intra_refresh_type     = config->intra_refresh_type;
-    callback_data->eb_enc_parameters.base_layer_switch_mode = config->base_layer_switch_mode;
     callback_data->eb_enc_parameters.enc_mode               = (EbBool)config->enc_mode;
     callback_data->eb_enc_parameters.snd_pass_enc_mode      = (EbBool)config->snd_pass_enc_mode;
     callback_data->eb_enc_parameters.frame_rate             = config->frame_rate;

@@ -114,7 +114,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"IntraPeriodTest2", {{"IntraPeriod", "10"}}, default_test_vectors},
 
     // TODO: add intra_refresh_type, hierarchical_levels, pred_structure
-    // and base_layer_switch_mode
 
     // test qps, default is 50
     {"QpTest1", {{"RateControlMode", "0"}, {"QP", "0"}}, default_test_vectors},

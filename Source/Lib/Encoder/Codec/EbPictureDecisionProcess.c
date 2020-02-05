@@ -3693,7 +3693,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     (pcs_ptr->cra_flag) ? I_SLICE :
                                     (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_P) ? P_SLICE :
                                     (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_B) ? B_SLICE :
-                                    (pcs_ptr->pre_assignment_buffer_count == pcs_ptr->pred_struct_ptr->pred_struct_period) ? ((out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] && scs_ptr->static_config.base_layer_switch_mode) ? P_SLICE : B_SLICE) :
+                                    (pcs_ptr->pre_assignment_buffer_count == pcs_ptr->pred_struct_ptr->pred_struct_period) ? ((out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] && 0) ? P_SLICE : B_SLICE) :
 
                                     (encode_context_ptr->pre_assignment_buffer_eos_flag) ? P_SLICE :
                                     B_SLICE;

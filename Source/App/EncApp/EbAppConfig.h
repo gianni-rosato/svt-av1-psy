@@ -191,7 +191,6 @@ typedef struct EbConfig {
     /*****************************************
      * Coding Structure
      *****************************************/
-    uint32_t base_layer_switch_mode;
     uint8_t  enc_mode;
     uint8_t  snd_pass_enc_mode;
     int32_t  intra_period;

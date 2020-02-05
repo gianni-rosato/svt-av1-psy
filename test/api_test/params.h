@@ -161,22 +161,6 @@ static const vector<uint8_t> invalid_pred_structure = {
     /* _pred_structure override in code
     EB_PRED_TOTAL_COUNT, EB_PRED_TOTAL_COUNT + 1, EB_PRED_INVALID*/};
 
-/* Decides whether to use b picture or P picture in the base layer.
- *
- * 0 = b Picture.
- * 1 = P Picture.
- *
- * Default is 0. */
-static const vector<uint32_t> default_base_layer_switch_mode = {
-    0,
-};
-static const vector<uint32_t> valid_base_layer_switch_mode = {
-    0,  // b Picture.
-    1,  // P Picture
-};
-static const vector<uint32_t> invalid_base_layer_switch_mode = {
-    2,  // > 1
-};
 
 // Input Info
 /* The width of input source in units of picture luma pixels.
