@@ -47,9 +47,6 @@ void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 #define S8 8 * 8
 #define S4 4 * 4
 
-static EbAv1InterPredictionFuncPtr av1_inter_prediction_function_table[2] = {
-    av1_inter_prediction, av1_inter_prediction_hbd};
-
 typedef void (*EbAv1EncodeLoopFuncPtr)(PictureControlSet *pcs_ptr, EncDecContext *context_ptr,
                                        SuperBlock *sb_ptr, uint32_t origin_x, uint32_t origin_y,
                                        uint32_t             cb_qp,
@@ -2646,7 +2643,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
 
-                                av1_inter_prediction_function_table[is_16bit](
+                                av1_inter_prediction(
                                     pcs_ptr,
                                     blk_ptr->interp_filters,
                                     blk_ptr,
@@ -3021,7 +3018,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                         : (EbPictureBufferDesc *)EB_NULL;
                             }
 
-                            av1_inter_prediction_function_table[is_16bit](
+                            av1_inter_prediction(
                                 pcs_ptr,
                                 blk_ptr->interp_filters,
                                 blk_ptr,
