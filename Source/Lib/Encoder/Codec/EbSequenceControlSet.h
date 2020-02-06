@@ -30,6 +30,11 @@ extern "C" {
      ************************************/
 typedef struct SequenceControlSet {
     EbDctor                  dctor;
+    SbGeom *                 sb_geom;
+    SbParams *               sb_params_array;
+
+    // Note: all pointers and variables before static_config will not
+    // be copied in copy_sequence_control_set
     EbSvtAv1EncConfiguration static_config;
 
     // Encoding Context
@@ -157,14 +162,14 @@ typedef struct SequenceControlSet {
     uint32_t total_process_init_count;
 
     uint16_t  film_grain_random_seed;
-    SbParams *sb_params_array;
+
     uint8_t   pic_width_in_sb;
     uint8_t   picture_height_in_sb;
     uint16_t  sb_total_count;
     uint16_t  sb_size_pix; //sb size in pixels 64/128
     uint16_t  sb_tot_cnt; // sb total number
     uint16_t  max_block_cnt;
-    SbGeom *  sb_geom;
+
 
     EbInputResolution input_resolution;
     EbScdMode         scd_mode;
