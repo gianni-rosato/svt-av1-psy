@@ -1413,6 +1413,36 @@ static const int plane_rd_mult[REF_TYPES][PLANE_TYPES] = {
     {16, 10},
 };
 
+#if FASTER_RDOQ
+/*
+ * Reduce the number of non-zero quantized coefficients before getting to the main/complex RDOQ stage
+ * (it performs an early check of whether to zero out each of the non-zero quantized coefficients,
+ * and updates the quantized coeffs if it is determined it can be zeroed out).
+ */
+static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t *dequant_ptr,
+                                         const int16_t *scan, const TranLow *coeff_ptr,
+                                         TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr) {
+    int eob_out = *eob;
+    int zbin[2] = {dequant_ptr[0] + ROUND_POWER_OF_TWO(dequant_ptr[0] * 70, 7),
+                   dequant_ptr[1] + ROUND_POWER_OF_TWO(dequant_ptr[1] * 70, 7)};
+    for (int i = *eob - 1; i >= 0; i--) {
+        const int rc         = scan[i];
+        const int qcoeff     = qcoeff_ptr[rc];
+        const int coeff      = coeff_ptr[rc];
+        const int coeff_sign = (coeff >> 31);
+        int64_t   abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
+        if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
+            eob_out--;
+            qcoeff_ptr[rc]  = 0;
+            dqcoeff_ptr[rc] = 0;
+        } else {
+            break;
+        }
+    }
+    *eob = eob_out;
+}
+#endif
+
 void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context,
                        int16_t dc_sign_context, const TranLow *coeff_ptr, int32_t stride,
                        intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
@@ -1429,7 +1459,12 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
 
     // Hsan (Trellis): hardcoded as not supported:
     int                    sharpness       = 0; // No Sharpness
+#if FASTER_RDOQ
+    // Perform a fast RDOQ stage for inter and chroma blocks
+    int                    fast_mode       = (is_inter && plane);
+#else
     int                    fast_mode       = 0; // TBD
+#endif
     AQ_MODE                aq_mode         = NO_AQ;
     DELTAQ_MODE            deltaq_mode     = NO_DELTA_Q;
     int8_t                 segment_id      = 0;
@@ -1450,6 +1485,12 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     const int           eob_multi_size = txsize_log2_minus4[tx_size];
     const LvMapEobCost *txb_eob_costs =
         &md_context->md_rate_estimation_ptr->eob_frac_bits[eob_multi_size][plane_type];
+#if FASTER_RDOQ
+    if (fast_mode) {
+        update_coeff_eob_fast(eob, shift, p->dequant_qtx, scan, coeff_ptr, qcoeff_ptr, dqcoeff_ptr);
+        if (*eob == 0) return;
+    }
+#endif
     const int rshift =
         (sharpness + (aq_mode == VARIANCE_AQ && segment_id < 4 ? 7 - segment_id : 2) +
          (aq_mode != VARIANCE_AQ && deltaq_mode > NO_DELTA_Q && sb_energy_level < 0
@@ -1731,7 +1772,11 @@ int32_t av1_quantize_inv_quantize(
             perform_rdoq = EB_FALSE;
     } else
         perform_rdoq = (EbBool)scs_ptr->static_config.enable_rdoq;
+#if FP_QUANT_BOTH_INTRA_INTER
+    if (perform_rdoq && md_context->rdoq_quantize_fp) {
+#else
     if (perform_rdoq && md_context->rdoq_quantize_fp && !is_inter) {
+#endif
         if (bit_increment) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                              n_coeffs,
