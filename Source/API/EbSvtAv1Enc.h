@@ -602,10 +602,10 @@ typedef struct EbSvtAv1EncConfiguration {
 
     uint32_t sq_weight;
 
-    uint64_t md_stage_1_class_prune_th;
-    uint64_t md_stage_1_cand_prune_th;
-    uint64_t md_stage_2_class_prune_th;
-    uint64_t md_stage_2_cand_prune_th;
+    uint64_t md_fast_cost_cand_prune_th;
+    uint64_t md_fast_cost_class_prune_th;
+    uint64_t md_full_cost_cand_prune_th;
+    uint64_t md_full_cost_class_prune_th;
 
     // signal for automax_partition; on by default
     uint8_t enable_auto_max_partition;

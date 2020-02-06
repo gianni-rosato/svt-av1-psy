@@ -2253,10 +2253,10 @@ void copy_api_from_app(
     scs_ptr->static_config.sq_weight = config_struct->sq_weight;
     scs_ptr->static_config.enable_auto_max_partition = config_struct->enable_auto_max_partition;
 
-    scs_ptr->static_config.md_stage_1_cand_prune_th = config_struct->md_stage_1_cand_prune_th;
-    scs_ptr->static_config.md_stage_1_class_prune_th = config_struct->md_stage_1_class_prune_th;
-    scs_ptr->static_config.md_stage_2_cand_prune_th = config_struct->md_stage_2_cand_prune_th;
-    scs_ptr->static_config.md_stage_2_class_prune_th = config_struct->md_stage_2_class_prune_th;
+    scs_ptr->static_config.md_fast_cost_cand_prune_th = config_struct->md_fast_cost_cand_prune_th;
+    scs_ptr->static_config.md_fast_cost_class_prune_th = config_struct->md_fast_cost_class_prune_th;
+    scs_ptr->static_config.md_full_cost_cand_prune_th = config_struct->md_full_cost_cand_prune_th;
+    scs_ptr->static_config.md_full_cost_class_prune_th = config_struct->md_full_cost_class_prune_th;
 
     // Prediction Structure
     scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
@@ -3003,10 +3003,10 @@ EbErrorType eb_svt_enc_init_parameter(
 
     config_ptr->sq_weight = 100;
 
-    config_ptr->md_stage_1_cand_prune_th = 75;
-    config_ptr->md_stage_1_class_prune_th = 100;
-    config_ptr->md_stage_2_cand_prune_th = 15;
-    config_ptr->md_stage_2_class_prune_th = 25;
+    config_ptr->md_fast_cost_cand_prune_th = 75;
+    config_ptr->md_fast_cost_class_prune_th = 100;
+    config_ptr->md_full_cost_cand_prune_th = 15;
+    config_ptr->md_full_cost_class_prune_th = 25;
 
     config_ptr->enable_auto_max_partition = 1;    return return_error;
 }

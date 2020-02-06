@@ -160,10 +160,10 @@
 #define BUFFER_FILE_MAX_ARG_COUNT 320
 #define BUFFER_FILE_MAX_VAR_LEN 128
 
-#define MDS1_PRUNE_C_TH "-mds1p-class-th"
-#define MDS1_PRUNE_S_TH "-mds1p-cand-th"
-#define MDS2_PRUNE_C_TH "-mds2p-class-th"
-#define MDS2_PRUNE_S_TH "-mds2p-cand-th"
+#define MD_FAST_PRUNE_C_TH "-md-fast-class-th"
+#define MD_FAST_PRUNE_S_TH "-md-fast-cand-th"
+#define MD_FULL_PRUNE_C_TH "-md-full-class-th"
+#define MD_FULL_PRUNE_S_TH "-md-full-cand-th"
 
 /**********************************
  * Set Cfg Functions
@@ -598,21 +598,21 @@ static void set_square_weight(const char *value, EbConfig *cfg) {
     if (cfg->sq_weight == 0) cfg->sq_weight = (uint32_t)~0;
 }
 
-static void set_mds1_prune_c_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_1_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_1_class_prune_th == 0) cfg->md_stage_1_class_prune_th = (uint64_t)~0;
+static void set_md_fast_cost_class_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_fast_cost_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_fast_cost_class_prune_th == 0) cfg->md_fast_cost_class_prune_th = (uint64_t)~0;
 }
-static void set_mds1_prune_s_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_1_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_1_cand_prune_th == 0) cfg->md_stage_1_cand_prune_th = (uint64_t)~0;
+static void set_md_fast_cost_cand_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_fast_cost_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_fast_cost_cand_prune_th == 0) cfg->md_fast_cost_cand_prune_th = (uint64_t)~0;
 }
-static void set_mds2_prune_c_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_2_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_2_class_prune_th == 0) cfg->md_stage_2_class_prune_th = (uint64_t)~0;
+static void set_md_full_cost_class_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_full_cost_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_full_cost_class_prune_th == 0) cfg->md_full_cost_class_prune_th = (uint64_t)~0;
 }
-static void set_mds2_prune_s_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_2_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_2_cand_prune_th == 0) cfg->md_stage_2_cand_prune_th = (uint64_t)~0;
+static void set_md_full_cost_cand_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_full_cost_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_full_cost_cand_prune_th == 0) cfg->md_full_cost_cand_prune_th = (uint64_t)~0;
 }
 
 static void set_enable_auto_max_partition(const char *value, EbConfig *cfg) {
@@ -850,10 +850,10 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
     {SINGLE_INPUT, ENABLE_AMP_TOKEN, "AutomaxPartition", set_enable_auto_max_partition},
 
-    {SINGLE_INPUT, MDS1_PRUNE_C_TH, "MDStage1PruneClassThreshold", set_mds1_prune_c_th},
-    {SINGLE_INPUT, MDS1_PRUNE_S_TH, "MDStage1PruneCandThreshold", set_mds1_prune_s_th},
-    {SINGLE_INPUT, MDS2_PRUNE_C_TH, "MDStage2PruneClassThreshold", set_mds2_prune_c_th},
-    {SINGLE_INPUT, MDS2_PRUNE_S_TH, "MDStage2PruneCandThreshold", set_mds2_prune_s_th},
+    {SINGLE_INPUT, MD_FAST_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_fast_cost_class_prune_th},
+    {SINGLE_INPUT, MD_FAST_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_fast_cost_cand_prune_th},
+    {SINGLE_INPUT, MD_FULL_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_full_cost_class_prune_th},
+    {SINGLE_INPUT, MD_FULL_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_full_cost_cand_prune_th},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -959,10 +959,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->sq_weight                 = 100;
     config_ptr->enable_auto_max_partition = 1;
 
-    config_ptr->md_stage_1_cand_prune_th  = 75;
-    config_ptr->md_stage_1_class_prune_th = 100;
-    config_ptr->md_stage_2_cand_prune_th  = 15;
-    config_ptr->md_stage_2_class_prune_th = 25;
+    config_ptr->md_fast_cost_cand_prune_th  = 75;
+    config_ptr->md_fast_cost_class_prune_th = 100;
+    config_ptr->md_full_cost_cand_prune_th  = 15;
+    config_ptr->md_full_cost_class_prune_th = 25;
 
     return;
 }

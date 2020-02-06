@@ -482,8 +482,14 @@ typedef enum CandClass {
 } CandClass;
 
 typedef enum MdStage { MD_STAGE_0, MD_STAGE_1, MD_STAGE_2, MD_STAGE_3, MD_STAGE_TOTAL } MdStage;
-#define MD_STAGING_MODE_0 0
-#define MD_STAGING_MODE_1 1
+
+typedef enum MdStagingMode {
+    MD_STAGING_MODE_0,
+    MD_STAGING_MODE_1,
+    MD_STAGING_MODE_2,
+    MD_STAGING_MODE_TOTAL
+} MdStagingMode;
+
 #define INTRA_NFL 16
 #define INTER_NEW_NFL 16
 #define INTER_PRED_NFL 16

@@ -226,10 +226,10 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.sq_weight                 = config->sq_weight;
     callback_data->eb_enc_parameters.enable_auto_max_partition = config->enable_auto_max_partition;
 
-    callback_data->eb_enc_parameters.md_stage_1_cand_prune_th  = config->md_stage_1_cand_prune_th;
-    callback_data->eb_enc_parameters.md_stage_1_class_prune_th = config->md_stage_1_class_prune_th;
-    callback_data->eb_enc_parameters.md_stage_2_cand_prune_th  = config->md_stage_2_cand_prune_th;
-    callback_data->eb_enc_parameters.md_stage_2_class_prune_th = config->md_stage_2_class_prune_th;
+    callback_data->eb_enc_parameters.md_fast_cost_cand_prune_th  = config->md_fast_cost_cand_prune_th;
+    callback_data->eb_enc_parameters.md_fast_cost_class_prune_th = config->md_fast_cost_class_prune_th;
+    callback_data->eb_enc_parameters.md_full_cost_cand_prune_th  = config->md_full_cost_cand_prune_th;
+    callback_data->eb_enc_parameters.md_full_cost_class_prune_th = config->md_full_cost_class_prune_th;
 
     // Prediction Structure
     callback_data->eb_enc_parameters.enable_manual_pred_struct    = config->enable_manual_pred_struct;

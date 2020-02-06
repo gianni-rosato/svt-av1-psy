@@ -1621,7 +1621,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     // |________|_____________________________|________________________________|_________________________________________|
     // |CLASS_0 |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma Only    |T, Q, Q-1, T-1 or Luma & Chroma          |
     // |CLASS_6 |                             |No RDOQ                         |RDOQ                                     |
-    // |        |                             |No Tx Type Search               |Tx Type Search                           |
+    // |CLASS_7 |                             |No Tx Type Search               |Tx Type Search                           |
     // |        |                             |No Tx Size Search               |Tx Size Search                           |
     // |        |                             |                                |CFL vs. Independent                      |
     // |________|_____________________________|________________________________|_________________________________________|
@@ -1630,7 +1630,26 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     // |CLASS_3 |Bilinear Interpolation       |No Tx Type Search               |Tx Type Search                           |
     // |CLASS_4 |                             |No Tx Size Search               |Tx Size Search                           |
     // |CLASS_5 |                             |Interpolation Search            |                                         |
+    // |CLASS_8 |                             |                                |                                         |
     // |________|_____________________________|________________________________|_________________________________________|
+    //
+    // MD_STAGING_MODE_2
+    //  ____________________________________________________________________________________________________________________________________________________________
+    // |        | md_stage_0                  | md_stage_1                     | md_stage_2                              | md_stage_3                              |
+    // |________|_____________________________|________________________________|_________________________________________|_________________________________________|
+    // |CLASS_0 |Prediction for Luma & Chroma |T, Q, Q-1, T-1 for Luma Only    |T, Q, Q-1, T-1 or Luma                   |T, Q, Q-1, T-1 or Luma & Chroma          |
+    // |CLASS_6 |                             |No RDOQ                         |RDOQ                                     |RDOQ                                     |
+    // |CLASS_7 |                             |No Tx Type Search               |Tx Type Search                           |Tx Type Search                           |
+    // |        |                             |No Tx Size Search               |                                         |Tx Size Search                           |
+    // |        |                             |                                |                                         |CFL vs. Independent                      |
+    // |________|_____________________________|________________________________|_________________________________________|_________________________________________|
+    // |CLASS_1 |Prediction for Luma Only     |T, Q, Q-1, T-1 for Luma Only    |T, Q, Q-1, T-1 or Luma                   |T, Q, Q-1, T-1 for Luma & Chroma         |
+    // |CLASS_2 |No Interpolation Search      |No RDOQ                         |RDOQ                                     |RDOQ                                     |
+    // |CLASS_3 |Bilinear Interpolation       |No Tx Type Search               |Tx Type Search                           |Tx Type Search                           |
+    // |CLASS_4 |                             |No Tx Size Search               |                                         |Tx Size Search                           |
+    // |CLASS_5 |                             |Interpolation Search            |                                         |                                         |
+    // |CLASS_8 |                             |                                |                                         |                                         |
+    // |________|_____________________________|________________________________|_________________________________________|_________________________________________|
     if (context_ptr->pd_pass == PD_PASS_0) {
         context_ptr->md_staging_mode = MD_STAGING_MODE_0;
     } else if (context_ptr->pd_pass == PD_PASS_1) {
@@ -1792,66 +1811,66 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->md_exit_th = (pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 10 : 18;
 
-    // md_stage_1_cand_prune_th (for single candidate removal per class)
-    // Remove candidate if deviation to the best is higher than md_stage_1_cand_prune_th
+    // md_fast_cost_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than md_fast_cost_cand_prune_th
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_fast_cost_cand_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_stage_1_cand_prune_th = 75;
+        context_ptr->md_fast_cost_cand_prune_th = 75;
     else if (MR_MODE ||
              (pcs_ptr->enc_mode == ENC_M0 && (pcs_ptr->parent_pcs_ptr->sc_content_detected == 0)) ||
              scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_fast_cost_cand_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_1_cand_prune_th = scs_ptr->static_config.md_stage_1_cand_prune_th;
+        context_ptr->md_fast_cost_cand_prune_th = scs_ptr->static_config.md_fast_cost_cand_prune_th;
     else
-        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_fast_cost_cand_prune_th = (uint64_t)~0;
 
-    // md_stage_1_class_prune_th (for class removal)
+    // md_fast_cost_class_prune_th (for class removal)
     // Remove class if deviation to the best higher than TH_C
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+        context_ptr->md_fast_cost_class_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_stage_1_class_prune_th = 100;
+        context_ptr->md_fast_cost_class_prune_th = 100;
     else if (MR_MODE ||
              (pcs_ptr->enc_mode == ENC_M0 && (pcs_ptr->parent_pcs_ptr->sc_content_detected == 0)) ||
              scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+        context_ptr->md_fast_cost_class_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_1_class_prune_th = scs_ptr->static_config.md_stage_1_class_prune_th;
+        context_ptr->md_fast_cost_class_prune_th = scs_ptr->static_config.md_fast_cost_class_prune_th;
     else
-        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
+        context_ptr->md_fast_cost_class_prune_th = (uint64_t)~0;
 
-    // md_stage_2_cand_prune_th (for single candidate removal per class)
-    // Remove candidate if deviation to the best is higher than md_stage_2_cand_prune_th
+    // md_full_cost_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than md_full_cost_cand_prune_th
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_full_cost_cand_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_stage_2_cand_prune_th =
+        context_ptr->md_full_cost_cand_prune_th =
             scs_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 5 : 3;
     else if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected || pcs_ptr->enc_mode <= ENC_M0)
-        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_full_cost_cand_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M2)
-        context_ptr->md_stage_2_cand_prune_th =
+        context_ptr->md_full_cost_cand_prune_th =
             scs_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 15 : 12;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_2_cand_prune_th =
+        context_ptr->md_full_cost_cand_prune_th =
             scs_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 5 : 3;
     else
-        context_ptr->md_stage_2_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_full_cost_cand_prune_th = (uint64_t)~0;
 
-    // md_stage_2_class_prune_th (for class removal)
-    // Remove class if deviation to the best is higher than md_stage_2_class_prune_th
+    // md_full_cost_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than md_full_cost_class_prune_th
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
+        context_ptr->md_full_cost_class_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_stage_2_class_prune_th = 25;
+        context_ptr->md_full_cost_class_prune_th = 25;
     else if (MR_MODE)
-        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
+        context_ptr->md_full_cost_class_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_stage_2_class_prune_th = scs_ptr->static_config.md_stage_2_class_prune_th;
+        context_ptr->md_full_cost_class_prune_th = scs_ptr->static_config.md_full_cost_class_prune_th;
     else // to be tested for m5-m8
-        context_ptr->md_stage_2_class_prune_th = (uint64_t)~0;
+        context_ptr->md_full_cost_class_prune_th = (uint64_t)~0;
 
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
