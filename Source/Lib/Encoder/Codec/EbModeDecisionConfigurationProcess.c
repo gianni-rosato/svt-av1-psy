@@ -1271,7 +1271,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
         enable_wm = EB_FALSE;
     else
+#if WARP_IMPROVEMENT
+        enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
+#else
         enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode == ENC_M0 ||
+#endif
                      (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
                       pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
                         ? EB_TRUE

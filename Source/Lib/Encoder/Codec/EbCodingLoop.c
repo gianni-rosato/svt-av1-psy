@@ -3002,6 +3002,22 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                         // Inter Prediction
                         if (do_mc && pu_ptr->motion_mode == WARPED_CAUSAL) {
+#if WARP_IMPROVEMENT
+                            EbPictureBufferDesc             *ref_pic_list0;
+                            EbPictureBufferDesc             *ref_pic_list1;
+                            if (!is_16bit) {
+                                ref_pic_list0 = blk_ptr->prediction_unit_array->ref_frame_index_l0 >= 0 ?
+                                    ref_obj_0->reference_picture : (EbPictureBufferDesc*)EB_NULL;
+                                ref_pic_list1 = blk_ptr->prediction_unit_array->ref_frame_index_l1 >= 0 ?
+                                    ref_obj_1->reference_picture : (EbPictureBufferDesc*)EB_NULL;
+                            }
+                            else {
+                                ref_pic_list0 = blk_ptr->prediction_unit_array->ref_frame_index_l0 >= 0 ?
+                                    ref_obj_0->reference_picture16bit : (EbPictureBufferDesc*)EB_NULL;
+                                ref_pic_list1 = blk_ptr->prediction_unit_array->ref_frame_index_l1 >= 0 ?
+                                    ref_obj_1->reference_picture16bit : (EbPictureBufferDesc*)EB_NULL;
+                            }
+#endif
                             warped_motion_prediction(
                                 pcs_ptr,
                                 &context_ptr->mv_unit,
@@ -3012,11 +3028,16 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 context_ptr->blk_origin_y,
                                 blk_ptr,
                                 blk_geom,
+#if WARP_IMPROVEMENT
+                                ref_pic_list0,
+                                ref_pic_list1,
+#else
                                 is_16bit ? ref_obj_0->reference_picture16bit
                                          : ref_obj_0->reference_picture,
                                 ref_idx_l1 >= 0 ? is_16bit ? ref_obj_1->reference_picture16bit
                                                            : ref_obj_1->reference_picture
                                                 : NULL,
+#endif
                                 recon_buffer,
                                 context_ptr->blk_origin_x,
                                 context_ptr->blk_origin_y,

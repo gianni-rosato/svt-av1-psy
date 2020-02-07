@@ -49,8 +49,8 @@ extern "C" {
 #define MAX_TILE_CNTS 128 // Annex A.3
 #endif
 #define ALTREF_IMPROVEMENT     1 // Enable TF for layer 1 in 1 pass encoding. Adjust the filter strength
-
 #define MD_RATE_EST_ENH 1 // MD rate estimation enhancement. Active for LP =1 for now
+#define WARP_IMPROVEMENT       1 // Improve Warp motion by adding all the candidates in list0 and list 1
 #define MR_MODE 0
 
 #define ALT_REF_QP_THRESH 20

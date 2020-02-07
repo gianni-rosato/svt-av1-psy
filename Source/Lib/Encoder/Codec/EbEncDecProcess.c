@@ -1516,6 +1516,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     // Level                Settings
     // 0                    OFF
     // 1                    On
+#if WARP_IMPROVEMENT
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    if(frm_hdr->allow_warped_motion)
+        if (context_ptr->pd_pass == PD_PASS_0)
+            context_ptr->warped_motion_injection = 0;
+        else if (context_ptr->pd_pass == PD_PASS_1)
+            context_ptr->warped_motion_injection = 1;
+        else
+            context_ptr->warped_motion_injection = 1;
+    else
+        context_ptr->warped_motion_injection = 0;
+#else
     if (context_ptr->pd_pass == PD_PASS_0) {
         context_ptr->warped_motion_injection = 0;
     } else if (context_ptr->pd_pass == PD_PASS_1) {
@@ -1524,7 +1536,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         context_ptr->warped_motion_injection = 0;
     else
         context_ptr->warped_motion_injection = 1;
-
+#endif
     // Set unipred3x3 injection
     // Level                Settings
     // 0                    OFF
