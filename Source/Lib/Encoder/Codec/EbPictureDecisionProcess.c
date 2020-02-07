@@ -1111,14 +1111,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->tx_size_search_mode = 0;
 
-        // Set skip atb                          Settings
-        // 0                                     OFF
-        // 1                                     ON
-        // Phoenix: Active only when atb compound is on
-        if (pcs_ptr->enc_mode <= ENC_M7)
-            pcs_ptr->coeff_based_skip_atb = 0;
-        else
-            pcs_ptr->coeff_based_skip_atb = 1;
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
         // 1                 Fast: If two predictors are very similar, skip wedge compound mode search

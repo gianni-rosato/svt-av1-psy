@@ -3632,6 +3632,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
     EbPictureBufferDesc         *prediction_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
+    uint8_t is_inter = 0; // set to 0 b/c this is an intra path
 
     uint32_t mode_type_left_neighbor_index = get_neighbor_array_unit_left_index(
         md_context_ptr->mode_type_neighbor_array,
@@ -3684,8 +3685,8 @@ EbErrorType  intra_luma_prediction_for_interintra(
             top_neigh_array + 1,
             left_neigh_array + 1,
             prediction_ptr,                                         //uint8_t *dst,
-            md_context_ptr->blk_geom->tx_boff_x[0][0] >> 2,         //int32_t col_off,
-            md_context_ptr->blk_geom->tx_boff_y[0][0] >> 2,         //int32_t row_off,
+            (md_context_ptr->blk_geom->tx_org_x[is_inter][0][0] - md_context_ptr->blk_geom->origin_x) >> 2,
+            (md_context_ptr->blk_geom->tx_org_y[is_inter][0][0] - md_context_ptr->blk_geom->origin_y) >> 2,
             PLANE_TYPE_Y,                                           //int32_t plane,
             md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
             md_context_ptr->blk_origin_x,
@@ -3722,8 +3723,8 @@ EbErrorType  intra_luma_prediction_for_interintra(
             top_neigh_array + 1,
             left_neigh_array + 1,
             prediction_ptr,                                         //uint8_t *dst,
-            md_context_ptr->blk_geom->tx_boff_x[0][0] >> 2,         //int32_t col_off,
-            md_context_ptr->blk_geom->tx_boff_y[0][0] >> 2,         //int32_t row_off,
+            (md_context_ptr->blk_geom->tx_org_x[is_inter][0][0] - md_context_ptr->blk_geom->origin_x) >> 2,
+            (md_context_ptr->blk_geom->tx_org_y[is_inter][0][0] - md_context_ptr->blk_geom->origin_y) >> 2,
             PLANE_TYPE_Y,                                           //int32_t plane,
             md_context_ptr->blk_geom->bsize,                        //uint32_t puSize,
             md_context_ptr->blk_origin_x,
