@@ -2008,8 +2008,8 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     if (ref_count_used > 0 && ref_count_used < MAX_REF_IDX) {
         for (int gop_i = 1; gop_i < 4; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
-                three_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
-                three_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
+                prediction_structure_config_array[2].entry_array[gop_i].ref_list0[i] = 0;
+                prediction_structure_config_array[2].entry_array[gop_i].ref_list1[i] = 0;
             }
         }
 
@@ -2030,8 +2030,8 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 
     for (int gop_i = 1; gop_i < 32; ++gop_i) {
         for (int i = 1; i < MAX_REF_IDX; ++i) {
-            six_level_hierarchical_pred_struct[gop_i].ref_list0[i] = 0;
-            six_level_hierarchical_pred_struct[gop_i].ref_list1[i] = 0;
+            prediction_structure_config_array[5].entry_array[gop_i].ref_list0[i] = 0;
+            prediction_structure_config_array[5].entry_array[gop_i].ref_list1[i] = 0;
         }
     }
 

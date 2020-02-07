@@ -165,6 +165,8 @@ typedef struct EncodeContext {
     DPBInfo dpb_list[REF_FRAMES];
     uint64_t display_picture_number;
     EbBool  is_mini_gop_changed;
+    EbBool  is_i_slice_in_last_mini_gop;
+    uint64_t i_slice_picture_number_in_last_mini_gop;
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

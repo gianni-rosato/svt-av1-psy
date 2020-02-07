@@ -2757,45 +2757,8 @@ static EbErrorType av1_generate_rps_info_from_user_config(
     // If there was an I-frame or Scene Change, then cleanup the Reference Queue's Dependent Counts
     if (picture_control_set_ptr->slice_type == I_SLICE)
     {
-        dpb_list_idx = 0;
-        while (dpb_list_idx < REF_FRAMES) {
-            DPBInfo *referenceEntryPtr = &dpb_list_ptr[dpb_list_idx];
-
-            // Modify Dependent List0
-            for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list0.list_count; ++dep_idx) {
-                uint64_t depPoc = POC_CIRCULAR_ADD(
-                referenceEntryPtr->picture_number,
-                referenceEntryPtr->dep_list0.list[dep_idx]);
-
-                if (depPoc >= picture_control_set_ptr->picture_number && referenceEntryPtr->dep_list0.list[dep_idx]) {
-                    referenceEntryPtr->dep_list0.list[dep_idx] = 0;
-                    --referenceEntryPtr->dep_count;
-                    if (referenceEntryPtr->dep_count < 0) {
-                        return EB_Corrupt_Frame;
-                    }
-                }
-            }
-
-            // Modify Dependent List1
-            for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list1.list_count; ++dep_idx) {
-                uint64_t depPoc = POC_CIRCULAR_ADD(
-                referenceEntryPtr->picture_number,
-                referenceEntryPtr->dep_list1.list[dep_idx]);
-
-                if (((depPoc >= picture_control_set_ptr->picture_number)
-                || (((picture_control_set_ptr->pre_assignment_buffer_count != picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
-                || (picture_control_set_ptr->idr_flag == EB_TRUE))
-                && (depPoc > (picture_control_set_ptr->picture_number - picture_control_set_ptr->pre_assignment_buffer_count))))
-                && referenceEntryPtr->dep_list1.list[dep_idx]) {
-                    referenceEntryPtr->dep_list1.list[dep_idx] = 0;
-                    --referenceEntryPtr->dep_count;
-                    if (referenceEntryPtr->dep_count < 0) {
-                        return EB_Corrupt_Frame;
-                    }
-                }
-            }
-            ++dpb_list_idx;
-        }
+        encode_context_ptr->is_i_slice_in_last_mini_gop = EB_TRUE;
+        encode_context_ptr->i_slice_picture_number_in_last_mini_gop = picture_control_set_ptr->picture_number;
     }
 
     // Construct dpb index mapping for ref list0
@@ -2961,12 +2924,12 @@ static EbErrorType av1_generate_rps_info_from_user_config(
 }
 
 static EbErrorType av1_generate_minigop_rps_info_from_user_config(
-    PictureParentControlSet       *picture_control_set_ptr,
     EncodeContext                 *encode_context_ptr,
     PictureDecisionContext        *context_ptr,
     uint32_t                       mini_gop_index
 )
 {
+    PictureParentControlSet       *picture_control_set_ptr = EB_NULL;
     if (encode_context_ptr->is_mini_gop_changed) {
         PredictionStructure          *next_pred_struct_ptr;
         PredictionStructureEntry     *next_base_layer_pred_position_ptr;
@@ -2974,7 +2937,7 @@ static EbErrorType av1_generate_minigop_rps_info_from_user_config(
         int32_t                       dpb_list_idx = 0;
         DPBInfo                      *dpb_list_ptr = &encode_context_ptr->dpb_list[0];
 
-        picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[0]->object_ptr;
+        picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_start_index[mini_gop_index]]->object_ptr;
         while (dpb_list_idx < REF_FRAMES) {
             DPBInfo *referenceEntryPtr = &dpb_list_ptr[dpb_list_idx];
 
@@ -3058,13 +3021,65 @@ static EbErrorType av1_generate_minigop_rps_info_from_user_config(
         }
     }
 
+    if (encode_context_ptr->is_i_slice_in_last_mini_gop == EB_TRUE)
+    {
+        encode_context_ptr->is_i_slice_in_last_mini_gop = EB_FALSE;
+        int32_t dpb_list_idx = 0;
+        uint32_t dep_idx = 0;
+        DPBInfo *dpb_list_ptr = &encode_context_ptr->dpb_list[0];
+        while (dpb_list_idx < REF_FRAMES) {
+            DPBInfo *referenceEntryPtr = &dpb_list_ptr[dpb_list_idx];
+
+            if (referenceEntryPtr->picture_number == encode_context_ptr->i_slice_picture_number_in_last_mini_gop) {
+                ++dpb_list_idx;
+                continue;
+            }
+
+            // Modify Dependent List0
+            for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list0.list_count; ++dep_idx) {
+                uint64_t depPoc = POC_CIRCULAR_ADD(
+                referenceEntryPtr->picture_number,
+                referenceEntryPtr->dep_list0.list[dep_idx]);
+
+                if (depPoc >= encode_context_ptr->i_slice_picture_number_in_last_mini_gop && referenceEntryPtr->dep_list0.list[dep_idx]) {
+                    referenceEntryPtr->dep_list0.list[dep_idx] = 0;
+                    --referenceEntryPtr->dep_count;
+                    if (referenceEntryPtr->dep_count < 0) {
+                        return EB_Corrupt_Frame;
+                    }
+                }
+            }
+
+            // Modify Dependent List1
+            for (dep_idx = 0; dep_idx < referenceEntryPtr->dep_list1.list_count; ++dep_idx) {
+                uint64_t depPoc = POC_CIRCULAR_ADD(
+                referenceEntryPtr->picture_number,
+                referenceEntryPtr->dep_list1.list[dep_idx]);
+
+                if ((depPoc >= encode_context_ptr->i_slice_picture_number_in_last_mini_gop)
+                && referenceEntryPtr->dep_list1.list[dep_idx]) {
+                    referenceEntryPtr->dep_list1.list[dep_idx] = 0;
+                    --referenceEntryPtr->dep_count;
+                    if (referenceEntryPtr->dep_count < 0) {
+                        return EB_Corrupt_Frame;
+                    }
+                }
+            }
+            ++dpb_list_idx;
+        }
+    }
+
     // Add 1 to the loop for the overlay picture. If the last picture is alt ref, increase the loop by 1 to add the overlay picture
     uint32_t has_overlay = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->is_alt_ref ? 1 : 0;
+    picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_start_index[mini_gop_index]]->object_ptr;
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
     for (uint32_t decode_order = 0,pictureIndex = context_ptr->mini_gop_start_index[mini_gop_index]; pictureIndex <= context_ptr->mini_gop_end_index[mini_gop_index]+has_overlay; ++pictureIndex, ++decode_order) {
         if (has_overlay && pictureIndex == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
             picture_control_set_ptr = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->overlay_ppcs_ptr;
         }
-        else if (context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period) {
+        else if ((context_ptr->mini_gop_length[mini_gop_index] == picture_control_set_ptr->pred_struct_ptr->pred_struct_period)
+        &&(context_ptr->mini_gop_idr_count[mini_gop_index] == 0)
+        &&(scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS)){
             uint32_t pic_idx = context_ptr->mini_gop_start_index[mini_gop_index];
             do {
                 picture_control_set_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_idx]->object_ptr;
@@ -4228,7 +4243,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                         }
                         if(scs_ptr->static_config.enable_manual_pred_struct){
-                            EbErrorType ret = av1_generate_minigop_rps_info_from_user_config(pcs_ptr,encode_context_ptr,context_ptr,mini_gop_index);
+                            EbErrorType ret = av1_generate_minigop_rps_info_from_user_config(encode_context_ptr,context_ptr,mini_gop_index);
                             if (ret != EB_ErrorNone) {
                                 CHECK_REPORT_ERROR_NC(
                                     encode_context_ptr->app_callback_ptr,
