@@ -860,10 +860,9 @@ void *picture_manager_kernel(void *input_ptr) {
                         set_tile_info(entry_pcs_ptr);
 
                         int      sb_size_log2    = entry_scs_ptr->seq_header.sb_size_log2;
-                        uint32_t encDecSegColCnt = (scs_ptr->static_config.super_block_size == 128) ?
-                                                 ((entry_pcs_ptr->aligned_width + 64) / 128) :
-                                                 ((entry_pcs_ptr->aligned_width + 32) / 64);
-                        uint32_t encDecSegRowCnt = entry_scs_ptr->enc_dec_segment_row_count_array
+                        uint32_t enc_dec_seg_col_cnt = entry_scs_ptr->enc_dec_segment_col_count_array
+                                                       [entry_pcs_ptr->temporal_layer_index];
+                        uint32_t enc_dec_seg_row_cnt = entry_scs_ptr->enc_dec_segment_row_count_array
                                                        [entry_pcs_ptr->temporal_layer_index];
 
                         struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->parent_pcs_ptr;
@@ -883,8 +882,8 @@ void *picture_manager_kernel(void *input_ptr) {
                                 ->tile_group_row_count_array[entry_pcs_ptr->temporal_layer_index]);
 
                         if (tile_group_cols * tile_group_rows > 1) {
-                            encDecSegColCnt = pic_width_in_sb / tile_group_cols;
-                            encDecSegRowCnt = picture_height_in_sb / tile_group_rows;
+                            enc_dec_seg_col_cnt = pic_width_in_sb / tile_group_cols;
+                            enc_dec_seg_row_cnt = picture_height_in_sb / tile_group_rows;
                         }
 
                         ppcs_ptr->tile_group_cols = tile_group_cols;
@@ -946,8 +945,8 @@ void *picture_manager_kernel(void *input_ptr) {
                                 // Init segments within the tile group
                                 enc_dec_segments_init(
                                     child_pcs_ptr->enc_dec_segment_ctrl[tile_group_idx],
-                                    encDecSegColCnt,
-                                    encDecSegRowCnt,
+                                    enc_dec_seg_col_cnt,
+                                    enc_dec_seg_row_cnt,
                                     tg_info_ptr->tile_group_width_in_sb,
                                     tg_info_ptr->tile_group_height_in_sb);
 
