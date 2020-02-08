@@ -4085,7 +4085,409 @@ enum {
             name = NULL;                                         \
         }                                                        \
     } while (0)
+#if QPS_CHANGE
+static int kf_low_motion_minq_cqp_8[QINDEX_RANGE] = {
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    2,    2,    2,
+    2,    2,    2,    2,
+    3,    3,    3,    3,
+    3,    3,    3,    4,
+    4,    4,    4,    4,
+    4,    4,    4,    5,
+    5,    5,    5,    5,
+    5,    5,    6,    6,
+    6,    6,    6,    6,
+    6,    7,    7,    7,
+    7,    7,    7,    7,
+    7,    8,    8,    8,
+    8,    8,    9,    9,
+    9,    9,    10,    10,
+    10,    10,    11,    11,
+    11,    11,    12,    12,
+    12,    12,    13,    13,
+    13,    13,    14,    14,
+    14,    15,    15,    15,
+    16,    16,    16,    17,
+    17,    18,    18,    18,
+    19,    19,    19,    20,
+    20,    20,    21,    21,
+    22,    22,    23,    23,
+    24,    24,    24,    25,
+    25,    26,    26,    27,
+    27,    28,    28,    29,
+    30,    30,    31,    31,
+    32,    32,    33,    34,
+    34,    35,    36,    36,
+    37,    37,    38,    39,
+    39,    40,    41,    42,
+    42,    43,    44,    45,
+    45,    46,    47,    48,
+    49,    50,    51,    51,
+    52,    53,    54,    55,
+    56,    57,    58,    59,
+    60,    61,    62,    64,
+    65,    66,    67,    69,
+    70,    71,    72,    74,
+    75,    77,    78,    80,
+    82,    83,    85,    87,
+    89,    91,    93,    95,
+    96,    97,    99,    100,
+    101,    103,    104,    105,
+    107,    109,    110,    112,
+    114,    116,    118,    120,
+    122,    124,    125,    127,
+    129,    131,    134,    136,
+    138,    140,    142,    144,
+    147,    149,    151,    154,
+    156,    158,    161,    163
+};
 
+static int kf_high_motion_minq_cqp_8[QINDEX_RANGE] = {
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    0,    0,    0,    0,
+    2,    2,    3,    3,
+    4,    4,    5,    5,
+    5,    6,    6,    7,
+    7,    8,    8,    8,
+    9,    9,    10,    10,
+    11,    11,    11,    12,
+    12,    13,    13,    14,
+    14,    14,    15,    15,
+    16,    16,    16,    17,
+    17,    18,    18,    19,
+    19,    19,    20,    20,
+    21,    21,    21,    22,
+    22,    23,    23,    24,
+    24,    24,    25,    25,
+    26,    26,    26,    27,
+    27,    28,    28,    28,
+    29,    29,    30,    30,
+    30,    31,    31,    32,
+    32,    32,    33,    33,
+    34,    34,    34,    35,
+    35,    36,    36,    36,
+    37,    38,    39,    39,
+    40,    41,    42,    42,
+    43,    44,    45,    46,
+    46,    47,    48,    49,
+    49,    50,    51,    51,
+    52,    53,    54,    54,
+    55,    56,    57,    58,
+    59,    61,    62,    63,
+    64,    65,    66,    67,
+    68,    69,    70,    71,
+    72,    73,    74,    76,
+    77,    78,    80,    81,
+    82,    84,    85,    86,
+    88,    89,    90,    92,
+    93,    95,    96,    97,
+    97,    98,    99,    100,
+    100,    101,    102,    103,
+    104,    105,    106,    107,
+    107,    108,    109,    110,
+    111,    112,    113,    114,
+    115,    116,    117,    118,
+    119,    120,    121,    121,
+    122,    123,    124,    124,
+    125,    126,    127,    127,
+    128,    129,    130,    130,
+    131,    132,    133,    134,
+    135,    135,    136,    137,
+    138,    139,    139,    140,
+    141,    141,    142,    143,
+    144,    144,    145,    146,
+    147,    148,    149,    149,
+    150,    151,    152,    153,
+    154,    154,    155,    156,
+    157,    158,    159,    160,
+    161,    162,    163,    164,
+    166,    167,    168,    169,
+    171,    172,    173,    175,
+    176,    178,    179,    181,
+    183,    184,    186,    188,
+    190,    191,    193,    195
+};
+
+static int kf_low_motion_minq_cqp_10[QINDEX_RANGE] = {
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      10,     10,
+        11,     11,     11,     11,
+        11,     11,     12,     12,
+        12,     12,     12,     13,
+        13,     13,     13,     13,
+        13,     13,     14,     14,
+        14,     14,     14,     14,
+        14,     15,     15,     15,
+        15,     15,     16,     16,
+        16,     16,     16,     16,
+        16,     17,     17,     17,
+        17,     17,     18,     18,
+        18,     18,     19,     19,
+        19,     19,     20,     20,
+        20,     21,     21,     21,
+        21,     22,     22,     22,
+        22,     23,     23,     23,
+        23,     24,     24,     24,
+        25,     25,     25,     26,
+        26,     26,     27,     27,
+        27,     28,     28,     28,
+        29,     29,     29,     30,
+        30,     31,     31,     32,
+        32,     32,     33,     33,
+        34,     34,     34,     35,
+        35,     36,     36,     37,
+        37,     38,     38,     39,
+        39,     40,     40,     41,
+        41,     42,     42,     43,
+        44,     44,     45,     46,
+        46,     47,     47,     48,
+        49,     49,     50,     51,
+        51,     52,     53,     54,
+        54,     55,     56,     57,
+        58,     58,     59,     60,
+        61,     62,     63,     64,
+        65,     66,     67,     68,
+        69,     70,     71,     72,
+        73,     74,     76,     77,
+        78,     80,     81,     83,
+        84,     86,     87,     89,
+        91,     93,     95,     96,
+        97,     98,     100,    101,
+        102,    103,    105,    106,
+        108,    109,    111,    113,
+        115,    117,    119,    121,
+        122,    124,    126,    128,
+        130,    132,    134,    136,
+        138,    140,    142,    144,
+        147,    149,    151,    154,
+        156,    159,    161,    163
+};
+
+static int kf_high_motion_minq_cqp_10[QINDEX_RANGE] = {
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      11,     11,     11,
+        12,     13,     13,     14,
+        14,     15,     15,     16,
+        16,     17,     17,     18,
+        18,     19,     19,     20,
+        20,     21,     21,     22,
+        22,     22,     23,     23,
+        24,     24,     25,     25,
+        26,     26,     27,     27,
+        27,     28,     28,     29,
+        29,     29,     30,     30,
+        31,     31,     32,     32,
+        32,     33,     33,     33,
+        34,     34,     35,     35,
+        35,     36,     36,     37,
+        37,     37,     38,     38,
+        39,     39,     39,     40,
+        40,     41,     41,     41,
+        42,     42,     42,     43,
+        43,     44,     45,     45,
+        46,     47,     48,     48,
+        49,     50,     50,     51,
+        52,     52,     53,     54,
+        54,     55,     56,     56,
+        57,     58,     58,     59,
+        60,     61,     62,     63,
+        64,     64,     66,     67,
+        67,     69,     69,     70,
+        71,     72,     73,     74,
+        75,     76,     77,     79,
+        80,     81,     82,     84,
+        85,     86,     87,     88,
+        90,     91,     92,     94,
+        95,     96,     97,     97,
+        98,     99,     100,    101,
+        101,    102,    103,    104,
+        105,    105,    106,    107,
+        108,    109,    110,    111,
+        112,    113,    114,    114,
+        115,    116,    117,    118,
+        119,    120,    121,    122,
+        123,    123,    124,    125,
+        125,    126,    127,    128,
+        128,    129,    130,    131,
+        132,    132,    133,    134,
+        135,    136,    136,    137,
+        138,    139,    139,    140,
+        141,    142,    142,    143,
+        144,    144,    145,    146,
+        147,    148,    149,    150,
+        150,    151,    152,    153,
+        154,    154,    155,    156,
+        157,    158,    159,    160,
+        161,    162,    163,    165,
+        166,    167,    168,    169,
+        171,    172,    173,    175,
+        176,    178,    179,    181,
+        183,    184,    186,    188,
+        190,    191,    193,    195
+};
+
+static int kf_low_motion_minq_cqp_12[QINDEX_RANGE] = {
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        13,     13,     13,     13,
+        14,     14,     14,     14,
+        14,     14,     15,     15,
+        15,     15,     15,     16,
+        16,     16,     16,     16,
+        16,     16,     17,     17,
+        17,     17,     17,     17,
+        18,     18,     18,     18,
+        18,     18,     18,     19,
+        19,     19,     19,     19,
+        19,     20,     20,     20,
+        20,     21,     21,     21,
+        21,     22,     22,     22,
+        22,     23,     23,     23,
+        23,     24,     24,     24,
+        24,     25,     25,     25,
+        25,     26,     26,     26,
+        27,     27,     27,     28,
+        28,     28,     29,     29,
+        29,     30,     30,     30,
+        31,     31,     31,     32,
+        32,     33,     33,     33,
+        34,     34,     35,     35,
+        35,     36,     36,     37,
+        37,     38,     38,     39,
+        39,     39,     40,     40,
+        41,     41,     42,     42,
+        43,     44,     44,     45,
+        45,     46,     46,     47,
+        48,     48,     49,     49,
+        50,     51,     51,     52,
+        53,     53,     54,     55,
+        56,     56,     57,     58,
+        59,     59,     60,     61,
+        62,     63,     64,     65,
+        66,     67,     68,     69,
+        70,     71,     72,     73,
+        74,     75,     76,     78,
+        79,     80,     82,     83,
+        85,     86,     88,     90,
+        91,     93,     95,     96,
+        97,     99,     100,    101,
+        102,    104,    105,    106,
+        108,    110,    111,    113,
+        115,    117,    119,    121,
+        122,    124,    126,    128,
+        130,    132,    134,    136,
+        138,    140,    142,    144,
+        147,    149,    152,    154,
+        156,    159,    161,    163
+};
+
+static int kf_high_motion_minq_cqp_12[QINDEX_RANGE] = {
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      0,
+        0,      0,      0,      13,
+        14,     14,     15,     15,
+        16,     16,     17,     17,
+        18,     18,     19,     19,
+        20,     20,     21,     21,
+        22,     22,     23,     23,
+        23,     24,     24,     25,
+        25,     26,     26,     27,
+        27,     28,     28,     28,
+        29,     29,     30,     30,
+        31,     31,     31,     32,
+        32,     33,     33,     33,
+        34,     34,     35,     35,
+        35,     36,     36,     37,
+        37,     37,     38,     38,
+        39,     39,     39,     40,
+        40,     40,     41,     41,
+        41,     42,     42,     43,
+        43,     43,     44,     44,
+        45,     45,     46,     47,
+        47,     48,     49,     49,
+        50,     51,     51,     52,
+        53,     53,     54,     55,
+        55,     56,     57,     57,
+        58,     59,     59,     60,
+        61,     62,     63,     64,
+        64,     65,     66,     67,
+        68,     69,     70,     71,
+        72,     73,     74,     75,
+        76,     77,     78,     79,
+        80,     82,     83,     84,
+        85,     86,     88,     89,
+        90,     91,     92,     94,
+        95,     96,     97,     98,
+        98,     99,     100,    101,
+        101,    102,    103,    104,
+        105,    106,    107,    107,
+        108,    109,    110,    111,
+        112,    113,    114,    115,
+        115,    116,    117,    118,
+        119,    120,    121,    122,
+        123,    123,    124,    125,
+        125,    126,    127,    128,
+        128,    129,    130,    131,
+        132,    132,    133,    134,
+        135,    136,    137,    137,
+        138,    139,    139,    140,
+        141,    142,    142,    143,
+        144,    145,    145,    146,
+        147,    148,    149,    150,
+        151,    151,    152,    153,
+        154,    155,    155,    156,
+        157,    158,    159,    160,
+        161,    162,    163,    165,
+        166,    167,    168,    170,
+        171,    172,    173,    175,
+        176,    178,    179,    181,
+        183,    184,    186,    188,
+        190,    191,    193,    195
+};
+#endif
 static int kf_low_motion_minq_8[QINDEX_RANGE] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -4421,7 +4823,17 @@ static int get_active_quality(int q, int gfu_boost, int low, int high, int *low_
         return low_motion_minq[q] + adjustment;
     }
 }
-
+#if QPS_CHANGE
+static int get_kf_active_quality_cqp(const RATE_CONTROL *const rc, int q,
+    AomBitDepth bit_depth) {
+    int *kf_low_motion_minq_cqp;
+    int *kf_high_motion_minq_cqp;
+    ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq_cqp);
+    ASSIGN_MINQ_TABLE(bit_depth, kf_high_motion_minq_cqp);
+    return get_active_quality(q, rc->kf_boost, kf_low, kf_high,
+        kf_low_motion_minq_cqp, kf_high_motion_minq_cqp);
+}
+#endif
 static int get_kf_active_quality(const RATE_CONTROL *const rc, int q, AomBitDepth bit_depth) {
     int *kf_low_motion_minq;
     int *kf_high_motion_minq;
@@ -4701,6 +5113,82 @@ static int adaptive_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, in
 
     return q;
 }
+
+#if QPS_CHANGE
+#define DEFAULT_KF_BOOST 2300
+#define DEFAULT_GF_BOOST 1350
+/******************************************************
+ * cqp_qindex_calc
+ * Assign the q_index per frame.
+ * Used in the one pass encoding with no look ahead
+ ******************************************************/
+static int cqp_qindex_calc(
+    PictureControlSet         *pcs_ptr,
+    RATE_CONTROL                *rc,
+    int                          qindex) {
+    SequenceControlSet        *scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
+    const Av1Common  *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+
+    int active_best_quality = 0;
+    int active_worst_quality = qindex;
+    double q_val;
+    int q;
+    const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
+    // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
+    // So, for each frame, arf_q is updated based on the qp of its references.
+    rc->arf_q = 0;
+    if (pcs_ptr->ref_slice_type_array[0][0] != I_SLICE)
+        rc->arf_q = MAX(rc->arf_q, ((pcs_ptr->ref_pic_qp_array[0][0] << 2) + 2));
+    if ((pcs_ptr->slice_type == B_SLICE) && (pcs_ptr->ref_slice_type_array[1][0] != I_SLICE))
+        rc->arf_q = MAX(rc->arf_q, ((pcs_ptr->ref_pic_qp_array[1][0] << 2) + 2));
+
+    if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
+        // Not forced keyframe.
+        double q_adj_factor = 1.0;
+
+        rc->worst_quality = MAXQ;
+        rc->best_quality = MINQ;
+
+        // cross multiplication to derive kf_boost from non_moving_average_score; kf_boost range is [kf_low,kf_high], and non_moving_average_score range [0,max_qp_scaling_avg_comp_I]
+        rc->kf_boost = DEFAULT_KF_BOOST;
+        // Baseline value derived from cpi->active_worst_quality and kf boost.
+        active_best_quality =
+            get_kf_active_quality_cqp(rc, active_worst_quality, bit_depth);
+        // Allow somewhat lower kf minq with small image formats.
+        if ((cm->frm_size.frame_width * cm->frm_size.frame_height) <= (352 * 288))
+            q_adj_factor -= 0.25;
+
+        // Convert the adjustment factor to a qindex delta
+        // on active_best_quality.
+        q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
+        active_best_quality +=
+            eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
+    }
+    else{
+        const  double delta_rate_new[7][6] =
+        {
+            { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 1L
+            { 0.6, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 2L
+            { 0.6, 0.8, 1.0, 1.0, 1.0, 1.0 }, // 3L
+            { 0.6 , 0.8, 0.9, 1.0, 1.0, 1.0 }, // 4L
+            { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0},  //5L
+            { 0.35, 0.6, 0.8,  0.9, 0.95, 1.0}  //6L
+        };
+        q_val = eb_av1_convert_qindex_to_q(qindex, bit_depth);
+        const int32_t delta_qindex = eb_av1_compute_qdelta(
+            q_val,
+            q_val * delta_rate_new[pcs_ptr->parent_pcs_ptr->hierarchical_levels]
+            [pcs_ptr->parent_pcs_ptr->temporal_layer_index],
+            bit_depth);
+
+        active_best_quality = MAX((int32_t)(qindex + delta_qindex), (pcs_ptr->ref_pic_qp_array[0][0] << 2) + 2);
+    }
+    q = active_best_quality;
+    clamp(q, active_best_quality, active_worst_quality);
+
+    return q;
+}
+#endif
 /******************************************************
  * sb_qp_derivation_two_pass
  * Calculates the QP per SB based on the referenced area
@@ -5103,7 +5591,16 @@ void *rate_control_kernel(void *input_ptr) {
                             new_qindex = adaptive_qindex_calc_two_pass(pcs_ptr, &rc, qindex);
                         else
                             new_qindex = adaptive_qindex_calc(pcs_ptr, &rc, qindex);
-                    } else if (pcs_ptr->slice_type == I_SLICE) {
+                    }
+#if QPS_CHANGE
+                    else {
+                        new_qindex = cqp_qindex_calc(
+                            pcs_ptr,
+                            &rc,
+                            qindex);
+                    }
+#else
+                    else if (pcs_ptr->slice_type == I_SLICE) {
                         const int32_t delta_qindex = eb_av1_compute_qdelta(
                             q_val,
                             q_val * 0.25,
@@ -5123,6 +5620,7 @@ void *rate_control_kernel(void *input_ptr) {
 
                         new_qindex = (int32_t)(qindex + delta_qindex);
                     }
+#endif
                     frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
                         (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
                         (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
