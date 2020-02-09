@@ -5578,8 +5578,10 @@ void *rate_control_kernel(void *input_ptr) {
                 if (scs_ptr->static_config.enable_qp_scaling_flag &&
                     pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+#if !QPS_CHANGE
                     const double  q_val  = eb_av1_convert_qindex_to_q(
                         qindex, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
+#endif
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     int32_t new_qindex;
                     if (!scs_ptr->use_output_stat_file &&
