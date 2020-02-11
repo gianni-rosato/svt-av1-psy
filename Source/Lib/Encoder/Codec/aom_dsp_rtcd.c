@@ -1172,10 +1172,11 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
              ext_eight_sad_calculation_32x32_64x64_c,
              ext_eight_sad_calculation_32x32_64x64_avx2);
     SET_AVX2(eb_sad_kernel4x4, fast_loop_nxm_sad_kernel, eb_compute4x_m_sad_avx2_intrin);
-    SET_SSE41_AVX2(get_eight_horizontal_search_point_results_8x8_16x16_pu,
-                   get_eight_horizontal_search_point_results_8x8_16x16_pu_c,
-                   get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin,
-                   get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin);
+    SET_SSE41_AVX2_AVX512(get_eight_horizontal_search_point_results_8x8_16x16_pu,
+                          get_eight_horizontal_search_point_results_8x8_16x16_pu_c,
+                          get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin,
+                          get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin,
+                          get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin);
     SET_SSE41_AVX2(get_eight_horizontal_search_point_results_32x32_64x64_pu,
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_c,
                    get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,

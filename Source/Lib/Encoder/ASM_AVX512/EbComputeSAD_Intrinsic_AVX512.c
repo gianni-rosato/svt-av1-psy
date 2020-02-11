@@ -3627,5 +3627,379 @@ void sad_loop_kernel_avx512_intrin(
     *x_search_center = (int16_t)best_x;
     *y_search_center = (int16_t)best_y;
 }
+void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin(
+    uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8,
+    uint32_t *p_best_mv8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv16x16, uint32_t mv,
+    uint16_t *p_sad16x16, EbBool sub_sad) {
+    __m128i s3;
+    __m128i sad_0, sad_1, sad_2, sad_3;
+    __m256i ref0temp, ref1temp, ss0temp, ss1temp, ss2temp, ss3temp;
+    __m256i ref2temp, ref3temp, ss4temp, ss5temp, ss6temp, ss7temp;
 
+    /*
+    -------------------------------------   -----------------------------------
+    | 8x8_00 | 8x8_01 | 8x8_04 | 8x8_05 |   8x8_16 | 8x8_17 | 8x8_20 | 8x8_21 |
+    -------------------------------------   -----------------------------------
+    | 8x8_02 | 8x8_03 | 8x8_06 | 8x8_07 |   8x8_18 | 8x8_19 | 8x8_22 | 8x8_23 |
+    -----------------------   -----------   ----------------------   ----------
+    | 8x8_08 | 8x8_09 | 8x8_12 | 8x8_13 |   8x8_24 | 8x8_25 | 8x8_29 | 8x8_29 |
+    ----------------------    -----------   ---------------------    ----------
+    | 8x8_10 | 8x8_11 | 8x8_14 | 8x8_15 |   8x8_26 | 8x8_27 | 8x8_30 | 8x8_31 |
+    -------------------------------------   -----------------------------------
+
+    -------------------------------------   -----------------------------------
+    | 8x8_32 | 8x8_33 | 8x8_36 | 8x8_37 |   8x8_48 | 8x8_49 | 8x8_52 | 8x8_53 |
+    -------------------------------------   -----------------------------------
+    | 8x8_34 | 8x8_35 | 8x8_38 | 8x8_39 |   8x8_50 | 8x8_51 | 8x8_54 | 8x8_55 |
+    -----------------------   -----------   ----------------------   ----------
+    | 8x8_40 | 8x8_41 | 8x8_44 | 8x8_45 |   8x8_56 | 8x8_57 | 8x8_60 | 8x8_61 |
+    ----------------------    -----------   ---------------------    ----------
+    | 8x8_42 | 8x8_43 | 8x8_46 | 8x8_48 |   8x8_58 | 8x8_59 | 8x8_62 | 8x8_63 |
+    -------------------------------------   -----------------------------------
+    */
+
+    /*
+    ----------------------    ----------------------
+    |  16x16_0  |  16x16_1  |  16x16_4  |  16x16_5  |
+    ----------------------    ----------------------
+    |  16x16_2  |  16x16_3  |  16x16_6  |  16x16_7  |
+    -----------------------   -----------------------
+    |  16x16_8  |  16x16_9  |  16x16_12 |  16x16_13 |
+    ----------------------    ----------------------
+    |  16x16_10 |  16x16_11 |  16x16_14 |  16x16_15 |
+    -----------------------   -----------------------
+    */
+    //8x8_0 & 8x8_1
+    __m256i result1, result2, result3, result4;
+    __m256i temp, temp1, temp2, temp3;
+    __m128i sumsad01, sumsad23;
+    result1 = result2 = result3 = result4 = _mm256_setzero_si256();
+
+    ref0temp = _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                       _mm_loadu_si128((__m128i *)(ref + 8)),
+                                       0x1);
+    ref1temp = _mm256_inserti128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+        _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+        0x1);
+
+    temp  = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+    temp1 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+    ss0temp = _mm256_permutevar8x32_epi32(
+        temp, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss2temp = _mm256_permutevar8x32_epi32(
+        temp,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+    ss1temp = _mm256_permutevar8x32_epi32(
+        temp1, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss3temp = _mm256_permutevar8x32_epi32(
+        temp1,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+    result1 = _mm256_dbsad_epu8(ss0temp, ref0temp, 0x94);
+    result2 = _mm256_dbsad_epu8(ss1temp, ref1temp, 0x94);
+    result3 = _mm256_dbsad_epu8(ss2temp, ref0temp, 0xE9);
+    result4 = _mm256_dbsad_epu8(ss3temp, ref1temp, 0xE9);
+
+    if (sub_sad) {
+        src += src_stride * 2;
+        ref += ref_stride * 2;
+    } else {
+        src += src_stride; // * 1
+        ref += ref_stride; // * 1
+
+        ref0temp =
+            _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                    _mm_loadu_si128((__m128i *)(ref + 8)),
+                                    0x1);
+        ref1temp = _mm256_inserti128_si256(
+            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+            _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+            0x1);
+
+        temp  = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+        temp1 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+        ss0temp = _mm256_permutevar8x32_epi32(
+            temp, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss2temp = _mm256_permutevar8x32_epi32(
+            temp,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+        ss1temp = _mm256_permutevar8x32_epi32(
+            temp1, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss3temp = _mm256_permutevar8x32_epi32(
+            temp1,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+        result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss0temp, ref0temp, 0x94));
+        result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss1temp, ref1temp, 0x94));
+        result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss2temp, ref0temp, 0xE9));
+        result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss3temp, ref1temp, 0xE9));
+
+        src += src_stride; // * 2
+        ref += ref_stride; // * 2
+    }
+
+    ref2temp = _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                       _mm_loadu_si128((__m128i *)(ref + 8)),
+                                       0x1);
+    ref3temp = _mm256_inserti128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+        _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+        0x1);
+
+    temp2 = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+    temp3 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+    ss4temp = _mm256_permutevar8x32_epi32(
+        temp2, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss6temp = _mm256_permutevar8x32_epi32(
+        temp2,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+    ss5temp = _mm256_permutevar8x32_epi32(
+        temp3, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss7temp = _mm256_permutevar8x32_epi32(
+        temp3,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+    result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss4temp, ref2temp, 0x94));
+    result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss5temp, ref3temp, 0x94));
+    result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss6temp, ref2temp, 0xE9));
+    result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss7temp, ref3temp, 0xE9));
+
+    if (sub_sad) {
+        src += src_stride * 2;
+        ref += ref_stride * 2;
+    } else {
+        src += src_stride; // * 3
+        ref += ref_stride; // * 3
+
+        ref2temp =
+            _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                    _mm_loadu_si128((__m128i *)(ref + 8)),
+                                    0x1);
+        ref3temp = _mm256_inserti128_si256(
+            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+            _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+            0x1);
+
+        temp2 = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+        temp3 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+        ss4temp = _mm256_permutevar8x32_epi32(
+            temp2, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss6temp = _mm256_permutevar8x32_epi32(
+            temp2,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+        ss5temp = _mm256_permutevar8x32_epi32(
+            temp3, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss7temp = _mm256_permutevar8x32_epi32(
+            temp3,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+        result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss4temp, ref2temp, 0x94));
+        result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss5temp, ref3temp, 0x94));
+        result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss6temp, ref2temp, 0xE9));
+        result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss7temp, ref3temp, 0xE9));
+
+        src += src_stride; // * 4
+        ref += ref_stride; // * 4
+    }
+
+    ref0temp = _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                       _mm_loadu_si128((__m128i *)(ref + 8)),
+                                       0x1);
+    ref1temp = _mm256_inserti128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+        _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+        0x1);
+
+    temp  = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+    temp1 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+    ss0temp = _mm256_permutevar8x32_epi32(
+        temp, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss2temp = _mm256_permutevar8x32_epi32(
+        temp,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+    ss1temp = _mm256_permutevar8x32_epi32(
+        temp1, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss3temp = _mm256_permutevar8x32_epi32(
+        temp1,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+    result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss0temp, ref0temp, 0x94));
+    result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss1temp, ref1temp, 0x94));
+    result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss2temp, ref0temp, 0xE9));
+    result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss3temp, ref1temp, 0xE9));
+
+    if (sub_sad) {
+        src += src_stride * 2;
+        ref += ref_stride * 2;
+    } else {
+        src += src_stride; // * 5
+        ref += ref_stride; // * 5
+        ref0temp =
+            _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                    _mm_loadu_si128((__m128i *)(ref + 8)),
+                                    0x1);
+        ref1temp = _mm256_inserti128_si256(
+            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+            _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+            0x1);
+
+        temp  = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+        temp1 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+        ss0temp = _mm256_permutevar8x32_epi32(
+            temp, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss2temp = _mm256_permutevar8x32_epi32(
+            temp,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+        ss1temp = _mm256_permutevar8x32_epi32(
+            temp1, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss3temp = _mm256_permutevar8x32_epi32(
+            temp1,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+        result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss0temp, ref0temp, 0x94));
+        result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss1temp, ref1temp, 0x94));
+        result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss2temp, ref0temp, 0xE9));
+        result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss3temp, ref1temp, 0xE9));
+
+        src += src_stride; // * 6
+        ref += ref_stride; // * 6
+    }
+
+    ref2temp = _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                       _mm_loadu_si128((__m128i *)(ref + 8)),
+                                       0x1);
+    ref3temp = _mm256_inserti128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+        _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+        0x1);
+
+    temp2 = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+    temp3 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+    ss4temp = _mm256_permutevar8x32_epi32(
+        temp2, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss6temp = _mm256_permutevar8x32_epi32(
+        temp2,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+    ss5temp = _mm256_permutevar8x32_epi32(
+        temp3, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+    ss7temp = _mm256_permutevar8x32_epi32(
+        temp3,
+        _mm256_setr_epi64x(
+            0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+    result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss4temp, ref2temp, 0x94));
+    result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss5temp, ref3temp, 0x94));
+    result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss6temp, ref2temp, 0xE9));
+    result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss7temp, ref3temp, 0xE9));
+
+    if (!sub_sad) {
+        src += src_stride; // * 7
+        ref += ref_stride; // * 7
+        ref0temp =
+            _mm256_inserti128_si256(_mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref))),
+                                    _mm_loadu_si128((__m128i *)(ref + 8)),
+                                    0x1);
+        ref1temp = _mm256_inserti128_si256(
+            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + (ref_stride * 8)))),
+            _mm_loadu_si128((__m128i *)(ref + (ref_stride * 8) + 8)),
+            0x1);
+
+        temp  = _mm256_broadcastsi128_si256(*(__m128i *)(src));
+        temp1 = _mm256_broadcastsi128_si256(*(__m128i *)(src + (src_stride * 8)));
+
+        ss0temp = _mm256_permutevar8x32_epi32(
+            temp, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss2temp = _mm256_permutevar8x32_epi32(
+            temp,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+        ss1temp = _mm256_permutevar8x32_epi32(
+            temp1, _mm256_setr_epi64x(0x0, 0x0, 0x0006000600060006, 0x0006000600060006));
+        ss3temp = _mm256_permutevar8x32_epi32(
+            temp1,
+            _mm256_setr_epi64x(
+                0x0001000100010001, 0x0001000100010001, 0x0007000700070007, 0x0007000700070007));
+
+        result1 = _mm256_adds_epu16(result1, _mm256_dbsad_epu8(ss0temp, ref0temp, 0x94));
+        result2 = _mm256_adds_epu16(result2, _mm256_dbsad_epu8(ss1temp, ref1temp, 0x94));
+        result3 = _mm256_adds_epu16(result3, _mm256_dbsad_epu8(ss2temp, ref0temp, 0xE9));
+        result4 = _mm256_adds_epu16(result4, _mm256_dbsad_epu8(ss3temp, ref1temp, 0xE9));
+    }
+
+    result1 = _mm256_adds_epu16(result1, result3);
+    result2 = _mm256_adds_epu16(result2, result4);
+
+    sad_0 = _mm256_castsi256_si128(result1);
+    sad_1 = _mm256_extracti128_si256(result1, 1);
+    sad_2 = _mm256_castsi256_si128(result2);
+    sad_3 = _mm256_extracti128_si256(result2, 1);
+
+    sad_0 = _mm_slli_epi16(sad_0, 1);
+    sad_1 = _mm_slli_epi16(sad_1, 1);
+    sad_2 = _mm_slli_epi16(sad_2, 1);
+    sad_3 = _mm_slli_epi16(sad_3, 1);
+
+    sumsad01 = _mm_adds_epu16(sad_0, sad_1);
+    sumsad23 = _mm_adds_epu16(sad_2, sad_3);
+    s3       = _mm_adds_epu16(sumsad01, sumsad23);
+
+    //sotore the 8 SADs(16x8 SADs)
+    _mm_store_si128((__m128i *)p_sad16x16, s3);
+    //find the best for 16x16
+    s3 = _mm_minpos_epu16(s3);
+
+    const uint32_t temSum = _mm_extract_epi16(s3, 0);
+
+    if (temSum < p_best_sad_16x16[0]) {
+        p_best_sad_16x16[0] = temSum;
+        const int16_t x_mv  = _MVXT(mv) + (int16_t)(_mm_extract_epi16(s3, 1) * 4);
+        const int16_t y_mv  = _MVYT(mv);
+        p_best_mv16x16[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+    }
+
+    //find the best for 8x8_0, 8x8_1, 8x8_2 & 8x8_3
+    sad_0 = _mm_minpos_epu16(sad_0);
+    sad_1 = _mm_minpos_epu16(sad_1);
+    sad_2 = _mm_minpos_epu16(sad_2);
+    sad_3 = _mm_minpos_epu16(sad_3);
+    sad_0 = _mm_unpacklo_epi16(sad_0, sad_1);
+    sad_2 = _mm_unpacklo_epi16(sad_2, sad_3);
+    sad_0 = _mm_unpacklo_epi32(sad_0, sad_2);
+    sad_1 = _mm_unpackhi_epi16(sad_0, _mm_setzero_si128());
+    sad_0 = _mm_unpacklo_epi16(sad_0, _mm_setzero_si128());
+
+    sad_1 = _mm_slli_epi16(sad_1, 2);
+    sad_2 = _mm_loadu_si128((__m128i *)p_best_sad_8x8);
+    s3    = _mm_cmpgt_epi32(sad_2, sad_0);
+    sad_0 = _mm_min_epu32(sad_0, sad_2);
+    _mm_storeu_si128((__m128i *)p_best_sad_8x8, sad_0);
+    sad_3 = _mm_loadu_si128((__m128i *)p_best_mv8x8);
+    sad_3 = _mm_andnot_si128(s3, sad_3);
+    sad_2 = _mm_set1_epi32(mv);
+    sad_2 = _mm_add_epi16(sad_2, sad_1);
+    sad_2 = _mm_and_si128(sad_2, s3);
+    sad_2 = _mm_or_si128(sad_2, sad_3);
+    _mm_storeu_si128((__m128i *)p_best_mv8x8, sad_2);
+}
 #endif // !NON_AVX512_SUPPORT
