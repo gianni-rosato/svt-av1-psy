@@ -32,7 +32,7 @@
 #include "av1me.h"
 #include "EbTemporalFiltering_sse4.h"
 #include "EbObject.h"
-#include "EbInterPrediction.h"
+#include "EbEncInterPrediction.h"
 #include "EbComputeVariance_C.h"
 #include "EbLog.h"
 

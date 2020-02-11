@@ -17,10 +17,12 @@
 #include <assert.h>
 
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 #include "convolve_avx2.h"
 #include "convolve.h"
+
+#include "EbInterPrediction.h"
 
 void eb_av1_highbd_jnt_convolve_2d_copy_avx2(const uint16_t *src, int32_t src_stride,
                                              uint16_t *dst0, int32_t dst_stride0, int32_t w,

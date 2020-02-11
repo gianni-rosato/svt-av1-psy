@@ -6,7 +6,10 @@
 #ifndef EbInterPrediction_h
 #define EbInterPrediction_h
 
-#include "EbModeDecision.h"
+//#include "EbModeDecision.h"
+#include "EbBlockStructures.h"
+#include "EbAv1Structs.h"
+#include "EbObject.h"
 #include "EbMcp.h"
 #include "filter.h"
 #include "convolve.h"
@@ -39,14 +42,53 @@ extern "C" {
         int32_t subpel_x;
         int32_t subpel_y;
     } SubpelParams;
-#if MC_DYNAMIC_PAD
+
     typedef struct PadBlock {
         int x0;
         int x1;
         int y0;
         int y1;
     } PadBlock;
-#endif
+
+#define INTERINTRA_WEDGE_SIGN 0
+
+typedef uint8_t *WedgeMasksType[MAX_WEDGE_TYPES];
+
+// Angles are with respect to horizontal anti-clockwise
+typedef enum WedgeDirectionType
+{
+    WEDGE_HORIZONTAL = 0,
+    WEDGE_VERTICAL = 1,
+    WEDGE_OBLIQUE27 = 2,
+    WEDGE_OBLIQUE63 = 3,
+    WEDGE_OBLIQUE117 = 4,
+    WEDGE_OBLIQUE153 = 5,
+    WEDGE_DIRECTIONS
+} WedgeDirectionType;
+
+static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
+                            int32_t max_row) {
+    mv->col = (int16_t)clamp(mv->col, min_col, max_col);
+    mv->row = (int16_t)clamp(mv->row, min_row, max_row);
+}
+
+// 3-tuple: {direction, x_offset, y_offset}
+typedef struct WedgeCodeType
+{
+    WedgeDirectionType direction;
+    int32_t x_offset;
+    int32_t y_offset;
+} WedgeCodeType;
+
+typedef struct WedgeParamsType
+{
+    int32_t bits;
+    const WedgeCodeType *codebook;
+    uint8_t *signflip;
+    WedgeMasksType *masks;
+} WedgeParamsType;
+
+
     struct ModeDecisionContext;
 
     typedef struct InterPredictionContext {
@@ -64,42 +106,6 @@ extern "C" {
         const ScaleFactors *sf, int32_t w, int32_t h, ConvolveParams *conv_params,
         InterpFilters interp_filters, int32_t is_intrabc, int32_t bd);
 
-EbErrorType av1_inter_prediction(
-    PictureControlSet              *pcs_ptr,
-    uint32_t                        interp_filters,
-    BlkStruct                      *blk_ptr,
-    uint8_t                         ref_frame_type,
-    MvUnit                         *mv_unit,
-    uint8_t                         use_intrabc,
-    MotionMode                      motion_mode,
-    uint8_t                         use_precomputed_obmc,
-    struct ModeDecisionContext     *md_context,
-    uint8_t                         compound_idx,
-    InterInterCompoundData         *interinter_comp,
-    TileInfo                       * tile,
-    NeighborArrayUnit              *luma_recon_neighbor_array,
-    NeighborArrayUnit              *cb_recon_neighbor_array ,
-    NeighborArrayUnit              *cr_recon_neighbor_array ,
-    uint8_t                         is_interintra_used ,
-    InterIntraMode                 interintra_mode,
-    uint8_t                         use_wedge_interintra,
-    int32_t                         interintra_wedge_index,
-    uint16_t                        pu_origin_x,
-    uint16_t                        pu_origin_y,
-    uint8_t                         bwidth,
-    uint8_t                         bheight,
-    EbPictureBufferDesc             *ref_pic_list0,
-    EbPictureBufferDesc             *ref_pic_list1,
-    EbPictureBufferDesc             *prediction_ptr,
-    uint16_t                        dst_origin_x,
-    uint16_t                        dst_origin_y,
-    EbBool                          perform_chroma,
-    uint8_t                         bit_depth);
-
-    void search_compound_diff_wedge(
-        PictureControlSet                    *pcs_ptr,
-        struct ModeDecisionContext                  *context_ptr,
-        ModeDecisionCandidate                *candidate_ptr);
 
     void av1_dist_wtd_comp_weight_assign(
         SeqHeader *seq_header,
@@ -127,9 +133,6 @@ EbErrorType av1_inter_prediction(
     static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
       DC_PRED, V_PRED, H_PRED, SMOOTH_PRED
     };
-    static INLINE int is_interintra_wedge_used(BlockSize sb_type) {
-        return wedge_params_lookup[sb_type].bits > 0;
-    }
 
     void combine_interintra(InterIntraMode mode,
         int8_t use_wedge_interintra, int wedge_index,
@@ -166,34 +169,30 @@ EbErrorType av1_inter_prediction(
     MV32 av1_scale_mv(const MV *mvq4, int x, int y,
         const ScaleFactors *sf);
 
-    EbErrorType inter_pu_prediction_av1(
-        uint8_t                              hbd_mode_decision,
-        struct ModeDecisionContext           *md_context_ptr,
-        PictureControlSet                    *pcs_ptr,
-        ModeDecisionCandidateBuffer          *candidate_buffer_ptr);
 
-    EbErrorType warped_motion_prediction(
-        PictureControlSet                    *pcs_ptr,
-        MvUnit                               *mv_unit,
-        uint8_t                               ref_frame_type,
-        uint8_t                               compound_idx,
-        InterInterCompoundData               *interinter_comp,
-        uint16_t                              pu_origin_x,
-        uint16_t                              pu_origin_y,
-        BlkStruct                           *blk_ptr,
-        const BlockGeom                      *blk_geom,
-        EbPictureBufferDesc                  *ref_pic_list0,
-        EbPictureBufferDesc                  *ref_pic_list1,
-        EbPictureBufferDesc                  *prediction_ptr,
-        uint16_t                              dst_origin_x,
-        uint16_t                              dst_origin_y,
-        EbWarpedMotionParams                 *wm_params_l0,
-        EbWarpedMotionParams                 *wm_params_l1,
-        uint8_t                               bit_depth,
-        EbBool                                perform_chroma);
+void build_smooth_interintra_mask(uint8_t *mask, int stride, BlockSize plane_bsize,
+                                  InterIntraMode mode);
 
-    extern aom_highbd_convolve_fn_t convolve_hbd[/*sub_x*/2][/*sub_y*/2][/*bi*/2];
-    extern AomConvolveFn convolve[/*sub_x*/2][/*sub_y*/2][/*bi*/2];
+void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride, uint16_t *dst,
+                                    int dst_stride, int w, int h, int subpel_x_q4,
+                                    int subpel_y_q4, ConvolveParams *conv_params, int bd);
+
+void convolve_2d_for_intrabc(const uint8_t *src, int src_stride, uint8_t *dst,
+                             int dst_stride, int w, int h, int subpel_x_q4, int subpel_y_q4,
+                             ConvolveParams *conv_params);
+
+extern aom_highbd_convolve_fn_t convolve_hbd[/*sub_x*/2][/*sub_y*/2][/*bi*/2];
+
+extern AomConvolveFn convolve[/*sub_x*/2][/*sub_y*/2][/*bi*/2];
+
+int is_interintra_wedge_used(BlockSize sb_type);
+
+int32_t get_wedge_bits_lookup(BlockSize sb_type);
+
+const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign, BlockSize sb_type);
+
+int get_wedge_params_bits(BlockSize sb_type);
+
 
 #ifdef __cplusplus
 }

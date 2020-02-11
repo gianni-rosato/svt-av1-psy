@@ -12,7 +12,7 @@
 #include <immintrin.h>
 #include "EbDefinitions.h"
 #include "EbMemory_SSE4_1.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "convolve.h"
 #include "convolve_avx2.h"
 #include "synonyms.h"

@@ -10,7 +10,7 @@
  */
 
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include <tmmintrin.h>
 #include "synonyms.h"
 

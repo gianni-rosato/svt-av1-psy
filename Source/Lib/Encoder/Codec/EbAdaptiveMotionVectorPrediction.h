@@ -61,7 +61,7 @@ uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t
                          uint16_t blk_origin_y, MvReferenceFrame rf0, PictureControlSet *pcs_ptr,
                          int32_t *pts, int32_t *pts_inref);
 
-void wm_count_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
+void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                       uint16_t blk_origin_y, uint8_t ref_frame_type, PictureControlSet *pcs_ptr,
                       uint16_t *num_samples);
 
@@ -215,11 +215,7 @@ static INLINE int is_global_mv_block(const PredictionMode mode, const BlockSize 
            is_motion_variation_allowed_bsize(bsize);
 }
 
-static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
-                            int32_t max_row) {
-    mv->col = (int16_t)clamp(mv->col, min_col, max_col);
-    mv->row = (int16_t)clamp(mv->row, min_row, max_row);
-}
+
 
 static INLINE int32_t is_mv_valid(const MV *mv) {
     return mv->row > MV_LOW && mv->row < MV_UPP && mv->col > MV_LOW && mv->col < MV_UPP;

@@ -10,7 +10,7 @@
  * Includes
  ***************************************/
 #include "EbIntraPrediction.h"
-#include "EbInterPrediction.h"
+#include "EbEncInterPrediction.h"
 #include "EbLambdaRateTables.h"
 #include "EbTransforms.h"
 #include "EbModeDecisionProcess.h"

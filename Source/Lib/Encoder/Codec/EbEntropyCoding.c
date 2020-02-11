@@ -47,7 +47,7 @@ static void mem_put_varsize(uint8_t *const dst, const int sz, const int val) {
 #endif
 
 int     svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
-int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane, int32_t mi_row,
+int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, SeqHeader *seq_header_p, int32_t plane, int32_t mi_row,
                                               int32_t mi_col, BlockSize bsize, int32_t *rcol0,
                                               int32_t *rcol1, int32_t *rrow0, int32_t *rrow1,
                                               int32_t *tile_tl_idx);
@@ -65,10 +65,10 @@ int32_t is_inter_block(const BlockModeInfo *mbmi);
 #define OD_CLZ(x) (-get_msb(x))
 #define OD_ILOG_NZ(x) (OD_CLZ0 - OD_CLZ(x))
 
-int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane, int32_t mi_row,
-                                              int32_t mi_col, BlockSize bsize, int32_t *rcol0,
-                                              int32_t *rcol1, int32_t *rrow0, int32_t *rrow1,
-                                              int32_t *tile_tl_idx);
+//int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane, int32_t mi_row,
+//                                              int32_t mi_col, BlockSize bsize, int32_t *rcol0,
+//                                              int32_t *rcol1, int32_t *rrow0, int32_t *rrow1,
+//                                              int32_t *tile_tl_idx);
 
 extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 int         get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
@@ -5152,10 +5152,10 @@ void eb_av1_encode_dv(AomWriter *w, const MV *mv, const MV *ref, NmvContext *mvc
     if (mv_joint_horizontal(j)) encode_mv_component(w, diff.col, &mvctx->comps[1], MV_SUBPEL_NONE);
 }
 
-int av1_allow_intrabc(const Av1Common *const cm) {
-    return (cm->p_pcs_ptr->slice_type == I_SLICE &&
-            cm->p_pcs_ptr->frm_hdr.allow_screen_content_tools &&
-            cm->p_pcs_ptr->frm_hdr.allow_intrabc);
+int av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type) {
+    return (slice_type == I_SLICE &&
+            frm_hdr->allow_screen_content_tools &&
+            frm_hdr->allow_intrabc);
 }
 
 static void write_intrabc_info(FRAME_CONTEXT *ec_ctx, BlkStruct *blk_ptr, AomWriter *w) {
@@ -5723,7 +5723,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     int32_t       mi_col    = blk_origin_x >> MI_SIZE_LOG2;
     int           mi_stride = pcs_ptr->parent_pcs_ptr->av1_cm->mi_stride;
     const int32_t offset    = mi_row * mi_stride + mi_col;
-    blk_ptr->av1xd->mi      = pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr->mi_grid_base + offset;
+    blk_ptr->av1xd->mi      = pcs_ptr->mi_grid_base + offset;
     ModeInfo *mi_ptr        = *blk_ptr->av1xd->mi;
 
     blk_ptr->av1xd->tile.mi_col_start = tb_ptr->tile_info.mi_col_start;
@@ -5822,7 +5822,8 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
             const uint32_t intra_luma_mode   = blk_ptr->pred_mode;
             uint32_t       intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
 
-            if (av1_allow_intrabc(pcs_ptr->parent_pcs_ptr->av1_cm))
+            if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr,
+                    pcs_ptr->parent_pcs_ptr->slice_type))
                 write_intrabc_info(frame_context, blk_ptr, ec_writer);
 
             if (blk_ptr->av1xd->use_intrabc == 0)
@@ -6439,6 +6440,7 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
                 for (int32_t plane = 0; plane < 3; ++plane) {
                     int32_t rcol0, rcol1, rrow0, rrow1, tile_tl_idx;
                     if (eb_av1_loop_restoration_corners_in_sb(cm,
+                                                              &scs_ptr->seq_header,
                                                               plane,
                                                               mi_row,
                                                               mi_col,

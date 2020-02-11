@@ -267,6 +267,15 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_AVX2)
         av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_avx2;
 
+    eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_c;
+    if (flags & HAS_AVX2)
+        eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_avx2;
+
+    eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_c;
+    if (flags & HAS_AVX2) eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_avx2;
+
+    eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_c;
+    if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
 
     eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_c;
     eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_c;
@@ -368,4 +377,95 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     SET_SSSE3(avc_style_luma_interpolation_filter,
               avc_style_luma_interpolation_filter_helper_c,
               avc_style_luma_interpolation_filter_helper_ssse3);
+
+    SET_AVX2_AVX512(eb_av1_wiener_convolve_add_src,
+                    eb_av1_wiener_convolve_add_src_c,
+                    eb_av1_wiener_convolve_add_src_avx2,
+                    eb_av1_wiener_convolve_add_src_avx512);
+
+    eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_c;
+    if (flags & HAS_AVX2) eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_avx2;
+
+    eb_av1_convolve_2d_scale = eb_av1_convolve_2d_scale_c;
+
+    eb_av1_highbd_convolve_2d_copy_sr = eb_av1_highbd_convolve_2d_copy_sr_c;
+    if (flags & HAS_AVX2)
+        eb_av1_highbd_convolve_2d_copy_sr = eb_av1_highbd_convolve_2d_copy_sr_avx2;
+    eb_av1_highbd_jnt_convolve_2d_copy = eb_av1_highbd_jnt_convolve_2d_copy_c;
+    if (flags & HAS_AVX2)
+        eb_av1_highbd_jnt_convolve_2d_copy = eb_av1_highbd_jnt_convolve_2d_copy_avx2;
+    eb_av1_highbd_convolve_y_sr = eb_av1_highbd_convolve_y_sr_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_convolve_y_sr = eb_av1_highbd_convolve_y_sr_avx2;
+    eb_av1_highbd_convolve_2d_sr = eb_av1_highbd_convolve_2d_sr_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_convolve_2d_sr = eb_av1_highbd_convolve_2d_sr_avx2;
+
+    eb_av1_highbd_convolve_2d_scale = eb_av1_highbd_convolve_2d_scale_c;
+
+    eb_av1_highbd_jnt_convolve_2d = eb_av1_highbd_jnt_convolve_2d_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_2d = eb_av1_highbd_jnt_convolve_2d_avx2;
+    eb_av1_highbd_jnt_convolve_x = eb_av1_highbd_jnt_convolve_x_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_x = eb_av1_highbd_jnt_convolve_x_avx2;
+    eb_av1_highbd_jnt_convolve_y = eb_av1_highbd_jnt_convolve_y_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_y = eb_av1_highbd_jnt_convolve_y_avx2;
+    eb_av1_highbd_convolve_x_sr = eb_av1_highbd_convolve_x_sr_c;
+    if (flags & HAS_AVX2) eb_av1_highbd_convolve_x_sr = eb_av1_highbd_convolve_x_sr_avx2;
+
+    SET_AVX2_AVX512(eb_av1_convolve_2d_sr,
+                    eb_av1_convolve_2d_sr_c,
+                    eb_av1_convolve_2d_sr_avx2,
+                    eb_av1_convolve_2d_sr_avx512);
+    SET_AVX2_AVX512(eb_av1_convolve_2d_copy_sr,
+                    eb_av1_convolve_2d_copy_sr_c,
+                    eb_av1_convolve_2d_copy_sr_avx2,
+                    eb_av1_convolve_2d_copy_sr_avx512);
+    SET_AVX2_AVX512(eb_av1_convolve_x_sr,
+                    eb_av1_convolve_x_sr_c,
+                    eb_av1_convolve_x_sr_avx2,
+                    eb_av1_convolve_x_sr_avx512);
+    SET_AVX2_AVX512(eb_av1_convolve_y_sr,
+                    eb_av1_convolve_y_sr_c,
+                    eb_av1_convolve_y_sr_avx2,
+                    eb_av1_convolve_y_sr_avx512);
+    SET_AVX2_AVX512(eb_av1_jnt_convolve_2d,
+                    eb_av1_jnt_convolve_2d_c,
+                    eb_av1_jnt_convolve_2d_avx2,
+                    eb_av1_jnt_convolve_2d_avx512);
+    SET_AVX2_AVX512(eb_av1_jnt_convolve_2d_copy,
+                    eb_av1_jnt_convolve_2d_copy_c,
+                    eb_av1_jnt_convolve_2d_copy_avx2,
+                    eb_av1_jnt_convolve_2d_copy_avx512);
+    SET_AVX2_AVX512(eb_av1_jnt_convolve_x,
+                    eb_av1_jnt_convolve_x_c,
+                    eb_av1_jnt_convolve_x_avx2,
+                    eb_av1_jnt_convolve_x_avx512);
+    SET_AVX2_AVX512(eb_av1_jnt_convolve_y,
+                    eb_av1_jnt_convolve_y_c,
+                    eb_av1_jnt_convolve_y_avx2,
+                    eb_av1_jnt_convolve_y_avx512);
+
+    aom_convolve8_horiz = aom_convolve8_horiz_c;
+    if (flags & HAS_AVX2) aom_convolve8_horiz = aom_convolve8_horiz_avx2;
+    aom_convolve8_vert = aom_convolve8_vert_c;
+    if (flags & HAS_AVX2) aom_convolve8_vert = aom_convolve8_vert_avx2;
+
+
+    av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_c;
+    if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_avx2;
+    av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_c;
+    if (flags & HAS_AVX2)
+        av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_avx2;
+    av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
+    if (flags & HAS_AVX2) av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_avx2;
+
+    aom_subtract_block = aom_subtract_block_c;
+    if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
+
+    aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_c;
+    if (flags & HAS_AVX2) aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_avx2;
+    aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_c;
+    if (flags & HAS_AVX2) aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_avx2;
+
+    aom_highbd_subtract_block = aom_highbd_subtract_block_c;
+    if (flags & HAS_AVX2) aom_highbd_subtract_block = aom_highbd_subtract_block_sse2;
+
 }

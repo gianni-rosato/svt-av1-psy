@@ -9,9 +9,10 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  *
  */
-#include "EbSequenceControlSet.h"
-#include "EbPictureControlSet.h"
-#include "aom_dsp_rtcd.h"
+//#include "EbSequenceControlSet.h"
+//#include "EbPictureControlSet.h"
+#include "Av1Common.h"
+#include "common_dsp_rtcd.h"
 #include "EbRestoration.h"
 #include "EbUtility.h"
 #include "EbLog.h"
@@ -1428,7 +1429,8 @@ static void foreach_rest_unit_in_tile_seg(const Av1PixelRect *tile_rect, int32_t
                                           int32_t hunits_per_tile, int32_t units_per_tile,
                                           int32_t unit_size, int32_t ss_y,
                                           RestUnitVisitor on_rest_unit, void *priv,
-                                          int32_t vunits_per_tile, PictureControlSet *pcs_ptr,
+                                          int32_t vunits_per_tile, uint8_t  rest_segments_column_count,
+                                          uint8_t  rest_segments_row_count,
                                           uint32_t segment_index) {
     //tile_row=0
     //tile_col=0
@@ -1445,15 +1447,15 @@ static void foreach_rest_unit_in_tile_seg(const Av1PixelRect *tile_rect, int32_t
     uint32_t picture_width_in_units  = hunits_per_tile;
     uint32_t picture_height_in_units = vunits_per_tile;
     SEGMENT_CONVERT_IDX_TO_XY(
-        segment_index, x_seg_idx, y_seg_idx, pcs_ptr->rest_segments_column_count);
+        segment_index, x_seg_idx, y_seg_idx, rest_segments_column_count);
     uint32_t x_unit_start_idx =
-        SEGMENT_START_IDX(x_seg_idx, picture_width_in_units, pcs_ptr->rest_segments_column_count);
+        SEGMENT_START_IDX(x_seg_idx, picture_width_in_units, rest_segments_column_count);
     uint32_t x_unit_end_idx =
-        SEGMENT_END_IDX(x_seg_idx, picture_width_in_units, pcs_ptr->rest_segments_column_count);
+        SEGMENT_END_IDX(x_seg_idx, picture_width_in_units, rest_segments_column_count);
     uint32_t y_unit_start_idx =
-        SEGMENT_START_IDX(y_seg_idx, picture_height_in_units, pcs_ptr->rest_segments_row_count);
+        SEGMENT_START_IDX(y_seg_idx, picture_height_in_units, rest_segments_row_count);
     uint32_t y_unit_end_idx =
-        SEGMENT_END_IDX(y_seg_idx, picture_height_in_units, pcs_ptr->rest_segments_row_count);
+        SEGMENT_END_IDX(y_seg_idx, picture_height_in_units, rest_segments_row_count);
 
     int32_t y0   = y_unit_start_idx * unit_size;
     int32_t yend = ((int32_t)y_unit_end_idx == (int32_t)picture_height_in_units)
@@ -1507,7 +1509,8 @@ static void foreach_rest_unit_in_tile_seg(const Av1PixelRect *tile_rect, int32_t
 }
 void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
                                         RestUnitVisitor on_rest_unit, void *priv,
-                                        PictureControlSet *pcs_ptr, uint32_t segment_index) {
+                                        uint8_t  rest_segments_column_count,
+                                        uint8_t  rest_segments_row_count, uint32_t segment_index) {
     const int32_t is_uv = plane > 0;
     const int32_t ss_y  = is_uv && cm->subsampling_y;
 
@@ -1529,16 +1532,17 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane, RestTileSt
                                   on_rest_unit,
                                   priv,
                                   rsi->vert_units_per_tile,
-                                  pcs_ptr,
+                                  rest_segments_column_count,
+                                  rest_segments_row_count,
                                   segment_index);
 }
 
-int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, int32_t plane, int32_t mi_row,
+int32_t eb_av1_loop_restoration_corners_in_sb(Av1Common *cm, SeqHeader *seq_header_p, int32_t plane, int32_t mi_row,
                                               int32_t mi_col, BlockSize bsize, int32_t *rcol0,
                                               int32_t *rcol1, int32_t *rrow0, int32_t *rrow1,
                                               int32_t *tile_tl_idx) {
     assert(rcol0 && rcol1 && rrow0 && rrow1);
-    if (bsize != cm->p_pcs_ptr->scs_ptr->seq_header.sb_size) return 0;
+    if (bsize != seq_header_p->sb_size) return 0;
     if (cm->rst_info[plane].frame_restoration_type == RESTORE_NONE) return 0;
 
     // assert(!cm->all_lossless);

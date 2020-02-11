@@ -24,7 +24,7 @@
 #include "convolve_avx2.h"
 #include "EbBlend_sse4.h"
 
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 static INLINE __m256i blend_16_u8_avx2(const uint8_t *src0, const uint8_t *src1,
                                        const __m256i *v_m0_b, const __m256i *v_m1_b,

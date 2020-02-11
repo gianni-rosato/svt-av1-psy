@@ -34,6 +34,7 @@
 extern "C" {
 #endif
 
+
 #define MAX_TILE_WIDTH (4096) // Max Tile width in pixels
 #define MAX_TILE_AREA (4096 * 2304) // Maximum tile area in pixels
 
@@ -304,7 +305,7 @@ static INLINE int is_interinter_compound_used(CompoundType type, BlockSize sb_ty
     case COMPOUND_AVERAGE:
     case COMPOUND_DISTWTD:
     case COMPOUND_DIFFWTD: return comp_allowed;
-    case COMPOUND_WEDGE: return comp_allowed && wedge_params_lookup[sb_type].bits > 0;
+    case COMPOUND_WEDGE: return comp_allowed && get_wedge_params_bits(sb_type) > 0;
     default: assert(0); return 0;
     }
 }

@@ -11,7 +11,7 @@
 
 #include "EbSystemResourceManager.h"
 #include "EbPictureBufferDesc.h"
-#include "EbInterPrediction.h"
+#include "EbEncInterPrediction.h"
 #include "EbEntropyCoding.h"
 #include "EbTransQuantBuffers.h"
 #include "EbCodingUnit.h"

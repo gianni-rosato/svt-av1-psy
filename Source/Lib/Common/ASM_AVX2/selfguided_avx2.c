@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 #include <immintrin.h>
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "EbRestoration.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"

@@ -931,7 +931,7 @@ EbErrorType rest_results_creator(
 }
 
 void init_fn_ptr(void);
-extern void av1_init_wedge_masks(void);
+void av1_init_wedge_masks(void);
 /**********************************
 * Initialize Encoder Library
 **********************************/

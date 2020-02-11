@@ -863,6 +863,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         uint32_t enc_dec_seg_col_cnt = entry_scs_ptr->enc_dec_segment_col_count_array
                                                        [entry_pcs_ptr->temporal_layer_index];
                         uint32_t enc_dec_seg_row_cnt = entry_scs_ptr->enc_dec_segment_row_count_array
+
                                                        [entry_pcs_ptr->temporal_layer_index];
 
                         struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->parent_pcs_ptr;
@@ -1070,7 +1071,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         }
 #endif
 
-                        child_pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr = child_pcs_ptr;
+//                        child_pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr = child_pcs_ptr;
 #if !TILES_PARALLEL
                         struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->parent_pcs_ptr;
                         Av1Common *const                cm       = ppcs_ptr->av1_cm;

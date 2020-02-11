@@ -43,7 +43,7 @@ int  av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
-int av1_allow_intrabc(const Av1Common *const cm);
+int av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type);
 
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
     if (ref_mv_stack[ref_idx].weight >= REF_CAT_LEVEL &&
@@ -573,7 +573,8 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     UNUSED(md_pass);
     UNUSED(enable_inter_intra);
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-    if (av1_allow_intrabc(pcs_ptr->parent_pcs_ptr->av1_cm) && candidate_ptr->use_intrabc) {
+    if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr, pcs_ptr->parent_pcs_ptr->slice_type)
+        && candidate_ptr->use_intrabc) {
         uint64_t luma_sad         = (LUMA_WEIGHT * luma_distortion) << AV1_COST_PRECISION;
         uint64_t chromasad_       = chroma_distortion << AV1_COST_PRECISION;
         uint64_t total_distortion = luma_sad + chromasad_;
@@ -755,7 +756,7 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         luma_rate =
             (uint32_t)(intra_mode_bits_num + skip_mode_rate + intra_luma_mode_bits_num +
                        intra_luma_ang_mode_bits_num + is_inter_rate + intra_filter_mode_bits_num);
-        if (av1_allow_intrabc(pcs_ptr->parent_pcs_ptr->av1_cm))
+        if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr, pcs_ptr->parent_pcs_ptr->slice_type))
             luma_rate +=
                 candidate_ptr->md_rate_estimation_ptr->intrabc_fac_bits[candidate_ptr->use_intrabc];
 

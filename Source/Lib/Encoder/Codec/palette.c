@@ -354,7 +354,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     int           mi_stride = cm->mi_stride;
     const int32_t offset    = mirow * mi_stride + micol;
-    xd->mi                  = cm->pcs_ptr->mi_grid_base + offset;
+    xd->mi                  = pcs_ptr->mi_grid_base + offset;
     ModeInfo *mi_ptr        = *xd->mi;
     if (xd->up_available) {
         xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;

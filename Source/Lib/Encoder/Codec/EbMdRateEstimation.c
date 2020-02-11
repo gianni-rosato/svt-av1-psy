@@ -23,7 +23,7 @@
 #include "EbBitstreamUnit.h"
 
 static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
-    const int32_t wbits = wedge_params_lookup[sb_type].bits;
+    const int32_t wbits = get_wedge_params_bits(sb_type);
     return (wbits > 0) ? wbits + 1 : 0;
 }
 
@@ -535,7 +535,7 @@ static InterpFilter get_ref_filter_type(const BlockModeInfo *ref_mbmi, int dir,
                 ? av1_extract_interp_filter(ref_mbmi->interp_filters, dir & 0x01)
                 : SWITCHABLE_FILTERS);
 }
-extern int av1_allow_intrabc(const Av1Common *const cm);
+extern int av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type);
 
 int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
                              uint32_t mode);
@@ -821,7 +821,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
  * Updates all the syntax stats/CDF for the current block
  ******************************************************************************/
 void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, int mi_col) {
-    const AV1_COMMON *const cm   = pcs_ptr->parent_pcs_ptr->av1_cm;
+//    const AV1_COMMON *const cm   = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *           xd   = blk_ptr->av1xd;
     const MbModeInfo *const mbmi = &xd->mi[0]->mbmi;
 
@@ -850,7 +850,8 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
                         mi_row,
                         mi_col);
     }
-    if (av1_allow_intrabc(cm)) update_cdf(fc->intrabc_cdf, is_intrabc_block(&mbmi->block_mi), 2);
+    if (av1_allow_intrabc(&pcs_ptr->parent_pcs_ptr->frm_hdr, pcs_ptr->parent_pcs_ptr->slice_type))
+        update_cdf(fc->intrabc_cdf, is_intrabc_block(&mbmi->block_mi), 2);
 
     if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr) || mbmi->block_mi.skip_mode) return;
     const int inter_block = is_inter_block(&mbmi->block_mi);

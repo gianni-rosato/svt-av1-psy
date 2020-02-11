@@ -30,7 +30,6 @@
 
 #include "EbDecProcessFrame.h"
 #include "EbDecIntraPrediction.h"
-//#include "../../Encoder/Codec/EbRestoration.h"
 
 static INLINE void dec_clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
                                 int32_t max_row) {

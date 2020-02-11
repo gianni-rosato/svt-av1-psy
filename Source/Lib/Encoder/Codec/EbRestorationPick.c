@@ -22,7 +22,8 @@
 
 void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
                                         RestUnitVisitor on_rest_unit, void *priv,
-                                        PictureControlSet *pcs_ptr, uint32_t segment_index);
+                                        uint8_t  rest_segments_column_count,
+                                        uint8_t  rest_segments_row_count, uint32_t segment_index);
 
 void eb_av1_selfguided_restoration_c(const uint8_t *dgd8, int32_t width, int32_t height,
                                      int32_t dgd_stride, int32_t *flt0, int32_t *flt1,
@@ -1534,7 +1535,8 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                            rsc_on_tile,
                                            search_norestore_seg,
                                            rsc_p,
-                                           pcs_ptr,
+                                           pcs_ptr->rest_segments_column_count,
+                                           pcs_ptr->rest_segments_row_count,
                                            segment_index);
         if (cm->wn_filter_mode)
             av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
@@ -1542,18 +1544,20 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                                rsc_on_tile,
                                                search_wiener_seg,
                                                rsc_p,
-                                               pcs_ptr,
+                                               pcs_ptr->rest_segments_column_count,
+                                               pcs_ptr->rest_segments_row_count,
                                                segment_index);
         av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
                                            rsc_p->plane,
                                            rsc_on_tile,
                                            search_sgrproj_seg,
                                            rsc_p,
-                                           pcs_ptr,
+                                           pcs_ptr->rest_segments_column_count,
+                                           pcs_ptr->rest_segments_row_count,
                                            segment_index);
     }
 }
-void rest_finish_search(Macroblock *x, Av1Common *const cm) {
+void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Common *const cm) {
     const int32_t   num_planes           = 3;
     RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
     int32_t         ntiles[2];
@@ -1578,8 +1582,8 @@ void rest_finish_search(Macroblock *x, Av1Common *const cm) {
         rsc.x        = x;
         rsc.plane    = plane;
         rsc.rusi     = rusi;
-        rsc.pic_num  = (uint32_t)cm->p_pcs_ptr->picture_number;
-        rsc.rusi_pic = cm->p_pcs_ptr->rusi_picture[plane];
+        rsc.pic_num  = (uint32_t)p_pcs_ptr->picture_number;
+        rsc.rusi_pic = p_pcs_ptr->rusi_picture[plane];
 
         const int32_t         plane_ntiles = ntiles[plane > 0];
         const RestorationType num_rtypes =

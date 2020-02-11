@@ -450,11 +450,11 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd, const int3
     } // Analyze a single 8x8 block motion information.
 }
 
-static int32_t has_top_right(const Av1Common *cm, const MacroBlockD *xd, int32_t mi_row,
+static int32_t has_top_right(const Av1Common *cm,  const BlockSize sb_size, const MacroBlockD *xd, int32_t mi_row,
                              int32_t mi_col, int32_t bs) {
     (void)xd;
     (void)cm;
-    const int32_t sb_mi_size = mi_size_wide[cm->p_pcs_ptr->scs_ptr->seq_header.sb_size];
+    const int32_t sb_mi_size = mi_size_wide[sb_size];
     const int32_t mask_row   = mi_row & (sb_mi_size - 1);
     const int32_t mask_col   = mi_col & (sb_mi_size - 1);
 
@@ -643,7 +643,8 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                        const EbWarpedMotionParams *gm_params, int32_t mi_row, int32_t mi_col,
                        int16_t *mode_context) {
     const int32_t    bs     = AOMMAX(xd->n8_w, xd->n8_h);
-    const int32_t    has_tr = has_top_right(cm, xd, mi_row, mi_col, bs);
+    const int32_t    has_tr = has_top_right(cm,
+            ((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header.sb_size, xd, mi_row, mi_col, bs);
     MvReferenceFrame rf[2];
 
     const TileInfo *const tile           = &xd->tile;
@@ -1754,7 +1755,7 @@ int select_samples(MV *mv, int *pts, int *pts_inref, int len, BlockSize bsize) {
 // Note: Samples returned are at 1/8-pel precision
 // Sample are the neighbor block center point's coordinates relative to the
 // left-top pixel of current block.
-int av1_find_samples(const Av1Common *cm, MacroBlockD *xd, int mi_row, int mi_col,
+int av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *xd, int mi_row, int mi_col,
                      MvReferenceFrame rf0, int *pts, int *pts_inref) {
     int up_available   = xd->up_available;
     int left_available = xd->left_available;
@@ -1858,7 +1859,7 @@ int av1_find_samples(const Av1Common *cm, MacroBlockD *xd, int mi_row, int mi_co
     }
 
     // Top-right block
-    if (do_tr && has_top_right(cm, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h))) {
+    if (do_tr && has_top_right(cm, sb_size, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h))) {
         Position trb_pos = {-1, xd->n4_w};
 
         if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
@@ -1878,7 +1879,7 @@ int av1_find_samples(const Av1Common *cm, MacroBlockD *xd, int mi_row, int mi_co
     return np;
 }
 
-void wm_count_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
+void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                       uint16_t blk_origin_y, uint8_t ref_frame_type, PictureControlSet *pcs_ptr,
                       uint16_t *num_samples) {
     Av1Common *  cm = pcs_ptr->parent_pcs_ptr->av1_cm;
@@ -1983,7 +1984,7 @@ void wm_count_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t bl
         }
     }
 
-    if (do_tr && has_top_right(cm, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h))) {
+    if (do_tr && has_top_right(cm, sb_size, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h))) {
         Position trb_pos = {-1, xd->n4_w};
         if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
             int         mi_row_offset = -1;
@@ -2014,7 +2015,9 @@ uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t
     xd->n4_w = blk_geom->bwidth >> MI_SIZE_LOG2;
     xd->n4_h = blk_geom->bheight >> MI_SIZE_LOG2;
 
-    return (uint16_t)av1_find_samples(cm, xd, mi_row, mi_col, rf0, pts, pts_inref);
+    return (uint16_t)av1_find_samples(cm,
+            ((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header.sb_size,
+            xd, mi_row, mi_col, rf0, pts, pts_inref);
 }
 
 EbBool warped_motion_parameters(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, MvUnit *mv_unit,

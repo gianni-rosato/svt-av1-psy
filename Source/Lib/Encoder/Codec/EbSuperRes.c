@@ -14,8 +14,9 @@
 */
 
 #include "EbEntropyCoding.h"
-#include "EbInterPrediction.h"
 #include "EbResize.h"
+#include "EbEncInterPrediction.h"
+
 
 #define FILTER_BITS 7
 

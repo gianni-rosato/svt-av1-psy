@@ -7,7 +7,7 @@
 #define EbDecBlock_h
 
 #include "EbDefinitions.h"
-#include "../../Encoder/Codec/EbRestoration.h"
+#include "EbRestoration.h"
 
 #define MODE_INFO_DBG 0
 

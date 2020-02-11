@@ -22,7 +22,7 @@
 #include "EbDecProcessFrame.h"
 #include "EbDecRestoration.h"
 #include "EbPictureOperators.h"
-#include "../../Encoder/Codec/EbRestoration.h"
+#include "EbRestoration.h"
 
 void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_width,
                                   int32_t src_height, int32_t use_highbd, int32_t plane,

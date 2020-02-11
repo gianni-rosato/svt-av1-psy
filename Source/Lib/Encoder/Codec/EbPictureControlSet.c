@@ -1989,13 +1989,15 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->temp_filt_mutex);
     EB_CREATE_MUTEX(object_ptr->debug_mutex);
+    EB_CREATE_MUTEX(object_ptr->debug_mutex);
     EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
     object_ptr->av1_cm->interp_filter = SWITCHABLE;
 
     object_ptr->av1_cm->mi_stride = picture_sb_width * (BLOCK_SIZE_64 / 4);
 
-    object_ptr->av1_cm->p_pcs_ptr = object_ptr;
+//    object_ptr->av1_cm->p_pcs_ptr = object_ptr;
+//    object_ptr->av1_cm->seq_header_ptr = object_ptr->se
 
     EB_MALLOC_ARRAY(object_ptr->av1_cm->frame_to_show, 1);
 

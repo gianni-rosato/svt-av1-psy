@@ -28,7 +28,7 @@
 
 #include "av1me.h"
 #include "hash.h"
-#include "EbInterPrediction.h"
+#include "EbEncInterPrediction.h"
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
@@ -1287,7 +1287,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                         context_ptr->variance_ready = 0;
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                             if (cur_type == MD_COMP_WEDGE &&
-                                wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                    get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                                 continue;
                             // If two predictors are very similar, skip wedge compound mode search
                             if (context_ptr->variance_ready)
@@ -1456,7 +1456,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                         context_ptr->variance_ready = 0;
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                             if (cur_type == MD_COMP_WEDGE &&
-                                wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                    get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                                 continue;
                             // If two predictors are very similar, skip wedge compound mode search
                             if (context_ptr->variance_ready)
@@ -1876,7 +1876,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                 context_ptr->variance_ready = 0;
                 for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                     if (cur_type == MD_COMP_WEDGE &&
-                        wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                            get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                         continue;
                     // If two predictors are very similar, skip wedge compound mode search
                     if (context_ptr->variance_ready)
@@ -1983,7 +1983,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                     context_ptr->variance_ready = 0;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                         if (cur_type == MD_COMP_WEDGE &&
-                            wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                             continue;
                         // If two predictors are very similar, skip wedge compound mode search
                         if (context_ptr->variance_ready)
@@ -2142,7 +2142,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr->variance_ready = 0;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                         if (cur_type == MD_COMP_WEDGE &&
-                            wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                             continue;
                         // If two predictors are very similar, skip wedge compound mode search
                         if (context_ptr->variance_ready)
@@ -2255,7 +2255,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr->variance_ready = 0;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                         if (cur_type == MD_COMP_WEDGE &&
-                            wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                             continue;
                         // If two predictors are very similar, skip wedge compound mode search
                         if (context_ptr->variance_ready)
@@ -3715,7 +3715,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         context_ptr->variance_ready = 0;
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                             if (cur_type == MD_COMP_WEDGE &&
-                                wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                    get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                                 continue;
                             // If two predictors are very similar, skip wedge compound mode search
                             if (context_ptr->variance_ready)
@@ -4642,7 +4642,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                     context_ptr->variance_ready = 0;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
                         if (cur_type == MD_COMP_WEDGE &&
-                            wedge_params_lookup[context_ptr->blk_geom->bsize].bits == 0)
+                                get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
                             continue;
                         // If two predictors are very similar, skip wedge compound mode search
                         if (context_ptr->variance_ready)

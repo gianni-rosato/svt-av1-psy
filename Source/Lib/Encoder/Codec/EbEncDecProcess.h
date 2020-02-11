@@ -12,7 +12,7 @@
 #include "EbSystemResourceManager.h"
 #include "EbPictureBufferDesc.h"
 #include "EbModeDecision.h"
-#include "EbInterPrediction.h"
+#include "EbEncInterPrediction.h"
 #include "EbEntropyCoding.h"
 #include "EbTransQuantBuffers.h"
 #include "EbReferenceObject.h"
