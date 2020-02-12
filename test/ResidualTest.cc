@@ -30,7 +30,7 @@
 
 #include "EbDefinitions.h"
 #include "EbPictureOperators.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "EbUtility.h"
 #include "EbUnitTestUtility.h"
 #include "aom_dsp_rtcd.h"

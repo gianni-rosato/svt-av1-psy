@@ -39,7 +39,7 @@
 #include "EbPictureOperators_AVX2.h"
 #include "EbPackUnPack_SSE2.h"
 #include "EbPackUnPack_C.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "EbUnitTestUtility.h"
 #include "EbUtility.h"
 #include "random.h"

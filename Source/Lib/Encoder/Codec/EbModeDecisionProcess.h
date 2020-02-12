@@ -7,16 +7,16 @@
 #define EbModeDecisionProcess_h
 
 #include "EbDefinitions.h"
+#include "EbModeDecision.h"
 #include "EbSyntaxElements.h"
 #include "EbSystemResourceManager.h"
 #include "EbPictureBufferDesc.h"
-#include "EbModeDecision.h"
-#include "EbEncInterPrediction.h"
 #include "EbEntropyCoding.h"
 #include "EbTransQuantBuffers.h"
 #include "EbReferenceObject.h"
 #include "EbNeighborArrays.h"
 #include "EbObject.h"
+#include "EbEncInterPrediction.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,6 +89,10 @@ typedef struct MdBlkStruct {
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
     uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
 } MdBlkStruct;
+
+struct ModeDecisionCandidate;
+struct ModeDecisionCandidateBuffer;
+struct InterPredictionContext;
 
 typedef struct ModeDecisionContext {
     EbDctor  dctor;

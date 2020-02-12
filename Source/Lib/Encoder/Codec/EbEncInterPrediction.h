@@ -11,6 +11,7 @@
 #include "filter.h"
 #include "convolve.h"
 #include "EbInterPrediction.h"
+#include "EbEncIntraPrediction.h"
 
 #ifdef __cplusplus
 extern "C" {

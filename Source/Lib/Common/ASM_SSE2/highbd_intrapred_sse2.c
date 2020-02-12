@@ -12,7 +12,7 @@
 #include <emmintrin.h>
 #include "EbHighbdIntraPrediction_SSE2.h"
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 // -----------------------------------------------------------------------------
 // H_PRED

@@ -13,10 +13,9 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include "EbEntropyCoding.h"
 #include "EbResize.h"
-#include "EbEncInterPrediction.h"
-
+#include "EbUtility.h"
+#include "EbSuperRes.h"
 
 #define FILTER_BITS 7
 

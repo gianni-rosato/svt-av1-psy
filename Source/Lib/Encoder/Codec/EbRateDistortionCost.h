@@ -9,11 +9,11 @@
 /***************************************
  * Includes
  ***************************************/
-#include "EbIntraPrediction.h"
+#include "EbModeDecisionProcess.h"
+#include "EbEncIntraPrediction.h"
 #include "EbEncInterPrediction.h"
 #include "EbLambdaRateTables.h"
 #include "EbTransforms.h"
-#include "EbModeDecisionProcess.h"
 #include "EbEncDecProcess.h"
 #include "EbEntropyCoding.h"
 

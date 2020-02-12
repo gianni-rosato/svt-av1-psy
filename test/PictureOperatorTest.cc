@@ -29,7 +29,7 @@
 #endif
 
 #include "EbMcp_SSE2.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "EbDefinitions.h"
 #include "random.h"
 #include "util.h"

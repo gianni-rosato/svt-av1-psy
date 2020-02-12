@@ -8,6 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbSegmentationParams.h"
+#include "EbAv1Structs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -156,6 +157,9 @@ typedef struct BlockModeInfo {
     int32_t mi_col;
 #endif
 } BlockModeInfo;
+
+void eb_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);
+void eb_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info, int32_t mi_rows, int row);
 
 #ifdef __cplusplus
 }

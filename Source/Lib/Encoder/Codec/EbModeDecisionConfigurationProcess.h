@@ -6,12 +6,12 @@
 #ifndef EbModeDecisionConfigurationProcess_h
 #define EbModeDecisionConfigurationProcess_h
 
+#include "EbDefinitions.h"
+#include "EbModeDecision.h"
 #include "EbSystemResourceManager.h"
 #include "EbMdRateEstimation.h"
-#include "EbDefinitions.h"
 #include "EbRateControlProcess.h"
 #include "EbSequenceControlSet.h"
-#include "EbModeDecision.h"
 #include "EbObject.h"
 #ifdef __cplusplus
 extern "C" {

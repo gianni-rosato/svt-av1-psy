@@ -4,7 +4,7 @@
 */
 #include <tmmintrin.h>
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 static const int32_t sm_weight_log2_scale = 8;
 

@@ -23,7 +23,7 @@
 #undef _GNU_SOURCE  // defined in EbThreads.h
 #endif
 #include "gtest/gtest.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
 #include "util.h"

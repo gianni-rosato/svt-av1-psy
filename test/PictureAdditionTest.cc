@@ -28,7 +28,7 @@
 #endif
 
 #include "EbPictureOperators.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "random.h"
 #include "util.h"
 

@@ -6,8 +6,9 @@
 #ifndef EbIntraPrediction_h
 #define EbIntraPrediction_h
 
-#include "EbModeDecision.h"
-#include "EbMotionEstimationProcess.h"
+#include "EbSvtAv1.h"
+#include "EbObject.h"
+#include "EbBlockStructures.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,23 +153,6 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left);
 void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride, TxSize tx_size,
                                    const uint16_t *above, const uint16_t *left, int mode, int bd);
 
-/////////..............................................//////////////////////////
-
-extern EbErrorType eb_av1_intra_prediction_cl(uint8_t                      hbd_mode_decision,
-                                              struct ModeDecisionContext * context_ptr,
-                                              PictureControlSet *          pcs_ptr,
-                                              ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-
-extern EbErrorType update_neighbor_samples_array_open_loop(uint8_t *above_ref, uint8_t *left_ref,
-                                                           EbPictureBufferDesc *input_ptr,
-                                                           uint32_t stride, uint32_t srcOriginX,
-                                                           uint32_t srcOriginY, uint8_t bwidth,
-                                                           uint8_t bheight);
-extern EbErrorType intra_prediction_open_loop(
-    int32_t p_angle, uint8_t ois_intra_mode, uint32_t srcOriginX, uint32_t srcOriginY,
-    TxSize tx_size, uint8_t *above_row, uint8_t *left_col,
-    MotionEstimationContext_t *context_ptr); // input parameter, ME context
-
 typedef void (*EB_INTRA_NOANG_TYPE)(const uint32_t size, uint8_t *ref_samples,
                                     uint8_t *      prediction_ptr,
                                     const uint32_t prediction_buffer_stride, const EbBool skip);
@@ -292,26 +276,6 @@ CflSubtractAverageFn eb_get_subtract_average_fn_c(TxSize tx_size);
         /* index the function pointer array out of bounds. */                 \
         return sub_avg[tx_size % TX_SIZES_ALL];                               \
     }
-
-void eb_av1_predict_intra_block(TileInfo *tile, STAGE stage, const BlockGeom *blk_geom,
-                                const Av1Common *cm, int32_t wpx, int32_t hpx, TxSize tx_size,
-                                PredictionMode mode, int32_t angle_delta, int32_t use_palette,
-                                PaletteInfo *palette_info, FilterIntraMode filter_intra_mode,
-                                uint8_t *top_neigh_array, uint8_t *left_neigh_array,
-                                EbPictureBufferDesc *recon_buffer, int32_t col_off, int32_t row_off,
-                                int32_t plane, BlockSize bsize, uint32_t txb_org_x_pict,
-                                uint32_t txb_org_y_pict, uint32_t bl_org_x_pict,
-                                uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
-                                ModeInfo **mi_grid_base, SeqHeader *seq_header_ptr);
-
-void eb_av1_predict_intra_block_16bit(
-    TileInfo *tile, STAGE stage, const BlockGeom *blk_geom, const Av1Common *cm, int32_t wpx,
-    int32_t hpx, TxSize tx_size, PredictionMode mode, int32_t angle_delta, int32_t use_palette,
-    PaletteInfo *palette_info, FilterIntraMode filter_intra_mode, uint16_t *top_neigh_array,
-    uint16_t *left_neigh_array, EbPictureBufferDesc *recon_buffer, int32_t col_off, int32_t row_off,
-    int32_t plane, BlockSize bsize, uint32_t txb_org_x_pict, uint32_t txb_org_y_pict,
-    uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
-    ModeInfo **mi_grid_base, SeqHeader *seq_header_ptr);
 
 #ifdef __cplusplus
 }

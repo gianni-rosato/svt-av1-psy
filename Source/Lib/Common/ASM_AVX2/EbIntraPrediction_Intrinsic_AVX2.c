@@ -7,7 +7,7 @@
 #include "immintrin.h"
 #include "lpf_common_sse2.h"
 #include "txfm_common_avx2.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 // Indices are sign, integer, and fractional part of the gradient value
 static const uint8_t gradient_to_angle_bin[2][7][16] = {

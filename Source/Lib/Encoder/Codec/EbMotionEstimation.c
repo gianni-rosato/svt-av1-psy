@@ -19,7 +19,7 @@
 #include "EbReferenceObject.h"
 #include "EbAvcStyleMcp.h"
 
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "EbLambdaRateTables.h"
 
 #include "EbLog.h"

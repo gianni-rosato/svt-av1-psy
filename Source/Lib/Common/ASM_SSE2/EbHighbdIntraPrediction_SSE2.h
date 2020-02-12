@@ -8,7 +8,7 @@
 
 #include <emmintrin.h>
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 static INLINE __m128i dc_sum_4x32bit(const __m128i src) {
     __m128i sum, sum_hi;

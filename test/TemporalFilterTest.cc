@@ -19,7 +19,7 @@
 #include <limits.h>
 
 #include "EbPictureOperators.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "EbTemporalFiltering.h"
 #include "random.h"
 #include "util.h"

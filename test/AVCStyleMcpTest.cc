@@ -41,9 +41,13 @@
 #include "EbAvcStyleMcp_SSSE3.h"
 #include "EbAvcStyleMcp_SSE2.h"
 #include "EbDefinitions.h"
-#include "EbIntraPrediction.h"
+#include "EbEncIntraPrediction.h"
 #include "random.h"
 #include "util.h"
+#include "EbUtility.h"
+
+void *eb_aom_memalign(size_t align, size_t size);
+void  eb_aom_free(void *memblk);
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 

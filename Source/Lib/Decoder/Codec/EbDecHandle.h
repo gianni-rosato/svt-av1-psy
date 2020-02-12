@@ -25,8 +25,9 @@ extern "C" {
 #include "EbDecBlock.h"
 #include "EbDecProcess.h"
 #include "EbCabacContextModel.h"
+#include "Av1Common.h"
+#include "EbThreads.h"
 
-#include "../../Encoder/Codec/EbPictureControlSet.h"
 #if MC_DYNAMIC_PAD
 
 /* This value is set to 72 to make
