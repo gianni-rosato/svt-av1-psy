@@ -3222,15 +3222,13 @@ void eb_av1_fwd_txfm2d_4x8_c(int16_t *input, int32_t *output, uint32_t input_str
 EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_stride,
                                    int32_t *coeff_buffer, uint32_t coeff_stride,
                                    TxSize transform_size, uint64_t *three_quad_energy,
-                                   int16_t *transform_inner_array_ptr, uint32_t bit_increment,
-                                   TxType transform_type, PlaneType component_type,
-                                   EB_TRANS_COEFF_SHAPE trans_coeff_shape)
+                                   uint32_t bit_increment, TxType transform_type,
+                                   PlaneType component_type, EB_TRANS_COEFF_SHAPE trans_coeff_shape)
 
 {
     (void)trans_coeff_shape;
     EbErrorType return_error = EB_ErrorNone;
 
-    (void)transform_inner_array_ptr;
     (void)coeff_stride;
     (void)component_type;
     uint8_t bit_depth = bit_increment ? 10 : 8; // NM - Set to zero for the moment

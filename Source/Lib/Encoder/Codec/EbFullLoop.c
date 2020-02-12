@@ -1915,7 +1915,6 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         NOT_USED_VALUE,
         context_ptr->blk_geom->txsize[tx_depth][txb_itr],
         &context_ptr->three_quad_energy,
-        context_ptr->transform_inner_array_ptr,
         context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
         candidate_buffer->candidate_ptr->transform_type[txb_itr],
         PLANE_TYPE_Y,
@@ -2131,7 +2130,7 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
                            EbPictureBufferDesc *coeff_samples_sb,
                            EbPictureBufferDesc *residual16bit, EbPictureBufferDesc *transform16bit,
                            EbPictureBufferDesc *inverse_quant_buffer,
-                           int16_t *transform_scratch_buffer, uint32_t *count_non_zero_coeffs,
+                           uint32_t *count_non_zero_coeffs,
                            uint32_t component_mask, uint16_t *eob,
                            MacroblockPlane *candidate_plane) {
     (void)cb_qp;
@@ -2188,7 +2187,6 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            transform_scratch_buffer,
             BIT_INCREMENT_8BIT,
             tx_type,
             PLANE_TYPE_Y,
@@ -2319,7 +2317,7 @@ void encode_pass_tx_search_hbd(
     PictureControlSet *pcs_ptr, EncDecContext *context_ptr, SuperBlock *sb_ptr, uint32_t cb_qp,
     EbPictureBufferDesc *coeff_samples_sb, EbPictureBufferDesc *residual16bit,
     EbPictureBufferDesc *transform16bit, EbPictureBufferDesc *inverse_quant_buffer,
-    int16_t *transform_scratch_buffer, uint32_t *count_non_zero_coeffs, uint32_t component_mask,
+    uint32_t *count_non_zero_coeffs, uint32_t component_mask,
     uint16_t *eob, MacroblockPlane *candidate_plane) {
     (void)cb_qp;
     (void)candidate_plane;
@@ -2372,7 +2370,6 @@ void encode_pass_tx_search_hbd(
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            transform_scratch_buffer,
             BIT_INCREMENT_10BIT,
             tx_type,
             PLANE_TYPE_Y,
@@ -2623,7 +2620,6 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
-                context_ptr->transform_inner_array_ptr,
                 context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
@@ -2710,7 +2706,6 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
-                context_ptr->transform_inner_array_ptr,
                 context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,

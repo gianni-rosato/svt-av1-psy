@@ -55,7 +55,6 @@ typedef void (*EbAv1EncodeLoopFuncPtr)(PictureControlSet *pcs_ptr, EncDecContext
                                        EbPictureBufferDesc *residual16bit, // no basis/offset
                                        EbPictureBufferDesc *transform16bit, // no basis/offset
                                        EbPictureBufferDesc *inverse_quant_buffer,
-                                       int16_t *            transform_scratch_buffer,
                                        uint32_t *count_non_zero_coeffs, uint32_t component_mask,
                                        uint16_t *eob, MacroblockPlane *candidate_plane);
 
@@ -63,7 +62,6 @@ typedef void (*EbAv1GenerateReconFuncPtr)(EncDecContext *context_ptr, uint32_t o
                                           uint32_t             origin_y,
                                           EbPictureBufferDesc *pred_samples, // no basis/offset
                                           EbPictureBufferDesc *residual16bit, // no basis/offset
-                                          int16_t *            transform_scratch_buffer,
                                           uint32_t component_mask, uint16_t *eob);
 
 /*******************************************
@@ -336,9 +334,8 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
                            EbPictureBufferDesc *coeff_samples_sb,
                            EbPictureBufferDesc *residual16bit, EbPictureBufferDesc *transform16bit,
                            EbPictureBufferDesc *inverse_quant_buffer,
-                           int16_t *transform_scratch_buffer, uint32_t *count_non_zero_coeffs,
-                           uint32_t component_mask, uint16_t *eob,
-                           MacroblockPlane *candidate_plane);
+                           uint32_t *count_non_zero_coeffs, uint32_t component_mask,
+                           uint16_t *eob, MacroblockPlane *candidate_plane);
 
 /**********************************************************
 * Encode Loop
@@ -368,7 +365,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                             EbPictureBufferDesc *residual16bit, // no basis/offset
                             EbPictureBufferDesc *transform16bit, // no basis/offset
                             EbPictureBufferDesc *inverse_quant_buffer,
-                            int16_t *transform_scratch_buffer, uint32_t *count_non_zero_coeffs,
+                            uint32_t *count_non_zero_coeffs,
                             uint32_t component_mask, uint16_t *eob,
                             MacroblockPlane *candidate_plane) {
     (void)cb_qp;
@@ -457,7 +454,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                                   residual16bit,
                                   transform16bit,
                                   inverse_quant_buffer,
-                                  transform_scratch_buffer,
                                   count_non_zero_coeffs,
                                   component_mask,
                                   eob,
@@ -471,7 +467,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            transform_scratch_buffer,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
             PLANE_TYPE_Y,
@@ -681,7 +676,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            transform_scratch_buffer,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
@@ -733,7 +727,6 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            transform_scratch_buffer,
             BIT_INCREMENT_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
@@ -777,7 +770,7 @@ void encode_pass_tx_search_hbd(
     PictureControlSet *pcs_ptr, EncDecContext *context_ptr, SuperBlock *sb_ptr, uint32_t cb_qp,
     EbPictureBufferDesc *coeff_samples_sb, EbPictureBufferDesc *residual16bit,
     EbPictureBufferDesc *transform16bit, EbPictureBufferDesc *inverse_quant_buffer,
-    int16_t *transform_scratch_buffer, uint32_t *count_non_zero_coeffs, uint32_t component_mask,
+    uint32_t *count_non_zero_coeffs, uint32_t component_mask,
     uint16_t *eob, MacroblockPlane *candidate_plane);
 
 /**********************************************************
@@ -806,7 +799,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                                   EbPictureBufferDesc *residual16bit, // no basis/offset
                                   EbPictureBufferDesc *transform16bit, // no basis/offset
                                   EbPictureBufferDesc *inverse_quant_buffer,
-                                  int16_t *            transform_scratch_buffer,
                                   uint32_t *count_non_zero_coeffs, uint32_t component_mask,
                                   uint16_t *eob, MacroblockPlane *candidate_plane)
 
@@ -892,7 +884,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                                           residual16bit,
                                           transform16bit,
                                           inverse_quant_buffer,
-                                          transform_scratch_buffer,
                                           count_non_zero_coeffs,
                                           component_mask,
                                           eob,
@@ -906,7 +897,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                transform_scratch_buffer,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 PLANE_TYPE_Y,
@@ -1058,7 +1048,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                transform_scratch_buffer,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
@@ -1110,7 +1099,6 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                transform_scratch_buffer,
                 BIT_INCREMENT_10BIT,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
@@ -1176,8 +1164,8 @@ static void av1_encode_generate_recon(EncDecContext *context_ptr, uint32_t origi
                                       uint32_t             origin_y,
                                       EbPictureBufferDesc *pred_samples, // no basis/offset
                                       EbPictureBufferDesc *residual16bit, // no basis/offset
-                                      int16_t *transform_scratch_buffer, uint32_t component_mask,
-                                      uint16_t *eob) {
+                                      uint32_t component_mask, uint16_t *eob)
+{
     uint32_t       pred_luma_offset;
     uint32_t       pred_chroma_offset;
     BlkStruct *   blk_ptr = context_ptr->blk_ptr;
@@ -1194,7 +1182,6 @@ static void av1_encode_generate_recon(EncDecContext *context_ptr, uint32_t origi
             pred_luma_offset = (pred_samples->origin_y + origin_y) * pred_samples->stride_y +
                                (pred_samples->origin_x + origin_x);
             if (txb_ptr->y_has_coeff == EB_TRUE && blk_ptr->skip_flag == EB_FALSE) {
-                (void)transform_scratch_buffer;
                 uint8_t *pred_buffer = pred_samples->buffer_y + pred_luma_offset;
                 av1_inv_transform_recon8bit(
                     ((int32_t *)residual16bit->buffer_y) + context_ptr->coded_area_sb,
@@ -1292,7 +1279,6 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
                                             uint32_t             origin_y,
                                             EbPictureBufferDesc *pred_samples, // no basis/offset
                                             EbPictureBufferDesc *residual16bit, // no basis/offset
-                                            int16_t *            transform_scratch_buffer,
                                             uint32_t component_mask, uint16_t *eob) {
     uint32_t pred_luma_offset;
     uint32_t pred_chroma_offset;
@@ -1300,7 +1286,6 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
     BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
 
-    (void)transform_scratch_buffer;
     //**********************************
     // Luma
     //**********************************
@@ -1473,7 +1458,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     EbPictureBufferDesc *residual_buffer           = context_ptr->residual_buffer;
     EbPictureBufferDesc *transform_buffer          = context_ptr->transform_buffer;
     EbPictureBufferDesc *inverse_quant_buffer      = context_ptr->inverse_quant_buffer;
-    int16_t *            transform_inner_array_ptr = context_ptr->transform_inner_array_ptr;
 
     uint32_t        count_non_zero_coeffs[3];
     MacroblockPlane blk_plane[3];
@@ -1654,7 +1638,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              residual_buffer,
                                              transform_buffer,
                                              inverse_quant_buffer,
-                                             transform_inner_array_ptr,
                                              count_non_zero_coeffs,
                                              PICTURE_BUFFER_DESC_LUMA_MASK,
                                              eobs[context_ptr->txb_itr],
@@ -1707,7 +1690,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              txb_origin_y,
                                              recon_buffer,
                                              inverse_quant_buffer,
-                                             transform_inner_array_ptr,
                                              PICTURE_BUFFER_DESC_LUMA_MASK,
                                              eobs[context_ptr->txb_itr]);
 
@@ -1986,7 +1968,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              residual_buffer,
                                              transform_buffer,
                                              inverse_quant_buffer,
-                                             transform_inner_array_ptr,
                                              count_non_zero_coeffs,
                                              PICTURE_BUFFER_DESC_CHROMA_MASK,
                                              eobs[context_ptr->txb_itr],
@@ -2039,7 +2020,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              txb_origin_y,
                                              recon_buffer,
                                              inverse_quant_buffer,
-                                             transform_inner_array_ptr,
                                              PICTURE_BUFFER_DESC_CHROMA_MASK,
                                              eobs[context_ptr->txb_itr]);
 
@@ -2456,8 +2436,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                 EbPictureBufferDesc *inverse_quant_buffer = context_ptr->inverse_quant_buffer;
 
-                int16_t *transform_inner_array_ptr = context_ptr->transform_inner_array_ptr;
-
                 BlkStruct *blk_ptr = context_ptr->blk_ptr =
                     &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
 
@@ -2731,7 +2709,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     residual_buffer,
                                     transform_buffer,
                                     inverse_quant_buffer,
-                                    transform_inner_array_ptr,
                                     count_non_zero_coeffs,
                                     blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK
                                                      : PICTURE_BUFFER_DESC_LUMA_MASK,
@@ -2789,7 +2766,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     context_ptr->blk_origin_y,
                                     recon_buffer,
                                     inverse_quant_buffer,
-                                    transform_inner_array_ptr,
                                     blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK
                                                      : PICTURE_BUFFER_DESC_LUMA_MASK,
                                     eobs[context_ptr->txb_itr]);
@@ -3216,7 +3192,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     residual_buffer,
                                     transform_buffer,
                                     inverse_quant_buffer,
-                                    transform_inner_array_ptr,
                                     count_non_zero_coeffs,
                                     context_ptr->blk_geom->has_uv && uv_pass
                                         ? PICTURE_BUFFER_DESC_FULL_MASK
@@ -3586,7 +3561,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 residual_buffer,
                                 transform_buffer,
                                 inverse_quant_buffer,
-                                transform_inner_array_ptr,
                                 count_non_zero_coeffs,
                                 context_ptr->blk_geom->has_uv && uv_pass
                                     ? PICTURE_BUFFER_DESC_FULL_MASK
@@ -3660,7 +3634,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 txb_origin_y,
                                 recon_buffer,
                                 inverse_quant_buffer,
-                                transform_inner_array_ptr,
                                 context_ptr->blk_geom->has_uv && uv_pass
                                     ? PICTURE_BUFFER_DESC_FULL_MASK
                                     : PICTURE_BUFFER_DESC_LUMA_MASK,

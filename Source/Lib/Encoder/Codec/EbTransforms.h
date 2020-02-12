@@ -130,7 +130,6 @@ static const uint32_t q_func[] = {26214, 23302, 20560, 18396, 16384, 14564};
 extern EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_stride,
                                           int32_t *coeff_buffer, uint32_t coeff_stride,
                                           TxSize transform_size, uint64_t *three_quad_energy,
-                                          int16_t *transform_inner_array_ptr,
                                           uint32_t bit_increment, TxType transform_type,
                                           PlaneType            component_type,
                                           EB_TRANS_COEFF_SHAPE trans_coeff_shape);

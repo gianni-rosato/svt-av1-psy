@@ -48,7 +48,6 @@ static void enc_dec_context_dctor(EbPtr p) {
     EB_DELETE(obj->inverse_quant_buffer);
     EB_DELETE(obj->input_sample16bit_buffer);
     if (obj->is_md_rate_estimation_ptr_owner) EB_FREE(obj->md_rate_estimation_ptr);
-    EB_FREE_ARRAY(obj->transform_inner_array_ptr);
     EB_FREE_ARRAY(obj);
 }
 
@@ -84,9 +83,6 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->picture_demux_output_fifo_ptr = eb_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
-    // Trasform Scratch Memory
-    EB_MALLOC_ARRAY(context_ptr->transform_inner_array_ptr,
-                    3152); //refer to EbInvTransform_SSE2.as. case 32x32
     // MD rate Estimation tables
     EB_MALLOC(context_ptr->md_rate_estimation_ptr, sizeof(MdRateEstimationContext));
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;

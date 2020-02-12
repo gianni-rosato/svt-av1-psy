@@ -41,7 +41,6 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->trans_quant_buffers_ptr);
     if (obj->hbd_mode_decision > EB_8_BIT_MD) EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
     if (obj->hbd_mode_decision != EB_10_BIT_MD) EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
-    EB_FREE(obj->transform_inner_array_ptr);
     if (obj->is_md_rate_estimation_ptr_owner) EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
     EB_FREE_ARRAY(obj->fast_candidate_array);
     EB_FREE_ARRAY(obj->fast_candidate_ptr_array);
@@ -85,10 +84,6 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     context_ptr->mode_decision_configuration_input_fifo_ptr =
         mode_decision_configuration_input_fifo_ptr;
     context_ptr->mode_decision_output_fifo_ptr = mode_decision_output_fifo_ptr;
-
-    // Trasform Scratch Memory
-    EB_MALLOC(context_ptr->transform_inner_array_ptr,
-              3120); //refer to EbInvTransform_SSE2.as. case 32x32
 
     // Cfl scratch memory
     if (context_ptr->hbd_mode_decision > EB_8_BIT_MD)

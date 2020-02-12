@@ -34,7 +34,6 @@ typedef struct EncDecContext {
     EbFifo *                 enc_dec_output_fifo_ptr;
     EbFifo *                 enc_dec_feedback_fifo_ptr;
     EbFifo *                 picture_demux_output_fifo_ptr; // to picture-manager
-    int16_t *                transform_inner_array_ptr;
     MdRateEstimationContext *md_rate_estimation_ptr;
     EbBool                   is_md_rate_estimation_ptr_owner;
     ModeDecisionContext *    md_context;
