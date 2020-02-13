@@ -157,6 +157,8 @@ void aom_lpf_vertical_4_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, c
                              const uint8_t *thresh);
 #define aom_lpf_vertical_4 aom_lpf_vertical_4_sse2
 
+void aom_lpf_vertical_6_c(uint8_t* s, int32_t pitch, const uint8_t* blimit, const uint8_t* limit,
+                          const uint8_t* thresh);
 void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
                              const uint8_t *thresh);
 #define aom_lpf_vertical_6 aom_lpf_vertical_6_sse2

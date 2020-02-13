@@ -336,6 +336,24 @@ void aom_lpf_horizontal_6_c(uint8_t *s, int32_t p, const uint8_t *blimit, const 
     }
 }
 
+void aom_lpf_vertical_6_c(uint8_t* s, int32_t pitch, const uint8_t* blimit, const uint8_t* limit,
+                          const uint8_t* thresh) {
+    int32_t i;
+    int32_t count = 4;
+
+    // loop filter designed to work using chars so that we can make maximum use
+    // of 8 bit simd instructions.
+    for (i = 0; i < count; ++i) {
+        const uint8_t p2 = s[-3], p1 = s[-2], p0 = s[-1];
+        const uint8_t q0 = s[0], q1 = s[1], q2 = s[2];
+
+        const int8_t mask = filter_mask3_chroma(*limit, *blimit, p2, p1, p0, q0, q1, q2);
+        const int8_t flat = flat_mask3_chroma(1, p2, p1, p0, q0, q1, q2);
+        filter6(mask, *thresh, flat, s - 3, s - 2, s - 1, s, s + 1, s + 2);
+        s += pitch;
+    }
+}
+
 void aom_lpf_horizontal_8_c(uint8_t *s, int32_t p, const uint8_t *blimit, const uint8_t *limit,
                             const uint8_t *thresh) {
     int32_t i;

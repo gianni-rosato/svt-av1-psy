@@ -34,16 +34,12 @@
 #include "acm_random.h"
 #include "EbDeblockingFilter_SSE2.h"
 #include "loopfilter_ref.h"
+#include "EbDeblockingCommon.h"
 
-using ::testing::make_tuple;
 using libaom_test::ACMRandom;
+using ::testing::make_tuple;
 namespace {
 
-// expose the target functions
-extern "C" {
-void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t p, const uint8_t *blimit,
-                             const uint8_t *limit, const uint8_t *thresh);
-}
 // define the common params
 #define LOOP_PARAM \
     int p, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh
@@ -126,7 +122,6 @@ class LoopFilterTest : public ::testing::TestWithParam<TestParamType> {
         (void)thresh;
         (void)bd;
     }
-
 
     void run_test() {
         ACMRandom rnd(ACMRandom::DeterministicSeed());
@@ -235,35 +230,67 @@ TEST_P(HbdLoopFilterTest, MatchTestRandomData) {
 // target and reference functions in different cases
 /* clang-format off */
 const HbdLpfTestParam kHbdLoop8Test6[] = {
+    make_tuple(&aom_highbd_lpf_horizontal_4_sse2,
+               &aom_highbd_lpf_horizontal_4_c, 8),
     make_tuple(&aom_highbd_lpf_horizontal_6_sse2,
                &aom_highbd_lpf_horizontal_6_c, 8),
-
+    make_tuple(&aom_highbd_lpf_horizontal_8_sse2,
+               &aom_highbd_lpf_horizontal_8_c, 8),
     make_tuple(&aom_highbd_lpf_horizontal_14_sse2,
                &aom_highbd_lpf_horizontal_14_c, 8),
+
+    make_tuple(&aom_highbd_lpf_vertical_4_sse2,
+               &aom_highbd_lpf_vertical_4_c, 8),
     make_tuple(&aom_highbd_lpf_vertical_6_sse2,
                &aom_highbd_lpf_vertical_6_c, 8),
+    make_tuple(&aom_highbd_lpf_vertical_8_sse2,
+               &aom_highbd_lpf_vertical_8_c, 8),
     make_tuple(&aom_highbd_lpf_vertical_14_sse2,
                &aom_highbd_lpf_vertical_14_c, 8),
+
+    make_tuple(&aom_highbd_lpf_horizontal_4_sse2,
+               &aom_highbd_lpf_horizontal_4_c, 10),
     make_tuple(&aom_highbd_lpf_horizontal_6_sse2,
                &aom_highbd_lpf_horizontal_6_c, 10),
-
+    make_tuple(&aom_highbd_lpf_horizontal_8_sse2,
+               &aom_highbd_lpf_horizontal_8_c, 10),
     make_tuple(&aom_highbd_lpf_horizontal_14_sse2,
                &aom_highbd_lpf_horizontal_14_c, 10),
+
+    make_tuple(&aom_highbd_lpf_vertical_4_sse2,
+               &aom_highbd_lpf_vertical_4_c, 10),
     make_tuple(&aom_highbd_lpf_vertical_6_sse2,
                &aom_highbd_lpf_vertical_6_c, 10),
+    make_tuple(&aom_highbd_lpf_vertical_8_sse2,
+               &aom_highbd_lpf_vertical_8_c, 10),
     make_tuple(&aom_highbd_lpf_vertical_14_sse2,
                &aom_highbd_lpf_vertical_14_c, 10),
+
+    make_tuple(&aom_highbd_lpf_horizontal_4_sse2,
+               &aom_highbd_lpf_horizontal_4_c, 12),
     make_tuple(&aom_highbd_lpf_horizontal_6_sse2,
                &aom_highbd_lpf_horizontal_6_c, 12),
-
+    make_tuple(&aom_highbd_lpf_horizontal_8_sse2,
+               &aom_highbd_lpf_horizontal_8_c, 12),
     make_tuple(&aom_highbd_lpf_horizontal_14_sse2,
                &aom_highbd_lpf_horizontal_14_c, 12),
-    make_tuple(&aom_highbd_lpf_vertical_14_sse2,
-               &aom_highbd_lpf_vertical_14_c, 12),
+
+    make_tuple(&aom_highbd_lpf_vertical_4_sse2,
+               &aom_highbd_lpf_vertical_4_c, 12),
     make_tuple(&aom_highbd_lpf_vertical_6_sse2,
-               &aom_highbd_lpf_vertical_6_c, 12)};
+               &aom_highbd_lpf_vertical_6_c, 12),
+    make_tuple(&aom_highbd_lpf_vertical_8_sse2,
+               &aom_highbd_lpf_vertical_8_c, 12),
+    make_tuple(&aom_highbd_lpf_vertical_14_sse2,
+               &aom_highbd_lpf_vertical_14_c, 12)};
 
 const LdbLpfTestParam kLoop8Test6[] = {
+    make_tuple(&aom_lpf_horizontal_4_sse2, &aom_lpf_horizontal_4_c, 8),
+    make_tuple(&aom_lpf_vertical_4_sse2, &aom_lpf_vertical_4_c, 8),
+    make_tuple(&aom_lpf_horizontal_6_sse2, &aom_lpf_horizontal_6_c, 8),
+    make_tuple(&aom_lpf_vertical_6_sse2, &aom_lpf_vertical_6_c, 8),
+    make_tuple(&aom_lpf_horizontal_8_sse2, &aom_lpf_horizontal_8_c, 8),
+    make_tuple(&aom_lpf_vertical_8_sse2, &aom_lpf_vertical_8_c, 8),
     make_tuple(&aom_lpf_horizontal_14_sse2, &aom_lpf_horizontal_14_c, 8),
     make_tuple(&aom_lpf_vertical_14_sse2, &aom_lpf_vertical_14_c, 8),
 };
