@@ -383,10 +383,14 @@ static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
             SVT_VERSION_MAJOR,
             SVT_VERSION_MINOR,
             SVT_VERSION_PATCHLEVEL);
-#if (defined(_MSC_VER) && (_MSC_VER < 1910))
-    SVT_LOG("SVT [build]  : Visual Studio 2013");
-#elif (defined(_MSC_VER) && (_MSC_VER >= 1910))
+#if ( defined( _MSC_VER ) && (_MSC_VER >= 1920) )
+    SVT_LOG("SVT [build]  :\tVisual Studio 2019");
+#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
     SVT_LOG("SVT [build]  :\tVisual Studio 2017");
+#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1900) )
+    SVT_LOG("SVT [build]  :\tVisual Studio 2015");
+#elif ( defined( _MSC_VER ) && (_MSC_VER < 1900) )
+    SVT_LOG("SVT [build]  :\tVisual Studio (old)");
 #elif defined(__GNUC__)
     SVT_LOG("SVT [build]  :\tGCC %d.%d.%d\t", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else

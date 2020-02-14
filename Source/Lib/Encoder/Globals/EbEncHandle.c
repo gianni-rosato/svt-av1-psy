@@ -3594,10 +3594,14 @@ EbErrorType init_svt_av1_encoder_handle(
     EbEncHandle      *handle;
 
     SVT_LOG("SVT [version]:\tSVT-AV1 Encoder Lib v%d.%d.%d\n", SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
-#if ( defined( _MSC_VER ) && (_MSC_VER < 1910) )
-    SVT_LOG("SVT [build]  : Visual Studio 2013");
+#if ( defined( _MSC_VER ) && (_MSC_VER >= 1920) )
+    SVT_LOG("SVT [build]  :\tVisual Studio 2019");
 #elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
     SVT_LOG("SVT [build]  :\tVisual Studio 2017");
+#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1900) )
+    SVT_LOG("SVT [build]  :\tVisual Studio 2015");
+#elif ( defined( _MSC_VER ) && (_MSC_VER < 1900) )
+    SVT_LOG("SVT [build]  :\tVisual Studio (old)");
 #elif defined(__GNUC__)
     SVT_LOG("SVT [build]  :\tGCC %s\t", __VERSION__);
 #else
