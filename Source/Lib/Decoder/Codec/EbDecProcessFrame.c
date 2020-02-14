@@ -19,6 +19,7 @@
 #include "EbDecProcessFrame.h"
 #include "EbDecProcessBlock.h"
 #include "EbDecNbr.h"
+#include "EbUtility.h"
 
 /* decode partition */
 static void decode_partition(DecModCtxt *dec_mod_ctxt,

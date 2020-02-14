@@ -10,6 +10,10 @@
  * Includes
  **************************************/
 
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "EbDefinitions.h"
 
 #include "EbSvtAv1Dec.h"
@@ -32,8 +36,7 @@
 #include "EbDecLF.h"
 #include "EbDecPicMgr.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "../../Encoder/Codec/EbWarpedMotion.h"
 
 extern int select_samples(MV *mv, int *pts, int *pts_inref, int len, BlockSize bsize);
 

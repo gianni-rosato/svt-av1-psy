@@ -21,6 +21,7 @@
 #include "EbDecParseHelper.h"
 #include "EbDecUtils.h"
 #include "EbInvTransforms.h"
+#include "EbInterPrediction.h"
 
 int neg_deinterleave(const int diff, int ref, int max) {
     if (!ref) return diff;

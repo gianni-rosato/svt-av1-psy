@@ -30,6 +30,8 @@
 #include "EbDecInverseQuantize.h"
 #include "EbLog.h"
 
+#include "EbUtility.h"
+
 #include <stdlib.h>
 
 void *dec_all_stage_kernel(void *input_ptr);

@@ -21,6 +21,7 @@
 #include "EbDecUtils.h"
 #include "EbDecNbr.h"
 #include "EbUtility.h"
+#include "EbDecCdef.h"
 
 /*Compute's whether 8x8 block is skip or not skip block*/
 static INLINE int32_t dec_is_8x8_block_skip(BlockModeInfo *mbmi) {

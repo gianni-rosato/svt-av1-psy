@@ -28,6 +28,8 @@
 #include "EbDecPicMgr.h"
 #include "EbDecLF.h"
 
+#include "EbUtility.h"
+
 /*TODO: Remove and harmonize with encoder. Globals prevent harmonization now! */
 /*****************************************
  * eb_recon_picture_buffer_desc_ctor

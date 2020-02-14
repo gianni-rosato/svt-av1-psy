@@ -863,6 +863,40 @@ static INLINE int32_t av1_ceil_log2(int32_t n) {
     return i;
 }
 
+static AomCdfProb cdf_element_prob(const AomCdfProb *const cdf, size_t element) {
+    assert(cdf != NULL);
+    return (element > 0 ? cdf[element - 1] : CDF_PROB_TOP) - cdf[element];
+}
+
+
+static INLINE void partition_gather_horz_alike(AomCdfProb *out, const AomCdfProb *const in,
+                                               BlockSize bsize) {
+    out[0] = CDF_PROB_TOP;
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ);
+    out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ_B);
+    out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
+    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_HORZ_4);
+    out[0] = AOM_ICDF(out[0]);
+    out[1] = AOM_ICDF(CDF_PROB_TOP);
+    out[2] = 0;
+}
+
+static INLINE void partition_gather_vert_alike(AomCdfProb *out, const AomCdfProb *const in,
+                                               BlockSize bsize) {
+    out[0] = CDF_PROB_TOP;
+    out[0] -= cdf_element_prob(in, PARTITION_VERT);
+    out[0] -= cdf_element_prob(in, PARTITION_SPLIT);
+    out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
+    out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
+    out[0] -= cdf_element_prob(in, PARTITION_VERT_B);
+    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_VERT_4);
+    out[0] = AOM_ICDF(out[0]);
+    out[1] = AOM_ICDF(CDF_PROB_TOP);
+    out[2] = 0;
+}
+
 /**********************************************************************************************************************/
 // onyxc_int.h
 

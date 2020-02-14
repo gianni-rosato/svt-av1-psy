@@ -8,6 +8,7 @@
 
 #include "EbObuParse.h"
 #include "EbDecParseFrame.h"
+#include "EbUtility.h"
 
 #define ACCT_STR __func__
 

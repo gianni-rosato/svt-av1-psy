@@ -18,7 +18,6 @@
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
-#include "../../Encoder/Codec/EbEntropyCoding.h"
 #include "EbDecBlock.h"
 #include "EbDecHandle.h"
 #include "EbObuParse.h"
@@ -27,6 +26,8 @@
 #include "EbDecRestoration.h"
 #include "EbDecParseObuUtil.h"
 #include "EbDecParseFrame.h"
+#include "EbInterPrediction.h"
+#include "../../Encoder/Codec/EbWarpedMotion.h"
 
 /*TODO : Should be removed */
 #include "EbDecInverseQuantize.h"

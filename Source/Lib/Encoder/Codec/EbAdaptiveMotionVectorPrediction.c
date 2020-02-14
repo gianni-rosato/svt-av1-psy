@@ -2136,20 +2136,6 @@ void eb_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, BlkSt
         count_overlappable_nb_left(cm, xd, mi_row, MAX_SIGNED_VALUE);
 }
 
-void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, int mi_row,
-                     int mi_col) {
-    (void)mi_col;
-    if (mi_row - mib_size < tile->mi_row_start) {
-        ref_dv->as_mv.row = 0;
-        ref_dv->as_mv.col = -MI_SIZE * mib_size - INTRABC_DELAY_PIXELS;
-    } else {
-        ref_dv->as_mv.row = -MI_SIZE * mib_size;
-        ref_dv->as_mv.col = 0;
-    }
-    ref_dv->as_mv.row *= 8;
-    ref_dv->as_mv.col *= 8;
-}
-
 int av1_is_dv_valid(const MV dv, const MacroBlockD *xd, int mi_row, int mi_col, BlockSize bsize,
                     int mib_size_log2) {
     const int bw             = block_size_wide[bsize];

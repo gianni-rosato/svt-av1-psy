@@ -117,6 +117,22 @@ enum {
     NEED_BOTTOMLEFT = 1 << 5,
 };
 
+static const uint32_t mode_to_angle_map[] = {
+        0,
+        90,
+        180,
+        45,
+        135,
+        113,
+        157,
+        203,
+        67,
+        0,
+        0,
+        0,
+        0,
+};
+
 int is_smooth(const BlockModeInfo *mbmi, int plane);
 
 extern const uint8_t extend_modes[INTRA_MODES];
@@ -276,6 +292,16 @@ CflSubtractAverageFn eb_get_subtract_average_fn_c(TxSize tx_size);
         /* index the function pointer array out of bounds. */                 \
         return sub_avg[tx_size % TX_SIZES_ALL];                               \
     }
+
+static INLINE int32_t av1_is_directional_mode(PredictionMode mode) {
+    return mode >= V_PRED && mode <= D67_PRED;
+}
+
+static INLINE int get_palette_bsize_ctx(BlockSize bsize) {
+    return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
+}
+
+static INLINE EbBool av1_use_angle_delta(BlockSize bsize) { return bsize >= BLOCK_8X8; }
 
 #ifdef __cplusplus
 }

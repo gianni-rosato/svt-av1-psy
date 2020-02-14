@@ -44,6 +44,11 @@
 
 static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
 
+int is_masked_compound_type(COMPOUND_TYPE type) {
+    return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
+}
+
+
 void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
                                  const uint8_t *src8, ptrdiff_t src_stride, const uint8_t *pred8,
                                  ptrdiff_t pred_stride, int bd) {
@@ -1989,6 +1994,21 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
                                      subh,
                                      conv_params);
     }
+}
+
+
+void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, int mi_row,
+                     int mi_col) {
+    (void)mi_col;
+    if (mi_row - mib_size < tile->mi_row_start) {
+        ref_dv->as_mv.row = 0;
+        ref_dv->as_mv.col = -MI_SIZE * mib_size - INTRABC_DELAY_PIXELS;
+    } else {
+        ref_dv->as_mv.row = -MI_SIZE * mib_size;
+        ref_dv->as_mv.col = 0;
+    }
+    ref_dv->as_mv.row *= 8;
+    ref_dv->as_mv.col *= 8;
 }
 
 

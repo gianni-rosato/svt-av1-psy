@@ -115,9 +115,6 @@ int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
     }
     return AOMMIN(5, above_ctx + left_ctx);
 }
-int is_masked_compound_type(COMPOUND_TYPE type) {
-    return (type == COMPOUND_WEDGE || type == COMPOUND_DIFFWTD);
-}
 
 /************************************************
 * CABAC Encoder Constructor

@@ -15,6 +15,7 @@
 */
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
@@ -30,6 +31,10 @@
 
 #include "EbDecProcessFrame.h"
 #include "EbDecIntraPrediction.h"
+#include "EbDecInterPrediction.h"
+#include "EbUtility.h"
+#include "EbDefinitions.h"
+#include "../../Encoder/Codec/EbWarpedMotion.h"
 
 static INLINE void dec_clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
                                 int32_t max_row) {

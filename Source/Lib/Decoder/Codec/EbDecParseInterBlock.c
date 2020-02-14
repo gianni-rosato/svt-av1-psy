@@ -16,6 +16,8 @@
 
 #include "EbDecParseInterBlock.h"
 #include "EbCommonUtils.h"
+#include "../../Encoder/Codec/EbWarpedMotion.h"
+
 
 typedef const int (*ColorCost)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][PALETTE_COLORS];
 typedef AomCdfProb (*MapCdf)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS];

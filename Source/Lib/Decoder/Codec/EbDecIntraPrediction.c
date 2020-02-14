@@ -23,6 +23,7 @@
 #include "EbDecParseHelper.h"
 #include "EbDecProcessFrame.h"
 #include "EbCommonUtils.h"
+#include "EbIntraPrediction.h"
 
 /* Avoid 12-bit output mismatch by intra pred intrinsic kernel */
 void dec_init_intra_predictors_12b_internal(void) {

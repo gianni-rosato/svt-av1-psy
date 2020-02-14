@@ -6,6 +6,9 @@
 #ifndef EbDecInterPrediction_h
 #define EbDecInterPrediction_h
 
+#include "EbInterPrediction.h"
+#include "EbDecProcessFrame.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

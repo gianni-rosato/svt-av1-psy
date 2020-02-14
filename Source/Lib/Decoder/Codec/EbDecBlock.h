@@ -8,6 +8,7 @@
 
 #include "EbDefinitions.h"
 #include "EbRestoration.h"
+#include "EbBlockStructures.h"
 
 #define MODE_INFO_DBG 0
 

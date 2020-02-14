@@ -34,6 +34,7 @@ extern "C" {
 #include "EbDecNbr.h"
 #include "EbDecPicMgr.h"
 #include "EbDecUtils.h"
+#include "EbDecInterPrediction.h"
 
 #define MVREF_ROW_COLS 3
 // Set the upper limit of the motion vector component magnitude.

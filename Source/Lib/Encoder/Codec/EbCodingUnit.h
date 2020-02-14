@@ -176,45 +176,8 @@ static const uint8_t av1_is_directional[35] = {
     1, 1, 1, 1, // EB_INTRA_MODE_27 -> EB_INTRA_MODE_30
     1, 1, 1, 1, // EB_INTRA_MODE_31 -> EB_INTRA_MODE_34
 };
-static const uint32_t mode_to_angle_map[] = {
-    0,
-    90,
-    180,
-    45,
-    135,
-    113,
-    157,
-    203,
-    67,
-    0,
-    0,
-    0,
-    0,
-};
-static INLINE int32_t av1_is_directional_mode(PredictionMode mode) {
-    return mode >= V_PRED && mode <= D67_PRED;
-}
-
-static INLINE EbBool av1_use_angle_delta(BlockSize bsize) { return bsize >= BLOCK_8X8; }
 
 struct PictureControlSet;
-
-
-typedef struct MbModeInfo {
-#if CONFIG_RD_DEBUG
-    RD_STATS rd_stats;
-    int32_t  mi_row;
-    int32_t  mi_col;
-#endif
-    EbWarpedMotionParams wm_params;
-    int32_t              comp_group_idx;
-
-    int8_t          cdef_strength;
-    TxSize          tx_size;
-    uint8_t         tx_depth;
-    BlockModeInfo   block_mi;
-    PaletteModeInfo palette_mode_info;
-} MbModeInfo;
 
 typedef struct {
     IntMv   mfmv0;

@@ -14,6 +14,9 @@
 extern "C" {
 #endif
 
+#define MAX_TILE_WIDTH (4096) // Max Tile width in pixels
+#define MAX_TILE_AREA (4096 * 2304) // Maximum tile area in pixels
+
 typedef struct MV {
     int16_t row;
     int16_t col;
@@ -158,8 +161,32 @@ typedef struct BlockModeInfo {
 #endif
 } BlockModeInfo;
 
+
+typedef struct MbModeInfo {
+#if CONFIG_RD_DEBUG
+    RD_STATS rd_stats;
+    int32_t  mi_row;
+    int32_t  mi_col;
+#endif
+    EbWarpedMotionParams wm_params;
+    int32_t              comp_group_idx;
+
+    int8_t          cdef_strength;
+    TxSize          tx_size;
+    uint8_t         tx_depth;
+    BlockModeInfo   block_mi;
+    PaletteModeInfo palette_mode_info;
+} MbModeInfo;
+
+
 void eb_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);
 void eb_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info, int32_t mi_rows, int row);
+
+static INLINE int32_t tile_log2(int32_t blk_size, int32_t target) {
+    int32_t k;
+    for (k = 0; (blk_size << k) < target; k++) {}
+    return k;
+}
 
 #ifdef __cplusplus
 }
