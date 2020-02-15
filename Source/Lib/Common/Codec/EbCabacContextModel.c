@@ -3182,6 +3182,85 @@ void eb_av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
 
 /********************************************************************************************************************************/
 
+#define MAX_COLOR_CONTEXT_HASH 8
+// Negative values are invalid
+int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1] = {
+        -1, -1, 0, -1, -1, 4, 3, 2, 1};
+
+#define NUM_PALETTE_NEIGHBORS 3 // left, top-left and top.
+int av1_get_palette_color_index_context(const uint8_t *color_map, int stride, int r, int c,
+                                        int palette_size, uint8_t *color_order, int *color_idx) {
+    assert(palette_size <= PALETTE_MAX_SIZE);
+    assert(r > 0 || c > 0);
+
+    // Get color indices of neighbors.
+    int color_neighbors[NUM_PALETTE_NEIGHBORS];
+    color_neighbors[0] = (c - 1 >= 0) ? color_map[r * stride + c - 1] : -1;
+    color_neighbors[1] = (c - 1 >= 0 && r - 1 >= 0) ? color_map[(r - 1) * stride + c - 1] : -1;
+    color_neighbors[2] = (r - 1 >= 0) ? color_map[(r - 1) * stride + c] : -1;
+
+    // The +10 below should not be needed. But we get a warning "array subscript
+    // is above array bounds [-Werror=array-bounds]" without it, possibly due to
+    // this (or similar) bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59124
+    int              scores[PALETTE_MAX_SIZE + 10] = {0};
+    int              i;
+    static const int weights[NUM_PALETTE_NEIGHBORS] = {2, 1, 2};
+    for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
+        if (color_neighbors[i] >= 0) { scores[color_neighbors[i]] += weights[i]; }
+    }
+
+    int inverse_color_order[PALETTE_MAX_SIZE];
+    for (i = 0; i < PALETTE_MAX_SIZE; ++i) {
+        color_order[i]         = i;
+        inverse_color_order[i] = i;
+    }
+
+    // Get the top NUM_PALETTE_NEIGHBORS scores (sorted from large to small).
+    for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
+        int max     = scores[i];
+        int max_idx = i;
+        for (int j = i + 1; j < palette_size; ++j) {
+            if (scores[j] > max) {
+                max     = scores[j];
+                max_idx = j;
+            }
+        }
+        if (max_idx != i) {
+            // Move the score at index 'max_idx' to index 'i', and shift the scores
+            // from 'i' to 'max_idx - 1' by 1.
+            const int     max_score       = scores[max_idx];
+            const uint8_t max_color_order = color_order[max_idx];
+            for (int k = max_idx; k > i; --k) {
+                scores[k]                           = scores[k - 1];
+                color_order[k]                      = color_order[k - 1];
+                inverse_color_order[color_order[k]] = k;
+            }
+            scores[i]                           = max_score;
+            color_order[i]                      = max_color_order;
+            inverse_color_order[color_order[i]] = i;
+        }
+    }
+
+    if (color_idx != NULL) *color_idx = inverse_color_order[color_map[r * stride + c]];
+
+    // Get hash value of context.
+    int              color_index_ctx_hash                    = 0;
+    static const int hash_multipliers[NUM_PALETTE_NEIGHBORS] = {1, 2, 2};
+    for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
+        color_index_ctx_hash += scores[i] * hash_multipliers[i];
+    }
+    assert(color_index_ctx_hash > 0);
+    assert(color_index_ctx_hash <= MAX_COLOR_CONTEXT_HASH);
+
+    // Lookup context from hash.
+    const int color_index_ctx = palette_color_index_context_lookup[color_index_ctx_hash];
+    assert(color_index_ctx >= 0);
+    assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
+    return color_index_ctx;
+}
+#undef NUM_PALETTE_NEIGHBORS
+#undef MAX_COLOR_CONTEXT_HASH
+
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/

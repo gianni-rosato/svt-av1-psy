@@ -19,7 +19,7 @@
 
 #include "EbDecHandle.h"
 #include "EbDecUtils.h"
-#include "../../Encoder/Codec/EbCdef.h"
+#include "EbCdef.h"
 
 #ifdef __cplusplus
 extern "C" {

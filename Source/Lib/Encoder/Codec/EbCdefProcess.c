@@ -22,7 +22,7 @@
 #include "EbEncDecResults.h"
 #include "EbThreads.h"
 #include "EbReferenceObject.h"
-#include "EbCdef.h"
+#include "EbEncCdef.h"
 #include "EbEncDecProcess.h"
 #include "EbPictureBufferDesc.h"
 #include "EbSequenceControlSet.h"

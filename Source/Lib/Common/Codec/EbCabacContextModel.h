@@ -901,6 +901,8 @@ static INLINE void partition_gather_vert_alike(AomCdfProb *out, const AomCdfProb
 // onyxc_int.h
 
 /**********************************************************************************************************************/
+int av1_get_palette_color_index_context(const uint8_t *color_map, int stride, int r, int c,
+                                        int palette_size, uint8_t *color_order, int *color_idx);
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 

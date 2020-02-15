@@ -69,45 +69,9 @@ static PartitionType from_shape_to_part[] = {PARTITION_NONE,
 #define MVREF_ROWS 3
 #define MVREF_COLS 3
 
-/*static INLINE*/ int32_t is_inter_block(const BlockModeInfo *mbmi) {
-    return (mbmi->use_intrabc || (mbmi->ref_frame[0] > INTRA_FRAME));
-}
-
 static int32_t have_newmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEWMV || mode == NEW_NEWMV || mode == NEAREST_NEWMV || mode == NEW_NEARESTMV ||
             mode == NEAR_NEWMV || mode == NEW_NEARMV);
-}
-#define n_elements(x) (int32_t)(sizeof(x) / sizeof(x[0]))
-MvReferenceFrame comp_ref0(int32_t ref_idx) {
-    static const MvReferenceFrame lut[] = {
-        LAST_FRAME, // LAST_LAST2_FRAMES,
-        LAST_FRAME, // LAST_LAST3_FRAMES,
-        LAST_FRAME, // LAST_GOLDEN_FRAMES,
-        BWDREF_FRAME, // BWDREF_ALTREF_FRAMES,
-        LAST2_FRAME, // LAST2_LAST3_FRAMES
-        LAST2_FRAME, // LAST2_GOLDEN_FRAMES,
-        LAST3_FRAME, // LAST3_GOLDEN_FRAMES,
-        BWDREF_FRAME, // BWDREF_ALTREF2_FRAMES,
-        ALTREF2_FRAME, // ALTREF2_ALTREF_FRAMES,
-    };
-    assert(n_elements(lut) == TOTAL_UNIDIR_COMP_REFS);
-    return lut[ref_idx];
-}
-
-MvReferenceFrame comp_ref1(int32_t ref_idx) {
-    static const MvReferenceFrame lut[] = {
-        LAST2_FRAME, // LAST_LAST2_FRAMES,
-        LAST3_FRAME, // LAST_LAST3_FRAMES,
-        GOLDEN_FRAME, // LAST_GOLDEN_FRAMES,
-        ALTREF_FRAME, // BWDREF_ALTREF_FRAMES,
-        LAST3_FRAME, // LAST2_LAST3_FRAMES
-        GOLDEN_FRAME, // LAST2_GOLDEN_FRAMES,
-        GOLDEN_FRAME, // LAST3_GOLDEN_FRAMES,
-        ALTREF2_FRAME, // BWDREF_ALTREF2_FRAMES,
-        ALTREF_FRAME, // ALTREF2_ALTREF_FRAMES,
-    };
-    assert(n_elements(lut) == TOTAL_UNIDIR_COMP_REFS);
-    return lut[ref_idx];
 }
 
 typedef struct position {
@@ -115,71 +79,7 @@ typedef struct position {
     int32_t col;
 } Position;
 
-static MvReferenceFrame ref_frame_map[TOTAL_COMP_REFS][2] = {
-    {LAST_FRAME, BWDREF_FRAME},
-    {LAST2_FRAME, BWDREF_FRAME},
-    {LAST3_FRAME, BWDREF_FRAME},
-    {GOLDEN_FRAME, BWDREF_FRAME},
-    {LAST_FRAME, ALTREF2_FRAME},
-    {LAST2_FRAME, ALTREF2_FRAME},
-    {LAST3_FRAME, ALTREF2_FRAME},
-    {GOLDEN_FRAME, ALTREF2_FRAME},
-    {LAST_FRAME, ALTREF_FRAME},
-    {LAST2_FRAME, ALTREF_FRAME},
-    {LAST3_FRAME, ALTREF_FRAME},
-    {GOLDEN_FRAME, ALTREF_FRAME},
-    {LAST_FRAME, LAST2_FRAME},
-    {LAST_FRAME, LAST3_FRAME},
-    {LAST_FRAME, GOLDEN_FRAME},
-    {BWDREF_FRAME, ALTREF_FRAME},
-    // NOTE: Following reference frame pairs are not supported to be explicitly
-    //       signalled, but they are possibly chosen by the use of skip_mode,
-    //       which may use the most recent one-sided reference frame pair.
-    {LAST2_FRAME, LAST3_FRAME},
-    {LAST2_FRAME, GOLDEN_FRAME},
-    {LAST3_FRAME, GOLDEN_FRAME},
-    {BWDREF_FRAME, ALTREF2_FRAME},
-    {ALTREF2_FRAME, ALTREF_FRAME}};
-
 // clang-format on
-
-void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type) {
-    if (ref_frame_type >= TOTAL_REFS_PER_FRAME) {
-        rf[0] = ref_frame_map[ref_frame_type - TOTAL_REFS_PER_FRAME][0];
-        rf[1] = ref_frame_map[ref_frame_type - TOTAL_REFS_PER_FRAME][1];
-    } else {
-        rf[0] = ref_frame_type;
-        rf[1] = NONE_FRAME;
-        // assert(ref_frame_type > NONE_FRAME); AMIR
-    }
-}
-int8_t get_uni_comp_ref_idx(const MvReferenceFrame *const rf) {
-    // Single ref pred
-    if (rf[1] <= INTRA_FRAME) return -1;
-
-    // Bi-directional comp ref pred
-    if ((rf[0] < BWDREF_FRAME) && (rf[1] >= BWDREF_FRAME)) return -1;
-
-    for (int8_t ref_idx = 0; ref_idx < TOTAL_UNIDIR_COMP_REFS; ++ref_idx) {
-        if (rf[0] == comp_ref0(ref_idx) && rf[1] == comp_ref1(ref_idx)) return ref_idx;
-    }
-    return -1;
-}
-
-extern INLINE int8_t av1_ref_frame_type(const MvReferenceFrame *const rf) {
-    if (rf[1] > INTRA_FRAME) {
-        const int8_t uni_comp_ref_idx = get_uni_comp_ref_idx(rf);
-        if (uni_comp_ref_idx >= 0) {
-            assert((TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx) <
-                   MODE_CTX_REF_FRAMES);
-            return TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx;
-        } else {
-            return TOTAL_REFS_PER_FRAME + FWD_RF_OFFSET(rf[0]) + BWD_RF_OFFSET(rf[1]) * FWD_REFS;
-        }
-    }
-
-    return rf[0];
-}
 
 static INLINE IntMv get_sub_block_mv(const ModeInfo *candidate, int32_t which_mv,
                                      int32_t search_col) {
@@ -1703,53 +1603,6 @@ static INLINE void record_samples(MbModeInfo *mbmi, int *pts, int *pts_inref, in
     pts[1]       = (y * 8);
     pts_inref[0] = (x * 8) + mbmi->block_mi.mv[0].as_mv.col;
     pts_inref[1] = (y * 8) + mbmi->block_mi.mv[0].as_mv.row;
-}
-
-// Select samples according to the motion vector difference.
-int select_samples(MV *mv, int *pts, int *pts_inref, int len, BlockSize bsize) {
-    const uint8_t bw                          = block_size_wide[bsize];
-    const uint8_t bh                          = block_size_high[bsize];
-    const int     thresh                      = clamp(AOMMAX(bw, bh), 16, 112);
-    int           pts_mvd[SAMPLES_ARRAY_SIZE] = {0};
-    int           i, j, k, l = len;
-    int           ret = 0;
-
-    // Obtain the motion vector difference.
-    for (i = 0; i < len; ++i) {
-        pts_mvd[i] = abs(pts_inref[2 * i] - pts[2 * i] - mv->col) +
-                     abs(pts_inref[2 * i + 1] - pts[2 * i + 1] - mv->row);
-
-        if (pts_mvd[i] > thresh)
-            pts_mvd[i] = -1;
-        else
-            ret++;
-    }
-
-    // Keep at least 1 sample.
-    if (!ret) return 1;
-
-    i = 0;
-    j = l - 1;
-    for (k = 0; k < l - ret; k++) {
-        while (pts_mvd[i] != -1) i++;
-        if (j < 0) break;
-        while (pts_mvd[j] == -1) {
-            j--;
-            if (j < 0) break;
-        }
-        if (i > j) break;
-
-        // Replace the discarded samples;
-        pts_mvd[i]           = pts_mvd[j];
-        pts[2 * i]           = pts[2 * j];
-        pts[2 * i + 1]       = pts[2 * j + 1];
-        pts_inref[2 * i]     = pts_inref[2 * j];
-        pts_inref[2 * i + 1] = pts_inref[2 * j + 1];
-        i++;
-        j--;
-    }
-
-    return ret;
 }
 
 // Note: Samples returned are at 1/8-pel precision

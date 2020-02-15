@@ -7,7 +7,7 @@
 
 #ifndef NON_AVX512_SUPPORT
 #include <immintrin.h>
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "EbBitstreamUnit.h"
 #include "EbCdef.h"
 #include "EbMemory_AVX2.h"

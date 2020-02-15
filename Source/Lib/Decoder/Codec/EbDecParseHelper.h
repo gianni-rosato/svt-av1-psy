@@ -38,7 +38,7 @@ static INLINE CflAllowedType is_cfl_allowed(PartitionInfo *xd, EbColorConfig *co
     return (CflAllowedType)(block_size_wide[bsize] <= 32 && block_size_high[bsize] <= 32);
 }
 
-extern int is_inter_block(const BlockModeInfo *mbmi);
+//extern int is_inter_block(const BlockModeInfo *mbmi);
 
 static INLINE int allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
     return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&

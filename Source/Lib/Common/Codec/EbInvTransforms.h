@@ -361,6 +361,8 @@ static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = {
         5, // TX_64X16
 };
 
+int16_t eb_av1_ac_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+
 #ifdef __cplusplus
 }
 #endif

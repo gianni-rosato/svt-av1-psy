@@ -27,7 +27,7 @@
 #include "EbDecParseObuUtil.h"
 #include "EbDecParseFrame.h"
 #include "EbInterPrediction.h"
-#include "../../Encoder/Codec/EbWarpedMotion.h"
+#include "EbWarpedMotion.h"
 
 /*TODO : Should be removed */
 #include "EbDecInverseQuantize.h"

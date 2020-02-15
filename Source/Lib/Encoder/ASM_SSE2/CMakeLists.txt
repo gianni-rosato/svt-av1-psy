@@ -29,7 +29,7 @@ file(GLOB all_files
 file(GLOB asm_includes
     "x86_abi_support.asm")
 
-list(REMOVE_ITEM all_files ${asm_includes})
+#list(REMOVE_ITEM all_files)
 
 
 add_library(ENCODER_ASM_SSE2 OBJECT ${all_files})

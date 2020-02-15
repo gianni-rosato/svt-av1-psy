@@ -12,7 +12,7 @@
 ;
 
 
-%include "x86_abi_support.asm"
+%include "../../Common/ASM_SSE2/x86_abi_support.asm"
 
 SECTION .text
 

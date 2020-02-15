@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include <emmintrin.h>
 
 typedef void (*SubtractWxHFuncType)(int16_t *diff, ptrdiff_t diff_stride, const uint16_t *src,

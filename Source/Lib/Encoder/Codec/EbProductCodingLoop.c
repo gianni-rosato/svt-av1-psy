@@ -4075,10 +4075,6 @@ void tx_type_search(PictureControlSet *pcs_ptr,
 
 static INLINE int block_signals_txsize(BlockSize bsize) { return bsize > BLOCK_4X4; }
 
-static INLINE int is_inter_block(const BlockModeInfo *bloc_mi) {
-    return is_intrabc_block(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
-}
-
 static INLINE int get_vartx_max_txsize(/*const MbModeInfo *xd,*/ BlockSize bsize, int plane) {
     /* if (xd->lossless[xd->mi[0]->segment_id]) return TX_4X4;*/
     const TxSize max_txsize = max_txsize_rect_lookup[bsize];
@@ -4239,6 +4235,8 @@ static INLINE int tx_size_to_depth(TxSize tx_size, BlockSize bsize) {
 }
 
 #define BLOCK_SIZES_ALL 22
+
+int is_inter_block(const BlockModeInfo *bloc_mi);
 
 // Returns a context number for the given MB prediction signal
 // The mode info data structure has a one element border above and to the

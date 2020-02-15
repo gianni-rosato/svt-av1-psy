@@ -10,11 +10,11 @@
  */
 
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 
 #include "av1_inv_txfm_avx2.h"
 #include "av1_inv_txfm_ssse3.h"
-#include "EbTransforms.h"
+#include "EbInvTransforms.h"
 
 // Sqrt2, Sqrt2^2, Sqrt2^3, Sqrt2^4, Sqrt2^5
 static int32_t new_sqrt2list[TX_SIZES] = {5793, 2 * 4096, 2 * 5793, 4 * 4096, 4 * 5793};

@@ -18,12 +18,6 @@
 #include "EbSegmentationParams.h"
 #include "EbMotionEstimationContext.h"
 
-const int segmentation_feature_signed[SEG_LVL_MAX] = {1, 1, 1, 1, 1, 0, 0, 0};
-
-const int segmentation_feature_bits[SEG_LVL_MAX] = {8, 6, 6, 6, 6, 3, 0, 0};
-
-const int segmentation_feature_max[SEG_LVL_MAX] = {
-    MAXQ, MAX_LOOP_FILTER, MAX_LOOP_FILTER, MAX_LOOP_FILTER, MAX_LOOP_FILTER, 7, 0, 0};
 
 static const uint8_t q_index_to_quantizer[] = {
     0,  0,  0,  0,  1,  1,  1,  1,  2,  2,  2,  2,  3,  3,  3,  3,  4,  4,  4,  4,  5,  5,  5,  5,

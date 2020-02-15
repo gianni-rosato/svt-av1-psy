@@ -36,7 +36,7 @@
 #include "EbDecLF.h"
 #include "EbDecPicMgr.h"
 
-#include "../../Encoder/Codec/EbWarpedMotion.h"
+#include "EbWarpedMotion.h"
 
 extern int select_samples(MV *mv, int *pts, int *pts_inref, int len, BlockSize bsize);
 

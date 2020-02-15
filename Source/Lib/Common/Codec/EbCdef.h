@@ -11,11 +11,13 @@
 #ifndef EbCdef_h
 #define EbCdef_h
 
+#include <stdint.h>
 #include "EbDefinitions.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 #define CDEF_STRENGTH_BITS 6
 #define CDEF_PRI_STRENGTHS 16
@@ -44,23 +46,11 @@ DECLARE_ALIGNED(16, extern const int32_t, eb_cdef_directions[8][2]);
 #define REDUCED_TOTAL_STRENGTHS (REDUCED_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 #define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 
-typedef void (*CdefFilterBlockFunc)(uint8_t *dst8, uint16_t *dst16, int32_t dstride,
-                                       const uint16_t *in, int32_t pri_strength,
-                                       int32_t sec_strength, int32_t dir, int32_t pri_damping,
-                                       int32_t sec_damping, int32_t bsize, int32_t coeff_shift);
-
-void copy_cdef_16bit_to_16bit(uint16_t *dst, int32_t dstride, uint16_t *src, CdefList *dlist,
-                              int32_t cdef_count, int32_t bsize);
-
-void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
-                       int32_t ydec, int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
-                       int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,
-                       int32_t cdef_count, int32_t level, int32_t sec_strength, int32_t pri_damping,
-                       int32_t sec_damping, int32_t coeff_shift);
-
-int32_t get_cdef_gi_step(int8_t cdef_filter_mode);
-
 void fill_rect(uint16_t *dst, int32_t dstride, int32_t v, int32_t h, uint16_t x);
+
+
+void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t src_voffset,
+                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
 
 void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
@@ -68,10 +58,15 @@ void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src
 void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride, int32_t v,
                int32_t h);
 
-void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t src_voffset,
-                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
+void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
+                       int32_t ydec, int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
+                       int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,
+                       int32_t cdef_count, int32_t level, int32_t sec_strength, int32_t pri_damping,
+                       int32_t sec_damping, int32_t coeff_shift);
+
 
 #ifdef __cplusplus
 }
 #endif
-#endif // AV1_COMMON_CDEF_H_
+#endif // EbCdef_h
+

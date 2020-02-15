@@ -29,7 +29,7 @@
 #endif
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
-#include "EbCdef.h"
+#include "EbEncCdef.h"
 #include "util.h"
 #include "random.h"
 #include "EbUnitTestUtility.h"

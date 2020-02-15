@@ -10,7 +10,7 @@
  */
 
 #include <immintrin.h>
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "EbBitstreamUnit.h"
 #include "EbCdef.h"
 #include "EbDefinitions.h"

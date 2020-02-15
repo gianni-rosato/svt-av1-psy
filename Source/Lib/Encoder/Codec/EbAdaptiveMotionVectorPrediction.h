@@ -12,7 +12,7 @@
 #include "EbPredictionUnit.h"
 #include "EbNeighborArrays.h"
 #include "EbMvMerge.h"
-#include "EbWarpedMotion.h"
+#include "EbEncWarpedMotion.h"
 
 #ifdef __cplusplus
 extern "C" {

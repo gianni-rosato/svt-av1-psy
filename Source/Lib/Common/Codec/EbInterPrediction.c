@@ -19,6 +19,7 @@
 #include "EbInterPrediction.h"
 #include "convolve.h"
 #include "common_dsp_rtcd.h"
+#include "EbUtility.h"
 //#include "EbRateDistortionCost.h"
 
 #define MVBOUNDLOW \
@@ -2009,6 +2010,280 @@ void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, in
     }
     ref_dv->as_mv.row *= 8;
     ref_dv->as_mv.col *= 8;
+}
+
+#define n_elements(x) (int32_t)(sizeof(x) / sizeof(x[0]))
+
+MvReferenceFrame comp_ref0(int32_t ref_idx) {
+    static const MvReferenceFrame lut[] = {
+            LAST_FRAME, // LAST_LAST2_FRAMES,
+            LAST_FRAME, // LAST_LAST3_FRAMES,
+            LAST_FRAME, // LAST_GOLDEN_FRAMES,
+            BWDREF_FRAME, // BWDREF_ALTREF_FRAMES,
+            LAST2_FRAME, // LAST2_LAST3_FRAMES
+            LAST2_FRAME, // LAST2_GOLDEN_FRAMES,
+            LAST3_FRAME, // LAST3_GOLDEN_FRAMES,
+            BWDREF_FRAME, // BWDREF_ALTREF2_FRAMES,
+            ALTREF2_FRAME, // ALTREF2_ALTREF_FRAMES,
+    };
+    assert(n_elements(lut) == TOTAL_UNIDIR_COMP_REFS);
+    return lut[ref_idx];
+}
+
+MvReferenceFrame comp_ref1(int32_t ref_idx) {
+    static const MvReferenceFrame lut[] = {
+            LAST2_FRAME, // LAST_LAST2_FRAMES,
+            LAST3_FRAME, // LAST_LAST3_FRAMES,
+            GOLDEN_FRAME, // LAST_GOLDEN_FRAMES,
+            ALTREF_FRAME, // BWDREF_ALTREF_FRAMES,
+            LAST3_FRAME, // LAST2_LAST3_FRAMES
+            GOLDEN_FRAME, // LAST2_GOLDEN_FRAMES,
+            GOLDEN_FRAME, // LAST3_GOLDEN_FRAMES,
+            ALTREF2_FRAME, // BWDREF_ALTREF2_FRAMES,
+            ALTREF_FRAME, // ALTREF2_ALTREF_FRAMES,
+    };
+    assert(n_elements(lut) == TOTAL_UNIDIR_COMP_REFS);
+    return lut[ref_idx];
+}
+
+int8_t get_uni_comp_ref_idx(const MvReferenceFrame *const rf) {
+    // Single ref pred
+    if (rf[1] <= INTRA_FRAME) return -1;
+
+    // Bi-directional comp ref pred
+    if ((rf[0] < BWDREF_FRAME) && (rf[1] >= BWDREF_FRAME)) return -1;
+
+    for (int8_t ref_idx = 0; ref_idx < TOTAL_UNIDIR_COMP_REFS; ++ref_idx) {
+        if (rf[0] == comp_ref0(ref_idx) && rf[1] == comp_ref1(ref_idx)) return ref_idx;
+    }
+    return -1;
+}
+
+int8_t av1_ref_frame_type(const MvReferenceFrame *const rf) {
+    if (rf[1] > INTRA_FRAME) {
+        const int8_t uni_comp_ref_idx = get_uni_comp_ref_idx(rf);
+        if (uni_comp_ref_idx >= 0) {
+            assert((TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx) <
+                   MODE_CTX_REF_FRAMES);
+            return TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx;
+        } else {
+            return TOTAL_REFS_PER_FRAME + FWD_RF_OFFSET(rf[0]) + BWD_RF_OFFSET(rf[1]) * FWD_REFS;
+        }
+    }
+
+    return rf[0];
+}
+
+static MvReferenceFrame ref_frame_map[TOTAL_COMP_REFS][2] = {
+        {LAST_FRAME, BWDREF_FRAME},
+        {LAST2_FRAME, BWDREF_FRAME},
+        {LAST3_FRAME, BWDREF_FRAME},
+        {GOLDEN_FRAME, BWDREF_FRAME},
+        {LAST_FRAME, ALTREF2_FRAME},
+        {LAST2_FRAME, ALTREF2_FRAME},
+        {LAST3_FRAME, ALTREF2_FRAME},
+        {GOLDEN_FRAME, ALTREF2_FRAME},
+        {LAST_FRAME, ALTREF_FRAME},
+        {LAST2_FRAME, ALTREF_FRAME},
+        {LAST3_FRAME, ALTREF_FRAME},
+        {GOLDEN_FRAME, ALTREF_FRAME},
+        {LAST_FRAME, LAST2_FRAME},
+        {LAST_FRAME, LAST3_FRAME},
+        {LAST_FRAME, GOLDEN_FRAME},
+        {BWDREF_FRAME, ALTREF_FRAME},
+        // NOTE: Following reference frame pairs are not supported to be explicitly
+        //       signalled, but they are possibly chosen by the use of skip_mode,
+        //       which may use the most recent one-sided reference frame pair.
+        {LAST2_FRAME, LAST3_FRAME},
+        {LAST2_FRAME, GOLDEN_FRAME},
+        {LAST3_FRAME, GOLDEN_FRAME},
+        {BWDREF_FRAME, ALTREF2_FRAME},
+        {ALTREF2_FRAME, ALTREF_FRAME}};
+
+void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type) {
+    if (ref_frame_type >= TOTAL_REFS_PER_FRAME) {
+        rf[0] = ref_frame_map[ref_frame_type - TOTAL_REFS_PER_FRAME][0];
+        rf[1] = ref_frame_map[ref_frame_type - TOTAL_REFS_PER_FRAME][1];
+    } else {
+        rf[0] = ref_frame_type;
+        rf[1] = NONE_FRAME;
+        // assert(ref_frame_type > NONE_FRAME); AMIR
+    }
+}
+
+int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y) {
+    assert(is_motion_variation_allowed_bsize(bsize));
+
+    const BlockSize bsize_plane = get_plane_block_size(bsize, subsampling_x, subsampling_y);
+    switch (bsize_plane) {
+#if DISABLE_CHROMA_U8X8_OBMC
+        case BLOCK_4X4:
+    case BLOCK_8X4:
+    case BLOCK_4X8: return 1; break;
+#else
+        case BLOCK_4X4:
+        case BLOCK_8X4:
+        case BLOCK_4X8: return dir == 0; break;
+#endif
+        default: return 0;
+    }
+}
+
+#define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
+
+/**
+ * Computes SSE of a compound predictor constructed from 2 fundamental
+ * predictors p0 and p1 using blending with mask.
+ *
+ * r1:  Residuals of p1.
+ *      (source - p1)
+ * d:   Difference of p1 and p0.
+ *      (p1 - p0)
+ * m:   The blending mask
+ * N:   Number of pixels
+ *
+ * 'r1', 'd', and 'm' are contiguous.
+ *
+ * Computes:
+ *  Sum((MAX_MASK_VALUE*r1 + mask*d)**2), which is equivalent to:
+ *  Sum((mask*r0 + (MAX_MASK_VALUE-mask)*r1)**2),
+ *    where r0 is (source - p0), and r1 is (source - p1), which is in turn
+ *    is equivalent to:
+ *  Sum((source*MAX_MASK_VALUE - (mask*p0 + (MAX_MASK_VALUE-mask)*p1))**2),
+ *    which is the SSE of the residuals of the compound predictor scaled up by
+ *    MAX_MASK_VALUE**2.
+ *
+ * Note that we clamp the partial term in the loop to 16 bits signed. This is
+ * to facilitate equivalent SIMD implementation. It should have no effect if
+ * residuals are within 16 - WEDGE_WEIGHT_BITS (=10) signed, which always
+ * holds for 8 bit input, and on real input, it should hold practically always,
+ * as residuals are expected to be small.
+ */
+uint64_t av1_wedge_sse_from_residuals_c(const int16_t *r1, const int16_t *d, const uint8_t *m,
+                                        int N) {
+    uint64_t csse = 0;
+    int      i;
+
+    for (i = 0; i < N; i++) {
+        int32_t t = MAX_MASK_VALUE * r1[i] + m[i] * d[i];
+        t         = clamp(t, INT16_MIN, INT16_MAX);
+        csse += t * t;
+    }
+    return ROUND_POWER_OF_TWO(csse, 2 * WEDGE_WEIGHT_BITS);
+}
+
+
+void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int wedge_index,
+                        int wedge_sign, BlockSize bsize, BlockSize plane_bsize, uint8_t *comppred,
+                        int compstride, const uint8_t *interpred, int interstride,
+                        const uint8_t *intrapred, int intrastride) {
+    const int bw = block_size_wide[plane_bsize];
+    const int bh = block_size_high[plane_bsize];
+
+    if (use_wedge_interintra) {
+        if (is_interintra_wedge_used(bsize)) {
+            const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
+            const int      subw = 2 * mi_size_wide[bsize] == bw;
+            const int      subh = 2 * mi_size_high[bsize] == bh;
+            aom_blend_a64_mask(comppred,
+                               compstride,
+                               intrapred,
+                               intrastride,
+                               interpred,
+                               interstride,
+                               mask,
+                               block_size_wide[bsize],
+                               bw,
+                               bh,
+                               subw,
+                               subh);
+        }
+        return;
+    } else {
+        uint8_t mask[MAX_SB_SQUARE];
+        build_smooth_interintra_mask(mask, bw, plane_bsize, mode);
+        aom_blend_a64_mask(comppred,
+                           compstride,
+                           intrapred,
+                           intrastride,
+                           interpred,
+                           interstride,
+                           mask,
+                           bw,
+                           bw,
+                           bh,
+                           0,
+                           0);
+    }
+}
+
+void eb_aom_highbd_blend_a64_hmask_c(uint16_t *dst, uint32_t dst_stride, const uint16_t *src0,
+                                     uint32_t src0_stride, const uint16_t *src1,
+                                     uint32_t src1_stride, const uint8_t *mask, int w, int h,
+                                     int bd) {
+    (void)bd;
+    int i, j;
+
+    assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
+    assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
+
+    assert(h >= 1);
+    assert(w >= 1);
+    assert(IS_POWER_OF_TWO(h));
+    assert(IS_POWER_OF_TWO(w));
+
+    assert(bd == 8 || bd == 10 || bd == 12);
+
+    for (i = 0; i < h; ++i) {
+        for (j = 0; j < w; ++j) {
+            dst[i * dst_stride + j] =
+                    AOM_BLEND_A64(mask[j], src0[i * src0_stride + j], src1[i * src1_stride + j]);
+        }
+    }
+}
+
+uint64_t aom_sum_squares_i16_c(const int16_t *src, uint32_t n) {
+    uint64_t ss = 0;
+    do {
+        const int16_t v = *src++;
+        ss += v * v;
+    } while (--n);
+
+    return ss;
+}
+
+// obmc_mask_N[overlap_position]
+static const uint8_t obmc_mask_1[1]                      = {64};
+DECLARE_ALIGNED(2, static const uint8_t, obmc_mask_2[2]) = {45, 64};
+
+DECLARE_ALIGNED(4, static const uint8_t, obmc_mask_4[4]) = {39, 50, 59, 64};
+
+static const uint8_t obmc_mask_8[8] = {36, 42, 48, 53, 57, 61, 64, 64};
+
+static const uint8_t obmc_mask_16[16] = {
+        34, 37, 40, 43, 46, 49, 52, 54, 56, 58, 60, 61, 64, 64, 64, 64};
+
+static const uint8_t obmc_mask_32[32] = {33, 35, 36, 38, 40, 41, 43, 44, 45, 47, 48,
+                                         50, 51, 52, 53, 55, 56, 57, 58, 59, 60, 60,
+                                         61, 62, 64, 64, 64, 64, 64, 64, 64, 64};
+
+static const uint8_t obmc_mask_64[64] = {
+        33, 34, 35, 35, 36, 37, 38, 39, 40, 40, 41, 42, 43, 44, 44, 44, 45, 46, 47, 47, 48, 49,
+        50, 51, 51, 51, 52, 52, 53, 54, 55, 56, 56, 56, 57, 57, 58, 58, 59, 60, 60, 60, 60, 60,
+        61, 62, 62, 62, 62, 62, 63, 63, 63, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
+};
+
+const uint8_t *av1_get_obmc_mask(int length) {
+    switch (length) {
+        case 1: return obmc_mask_1;
+        case 2: return obmc_mask_2;
+        case 4: return obmc_mask_4;
+        case 8: return obmc_mask_8;
+        case 16: return obmc_mask_16;
+        case 32: return obmc_mask_32;
+        case 64: return obmc_mask_64;
+        default: assert(0); return NULL;
+    }
 }
 
 

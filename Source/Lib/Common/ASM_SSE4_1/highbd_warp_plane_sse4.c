@@ -9,7 +9,7 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
 #include <smmintrin.h> /* SSE4.1 */
 

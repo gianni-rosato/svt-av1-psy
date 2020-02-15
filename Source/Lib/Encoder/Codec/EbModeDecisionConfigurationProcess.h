@@ -13,6 +13,8 @@
 #include "EbRateControlProcess.h"
 #include "EbSequenceControlSet.h"
 #include "EbObject.h"
+#include "EbInvTransforms.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

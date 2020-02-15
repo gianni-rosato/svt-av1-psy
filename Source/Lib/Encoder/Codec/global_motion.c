@@ -20,7 +20,7 @@
 #include "corner_match.h"
 #include "ransac.h"
 
-#include "EbWarpedMotion.h"
+#include "EbEncWarpedMotion.h"
 
 #define MIN_INLIER_PROB 0.1
 

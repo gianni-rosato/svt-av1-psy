@@ -37,6 +37,11 @@ extern "C" {
 #define INTRABC_DELAY_PIXELS 256 //  Delay of 256 pixels
 #define INTRABC_DELAY_SB64 (INTRABC_DELAY_PIXELS / 64)
 
+// HW does not support < 4x4 prediction. To limit the bandwidth requirement, if
+// block-size of current plane is smaller than 8x8, always only blend with the
+// left neighbor(s) (skip blending with the above side).
+#define DISABLE_CHROMA_U8X8_OBMC 0 // 0: one-sided obmc; 1: disable
+
     extern DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_8[SUBPEL_SHIFTS]);
     extern DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_4[SUBPEL_SHIFTS]);
     extern DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_8sharp[SUBPEL_SHIFTS]);
@@ -416,6 +421,13 @@ static INLINE uint32_t have_nearmv_in_inter_mode(PredictionMode mode) {
 
 static INLINE int is_intrabc_block(const BlockModeInfo *block_mi) { return block_mi->use_intrabc; }
 
+static INLINE int is_inter_block(const BlockModeInfo *bloc_mi) {
+    return is_intrabc_block(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
+}
+
+void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
+
+int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
 
 #ifdef __cplusplus
 }

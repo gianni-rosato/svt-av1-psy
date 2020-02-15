@@ -14,7 +14,7 @@
 #include <immintrin.h>
 
 #include "EbDefinitions.h"
-#include "aom_dsp_rtcd.h"
+#include "common_dsp_rtcd.h"
 #include "txfm_common_avx2.h"
 
 #ifdef __cplusplus

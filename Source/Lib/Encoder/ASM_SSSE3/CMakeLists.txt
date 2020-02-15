@@ -6,8 +6,8 @@
 # ASM_SSSE3 Directory CMakeLists.txt
 
 # Include Encoder Subdirectories
-include_directories(../../../API
-        ../../Encoder/Codec
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSSE3/

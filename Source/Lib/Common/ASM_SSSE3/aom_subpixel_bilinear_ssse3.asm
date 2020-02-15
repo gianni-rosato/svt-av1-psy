@@ -11,7 +11,7 @@
 
 ;
 
-%include "x86_abi_support.asm"
+%include "../ASM_SSE2/x86_abi_support.asm"
 
 %macro GET_PARAM_4 0
     mov         rdx, arg(5)                 ;filter ptr

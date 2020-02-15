@@ -83,7 +83,9 @@ EbErrorType warped_motion_prediction(
         uint8_t                               bit_depth,
         EbBool                                perform_chroma);
 
+const uint8_t *av1_get_obmc_mask(int length);
 
+int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 
 #ifdef __cplusplus
 }

@@ -26,7 +26,7 @@
 #include "EbSegmentationParams.h"
 #include "EbAv1Structs.h"
 #include "EbMdRateEstimation.h"
-#include "EbCdef.h"
+#include "EbEncCdef.h"
 #include "Av1Common.h"
 
 #include "av1me.h"
