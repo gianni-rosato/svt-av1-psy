@@ -4221,26 +4221,26 @@ void half_pel_refinement_sb(
     uint32_t posb_buffer_index;
     uint32_t posh_buffer_index;
     uint32_t posj_buffer_index;
-    if (context_ptr->fractional_search64x64)
-        half_pel_refinement_block(context_ptr,
-                                  &(refBuffer[0]),
-                                  ref_stride,
-                                  context_ptr->p_best_ssd64x64,
-                                  0,
-                                  &(pos_b_buffer[0]),
-                                  &(pos_h_buffer[0]),
-                                  &(pos_j_buffer[0]),
-                                  64,
-                                  64,
-                                  x_search_area_origin,
-                                  y_search_area_origin,
-                                  search_area_height,
-                                  search_area_width,
-                                  context_ptr->p_best_sad_64x64,
-                                  context_ptr->p_best_mv64x64,
-                                  &context_ptr->psub_pel_direction64x64,
-                                  context_ptr->p_best_full_pel_mv64x64,
-                                  inetger_mv);
+    // 64x64 [1 partition]
+    half_pel_refinement_block(context_ptr,
+                                &(refBuffer[0]),
+                                ref_stride,
+                                context_ptr->p_best_ssd64x64,
+                                0,
+                                &(pos_b_buffer[0]),
+                                &(pos_h_buffer[0]),
+                                &(pos_j_buffer[0]),
+                                64,
+                                64,
+                                x_search_area_origin,
+                                y_search_area_origin,
+                                search_area_height,
+                                search_area_width,
+                                context_ptr->p_best_sad_64x64,
+                                context_ptr->p_best_mv64x64,
+                                &context_ptr->psub_pel_direction64x64,
+                                context_ptr->p_best_full_pel_mv64x64,
+                                inetger_mv);
     // 32x32 [4 partitions]
     for (pu_index = 0; pu_index < 4; ++pu_index) {
         block_index_shift_x = (pu_index & 0x01) << 5;
@@ -4704,63 +4704,6 @@ static void open_loop_me_half_pel_search_sblock(
         0);
 }
 
-static void quarter_pel_refinement_sb(
-    MeContext *context_ptr, //[IN/OUT]  ME context Ptr, used to get/update ME results
-    uint8_t *  pos_full, //[IN]
-    uint32_t   full_stride, //[IN]
-    uint8_t *  pos_b, //[IN]
-    uint8_t *  pos_h, //[IN]
-    uint8_t *  pos_j, //[IN]
-    int16_t    x_search_area_origin, //[IN] search area origin in the horizontal
-    // direction, used to point to reference samples
-    int16_t y_search_area_origin, //[IN] search area origin in the vertical
-    // direction, used to point to reference samples
-    uint32_t integer_mv);
-
-/*******************************************
- * open_loop_me_quarter_pel_search_sblock
- *******************************************/
-static void open_loop_me_quarter_pel_search_sblock(MeContext *context_ptr, uint32_t list_index,
-                                                   uint32_t ref_pic_index,
-                                                   int16_t  x_search_area_origin,
-                                                   int16_t  y_search_area_origin,
-                                                   uint32_t search_area_width,
-                                                   uint32_t search_area_height) {
-    uint32_t search_index_x, search_index_y;
-    for (search_index_y = 0; search_index_y < search_area_height; search_index_y++) {
-        for (search_index_x = 0; search_index_x < search_area_width; search_index_x++) {
-            int32_t  mvx        = (int32_t)search_index_x + x_search_area_origin;
-            int32_t  mvy        = (int32_t)search_index_y + y_search_area_origin;
-            uint32_t mv1        = (((uint16_t)mvy) << 18);
-            uint16_t mv2        = (((uint16_t)mvx << 2));
-            uint32_t mv0        = mv1 | mv2;
-            int16_t  x_mv       = _MVXT(mv0);
-            int16_t  y_mv       = _MVYT(mv0);
-            uint32_t inetger_mv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-            quarter_pel_refinement_sb(
-                context_ptr,
-                context_ptr->integer_buffer_ptr[list_index][ref_pic_index] + (ME_FILTER_TAP >> 1) +
-                    ((ME_FILTER_TAP >> 1) *
-                     context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
-                context_ptr->interpolated_full_stride[list_index][ref_pic_index],
-                &(context_ptr->pos_b_buffer[list_index][ref_pic_index]
-                                           [(ME_FILTER_TAP >> 1) *
-                                            context_ptr->interpolated_stride]), // points to b
-                // position of the
-                // figure above
-
-                &(context_ptr
-                      ->pos_h_buffer[list_index][ref_pic_index][1]), // points to h position of the
-                // figure above
-                &(context_ptr
-                      ->pos_j_buffer[list_index][ref_pic_index][0]), // points to j position of the
-                // figure above
-                x_search_area_origin,
-                y_search_area_origin,
-                inetger_mv);
-        }
-    }
-}
 /*******************************************
  * open_loop_me_fullpel_search_sblock
  *******************************************/
@@ -5545,7 +5488,7 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                         int16_t y_search_area_origin, // input parameter, search area origin in the
                         // vertical direction, used to point to
                         // reference samples
-                        EbBool disable8x8CuInMeFlag, EbBool enable_half_pel_32x32,
+                        EbBool enable_half_pel_32x32,
                         EbBool enable_half_pel_16x16, EbBool enable_half_pel_8x8) {
     uint32_t idx;
     uint32_t pu_index;
@@ -5556,23 +5499,23 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
     uint32_t pos_h_buffer_index;
     uint32_t pos_j_buffer_index;
 
-    if (context_ptr->fractional_search64x64)
-        pu_half_pel_refinement(scs_ptr,
-                               context_ptr,
-                               &(refBuffer[0]),
-                               ref_stride,
-                               context_ptr->p_best_ssd64x64,
-                               0,
-                               &(pos_b_buffer[0]),
-                               &(pos_h_buffer[0]),
-                               &(pos_j_buffer[0]),
-                               64,
-                               64,
-                               x_search_area_origin,
-                               y_search_area_origin,
-                               context_ptr->p_best_sad_64x64,
-                               context_ptr->p_best_mv64x64,
-                               &context_ptr->psub_pel_direction64x64);
+    // 64x64 [1 partition]
+    pu_half_pel_refinement(scs_ptr,
+                            context_ptr,
+                            &(refBuffer[0]),
+                            ref_stride,
+                            context_ptr->p_best_ssd64x64,
+                            0,
+                            &(pos_b_buffer[0]),
+                            &(pos_h_buffer[0]),
+                            &(pos_j_buffer[0]),
+                            64,
+                            64,
+                            x_search_area_origin,
+                            y_search_area_origin,
+                            context_ptr->p_best_sad_64x64,
+                            context_ptr->p_best_mv64x64,
+                            &context_ptr->psub_pel_direction64x64);
 
     if (enable_half_pel_32x32) {
         // 32x32 [4 partitions]
@@ -5642,41 +5585,39 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
     }
     if (enable_half_pel_8x8) {
         // 8x8   [64 partitions]
-        if (!disable8x8CuInMeFlag) {
-            for (pu_index = 0; pu_index < 64; ++pu_index) {
-                idx = tab8x8[pu_index]; // TODO bitwise this
+        for (pu_index = 0; pu_index < 64; ++pu_index) {
+            idx = tab8x8[pu_index]; // TODO bitwise this
 
-                pu_shift_x_index = (pu_index & 0x07) << 3;
-                pu_shift_y_index = (pu_index >> 3) << 3;
+            pu_shift_x_index = (pu_index & 0x07) << 3;
+            pu_shift_y_index = (pu_index >> 3) << 3;
 
-                blk_sb_buffer_index =
-                    pu_shift_x_index + pu_shift_y_index * context_ptr->sb_src_stride;
+            blk_sb_buffer_index =
+                pu_shift_x_index + pu_shift_y_index * context_ptr->sb_src_stride;
 
-                pos_b_buffer_index =
-                    pu_shift_x_index + pu_shift_y_index * context_ptr->interpolated_stride;
-                pos_h_buffer_index =
-                    pu_shift_x_index + pu_shift_y_index * context_ptr->interpolated_stride;
-                pos_j_buffer_index =
-                    pu_shift_x_index + pu_shift_y_index * context_ptr->interpolated_stride;
+            pos_b_buffer_index =
+                pu_shift_x_index + pu_shift_y_index * context_ptr->interpolated_stride;
+            pos_h_buffer_index =
+                pu_shift_x_index + pu_shift_y_index * context_ptr->interpolated_stride;
+            pos_j_buffer_index =
+                pu_shift_x_index + pu_shift_y_index * context_ptr->interpolated_stride;
 
-                pu_half_pel_refinement(
-                    scs_ptr,
-                    context_ptr,
-                    &(refBuffer[pu_shift_y_index * ref_stride + pu_shift_x_index]),
-                    ref_stride,
-                    &context_ptr->p_best_ssd8x8[idx],
-                    blk_sb_buffer_index,
-                    &(pos_b_buffer[pos_b_buffer_index]),
-                    &(pos_h_buffer[pos_h_buffer_index]),
-                    &(pos_j_buffer[pos_j_buffer_index]),
-                    8,
-                    8,
-                    x_search_area_origin,
-                    y_search_area_origin,
-                    &context_ptr->p_best_sad_8x8[idx],
-                    &context_ptr->p_best_mv8x8[idx],
-                    &context_ptr->psub_pel_direction8x8[idx]);
-            }
+            pu_half_pel_refinement(
+                scs_ptr,
+                context_ptr,
+                &(refBuffer[pu_shift_y_index * ref_stride + pu_shift_x_index]),
+                ref_stride,
+                &context_ptr->p_best_ssd8x8[idx],
+                blk_sb_buffer_index,
+                &(pos_b_buffer[pos_b_buffer_index]),
+                &(pos_h_buffer[pos_h_buffer_index]),
+                &(pos_j_buffer[pos_j_buffer_index]),
+                8,
+                8,
+                x_search_area_origin,
+                y_search_area_origin,
+                &context_ptr->p_best_sad_8x8[idx],
+                &context_ptr->p_best_mv8x8[idx],
+                &context_ptr->psub_pel_direction8x8[idx]);
         }
     }
     if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
@@ -6796,7 +6737,7 @@ static void quarter_pel_search_sb(
     // direction, used to point to reference samples
     int16_t y_search_area_origin, //[IN] search area origin in the vertical
     // direction, used to point to reference samples
-    EbBool disable8x8CuInMeFlag, EbBool enable_half_pel32x32, EbBool enable_half_pel16x16,
+    EbBool enable_half_pel32x32, EbBool enable_half_pel16x16,
     EbBool enable_half_pel8x8, EbBool enable_quarter_pel, EbBool ext_block_flag) {
     uint32_t pu_index;
 
@@ -6816,55 +6757,55 @@ static void quarter_pel_search_sb(
     int16_t  x_mv, y_mv;
     uint32_t nidx;
 
-    if (context_ptr->fractional_search64x64) {
-        x_mv = _MVXT(*context_ptr->p_best_mv64x64);
-        y_mv = _MVYT(*context_ptr->p_best_mv64x64);
+    // 64x64 [1 partition]
+    x_mv = _MVXT(*context_ptr->p_best_mv64x64);
+    y_mv = _MVYT(*context_ptr->p_best_mv64x64);
 
-        set_quarter_pel_refinement_inputs_on_the_fly(pos_Full,
-                                                     FullStride,
-                                                     pos_b,
-                                                     pos_h,
-                                                     pos_j,
-                                                     context_ptr->interpolated_stride,
-                                                     x_mv,
-                                                     y_mv,
-                                                     buf1,
-                                                     buf_1_stride,
-                                                     buf2,
-                                                     buf_2_stride);
+    set_quarter_pel_refinement_inputs_on_the_fly(pos_Full,
+                                                    FullStride,
+                                                    pos_b,
+                                                    pos_h,
+                                                    pos_j,
+                                                    context_ptr->interpolated_stride,
+                                                    x_mv,
+                                                    y_mv,
+                                                    buf1,
+                                                    buf_1_stride,
+                                                    buf2,
+                                                    buf_2_stride);
 
-        buf1[0] = buf1[0];
-        buf2[0] = buf2[0];
-        buf1[1] = buf1[1];
-        buf2[1] = buf2[1];
-        buf1[2] = buf1[2];
-        buf2[2] = buf2[2];
-        buf1[3] = buf1[3];
-        buf2[3] = buf2[3];
-        buf1[4] = buf1[4];
-        buf2[4] = buf2[4];
-        buf1[5] = buf1[5];
-        buf2[5] = buf2[5];
-        buf1[6] = buf1[6];
-        buf2[6] = buf2[6];
-        buf1[7] = buf1[7];
-        buf2[7] = buf2[7];
+    buf1[0] = buf1[0];
+    buf2[0] = buf2[0];
+    buf1[1] = buf1[1];
+    buf2[1] = buf2[1];
+    buf1[2] = buf1[2];
+    buf2[2] = buf2[2];
+    buf1[3] = buf1[3];
+    buf2[3] = buf2[3];
+    buf1[4] = buf1[4];
+    buf2[4] = buf2[4];
+    buf1[5] = buf1[5];
+    buf2[5] = buf2[5];
+    buf1[6] = buf1[6];
+    buf2[6] = buf2[6];
+    buf1[7] = buf1[7];
+    buf2[7] = buf2[7];
 
-        pu_quarter_pel_refinement_on_the_fly(context_ptr,
-                                             context_ptr->p_best_ssd64x64,
-                                             0,
-                                             buf1,
-                                             buf_1_stride,
-                                             buf2,
-                                             buf_2_stride,
-                                             64,
-                                             64,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             context_ptr->p_best_sad_64x64,
-                                             context_ptr->p_best_mv64x64,
-                                             context_ptr->psub_pel_direction64x64);
-    }
+    pu_quarter_pel_refinement_on_the_fly(context_ptr,
+                                            context_ptr->p_best_ssd64x64,
+                                            0,
+                                            buf1,
+                                            buf_1_stride,
+                                            buf2,
+                                            buf_2_stride,
+                                            64,
+                                            64,
+                                            x_search_area_origin,
+                                            y_search_area_origin,
+                                            context_ptr->p_best_sad_64x64,
+                                            context_ptr->p_best_mv64x64,
+                                            context_ptr->psub_pel_direction64x64);
+
     if (enable_quarter_pel && enable_half_pel32x32) {
         // 32x32 [4 partitions]
         for (pu_index = 0; pu_index < 4; ++pu_index) {
@@ -6985,63 +6926,61 @@ static void quarter_pel_search_sb(
 
     if (enable_quarter_pel && enable_half_pel8x8) {
         // 8x8   [64 partitions]
-        if (!disable8x8CuInMeFlag) {
-            for (pu_index = 0; pu_index < 64; ++pu_index) {
-                nidx = tab8x8[pu_index];
+        for (pu_index = 0; pu_index < 64; ++pu_index) {
+            nidx = tab8x8[pu_index];
 
-                x_mv = _MVXT(context_ptr->p_best_mv8x8[nidx]);
-                y_mv = _MVYT(context_ptr->p_best_mv8x8[nidx]);
+            x_mv = _MVXT(context_ptr->p_best_mv8x8[nidx]);
+            y_mv = _MVYT(context_ptr->p_best_mv8x8[nidx]);
 
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_Full,
-                                                             FullStride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf_1_stride,
-                                                             buf2,
-                                                             buf_2_stride);
+            set_quarter_pel_refinement_inputs_on_the_fly(pos_Full,
+                                                            FullStride,
+                                                            pos_b,
+                                                            pos_h,
+                                                            pos_j,
+                                                            context_ptr->interpolated_stride,
+                                                            x_mv,
+                                                            y_mv,
+                                                            buf1,
+                                                            buf_1_stride,
+                                                            buf2,
+                                                            buf_2_stride);
 
-                pu_shift_x_index = (pu_index & 0x07) << 3;
-                pu_shift_y_index = (pu_index >> 3) << 3;
+            pu_shift_x_index = (pu_index & 0x07) << 3;
+            pu_shift_y_index = (pu_index >> 3) << 3;
 
-                blk_sb_buffer_index = pu_shift_x_index + pu_shift_y_index * BLOCK_SIZE_64;
+            blk_sb_buffer_index = pu_shift_x_index + pu_shift_y_index * BLOCK_SIZE_64;
 
-                buf1[0] = buf1[0] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[0];
-                buf2[0] = buf2[0] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[0];
-                buf1[1] = buf1[1] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[1];
-                buf2[1] = buf2[1] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[1];
-                buf1[2] = buf1[2] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[2];
-                buf2[2] = buf2[2] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[2];
-                buf1[3] = buf1[3] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[3];
-                buf2[3] = buf2[3] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[3];
-                buf1[4] = buf1[4] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[4];
-                buf2[4] = buf2[4] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[4];
-                buf1[5] = buf1[5] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[5];
-                buf2[5] = buf2[5] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[5];
-                buf1[6] = buf1[6] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[6];
-                buf2[6] = buf2[6] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[6];
-                buf1[7] = buf1[7] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[7];
-                buf2[7] = buf2[7] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[7];
+            buf1[0] = buf1[0] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[0];
+            buf2[0] = buf2[0] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[0];
+            buf1[1] = buf1[1] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[1];
+            buf2[1] = buf2[1] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[1];
+            buf1[2] = buf1[2] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[2];
+            buf2[2] = buf2[2] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[2];
+            buf1[3] = buf1[3] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[3];
+            buf2[3] = buf2[3] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[3];
+            buf1[4] = buf1[4] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[4];
+            buf2[4] = buf2[4] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[4];
+            buf1[5] = buf1[5] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[5];
+            buf2[5] = buf2[5] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[5];
+            buf1[6] = buf1[6] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[6];
+            buf2[6] = buf2[6] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[6];
+            buf1[7] = buf1[7] + pu_shift_x_index + pu_shift_y_index * buf_1_stride[7];
+            buf2[7] = buf2[7] + pu_shift_x_index + pu_shift_y_index * buf_2_stride[7];
 
-                pu_quarter_pel_refinement_on_the_fly(context_ptr,
-                                                     &context_ptr->p_best_ssd8x8[nidx],
-                                                     blk_sb_buffer_index,
-                                                     buf1,
-                                                     buf_1_stride,
-                                                     buf2,
-                                                     buf_2_stride,
-                                                     8,
-                                                     8,
-                                                     x_search_area_origin,
-                                                     y_search_area_origin,
-                                                     &context_ptr->p_best_sad_8x8[nidx],
-                                                     &context_ptr->p_best_mv8x8[nidx],
-                                                     context_ptr->psub_pel_direction8x8[nidx]);
-            }
+            pu_quarter_pel_refinement_on_the_fly(context_ptr,
+                                                    &context_ptr->p_best_ssd8x8[nidx],
+                                                    blk_sb_buffer_index,
+                                                    buf1,
+                                                    buf_1_stride,
+                                                    buf2,
+                                                    buf_2_stride,
+                                                    8,
+                                                    8,
+                                                    x_search_area_origin,
+                                                    y_search_area_origin,
+                                                    &context_ptr->p_best_sad_8x8[nidx],
+                                                    &context_ptr->p_best_mv8x8[nidx],
+                                                    context_ptr->psub_pel_direction8x8[nidx]);
         }
     }
 
@@ -7623,1426 +7562,6 @@ static void quarter_pel_search_sb(
         }
     }
 
-    return;
-}
-/*******************************************
- * quarter_pel_refinemnet_block
- *   performs Quarter Pel refinement for each block
- *******************************************/
-static void quarter_pel_refinemnet_block(
-    MeContext *context_ptr, // [IN] ME context Ptr, used to get SB Ptr
-    uint32_t * p_best_ssd,
-    uint32_t   src_block_index, // [IN] PU origin, used to point to source samples
-    uint8_t ** buf1, // [IN]
-    uint32_t * buf1_stride,
-    uint8_t ** buf2, // [IN]
-    uint32_t * buf2_stride,
-    uint32_t   pu_width, // [IN]  PU width
-    uint32_t   pu_height, // [IN]  PU height
-    int16_t    x_search_area_origin, // [IN] search area origin in the horizontal
-    // direction, used to point to reference samples
-    int16_t y_search_area_origin, // [IN] search area origin in the vertical
-    // direction, used to point to reference samples
-    uint32_t candidate_mv, uint32_t *p_best_sad, uint32_t *p_best_mv, uint16_t is_frac_candidate) {
-    int16_t  x_mv           = _MVXT(candidate_mv);
-    int16_t  y_mv           = _MVYT(candidate_mv);
-    int16_t  search_index_x = ((x_mv + 2) >> 2) - x_search_area_origin;
-    int16_t  search_index_y = ((y_mv + 2) >> 2) - y_search_area_origin;
-    uint64_t dist;
-    int16_t  quarter_mv_x[8];
-    int16_t  quarter_mv_y[8];
-    int32_t  search_region_index1 = 0;
-    int32_t  search_region_index2 = 0;
-    quarter_mv_x[0]               = x_mv - 1; // L  position
-    quarter_mv_x[1]               = x_mv + 1; // R  position
-    quarter_mv_x[2]               = x_mv; // T  position
-    quarter_mv_x[3]               = x_mv; // b  position
-    quarter_mv_x[4]               = x_mv - 1; // TL position
-    quarter_mv_x[5]               = x_mv + 1; // TR position
-    quarter_mv_x[6]               = x_mv + 1; // BR position
-    quarter_mv_x[7]               = x_mv - 1; // BL position
-    quarter_mv_y[0]               = y_mv; // L  position
-    quarter_mv_y[1]               = y_mv; // R  position
-    quarter_mv_y[2]               = y_mv - 1; // T  position
-    quarter_mv_y[3]               = y_mv + 1; // b  position
-    quarter_mv_y[4]               = y_mv - 1; // TL position
-    quarter_mv_y[5]               = y_mv - 1; // TR position
-    quarter_mv_y[6]               = y_mv + 1; // BR position
-    quarter_mv_y[7]               = y_mv + 1; // BL position
-    // L position
-    search_region_index1 =
-        (int32_t)search_index_x + (int32_t)buf1_stride[0] * (int32_t)search_index_y;
-    search_region_index2 =
-        (int32_t)search_index_x + (int32_t)buf2_stride[0] * (int32_t)search_index_y;
-    dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-               ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                        BLOCK_SIZE_64,
-                                        buf1[0] + search_region_index1,
-                                        buf1_stride[0],
-                                        buf2[0] + search_region_index2,
-                                        buf2_stride[0],
-                                        pu_height,
-                                        pu_width)
-               : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                     ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                           BLOCK_SIZE_64 << 1,
-                                           buf1[0] + search_region_index1,
-                                           buf1_stride[0] << 1,
-                                           buf2[0] + search_region_index2,
-                                           buf2_stride[0] << 1,
-                                           pu_height >> 1,
-                                           pu_width))
-                           << 1
-                     : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                          BLOCK_SIZE_64,
-                                          buf1[0] + search_region_index1,
-                                          buf1_stride[0],
-                                          buf2[0] + search_region_index2,
-                                          buf2_stride[0],
-                                          pu_height,
-                                          pu_width);
-    if (context_ptr->fractional_search_method == SSD_SEARCH) {
-        if (dist < *p_best_ssd) {
-            *p_best_sad = (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                       BLOCK_SIZE_64,
-                                                       buf1[0] + search_region_index1,
-                                                       buf1_stride[0],
-                                                       buf2[0] + search_region_index2,
-                                                       buf2_stride[0],
-                                                       pu_height,
-                                                       pu_width);
-            *p_best_mv  = ((uint16_t)quarter_mv_y[0] << 16) | ((uint16_t)quarter_mv_x[0]);
-            *p_best_ssd = (uint32_t)dist;
-        }
-    } else {
-        if (dist < *p_best_sad) {
-            *p_best_sad = (uint32_t)dist;
-            *p_best_mv  = ((uint16_t)quarter_mv_y[0] << 16) | ((uint16_t)quarter_mv_x[0]);
-        }
-    }
-    // R positions
-    search_region_index1 =
-        (int32_t)search_index_x + (int32_t)buf1_stride[1] * (int32_t)search_index_y;
-    search_region_index2 =
-        (int32_t)search_index_x + (int32_t)buf2_stride[1] * (int32_t)search_index_y;
-    dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-               ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                        BLOCK_SIZE_64,
-                                        buf1[1] + search_region_index1,
-                                        buf1_stride[1],
-                                        buf2[1] + search_region_index2,
-                                        buf2_stride[1],
-                                        pu_height,
-                                        pu_width)
-               : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                     ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                           BLOCK_SIZE_64 << 1,
-                                           buf1[1] + search_region_index1,
-                                           buf1_stride[1] << 1,
-                                           buf2[1] + search_region_index2,
-                                           buf2_stride[1] << 1,
-                                           pu_height >> 1,
-                                           pu_width))
-                           << 1
-                     : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                          BLOCK_SIZE_64,
-                                          buf1[1] + search_region_index1,
-                                          buf1_stride[1],
-                                          buf2[1] + search_region_index2,
-                                          buf2_stride[1],
-                                          pu_height,
-                                          pu_width);
-    if (context_ptr->fractional_search_method == SSD_SEARCH) {
-        if (dist < *p_best_ssd) {
-            *p_best_sad = (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                       BLOCK_SIZE_64,
-                                                       buf1[1] + search_region_index1,
-                                                       buf1_stride[1],
-                                                       buf2[1] + search_region_index2,
-                                                       buf2_stride[1],
-                                                       pu_height,
-                                                       pu_width);
-            *p_best_mv  = ((uint16_t)quarter_mv_y[1] << 16) | ((uint16_t)quarter_mv_x[1]);
-            *p_best_ssd = (uint32_t)dist;
-        }
-    } else {
-        if (dist < *p_best_sad) {
-            *p_best_sad = (uint32_t)dist;
-            *p_best_mv  = ((uint16_t)quarter_mv_y[1] << 16) | ((uint16_t)quarter_mv_x[1]);
-        }
-    }
-    // T position
-    search_region_index1 =
-        (int32_t)search_index_x + (int32_t)buf1_stride[2] * (int32_t)search_index_y;
-    search_region_index2 =
-        (int32_t)search_index_x + (int32_t)buf2_stride[2] * (int32_t)search_index_y;
-    dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-               ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                        BLOCK_SIZE_64,
-                                        buf1[2] + search_region_index1,
-                                        buf1_stride[2],
-                                        buf2[2] + search_region_index2,
-                                        buf2_stride[2],
-                                        pu_height,
-                                        pu_width)
-               : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                     ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                           BLOCK_SIZE_64 << 1,
-                                           buf1[2] + search_region_index1,
-                                           buf1_stride[2] << 1,
-                                           buf2[2] + search_region_index2,
-                                           buf2_stride[2] << 1,
-                                           pu_height >> 1,
-                                           pu_width))
-                           << 1
-                     : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                          BLOCK_SIZE_64,
-                                          buf1[2] + search_region_index1,
-                                          buf1_stride[2],
-                                          buf2[2] + search_region_index2,
-                                          buf2_stride[2],
-                                          pu_height,
-                                          pu_width);
-    if (context_ptr->fractional_search_method == SSD_SEARCH) {
-        if (dist < *p_best_ssd) {
-            *p_best_sad = (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                       BLOCK_SIZE_64,
-                                                       buf1[2] + search_region_index1,
-                                                       buf1_stride[2],
-                                                       buf2[2] + search_region_index2,
-                                                       buf2_stride[2],
-                                                       pu_height,
-                                                       pu_width);
-            *p_best_mv  = ((uint16_t)quarter_mv_y[2] << 16) | ((uint16_t)quarter_mv_x[2]);
-            *p_best_ssd = (uint32_t)dist;
-        }
-    } else {
-        if (dist < *p_best_sad) {
-            *p_best_sad = (uint32_t)dist;
-            *p_best_mv  = ((uint16_t)quarter_mv_y[2] << 16) | ((uint16_t)quarter_mv_x[2]);
-        }
-    }
-    // b position
-    search_region_index1 =
-        (int32_t)search_index_x + (int32_t)buf1_stride[3] * (int32_t)search_index_y;
-    search_region_index2 =
-        (int32_t)search_index_x + (int32_t)buf2_stride[3] * (int32_t)search_index_y;
-    dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-               ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                        BLOCK_SIZE_64,
-                                        buf1[3] + search_region_index1,
-                                        buf1_stride[3],
-                                        buf2[3] + search_region_index2,
-                                        buf2_stride[3],
-                                        pu_height,
-                                        pu_width)
-               : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                     ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                           BLOCK_SIZE_64 << 1,
-                                           buf1[3] + search_region_index1,
-                                           buf1_stride[3] << 1,
-                                           buf2[3] + search_region_index2,
-                                           buf2_stride[3] << 1,
-                                           pu_height >> 1,
-                                           pu_width))
-                           << 1
-                     : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                          BLOCK_SIZE_64,
-                                          buf1[3] + search_region_index1,
-                                          buf1_stride[3],
-                                          buf2[3] + search_region_index2,
-                                          buf2_stride[3],
-                                          pu_height,
-                                          pu_width);
-    if (context_ptr->fractional_search_method == SSD_SEARCH) {
-        if (dist < *p_best_ssd) {
-            *p_best_sad = (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                       BLOCK_SIZE_64,
-                                                       buf1[3] + search_region_index1,
-                                                       buf1_stride[3],
-                                                       buf2[3] + search_region_index2,
-                                                       buf2_stride[3],
-                                                       pu_height,
-                                                       pu_width);
-            *p_best_mv  = ((uint16_t)quarter_mv_y[3] << 16) | ((uint16_t)quarter_mv_x[3]);
-            *p_best_ssd = (uint32_t)dist;
-        }
-    } else {
-        if (dist < *p_best_sad) {
-            *p_best_sad = (uint32_t)dist;
-            *p_best_mv  = ((uint16_t)quarter_mv_y[3] << 16) | ((uint16_t)quarter_mv_x[3]);
-        }
-    }
-    // TL position
-    if (!is_frac_candidate) {
-        search_region_index1 =
-            (int32_t)search_index_x + (int32_t)buf1_stride[4] * (int32_t)search_index_y;
-        search_region_index2 =
-            (int32_t)search_index_x + (int32_t)buf2_stride[4] * (int32_t)search_index_y;
-        dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-                   ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                            BLOCK_SIZE_64,
-                                            buf1[4] + search_region_index1,
-                                            buf1_stride[4],
-                                            buf2[4] + search_region_index2,
-                                            buf2_stride[4],
-                                            pu_height,
-                                            pu_width)
-                   : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                         ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                               BLOCK_SIZE_64 << 1,
-                                               buf1[4] + search_region_index1,
-                                               buf1_stride[4] << 1,
-                                               buf2[4] + search_region_index2,
-                                               buf2_stride[4] << 1,
-                                               pu_height >> 1,
-                                               pu_width))
-                               << 1
-                         : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                              BLOCK_SIZE_64,
-                                              buf1[4] + search_region_index1,
-                                              buf1_stride[4],
-                                              buf2[4] + search_region_index2,
-                                              buf2_stride[4],
-                                              pu_height,
-                                              pu_width);
-        if (context_ptr->fractional_search_method == SSD_SEARCH) {
-            if (dist < *p_best_ssd) {
-                *p_best_sad =
-                    (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                 BLOCK_SIZE_64,
-                                                 buf1[4] + search_region_index1,
-                                                 buf1_stride[4],
-                                                 buf2[4] + search_region_index2,
-                                                 buf2_stride[4],
-                                                 pu_height,
-                                                 pu_width);
-                *p_best_mv  = ((uint16_t)quarter_mv_y[4] << 16) | ((uint16_t)quarter_mv_x[4]);
-                *p_best_ssd = (uint32_t)dist;
-            }
-        } else {
-            if (dist < *p_best_sad) {
-                *p_best_sad = (uint32_t)dist;
-                *p_best_mv  = ((uint16_t)quarter_mv_y[4] << 16) | ((uint16_t)quarter_mv_x[4]);
-            }
-        }
-        // TR position
-        search_region_index1 =
-            (int32_t)search_index_x + (int32_t)buf1_stride[5] * (int32_t)search_index_y;
-        search_region_index2 =
-            (int32_t)search_index_x + (int32_t)buf2_stride[5] * (int32_t)search_index_y;
-        dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-                   ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                            BLOCK_SIZE_64,
-                                            buf1[5] + search_region_index1,
-                                            buf1_stride[5],
-                                            buf2[5] + search_region_index2,
-                                            buf2_stride[5],
-                                            pu_height,
-                                            pu_width)
-                   : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                         ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                               BLOCK_SIZE_64 << 1,
-                                               buf1[5] + search_region_index1,
-                                               buf1_stride[5] << 1,
-                                               buf2[5] + search_region_index2,
-                                               buf2_stride[5] << 1,
-                                               pu_height >> 1,
-                                               pu_width))
-                               << 1
-                         : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                              BLOCK_SIZE_64,
-                                              buf1[5] + search_region_index1,
-                                              buf1_stride[5],
-                                              buf2[5] + search_region_index2,
-                                              buf2_stride[5],
-                                              pu_height,
-                                              pu_width);
-        if (context_ptr->fractional_search_method == SSD_SEARCH) {
-            if (dist < *p_best_ssd) {
-                *p_best_sad =
-                    (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                 BLOCK_SIZE_64,
-                                                 buf1[5] + search_region_index1,
-                                                 buf1_stride[5],
-                                                 buf2[5] + search_region_index2,
-                                                 buf2_stride[5],
-                                                 pu_height,
-                                                 pu_width);
-                *p_best_mv  = ((uint16_t)quarter_mv_y[5] << 16) | ((uint16_t)quarter_mv_x[5]);
-                *p_best_ssd = (uint32_t)dist;
-            }
-        } else {
-            if (dist < *p_best_sad) {
-                *p_best_sad = (uint32_t)dist;
-                *p_best_mv  = ((uint16_t)quarter_mv_y[5] << 16) | ((uint16_t)quarter_mv_x[5]);
-            }
-        }
-        // BR position
-        search_region_index1 =
-            (int32_t)search_index_x + (int32_t)buf1_stride[6] * (int32_t)search_index_y;
-        search_region_index2 =
-            (int32_t)search_index_x + (int32_t)buf2_stride[6] * (int32_t)search_index_y;
-        dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-                   ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                            BLOCK_SIZE_64,
-                                            buf1[6] + search_region_index1,
-                                            buf1_stride[6],
-                                            buf2[6] + search_region_index2,
-                                            buf2_stride[6],
-                                            pu_height,
-                                            pu_width)
-                   : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                         ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                               BLOCK_SIZE_64 << 1,
-                                               buf1[6] + search_region_index1,
-                                               buf1_stride[6] << 1,
-                                               buf2[6] + search_region_index2,
-                                               buf2_stride[6] << 1,
-                                               pu_height >> 1,
-                                               pu_width))
-                               << 1
-                         : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                              BLOCK_SIZE_64,
-                                              buf1[6] + search_region_index1,
-                                              buf1_stride[6],
-                                              buf2[6] + search_region_index2,
-                                              buf2_stride[6],
-                                              pu_height,
-                                              pu_width);
-        if (context_ptr->fractional_search_method == SSD_SEARCH) {
-            if (dist < *p_best_ssd) {
-                *p_best_sad =
-                    (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                 BLOCK_SIZE_64,
-                                                 buf1[6] + search_region_index1,
-                                                 buf1_stride[6],
-                                                 buf2[6] + search_region_index2,
-                                                 buf2_stride[6],
-                                                 pu_height,
-                                                 pu_width);
-                *p_best_mv  = ((uint16_t)quarter_mv_y[6] << 16) | ((uint16_t)quarter_mv_x[6]);
-                *p_best_ssd = (uint32_t)dist;
-            }
-        } else {
-            if (dist < *p_best_sad) {
-                *p_best_sad = (uint32_t)dist;
-                *p_best_mv  = ((uint16_t)quarter_mv_y[6] << 16) | ((uint16_t)quarter_mv_x[6]);
-            }
-        }
-        // BL position
-        search_region_index1 =
-            (int32_t)search_index_x + (int32_t)buf1_stride[7] * (int32_t)search_index_y;
-        search_region_index2 =
-            (int32_t)search_index_x + (int32_t)buf2_stride[7] * (int32_t)search_index_y;
-        dist = (context_ptr->fractional_search_method == SSD_SEARCH)
-                   ? combined_averaging_ssd(&(context_ptr->sb_buffer[src_block_index]),
-                                            BLOCK_SIZE_64,
-                                            buf1[7] + search_region_index1,
-                                            buf1_stride[7],
-                                            buf2[7] + search_region_index2,
-                                            buf2_stride[7],
-                                            pu_height,
-                                            pu_width)
-                   : (context_ptr->fractional_search_method == SUB_SAD_SEARCH)
-                         ? (nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                               BLOCK_SIZE_64 << 1,
-                                               buf1[7] + search_region_index1,
-                                               buf1_stride[7] << 1,
-                                               buf2[7] + search_region_index2,
-                                               buf2_stride[7] << 1,
-                                               pu_height >> 1,
-                                               pu_width))
-                               << 1
-                         : nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                              BLOCK_SIZE_64,
-                                              buf1[7] + search_region_index1,
-                                              buf1_stride[7],
-                                              buf2[7] + search_region_index2,
-                                              buf2_stride[7],
-                                              pu_height,
-                                              pu_width);
-        if (context_ptr->fractional_search_method == SSD_SEARCH) {
-            if (dist < *p_best_ssd) {
-                *p_best_sad =
-                    (uint32_t)nxm_sad_avg_kernel(&(context_ptr->sb_buffer[src_block_index]),
-                                                 BLOCK_SIZE_64,
-                                                 buf1[7] + search_region_index1,
-                                                 buf1_stride[7],
-                                                 buf2[7] + search_region_index2,
-                                                 buf2_stride[7],
-                                                 pu_height,
-                                                 pu_width);
-                *p_best_mv  = ((uint16_t)quarter_mv_y[7] << 16) | ((uint16_t)quarter_mv_x[7]);
-                *p_best_ssd = (uint32_t)dist;
-            }
-        } else {
-            if (dist < *p_best_sad) {
-                *p_best_sad = (uint32_t)dist;
-                *p_best_mv  = ((uint16_t)quarter_mv_y[7] << 16) | ((uint16_t)quarter_mv_x[7]);
-            }
-        }
-    }
-    return;
-}
-/*******************************************
- * quarter_pel_refinement_sb
- *   performs Quarter Pel refinement
- *******************************************/
-void quarter_pel_refinement_sb(
-    MeContext *context_ptr, //[IN/OUT]  ME context Ptr, used to get/update ME results
-    uint8_t *  pos_full, //[IN]
-    uint32_t   full_stride, //[IN]
-    uint8_t *  pos_b, //[IN]
-    uint8_t *  pos_h, //[IN]
-    uint8_t *  pos_j, //[IN]
-    int16_t    x_search_area_origin, //[IN] search area origin in the horizontal
-    // direction, used to point to reference samples
-    int16_t y_search_area_origin, //[IN] search area origin in the vertical
-    // direction, used to point to reference samples
-    uint32_t integer_mv) {
-    uint32_t pu_index;
-    uint32_t block_index_shift_x;
-    uint32_t block_index_shift_y;
-    uint32_t src_block_index;
-    uint8_t *buf1[8];
-    uint8_t *buf2[8];
-    uint32_t buf1_stride[8];
-    uint32_t buf2_stride[8];
-    int16_t  x_mv, y_mv;
-    uint32_t nidx;
-    int16_t  int_x_mv           = _MVXT(integer_mv);
-    int16_t  int_y_mv           = _MVYT(integer_mv);
-    int16_t  int_x_search_index = ((int_x_mv + 2) >> 2) - x_search_area_origin;
-    int16_t  int_y_search_index = ((int_y_mv + 2) >> 2) - y_search_area_origin;
-    int16_t  x_best_mv;
-    int16_t  y_best_mv;
-    int16_t  best_x_search_index;
-    int16_t  best_y_search_index;
-    int16_t  dis_x;
-    int16_t  dis_y;
-    int8_t   skip_qp_pel = 0;
-    uint32_t testmv;
-    int16_t  it;
-    int16_t  num_qp_it = 2;
-    if (context_ptr->fractional_search64x64) {
-        x_best_mv           = _MVXT(*context_ptr->p_best_full_pel_mv64x64);
-        y_best_mv           = _MVYT(*context_ptr->p_best_full_pel_mv64x64);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                buf1[0] = buf1[0];
-                buf2[0] = buf2[0];
-                buf1[1] = buf1[1];
-                buf2[1] = buf2[1];
-                buf1[2] = buf1[2];
-                buf2[2] = buf2[2];
-                buf1[3] = buf1[3];
-                buf2[3] = buf2[3];
-                buf1[4] = buf1[4];
-                buf2[4] = buf2[4];
-                buf1[5] = buf1[5];
-                buf2[5] = buf2[5];
-                buf1[6] = buf1[6];
-                buf2[6] = buf2[6];
-                buf1[7] = buf1[7];
-                buf2[7] = buf2[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             context_ptr->p_best_ssd64x64,
-                                             0,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             64,
-                                             64,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             context_ptr->p_best_sad_64x64,
-                                             context_ptr->p_best_mv64x64,
-                                             it);
-            }
-        }
-    }
-    // 32x32 [4 partitions]
-    for (pu_index = 0; pu_index < 4; ++pu_index) {
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv32x32[pu_index]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv32x32[pu_index]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                block_index_shift_x = (pu_index & 0x01) << 5;
-                block_index_shift_y = (pu_index >> 1) << 5;
-                src_block_index     = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd32x32[pu_index],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             32,
-                                             32,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_32x32[pu_index],
-                                             &context_ptr->p_best_mv32x32[pu_index],
-                                             it);
-            }
-        }
-    }
-    // 16x16 [16 partitions]
-    for (pu_index = 0; pu_index < 16; ++pu_index) {
-        nidx                = tab16x16[pu_index];
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv16x16[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv16x16[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                block_index_shift_x = (pu_index & 0x03) << 4;
-                block_index_shift_y = (pu_index >> 2) << 4;
-                src_block_index     = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd16x16[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             16,
-                                             16,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_16x16[nidx],
-                                             &context_ptr->p_best_mv16x16[nidx],
-                                             it);
-            }
-        }
-    }
-    // 8x8   [64 partitions]
-    for (pu_index = 0; pu_index < 64; ++pu_index) {
-        nidx                = tab8x8[pu_index];
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv8x8[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv8x8[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                block_index_shift_x = (pu_index & 0x07) << 3;
-                block_index_shift_y = (pu_index >> 3) << 3;
-                src_block_index     = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd8x8[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             8,
-                                             8,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_8x8[nidx],
-                                             &context_ptr->p_best_mv8x8[nidx],
-                                             it);
-            }
-        }
-    }
-    // 64x32
-    for (pu_index = 0; pu_index < 2; ++pu_index) {
-        block_index_shift_x = 0;
-        block_index_shift_y = pu_index << 5;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv64x32[pu_index]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv64x32[pu_index]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd64x32[pu_index],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             64,
-                                             32,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_64x32[pu_index],
-                                             &context_ptr->p_best_mv64x32[pu_index],
-                                             it);
-            }
-        }
-    }
-    // 32x16
-    for (pu_index = 0; pu_index < 8; ++pu_index) {
-        nidx                = tab32x16[pu_index];
-        block_index_shift_x = (pu_index & 0x01) << 5;
-        block_index_shift_y = (pu_index >> 1) << 4;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv32x16[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv32x16[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd32x16[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             32,
-                                             16,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_32x16[nidx],
-                                             &context_ptr->p_best_mv32x16[nidx],
-                                             it);
-            }
-        }
-    }
-    // 16x8
-    for (pu_index = 0; pu_index < 32; ++pu_index) {
-        nidx                = tab16x8[pu_index];
-        block_index_shift_x = (pu_index & 0x03) << 4;
-        block_index_shift_y = (pu_index >> 2) << 3;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv16x8[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv16x8[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd16x8[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             16,
-                                             8,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_16x8[nidx],
-                                             &context_ptr->p_best_mv16x8[nidx],
-                                             it);
-            }
-        }
-    }
-    // 32x64
-    for (pu_index = 0; pu_index < 2; ++pu_index) {
-        block_index_shift_x = pu_index << 5;
-        block_index_shift_y = 0;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv32x64[pu_index]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv32x64[pu_index]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd32x64[pu_index],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             32,
-                                             64,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_32x64[pu_index],
-                                             &context_ptr->p_best_mv32x64[pu_index],
-                                             it);
-            }
-        }
-    }
-    // 16x32
-    for (pu_index = 0; pu_index < 8; ++pu_index) {
-        nidx                = tab16x32[pu_index];
-        block_index_shift_x = (pu_index & 0x03) << 4;
-        block_index_shift_y = (pu_index >> 2) << 5;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv16x32[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv16x32[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd16x32[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             16,
-                                             32,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_16x32[nidx],
-                                             &context_ptr->p_best_mv16x32[nidx],
-                                             it);
-            }
-        }
-    }
-    // 8x16
-    for (pu_index = 0; pu_index < 32; ++pu_index) {
-        nidx                = tab8x16[pu_index];
-        block_index_shift_x = (pu_index & 0x07) << 3;
-        block_index_shift_y = (pu_index >> 3) << 4;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv8x16[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv8x16[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd8x16[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             8,
-                                             16,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_8x16[nidx],
-                                             &context_ptr->p_best_mv8x16[nidx],
-                                             it);
-            }
-        }
-    }
-    // 32x8
-    for (pu_index = 0; pu_index < 16; ++pu_index) {
-        nidx                = tab32x8[pu_index];
-        block_index_shift_x = (pu_index & 0x01) << 5;
-        block_index_shift_y = (pu_index >> 1) << 3;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv32x8[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv32x8[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd32x8[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             32,
-                                             8,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_32x8[nidx],
-                                             &context_ptr->p_best_mv32x8[nidx],
-                                             it);
-            }
-        }
-    }
-
-    // 8x32
-    for (pu_index = 0; pu_index < 16; ++pu_index) {
-        nidx                = tab8x32[pu_index];
-        block_index_shift_x = (pu_index & 0x07) << 3;
-        block_index_shift_y = (pu_index >> 3) << 5;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv8x32[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv8x32[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd8x32[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             8,
-                                             32,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_8x32[nidx],
-                                             &context_ptr->p_best_mv8x32[nidx],
-                                             it);
-            }
-        }
-    }
-
-    // 64x16
-    for (pu_index = 0; pu_index < 4; ++pu_index) {
-        nidx                = pu_index;
-        block_index_shift_x = 0;
-        block_index_shift_y = pu_index << 4;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv64x16[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv64x16[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd64x16[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             64,
-                                             16,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_64x16[nidx],
-                                             &context_ptr->p_best_mv64x16[nidx],
-                                             it);
-            }
-        }
-    }
-    // 16x64
-    for (pu_index = 0; pu_index < 4; ++pu_index) {
-        nidx                = pu_index;
-        block_index_shift_x = pu_index << 4;
-        block_index_shift_y = 0;
-        x_best_mv           = _MVXT(context_ptr->p_best_full_pel_mv16x64[nidx]);
-        y_best_mv           = _MVYT(context_ptr->p_best_full_pel_mv16x64[nidx]);
-        best_x_search_index = ((x_best_mv + 2) >> 2) - x_search_area_origin;
-        best_y_search_index = ((y_best_mv + 2) >> 2) - y_search_area_origin;
-        dis_x               = ABS(int_x_search_index - best_x_search_index);
-        dis_y               = ABS(int_y_search_index - best_y_search_index);
-        skip_qp_pel         = 0;
-        if ((dis_x) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if ((dis_y) > Q_PEL_SEARCH_WIND) skip_qp_pel = 1;
-        if (!skip_qp_pel) {
-            for (it = 0; it < num_qp_it; it++) {
-                x_mv   = (int16_t)_MVXT(integer_mv) + (2 * it);
-                y_mv   = (int16_t)_MVYT(integer_mv) + (2 * it);
-                testmv = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-                set_quarter_pel_refinement_inputs_on_the_fly(pos_full,
-                                                             full_stride,
-                                                             pos_b,
-                                                             pos_h,
-                                                             pos_j,
-                                                             context_ptr->interpolated_stride,
-                                                             x_mv,
-                                                             y_mv,
-                                                             buf1,
-                                                             buf1_stride,
-                                                             buf2,
-                                                             buf2_stride);
-                src_block_index = block_index_shift_x + block_index_shift_y * BLOCK_SIZE_64;
-                buf1[0] = buf1[0] + block_index_shift_x + block_index_shift_y * buf1_stride[0];
-                buf2[0] = buf2[0] + block_index_shift_x + block_index_shift_y * buf2_stride[0];
-                buf1[1] = buf1[1] + block_index_shift_x + block_index_shift_y * buf1_stride[1];
-                buf2[1] = buf2[1] + block_index_shift_x + block_index_shift_y * buf2_stride[1];
-                buf1[2] = buf1[2] + block_index_shift_x + block_index_shift_y * buf1_stride[2];
-                buf2[2] = buf2[2] + block_index_shift_x + block_index_shift_y * buf2_stride[2];
-                buf1[3] = buf1[3] + block_index_shift_x + block_index_shift_y * buf1_stride[3];
-                buf2[3] = buf2[3] + block_index_shift_x + block_index_shift_y * buf2_stride[3];
-                buf1[4] = buf1[4] + block_index_shift_x + block_index_shift_y * buf1_stride[4];
-                buf2[4] = buf2[4] + block_index_shift_x + block_index_shift_y * buf2_stride[4];
-                buf1[5] = buf1[5] + block_index_shift_x + block_index_shift_y * buf1_stride[5];
-                buf2[5] = buf2[5] + block_index_shift_x + block_index_shift_y * buf2_stride[5];
-                buf1[6] = buf1[6] + block_index_shift_x + block_index_shift_y * buf1_stride[6];
-                buf2[6] = buf2[6] + block_index_shift_x + block_index_shift_y * buf2_stride[6];
-                buf1[7] = buf1[7] + block_index_shift_x + block_index_shift_y * buf1_stride[7];
-                buf2[7] = buf2[7] + block_index_shift_x + block_index_shift_y * buf2_stride[7];
-                quarter_pel_refinemnet_block(context_ptr,
-                                             &context_ptr->p_best_ssd16x64[nidx],
-                                             src_block_index,
-                                             buf1,
-                                             buf1_stride,
-                                             buf2,
-                                             buf2_stride,
-                                             16,
-                                             64,
-                                             x_search_area_origin,
-                                             y_search_area_origin,
-                                             testmv,
-                                             &context_ptr->p_best_sad_16x64[nidx],
-                                             &context_ptr->p_best_mv16x64[nidx],
-                                             it);
-            }
-        }
-    }
     return;
 }
 void hme_one_quadrant_level_0(
@@ -12151,20 +10670,6 @@ EbErrorType motion_estimate_sb(
                                                                 search_area_width,
                                                                 search_area_height);
                         }
-
-                        if (context_ptr->quarter_pel_mode == EX_QP_MODE) {
-                            // Quarter-Pel search
-                            memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
-                                   context_ptr->p_sb_best_mv[list_index][ref_pic_index],
-                                   MAX_ME_PU_COUNT * sizeof(uint32_t));
-                            open_loop_me_quarter_pel_search_sblock(context_ptr,
-                                                                   list_index,
-                                                                   ref_pic_index,
-                                                                   x_search_area_origin,
-                                                                   y_search_area_origin,
-                                                                   search_area_width,
-                                                                   search_area_height);
-                        }
                     } else {
                         initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
@@ -12288,44 +10793,40 @@ EbErrorType motion_estimate_sb(
                             &(context_ptr->pos_j_buffer[list_index][ref_pic_index][0]),
                             x_search_area_origin,
                             y_search_area_origin,
-                            pcs_ptr->cu8x8_mode == CU_8x8_MODE_1,
                             enable_half_pel_32x32,
                             enable_half_pel_16x16,
                             enable_half_pel_8x8);
                     }
 
-                    if (context_ptr->quarter_pel_mode == REFINMENT_QP_MODE) {
-                        // Quarter-Pel Refinement [8 search positions]
-                        quarter_pel_search_sb(
-                            context_ptr,
-                            context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
-                                (ME_FILTER_TAP >> 1) +
-                                ((ME_FILTER_TAP >> 1) *
-                                 context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
-                            context_ptr->interpolated_full_stride[list_index][ref_pic_index],
-                            &(context_ptr
-                                  ->pos_b_buffer[list_index][ref_pic_index]
-                                                [(ME_FILTER_TAP >> 1) *
-                                                 context_ptr->interpolated_stride]), // points to b
-                            // position of
-                            // the figure
-                            // above
+                    // Quarter-Pel Refinement [8 search positions]
+                    quarter_pel_search_sb(
+                        context_ptr,
+                        context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
+                            (ME_FILTER_TAP >> 1) +
+                            ((ME_FILTER_TAP >> 1) *
+                                context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
+                        context_ptr->interpolated_full_stride[list_index][ref_pic_index],
+                        &(context_ptr
+                                ->pos_b_buffer[list_index][ref_pic_index]
+                                            [(ME_FILTER_TAP >> 1) *
+                                                context_ptr->interpolated_stride]), // points to b
+                        // position of
+                        // the figure
+                        // above
 
-                            &(context_ptr->pos_h_buffer[list_index][ref_pic_index]
-                                                       [1]), // points to h position
-                            // of the figure above
-                            &(context_ptr->pos_j_buffer[list_index][ref_pic_index]
-                                                       [0]), // points to j position
-                            // of the figure above
-                            x_search_area_origin,
-                            y_search_area_origin,
-                            pcs_ptr->cu8x8_mode == CU_8x8_MODE_1,
-                            enable_half_pel_32x32,
-                            enable_half_pel_16x16,
-                            enable_half_pel_8x8,
-                            enable_quarter_pel,
-                            pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
-                    }
+                        &(context_ptr->pos_h_buffer[list_index][ref_pic_index]
+                                                    [1]), // points to h position
+                        // of the figure above
+                        &(context_ptr->pos_j_buffer[list_index][ref_pic_index]
+                                                    [0]), // points to j position
+                        // of the figure above
+                        x_search_area_origin,
+                        y_search_area_origin,
+                        enable_half_pel_32x32,
+                        enable_half_pel_16x16,
+                        enable_half_pel_8x8,
+                        enable_quarter_pel,
+                        pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
                 }
                 if (is_nsq_table_used && ref_pic_index == 0) {
                     context_ptr->p_best_nsq64x64 =
@@ -12427,18 +10928,15 @@ EbErrorType motion_estimate_sb(
                 }
             }
             if (num_of_list_to_search) {
-                if (pcs_ptr->cu8x8_mode == CU_8x8_MODE_0 || pu_index < 21 ||
-                    (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE)) {
-                    bi_prediction_search(scs_ptr,
-                                         context_ptr,
-                                         pu_index,
-                                         cand_index,
-                                         pcs_ptr->ref_list0_count,
-                                         pcs_ptr->ref_list1_count,
-                                         &total_me_candidate_index,
-                                         ref_type_table,
-                                         pcs_ptr);
-                }
+                bi_prediction_search(scs_ptr,
+                                        context_ptr,
+                                        pu_index,
+                                        cand_index,
+                                        pcs_ptr->ref_list0_count,
+                                        pcs_ptr->ref_list1_count,
+                                        &total_me_candidate_index,
+                                        ref_type_table,
+                                        pcs_ptr);
             }
 
             // Sorting of the ME candidates

@@ -337,7 +337,6 @@ typedef struct ModeDecisionContext {
     uint32_t sq_weight;
 
     // signal for enabling shortcut to skip search depths
-    uint8_t      enable_auto_max_partition;
     MD_COMP_TYPE compound_types_to_try;
     uint8_t      best_me_cand_only_flag;
     uint8_t      dc_cand_only_flag;

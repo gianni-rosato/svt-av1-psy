@@ -240,10 +240,6 @@ typedef struct EbConfig {
     ****************************************/
     int inter_intra_compound;
     /****************************************
-     * fractional search 64x64
-    ****************************************/
-    int fract_search_64;
-    /****************************************
      * motion field motion vector
     ****************************************/
     int enable_mfmv;
@@ -460,9 +456,6 @@ typedef struct EbConfig {
     uint64_t md_fast_cost_cand_prune_th;
     uint64_t md_full_cost_class_prune_th;
     uint64_t md_full_cost_cand_prune_th;
-
-    // signal for enabling shortcut to skip search depths
-    uint8_t enable_auto_max_partition;
 
     // prediction structure
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];

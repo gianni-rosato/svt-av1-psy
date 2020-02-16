@@ -273,12 +273,6 @@ void refinement_prediction_loop(
                         refinement_level = ndp_level_0[depth];
                     }
 
-                if (pcs_ptr->parent_pcs_ptr->cu8x8_mode == CU_8x8_MODE_1) {
-                    refinement_level = ((refinement_level & REFINEMENT_Pp1) && depth == 2) ? refinement_level - REFINEMENT_Pp1 :
-                        ((refinement_level & REFINEMENT_Pp2) && depth == 1) ? refinement_level - REFINEMENT_Pp2 :
-                        ((refinement_level & REFINEMENT_Pp3) && depth == 0) ? refinement_level - REFINEMENT_Pp3 : refinement_level;
-                }
-
                 uint8_t lowest_level = 0x00;
 
                 lowest_level = (refinement_level & REFINEMENT_Pp3) ? REFINEMENT_Pp3 : (refinement_level & REFINEMENT_Pp2) ? REFINEMENT_Pp2 : (refinement_level & REFINEMENT_Pp1) ? REFINEMENT_Pp1 :

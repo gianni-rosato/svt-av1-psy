@@ -185,8 +185,6 @@ typedef struct MeshPattern {
     int interval;
 } MeshPattern;
 
-enum { NOT_IN_USE, DIRECT_PRED, RELAXED_PRED, ADAPT_PRED } UENUM1BYTE(MAX_PART_PRED_MODE);
-
 typedef struct SpeedFeatures {
     // TODO(jingning): combine the related motion search speed features
     // This allows us to use motion search at other sizes as a starting
@@ -204,10 +202,6 @@ typedef struct SpeedFeatures {
 
     // Pattern to be used for any exhaustive mesh searches.
     MeshPattern mesh_patterns[MAX_MESH_STEP];
-    // Sets min and max square partition levels for this superblock based on
-    // motion vector and prediction error distribution produced from 16x16
-    // simple motion search
-    MAX_PART_PRED_MODE auto_max_partition_based_on_simple_motion;
 
 } SpeedFeatures;
 
@@ -738,7 +732,6 @@ typedef struct PictureParentControlSet {
     EbEncMode         enc_mode;
     EbEncMode         snd_pass_enc_mode;
     EB_SB_DEPTH_MODE *sb_depth_mode_array;
-    EbCu8x8Mode       cu8x8_mode;
     EbBool            use_src_ref;
     EbBool            limit_ois_to_dc_mode_flag;
 

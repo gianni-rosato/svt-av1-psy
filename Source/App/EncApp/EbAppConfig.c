@@ -65,7 +65,6 @@
 #define CLASS_12_TOKEN "-class-12"
 #define EDGE_SKIP_ANGLE_INTRA_TOKEN "-intra-edge-skp"
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
-#define FRAC_SEARCH_64_TOKEN "-frac-search-64"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
 #define TRELLIS_ENABLE_TOKEN "-trellis"
@@ -133,7 +132,6 @@
 #define TILE_COL_TOKEN "-tile-columns"
 
 #define SQ_WEIGHT_TOKEN "-sqw"
-#define ENABLE_AMP_TOKEN "-enable-amp"
 #define CHROMA_MODE_TOKEN "-chroma-mode"
 
 #define SCENE_CHANGE_DETECTION_TOKEN "-scd"
@@ -314,9 +312,6 @@ static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
 };
 static void set_interintra_compound_flag(const char *value, EbConfig *cfg) {
     cfg->inter_intra_compound = strtol(value, NULL, 0);
-};
-static void set_fractional_search_64_flag(const char *value, EbConfig *cfg) {
-    cfg->fract_search_64 = strtol(value, NULL, 0);
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->enable_mfmv = strtol(value, NULL, 0);
@@ -610,11 +605,6 @@ static void set_md_full_cost_cand_prune_th(const char *value, EbConfig *cfg) {
     cfg->md_full_cost_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
     if (cfg->md_full_cost_cand_prune_th == 0) cfg->md_full_cost_cand_prune_th = (uint64_t)~0;
 }
-
-static void set_enable_auto_max_partition(const char *value, EbConfig *cfg) {
-    cfg->enable_auto_max_partition = (uint8_t)strtol(value, NULL, 0);
-};
-
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
     ARRAY_INPUT // Configuration parameters that have multiple values as input
@@ -843,12 +833,6 @@ ConfigEntry config_entry_specific[] = {
      INTER_INTRA_COMPOUND_TOKEN,
      "Enable interintra compound (0: OFF, 1: ON (default))",
      set_interintra_compound_flag},
-    // FRACTIONAL SEARCH 64x64
-    {SINGLE_INPUT,
-     FRAC_SEARCH_64_TOKEN,
-     "Enable fractional search for 64x64 (0: OFF, 1: ON, -1: DEFAULT)",
-     set_fractional_search_64_flag},
-
     // OBMC
     {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
     // RDOQ
@@ -993,10 +977,7 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT, ALTREF_NFRAMES, "AltRef max frames([0-10], default: 7)", set_altref_n_frames},
     {SINGLE_INPUT, ENABLE_OVERLAYS, "Enable the insertion of an extra picture called overlayer picture which will be used as an extra reference frame for the base-layer picture(0: OFF[default], 1: ON)", set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
-
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H and V shapes([75-100], default: 100)", set_square_weight},
-    {SINGLE_INPUT, ENABLE_AMP_TOKEN, "Auto max partition: Decide whether to skip 128x128 or not(0: OFF, 1: ON[default])", set_enable_auto_max_partition},
-
     {SINGLE_INPUT,
      MD_FAST_PRUNE_C_TH,
      "Set MD fast prune class threshold[5-200]",
@@ -1117,9 +1098,6 @@ ConfigEntry config_entry[] = {
      set_edge_skip_angle_intra_flag},
     // INTER INTRA COMPOUND
     {SINGLE_INPUT, INTER_INTRA_COMPOUND_TOKEN, "InterIntraCompound", set_interintra_compound_flag},
-    // FRACTIONAL SEARCH 64x64
-    {SINGLE_INPUT, FRAC_SEARCH_64_TOKEN, "FractionalSearch64", set_fractional_search_64_flag},
-
     // OBMC
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
     // RDOQ
@@ -1229,8 +1207,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
 
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
-    {SINGLE_INPUT, ENABLE_AMP_TOKEN, "AutomaxPartition", set_enable_auto_max_partition},
-
     {SINGLE_INPUT, MD_FAST_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_fast_cost_class_prune_th},
     {SINGLE_INPUT, MD_FAST_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_fast_cost_cand_prune_th},
     {SINGLE_INPUT, MD_FULL_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_full_cost_class_prune_th},
@@ -1269,7 +1245,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->combine_class_12                          = DEFAULT;
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;
-    config_ptr->fract_search_64                           = DEFAULT;
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->enable_trellis                            = DEFAULT;
@@ -1338,7 +1313,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // end - super-resolution support
 
     config_ptr->sq_weight                 = 100;
-    config_ptr->enable_auto_max_partition = 1;
 
     config_ptr->md_fast_cost_cand_prune_th  = 75;
     config_ptr->md_fast_cost_class_prune_th = 100;

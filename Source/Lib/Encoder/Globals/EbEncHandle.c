@@ -2078,8 +2078,6 @@ void copy_api_from_app(
     scs_ptr->static_config.edge_skp_angle_intra         = ((EbSvtAv1EncConfiguration*)config_struct)->edge_skp_angle_intra;
     // inter intra compoound
     scs_ptr->static_config.inter_intra_compound         = ((EbSvtAv1EncConfiguration*)config_struct)->inter_intra_compound;
-    // fractional search 64x64
-    scs_ptr->static_config.fract_search_64              = ((EbSvtAv1EncConfiguration*)config_struct)->fract_search_64;
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
     // redundant block
@@ -2250,7 +2248,6 @@ void copy_api_from_app(
     scs_ptr->static_config.superres_qthres = config_struct->superres_qthres;
 
     scs_ptr->static_config.sq_weight = config_struct->sq_weight;
-    scs_ptr->static_config.enable_auto_max_partition = config_struct->enable_auto_max_partition;
 
     scs_ptr->static_config.md_fast_cost_cand_prune_th = config_struct->md_fast_cost_cand_prune_th;
     scs_ptr->static_config.md_fast_cost_class_prune_th = config_struct->md_fast_cost_class_prune_th;
@@ -2707,11 +2704,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-    if (config->fract_search_64 != 0 && config->fract_search_64 != 1 && config->fract_search_64 != -1) {
-      SVT_LOG("Error instance %u: Invalid fractional search for 64x64 flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->fract_search_64);
-      return_error = EB_ErrorBadParameter;
-    }
-
     if (config->enable_mfmv != 0 && config->enable_mfmv != 1 && config->enable_mfmv != -1) {
       SVT_LOG("Error instance %u: Invalid motion field motion vector flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_mfmv);
       return_error = EB_ErrorBadParameter;
@@ -2899,7 +2891,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->edge_skp_angle_intra = DEFAULT;
     config_ptr->combine_class_12 = DEFAULT;
     config_ptr->inter_intra_compound = DEFAULT;
-    config_ptr->fract_search_64 = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
     config_ptr->enable_redundant_blk = DEFAULT;
     config_ptr->enable_trellis = DEFAULT;
@@ -3002,7 +2993,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->md_full_cost_cand_prune_th = 15;
     config_ptr->md_full_cost_class_prune_th = 25;
 
-    config_ptr->enable_auto_max_partition = 1;    return return_error;
+    return return_error;
 }
 //#define DEBUG_BUFFERS
 static void print_lib_params(

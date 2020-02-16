@@ -201,14 +201,6 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
     else
         context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
-    if (scs_ptr->static_config.fract_search_64 == DEFAULT)
-        if (pcs_ptr->sc_content_detected)
-            context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
-        else
-            context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
-    else
-        context_ptr->me_context_ptr->fractional_search64x64 =
-            scs_ptr->static_config.fract_search_64;
 
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
@@ -229,14 +221,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->use_subpel_flag = scs_ptr->static_config.enable_subpel;
     if (MR_MODE) {
         context_ptr->me_context_ptr->half_pel_mode    = EX_HP_MODE;
-        context_ptr->me_context_ptr->quarter_pel_mode = EX_QP_MODE;
     } else if (enc_mode == ENC_M0) {
         context_ptr->me_context_ptr->half_pel_mode =
             ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? REFINMENT_HP_MODE : EX_HP_MODE;
-        context_ptr->me_context_ptr->quarter_pel_mode = REFINMENT_QP_MODE;
     } else {
         context_ptr->me_context_ptr->half_pel_mode    = REFINMENT_HP_MODE;
-        context_ptr->me_context_ptr->quarter_pel_mode = REFINMENT_QP_MODE;
     }
 
     // Set fractional search model
@@ -382,18 +371,6 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     else
         context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
 
-    if (scs_ptr->static_config.fract_search_64 == DEFAULT)
-        if (pcs_ptr->sc_content_detected)
-            if (enc_mode <= ENC_M5)
-                context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
-            else
-                context_ptr->me_context_ptr->fractional_search64x64 = EB_FALSE;
-        else
-            context_ptr->me_context_ptr->fractional_search64x64 = EB_TRUE;
-    else
-        context_ptr->me_context_ptr->fractional_search64x64 =
-            scs_ptr->static_config.fract_search_64;
-
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->tf_enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->tf_enable_hme_level0_flag;
@@ -413,14 +390,11 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
 
     if (MR_MODE) {
         context_ptr->me_context_ptr->half_pel_mode    = EX_HP_MODE;
-        context_ptr->me_context_ptr->quarter_pel_mode = EX_QP_MODE;
     } else if (enc_mode == ENC_M0) {
         context_ptr->me_context_ptr->half_pel_mode =
             ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? REFINMENT_HP_MODE : EX_HP_MODE;
-        context_ptr->me_context_ptr->quarter_pel_mode = REFINMENT_QP_MODE;
     } else {
         context_ptr->me_context_ptr->half_pel_mode    = REFINMENT_HP_MODE;
-        context_ptr->me_context_ptr->quarter_pel_mode = REFINMENT_QP_MODE;
     }
     // Set fractional search model
     // 0: search all blocks

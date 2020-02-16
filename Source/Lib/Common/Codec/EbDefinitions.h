@@ -80,10 +80,6 @@ typedef enum MeHpMode {
     EX_HP_MODE        = 0, // Exhaustive  1/2-pel serach mode.
     REFINMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
 } MeHpMode;
-typedef enum MeQpMode {
-    EX_QP_MODE        = 0, // Exhaustive  1/4-pel serach mode.
-    REFINMENT_QP_MODE = 1 // Refinement 1/4-pel serach mode.
-} MeQpMode;
 #if GLOBAL_WARPED_MOTION
 typedef enum GM_LEVEL {
     GM_FULL      = 0, // Exhaustive search mode.
@@ -2758,12 +2754,6 @@ typedef enum EbSaoMode
     SAO_MODE_0 = 0,
     SAO_MODE_1 = 1
 } EbSaoMode;
-
-typedef enum EbCu8x8Mode
-{
-    CU_8x8_MODE_0 = 0,  // Perform OIS, Full_Search, Fractional_Search & Bipred for CU_8x8
-    CU_8x8_MODE_1 = 1   // Perform OIS and only Full_Search for CU_8x8
-} EbCu8x8Mode;
 
 // Multi-Pass Partitioning Depth(Multi - Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure
 // As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases

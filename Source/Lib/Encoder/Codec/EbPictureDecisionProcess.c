@@ -1091,18 +1091,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (MR_MODE)
             pcs_ptr->intra_pred_mode = 0;
 
-        if (pcs_ptr->sc_content_detected)
-            pcs_ptr->cu8x8_mode = (pcs_ptr->temporal_layer_index > 0) ?
-            CU_8x8_MODE_1 :
-            CU_8x8_MODE_0;
-        else
-            if (pcs_ptr->enc_mode <= ENC_M8)
-                pcs_ptr->cu8x8_mode = CU_8x8_MODE_0;
-            else
-                pcs_ptr->cu8x8_mode = (pcs_ptr->temporal_layer_index > 0) ?
-                CU_8x8_MODE_1 :
-                CU_8x8_MODE_0;
-
         // Set tx size search mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks

@@ -247,12 +247,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int inter_intra_compound;
-
-    /* fractional search 64
-    *
-    * Default is -1. */
-    int fract_search_64;
-
     /* combine class 12
     *
     * Default is -1. */
@@ -599,9 +593,6 @@ typedef struct EbSvtAv1EncConfiguration {
     uint64_t md_fast_cost_class_prune_th;
     uint64_t md_full_cost_cand_prune_th;
     uint64_t md_full_cost_class_prune_th;
-
-    // signal for automax_partition; on by default
-    uint8_t enable_auto_max_partition;
 
   /* Prediction Structure user defined
    */

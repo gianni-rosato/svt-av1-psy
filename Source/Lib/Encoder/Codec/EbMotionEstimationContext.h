@@ -409,7 +409,6 @@ typedef struct MeContext {
     uint8_t        hme_search_type;
 
     uint8_t fractional_search_method;
-    EbBool  fractional_search64x64;
 
     uint8_t fractional_search_model;
     uint8_t hme_search_method;
@@ -422,7 +421,6 @@ typedef struct MeContext {
 
     EbBool use_subpel_flag;
     EbBool half_pel_mode;
-    EbBool quarter_pel_mode;
 
     EbBool compute_global_motion;
 

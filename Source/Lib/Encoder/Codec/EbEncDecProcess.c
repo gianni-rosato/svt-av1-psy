@@ -2030,17 +2030,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->best_me_cand_only_flag = EB_FALSE;
 
-    // signal for enabling shortcut to skip search depths
-    if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->enable_auto_max_partition = 0;
-    else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->enable_auto_max_partition = 0;
-    else if (pcs_ptr->enc_mode <= ENC_M0 ||
-             pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
-        context_ptr->enable_auto_max_partition = 0;
-    else
-        context_ptr->enable_auto_max_partition = scs_ptr->static_config.enable_auto_max_partition;
-
     return return_error;
 }
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,

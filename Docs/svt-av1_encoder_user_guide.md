@@ -198,7 +198,6 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **CombineClass12** | -class-12 | [0/1, -1 for default] | -1 | Enable combine MD Class1&2, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **EdgeSkipAngleIntra** | --intra-edge-skp | [0/1, -1 for default] | -1 | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **InterIntraCompound** | -interintra-comp | [0/1, -1 for default] | -1 | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **FractionalSearch64** | -frac-search-64 | [0/1, -1 for default] | -1 | Enable fractional search for 64x64, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Obmc** | -obmc | [0-1, 1 for default] | 1 | Enable OBMC(0: OFF, 1: ON[default]) |
 | **RDOQ** | -rdoq | [0/1, -1 for default] | -1 | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
 | **FilterIntra** | -filter-intra | [0-1, 1 for default] | 1 | Enable filter intra prediction mode (0: OFF, 1: ON [default]) |
@@ -236,7 +235,6 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **AltRefNframes** | -altref-nframes | [0-10, 7 for default] | 7 | AltRef max frames([0-10], default: 7) |
 | **EnableOverlays** | -enable-overlays | [0-1, 0 for default] | 0 | Enable the insertion of an extra picture called overlayer picture which will be used as an extra reference frame for the base-layer picture(0: OFF[default], 1: ON) |
 | **SquareWeight** | -sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
-| **AutomaxPartition** | -enable-amp | [0-1, 1 for default] | 1 | Auto max partition: Decide whether to skip 128x128 or not(0: OFF, 1: ON[default]) |
 | **ChannelNumber** | -nch | [1 - 6] | 1 | Number of encode instances |
 | **StatReport** | -stat-report | [0 - 1] | 0 | When set to 1, calculate and display PSNR values |
 | **MDFastPruneClassThreshold** | -mds1p-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
