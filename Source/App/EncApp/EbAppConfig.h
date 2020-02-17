@@ -400,6 +400,7 @@ typedef struct EbConfig {
      ****************************************/
 
     uint32_t screen_content_mode;
+    int intrabc_mode;
     uint32_t high_dynamic_range_input;
     EbBool   unrestricted_motion_vector;
 

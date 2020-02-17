@@ -2211,6 +2211,8 @@ void copy_api_from_app(
     scs_ptr->static_config.high_dynamic_range_input = ((EbSvtAv1EncConfiguration*)config_struct)->high_dynamic_range_input;
     scs_ptr->static_config.screen_content_mode = ((EbSvtAv1EncConfiguration*)config_struct)->screen_content_mode;
 
+    scs_ptr->static_config.intrabc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->intrabc_mode;
+
     // Annex A parameters
     scs_ptr->static_config.profile = ((EbSvtAv1EncConfiguration*)config_struct)->profile;
     scs_ptr->static_config.tier = ((EbSvtAv1EncConfiguration*)config_struct)->tier;
@@ -2555,6 +2557,13 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+
+    // IntraBC
+    if (config->intrabc_mode > 3 || config->intrabc_mode < -1) {
+        SVT_LOG( "Error instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n", channel_number + 1, config->intrabc_mode);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (scs_ptr->static_config.enable_adaptive_quantization > 2) {
         SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0-2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2973,6 +2982,8 @@ EbErrorType eb_svt_enc_init_parameter(
 
     config_ptr->high_dynamic_range_input = 0;
     config_ptr->screen_content_mode = 0;
+
+    config_ptr->intrabc_mode = DEFAULT;
 
     // Annex A parameters
     config_ptr->profile = 0;
