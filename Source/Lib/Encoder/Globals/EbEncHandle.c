@@ -2122,9 +2122,6 @@ void copy_api_from_app(
     // Filter intra prediction
     scs_ptr->static_config.enable_filter_intra = ((EbSvtAv1EncConfiguration*)config_struct)->enable_filter_intra;
 
-    // Intra Edge Filter
-    scs_ptr->static_config.enable_intra_edge_filter = ((EbSvtAv1EncConfiguration*)config_struct)->enable_intra_edge_filter;
-
     // ME Tools
     scs_ptr->static_config.use_default_me_hme = ((EbSvtAv1EncConfiguration*)config_struct)->use_default_me_hme;
     scs_ptr->static_config.enable_hme_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_flag;
@@ -2647,12 +2644,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-    // Intra Edge Filter
-    if (config->enable_intra_edge_filter != 0 && config->enable_intra_edge_filter != 1 && config->enable_intra_edge_filter != -1) {
-        SVT_LOG("Error instance %u: Invalid Filter Intra flag [0/1, -1], your input: %d\n", channel_number + 1, config->enable_intra_edge_filter);
-        return_error = EB_ErrorBadParameter;
-    }
-
     // HBD mode decision
     if (config->enable_hbd_mode_decision != 0 && config->enable_hbd_mode_decision != 1 && config->enable_hbd_mode_decision != 2) {
     SVT_LOG("Error instance %u: Invalid HBD mode decision flag [0 - 2], your input: %d\n", channel_number + 1, config->enable_hbd_mode_decision);
@@ -2919,7 +2910,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->bipred_3x3_inject = DEFAULT;
     config_ptr->compound_level = DEFAULT;
     config_ptr->enable_filter_intra = EB_TRUE;
-    config_ptr->enable_intra_edge_filter = DEFAULT;
     config_ptr->ext_block_flag = EB_FALSE;
     config_ptr->use_default_me_hme = EB_TRUE;
     config_ptr->enable_hme_flag = EB_TRUE;
