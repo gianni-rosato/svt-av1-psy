@@ -341,6 +341,12 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 1. */
     EbBool enable_filter_intra;
+
+    /* Intra Edge Filter
+    *
+    * Default is -1. */
+    int enable_intra_edge_filter;
+
     /* Flag to enable the use of default ME HME parameters.
     *
     * Default is 1. */
