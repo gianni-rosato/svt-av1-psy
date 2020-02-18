@@ -2131,6 +2131,9 @@ void copy_api_from_app(
     // Chroma mode
     scs_ptr->static_config.set_chroma_mode = ((EbSvtAv1EncConfiguration*)config_struct)->set_chroma_mode;
 
+    // Chroma mode
+    scs_ptr->static_config.disable_cfl_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_cfl_flag;
+
     // OBMC
     scs_ptr->static_config.enable_obmc = ((EbSvtAv1EncConfiguration*)config_struct)->enable_obmc;
 
@@ -2714,6 +2717,12 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
+    // Disable chroma from luma (CFL)
+    if (config->disable_cfl_flag != 0 && config->disable_cfl_flag != 1 && config->disable_cfl_flag != -1) {
+        SVT_LOG( "Error instance %u: Invalid CFL flag [0/1, -1], your input: %i\n", channel_number + 1, config->disable_cfl_flag);
+        return_error = EB_ErrorBadParameter;
+    }
+
     // CDEF
     if (config->cdef_mode > 5 || config->cdef_mode < -1) {
         SVT_LOG("Error instance %u: Invalid CDEF mode [0 - 5, -1 for auto], your input: %d\n", channel_number + 1, config->cdef_mode);
@@ -2987,6 +2996,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->nsq_table = DEFAULT;
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->set_chroma_mode = DEFAULT;
+    config_ptr->disable_cfl_flag = DEFAULT;
     config_ptr->enable_obmc = EB_TRUE;
     config_ptr->enable_rdoq = DEFAULT;
     config_ptr->pred_me = DEFAULT;

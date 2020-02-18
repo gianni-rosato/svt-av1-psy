@@ -5044,6 +5044,11 @@ void inject_intra_candidates_ois(PictureControlSet *pcs_ptr, ModeDecisionContext
         (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE
                                                                                   : EB_FALSE;
 
+    SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
+        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+
     OisSbResults *ois_sb_results_ptr = pcs_ptr->parent_pcs_ptr->ois_sb_results[sb_ptr->index];
     OisCandidate *ois_blk_ptr =
         ois_sb_results_ptr
@@ -5521,6 +5526,10 @@ void  inject_intra_candidates(
     uint8_t                     disable_angle_prediction;
     uint8_t directional_mode_skip_mask[INTRA_MODES] = { 0 };
 
+    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
+        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+
     if (context_ptr->edge_based_skip_angle_intra && use_angle_delta)
     {
         EbPictureBufferDesc   *src_pic = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -5737,6 +5746,11 @@ void  inject_filter_intra_candidates(
 
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
 
+    SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
+        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     for (filter_intra_mode = intra_mode_start; filter_intra_mode < intra_mode_end ; ++filter_intra_mode) {
@@ -5834,6 +5848,11 @@ void  inject_palette_candidates(
     uint32_t cand_i;
     uint32_t tot_palette_cands = 0;
     PaletteInfo    *palette_cand_array = context_ptr->palette_cand_array;
+
+    SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+        // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
+        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
 
     search_palette_luma(
         pcs_ptr,
