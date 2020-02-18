@@ -15,6 +15,8 @@
 #include <immintrin.h>
 #include "synonyms.h"
 
+#ifndef NON_AVX512_SUPPORT
+
 /**
   * Various reusable shorthands for x86 SIMD intrinsics.
   *
@@ -44,5 +46,7 @@ static INLINE void zz_store_512(void *const a, const __m512i v) {
 static INLINE void zz_storeu_512(void *const a, const __m512i v) {
     _mm512_storeu_si512((__m512i *)a, v);
 }
+
+#endif  // !NON_AVX512_SUPPORT
 
 #endif // AOM_DSP_X86_SYNONYMS_AVX512_H_

@@ -17,6 +17,7 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
 link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
 
 set(flags_to_test
+    -mavx2
     -mavx512f
     -mavx512bw
     -mavx512dq

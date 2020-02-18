@@ -15,6 +15,8 @@
 #include "synonyms_avx2.h"
 #include "synonyms_avx512.h"
 
+#ifndef NON_AVX512_SUPPORT
+
 static INLINE __m512i eb_mm512_broadcast_i64x2(const __m128i v) {
 #ifdef _WIN32
     // Work around of Visual Studio warning C4305: 'function': truncation from
@@ -1094,5 +1096,7 @@ static INLINE void jnt_no_avg_round_store_64_avx512(const __m512i res[2], const 
     d[1] = jnt_no_avg_round_avx512(res[1], offset);
     jnt_no_avg_store_64_avx512(d[0], d[1], dst);
 }
+
+#endif  // !NON_AVX512_SUPPORT
 
 #endif // AOM_DSP_X86_CONVOLVE_AVX512_H_
