@@ -227,6 +227,8 @@ typedef struct EbConfig {
      * Restoration filtering
     ****************************************/
     int enable_restoration_filtering;
+    int sg_filter_mode;
+    int wn_filter_mode;
 
     /****************************************
      * class12

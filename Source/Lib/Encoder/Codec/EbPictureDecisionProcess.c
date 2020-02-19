@@ -1009,18 +1009,21 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            16 step refinement
 
     Av1Common* cm = pcs_ptr->av1_cm;
-    if (sc_content_detected)
-        if (pcs_ptr->enc_mode <= ENC_M5)
+    if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
+        if (sc_content_detected)
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                cm->sg_filter_mode = 4;
+            else
+                cm->sg_filter_mode = 0;
+        else if (pcs_ptr->enc_mode <= ENC_M2)
             cm->sg_filter_mode = 4;
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+            cm->sg_filter_mode = 3;
         else
-            cm->sg_filter_mode = 0;
+            cm->sg_filter_mode = 1;
+    }
     else
-        if (pcs_ptr->enc_mode <= ENC_M2)
-        cm->sg_filter_mode = 4;
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-        cm->sg_filter_mode = 3;
-    else
-        cm->sg_filter_mode = 1;
+        cm->sg_filter_mode = scs_ptr->static_config.sg_filter_mode;
 
     // WN Level                                     Settings
     // 0                                            OFF
@@ -1028,19 +1031,22 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 2                                            5-Tap luma/ 5-Tap chroma
     // 3                                            7-Tap luma/ 5-Tap chroma
 
-    if (sc_content_detected)
-        if (pcs_ptr->enc_mode <= ENC_M5)
+    if (scs_ptr->static_config.wn_filter_mode == DEFAULT) {
+        if (sc_content_detected)
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                cm->wn_filter_mode = 3;
+            else
+                cm->wn_filter_mode = 0;
+        else if (pcs_ptr->enc_mode <= ENC_M5)
             cm->wn_filter_mode = 3;
+        else if (pcs_ptr->enc_mode <= ENC_M7)
+            cm->wn_filter_mode = 2;
         else
             cm->wn_filter_mode = 0;
+    }
     else
+        cm->wn_filter_mode = scs_ptr->static_config.wn_filter_mode;
 
-    if (pcs_ptr->enc_mode <= ENC_M5)
-        cm->wn_filter_mode = 3;
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-        cm->wn_filter_mode = 2;
-    else
-        cm->wn_filter_mode = 0;
     // Intra prediction modes                       Settings
     // 0                                            FULL
     // 1                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
