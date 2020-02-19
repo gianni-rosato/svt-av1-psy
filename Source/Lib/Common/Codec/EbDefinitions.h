@@ -35,8 +35,17 @@ extern "C" {
 #endif
 
 #define OIS_MEM              1 //reduce memory consumption due to ois struct
+#define MULTI_STAGE_ME       1
+#if MULTI_STAGE_ME
+#define MUS_ME               1 //MUlti-Stage ME - HME pruning
+#define SHUT_HME_L1_CHECK    1 //Remove usage of ME results for list=0 refIndex=0 to decide HME centre. Feature has wrong assumptions as: MRP OFF and list1 distance = list0 distance.
 
-
+#define MUS_ME_FP            1 //MUlti-Stage ME - Decouple full-pel from subpel
+#define MUS_ME_FP_SB         1 //MUlti-Stage ME - Full-pel pruning
+#define SKIP_ME_BASED_ON_HME     0 //MUlti-Stage ME - Reduce SR based on HME distortion
+#define REDUCE_ME_FOR_LOW_M_SB   0 //MUlti-Stage ME - Reduce SR based on HME distortion and HME MV
+#define SWITCHED_HALF_PEL_MODE   0 //MUlti-Stage ME - adapt half_pel mode based on fulpel distortion
+#endif
 #define MC_DYNAMIC_PAD              1
 #define GLOBAL_WARPED_MOTION 1 // Global warped motion detection and insertion
 #ifndef NON_AVX512_SUPPORT
@@ -78,7 +87,10 @@ extern "C" {
 #define HP_REF_OPT 1 // Remove redundant positions.
 typedef enum MeHpMode {
     EX_HP_MODE        = 0, // Exhaustive  1/2-pel serach mode.
-    REFINMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
+    REFINEMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
+#if SWITCHED_HALF_PEL_MODE
+    , SWITCHABLE_HP_MODE = 2 // Switch between EX_HP_MODE and REFINEMENT_HP_MODE mode.
+#endif
 } MeHpMode;
 #if GLOBAL_WARPED_MOTION
 typedef enum GM_LEVEL {

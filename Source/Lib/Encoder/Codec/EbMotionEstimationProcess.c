@@ -223,9 +223,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->half_pel_mode    = EX_HP_MODE;
     } else if (enc_mode == ENC_M0) {
         context_ptr->me_context_ptr->half_pel_mode =
-            ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? REFINMENT_HP_MODE : EX_HP_MODE;
+            ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? REFINEMENT_HP_MODE : EX_HP_MODE;
+#if SWITCHED_HALF_PEL_MODE
+    }else if (enc_mode == ENC_M2) {
+        context_ptr->me_context_ptr->half_pel_mode =
+            ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? SWITCHABLE_HP_MODE : EX_HP_MODE;
+        context_ptr->me_context_ptr->quarter_pel_mode = REFINEMENT_QP_MODE;
+#endif
     } else {
-        context_ptr->me_context_ptr->half_pel_mode    = REFINMENT_HP_MODE;
+        context_ptr->me_context_ptr->half_pel_mode    = REFINEMENT_HP_MODE;
     }
 
     // Set fractional search model
@@ -392,9 +398,9 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
         context_ptr->me_context_ptr->half_pel_mode    = EX_HP_MODE;
     } else if (enc_mode == ENC_M0) {
         context_ptr->me_context_ptr->half_pel_mode =
-            ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? REFINMENT_HP_MODE : EX_HP_MODE;
+            ((pcs_ptr->sc_content_detected) && (!MR_MODE)) ? REFINEMENT_HP_MODE : EX_HP_MODE;
     } else {
-        context_ptr->me_context_ptr->half_pel_mode    = REFINMENT_HP_MODE;
+        context_ptr->me_context_ptr->half_pel_mode    = REFINEMENT_HP_MODE;
     }
     // Set fractional search model
     // 0: search all blocks

@@ -2295,6 +2295,10 @@ void predictive_me_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContex
 
 void    av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
+#if MUS_ME
+uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr,const MeSbResults *me_results,
+                           uint8_t list_idx, uint8_t ref_idx);
+#endif
 void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                              EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index,
                              uint32_t blk_origin_index) {
@@ -2342,74 +2346,84 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
-            int16_t me_mv_x;
-            int16_t me_mv_y;
-            if (list_idx == 0) {
-                me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].x_mv)
-                          << 1;
-                me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].y_mv)
-                          << 1;
-            } else {
-                me_mv_x = (me_results
-                               ->me_mv_array[context_ptr->me_block_offset]
-                                            [((scs_ptr->mrp_mode == 0) ? 4 : 2) + ref_idx]
-                               .x_mv)
-                          << 1;
-                me_mv_y = (me_results
-                               ->me_mv_array[context_ptr->me_block_offset]
-                                            [((scs_ptr->mrp_mode == 0) ? 4 : 2) + ref_idx]
-                               .y_mv)
-                          << 1;
-            }
-            // Round-up to the closest integer the ME MV
-            me_mv_x = (me_mv_x + 4) & ~0x07;
-            me_mv_y = (me_mv_y + 4) & ~0x07;
-
-            uint32_t           pa_me_distortion;
-            EbReferenceObject *ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-            EbPictureBufferDesc *ref_pic =
-                hbd_mode_decision ? ref_obj->reference_picture16bit : ref_obj->reference_picture;
-
-            uint32_t ref_origin_index =
-                ref_pic->origin_x + (context_ptr->blk_origin_x + (me_mv_x >> 3)) +
-                (context_ptr->blk_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) *
-                    ref_pic->stride_y;
-            if (use_ssd) {
-                EbSpatialFullDistType spatial_full_dist_type_fun =
-                    hbd_mode_decision ? full_distortion_kernel16_bits
-                                      : spatial_full_distortion_kernel;
-
-                pa_me_distortion =
-                    (uint32_t)spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
-                                                         input_origin_index,
-                                                         input_picture_ptr->stride_y,
-                                                         ref_pic->buffer_y,
-                                                         ref_origin_index,
-                                                         ref_pic->stride_y,
-                                                         context_ptr->blk_geom->bwidth,
-                                                         context_ptr->blk_geom->bheight);
-            } else {
-                assert((context_ptr->blk_geom->bwidth >> 3) < 17);
-
-                if (hbd_mode_decision) {
-                    pa_me_distortion = sad_16b_kernel(
-                        ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
-                        input_picture_ptr->stride_y,
-                        ((uint16_t *)ref_pic->buffer_y) + ref_origin_index,
-                        ref_pic->stride_y,
-                        context_ptr->blk_geom->bheight,
-                        context_ptr->blk_geom->bwidth);
-                } else {
-                    pa_me_distortion =
-                        nxm_sad_kernel_sub_sampled(input_picture_ptr->buffer_y + input_origin_index,
-                                                   input_picture_ptr->stride_y,
-                                                   ref_pic->buffer_y + ref_origin_index,
-                                                   ref_pic->stride_y,
-                                                   context_ptr->blk_geom->bheight,
-                                                   context_ptr->blk_geom->bwidth);
+#if MUS_ME
+            uint32_t pa_me_distortion = ~0;//any non zero value
+            if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
+#endif
+                int16_t me_mv_x;
+                int16_t me_mv_y;
+                if (list_idx == 0) {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].x_mv)
+                        << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].y_mv)
+                        << 1;
                 }
-            }
+                else {
+                    me_mv_x = (me_results
+                        ->me_mv_array[context_ptr->me_block_offset]
+                        [((scs_ptr->mrp_mode == 0) ? 4 : 2) + ref_idx]
+                    .x_mv)
+                        << 1;
+                    me_mv_y = (me_results
+                        ->me_mv_array[context_ptr->me_block_offset]
+                        [((scs_ptr->mrp_mode == 0) ? 4 : 2) + ref_idx]
+                    .y_mv)
+                        << 1;
+                }
+                // Round-up to the closest integer the ME MV
+                me_mv_x = (me_mv_x + 4) & ~0x07;
+                me_mv_y = (me_mv_y + 4) & ~0x07;
+#if !MUS_ME
+                uint32_t           pa_me_distortion;
+#endif
+                EbReferenceObject *ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                EbPictureBufferDesc *ref_pic =
+                    hbd_mode_decision ? ref_obj->reference_picture16bit : ref_obj->reference_picture;
 
+                uint32_t ref_origin_index =
+                    ref_pic->origin_x + (context_ptr->blk_origin_x + (me_mv_x >> 3)) +
+                    (context_ptr->blk_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) *
+                    ref_pic->stride_y;
+                if (use_ssd) {
+                    EbSpatialFullDistType spatial_full_dist_type_fun =
+                        hbd_mode_decision ? full_distortion_kernel16_bits
+                        : spatial_full_distortion_kernel;
+
+                    pa_me_distortion =
+                        (uint32_t)spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                            input_origin_index,
+                            input_picture_ptr->stride_y,
+                            ref_pic->buffer_y,
+                            ref_origin_index,
+                            ref_pic->stride_y,
+                            context_ptr->blk_geom->bwidth,
+                            context_ptr->blk_geom->bheight);
+                }
+                else {
+                    assert((context_ptr->blk_geom->bwidth >> 3) < 17);
+
+                    if (hbd_mode_decision) {
+                        pa_me_distortion = sad_16b_kernel(
+                            ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
+                            input_picture_ptr->stride_y,
+                            ((uint16_t *)ref_pic->buffer_y) + ref_origin_index,
+                            ref_pic->stride_y,
+                            context_ptr->blk_geom->bheight,
+                            context_ptr->blk_geom->bwidth);
+                    }
+                    else {
+                        pa_me_distortion =
+                            nxm_sad_kernel_sub_sampled(input_picture_ptr->buffer_y + input_origin_index,
+                                input_picture_ptr->stride_y,
+                                ref_pic->buffer_y + ref_origin_index,
+                                ref_pic->stride_y,
+                                context_ptr->blk_geom->bheight,
+                                context_ptr->blk_geom->bwidth);
+                    }
+                }
+#if MUS_ME
+            }
+#endif
             if (pa_me_distortion != 0 || context_ptr->predictive_me_level >= 5) {
                 //NEAREST
                 mvp_x_array[mvp_count] =

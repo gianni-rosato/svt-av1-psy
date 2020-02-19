@@ -1164,6 +1164,15 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0: OFF
         // 1: ON
         pcs_ptr->tx_size_early_exit = 1;
+#if MUS_ME
+        //Prune reference and reduce ME SR based on HME/ME distortion
+        // 0: OFF
+        // 1: ON
+        if (pcs_ptr->sc_content_detected)
+            pcs_ptr->prune_ref_based_me = 0;
+        else
+            pcs_ptr->prune_ref_based_me = 1;
+#endif
     return return_error;
 }
 

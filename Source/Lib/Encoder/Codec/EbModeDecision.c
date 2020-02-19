@@ -60,7 +60,31 @@ int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, Pre
     return enable_inter_intra && is_interintra_allowed_bsize((const BlockSize)sb_type) &&
            is_interintra_allowed_mode(mode) && is_interintra_allowed_ref(ref_frame);
 }
-
+#if MUS_ME
+//Given one reference frame identified by the pair (list_index,ref_index)
+//indicate if ME data is valid
+uint8_t is_me_data_present(
+    struct ModeDecisionContext  *context_ptr,
+    const MeSbResults           *me_results,
+    uint8_t                      list_idx,
+    uint8_t                      ref_idx){
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+    const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+    for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i){
+        const MeCandidate *me_cand = &me_block_results[me_cand_i];
+        assert(me_cand->direction >= 0 && me_cand->direction <= 2);
+        if (me_cand->direction == 0 || me_cand->direction == 2) {
+            if (list_idx == me_cand->ref0_list && ref_idx == me_cand->ref_idx_l0)
+                return 1;
+        }
+        if (me_cand->direction == 1 || me_cand->direction == 2) {
+            if (list_idx == me_cand->ref1_list && ref_idx == me_cand->ref_idx_l1)
+                return 1;
+        }
+    }
+    return 0;
+}
+#endif
 /********************************************
 * Constants
 ********************************************/
@@ -2138,6 +2162,9 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                                           context_ptr->blk_geom->bsize);
                 }
                 inj_mv = inj_mv && inside_tile;
+#if MUS_ME
+                inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
+#endif
                 if (inj_mv) {
                     context_ptr->variance_ready = 0;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
@@ -2251,6 +2278,9 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                                           context_ptr->blk_geom->bsize);
                 }
                 inj_mv = inj_mv && inside_tile;
+#if MUS_ME
+                inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
+#endif
                 if (inj_mv) {
                     context_ptr->variance_ready = 0;
                     for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
@@ -2353,7 +2383,9 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                                                to_inject_mv_x_l1,
                                                                to_inject_mv_y_l1,
                                                                ref_pair) == EB_FALSE;
-
+#if MUS_ME
+                    inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, 0, ref_idx_0);
+#endif
                     if (inj_mv) {
                         context_ptr->variance_ready = 0;
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
@@ -2465,7 +2497,9 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                                                to_inject_mv_x_l1,
                                                                to_inject_mv_y_l1,
                                                                ref_pair) == EB_FALSE;
-
+#if MUS_ME
+                    inj_mv = inj_mv && is_me_data_present(context_ptr, me_results, get_list_idx(rf[1]), ref_idx_1);
+#endif
                     if (inj_mv) {
                         context_ptr->variance_ready = 0;
                         for (cur_type = MD_COMP_AVG; cur_type <= tot_comp_types; cur_type++) {
