@@ -4933,8 +4933,11 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
     context_ptr->md_staging_tx_search        = 0;
     context_ptr->md_staging_skip_full_chroma = EB_TRUE;
     context_ptr->md_staging_skip_rdoq        = EB_TRUE;
+#if ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS
+    context_ptr->md_staging_spatial_sse_full_loop = EB_FALSE;
+#else
     context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
-
+#endif
     for (full_loop_candidate_index = 0;
          full_loop_candidate_index < context_ptr->md_stage_1_count[context_ptr->target_class];
          ++full_loop_candidate_index) {
@@ -4998,9 +5001,11 @@ void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_skip_full_pred            = EB_TRUE;
         context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
         context_ptr->md_staging_skip_inter_chroma_pred    = EB_TRUE;
-
+#if ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS
+        context_ptr->md_staging_spatial_sse_full_loop = EB_FALSE;
+#else
         context_ptr->md_staging_spatial_sse_full_loop = context_ptr->spatial_sse_full_loop;
-
+#endif
         full_loop_core(pcs_ptr,
                        sb_ptr,
                        blk_ptr,

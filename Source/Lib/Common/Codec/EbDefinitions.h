@@ -72,6 +72,9 @@ extern "C" {
 #define ENHANCED_SQ_WEIGHT 1 // tune sq_weight threshold based on block properties
 
 #define HIGH_PRECISION_MV_QTHRESH 150
+
+#define ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS 1 // Updated Multi-Pass-PD and MD-Staging Settings
+
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC \
