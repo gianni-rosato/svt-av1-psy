@@ -207,7 +207,7 @@ static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
     FOPEN(cfg->bitstream_file, value, "wb");
 };
 static void set_cfg_error_file(const char *value, EbConfig *cfg) {
-    if (cfg->error_log_file) { fclose(cfg->error_log_file); }
+    if (cfg->error_log_file && cfg->error_log_file != stderr) { fclose(cfg->error_log_file); }
     FOPEN(cfg->error_log_file, value, "w+");
 };
 static void set_cfg_recon_file(const char *value, EbConfig *cfg) {
