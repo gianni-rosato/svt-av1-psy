@@ -628,6 +628,26 @@ FuncPair TEST_HME_FUNC_PAIRS[] = {
 typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair>
     sad_LoopTestParam;
 
+#if RESTRUCTURE_SAD
+typedef void (*PmeSadLoopKernel)(
+    uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
+    uint32_t block_height, uint32_t block_width, uint32_t *best_sad,
+    int16_t *best_mvx, int16_t *best_mvy, int16_t search_position_start_x,
+    int16_t search_position_start_y, int16_t search_area_width,
+    int16_t search_area_height, int16_t search_step, int16_t mvx, int16_t mvy);
+
+typedef std::tuple<PmeSadLoopKernel, PmeSadLoopKernel> FuncPairPME;
+
+FuncPairPME TEST_PME_FUNC_PAIRS[] = {
+    FuncPairPME(pme_sad_loop_kernel_c, pme_sad_loop_kernel_avx2)};
+
+BlkSize TEST_BLOCK_SIZES_LARGE[] = {
+    BlkSize(64, 128), BlkSize(128, 128), BlkSize(128, 64)};
+
+typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPairPME>
+    PmeSadLoopTestParam;
+#endif
+
 /**
  * @brief Unit test for SAD loop (sparse, hme) functions include:
  *  - sad_loop_kernel_{sse4_1,avx2,avx512}
@@ -827,6 +847,216 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_BLOCK_SIZES),
                        ::testing::ValuesIn(TEST_AREAS),
                        ::testing::ValuesIn(TEST_HME_FUNC_PAIRS)));
+
+#if RESTRUCTURE_SAD
+class PmeSadLoopTest
+    : public ::testing::WithParamInterface<PmeSadLoopTestParam>,
+      public SADTestBase {
+  public:
+    PmeSadLoopTest()
+        : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),
+                      std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0),
+                      std::get<0>(TEST_GET_PARAM(2)),
+                      std::get<1>(TEST_GET_PARAM(2))),
+          func_c_(std::get<0>(TEST_GET_PARAM(3))),
+          func_o_(std::get<1>(TEST_GET_PARAM(3))) {
+        SVTRandom rnd(INT16_MIN, INT16_MAX);
+
+        search_step = 8;
+        mvx = rnd.random();
+        mvy = rnd.random();
+        search_position_start_x = rnd.random();
+        search_position_start_y = rnd.random();
+    }
+
+  protected:
+    PmeSadLoopKernel func_c_;
+    PmeSadLoopKernel func_o_;
+    int16_t search_step;
+    int16_t mvx;
+    int16_t mvy;
+    int16_t search_position_start_x;
+    int16_t search_position_start_y;
+
+    void check_sad_loop() {
+        prepare_data();
+
+        uint32_t best_sad0 = UINT32_MAX;
+        int16_t best_mvx0 = 0;
+        int16_t best_mvy0 = 0;
+        func_c_(src_aligned_,
+                src_stride_,
+                ref1_aligned_,
+                ref1_stride_,
+                height_,
+                width_,
+                &best_sad0,
+                &best_mvx0,
+                &best_mvy0,
+                search_position_start_x,
+                search_position_start_y,
+                (search_area_width_ & 0xfffffff8),
+                search_area_height_,
+                search_step,
+                mvx,
+                mvy);
+
+        uint32_t best_sad1 = UINT32_MAX;
+        int16_t best_mvx1 = 0;
+        int16_t best_mvy1 = 0;
+        func_o_(src_aligned_,
+                src_stride_,
+                ref1_aligned_,
+                ref1_stride_,
+                height_,
+                width_,
+                &best_sad1,
+                &best_mvx1,
+                &best_mvy1,
+                search_position_start_x,
+                search_position_start_y,
+                (search_area_width_ & 0xfffffff8),
+                search_area_height_,
+                search_step,
+                mvx,
+                mvy);
+
+        EXPECT_EQ(best_sad0, best_sad1)
+            << "compare best_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(best_mvx0, best_mvx1)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(best_mvy0, best_mvy1)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+    }
+
+    void speed_sad_loop() {
+        const uint64_t num_loop = 100000;
+        double time_c, time_o;
+        uint64_t start_time_seconds, start_time_useconds;
+        uint64_t middle_time_seconds, middle_time_useconds;
+        uint64_t finish_time_seconds, finish_time_useconds;
+
+        prepare_data();
+
+        uint32_t best_sad0 = UINT32_MAX;
+        uint32_t best_sad1 = UINT32_MAX;
+        int16_t best_mvx0 = 0;
+        int16_t best_mvy0 = 0;
+        int16_t best_mvx1 = 0;
+        int16_t best_mvy1 = 0;
+
+        eb_start_time(&start_time_seconds, &start_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            func_c_(src_aligned_,
+                    src_stride_,
+                    ref1_aligned_,
+                    ref1_stride_,
+                    height_,
+                    width_,
+                    &best_sad0,
+                    &best_mvx0,
+                    &best_mvy0,
+                    search_position_start_x,
+                    search_position_start_y,
+                    (search_area_width_ & 0xfffffff8),
+                    search_area_height_,
+                    search_step,
+                    mvx,
+                    mvy);
+        }
+
+        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+
+        for (uint64_t i = 0; i < num_loop; i++) {
+            func_o_(src_aligned_,
+                    src_stride_,
+                    ref1_aligned_,
+                    ref1_stride_,
+                    height_,
+                    width_,
+                    &best_sad1,
+                    &best_mvx1,
+                    &best_mvy1,
+                    search_position_start_x,
+                    search_position_start_y,
+                    (search_area_width_ & 0xfffffff8),
+                    search_area_height_,
+                    search_step,
+                    mvx,
+                    mvy);
+        }
+
+        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+
+        EXPECT_EQ(best_sad0, best_sad1)
+            << "compare best_sad error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(best_mvx0, best_mvx1)
+            << "compare x_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+        EXPECT_EQ(best_mvy0, best_mvy1)
+            << "compare y_search_center error"
+            << " block dim: [" << width_ << " x " << height_ << "] "
+            << "search area [" << search_area_width_ << " x "
+            << search_area_height_ << "]";
+
+        eb_compute_overall_elapsed_time_ms(start_time_seconds,
+                                      start_time_useconds,
+                                      middle_time_seconds,
+                                      middle_time_useconds,
+                                      &time_c);
+        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                      middle_time_useconds,
+                                      finish_time_seconds,
+                                      finish_time_useconds,
+                                      &time_o);
+
+        printf("    sad_loop_kernel(%dx%d) search area[%dx%d]: %5.2fx)\n",
+               width_,
+               height_,
+               search_area_width_,
+               search_area_height_,
+               time_c / time_o);
+    }
+};
+
+TEST_P(PmeSadLoopTest, PmeSadLoopTest) {
+    check_sad_loop();
+}
+
+TEST_P(PmeSadLoopTest, DISABLED_PmeSadLoopSpeedTest) {
+    speed_sad_loop();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    LOOPSAD, PmeSadLoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::ValuesIn(TEST_PME_FUNC_PAIRS)));
+
+INSTANTIATE_TEST_CASE_P(
+    LOOPSAD_LARGE, PmeSadLoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES_LARGE),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::ValuesIn(TEST_PME_FUNC_PAIRS)));
+
+#endif
 
 /**
  * best_sadmxn in GetEightsad_Test,Allsad_CalculationTest and

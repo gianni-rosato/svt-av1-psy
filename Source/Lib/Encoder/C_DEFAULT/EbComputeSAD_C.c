@@ -159,6 +159,50 @@ void sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
     return;
 }
 
+#if RESTRUCTURE_SAD
+/*******************************************************************************
+* performs sad search for given block and search area
+* return best sad with its best mvx/mvy
+*******************************************************************************/
+void pme_sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
+                           uint32_t  src_stride, // input parameter, source stride
+                           uint8_t * ref, // input parameter, reference samples Ptr
+                           uint32_t  ref_stride, // input parameter, reference stride
+                           uint32_t  block_height, // input parameter, block height (M)
+                           uint32_t  block_width, // input parameter, block width (N)
+                           uint32_t *best_sad, int16_t *best_mvx, int16_t *best_mvy,
+                           int16_t search_position_start_x, int16_t search_position_start_y,
+                           int16_t search_area_width, int16_t search_area_height,
+                           int16_t search_step, int16_t mvx, int16_t mvy) {
+    int16_t xSearchIndex;
+    int16_t ySearchIndex;
+
+    for (ySearchIndex = 0; ySearchIndex < search_area_height; ySearchIndex++) {
+        for (xSearchIndex = 0; xSearchIndex < search_area_width; xSearchIndex++) {
+            uint32_t x, y;
+            uint32_t sad = 0;
+
+            for (y = 0; y < block_height; y++) {
+                for (x = 0; x < block_width; x++)
+                    sad += EB_ABS_DIFF(src[y * src_stride + x],
+                                       ref[xSearchIndex + y * ref_stride + x]);
+            }
+
+            // Update results
+            if (sad < *best_sad) {
+                *best_mvx = mvx + ((search_position_start_x + xSearchIndex) * search_step);
+                *best_mvy = mvy + ((search_position_start_y + ySearchIndex) * search_step);
+                *best_sad = sad;
+            }
+        }
+
+        ref += ref_stride;
+    }
+
+    return;
+}
+#endif
+
 /* Sum the difference between every corresponding element of the buffers. */
 static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride,
                                     int width, int height) {

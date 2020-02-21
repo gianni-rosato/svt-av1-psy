@@ -85,9 +85,16 @@ extern "C" {
 #define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
     (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
 
-#define H_PEL_SEARCH_WIND 3 // 1/2-pel serach window
-#define Q_PEL_SEARCH_WIND 2 // 1/4-pel serach window
+#define H_PEL_SEARCH_WIND 3 // 1/2-pel search window
+#define Q_PEL_SEARCH_WIND 2 // 1/4-pel search window
 #define HP_REF_OPT 1 // Remove redundant positions.
+
+#define ENABLE_PME_SAD 0
+#define SWITCH_XY_LOOPS_PME_SAD_SSD 0
+#if SWITCH_XY_LOOPS_PME_SAD_SSD
+#define RESTRUCTURE_SAD 1
+#endif
+
 typedef enum MeHpMode {
     EX_HP_MODE        = 0, // Exhaustive  1/2-pel serach mode.
     REFINEMENT_HP_MODE = 1 // Refinement 1/2-pel serach mode.
