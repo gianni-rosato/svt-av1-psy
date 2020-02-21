@@ -1,8 +1,13 @@
 image: Visual Studio 2019
-configuration:
-  - Debug
-  - Release
-
+configuration: Release
+skip_branch_with_pr: true
+skip_commits:
+  files:
+    - '.github/*'
+    - 'Docs/*'
+    - '.travis.yml'
+    - '.gitignore'
+    - '*.md'
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
   MSYSTEM: MINGW64
