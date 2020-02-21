@@ -5427,6 +5427,73 @@ void check_redundant_block(const BlockGeom *blk_geom, ModeDecisionContext *conte
     }
 }
 
+#if COMP_SIMILAR
+/*
+   search for a valid previously encoded similar
+   block (block having the same location and shape as the current block,
+   but where neighboring blocks are different from those for the current block)
+*/
+void check_similar_block(const BlockGeom * blk_geom,
+    ModeDecisionContext *context_ptr,
+    uint8_t * similar_blk_avail,
+    uint16_t *similar_blk_mds)
+{
+    if (blk_geom->similar) {
+        for (int it = 0; it < blk_geom->similar_list.list_size; it++) {
+            if (context_ptr->md_local_blk_unit[blk_geom->similar_list.blk_mds_table[it]].avail_blk_flag)
+            {
+                *similar_blk_mds = blk_geom->similar_list.blk_mds_table[it];
+                *similar_blk_avail = 1;
+                break;
+            }
+        }
+    }
+}
+/******************************************************
+* Derive md Settings(feature signals) that could be
+  changed  at the block level
+******************************************************/
+EbErrorType signal_derivation_block(
+    PictureControlSet     *pcs,
+    ModeDecisionContext   *context_ptr) {
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    // set compound_types_to_try
+    if (context_ptr->pd_pass == PD_PASS_0)
+        context_ptr->compound_types_to_try = MD_COMP_AVG;
+    else if (context_ptr->pd_pass == PD_PASS_1)
+        context_ptr->compound_types_to_try = MD_COMP_AVG;
+    else {
+        if (pcs->parent_pcs_ptr->compound_mode)
+            context_ptr->compound_types_to_try = pcs->parent_pcs_ptr->compound_mode == 1 ? MD_COMP_DIFF0 : MD_COMP_WEDGE;
+        else
+            context_ptr->compound_types_to_try = MD_COMP_AVG;
+    }
+
+    BlkStruct *similar_cu = &context_ptr->md_blk_arr_nsq[context_ptr->similar_blk_mds];
+    if (context_ptr->compound_types_to_try > MD_COMP_AVG && context_ptr->similar_blk_avail) {
+        int32_t is_src_compound = similar_cu->pred_mode >= NEAREST_NEARESTMV;
+        if (context_ptr->comp_similar_mode == 1) {
+            context_ptr->compound_types_to_try = !is_src_compound ? MD_COMP_AVG : context_ptr->compound_types_to_try;
+        }
+        else if (context_ptr->comp_similar_mode == 2) {
+            context_ptr->compound_types_to_try = !is_src_compound ? MD_COMP_AVG : similar_cu->interinter_comp.type;
+        }
+    }
+
+#if INTRA_SIMILAR
+    context_ptr->inject_inter_candidates = 1;
+    if (context_ptr->pd_pass > PD_PASS_1 && context_ptr->similar_blk_avail) {
+        int32_t is_src_intra = similar_cu->pred_mode <= PAETH_PRED;
+        if (context_ptr->intra_similar_mode)
+            context_ptr->inject_inter_candidates = is_src_intra ? 0 : context_ptr->inject_inter_candidates;
+    }
+#endif
+
+    return return_error;
+}
+#endif
 /*******************************************
 * ModeDecision SB
 *   performs CL (SB)
@@ -6161,6 +6228,13 @@ void md_encode_block(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
         ROUND_UV(blk_geom->origin_x) / 2 + ROUND_UV(blk_geom->origin_y) / 2 * SB_STRIDE_UV;
     BlkStruct *blk_ptr        = context_ptr->blk_ptr;
     candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+
+#if COMP_SIMILAR
+    signal_derivation_block(
+        pcs_ptr,
+        context_ptr);
+#endif
+
     for (uint8_t ref_idx = 0; ref_idx < MAX_REF_TYPE_CAND; ref_idx++)
         context_ptr->ref_best_cost_sq_table[ref_idx] = MAX_CU_COST;
     EbBool is_nsq_table_used = (pcs_ptr->slice_type == !I_SLICE &&
@@ -7124,6 +7198,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         if (all_blk_init)
             check_redundant_block(blk_geom, context_ptr, &redundant_blk_avail, &redundant_blk_mds);
 
+#if COMP_SIMILAR
+        context_ptr->similar_blk_avail = 0;
+        if (all_blk_init)
+            check_similar_block(blk_geom, context_ptr, &context_ptr->similar_blk_avail, &context_ptr->similar_blk_mds);
+#endif
         if (redundant_blk_avail && context_ptr->redundant_blk) {
             // Copy results
             BlkStruct *src_cu = &context_ptr->md_blk_arr_nsq[redundant_blk_mds];

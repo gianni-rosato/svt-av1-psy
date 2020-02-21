@@ -1131,6 +1131,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 
+        if (pcs_ptr->wedge_mode > 0 && pcs_ptr->compound_mode != 2)
+            SVT_LOG("wedge_mode set but will not be active\n");
+
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON

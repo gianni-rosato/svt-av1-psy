@@ -34,6 +34,9 @@
 extern "C" {
 #endif
 
+
+#define COMP_SIMILAR        1 //use previously coded similar blocks to prune compound modes
+#define INTRA_SIMILAR       1 //If previous similar block is intra, do not inject any inter
 #define OIS_MEM              1 //reduce memory consumption due to ois struct
 #define MULTI_STAGE_ME       1
 #if MULTI_STAGE_ME

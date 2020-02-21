@@ -1928,6 +1928,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
                 ? FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED
                 : FULL_PEL_REF_WINDOW_HEIGHT;
     }
+#if COMP_SIMILAR
+    //comp_similar_mode
+    //0: OFF
+    //1: If previous similar block is not compound, do not inject compound
+    //2: If previous similar block is not compound, do not inject compound
+    //   else consider the compound modes up the mode for the similar block
+    if (pcs_ptr->enc_mode <= ENC_M3)
+        context_ptr->comp_similar_mode = 1;
+    else
+        context_ptr->comp_similar_mode = 2;
+#else
 
     // set compound_types_to_try
     if (context_ptr->pd_pass == PD_PASS_0)
@@ -1941,6 +1952,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         else
             context_ptr->compound_types_to_try = MD_COMP_AVG;
     }
+#endif
+
+#if  INTRA_SIMILAR
+    //intra_similar_mode
+    //0: OFF
+    //1: If previous similar block is intra, do not inject any inter
+    context_ptr->intra_similar_mode = 1;
+#endif
+
     // Set coeff_based_nsq_cand_reduction
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;

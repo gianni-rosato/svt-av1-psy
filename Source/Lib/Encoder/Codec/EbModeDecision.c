@@ -5783,8 +5783,11 @@ EbErrorType generate_md_stage_0_cand(
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
     }
 
-
+#if INTRA_SIMILAR
+    if (slice_type != I_SLICE && context_ptr->inject_inter_candidates) {
+#else
     if (slice_type != I_SLICE) {
+#endif
             inject_inter_candidates(
                 pcs_ptr,
                 context_ptr,
