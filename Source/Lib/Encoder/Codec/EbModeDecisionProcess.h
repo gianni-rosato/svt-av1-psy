@@ -258,7 +258,11 @@ typedef struct ModeDecisionContext {
     Part                 nsq_table[NSQ_TAB_SIZE];
     uint8_t              full_loop_escape;
     uint8_t              global_mv_injection;
+#if ENHANCED_ME_MV
+    uint8_t              perform_me_mv_1_8_pel_ref;
+#else
     uint8_t              nx4_4xn_parent_mv_injection;
+#endif
     uint8_t              new_nearest_injection;
     uint8_t              new_nearest_near_comb_injection;
     uint8_t              warped_motion_injection;
@@ -281,6 +285,9 @@ typedef struct ModeDecisionContext {
     EbBool               spatial_sse_full_loop;
     EbBool               blk_skip_decision;
     EbBool               trellis_quant_coeff_optimization;
+#if ENHANCED_ME_MV
+    int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
+#endif
     int16_t              best_spatial_pred_mv[2][4][2];
     int8_t               valid_refined_mv[2][4];
     EbPictureBufferDesc *input_sample16bit_buffer;

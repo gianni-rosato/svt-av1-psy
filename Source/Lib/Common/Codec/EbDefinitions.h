@@ -73,7 +73,7 @@ extern "C" {
 #define FASTER_RDOQ 1 // Perform a fast RDOQ stage to reduce non-zero coeffs before the main/complex RDOQ stage for inter and chroma blocks
 #define FP_QUANT_BOTH_INTRA_INTER 1 // Add quantize_fp for INTER blocks
 #define ENHANCED_SQ_WEIGHT 1 // tune sq_weight threshold based on block properties
-
+#define ENHANCED_ME_MV 1 // (1) Improved Nx4 and 4xN INTER candidates for all categories: used the parent ME_MV instead of using of the 64x64 ME_MV, (2) Added ME_MV 1 / 8 Pel refinement.
 #define TXS_DEPTH_2 1 // TXS for Depth_2
 
 #define HIGH_PRECISION_MV_QTHRESH 150
