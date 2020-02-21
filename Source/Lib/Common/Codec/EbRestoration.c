@@ -1890,14 +1890,13 @@ EbErrorType eb_av1_alloc_restoration_buffers(Av1Common *cm) {
     // Now we need to allocate enough space to store the line buffers for the
     // stripes
     const int32_t frame_w    = cm->frm_size.superres_upscaled_width;
-    const int32_t use_highbd = cm->use_highbitdepth ? 1 : 0;
 
     for (int32_t p = 0; p < num_planes; ++p) {
         const int32_t is_uv    = p > 0;
         const int32_t ss_x     = is_uv && cm->subsampling_x;
         const int32_t plane_w  = ((frame_w + ss_x) >> ss_x) + 2 * RESTORATION_EXTRA_HORZ;
         const int32_t stride   = ALIGN_POWER_OF_TWO(plane_w, 5);
-        const int32_t buf_size = num_stripes * stride * RESTORATION_CTX_VERT << use_highbd;
+        const int32_t buf_size = num_stripes * stride * RESTORATION_CTX_VERT << 1;
         RestorationStripeBoundaries *boundaries = &cm->rst_info[p].boundaries;
 
         {

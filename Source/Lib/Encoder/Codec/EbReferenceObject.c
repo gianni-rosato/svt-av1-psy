@@ -174,6 +174,12 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
             picture_buffer_desc_init_data_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
     }
+    picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
+    picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT;
+    EB_NEW(reference_object->reference_picture16bit,
+           eb_picture_buffer_desc_ctor,
+           (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
+    picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_8BIT;
     if (picture_buffer_desc_init_data_ptr->mfmv) {
         //MFMV map is 8x8 based.
         uint32_t  mi_rows  = reference_object->reference_picture->height >> MI_SIZE_LOG2;

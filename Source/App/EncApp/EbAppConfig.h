@@ -173,6 +173,7 @@ typedef struct EbConfig {
     uint32_t      injector;
     uint32_t      speed_control_flag;
     uint32_t      encoder_bit_depth;
+    EbBool        encoder_16bit_pipeline;
     uint32_t      encoder_color_format;
     uint32_t      compressed_ten_bit_format;
     uint32_t      source_width;

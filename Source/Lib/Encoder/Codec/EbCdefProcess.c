@@ -524,7 +524,7 @@ void *cdef_kernel(void *input_ptr) {
         int32_t selected_strength_cnt[64] = {0};
 
         if (scs_ptr->seq_header.enable_cdef && pcs_ptr->parent_pcs_ptr->cdef_filter_mode) {
-            if (is_16bit)
+            if (scs_ptr->static_config.encoder_16bit_pipeline || is_16bit)
                 cdef_seg_search16bit(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
             else
                 cdef_seg_search(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
@@ -542,7 +542,7 @@ void *cdef_kernel(void *input_ptr) {
                 if (scs_ptr->seq_header.enable_restoration != 0 ||
                     pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     scs_ptr->static_config.recon_enabled) {
-                    if (is_16bit)
+                    if (scs_ptr->static_config.encoder_16bit_pipeline || is_16bit)
                         av1_cdef_frame16bit(0, scs_ptr, pcs_ptr);
                     else
                         eb_av1_cdef_frame(0, scs_ptr, pcs_ptr);
@@ -552,6 +552,74 @@ void *cdef_kernel(void *input_ptr) {
                 frm_hdr->cdef_params.cdef_y_strength[0]    = 0;
                 pcs_ptr->parent_pcs_ptr->nb_cdef_strengths = 1;
                 frm_hdr->cdef_params.cdef_uv_strength[0]   = 0;
+            }
+
+            // TODO: remove the copy when entire 16bit pipeline is ready
+            if (scs_ptr->static_config.encoder_16bit_pipeline &&
+                scs_ptr->static_config.encoder_bit_depth == EB_8BIT &&
+               !scs_ptr->seq_header.enable_restoration) {
+                //copy recon from 16bit to 8bit
+                uint8_t*  recon_8bit;
+                int32_t   recon_stride_8bit;
+                uint16_t* recon_16bit;
+                int32_t   recon_stride_16bit;
+                EbPictureBufferDesc *recon_buffer, *recon_buffer_8bit;
+                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
+                    recon_buffer = ((EbReferenceObject *)
+                        pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                        ->reference_picture16bit;
+                    recon_buffer_8bit = ((EbReferenceObject *)
+                        pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                        ->reference_picture;
+                } else {
+                    recon_buffer = pcs_ptr->recon_picture16bit_ptr;
+                    recon_buffer_8bit = pcs_ptr->recon_picture_ptr;
+                }
+                // Y
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_y)
+                            + recon_buffer->origin_x
+                            + recon_buffer->origin_y * recon_buffer->stride_y;
+                recon_stride_16bit = recon_buffer->stride_y;
+                recon_8bit  = recon_buffer_8bit->buffer_y
+                            + recon_buffer_8bit->origin_x
+                            + recon_buffer_8bit->origin_y * recon_buffer_8bit->stride_y;
+                recon_stride_8bit = recon_buffer_8bit->stride_y;
+                for (int j = 0; j < recon_buffer->height; j++) {
+                    for (int i = 0; i < recon_buffer->width; i++) {
+                        recon_8bit[i + j * recon_stride_8bit] =
+                            (uint8_t)recon_16bit[i + j * recon_stride_16bit];
+                    }
+                }
+                // Cb
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_cb)
+                            + recon_buffer->origin_x / 2
+                            + recon_buffer->origin_y / 2 * recon_buffer->stride_cb;
+                recon_stride_16bit = recon_buffer->stride_cb;
+                recon_8bit  = recon_buffer_8bit->buffer_cb
+                            + recon_buffer_8bit->origin_x / 2
+                            + recon_buffer_8bit->origin_y / 2 * recon_buffer_8bit->stride_cb;
+                recon_stride_8bit = recon_buffer_8bit->stride_cb;
+                for (int j = 0; j < recon_buffer->height / 2; j++) {
+                    for (int i = 0; i < recon_buffer->width / 2; i++) {
+                        recon_8bit[i + j * recon_stride_8bit] =
+                            (uint8_t)recon_16bit[i + j * recon_stride_16bit];
+                    }
+                }
+                // Cr
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_cr)
+                            + recon_buffer->origin_x / 2
+                            + recon_buffer->origin_y / 2 * recon_buffer->stride_cr;
+                recon_stride_16bit = recon_buffer->stride_cr;
+                recon_8bit  = recon_buffer_8bit->buffer_cr
+                            + recon_buffer_8bit->origin_x / 2
+                            + recon_buffer_8bit->origin_y / 2 * recon_buffer_8bit->stride_cr;
+                recon_stride_8bit = recon_buffer_8bit->stride_cr;
+                for (int j = 0; j < recon_buffer->height / 2; j++) {
+                    for (int i = 0; i < recon_buffer->width / 2; i++) {
+                        recon_8bit[i + j * recon_stride_8bit] =
+                            (uint8_t)recon_16bit[i + j * recon_stride_16bit];
+                    }
+                }
             }
 
             //restoration prep
@@ -566,21 +634,21 @@ void *cdef_kernel(void *input_ptr) {
                                 cm->frame_to_show->strides[0],
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
-                                is_16bit);
+                                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
                 eb_extend_frame(cm->frame_to_show->buffers[1],
                                 cm->frame_to_show->crop_widths[1],
                                 cm->frame_to_show->crop_heights[1],
                                 cm->frame_to_show->strides[1],
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
-                                is_16bit);
+                                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
                 eb_extend_frame(cm->frame_to_show->buffers[2],
                                 cm->frame_to_show->crop_widths[1],
                                 cm->frame_to_show->crop_heights[1],
                                 cm->frame_to_show->strides[1],
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
-                                is_16bit);
+                                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
             }
 
             pcs_ptr->rest_segments_column_count = scs_ptr->rest_segment_column_count;

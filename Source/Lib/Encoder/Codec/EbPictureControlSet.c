@@ -455,6 +455,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                eb_recon_picture_buffer_desc_ctor,
                (EbPtr)&input_pic_buf_desc_init_data);
     }
+    EB_NEW(object_ptr->recon_picture16bit_ptr,
+           eb_recon_picture_buffer_desc_ctor,
+           (EbPtr)&coeff_buffer_desc_init_data);
     // Film Grain Picture Buffer
     if (init_data_ptr->film_grain_noise_level) {
         if (is_16bit) {
@@ -468,7 +471,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         }
     }
 
-    if (is_16bit) {
+    {
         EB_NEW(object_ptr->input_frame16bit,
                eb_picture_buffer_desc_ctor,
                (EbPtr)&coeff_buffer_desc_init_data);
