@@ -19,6 +19,7 @@ addons:
       - yasm
       - ccache
       - python
+    update: true # Remove when Travis macOS images get updated
 notifications:
   webhooks: https://coveralls.io/webhook
 
