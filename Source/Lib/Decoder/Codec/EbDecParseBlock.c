@@ -471,7 +471,7 @@ static void read_delta_params(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
 
 int intra_angle_info(SvtReader *r, AomCdfProb *cdf, PredictionMode mode, BlockSize bsize) {
     int angle_delta_y = 0;
-    if (av1_use_angle_delta(bsize) && av1_is_directional_mode(mode)) {
+    if (av1_use_angle_delta(bsize, EB_TRUE) && av1_is_directional_mode(mode)) {
         const int sym = svt_read_symbol(r, cdf, 2 * MAX_ANGLE_DELTA + 1, ACCT_STR);
         angle_delta_y = sym - MAX_ANGLE_DELTA;
     }

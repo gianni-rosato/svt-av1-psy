@@ -255,6 +255,11 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int edge_skp_angle_intra;
 
+    /* enable angle intra
+    *
+    * Default is -1. */
+    int intra_angle_delta;
+
     /* inter intra compound
     *
     * Default is -1. */

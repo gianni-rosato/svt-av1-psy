@@ -12403,7 +12403,7 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
 
             uint8_t  angle_delta_counter         = 0;
             uint8_t  angle_delta_shift           = 1;
-            EbBool   use_angle_delta             = (bsize >= 8);
+            EbBool   use_angle_delta             = av1_use_angle_delta(bsize, pcs_ptr->scs_ptr->static_config.intra_angle_delta);
             uint8_t  angle_delta_candidate_count = use_angle_delta ? 7 : 1;
             uint8_t  disable_angular_prediction  = 0;
             if (pcs_ptr->intra_pred_mode == 5) {
