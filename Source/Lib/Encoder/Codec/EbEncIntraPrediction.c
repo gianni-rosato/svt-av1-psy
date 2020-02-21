@@ -640,7 +640,7 @@ void eb_av1_predict_intra_block(
             mi_row, mi_col, bottom_available, have_left, partition,
             tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
-    const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
+    const int32_t disable_edge_filter = !(seq_header_ptr->enable_intra_edge_filter);
 
     //if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
     //  build_intra_predictors_high(
@@ -875,7 +875,7 @@ void eb_av1_predict_intra_block_16bit(
             mi_row, mi_col, bottom_available, have_left, partition,
             tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
-    const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
+    const int32_t disable_edge_filter = !(seq_header_ptr->enable_intra_edge_filter);
 
     build_intra_predictors_high(
             xd,

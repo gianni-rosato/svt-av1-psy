@@ -337,6 +337,12 @@ typedef struct EbConfig {
      * Filter intra prediction
      ****************************************/
     EbBool enable_filter_intra;
+
+    /****************************************
+     * Intra Edge Filter
+     ****************************************/
+    int enable_intra_edge_filter;
+
     /****************************************
      * ME Tools
      ****************************************/
