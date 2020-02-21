@@ -34,10 +34,15 @@ static void mode_decision_context_dctor(EbPtr p) {
     }
 #endif
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
-
+#if TXS_DEPTH_2
+    EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_1->candidate_ptr);
+    EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_1);
+    EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_2->candidate_ptr);
+    EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_2);
+#else
     EB_FREE_ARRAY(obj->scratch_candidate_buffer->candidate_ptr);
     EB_DELETE(obj->scratch_candidate_buffer);
-
+#endif
     EB_DELETE(obj->trans_quant_buffers_ptr);
     if (obj->hbd_mode_decision > EB_8_BIT_MD) EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
     if (obj->hbd_mode_decision != EB_10_BIT_MD) EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
@@ -139,11 +144,25 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                &(context_ptr->full_cost_skip_ptr[buffer_index]),
                &(context_ptr->full_cost_merge_ptr[buffer_index]));
     }
+#if TXS_DEPTH_2
+    EB_NEW(context_ptr->candidate_buffer_tx_depth_1,
+           mode_decision_scratch_candidate_buffer_ctor,
+           context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+
+    EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_tx_depth_1->candidate_ptr, 1);
+
+    EB_NEW(context_ptr->candidate_buffer_tx_depth_2,
+           mode_decision_scratch_candidate_buffer_ctor,
+           context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+
+    EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_tx_depth_2->candidate_ptr, 1);
+#else
     EB_NEW(context_ptr->scratch_candidate_buffer,
            mode_decision_scratch_candidate_buffer_ctor,
            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     EB_ALLOC_PTR_ARRAY(context_ptr->scratch_candidate_buffer->candidate_ptr, 1);
+#endif
     context_ptr->md_blk_arr_nsq[0].av1xd                     = NULL;
     context_ptr->md_blk_arr_nsq[0].neigh_left_recon[0]       = NULL;
     context_ptr->md_blk_arr_nsq[0].neigh_top_recon[0]        = NULL;
@@ -255,6 +274,10 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
             neighbor_array_unit_reset(pcs_ptr->md_luma_recon_neighbor_array[depth][tile_idx]);
             neighbor_array_unit_reset(
                 pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth][tile_idx]);
+#if TXS_DEPTH_2
+            neighbor_array_unit_reset(
+                pcs_ptr->md_tx_depth_2_luma_recon_neighbor_array[depth][tile_idx]);
+#endif
             neighbor_array_unit_reset(pcs_ptr->md_cb_recon_neighbor_array[depth][tile_idx]);
             neighbor_array_unit_reset(pcs_ptr->md_cr_recon_neighbor_array[depth][tile_idx]);
         }
@@ -262,6 +285,10 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
             neighbor_array_unit_reset(pcs_ptr->md_luma_recon_neighbor_array16bit[depth][tile_idx]);
             neighbor_array_unit_reset(
                 pcs_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[depth][tile_idx]);
+#if TXS_DEPTH_2
+            neighbor_array_unit_reset(
+                pcs_ptr->md_tx_depth_2_luma_recon_neighbor_array16bit[depth][tile_idx]);
+#endif
             neighbor_array_unit_reset(pcs_ptr->md_cb_recon_neighbor_array16bit[depth][tile_idx]);
             neighbor_array_unit_reset(pcs_ptr->md_cr_recon_neighbor_array16bit[depth][tile_idx]);
         }

@@ -139,7 +139,15 @@ extern "C" {
         70, 66, 63, 60, 57, 54, 51, 48, 45, 42, 38, 35, 32, 29, 26,
         23, 20, 18, 15, 12, 9, 6, 3,
     };
-
+#if TXS_DEPTH_2
+    static const int use_inter_ext_tx_for_txsize[EXT_TX_SETS_INTER]
+        [EXT_TX_SIZES] = {
+          { 1, 1, 1, 1 },  // unused
+          { 1, 1, 0, 0 },
+          { 0, 0, 1, 0 },
+          { 0, 1, 1, 1 },
+    };
+#else
     static const int32_t use_inter_ext_tx_for_txsize[EXT_TX_SETS_INTER][EXT_TX_SIZES] =
     {
         { 1, 1, 1, 1 },  // unused
@@ -147,7 +155,7 @@ extern "C" {
         { 0, 0, 1, 0 },
         { 0, 0, 0, 1 },
     };
-
+#endif
     static const int32_t use_intra_ext_tx_for_txsize[EXT_TX_SETS_INTRA][EXT_TX_SIZES] =
     {
         { 1, 1, 1, 1 },  // unused

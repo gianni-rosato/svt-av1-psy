@@ -103,7 +103,12 @@ typedef struct ModeDecisionContext {
     ModeDecisionCandidate **      fast_candidate_ptr_array;
     ModeDecisionCandidate *       fast_candidate_array;
     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array;
+#if TXS_DEPTH_2
+    ModeDecisionCandidateBuffer *candidate_buffer_tx_depth_1;
+    ModeDecisionCandidateBuffer *candidate_buffer_tx_depth_2;
+#else
     ModeDecisionCandidateBuffer * scratch_candidate_buffer;
+#endif
     MdRateEstimationContext *     md_rate_estimation_ptr;
     EbBool                        is_md_rate_estimation_ptr_owner;
     InterPredictionContext *      inter_prediction_context;

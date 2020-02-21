@@ -33,6 +33,12 @@ static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
 * probability p15 / 2^15
 ***************************************************************/
 static INLINE int32_t av1_cost_symbol(AomCdfProb p15) {
+#if TXS_DEPTH_2
+    // p15 can be out of range [1, CDF_PROB_TOP - 1]. Clamping it, so that the
+    // following cost calculation works correctly. Otherwise, if p15 =
+    // CDF_PROB_TOP, shift would be -1, and "p15 << shift" would be wrong.
+    p15 = (AomCdfProb)clamp(p15, 1, CDF_PROB_TOP - 1);
+#endif
     assert(0 < p15 && p15 < CDF_PROB_TOP);
     const int32_t shift = CDF_PROB_BITS - 1 - get_msb(p15);
     const int32_t prob  = get_prob(p15 << shift, CDF_PROB_TOP);
@@ -446,7 +452,11 @@ void av1_estimate_coefficients_rate(MdRateEstimationContext *md_rate_estimation_
                 int32_t br_rate[BR_CDF_SIZE];
                 int32_t prev_cost = 0;
                 int32_t i, j;
+#if TXS_DEPTH_2
+                av1_get_syntax_rate_from_cdf(br_rate, fc->coeff_br_cdf[AOMMIN(tx_size, TX_32X32)][plane][ctx], NULL);
+#else
                 av1_get_syntax_rate_from_cdf(br_rate, fc->coeff_br_cdf[tx_size][plane][ctx], NULL);
+#endif
                 // SVT_LOG("br_rate: ");
                 // for(j = 0; j < BR_CDF_SIZE; j++)
                 //  SVT_LOG("%4d ", br_rate[j]);

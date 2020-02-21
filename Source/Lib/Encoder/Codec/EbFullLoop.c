@@ -1012,6 +1012,27 @@ static INLINE TxSize get_txsize_entropy_ctx(TxSize txsize) {
 static INLINE PlaneType get_plane_type(int plane) {
     return (plane == 0) ? PLANE_TYPE_Y : PLANE_TYPE_UV;
 }
+#if TXS_DEPTH_2
+// Transform end of block bit estimation
+static int get_eob_cost(int eob, const LvMapEobCost *txb_eob_costs,
+    const LvMapCoeffCost *txb_costs, TxClass tx_class) {
+    int eob_extra;
+    const int eob_pt = get_eob_pos_token(eob, &eob_extra);
+    int eob_cost = 0;
+    const int eob_multi_ctx = (tx_class == TX_CLASS_2D) ? 0 : 1;
+    eob_cost = txb_eob_costs->eob_cost[eob_multi_ctx][eob_pt - 1];
+
+    if (eb_k_eob_offset_bits[eob_pt] > 0) {
+        const int eob_ctx = eob_pt - 3;
+        const int eob_shift = eb_k_eob_offset_bits[eob_pt] - 1;
+        const int bit = (eob_extra & (1 << eob_shift)) ? 1 : 0;
+        eob_cost += txb_costs->eob_extra_cost[eob_ctx][bit];
+        const int offset_bits = eb_k_eob_offset_bits[eob_pt];
+        if (offset_bits > 1) eob_cost += av1_cost_literal(offset_bits - 1);
+    }
+    return eob_cost;
+}
+#else
 static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
                             const LvMapCoeffCost *txb_costs, TxType tx_type) {
     int32_t       eob_extra;
@@ -1029,7 +1050,7 @@ static int32_t get_eob_cost(int32_t eob, const LvMapEobCost *txb_eob_costs,
     }
     return eob_cost;
 }
-
+#endif
 static INLINE int get_lower_levels_ctx_general(int is_last, int scan_idx, int bwl, int height,
                                                const uint8_t *levels, int coeff_idx, TxSize tx_size,
                                                TxClass tx_class) {
@@ -1073,7 +1094,11 @@ static INLINE int get_coeff_cost_general(int is_last, int ci, TranLow abs_qc, in
             if (is_last)
                 br_ctx = get_br_ctx_eob(ci, bwl, tx_class);
             else
+#if TXS_DEPTH_2
+                br_ctx = get_br_ctx(levels, ci, bwl, tx_class);
+#else
                 br_ctx = get_br_ctx(levels, ci, bwl, (const TxType)tx_class);
+#endif
             cost += get_br_cost(abs_qc, txb_costs->lps_cost[br_ctx]);
         }
     }
@@ -1134,7 +1159,11 @@ static AOM_FORCE_INLINE int get_two_coeff_cost_simple(int ci, TranLow abs_qc, in
     if (abs_qc) {
         cost += av1_cost_literal(1);
         if (abs_qc > NUM_BASE_LEVELS) {
+#if TXS_DEPTH_2
+            const int br_ctx = get_br_ctx(levels, ci, bwl, tx_class);
+#else
             const int br_ctx      = get_br_ctx(levels, ci, bwl, (const TxType)tx_class);
+#endif
             int       brcost_diff = 0;
             cost += get_br_cost_with_diff(abs_qc, txb_costs->lps_cost[br_ctx], &brcost_diff);
             diff += brcost_diff;
@@ -1210,7 +1239,11 @@ static AOM_FORCE_INLINE void update_coeff_eob(
         int       lower_level_new_eob = 0;
         const int new_eob             = si + 1;
         const int coeff_ctx_new_eob   = get_lower_levels_ctx_eob(bwl, height, si);
+#if TXS_DEPTH_2
+        const int new_eob_cost = get_eob_cost(new_eob, txb_eob_costs, txb_costs, tx_class);
+#else
         const int new_eob_cost = get_eob_cost(new_eob, txb_eob_costs, txb_costs, (TxType)tx_class);
+#endif
         int       rate_coeff_eob =
             new_eob_cost +
             get_coeff_cost_eob(
@@ -1505,7 +1538,11 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     // TODO(angirbird): check iqmatrix
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
+#if TXS_DEPTH_2
+    const int eob_cost = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
+#else
     const int eob_cost      = get_eob_cost(*eob, txb_eob_costs, txb_costs, (TxType)tx_class);
+#endif
     int       accu_rate     = eob_cost;
 
     int64_t       accu_dist  = 0;
@@ -1674,6 +1711,9 @@ int32_t av1_quantize_inv_quantize(
     (void)candidate_buffer;
     (void)is_encode_pass;
     (void)coeff_stride;
+#if TXS_DEPTH_2
+    (void)is_intra_bc;
+#endif
     MacroblockPlane candidate_plane;
     const QmVal *   q_matrix  = pcs_ptr->parent_pcs_ptr->gqmatrix[NUM_QM_LEVELS - 1][0][txsize];
     const QmVal *   iq_matrix = pcs_ptr->parent_pcs_ptr->giqmatrix[NUM_QM_LEVELS - 1][0][txsize];
@@ -1762,9 +1802,13 @@ int32_t av1_quantize_inv_quantize(
     qparam.iqmatrix  = iq_matrix;
 
     EbBool is_inter     = (pred_mode >= NEARESTMV);
+#if TXS_DEPTH_2
+    EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
+        md_context->trellis_quant_coeff_optimization);
+#else
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
                            md_context->trellis_quant_coeff_optimization && !is_intra_bc);
-
+#endif
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     if (scs_ptr->static_config.enable_rdoq == DEFAULT) {
         perform_rdoq = perform_rdoq && (EbBool)scs_ptr->static_config.enable_rdoq;

@@ -673,8 +673,11 @@ int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *parent_pcs_ptr,
         if (level > NUM_BASE_LEVELS) {
             // level is above 1.
             int32_t base_range = level - 1 - NUM_BASE_LEVELS;
+#if TXS_DEPTH_2
+            int16_t br_ctx = get_br_ctx(levels, pos, bwl, tx_type_to_class[tx_type]);
+#else
             int16_t br_ctx     = get_br_ctx(levels, pos, bwl, tx_type);
-
+#endif
             for (int32_t idx = 0; idx < COEFF_BASE_RANGE; idx += BR_CDF_SIZE - 1) {
                 const int32_t k = AOMMIN(base_range - idx, BR_CDF_SIZE - 1);
                 aom_write_symbol(

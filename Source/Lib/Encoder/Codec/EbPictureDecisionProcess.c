@@ -1095,7 +1095,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
         if (pcs_ptr->enc_mode <= ENC_M2)
+#if TXS_DEPTH_2
+            pcs_ptr->tx_size_search_mode = (pcs_ptr->sc_content_detected && pcs_ptr->slice_type != I_SLICE) ? 0 : 1;
+#else
             pcs_ptr->tx_size_search_mode = (MR_MODE || pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
+#endif
         else
             pcs_ptr->tx_size_search_mode = 0;
 

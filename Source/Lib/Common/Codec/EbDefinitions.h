@@ -74,6 +74,8 @@ extern "C" {
 #define FP_QUANT_BOTH_INTRA_INTER 1 // Add quantize_fp for INTER blocks
 #define ENHANCED_SQ_WEIGHT 1 // tune sq_weight threshold based on block properties
 
+#define TXS_DEPTH_2 1 // TXS for Depth_2
+
 #define HIGH_PRECISION_MV_QTHRESH 150
 
 #define ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS 1 // Updated Multi-Pass-PD and MD-Staging Settings
@@ -181,7 +183,11 @@ enum {
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
 #define BLOCK_MAX_COUNT_SB_128 4421 // TODO: reduce alloction for 64x64
 #define BLOCK_MAX_COUNT_SB_64 1101 // TODO: reduce alloction for 64x64
+#if TXS_DEPTH_2
+#define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
+#else
 #define MAX_TXB_COUNT 4 // Maximum number of transform blocks.
+#endif
 #define MAX_NFL 125 // Maximum number of candidates MD can support
 #define MAX_NFL_BUFF \
     (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call

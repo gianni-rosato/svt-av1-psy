@@ -97,7 +97,40 @@ static INLINE int get_segdata(SegmentationParams *seg, int segment_id,
 static const PredictionMode fimode_to_intradir[FILTER_INTRA_MODES] = {
         DC_PRED, V_PRED, H_PRED, D157_PRED, DC_PRED};
 
-
+#if TXS_DEPTH_2
+static AOM_FORCE_INLINE int get_br_ctx(const uint8_t *const levels,
+    const int c,  // raster order
+    const int bwl, const TxClass tx_class) {
+    const int row = c >> bwl;
+    const int col = c - (row << bwl);
+    const int stride = (1 << bwl) + TX_PAD_HOR;
+    const int pos = row * stride + col;
+    int mag = levels[pos + 1];
+    mag += levels[pos + stride];
+    switch (tx_class) {
+    case TX_CLASS_2D:
+        mag += levels[pos + stride + 1];
+        mag = AOMMIN((mag + 1) >> 1, 6);
+        if (c == 0) return mag;
+        if ((row < 2) && (col < 2)) return mag + 7;
+        break;
+    case TX_CLASS_HORIZ:
+        mag += levels[pos + 2];
+        mag = AOMMIN((mag + 1) >> 1, 6);
+        if (c == 0) return mag;
+        if (col == 0) return mag + 7;
+        break;
+    case TX_CLASS_VERT:
+        mag += levels[pos + (stride << 1)];
+        mag = AOMMIN((mag + 1) >> 1, 6);
+        if (c == 0) return mag;
+        if (row == 0) return mag + 7;
+        break;
+    default: break;
+    }
+    return mag + 14;
+}
+#else
 static INLINE int32_t get_br_ctx(const uint8_t *const levels,
                                  const int32_t        c, // raster order
                                  const int32_t bwl, const TxType tx_type) {
@@ -132,5 +165,5 @@ static INLINE int32_t get_br_ctx(const uint8_t *const levels,
 
     return mag + 14;
 }
-
+#endif
 #endif //EbCommonUtils_h

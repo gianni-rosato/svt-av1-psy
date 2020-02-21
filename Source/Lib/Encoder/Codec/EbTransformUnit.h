@@ -10,7 +10,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if TXS_DEPTH_2
+#define TRANSFORM_UNIT_MAX_COUNT 21
+#else
 #define TRANSFORM_UNIT_MAX_COUNT 5
+#endif
 #define TRANSFORM_UNIT_2Nx2N_AREA 16
 #define TRANSFORM_UNIT_NxN_AREA 4
 
