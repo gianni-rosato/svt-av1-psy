@@ -124,11 +124,12 @@ Control flags associated with CDEF are listed in Table 1 below.
 
 ##### Table 1. Control flags for CDEF.
 
-| **Flag**                        | **Level** | **Description**                                                                                                            |
-| ------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| enable\_cdef                    | Sequence  | Indicates whether to use CDEF for the whole sequence.                                                                      |
-| cdef\_filter\_mode              | Picture   | Indicates the level of complexity of the CDEF strength search as a function of the encoder mode (enc\_mode).               |
-| use\_ref\_frame\_cdef\_strength | Picture   | If set, use the CDEF strength for the reference frame in optimizing the search for the CDEF strength in the current frame. |
+| **Flag**                        | **Level**      | **Description**                                                                                                            |
+| ------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| -cdef-mode                      | Configuration  | Command line option: 0: OFF, 1-5: ON with steps 2,4,8,16,64, -1: Auto mode (determined in code)                            |
+| enable\_cdef                    | Sequence       | Indicates whether to use CDEF for the whole sequence.                                                                      |
+| cdef\_filter\_mode              | Picture        | Indicates the level of complexity of the CDEF strength search as a function of the encoder mode (enc\_mode).               |
+| use\_ref\_frame\_cdef\_strength | Picture        | If set, use the CDEF strength for the reference frame in optimizing the search for the CDEF strength in the current frame. |
 
 **Implementation details**
 

@@ -1210,7 +1210,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
 
     gi_step = get_cdef_gi_step(ppcs->cdef_filter_mode);
 
-    mid_gi   = ppcs->cdf_ref_frame_strenght;
+    mid_gi   = ppcs->cdf_ref_frame_strength;
     start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_filter_mode == 1
                    ? (AOMMAX(0, mid_gi - gi_step))
                    : 0;

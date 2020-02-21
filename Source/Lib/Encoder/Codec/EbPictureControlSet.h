@@ -835,7 +835,7 @@ typedef struct PictureParentControlSet {
     RestUnitSearchInfo *rusi_picture[3]; //for 3 planes
     int8_t              cdef_filter_mode;
     int32_t             cdef_frame_strength;
-    int32_t             cdf_ref_frame_strenght;
+    int32_t             cdf_ref_frame_strength;
     int32_t             use_ref_frame_cdef_strength;
     uint8_t             nsq_search_level;
     uint8_t             palette_mode;

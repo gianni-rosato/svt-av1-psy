@@ -426,20 +426,20 @@ void set_reference_cdef_strength(PictureControlSet *pcs_ptr) {
     switch (pcs_ptr->slice_type) {
     case I_SLICE:
         pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 0;
-        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strenght      = 0;
+        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strength      = 0;
         break;
     case B_SLICE:
         ref_obj_l0 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
         ref_obj_l1 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
         strength   = (ref_obj_l0->cdef_frame_strength + ref_obj_l1->cdef_frame_strength) / 2;
         pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
-        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strenght      = strength;
+        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strength      = strength;
         break;
     case P_SLICE:
         ref_obj_l0 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
         strength   = ref_obj_l0->cdef_frame_strength;
         pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
-        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strenght      = strength;
+        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strength      = strength;
         break;
     default: SVT_LOG("CDEF: Not supported picture type"); break;
     }
