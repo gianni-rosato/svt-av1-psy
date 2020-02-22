@@ -259,6 +259,17 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int inter_intra_compound;
+
+    /* enable paeth
+    *
+    * Default is -1. */
+    int enable_paeth;
+
+    /* enable smooth
+    *
+    * Default is -1. */
+    int enable_smooth;
+
     /* combine class 12
     *
     * Default is -1. */

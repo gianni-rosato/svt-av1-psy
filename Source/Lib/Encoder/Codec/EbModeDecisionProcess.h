@@ -385,6 +385,8 @@ typedef struct ModeDecisionContext {
     EbBool       rdoq_quantize_fp;
     uint8_t      md_tx_size_search_mode;
     uint8_t      md_pic_obmc_mode;
+    uint8_t      md_enable_paeth;
+    uint8_t      md_enable_smooth;
     uint8_t      md_enable_inter_intra;
     uint8_t      md_filter_intra_mode;
     uint8_t      md_max_ref_count;

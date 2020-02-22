@@ -12397,7 +12397,10 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
             uint8_t  best_intra_ois_index        = 0;
             uint32_t best_intra_ois_distortion   = 64 * 64 * 255;
             uint8_t  intra_mode_start            = DC_PRED;
-            uint8_t  intra_mode_end              = PAETH_PRED;
+            EbBool   enable_paeth                = pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_paeth;
+            EbBool   enable_smooth               = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_smooth;
+            uint8_t  intra_mode_end              = enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
+
             uint8_t  angle_delta_counter         = 0;
             uint8_t  angle_delta_shift           = 1;
             EbBool   use_angle_delta             = (bsize >= 8);
@@ -12420,12 +12423,12 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
                 angle_delta_shift           = 1;
             } else {
                 if (pcs_ptr->slice_type == I_SLICE) {
-                    intra_mode_end              = /*is_16_bit ? SMOOTH_H_PRED :*/ PAETH_PRED;
+                    intra_mode_end              = /*is_16_bit ? SMOOTH_H_PRED :*/ enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
                     angle_delta_candidate_count = use_angle_delta ? 5 : 1;
                     disable_angular_prediction  = 0;
                     angle_delta_shift           = 1;
                 } else if (pcs_ptr->temporal_layer_index == 0) {
-                    intra_mode_end              = /*is_16_bit ? SMOOTH_H_PRED :*/ PAETH_PRED;
+                    intra_mode_end              = /*is_16_bit ? SMOOTH_H_PRED :*/ enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
                     angle_delta_candidate_count = (bsize > 16) ? 1 : use_angle_delta ? 2 : 1;
                     disable_angular_prediction  = 0;
                     angle_delta_shift           = 3;

@@ -6649,7 +6649,10 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
 #else
     uint8_t                uv_mode_total_count = 0;
 #endif
-    for (uv_mode = UV_DC_PRED; uv_mode <= UV_PAETH_PRED; uv_mode++) {
+    UvPredictionMode       uv_mode_end = context_ptr->md_enable_paeth ? UV_PAETH_PRED :
+                     context_ptr->md_enable_smooth ? UV_SMOOTH_H_PRED : UV_D67_PRED;
+
+    for (uv_mode = UV_DC_PRED; uv_mode <= uv_mode_end; uv_mode++) {
         uint8_t uv_angle_delta_candidate_count =
             (use_angle_delta && av1_is_directional_mode((PredictionMode)uv_mode)) ? 7 : 1;
         uint8_t uv_angle_delta_shift = 1;
@@ -6881,8 +6884,10 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
 
     // Loop over all intra mode, then over all uv move to derive the best uv mode for a given intra mode in term of rate
 
+    uint8_t intra_mode_end = context_ptr->md_enable_paeth ? PAETH_PRED :
+                             context_ptr->md_enable_smooth ? SMOOTH_H_PRED : D67_PRED;
     // intra_mode loop (luma mode loop)
-    for (uint8_t intra_mode = DC_PRED; intra_mode <= PAETH_PRED; ++intra_mode) {
+    for (uint8_t intra_mode = DC_PRED; intra_mode <= intra_mode_end; ++intra_mode) {
         uint8_t angle_delta_candidate_count =
             (use_angle_delta && av1_is_directional_mode((PredictionMode)intra_mode)) ? 7 : 1;
         uint8_t angle_delta_shift = 1;

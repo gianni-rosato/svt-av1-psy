@@ -2121,6 +2121,9 @@ void copy_api_from_app(
     // Compound mode
     scs_ptr->static_config.compound_level = ((EbSvtAv1EncConfiguration*)config_struct)->compound_level;
 
+    scs_ptr->static_config.enable_paeth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_paeth;
+    scs_ptr->static_config.enable_smooth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_smooth;
+
     // Filter intra prediction
     scs_ptr->static_config.enable_filter_intra = ((EbSvtAv1EncConfiguration*)config_struct)->enable_filter_intra;
 
@@ -2716,6 +2719,16 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
+    if (config->enable_paeth != 0 && config->enable_paeth != 1 && config->enable_paeth != -1) {
+        SVT_LOG("Error instance %u: Invalid Paeth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_paeth);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->enable_smooth != 0 && config->enable_smooth != 1 && config->enable_smooth != -1) {
+        SVT_LOG("Error instance %u: Invalid Smooth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_smooth);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->enable_mfmv != 0 && config->enable_mfmv != 1 && config->enable_mfmv != -1) {
       SVT_LOG("Error instance %u: Invalid motion field motion vector flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_mfmv);
       return_error = EB_ErrorBadParameter;
@@ -2905,6 +2918,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->edge_skp_angle_intra = DEFAULT;
     config_ptr->combine_class_12 = DEFAULT;
     config_ptr->inter_intra_compound = DEFAULT;
+    config_ptr->enable_paeth = DEFAULT;
+    config_ptr->enable_smooth = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
     config_ptr->enable_redundant_blk = DEFAULT;
     config_ptr->enable_trellis = DEFAULT;
