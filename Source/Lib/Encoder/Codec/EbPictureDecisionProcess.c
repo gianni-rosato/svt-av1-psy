@@ -3269,99 +3269,106 @@ static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
     return ahd;
 }
 
+/* Picture Decision Kernel */
+
 /***************************************************************************************************
- * Picture Decision Kernel
- *
- * Notes on the Picture Decision:
- *
- * The Picture Decision process performs multi-picture level decisions, including setting of the prediction structure,
- * setting the picture type and scene change detection.
- *
- * Inputs:
- * Input Picture
- *   -Input Picture Data
- *
- *  Outputs:
- *   -Picture Control Set with fully available PA Reference List
- *
- *  For Low Delay Sequences, pictures are started into the encoder pipeline immediately.
- *
- *  For Random Access Sequences, pictures are held for up to a PredictionStructurePeriod
- *    in order to determine if a Scene Change or Intra Frame is forthcoming. Either of
- *    those events (and additionally a End of Sequence Flag) will change the expected
- *    prediction structure.
- *
- *  Below is an example worksheet for how Intra Flags and Scene Change Flags interact
- *    together to affect the prediction structure.
- *
- *  The base prediction structure for this example is a 3-Level Hierarchical Random Access,
- *    Single Reference Prediction Structure:
- *
- *        b   b
- *       / \ / \
- *      /   b   \
- *     /   / \   \
- *    I-----------b
- *
- *  From this base structure, the following RPS positions are derived:
- *
- *    p   p       b   b       p   p
- *     \   \     / \ / \     /   /
- *      P   \   /   b   \   /   P
- *       \   \ /   / \   \ /   /
- *        ----I-----------b----
- *
- *    L L L   I  [ Normal ]   T T T
- *    2 1 0   n               0 1 2
- *            t
- *            r
- *            a
- *
- *  The RPS is composed of Leading Picture [L2-L0], Intra (CRA), Base/Normal Pictures,
- *    and Trailing Pictures [T0-t2]. Generally speaking, Leading Pictures are useful
- *    for handling scene changes without adding extraneous I-pictures and the Trailing
- *    pictures are useful for terminating GOPs.
- *
- *  Here is a table of possible combinations of pictures needed to handle intra and
- *    scene changes happening in quick succession.
- *
- *        Distance to scene change ------------>
- *
- *                  0              1                 2                3+
- *   I
- *   n
- *   t   0        I   I           n/a               n/a              n/a
- *   r
- *   a              p              p
- *                   \            /
- *   P   1        I   I          I   I              n/a              n/a
- *   e
- *   r               p                               p
- *   i                \                             /
- *   o            p    \         p   p             /   p
- *   d             \    \       /     \           /   /
- *       2     I    -----I     I       I         I----    I          n/a
- *   |
- *   |            p   p           p   p            p   p            p   p
- *   |             \   \         /     \          /     \          /   /
- *   |              P   \       /   p   \        /   p   \        /   P
- *   |               \   \     /     \   \      /   /     \      /   /
- *   V   3+   I       ----I   I       ----I    I----       I    I----       I
- *
- *   The table is interpreted as follows:
- *
- *   If there are no SCs or Intras encountered for a PredPeriod, then the normal
- *     prediction structure is applied.
- *
- *   If there is an intra in the PredPeriod, then one of the above combinations of
- *     Leading and Trailing pictures is used.  If there is no scene change, the last
- *     valid column consisting of Trailing Pictures only is used.  However, if there
- *     is an upcoming scene change before the next intra, then one of the above patterns
- *     is used. In the case of End of Sequence flags, only the last valid column of Trailing
- *     Pictures is used. The intention here is that any combination of Intra Flag and Scene
- *     Change flag can be coded.
- *
- ***************************************************************************************************/
+*
+* @brief
+*  The Picture Decision process performs multi-picture level decisions, including setting of the prediction structure,
+*  setting the picture type and performing scene change detection.
+*
+* @par Description:
+*  Since the prior Picture Analysis process stage is multithreaded, inputs to the Picture Decision Process can arrive
+*  out-of-display-order, so a reordering queue is used to enforce processing of pictures in display order. The algorithms
+*  employed in the Picture Decision process are dependent on prior pictures’ statistics, so the order in which pictures are
+*  processed must be strictly enforced. Additionally, the Picture Decision process uses the reorder queue to hold input pictures
+*  until they can be started into the Motion Estimation process while following the proper prediction structure.
+*
+* @param[in] Pictures
+*  The Picture Decision Process takes images spontaneously as they arive and perform multi-picture level decisions,
+*  including setting of the picture structure, setting the picture type and scene change detection.
+*
+* @param[out] Picture Control Set
+*  Picture Control Set with fully available Picture Analysis Reference List
+*
+* @remarks
+*  For Low Delay Sequences, pictures are started into the encoder pipeline immediately.
+*
+*  For Random Access Sequences, pictures are held for up to a PredictionStructurePeriod
+*    in order to determine if a Scene Change or Intra Frame is forthcoming. Either of
+*    those events (and additionally a End of Sequence Flag) will change the expected
+*    prediction structure.
+*
+*  Below is an example worksheet for how Intra Flags and Scene Change Flags interact
+*    together to affect the prediction structure.
+*
+*  The base prediction structure for this example is a 3-Level Hierarchical Random Access,
+*    Single Reference Prediction Structure:
+*
+*        b   b
+*       / \ / \
+*      /   b   \
+*     /   / \   \
+*    I-----------b
+*
+*  From this base structure, the following RPS positions are derived:
+*
+*    p   p       b   b       p   p
+*     \   \     / \ / \     /   /
+*      P   \   /   b   \   /   P
+*       \   \ /   / \   \ /   /
+*        ----I-----------b----
+*
+*    L L L   I  [ Normal ]   T T T
+*    2 1 0   n               0 1 2
+*            t
+*            r
+*            a
+*
+*  The RPS is composed of Leading Picture [L2-L0], Intra (CRA), Base/Normal Pictures,
+*    and Trailing Pictures [T0-t2]. Generally speaking, Leading Pictures are useful
+*    for handling scene changes without adding extraneous I-pictures and the Trailing
+*    pictures are useful for terminating GOPs.
+*
+*  Here is a table of possible combinations of pictures needed to handle intra and
+*    scene changes happening in quick succession.
+*
+*        Distance to scene change ------------>
+*
+*                  0              1                 2                3+
+*   I
+*   n
+*   t   0        I   I           n/a               n/a              n/a
+*   r
+*   a              p              p
+*                   \            /
+*   P   1        I   I          I   I              n/a              n/a
+*   e
+*   r               p                               p
+*   i                \                             /
+*   o            p    \         p   p             /   p
+*   d             \    \       /     \           /   /
+*       2     I    -----I     I       I         I----    I          n/a
+*   |
+*   |            p   p           p   p            p   p            p   p
+*   |             \   \         /     \          /     \          /   /
+*   |              P   \       /   p   \        /   p   \        /   P
+*   |               \   \     /     \   \      /   /     \      /   /
+*   V   3+   I       ----I   I       ----I    I----       I    I----       I
+*
+*   The table is interpreted as follows:
+*
+*   If there are no SCs or Intras encountered for a PredPeriod, then the normal
+*     prediction structure is applied.
+*
+*   If there is an intra in the PredPeriod, then one of the above combinations of
+*     Leading and Trailing pictures is used.  If there is no scene change, the last
+*     valid column consisting of Trailing Pictures only is used.  However, if there
+*     is an upcoming scene change before the next intra, then one of the above patterns
+*     is used. In the case of End of Sequence flags, only the last valid column of Trailing
+*     Pictures is used. The intention here is that any combination of Intra Flag and Scene
+*     Change flag can be coded.
+***************************************************************************************************/
 void* picture_decision_kernel(void *input_ptr)
 {
     EbThreadContext               *thread_context_ptr = (EbThreadContext*)input_ptr;

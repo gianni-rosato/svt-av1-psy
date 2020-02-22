@@ -12,16 +12,6 @@
 
 This document describes how to use the Scalable Video Technology for AV1 Decoder (SVT-AV1). In particular, this user guide describes how to run the sample application with the respective dynamically linked library.
 
-## Known Limitations
-
-Initial version:
-
-- Supports all frames without loopfilter (deblocking, cdef and self guided restoration filters not supported)
-- Screen content tools are not supported
-- Following Inter tools are not supported : (OBMC, COMPOUND_INTRA, COMPOUND_DISTANCE, COMPOUND_WEDGE, COMPOUND_DIFFWTD, Temporal Scan)
-- Supports only 8-bit and 10-bit 4:2:0 content
-- Tested only on Windows
-
 ## Sample Application Guide
 
 This section describes how to run the sample decoder application that uses the SVT-AV1 Decoder library. It describes the command line input parameters and the resulting outputs.

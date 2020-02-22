@@ -99,6 +99,8 @@ void derive_picture_activity_statistics(PictureParentControlSet *pcs_ptr)
 
 /************************************************
  * Source Based Operations Kernel
+ * Source-based operations process involves a number of analysis algorithms
+ * to identify spatiotemporal characteristics of the input pictures.
  ************************************************/
 void *source_based_operations_kernel(void *input_ptr) {
     EbThreadContext *             thread_context_ptr = (EbThreadContext *)input_ptr;

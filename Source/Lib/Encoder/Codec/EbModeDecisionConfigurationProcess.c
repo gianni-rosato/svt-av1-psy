@@ -1458,9 +1458,35 @@ void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
 
     if (ref_stamp >= 0) motion_field_projection(cm, pcs_ptr, LAST2_FRAME, 2);
 }
-/******************************************************
- * Mode Decision Configuration Kernel
- ******************************************************/
+
+/* Mode Decision Configuration Kernel */
+
+/*********************************************************************************
+*
+* @brief
+*  The Mode Decision Configuration Process involves a number of initialization steps,
+*  setting flags for a number of features, and determining the blocks to be considered
+*  in subsequent MD stages.
+*
+* @par Description:
+*  The Mode Decision Configuration Process involves a number of initialization steps,
+*  setting flags for a number of features, and determining the blocks to be considered
+*  in subsequent MD stages. Examples of flags that are set are the flags for filter intra,
+*  eighth-pel, OBMC and warped motion and flags for updating the cumulative density functions
+*  Examples of initializations include initializations for picture chroma QP offsets,
+*  CDEF strength, self-guided restoration filter parameters, quantization parameters,
+*  lambda arrays, mv and coefficient rate estimation arrays.
+*
+*  The set of blocks to be processed in subsequent MD stages is decided in this process as a
+*  function of the picture depth mode (pic_depth_mode).
+*
+* @param[in] Configurations
+*  Configuration flags that are to be set
+*
+* @param[out] Initializations
+*  Initializations for various flags and variables
+*
+********************************************************************************/
 void *mode_decision_configuration_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *                 thread_context_ptr = (EbThreadContext *)input_ptr;

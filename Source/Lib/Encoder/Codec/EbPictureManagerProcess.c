@@ -128,25 +128,27 @@ void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr
 
 void set_tile_info(PictureParentControlSet *pcs_ptr);
 
+/* Picture Manager Kernel */
+
 /***************************************************************************************************
- * Picture Manager Kernel
  *
- * Notes on the Picture Manager:
+ * @brief
+ *  The Picture Manager Process performs the function of managing both the Input Picture buffers and
+ *  the Reference Picture buffers and subdividing the Input Picture into Tiles.
  *
- * The Picture Manager Process performs the function of managing both the Input Picture buffers and
- * the Reference Picture buffers and subdividing the Input Picture into Tiles. Both the Input Picture
- * and Reference Picture buffers particular management depends on the GoP structure already implemented in
- * the Picture decision. Also note that the Picture Manager sets up the RPS for Entropy Coding as well.
+ * @par Description:
+ *  Both the Input Picture and Reference Picture buffers particular management depends on
+ *  the GoP structure already implemented in the Picture decision. Also note that the
+ *  Picture Manager sets up the RPS for Entropy Coding as well.
  *
- * Inputs:
- * Input Picture
- *   -Input Picture Data
+ * @param[in] Input Picture
+ *  Input Picture Data
  *
- *  Reference Picture
- *   -Reference Picture Data
+ * @param[in] Reference Picture
+ *  Reference Picture Data
  *
- *  Outputs:
- *   -Picture Control Set with fully available Reference List
+ * @param[out] Picture Control Set
+ *  Picture Control Set with fully available Reference List
  *
  ***************************************************************************************************/
 void *picture_manager_kernel(void *input_ptr) {

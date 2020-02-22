@@ -500,9 +500,25 @@ void write_stat_to_file(SequenceControlSet *scs_ptr, StatStruct stat_struct, uin
     eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
 }
 
-/******************************************************
- * Entropy Coding Kernel
- ******************************************************/
+/* Entropy Coding */
+
+/*********************************************************************************
+*
+* @brief
+*  The Entropy Coding process is responsible for producing an AV1 conformant bitstream for each frame.
+*
+* @par Description:
+*  The entropy coder is a frame-based process and is based on multi-symbol arithmetic range coding.
+*  It takes as input the coding decisions and information for each block and produces as output the bitstream
+*  for each frame.
+*
+* @param[in] Coding Decisions
+*  Coding decisions and information for each block.
+*
+* @param[out] bitstream
+*  Bitstream for each block
+*
+********************************************************************************/
 void *entropy_coding_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;

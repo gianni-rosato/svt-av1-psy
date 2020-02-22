@@ -1,21 +1,23 @@
-# Scalable Video Technology for AV1 Encoder (SVT-AV1 Encoder)
+# Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder)
 
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/OpenVisualCloud/SVT-AV1?branch=master&svg=true)](https://ci.appveyor.com/project/OpenVisualCloud/SVT-AV1)
 [![Travis Build Status](https://travis-ci.com/OpenVisualCloud/SVT-AV1.svg?branch=master)](https://travis-ci.com/OpenVisualCloud/SVT-AV1)
 [![Coverage Status](https://coveralls.io/repos/github/OpenVisualCloud/SVT-AV1/badge.svg?branch=master)](https://coveralls.io/github/OpenVisualCloud/SVT-AV1?branch=master)
 
-The Scalable Video Technology for AV1 Encoder (SVT-AV1 Encoder) is an AV1-compliant encoder library core. The SVT-AV1 development is a work-in-progress targeting performance levels applicable to both VOD and Live encoding / transcoding video applications.
+The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-compliant encoder/decoder library core. The SVT-AV1 encoder development is a work-in-progress targeting performance levels applicable to both VOD and Live encoding / transcoding video applications. The SVT-AV1 decoder implementation is targeting future codec research activities.
 
 ## License
 
-SVT-AV1 Encoder is licensed under the OSI-approved BSD+Patent license. See [LICENSE](LICENSE.md) for details.
+SVT-AV1 is licensed under the OSI-approved BSD+Patent license. See [LICENSE](LICENSE.md) for details.
+SVT-AV1 uses code from the [libaom](https://aomedia.googlesource.com/aom/) project. The files used are marked with the following [license](LICENSE_AOM.md) in their headers.
 
 ## Documentation
 
-More details about the SVT-AV1 usage can be found under:
+More details about the SVT-AV1 usage and implementation can be found under:
 
 - [svt-av1-encoder-user-guide](Docs/svt-av1_encoder_user_guide.md)
 - [svt-av1-decoder-user-guide](Docs/svt-av1_decoder_user_guide.md)
+- [svt-av1-documentation-page](Docs/README.md)
 
 ## System Requirements
 

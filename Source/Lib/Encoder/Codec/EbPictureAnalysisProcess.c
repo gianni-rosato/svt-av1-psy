@@ -3832,15 +3832,30 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
     }
 }
 
-/************************************************
- * Picture Analysis Kernel
- * The Picture Analysis Process pads & decimates the input pictures.
- * The Picture Analysis also includes creating an n-bin Histogram,
- * gathering picture 1st and 2nd moment statistics for each 8x8 block,
- * which are used to compute variance.
- * The Picture Analysis process is multithreaded, so pictures can be
- * processed out of order as long as all inputs are available.
- ************************************************/
+/* Picture Analysis Kernel */
+
+/*********************************************************************************
+*
+* @brief
+*  The Picture Analysis processes perform the first stage of encoder pre-processing analysis
+*  as well as any intra-picture image conversion procedures, such as resampling, color space conversion, or tone mapping.
+*
+* @par Description:
+*  The Picture Analysis processes can be multithreaded and as such can process multiple input pictures at a time.
+*  The Picture Analysis also includes creating an n-bin Histogram, gathering 1st and 2nd moment statistics for each 8x8 block
+*  in the picture, which are used in variance calculations. Since the Picture Analysis process is multithreaded,
+*  the pictures can be processed out of order as long as all image-modifying functions are completed before any
+*  statistics-gathering functions begin.
+*
+* @param[in] Pictures
+*  The Picture Analysis Kernel performs pre-processing analysis as well as any intra-picture image conversion,
+*  color space conversion or tone mapping on the pictures that it was given.
+*
+* @param[out] statistics
+*  n-bin histogram is created to gather 1st and 2nd moment statistics for each 8x8 block which is then used to compute statistics
+*
+********************************************************************************/
+
 void *picture_analysis_kernel(void *input_ptr) {
     EbThreadContext *        thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureAnalysisContext * context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;

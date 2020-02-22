@@ -808,17 +808,33 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     return;
 }
 
-/************************************************
-* Initial Rate Control Kernel
-* The Initial Rate Control Process determines the initial bit budget for each
-* picture depending on the data gathered in the Picture Analysis and Motion
-* Analysis processes as well as the settings determined in the Picture Decision process.
-* The Initial Rate Control process also employs a sliding window buffer to analyze multiple
-* pictures if the delay is allowed.  Note that through this process, until the subsequent
-* Picture Manager process, no reference picture data has been used.
-* P.S. Temporal noise reduction is now performed in Initial Rate Control Process.
-* In future we might decide to move it to Motion Analysis Process.
-************************************************/
+/* Initial Rate Control Kernel */
+
+/*********************************************************************************
+*
+* @brief
+*  The Initial Rate Control process determines the initial bit budget for each picture
+*  depending on the data gathered in the Picture Analysis and Motion Estimation processes
+*  as well as the settings determined in the Picture Decision process.
+*
+* @par Description:
+*  The Initial Rate Control process employs a sliding window buffer to analyze
+*  multiple pictures if a delay is allowed. Note that no reference picture data is
+*  used in this process.
+*
+* @param[in] Picture
+*  The Initial Rate Control Kernel takes a picture and determines the initial bit budget
+*  for each picture depending on the data that was gathered in Picture Analysis and
+*  Motion Estimation processes
+*
+* @param[out] Bit Budget
+*  Bit Budget is the amount of budgetted bits for a picture
+*
+* @remarks
+*  Temporal noise reduction is currently performed in Initial Rate Control Process.
+*  In the future we might decide to move it to Motion Analysis Process.
+*
+********************************************************************************/
 void *initial_rate_control_kernel(void *input_ptr) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
     InitialRateControlContext *context_ptr = (InitialRateControlContext *)thread_context_ptr->priv;
