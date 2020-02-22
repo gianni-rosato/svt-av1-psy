@@ -9777,6 +9777,58 @@ void integer_search_sb(
                 continue;  //so will not get ME results for those references.
             x_search_center = context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x;
             y_search_center = context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y;
+#if DIST_BASED_ME_SEARCH_AREA
+            search_area_width = context_ptr->search_area_width;
+            search_area_height = context_ptr->search_area_height;
+
+            uint16_t dist = (context_ptr->me_alt_ref == EB_TRUE) ?
+                ABS((int16_t)(context_ptr->tf_frame_index - context_ptr->tf_index_center)) :
+                ABS((int16_t)(pcs_ptr->picture_number -
+                    pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index]));
+            // factor to slowdown the ME search region growth to MAX
+            if (!pcs_ptr->sc_content_detected && context_ptr->me_alt_ref == 0) {
+                int8_t round_up = ((dist%8) == 0) ? 0 : 1;
+                dist = ((dist * 5) / 8) + round_up;
+            }
+            search_area_width = MIN((search_area_width*dist),context_ptr->max_me_search_width);
+            search_area_height = MIN((search_area_height*dist),context_ptr->max_me_search_height);
+
+#if SKIP_ME_BASED_ON_HME
+            // Constrain x_ME to be a multiple of 8 (round up)
+            // Update ME search reagion size based on hme-data
+#if SC_HME_PRUNING
+            if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index] == SC_HME_TH_STILL) {
+                search_area_width = ((search_area_width / SC_SR_DENOM_STILL) + 7) & ~0x07;
+                search_area_height = (search_area_height / SC_SR_DENOM_STILL);
+            }
+            else if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index] == SC_HME_TH_EASY) {
+                search_area_width = ((search_area_width / SC_SR_DENOM_EASY) + 7) & ~0x07;
+                search_area_height = (search_area_height / SC_SR_DENOM_EASY);
+            }
+            else if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index]) {
+                search_area_width = ((search_area_width / 8) + 7) & ~0x07;
+                search_area_height = (search_area_height / 8);
+            }
+            else {
+                search_area_width = (search_area_width + 7) & ~0x07;
+                search_area_height = search_area_height;
+            }
+#else
+            if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index]) {
+                search_area_width = ((search_area_width / 8) + 7) & ~0x07;
+                search_area_height = (search_area_height / 8);
+            }
+            else {
+                search_area_width = (search_area_width + 7) & ~0x07;
+                search_area_height = search_area_height;
+            }
+#endif
+#else
+            // Constrain x_ME to be a multiple of 8 (round up)
+            search_area_width = (search_area_width + 7) & ~0x07;
+#endif
+
+#else
 #if SKIP_ME_BASED_ON_HME
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data
@@ -9792,6 +9844,7 @@ void integer_search_sb(
             // Constrain x_ME to be a multiple of 8 (round up)
             search_area_width  = (context_ptr->search_area_width + 7) & ~0x07;
             search_area_height = context_ptr->search_area_height;
+#endif
 #endif
             if ((x_search_center != 0 || y_search_center != 0) &&
                 (pcs_ptr->is_used_as_reference_flag == EB_TRUE)) {
@@ -10158,7 +10211,7 @@ void integer_search_sb(
   frame. keep only the references that are close to the best reference.
 */
 void prune_references_fp(
-    PictureParentControlSet   *picture_control_set_ptr,
+    PictureParentControlSet   *pcs_ptr,
     MeContext                 *context_ptr)
 {
     HmeResults sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -10167,7 +10220,7 @@ void prune_references_fp(
     uint8_t num_of_ref_pic_to_search, num_of_list_to_search;
     uint32_t idx;
     uint32_t pu_index;
-    num_of_list_to_search = (picture_control_set_ptr->slice_type == P_SLICE)
+    num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE)
         ? (uint32_t)REF_LIST_0
         : (uint32_t)REF_LIST_1;
 
@@ -10181,11 +10234,11 @@ void prune_references_fp(
         }
         else {
             num_of_ref_pic_to_search =
-                (picture_control_set_ptr->slice_type == P_SLICE)
-                ? picture_control_set_ptr->ref_list0_count
+                (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->ref_list0_count
                 : (list_index == REF_LIST_0)
-                ? picture_control_set_ptr->ref_list0_count
-                : picture_control_set_ptr->ref_list1_count;
+                ? pcs_ptr->ref_list0_count
+                : pcs_ptr->ref_list1_count;
         }
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {

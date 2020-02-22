@@ -1680,7 +1680,10 @@ static EbErrorType produce_temporally_filtered_pic(
                 // ------------
                 // Step 1: motion estimation + compensation
                 // ------------
-
+#if DIST_BASED_ME_SEARCH_AREA
+                me_context_ptr->me_context_ptr->tf_frame_index = frame_index ;
+                me_context_ptr->me_context_ptr->tf_index_center = index_center;
+#endif
                 // if frame to process is the center frame
                 if (frame_index == index_center) {
                     // skip MC (central frame)

@@ -447,6 +447,10 @@ typedef struct MeContext {
     // ME
     uint16_t search_area_width;
     uint16_t search_area_height;
+#if DIST_BASED_ME_SEARCH_AREA
+    uint16_t max_me_search_width;
+    uint16_t max_me_search_height;
+#endif
     // HME
     uint16_t number_hme_search_region_in_width;
     uint16_t number_hme_search_region_in_height;
@@ -473,6 +477,11 @@ typedef struct MeContext {
     uint16_t adj_search_area_height;
     EbBool   me_alt_ref;
     void *   alt_ref_reference_ptr;
+#if DIST_BASED_ME_SEARCH_AREA
+    // tf
+    int tf_frame_index;
+    int tf_index_center;
+#endif
     // -------
 } MeContext;
 
