@@ -620,9 +620,9 @@ static AOM_FORCE_INLINE void lpf_internal_14_sse2(__m128i *q6p6, __m128i *q5p5, 
 void aom_lpf_horizontal_14_sse2(uint8_t *s, int32_t p, const uint8_t *_blimit,
                                 const uint8_t *_limit, const uint8_t *_thresh) {
     __m128i q6p6, q5p5, q4p4, q3p3, q2p2, q1p1, q0p0;
-    __m128i blimit = _mm_load_si128((const __m128i *)_blimit);
-    __m128i limit  = _mm_load_si128((const __m128i *)_limit);
-    __m128i thresh = _mm_load_si128((const __m128i *)_thresh);
+    __m128i blimit = _mm_loadu_si128((const __m128i *)_blimit);
+    __m128i limit  = _mm_loadu_si128((const __m128i *)_limit);
+    __m128i thresh = _mm_loadu_si128((const __m128i *)_thresh);
 
     q4p4 = _mm_unpacklo_epi32(xx_loadl_32(s - 5 * p), xx_loadl_32(s + 4 * p));
     q3p3 = _mm_unpacklo_epi32(xx_loadl_32(s - 4 * p), xx_loadl_32(s + 3 * p));
@@ -650,9 +650,9 @@ static AOM_FORCE_INLINE void lpf_internal_6_sse2(__m128i *p2, __m128i *q2, __m12
                                                  __m128i *p1p0, const uint8_t *_blimit,
                                                  const uint8_t *_limit, const uint8_t *_thresh) {
     const __m128i zero   = _mm_setzero_si128();
-    const __m128i blimit = _mm_load_si128((const __m128i *)_blimit);
-    const __m128i limit  = _mm_load_si128((const __m128i *)_limit);
-    const __m128i thresh = _mm_load_si128((const __m128i *)_thresh);
+    const __m128i blimit = _mm_loadu_si128((const __m128i *)_blimit);
+    const __m128i limit  = _mm_loadu_si128((const __m128i *)_limit);
+    const __m128i thresh = _mm_loadu_si128((const __m128i *)_thresh);
     __m128i       mask, hev, flat;
     __m128i       q2p2, q1p1, q0p0, p1q1, p0q0, flat_p1p0, flat_q0q1;
     __m128i       p2_16, q2_16, p1_16, q1_16, p0_16, q0_16;
@@ -806,9 +806,9 @@ static AOM_FORCE_INLINE void lpf_internal_8_sse2(__m128i *p3_8, __m128i *q3_8, _
                                                  __m128i *q2_out, const uint8_t *_blimit,
                                                  const uint8_t *_limit, const uint8_t *_thresh) {
     const __m128i zero   = _mm_setzero_si128();
-    const __m128i blimit = _mm_load_si128((const __m128i *)_blimit);
-    const __m128i limit  = _mm_load_si128((const __m128i *)_limit);
-    const __m128i thresh = _mm_load_si128((const __m128i *)_thresh);
+    const __m128i blimit = _mm_loadu_si128((const __m128i *)_blimit);
+    const __m128i limit  = _mm_loadu_si128((const __m128i *)_limit);
+    const __m128i thresh = _mm_loadu_si128((const __m128i *)_thresh);
     __m128i       mask, hev, flat;
     __m128i       p2, q2, p1, p0, q0, q1, p3, q3, q3p3, flat_p1p0, flat_q0q1;
     __m128i       q2p2, q1p1, q0p0, p1q1, p0q0;
@@ -1164,10 +1164,10 @@ void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t p, const uint8_t *blimit, const
 
     transpose6x6_sse2(&d0d1, &p0, &p1p0, &q1q0, &q0, &d5, &d0d1, &d2d3, &d4d5);
 
-    _mm_store_si128((__m128i *)(temp_dst), d0d1);
+    _mm_storeu_si128((__m128i *)(temp_dst), d0d1);
     memcpy((s - 3) + 0 * p, temp_dst, 6);
     memcpy((s - 3) + 1 * p, temp_dst + 8, 6);
-    _mm_store_si128((__m128i *)(temp_dst), d2d3);
+    _mm_storeu_si128((__m128i *)(temp_dst), d2d3);
     memcpy((s - 3) + 2 * p, temp_dst, 6);
     memcpy((s - 3) + 3 * p, temp_dst + 8, 6);
 }
@@ -1229,9 +1229,9 @@ void aom_lpf_vertical_14_sse2(uint8_t *s, int32_t p, const uint8_t *_blimit, con
     __m128i q7p7, q6p6, q5p5, q4p4, q3p3, q2p2, q1p1, q0p0;
     __m128i x6, x5, x4, x3;
     __m128i pq0, pq1, pq2, pq3;
-    __m128i blimit = _mm_load_si128((__m128i *)_blimit);
-    __m128i limit  = _mm_load_si128((__m128i *)_limit);
-    __m128i thresh = _mm_load_si128((__m128i *)_thresh);
+    __m128i blimit = _mm_loadu_si128((__m128i *)_blimit);
+    __m128i limit  = _mm_loadu_si128((__m128i *)_limit);
+    __m128i thresh = _mm_loadu_si128((__m128i *)_thresh);
 
     x6 = _mm_loadu_si128((__m128i *)((s - 8) + 0 * p));
     x5 = _mm_loadu_si128((__m128i *)((s - 8) + 1 * p));
@@ -1266,13 +1266,13 @@ static INLINE void get_limit(const uint8_t *bl, const uint8_t *l, const uint8_t 
     const int32_t shift = bd - 8;
     const __m128i zero  = _mm_setzero_si128();
 
-    __m128i x = _mm_unpacklo_epi8(_mm_load_si128((const __m128i *)bl), zero);
+    __m128i x = _mm_unpacklo_epi8(_mm_loadu_si128((const __m128i *)bl), zero);
     *blt      = _mm_slli_epi16(x, shift);
 
-    x   = _mm_unpacklo_epi8(_mm_load_si128((const __m128i *)l), zero);
+    x   = _mm_unpacklo_epi8(_mm_loadu_si128((const __m128i *)l), zero);
     *lt = _mm_slli_epi16(x, shift);
 
-    x    = _mm_unpacklo_epi8(_mm_load_si128((const __m128i *)t), zero);
+    x    = _mm_unpacklo_epi8(_mm_loadu_si128((const __m128i *)t), zero);
     *thr = _mm_slli_epi16(x, shift);
 
     *t80_out = _mm_set1_epi16(1 << (bd - 1));

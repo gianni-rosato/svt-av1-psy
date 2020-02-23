@@ -38,10 +38,10 @@ cglobal subtract_block, 7, 7, 8, \
   je .case_64
 
 %macro loop16 6
-  mova                  m0, [srcq+%1]
-  mova                  m4, [srcq+%2]
-  mova                  m1, [predq+%3]
-  mova                  m5, [predq+%4]
+  movu                  m0, [srcq+%1]
+  movu                  m4, [srcq+%2]
+  movu                  m1, [predq+%3]
+  movu                  m5, [predq+%4]
   punpckhbw             m2, m0, m7
   punpckhbw             m3, m1, m7
   punpcklbw             m0, m7
@@ -54,10 +54,10 @@ cglobal subtract_block, 7, 7, 8, \
   punpcklbw             m5, m7
   psubw                 m1, m3
   psubw                 m4, m5
-  mova [diffq+mmsize*0+%5], m0
-  mova [diffq+mmsize*1+%5], m2
-  mova [diffq+mmsize*0+%6], m4
-  mova [diffq+mmsize*1+%6], m1
+  movu [diffq+mmsize*0+%5], m0
+  movu [diffq+mmsize*1+%5], m2
+  movu [diffq+mmsize*0+%6], m4
+  movu [diffq+mmsize*1+%6], m1
 %endmacro
 
   mov             pred_str, pred_stridemp
@@ -118,8 +118,8 @@ cglobal subtract_block, 7, 7, 8, \
   punpcklbw             m3, m7
   psubw                 m0, m1
   psubw                 m2, m3
-  mova             [diffq], m0
-  mova [diffq+diff_strideq*2], m2
+  movu             [diffq], m0
+  movu [diffq+diff_strideq*2], m2
 %endmacro
 
 .case_8:

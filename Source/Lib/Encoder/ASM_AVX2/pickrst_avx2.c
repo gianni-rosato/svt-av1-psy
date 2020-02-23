@@ -48,9 +48,9 @@ static INLINE uint8_t find_average_avx2(const uint8_t *src, int32_t h_start, int
 
         if (leftover >= 16) {
             mask_l = _mm_set1_epi8(-1);
-            mask_h = _mm_load_si128((__m128i *)(mask_8bit[leftover - 16]));
+            mask_h = _mm_loadu_si128((__m128i *)(mask_8bit[leftover - 16]));
         } else {
-            mask_l = _mm_load_si128((__m128i *)(mask_8bit[leftover]));
+            mask_l = _mm_loadu_si128((__m128i *)(mask_8bit[leftover]));
             mask_h = _mm_setzero_si128();
         }
         const __m256i mask = _mm256_inserti128_si256(_mm256_castsi128_si256(mask_l), mask_h, 1);

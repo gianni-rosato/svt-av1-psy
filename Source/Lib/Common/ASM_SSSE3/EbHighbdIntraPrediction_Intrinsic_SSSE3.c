@@ -32,7 +32,7 @@ static const uint16_t sm_weights_16[32] = {
 static INLINE void load_right_weights_4(const uint16_t *const above, __m128i *const r,
                                         __m128i *const weights) {
     *r       = _mm_set1_epi16((uint16_t)above[3]);
-    *weights = _mm_load_si128((const __m128i *)sm_weights_4);
+    *weights = _mm_loadu_si128((const __m128i *)sm_weights_4);
 }
 
 static INLINE void init_4(const uint16_t *const above, const uint16_t *const left, const int32_t h,
@@ -50,7 +50,7 @@ static INLINE void init_4(const uint16_t *const above, const uint16_t *const lef
 }
 
 static INLINE void load_left_8(const uint16_t *const left, const __m128i r, __m128i *const lr) {
-    const __m128i l = _mm_load_si128((const __m128i *)left);
+    const __m128i l = _mm_loadu_si128((const __m128i *)left);
     lr[0]           = _mm_unpacklo_epi16(l, r); // 0 1 2 3
     lr[1]           = _mm_unpackhi_epi16(l, r); // 4 5 6 7
 }
@@ -113,9 +113,9 @@ void eb_aom_highbd_smooth_predictor_4x8_ssse3(uint16_t *dst, ptrdiff_t stride,
 
     init_4(above, left, 8, &ab, &r, &weights_w, rep);
     load_left_8(left, r, lr);
-    weights_h = _mm_load_si128((const __m128i *)(sm_weights_8 + 0));
+    weights_h = _mm_loadu_si128((const __m128i *)(sm_weights_8 + 0));
     smooth_pred_4x4(weights_w, weights_h, rep, ab, lr[0], &dst, stride);
-    weights_h = _mm_load_si128((const __m128i *)(sm_weights_8 + 8));
+    weights_h = _mm_loadu_si128((const __m128i *)(sm_weights_8 + 8));
     smooth_pred_4x4(weights_w, weights_h, rep, ab, lr[1], &dst, stride);
 }
 
@@ -130,15 +130,15 @@ void eb_aom_highbd_smooth_predictor_4x16_ssse3(uint16_t *dst, ptrdiff_t stride,
     init_4(above, left, 16, &ab, &r, &weights_w, rep);
 
     load_left_8(left + 0, r, lr);
-    weights_h = _mm_load_si128((const __m128i *)(sm_weights_16 + 0));
+    weights_h = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 0));
     smooth_pred_4x4(weights_w, weights_h, rep, ab, lr[0], &dst, stride);
-    weights_h = _mm_load_si128((const __m128i *)(sm_weights_16 + 8));
+    weights_h = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 8));
     smooth_pred_4x4(weights_w, weights_h, rep, ab, lr[1], &dst, stride);
 
     load_left_8(left + 8, r, lr);
-    weights_h = _mm_load_si128((const __m128i *)(sm_weights_16 + 16));
+    weights_h = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 16));
     smooth_pred_4x4(weights_w, weights_h, rep, ab, lr[0], &dst, stride);
-    weights_h = _mm_load_si128((const __m128i *)(sm_weights_16 + 24));
+    weights_h = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 24));
     smooth_pred_4x4(weights_w, weights_h, rep, ab, lr[1], &dst, stride);
 }
 
@@ -278,7 +278,7 @@ void eb_aom_highbd_smooth_v_predictor_4x4_ssse3(uint16_t *dst, ptrdiff_t stride,
     (void)bd;
 
     smooth_v_init_4(above, left, 4, &ab, rep);
-    const __m128i weights = _mm_load_si128((const __m128i *)sm_weights_4);
+    const __m128i weights = _mm_loadu_si128((const __m128i *)sm_weights_4);
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
 }
 
@@ -291,9 +291,9 @@ void eb_aom_highbd_smooth_v_predictor_4x8_ssse3(uint16_t *dst, ptrdiff_t stride,
     (void)bd;
 
     smooth_v_init_4(above, left, 8, &ab, rep);
-    weights = _mm_load_si128((const __m128i *)(sm_weights_8 + 0));
+    weights = _mm_loadu_si128((const __m128i *)(sm_weights_8 + 0));
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
-    weights = _mm_load_si128((const __m128i *)(sm_weights_8 + 8));
+    weights = _mm_loadu_si128((const __m128i *)(sm_weights_8 + 8));
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
 }
 
@@ -307,14 +307,14 @@ void eb_aom_highbd_smooth_v_predictor_4x16_ssse3(uint16_t *dst, ptrdiff_t stride
 
     smooth_v_init_4(above, left, 16, &ab, rep);
 
-    weights = _mm_load_si128((const __m128i *)(sm_weights_16 + 0));
+    weights = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 0));
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
-    weights = _mm_load_si128((const __m128i *)(sm_weights_16 + 8));
+    weights = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 8));
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
 
-    weights = _mm_load_si128((const __m128i *)(sm_weights_16 + 16));
+    weights = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 16));
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
-    weights = _mm_load_si128((const __m128i *)(sm_weights_16 + 24));
+    weights = _mm_loadu_si128((const __m128i *)(sm_weights_16 + 24));
     smooth_v_pred_4x4(weights, rep, ab, &dst, stride);
 }
 
@@ -385,7 +385,7 @@ void eb_aom_paeth_predictor_4x8_ssse3(uint8_t *dst, ptrdiff_t stride, const uint
 
 void eb_aom_paeth_predictor_4x16_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                        const uint8_t *left) {
-    __m128i       l    = _mm_load_si128((const __m128i *)left);
+    __m128i       l    = _mm_loadu_si128((const __m128i *)left);
     const __m128i t    = _mm_cvtsi32_si128(((const uint32_t *)above)[0]);
     const __m128i zero = _mm_setzero_si128();
     const __m128i t16  = _mm_unpacklo_epi8(t, zero);
@@ -447,7 +447,7 @@ void eb_aom_paeth_predictor_8x8_ssse3(uint8_t *dst, ptrdiff_t stride, const uint
 
 void eb_aom_paeth_predictor_8x16_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                        const uint8_t *left) {
-    __m128i       l    = _mm_load_si128((const __m128i *)left);
+    __m128i       l    = _mm_loadu_si128((const __m128i *)left);
     const __m128i t    = _mm_loadl_epi64((const __m128i *)above);
     const __m128i zero = _mm_setzero_si128();
     const __m128i t16  = _mm_unpacklo_epi8(t, zero);
@@ -475,7 +475,7 @@ void eb_aom_paeth_predictor_8x32_ssse3(uint8_t *dst, ptrdiff_t stride, const uin
     const __m128i one  = _mm_set1_epi16(1);
 
     for (int j = 0; j < 2; ++j) {
-        const __m128i l   = _mm_load_si128((const __m128i *)(left + j * 16));
+        const __m128i l   = _mm_loadu_si128((const __m128i *)(left + j * 16));
         __m128i       rep = _mm_set1_epi16(0x8000);
         for (int i = 0; i < 16; ++i) {
             const __m128i l16 = _mm_shuffle_epi8(l, rep);
@@ -499,7 +499,7 @@ static INLINE __m128i paeth_16x1_pred(const __m128i *left, const __m128i *top0, 
 void eb_aom_paeth_predictor_16x4_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                        const uint8_t *left) {
     __m128i       l    = _mm_cvtsi32_si128(((const uint32_t *)left)[0]);
-    const __m128i t    = _mm_load_si128((const __m128i *)above);
+    const __m128i t    = _mm_loadu_si128((const __m128i *)above);
     const __m128i zero = _mm_setzero_si128();
     const __m128i top0 = _mm_unpacklo_epi8(t, zero);
     const __m128i top1 = _mm_unpackhi_epi8(t, zero);
@@ -520,7 +520,7 @@ void eb_aom_paeth_predictor_16x4_ssse3(uint8_t *dst, ptrdiff_t stride, const uin
 void eb_aom_paeth_predictor_16x8_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                        const uint8_t *left) {
     __m128i       l    = _mm_loadl_epi64((const __m128i *)left);
-    const __m128i t    = _mm_load_si128((const __m128i *)above);
+    const __m128i t    = _mm_loadu_si128((const __m128i *)above);
     const __m128i zero = _mm_setzero_si128();
     const __m128i top0 = _mm_unpacklo_epi8(t, zero);
     const __m128i top1 = _mm_unpackhi_epi8(t, zero);
@@ -541,8 +541,8 @@ void eb_aom_paeth_predictor_16x8_ssse3(uint8_t *dst, ptrdiff_t stride, const uin
 
 void eb_aom_paeth_predictor_16x16_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    __m128i       l    = _mm_load_si128((const __m128i *)left);
-    const __m128i t    = _mm_load_si128((const __m128i *)above);
+    __m128i       l    = _mm_loadu_si128((const __m128i *)left);
+    const __m128i t    = _mm_loadu_si128((const __m128i *)above);
     const __m128i zero = _mm_setzero_si128();
     const __m128i top0 = _mm_unpacklo_epi8(t, zero);
     const __m128i top1 = _mm_unpackhi_epi8(t, zero);
@@ -563,8 +563,8 @@ void eb_aom_paeth_predictor_16x16_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_16x32_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    __m128i       l    = _mm_load_si128((const __m128i *)left);
-    const __m128i t    = _mm_load_si128((const __m128i *)above);
+    __m128i       l    = _mm_loadu_si128((const __m128i *)left);
+    const __m128i t    = _mm_loadu_si128((const __m128i *)above);
     const __m128i zero = _mm_setzero_si128();
     const __m128i top0 = _mm_unpacklo_epi8(t, zero);
     const __m128i top1 = _mm_unpackhi_epi8(t, zero);
@@ -583,7 +583,7 @@ void eb_aom_paeth_predictor_16x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
         rep = _mm_add_epi16(rep, one);
     }
 
-    l   = _mm_load_si128((const __m128i *)(left + 16));
+    l   = _mm_loadu_si128((const __m128i *)(left + 16));
     rep = _mm_set1_epi16(0x8000);
     for (i = 0; i < 16; ++i) {
         l16               = _mm_shuffle_epi8(l, rep);
@@ -597,7 +597,7 @@ void eb_aom_paeth_predictor_16x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_16x64_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i t    = _mm_load_si128((const __m128i *)above);
+    const __m128i t    = _mm_loadu_si128((const __m128i *)above);
     const __m128i zero = _mm_setzero_si128();
     const __m128i top0 = _mm_unpacklo_epi8(t, zero);
     const __m128i top1 = _mm_unpackhi_epi8(t, zero);
@@ -605,7 +605,7 @@ void eb_aom_paeth_predictor_16x64_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
     const __m128i one  = _mm_set1_epi16(1);
 
     for (int j = 0; j < 4; ++j) {
-        const __m128i l   = _mm_load_si128((const __m128i *)(left + j * 16));
+        const __m128i l   = _mm_loadu_si128((const __m128i *)(left + j * 16));
         __m128i       rep = _mm_set1_epi16(0x8000);
         for (int i = 0; i < 16; ++i) {
             const __m128i l16 = _mm_shuffle_epi8(l, rep);
@@ -619,8 +619,8 @@ void eb_aom_paeth_predictor_16x64_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_32x8_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                        const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -647,8 +647,8 @@ void eb_aom_paeth_predictor_32x8_ssse3(uint8_t *dst, ptrdiff_t stride, const uin
 
 void eb_aom_paeth_predictor_32x16_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -658,7 +658,7 @@ void eb_aom_paeth_predictor_32x16_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
     const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
     __m128i       rep  = _mm_set1_epi16(0x8000);
     const __m128i one  = _mm_set1_epi16(1);
-    __m128i       l    = _mm_load_si128((const __m128i *)left);
+    __m128i       l    = _mm_loadu_si128((const __m128i *)left);
     __m128i       l16;
 
     int i;
@@ -676,8 +676,8 @@ void eb_aom_paeth_predictor_32x16_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_32x32_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -687,7 +687,7 @@ void eb_aom_paeth_predictor_32x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
     const __m128i tl16 = _mm_set1_epi16((uint16_t)above[-1]);
     __m128i       rep  = _mm_set1_epi16(0x8000);
     const __m128i one  = _mm_set1_epi16(1);
-    __m128i       l    = _mm_load_si128((const __m128i *)left);
+    __m128i       l    = _mm_loadu_si128((const __m128i *)left);
     __m128i       l16;
 
     int i;
@@ -703,7 +703,7 @@ void eb_aom_paeth_predictor_32x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
     }
 
     rep = _mm_set1_epi16(0x8000);
-    l   = _mm_load_si128((const __m128i *)(left + 16));
+    l   = _mm_loadu_si128((const __m128i *)(left + 16));
     for (i = 0; i < 16; ++i) {
         l16                = _mm_shuffle_epi8(l, rep);
         const __m128i r32l = paeth_16x1_pred(&l16, &al, &ah, &tl16);
@@ -718,8 +718,8 @@ void eb_aom_paeth_predictor_32x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_32x64_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -732,7 +732,7 @@ void eb_aom_paeth_predictor_32x64_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
     int i, j;
     for (j = 0; j < 4; ++j) {
-        const __m128i l   = _mm_load_si128((const __m128i *)(left + j * 16));
+        const __m128i l   = _mm_loadu_si128((const __m128i *)(left + j * 16));
         __m128i       rep = _mm_set1_epi16(0x8000);
         for (i = 0; i < 16; ++i) {
             l16                = _mm_shuffle_epi8(l, rep);
@@ -749,10 +749,10 @@ void eb_aom_paeth_predictor_32x64_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_64x32_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
-    const __m128i c    = _mm_load_si128((const __m128i *)(above + 32));
-    const __m128i d    = _mm_load_si128((const __m128i *)(above + 48));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
+    const __m128i c    = _mm_loadu_si128((const __m128i *)(above + 32));
+    const __m128i d    = _mm_loadu_si128((const __m128i *)(above + 48));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -769,7 +769,7 @@ void eb_aom_paeth_predictor_64x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
     int i, j;
     for (j = 0; j < 2; ++j) {
-        const __m128i l   = _mm_load_si128((const __m128i *)(left + j * 16));
+        const __m128i l   = _mm_loadu_si128((const __m128i *)(left + j * 16));
         __m128i       rep = _mm_set1_epi16(0x8000);
         for (i = 0; i < 16; ++i) {
             l16              = _mm_shuffle_epi8(l, rep);
@@ -790,10 +790,10 @@ void eb_aom_paeth_predictor_64x32_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_64x64_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
-    const __m128i c    = _mm_load_si128((const __m128i *)(above + 32));
-    const __m128i d    = _mm_load_si128((const __m128i *)(above + 48));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
+    const __m128i c    = _mm_loadu_si128((const __m128i *)(above + 32));
+    const __m128i d    = _mm_loadu_si128((const __m128i *)(above + 48));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -810,7 +810,7 @@ void eb_aom_paeth_predictor_64x64_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
     int i, j;
     for (j = 0; j < 4; ++j) {
-        const __m128i l   = _mm_load_si128((const __m128i *)(left + j * 16));
+        const __m128i l   = _mm_loadu_si128((const __m128i *)(left + j * 16));
         __m128i       rep = _mm_set1_epi16(0x8000);
         for (i = 0; i < 16; ++i) {
             l16              = _mm_shuffle_epi8(l, rep);
@@ -831,10 +831,10 @@ void eb_aom_paeth_predictor_64x64_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
 
 void eb_aom_paeth_predictor_64x16_ssse3(uint8_t *dst, ptrdiff_t stride, const uint8_t *above,
                                         const uint8_t *left) {
-    const __m128i a    = _mm_load_si128((const __m128i *)above);
-    const __m128i b    = _mm_load_si128((const __m128i *)(above + 16));
-    const __m128i c    = _mm_load_si128((const __m128i *)(above + 32));
-    const __m128i d    = _mm_load_si128((const __m128i *)(above + 48));
+    const __m128i a    = _mm_loadu_si128((const __m128i *)above);
+    const __m128i b    = _mm_loadu_si128((const __m128i *)(above + 16));
+    const __m128i c    = _mm_loadu_si128((const __m128i *)(above + 32));
+    const __m128i d    = _mm_loadu_si128((const __m128i *)(above + 48));
     const __m128i zero = _mm_setzero_si128();
     const __m128i al   = _mm_unpacklo_epi8(a, zero);
     const __m128i ah   = _mm_unpackhi_epi8(a, zero);
@@ -850,7 +850,7 @@ void eb_aom_paeth_predictor_64x16_ssse3(uint8_t *dst, ptrdiff_t stride, const ui
     __m128i       l16;
 
     int           i;
-    const __m128i l   = _mm_load_si128((const __m128i *)left);
+    const __m128i l   = _mm_loadu_si128((const __m128i *)left);
     __m128i       rep = _mm_set1_epi16(0x8000);
     for (i = 0; i < 16; ++i) {
         l16              = _mm_shuffle_epi8(l, rep);

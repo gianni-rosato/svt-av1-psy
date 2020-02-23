@@ -379,7 +379,7 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
             __m128i s_128[2];
             __m256i r[2];
 
-            s_128[0] = _mm_load_si128((__m128i *)im);
+            s_128[0] = _mm_loadu_si128((__m128i *)im);
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
@@ -942,7 +942,7 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
         if (w == 8) {
             __m128i s_128[2];
 
-            s_128[0] = _mm_load_si128((__m128i *)im);
+            s_128[0] = _mm_loadu_si128((__m128i *)im);
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {

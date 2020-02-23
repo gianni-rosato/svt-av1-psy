@@ -149,10 +149,10 @@ static void fdct4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, const int32_t
 }
 
 static INLINE void write_buffer_4x4(__m128i *res, int32_t *output) {
-    _mm_store_si128((__m128i *)(output + 0 * 4), res[0]);
-    _mm_store_si128((__m128i *)(output + 1 * 4), res[1]);
-    _mm_store_si128((__m128i *)(output + 2 * 4), res[2]);
-    _mm_store_si128((__m128i *)(output + 3 * 4), res[3]);
+    _mm_storeu_si128((__m128i *)(output + 0 * 4), res[0]);
+    _mm_storeu_si128((__m128i *)(output + 1 * 4), res[1]);
+    _mm_storeu_si128((__m128i *)(output + 2 * 4), res[2]);
+    _mm_storeu_si128((__m128i *)(output + 3 * 4), res[3]);
 }
 
 static void fadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, const int32_t num_col) {

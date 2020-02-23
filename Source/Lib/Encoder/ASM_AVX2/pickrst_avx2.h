@@ -423,7 +423,7 @@ static INLINE __m256i load_win7_avx2(const int16_t *const d, const int32_t width
                                          14,
                                          15);
     // 00s 01s 02s 03s 04s 05s 06s 07s
-    const __m128i ds = _mm_load_si128((__m128i *)d);
+    const __m128i ds = _mm_loadu_si128((__m128i *)d);
     // 00e 01e 02e 03e 04e 05e 06e 07e
     const __m128i de = _mm_loadu_si128((__m128i *)(d + width));
     const __m256i t0 = _mm256_inserti128_si256(_mm256_castsi128_si256(ds), de, 1);

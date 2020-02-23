@@ -34,8 +34,8 @@ static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, co
 
     do {
         const __m128i v_p_b = _mm_cvtsi32_si128(*(const uint32_t *)(pre + n));
-        const __m128i v_m_d = _mm_load_si128((const __m128i *)(mask + n));
-        const __m128i v_w_d = _mm_load_si128((const __m128i *)(wsrc + n));
+        const __m128i v_m_d = _mm_loadu_si128((const __m128i *)(mask + n));
+        const __m128i v_w_d = _mm_loadu_si128((const __m128i *)(wsrc + n));
 
         const __m128i v_p_d = _mm_cvtepu8_epi32(v_p_b);
 

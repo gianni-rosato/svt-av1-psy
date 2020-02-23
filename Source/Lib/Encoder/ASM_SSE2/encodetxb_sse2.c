@@ -101,7 +101,7 @@ static INLINE void get_4_nz_map_contexts_2d(const uint8_t *levels, const int32_t
         load_levels_4x4x5_sse2(levels, stride, offsets, level);
         count = get_coeff_contexts_kernel_sse2(level);
         count = _mm_add_epi8(count, pos_to_offset);
-        _mm_store_si128((__m128i *)cc, count);
+        _mm_storeu_si128((__m128i *)cc, count);
         pos_to_offset = pos_to_offset_large;
         levels += 4 * stride;
         cc += 16;
@@ -143,7 +143,7 @@ static INLINE void get_8_coeff_contexts_2d(const uint8_t *levels, const int32_t 
         load_levels_8x2x5_sse2(levels, stride, offsets, level);
         count = get_coeff_contexts_kernel_sse2(level);
         count = _mm_add_epi8(count, pos_to_offset[0]);
-        _mm_store_si128((__m128i *)cc, count);
+        _mm_storeu_si128((__m128i *)cc, count);
         pos_to_offset[0] = pos_to_offset[1];
         pos_to_offset[1] = pos_to_offset[2];
         levels += 2 * stride;
@@ -205,7 +205,7 @@ static INLINE void get_16n_coeff_contexts_2d(const uint8_t *levels, const int32_
             load_levels_16x1x5_sse2(levels, stride, offsets, level);
             count = get_coeff_contexts_kernel_sse2(level);
             count = _mm_add_epi8(count, pos_to_offset[0]);
-            _mm_store_si128((__m128i *)cc, count);
+            _mm_storeu_si128((__m128i *)cc, count);
             levels += 16;
             cc += 16;
             w -= 16;
@@ -254,7 +254,7 @@ static INLINE void get_4_nz_map_contexts_hor(const uint8_t *levels, const int32_
         load_levels_4x4x5_sse2(levels, stride, offsets, level);
         count = get_coeff_contexts_kernel_sse2(level);
         count = _mm_add_epi8(count, pos_to_offset);
-        _mm_store_si128((__m128i *)coeff_contexts, count);
+        _mm_storeu_si128((__m128i *)coeff_contexts, count);
         levels += 4 * stride;
         coeff_contexts += 16;
         row -= 4;
@@ -292,7 +292,7 @@ static INLINE void get_4_nz_map_contexts_ver(const uint8_t *levels, const int32_
         load_levels_4x4x5_sse2(levels, stride, offsets, level);
         count = get_coeff_contexts_kernel_sse2(level);
         count = _mm_add_epi8(count, pos_to_offset);
-        _mm_store_si128((__m128i *)coeff_contexts, count);
+        _mm_storeu_si128((__m128i *)coeff_contexts, count);
         pos_to_offset = pos_to_offset_large;
         levels += 4 * stride;
         coeff_contexts += 16;
@@ -330,7 +330,7 @@ static INLINE void get_8_coeff_contexts_hor(const uint8_t *levels, const int32_t
         load_levels_8x2x5_sse2(levels, stride, offsets, level);
         count = get_coeff_contexts_kernel_sse2(level);
         count = _mm_add_epi8(count, pos_to_offset);
-        _mm_store_si128((__m128i *)coeff_contexts, count);
+        _mm_storeu_si128((__m128i *)coeff_contexts, count);
         levels += 2 * stride;
         coeff_contexts += 16;
         row -= 2;
@@ -368,7 +368,7 @@ static INLINE void get_8_coeff_contexts_ver(const uint8_t *levels, const int32_t
         load_levels_8x2x5_sse2(levels, stride, offsets, level);
         count = get_coeff_contexts_kernel_sse2(level);
         count = _mm_add_epi8(count, pos_to_offset);
-        _mm_store_si128((__m128i *)coeff_contexts, count);
+        _mm_storeu_si128((__m128i *)coeff_contexts, count);
         pos_to_offset = pos_to_offset_large;
         levels += 2 * stride;
         coeff_contexts += 16;
@@ -425,7 +425,7 @@ static INLINE void get_16n_coeff_contexts_hor(const uint8_t *levels, const int32
             load_levels_16x1x5_sse2(levels, stride, offsets, level);
             count = get_coeff_contexts_kernel_sse2(level);
             count = _mm_add_epi8(count, pos_to_offset);
-            _mm_store_si128((__m128i *)coeff_contexts, count);
+            _mm_storeu_si128((__m128i *)coeff_contexts, count);
             pos_to_offset = pos_to_offset_large;
             levels += 16;
             coeff_contexts += 16;
@@ -458,7 +458,7 @@ static INLINE void get_16n_coeff_contexts_ver(const uint8_t *levels, const int32
             load_levels_16x1x5_sse2(levels, stride, offsets, level);
             count = get_coeff_contexts_kernel_sse2(level);
             count = _mm_add_epi8(count, pos_to_offset[0]);
-            _mm_store_si128((__m128i *)coeff_contexts, count);
+            _mm_storeu_si128((__m128i *)coeff_contexts, count);
             levels += 16;
             coeff_contexts += 16;
             w -= 16;

@@ -213,8 +213,8 @@ static INLINE __m256i xx_loadu2_mi128(const void *hi, const void *lo) {
 
 static INLINE void xx_store2_mi128(const uint8_t *output_ptr, const ptrdiff_t stride,
                                    const __m256i *a) {
-    _mm_store_si128((__m128i *)output_ptr, _mm256_castsi256_si128(*a));
-    _mm_store_si128((__m128i *)(output_ptr + stride), _mm256_extractf128_si256(*a, 1));
+    _mm_storeu_si128((__m128i *)output_ptr, _mm256_castsi256_si128(*a));
+    _mm_storeu_si128((__m128i *)(output_ptr + stride), _mm256_extractf128_si256(*a, 1));
 }
 
 static void aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
@@ -719,7 +719,7 @@ static void aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_p
         src_reg_filt1_1 = _mm256_permute4x64_epi64(src_reg_filt1_1, 0x8);
 
         // save 16 bytes
-        _mm_store_si128((__m128i *)output_ptr, _mm256_castsi256_si128(src_reg_filt1_1));
+        _mm_storeu_si128((__m128i *)output_ptr, _mm256_castsi256_si128(src_reg_filt1_1));
     }
 }
 
@@ -904,7 +904,7 @@ static void aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_p
         src_reg_filt1_1 = _mm_packus_epi16(src_reg_filt1_1, src_reg_filt2_1);
 
         // save 16 bytes
-        _mm_store_si128((__m128i *)output_ptr, src_reg_filt1_1);
+        _mm_storeu_si128((__m128i *)output_ptr, src_reg_filt1_1);
     }
 }
 
@@ -1415,7 +1415,7 @@ static void aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_p
         src_reg_filt1 = _mm_packus_epi16(src_reg_filt1, src_reg_filt3);
 
         // save 16 bytes
-        _mm_store_si128((__m128i *)output_ptr, src_reg_filt1);
+        _mm_storeu_si128((__m128i *)output_ptr, src_reg_filt1);
     }
 }
 

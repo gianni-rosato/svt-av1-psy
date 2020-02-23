@@ -80,7 +80,7 @@ static INLINE __m128i dc_sum_4_16(const uint16_t *const src_4, const uint16_t *c
 }
 
 static INLINE __m128i dc_sum_8_16(const uint16_t *const src_8, const uint16_t *const src_16) {
-    const __m128i s_8      = _mm_load_si128((const __m128i *)src_8);
+    const __m128i s_8      = _mm_loadu_si128((const __m128i *)src_8);
     const __m256i s_16     = _mm256_loadu_si256((const __m256i *)src_16);
     const __m128i s_lo     = _mm256_extracti128_si256(s_16, 0);
     const __m128i s_hi     = _mm256_extracti128_si256(s_16, 1);
@@ -817,7 +817,7 @@ static INLINE void h_pred_16(uint16_t **const dst, const ptrdiff_t stride, const
 
 // Process 8 rows.
 static INLINE void h_pred_16x8(uint16_t **dst, const ptrdiff_t stride, const uint16_t *const left) {
-    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_16(dst, stride, _mm_srli_si128(left_u16, 0));
     h_pred_16(dst, stride, _mm_srli_si128(left_u16, 2));
@@ -1438,9 +1438,9 @@ static INLINE void smooth_pred_8x2(const __m256i *const weights_w, const __m256i
                                    uint16_t **const dst, const ptrdiff_t stride) {
     // 00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17
     const __m256i d = smooth_pred_kernel(weights_w, weights_h, rep, ab, lr);
-    _mm_store_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
     *dst += stride;
-    _mm_store_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
     *dst += stride;
 }
 
@@ -1950,9 +1950,9 @@ static INLINE void smooth_h_pred_8x2(const __m256i *const weights, __m256i *cons
     const __m256i t = _mm256_shuffle_epi8(*lr, rep); // 0 0 0 0  1 1 1 1
     // 00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17
     const __m256i d = smooth_h_pred_kernel(weights, t);
-    _mm_store_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
     *dst += stride;
-    _mm_store_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
     *dst += stride;
     *lr = _mm256_srli_si256(*lr, 8); // 2 3 x x  3 4 x x
 }
@@ -1966,7 +1966,7 @@ static INLINE void smooth_h_pred_8x4(const __m256i *const weights, __m256i *cons
 static INLINE void smooth_h_pred_8x8(const uint16_t *const left, const __m256i r,
                                      const __m256i *const weights, uint16_t **const dst,
                                      const ptrdiff_t stride) {
-    const __m128i l0 = _mm_load_si128((const __m128i *)left);
+    const __m128i l0 = _mm_loadu_si128((const __m128i *)left);
     const __m128i l1 = _mm_srli_si128(l0, 2);
     // 0 1 2 3 4 5 6 7  1 2 3 4 5 6 7 x
     const __m256i l = _mm256_inserti128_si256(_mm256_castsi128_si256(l0), l1, 1);
@@ -2340,9 +2340,9 @@ static INLINE void smooth_v_pred_8x2(const __m256i weights, const __m256i rep,
                                      const ptrdiff_t stride) {
     // 00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17
     const __m256i d = smooth_v_pred_kernel(weights, rep, ab);
-    _mm_store_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
     *dst += stride;
-    _mm_store_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
     *dst += stride;
 }
 

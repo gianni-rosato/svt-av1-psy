@@ -75,12 +75,12 @@ static INLINE void btf_16_w4_sse2(const __m128i *const w0, const __m128i *const 
     }
 
 static INLINE __m128i load_32bit_to_16bit(const int32_t *a) {
-    const __m128i a_low = _mm_load_si128((const __m128i *)a);
+    const __m128i a_low = _mm_loadu_si128((const __m128i *)a);
     return _mm_packs_epi32(a_low, *(const __m128i *)(a + 4));
 }
 
 static INLINE __m128i load_32bit_to_16bit_w4(const int32_t *a) {
-    const __m128i a_low = _mm_load_si128((const __m128i *)a);
+    const __m128i a_low = _mm_loadu_si128((const __m128i *)a);
     return _mm_packs_epi32(a_low, a_low);
 }
 

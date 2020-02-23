@@ -306,7 +306,7 @@ static void convolve_2d_sr_ver_2tap_avx2(const int16_t *const im_block, const in
             __m128i s_128[2];
             __m256i r[2];
 
-            s_128[0] = _mm_load_si128((__m128i *)im);
+            s_128[0] = _mm_loadu_si128((__m128i *)im);
 
             do {
                 xy_y_convolve_2tap_8x2_avx2(im, s_128, &coeffs_256, r);
@@ -434,7 +434,7 @@ static void convolve_2d_sr_ver_2tap_half_avx2(const int16_t *const im_block, con
     } else if (w == 8) {
         __m128i s_128[2];
 
-        s_128[0] = _mm_load_si128((__m128i *)im);
+        s_128[0] = _mm_loadu_si128((__m128i *)im);
 
         do {
             const __m256i res = xy_y_convolve_2tap_8x2_half_pel_avx2(im, s_128);

@@ -640,7 +640,7 @@ static INLINE void h_pred_32x8(uint16_t **dst, const ptrdiff_t stride, const uin
     assert(!((intptr_t)*dst % 32));
     assert(!(stride % 32));
 
-    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     h_pred_32(dst, stride, _mm_srli_si128(left_u16, 0));
     h_pred_32(dst, stride, _mm_srli_si128(left_u16, 2));
@@ -688,7 +688,7 @@ static INLINE void h_store_32_unpackhi(uint16_t **dst, const ptrdiff_t stride, c
 }
 
 static INLINE void h_predictor_32x8(uint16_t *dst, ptrdiff_t stride, const uint16_t *left) {
-    const __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
     const __m128i row0     = _mm_shufflelo_epi16(left_u16, 0x0);
     const __m128i row1     = _mm_shufflelo_epi16(left_u16, 0x55);
     const __m128i row2     = _mm_shufflelo_epi16(left_u16, 0xaa);
@@ -751,7 +751,7 @@ static INLINE void h_pred_64x8(uint16_t **dst, const ptrdiff_t stride, const uin
     assert(!((intptr_t)*dst % 32));
     assert(!(stride % 32));
 
-    __m128i left_u16 = _mm_load_si128((const __m128i *)left);
+    __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
     for (int16_t j = 0; j < 8; j++) {
         h_pred_64(dst, stride, left_u16);

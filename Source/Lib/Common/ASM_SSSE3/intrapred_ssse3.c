@@ -190,12 +190,12 @@ static INLINE void load_pixel_w8(const uint8_t *above, const uint8_t *left,
     else if (height == 8)
         pixels[2] = _mm_loadl_epi64((const __m128i *)left);
     else if (height == 16)
-        pixels[2] = _mm_load_si128((const __m128i *)left);
+        pixels[2] = _mm_loadu_si128((const __m128i *)left);
     else {
-        pixels[2] = _mm_load_si128((const __m128i *)left);
+        pixels[2] = _mm_loadu_si128((const __m128i *)left);
         pixels[4] = pixels[0];
         pixels[5] = pixels[1];
-        pixels[6] = _mm_load_si128((const __m128i *)(left + 16));
+        pixels[6] = _mm_loadu_si128((const __m128i *)(left + 16));
         pixels[7] = pixels[3];
     }
 }
@@ -945,10 +945,10 @@ static INLINE void load_pixel_h_w8(const uint8_t *above, const uint8_t *left,
     else if (height == 8)
         pixels[0] = _mm_loadl_epi64((const __m128i *)left);
     else if (height == 16)
-        pixels[0] = _mm_load_si128((const __m128i *)left);
+        pixels[0] = _mm_loadu_si128((const __m128i *)left);
     else {
-        pixels[0] = _mm_load_si128((const __m128i *)left);
-        pixels[2] = _mm_load_si128((const __m128i *)(left + 16));
+        pixels[0] = _mm_loadu_si128((const __m128i *)left);
+        pixels[2] = _mm_loadu_si128((const __m128i *)(left + 16));
         pixels[3] = pixels[1];
     }
 }

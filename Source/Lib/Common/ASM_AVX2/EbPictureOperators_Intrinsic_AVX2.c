@@ -633,7 +633,7 @@ void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
             //AVG
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
 #if ALSTORE
-            _mm_store_si128((__m128i *)dst_ptr, avg8_0_u8);
+            _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
 #else
             _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
 #endif
@@ -661,7 +661,7 @@ void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
             //AVG
             avg8_2_u8 = _mm_avg_epu8(out8_2_u8_l0, out8_2_u8_l1);
 #if ALSTORE
-            _mm_store_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
 #else
             _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
 #endif
@@ -762,8 +762,8 @@ void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
             avg8_1_u8 = _mm_avg_epu8(out8_1_u8_l0, out8_1_u8_l1);
 #if ALSTORE
-            _mm_store_si128((__m128i *)dst_ptr, avg8_0_u8);
-            _mm_store_si128((__m128i *)(dst_ptr + 16), avg8_1_u8);
+            _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + 16), avg8_1_u8);
 #else
             _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
             _mm_storeu_si128((__m128i *)(dst_ptr + 16), avg8_1_u8);
@@ -801,8 +801,8 @@ void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
             avg8_2_u8 = _mm_avg_epu8(out8_2_u8_l0, out8_2_u8_l1);
             avg8_3_u8 = _mm_avg_epu8(out8_3_u8_l0, out8_3_u8_l1);
 #if ALSTORE
-            _mm_store_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
-            _mm_store_si128((__m128i *)(dst_ptr + dst_stride + 16), avg8_3_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride + 16), avg8_3_u8);
 #else
             _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
             _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride + 16), avg8_3_u8);
@@ -903,10 +903,10 @@ void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
             avg8_2_u8 = _mm_avg_epu8(out8_2_u8_l0, out8_2_u8_l1);
             avg8_3_u8 = _mm_avg_epu8(out8_3_u8_l0, out8_3_u8_l1);
 #if ALSTORE
-            _mm_store_si128((__m128i *)dst_ptr, avg8_0_u8);
-            _mm_store_si128((__m128i *)(dst_ptr + 16), avg8_1_u8);
-            _mm_store_si128((__m128i *)(dst_ptr + 32), avg8_2_u8);
-            _mm_store_si128((__m128i *)(dst_ptr + 48), avg8_3_u8);
+            _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + 16), avg8_1_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + 32), avg8_2_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + 48), avg8_3_u8);
 #else
             _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
             _mm_storeu_si128((__m128i *)(dst_ptr + 16), avg8_1_u8);
@@ -1031,7 +1031,7 @@ void unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride,
             //AVG
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
 
-            _mm_store_si128((__m128i *)dst_ptr, avg8_0_u8);
+            _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
 
             //--------
             //Line Two
@@ -1056,7 +1056,7 @@ void unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride,
             //AVG
             avg8_2_u8 = _mm_avg_epu8(out8_2_u8_l0, out8_2_u8_l1);
 
-            _mm_store_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
+            _mm_storeu_si128((__m128i *)(dst_ptr + dst_stride), avg8_2_u8);
 
             dst_ptr += 2 * dst_stride;
             ref16_l0 += 2 * ref_l0_stride;
@@ -1079,7 +1079,7 @@ void unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride,
                 _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
             //AVG
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
-            _mm_store_si128((__m128i *)dst_ptr, avg8_0_u8);
+            _mm_storeu_si128((__m128i *)dst_ptr, avg8_0_u8);
         }
     } else if (width == 32) {
         __m256i in_val_16b_0, in_val_16b_1;

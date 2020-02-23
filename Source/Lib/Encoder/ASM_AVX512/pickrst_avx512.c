@@ -57,9 +57,9 @@ static INLINE uint8_t find_average_avx512(const uint8_t *src, int32_t h_start, i
 
             if (leftover >= 48) {
                 maskL128 = _mm_set1_epi8(-1);
-                maskH128 = _mm_load_si128((__m128i *)(mask_8bit[leftover - 48]));
+                maskH128 = _mm_loadu_si128((__m128i *)(mask_8bit[leftover - 48]));
             } else {
-                maskL128 = _mm_load_si128((__m128i *)(mask_8bit[leftover - 32]));
+                maskL128 = _mm_loadu_si128((__m128i *)(mask_8bit[leftover - 32]));
                 maskH128 = _mm_setzero_si128();
             }
 
@@ -69,9 +69,9 @@ static INLINE uint8_t find_average_avx512(const uint8_t *src, int32_t h_start, i
 
             if (leftover >= 16) {
                 maskL128 = _mm_set1_epi8(-1);
-                maskH128 = _mm_load_si128((__m128i *)(mask_8bit[leftover - 16]));
+                maskH128 = _mm_loadu_si128((__m128i *)(mask_8bit[leftover - 16]));
             } else {
-                maskL128 = _mm_load_si128((__m128i *)(mask_8bit[leftover]));
+                maskL128 = _mm_loadu_si128((__m128i *)(mask_8bit[leftover]));
                 maskH128 = _mm_setzero_si128();
             }
 

@@ -151,7 +151,7 @@ static INLINE void prepare_half_coeffs_4tap_ssse3(const InterpFilterParams *cons
                                                   __m128i *const coeffs /* [2] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -174,7 +174,7 @@ static INLINE void prepare_half_coeffs_6tap_ssse3(const InterpFilterParams *cons
                                                   __m128i *const coeffs /* [3] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -199,7 +199,7 @@ static INLINE void prepare_half_coeffs_8tap_ssse3(const InterpFilterParams *cons
                                                   __m128i *const coeffs /* [4] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -248,7 +248,7 @@ static INLINE void prepare_half_coeffs_4tap_avx2(const InterpFilterParams *const
                                                  __m256i *const                  coeffs /* [2] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -266,7 +266,7 @@ static INLINE void prepare_half_coeffs_6tap_avx2(const InterpFilterParams *const
                                                  __m256i *const                  coeffs /* [3] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -284,7 +284,7 @@ static INLINE void prepare_half_coeffs_8tap_avx2(const InterpFilterParams *const
                                                  __m256i *const                  coeffs /* [4] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
 
     // right shift all filter co-efficients by 1 to reduce the bits required.
     // This extra right shift will be taken care of at the end while rounding
@@ -315,7 +315,7 @@ static INLINE void prepare_coeffs_4tap_sse2(const InterpFilterParams *const filt
     const int16_t *filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
 
-    const __m128i coeff = _mm_load_si128((__m128i *)filter);
+    const __m128i coeff = _mm_loadu_si128((__m128i *)filter);
 
     // coeffs 2 3 2 3 2 3 2 3
     coeffs[0] = _mm_shuffle_epi32(coeff, 0x55);
@@ -328,7 +328,7 @@ static INLINE void prepare_coeffs_6tap_ssse3(const InterpFilterParams *const fil
                                              __m128i *const                  coeffs /* [3] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeff = _mm_load_si128((__m128i *)filter);
+    const __m128i coeff = _mm_loadu_si128((__m128i *)filter);
 
     // coeffs 1 2 1 2 1 2 1 2
     coeffs[0] = _mm_shuffle_epi8(coeff, _mm_set1_epi32(0x05040302u));
@@ -344,7 +344,7 @@ static INLINE void prepare_coeffs_8tap_sse2(const InterpFilterParams *const filt
     const int16_t *filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
 
-    const __m128i coeff = _mm_load_si128((__m128i *)filter);
+    const __m128i coeff = _mm_loadu_si128((__m128i *)filter);
 
     // coeffs 0 1 0 1 0 1 0 1
     coeffs[0] = _mm_shuffle_epi32(coeff, 0x00);
@@ -375,7 +375,7 @@ static INLINE void prepare_coeffs_4tap_avx2(const InterpFilterParams *const filt
     const int16_t *filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
 
-    const __m128i coeff_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeff_8 = _mm_loadu_si128((__m128i *)filter);
     const __m256i coeff   = _mm256_broadcastsi128_si256(coeff_8);
 
     // coeffs 2 3 2 3 2 3 2 3
@@ -389,7 +389,7 @@ static INLINE void prepare_coeffs_6tap_avx2(const InterpFilterParams *const filt
                                             __m256i *const                  coeffs /* [3] */) {
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
-    const __m128i coeffs_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
     const __m256i coeff    = _mm256_broadcastsi128_si256(coeffs_8);
 
     // coeffs 1 2 1 2 1 2 1 2
@@ -406,7 +406,7 @@ static INLINE void prepare_coeffs_8tap_avx2(const InterpFilterParams *const filt
     const int16_t *filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
 
-    const __m128i coeff_8 = _mm_load_si128((__m128i *)filter);
+    const __m128i coeff_8 = _mm_loadu_si128((__m128i *)filter);
     const __m256i coeff   = _mm256_broadcastsi128_si256(coeff_8);
 
     // coeffs 0 1 0 1 0 1 0 1
@@ -664,7 +664,7 @@ static INLINE void xy_x_round_store_2x2_sse2(const __m128i res, int16_t *const d
 
 static INLINE void xy_x_round_store_4x2_sse2(const __m128i res, int16_t *const dst) {
     const __m128i d = xy_x_round_sse2(res);
-    _mm_store_si128((__m128i *)dst, d);
+    _mm_storeu_si128((__m128i *)dst, d);
 }
 
 static INLINE void xy_x_round_store_8x2_sse2(const __m128i res[2], int16_t *const dst) {
@@ -672,8 +672,8 @@ static INLINE void xy_x_round_store_8x2_sse2(const __m128i res[2], int16_t *cons
 
     r[0] = xy_x_round_sse2(res[0]);
     r[1] = xy_x_round_sse2(res[1]);
-    _mm_store_si128((__m128i *)dst, r[0]);
-    _mm_store_si128((__m128i *)(dst + 8), r[1]);
+    _mm_storeu_si128((__m128i *)dst, r[0]);
+    _mm_storeu_si128((__m128i *)(dst + 8), r[1]);
 }
 
 static INLINE void xy_x_round_store_8x2_avx2(const __m256i res, int16_t *const dst) {
@@ -1398,9 +1398,9 @@ static INLINE void xy_y_convolve_2tap_16_avx2(const __m256i s0, const __m256i s1
 static INLINE void xy_y_convolve_2tap_8x2_avx2(const int16_t *const src, __m128i s_128[2],
                                                const __m256i coeffs[1], __m256i r[2]) {
     __m256i s_256[2];
-    s_128[1] = _mm_load_si128((__m128i *)(src + 8));
+    s_128[1] = _mm_loadu_si128((__m128i *)(src + 8));
     s_256[0] = _mm256_setr_m128i(s_128[0], s_128[1]);
-    s_128[0] = _mm_load_si128((__m128i *)(src + 2 * 8));
+    s_128[0] = _mm_loadu_si128((__m128i *)(src + 2 * 8));
     s_256[1] = _mm256_setr_m128i(s_128[1], s_128[0]);
     xy_y_convolve_2tap_16_avx2(s_256[0], s_256[1], coeffs, r);
 }
@@ -1408,9 +1408,9 @@ static INLINE void xy_y_convolve_2tap_8x2_avx2(const int16_t *const src, __m128i
 static INLINE __m256i xy_y_convolve_2tap_8x2_half_pel_avx2(const int16_t *const src,
                                                            __m128i              s_128[2]) {
     __m256i s_256[2];
-    s_128[1] = _mm_load_si128((__m128i *)(src + 8));
+    s_128[1] = _mm_loadu_si128((__m128i *)(src + 8));
     s_256[0] = _mm256_setr_m128i(s_128[0], s_128[1]);
-    s_128[0] = _mm_load_si128((__m128i *)(src + 2 * 8));
+    s_128[0] = _mm_loadu_si128((__m128i *)(src + 2 * 8));
     s_256[1] = _mm256_setr_m128i(s_128[1], s_128[0]);
     return _mm256_add_epi16(s_256[0], s_256[1]);
 }

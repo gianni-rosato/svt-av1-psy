@@ -73,10 +73,10 @@ typedef void (*Transform1dSse41)(__m128i *in, __m128i *out, int32_t bit, int32_t
                                  int32_t bd, int32_t out_shift);
 
 static INLINE void load_buffer_4x4(const int32_t *coeff, __m128i *in) {
-    in[0] = _mm_load_si128((const __m128i *)(coeff + 0));
-    in[1] = _mm_load_si128((const __m128i *)(coeff + 4));
-    in[2] = _mm_load_si128((const __m128i *)(coeff + 8));
-    in[3] = _mm_load_si128((const __m128i *)(coeff + 12));
+    in[0] = _mm_loadu_si128((const __m128i *)(coeff + 0));
+    in[1] = _mm_loadu_si128((const __m128i *)(coeff + 4));
+    in[2] = _mm_loadu_si128((const __m128i *)(coeff + 8));
+    in[3] = _mm_loadu_si128((const __m128i *)(coeff + 12));
 }
 
 static void addsub_sse4_1(const __m128i in0, const __m128i in1, __m128i *out0, __m128i *out1,
@@ -378,22 +378,22 @@ void eb_av1_inv_txfm2d_add_4x4_sse4_1(const int32_t *input, uint16_t *output_r, 
 
 // 8x8
 static void load_buffer_8x8(const int32_t *coeff, __m128i *in) {
-    in[0]  = _mm_load_si128((const __m128i *)(coeff + 0));
-    in[1]  = _mm_load_si128((const __m128i *)(coeff + 4));
-    in[2]  = _mm_load_si128((const __m128i *)(coeff + 8));
-    in[3]  = _mm_load_si128((const __m128i *)(coeff + 12));
-    in[4]  = _mm_load_si128((const __m128i *)(coeff + 16));
-    in[5]  = _mm_load_si128((const __m128i *)(coeff + 20));
-    in[6]  = _mm_load_si128((const __m128i *)(coeff + 24));
-    in[7]  = _mm_load_si128((const __m128i *)(coeff + 28));
-    in[8]  = _mm_load_si128((const __m128i *)(coeff + 32));
-    in[9]  = _mm_load_si128((const __m128i *)(coeff + 36));
-    in[10] = _mm_load_si128((const __m128i *)(coeff + 40));
-    in[11] = _mm_load_si128((const __m128i *)(coeff + 44));
-    in[12] = _mm_load_si128((const __m128i *)(coeff + 48));
-    in[13] = _mm_load_si128((const __m128i *)(coeff + 52));
-    in[14] = _mm_load_si128((const __m128i *)(coeff + 56));
-    in[15] = _mm_load_si128((const __m128i *)(coeff + 60));
+    in[0]  = _mm_loadu_si128((const __m128i *)(coeff + 0));
+    in[1]  = _mm_loadu_si128((const __m128i *)(coeff + 4));
+    in[2]  = _mm_loadu_si128((const __m128i *)(coeff + 8));
+    in[3]  = _mm_loadu_si128((const __m128i *)(coeff + 12));
+    in[4]  = _mm_loadu_si128((const __m128i *)(coeff + 16));
+    in[5]  = _mm_loadu_si128((const __m128i *)(coeff + 20));
+    in[6]  = _mm_loadu_si128((const __m128i *)(coeff + 24));
+    in[7]  = _mm_loadu_si128((const __m128i *)(coeff + 28));
+    in[8]  = _mm_loadu_si128((const __m128i *)(coeff + 32));
+    in[9]  = _mm_loadu_si128((const __m128i *)(coeff + 36));
+    in[10] = _mm_loadu_si128((const __m128i *)(coeff + 40));
+    in[11] = _mm_loadu_si128((const __m128i *)(coeff + 44));
+    in[12] = _mm_loadu_si128((const __m128i *)(coeff + 48));
+    in[13] = _mm_loadu_si128((const __m128i *)(coeff + 52));
+    in[14] = _mm_loadu_si128((const __m128i *)(coeff + 56));
+    in[15] = _mm_loadu_si128((const __m128i *)(coeff + 60));
 }
 
 static void idct8x8_sse4_1(__m128i *in, __m128i *out, int32_t bit) {
@@ -850,14 +850,14 @@ static void write_buffer_8x8(__m128i *in, uint16_t *output_r, int32_t stride_r, 
 
     round_shift_8x8(in, shift);
 
-    v0 = _mm_load_si128((__m128i const *)(output_r + 0 * stride_r));
-    v1 = _mm_load_si128((__m128i const *)(output_r + 1 * stride_r));
-    v2 = _mm_load_si128((__m128i const *)(output_r + 2 * stride_r));
-    v3 = _mm_load_si128((__m128i const *)(output_r + 3 * stride_r));
-    v4 = _mm_load_si128((__m128i const *)(output_r + 4 * stride_r));
-    v5 = _mm_load_si128((__m128i const *)(output_r + 5 * stride_r));
-    v6 = _mm_load_si128((__m128i const *)(output_r + 6 * stride_r));
-    v7 = _mm_load_si128((__m128i const *)(output_r + 7 * stride_r));
+    v0 = _mm_loadu_si128((__m128i const *)(output_r + 0 * stride_r));
+    v1 = _mm_loadu_si128((__m128i const *)(output_r + 1 * stride_r));
+    v2 = _mm_loadu_si128((__m128i const *)(output_r + 2 * stride_r));
+    v3 = _mm_loadu_si128((__m128i const *)(output_r + 3 * stride_r));
+    v4 = _mm_loadu_si128((__m128i const *)(output_r + 4 * stride_r));
+    v5 = _mm_loadu_si128((__m128i const *)(output_r + 5 * stride_r));
+    v6 = _mm_loadu_si128((__m128i const *)(output_r + 6 * stride_r));
+    v7 = _mm_loadu_si128((__m128i const *)(output_r + 7 * stride_r));
 
     if (flipud) {
         u0 = get_recon_8x8(v0, in[14], in[15], fliplr, bd);
@@ -879,14 +879,14 @@ static void write_buffer_8x8(__m128i *in, uint16_t *output_r, int32_t stride_r, 
         u7 = get_recon_8x8(v7, in[14], in[15], fliplr, bd);
     }
 
-    _mm_store_si128((__m128i *)(output_w + 0 * stride_w), u0);
-    _mm_store_si128((__m128i *)(output_w + 1 * stride_w), u1);
-    _mm_store_si128((__m128i *)(output_w + 2 * stride_w), u2);
-    _mm_store_si128((__m128i *)(output_w + 3 * stride_w), u3);
-    _mm_store_si128((__m128i *)(output_w + 4 * stride_w), u4);
-    _mm_store_si128((__m128i *)(output_w + 5 * stride_w), u5);
-    _mm_store_si128((__m128i *)(output_w + 6 * stride_w), u6);
-    _mm_store_si128((__m128i *)(output_w + 7 * stride_w), u7);
+    _mm_storeu_si128((__m128i *)(output_w + 0 * stride_w), u0);
+    _mm_storeu_si128((__m128i *)(output_w + 1 * stride_w), u1);
+    _mm_storeu_si128((__m128i *)(output_w + 2 * stride_w), u2);
+    _mm_storeu_si128((__m128i *)(output_w + 3 * stride_w), u3);
+    _mm_storeu_si128((__m128i *)(output_w + 4 * stride_w), u4);
+    _mm_storeu_si128((__m128i *)(output_w + 5 * stride_w), u5);
+    _mm_storeu_si128((__m128i *)(output_w + 6 * stride_w), u6);
+    _mm_storeu_si128((__m128i *)(output_w + 7 * stride_w), u7);
 }
 
 void eb_av1_inv_txfm2d_add_8x8_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
@@ -986,7 +986,7 @@ void eb_av1_inv_txfm2d_add_8x8_sse4_1(const int32_t *input, uint16_t *output_r, 
 // 16x16
 static void load_buffer_16x16(const int32_t *coeff, __m128i *in) {
     int32_t i;
-    for (i = 0; i < 64; ++i) in[i] = _mm_load_si128((const __m128i *)(coeff + (i << 2)));
+    for (i = 0; i < 64; ++i) in[i] = _mm_loadu_si128((const __m128i *)(coeff + (i << 2)));
 }
 
 static void assign_8x8_input_from_16x16(const __m128i *in, __m128i *in8x8, int32_t col) {

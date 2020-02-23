@@ -28,7 +28,7 @@ double av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x
                                           unsigned char *im2, int stride2, int x2, int y2) {
     int           i, stride1_i = 0, stride2_i = 0;
     __m256i       temp1, sum_vec, sumsq2_vec, cross_vec, v, v1_1, v2_1;
-    const __m128i mask = _mm_load_si128((__m128i *)byte_mask);
+    const __m128i mask = _mm_loadu_si128((__m128i *)byte_mask);
     const __m256i zero = _mm256_setzero_si256();
     __m128i       v1, v2;
 

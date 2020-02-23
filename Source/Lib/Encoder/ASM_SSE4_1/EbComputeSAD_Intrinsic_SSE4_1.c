@@ -4480,7 +4480,7 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin(
         s1 = _mm_adds_epu16(sad[2], sad[3]);
         s3 = _mm_adds_epu16(s0, s1);
         //sotore the 8 SADs(16x16 SADs)
-        _mm_store_si128((__m128i *)p_sad16x16, s3);
+        _mm_storeu_si128((__m128i *)p_sad16x16, s3);
         //find the best for 16x16
         s3      = _mm_minpos_epu16(s3);
         tem_sum = _mm_extract_epi16(s3, 0);

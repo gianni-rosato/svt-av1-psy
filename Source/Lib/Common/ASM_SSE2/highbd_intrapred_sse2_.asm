@@ -48,8 +48,8 @@ cglobal highbd_dc_predictor_8x8, 4, 5, 4, dst, stride, above, left, goffset
   GET_GOT     goffsetq
 
   pxor                  m1, m1
-  mova                  m0, [aboveq]
-  mova                  m2, [leftq]
+  movu                  m0, [aboveq]
+  movu                  m2, [leftq]
   DEFINE_ARGS dst, stride, stride3, one
   mov                 oned, 0x00010001
   lea             stride3q, [strideq*3]
@@ -65,15 +65,15 @@ cglobal highbd_dc_predictor_8x8, 4, 5, 4, dst, stride, above, left, goffset
   psrlw                 m0, 4
   pshuflw               m0, m0, 0x0
   punpcklqdq            m0, m0
-  mova   [dstq           ], m0
-  mova   [dstq+strideq*2 ], m0
-  mova   [dstq+strideq*4 ], m0
-  mova   [dstq+stride3q*2], m0
+  movu   [dstq           ], m0
+  movu   [dstq+strideq*2 ], m0
+  movu   [dstq+strideq*4 ], m0
+  movu   [dstq+stride3q*2], m0
   lea                 dstq, [dstq+strideq*8]
-  mova   [dstq           ], m0
-  mova   [dstq+strideq*2 ], m0
-  mova   [dstq+strideq*4 ], m0
-  mova   [dstq+stride3q*2], m0
+  movu   [dstq           ], m0
+  movu   [dstq+strideq*2 ], m0
+  movu   [dstq+strideq*4 ], m0
+  movu   [dstq+stride3q*2], m0
 
   RESTORE_GOT
   RET
@@ -90,18 +90,18 @@ cglobal highbd_v_predictor_4x4, 3, 3, 1, dst, stride, above
 
 INIT_XMM sse2
 cglobal highbd_v_predictor_8x8, 3, 3, 1, dst, stride, above
-  mova                  m0, [aboveq]
+  movu                  m0, [aboveq]
   DEFINE_ARGS dst, stride, stride3
   lea             stride3q, [strideq*3]
-  mova   [dstq           ], m0
-  mova   [dstq+strideq*2 ], m0
-  mova   [dstq+strideq*4 ], m0
-  mova   [dstq+stride3q*2], m0
+  movu   [dstq           ], m0
+  movu   [dstq+strideq*2 ], m0
+  movu   [dstq+strideq*4 ], m0
+  movu   [dstq+stride3q*2], m0
   lea                 dstq, [dstq+strideq*8]
-  mova   [dstq           ], m0
-  mova   [dstq+strideq*2 ], m0
-  mova   [dstq+strideq*4 ], m0
-  mova   [dstq+stride3q*2], m0
+  movu   [dstq           ], m0
+  movu   [dstq+strideq*2 ], m0
+  movu   [dstq+strideq*4 ], m0
+  movu   [dstq+stride3q*2], m0
   RET
 
 
