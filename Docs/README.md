@@ -22,4 +22,5 @@
   * [Subpel Interpolation in the Open Loop Motion Estimation Appendix](Appendix-Subpel-Interpolation-Open-Loop-ME.md)
   * [TX Search Appendix](Appendix-TX-Search.md)
   * [SQ Weight Appendix](Appendix-SQ-Weight.md)
+  * [Variance Based Adaptive Quantization Appendix](Appendix-Variance-Based-Adaptive-Quantization.md)
   * [Notices](Notices.md)

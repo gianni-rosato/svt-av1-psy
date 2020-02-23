@@ -1286,6 +1286,7 @@ The following appendices highlight the design and implementation of features in 
 - [Restoration Filter Appendix](Appendix-Restoration-Filter.md)
 - [Subpel Interpolation in the Open Loop Motion Estimation Appendix](Appendix-Subpel-Interpolation-Open-Loop-ME.md)
 - [Transform Search Appendix](Appendix-TX-Search.md)
+- [Variance Based Adaptive Quantization Appendix](Appendix-Variance-Based-Adaptive-Quantization.md)
 
 ## References
 
