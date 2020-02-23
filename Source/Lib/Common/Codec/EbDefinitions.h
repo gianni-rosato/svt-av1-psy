@@ -43,11 +43,11 @@ extern "C" {
 #define MUS_ME               1 //MUlti-Stage ME - HME pruning
 #define SHUT_HME_L1_CHECK    1 //Remove usage of ME results for list=0 refIndex=0 to decide HME centre. Feature has wrong assumptions as: MRP OFF and list1 distance = list0 distance.
 
-#define MUS_ME_FP            1 //MUlti-Stage ME - Decouple full-pel from subpel
-#define MUS_ME_FP_SB         1 //MUlti-Stage ME - Full-pel pruning
-#define SKIP_ME_BASED_ON_HME     0 //MUlti-Stage ME - Reduce SR based on HME distortion
-#define REDUCE_ME_FOR_LOW_M_SB   0 //MUlti-Stage ME - Reduce SR based on HME distortion and HME MV
-#define SWITCHED_HALF_PEL_MODE   0 //MUlti-Stage ME - adapt half_pel mode based on fulpel distortion
+#define MUS_ME_FP            1 //Multi-Stage ME - Decouple full-pel from subpel
+#define MUS_ME_FP_SB         1 //Multi-Stage ME - Full-pel pruning
+#define SKIP_ME_BASED_ON_HME     1 //Multi-Stage ME - Reduce SR based on HME distortion
+#define REDUCE_ME_FOR_LOW_M_SB   1 //Multi-Stage ME - Reduce SR based on HME distortion and HME MV
+#define SWITCHED_HALF_PEL_MODE   1 //Multi-Stage ME - Adapt half_pel mode based on fulpel distortion
 #endif
 #define MC_DYNAMIC_PAD              1
 #define DIST_BASED_ME_SEARCH_AREA       1 // Distance-based multiper for ME search region

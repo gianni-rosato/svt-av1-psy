@@ -9811,7 +9811,6 @@ void integer_search_sb(
             }
             else {
                 search_area_width = (search_area_width + 7) & ~0x07;
-                search_area_height = search_area_height;
             }
 #else
             if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index]) {
@@ -9820,7 +9819,6 @@ void integer_search_sb(
             }
             else {
                 search_area_width = (search_area_width + 7) & ~0x07;
-                search_area_height = search_area_height;
             }
 #endif
 #else
@@ -11014,7 +11012,9 @@ EbErrorType motion_estimate_sb(
             context_ptr->reduce_me_sr_flag[li][ri] = 0;
 #endif
 #if SWITCHED_HALF_PEL_MODE
-            context_ptr->local_hp_mode[li][ri] = context_ptr->half_pel_mode == SWITCHABLE_HP_MODE ? EX_HP_MODE : context_ptr->half_pel_mode;
+            context_ptr->local_hp_mode[li][ri] =
+                context_ptr->half_pel_mode == SWITCHABLE_HP_MODE ? EX_HP_MODE :
+                context_ptr->half_pel_mode;
 #endif
         }
     }
@@ -11854,7 +11854,8 @@ EbErrorType motion_estimate_sb(
 #endif
                         context_ptr->full_quarter_pel_refinement = 0;
 #if SWITCHED_HALF_PEL_MODE
-                        if (context_ptr->half_pel_mode == EX_HP_MODE || context_ptr->local_hp_mode[list_index][ref_pic_index] == EX_HP_MODE) {
+                        if (context_ptr->half_pel_mode == EX_HP_MODE ||
+                            context_ptr->local_hp_mode[list_index][ref_pic_index] == EX_HP_MODE) {
 #else
                         if (context_ptr->half_pel_mode == EX_HP_MODE) {
 #endif
@@ -12072,7 +12073,8 @@ EbErrorType motion_estimate_sb(
                     // Interpolate the search region for Half-Pel Refinements
                     // H - AVC Style
 #if SWITCHED_HALF_PEL_MODE
-                    if (context_ptr->half_pel_mode == REFINEMENT_HP_MODE || context_ptr->local_hp_mode[list_index][ref_pic_index] == REFINMENT_HP_MODE) {
+                    if (context_ptr->half_pel_mode == REFINEMENT_HP_MODE ||
+                        context_ptr->local_hp_mode[list_index][ref_pic_index] == REFINEMENT_HP_MODE) {
 #else
                     if (context_ptr->half_pel_mode == REFINEMENT_HP_MODE) {
 #endif
