@@ -2066,7 +2066,26 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->perform_me_mv_1_8_pel_ref = (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_high_precision_mv);
 #endif
-
+#if NICS_CLEANUP
+    // Set nic_level for PD2 only
+    // nic_level        nic scale factor
+    // 0                1
+    // 1                3/4
+    // 2                2/3
+    // 3                1/2
+    if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+        if (pcs_ptr->enc_mode <= ENC_M1)
+            context_ptr->nic_level = 1;
+        else
+            context_ptr->nic_level = 2;
+    else
+        if (pcs_ptr->enc_mode <= ENC_M0)
+            context_ptr->nic_level = 1;
+        else if (pcs_ptr->enc_mode <= ENC_M1)
+            context_ptr->nic_level = 2;
+        else
+            context_ptr->nic_level = 3;
+#endif
     return return_error;
 }
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,

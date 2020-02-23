@@ -13,7 +13,7 @@
 * Media Patent License 1.0 was not distributed with this source code in the
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
-
+//
 #ifndef EbDefinitions_h
 #define EbDefinitions_h
 #include <stdint.h>
@@ -34,7 +34,7 @@
 extern "C" {
 #endif
 
-
+#define NICS_CLEANUP        1
 #define COMP_SIMILAR        1 //use previously coded similar blocks to prune compound modes
 #define INTRA_SIMILAR       1 //If previous similar block is intra, do not inject any inter
 #define OIS_MEM              1 //reduce memory consumption due to ois struct
@@ -538,10 +538,15 @@ typedef enum MdStagingMode {
     MD_STAGING_MODE_TOTAL
 } MdStagingMode;
 
+#if NICS_CLEANUP
+// NICS
+#define MAX_FRAME_TYPE    3  // Max number of frame type allowed for nics
+#define ALL_S0           -1  // Allow all candidates from stage0
+#else
 #define INTRA_NFL 16
 #define INTER_NEW_NFL 16
 #define INTER_PRED_NFL 16
-
+#endif
 #define BEST_CANDIDATE_COUNT 4
 #define MAX_REF_TYPE_CAND 30
 #define PRUNE_REC_TH 5
