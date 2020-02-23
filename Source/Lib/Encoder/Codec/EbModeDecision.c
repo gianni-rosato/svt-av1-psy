@@ -32,12 +32,19 @@
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
+#if INFR_OPT
+#define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
+    MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
+    if (cnt >= MODE_DECISION_CANDIDATE_MAX_COUNT_Y)                                          \
+        SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
+    MULTI_LINE_MACRO_END
+#else
 #define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
     MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
     if (cnt >= MODE_DECISION_CANDIDATE_MAX_COUNT)                                          \
         SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
     MULTI_LINE_MACRO_END
-
+#endif
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 int    av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 #define INT_MAX 2147483647 // maximum (signed) int value

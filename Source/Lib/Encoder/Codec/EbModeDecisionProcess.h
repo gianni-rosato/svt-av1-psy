@@ -24,7 +24,13 @@ extern "C" {
 /**************************************
      * Defines
      **************************************/
+#if INFR_OPT
+#define MODE_DECISION_CANDIDATE_MAX_COUNT_Y 1855
+#define MODE_DECISION_CANDIDATE_MAX_COUNT \
+    (MODE_DECISION_CANDIDATE_MAX_COUNT_Y + 84)
+#else
 #define MODE_DECISION_CANDIDATE_MAX_COUNT 1855
+#endif
 #define DEPTH_ONE_STEP 21
 #define DEPTH_TWO_STEP 5
 #define DEPTH_THREE_STEP 1
@@ -255,6 +261,9 @@ typedef struct ModeDecisionContext {
     uint8_t              parent_sq_has_coeff[MAX_PARENT_SQ];
     uint8_t              parent_sq_pred_mode[MAX_PARENT_SQ];
     uint8_t              chroma_level;
+#if MOVE_OPT
+    uint8_t              chroma_at_last_md_stage;
+#endif
     Part                 nsq_table[NSQ_TAB_SIZE];
     uint8_t              full_loop_escape;
     uint8_t              global_mv_injection;
@@ -316,7 +325,9 @@ typedef struct ModeDecisionContext {
     uint32_t md_stage_1_total_count;
     uint32_t md_stage_2_total_count;
     uint32_t md_stage_3_total_count;
-
+#if COMP_OPT
+    uint32_t md_stage_3_total_intra_count;
+#endif
     uint8_t combine_class12; // 1:class1 and 2 are combined.
 
     CandClass target_class;

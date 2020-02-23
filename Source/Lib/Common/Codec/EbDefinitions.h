@@ -34,6 +34,13 @@
 extern "C" {
 #endif
 
+#define CHROMA_SEARCH_OPT        1 // Move chroma search to be done on the best intra candidate survived from MD stage 2
+#if CHROMA_SEARCH_OPT
+#define INFR_OPT                 1 // Lossless: Infrastructure work to allow the protability of the chroma search
+#define MOVE_OPT                 1 // Semi-lossless: Move the intra search to just before last md_stage
+#define COMP_OPT                 1 // Speed optimisation by restricting the search only when at least 1 intra candidate survives to the last md_stage
+#endif
+
 #define NICS_CLEANUP        1
 #define COMP_SIMILAR        1 //use previously coded similar blocks to prune compound modes
 #define INTRA_SIMILAR       1 //If previous similar block is intra, do not inject any inter
@@ -190,8 +197,15 @@ enum {
 #define MAX_TXB_COUNT 4 // Maximum number of transform blocks.
 #endif
 #define MAX_NFL 125 // Maximum number of candidates MD can support
+#if INFR_OPT
+#define MAX_NFL_BUFF_Y \
+    (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
+#define MAX_NFL_BUFF \
+    (MAX_NFL_BUFF_Y + 84) //need one extra temp buffer for each fast loop call
+#else
 #define MAX_NFL_BUFF \
     (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
+#endif
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
