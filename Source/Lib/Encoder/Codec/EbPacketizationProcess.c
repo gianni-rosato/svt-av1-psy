@@ -15,6 +15,7 @@
 #include "EbTime.h"
 #include "EbModeDecisionProcess.h"
 #include "EbPictureDemuxResults.h"
+#include "EbLog.h"
 #define DETAILED_FRAME_OUTPUT 0
 
 /**************************************
@@ -76,33 +77,6 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
     EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
 
     return EB_ErrorNone;
-}
-#define TD_SIZE 2
-#define OBU_FRAME_HEADER_SIZE 3
-#define TILES_GROUP_SIZE 1
-
-// Write TD after offsetting the stream buffer
-static void write_td(EbBufferHeaderType *out_str_ptr, EbBool show_ex, EbBool has_tiles) {
-    uint8_t td_buff[TD_SIZE] = {0, 0};
-    uint8_t obu_frame_header_size =
-        has_tiles ? OBU_FRAME_HEADER_SIZE + TILES_GROUP_SIZE : OBU_FRAME_HEADER_SIZE;
-    if (out_str_ptr && (out_str_ptr->n_alloc_len > (out_str_ptr->n_filled_len + 2))) {
-        uint8_t *src_address =
-            (show_ex == EB_FALSE)
-                ? out_str_ptr->p_buffer
-                : out_str_ptr->p_buffer + out_str_ptr->n_filled_len - (obu_frame_header_size);
-
-        uint8_t *dst_address = src_address + TD_SIZE;
-
-        uint32_t move_size =
-            (show_ex == EB_FALSE) ? out_str_ptr->n_filled_len : (obu_frame_header_size);
-
-        memmove(dst_address, src_address, move_size);
-
-        encode_td_av1((uint8_t *)(&td_buff));
-
-        EB_MEMCPY(src_address, &td_buff, TD_SIZE);
-    }
 }
 
 void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
@@ -331,6 +305,288 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         }
     }
 }
+
+static inline int get_reorder_queue_pos(const EncodeContext *encode_context_ptr, int delta) {
+    return (encode_context_ptr->packetization_reorder_queue_head_index + delta) % PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
+}
+
+static inline PacketizationReorderEntry* get_reorder_queue_entry(const EncodeContext *encode_context_ptr, int delta) {
+    int pos = get_reorder_queue_pos(encode_context_ptr, delta);
+    return encode_context_ptr->packetization_reorder_queue[pos];
+}
+
+static uint32_t count_frames_in_next_tu(const EncodeContext *encode_context_ptr, int *data_size) {
+    const PacketizationReorderEntry *queue_entry_ptr;
+    const EbBufferHeaderType *       output_stream_ptr;
+    int                              i = 0;
+    *data_size                         = 0;
+    do {
+        queue_entry_ptr                = get_reorder_queue_entry(encode_context_ptr, i);
+        const EbObjectWrapper *wrapper = queue_entry_ptr->output_stream_wrapper_ptr;
+        //not a completed td
+        if (!wrapper) return 0;
+
+        output_stream_ptr = (EbBufferHeaderType *)wrapper->object_ptr;
+        *data_size += output_stream_ptr->n_filled_len;
+
+        i++;
+        //we have a td when we got a displable frame
+        if (queue_entry_ptr->show_frame) break;
+    } while (i < PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
+    return i;
+}
+
+static int pts_descend(const void *pa, const void*pb) {
+    EbObjectWrapper* a = *(EbObjectWrapper**)pa;
+    EbObjectWrapper* b = *(EbObjectWrapper**)pb;
+    EbBufferHeaderType *ba = (EbBufferHeaderType *)(a->object_ptr);
+    EbBufferHeaderType *bb = (EbBufferHeaderType *)(b->object_ptr);
+    return (int)(bb->pts - ba->pts);
+}
+
+static void push_undisplayed_frame(EncodeContext *encode_context_ptr, EbObjectWrapper *wrapper) {
+    if (encode_context_ptr->picture_decision_undisplayed_queue_count >= REF_FRAMES) {
+        SVT_ERROR("bug, too many frames in undisplayed queue");
+        return;
+    }
+    uint32_t count = encode_context_ptr->picture_decision_undisplayed_queue_count;
+    encode_context_ptr->picture_decision_undisplayed_queue[count++] = wrapper;
+    encode_context_ptr->picture_decision_undisplayed_queue_count = count;
+}
+
+static EbObjectWrapper *pop_undisplayed_frame(EncodeContext *encode_context_ptr) {
+    uint32_t count = encode_context_ptr->picture_decision_undisplayed_queue_count;
+    if (!count) {
+        SVT_ERROR("bug, no frame in undisplayed queue");
+        return NULL;
+    }
+    count--;
+    EbObjectWrapper *ret = encode_context_ptr->picture_decision_undisplayed_queue[count];
+    encode_context_ptr->picture_decision_undisplayed_queue_count = count;
+    return ret;
+}
+
+static void sort_undisplayed_frame(EncodeContext* encode_context_ptr) {
+    qsort(&encode_context_ptr->picture_decision_undisplayed_queue[0],
+          encode_context_ptr->picture_decision_undisplayed_queue_count,
+          sizeof(EbObjectWrapper *),
+          pts_descend);
+}
+
+#if DETAILED_FRAME_OUTPUT
+static void print_detailed_frame_info(PacketizationContext* context_ptr, const PacketizationReorderEntry *queue_entry_ptr) {
+    int32_t i;
+    uint8_t showTab[] = {'H', 'V'};
+
+    //Countinuity count check of visible frames
+    if (queue_entry_ptr->show_frame) {
+        if (context_ptr->disp_order_continuity_count == queue_entry_ptr->poc)
+            context_ptr->disp_order_continuity_count++;
+        else {
+            SVT_LOG("SVT [ERROR]: disp_order_continuity_count Error1 POC:%i\n",
+                    (int32_t)queue_entry_ptr->poc);
+            exit(0);
+        }
+    }
+
+    if (queue_entry_ptr->has_show_existing) {
+        if (context_ptr->disp_order_continuity_count ==
+            context_ptr->dpb_disp_order[queue_entry_ptr->show_existing_frame])
+            context_ptr->disp_order_continuity_count++;
+        else {
+            SVT_LOG("SVT [ERROR]: disp_order_continuity_count Error2 POC:%i\n",
+                    (int32_t)queue_entry_ptr->poc);
+            exit(0);
+        }
+    }
+
+    //update total number of shown frames
+    if (queue_entry_ptr->show_frame) context_ptr->tot_shown_frames++;
+    if (queue_entry_ptr->has_show_existing) context_ptr->tot_shown_frames++;
+
+    //implement the GOP here - Serial dec order
+    if (queue_entry_ptr->frame_type == KEY_FRAME) {
+        //reset the DPB on a Key frame
+        for (i = 0; i < 8; i++) {
+            context_ptr->dpb_dec_order[i]  = queue_entry_ptr->picture_number;
+            context_ptr->dpb_disp_order[i] = queue_entry_ptr->poc;
+        }
+        SVT_LOG("%i  %i  %c ****KEY***** %i frames\n",
+                (int32_t)queue_entry_ptr->picture_number,
+                (int32_t)queue_entry_ptr->poc,
+                showTab[queue_entry_ptr->show_frame],
+                (int32_t)context_ptr->tot_shown_frames);
+    } else {
+        int32_t LASTrefIdx = queue_entry_ptr->av1_ref_signal.ref_dpb_index[0];
+        int32_t BWDrefIdx  = queue_entry_ptr->av1_ref_signal.ref_dpb_index[4];
+
+        if (queue_entry_ptr->frame_type == INTER_FRAME) {
+            if (queue_entry_ptr->has_show_existing)
+                SVT_LOG("%i (%i  %i)    %i  (%i  %i)   %c  showEx: %i   %i frames\n",
+                        (int32_t)queue_entry_ptr->picture_number,
+                        (int32_t)context_ptr->dpb_dec_order[LASTrefIdx],
+                        (int32_t)context_ptr->dpb_dec_order[BWDrefIdx],
+                        (int32_t)queue_entry_ptr->poc,
+                        (int32_t)context_ptr->dpb_disp_order[LASTrefIdx],
+                        (int32_t)context_ptr->dpb_disp_order[BWDrefIdx],
+                        showTab[queue_entry_ptr->show_frame],
+                        (int32_t)context_ptr
+                            ->dpb_disp_order[queue_entry_ptr->show_existing_frame],
+                        (int32_t)context_ptr->tot_shown_frames);
+            else
+                SVT_LOG("%i (%i  %i)    %i  (%i  %i)   %c  %i frames\n",
+                        (int32_t)queue_entry_ptr->picture_number,
+                        (int32_t)context_ptr->dpb_dec_order[LASTrefIdx],
+                        (int32_t)context_ptr->dpb_dec_order[BWDrefIdx],
+                        (int32_t)queue_entry_ptr->poc,
+                        (int32_t)context_ptr->dpb_disp_order[LASTrefIdx],
+                        (int32_t)context_ptr->dpb_disp_order[BWDrefIdx],
+                        showTab[queue_entry_ptr->show_frame],
+                        (int32_t)context_ptr->tot_shown_frames);
+
+            if (queue_entry_ptr->ref_poc_list0 !=
+                context_ptr->dpb_disp_order[LASTrefIdx]) {
+                SVT_LOG("L0 MISMATCH POC:%i\n", (int32_t)queue_entry_ptr->poc);
+                exit(0);
+            }
+//TODO: how to enable this?
+#if 0
+            if (scs_ptr->static_config.hierarchical_levels == 3 &&
+                queue_entry_ptr->slice_type == B_SLICE &&
+                queue_entry_ptr->ref_poc_list1 !=
+                    context_ptr->dpb_disp_order[BWDrefIdx]) {
+                SVT_LOG("L1 MISMATCH POC:%i\n", (int32_t)queue_entry_ptr->poc);
+                exit(0);
+            }
+#endif
+            for (int rr = 0; rr < 7; rr++) {
+                uint8_t dpb_spot = queue_entry_ptr->av1_ref_signal.ref_dpb_index[rr];
+
+                if (queue_entry_ptr->ref_poc_array[rr] !=
+                    context_ptr->dpb_disp_order[dpb_spot])
+                    SVT_LOG("REF_POC MISMATCH POC:%i  ref:%i\n",
+                            (int32_t)queue_entry_ptr->poc,
+                            rr);
+            }
+        } else {
+            if (queue_entry_ptr->has_show_existing)
+                SVT_LOG("%i  %i  %c   showEx: %i ----INTRA---- %i frames \n",
+                        (int32_t)queue_entry_ptr->picture_number,
+                        (int32_t)queue_entry_ptr->poc,
+                        showTab[queue_entry_ptr->show_frame],
+                        (int32_t)context_ptr
+                            ->dpb_disp_order[queue_entry_ptr->show_existing_frame],
+                        (int32_t)context_ptr->tot_shown_frames);
+            else
+                SVT_LOG("%i  %i  %c   ----INTRA---- %i frames\n",
+                        (int32_t)queue_entry_ptr->picture_number,
+                        (int32_t)queue_entry_ptr->poc,
+                        (int32_t)showTab[queue_entry_ptr->show_frame],
+                        (int32_t)context_ptr->tot_shown_frames);
+        }
+
+        //Update the DPB
+        for (i = 0; i < 8; i++) {
+            if ((queue_entry_ptr->av1_ref_signal.refresh_frame_mask >> i) & 1) {
+                context_ptr->dpb_dec_order[i]  = queue_entry_ptr->picture_number;
+                context_ptr->dpb_disp_order[i] = queue_entry_ptr->poc;
+            }
+        }
+    }
+}
+#endif
+
+static void collect_frames_info(PacketizationContext* context_ptr, const EncodeContext *encode_context_ptr, int frames) {
+    for (int i = 0; i < frames; i++) {
+        PacketizationReorderEntry *queue_entry_ptr = get_reorder_queue_entry(encode_context_ptr, i);
+        EbBufferHeaderType        *output_stream_ptr = (EbBufferHeaderType *) queue_entry_ptr->output_stream_wrapper_ptr->object_ptr;
+#if DETAILED_FRAME_OUTPUT
+        print_detailed_frame_info(context_ptr, queue_entry_ptr) ;
+#else
+        (void)context_ptr;
+#endif
+        // Calculate frame latency in milliseconds
+        double   latency               = 0.0;
+        uint64_t finish_time_seconds   = 0;
+        uint64_t finish_time_u_seconds = 0;
+        eb_finish_time(&finish_time_seconds, &finish_time_u_seconds);
+
+        eb_compute_overall_elapsed_time_ms(queue_entry_ptr->start_time_seconds,
+                                            queue_entry_ptr->start_time_u_seconds,
+                                            finish_time_seconds,
+                                            finish_time_u_seconds,
+                                            &latency);
+
+        output_stream_ptr->n_tick_count  = (uint32_t)latency;
+        output_stream_ptr->p_app_private = queue_entry_ptr->out_meta_data;
+        if (queue_entry_ptr->is_alt_ref)
+            output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
+
+    }
+}
+
+#define TD_SIZE 2
+
+//a tu start with a td, + 0 more not displable frame, + 1 display frame
+static void encode_tu(EncodeContext *encode_context_ptr, int frames, int total_bytes,
+                      EbBufferHeaderType *output_stream_ptr) {
+    total_bytes += TD_SIZE;
+    if (total_bytes > (int)output_stream_ptr->n_alloc_len) {
+        SVT_ERROR("encode size(%d) is too large", total_bytes);
+        return;
+    }
+    uint8_t *dst                    = output_stream_ptr->p_buffer + total_bytes;
+    //we use last frame's output_stream_ptr to hold entire tu, so we need copy backward.
+    int last = frames - 1;
+    for (int i = last; i >= 0; i--) {
+        PacketizationReorderEntry *queue_entry_ptr = get_reorder_queue_entry(encode_context_ptr, i);
+        EbObjectWrapper* wrapper = queue_entry_ptr->output_stream_wrapper_ptr;
+        EbBufferHeaderType *       src_stream_ptr = (EbBufferHeaderType *)wrapper->object_ptr;
+        uint32_t size = src_stream_ptr->n_filled_len;
+        dst -= size;
+        memmove(dst, src_stream_ptr->p_buffer, size);
+        if (i != last) {
+            //lost frame is displayable frame, other are unsidplayed
+            push_undisplayed_frame(encode_context_ptr, wrapper);
+        }
+    }
+    if (frames > 1)
+        sort_undisplayed_frame(encode_context_ptr);
+    dst -= TD_SIZE;
+    encode_td_av1(dst);
+    output_stream_ptr->n_filled_len = total_bytes;
+    output_stream_ptr->flags |= EB_BUFFERFLAG_HAS_TD;
+}
+
+static void encode_show_existing(EncodeContext *encode_context_ptr,
+                                 PacketizationReorderEntry *queue_entry_ptr,
+                                 EbBufferHeaderType        *output_stream_ptr) {
+    uint8_t* dst = output_stream_ptr->p_buffer;
+
+    encode_td_av1(dst);
+    output_stream_ptr->n_filled_len = TD_SIZE;
+
+    // Copy Slice Header to the Output Bitstream
+    copy_payload(queue_entry_ptr->bitstream_ptr,
+                 output_stream_ptr->p_buffer,
+                 (uint32_t *)&(output_stream_ptr->n_filled_len),
+                 (uint32_t *)&(output_stream_ptr->n_alloc_len),
+                 encode_context_ptr);
+
+    output_stream_ptr->flags |= (EB_BUFFERFLAG_SHOW_EXT | EB_BUFFERFLAG_HAS_TD);
+}
+
+static void release_frames(EncodeContext *encode_context_ptr, int frames) {
+    for (int i = 0; i < frames; i++) {
+        PacketizationReorderEntry *queue_entry_ptr = get_reorder_queue_entry(encode_context_ptr, i);
+        queue_entry_ptr->out_meta_data = (EbLinkedListNode *)EB_NULL;
+        // Reset the Reorder Queue Entry
+        queue_entry_ptr->picture_number += PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
+        queue_entry_ptr->output_stream_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+    }
+    encode_context_ptr->packetization_reorder_queue_head_index = get_reorder_queue_pos(encode_context_ptr, frames);
+}
+
 void *packetization_kernel(void *input_ptr) {
     // Context
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -361,6 +617,7 @@ void *packetization_kernel(void *input_ptr) {
     int32_t                    queue_entry_index;
     PacketizationReorderEntry *queue_entry_ptr;
     EbLinkedListNode *         app_data_ll_head_temp_ptr;
+    uint32_t                   frames;
 
     context_ptr->tot_shown_frames            = 0;
     context_ptr->disp_order_continuity_count = 0;
@@ -409,9 +666,8 @@ void *packetization_kernel(void *input_ptr) {
                 : 0;
         output_stream_ptr->n_filled_len = 0;
         output_stream_ptr->pts          = pcs_ptr->parent_pcs_ptr->input_ptr->pts;
-        //minus (1 << MAX_HIERARCHICAL_LEVEL) to make sure the dts never larger than pts.
-        output_stream_ptr->dts          = pcs_ptr->parent_pcs_ptr->decode_order -
-                                 (uint64_t)(1 << MAX_HIERARCHICAL_LEVEL) + 1;
+        //we output one temporal unit a time, so dts alwasy equals to pts.
+        output_stream_ptr->dts          = output_stream_ptr->pts;
         output_stream_ptr->pic_type =
             pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
                 ? pcs_ptr->parent_pcs_ptr->idr_flag ? EB_AV1_KEY_PICTURE : pcs_ptr->slice_type
@@ -485,17 +741,8 @@ void *packetization_kernel(void *input_ptr) {
                      encode_context_ptr);
         if (pcs_ptr->parent_pcs_ptr->has_show_existing) {
             // Reset the Bitstream before writing to it
-            reset_bitstream(pcs_ptr->bitstream_ptr->output_bitstream_ptr);
-            write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 1);
-
-            // Copy Slice Header to the Output Bitstream
-            copy_payload(pcs_ptr->bitstream_ptr,
-                         output_stream_ptr->p_buffer,
-                         (uint32_t *)&(output_stream_ptr->n_filled_len),
-                         (uint32_t *)&(output_stream_ptr->n_alloc_len),
-                         encode_context_ptr);
-
-            output_stream_ptr->flags |= EB_BUFFERFLAG_SHOW_EXT;
+            reset_bitstream(queue_entry_ptr->bitstream_ptr->output_bitstream_ptr);
+            write_frame_header_av1(queue_entry_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 1);
         }
 
         // Send the number of bytes per frame to RC
@@ -514,7 +761,7 @@ void *packetization_kernel(void *input_ptr) {
         queue_entry_ptr->ref_poc_list0 = pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0];
         queue_entry_ptr->ref_poc_list1 = pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0];
         memcpy(queue_entry_ptr->ref_poc_array,
-               pcs_ptr->parent_pcs_ptr->av1RefSignal.ref_poc_array,
+               pcs_ptr->parent_pcs_ptr->av1_ref_signal.ref_poc_array,
                7 * sizeof(uint64_t));
 #endif
         queue_entry_ptr->show_frame          = frm_hdr->show_frame;
@@ -566,185 +813,29 @@ void *packetization_kernel(void *input_ptr) {
         //****************************************************
         // Process the head of the queue
         //****************************************************
-        // Look at head of queue and see if any picture is ready to go
-        queue_entry_ptr = encode_context_ptr->packetization_reorder_queue
-                              [encode_context_ptr->packetization_reorder_queue_head_index];
-
-        while (queue_entry_ptr->output_stream_wrapper_ptr != EB_NULL) {
-            EbBool has_tiles =
-                (EbBool)(scs_ptr->static_config.tile_columns || scs_ptr->static_config.tile_rows);
+        // Look at head of queue and see if we got a td
+        int total_bytes;
+        while ((frames = count_frames_in_next_tu(encode_context_ptr, &total_bytes))) {
+            collect_frames_info(context_ptr, encode_context_ptr, frames);
+            //last frame in a termporal unit is a displable frame. only the last frame has pts.
+            //so we collect all bitstream to last frames' output buffer.
+            queue_entry_ptr           = get_reorder_queue_entry(encode_context_ptr, frames - 1);
             output_stream_wrapper_ptr = queue_entry_ptr->output_stream_wrapper_ptr;
             output_stream_ptr         = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
 
-            if (queue_entry_ptr->has_show_existing) {
-                write_td(output_stream_ptr, EB_TRUE, has_tiles);
-                output_stream_ptr->n_filled_len += TD_SIZE;
-            }
-
-            if (encode_context_ptr->td_needed == EB_TRUE) {
-                output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_HAS_TD;
-                write_td(output_stream_ptr, EB_FALSE, has_tiles);
-                encode_context_ptr->td_needed = EB_FALSE;
-                output_stream_ptr->n_filled_len += TD_SIZE;
-            }
-
-            if (queue_entry_ptr->has_show_existing || queue_entry_ptr->show_frame)
-                encode_context_ptr->td_needed = EB_TRUE;
-
-#if DETAILED_FRAME_OUTPUT
-            {
-                int32_t i;
-                uint8_t showTab[] = {'H', 'V'};
-
-                //Countinuity count check of visible frames
-                if (queue_entry_ptr->show_frame) {
-                    if (context_ptr->disp_order_continuity_count == queue_entry_ptr->poc)
-                        context_ptr->disp_order_continuity_count++;
-                    else {
-                        SVT_LOG("SVT [ERROR]: disp_order_continuity_count Error1 POC:%i\n",
-                                (int32_t)queue_entry_ptr->poc);
-                        exit(0);
-                    }
-                }
-
-                if (queue_entry_ptr->has_show_existing) {
-                    if (context_ptr->disp_order_continuity_count ==
-                        context_ptr->dpb_disp_order[queue_entry_ptr->show_existing_frame])
-                        context_ptr->disp_order_continuity_count++;
-                    else {
-                        SVT_LOG("SVT [ERROR]: disp_order_continuity_count Error2 POC:%i\n",
-                                (int32_t)queue_entry_ptr->poc);
-                        exit(0);
-                    }
-                }
-
-                //update total number of shown frames
-                if (queue_entry_ptr->show_frame) context_ptr->tot_shown_frames++;
-                if (queue_entry_ptr->has_show_existing) context_ptr->tot_shown_frames++;
-
-                //implement the GOP here - Serial dec order
-                if (queue_entry_ptr->frame_type == KEY_FRAME) {
-                    //reset the DPB on a Key frame
-                    for (i = 0; i < 8; i++) {
-                        context_ptr->dpb_dec_order[i]  = queue_entry_ptr->picture_number;
-                        context_ptr->dpb_disp_order[i] = queue_entry_ptr->poc;
-                    }
-                    SVT_LOG("%i  %i  %c ****KEY***** %i frames\n",
-                            (int32_t)queue_entry_ptr->picture_number,
-                            (int32_t)queue_entry_ptr->poc,
-                            showTab[queue_entry_ptr->show_frame],
-                            (int32_t)context_ptr->tot_shown_frames);
-                } else {
-                    int32_t LASTrefIdx = queue_entry_ptr->av1_ref_signal.ref_dpb_index[0];
-                    int32_t BWDrefIdx  = queue_entry_ptr->av1_ref_signal.ref_dpb_index[4];
-
-                    if (queue_entry_ptr->frame_type == INTER_FRAME) {
-                        if (queue_entry_ptr->has_show_existing)
-                            SVT_LOG("%i (%i  %i)    %i  (%i  %i)   %c  showEx: %i   %i frames\n",
-                                    (int32_t)queue_entry_ptr->picture_number,
-                                    (int32_t)context_ptr->dpb_dec_order[LASTrefIdx],
-                                    (int32_t)context_ptr->dpb_dec_order[BWDrefIdx],
-                                    (int32_t)queue_entry_ptr->poc,
-                                    (int32_t)context_ptr->dpb_disp_order[LASTrefIdx],
-                                    (int32_t)context_ptr->dpb_disp_order[BWDrefIdx],
-                                    showTab[queue_entry_ptr->show_frame],
-                                    (int32_t)context_ptr
-                                        ->dpb_disp_order[queue_entry_ptr->show_existing_frame],
-                                    (int32_t)context_ptr->tot_shown_frames);
-                        else
-                            SVT_LOG("%i (%i  %i)    %i  (%i  %i)   %c  %i frames\n",
-                                    (int32_t)queue_entry_ptr->picture_number,
-                                    (int32_t)context_ptr->dpb_dec_order[LASTrefIdx],
-                                    (int32_t)context_ptr->dpb_dec_order[BWDrefIdx],
-                                    (int32_t)queue_entry_ptr->poc,
-                                    (int32_t)context_ptr->dpb_disp_order[LASTrefIdx],
-                                    (int32_t)context_ptr->dpb_disp_order[BWDrefIdx],
-                                    showTab[queue_entry_ptr->show_frame],
-                                    (int32_t)context_ptr->tot_shown_frames);
-
-                        if (queue_entry_ptr->ref_poc_list0 !=
-                            context_ptr->dpb_disp_order[LASTrefIdx]) {
-                            SVT_LOG("L0 MISMATCH POC:%i\n", (int32_t)queue_entry_ptr->poc);
-                            exit(0);
-                        }
-                        if (scs_ptr->static_config.hierarchical_levels == 3 &&
-                            queue_entry_ptr->slice_type == B_SLICE &&
-                            queue_entry_ptr->ref_poc_list1 !=
-                                context_ptr->dpb_disp_order[BWDrefIdx]) {
-                            SVT_LOG("L1 MISMATCH POC:%i\n", (int32_t)queue_entry_ptr->poc);
-                            exit(0);
-                        }
-
-                        for (int rr = 0; rr < 7; rr++) {
-                            uint8_t dpb_spot = queue_entry_ptr->av1RefSignal.refDpbIndex[rr];
-
-                            if (queue_entry_ptr->ref_poc_array[rr] !=
-                                context_ptr->dpbDispOrder[dpb_spot])
-                                SVT_LOG("REF_POC MISMATCH POC:%i  ref:%i\n",
-                                        (int32_t)queue_entry_ptr->poc,
-                                        rr);
-                        }
-                    } else {
-                        if (queue_entry_ptr->has_show_existing)
-                            SVT_LOG("%i  %i  %c   showEx: %i ----INTRA---- %i frames \n",
-                                    (int32_t)queue_entry_ptr->picture_number,
-                                    (int32_t)queue_entry_ptr->poc,
-                                    showTab[queue_entry_ptr->show_frame],
-                                    (int32_t)context_ptr
-                                        ->dpb_disp_order[queue_entry_ptr->show_existing_frame],
-                                    (int32_t)context_ptr->tot_shown_frames);
-                        else
-                            SVT_LOG("%i  %i  %c   ----INTRA---- %i frames\n",
-                                    (int32_t)queue_entry_ptr->picture_number,
-                                    (int32_t)queue_entry_ptr->poc,
-                                    (int32_t)showTab[queue_entry_ptr->show_frame],
-                                    (int32_t)context_ptr->tot_shown_frames);
-                    }
-
-                    //Update the DPB
-                    for (i = 0; i < 8; i++) {
-                        if ((queue_entry_ptr->av1_ref_signal.refresh_frame_mask >> i) & 1) {
-                            context_ptr->dpb_dec_order[i]  = queue_entry_ptr->picture_number;
-                            context_ptr->dpb_disp_order[i] = queue_entry_ptr->poc;
-                        }
-                    }
-                }
-            }
-#endif
-            // Calculate frame latency in milliseconds
-            double   latency               = 0.0;
-            uint64_t finish_time_seconds   = 0;
-            uint64_t finish_time_u_seconds = 0;
-            eb_finish_time(&finish_time_seconds, &finish_time_u_seconds);
-
-            eb_compute_overall_elapsed_time_ms(queue_entry_ptr->start_time_seconds,
-                                               queue_entry_ptr->start_time_u_seconds,
-                                               finish_time_seconds,
-                                               finish_time_u_seconds,
-                                               &latency);
-
-            output_stream_ptr->n_tick_count  = (uint32_t)latency;
-            output_stream_ptr->p_app_private = queue_entry_ptr->out_meta_data;
-            if (queue_entry_ptr->is_alt_ref)
-                output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;
-
+            encode_tu(encode_context_ptr, frames, total_bytes, output_stream_ptr);
             eb_post_full_object(output_stream_wrapper_ptr);
-            queue_entry_ptr->out_meta_data = (EbLinkedListNode *)EB_NULL;
-
-            // Reset the Reorder Queue Entry
-            queue_entry_ptr->picture_number += PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
-            queue_entry_ptr->output_stream_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
-
-            // Increment the Reorder Queue head Ptr
-            encode_context_ptr->packetization_reorder_queue_head_index =
-                (encode_context_ptr->packetization_reorder_queue_head_index ==
-                 PACKETIZATION_REORDER_QUEUE_MAX_DEPTH - 1)
-                    ? 0
-                    : encode_context_ptr->packetization_reorder_queue_head_index + 1;
-
-            queue_entry_ptr = encode_context_ptr->packetization_reorder_queue
-                                  [encode_context_ptr->packetization_reorder_queue_head_index];
+            if (queue_entry_ptr->has_show_existing) {
+                EbObjectWrapper *existed = pop_undisplayed_frame(encode_context_ptr);
+                if (existed) {
+                    EbBufferHeaderType *existed_output_stream_ptr = (EbBufferHeaderType *)existed->object_ptr;
+                    encode_show_existing(encode_context_ptr, queue_entry_ptr, existed_output_stream_ptr);
+                    eb_post_full_object(existed);
+                }
+            }
+            release_frames(encode_context_ptr, frames);
         }
     }
     return EB_NULL;
+
 }

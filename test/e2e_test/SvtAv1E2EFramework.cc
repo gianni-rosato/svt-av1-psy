@@ -557,23 +557,6 @@ void SvtAv1E2ETestFramework::write_output_header() {
         fwrite(header, 1, IVF_STREAM_HEADER_SIZE, output_file_->file);
 }
 
-static void update_prev_ivf_header(
-    svt_av1_e2e_test::SvtAv1E2ETestFramework::IvfFile *ivf) {
-    char header[4];  // only for the number of bytes
-    if (ivf && ivf->file && ivf->byte_count_since_ivf != 0) {
-        fseeko(
-            ivf->file,
-            (-(int32_t)(ivf->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE)),
-            SEEK_CUR);
-        mem_put_le32(&header[0], (int32_t)(ivf->byte_count_since_ivf));
-        fwrite(header, 1, 4, ivf->file);
-        fseeko(ivf->file,
-                 (ivf->byte_count_since_ivf + IVF_FRAME_HEADER_SIZE - 4),
-                 SEEK_CUR);
-        ivf->byte_count_since_ivf = 0;
-    }
-}
-
 static void write_ivf_frame_header(
     svt_av1_e2e_test::SvtAv1E2ETestFramework::IvfFile *ivf,
     uint32_t byte_count) {
@@ -599,77 +582,13 @@ static void write_ivf_frame_header(
 
 void SvtAv1E2ETestFramework::write_compress_data(
     const EbBufferHeaderType *output) {
-    // Check for the flags EB_BUFFERFLAG_HAS_TD and
-    // EB_BUFFERFLAG_SHOW_EXT
-    switch (output->flags & 0x00000006) {
-    case (EB_BUFFERFLAG_HAS_TD | EB_BUFFERFLAG_SHOW_EXT):
-        // terminate previous ivf packet, update the combined size of
-        // packets sent
-        update_prev_ivf_header(output_file_);
-
-        // Write a new IVF frame header to file as a TD is in the packet
-        write_ivf_frame_header(
-            output_file_,
-            output->n_filled_len - (obu_frame_header_size_ + TD_SIZE));
-        fwrite(output->p_buffer,
-               1,
-               output->n_filled_len - (obu_frame_header_size_ + TD_SIZE),
-               output_file_->file);
-
-        // An EB_BUFFERFLAG_SHOW_EXT means that another TD has been added to
-        // the packet to show another frame, a new IVF is needed
-        write_ivf_frame_header(output_file_,
-                               (obu_frame_header_size_ + TD_SIZE));
-        fwrite(output->p_buffer + output->n_filled_len -
-                   (obu_frame_header_size_ + TD_SIZE),
-               1,
-               (obu_frame_header_size_ + TD_SIZE),
-               output_file_->file);
-
-        break;
-    case (EB_BUFFERFLAG_HAS_TD):
-        // terminate previous ivf packet, update the combined size of
-        // packets sent
-        update_prev_ivf_header(output_file_);
-
-        // Write a new IVF frame header to file as a TD is in the packet
-        write_ivf_frame_header(output_file_, output->n_filled_len);
-        fwrite(output->p_buffer, 1, output->n_filled_len, output_file_->file);
-        break;
-    case (EB_BUFFERFLAG_SHOW_EXT):
-        // this case means that there's only one TD in this packet and is
-        // relater
-        fwrite(output->p_buffer,
-               1,
-               output->n_filled_len - (obu_frame_header_size_ + TD_SIZE),
-               output_file_->file);
-        // this packet will be part of the previous IVF header
-        output_file_->byte_count_since_ivf +=
-            (output->n_filled_len - (obu_frame_header_size_ + TD_SIZE));
-
-        // terminate previous ivf packet, update the combined size of
-        // packets sent
-        update_prev_ivf_header(output_file_);
-
-        // An EB_BUFFERFLAG_SHOW_EXT means that another TD has been added to
-        // the packet to show another frame, a new IVF is needed
-        write_ivf_frame_header(output_file_,
-                               (obu_frame_header_size_ + TD_SIZE));
-        fwrite(output->p_buffer + output->n_filled_len -
-                   (obu_frame_header_size_ + TD_SIZE),
-               1,
-               (obu_frame_header_size_ + TD_SIZE),
-               output_file_->file);
-
-        break;
-    default:
-        // This is a packet without a TD, write it straight to file
-        fwrite(output->p_buffer, 1, output->n_filled_len, output_file_->file);
-
-        // this packet will be part of the previous IVF header
-        output_file_->byte_count_since_ivf += (output->n_filled_len);
-        break;
-    }
+    write_ivf_frame_header(
+        output_file_,
+        output->n_filled_len);
+    fwrite(output->p_buffer,
+        1,
+        output->n_filled_len,
+        output_file_->file);
 }
 
 void SvtAv1E2ETestFramework::process_compress_data(
@@ -681,15 +600,7 @@ void SvtAv1E2ETestFramework::process_compress_data(
         return;
     }
 
-    if (data->flags & EB_BUFFERFLAG_SHOW_EXT) {
-        uint32_t first_part_size =
-            data->n_filled_len - obu_frame_header_size_ - TD_SIZE;
-        decode_compress_data(data->p_buffer, first_part_size);
-        decode_compress_data(data->p_buffer + first_part_size,
-                             obu_frame_header_size_ + TD_SIZE);
-    } else {
-        decode_compress_data(data->p_buffer, data->n_filled_len);
-    }
+    decode_compress_data(data->p_buffer, data->n_filled_len);
 }
 
 void SvtAv1E2ETestFramework::decode_compress_data(const uint8_t *data,
