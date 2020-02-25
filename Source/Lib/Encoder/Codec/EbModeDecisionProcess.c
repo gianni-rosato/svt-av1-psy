@@ -36,9 +36,9 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->candidate_buffer_ptr_array, MAX_NFL_BUFF);
 #if TXS_DEPTH_2
     EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_1->candidate_ptr);
-    EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_1);
+    EB_DELETE(obj->candidate_buffer_tx_depth_1);
     EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_2->candidate_ptr);
-    EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_2);
+    EB_DELETE(obj->candidate_buffer_tx_depth_2);
 #else
     EB_FREE_ARRAY(obj->scratch_candidate_buffer->candidate_ptr);
     EB_DELETE(obj->scratch_candidate_buffer);

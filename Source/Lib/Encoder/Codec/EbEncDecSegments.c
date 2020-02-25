@@ -20,6 +20,11 @@ static void enc_dec_segments_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->valid_sb_count_array);
     EB_FREE_ARRAY(obj->dep_map.dependency_map);
     EB_FREE_ARRAY(obj->row_array);
+
+    EB_FREE_ARRAY(obj->dep_map.dependency_map);
+    EB_FREE_ARRAY(obj->valid_sb_count_array);
+    EB_FREE_ARRAY(obj->y_start_array);
+    EB_FREE_ARRAY(obj->x_start_array);
 }
 
 EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment_col_count,

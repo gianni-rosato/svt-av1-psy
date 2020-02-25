@@ -129,11 +129,10 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
 void picture_control_set_dctor(EbPtr p) {
     PictureControlSet *obj = (PictureControlSet *)p;
     uint16_t tile_cnt = obj->tile_row_count * obj->tile_column_count;
-    uint16_t tile_row_cnt = obj->tile_row_count;
     uint8_t            depth;
     av1_hash_table_destroy(&obj->hash_table);
     EB_FREE_ALIGNED_ARRAY(obj->tpl_mvs);
-    EB_DELETE_PTR_ARRAY(obj->enc_dec_segment_ctrl, tile_row_cnt);
+    EB_DELETE_PTR_ARRAY(obj->enc_dec_segment_ctrl, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_intra_luma_mode_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_intra_chroma_mode_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_mv_neighbor_array, tile_cnt);
