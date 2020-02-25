@@ -360,10 +360,10 @@ static INLINE void prepare_horizontal_filter_coeff_alpha0_avx2(int beta, int sx,
 
     const __m256i res_0 = _mm256_inserti128_si256(_mm256_castsi128_si256(tmp_0), tmp_1, 0x1);
 
-    coeff[0] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_alpha0_mask01_avx2));
-    coeff[1] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_alpha0_mask23_avx2));
-    coeff[2] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_alpha0_mask45_avx2));
-    coeff[3] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_alpha0_mask67_avx2));
+    coeff[0] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_alpha0_mask01_avx2));
+    coeff[1] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_alpha0_mask23_avx2));
+    coeff[2] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_alpha0_mask45_avx2));
+    coeff[3] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_alpha0_mask67_avx2));
 }
 
 static INLINE void horizontal_filter_avx2(const __m256i src, __m256i *horz_out, int sx, int alpha,
@@ -662,10 +662,10 @@ static INLINE void prepare_vertical_filter_coeffs_gamma0_avx2(int delta, int sy,
 
     __m256i res_0 = _mm256_inserti128_si256(_mm256_castsi128_si256(filt_0), filt_1, 0x1);
 
-    coeffs[0] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_gamma0_mask0_avx2));
-    coeffs[1] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_gamma0_mask1_avx2));
-    coeffs[2] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_gamma0_mask2_avx2));
-    coeffs[3] = _mm256_shuffle_epi8(res_0, _mm256_load_si256((__m256i *)shuffle_gamma0_mask3_avx2));
+    coeffs[0] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_gamma0_mask0_avx2));
+    coeffs[1] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_gamma0_mask1_avx2));
+    coeffs[2] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_gamma0_mask2_avx2));
+    coeffs[3] = _mm256_shuffle_epi8(res_0, _mm256_loadu_si256((__m256i *)shuffle_gamma0_mask3_avx2));
 
     coeffs[4] = coeffs[0];
     coeffs[5] = coeffs[1];
@@ -1216,10 +1216,10 @@ void eb_av1_warp_affine_avx2(const int32_t *mat, const uint8_t *ref, int width, 
     const int16_t const5 = (1 << (FILTER_BITS - reduce_bits_horiz));
 
     __m256i shuffle_src[4];
-    shuffle_src[0] = _mm256_load_si256((__m256i *)shuffle_src0);
-    shuffle_src[1] = _mm256_load_si256((__m256i *)shuffle_src1);
-    shuffle_src[2] = _mm256_load_si256((__m256i *)shuffle_src2);
-    shuffle_src[3] = _mm256_load_si256((__m256i *)shuffle_src3);
+    shuffle_src[0] = _mm256_loadu_si256((__m256i *)shuffle_src0);
+    shuffle_src[1] = _mm256_loadu_si256((__m256i *)shuffle_src1);
+    shuffle_src[2] = _mm256_loadu_si256((__m256i *)shuffle_src2);
+    shuffle_src[3] = _mm256_loadu_si256((__m256i *)shuffle_src3);
 
     for (i = 0; i < p_height; i += 8) {
         for (j = 0; j < p_width; j += 8) {

@@ -1388,7 +1388,7 @@ static INLINE void load_buffer_32x32_avx512(const int16_t *input, __m512i *outpu
 
     for (i = 0; i < 32; ++i) {
         temp[0] = _mm256_loadu_si256((const __m256i *)(input + 0 * 16));
-        temp[1] = _mm256_load_si256((const __m256i *)(input + 1 * 16));
+        temp[1] = _mm256_loadu_si256((const __m256i *)(input + 1 * 16));
 
         output[0] = _mm512_cvtepi16_epi32(temp[0]);
         output[1] = _mm512_cvtepi16_epi32(temp[1]);

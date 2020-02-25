@@ -42,14 +42,14 @@ static INLINE void add_32bit_8x8(const __m256i neighbor, __m256i r[8]) {
 
 static INLINE void store_32bit_8x8(const __m256i r[8], int32_t *const buf,
                                    const int32_t buf_stride) {
-    _mm256_store_si256((__m256i *)(buf + 0 * buf_stride), r[0]);
-    _mm256_store_si256((__m256i *)(buf + 1 * buf_stride), r[1]);
-    _mm256_store_si256((__m256i *)(buf + 2 * buf_stride), r[2]);
-    _mm256_store_si256((__m256i *)(buf + 3 * buf_stride), r[3]);
-    _mm256_store_si256((__m256i *)(buf + 4 * buf_stride), r[4]);
-    _mm256_store_si256((__m256i *)(buf + 5 * buf_stride), r[5]);
-    _mm256_store_si256((__m256i *)(buf + 6 * buf_stride), r[6]);
-    _mm256_store_si256((__m256i *)(buf + 7 * buf_stride), r[7]);
+    _mm256_storeu_si256((__m256i *)(buf + 0 * buf_stride), r[0]);
+    _mm256_storeu_si256((__m256i *)(buf + 1 * buf_stride), r[1]);
+    _mm256_storeu_si256((__m256i *)(buf + 2 * buf_stride), r[2]);
+    _mm256_storeu_si256((__m256i *)(buf + 3 * buf_stride), r[3]);
+    _mm256_storeu_si256((__m256i *)(buf + 4 * buf_stride), r[4]);
+    _mm256_storeu_si256((__m256i *)(buf + 5 * buf_stride), r[5]);
+    _mm256_storeu_si256((__m256i *)(buf + 6 * buf_stride), r[6]);
+    _mm256_storeu_si256((__m256i *)(buf + 7 * buf_stride), r[7]);
 }
 
 static AOM_FORCE_INLINE void integral_images(const uint8_t *src, int32_t src_stride, int32_t width,
@@ -109,7 +109,7 @@ static AOM_FORCE_INLINE void integral_images(const uint8_t *src, int32_t src_str
 
             transpose_32bit_8x8_avx2(r32, r32);
 
-            const __m256i d_top = _mm256_load_si256((__m256i *)(dt - buf_stride + x));
+            const __m256i d_top = _mm256_loadu_si256((__m256i *)(dt - buf_stride + x));
             add_32bit_8x8(d_top, r32);
             store_32bit_8x8(r32, dt + x, buf_stride);
 
@@ -128,7 +128,7 @@ static AOM_FORCE_INLINE void integral_images(const uint8_t *src, int32_t src_str
 
             transpose_32bit_8x8_avx2(r32, r32);
 
-            const __m256i c_top = _mm256_load_si256((__m256i *)(ct - buf_stride + x));
+            const __m256i c_top = _mm256_loadu_si256((__m256i *)(ct - buf_stride + x));
             add_32bit_8x8(c_top, r32);
             store_32bit_8x8(r32, ct + x, buf_stride);
             x += 8;
@@ -136,8 +136,8 @@ static AOM_FORCE_INLINE void integral_images(const uint8_t *src, int32_t src_str
 
         /* Used in calc_ab and calc_ab_fast, when calc out of right border */
         for (int ln = 0; ln < 8; ++ln) {
-            _mm256_store_si256((__m256i *)(ct + x + ln * buf_stride), zero);
-            _mm256_store_si256((__m256i *)(dt + x + ln * buf_stride), zero);
+            _mm256_storeu_si256((__m256i *)(ct + x + ln * buf_stride), zero);
+            _mm256_storeu_si256((__m256i *)(dt + x + ln * buf_stride), zero);
         }
 
         src_t += 8 * src_stride;
@@ -205,7 +205,7 @@ static AOM_FORCE_INLINE void integral_images_highbd(const uint16_t *src, int32_t
 
             transpose_32bit_8x8_avx2(a32, a32);
 
-            const __m256i c_top = _mm256_load_si256((__m256i *)(ct - buf_stride + x));
+            const __m256i c_top = _mm256_loadu_si256((__m256i *)(ct - buf_stride + x));
             add_32bit_8x8(c_top, a32);
             store_32bit_8x8(a32, ct + x, buf_stride);
 
@@ -214,7 +214,7 @@ static AOM_FORCE_INLINE void integral_images_highbd(const uint16_t *src, int32_t
 
             transpose_32bit_8x8_avx2(r32, r32);
 
-            const __m256i d_top = _mm256_load_si256((__m256i *)(dt - buf_stride + x));
+            const __m256i d_top = _mm256_loadu_si256((__m256i *)(dt - buf_stride + x));
             add_32bit_8x8(d_top, r32);
             store_32bit_8x8(r32, dt + x, buf_stride);
             x += 8;
@@ -222,8 +222,8 @@ static AOM_FORCE_INLINE void integral_images_highbd(const uint16_t *src, int32_t
 
         /* Used in calc_ab and calc_ab_fast, when calc out of right border */
         for (int ln = 0; ln < 8; ++ln) {
-            _mm256_store_si256((__m256i *)(ct + x + ln * buf_stride), zero);
-            _mm256_store_si256((__m256i *)(dt + x + ln * buf_stride), zero);
+            _mm256_storeu_si256((__m256i *)(ct + x + ln * buf_stride), zero);
+            _mm256_storeu_si256((__m256i *)(dt + x + ln * buf_stride), zero);
         }
 
         src_t += 8 * src_stride;

@@ -107,12 +107,12 @@ static INLINE void get_gradient_hist_avx2_internal(const __m256i *src1, const __
     //AOMMIN(quotA, 6)
     quot = _mm256_min_epi16(quot, val_6_i16);
 
-    _mm256_store_si256((__m256i *)dy_mask_array, dy_mask);
-    _mm256_store_si256((__m256i *)quot_array, quot);
-    _mm256_store_si256((__m256i *)remd_array, remd);
-    _mm256_store_si256((__m256i *)sn_array, sn);
-    _mm256_store_si256((__m256i *)temp_array, tmp1_32);
-    _mm256_store_si256((__m256i *)&temp_array[8], tmp2_32);
+    _mm256_storeu_si256((__m256i *)dy_mask_array, dy_mask);
+    _mm256_storeu_si256((__m256i *)quot_array, quot);
+    _mm256_storeu_si256((__m256i *)remd_array, remd);
+    _mm256_storeu_si256((__m256i *)sn_array, sn);
+    _mm256_storeu_si256((__m256i *)temp_array, tmp1_32);
+    _mm256_storeu_si256((__m256i *)&temp_array[8], tmp2_32);
 }
 
 void av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows, int cols,
@@ -2119,7 +2119,7 @@ static void dr_prediction_z2_hxw_avx2(int32_t H, int32_t W, uint8_t *dst, ptrdif
                 base_y_c256 = _mm256_srai_epi16(y_c256, frac_bits_y);
                 mask256     = _mm256_cmpgt_epi16(min_base_y256, base_y_c256);
                 base_y_c256 = _mm256_andnot_si256(mask256, base_y_c256);
-                _mm256_store_si256((__m256i *)base_y_c, base_y_c256); /**/
+                _mm256_storeu_si256((__m256i *)base_y_c, base_y_c256); /**/
 
                 a0_y        = _mm256_setr_epi16(left[base_y_c[0]],
                                          left[base_y_c[1]],
@@ -2138,7 +2138,7 @@ static void dr_prediction_z2_hxw_avx2(int32_t H, int32_t W, uint8_t *dst, ptrdif
                                          left[base_y_c[14]],
                                          left[base_y_c[15]]);
                 base_y_c256 = _mm256_add_epi16(base_y_c256, c1);
-                _mm256_store_si256((__m256i *)base_y_c, base_y_c256);
+                _mm256_storeu_si256((__m256i *)base_y_c, base_y_c256);
 
                 a1_y = _mm256_setr_epi16(left[base_y_c[0]],
                                          left[base_y_c[1]],
@@ -3325,7 +3325,7 @@ static void highbd_dr_prediction_z2_nx8_32bit_avx2(int32_t N, uint16_t *dst, ptr
             base_y_c256 = _mm256_srai_epi32(y_c256, frac_bits_y);
             mask256     = _mm256_cmpgt_epi32(min_base_y256, base_y_c256);
             base_y_c256 = _mm256_andnot_si256(mask256, base_y_c256);
-            _mm256_store_si256((__m256i *)base_y_c, base_y_c256);
+            _mm256_storeu_si256((__m256i *)base_y_c, base_y_c256);
 
             a0_y = _mm256_cvtepu16_epi32(_mm_setr_epi16(left[base_y_c[0]],
                                                         left[base_y_c[1]],
@@ -3468,7 +3468,7 @@ static void highbd_dr_prediction_z2_hxw_avx2(int32_t H, int32_t W, uint16_t *dst
                 base_y_c256 = _mm256_srai_epi16(y_c256, frac_bits_y);
                 mask256     = _mm256_cmpgt_epi16(min_base_y256, base_y_c256);
                 base_y_c256 = _mm256_andnot_si256(mask256, base_y_c256);
-                _mm256_store_si256((__m256i *)base_y_c, base_y_c256);
+                _mm256_storeu_si256((__m256i *)base_y_c, base_y_c256);
 
                 a0_y        = _mm256_setr_epi16(left[base_y_c[0]],
                                          left[base_y_c[1]],
@@ -3487,7 +3487,7 @@ static void highbd_dr_prediction_z2_hxw_avx2(int32_t H, int32_t W, uint16_t *dst
                                          left[base_y_c[14]],
                                          left[base_y_c[15]]);
                 base_y_c256 = _mm256_add_epi16(base_y_c256, c1);
-                _mm256_store_si256((__m256i *)base_y_c, base_y_c256);
+                _mm256_storeu_si256((__m256i *)base_y_c, base_y_c256);
 
                 a1_y = _mm256_setr_epi16(left[base_y_c[0]],
                                          left[base_y_c[1]],
@@ -3652,14 +3652,14 @@ static void highbd_dr_prediction_z2_hxw_32bit_avx2(int32_t H, int32_t W, uint16_
                 base_y_c256 = _mm256_srai_epi32(y_c256, frac_bits_y);
                 mask256     = _mm256_cmpgt_epi32(min_base_y256, base_y_c256);
                 base_y_c256 = _mm256_andnot_si256(mask256, base_y_c256);
-                _mm256_store_si256((__m256i *)base_y_c, base_y_c256);
+                _mm256_storeu_si256((__m256i *)base_y_c, base_y_c256);
                 c256 = _mm256_setr_epi32(
                     9 + j, 10 + j, 11 + j, 12 + j, 13 + j, 14 + j, 15 + j, 16 + j);
                 y_c_1_256   = _mm256_sub_epi32(r6, _mm256_mullo_epi32(c256, dy256));
                 base_y_c256 = _mm256_srai_epi32(y_c_1_256, frac_bits_y);
                 mask256     = _mm256_cmpgt_epi32(min_base_y256, base_y_c256);
                 base_y_c256 = _mm256_andnot_si256(mask256, base_y_c256);
-                _mm256_store_si256((__m256i *)(base_y_c + 8), base_y_c256);
+                _mm256_storeu_si256((__m256i *)(base_y_c + 8), base_y_c256);
 
                 a0_y = _mm256_cvtepu16_epi32(_mm_setr_epi16(left[base_y_c[0]],
                                                             left[base_y_c[1]],

@@ -235,7 +235,7 @@ static void aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pi
     const __m256i filters_reg32 = MM256_BROADCASTSI128_SI256(filters_reg);
 
     first_filters = _mm256_shuffle_epi8(filters_reg32, _mm256_set1_epi32(0x5040302u));
-    filt1_reg     = _mm256_load_si256((__m256i const *)(filt4_d4_global_avx2));
+    filt1_reg     = _mm256_loadu_si256((__m256i const *)(filt4_d4_global_avx2));
 
     // multiple the size of the source and destination stride by two
     src_stride = src_pixels_per_line << 1;
@@ -318,8 +318,8 @@ static void aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pi
     // duplicate only the second 32 bits
     second_filters = _mm256_shuffle_epi32(filters_reg32, 0x55);
 
-    filt1_reg = _mm256_load_si256((__m256i const *)filt_d4_global_avx2);
-    filt2_reg = _mm256_load_si256((__m256i const *)(filt_d4_global_avx2 + 32));
+    filt1_reg = _mm256_loadu_si256((__m256i const *)filt_d4_global_avx2);
+    filt2_reg = _mm256_loadu_si256((__m256i const *)(filt_d4_global_avx2 + 32));
 
     // multiple the size of the source and destination stride by two
     src_stride = src_pixels_per_line << 1;
@@ -420,8 +420,8 @@ static void aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pi
     // across 256 bit register
     third_filters = _mm256_shuffle_epi8(filters_reg32, _mm256_set1_epi16(0x504u));
 
-    filt2_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32));
-    filt3_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
+    filt2_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32));
+    filt3_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
 
     // multiply the size of the source and destination stride by two
     src_stride = src_pixels_per_line << 1;
@@ -517,10 +517,10 @@ static void aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pi
     // across 256 bit register
     forth_filters = _mm256_shuffle_epi8(filters_reg32, _mm256_set1_epi16(0x706u));
 
-    filt1_reg = _mm256_load_si256((__m256i const *)filt_global_avx2);
-    filt2_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32));
-    filt3_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
-    filt4_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32 * 3));
+    filt1_reg = _mm256_loadu_si256((__m256i const *)filt_global_avx2);
+    filt2_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32));
+    filt3_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
+    filt4_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32 * 3));
 
     // multiple the size of the source and destination stride by two
     src_stride = src_pixels_per_line << 1;
@@ -637,8 +637,8 @@ static void aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_p
     // across 256 bit register
     third_filters = _mm256_shuffle_epi8(filters_reg32, _mm256_set1_epi16(0x504u));
 
-    filt2_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32));
-    filt3_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
+    filt2_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32));
+    filt3_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
 
     // multiply the size of the source and destination stride by two
     src_stride = src_pixels_per_line << 1;
@@ -756,10 +756,10 @@ static void aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_p
     // across 256 bit register
     forth_filters = _mm256_shuffle_epi8(filters_reg32, _mm256_set1_epi16(0x706u));
 
-    filt1_reg = _mm256_load_si256((__m256i const *)filt_global_avx2);
-    filt2_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32));
-    filt3_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
-    filt4_reg = _mm256_load_si256((__m256i const *)(filt_global_avx2 + 32 * 3));
+    filt1_reg = _mm256_loadu_si256((__m256i const *)filt_global_avx2);
+    filt2_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32));
+    filt3_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32 * 2));
+    filt4_reg = _mm256_loadu_si256((__m256i const *)(filt_global_avx2 + 32 * 3));
 
     // multiple the size of the source and destination stride by two
     src_stride = src_pixels_per_line << 1;

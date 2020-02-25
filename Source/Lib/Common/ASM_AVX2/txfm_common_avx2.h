@@ -85,7 +85,7 @@ static INLINE void btf_32_add_sub_out_avx2(__m256i *out0, __m256i *out1, __m256i
 }
 
 static INLINE __m256i load_16bit_to_16bit_avx2(const int16_t *a) {
-    return _mm256_load_si256((const __m256i *)a);
+    return _mm256_loadu_si256((const __m256i *)a);
 }
 
 static INLINE void load_buffer_16bit_to_16bit_avx2(const int16_t *in, int stride, __m256i *out,
@@ -275,7 +275,7 @@ static INLINE void store_rect_16bit_to_32bit_w8_avx2(const __m256i a, int32_t *c
     const __m256i temp = _mm256_permute2f128_si256(b_lo, b_hi, 0x31);
     _mm_storeu_si128((__m128i *)b, _mm256_castsi256_si128(b_lo));
     _mm_storeu_si128((__m128i *)(b + 4), _mm256_castsi256_si128(b_hi));
-    _mm256_store_si256((__m256i *)(b + 64), temp);
+    _mm256_storeu_si256((__m256i *)(b + 64), temp);
 }
 
 static INLINE void store_rect_buffer_16bit_to_32bit_w8_avx2(const __m256i *const in,

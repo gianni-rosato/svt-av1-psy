@@ -3965,7 +3965,7 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin(
     s3       = _mm_adds_epu16(sumsad01, sumsad23);
 
     //sotore the 8 SADs(16x8 SADs)
-    _mm_store_si128((__m128i *)p_sad16x16, s3);
+    _mm_storeu_si128((__m128i *)p_sad16x16, s3);
     //find the best for 16x16
     s3 = _mm_minpos_epu16(s3);
 

@@ -15,15 +15,15 @@ s * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 #include "fft_common.h"
 
 static INLINE void transpose4x4(const float *A, float *b, const int32_t lda, const int32_t ldb) {
-    __m128 row1 = _mm_load_ps(&A[0 * lda]);
-    __m128 row2 = _mm_load_ps(&A[1 * lda]);
-    __m128 row3 = _mm_load_ps(&A[2 * lda]);
-    __m128 row4 = _mm_load_ps(&A[3 * lda]);
+    __m128 row1 = _mm_loadu_ps(&A[0 * lda]);
+    __m128 row2 = _mm_loadu_ps(&A[1 * lda]);
+    __m128 row3 = _mm_loadu_ps(&A[2 * lda]);
+    __m128 row4 = _mm_loadu_ps(&A[3 * lda]);
     _MM_TRANSPOSE4_PS(row1, row2, row3, row4);
-    _mm_store_ps(&b[0 * ldb], row1);
-    _mm_store_ps(&b[1 * ldb], row2);
-    _mm_store_ps(&b[2 * ldb], row3);
-    _mm_store_ps(&b[3 * ldb], row4);
+    _mm_storeu_ps(&b[0 * ldb], row1);
+    _mm_storeu_ps(&b[1 * ldb], row2);
+    _mm_storeu_ps(&b[2 * ldb], row3);
+    _mm_storeu_ps(&b[3 * ldb], row4);
 }
 
 void eb_aom_transpose_float_sse2(const float *A, float *b, int32_t n) {
@@ -62,14 +62,14 @@ void eb_aom_fft_unpack_2d_output_sse2(const float *packed, float *output, int32_
         }
 
         for (int32_t c = 4; c < n2; c += 4) {
-            __m128 real1 = _mm_load_ps(packed + r * n + c);
-            __m128 real2 = _mm_load_ps(packed + (r + n2) * n + c + n2);
-            __m128 imag1 = _mm_load_ps(packed + (r + n2) * n + c);
-            __m128 imag2 = _mm_load_ps(packed + r * n + c + n2);
+            __m128 real1 = _mm_loadu_ps(packed + r * n + c);
+            __m128 real2 = _mm_loadu_ps(packed + (r + n2) * n + c + n2);
+            __m128 imag1 = _mm_loadu_ps(packed + (r + n2) * n + c);
+            __m128 imag2 = _mm_loadu_ps(packed + r * n + c + n2);
             real1        = _mm_sub_ps(real1, real2);
             imag1        = _mm_add_ps(imag1, imag2);
-            _mm_store_ps(output + 2 * (r * n + c), _mm_unpacklo_ps(real1, imag1));
-            _mm_store_ps(output + 2 * (r * n + c + 2), _mm_unpackhi_ps(real1, imag1));
+            _mm_storeu_ps(output + 2 * (r * n + c), _mm_unpacklo_ps(real1, imag1));
+            _mm_storeu_ps(output + 2 * (r * n + c + 2), _mm_unpackhi_ps(real1, imag1));
         }
 
         int32_t r2                    = r + n2;
@@ -83,20 +83,20 @@ void eb_aom_fft_unpack_2d_output_sse2(const float *packed, float *output, int32_
             output[2 * (r2 * n + c) + 1] = -packed[(r3 + n2) * n + c] + packed[r3 * n + c + n2];
         }
         for (int32_t c = 4; c < n2; c += 4) {
-            __m128 real1 = _mm_load_ps(packed + r3 * n + c);
-            __m128 real2 = _mm_load_ps(packed + (r3 + n2) * n + c + n2);
-            __m128 imag1 = _mm_load_ps(packed + (r3 + n2) * n + c);
-            __m128 imag2 = _mm_load_ps(packed + r3 * n + c + n2);
+            __m128 real1 = _mm_loadu_ps(packed + r3 * n + c);
+            __m128 real2 = _mm_loadu_ps(packed + (r3 + n2) * n + c + n2);
+            __m128 imag1 = _mm_loadu_ps(packed + (r3 + n2) * n + c);
+            __m128 imag2 = _mm_loadu_ps(packed + r3 * n + c + n2);
             real1        = _mm_add_ps(real1, real2);
             imag1        = _mm_sub_ps(imag2, imag1);
-            _mm_store_ps(output + 2 * (r2 * n + c), _mm_unpacklo_ps(real1, imag1));
-            _mm_store_ps(output + 2 * (r2 * n + c + 2), _mm_unpackhi_ps(real1, imag1));
+            _mm_storeu_ps(output + 2 * (r2 * n + c), _mm_unpacklo_ps(real1, imag1));
+            _mm_storeu_ps(output + 2 * (r2 * n + c + 2), _mm_unpackhi_ps(real1, imag1));
         }
     }
 }
 
 // Generate definitions for 1d transforms using float and __mm128
-GEN_FFT_4(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps, _mm_set1_ps,
+GEN_FFT_4(static INLINE void, sse2, float, __m128, _mm_loadu_ps, _mm_storeu_ps, _mm_set1_ps,
           _mm_add_ps, _mm_sub_ps);
 
 void eb_aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
@@ -111,7 +111,7 @@ void eb_aom_fft4x4_float_sse2(const float *input, float *temp, float *output) {
 }
 
 // Generate definitions for 1d inverse transforms using float and mm128
-GEN_IFFT_4(static INLINE void, sse2, float, __m128, _mm_load_ps, _mm_store_ps, _mm_set1_ps,
+GEN_IFFT_4(static INLINE void, sse2, float, __m128, _mm_loadu_ps, _mm_storeu_ps, _mm_set1_ps,
            _mm_add_ps, _mm_sub_ps);
 
 void eb_aom_ifft4x4_float_sse2(const float *input, float *temp, float *output) {

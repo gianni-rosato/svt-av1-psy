@@ -69,10 +69,10 @@ void compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride
             out_s0_s15  = _mm256_inserti128_si256(concat2, _mm256_castsi256_si128(concat3), 1);
             out_s16_s31 = _mm256_inserti128_si256(concat3, _mm256_extracti128_si256(concat2, 1), 0);
 
-            _mm256_store_si256((__m256i *)out16_bit_buffer, out0_15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride), out_s0_s15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride + 16), out_s16_s31);
+            _mm256_storeu_si256((__m256i *)out16_bit_buffer, out0_15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride), out_s0_s15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride + 16), out_s16_s31);
 
             in8_bit_buffer += in8_stride << 1;
             inn_bit_buffer += inn_stride << 1;
@@ -126,10 +126,10 @@ void compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride
             out32_47  = _mm256_inserti128_si256(concat2, _mm256_castsi256_si128(concat3), 1);
             out_48_63 = _mm256_inserti128_si256(concat3, _mm256_extracti128_si256(concat2, 1), 0);
 
-            _mm256_store_si256((__m256i *)out16_bit_buffer, out_0_15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 32), out32_47);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 48), out_48_63);
+            _mm256_storeu_si256((__m256i *)out16_bit_buffer, out_0_15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 32), out32_47);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 48), out_48_63);
 
             in8_bit_buffer += in8_stride;
             inn_bit_buffer += inn_stride;
@@ -369,10 +369,10 @@ void eb_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stri
             out_s0_s15  = _mm256_inserti128_si256(concat2, _mm256_castsi256_si128(concat3), 1);
             out_s16_s31 = _mm256_inserti128_si256(concat3, _mm256_extracti128_si256(concat2, 1), 0);
 
-            _mm256_store_si256((__m256i *)out16_bit_buffer, out0_15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride), out_s0_s15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride + 16), out_s16_s31);
+            _mm256_storeu_si256((__m256i *)out16_bit_buffer, out0_15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride), out_s0_s15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride + 16), out_s16_s31);
 
             in8_bit_buffer += in8_stride << 1;
             //inn_bit_buffer += inn_stride << 1;
@@ -417,15 +417,15 @@ void eb_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stri
             out_s32_s47 = _mm256_inserti128_si256(concat6, _mm256_castsi256_si128(concat7), 1);
             out_s48_s63 = _mm256_inserti128_si256(concat7, _mm256_extracti128_si256(concat6, 1), 0);
 
-            _mm256_store_si256((__m256i *)out16_bit_buffer, out_0_15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 32), out32_47);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + 48), out_48_63);
+            _mm256_storeu_si256((__m256i *)out16_bit_buffer, out_0_15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 16), out16_31);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 32), out32_47);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + 48), out_48_63);
 
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride), out_s0_s15);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride + 16), out_s16_s31);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride + 32), out_s32_s47);
-            _mm256_store_si256((__m256i *)(out16_bit_buffer + out_stride + 48), out_s48_s63);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride), out_s0_s15);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride + 16), out_s16_s31);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride + 32), out_s32_s47);
+            _mm256_storeu_si256((__m256i *)(out16_bit_buffer + out_stride + 48), out_s48_s63);
 
             in8_bit_buffer += in8_stride << 1;
             //inn_bit_buffer += inn_stride << 1;

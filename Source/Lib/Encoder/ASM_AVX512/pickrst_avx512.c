@@ -107,10 +107,10 @@ static INLINE __m512i mask16_avx512(const int32_t leftover) {
 
     if (leftover >= 16) {
         mask_l = _mm256_set1_epi8(-1);
-        mask_h = _mm256_load_si256((__m256i *)(mask_16bit[leftover - 16]));
+        mask_h = _mm256_loadu_si256((__m256i *)(mask_16bit[leftover - 16]));
     } else {
         mask_h = _mm256_setzero_si256();
-        mask_l = _mm256_load_si256((__m256i *)(mask_16bit[leftover]));
+        mask_l = _mm256_loadu_si256((__m256i *)(mask_16bit[leftover]));
     }
 
     return _mm512_inserti64x4(_mm512_castsi256_si512(mask_l), mask_h, 1);

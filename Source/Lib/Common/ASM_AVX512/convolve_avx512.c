@@ -1301,9 +1301,9 @@ void eb_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t
 
                 prepare_half_coeffs_6tap_avx2(filter_params_x, subpel_x_q4, coeffs_256);
 
-                filt_256[0] = _mm256_load_si256((__m256i const *)filt1_global_avx);
-                filt_256[1] = _mm256_load_si256((__m256i const *)filt2_global_avx);
-                filt_256[2] = _mm256_load_si256((__m256i const *)filt3_global_avx);
+                filt_256[0] = _mm256_loadu_si256((__m256i const *)filt1_global_avx);
+                filt_256[1] = _mm256_loadu_si256((__m256i const *)filt2_global_avx);
+                filt_256[2] = _mm256_loadu_si256((__m256i const *)filt3_global_avx);
 
                 if (w == 8) {
                     do {
@@ -1370,10 +1370,10 @@ void eb_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t
 
                 prepare_half_coeffs_8tap_avx2(filter_params_x, subpel_x_q4, coeffs_256);
 
-                filt_256[3] = _mm256_load_si256((__m256i const *)filt4_global_avx);
-                filt_256[0] = _mm256_load_si256((__m256i const *)filt1_global_avx);
-                filt_256[1] = _mm256_load_si256((__m256i const *)filt2_global_avx);
-                filt_256[2] = _mm256_load_si256((__m256i const *)filt3_global_avx);
+                filt_256[3] = _mm256_loadu_si256((__m256i const *)filt4_global_avx);
+                filt_256[0] = _mm256_loadu_si256((__m256i const *)filt1_global_avx);
+                filt_256[1] = _mm256_loadu_si256((__m256i const *)filt2_global_avx);
+                filt_256[2] = _mm256_loadu_si256((__m256i const *)filt3_global_avx);
 
                 if (w == 8) {
                     do {

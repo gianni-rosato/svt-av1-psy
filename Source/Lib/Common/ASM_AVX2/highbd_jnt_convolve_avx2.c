@@ -299,7 +299,7 @@ void eb_av1_highbd_jnt_convolve_2d_avx2(const uint16_t *src, int32_t src_stride,
                 __m256i res_odd1  = _mm256_packs_epi32(res_odd, res_odd);
                 __m256i res       = _mm256_unpacklo_epi16(res_even1, res_odd1);
 
-                _mm256_store_si256((__m256i *)&im_block[i * im_stride], res);
+                _mm256_storeu_si256((__m256i *)&im_block[i * im_stride], res);
             }
         }
 
