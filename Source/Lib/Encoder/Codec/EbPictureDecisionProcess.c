@@ -995,19 +995,16 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            16 step refinement
     // 5                                            64 step refinement
     if (scs_ptr->seq_header.enable_cdef && frm_hdr->allow_intrabc == 0) {
-        if (scs_ptr->static_config.cdef_mode == DEFAULT) {
-            if (sc_content_detected)
-                if (pcs_ptr->enc_mode <= ENC_M5)
-                    pcs_ptr->cdef_filter_mode = 4;
-                else
-                    pcs_ptr->cdef_filter_mode = 0;
+        if (sc_content_detected)
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                pcs_ptr->cdef_filter_mode = 4;
             else
-                if (pcs_ptr->enc_mode <= ENC_M7)
-                    pcs_ptr->cdef_filter_mode = 5;
-                else
-                    pcs_ptr->cdef_filter_mode = 2;
-        } else
-            pcs_ptr->cdef_filter_mode = (int8_t)(scs_ptr->static_config.cdef_mode);
+                pcs_ptr->cdef_filter_mode = 0;
+        else
+        if (pcs_ptr->enc_mode <= ENC_M7)
+            pcs_ptr->cdef_filter_mode = 5;
+        else
+            pcs_ptr->cdef_filter_mode = 2;
     }
     else
         pcs_ptr->cdef_filter_mode = 0;

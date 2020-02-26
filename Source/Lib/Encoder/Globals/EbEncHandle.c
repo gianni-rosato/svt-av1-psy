@@ -2069,9 +2069,6 @@ void copy_api_from_app(
     // Global motion
     scs_ptr->static_config.enable_global_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_global_motion;
 
-    // CDEF
-    scs_ptr->static_config.cdef_mode = ((EbSvtAv1EncConfiguration*)config_struct)->cdef_mode;
-
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
     scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
@@ -2714,12 +2711,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-    // CDEF
-    if (config->cdef_mode > 5 || config->cdef_mode < -1) {
-        SVT_LOG("Error instance %u: Invalid CDEF mode [0 - 5, -1 for auto], your input: %d\n", channel_number + 1, config->cdef_mode);
-        return_error = EB_ErrorBadParameter;
-    }
-
     // Restoration Filtering
     if (config->enable_restoration_filtering != 0 && config->enable_restoration_filtering != 1 && config->enable_restoration_filtering != -1) {
       SVT_LOG("Error instance %u: Invalid restoration flag [0 - 1, -1 for auto], your input: %d\n", channel_number + 1, config->enable_restoration_filtering);
@@ -2964,7 +2955,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->disable_dlf_flag = EB_FALSE;
     config_ptr->enable_warped_motion = EB_TRUE;
     config_ptr->enable_global_motion = EB_TRUE;
-    config_ptr->cdef_mode = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->sg_filter_mode = DEFAULT;
     config_ptr->wn_filter_mode = DEFAULT;
