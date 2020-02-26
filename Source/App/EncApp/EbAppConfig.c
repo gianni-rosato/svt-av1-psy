@@ -142,7 +142,6 @@
 
 #define SQ_WEIGHT_TOKEN "-sqw"
 #define CHROMA_MODE_TOKEN "-chroma-mode"
-#define DISABLE_CFL_TOKEN "-dcfl"
 
 #define SCENE_CHANGE_DETECTION_TOKEN "-scd"
 #define INJECTOR_TOKEN "-inj" // no Eval
@@ -382,9 +381,6 @@ static void set_frame_end_cdf_update_flag(const char *value, EbConfig *cfg) {
 };
 static void set_chroma_mode(const char *value, EbConfig *cfg) {
     cfg->set_chroma_mode = strtol(value, NULL, 0);
-};
-static void set_disable_cfl_flag(const char *value, EbConfig *cfg) {
-    cfg->disable_cfl_flag = strtol(value, NULL, 0);
 };
 static void set_enable_obmc_flag(const char *value, EbConfig *cfg) {
     cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);
@@ -861,10 +857,6 @@ ConfigEntry config_entry_specific[] = {
 
     // CHROMA
     {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
-    {SINGLE_INPUT,
-     DISABLE_CFL_TOKEN, "Set chroma from luma (CFL) flag (0: OFF, 1: ON, -1: DEFAULT)",
-     set_disable_cfl_flag},
-
     // LOCAL WARPED MOTION
     {SINGLE_INPUT,
      LOCAL_WARPED_ENABLE_TOKEN,
@@ -1166,7 +1158,6 @@ ConfigEntry config_entry[] = {
 
     // CHROMA
     {SINGLE_INPUT, CHROMA_MODE_TOKEN, "ChromaMode", set_chroma_mode},
-    {SINGLE_INPUT, DISABLE_CFL_TOKEN, "DisableCFL", set_disable_cfl_flag},
 
     // LOCAL WARPED MOTION
     {SINGLE_INPUT,
@@ -1366,7 +1357,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->nsq_table                                 = DEFAULT;
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
-    config_ptr->disable_cfl_flag                          = DEFAULT;
     config_ptr->enable_obmc                               = EB_TRUE;
     config_ptr->enable_rdoq                               = DEFAULT;
     config_ptr->pred_me                                   = DEFAULT;

@@ -338,11 +338,6 @@ typedef struct EbConfig {
      * Default is -1 (AUTO)  */
     int set_chroma_mode;
 
-    /* Disable chroma from luma (CFL)
-     *
-     * Default is -1 (auto) */
-    int disable_cfl_flag;
-
     /****************************************
      * OBMC
      ****************************************/
