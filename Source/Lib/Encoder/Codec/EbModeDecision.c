@@ -5263,9 +5263,8 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     enum IntrabcMotionDirection { IBC_MOTION_ABOVE, IBC_MOTION_LEFT, IBC_MOTION_DIRECTIONS };
 
     //up to two dv candidates will be generated
-    //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
     enum IntrabcMotionDirection max_dir =
-        pcs->parent_pcs_ptr->ibc_mode > 2 ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
+        pcs->parent_pcs_ptr->ibc_mode > 1 ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
 
     for (enum IntrabcMotionDirection dir = IBC_MOTION_ABOVE; dir < max_dir; ++dir) {
         const MvLimits tmp_mv_limits = x->mv_limits;

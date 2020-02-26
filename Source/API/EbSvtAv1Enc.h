@@ -459,15 +459,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is 0. */
     uint32_t screen_content_mode;
 
-    /* Flag to control intraBC mode
-    *  0      OFF
-    *  1      slow
-    *  2      faster
-    *  3      fastest
-    *
-    * Default is -1 (DEFAULT behavior). */
-    int intrabc_mode;
-
     /* Enable adaptive quantization within a frame using segmentation.
      *
      * Default is FALSE. */

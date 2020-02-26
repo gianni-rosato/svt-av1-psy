@@ -109,7 +109,6 @@
 #define HME_LEVEL2_WIDTH "-hme-l2-w"
 #define HME_LEVEL2_HEIGHT "-hme-l2-h"
 #define SCREEN_CONTENT_TOKEN "-scm"
-#define INTRABC_MODE_TOKEN "-intrabc-mode"
 // --- start: ALTREF_FILTERING_SUPPORT
 #define ENABLE_ALTREFS "-enable-altrefs"
 #define ALTREF_STRENGTH "-altref-strength"
@@ -483,9 +482,6 @@ static void set_hme_level_2_search_area_in_height_array(const char *value, EbCon
 };
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->screen_content_mode = strtoul(value, NULL, 0);
-};
-static void set_intrabc_mode(const char *value, EbConfig *cfg) {
-    cfg->intrabc_mode = strtol(value, NULL, 0);
 };
 // --- start: ALTREF_FILTERING_SUPPORT
 static void set_enable_altrefs(const char *value, EbConfig *cfg) {
@@ -960,10 +956,6 @@ ConfigEntry config_entry_specific[] = {
      "Set screen content detection level([0-2], 2: DEFAULT)",
      set_screen_content_mode},
     {SINGLE_INPUT,
-     INTRABC_MODE_TOKEN,
-      "Set intraBC mode (0: OFF, 1: ON slow, 2: ON faster, 3: ON fastest, -1: DEFAULT)",
-     set_intrabc_mode},
-    {SINGLE_INPUT,
      HBD_MD_ENABLE_TOKEN,
      "Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON)",
      set_enable_hbd_mode_decision},
@@ -1193,7 +1185,6 @@ ConfigEntry config_entry[] = {
      set_cfg_hme_level_0_total_search_area_height},
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
-    {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
     {SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", set_enable_hbd_mode_decision},
     {SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", set_enable_palette},
     {SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", set_enable_olpd_refinement},
@@ -1343,7 +1334,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
     config_ptr->screen_content_mode                       = 0;
-    config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->enable_hbd_mode_decision                  = 2;
     config_ptr->enable_palette                            = -1;
     config_ptr->olpd_refinement                           = -1;
