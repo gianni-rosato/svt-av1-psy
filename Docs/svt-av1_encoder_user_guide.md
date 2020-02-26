@@ -204,8 +204,6 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **CombineClass12** | -class-12 | [0/1, -1 for default] | -1 | Enable combine MD Class1&2, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **EdgeSkipAngleIntra** | --intra-edge-skp | [0/1, -1 for default] | -1 | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **InterIntraCompound** | -interintra-comp | [0/1, -1 for default] | -1 | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Paeth** | -paeth | [0/1, -1 for default] | -1 | Enable Paeth, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Smooth** | -smooth | [0/1, -1 for default] | -1 | Enable Smooth, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Obmc** | -obmc | [0-1, 1 for default] | 1 | Enable OBMC(0: OFF, 1: ON[default]) |
 | **RDOQ** | -rdoq | [0/1, -1 for default] | -1 | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
 | **FilterIntra** | -filter-intra | [0-1, 1 for default] | 1 | Enable filter intra prediction mode (0: OFF, 1: ON [default]) |

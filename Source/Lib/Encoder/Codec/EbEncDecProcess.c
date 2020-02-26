@@ -1999,26 +1999,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->md_enable_inter_intra = pcs_ptr->parent_pcs_ptr->enable_inter_intra;
 
-    // Set enable_paeth @ MD
-    if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_enable_paeth = 1;
-    else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_enable_paeth = 1;
-    else if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT)
-            context_ptr->md_enable_paeth = 1;
-    else
-        context_ptr->md_enable_paeth = (uint8_t)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_paeth;
-
-    // Set enable_smooth @ MD
-    if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_enable_smooth = 1;
-    else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_enable_smooth = 1;
-    else if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT)
-            context_ptr->md_enable_smooth = 1;
-    else
-        context_ptr->md_enable_smooth = (uint8_t)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_smooth;
-
     // Set md_atb_mode @ MD
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_tx_size_search_mode = 0;

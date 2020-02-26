@@ -68,8 +68,6 @@
 #define CLASS_12_TOKEN "-class-12"
 #define EDGE_SKIP_ANGLE_INTRA_TOKEN "-intra-edge-skp"
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
-#define PAETH_TOKEN "-paeth"
-#define SMOOTH_TOKEN "-smooth"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
 #define TRELLIS_ENABLE_TOKEN "-trellis"
@@ -326,12 +324,6 @@ static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
 };
 static void set_interintra_compound_flag(const char *value, EbConfig *cfg) {
     cfg->inter_intra_compound = strtol(value, NULL, 0);
-};
-static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_paeth = strtol(value, NULL, 0);
-};
-static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_smooth = strtol(value, NULL, 0);
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->enable_mfmv = strtol(value, NULL, 0);
@@ -862,16 +854,6 @@ ConfigEntry config_entry_specific[] = {
      INTER_INTRA_COMPOUND_TOKEN,
      "Enable interintra compound (0: OFF, 1: ON (default))",
      set_interintra_compound_flag},
-    // PAETH
-    {SINGLE_INPUT,
-        PAETH_TOKEN,
-        "Enable paeth (0: OFF, 1: ON, -1: DEFAULT)",
-        set_enable_paeth_flag},
-    // SMOOTH
-    {SINGLE_INPUT,
-        SMOOTH_TOKEN,
-        "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
-        set_enable_smooth_flag},
     // OBMC
     {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
     // RDOQ
@@ -1137,10 +1119,6 @@ ConfigEntry config_entry[] = {
      set_edge_skip_angle_intra_flag},
     // INTER INTRA COMPOUND
     {SINGLE_INPUT, INTER_INTRA_COMPOUND_TOKEN, "InterIntraCompound", set_interintra_compound_flag},
-    // PAETH
-    {SINGLE_INPUT, PAETH_TOKEN, "Paeth", set_enable_paeth_flag},
-    // SMOOTH
-    {SINGLE_INPUT, SMOOTH_TOKEN, "Smooth", set_enable_smooth_flag},
     // OBMC
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
     // RDOQ
@@ -1291,8 +1269,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->combine_class_12                          = DEFAULT;
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;
-    config_ptr->enable_paeth                              = DEFAULT;
-    config_ptr->enable_smooth                             = DEFAULT;
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->enable_trellis                            = DEFAULT;

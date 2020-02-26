@@ -5505,9 +5505,7 @@ void  inject_intra_candidates(
     (void)sb_ptr;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     uint8_t                     intra_mode_start = DC_PRED;
-    uint8_t                     intra_mode_end = dc_cand_only_flag ? DC_PRED :
-                                                 context_ptr->md_enable_paeth ? PAETH_PRED :
-                                                 context_ptr->md_enable_smooth ? SMOOTH_H_PRED : D67_PRED;
+    uint8_t                     intra_mode_end = dc_cand_only_flag ? DC_PRED : PAETH_PRED;
     uint8_t                     open_loop_intra_candidate;
     uint32_t                    cand_total_cnt = 0;
     uint8_t                     angle_delta_counter = 0;
@@ -5538,8 +5536,7 @@ void  inject_intra_candidates(
     else
     if (pcs_ptr->parent_pcs_ptr->intra_pred_mode == 4) {
         if (pcs_ptr->slice_type == I_SLICE) {
-            intra_mode_end = context_ptr->md_enable_paeth ? PAETH_PRED :
-                             context_ptr->md_enable_smooth ? SMOOTH_H_PRED : D67_PRED;
+            intra_mode_end =  PAETH_PRED;
             angle_delta_candidate_count = use_angle_delta ? 5 : 1;
             disable_angle_prediction = 0;
             angle_delta_shift = 2;
@@ -5729,7 +5726,6 @@ void  inject_filter_intra_candidates(
 
     FilterIntraMode             intra_mode_start = FILTER_DC_PRED;
     FilterIntraMode             intra_mode_end   = FILTER_INTRA_MODES;
-
     FilterIntraMode             filter_intra_mode;
     uint32_t                    cand_total_cnt = *candidate_total_cnt;
     ModeDecisionCandidate      *cand_array = context_ptr->fast_candidate_array;
@@ -5739,9 +5735,6 @@ void  inject_filter_intra_candidates(
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
     for (filter_intra_mode = intra_mode_start; filter_intra_mode < intra_mode_end ; ++filter_intra_mode) {
-
-            if (filter_intra_mode == FILTER_PAETH_PRED && !context_ptr->md_enable_paeth)
-                continue;
 
             cand_array[cand_total_cnt].type = INTRA_MODE;
             cand_array[cand_total_cnt].intra_luma_mode = DC_PRED;
