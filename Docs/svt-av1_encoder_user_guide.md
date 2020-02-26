@@ -184,8 +184,6 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **LookAheadDistance** | -lad | [0 - 120] | 33 | When Rate Control is set to 1 it&#39;s best to set this parameter to be equal to the Intra period value (such is the default set by the encoder) [this value is capped by the encoder to its maximum need e.g. 33 for CQP, 2*fps for rate control] |
 | **LoopFilterDisable** | -dlf | [0-1, 0 for default] | 0 | Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled) |
 | **RestorationFilter** | -restoration-filtering | [0/1, -1 for default] | -1 | Enable restoration filtering , 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **SelfGuidedFilterMode** | -sg-filter-mode | [0-4,  -1 for default] | -1 | Self-guided filter mode (0:OFF, 1: step 0, 2: step 1, 3: step 4, 4: step 16, -1: DEFAULT)|
-| **WienerFilterMode** | -wn-filter-mode | [0-3,  -1 for default] | -1 | Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: 7-Tap luma/ 7-Tap chroma, -1: DEFAULT)|
 | **Mfmv** | -mfmv | [0/1, -1 for default] | -1 | Enable motion field motion vector, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **RedundantBlock** | -redundant-blk | [0/1, -1 for default] | -1 | Enable redundant block, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Trellis** | -trellis | [0/1, -1 for default] | -1 | Enable trellis quant coefficient optimization, 0 = OFF, 1 = ON, -1 = DEFAULT|

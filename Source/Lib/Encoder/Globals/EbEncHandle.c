@@ -2071,8 +2071,6 @@ void copy_api_from_app(
 
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
-    scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
-    scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
 
     //combine class 12
     scs_ptr->static_config.combine_class_12             = ((EbSvtAv1EncConfiguration*)config_struct)->combine_class_12;
@@ -2676,16 +2674,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-    if (config->sg_filter_mode > 4 || config->sg_filter_mode < -1) {
-        SVT_LOG("Error instance %u: Invalid self-guided filter mode [0 - 4, -1 for auto], your input: %d\n", channel_number + 1, config->sg_filter_mode);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->wn_filter_mode > 3 || config->wn_filter_mode < -1) {
-        SVT_LOG("Error instance %u: Invalid Wiener filter mode [0 - 3, -1 for auto], your input: %d\n", channel_number + 1, config->wn_filter_mode);
-        return_error = EB_ErrorBadParameter;
-    }
-
     if (config->pred_me > 5 || config->pred_me < -1) {
       SVT_LOG("Error instance %u: Invalid predictive me level [0-5, -1 for auto], your input: %d\n", channel_number + 1, config->pred_me);
       return_error = EB_ErrorBadParameter;
@@ -2900,8 +2888,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_warped_motion = EB_TRUE;
     config_ptr->enable_global_motion = EB_TRUE;
     config_ptr->enable_restoration_filtering = DEFAULT;
-    config_ptr->sg_filter_mode = DEFAULT;
-    config_ptr->wn_filter_mode = DEFAULT;
     config_ptr->edge_skp_angle_intra = DEFAULT;
     config_ptr->combine_class_12 = DEFAULT;
     config_ptr->inter_intra_compound = DEFAULT;

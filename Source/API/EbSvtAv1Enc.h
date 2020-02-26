@@ -241,14 +241,9 @@ typedef struct EbSvtAv1EncConfiguration {
     EbBool enable_global_motion;
 
     /* Restoration filtering
-    *  enable/disable
-    *  set Self-Guided (sg) mode
-    *  set Wiener (wn) mode
     *
     * Default is -1. */
     int enable_restoration_filtering;
-    int sg_filter_mode;
-    int wn_filter_mode;
 
     /* edge based skip angle intra
     *
