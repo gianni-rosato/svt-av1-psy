@@ -239,10 +239,6 @@ typedef struct EbConfig {
     ****************************************/
     int edge_skp_angle_intra;
     /****************************************
-     * intra angle delta
-    ****************************************/
-    int intra_angle_delta;
-    /****************************************
      * intra inter compoound
     ****************************************/
     int inter_intra_compound;

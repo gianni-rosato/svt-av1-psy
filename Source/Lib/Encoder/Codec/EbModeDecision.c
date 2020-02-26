@@ -5465,7 +5465,7 @@ static void angle_estimation(
     uint8_t *directional_mode_skip_mask)
 {
     // Check if angle_delta is used
-    //if (!av1_use_angle_delta(bsize, need access to context)) return;
+    //if (!av1_use_angle_delta(bsize)) return;
 
     uint64_t hist[DIRECTIONAL_MODES] = { 0 };
     //if (is_hbd)
@@ -5512,7 +5512,7 @@ void  inject_intra_candidates(
     uint8_t                     open_loop_intra_candidate;
     uint32_t                    cand_total_cnt = 0;
     uint8_t                     angle_delta_counter = 0;
-    EbBool                      use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize, context_ptr->md_intra_angle_delta);
+    EbBool                      use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
     uint8_t                     angle_delta_candidate_count = use_angle_delta ? 7 : 1;
     ModeDecisionCandidate    *cand_array = context_ptr->fast_candidate_array;
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;

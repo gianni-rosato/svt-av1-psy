@@ -389,7 +389,6 @@ typedef struct ModeDecisionContext {
     uint8_t      md_enable_smooth;
     uint8_t      md_enable_inter_intra;
     uint8_t      md_filter_intra_mode;
-    uint8_t      md_intra_angle_delta;
     uint8_t      md_max_ref_count;
     EbBool       md_skip_mvp_generation;
     int16_t      full_pel_ref_window_width_th;

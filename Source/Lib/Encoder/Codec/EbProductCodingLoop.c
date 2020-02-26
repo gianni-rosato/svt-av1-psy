@@ -6609,7 +6609,7 @@ void order_nsq_table(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #if MOVE_OPT
 void init_chroma_mode(ModeDecisionContext   *context_ptr) {
     context_ptr->uv_search_path = EB_TRUE;
-    EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize, context_ptr->md_intra_angle_delta);
+    EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
     for (uint8_t intra_mode = DC_PRED; intra_mode <= PAETH_PRED; ++intra_mode) {
         uint8_t angleDeltaCandidateCount = (use_angle_delta && av1_is_directional_mode((PredictionMode)intra_mode)) ? 7 : 1;
         uint8_t angle_delta_shift = 1;
@@ -6634,7 +6634,7 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
     // Start uv search path
     context_ptr->uv_search_path = EB_TRUE;
 
-    EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize, context_ptr->md_intra_angle_delta);
+    EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize);
 
     UvPredictionMode uv_mode;
 
