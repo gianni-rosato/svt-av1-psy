@@ -90,7 +90,6 @@
 #define BIPRED_3x3_TOKEN "-bipred-3x3"
 #define COMPOUND_LEVEL_TOKEN "-compound"
 #define FILTER_INTRA_TOKEN "-filter-intra"
-#define INTRA_EDGE_FILTER_TOKEN "-intra-edge-filter"
 #define USE_DEFAULT_ME_HME_TOKEN "-use-default-me-hme"
 #define HME_ENABLE_TOKEN "-hme"
 #define HME_L0_ENABLE_TOKEN "-hme-l0"
@@ -392,10 +391,6 @@ static void set_compound_level_flag(const char *value, EbConfig *cfg) {
 static void set_enable_filter_intra_flag(const char *value, EbConfig *cfg) {
     cfg->enable_filter_intra = (EbBool)strtoul(value, NULL, 0);
 };
-static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_intra_edge_filter = strtol(value, NULL, 0);
-};
-
 static void set_enable_hme_flag(const char *value, EbConfig *cfg) {
     cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
 };
@@ -892,12 +887,6 @@ ConfigEntry config_entry_specific[] = {
      "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
      set_enable_filter_intra_flag},
 
-    // Edge Intra Filter
-    {SINGLE_INPUT,
-        INTRA_EDGE_FILTER_TOKEN,
-        "Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_intra_edge_filter_flag},
-
     // PREDICTIVE ME
     {SINGLE_INPUT,
      PRED_ME_TOKEN,
@@ -1168,9 +1157,6 @@ ConfigEntry config_entry[] = {
     // Filter Intra
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_enable_filter_intra_flag},
 
-    // Edge Intra Filter
-    {SINGLE_INPUT, INTRA_EDGE_FILTER_TOKEN, "IntraEdgeFilter", set_enable_intra_edge_filter_flag},
-
     // PREDICTIVE ME
     {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
     // BIPRED 3x3 INJECTION
@@ -1335,7 +1321,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->bipred_3x3_inject                         = DEFAULT;
     config_ptr->compound_level                            = DEFAULT;
     config_ptr->enable_filter_intra                       = EB_TRUE;
-    config_ptr->enable_intra_edge_filter                  = DEFAULT;
     config_ptr->use_default_me_hme                        = EB_TRUE;
     config_ptr->enable_hme_flag                           = EB_TRUE;
     config_ptr->enable_hme_level0_flag                    = EB_TRUE;
