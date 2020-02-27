@@ -284,7 +284,6 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
                                      EbPictureBufferDesc *recon_picture_buf,
                                      LfCtxt *lf_ctxt,
                                      const int32_t num_planes,
-                                     BlockSize sb_size,
                                      const int32_t sb_mi_row,
                                      const int32_t sb_mi_col,
                                      int32_t *sb_delta_lf)
@@ -325,8 +324,8 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
         int32_t mb_to_right_edge  = ((mi_cols - bw4 - blk_mi_col) * MI_SIZE) * 8;
 
         uint8_t lossless   = frm_hdr->lossless_array[mode_info->segment_id];
-        int lossless_block = (lossless && ((sb_size >= BLOCK_64X64) &&
-            (sb_size <= BLOCK_128X128)));
+        int lossless_block = (lossless && ((bsize >= BLOCK_64X64) &&
+                             (bsize <= BLOCK_128X128)));
 
         int max_blocks_wide = block_size_wide[bsize];
         int max_blocks_high = block_size_high[bsize];
@@ -411,7 +410,7 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
                                       (trans_info->txb_x_offset << sub_x);
 
                 /* For VERT_EDGE edge and x_range is for SB scan */
-                sb_delta_lf_left = blk_mi_col == sb_mi_col ?
+                sb_delta_lf_left = (left_mi_col == sb_mi_col) ?
                                    sb_delta_lf - FRAME_LF_COUNT : sb_delta_lf;
 
                 min_txh = cur_txh;
@@ -451,7 +450,7 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
                     int32_t frame_height = frm_hdr->frame_size.frame_height;
                     int32_t ext_height = curr_luma_y + (min_high << sub_y);
                     if (frame_height < ext_height)
-                        min_high = (frame_height - (int32_t)curr_luma_y) >> sub_y;
+                        min_high = ((frame_height - (int32_t)curr_luma_y) + sub_y) >> sub_y;
 
                     for (int32_t h = 0; h < min_high; h += 4) {
                         int8_t filter_idx = filter_map[params.filter_length];
@@ -483,9 +482,11 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
 }
 
 void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
-                                     EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
-                                     const int32_t num_planes, BlockSize sb_size,
-                                     const int32_t sb_mi_row, const uint32_t sb_mi_col,
+                                     EbPictureBufferDesc *recon_picture_buf,
+                                     LfCtxt *lf_ctxt,
+                                     const int32_t num_planes,
+                                     const int32_t sb_mi_row,
+                                     const uint32_t sb_mi_col,
                                      int32_t *sb_delta_lf) {
     FrameHeader *frm_hdr        = &dec_handle->frame_header;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
@@ -526,8 +527,8 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
                                     * MI_SIZE) * 8;
 
         uint8_t lossless = frm_hdr->lossless_array[mode_info->segment_id];
-        int lossless_block = (lossless && ((sb_size >= BLOCK_64X64) &&
-                             (sb_size <= BLOCK_128X128)));
+        int lossless_block = (lossless && ((bsize >= BLOCK_64X64) &&
+                             (bsize <= BLOCK_128X128)));
 
         int max_blocks_wide = block_size_wide[bsize];
         int max_blocks_high = block_size_high[bsize];
@@ -611,7 +612,7 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
                                       (trans_info->txb_x_offset << sub_x);
 
                 /* For VERT_EDGE edge and x_range is for SB scan */
-                sb_delta_lf_above = blk_mi_row == sb_mi_row ?
+                sb_delta_lf_above = (left_mi_row == sb_mi_row) ?
                                     sb_delta_lf - lf_ctxt->delta_lf_stride :
                                     sb_delta_lf;
 
@@ -648,9 +649,9 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
                     /*Do the filtering for only for the actual frame boundry*/
                     int32_t min_width = min_txw << MI_SIZE_LOG2;
                     int32_t frame_width = frm_hdr->frame_size.frame_width;
-                    int32_t ext_height = curr_luma_x + (min_width << sub_x);
-                    if (frame_width < ext_height)
-                        min_width = (frame_width - (int32_t)curr_luma_x) >> sub_x;
+                    int32_t ext_width = curr_luma_x + (min_width << sub_x);
+                    if (frame_width < ext_width)
+                        min_width = ((frame_width - (int32_t)curr_luma_x) + sub_x) >> sub_x;
 
                     for (uint8_t w = 0; w < min_width; w += 4) {
                         int filter_idx = filter_map[params.filter_length];
@@ -702,7 +703,6 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                         recon_picture_buf,
                                         lf_ctxt,
                                         num_planes,
-                                        seq_header->sb_size,
                                         mi_row,
                                         mi_col,
                                         sb_delta_lf);
@@ -717,7 +717,6 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                             recon_picture_buf,
                                             lf_ctxt,
                                             num_planes,
-                                            seq_header->sb_size,
                                             mi_row,
                                             mi_col - max_mib_size,
                                             (sb_delta_lf - FRAME_LF_COUNT));
@@ -729,7 +728,6 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                             recon_picture_buf,
                                             lf_ctxt,
                                             num_planes,
-                                            seq_header->sb_size,
                                             mi_row,
                                             mi_col,
                                             sb_delta_lf);
@@ -740,7 +738,6 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                         recon_picture_buf,
                                         lf_ctxt,
                                         num_planes,
-                                        seq_header->sb_size,
                                         mi_row,
                                         mi_col,
                                         sb_delta_lf);
@@ -750,7 +747,6 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                         recon_picture_buf,
                                         lf_ctxt,
                                         num_planes,
-                                        seq_header->sb_size,
                                         mi_row,
                                         mi_col,
                                         sb_delta_lf);
@@ -834,8 +830,8 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
 
     int32_t  sb_size_w            = block_size_wide[seq_header->sb_size];
     int32_t  sb_size_h            = block_size_high[seq_header->sb_size];
-    uint32_t pic_width_in_sb      = (seq_header->max_frame_width + sb_size_w - 1) / sb_size_w;
-    uint32_t picture_height_in_sb = (seq_header->max_frame_height + sb_size_h - 1) / sb_size_h;
+    uint32_t pic_width_in_sb      = (frm_hdr->frame_size.frame_width + sb_size_w - 1) / sb_size_w;
+    uint32_t picture_height_in_sb = (frm_hdr->frame_size.frame_height + sb_size_h - 1) / sb_size_h;
 
     frm_hdr->loop_filter_params.combine_vert_horz_lf = 1;
     /*init hev threshold const vectors*/

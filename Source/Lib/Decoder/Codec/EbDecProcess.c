@@ -1324,7 +1324,8 @@ void dec_av1_loop_restoration_filter_frame_mt(
     eb_release_mutex(dec_mt_frame_data->temp_mutex);
 
     volatile uint32_t *num_threads_lred = &dec_mt_frame_data->num_threads_lred;
-    while (*num_threads_lred != dec_handle->dec_config.threads);
+    while (*num_threads_lred != dec_handle->dec_config.threads &&
+            EB_FALSE == dec_mt_frame_data->end_flag);
 }
 
 void *dec_all_stage_kernel(void *input_ptr) {
@@ -1403,4 +1404,8 @@ void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {
 
     while (dec_mt_frame_data->num_threads_exited != dec_handle_ptr->dec_config.threads - 1)
         eb_sleep_ms(5);
+
+    /*Destroying lib created thread's*/
+    EB_DESTROY_THREAD_ARRAY(dec_handle_ptr->decode_thread_handle_array,
+                            dec_handle_ptr->dec_config.threads - 1);
 }

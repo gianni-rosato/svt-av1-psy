@@ -42,6 +42,7 @@ typedef struct Av1Common {
     int32_t      mi_rows;
     int32_t      mi_cols;
     int32_t      ref_frame_sign_bias[REF_FRAMES]; /* Two state 0, 1 */
+    uint8_t *    last_frame_seg_map;
     InterpFilter interp_filter;
     int32_t      mi_stride;
 

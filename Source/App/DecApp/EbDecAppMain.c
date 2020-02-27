@@ -22,31 +22,29 @@
 #endif
 
 int init_pic_buffer(EbSvtIOFormat *pic_buffer, CliInput *cli, EbSvtAv1DecConfiguration *config) {
+    /* FilmGrain module req. even dim. for internal operation */
+    pic_buffer->y_stride = cli->width & 1 ? cli->width + 1 : cli->width;
     switch (cli->fmt) {
     case EB_YUV400:
         pic_buffer->cb_stride = INT32_MAX;
         pic_buffer->cr_stride = INT32_MAX;
-        pic_buffer->y_stride  = cli->width;
         break;
     case EB_YUV420:
         pic_buffer->cb_stride = cli->width / 2;
         pic_buffer->cr_stride = cli->width / 2;
-        pic_buffer->y_stride  = cli->width;
         break;
     case EB_YUV422:
         pic_buffer->cb_stride = cli->width / 2;
         pic_buffer->cr_stride = cli->width / 2;
-        pic_buffer->y_stride  = cli->width;
         break;
     case EB_YUV444:
         pic_buffer->cb_stride = cli->width;
         pic_buffer->cr_stride = cli->width;
-        pic_buffer->y_stride  = cli->width;
         break;
     default: fprintf(stderr, "Unsupported colour format. \n"); return 0;
     }
     pic_buffer->width     = cli->width;
-    pic_buffer->height    = cli->width;
+    pic_buffer->height    = cli->height;
     pic_buffer->luma_ext  = NULL;
     pic_buffer->cb_ext    = NULL;
     pic_buffer->cr_ext    = NULL;
@@ -194,8 +192,11 @@ int32_t main(int32_t argc, char *argv[]) {
         recon_buffer                     = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
         recon_buffer->p_buffer           = (uint8_t *)malloc(sizeof(EbSvtIOFormat));
 
+        /* FilmGrain module req. even dim. for internal operation */
+        int w = (cli.width & 1) ? (cli.width + 1) : cli.width;
+        int h = (cli.height & 1) ? (cli.height + 1) : cli.height;
         int size = (config_ptr->max_bit_depth == EB_EIGHT_BIT) ? sizeof(uint8_t) : sizeof(uint16_t);
-        size     = size * cli.height * cli.width;
+        size     = size * w * h;
 
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->luma = (uint8_t *)malloc(size);
         ((EbSvtIOFormat *)recon_buffer->p_buffer)->cb   = (uint8_t *)malloc(size >> 2);

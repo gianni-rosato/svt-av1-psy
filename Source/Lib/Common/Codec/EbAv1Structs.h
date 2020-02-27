@@ -310,6 +310,8 @@ typedef struct QuantizationParams {
     /*!< Specifies the level in the quantizer matrix that should be used for
      * each plane decoding */
     uint8_t qm[MAX_MB_PLANE];
+    /*!< qindex for every segment ID */
+    uint8_t qindex[MAX_SEGMENTS];
 } QuantizationParams;
 typedef struct DeltaQParams {
     /*!< Specifies whether quantizer index delta values are present */
@@ -459,9 +461,6 @@ typedef struct FrameHeader {
     /*!< Specifies the expected output order hint for each reference frame */
     uint32_t ref_order_hint[REF_FRAMES];
 
-    /*!< Specifies the expected output order for each reference frame */
-    uint32_t order_hints[REF_FRAMES];
-
     /*!< 1: Indicates that intra block copy may be used in this frame.
      *   0: Indicates that intra block copy is not allowed in this frame */
     uint8_t allow_intrabc;
@@ -475,6 +474,9 @@ typedef struct FrameHeader {
      *  0: Signifies that the corresponding reference picture slot is not valid
      *     for use as a reference picture*/
     uint32_t ref_valid[REF_FRAMES];
+
+    /*!< Specifies the frame id for each reference frame */
+    uint32_t ref_frame_id[REF_FRAMES];
 
     /*!< Frame Size structure */
     FrameSize frame_size;

@@ -85,6 +85,10 @@ typedef struct EbDecPicBuf {
     /* film grain */
     AomFilmGrain film_grain_params;
 
+    // Inter frame reference frame delta for loop filter
+    int8_t ref_deltas[REF_FRAMES];
+    // 0 = ZERO_MV, MV
+    int8_t mode_deltas[MAX_MODE_LF_DELTAS];
 } EbDecPicBuf;
 
 /* Frame level buffers */
@@ -221,6 +225,8 @@ typedef struct EbDecHandle {
     // Prepare ref_frame_map for the next frame.
     EbDecPicBuf *next_ref_frame_map[REF_FRAMES];
 
+    /* For Reference frame loading process */
+    EbDecPicBuf *prev_frame;
     /* TODO: Move to buffer pool. */
     EbDecPicBuf *cur_pic_buf[DEC_MAX_NUM_FRM_PRLL];
 

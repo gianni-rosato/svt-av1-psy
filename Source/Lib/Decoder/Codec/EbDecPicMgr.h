@@ -42,6 +42,8 @@ void         svt_setup_frame_buf_refs(EbDecHandle *dec_handle_ptr);
 
 ScaleFactors *get_ref_scale_factors(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame);
 
+EbDecPicBuf *get_primary_ref_frame_buf(EbDecHandle *dec_handle_ptr);
+
 void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_t gld_map_idx);
 
 #ifdef __cplusplus

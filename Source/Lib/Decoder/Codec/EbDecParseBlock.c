@@ -391,11 +391,6 @@ int read_delta_lflevel(ParseCtxt *parse_ctxt, AomCdfProb *cdf, BlockModeInfo *mb
     }
     const int sign        = abs ? svt_read_bit(r, ACCT_STR) : 1;
     reduced_delta_lflevel = sign ? -abs : abs;
-    reduced_delta_lflevel =
-        clamp(delta_lf + (reduced_delta_lflevel << delta_lf_params->delta_lf_res),
-              -MAX_LOOP_FILTER,
-              MAX_LOOP_FILTER);
-
     tmp_lvl = (clamp(delta_lf + (reduced_delta_lflevel << delta_lf_params->delta_lf_res),
                      -MAX_LOOP_FILTER,
                      MAX_LOOP_FILTER));
@@ -742,22 +737,17 @@ int read_inter_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Partit
     const int y_mis = AOMMIN(frame_header->mi_rows - mi_row, bh);
 
     if (!seg->segmentation_enabled) return 0; // Default for disabled segmentation
-
-    EbDecPicBuf *prev_buf = NULL;
-    if (frame_header->primary_ref_frame != PRIMARY_REF_NONE) {
-        prev_buf = get_ref_frame_buf(dec_handle, frame_header->primary_ref_frame + 1);
-        if (prev_buf == NULL) assert(0);
-    }
     if (!seg->segmentation_update_map) {
         copy_segment_id(parse_ctxt,
-                        prev_buf->segment_maps,
+                        dec_handle->cm
+                            .last_frame_seg_map,
                         dec_handle->cur_pic_buf[0]->segment_maps,
                         mi_offset,
                         x_mis,
                         y_mis);
-        return prev_buf->segment_maps
+        return dec_handle->cm.last_frame_seg_map
                    ? get_segment_id(
-                         frame_header, prev_buf->segment_maps, mbmi->sb_type, mi_row, mi_col)
+                         frame_header, dec_handle->cm.last_frame_seg_map, mbmi->sb_type, mi_row, mi_col)
                    : 0;
     }
 
@@ -780,9 +770,9 @@ int read_inter_segment_id(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Partit
         mbmi->seg_id_predicted = svt_read_symbol(r, segp->pred_cdf[ctx], 2, ACCT_STR);
         if (mbmi->seg_id_predicted) {
             segment_id =
-                prev_buf->segment_maps
+                dec_handle->cm.last_frame_seg_map
                     ? get_segment_id(
-                          frame_header, prev_buf->segment_maps, mbmi->sb_type, mi_row, mi_col)
+                          frame_header, dec_handle->cm.last_frame_seg_map, mbmi->sb_type, mi_row, mi_col)
                     : 0;
         } else
             segment_id = read_segment_id(dec_handle, parse_ctxt, xd, 0);
@@ -1007,32 +997,31 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
     EbBool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||
                            (0 == dec_handle->frame_header.use_ref_frame_mvs));
 
+    OrderHintInfo *order_hint_info = &dec_handle->seq_header.order_hint_info;
+
+    if (!order_hint_info->enable_order_hint) return;
+
+    const int cur_order_hint = dec_handle->cur_pic_buf[0]->order_hint;
+
+    const EbDecPicBuf *ref_buf[INTER_REFS_PER_FRAME];
+    int                ref_order_hint[INTER_REFS_PER_FRAME];
+
+    for (int ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ref_frame++) {
+        const int                ref_idx    = ref_frame - LAST_FRAME;
+        const EbDecPicBuf *const buf        = get_ref_frame_buf(dec_handle, ref_frame);
+        int                      order_hint = 0;
+
+        if (buf != NULL) order_hint = buf->order_hint;
+
+        ref_buf[ref_idx]        = buf;
+        ref_order_hint[ref_idx] = order_hint;
+
+        if (get_relative_dist(order_hint_info, order_hint, cur_order_hint) > 0)
+            dec_handle->master_frame_buf.ref_frame_side[ref_frame] = 1;
+        else if (order_hint == cur_order_hint)
+            dec_handle->master_frame_buf.ref_frame_side[ref_frame] = -1;
+    }
     if (!no_proj_flag) {
-        OrderHintInfo *order_hint_info = &dec_handle->seq_header.order_hint_info;
-
-        if (!order_hint_info->enable_order_hint) return;
-
-        const int cur_order_hint = dec_handle->cur_pic_buf[0]->order_hint;
-
-        const EbDecPicBuf *ref_buf[INTER_REFS_PER_FRAME];
-        int                ref_order_hint[INTER_REFS_PER_FRAME];
-
-        for (int ref_frame = LAST_FRAME; ref_frame <= ALTREF_FRAME; ref_frame++) {
-            const int                ref_idx    = ref_frame - LAST_FRAME;
-            const EbDecPicBuf *const buf        = get_ref_frame_buf(dec_handle, ref_frame);
-            int                      order_hint = 0;
-
-            if (buf != NULL) order_hint = buf->order_hint;
-
-            ref_buf[ref_idx]        = buf;
-            ref_order_hint[ref_idx] = order_hint;
-
-            if (get_relative_dist(order_hint_info, order_hint, cur_order_hint) > 0)
-                dec_handle->master_frame_buf.ref_frame_side[ref_frame] = 1;
-            else if (order_hint == cur_order_hint)
-                dec_handle->master_frame_buf.ref_frame_side[ref_frame] = -1;
-        }
-
         //branch of point for MT
         if (is_mt) {
             DecMtMotionProjInfo *motion_proj_info =
@@ -1081,7 +1070,8 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
         eb_release_mutex(dec_mt_frame_data->temp_mutex);
 
         volatile uint32_t *num_threads_header = &dec_mt_frame_data->num_threads_header;
-        while (*num_threads_header != dec_handle->dec_config.threads)
+        while (*num_threads_header != dec_handle->dec_config.threads &&
+              (EB_FALSE == dec_mt_frame_data->end_flag))
             ;
     }
 }
@@ -1166,8 +1156,6 @@ void inter_frame_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Parti
         mbmi->segment_id = read_inter_segment_id(dec_handle, parse_ctxt, pi, 0);
     }
 
-    parse_ctxt->frame_header->coded_lossless =
-        parse_ctxt->frame_header->lossless_array[mbmi->segment_id];
     read_cdef(parse_ctxt, pi);
 
     read_delta_params(parse_ctxt, pi);
@@ -1585,8 +1573,8 @@ void parse_transform_type(ParseCtxt *parse_ctxt, PartitionInfo *xd, TxSize tx_si
         seg_feature_active(
             &parse_ctxt->frame_header->segmentation_params, mbmi->segment_id, SEG_LVL_SKIP))
         return;
-
-    const int qindex = parse_ctxt->frame_header->quantization_params.base_q_idx;
+    const int qindex = parse_ctxt->frame_header->quantization_params.
+                                            qindex[mbmi->segment_id];
     if (qindex == 0) return;
 
     const int       inter_block = is_inter_block(mbmi);

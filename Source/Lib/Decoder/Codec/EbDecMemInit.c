@@ -60,28 +60,30 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
     picture_buffer_desc_ptr->color_format = picture_buffer_desc_init_data_ptr->color_format;
     picture_buffer_desc_ptr->stride_y = picture_buffer_desc_init_data_ptr->max_width +
         picture_buffer_desc_init_data_ptr->left_padding + picture_buffer_desc_init_data_ptr->right_padding;
-    if(picture_buffer_desc_ptr->color_format == EB_YUV420 ||
-       picture_buffer_desc_ptr->color_format == EB_YUV422)
-        picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr
-            = picture_buffer_desc_ptr->stride_y >> 1;
-    else if (picture_buffer_desc_ptr->color_format == EB_YUV444)
-        picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr
-            = picture_buffer_desc_ptr->stride_y;
+    uint32_t height_y = (picture_buffer_desc_init_data_ptr->max_height + picture_buffer_desc_init_data_ptr->top_padding
+        + picture_buffer_desc_init_data_ptr->bot_padding);
+
     picture_buffer_desc_ptr->origin_x = picture_buffer_desc_init_data_ptr->left_padding;
     picture_buffer_desc_ptr->origin_y = picture_buffer_desc_init_data_ptr->top_padding;
     picture_buffer_desc_ptr->origin_bot_y = picture_buffer_desc_init_data_ptr->bot_padding;
 
-    picture_buffer_desc_ptr->luma_size = (picture_buffer_desc_init_data_ptr->max_width +
-        picture_buffer_desc_init_data_ptr->left_padding + picture_buffer_desc_init_data_ptr->right_padding) *
-        (picture_buffer_desc_init_data_ptr->max_height + picture_buffer_desc_init_data_ptr->top_padding
-            + picture_buffer_desc_init_data_ptr->bot_padding);
+    picture_buffer_desc_ptr->luma_size = (picture_buffer_desc_ptr->stride_y) * height_y;
 
-    if (picture_buffer_desc_ptr->color_format == EB_YUV420) // 420
-        picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size >> 2;
-    else if (picture_buffer_desc_ptr->color_format == EB_YUV422) // 422
-        picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size >> 1;
-    else if (picture_buffer_desc_ptr->color_format == EB_YUV444) // 444
-        picture_buffer_desc_ptr->chroma_size = picture_buffer_desc_ptr->luma_size;
+    uint32_t stride_c = 0, height_c = 0;
+    if (picture_buffer_desc_ptr->color_format == EB_YUV420) {// 420
+        stride_c = (picture_buffer_desc_ptr->stride_y + 1) >> 1;
+        height_c = (height_y + 1) >> 1;
+    }
+    else if (picture_buffer_desc_ptr->color_format == EB_YUV422) {// 422
+        stride_c = (picture_buffer_desc_ptr->stride_y + 1) >> 1;
+        height_c = height_y;
+    }
+    else if (picture_buffer_desc_ptr->color_format == EB_YUV444) {// 444
+        stride_c = picture_buffer_desc_ptr->stride_y;
+        height_c = height_y;
+    }
+    picture_buffer_desc_ptr->stride_cb = picture_buffer_desc_ptr->stride_cr = stride_c;
+    picture_buffer_desc_ptr->chroma_size = (stride_c * height_c);
 
     picture_buffer_desc_ptr->packed_flag = EB_FALSE;
 

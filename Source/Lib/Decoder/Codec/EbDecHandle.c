@@ -121,6 +121,22 @@ static EbErrorType eb_dec_handle_ctor(EbDecHandle **decHandleDblPtr, EbComponent
     return return_error;
 }
 
+/* FilmGrain module req. even dim. for internal operation
+   For odd luma, chroma uses data from even pixel in luma*/
+static void copy_even(uint8_t *luma, uint32_t wd,
+                 uint32_t ht, uint32_t stride, int32_t use_hbd) {
+    if ((wd & 1) == 0 && (ht & 1) == 0) return;
+    if (wd & 1) {
+        for (uint32_t i = 0; i < ht; ++i)
+            luma[i * (stride << use_hbd) + (wd << use_hbd)] =
+                luma[i *(stride << use_hbd) + ((wd - 1) << use_hbd)];
+        wd = wd + 1;
+    }
+    if (ht & 1) {
+        memcpy(&luma[ht *  (stride << use_hbd)], &luma[(ht - 1) * (stride << use_hbd)],
+            sizeof(*luma) * (wd << use_hbd));
+    }
+}
 /* Copy from recon buffer to out buffer! */
 int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
     EbPictureBufferDesc *recon_picture_buf = dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf;
@@ -139,6 +155,9 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
     uint32_t wd = dec_handle_ptr->frame_header.frame_size.superres_upscaled_width;
     uint32_t ht = dec_handle_ptr->frame_header.frame_size.frame_height;
     uint32_t i, sx = 0, sy = 0;
+    /* FilmGrain module req. even dim. for internal operation */
+    int even_w = (wd & 1) ? (wd + 1) : wd;
+    int even_h = (ht & 1) ? (ht + 1) : ht;
 
     if (out_img->height != ht || out_img->width != wd ||
         out_img->color_fmt != recon_picture_buf->color_format ||
@@ -146,9 +165,9 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
         int size = (dec_handle_ptr->seq_header.color_config.bit_depth == EB_EIGHT_BIT)
                        ? sizeof(uint8_t)
                        : sizeof(uint16_t);
-        int luma_size   = size * ht * wd;
-        int chroma_size = -1;
 
+        int luma_size = size * even_w * even_h;
+        int chroma_size = -1;
         out_img->color_fmt = recon_picture_buf->color_format;
         switch (recon_picture_buf->color_format) {
         case EB_YUV400:
@@ -173,7 +192,8 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
         default: SVT_LOG("Unsupported colour format. \n"); return 0;
         }
 
-        out_img->y_stride = wd;
+        /* FilmGrain module req. even dim. for internal operation */
+        out_img->y_stride = even_w;
         out_img->width    = wd;
         out_img->height   = ht;
         if (out_img->bit_depth != (EbBitDepth)recon_picture_buf->bit_depth) {
@@ -318,13 +338,13 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
             case EB_10BIT: film_grain_ptr->bit_depth = 10; break;
             default: assert(0);
             }
-
+            copy_even(luma, wd, ht, out_img->y_stride, use_high_bit_depth);
             eb_av1_add_film_grain_run(film_grain_ptr,
                                       luma,
                                       cb,
                                       cr,
-                                      ht,
-                                      wd,
+                                      even_h,/*(ht & 1 ? ht + 1 : ht),*/
+                                      even_w,/*(wd & 1 ? wd + 1 : ht),*/
                                       out_img->y_stride,
                                       out_img->cb_stride,
                                       use_high_bit_depth,
@@ -471,7 +491,7 @@ eb_init_decoder(EbComponentType *svt_dec_component) {
     if (svt_dec_component == NULL) return EB_ErrorBadParameter;
 
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
-    CPU_FLAGS    cpu_flags      = get_cpu_flags_to_use();
+    CPU_FLAGS    cpu_flags = get_cpu_flags_to_use();
 
     dec_handle_ptr->dec_cnt       = -1;
     dec_handle_ptr->num_frms_prll = 1;

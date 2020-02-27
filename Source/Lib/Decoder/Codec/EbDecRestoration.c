@@ -243,8 +243,10 @@ void eb_dec_av1_loop_restoration_filter_unit(uint8_t need_bounadaries,
            restoration unit */
         const int32_t nominal_stripe_height =
             full_stripe_height - ((tile_stripe == 0) ? runit_offset : 0);
+        /*In wiener filter leaf level function assumes always h to be multiple of 2.
+          we can see assert related to h in this function->eb_av1_wiener_convolve_add_src_avx2*/
         const int32_t h = AOMMIN(nominal_stripe_height,
-            remaining_stripes.v_end - remaining_stripes.v_start);
+            ((remaining_stripes.v_end - remaining_stripes.v_start) + 1) & ~1);
 
         if (need_bounadaries)
             setup_processing_stripe_boundary(&remaining_stripes,

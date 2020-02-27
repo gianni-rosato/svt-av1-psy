@@ -250,10 +250,15 @@ void dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t frame_decod
     for (ref_index = 0; ref_index < INTER_REFS_PER_FRAME; ref_index++) {
         dec_handle_ptr->remapped_ref_idx[ref_index] = INVALID_IDX;
     }
-    for (int i = 0; i < NUM_REF_FRAMES; i++)
-        if ((dec_handle_ptr->frame_header.refresh_frame_flags >> i) & 1)
+
+    for (int i = 0; i < NUM_REF_FRAMES; i++) {
+        if ((dec_handle_ptr->frame_header.refresh_frame_flags >> i) & 1) {
             dec_handle_ptr->frame_header.ref_order_hint[i] =
                 dec_handle_ptr->frame_header.order_hint;
+            dec_handle_ptr->frame_header.ref_frame_id[i] =
+                dec_handle_ptr->frame_header.current_frame_id;
+        }
+    }
 }
 
 // Generate next_ref_frame_map.
@@ -301,6 +306,13 @@ EbDecPicBuf *get_ref_frame_buf(EbDecHandle *dec_handle_ptr, const MvReferenceFra
 ScaleFactors *get_ref_scale_factors(EbDecHandle *dec_handle_ptr, const MvReferenceFrame ref_frame) {
     const int map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, ref_frame);
     return (map_idx != INVALID_IDX) ? &dec_handle_ptr->ref_scale_factors[map_idx] : NULL;
+}
+
+EbDecPicBuf *get_primary_ref_frame_buf(EbDecHandle *dec_handle_ptr) {
+    int primary_ref_frame = dec_handle_ptr->frame_header.primary_ref_frame;
+    if (primary_ref_frame == PRIMARY_REF_NONE) return NULL;
+    const int map_idx = get_ref_frame_map_with_idx(dec_handle_ptr, primary_ref_frame + 1);
+    return (map_idx != INVALID_IDX) ? dec_handle_ptr->ref_frame_map[map_idx] : NULL;
 }
 
 /* Compares the sort_idx fields. If they are equal, then compares the map_idx

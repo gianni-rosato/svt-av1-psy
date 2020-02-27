@@ -364,7 +364,8 @@ static void dealloc_arrays(AomFilmGrain *params, int32_t ***pred_pos_luma,
                            int32_t **cb_line_buf, int32_t **cr_line_buf, int32_t **y_col_buf,
                            int32_t **cb_col_buf, int32_t **cr_col_buf) {
     int32_t num_pos_luma   = 2 * params->ar_coeff_lag * (params->ar_coeff_lag + 1);
-    int32_t num_pos_chroma = num_pos_luma + 1;
+    int32_t num_pos_chroma = num_pos_luma;
+    if (params->num_y_points > 0) ++num_pos_chroma;
 
     for (int32_t row = 0; row < num_pos_luma; row++) free((*pred_pos_luma)[row]);
     free(*pred_pos_luma);
@@ -466,7 +467,9 @@ static void generate_chroma_grain_blocks(
     if (params->num_y_points > 0) ++num_pos_chroma;
     int32_t rounding_offset = (1 << (params->ar_coeff_shift - 1));
 
-    if (params->num_cb_points) {
+    int chroma_grain_block_size = chroma_block_size_y * chroma_grain_stride;
+
+    if (params->num_cb_points || params->chroma_scaling_from_luma) {
         init_random_generator(7 << 5, params->random_seed);
 
         for (int32_t i = 0; i < chroma_block_size_y; i++)
@@ -475,8 +478,11 @@ static void generate_chroma_grain_blocks(
                     (gaussian_sequence[get_random_number(gauss_bits)] +
                      ((1 << gauss_sec_shift) >> 1)) >>
                     gauss_sec_shift;
+    } else {
+        memset(cb_grain_block, 0,
+            sizeof(*cb_grain_block) * chroma_grain_block_size);
     }
-    if (params->num_cr_points) {
+    if (params->num_cr_points || params->chroma_scaling_from_luma) {
         init_random_generator(11 << 5, params->random_seed);
 
         for (int32_t i = 0; i < chroma_block_size_y; i++)
@@ -485,6 +491,9 @@ static void generate_chroma_grain_blocks(
                     (gaussian_sequence[get_random_number(gauss_bits)] +
                      ((1 << gauss_sec_shift) >> 1)) >>
                     gauss_sec_shift;
+    } else {
+        memset(cr_grain_block, 0,
+            sizeof(*cr_grain_block) * chroma_grain_block_size);
     }
 
     for (int32_t i = top_pad; i < chroma_block_size_y - bottom_pad; i++)
@@ -524,13 +533,13 @@ static void generate_chroma_grain_blocks(
                     exit(1);
                 }
             }
-            if (params->num_cb_points)
+            if (params->num_cb_points || params->chroma_scaling_from_luma)
                 cb_grain_block[i * chroma_grain_stride + j] =
                     clamp(cb_grain_block[i * chroma_grain_stride + j] +
                               ((wsum_cb + rounding_offset) >> params->ar_coeff_shift),
                           grain_min,
                           grain_max);
-            if (params->num_cr_points)
+            if (params->num_cr_points || params->chroma_scaling_from_luma)
                 cr_grain_block[i * chroma_grain_stride + j] =
                     clamp(cr_grain_block[i * chroma_grain_stride + j] +
                               ((wsum_cr + rounding_offset) >> params->ar_coeff_shift),
@@ -592,8 +601,10 @@ static void add_noise_to_block(AomFilmGrain *params, uint8_t *luma, uint8_t *cb,
     int32_t rounding_offset = (1 << (params->scaling_shift - 1));
 
     int32_t apply_y  = params->num_y_points > 0 ? 1 : 0;
-    int32_t apply_cb = params->num_cb_points > 0 ? 1 : 0;
-    int32_t apply_cr = params->num_cr_points > 0 ? 1 : 0;
+    int32_t apply_cb = (params->num_cb_points > 0 ||
+                        params->chroma_scaling_from_luma) ? 1 : 0;
+    int32_t apply_cr = (params->num_cr_points > 0 ||
+                        params->chroma_scaling_from_luma) ? 1 : 0;
 
     if (params->chroma_scaling_from_luma) {
         cb_mult      = 0; // fixed scale

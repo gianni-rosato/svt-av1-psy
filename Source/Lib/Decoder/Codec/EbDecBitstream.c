@@ -35,6 +35,7 @@ void dec_bits_init(Bitstrm *bs, const uint8_t *data, size_t numbytes) {
 Bitstream offset and consumes the bits. Section: 4.10.2 -> f(n) */
 uint32_t dec_get_bits(Bitstrm *bs, uint32_t numbits) {
     uint32_t bits_read;
+    if (0 == numbits) return 0;
     GET_BITS(bits_read, bs->buf, bs->bit_ofst, bs->cur_word, bs->nxt_word, numbits);
     return bits_read;
 }
