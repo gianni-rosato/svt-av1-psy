@@ -2,7 +2,6 @@
 
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/OpenVisualCloud/SVT-AV1?branch=master&svg=true)](https://ci.appveyor.com/project/OpenVisualCloud/SVT-AV1)
 [![Travis Build Status](https://travis-ci.com/OpenVisualCloud/SVT-AV1.svg?branch=master)](https://travis-ci.com/OpenVisualCloud/SVT-AV1)
-[![Coverage Status](https://coveralls.io/repos/github/OpenVisualCloud/SVT-AV1/badge.svg?branch=master)](https://coveralls.io/github/OpenVisualCloud/SVT-AV1?branch=master)
 
 The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-compliant encoder/decoder library core. The SVT-AV1 encoder development is a work-in-progress targeting performance levels applicable to both VOD and Live encoding / transcoding video applications. The SVT-AV1 decoder implementation is targeting future codec research activities.
 
