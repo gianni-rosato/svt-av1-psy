@@ -2738,6 +2738,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     input_picture_ptr = hbd_mode_decision ? pcs_ptr->input_frame16bit
         : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
+    //Update input origin
+    input_origin_index =
+        (context_ptr->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
+        (context_ptr->blk_origin_x + input_picture_ptr->origin_x);
+
     for (uint32_t ref_it = 0; ref_it < pcs_ptr->parent_pcs_ptr->tot_ref_frame_types; ++ref_it) {
         MvReferenceFrame ref_pair = pcs_ptr->parent_pcs_ptr->ref_frame_type_arr[ref_it];
 
@@ -2828,12 +2833,12 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                     : context_ptr->hbd_mode_decision;
     input_picture_ptr = hbd_mode_decision ? pcs_ptr->input_frame16bit
                                           : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-#if !ENHANCED_ME_MV
+
     //Update input origin
     input_origin_index =
         (context_ptr->blk_origin_y + input_picture_ptr->origin_y) * input_picture_ptr->stride_y +
         (context_ptr->blk_origin_x + input_picture_ptr->origin_x);
-#endif
+
     // Reset valid_refined_mv
     memset(context_ptr->valid_refined_mv, 0, 8); // [2][4]
 
