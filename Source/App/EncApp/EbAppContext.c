@@ -127,12 +127,10 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.inter_intra_compound     = config->inter_intra_compound;
     callback_data->eb_enc_parameters.enable_mfmv              = config->enable_mfmv;
     callback_data->eb_enc_parameters.enable_redundant_blk     = config->enable_redundant_blk;
-    callback_data->eb_enc_parameters.enable_trellis           = config->enable_trellis;
     callback_data->eb_enc_parameters.spatial_sse_fl           = config->spatial_sse_fl;
     callback_data->eb_enc_parameters.enable_subpel            = config->enable_subpel;
     callback_data->eb_enc_parameters.over_bndry_blk           = config->over_bndry_blk;
     callback_data->eb_enc_parameters.new_nearest_comb_inject  = config->new_nearest_comb_inject;
-    callback_data->eb_enc_parameters.nx4_4xn_parent_mv_inject = config->nx4_4xn_parent_mv_inject;
     callback_data->eb_enc_parameters.prune_unipred_me         = config->prune_unipred_me;
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
@@ -224,10 +222,10 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
 
     callback_data->eb_enc_parameters.sq_weight                 = config->sq_weight;
 
-    callback_data->eb_enc_parameters.md_fast_cost_cand_prune_th  = config->md_fast_cost_cand_prune_th;
-    callback_data->eb_enc_parameters.md_fast_cost_class_prune_th = config->md_fast_cost_class_prune_th;
-    callback_data->eb_enc_parameters.md_full_cost_cand_prune_th  = config->md_full_cost_cand_prune_th;
-    callback_data->eb_enc_parameters.md_full_cost_class_prune_th = config->md_full_cost_class_prune_th;
+    callback_data->eb_enc_parameters.md_stage_1_cand_prune_th  = config->md_stage_1_cand_prune_th;
+    callback_data->eb_enc_parameters.md_stage_1_class_prune_th = config->md_stage_1_class_prune_th;
+    callback_data->eb_enc_parameters.md_stage_2_3_cand_prune_th  = config->md_stage_2_3_cand_prune_th;
+    callback_data->eb_enc_parameters.md_stage_2_3_class_prune_th = config->md_stage_2_3_class_prune_th;
 
     // Prediction Structure
     callback_data->eb_enc_parameters.enable_manual_pred_struct    = config->enable_manual_pred_struct;

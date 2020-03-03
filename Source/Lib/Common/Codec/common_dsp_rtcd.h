@@ -19,10 +19,7 @@
 #ifndef COMMON_DSP_RTCD_H_
 #define COMMON_DSP_RTCD_H_
 
-//#include "common_dsp_rtcd.h"
 #include "EbDefinitions.h"
-//#include "EbCodingUnit.h"
-//# include "ml.h"
 
 
 /*

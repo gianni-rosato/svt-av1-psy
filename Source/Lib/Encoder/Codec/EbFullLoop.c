@@ -1489,8 +1489,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     (void)sc;
     (void)qparam;
     (void)bit_increment;
-
-    // Hsan (Trellis): hardcoded as not supported:
     int                    sharpness       = 0; // No Sharpness
 #if FASTER_RDOQ
     // Perform a fast RDOQ stage for inter and chroma blocks
@@ -1705,8 +1703,8 @@ int32_t av1_quantize_inv_quantize(
 
     uint32_t component_type, uint32_t bit_increment, TxType tx_type,
     ModeDecisionCandidateBuffer *candidate_buffer,
-    int16_t txb_skip_context, // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
-    int16_t dc_sign_context, // Hsan (Trellis): derived @ MD (what about re-generating @ EP ?)
+    int16_t txb_skip_context,
+    int16_t dc_sign_context,
     PredictionMode pred_mode, EbBool is_intra_bc, EbBool is_encode_pass) {
     (void)candidate_buffer;
     (void)is_encode_pass;
@@ -1804,22 +1802,20 @@ int32_t av1_quantize_inv_quantize(
     EbBool is_inter     = (pred_mode >= NEARESTMV);
 #if TXS_DEPTH_2
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
-        md_context->trellis_quant_coeff_optimization);
+        md_context->enable_rdoq);
 #else
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
-                           md_context->trellis_quant_coeff_optimization && !is_intra_bc);
+                           md_context->enable_rdoq && !is_intra_bc);
 #endif
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    if (scs_ptr->static_config.enable_rdoq == DEFAULT) {
-        perform_rdoq = perform_rdoq && (EbBool)scs_ptr->static_config.enable_rdoq;
-        if (scs_ptr->static_config.encoder_bit_depth > 8 && pcs_ptr->hbd_mode_decision == 0)
-            perform_rdoq = EB_FALSE;
-    } else
-        perform_rdoq = (EbBool)scs_ptr->static_config.enable_rdoq;
+    // Shut rdoq if 10BIT and hbd_mode_decision 0
+    if (scs_ptr->static_config.encoder_bit_depth > 8 && pcs_ptr->hbd_mode_decision == 0)
+        perform_rdoq = EB_FALSE;
+
 #if FP_QUANT_BOTH_INTRA_INTER
-    if (perform_rdoq && md_context->rdoq_quantize_fp) {
+    if (perform_rdoq) {
 #else
-    if (perform_rdoq && md_context->rdoq_quantize_fp && !is_inter) {
+    if (perform_rdoq && !is_inter) {
 #endif
         if (bit_increment) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
@@ -1866,7 +1862,7 @@ int32_t av1_quantize_inv_quantize(
     }
 
     if (perform_rdoq && *eob != 0) {
-        // Perform Trellis
+        // Perform rdoq
         if (*eob != 0) {
             eb_av1_optimize_b(md_context,
                               txb_skip_context,

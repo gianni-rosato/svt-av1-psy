@@ -462,8 +462,6 @@ typedef struct PictureControlSet {
     EbBool adjust_min_qp_flag;
 
     EbEncMode enc_mode;
-    EbBool    intra_md_open_loop_flag;
-    EbBool    limit_intra;
 #if TILES_PARALLEL
     int32_t     cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo  wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];

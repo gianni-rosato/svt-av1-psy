@@ -186,12 +186,10 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **RestorationFilter** | -restoration-filtering | [0/1, -1 for default] | -1 | Enable restoration filtering , 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Mfmv** | -mfmv | [0/1, -1 for default] | -1 | Enable motion field motion vector, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **RedundantBlock** | -redundant-blk | [0/1, -1 for default] | -1 | Enable redundant block, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Trellis** | -trellis | [0/1, -1 for default] | -1 | Enable trellis quant coefficient optimization, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **SpatialSSEfl** | -spatial-sse-fl | [0/1, -1 for default] | -1 | Enable spatial sse full loop, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Subpel** | -subpel | [0/1, -1 for default] | -1 | Enable subpel, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **OverBoundryBlock** | -over-bndry-blk | [0/1, -1 for default] | -1 | Enable over boundary block mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **NewNearestCombInjection** | -new-nrst-near-comb | [0/1, -1 for default] | -1 | Enable new nearest near comb injection, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **nx4ParentMvInjection** | -nx4-4xn-mv-inject | [0/1, -1 for default] | -1 | Enable nx4 4xn parent mv injection, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **PruneUnipredMe** | -prune-unipred-me | [0/1, -1 for default] | -1 | Enable prune unipred at me, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **PruneRefRecPart** | -prune-ref-rec-part | [0/1, -1 for default] | -1 | Enable prune prune ref frame for rec partitions, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **NsqTable** | --nsq-table-use | [0/1, -1 for default] | -1 | Enable nsq table, 0 = OFF, 1 = ON, -1 = DEFAULT|
@@ -241,10 +239,10 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **SquareWeight** | -sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
 | **ChannelNumber** | -nch | [1 - 6] | 1 | Number of encode instances |
 | **StatReport** | -stat-report | [0 - 1] | 0 | When set to 1, calculate and display PSNR values |
-| **MDFastPruneClassThreshold** | -mds1p-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
-| **MDFastPruneCandThreshold** | -mds1p-cand-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |
-| **MDFullPruneClassThreshold** | -mds2p-class-th | 0 for off and any whole number percentage | 25 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 2 |
-| **MDFullPruneCandThreshold** | -mds2p-cand-th | 0 for off and any whole number percentage | 15 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 2 |
+| **MDS1PruneClassThreshold** | -mds-1-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
+| **MDS1PruneCandThreshold** | -mds-1-cand-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |
+| **MDS23PruneClassThreshold** | -mds-2-3-class-th | 0 for off and any whole number percentage | 25 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 2/3 |
+| **MDS23PruneCandThreshold** | -mds-2-3-cand-th | 0 for off and any whole number percentage | 15 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 2/3 |
 
 ## Appendix A Encoder Parameters
 

@@ -2222,12 +2222,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 #endif
 
     EbBool       dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
-    const EbBool is_intra_sb     = pcs_ptr->limit_intra ? EB_FALSE : EB_TRUE;
-
-    EbBool do_recon =
-        (EbBool)((pcs_ptr->limit_intra == 0 || is_intra_sb == 1) ||
-                 pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
-                 scs_ptr->static_config.recon_enabled || scs_ptr->static_config.stat_report);
 
     EntropyCoder *coeff_est_entropy_coder_ptr = pcs_ptr->coeff_est_entropy_coder_ptr;
 
@@ -2246,10 +2240,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                ->reference_picture;
     else // non ref pictures
         recon_buffer = is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
-
-    // DeriveZeroLumaCbf
-    EbBool high_intra_ref      = EB_FALSE;
-    EbBool check_zero_luma_cbf = EB_FALSE;
 
     if (is_16bit) {
         //SB128_TODO change 10bit SB creation
@@ -2355,22 +2345,6 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                  sb_origin_y,
                                  sb_width,
                                  sb_height);
-    }
-
-    if ((scs_ptr->input_resolution == INPUT_SIZE_4K_RANGE) &&
-        !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-            if (pcs_ptr->slice_type == B_SLICE) {
-                EbReferenceObject *ref_obj_l0 =
-                    (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-                EbReferenceObject *ref_obj_l1 =
-                    (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-                uint32_t const thresh = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 25 : 30;
-
-                if ((ref_obj_l0->tmp_layer_idx == 2 && ref_obj_l0->intra_coded_area > thresh) ||
-                    (ref_obj_l1->tmp_layer_idx == 2 && ref_obj_l1->intra_coded_area > thresh))
-                    high_intra_ref = EB_TRUE;
-            }
-            if (high_intra_ref == EB_FALSE) check_zero_luma_cbf = EB_TRUE;
     }
     context_ptr->intra_coded_area_sb[sb_addr] = 0;
     context_ptr->coded_area_sb                = 0;
@@ -3095,44 +3069,14 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                     //********************************
                     //        INTER
                     //********************************
-
-                    EbBool zero_luma_cbf_md = EB_FALSE;
-                    //EbBool doLumaMC = EB_TRUE;
-                    EbBool do_mv_pred = EB_TRUE;
-                    //if QP M and Segments are used, First Cu in SB row should have at least one coeff.
-                    EbBool is_first_blk_in_row = EB_FALSE;
-                    zero_luma_cbf_md           = (EbBool)(
-                        check_zero_luma_cbf &&
-                        ((&blk_ptr->prediction_unit_array[0])->merge_flag == EB_FALSE &&
-                         blk_ptr->block_has_coeff == 0 && is_first_blk_in_row == EB_FALSE));
-                    zero_luma_cbf_md = EB_FALSE;
-
-                    //Motion Compensation could be avoided in the case below
-                    EbBool do_mc = EB_TRUE;
-
                     // Perform Merge/Skip Decision if the mode coming from MD is merge. for the First CU in Row merge will remain as is.
                     if (blk_ptr->prediction_unit_array[0].merge_flag == EB_TRUE) {
-                        if (is_first_blk_in_row == EB_FALSE)
-                            is_blk_skip =
-                                md_context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost <=
-                                        md_context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost
-                                    ? 1
-                                    : 0;
+                        is_blk_skip =
+                            md_context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost <=
+                                    md_context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost
+                                ? 1
+                                : 0;
                     }
-
-                    //MC could be avoided in some cases below
-                    if (is_first_blk_in_row == EB_FALSE) {
-                        if (pcs_ptr->limit_intra && is_intra_sb == EB_FALSE) {
-                            if (is_blk_skip) {
-                                do_mc      = EB_FALSE;
-                                do_mv_pred = EB_FALSE;
-                            }
-                        }
-                    }
-
-                    do_mc = (EbBool)(do_recon | do_mc);
-
-                    do_mv_pred = (EbBool)(do_recon | do_mv_pred);
 
                     //IntMv  predmv[2];
                     enc_pass_av1_mv_pred(&sb_ptr->tile_info,
@@ -3169,7 +3113,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                             pu_ptr->mv[REF_LIST_1].mv_union;
 
                         // Inter Prediction
-                        if (do_mc && pu_ptr->motion_mode == WARPED_CAUSAL) {
+                        if (pu_ptr->motion_mode == WARPED_CAUSAL) {
 #if WARP_IMPROVEMENT
                             EbPictureBufferDesc             *ref_pic_list0;
                             EbPictureBufferDesc             *ref_pic_list1;
@@ -3215,7 +3159,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 EB_TRUE);
                         }
 
-                        if (do_mc && pu_ptr->motion_mode != WARPED_CAUSAL) {
+                        if (pu_ptr->motion_mode != WARPED_CAUSAL) {
                             EbPictureBufferDesc *ref_pic_list0;
                             EbPictureBufferDesc *ref_pic_list1;
 
@@ -3362,51 +3306,49 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                             &context_ptr->md_context->cr_txb_skip_context,
                                             &context_ptr->md_context->cr_dc_sign_context);
                             }
-                            if (!zero_luma_cbf_md)
-                                //inter mode  1
-                                av1_encode_loop_func_table[is_16bit](
-                                    pcs_ptr,
-                                    context_ptr,
-                                    sb_ptr,
-                                    txb_origin_x, //pic org
-                                    txb_origin_y,
-                                    cb_qp,
-                                    recon_buffer,
-                                    coeff_buffer_sb,
-                                    residual_buffer,
-                                    transform_buffer,
-                                    inverse_quant_buffer,
-                                    count_non_zero_coeffs,
-                                    context_ptr->blk_geom->has_uv && uv_pass
-                                        ? PICTURE_BUFFER_DESC_FULL_MASK
-                                        : PICTURE_BUFFER_DESC_LUMA_MASK,
-                                    eobs[context_ptr->txb_itr],
-                                    blk_plane);
+
+                            //inter mode  1
+                            av1_encode_loop_func_table[is_16bit](
+                                pcs_ptr,
+                                context_ptr,
+                                sb_ptr,
+                                txb_origin_x, //pic org
+                                txb_origin_y,
+                                cb_qp,
+                                recon_buffer,
+                                coeff_buffer_sb,
+                                residual_buffer,
+                                transform_buffer,
+                                inverse_quant_buffer,
+                                count_non_zero_coeffs,
+                                context_ptr->blk_geom->has_uv && uv_pass
+                                    ? PICTURE_BUFFER_DESC_FULL_MASK
+                                    : PICTURE_BUFFER_DESC_LUMA_MASK,
+                                eobs[context_ptr->txb_itr],
+                                blk_plane);
 
                             // SKIP the CBF zero mode for DC path. There are problems with cost calculations
                             {
                                 // Compute Tu distortion
-                                if (!zero_luma_cbf_md)
-
-                                    // LUMA DISTORTION
-                                    picture_full_distortion32_bits(
-                                        transform_buffer,
-                                        context_ptr->coded_area_sb,
-                                        0,
-                                        inverse_quant_buffer,
-                                        context_ptr->coded_area_sb,
-                                        0,
-                                        blk_geom->tx_width[blk_ptr->tx_depth][tu_it],
-                                        blk_geom->tx_height[blk_ptr->tx_depth][tu_it],
-                                        context_ptr->blk_geom->bwidth_uv,
-                                        context_ptr->blk_geom->bheight_uv,
-                                        y_tu_full_distortion,
-                                        y_tu_full_distortion,
-                                        y_tu_full_distortion,
-                                        eobs[context_ptr->txb_itr][0],
-                                        0,
-                                        0,
-                                        COMPONENT_LUMA);
+                                // LUMA DISTORTION
+                                picture_full_distortion32_bits(
+                                    transform_buffer,
+                                    context_ptr->coded_area_sb,
+                                    0,
+                                    inverse_quant_buffer,
+                                    context_ptr->coded_area_sb,
+                                    0,
+                                    blk_geom->tx_width[blk_ptr->tx_depth][tu_it],
+                                    blk_geom->tx_height[blk_ptr->tx_depth][tu_it],
+                                    context_ptr->blk_geom->bwidth_uv,
+                                    context_ptr->blk_geom->bheight_uv,
+                                    y_tu_full_distortion,
+                                    y_tu_full_distortion,
+                                    y_tu_full_distortion,
+                                    eobs[context_ptr->txb_itr][0],
+                                    0,
+                                    0,
+                                    COMPONENT_LUMA);
                                 TxSize tx_size =
                                     blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr];
                                 int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
@@ -3419,7 +3361,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 cb_txb_coeff_bits = 0;
                                 cr_txb_coeff_bits = 0;
 
-                                if (!zero_luma_cbf_md) {
+                                {
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                         context_ptr->md_context->candidate_buffer_ptr_array;
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3463,19 +3405,12 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 }
 
                                 // CBF Tu decision
-                                if (zero_luma_cbf_md == EB_FALSE)
+                                av1_encode_txb_calc_cost(context_ptr,
+                                                         count_non_zero_coeffs,
+                                                         y_tu_full_distortion,
+                                                         &y_txb_coeff_bits,
+                                                         component_mask);
 
-                                    av1_encode_txb_calc_cost(context_ptr,
-                                                             count_non_zero_coeffs,
-                                                             y_tu_full_distortion,
-                                                             &y_txb_coeff_bits,
-                                                             component_mask);
-
-                                else {
-                                    blk_ptr->txb_array[context_ptr->txb_itr].y_has_coeff = 0;
-                                    blk_ptr->txb_array[context_ptr->txb_itr].u_has_coeff = 0;
-                                    blk_ptr->txb_array[context_ptr->txb_itr].v_has_coeff = 0;
-                                }
                                 // Update count_non_zero_coeffs after CBF decision
                                 if (blk_ptr->txb_array[context_ptr->txb_itr].y_has_coeff ==
                                     EB_FALSE)
@@ -3639,12 +3574,10 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                     }
 
                     //Set Final CU data flags after skip/Merge decision.
-                    if (is_first_blk_in_row == EB_FALSE) {
-                        if (blk_ptr->prediction_unit_array[0].merge_flag == EB_TRUE) {
-                            blk_ptr->skip_flag = (is_blk_skip) ? EB_TRUE : EB_FALSE;
-                            blk_ptr->prediction_unit_array[0].merge_flag =
-                                (is_blk_skip) ? EB_FALSE : EB_TRUE;
-                        }
+                    if (blk_ptr->prediction_unit_array[0].merge_flag == EB_TRUE) {
+                        blk_ptr->skip_flag = (is_blk_skip) ? EB_TRUE : EB_FALSE;
+                        blk_ptr->prediction_unit_array[0].merge_flag =
+                            (is_blk_skip) ? EB_FALSE : EB_TRUE;
                     }
 
                     // Initialize the Transform Loop
@@ -3810,18 +3743,16 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                         }
 
                         //inter mode
-                        if (do_recon)
-
-                            av1_enc_gen_recon_func_ptr[is_16bit](
-                                context_ptr,
-                                txb_origin_x, //pic offset
-                                txb_origin_y,
-                                recon_buffer,
-                                inverse_quant_buffer,
-                                context_ptr->blk_geom->has_uv && uv_pass
-                                    ? PICTURE_BUFFER_DESC_FULL_MASK
-                                    : PICTURE_BUFFER_DESC_LUMA_MASK,
-                                eobs[context_ptr->txb_itr]);
+                        av1_enc_gen_recon_func_ptr[is_16bit](
+                            context_ptr,
+                            txb_origin_x, //pic offset
+                            txb_origin_y,
+                            recon_buffer,
+                            inverse_quant_buffer,
+                            context_ptr->blk_geom->has_uv && uv_pass
+                                ? PICTURE_BUFFER_DESC_FULL_MASK
+                                : PICTURE_BUFFER_DESC_LUMA_MASK,
+                            eobs[context_ptr->txb_itr]);
 
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
                             y_has_coeff |= blk_ptr->txb_array[context_ptr->txb_itr].y_has_coeff;
@@ -3944,22 +3875,20 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                     } // 2nd Partition Loop
 
                     // Update Recon Samples Neighbor Arrays -INTER-
-
-                    if (do_recon)
-                        encode_pass_update_recon_sample_neighbour_arrays(
-                            ep_luma_recon_neighbor_array,
-                            ep_cb_recon_neighbor_array,
-                            ep_cr_recon_neighbor_array,
-                            recon_buffer,
-                            context_ptr->blk_origin_x,
-                            context_ptr->blk_origin_y,
-                            context_ptr->blk_geom->bwidth,
-                            context_ptr->blk_geom->bheight,
-                            context_ptr->blk_geom->bwidth_uv,
-                            context_ptr->blk_geom->bheight_uv,
-                            context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK
-                                                          : PICTURE_BUFFER_DESC_LUMA_MASK,
-                            is_16bit);
+                    encode_pass_update_recon_sample_neighbour_arrays(
+                        ep_luma_recon_neighbor_array,
+                        ep_cb_recon_neighbor_array,
+                        ep_cr_recon_neighbor_array,
+                        recon_buffer,
+                        context_ptr->blk_origin_x,
+                        context_ptr->blk_origin_y,
+                        context_ptr->blk_geom->bwidth,
+                        context_ptr->blk_geom->bheight,
+                        context_ptr->blk_geom->bwidth_uv,
+                        context_ptr->blk_geom->bheight_uv,
+                        context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK
+                                                        : PICTURE_BUFFER_DESC_LUMA_MASK,
+                        is_16bit);
                     // Collect the referenced area per 64x64
                     if (scs_ptr->use_output_stat_file) {
                         if (blk_ptr->prediction_unit_array->ref_frame_index_l0 >= 0) {

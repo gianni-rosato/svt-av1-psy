@@ -46,9 +46,6 @@ typedef struct MeSbResults {
     uint8_t *     total_me_candidate_index;
     MeCandidate **me_candidate;
     MeCandidate * me_candidate_array;
-    uint8_t *     me_nsq_0; // 2 Number of reference lists
-    uint8_t *     me_nsq_1; // 2 Number of reference lists
-
     MvCandidate **me_mv_array;
     // [PU][LAST, LAST2, LAST3, GOLD, BWD, ALT2, ALT] if MRP Mode 0,
     // [PU][LAST, LAST2, BWD, ALT2] if MRP Mode 1,

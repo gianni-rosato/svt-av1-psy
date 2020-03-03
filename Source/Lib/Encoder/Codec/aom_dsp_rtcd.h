@@ -22,7 +22,7 @@
 #include "common_dsp_rtcd.h"
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
-# include "ml.h"
+
 #ifdef RTCD_C
 #define RTCD_EXTERN                //CHKN RTCD call in effect. declare the function pointers in  encHandle.
 #else
@@ -1045,11 +1045,8 @@ extern "C" {
     RTCD_EXTERN void(*avc_style_luma_interpolation_filter)(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32_t dst_stride, uint32_t pu_width, uint32_t pu_height, EbByte temp_buf, EbBool skip, uint32_t frac_pos, uint8_t fractional_position);
     RTCD_EXTERN uint64_t(*compute_mean_8x8)(uint8_t *input_samples, uint32_t input_stride, uint32_t input_area_width, uint32_t input_area_height);
     RTCD_EXTERN uint64_t(*compute_mean_square_values_8x8)(uint8_t *input_samples, uint32_t input_stride, uint32_t input_area_width, uint32_t input_area_height);
-     RTCD_EXTERN void(*compute_interm_var_four8x8)(uint8_t *input_samples, uint16_t input_stride, uint64_t *mean_of8x8_blocks, uint64_t *mean_of_squared8x8_blocks);
+    RTCD_EXTERN void(*compute_interm_var_four8x8)(uint8_t *input_samples, uint16_t input_stride, uint64_t *mean_of8x8_blocks, uint64_t *mean_of_squared8x8_blocks);
     RTCD_EXTERN uint32_t(*sad_16b_kernel)(uint16_t *src, uint32_t src_stride, uint16_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width);
-    void av1_nn_predict_c(const float *input_nodes, const NnConfig *const nn_config, int reduce_prec, float *const output);
-    void av1_nn_predict_sse3(const float *input_nodes, const NnConfig *const nn_config, int reduce_prec, float *const output);
-    RTCD_EXTERN void(*av1_nn_predict)(const float *input_nodes, const NnConfig *const nn_config, int reduce_prec, float *const output);
 
 #if RESTRUCTURE_SAD
     RTCD_EXTERN void (*pme_sad_loop_kernel)(uint8_t* src, uint32_t src_stride, uint8_t* ref, uint32_t ref_stride, uint32_t block_height, uint32_t block_width, uint32_t* best_sad, int16_t* best_mvx, int16_t* best_mvy, int16_t search_position_start_x, int16_t search_position_start_y, int16_t search_area_width, int16_t search_area_height, int16_t search_step, int16_t mvx, int16_t mvy);

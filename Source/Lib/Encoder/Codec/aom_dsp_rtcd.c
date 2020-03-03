@@ -693,9 +693,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
     if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
-    av1_nn_predict = av1_nn_predict_c;
-    if (flags & HAS_SSE3) av1_nn_predict = av1_nn_predict_sse3;
-
 #if RESTRUCTURE_SAD
     SET_AVX2(pme_sad_loop_kernel, pme_sad_loop_kernel_c, pme_sad_loop_kernel_avx2);
 #endif

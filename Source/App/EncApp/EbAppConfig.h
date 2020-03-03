@@ -249,10 +249,6 @@ typedef struct EbConfig {
     ****************************************/
     int enable_redundant_blk;
     /****************************************
-      * trellis quant coeff optimization
-     ****************************************/
-    int enable_trellis;
-    /****************************************
       * spatial sse in full loop
      ****************************************/
     int spatial_sse_fl;
@@ -268,10 +264,6 @@ typedef struct EbConfig {
       * new nearest comb injection
      ****************************************/
     int new_nearest_comb_inject;
-    /****************************************
-      * nx4 4xn parent motion vector injection
-     ****************************************/
-    int nx4_4xn_parent_mv_inject;
     /****************************************
       * prune unipred at me
      ****************************************/
@@ -453,10 +445,10 @@ typedef struct EbConfig {
     uint32_t sq_weight;
 
     // inter/intra class pruning costs before MD stage 1/2
-    uint64_t md_fast_cost_class_prune_th;
-    uint64_t md_fast_cost_cand_prune_th;
-    uint64_t md_full_cost_class_prune_th;
-    uint64_t md_full_cost_cand_prune_th;
+    uint64_t md_stage_1_class_prune_th;
+    uint64_t md_stage_1_cand_prune_th;
+    uint64_t md_stage_2_3_class_prune_th;
+    uint64_t md_stage_2_3_cand_prune_th;
 
     // prediction structure
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];

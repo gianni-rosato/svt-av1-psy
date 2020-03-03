@@ -82,9 +82,6 @@ static void me_sb_results_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->me_mv_array);
     EB_FREE_ARRAY(obj->me_candidate_array);
     EB_FREE_ARRAY(obj->total_me_candidate_index);
-
-    EB_FREE_ARRAY(obj->me_nsq_0);
-    EB_FREE_ARRAY(obj->me_nsq_1);
 }
 
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
@@ -118,10 +115,6 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks
         obj_ptr->me_mv_array[pu_index]               = obj_ptr->me_mv_array[0] + pu_index * count;
     }
     EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, max_number_of_blks_per_sb);
-
-    EB_MALLOC_ARRAY(obj_ptr->me_nsq_0, max_number_of_blks_per_sb);
-    EB_MALLOC_ARRAY(obj_ptr->me_nsq_1, max_number_of_blks_per_sb);
-
     return EB_ErrorNone;
 }
 

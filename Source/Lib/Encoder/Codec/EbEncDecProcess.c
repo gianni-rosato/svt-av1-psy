@@ -1747,24 +1747,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->blk_skip_decision = EB_FALSE;
 
-    // Derive Trellis Quant Coeff Optimization Flag
+    // Derive enable_rdoqFlag
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->trellis_quant_coeff_optimization = EB_FALSE;
+        context_ptr->enable_rdoq = EB_FALSE;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->trellis_quant_coeff_optimization = EB_FALSE;
-    else if (scs_ptr->static_config.enable_trellis == DEFAULT)
+        context_ptr->enable_rdoq = EB_FALSE;
+    else if (scs_ptr->static_config.enable_rdoq == DEFAULT)
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
             if (pcs_ptr->enc_mode <= ENC_M2)
-                context_ptr->trellis_quant_coeff_optimization = EB_TRUE;
+                context_ptr->enable_rdoq = EB_TRUE;
             else
-                context_ptr->trellis_quant_coeff_optimization = EB_FALSE;
+                context_ptr->enable_rdoq = EB_FALSE;
         else if (pcs_ptr->enc_mode <= ENC_M2)
-            context_ptr->trellis_quant_coeff_optimization = EB_TRUE;
+            context_ptr->enable_rdoq = EB_TRUE;
         else
-            context_ptr->trellis_quant_coeff_optimization = EB_FALSE;
+            context_ptr->enable_rdoq = EB_FALSE;
 
     else
-        context_ptr->trellis_quant_coeff_optimization = scs_ptr->static_config.enable_trellis;
+        context_ptr->enable_rdoq = scs_ptr->static_config.enable_rdoq;
 
     // Derive redundant block
     if (context_ptr->pd_pass == PD_PASS_0)
@@ -1832,66 +1832,66 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->md_exit_th = (pcs_ptr->parent_pcs_ptr->sc_content_detected) ? 10 : 18;
 
-    // md_fast_cost_cand_prune_th (for single candidate removal per class)
-    // Remove candidate if deviation to the best is higher than md_fast_cost_cand_prune_th
+    // md_stage_1_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than md_stage_1_cand_prune_th
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_fast_cost_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_fast_cost_cand_prune_th = 75;
+        context_ptr->md_stage_1_cand_prune_th = 75;
     else if (MR_MODE ||
              (pcs_ptr->enc_mode == ENC_M0 && (pcs_ptr->parent_pcs_ptr->sc_content_detected == 0)) ||
              scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-        context_ptr->md_fast_cost_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_fast_cost_cand_prune_th = scs_ptr->static_config.md_fast_cost_cand_prune_th;
+        context_ptr->md_stage_1_cand_prune_th = scs_ptr->static_config.md_stage_1_cand_prune_th;
     else
-        context_ptr->md_fast_cost_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_1_cand_prune_th = (uint64_t)~0;
 
-    // md_fast_cost_class_prune_th (for class removal)
+    // md_stage_1_class_prune_th (for class removal)
     // Remove class if deviation to the best higher than TH_C
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_fast_cost_class_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_fast_cost_class_prune_th = 100;
+        context_ptr->md_stage_1_class_prune_th = 100;
     else if (MR_MODE ||
              (pcs_ptr->enc_mode == ENC_M0 && (pcs_ptr->parent_pcs_ptr->sc_content_detected == 0)) ||
              scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-        context_ptr->md_fast_cost_class_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_fast_cost_class_prune_th = scs_ptr->static_config.md_fast_cost_class_prune_th;
+        context_ptr->md_stage_1_class_prune_th = scs_ptr->static_config.md_stage_1_class_prune_th;
     else
-        context_ptr->md_fast_cost_class_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
 
-    // md_full_cost_cand_prune_th (for single candidate removal per class)
-    // Remove candidate if deviation to the best is higher than md_full_cost_cand_prune_th
+    // md_stage_2_3_cand_prune_th (for single candidate removal per class)
+    // Remove candidate if deviation to the best is higher than md_stage_2_3_cand_prune_th
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_full_cost_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_2_3_cand_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_full_cost_cand_prune_th =
+        context_ptr->md_stage_2_3_cand_prune_th =
             scs_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 5 : 3;
     else if (MR_MODE || pcs_ptr->parent_pcs_ptr->sc_content_detected || pcs_ptr->enc_mode <= ENC_M0)
-        context_ptr->md_full_cost_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_2_3_cand_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M2)
-        context_ptr->md_full_cost_cand_prune_th =
+        context_ptr->md_stage_2_3_cand_prune_th =
             scs_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 15 : 12;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_full_cost_cand_prune_th =
+        context_ptr->md_stage_2_3_cand_prune_th =
             scs_ptr->input_resolution <= INPUT_SIZE_1080i_RANGE ? 5 : 3;
     else
-        context_ptr->md_full_cost_cand_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_2_3_cand_prune_th = (uint64_t)~0;
 
-    // md_full_cost_class_prune_th (for class removal)
-    // Remove class if deviation to the best is higher than md_full_cost_class_prune_th
+    // md_stage_2_3_class_prune_th (for class removal)
+    // Remove class if deviation to the best is higher than md_stage_2_3_class_prune_th
     if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->md_full_cost_class_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
     else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->md_full_cost_class_prune_th = 25;
+        context_ptr->md_stage_2_3_class_prune_th = 25;
     else if (MR_MODE)
-        context_ptr->md_full_cost_class_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        context_ptr->md_full_cost_class_prune_th = scs_ptr->static_config.md_full_cost_class_prune_th;
+        context_ptr->md_stage_2_3_class_prune_th = scs_ptr->static_config.md_stage_2_3_class_prune_th;
     else // to be tested for m5-m8
-        context_ptr->md_full_cost_class_prune_th = (uint64_t)~0;
+        context_ptr->md_stage_2_3_class_prune_th = (uint64_t)~0;
 
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
@@ -1919,20 +1919,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
 
     // Set pred ME full search area
     if (context_ptr->pd_pass == PD_PASS_0) {
-        context_ptr->full_pel_ref_window_width_th  = FULL_PEL_REF_WINDOW_WIDTH;
-        context_ptr->full_pel_ref_window_height_th = FULL_PEL_REF_WINDOW_HEIGHT;
+        context_ptr->pred_me_full_pel_search_width  = PRED_ME_FULL_PEL_SEARCH_WIDTH;
+        context_ptr->pred_me_full_pel_search_height = PRED_ME_FULL_PEL_SEARCH_HEIGHT;
     } else if (context_ptr->pd_pass == PD_PASS_1) {
-        context_ptr->full_pel_ref_window_width_th  = FULL_PEL_REF_WINDOW_WIDTH;
-        context_ptr->full_pel_ref_window_height_th = FULL_PEL_REF_WINDOW_HEIGHT;
+        context_ptr->pred_me_full_pel_search_width  = PRED_ME_FULL_PEL_SEARCH_WIDTH;
+        context_ptr->pred_me_full_pel_search_height = PRED_ME_FULL_PEL_SEARCH_HEIGHT;
     } else {
-        context_ptr->full_pel_ref_window_width_th =
+        context_ptr->pred_me_full_pel_search_width =
             (pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 && pcs_ptr->enc_mode == ENC_M0)
-                ? FULL_PEL_REF_WINDOW_WIDTH_EXTENDED
-                : FULL_PEL_REF_WINDOW_WIDTH;
-        context_ptr->full_pel_ref_window_height_th =
+                ? PRED_ME_FULL_PEL_SEARCH_WIDTH_EXTENDED
+                : PRED_ME_FULL_PEL_SEARCH_WIDTH;
+        context_ptr->pred_me_full_pel_search_height =
             (pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 && pcs_ptr->enc_mode == ENC_M0)
-                ? FULL_PEL_REF_WINDOW_HEIGHT_EXTENDED
-                : FULL_PEL_REF_WINDOW_HEIGHT;
+                ? PRED_ME_FULL_PEL_SEARCH_HEIGHT_EXTENDED
+                : PRED_ME_FULL_PEL_SEARCH_HEIGHT;
     }
 #if COMP_SIMILAR
     //comp_similar_mode
@@ -1974,14 +1974,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         context_ptr->coeff_based_nsq_cand_reduction = EB_FALSE;
     else
         context_ptr->coeff_based_nsq_cand_reduction = EB_TRUE;
-
-    // Set rdoq_quantize_fp @ MD
-    if (context_ptr->pd_pass == PD_PASS_0)
-        context_ptr->rdoq_quantize_fp = EB_FALSE;
-    else if (context_ptr->pd_pass == PD_PASS_1)
-        context_ptr->rdoq_quantize_fp = EB_FALSE;
-    else
-        context_ptr->rdoq_quantize_fp = (pcs_ptr->enc_mode <= ENC_M7) ? EB_TRUE : EB_FALSE;
 
     // Set pic_obmc_mode @ MD
     if (context_ptr->pd_pass == PD_PASS_0)

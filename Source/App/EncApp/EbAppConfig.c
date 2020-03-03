@@ -68,12 +68,10 @@
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
-#define TRELLIS_ENABLE_TOKEN "-trellis"
 #define SPATIAL_SSE_FL_TOKEN "-spatial-sse-fl"
 #define SUBPEL_TOKEN "-subpel"
 #define OVR_BNDRY_BLK_TOKEN "-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_TOKEN "-new-nrst-near-comb"
-#define NX4_4XN_MV_INJECT_TOKEN "-nx4-4xn-mv-inject"
 #define PRUNE_UNIPRED_ME_TOKEN "-prune-unipred-me"
 #define PRUNE_REF_REC_PART_TOKEN "-prune-ref-rec-part"
 #define NSQ_TABLE_TOKEN "-nsq-table-use"
@@ -159,10 +157,10 @@
 #define BUFFER_FILE_MAX_ARG_COUNT 320
 #define BUFFER_FILE_MAX_VAR_LEN 128
 
-#define MD_FAST_PRUNE_C_TH "-md-fast-class-th"
-#define MD_FAST_PRUNE_S_TH "-md-fast-cand-th"
-#define MD_FULL_PRUNE_C_TH "-md-full-class-th"
-#define MD_FULL_PRUNE_S_TH "-md-full-cand-th"
+#define MDS_1_PRUNE_C_TH "-mds-1-class-th"
+#define MDS_1_PRUNE_S_TH "-mds-1-cand-th"
+#define MDS_2_3_PRUNE_C_TH "-mds-2-3-class-th"
+#define MDS_2_3_PRUNE_S_TH "-mds-2-3-cand-th"
 
 /**********************************
  * Set Cfg Functions
@@ -323,9 +321,6 @@ static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
 static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
     cfg->enable_redundant_blk = strtol(value, NULL, 0);
 };
-static void set_enable_trellis_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_trellis = strtol(value, NULL, 0);
-};
 static void set_spatial_sse_fl_flag(const char *value, EbConfig *cfg) {
     cfg->spatial_sse_fl = strtol(value, NULL, 0);
 };
@@ -337,9 +332,6 @@ static void set_over_bndry_blk_flag(const char *value, EbConfig *cfg) {
 };
 static void set_new_nearest_comb_inject_flag(const char *value, EbConfig *cfg) {
     cfg->new_nearest_comb_inject = strtol(value, NULL, 0);
-};
-static void set_nx4_4xn_parent_mv_inject_flag(const char *value, EbConfig *cfg) {
-    cfg->nx4_4xn_parent_mv_inject = strtol(value, NULL, 0);
 };
 static void set_prune_unipred_me_flag(const char *value, EbConfig *cfg) {
     cfg->prune_unipred_me = strtol(value, NULL, 0);
@@ -593,21 +585,21 @@ static void set_square_weight(const char *value, EbConfig *cfg) {
     if (cfg->sq_weight == 0) cfg->sq_weight = (uint32_t)~0;
 }
 
-static void set_md_fast_cost_class_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_fast_cost_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_fast_cost_class_prune_th == 0) cfg->md_fast_cost_class_prune_th = (uint64_t)~0;
+static void set_md_stage_1_class_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_stage_1_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_1_class_prune_th == 0) cfg->md_stage_1_class_prune_th = (uint64_t)~0;
 }
-static void set_md_fast_cost_cand_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_fast_cost_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_fast_cost_cand_prune_th == 0) cfg->md_fast_cost_cand_prune_th = (uint64_t)~0;
+static void set_md_stage_1_cand_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_stage_1_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_1_cand_prune_th == 0) cfg->md_stage_1_cand_prune_th = (uint64_t)~0;
 }
-static void set_md_full_cost_class_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_full_cost_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_full_cost_class_prune_th == 0) cfg->md_full_cost_class_prune_th = (uint64_t)~0;
+static void set_md_stage_2_3_class_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_stage_2_3_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_2_3_class_prune_th == 0) cfg->md_stage_2_3_class_prune_th = (uint64_t)~0;
 }
-static void set_md_full_cost_cand_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_full_cost_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_full_cost_cand_prune_th == 0) cfg->md_full_cost_cand_prune_th = (uint64_t)~0;
+static void set_md_stage_2_3_cand_prune_th(const char *value, EbConfig *cfg) {
+    cfg->md_stage_2_3_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
+    if (cfg->md_stage_2_3_cand_prune_th == 0) cfg->md_stage_2_3_cand_prune_th = (uint64_t)~0;
 }
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
@@ -768,11 +760,6 @@ ConfigEntry config_entry_specific[] = {
      "block(0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_redundant_blk_flag},
     {SINGLE_INPUT,
-     TRELLIS_ENABLE_TOKEN,
-     "Disable trellis optimization of quantized coefficients (0: OFF 1: ON  2: ON for rd "
-     "search 3: ON for estimate yrd serch (default))",
-     set_enable_trellis_flag},
-    {SINGLE_INPUT,
      SPATIAL_SSE_FL_TOKEN,
      "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
      set_spatial_sse_fl_flag},
@@ -788,10 +775,6 @@ ConfigEntry config_entry_specific[] = {
      NEW_NEAREST_COMB_INJECT_TOKEN,
      "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
      set_new_nearest_comb_inject_flag},
-    {SINGLE_INPUT,
-     NX4_4XN_MV_INJECT_TOKEN,
-     "Enable nx4 4xn parent mv injection (0: OFF, 1: ON, -1: DEFAULT)",
-     set_nx4_4xn_parent_mv_inject_flag},
     {SINGLE_INPUT,
      PRUNE_UNIPRED_ME_TOKEN,
      "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
@@ -841,7 +824,6 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
     // RDOQ
     {SINGLE_INPUT, RDOQ_TOKEN, "Enable RDOQ (0: OFF, 1: ON, -1: DEFAULT)", set_enable_rdoq_flag},
-
     // Filter Intra
     {SINGLE_INPUT,
      FILTER_INTRA_TOKEN,
@@ -983,21 +965,21 @@ ConfigEntry config_entry_specific[] = {
     // --- end: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H and V shapes([75-100], default: 100)", set_square_weight},
     {SINGLE_INPUT,
-     MD_FAST_PRUNE_C_TH,
-     "Set MD fast prune class threshold[5-200]",
-     set_md_fast_cost_class_prune_th},
+     MDS_1_PRUNE_C_TH,
+     "Set MD Stage 1 prune class threshold[5-200]",
+     set_md_stage_1_class_prune_th},
     {SINGLE_INPUT,
-     MD_FAST_PRUNE_S_TH,
-     "Set MD fast prune candidate threshold[5,150]",
-     set_md_fast_cost_cand_prune_th},
+     MDS_1_PRUNE_S_TH,
+     "Set MD Stage 1 prune candidate threshold[5,150]",
+     set_md_stage_1_cand_prune_th},
     {SINGLE_INPUT,
-     MD_FULL_PRUNE_C_TH,
-     "Set MD full prune class threshold[5,100]",
-     set_md_full_cost_class_prune_th},
+     MDS_2_3_PRUNE_C_TH,
+     "Set MD Stage 2/3 prune class threshold[5,100]",
+     set_md_stage_2_3_class_prune_th},
     {SINGLE_INPUT,
-     MD_FULL_PRUNE_S_TH,
-     "Set MD full prune candidate threshold[5,50]",
-     set_md_full_cost_cand_prune_th},
+     MDS_2_3_PRUNE_S_TH,
+     "Set MD Stage 2/3 prune candidate threshold[5,50]",
+     set_md_stage_2_3_cand_prune_th},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1066,7 +1048,6 @@ ConfigEntry config_entry[] = {
 
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
-    {SINGLE_INPUT, TRELLIS_ENABLE_TOKEN, "Trellis", set_enable_trellis_flag},
     {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_fl_flag},
     {SINGLE_INPUT, SUBPEL_TOKEN, "Subpel", set_enable_sub_pel_flag},
     {SINGLE_INPUT, OVR_BNDRY_BLK_TOKEN, "OverBoundryBlock", set_over_bndry_blk_flag},
@@ -1074,10 +1055,6 @@ ConfigEntry config_entry[] = {
      NEW_NEAREST_COMB_INJECT_TOKEN,
      "NewNearestCombInjection",
      set_new_nearest_comb_inject_flag},
-    {SINGLE_INPUT,
-     NX4_4XN_MV_INJECT_TOKEN,
-     "nx4ParentMvInjection",
-     set_nx4_4xn_parent_mv_inject_flag},
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_TOKEN, "PruneUnipredMe", set_prune_unipred_me_flag},
     {SINGLE_INPUT, PRUNE_REF_REC_PART_TOKEN, "PruneRefRecPart", set_prune_ref_rec_part_flag},
     {SINGLE_INPUT, NSQ_TABLE_TOKEN, "NsqTable", set_nsq_table_flag},
@@ -1107,10 +1084,8 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
     // RDOQ
     {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_enable_rdoq_flag},
-
     // Filter Intra
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_enable_filter_intra_flag},
-
     // PREDICTIVE ME
     {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
     // BIPRED 3x3 INJECTION
@@ -1212,10 +1187,10 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
 
     {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
-    {SINGLE_INPUT, MD_FAST_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_fast_cost_class_prune_th},
-    {SINGLE_INPUT, MD_FAST_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_fast_cost_cand_prune_th},
-    {SINGLE_INPUT, MD_FULL_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_full_cost_class_prune_th},
-    {SINGLE_INPUT, MD_FULL_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_full_cost_cand_prune_th},
+    {SINGLE_INPUT, MDS_1_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_stage_1_class_prune_th},
+    {SINGLE_INPUT, MDS_1_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_stage_1_cand_prune_th},
+    {SINGLE_INPUT, MDS_2_3_PRUNE_C_TH, "MdFullPruneClassThreshold", set_md_stage_2_3_class_prune_th},
+    {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1253,12 +1228,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->inter_intra_compound                      = DEFAULT;
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
-    config_ptr->enable_trellis                            = DEFAULT;
     config_ptr->spatial_sse_fl                            = DEFAULT;
     config_ptr->enable_subpel                             = DEFAULT;
     config_ptr->over_bndry_blk                            = DEFAULT;
     config_ptr->new_nearest_comb_inject                   = DEFAULT;
-    config_ptr->nx4_4xn_parent_mv_inject                  = DEFAULT;
     config_ptr->prune_unipred_me                          = DEFAULT;
     config_ptr->prune_ref_rec_part                        = DEFAULT;
     config_ptr->nsq_table                                 = DEFAULT;
@@ -1320,10 +1293,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
 
     config_ptr->sq_weight                 = 100;
 
-    config_ptr->md_fast_cost_cand_prune_th  = 75;
-    config_ptr->md_fast_cost_class_prune_th = 100;
-    config_ptr->md_full_cost_cand_prune_th  = 15;
-    config_ptr->md_full_cost_class_prune_th = 25;
+    config_ptr->md_stage_1_cand_prune_th  = 75;
+    config_ptr->md_stage_1_class_prune_th = 100;
+    config_ptr->md_stage_2_3_cand_prune_th  = 15;
+    config_ptr->md_stage_2_3_class_prune_th = 25;
 
     return;
 }
