@@ -3537,13 +3537,18 @@ void write_sequence_header(SequenceControlSet *      scs_ptr /*Av1Comp *cpi*/,
     //    write_sb_size(seq_params, wb);
     eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_filter_intra);
 
-    scs_ptr->seq_header.enable_intra_edge_filter = 1;
+    if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
+        scs_ptr->seq_header.enable_intra_edge_filter = 1;
+    else
+        scs_ptr->seq_header.enable_intra_edge_filter = (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
+
     eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_intra_edge_filter);
 
     if (!scs_ptr->seq_header.reduced_still_picture_header) {
         eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_interintra_compound);
         eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_masked_compound);
-        eb_aom_wb_write_bit(wb, scs_ptr->static_config.enable_warped_motion);
+//        eb_aom_wb_write_bit(wb, scs_ptr->static_config.enable_warped_motion);
+        eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_warped_motion);
         eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_dual_filter);
 
         eb_aom_wb_write_bit(wb, scs_ptr->seq_header.order_hint_info.enable_order_hint);

@@ -232,28 +232,54 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Warped motion
     *
-    * Default is 0. */
-    EbBool enable_warped_motion;
+    * Default is -1. */
+    int enable_warped_motion;
 
     /* Global motion
     *
     * Default is 1. */
     EbBool enable_global_motion;
 
+    /* CDEF mode
+    *
+    * Default is -1. */
+    int cdef_mode;
+
     /* Restoration filtering
+    *  enable/disable
+    *  set Self-Guided (sg) mode
+    *  set Wiener (wn) mode
     *
     * Default is -1. */
     int enable_restoration_filtering;
+    int sg_filter_mode;
+    int wn_filter_mode;
 
     /* edge based skip angle intra
     *
     * Default is -1. */
     int edge_skp_angle_intra;
 
+    /* enable angle intra
+    *
+    * Default is -1. */
+    int intra_angle_delta;
+
     /* inter intra compound
     *
     * Default is -1. */
     int inter_intra_compound;
+
+    /* enable paeth
+    *
+    * Default is -1. */
+    int enable_paeth;
+
+    /* enable smooth
+    *
+    * Default is -1. */
+    int enable_smooth;
+
     /* combine class 12
     *
     * Default is -1. */
@@ -326,6 +352,11 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1 (AUTO) */
     int set_chroma_mode;
 
+    /* Disable chroma from luma (CFL)
+     *
+     * Default is -1 (auto) */
+    int disable_cfl_flag;
+
     /* OBMC
     *
     * Default is 1. */
@@ -340,6 +371,12 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 1. */
     EbBool enable_filter_intra;
+
+    /* Intra Edge Filter
+    *
+    * Default is -1. */
+    int enable_intra_edge_filter;
+
     /* Flag to enable the use of default ME HME parameters.
     *
     * Default is 1. */
@@ -434,6 +471,15 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0. */
     uint32_t screen_content_mode;
+
+    /* Flag to control intraBC mode
+    *  0      OFF
+    *  1      slow
+    *  2      faster
+    *  3      fastest
+    *
+    * Default is -1 (DEFAULT behavior). */
+    int intrabc_mode;
 
     /* Enable adaptive quantization within a frame using segmentation.
      *

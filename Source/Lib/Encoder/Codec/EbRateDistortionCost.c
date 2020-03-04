@@ -654,6 +654,11 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         EbBool is_monochrome_flag = EB_FALSE; // NM - is_monochrome_flag is harcoded to false.
         EbBool is_cfl_allowed     = (blk_geom->bwidth <= 32 && blk_geom->bheight <= 32) ? 1 : 0;
 
+        SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && is_cfl_allowed)
+            // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
+            is_cfl_allowed = (EbBool)!scs_ptr->static_config.disable_cfl_flag;
+
         uint8_t sub_sampling_x = 1; // NM - subsampling_x is harcoded to 1 for 420 chroma sampling.
         uint8_t sub_sampling_y = 1; // NM - subsampling_y is harcoded to 1 for 420 chroma sampling.
         // In fast loop CFL alphas are not know yet. The chroma mode bits are calculated based on DC Mode, and if CFL is the winner compared to CFL, ChromaBits are updated
@@ -1900,6 +1905,10 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             EbBool is_cfl_allowed =
                 (context_ptr->blk_geom->bwidth <= 32 && context_ptr->blk_geom->bheight <= 32) ? 1
                                                                                               : 0;
+            SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+            if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && is_cfl_allowed)
+                // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
+                is_cfl_allowed = (EbBool)!scs_ptr->static_config.disable_cfl_flag;
 
             chroma_rate +=
                 candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr

@@ -926,21 +926,25 @@ EbErrorType signal_derivation_multi_processes_oq(
     //TODO: we can force all frames in GOP with the same detection status of leading I frame.
     if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_content_detected;
-        if (pcs_ptr->enc_mode <= ENC_M5)
-            frm_hdr->allow_intrabc =  pcs_ptr->sc_content_detected;
-        else
-            frm_hdr->allow_intrabc =  0;
-
-        //IBC Modes:   0:Slow   1:Fast   2:Faster
-        if (pcs_ptr->enc_mode <= ENC_M5)
-            pcs_ptr->ibc_mode = 0;
-        else
-            pcs_ptr->ibc_mode = 1;
+        if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
+            //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
+            if (pcs_ptr->enc_mode <= ENC_M5) {
+                frm_hdr->allow_intrabc =  pcs_ptr->sc_content_detected;
+                pcs_ptr->ibc_mode = 1; // Slow
+            } else {
+                frm_hdr->allow_intrabc =  0;
+                pcs_ptr->ibc_mode = 2; // Faster
+            }
+        } else {
+            frm_hdr->allow_intrabc =  (uint8_t)(scs_ptr->static_config.intrabc_mode > 0);
+            pcs_ptr->ibc_mode = (uint8_t)scs_ptr->static_config.intrabc_mode;
+        }
     }
     else {
         //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_content_detected;
         frm_hdr->allow_intrabc = 0;
+        pcs_ptr->ibc_mode = 0; // OFF
     }
 
    /*Palette Modes:
@@ -979,6 +983,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         pcs_ptr->loop_filter_mode = 0;
+
     // CDEF Level                                   Settings
     // 0                                            OFF
     // 1                                            1 step refinement
@@ -987,16 +992,19 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            16 step refinement
     // 5                                            64 step refinement
     if (scs_ptr->seq_header.enable_cdef && frm_hdr->allow_intrabc == 0) {
-        if (sc_content_detected)
-            if (pcs_ptr->enc_mode <= ENC_M5)
-                pcs_ptr->cdef_filter_mode = 4;
+        if (scs_ptr->static_config.cdef_mode == DEFAULT) {
+            if (sc_content_detected)
+                if (pcs_ptr->enc_mode <= ENC_M5)
+                    pcs_ptr->cdef_filter_mode = 4;
+                else
+                    pcs_ptr->cdef_filter_mode = 0;
             else
-                pcs_ptr->cdef_filter_mode = 0;
-        else
-        if (pcs_ptr->enc_mode <= ENC_M7)
-            pcs_ptr->cdef_filter_mode = 5;
-        else
-            pcs_ptr->cdef_filter_mode = 2;
+                if (pcs_ptr->enc_mode <= ENC_M7)
+                    pcs_ptr->cdef_filter_mode = 5;
+                else
+                    pcs_ptr->cdef_filter_mode = 2;
+        } else
+            pcs_ptr->cdef_filter_mode = (int8_t)(scs_ptr->static_config.cdef_mode);
     }
     else
         pcs_ptr->cdef_filter_mode = 0;
@@ -1009,18 +1017,21 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            16 step refinement
 
     Av1Common* cm = pcs_ptr->av1_cm;
-    if (sc_content_detected)
-        if (pcs_ptr->enc_mode <= ENC_M5)
+    if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
+        if (sc_content_detected)
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                cm->sg_filter_mode = 4;
+            else
+                cm->sg_filter_mode = 0;
+        else if (pcs_ptr->enc_mode <= ENC_M2)
             cm->sg_filter_mode = 4;
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+            cm->sg_filter_mode = 3;
         else
-            cm->sg_filter_mode = 0;
+            cm->sg_filter_mode = 1;
+    }
     else
-        if (pcs_ptr->enc_mode <= ENC_M2)
-        cm->sg_filter_mode = 4;
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-        cm->sg_filter_mode = 3;
-    else
-        cm->sg_filter_mode = 1;
+        cm->sg_filter_mode = scs_ptr->static_config.sg_filter_mode;
 
     // WN Level                                     Settings
     // 0                                            OFF
@@ -1028,19 +1039,22 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 2                                            5-Tap luma/ 5-Tap chroma
     // 3                                            7-Tap luma/ 5-Tap chroma
 
-    if (sc_content_detected)
-        if (pcs_ptr->enc_mode <= ENC_M5)
+    if (scs_ptr->static_config.wn_filter_mode == DEFAULT) {
+        if (sc_content_detected)
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                cm->wn_filter_mode = 3;
+            else
+                cm->wn_filter_mode = 0;
+        else if (pcs_ptr->enc_mode <= ENC_M5)
             cm->wn_filter_mode = 3;
+        else if (pcs_ptr->enc_mode <= ENC_M7)
+            cm->wn_filter_mode = 2;
         else
             cm->wn_filter_mode = 0;
+    }
     else
+        cm->wn_filter_mode = scs_ptr->static_config.wn_filter_mode;
 
-    if (pcs_ptr->enc_mode <= ENC_M5)
-        cm->wn_filter_mode = 3;
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-        cm->wn_filter_mode = 2;
-    else
-        cm->wn_filter_mode = 0;
     // Intra prediction modes                       Settings
     // 0                                            FULL
     // 1                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4

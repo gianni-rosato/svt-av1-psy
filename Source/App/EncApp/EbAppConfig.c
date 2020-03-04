@@ -62,10 +62,16 @@
 #define FILM_GRAIN_TOKEN "-film-grain"
 #define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN "-dlf"
+#define CDEF_MODE_TOKEN "-cdef-mode"
 #define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
+#define SG_FILTER_MODE_TOKEN "-sg-filter-mode"
+#define WN_FILTER_MODE_TOKEN "-wn-filter-mode"
 #define CLASS_12_TOKEN "-class-12"
 #define EDGE_SKIP_ANGLE_INTRA_TOKEN "-intra-edge-skp"
+#define INTRA_ANGLE_DELTA_TOKEN "-intra-angle-delta"
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
+#define PAETH_TOKEN "-paeth"
+#define SMOOTH_TOKEN "-smooth"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
 #define SPATIAL_SSE_FL_TOKEN "-spatial-sse-fl"
@@ -84,6 +90,7 @@
 #define BIPRED_3x3_TOKEN "-bipred-3x3"
 #define COMPOUND_LEVEL_TOKEN "-compound"
 #define FILTER_INTRA_TOKEN "-filter-intra"
+#define INTRA_EDGE_FILTER_TOKEN "-intra-edge-filter"
 #define USE_DEFAULT_ME_HME_TOKEN "-use-default-me-hme"
 #define HME_ENABLE_TOKEN "-hme"
 #define HME_L0_ENABLE_TOKEN "-hme-l0"
@@ -103,6 +110,7 @@
 #define HME_LEVEL2_WIDTH "-hme-l2-w"
 #define HME_LEVEL2_HEIGHT "-hme-l2-h"
 #define SCREEN_CONTENT_TOKEN "-scm"
+#define INTRABC_MODE_TOKEN "-intrabc-mode"
 // --- start: ALTREF_FILTERING_SUPPORT
 #define ENABLE_ALTREFS "-enable-altrefs"
 #define ALTREF_STRENGTH "-altref-strength"
@@ -132,6 +140,7 @@
 
 #define SQ_WEIGHT_TOKEN "-sqw"
 #define CHROMA_MODE_TOKEN "-chroma-mode"
+#define DISABLE_CFL_TOKEN "-dcfl"
 
 #define SCENE_CHANGE_DETECTION_TOKEN "-scd"
 #define INJECTOR_TOKEN "-inj" // no Eval
@@ -298,13 +307,22 @@ static void set_disable_dlf_flag(const char *value, EbConfig *cfg) {
     cfg->disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_enable_local_warped_motion_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_warped_motion = (EbBool)strtoul(value, NULL, 0);
+    cfg->enable_warped_motion = strtol(value, NULL, 0);
 };
 static void set_enable_global_motion_flag(const char *value, EbConfig *cfg) {
     cfg->enable_global_motion = (EbBool)strtoul(value, NULL, 0);
 };
+static void set_cdef_mode(const char *value, EbConfig *cfg) {
+    cfg->cdef_mode = strtol(value, NULL, 0);
+};
 static void set_enable_restoration_filter_flag(const char *value, EbConfig *cfg) {
     cfg->enable_restoration_filtering = strtol(value, NULL, 0);
+};
+static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
+    cfg->sg_filter_mode = strtol(value, NULL, 0);
+};
+static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
+    cfg->wn_filter_mode = strtol(value, NULL, 0);
 };
 static void set_class_12_flag(const char *value, EbConfig *cfg) {
     cfg->combine_class_12 = strtol(value, NULL, 0);
@@ -312,8 +330,17 @@ static void set_class_12_flag(const char *value, EbConfig *cfg) {
 static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
     cfg->edge_skp_angle_intra = strtol(value, NULL, 0);
 };
+static void set_intra_angle_delta_flag(const char *value, EbConfig *cfg) {
+    cfg->intra_angle_delta = strtol(value, NULL, 0);
+};
 static void set_interintra_compound_flag(const char *value, EbConfig *cfg) {
     cfg->inter_intra_compound = strtol(value, NULL, 0);
+};
+static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
+    cfg->enable_paeth = strtol(value, NULL, 0);
+};
+static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
+    cfg->enable_smooth = strtol(value, NULL, 0);
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->enable_mfmv = strtol(value, NULL, 0);
@@ -348,6 +375,9 @@ static void set_frame_end_cdf_update_flag(const char *value, EbConfig *cfg) {
 static void set_chroma_mode(const char *value, EbConfig *cfg) {
     cfg->set_chroma_mode = strtol(value, NULL, 0);
 };
+static void set_disable_cfl_flag(const char *value, EbConfig *cfg) {
+    cfg->disable_cfl_flag = strtol(value, NULL, 0);
+};
 static void set_enable_obmc_flag(const char *value, EbConfig *cfg) {
     cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);
 };
@@ -366,6 +396,10 @@ static void set_compound_level_flag(const char *value, EbConfig *cfg) {
 static void set_enable_filter_intra_flag(const char *value, EbConfig *cfg) {
     cfg->enable_filter_intra = (EbBool)strtoul(value, NULL, 0);
 };
+static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) {
+    cfg->enable_intra_edge_filter = strtol(value, NULL, 0);
+};
+
 static void set_enable_hme_flag(const char *value, EbConfig *cfg) {
     cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
 };
@@ -458,6 +492,9 @@ static void set_hme_level_2_search_area_in_height_array(const char *value, EbCon
 };
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->screen_content_mode = strtoul(value, NULL, 0);
+};
+static void set_intrabc_mode(const char *value, EbConfig *cfg) {
+    cfg->intrabc_mode = strtol(value, NULL, 0);
 };
 // --- start: ALTREF_FILTERING_SUPPORT
 static void set_enable_altrefs(const char *value, EbConfig *cfg) {
@@ -745,11 +782,24 @@ ConfigEntry config_entry_specific[] = {
      LOOP_FILTER_DISABLE_TOKEN,
      "Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled)",
      set_disable_dlf_flag},
+    // CDEF
+    {SINGLE_INPUT,
+        CDEF_MODE_TOKEN, "CDEF Mode (0: OFF, 1-5: ON with 2,4,8,16,64 step refinement, -1: DEFAULT)",
+        set_cdef_mode},
     // RESTORATION
     {SINGLE_INPUT,
      RESTORATION_ENABLE_TOKEN,
      "Enable the loop restoration filter(0: OFF ,1: ON ,-1:DEFAULT)",
      set_enable_restoration_filter_flag},
+    {SINGLE_INPUT,
+        SG_FILTER_MODE_TOKEN,
+        "Self-guided filter mode (0:OFF, 1: step 0, 2: step 1, 3: step 4, 4: step 16, -1: DEFAULT)",
+        set_sg_filter_mode},
+    {SINGLE_INPUT,
+        WN_FILTER_MODE_TOKEN,
+        "Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: 7-Tap luma/ 7-Tap chroma, -1: DEFAULT)",
+        set_wn_filter_mode},
+
     {SINGLE_INPUT,
      MFMV_ENABLE_TOKEN,
      "Enable motion field motion vector( 0: OFF, 1: ON, -1: DEFAULT)",
@@ -794,10 +844,14 @@ ConfigEntry config_entry_specific[] = {
 
     // CHROMA
     {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
+    {SINGLE_INPUT,
+     DISABLE_CFL_TOKEN, "Set chroma from luma (CFL) flag (0: OFF, 1: ON, -1: DEFAULT)",
+     set_disable_cfl_flag},
+
     // LOCAL WARPED MOTION
     {SINGLE_INPUT,
      LOCAL_WARPED_ENABLE_TOKEN,
-     "Enable local warped motion (0: OFF, 1: ON [default])",
+     "Enable local warped motion (0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_local_warped_motion_flag},
     // GLOBAL MOTION
     {SINGLE_INPUT,
@@ -815,11 +869,26 @@ ConfigEntry config_entry_specific[] = {
      EDGE_SKIP_ANGLE_INTRA_TOKEN,
      "Enable intra edge filtering (0: OFF, 1: ON (default))",
      set_edge_skip_angle_intra_flag},
+    // INTRA ANGLE DELTA
+    {SINGLE_INPUT,
+        INTRA_ANGLE_DELTA_TOKEN,
+        "Enable intra angle delta filtering filtering (0: OFF, 1: ON (default))",
+        set_intra_angle_delta_flag},
     // INTER INTRA COMPOUND
     {SINGLE_INPUT,
      INTER_INTRA_COMPOUND_TOKEN,
      "Enable interintra compound (0: OFF, 1: ON (default))",
      set_interintra_compound_flag},
+    // PAETH
+    {SINGLE_INPUT,
+        PAETH_TOKEN,
+        "Enable paeth (0: OFF, 1: ON, -1: DEFAULT)",
+        set_enable_paeth_flag},
+    // SMOOTH
+    {SINGLE_INPUT,
+        SMOOTH_TOKEN,
+        "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
+        set_enable_smooth_flag},
     // OBMC
     {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
     // RDOQ
@@ -829,6 +898,12 @@ ConfigEntry config_entry_specific[] = {
      FILTER_INTRA_TOKEN,
      "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
      set_enable_filter_intra_flag},
+
+    // Edge Intra Filter
+    {SINGLE_INPUT,
+        INTRA_EDGE_FILTER_TOKEN,
+        "Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)",
+     set_enable_intra_edge_filter_flag},
 
     // PREDICTIVE ME
     {SINGLE_INPUT,
@@ -902,6 +977,10 @@ ConfigEntry config_entry_specific[] = {
      SCREEN_CONTENT_TOKEN,
      "Set screen content detection level([0-2], 2: DEFAULT)",
      set_screen_content_mode},
+    {SINGLE_INPUT,
+     INTRABC_MODE_TOKEN,
+      "Set intraBC mode (0: OFF, 1: ON slow, 2: ON faster, 3: ON fastest, -1: DEFAULT)",
+     set_intrabc_mode},
     {SINGLE_INPUT,
      HBD_MD_ENABLE_TOKEN,
      "Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON)",
@@ -1040,11 +1119,13 @@ ConfigEntry config_entry[] = {
     // DLF
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", set_disable_dlf_flag},
 
+    // CDEF
+    {SINGLE_INPUT, CDEF_MODE_TOKEN, "CDEFMode", set_cdef_mode},
+
     // RESTORATION
-    {SINGLE_INPUT,
-     RESTORATION_ENABLE_TOKEN,
-     "RestorationFilter",
-     set_enable_restoration_filter_flag},
+    {SINGLE_INPUT, RESTORATION_ENABLE_TOKEN, "RestorationFilter", set_enable_restoration_filter_flag},
+    {SINGLE_INPUT, SG_FILTER_MODE_TOKEN, "SelfGuidedFilterMode", set_sg_filter_mode},
+    {SINGLE_INPUT, WN_FILTER_MODE_TOKEN, "WienerFilterMode", set_wn_filter_mode},
 
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
@@ -1062,12 +1143,11 @@ ConfigEntry config_entry[] = {
 
     // CHROMA
     {SINGLE_INPUT, CHROMA_MODE_TOKEN, "ChromaMode", set_chroma_mode},
+    {SINGLE_INPUT, DISABLE_CFL_TOKEN, "DisableCFL", set_disable_cfl_flag},
 
     // LOCAL WARPED MOTION
     {SINGLE_INPUT,
-     LOCAL_WARPED_ENABLE_TOKEN,
-     "LocalWarpedMotion",
-     set_enable_local_warped_motion_flag},
+     LOCAL_WARPED_ENABLE_TOKEN, "LocalWarpedMotion", set_enable_local_warped_motion_flag},
     // GLOBAL MOTION
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
 
@@ -1078,14 +1158,28 @@ ConfigEntry config_entry[] = {
      EDGE_SKIP_ANGLE_INTRA_TOKEN,
      "EdgeSkipAngleIntra",
      set_edge_skip_angle_intra_flag},
+    // INTRA ANGLE DELTA
+    {SINGLE_INPUT,
+        INTRA_ANGLE_DELTA_TOKEN,
+        "IntraAngleDelta",
+        set_intra_angle_delta_flag},
+
     // INTER INTRA COMPOUND
     {SINGLE_INPUT, INTER_INTRA_COMPOUND_TOKEN, "InterIntraCompound", set_interintra_compound_flag},
+    // PAETH
+    {SINGLE_INPUT, PAETH_TOKEN, "Paeth", set_enable_paeth_flag},
+    // SMOOTH
+    {SINGLE_INPUT, SMOOTH_TOKEN, "Smooth", set_enable_smooth_flag},
     // OBMC
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
     // RDOQ
     {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_enable_rdoq_flag},
     // Filter Intra
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_enable_filter_intra_flag},
+
+    // Edge Intra Filter
+    {SINGLE_INPUT, INTRA_EDGE_FILTER_TOKEN, "IntraEdgeFilter", set_enable_intra_edge_filter_flag},
+
     // PREDICTIVE ME
     {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
     // BIPRED 3x3 INJECTION
@@ -1122,6 +1216,7 @@ ConfigEntry config_entry[] = {
      set_cfg_hme_level_0_total_search_area_height},
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
+    {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
     {SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", set_enable_hbd_mode_decision},
     {SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", set_enable_palette},
     {SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", set_enable_olpd_refinement},
@@ -1222,10 +1317,17 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hierarchical_levels                       = 4;
     config_ptr->pred_structure                            = 2;
     config_ptr->enable_global_motion                      = EB_TRUE;
+    config_ptr->enable_warped_motion                      = DEFAULT;
+    config_ptr->cdef_mode                                 = DEFAULT;
     config_ptr->enable_restoration_filtering              = DEFAULT;
+    config_ptr->sg_filter_mode                            = DEFAULT;
+    config_ptr->wn_filter_mode                            = DEFAULT;
     config_ptr->combine_class_12                          = DEFAULT;
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
+    config_ptr->intra_angle_delta                         = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;
+    config_ptr->enable_paeth                              = DEFAULT;
+    config_ptr->enable_smooth                             = DEFAULT;
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->spatial_sse_fl                            = DEFAULT;
@@ -1237,12 +1339,14 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->nsq_table                                 = DEFAULT;
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
+    config_ptr->disable_cfl_flag                          = DEFAULT;
     config_ptr->enable_obmc                               = EB_TRUE;
     config_ptr->enable_rdoq                               = DEFAULT;
     config_ptr->pred_me                                   = DEFAULT;
     config_ptr->bipred_3x3_inject                         = DEFAULT;
     config_ptr->compound_level                            = DEFAULT;
     config_ptr->enable_filter_intra                       = EB_TRUE;
+    config_ptr->enable_intra_edge_filter                  = DEFAULT;
     config_ptr->use_default_me_hme                        = EB_TRUE;
     config_ptr->enable_hme_flag                           = EB_TRUE;
     config_ptr->enable_hme_level0_flag                    = EB_TRUE;
@@ -1265,6 +1369,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
     config_ptr->screen_content_mode                       = 0;
+    config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->enable_hbd_mode_decision                  = 2;
     config_ptr->enable_palette                            = -1;
     config_ptr->olpd_refinement                           = -1;

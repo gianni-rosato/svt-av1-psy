@@ -171,6 +171,9 @@ typedef struct SeqHeader {
     /*!< Specifies whether the intra edge filtering process should be enabled */
     uint8_t enable_intra_edge_filter;
 
+    /*!< Specifies whether the intra angle delta filtering process should be enabled */
+    uint8_t enable_intra_angle_delta_filter;
+
     /*!<1: Specifies that the mode info for inter blocks may contain the syntax
      *     element interintra.
      *  0: Specifies that the syntax element interintra will not be present */

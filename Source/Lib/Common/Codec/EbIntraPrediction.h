@@ -301,7 +301,7 @@ static INLINE int get_palette_bsize_ctx(BlockSize bsize) {
     return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
 }
 
-static INLINE EbBool av1_use_angle_delta(BlockSize bsize) { return bsize >= BLOCK_8X8; }
+static INLINE EbBool av1_use_angle_delta(BlockSize bsize, uint8_t enable_angle_delta) { return (enable_angle_delta ? bsize >= BLOCK_8X8 : (EbBool)enable_angle_delta); }
 
 #ifdef __cplusplus
 }

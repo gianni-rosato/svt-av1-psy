@@ -2064,20 +2064,21 @@ void copy_api_from_app(
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
 
     // Local Warped Motion
-    scs_ptr->static_config.enable_warped_motion = EB_TRUE;
+    scs_ptr->static_config.enable_warped_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_warped_motion;
 
     // Global motion
     scs_ptr->static_config.enable_global_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_global_motion;
 
+    // CDEF
+    scs_ptr->static_config.cdef_mode = ((EbSvtAv1EncConfiguration*)config_struct)->cdef_mode;
+
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
+    scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
+    scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
 
     //combine class 12
     scs_ptr->static_config.combine_class_12             = ((EbSvtAv1EncConfiguration*)config_struct)->combine_class_12;
-    // edge skip angle intra
-    scs_ptr->static_config.edge_skp_angle_intra         = ((EbSvtAv1EncConfiguration*)config_struct)->edge_skp_angle_intra;
-    // inter intra compoound
-    scs_ptr->static_config.inter_intra_compound         = ((EbSvtAv1EncConfiguration*)config_struct)->inter_intra_compound;
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
     // redundant block
@@ -2092,6 +2093,12 @@ void copy_api_from_app(
     scs_ptr->static_config.new_nearest_comb_inject      = ((EbSvtAv1EncConfiguration*)config_struct)->new_nearest_comb_inject;
     // prune unipred at me
     scs_ptr->static_config.prune_unipred_me             = ((EbSvtAv1EncConfiguration*)config_struct)->prune_unipred_me;
+    // edge skip angle intra
+    scs_ptr->static_config.edge_skp_angle_intra         = ((EbSvtAv1EncConfiguration*)config_struct)->edge_skp_angle_intra;
+    // intra angle delta
+    scs_ptr->static_config.intra_angle_delta            = ((EbSvtAv1EncConfiguration*)config_struct)->intra_angle_delta;
+    // inter intra compoound
+    scs_ptr->static_config.inter_intra_compound         = ((EbSvtAv1EncConfiguration*)config_struct)->inter_intra_compound;
     //prune ref frame for rec partitions
     scs_ptr->static_config.prune_ref_rec_part           = ((EbSvtAv1EncConfiguration*)config_struct)->prune_ref_rec_part;
     // NSQ table
@@ -2101,6 +2108,9 @@ void copy_api_from_app(
 
     // Chroma mode
     scs_ptr->static_config.set_chroma_mode = ((EbSvtAv1EncConfiguration*)config_struct)->set_chroma_mode;
+
+    // Chroma mode
+    scs_ptr->static_config.disable_cfl_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_cfl_flag;
 
     // OBMC
     scs_ptr->static_config.enable_obmc = ((EbSvtAv1EncConfiguration*)config_struct)->enable_obmc;
@@ -2115,8 +2125,14 @@ void copy_api_from_app(
     // Compound mode
     scs_ptr->static_config.compound_level = ((EbSvtAv1EncConfiguration*)config_struct)->compound_level;
 
+    scs_ptr->static_config.enable_paeth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_paeth;
+    scs_ptr->static_config.enable_smooth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_smooth;
+
     // Filter intra prediction
     scs_ptr->static_config.enable_filter_intra = ((EbSvtAv1EncConfiguration*)config_struct)->enable_filter_intra;
+
+    // Intra Edge Filter
+    scs_ptr->static_config.enable_intra_edge_filter = ((EbSvtAv1EncConfiguration*)config_struct)->enable_intra_edge_filter;
 
     // ME Tools
     scs_ptr->static_config.use_default_me_hme = ((EbSvtAv1EncConfiguration*)config_struct)->use_default_me_hme;
@@ -2201,6 +2217,8 @@ void copy_api_from_app(
     // Thresholds
     scs_ptr->static_config.high_dynamic_range_input = ((EbSvtAv1EncConfiguration*)config_struct)->high_dynamic_range_input;
     scs_ptr->static_config.screen_content_mode = ((EbSvtAv1EncConfiguration*)config_struct)->screen_content_mode;
+
+    scs_ptr->static_config.intrabc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->intrabc_mode;
 
     // Annex A parameters
     scs_ptr->static_config.profile = ((EbSvtAv1EncConfiguration*)config_struct)->profile;
@@ -2546,6 +2564,13 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+
+    // IntraBC
+    if (config->intrabc_mode > 3 || config->intrabc_mode < -1) {
+        SVT_LOG( "Error instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n", channel_number + 1, config->intrabc_mode);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (scs_ptr->static_config.enable_adaptive_quantization > 2) {
         SVT_LOG("Error instance %u : Invalid enable_adaptive_quantization. enable_adaptive_quantization must be [0-2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2617,8 +2642,8 @@ static EbErrorType verify_settings(
     }
 
     // Local Warped Motion
-    if (config->enable_warped_motion != 0 && config->enable_warped_motion != 1) {
-      SVT_LOG("Error instance %u: Invalid warped motion flag [0 - 1], your input: %d\n", channel_number + 1, config->enable_warped_motion);
+    if (config->enable_warped_motion != 0 && config->enable_warped_motion != 1 && config->enable_warped_motion != -1) {
+      SVT_LOG("Error instance %u: Invalid warped motion flag [0/1, -1], your input: %d\n", channel_number + 1, config->enable_warped_motion);
       return_error = EB_ErrorBadParameter;
     }
 
@@ -2638,6 +2663,12 @@ static EbErrorType verify_settings(
     if (config->enable_filter_intra != 0 && config->enable_filter_intra != 1) {
       SVT_LOG("Error instance %u: Invalid Filter Intra flag [0 - 1], your input: %d\n", channel_number + 1, config->enable_filter_intra);
       return_error = EB_ErrorBadParameter;
+    }
+
+    // Intra Edge Filter
+    if (config->enable_intra_edge_filter != 0 && config->enable_intra_edge_filter != 1 && config->enable_intra_edge_filter != -1) {
+        SVT_LOG("Error instance %u: Invalid Filter Intra flag [0/1, -1], your input: %d\n", channel_number + 1, config->enable_intra_edge_filter);
+        return_error = EB_ErrorBadParameter;
     }
 
     // HBD mode decision
@@ -2664,10 +2695,32 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
+    // Disable chroma from luma (CFL)
+    if (config->disable_cfl_flag != 0 && config->disable_cfl_flag != 1 && config->disable_cfl_flag != -1) {
+        SVT_LOG( "Error instance %u: Invalid CFL flag [0/1, -1], your input: %i\n", channel_number + 1, config->disable_cfl_flag);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    // CDEF
+    if (config->cdef_mode > 5 || config->cdef_mode < -1) {
+        SVT_LOG("Error instance %u: Invalid CDEF mode [0 - 5, -1 for auto], your input: %d\n", channel_number + 1, config->cdef_mode);
+        return_error = EB_ErrorBadParameter;
+    }
+
     // Restoration Filtering
     if (config->enable_restoration_filtering != 0 && config->enable_restoration_filtering != 1 && config->enable_restoration_filtering != -1) {
       SVT_LOG("Error instance %u: Invalid restoration flag [0 - 1, -1 for auto], your input: %d\n", channel_number + 1, config->enable_restoration_filtering);
       return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->sg_filter_mode > 4 || config->sg_filter_mode < -1) {
+        SVT_LOG("Error instance %u: Invalid self-guided filter mode [0 - 4, -1 for auto], your input: %d\n", channel_number + 1, config->sg_filter_mode);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->wn_filter_mode > 3 || config->wn_filter_mode < -1) {
+        SVT_LOG("Error instance %u: Invalid Wiener filter mode [0 - 3, -1 for auto], your input: %d\n", channel_number + 1, config->wn_filter_mode);
+        return_error = EB_ErrorBadParameter;
     }
 
     if (config->pred_me > 5 || config->pred_me < -1) {
@@ -2695,9 +2748,24 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
+    if (config->intra_angle_delta != 0 && config->intra_angle_delta != 1 && config->intra_angle_delta != -1) {
+        SVT_LOG("Error instance %u: Invalid Enable intra angle delta flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->intra_angle_delta);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->inter_intra_compound != 0 && config->inter_intra_compound != 1 && config->inter_intra_compound != -1) {
       SVT_LOG("Error instance %u: Invalid Inter Intra Compound flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->inter_intra_compound);
       return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->enable_paeth != 0 && config->enable_paeth != 1 && config->enable_paeth != -1) {
+        SVT_LOG("Error instance %u: Invalid Paeth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_paeth);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->enable_smooth != 0 && config->enable_smooth != 1 && config->enable_smooth != -1) {
+        SVT_LOG("Error instance %u: Invalid Smooth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_smooth);
+        return_error = EB_ErrorBadParameter;
     }
 
     if (config->enable_mfmv != 0 && config->enable_mfmv != 1 && config->enable_mfmv != -1) {
@@ -2871,12 +2939,18 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->hierarchical_levels = 4;
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
     config_ptr->disable_dlf_flag = EB_FALSE;
-    config_ptr->enable_warped_motion = EB_TRUE;
+    config_ptr->enable_warped_motion = DEFAULT;
     config_ptr->enable_global_motion = EB_TRUE;
+    config_ptr->cdef_mode = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
+    config_ptr->sg_filter_mode = DEFAULT;
+    config_ptr->wn_filter_mode = DEFAULT;
     config_ptr->edge_skp_angle_intra = DEFAULT;
+    config_ptr->intra_angle_delta = DEFAULT;
     config_ptr->combine_class_12 = DEFAULT;
     config_ptr->inter_intra_compound = DEFAULT;
+    config_ptr->enable_paeth = DEFAULT;
+    config_ptr->enable_smooth = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
     config_ptr->enable_redundant_blk = DEFAULT;
     config_ptr->spatial_sse_fl = DEFAULT;
@@ -2888,12 +2962,14 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->nsq_table = DEFAULT;
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->set_chroma_mode = DEFAULT;
+    config_ptr->disable_cfl_flag = DEFAULT;
     config_ptr->enable_obmc = EB_TRUE;
     config_ptr->enable_rdoq = DEFAULT;
     config_ptr->pred_me = DEFAULT;
     config_ptr->bipred_3x3_inject = DEFAULT;
     config_ptr->compound_level = DEFAULT;
     config_ptr->enable_filter_intra = EB_TRUE;
+    config_ptr->enable_intra_edge_filter = DEFAULT;
     config_ptr->ext_block_flag = EB_FALSE;
     config_ptr->use_default_me_hme = EB_TRUE;
     config_ptr->enable_hme_flag = EB_TRUE;
@@ -2928,6 +3004,8 @@ EbErrorType eb_svt_enc_init_parameter(
 
     config_ptr->high_dynamic_range_input = 0;
     config_ptr->screen_content_mode = 0;
+
+    config_ptr->intrabc_mode = DEFAULT;
 
     // Annex A parameters
     config_ptr->profile = 0;

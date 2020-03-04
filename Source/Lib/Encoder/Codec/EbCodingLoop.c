@@ -2435,6 +2435,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                      context_ptr->blk_geom->bheight == 4)
                         ? EB_TRUE
                         : EB_FALSE;
+
+                if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+                    // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
+                    disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+
                 // Evaluate cfl @ EP if applicable, and not done @ MD
                 context_ptr->evaluate_cfl_ep =
                     (disable_cfl_flag == EB_FALSE &&

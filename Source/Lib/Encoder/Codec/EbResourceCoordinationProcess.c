@@ -177,6 +177,11 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
         tf_enable_hme_level2_flag[0][input_resolution][hme_me_level] ||
         tf_enable_hme_level2_flag[1][input_resolution][hme_me_level];
 
+    if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
+        scs_ptr->seq_header.enable_intra_edge_filter = 1;
+    else
+        scs_ptr->seq_header.enable_intra_edge_filter = (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
+
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
         if (pcs_ptr->enc_mode >= ENC_M8)
             scs_ptr->seq_header.enable_restoration = 0;
@@ -186,7 +191,18 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
 
+    if (scs_ptr->static_config.cdef_mode == DEFAULT)
+        scs_ptr->seq_header.enable_cdef = 1;
+    else
+        scs_ptr->seq_header.enable_cdef = (uint8_t)(scs_ptr->static_config.cdef_mode>0);
+
     scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M6) ? 0 : 1;
+
+    if (scs_ptr->static_config.enable_warped_motion == DEFAULT) {
+        scs_ptr->seq_header.enable_warped_motion = 1;
+    } else
+        scs_ptr->seq_header.enable_warped_motion = (uint8_t)scs_ptr->static_config.enable_warped_motion;
+
     return return_error;
 }
 

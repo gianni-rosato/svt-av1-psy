@@ -106,7 +106,7 @@ The Intra block copy algorithm is enabled only when screen content is
 detected. Alternatively, there is a manual mode where the user can
 configure the encoder to enable or disable IBC via –scm 0/1 in the
 encoder command line instruction. With -scm 1, IBC will be used
-regardless of the value of the SC detector.
+regardless of the value of the SC detector. Command line option `-intrabc-mode` allows to specify intraBC mode as per table below.
 
 The control flags associated with the IBC feature are listed in Table 1
 below.
@@ -116,7 +116,8 @@ below.
 |**Flag**|**Level(Sequence/Picture)**|**Description**|
 |--- |--- |--- |
 |-scm|Sequence|Command line token. 0: No IBC, 1: IBC ON 2:Auto mode (detector based)|
-|ibc_mode|Picture|Controls the complexity-quality tradeoff of the feature. 0: Slow mode, 1: Faster, 2: Fastest|
+|-intrabc-mode|Configuration|To specify intraBC mode on command line. 0: OFF, 1-3: IBC ON with complexity as below, -1: Default behavior|
+|ibc_mode|Picture|Controls the complexity-quality tradeoff of the feature. 0: OFF, 1: Slow mode, 2: Faster, 3: Fastest|
 |allow_intrabc|Picture|For intra pictures and for encoder presets 0 to 5, allow_intrabc setting is the same as the sc_content_detected setting; otherwise, it is set to 0.|
 
 ## 3.  Optimization of the algorithm
@@ -129,9 +130,10 @@ in Table 2 below.
 
 | **ibc\_mode** | **Description**                                                                                                 |
 | ------------- | --------------------------------------------------------------------------------------------------------------- |
-| 0             | Slow mode.                                                                                                  |
-| 1             | Fast mode. A more relaxed threshold is used to enable an early exit in the DV search for Nx4 or 4xN blocks. |
-| 2             | Faster mode. Only Above search area is considered in the search algorithm                                   |
+| 0             | OFF                                                                                                  |
+| 1             | Slow mode.                                                                                                  |
+| 2             | Fast mode. A more relaxed threshold is used to enable an early exit in the DV search for Nx4 or 4xN blocks. |
+| 3             | Faster mode. Only Above search area is considered in the search algorithm                                   |
 
 The settings for ```ibc_mode``` are a function of the encoder preset and
 are given in Table 3 below.
@@ -140,8 +142,8 @@ are given in Table 3 below.
 
 | **Encoder preset (enc\_mode)** | **ibc\_mode** |
 | ------------------------------ | ------------- |
-| 0 to 2                         | 0        |
-| 3 to 8                         | 1        |
+| 0 to 2                         | 1        |
+| 3 to 8                         | 2        |
 
 ## 4.  Signaling
 

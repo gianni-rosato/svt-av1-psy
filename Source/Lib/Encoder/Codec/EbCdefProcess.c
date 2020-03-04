@@ -228,7 +228,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                             ysize,
                             xsize);
                 gi_step  = get_cdef_gi_step(ppcs->cdef_filter_mode);
-                mid_gi   = ppcs->cdf_ref_frame_strenght;
+                mid_gi   = ppcs->cdf_ref_frame_strength;
                 start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_filter_mode == 1
                                ? (AOMMAX(0, mid_gi - gi_step))
                                : 0;
@@ -430,7 +430,7 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                              ysize,
                              xsize);
                 gi_step  = get_cdef_gi_step(ppcs->cdef_filter_mode);
-                mid_gi   = ppcs->cdf_ref_frame_strenght;
+                mid_gi   = ppcs->cdf_ref_frame_strength;
                 start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_filter_mode == 1
                                ? (AOMMAX(0, mid_gi - gi_step))
                                : 0;

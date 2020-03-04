@@ -183,7 +183,10 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
 | **LookAheadDistance** | -lad | [0 - 120] | 33 | When Rate Control is set to 1 it&#39;s best to set this parameter to be equal to the Intra period value (such is the default set by the encoder) [this value is capped by the encoder to its maximum need e.g. 33 for CQP, 2*fps for rate control] |
 | **LoopFilterDisable** | -dlf | [0-1, 0 for default] | 0 | Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled) |
+| **CDEFMode** | -cdef-mode | [0-5, -1 for default] | -1 | CDEF Mode, 0: OFF, 1-5: ON with 2,4,8,16,64 step refinement, -1: DEFAULT|
 | **RestorationFilter** | -restoration-filtering | [0/1, -1 for default] | -1 | Enable restoration filtering , 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **SelfGuidedFilterMode** | -sg-filter-mode | [0-4,  -1 for default] | -1 | Self-guided filter mode (0:OFF, 1: step 0, 2: step 1, 3: step 4, 4: step 16, -1: DEFAULT)|
+| **WienerFilterMode** | -wn-filter-mode | [0-3,  -1 for default] | -1 | Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: 7-Tap luma/ 7-Tap chroma, -1: DEFAULT)|
 | **Mfmv** | -mfmv | [0/1, -1 for default] | -1 | Enable motion field motion vector, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **RedundantBlock** | -redundant-blk | [0/1, -1 for default] | -1 | Enable redundant block, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **SpatialSSEfl** | -spatial-sse-fl | [0/1, -1 for default] | -1 | Enable spatial sse full loop, 0 = OFF, 1 = ON, -1 = DEFAULT|
@@ -195,11 +198,16 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **NsqTable** | --nsq-table-use | [0/1, -1 for default] | -1 | Enable nsq table, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **FrameEndCdfUpdate** | -framend-cdf-upd-mode | [0/1, -1 for default] | -1 | Enable frame end cdf update mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **ChromaMode** | -chroma-mode | [0-3, -1 for default] | -1 | Chroma Mode <br>-1 = DEFAULT<br>0 = Full chroma search @ MD  <br>1 = Fast chroma search @ MD  <br>2 = Chroma blind @ MD + CFL @ EP <br>3 = Chroma blind @ MD + no CFL @ EP |
-| **LocalWarpedMotion** | -local-warp | [0 - 1] | 0 | Enable warped motion use , 0 = OFF, 1 = ON |
+| **DisableCfl** | -dcfl | [0/1, -1 for default] | -1 | Disable chroma from luma (CFL), 0 = OFF (do not disable), 1 = ON (disable), -1 = DEFAULT|
+| **LocalWarpedMotion** | -local-warp | [0/1, -1 for default] | -1 | Enable warped motion use , 0 = OFF, 1 = ON, -1 = DEFAULT |
 | **GlobalMotion** | -global-motion | [0-1, 1 for default] | 1 | Enable global motion (0: OFF, 1: ON [default]) |
 | **CombineClass12** | -class-12 | [0/1, -1 for default] | -1 | Enable combine MD Class1&2, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **EdgeSkipAngleIntra** | --intra-edge-skp | [0/1, -1 for default] | -1 | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **EdgeSkipAngleIntra** | -intra-edge-skp | [0/1, -1 for default] | -1 | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **IntraAngleDelta** | -intra-angle-delta | [0/1, -1 for default] | -1 | Enable intra angle delta filtering (0: OFF, 1: ON, -1 = DEFAULT |
+| **IntraEdgeFilter** | -intra-edge-filter | [0/1, -1 for default] | -1 | Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)|
 | **InterIntraCompound** | -interintra-comp | [0/1, -1 for default] | -1 | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **Paeth** | -paeth | [0/1, -1 for default] | -1 | Enable Paeth, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **Smooth** | -smooth | [0/1, -1 for default] | -1 | Enable Smooth, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Obmc** | -obmc | [0-1, 1 for default] | 1 | Enable OBMC(0: OFF, 1: ON[default]) |
 | **RDOQ** | -rdoq | [0/1, -1 for default] | -1 | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
 | **FilterIntra** | -filter-intra | [0-1, 1 for default] | 1 | Enable filter intra prediction mode (0: OFF, 1: ON [default]) |
@@ -219,6 +227,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HmeLevel0TotalSearchAreaWidth** | -hme-tot-l0-w | [1 - 256] | Depends on input resolution | Total HME Level 0 Search Area in Width |
 | **HmeLevel0TotalSearchAreaHeight** | -hme-tot-l0-h | [1 - 256] | Depends on input resolution | Total HME Level 1 Search Area in Width |
 | **ScreenContentMode** | -scm | [0 - 2] | 0 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
+| **IntraBCMode** | -intrabc-mode | [0 - 3], -1 for default] | -1 | IntraBC mode (0 = OFF, 1 = ON slow, 1 = ON faster, 2 = ON fastest, -1 = DEFAULT) |
 | **HighBitDepthModeDecision** | -hbd-md | [0-2, 1 for default] | 1 | Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON) |
 | **PaletteMode** | -palette | [0 - 6] | -1 | Enable Palette mode (-1: DEFAULT (ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
 | **UnrestrictedMotionVector** | -umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set -umv 0 |
