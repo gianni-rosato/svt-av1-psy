@@ -382,194 +382,349 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
+#if MRP_31B_SUPPORT
+        {32, 64, 96, 0}, // GOP Index 0 - Ref List 0
+#else
         {32, 0, 0, 0}, // GOP Index 0 - Ref List 0
+#endif
         {32, 0, 0, 0} // GOP Index 0 - Ref List 1
     },
     {
         5, // GOP Index 1 - Temporal Layer
         5, // GOP Index 1 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 17, 33, 0}, // GOP Index 1 - Ref List 0
+        {-1, -3, -7, 0} // GOP Index 1 - Ref List 1
+#else
         {1, 0, 0, 0}, // GOP Index 1 - Ref List 0
         {-1, -3, -7, -15} // GOP Index 1 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 2 - Temporal Layer
         4, // GOP Index 2 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 18, 0}, // GOP Index 2 - Ref List 0
+        {-2, -6, -14, 0} // GOP Index 2 - Ref List 1
+#else
         {2, 0, 0, 0}, // GOP Index 2 - Ref List 0
         {-2, -6, -14, -30} // GOP Index 2 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 3 - Temporal Layer
         6, // GOP Index 3 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 19, 0}, // GOP Index 3 - Ref List 0
+#else
         {1, 3, 0, 0}, // GOP Index 3 - Ref List 0
+#endif
         {-1, -5, -13, 0} // GOP Index 3 - Ref List 1
     },
     {
         3, // GOP Index 4 - Temporal Layer
         3, // GOP Index 4 - Decode Order
+#if MRP_31B_SUPPORT
+        {4, 8, 20, 36}, // GOP Index 4 - Ref List 0
+        {-4, -12, -28, 0} // GOP Index 4 - Ref List 1
+#else
         {4, 0, 0, 0}, // GOP Index 4 - Ref List 0
         {-4, -12, -28, 4} // GOP Index 4 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 5 - Temporal Layer
         8, // GOP Index 5 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 5, 21, 0}, // GOP Index 5 - Ref List 0
+#else
         {1, 5, 0, 0}, // GOP Index 5 - Ref List 0
+#endif
         {-1, -3, -11, 0} // GOP Index 5 - Ref List 1
     },
     {
         4, // GOP Index 6 - Temporal Layer
         7, // GOP Index 6 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 6, 22}, // GOP Index 6 - Ref List 0
+        {-2, -10, -26, 0} // GOP Index 6 - Ref List 1
+#else
         {2, 6, 0, 0}, // GOP Index 6 - Ref List 0
         {-2, -10, -26, 2} // GOP Index 6 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 7 - Temporal Layer
         9, // GOP Index 7 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 7, 23}, // GOP Index 7 - Ref List 0
+        {-1, -9, -25, 0} // GOP Index 7 - Ref List 1
+#else
         {1, 3, 0, 0}, // GOP Index 7 - Ref List 0
         {-1, -9, -25, 1} // GOP Index 7 - Ref List 1
+#endif
     },
     {
         2, // GOP Index 8 - Temporal Layer
         2, // GOP Index 8 - Decode Order
+#if MRP_31B_SUPPORT
+        {8, 16, 24, 40}, // GOP Index 8 - Ref List 0
+        {-8, -24, 0, 0} // GOP Index 8 - Ref List 1
+#else
         {8, 0, 0, 0}, // GOP Index 8 - Ref List 0
         {-8, -24, 8, 0} // GOP Index 8 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 9 - Temporal Layer
         12, // GOP Index 9 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 9, 25, 0}, // GOP Index 9 - Ref List 0
+#else
         {1, 9, 0, 0}, // GOP Index 9 - Ref List 0
+#endif
         {-1, -3, -7, 0} // GOP Index 9 - Ref List 1
     },
     {
         4, // GOP Index 10 - Temporal Layer
         11, // GOP Index 10 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 10, 26}, // GOP Index 10 - Ref List 0
+        {-2, -6, -22, 0} // GOP Index 10 - Ref List 1
+#else
         {2, 10, 0, 0}, // GOP Index 10 - Ref List 0
         {-2, -6, -22, 2} // GOP Index 10 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 11 - Temporal Layer
         13, // GOP Index 11 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 11, 27}, // GOP Index 11 - Ref List 0
+        {-1, -5, -21, 0} // GOP Index 11 - Ref List 1
+#else
         {1, 3, 0, 0}, // GOP Index 11 - Ref List 0
         {-1, -5, -21, 1} // GOP Index 11 - Ref List 1
+#endif
     },
     {
         3, // GOP Index 12 - Temporal Layer
         10, // GOP Index 12 - Decode Order
+#if MRP_31B_SUPPORT
+        {4, 8, 12, 28}, // GOP Index 12 - Ref List 0
+        {-4, -20, 0, 0} // GOP Index 12 - Ref List 1
+#else
         {4, 12, 0, 0}, // GOP Index 12 - Ref List 0
         {-4, -20, 4, 12} // GOP Index 12 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 13 - Temporal Layer
         15, // GOP Index 13 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 5, 13, 29}, // GOP Index 13 - Ref List 0
+        {-1, -3, -19, 0} // GOP Index 13 - Ref List 1
+#else
         {1, 5, 0, 0}, // GOP Index 13 - Ref List 0
         {-1, -3, -19, 1} // GOP Index 13 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 14 - Temporal Layer
         14, // GOP Index 14 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 6, 14}, // GOP Index 14 - Ref List 0
+        {-2, -18, 0, 0} // GOP Index 14 - Ref List 1
+#else
         {2, 6, 14, 0}, // GOP Index 14 - Ref List 0
         {-2, -18, 2, 6} // GOP Index 14 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 15 - Temporal Layer
         16, // GOP Index 15 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 7, 15}, // GOP Index 15 - Ref List 0
+        {-1, -17, 0, 0} // GOP Index 15 - Ref List 1
+#else
         {1, 3, 7, 0}, // GOP Index 15 - Ref List 0
         {-1, -17, 1, 3} // GOP Index 15 - Ref List 1
+#endif
     },
     {
         1, // GOP Index 16 - Temporal Layer
         1, // GOP Index 16 - Decode Order
+#if MRP_31B_SUPPORT
+        {16, 32, 48, 0}, // GOP Index 16 - Ref List 0
+        {-16, 0, 0, 0} // GOP Index 16 - Ref List 1
+#else
         {16, 0, 0, 0}, // GOP Index 16 - Ref List 0
         {-16, 16, 0, 0} // GOP Index 16 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 17 - Temporal Layer
         20, // GOP Index 17 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 17, 33, 0}, // GOP Index 17 - Ref List 0
+#else
         {1, 17, 0, 0}, // GOP Index 17 - Ref List 0
+#endif
         {-1, -3, -7, 0} // GOP Index 17 - Ref List 1
     },
     {
         4, // GOP Index 18 - Temporal Layer
         19, // GOP Index 18 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 18, 34}, // GOP Index 18 - Ref List 0
+        {-2, -6, -14, 0} // GOP Index 18 - Ref List 1
+#else
         {2, 18, 0, 0}, // GOP Index 18 - Ref List 0
         {-2, -6, -14, 2} // GOP Index 18 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 19 - Temporal Layer
         21, // GOP Index 19 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 19, 35}, // GOP Index 19 - Ref List 0
+        {-1, -5, -13, 0} // GOP Index 19 - Ref List 1
+#else
         {1, 3, 0, 0}, // GOP Index 19 - Ref List 0
         {-1, -5, -13, 1} // GOP Index 19 - Ref List 1
+#endif
     },
     {
         3, // GOP Index 20 - Temporal Layer
         18, // GOP Index 20 - Decode Order
+#if MRP_31B_SUPPORT
+        {4, 8, 20, 0}, // GOP Index 20 - Ref List 0
+        {-4, -12, 0, 0} // GOP Index 20 - Ref List 1
+#else
         {4, 20, 0, 0}, // GOP Index 20 - Ref List 0
         {-4, -12, 4, 20} // GOP Index 20 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 21 - Temporal Layer
         23, // GOP Index 21 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 5, 21, 37}, // GOP Index 21 - Ref List 0
+        {-1, -3, -11, 0} // GOP Index 21 - Ref List 1
+#else
         {1, 5, 0, 0}, // GOP Index 21 - Ref List 0
         {-1, -3, -11, 1} // GOP Index 21 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 22 - Temporal Layer
         22, // GOP Index 22 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 6, 22}, // GOP Index 22 - Ref List 0
+        {-2, -10, 0, 0} // GOP Index 22 - Ref List 1
+#else
         {2, 6, 22, 0}, // GOP Index 22 - Ref List 0
         {-2, -10, 2, 6} // GOP Index 22 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 23 - Temporal Layer
         24, // GOP Index 23 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 7, 23}, // GOP Index 23 - Ref List 0
+        {-1, -9, 0, 0} // GOP Index 23 - Ref List 1
+#else
         {1, 3, 7, 0}, // GOP Index 23 - Ref List 0
         {-1, -9, 1, 3} // GOP Index 23 - Ref List 1
+#endif
     },
     {
         2, // GOP Index 24 - Temporal Layer
         17, // GOP Index 24 - Decode Order
+#if MRP_31B_SUPPORT
+        {8, 16, 24, 0}, // GOP Index 24 - Ref List 0
+        {-8, 0, 0, 0} // GOP Index 24 - Ref List 1
+#else
         {8, 24, 0, 0}, // GOP Index 24 - Ref List 0
         {-8, 8, 24, 0} // GOP Index 24 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 25 - Temporal Layer
         27, // GOP Index 25 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 9, 25, 0}, // GOP Index 25 - Ref List 0
+        {-1, -3, -7, 0} // GOP Index 25 - Ref List 1
+#else
         {1, 9, 0, 0}, // GOP Index 25 - Ref List 0
         {-1, -3, -7, 1} // GOP Index 25 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 26 - Temporal Layer
         26, // GOP Index 26 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 10, 26}, // GOP Index 26 - Ref List 0
+        {-2, -6, 0, 0} // GOP Index 26 - Ref List 1
+#else
         {2, 10, 26, 0}, // GOP Index 26 - Ref List 0
         {-2, -6, 2, 10} // GOP Index 26 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 27 - Temporal Layer
         28, // GOP Index 27 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 11, 27}, // GOP Index 27 - Ref List 0
+        {-1, -5, 0, 0} // GOP Index 27 - Ref List 1
+#else
         {1, 3, 11, 0}, // GOP Index 27 - Ref List 0
         {-1, -5, 1, 3} // GOP Index 27 - Ref List 1
+#endif
     },
     {
         3, // GOP Index 28 - Temporal Layer
         25, // GOP Index 28 - Decode Order
+#if MRP_31B_SUPPORT
+        {4, 8, 12, 28}, // GOP Index 28 - Ref List 0
+        {-4, 0, 0, 0} // GOP Index 28 - Ref List 1
+#else
         {4, 12, 28, 0}, // GOP Index 28 - Ref List 0
         {-4, 4, 12, 28} // GOP Index 28 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 29 - Temporal Layer
         30, // GOP Index 29 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 5, 13, 29}, // GOP Index 29 - Ref List 0
+        {-1, -3, 0, 0} // GOP Index 29 - Ref List 1
+#else
         {1, 5, 13, 0}, // GOP Index 29 - Ref List 0
         {-1, -3, 1, 5} // GOP Index 29 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 30 - Temporal Layer
         29, // GOP Index 30 - Decode Order
+#if MRP_31B_SUPPORT
+        {2, 4, 6, 14}, // GOP Index 30 - Ref List 0
+        {-2, 0, 0, 0} // GOP Index 30 - Ref List 1
+#else
         {2, 6, 14, 0}, // GOP Index 30 - Ref List 0
         {-2, 2, 6, 14} // GOP Index 30 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 31 - Temporal Layer
         31, // GOP Index 31 - Decode Order
+#if MRP_31B_SUPPORT
+        {1, 3, 7, 15}, // GOP Index 31 - Ref List 0
+        {-1, 0, 0, 0} // GOP Index 31 - Ref List 1
+#else
         {1, 3, 5, 15}, // GOP Index 31 - Ref List 0
         {-1, 1, 3, 5} // GOP Index 31 - Ref List 1
+#endif
     }};
 
 /************************************************
@@ -2026,14 +2181,25 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
                 prediction_structure_config_array[4].entry_array[gop_i].ref_list1[i] = 0;
             }
         }
+
+#if MRP_31B_SUPPORT
+        for (int gop_i = 1; gop_i < 32; ++gop_i) {
+            for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
+                prediction_structure_config_array[5].entry_array[gop_i].ref_list0[i] = 0;
+                prediction_structure_config_array[5].entry_array[gop_i].ref_list1[i] = 0;
+            }
+        }
+#endif
     }
 
+#if !MRP_31B_SUPPORT
     for (int gop_i = 1; gop_i < 32; ++gop_i) {
         for (int i = 1; i < MAX_REF_IDX; ++i) {
             prediction_structure_config_array[5].entry_array[gop_i].ref_list0[i] = 0;
             prediction_structure_config_array[5].entry_array[gop_i].ref_list1[i] = 0;
         }
     }
+#endif
 
     // Count the number of Prediction Structures
     while ((prediction_structure_config_array[pred_struct_index].entry_array != 0) &&
