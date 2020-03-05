@@ -258,12 +258,26 @@ void av1_model_rd_curvfit(BlockSize bsize, double sse_norm, double xqr, double *
 // log2(sse_norm/qstep^2)
 static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, BlockSize plane_bsize,
                                   int64_t sse, int num_samples, int *rate, int64_t *dist,
+#if QUANT_HBD0_FIX
+                                 ModeDecisionContext *context_ptr,
+#endif
                                   uint32_t rdmult) {
     (void)plane_bsize;
     const int dequant_shift = 3;
     int32_t   current_q_index =
             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#if QUANT_CLEANUP
+
+#if QUANT_HBD0_FIX
+    Dequants *const dequants = context_ptr->hbd_mode_decision ?
+                               &picture_control_set_ptr->parent_pcs_ptr->deq_bd:
+                               &picture_control_set_ptr->parent_pcs_ptr->deq_8bit;
+#else
+    Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq_bd;
+#endif
+#else
     Dequants *const dequants  = &picture_control_set_ptr->parent_pcs_ptr->deq;
+#endif
     int16_t         quantizer = dequants->y_dequant_q3[current_q_index][1];
 
     const int qstep = AOMMAX(quantizer >> dequant_shift, 1);
@@ -361,6 +375,11 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                 ? EB_8_BIT_MD
                                 : context_ptr->hbd_mode_decision;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD]:
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     EbPictureBufferDesc *src_pic =
             hbd_mode_decision ? picture_control_set_ptr->input_frame16bit
                               : picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -414,9 +433,22 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
         sse  = ROUND_POWER_OF_TWO(sse, bd_round);
 
         model_rd_with_curvfit(
+#if NEW_MD_LAMBDA
+#if QUANT_HBD0_FIX
+                picture_control_set_ptr, bsize, sse, N, &rate, &dist,context_ptr, full_lambda);
+#else
+                picture_control_set_ptr, bsize, sse, N, &rate, &dist, full_lambda);
+#endif
+#else
                 picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr->full_lambda);
+#endif
 
+#if NEW_MD_LAMBDA
+        rd = RDCOST(full_lambda, rate, dist);
+#else
         rd = RDCOST(context_ptr->full_lambda, rate, dist);
+
+#endif
 
         if (rd < best_rd) {
             *best_wedge_index = wedge_index;
@@ -523,6 +555,11 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
                               int8_t *const best_wedge_index) {
     //const MACROBLOCKD *const xd = &x->e_mbd;
 
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     const int bw = block_size_wide[bsize];
     const int bh = block_size_high[bsize];
     const int N  = bw * bh;
@@ -541,11 +578,23 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
         sse  = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse  = ROUND_POWER_OF_TWO(sse, bd_round);
         model_rd_with_curvfit(
+#if NEW_MD_LAMBDA
+#if QUANT_HBD0_FIX
+                picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
+#else
+                picture_control_set_ptr, bsize, /*0,*/ sse, N, &rate, &dist, full_lambda);
+#endif
+#else
                 picture_control_set_ptr, bsize, /*0,*/ sse, N, &rate, &dist, context_ptr->full_lambda);
+#endif
         // model_rd_sse_fn[MODELRD_TYPE_MASKED_COMPOUND](cpi, x, bsize, 0, sse, N, &rate, &dist);
         // rate += x->wedge_idx_cost[bsize][wedge_index];
         rate += candidate_ptr->md_rate_estimation_ptr->wedge_idx_fac_bits[bsize][wedge_index];
+#if NEW_MD_LAMBDA
+        rd = RDCOST(full_lambda, rate, dist);
+#else
         rd = RDCOST(/*x->rdmult*/ context_ptr->full_lambda, rate, dist);
+#endif
 
         if (rd < best_rd) {
             *best_wedge_index = wedge_index;
@@ -599,6 +648,11 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
                                 ? EB_8_BIT_MD
                                 : context_ptr->hbd_mode_decision;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     const int         bw = block_size_wide[bsize];
     const int         bh = block_size_high[bsize];
     const int         N  = 1 << num_pels_log2_lookup[bsize];
@@ -627,9 +681,21 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
         sse = ROUND_POWER_OF_TWO(sse, bd_round);
 
         model_rd_with_curvfit(
+#if NEW_MD_LAMBDA
+#if QUANT_HBD0_FIX
+                picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
+#else
+                picture_control_set_ptr, bsize, sse, N, &rate, &dist, full_lambda);
+#endif
+#else
                 picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr->full_lambda);
+#endif
 
+#if NEW_MD_LAMBDA
+        const int64_t rd0 = RDCOST(full_lambda, rate, dist);
+#else
         const int64_t rd0 = RDCOST(context_ptr->full_lambda, rate, dist);
+#endif
 
         if (rd0 < best_rd) {
             best_mask_type = cur_mask_type;
@@ -718,6 +784,12 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
     // we need to divide by 8 before sending to modeling function.
     const int bd_round = 0;
 
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
+
     int64_t rate_sum  = 0;
     int64_t dist_sum  = 0;
     int64_t total_sse = 0;
@@ -739,7 +811,14 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
                               bw * bh,
                               &rate,
                               &dist,
+#if QUANT_HBD0_FIX
+                              context_ptr,
+#endif
+#if NEW_MD_LAMBDA
+                              full_lambda);
+#else
                               context_ptr->full_lambda);
+#endif
 
         total_sse += sse;
         rate_sum += rate;
@@ -2519,8 +2598,17 @@ extern void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
 
         int32_t current_q_index =
                 picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#if QUANT_CLEANUP
+#if QUANT_HBD0_FIX
+        Dequants *const dequants = md_context_ptr->hbd_mode_decision ?
+            &picture_control_set_ptr->parent_pcs_ptr->deq_bd:
+            &picture_control_set_ptr->parent_pcs_ptr->deq_8bit ;
+#else
+        Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq_bd;
+#endif
+#else
         Dequants *const dequants = &picture_control_set_ptr->parent_pcs_ptr->deq;
-
+#endif
         int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
         model_rd_from_sse(
                 plane == 0 ? md_context_ptr->blk_geom->bsize : md_context_ptr->blk_geom->bsize_uv,
@@ -2609,7 +2697,17 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
     int32_t       tmp_rate;
     int64_t       tmp_dist;
 
+#if OMARK_HBD0_IFS
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda_divided = hbd_mode_decision ?
+        md_context_ptr->full_lambda_md[EB_10_BIT_MD] >> (2 * (bit_depth - 8)) :
+        md_context_ptr->full_lambda_md[EB_8_BIT_MD];
+#else
     uint32_t full_lambda_8b = md_context_ptr->full_lambda >> (2 * (bit_depth - 8));
+#endif
+#else
+    uint32_t full_lambda_8b = md_context_ptr->full_lambda >> (2 * (bit_depth - 8));
+#endif
 
     InterpFilter assign_filter = SWITCHABLE;
 
@@ -2662,7 +2760,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                     &tmp_dist,
                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
+#if OMARK_HBD0_IFS
+    rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
+#else
     rd = RDCOST(full_lambda_8b, switchable_rate + tmp_rate, tmp_dist);
+#endif
 
     if (assign_filter == SWITCHABLE) {
         // do interp_filter search
@@ -2728,7 +2830,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if OMARK_HBD0_IFS
+                    tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     tmp_rd = RDCOST(full_lambda_8b, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < rd) {
                         best_dual_mode  = i;
@@ -2787,7 +2893,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if OMARK_HBD0_IFS
+                    tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     tmp_rd = RDCOST(full_lambda_8b, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
@@ -2852,7 +2962,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if OMARK_HBD0_IFS
+                    tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     tmp_rd = RDCOST(full_lambda_8b, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;

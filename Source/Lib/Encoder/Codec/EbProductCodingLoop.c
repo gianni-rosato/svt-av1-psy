@@ -1167,6 +1167,14 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
                     uint32_t cu_origin_index, uint32_t cu_chroma_origin_index, EbBool use_ssd) {
     uint64_t luma_fast_distortion;
     uint64_t chroma_fast_distortion;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+    uint32_t fast_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->fast_lambda_md[EB_10_BIT_MD] :
+        context_ptr->fast_lambda_md[EB_8_BIT_MD];
+#endif
 
     ModeDecisionCandidate *candidate_ptr  = candidate_buffer->candidate_ptr;
     EbPictureBufferDesc *  prediction_ptr = candidate_buffer->prediction_ptr;
@@ -1293,7 +1301,11 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         blk_ptr->qp,
         luma_fast_distortion,
         chroma_fast_distortion,
+#if NEW_MD_LAMBDA
+        use_ssd ? full_lambda : fast_lambda,
+#else
         use_ssd ? context_ptr->full_lambda : context_ptr->fast_lambda,
+#endif
         use_ssd,
         pcs_ptr,
         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -2169,6 +2181,11 @@ void md_stage_0(
     uint64_t best_first_fast_cost_search_candidate_cost  = MAX_CU_COST;
     int32_t  best_first_fast_cost_search_candidate_index = INVALID_FAST_CANDIDATE_INDEX;
     EbBool   use_ssd = EB_FALSE;
+#if NEW_MD_LAMBDA
+    uint32_t fast_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->fast_lambda_md[EB_10_BIT_MD] :
+        context_ptr->fast_lambda_md[EB_8_BIT_MD];
+#endif
     // Set MD Staging fast_loop_core settings
     context_ptr->md_staging_skip_interpolation_search =
         (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
@@ -2213,7 +2230,11 @@ void md_stage_0(
                         blk_ptr->qp,
                         luma_fast_distortion,
                         0,
+#if NEW_MD_LAMBDA
+                        fast_lambda,
+#else
                         context_ptr->fast_lambda,
+#endif
                         0,
                         pcs_ptr,
                         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -3452,13 +3473,27 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
     int64_t  best_rd = INT64_MAX;
     uint64_t full_distortion[DIST_CALC_TOTAL];
     uint64_t coeff_bits;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
 
+#if NEW_MD_LAMBDA
+    const int64_t mode_rd = RDCOST(
+         full_lambda,
+        (uint64_t)candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+            ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
+                                    [UV_CFL_PRED],
+        0);
+#else
     const int64_t mode_rd = RDCOST(
         context_ptr->full_lambda,
         (uint64_t)candidate_buffer->candidate_ptr->md_rate_estimation_ptr
             ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
                                     [UV_CFL_PRED],
         0);
+#endif
 
     int64_t best_rd_uv[CFL_JOINT_SIGNS][CFL_PRED_PLANES];
     int32_t best_c[CFL_JOINT_SIGNS][CFL_PRED_PLANES];
@@ -3496,9 +3531,15 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
             const int32_t alpha_rate = candidate_buffer->candidate_ptr->md_rate_estimation_ptr
                                            ->cfl_alpha_fac_bits[joint_sign][plane][0];
 
+#if NEW_MD_LAMBDA
+            best_rd_uv[joint_sign][plane] = RDCOST(full_lambda,
+                                                   coeff_bits + alpha_rate,
+                                                   full_distortion[DIST_CALC_RESIDUAL]);
+#else
             best_rd_uv[joint_sign][plane] = RDCOST(context_ptr->full_lambda,
                                                    coeff_bits + alpha_rate,
                                                    full_distortion[DIST_CALC_RESIDUAL]);
+#endif
         }
     }
 
@@ -3538,9 +3579,15 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                         candidate_buffer->candidate_ptr->md_rate_estimation_ptr
                             ->cfl_alpha_fac_bits[joint_sign][plane][c];
 
+#if NEW_MD_LAMBDA
+                    int64_t this_rd = RDCOST(full_lambda,
+                                             coeff_bits + alpha_rate,
+                                             full_distortion[DIST_CALC_RESIDUAL]);
+#else
                     int64_t this_rd = RDCOST(context_ptr->full_lambda,
                                              coeff_bits + alpha_rate,
                                              full_distortion[DIST_CALC_RESIDUAL]);
+#endif
                     if (this_rd >= best_rd_uv[joint_sign][plane]) continue;
                     best_rd_uv[joint_sign][plane] = this_rd;
                     best_c[joint_sign][plane]     = c;
@@ -3564,12 +3611,21 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
     candidate_buffer->candidate_ptr->cfl_alpha_idx   = 0;
     candidate_buffer->candidate_ptr->cfl_alpha_signs = 0;
 
+#if NEW_MD_LAMBDA
+    const int64_t dc_mode_rd = RDCOST(
+        full_lambda,
+        candidate_buffer->candidate_ptr->md_rate_estimation_ptr
+            ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
+                                    [UV_DC_PRED],
+        0);
+#else
     const int64_t dc_mode_rd = RDCOST(
         context_ptr->full_lambda,
         candidate_buffer->candidate_ptr->md_rate_estimation_ptr
             ->intra_uv_mode_fac_bits[CFL_ALLOWED][candidate_buffer->candidate_ptr->intra_luma_mode]
                                     [UV_DC_PRED],
         0);
+#endif
 
     av1_cost_calc_cfl(pcs_ptr,
                       candidate_buffer,
@@ -3584,7 +3640,11 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                       1);
 
     int64_t dc_rd =
+#if NEW_MD_LAMBDA
+        RDCOST(full_lambda, coeff_bits, full_distortion[DIST_CALC_RESIDUAL]);
+#else
         RDCOST(context_ptr->full_lambda, coeff_bits, full_distortion[DIST_CALC_RESIDUAL]);
+#endif
 
     dc_rd += dc_mode_rd;
     if (dc_rd <= best_rd) {
@@ -3820,6 +3880,11 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
                                uint8_t cr_qp, uint64_t *cb_full_distortion,
                                uint64_t *cr_full_distortion, uint64_t *cb_coeff_bits,
                                uint64_t *cr_coeff_bits) {
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     if (candidate_buffer->candidate_ptr->filter_intra_mode != FILTER_INTRA_MODES)
         assert(candidate_buffer->candidate_ptr->intra_luma_mode == DC_PRED);
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -3849,7 +3914,11 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
     int distortion =
         (int)(cb_full_distortion[DIST_CALC_RESIDUAL] + cr_full_distortion[DIST_CALC_RESIDUAL]);
     int rate = (int)(coeff_rate + chroma_rate + candidate_buffer->candidate_ptr->fast_luma_rate);
+#if NEW_MD_LAMBDA
+    uint64_t cfl_uv_cost = RDCOST(full_lambda, rate, distortion);
+#else
     uint64_t cfl_uv_cost = RDCOST(context_ptr->full_lambda, rate, distortion);
+#endif
 
     // cfl vs. best independant
     if (context_ptr->best_uv_cost[candidate_buffer->candidate_ptr->intra_luma_mode]
@@ -4512,6 +4581,11 @@ void tx_type_search(PictureControlSet *pcs_ptr,
                                .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                          : 0;
 
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     TxType   txk_start           = DCT_DCT;
     TxType   txk_end             = TX_TYPES;
     uint64_t best_cost_tx_search = (uint64_t)~0;
@@ -4642,6 +4716,13 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             context_ptr->luma_dc_sign_context,
             candidate_buffer->candidate_ptr->pred_mode,
             candidate_buffer->candidate_ptr->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+            full_lambda,
+#else
+            context_ptr->full_lambda,
+#endif
+#endif
             EB_FALSE);
 
         candidate_buffer->candidate_ptr->quantized_dc[0][context_ptr->txb_itr] =
@@ -4765,8 +4846,13 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             candidate_buffer->candidate_ptr->transform_type_uv,
             COMPONENT_LUMA);
 
+#if NEW_MD_LAMBDA
+        uint64_t cost = RDCOST(
+            full_lambda, y_txb_coeff_bits, txb_full_distortion[0][DIST_CALC_RESIDUAL]);
+#else
         uint64_t cost = RDCOST(
             context_ptr->full_lambda, y_txb_coeff_bits, txb_full_distortion[0][DIST_CALC_RESIDUAL]);
+#endif
         if (cost < best_cost_tx_search) {
             best_cost_tx_search = cost;
             best_tx_type        = tx_type;
@@ -5306,6 +5392,11 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
 #if !TXS_DEPTH_2
     UNUSED(start_tx_depth); // TODO: start_tx_depth will be used for future features; this commit is adding the infrastructure for that
 #endif
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision
                                                  ? pcs_ptr->input_frame16bit
                                                  : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -5510,9 +5601,16 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
 
             if (y_has_coeff) block_has_coeff = EB_TRUE;
 
+
+#if NEW_MD_LAMBDA
+            current_tx_cost = RDCOST(full_lambda,
+                                     tx_y_coeff_bits,
+                                     tx_y_full_distortion[DIST_CALC_RESIDUAL]);
+#else
             current_tx_cost = RDCOST(context_ptr->full_lambda,
                                      tx_y_coeff_bits,
                                      tx_y_full_distortion[DIST_CALC_RESIDUAL]);
+#endif
             if (current_tx_cost > best_cost_search) break;
 
         } // Transform Loop
@@ -5526,9 +5624,15 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                                                 context_ptr->tx_depth,
                                                 block_has_coeff);
 
+#if NEW_MD_LAMBDA
+        uint64_t cost = RDCOST(full_lambda,
+                               (tx_y_coeff_bits + tx_size_bits),
+                               tx_y_full_distortion[DIST_CALC_RESIDUAL]);
+#else
         uint64_t cost = RDCOST(context_ptr->full_lambda,
                                (tx_y_coeff_bits + tx_size_bits),
                                tx_y_full_distortion[DIST_CALC_RESIDUAL]);
+#endif
 
             if (cost < best_cost_search) {
                 best_cost_search                      = cost;
@@ -5617,6 +5721,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     uint64_t y_coeff_bits;
     uint64_t cb_coeff_bits = 0;
     uint64_t cr_coeff_bits = 0;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
 
     // initialize TU Split
     y_full_distortion[DIST_CALC_RESIDUAL]   = 0;
@@ -5837,7 +5946,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                                                               y_full_distortion,
                                                               cb_full_distortion,
                                                               cr_full_distortion,
+#if NEW_MD_LAMBDA
+                                                              full_lambda,
+#else
                                                               context_ptr->full_lambda,
+#endif
                                                               &y_coeff_bits,
                                                               &cb_coeff_bits,
                                                               &cr_coeff_bits,
@@ -6412,6 +6525,11 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                      uint32_t             cu_chroma_origin_index,
                                      ModeDecisionContext *context_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     // Start uv search path
     context_ptr->uv_search_path = EB_TRUE;
 
@@ -6729,10 +6847,17 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                               [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]] +
                     candidate_ptr->fast_luma_rate + candidate_ptr->fast_chroma_rate;
                 uint64_t uv_cost =
+#if NEW_MD_LAMBDA
+                    RDCOST(full_lambda,
+                           rate,
+                           distortion[candidate_ptr->intra_chroma_mode]
+                                     [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]]);
+#else
                     RDCOST(context_ptr->full_lambda,
                            rate,
                            distortion[candidate_ptr->intra_chroma_mode]
                                      [MAX_ANGLE_DELTA + candidate_ptr->angle_delta[PLANE_TYPE_UV]]);
+#endif
 
                 if (uv_cost <
                     context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta]) {
@@ -7618,6 +7743,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     EbBool all_blk_init = (pcs_ptr->parent_pcs_ptr->pic_depth_mode <= PIC_SQ_DEPTH_MODE);
     init_sq_nsq_block(scs_ptr, context_ptr);
 
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     // Mode Decision Neighbor Arrays
 #if TILES_PARALLEL
     context_ptr->intra_luma_mode_neighbor_array =
@@ -8090,7 +8220,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                                               sb_addr,
                                               sb_origin_x,
                                               sb_origin_y,
+#if NEW_MD_LAMBDA
+                                              full_lambda,
+#else
                                               context_ptr->full_lambda,
+#endif
                                               context_ptr->md_rate_estimation_ptr,
                                               pcs_ptr);
             d1_block_itr   = 0;

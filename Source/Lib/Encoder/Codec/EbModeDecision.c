@@ -276,6 +276,11 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                        (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
 
     uint8_t bit_depth = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
 
     uint32_t            bwidth  = context_ptr->blk_geom->bwidth;
     uint32_t            bheight = context_ptr->blk_geom->bheight;
@@ -471,7 +476,11 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                                  NULL);
                 }
                 // rd = RDCOST(x->rdmult, tmp_rate_mv + rate_sum + rmode, dist_sum);
+#if NEW_MD_LAMBDA
+                rd = RDCOST(full_lambda, tmp_rate_mv + rate_sum + rmode, dist_sum);
+#else
                 rd = RDCOST(context_ptr->full_lambda, tmp_rate_mv + rate_sum + rmode, dist_sum);
+#endif
 
                 if (rd < best_interintra_rd) {
                     best_interintra_rd             = rd;
@@ -3387,6 +3396,10 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
     (void)ref_idx;
     const Av1Common *const cm      = pcs->parent_pcs_ptr->av1_cm;
     FrameHeader *          frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
+#if NEW_MD_LAMBDA
+// single_motion_search supports 8bit path only
+    uint32_t full_lambda = context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
 
     x->xd            = context_ptr->blk_ptr->av1xd;
     const int mi_row = -x->xd->mb_to_top_edge / (8 * MI_SIZE);
@@ -3404,7 +3417,12 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
     x->mv_limits.col_max = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
     //set search paramters
     x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
+    x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
+#if NEW_MD_LAMBDA
+    x->errorperbit = full_lambda >> RD_EPB_SHIFT;
+#else
     x->errorperbit = context_ptr->full_lambda >> RD_EPB_SHIFT;
+#endif
     x->errorperbit += (x->errorperbit == 0);
 
     int bestsme = INT_MAX;
@@ -5191,6 +5209,11 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
                      uint8_t *num_dv_cand) {
     IntraBcContext  x_st;
     IntraBcContext *x = &x_st;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     //fill x with what needed.
     x->is_exhaustive_allowed =
         context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 ? 1 : 0;
@@ -5226,7 +5249,11 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     x->mv_limits.col_max = (cm->mi_cols - mi_col) * MI_SIZE + AOM_INTERP_EXTEND;
     //set search paramters
     x->sadperbit16 = sad_per_bit16lut_8[frm_hdr->quantization_params.base_q_idx];
+#if NEW_MD_LAMBDA
+    x->errorperbit = full_lambda >> RD_EPB_SHIFT;
+#else
     x->errorperbit = context_ptr->full_lambda >> RD_EPB_SHIFT;
+#endif
     x->errorperbit += (x->errorperbit == 0);
     //temp buffer for hash me
     for (int xi = 0; xi < 2; xi++)

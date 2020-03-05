@@ -1111,6 +1111,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     frm_hdr->is_motion_mode_switchable =
         frm_hdr->is_motion_mode_switchable || pcs_ptr->parent_pcs_ptr->pic_obmc_mode;
 
+#if PICT_SWITCH
+    pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
+#endif
     return return_error;
 }
 
@@ -1524,7 +1527,34 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         set_global_motion_field(pcs_ptr);
 
         eb_av1_qm_init(pcs_ptr->parent_pcs_ptr);
+#if QUANT_CLEANUP
+        Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
+        Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
+        eb_av1_set_quantizer(
+            pcs_ptr->parent_pcs_ptr,
+            frm_hdr->quantization_params.base_q_idx);
+        eb_av1_build_quantizer(
+            (AomBitDepth)scs_ptr->static_config.encoder_bit_depth,
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
+            quants_bd,
+            deq_bd);
 
+        Quants *const quants_8bit = &pcs_ptr->parent_pcs_ptr->quants_8bit;
+        Dequants *const deq_8bit = &pcs_ptr->parent_pcs_ptr->deq_8bit;
+        eb_av1_build_quantizer(
+            AOM_BITS_8,
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
+            quants_8bit,
+            deq_8bit);
+#else
         Quants *const   quants   = &pcs_ptr->parent_pcs_ptr->quants;
         Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq;
 
@@ -1549,6 +1579,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
                                quants_md,
                                dequants_md);
+#endif
 
         // Hsan: collapse spare code
         MdRateEstimationContext *md_rate_estimation_array;
@@ -1566,11 +1597,17 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
             &lambdasad_,
             &lambda_sse,
+#if !NEW_MD_LAMBDA
             &lambdasad_,
             &lambda_sse,
+#endif
             (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
             context_ptr->qp_index,
+#if OMARK_LAMBDA
+            EB_TRUE);
+#else
             pcs_ptr->hbd_mode_decision);
+#endif
         context_ptr->lambda      = (uint64_t)lambdasad_;
         md_rate_estimation_array = pcs_ptr->md_rate_estimation_array;
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array

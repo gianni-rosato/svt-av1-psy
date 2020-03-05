@@ -1481,7 +1481,11 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
                        intptr_t n_coeffs, const MacroblockPlane *p, TranLow *qcoeff_ptr,
                        TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, EbBool is_inter,
+#if OMARK_HBD0_RDOQ
+                       uint32_t bit_increment, uint32_t lambda,int plane)
+#else
                        uint32_t bit_increment, int plane)
+#endif
 
 {
     (void)stride;
@@ -1528,7 +1532,11 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
               ? (3 - sb_energy_level)
               : 0));
     const int64_t rdmult =
+#if OMARK_HBD0_RDOQ
+        (((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) + 2) >> rshift;
+#else
         (((int64_t)md_context->full_lambda * plane_rd_mult[is_inter][plane_type]) + 2) >> rshift;
+#endif
     uint8_t        levels_buf[TX_PAD_2D];
     uint8_t *const levels = set_levels(levels_buf, width);
 
@@ -1705,7 +1713,11 @@ int32_t av1_quantize_inv_quantize(
     ModeDecisionCandidateBuffer *candidate_buffer,
     int16_t txb_skip_context,
     int16_t dc_sign_context,
+#if OMARK_HBD0_RDOQ
+    PredictionMode pred_mode, EbBool is_intra_bc,uint32_t lambda, EbBool is_encode_pass) {
+#else
     PredictionMode pred_mode, EbBool is_intra_bc, EbBool is_encode_pass) {
+#endif
     (void)candidate_buffer;
     (void)is_encode_pass;
     (void)coeff_stride;
@@ -1719,6 +1731,70 @@ int32_t av1_quantize_inv_quantize(
                            ? quantizer_to_qindex[qp]
                            : pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                                  segmentation_qp_offset;
+#if QUANT_CLEANUP
+    if (bit_increment == 0) {
+        if (component_type == COMPONENT_LUMA) {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_8bit.y_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CB) {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.u_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.u_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.u_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.u_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.u_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.u_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_8bit.u_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CR) {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.v_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.v_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.v_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.v_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.v_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.v_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_8bit.v_dequant_qtx[q_index];
+        }
+    }
+    else {
+        if (component_type == COMPONENT_LUMA) {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.y_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.y_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.y_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.y_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.y_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.y_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_bd.y_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CB) {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.u_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.u_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.u_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.u_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.u_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.u_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_bd.u_dequant_qtx[q_index];
+        }
+
+        if (component_type == COMPONENT_CHROMA_CR) {
+            candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.v_quant[q_index];
+            candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.v_quant_fp[q_index];
+            candidate_plane.round_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.v_round_fp[q_index];
+            candidate_plane.quant_shift_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.v_quant_shift[q_index];
+            candidate_plane.zbin_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.v_zbin[q_index];
+            candidate_plane.round_qtx = pcs_ptr->parent_pcs_ptr->quants_bd.v_round[q_index];
+            candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq_bd.v_dequant_qtx[q_index];
+        }
+    }
+#else
     if (bit_increment == 0) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx    = pcs_ptr->parent_pcs_ptr->quants_md.y_quant[q_index];
@@ -1786,7 +1862,7 @@ int32_t av1_quantize_inv_quantize(
             candidate_plane.dequant_qtx = pcs_ptr->parent_pcs_ptr->deq.v_dequant_qtx[q_index];
         }
     }
-
+#endif
     const ScanOrder *const scan_order =
         &av1_scan_orders[txsize][tx_type]; //get_scan(tx_size, tx_type);
 
@@ -1807,10 +1883,12 @@ int32_t av1_quantize_inv_quantize(
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
                            md_context->enable_rdoq && !is_intra_bc);
 #endif
+#if !RDQO_ON_HBD0
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     // Shut rdoq if 10BIT and hbd_mode_decision 0
     if (scs_ptr->static_config.encoder_bit_depth > 8 && pcs_ptr->hbd_mode_decision == 0)
         perform_rdoq = EB_FALSE;
+#endif
 
 #if FP_QUANT_BOTH_INTRA_INTER
     if (perform_rdoq) {
@@ -1880,6 +1958,9 @@ int32_t av1_quantize_inv_quantize(
                               tx_type,
                               is_inter,
                               bit_increment,
+#if OMARK_HBD0_RDOQ
+                              lambda,
+#endif
                               (component_type == COMPONENT_LUMA) ? 0 : 1);
         }
     }
@@ -1916,6 +1997,11 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
     uint64_t              y_txb_coeff_bits;
     EB_ALIGN(16) uint64_t txb_full_distortion[3][DIST_CALC_TOTAL];
     context_ptr->three_quad_energy = 0;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     uint8_t  tx_depth              = context_ptr->tx_depth;
     uint32_t txb_itr               = context_ptr->txb_itr;
     uint32_t txb_1d_offset         = context_ptr->txb_1d_offset;
@@ -1987,6 +2073,13 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         context_ptr->luma_dc_sign_context,
         candidate_buffer->candidate_ptr->pred_mode,
         candidate_buffer->candidate_ptr->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+         full_lambda,
+#else
+         context_ptr->full_lambda,
+#endif
+#endif
         EB_FALSE);
 
     if (context_ptr->md_staging_spatial_sse_full_loop) {
@@ -2113,7 +2206,11 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                            txb_full_distortion[0], //gets updated inside based on cbf decision
                            &y_txb_coeff_bits, //gets updated inside based on cbf decision
                            &y_full_cost,
+#if NEW_MD_LAMBDA
+                           full_lambda);
+#else
                            context_ptr->full_lambda);
+#endif
 
     (*y_coeff_bits) += y_txb_coeff_bits;
 
@@ -2258,6 +2355,9 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             0,
             0,
             blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+            context_ptr->full_lambda,
+#endif
             EB_FALSE);
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
@@ -2441,6 +2541,9 @@ void encode_pass_tx_search_hbd(
             0,
             0,
             blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+            context_ptr->full_lambda,
+#endif
             EB_FALSE);
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
@@ -2587,6 +2690,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
     uint32_t txb_itr;
     uint32_t txb_origin_x;
     uint32_t txb_origin_y;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
 
     context_ptr->three_quad_energy = 0;
 
@@ -2694,6 +2802,13 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->cb_dc_sign_context,
                 candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
                 candidate_buffer->candidate_ptr->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+                full_lambda,
+#else
+                context_ptr->full_lambda,
+#endif
+#endif
                 EB_FALSE);
 
             if (context_ptr->md_staging_spatial_sse_full_loop) {
@@ -2780,6 +2895,13 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->cr_dc_sign_context,
                 candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
                 candidate_buffer->candidate_ptr->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+                full_lambda,
+#else
+                context_ptr->full_lambda,
+#endif
+#endif
                 EB_FALSE);
 
             if (context_ptr->md_staging_spatial_sse_full_loop) {
@@ -2853,6 +2975,11 @@ void cu_full_distortion_fast_txb_mode_r(
     current_txb_index              = 0;
     transform_buffer = context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
 
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                         candidate_buffer->candidate_ptr->use_intrabc)
                            ? EB_TRUE
@@ -3021,7 +3148,11 @@ void cu_full_distortion_fast_txb_mode_r(
                               &cb_txb_coeff_bits,
                               &cr_txb_coeff_bits,
                               context_ptr->blk_geom->txsize[tx_depth][txb_itr],
+#if NEW_MD_LAMBDA
+                              full_lambda);
+#else
                               context_ptr->full_lambda);
+#endif
 
             *cb_coeff_bits += cb_txb_coeff_bits;
             *cr_coeff_bits += cr_txb_coeff_bits;
@@ -3084,6 +3215,11 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
     uint32_t blk_it;
     uint32_t merge_block_cnt  = 0;
     EbBool   merge_block_flag = EB_FALSE;
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     for (blk_it = 0; blk_it < context_ptr->blk_geom->totns; blk_it++) {
         tot_cost += context_ptr->md_local_blk_unit[first_blk_idx + blk_it].cost;
         if (context_ptr->blk_geom->sqi_mds != first_blk_idx + blk_it)
@@ -3100,7 +3236,11 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
                             0,
                             from_shape_to_part[context_ptr->blk_geom->shape],
                             &split_cost,
+#if NEW_MD_LAMBDA
+                            full_lambda,
+#else
                             context_ptr->full_lambda,
+#endif
                             context_ptr->md_rate_estimation_ptr,
                             context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr->scs_ptr->max_sb_depth);
 
@@ -3124,6 +3264,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                          PictureParentControlSet *pcs_ptr,
                          uint32_t curr_depth_mds, uint32_t above_depth_mds, uint32_t step,
                          uint64_t *above_depth_cost, uint64_t *curr_depth_cost) {
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     uint64_t above_non_split_rate = 0;
     uint64_t above_split_rate     = 0;
 
@@ -3171,7 +3316,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                             0,
                             PARTITION_SPLIT,
                             &above_split_rate,
+#if NEW_MD_LAMBDA
+                            full_lambda,
+#else
                             context_ptr->full_lambda,
+#endif
                             context_ptr->md_rate_estimation_ptr,
                             scs_ptr->max_sb_depth);
     } else
@@ -3185,7 +3334,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     0,
                                     PARTITION_NONE,
                                     &curr_non_split_rate_blk0,
+#if NEW_MD_LAMBDA
+                                    full_lambda,
+#else
                                     context_ptr->full_lambda,
+#endif
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
 
@@ -3197,7 +3350,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     0,
                                     PARTITION_NONE,
                                     &curr_non_split_rate_blk1,
+#if NEW_MD_LAMBDA
+                                    full_lambda,
+#else
                                     context_ptr->full_lambda,
+#endif
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
 
@@ -3209,7 +3366,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     0,
                                     PARTITION_NONE,
                                     &curr_non_split_rate_blk2,
+#if NEW_MD_LAMBDA
+                                    full_lambda,
+#else
                                     context_ptr->full_lambda,
+#endif
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
 
@@ -3221,7 +3382,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     0,
                                     PARTITION_NONE,
                                     &curr_non_split_rate_blk3,
+#if NEW_MD_LAMBDA
+                                    full_lambda,
+#else
                                     context_ptr->full_lambda,
+#endif
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
     }
@@ -3308,6 +3473,11 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
                                  PictureParentControlSet *pcs_ptr,
                                  uint32_t above_depth_mds, uint32_t step,
                                  uint64_t *above_depth_cost, uint64_t *curr_depth_cost) {
+#if NEW_MD_LAMBDA
+    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     uint64_t above_non_split_rate = 0;
     uint64_t above_split_rate     = 0;
     *curr_depth_cost              = 0;
@@ -3324,7 +3494,11 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
                                         0,
                                         PARTITION_NONE,
                                         &curr_non_split_rate_blk,
+#if NEW_MD_LAMBDA
+                                        full_lambda,
+#else
                                         context_ptr->full_lambda,
+#endif
                                         context_ptr->md_rate_estimation_ptr,
                                         scs_ptr->max_sb_depth);
         }
@@ -3367,7 +3541,11 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
                             0,
                             PARTITION_SPLIT,
                             &above_split_rate,
+#if NEW_MD_LAMBDA
+                            full_lambda,
+#else
                             context_ptr->full_lambda,
+#endif
                             context_ptr->md_rate_estimation_ptr,
                             scs_ptr->max_sb_depth);
     } else

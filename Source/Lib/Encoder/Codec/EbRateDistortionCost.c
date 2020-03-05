@@ -810,8 +810,11 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
         if (use_ssd) {
             int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
+#if QUANT_CLEANUP
+            Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
+#else
             Dequants *const dequants        = &pcs_ptr->parent_pcs_ptr->deq;
-
+#endif
             int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
             rate              = 0;
             model_rd_from_sse(blk_geom->bsize, quantizer, luma_distortion, &rate, &luma_sad);
@@ -1703,7 +1706,11 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     candidate_ptr->fast_chroma_rate = (full_cost_shut_fast_rate_flag) ? 0 : chroma_rate;
     if (use_ssd) {
         int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
+#if QUANT_CLEANUP
+        Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
+#else
         Dequants *const dequants        = &pcs_ptr->parent_pcs_ptr->deq;
+#endif
 
         int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
         rate              = 0;

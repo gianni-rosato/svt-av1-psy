@@ -422,16 +422,43 @@ const EbLambdaAssignFunc lambda_assignment_function_table[4] = {
     lambda_assign_i_slice // I_SLICE
 };
 
+#if NEW_MD_LAMBDA
+void av1_lambda_assign_md(
+    ModeDecisionContext   *context_ptr)
+{
+        context_ptr->full_lambda_md[0] = av1_lambda_mode_decision8_bit_sse[context_ptr->qp_index];
+        context_ptr->fast_lambda_md[0] = av1_lambda_mode_decision8_bit_sad[context_ptr->qp_index];
+
+        context_ptr->full_lambda_md[1] = av1lambda_mode_decision10_bit_sse[context_ptr->qp_index];
+        context_ptr->fast_lambda_md[1] = av1lambda_mode_decision10_bit_sad[context_ptr->qp_index];
+
+        context_ptr->full_lambda_md[1] *= 16;
+        context_ptr->fast_lambda_md[1] *= 4;
+}
+#endif
+#if NEW_MD_LAMBDA
+void av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint8_t bit_depth, uint16_t qp_index,
+#if OMARK_LAMBDA
+                       EbBool multiply_lambda) {
+#else
+                       EbBool hbd_mode_decision) {
+#endif
+#else
 void av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint32_t *fast_chroma_lambda,
                        uint32_t *full_chroma_lambda, uint8_t bit_depth, uint16_t qp_index,
                        EbBool hbd_mode_decision) {
+#endif
     if (bit_depth == 8) {
         *full_lambda = av1_lambda_mode_decision8_bit_sse[qp_index];
         *fast_lambda = av1_lambda_mode_decision8_bit_sad[qp_index];
     } else if (bit_depth == 10) {
         *full_lambda = av1lambda_mode_decision10_bit_sse[qp_index];
         *fast_lambda = av1lambda_mode_decision10_bit_sad[qp_index];
+#if OMARK_LAMBDA
+        if (multiply_lambda) {
+#else
         if (hbd_mode_decision) {
+#endif
             *full_lambda *= 16;
             *fast_lambda *= 4;
         }
@@ -443,10 +470,12 @@ void av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint32_t *f
         assert(bit_depth <= 12);
     }
 
+#if !NEW_MD_LAMBDA
     //*full_lambda = 0; //-------------Nader
     //*fast_lambda = 0;
     *fast_chroma_lambda = *fast_lambda;
     *full_chroma_lambda = *full_lambda;
+#endif
 
     // NM: To be done: tune lambda based on the picture type and layer.
 }
@@ -466,6 +495,9 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
                          PictureControlSet *pcs_ptr, uint32_t segment_index) {
 #endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if PICT_SWITCH
+    context_ptr->hbd_mode_decision = pcs_ptr->hbd_mode_decision;
+#endif
     // QP
     uint16_t picture_qp   = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     context_ptr->qp       = picture_qp;
@@ -473,14 +505,26 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
     context_ptr->qp_index  = (uint8_t)frm_hdr->quantization_params.base_q_idx;
+#if NEW_MD_LAMBDA
+    av1_lambda_assign_md(context_ptr);
+#else
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
+#if OMARK_HBD0_MD
+        context_ptr->hbd_mode_decision? EB_10BIT : EB_8BIT,
+#else
         (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
+#endif
         context_ptr->qp_index,
+#if OMARK_LAMBDA && OMARK_HBD0_MD
+        EB_TRUE);
+#else
         context_ptr->hbd_mode_decision);
+#endif
+#endif
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
     if (context_ptr->is_md_rate_estimation_ptr_owner) {
         context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
@@ -537,15 +581,28 @@ void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControl
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
             ? (uint8_t)quantizer_to_qindex[sb_qp]
             : (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#if NEW_MD_LAMBDA
 
+    av1_lambda_assign_md(context_ptr);
+
+#else
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
         &context_ptr->fast_chroma_lambda,
         &context_ptr->full_chroma_lambda,
+#if OMARK_HBD0_MD
+        context_ptr->hbd_mode_decision? EB_10BIT : EB_8BIT,
+#else
         (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
+#endif
         context_ptr->qp_index,
+#if OMARK_LAMBDA && OMARK_HBD0_MD
+        EB_TRUE);
+#else
         context_ptr->hbd_mode_decision);
+#endif
+#endif
 
     return;
 }

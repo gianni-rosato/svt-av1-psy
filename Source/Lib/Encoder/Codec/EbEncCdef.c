@@ -1225,15 +1225,25 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     uint64_t      lambda;
     const int32_t num_planes = 3; // av1_num_planes(cm);
     uint16_t qp_index = (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#if NEW_MD_LAMBDA
+    uint32_t fast_lambda, full_lambda;
+#else
     uint32_t fast_lambda, full_lambda, fast_chroma_lambda, full_chroma_lambda;
+#endif
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
         &fast_lambda,
         &full_lambda,
+#if !NEW_MD_LAMBDA
         &fast_chroma_lambda,
         &full_chroma_lambda,
+#endif
         (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
         qp_index,
+#if OMARK_HBD1_CDEF && OMARK_LAMBDA
+        EB_FALSE);
+#else
         pcs_ptr->hbd_mode_decision);
+#endif
     lambda = full_lambda;
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);

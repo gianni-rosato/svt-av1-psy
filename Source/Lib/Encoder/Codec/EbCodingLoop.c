@@ -499,6 +499,13 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->luma_dc_sign_context,
             blk_ptr->pred_mode,
             blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+            context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
+#else
+            context_ptr->full_lambda,
+#endif
+#endif
             EB_TRUE);
 
         if (context_ptr->md_skip_blk) {
@@ -708,6 +715,13 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->cb_dc_sign_context,
             blk_ptr->pred_mode,
             blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+            context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
+#else
+            context_ptr->md_context->full_lambda,
+#endif
+#endif
             EB_TRUE);
 
         if (context_ptr->md_skip_blk) {
@@ -753,6 +767,13 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->cr_dc_sign_context,
             blk_ptr->pred_mode,
             blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+            context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
+#else
+            context_ptr->md_context->full_lambda,
+#endif
+#endif
             EB_TRUE);
         if (context_ptr->md_skip_blk) {
             count_non_zero_coeffs[2] = 0;
@@ -929,6 +950,13 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->md_context->luma_dc_sign_context,
                 blk_ptr->pred_mode,
                 blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+                context_ptr->md_context->full_lambda_md[EB_10_BIT_MD],
+#else
+                context_ptr->md_context->full_lambda,
+#endif
+#endif
                 EB_TRUE);
             if (context_ptr->md_skip_blk) {
                 count_non_zero_coeffs[0] = 0;
@@ -1080,6 +1108,13 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->md_context->cb_dc_sign_context,
                 blk_ptr->pred_mode,
                 blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+                context_ptr->md_context->full_lambda_md[EB_10_BIT_MD],
+#else
+                context_ptr->md_context->full_lambda,
+#endif
+#endif
                 EB_TRUE);
 
             if (context_ptr->md_skip_blk) {
@@ -1126,6 +1161,13 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->md_context->cr_dc_sign_context,
                 blk_ptr->pred_mode,
                 blk_ptr->av1xd->use_intrabc,
+#if OMARK_HBD0_RDOQ
+#if NEW_MD_LAMBDA
+                context_ptr->md_context->full_lambda_md[EB_10_BIT_MD],
+#else
+                context_ptr->md_context->full_lambda,
+#endif
+#endif
                 EB_TRUE);
             if (context_ptr->md_skip_blk) {
                 count_non_zero_coeffs[2] = 0;

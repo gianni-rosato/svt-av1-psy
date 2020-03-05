@@ -54,8 +54,10 @@ typedef struct EncDecContext {
     uint8_t  chroma_qp;
     uint32_t fast_lambda;
     uint32_t full_lambda;
+#if !NEW_MD_LAMBDA
     uint32_t fast_chroma_lambda;
     uint32_t full_chroma_lambda;
+#endif
     uint32_t full_chroma_lambda_sao;
 
     //  Context Variables---------------------------------

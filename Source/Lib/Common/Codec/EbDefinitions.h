@@ -34,6 +34,18 @@
 extern "C" {
 #endif
 
+#define OMARK_LAMBDA                1 // 2. fix lambda calculation for HBD0
+#define OMARK_HBD1_CDEF             1 // 3. fix CDEF lambda for hbd1/2
+#define OMARK_HBD0_ED               1 // 4. fix ED lambda for hbd0
+#define OMARK_HBD0_IFS              1 // 5. fix IFS lambda for hbd0
+#define OMARK_HBD0_MD               1 // 5. fix MD lambda for hbd0
+#define OMARK_HBD0_RDOQ             1 // 6. fix RDOQ lambda for hbd0
+#define RDQO_ON_HBD0                1 // 6. turn ON RDOQ for hbd0
+#define PICT_SWITCH                 1  // Fix picture switching
+#define QUANT_CLEANUP               1
+#define QUANT_HBD0_FIX              1
+#define NEW_MD_LAMBDA               1
+
 #define CHROMA_SEARCH_OPT        1 // Move chroma search to be done on the best intra candidate survived from MD stage 2
 #if CHROMA_SEARCH_OPT
 #define INFR_OPT                 1 // Lossless: Infrastructure work to allow the protability of the chroma search
