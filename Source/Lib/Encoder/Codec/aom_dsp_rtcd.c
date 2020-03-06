@@ -97,6 +97,13 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
     if (flags & HAS_AVX2) eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx2;
 
+#ifndef NON_AVX512_SUPPORT
+    if (flags & HAS_AVX512F) {
+        eb_av1_compute_stats        = eb_av1_compute_stats_avx512;
+        eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
+    }
+#endif
+
     eb_av1_lowbd_pixel_proj_error  = eb_av1_lowbd_pixel_proj_error_c;
     eb_av1_highbd_pixel_proj_error = eb_av1_highbd_pixel_proj_error_c;
     if (flags & HAS_AVX2) eb_av1_highbd_pixel_proj_error = eb_av1_highbd_pixel_proj_error_avx2;

@@ -3955,11 +3955,6 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin(
     sad_2 = _mm256_castsi256_si128(result2);
     sad_3 = _mm256_extracti128_si256(result2, 1);
 
-    sad_0 = _mm_slli_epi16(sad_0, 1);
-    sad_1 = _mm_slli_epi16(sad_1, 1);
-    sad_2 = _mm_slli_epi16(sad_2, 1);
-    sad_3 = _mm_slli_epi16(sad_3, 1);
-
     sumsad01 = _mm_adds_epu16(sad_0, sad_1);
     sumsad23 = _mm_adds_epu16(sad_2, sad_3);
     s3       = _mm_adds_epu16(sumsad01, sumsad23);

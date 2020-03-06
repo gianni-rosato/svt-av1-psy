@@ -1086,7 +1086,11 @@ typedef void (*get_eight_sad_32_64_func)(uint16_t *p_sad16x16,
 
 static const get_eight_sad_8_16_func get_eight_sad_8_16_func_table[] = {
     get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin,
-    get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin};
+    get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin
+#ifndef NON_AVX512_SUPPORT
+    ,get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin
+#endif
+};
 
 static const get_eight_sad_32_64_func get_eight_sad_32_64_func_table[] = {
     get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,

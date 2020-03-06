@@ -10,6 +10,7 @@
  * - av1_wedge_sign_from_residuals_avx2
  * - av1_wedge_compute_delta_squares_avx2
  * - av1_wedge_sse_from_residuals_avx2
+ * - aom_sum_squares_i16_sse2
  *
  * @author Cidana-Wenyao
  *
@@ -19,6 +20,7 @@
 #include "EbUtility.h"
 #include "aom_dsp_rtcd.h"
 #include "random.h"
+#include "util.h"
 
 using svt_av1_test_tool::SVTRandom;
 namespace {
@@ -253,4 +255,54 @@ TEST_F(WedgeUtilTest, SseFromResidualExtremeTest) {
             << k;
     }
 }
+
+typedef uint64_t (*AomSumSquaresI16Func)(const int16_t *, uint32_t);
+typedef ::testing::tuple<BlockSize, AomSumSquaresI16Func> AomHSumSquaresParam;
+
+class AomSumSquaresTest : public ::testing::TestWithParam<AomHSumSquaresParam> {
+  public:
+    AomSumSquaresTest() : rnd_(0, 255){};
+    virtual ~AomSumSquaresTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        AomSumSquaresI16Func test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, uint16_t, src_[MAX_SB_SQUARE]);
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(src_, 0, sizeof(src_));
+            for (int j = 0; j < width * height; j++) {
+                src_[j] = rnd_.random();
+            }
+
+            uint64_t res_ref_ =
+                aom_sum_squares_i16_c((const int16_t *)src_, width * height);
+
+            uint64_t res_tst_ =
+                test_impl((const int16_t *)src_, width * height);
+
+            ASSERT_EQ(res_ref_, res_tst_);
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(AomSumSquaresTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SUM_SQUARES_TEST, AomSumSquaresTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(aom_sum_squares_i16_sse2)));
+
 }  // namespace

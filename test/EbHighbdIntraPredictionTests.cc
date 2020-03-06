@@ -9,6 +9,8 @@
 #include "EbUnitTestUtility.h"
 #include "EbHighbdIntraPredictionTests.h"
 #include <immintrin.h>
+#include "random.h"
+#include "util.h"
 
 #ifndef NON_AVX512_SUPPORT
 using namespace std;
@@ -893,3 +895,56 @@ TEST(HighbdIntraPredictionTest, aom_highbd_smooth_h_predictor_kernels)
 
 }
 #endif
+
+typedef void (*GetGRadientHistFunc)(const uint8_t *, int, int, int, uint64_t *);
+typedef ::testing::tuple<BlockSize, GetGRadientHistFunc> GetGRadientHistParam;
+
+class GetGRadientHistTest
+    : public ::testing::TestWithParam<GetGRadientHistParam> {
+  public:
+    GetGRadientHistTest() : rnd_(0, 255){};
+    virtual ~GetGRadientHistTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        GetGRadientHistFunc test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, uint8_t, src_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint64_t, out_ref_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint64_t, out_tst_[MAX_SB_SQUARE]);
+
+        memset(out_ref_, 0, sizeof(out_ref_));
+        memset(out_tst_, 0, sizeof(out_tst_));
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(src_, 0, sizeof(src_));
+            for (int j = 0; j < width * height; j++) {
+                src_[j] = rnd_.random();
+            }
+
+            av1_get_gradient_hist_c(src_, width, height, width, out_ref_);
+
+            test_impl(src_, width, height, width, out_tst_);
+
+            ASSERT_EQ(0,memcmp(out_ref_,out_tst_,sizeof(out_ref_)));
+        }
+    }
+
+  private:
+    svt_av1_test_tool::SVTRandom rnd_;
+};
+
+TEST_P(GetGRadientHistTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    GET_GRADIENT_HIST, GetGRadientHistTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(av1_get_gradient_hist_avx2)));

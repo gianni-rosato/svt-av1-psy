@@ -1026,8 +1026,6 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 #ifndef NON_AVX512_SUPPORT
     if (flags & HAS_AVX512F) {
         eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
-        eb_av1_compute_stats        = eb_av1_compute_stats_avx512;
-        eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx512;
     }
 #endif
 

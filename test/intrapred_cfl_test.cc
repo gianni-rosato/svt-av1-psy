@@ -18,6 +18,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbDefinitions.h"
 #include "random.h"
+#include "util.h"
 namespace {
 using svt_av1_test_tool::SVTRandom;
 
@@ -170,4 +171,97 @@ class HbdCflPredTest : public CflPredTest<uint16_t, CFL_PRED_HBD> {
 
 TEST_CLASS(LbdCflPredMatchTest, LbdCflPredTest)
 TEST_CLASS(HbdCflPredMatchTest, HbdCflPredTest)
+
+typedef void (*AomUpsampledPredFunc)(MacroBlockD *,
+                                     const struct AV1Common *const, int, int,
+                                     const MV *const, uint8_t *, int, int, int,
+                                     int, const uint8_t *, int, int);
+typedef ::testing::tuple<BlockSize, AomUpsampledPredFunc, int, int, int> AomUpsampledPredParam;
+
+class AomUpsampledPredTest
+    : public ::testing::TestWithParam<AomUpsampledPredParam> {
+  public:
+    AomUpsampledPredTest() : rnd_(0, 255){};
+    virtual ~AomUpsampledPredTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        AomUpsampledPredFunc test_impl = TEST_GET_PARAM(1);
+        int subpel_search = TEST_GET_PARAM(2);
+        int subpel_x_q3 = TEST_GET_PARAM(3);
+        int subpel_y_q3 = TEST_GET_PARAM(4);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, uint8_t, ref_[MAX_SB_SQUARE * 2]);
+        DECLARE_ALIGNED(16, uint8_t, comp_pred_ref_[MAX_SB_SQUARE * 2]);
+        DECLARE_ALIGNED(16, uint8_t, comp_pred_tst_[MAX_SB_SQUARE * 2]);
+
+        memset(comp_pred_ref_, 1, sizeof(comp_pred_ref_));
+        memset(comp_pred_tst_, 1, sizeof(comp_pred_tst_));
+
+        //Function aom_upsampled_pred_sse2 call inside function pointer which have to be set properly
+        // by setup_common_rtcd_internal(), we want to test intrinsic version of it, so AVX2 flag is necessary
+        setup_common_rtcd_internal(CPU_FLAGS_AVX2);
+
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(ref_, 1, sizeof(ref_));
+            for (int j = 0; j < width * height+ 3 * width; j++) {
+                ref_[j] = rnd_.random();
+            }
+
+            aom_upsampled_pred_c(NULL,
+                                 NULL,
+                                 0,
+                                 0,
+                                 NULL,
+                                 comp_pred_ref_,
+                                 width,
+                                 height,
+                                 subpel_x_q3,
+                                 subpel_y_q3,
+                                 ref_ + 3 * width,
+                                 width,
+                                 subpel_search);
+            test_impl(NULL,
+                      NULL,
+                      0,
+                      0,
+                      NULL,
+                      comp_pred_tst_,
+                      width,
+                      height,
+                      subpel_x_q3,
+                      subpel_y_q3,
+                      ref_ + 3 * width,
+                      width,
+                      subpel_search);
+
+            ASSERT_EQ(
+                0,
+                memcmp(comp_pred_ref_, comp_pred_tst_, sizeof(comp_pred_ref_)));
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(AomUpsampledPredTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(aom_upsampled_pred_sse2),
+                       ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
+                       ::testing::Values(0, 1, 2),
+                       ::testing::Values(0, 1, 2)));
+
 }  // namespace

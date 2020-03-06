@@ -13,6 +13,8 @@
  * - aom_highbd_blend_a64_mask_sse4_1/aom_highbd_blend_a64_d16_mask_avx2
  * - aom_blend_a64_hmask_sse4_1/aom_blend_a64_vmask_sse4_1
  * - aom_highbd_blend_a64_hmask_sse4_1/aom_highbd_blend_a64_vmask_sse4_1
+ * - eb_aom_highbd_blend_a64_hmask_sse4_1/eb_aom_highbd_blend_a64_vmask_sse4_1
+ * - aom_sse_avx2/aom_highbd_sse_avx2
  *
  * @author Cidana-Wenyao
  *
@@ -550,6 +552,65 @@ INSTANTIATE_TEST_CASE_P(
                                     aom_highbd_blend_a64_hmask_sse4_1,
                                     "aom_highbd_blend_a64_hmask_sse4_1")}));
 
+using EbHbdBlendA64HMaskFunc = void (*)(uint16_t *, uint32_t, const uint16_t *,
+                                        uint32_t, const uint16_t *, uint32_t,
+                                        const uint8_t *, int, int, int);
+
+class EbHbdCompBlendHMaskTest
+    : public CompBlendTest<uint16_t, uint16_t, EbHbdBlendA64HMaskFunc,
+                           MAKE_PARAM(EbHbdBlendA64HMaskFunc)> {
+  public:
+    EbHbdCompBlendHMaskTest() {
+        bd_ = 8;
+        func_ref_ = TEST_GET_PARAM(0);
+        func_tst_ = TEST_GET_PARAM(1);
+        tst_fn_name = TEST_GET_PARAM(2);
+        no_sub_ = true;
+    }
+
+    void run_hbd_test(uint8_t bd) {
+        bd_ = bd;
+        run_test();
+    }
+
+    void run_blend(int subw, int subh) override {
+        (void)subw;
+        (void)subh;
+        func_ref_((uint16_t *)ref_dst_,
+                  dst_stride_,
+                  (uint16_t *)src0_,
+                  src_stride_,
+                  (uint16_t *)src1_,
+                  src_stride_,
+                  mask_,
+                  w_,
+                  h_,
+                  bd_);
+        func_tst_((uint16_t *)tst_dst_,
+                  dst_stride_,
+                  (uint16_t *)src0_,
+                  src_stride_,
+                  (uint16_t *)src1_,
+                  src_stride_,
+                  mask_,
+                  w_,
+                  h_,
+                  bd_);
+    }
+};
+
+TEST_P(EbHbdCompBlendHMaskTest, BlendA64Mask) {
+    run_hbd_test(8);
+    run_hbd_test(10);
+    run_hbd_test(12);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    BLEND, EbHbdCompBlendHMaskTest,
+    ::testing::ValuesIn({make_tuple(eb_aom_highbd_blend_a64_hmask_c,
+                                    eb_aom_highbd_blend_a64_hmask_sse4_1,
+                                    "eb_aom_highbd_blend_a64_hmask_sse4_1")}));
+
 using HbdBlendA64VMaskFunc = void (*)(uint8_t *, uint32_t, const uint8_t *,
                                       uint32_t, const uint8_t *, uint32_t,
                                       const uint8_t *, int, int, int);
@@ -609,6 +670,65 @@ INSTANTIATE_TEST_CASE_P(
                                     aom_highbd_blend_a64_vmask_sse4_1,
                                     "aom_highbd_blend_a64_vmask_sse4_1")}));
 
+using EbHbdBlendA64VMaskFunc = void (*)(uint16_t *, uint32_t, const uint16_t *,
+                                        uint32_t, const uint16_t *, uint32_t,
+                                        const uint8_t *, int, int, int);
+
+class EbHbdCompBlendVMaskTest
+    : public CompBlendTest<uint16_t, uint16_t, EbHbdBlendA64VMaskFunc,
+                           MAKE_PARAM(EbHbdBlendA64VMaskFunc)> {
+  public:
+    EbHbdCompBlendVMaskTest() {
+        bd_ = 8;
+        func_ref_ = TEST_GET_PARAM(0);
+        func_tst_ = TEST_GET_PARAM(1);
+        tst_fn_name = TEST_GET_PARAM(2);
+        no_sub_ = true;
+    }
+
+    void run_hbd_test(uint8_t bd) {
+        bd_ = bd;
+        run_test();
+    }
+
+    void run_blend(int subw, int subh) override {
+        (void)subw;
+        (void)subh;
+        func_ref_((uint16_t *)ref_dst_,
+                  dst_stride_,
+                  (uint16_t *)src0_,
+                  src_stride_,
+                  (uint16_t *)src1_,
+                  src_stride_,
+                  mask_,
+                  w_,
+                  h_,
+                  bd_);
+        func_tst_((uint16_t *)tst_dst_,
+                  dst_stride_,
+                  (uint16_t *)src0_,
+                  src_stride_,
+                  (uint16_t *)src1_,
+                  src_stride_,
+                  mask_,
+                  w_,
+                  h_,
+                  bd_);
+    }
+};
+
+TEST_P(EbHbdCompBlendVMaskTest, BlendA64Mask) {
+    run_hbd_test(8);
+    run_hbd_test(10);
+    run_hbd_test(12);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    BLEND, EbHbdCompBlendVMaskTest,
+    ::testing::ValuesIn({make_tuple(eb_aom_highbd_blend_a64_vmask_c,
+                                    eb_aom_highbd_blend_a64_vmask_sse4_1,
+                                    "eb_aom_highbd_blend_a64_vmask_sse4_1")}));
+
 typedef void (*BuildCompDiffwtdMaskedFunc)(uint8_t *mask,
                                            DIFFWTD_MASK_TYPE mask_type,
                                            const uint8_t *src0, int src0_stride,
@@ -639,9 +759,9 @@ class BuildCompDiffwtdMaskTest
         DECLARE_ALIGNED(16, uint8_t, src1[MAX_SB_SQUARE]);
         const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {
-            for (int i = 0; i < width * height; i++) {
-                src0[i] = rnd_.random();
-                src1[i] = rnd_.random();
+            for (int j = 0; j < width * height; j++) {
+                src0[j] = rnd_.random();
+                src1[j] = rnd_.random();
             }
 
             av1_build_compound_diffwtd_mask_c(
@@ -672,6 +792,90 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(av1_build_compound_diffwtd_mask_avx2)));
+
+typedef void (*BuildCompDiffwtdMaskedHighbdFunc)(uint8_t *mask,
+                                           DIFFWTD_MASK_TYPE mask_type,
+                                           const uint8_t *src0, int src0_stride,
+                                           const uint8_t *src1, int src1_stride,
+                                           int h, int w,int bd);
+typedef ::testing::tuple<BlockSize, BuildCompDiffwtdMaskedHighbdFunc>
+    BuildCompDiffwtdMaskHighbdParam;
+
+class BuildCompDiffwtdMaskHighbdTest
+    : public ::testing::TestWithParam<BuildCompDiffwtdMaskHighbdParam> {
+  public:
+    BuildCompDiffwtdMaskHighbdTest() : rnd_(0, 255){};
+    virtual ~BuildCompDiffwtdMaskHighbdTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test(const DIFFWTD_MASK_TYPE type, int bd) {
+        const int block_size = TEST_GET_PARAM(0);
+        BuildCompDiffwtdMaskedHighbdFunc test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, uint8_t, mask_ref[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, mask_test[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint16_t, src0[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint16_t, src1[MAX_SB_SQUARE]);
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            for (int j = 0; j < width * height; j++) {
+                src0[j] = rnd_.random();
+                src1[j] = rnd_.random();
+            }
+
+            av1_build_compound_diffwtd_mask_highbd_c(mask_ref,
+                                                     type,
+                                                     (uint8_t *)src0,
+                                                     width,
+                                                     (uint8_t *)src1,
+                                                     width,
+                                                     height,
+                                                     width,
+                                                     bd);
+
+            test_impl(mask_test,
+                      type,
+                      (uint8_t *)src0,
+                      width,
+                      (uint8_t *)src1,
+                      width,
+                      height,
+                      width,
+                      bd);
+            for (int r = 0; r < height; ++r) {
+                for (int c = 0; c < width; ++c) {
+                    ASSERT_EQ(mask_ref[c + r * width], mask_test[c + r * width])
+                        << "[" << r << "," << c << "] " << i << " @ " << width
+                        << "x" << height << " inv " << type;
+                }
+            }
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(BuildCompDiffwtdMaskHighbdTest, MatchTest) {
+    run_test(DIFFWTD_38, 8);
+    run_test(DIFFWTD_38_INV, 8);
+    run_test(DIFFWTD_38, 10);
+    run_test(DIFFWTD_38_INV, 10);
+    run_test(DIFFWTD_38, 12);
+    run_test(DIFFWTD_38_INV, 12);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    CompUtilTest, BuildCompDiffwtdMaskHighbdTest,
+    ::testing::Combine(
+        ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+        ::testing::Values(av1_build_compound_diffwtd_mask_highbd_ssse3,
+                          av1_build_compound_diffwtd_mask_highbd_avx2)));
 
 // test av1_build_compound_diffwtd_mask_d16_avx2
 typedef void (*BuildCompDiffwtdMaskD16Func)(
@@ -767,4 +971,237 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Range(8, 13, 2),
         ::testing::Values(av1_build_compound_diffwtd_mask_d16_avx2),
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL)));
+
+typedef int64_t (*AomSseFunc)(const uint8_t *, int, const uint8_t *, int, int,
+                              int);
+typedef ::testing::tuple<BlockSize, AomSseFunc> AomSseParam;
+
+class AomSseTest : public ::testing::TestWithParam<AomSseParam> {
+  public:
+    AomSseTest() : rnd_(0, 255){};
+    virtual ~AomSseTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        AomSseFunc test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, uint8_t, a_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, b_[MAX_SB_SQUARE]);
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(a_, 0, sizeof(a_));
+            memset(b_, 0, sizeof(b_));
+            for (int j = 0; j < width * height; j++) {
+                a_[j] = rnd_.random();
+                b_[j] = rnd_.random();
+            }
+
+            int64_t res_ref = aom_sse_c(a_, width, b_, width, height, width);
+            int64_t res_tst = test_impl(a_, width, b_, width, height, width);
+
+            ASSERT_EQ(res_ref, res_tst);
+
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(AomSseTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(SSETEST, AomSseTest,
+                        ::testing::Combine(::testing::Range(BLOCK_4X4,
+                                                            BlockSizeS_ALL),
+                                           ::testing::Values(aom_sse_avx2)));
+
+class AomSseHighbdTest : public ::testing::TestWithParam<AomSseParam> {
+  public:
+    AomSseHighbdTest() : rnd_(0, 255){};
+    virtual ~AomSseHighbdTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        AomSseFunc test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, uint16_t, a_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint16_t, b_[MAX_SB_SQUARE]);
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(a_, 0, sizeof(a_));
+            memset(b_, 0, sizeof(b_));
+            for (int j = 0; j < width * height; j++) {
+                a_[j] = rnd_.random();
+                b_[j] = rnd_.random();
+            }
+
+            int64_t res_ref = aom_highbd_sse_c(
+                (uint8_t *)a_, width, (uint8_t *)b_, width, height, width);
+            int64_t res_tst = test_impl(
+                (uint8_t *)a_, width, (uint8_t *)b_, width, height, width);
+
+            ASSERT_EQ(res_ref, res_tst);
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(AomSseHighbdTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SSETEST, AomSseHighbdTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(aom_highbd_sse_avx2)));
+
+typedef void (*AomSubstractBlockFunc)(int, int, int16_t *, ptrdiff_t,
+                                      const uint8_t *, ptrdiff_t,
+                                      const uint8_t *, ptrdiff_t);
+typedef ::testing::tuple<BlockSize, AomSubstractBlockFunc>
+    AomSubstractBlockParam;
+
+class AomSubstractBlockTest
+    : public ::testing::TestWithParam<AomSubstractBlockParam> {
+  public:
+    AomSubstractBlockTest() : rnd_(0, 255){};
+    virtual ~AomSubstractBlockTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        AomSubstractBlockFunc test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, int16_t, diff_ref_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, int16_t, diff_tst_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, src_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint8_t, pred_[MAX_SB_SQUARE]);
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(src_, 0, sizeof(src_));
+            memset(pred_, 0, sizeof(pred_));
+            for (int j = 0; j < width * height; j++) {
+                src_[j] = rnd_.random();
+                pred_[j] = rnd_.random();
+            }
+            memset(diff_ref_, 0, sizeof(diff_ref_));
+            memset(diff_tst_, 0, sizeof(diff_tst_));
+
+            aom_subtract_block_c(
+                width, height, diff_ref_, width, src_, width, pred_, width);
+            test_impl(
+                width, height, diff_tst_, width, src_, width, pred_, width);
+
+            ASSERT_EQ(0,memcmp(diff_ref_,diff_tst_,sizeof(diff_ref_)));
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(AomSubstractBlockTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(SUBSTRACT_BLOCK_TEST, AomSubstractBlockTest,
+                        ::testing::Combine(::testing::Range(BLOCK_4X4,
+                                                            BlockSizeS_ALL),
+                       ::testing::Values(eb_aom_subtract_block_sse2,
+                                         aom_subtract_block_avx2)));
+
+typedef void (*AomHighbdSubstractBlockFunc)(int, int, int16_t *, ptrdiff_t,
+                                            const uint8_t *, ptrdiff_t,
+                                            const uint8_t *, ptrdiff_t, int);
+typedef ::testing::tuple<BlockSize, AomHighbdSubstractBlockFunc>
+    AomHighbdSubstractBlockParam;
+
+class AomHighbdSubstractBlockTest
+    : public ::testing::TestWithParam<AomHighbdSubstractBlockParam> {
+  public:
+    AomHighbdSubstractBlockTest() : rnd_(0, 255){};
+    virtual ~AomHighbdSubstractBlockTest() {
+    }
+
+    void TearDown() override {
+        aom_clear_system_state();
+    }
+
+    void run_test() {
+        const int block_size = TEST_GET_PARAM(0);
+        AomHighbdSubstractBlockFunc test_impl = TEST_GET_PARAM(1);
+        const int width = block_size_wide[block_size];
+        const int height = block_size_high[block_size];
+        DECLARE_ALIGNED(16, int16_t, diff_ref_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, int16_t, diff_tst_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint16_t, src_[MAX_SB_SQUARE]);
+        DECLARE_ALIGNED(16, uint16_t, pred_[MAX_SB_SQUARE]);
+        const int run_times = 100;
+        for (int i = 0; i < run_times; ++i) {
+            memset(src_, 0, sizeof(src_));
+            memset(pred_, 0, sizeof(pred_));
+            for (int j = 0; j < width * height; j++) {
+                src_[j] = rnd_.random();
+                pred_[j] = rnd_.random();
+            }
+            memset(diff_ref_, 0, sizeof(diff_ref_));
+            memset(diff_tst_, 0, sizeof(diff_tst_));
+
+            aom_highbd_subtract_block_c(width,
+                                        height,
+                                        diff_ref_,
+                                        width,
+                                        (uint8_t *)src_,
+                                        width,
+                                        (uint8_t *)pred_,
+                                        width,
+                                        8);//last parameter is unused
+            test_impl(width,
+                      height,
+                      diff_tst_,
+                      width,
+                      (uint8_t *)src_,
+                      width,
+                      (uint8_t *)pred_,
+                      width,
+                      8);
+
+            ASSERT_EQ(0, memcmp(diff_ref_, diff_tst_, sizeof(diff_ref_)));
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+};
+
+TEST_P(AomHighbdSubstractBlockTest, MatchTest) {
+    run_test();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SUBSTRACT_BLOCK_TEST, AomHighbdSubstractBlockTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(aom_highbd_subtract_block_sse2)));
+
 }  // namespace

@@ -306,7 +306,7 @@ void aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const cm, 
             assert(!(width & 3));
             assert(!(height & 3));
             /*Read 4 pixels four rows at a time.*/
-            for (i = 0; i < height; i++) {
+            for (i = 0; i < height; i+=4) {
                 const __m128i row0 = xx_loadl_64(ref + 0 * ref_stride);
                 const __m128i row1 = xx_loadl_64(ref + 1 * ref_stride);
                 const __m128i row2 = xx_loadl_64(ref + 2 * ref_stride);
