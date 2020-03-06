@@ -5990,7 +5990,11 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         candidate_ptr    = candidate_buffer->candidate_ptr;
 
         context_ptr->md_staging_skip_full_pred            = EB_FALSE;
+#if IFS_MD_STAGE_3
+        context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
+#else
         context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
+#endif
         context_ptr->md_staging_skip_inter_chroma_pred    = EB_TRUE;
         candidate_buffer->candidate_ptr->interp_filters   = 0;
         full_loop_core(pcs_ptr,
@@ -6091,9 +6095,13 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 
         // Set MD Staging full_loop_core settings
         context_ptr->md_staging_skip_full_pred = context_ptr->md_staging_mode == MD_STAGING_MODE_0;
+#if IFS_MD_STAGE_3
+        context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
+#else
         context_ptr->md_staging_skip_interpolation_search =
             (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
              context_ptr->md_staging_mode == MD_STAGING_MODE_2);
+#endif
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
         context_ptr->md_staging_tx_size_mode = EB_TRUE;
         context_ptr->md_staging_tx_search =
