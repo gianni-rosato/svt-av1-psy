@@ -765,7 +765,7 @@ void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
     SeqHeader *     seq_header       = &dec_handle_ptr->seq_header;
     uint8_t         sb_size_log2     = seq_header->sb_size_log2;
     int32_t         sb_size_w        = block_size_wide[seq_header->sb_size];
-    int32_t         pic_width_in_sb  = (seq_header->max_frame_width + sb_size_w - 1) / sb_size_w;
+    int32_t         pic_width_in_sb  = (frm_hdr->frame_size.frame_width + sb_size_w - 1) / sb_size_w;
     uint32_t        sb_origin_y      = y_sb_index << sb_size_log2;
 
     volatile int32_t *sb_lf_completed_in_prev_row = NULL;
