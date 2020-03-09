@@ -16,6 +16,7 @@
 #include "EbModeDecisionProcess.h"
 #include "EbPictureDemuxResults.h"
 #include "EbLog.h"
+#include "EbSvtAv1ErrorCodes.h"
 #define DETAILED_FRAME_OUTPUT 0
 
 /**************************************
@@ -580,6 +581,22 @@ static void encode_tu(EncodeContext *encode_context_ptr, int frames, int total_b
     output_stream_ptr->flags |= EB_BUFFERFLAG_HAS_TD;
 }
 
+static EbErrorType copy_data_from_bitstream(EncodeContext *encode_context_ptr, Bitstream *bitstream_ptr, EbBufferHeaderType *output_stream_ptr) {
+    EbErrorType          return_error = EB_ErrorNone;
+    int size = bitstream_get_bytes_count(bitstream_ptr);
+
+    CHECK_REPORT_ERROR((size + output_stream_ptr->n_filled_len
+                       < output_stream_ptr->n_alloc_len),
+                       encode_context_ptr->app_callback_ptr,
+                       EB_ENC_EC_ERROR2);
+
+    void* dest = output_stream_ptr->p_buffer + output_stream_ptr->n_filled_len;
+    bitstream_copy(bitstream_ptr, dest, size);
+    output_stream_ptr->n_filled_len += size;
+
+    return return_error;
+}
+
 static void encode_show_existing(EncodeContext *encode_context_ptr,
                                  PacketizationReorderEntry *queue_entry_ptr,
                                  EbBufferHeaderType        *output_stream_ptr) {
@@ -588,12 +605,9 @@ static void encode_show_existing(EncodeContext *encode_context_ptr,
     encode_td_av1(dst);
     output_stream_ptr->n_filled_len = TD_SIZE;
 
-    // Copy Slice Header to the Output Bitstream
-    copy_payload(queue_entry_ptr->bitstream_ptr,
-                 output_stream_ptr->p_buffer,
-                 (uint32_t *)&(output_stream_ptr->n_filled_len),
-                 (uint32_t *)&(output_stream_ptr->n_alloc_len),
-                 encode_context_ptr);
+    copy_data_from_bitstream(encode_context_ptr,
+                 queue_entry_ptr->bitstream_ptr,
+                 output_stream_ptr);
 
     output_stream_ptr->flags |= (EB_BUFFERFLAG_SHOW_EXT | EB_BUFFERFLAG_HAS_TD);
 }
@@ -748,22 +762,20 @@ void *packetization_kernel(void *input_ptr) {
             (void)picture_manager_results_wrapper_ptr;
         }
         // Reset the Bitstream before writing to it
-        reset_bitstream(pcs_ptr->bitstream_ptr->output_bitstream_ptr);
+        bitstream_reset(pcs_ptr->bitstream_ptr);
 
         // Code the SPS
         if (frm_hdr->frame_type == KEY_FRAME) { encode_sps_av1(pcs_ptr->bitstream_ptr, scs_ptr); }
 
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
 
-        // Copy Slice Header to the Output Bitstream
-        copy_payload(pcs_ptr->bitstream_ptr,
-                     output_stream_ptr->p_buffer,
-                     (uint32_t *)&(output_stream_ptr->n_filled_len),
-                     (uint32_t *)&(output_stream_ptr->n_alloc_len),
-                     encode_context_ptr);
+        copy_data_from_bitstream(encode_context_ptr,
+                    pcs_ptr->bitstream_ptr,
+                    output_stream_ptr);
+
         if (pcs_ptr->parent_pcs_ptr->has_show_existing) {
             // Reset the Bitstream before writing to it
-            reset_bitstream(queue_entry_ptr->bitstream_ptr->output_bitstream_ptr);
+            bitstream_reset(queue_entry_ptr->bitstream_ptr);
             write_frame_header_av1(queue_entry_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 1);
         }
 

@@ -15,7 +15,7 @@ extern "C" {
 #endif
 typedef struct Bitstream {
     EbDctor dctor;
-    EbPtr   output_bitstream_ptr;
+    OutputBitstreamUnit* output_bitstream_ptr;
 } Bitstream;
 
 typedef struct EntropyCoder {
@@ -48,9 +48,16 @@ extern EbErrorType entropy_tile_info_ctor(
 
 extern EbErrorType bitstream_ctor(Bitstream *bitstream_ptr, uint32_t buffer_size);
 
+void bitstream_reset(Bitstream* bitstream_ptr);
+
+int bitstream_get_bytes_count(const Bitstream* bitstream_ptr);
+
+//copy size bytes from bistream_ptr to dst
+void bitstream_copy(const Bitstream* bitstream_ptr, void* dest, int size);
+
 extern EbErrorType entropy_coder_ctor(EntropyCoder *entropy_coder_ptr, uint32_t buffer_size);
 
-extern EbPtr entropy_coder_get_bitstream_ptr(EntropyCoder *entropy_coder_ptr);
+extern OutputBitstreamUnit* entropy_coder_get_bitstream_ptr(EntropyCoder *entropy_coder_ptr);
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,6 @@ extern "C" {
 typedef struct OutputBitstreamUnit {
     EbDctor  dctor;
     uint32_t size; // allocated buffer size
-    uint32_t written_bits_count; // count of written bits
     uint8_t *buffer_begin_av1; // the byte buffer
     uint8_t *buffer_av1; // the byte buffer
 } OutputBitstreamUnit;
@@ -41,12 +40,6 @@ extern EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr
                                               uint32_t             buffer_size);
 
 extern EbErrorType output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr);
-
-extern EbErrorType output_bitstream_rbsp_to_payload(OutputBitstreamUnit *bitstream_ptr,
-                                                    EbByte               output_buffer,
-                                                    uint32_t *           output_buffer_index,
-                                                    uint32_t *           output_buffer_size,
-                                                    uint32_t             startLocation);
 
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/

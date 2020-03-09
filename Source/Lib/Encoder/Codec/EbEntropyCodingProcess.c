@@ -200,7 +200,7 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
                         pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
     uint16_t tile_idx = 0;
     for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
-        reset_bitstream(entropy_coder_get_bitstream_ptr(
+        output_bitstream_reset(entropy_coder_get_bitstream_ptr(
             pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr));
     }
 
@@ -259,7 +259,7 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
 #else
 static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
                                          PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-    reset_bitstream(entropy_coder_get_bitstream_ptr(pcs_ptr->entropy_coder_ptr));
+    output_bitstream_reset(entropy_coder_get_bitstream_ptr(pcs_ptr->entropy_coder_ptr));
 
     uint32_t entropy_coding_qp;
 
@@ -311,7 +311,7 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
 static void reset_ec_tile(uint32_t total_size, uint32_t is_last_tile_in_tg,
                           EntropyCodingContext *context_ptr, PictureControlSet *pcs_ptr,
                           SequenceControlSet *scs_ptr) {
-    reset_bitstream(entropy_coder_get_bitstream_ptr(pcs_ptr->entropy_coder_ptr));
+    output_bitstream_reset(entropy_coder_get_bitstream_ptr(pcs_ptr->entropy_coder_ptr));
 
     uint32_t entropy_coding_qp;
 

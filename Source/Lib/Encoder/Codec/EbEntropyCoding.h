@@ -58,8 +58,6 @@ extern int get_wedge_params_bits(BlockSize sb_type);
 
 extern EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr);
 
-extern EbErrorType reset_bitstream(EbPtr bitstream_ptr);
-
 extern EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr,
                                        EntropyCoder *entropy_coder_ptr, uint32_t qp,
                                        EB_SLICE slice_type);
@@ -72,11 +70,6 @@ EbErrorType av1_txb_estimate_coeff_bits(
     uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
     TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
     COMPONENT_TYPE component_type);
-
-extern EbErrorType copy_payload(Bitstream *bitstream_ptr, EbByte output_buffer,
-                                                  uint32_t *     output_buffer_index,
-                                                  uint32_t *     output_buffer_size,
-                                                  EncodeContext *encode_context_ptr);
 
 //**********************************************************************************************************//
 //onyxc_int.h

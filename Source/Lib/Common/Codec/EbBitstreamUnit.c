@@ -43,7 +43,6 @@ EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint3
         bitstream_ptr->buffer_begin_av1 = 0;
         bitstream_ptr->buffer_av1       = 0;
     }
-    bitstream_ptr->written_bits_count = 0;
 
     return EB_ErrorNone;
 }
@@ -54,43 +53,12 @@ EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint3
 EbErrorType output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    bitstream_ptr->written_bits_count = 0;
     // Reset the write ptr to the beginning of the buffer
     bitstream_ptr->buffer_av1 = bitstream_ptr->buffer_begin_av1;
 
     return return_error;
 }
 
-/**********************************
- * Output RBSP to payload
- *   Intended to be used in CABAC
- **********************************/
-EbErrorType output_bitstream_rbsp_to_payload(OutputBitstreamUnit *bitstream_ptr,
-                                             EbByte output_buffer, uint32_t *output_buffer_index,
-                                             uint32_t *output_buffer_size,
-                                             uint32_t  start_location) {
-    EbErrorType return_error = EB_ErrorNone;
-    uint32_t    buffer_written_bytes_count =
-        (uint32_t)(bitstream_ptr->buffer_av1 - bitstream_ptr->buffer_begin_av1);
-    uint32_t write_location = start_location;
-    uint32_t read_location  = start_location;
-    EbByte   read_byte_ptr;
-    EbByte   write_byte_ptr;
-
-    // IVF data
-    read_byte_ptr  = (EbByte)bitstream_ptr->buffer_begin_av1;
-    write_byte_ptr = &output_buffer[*output_buffer_index];
-    //frame_count++;
-    while ((read_location < buffer_written_bytes_count)) {
-        if ((*output_buffer_index) < (*output_buffer_size)) {
-            write_byte_ptr[write_location++] = read_byte_ptr[read_location];
-            *output_buffer_index += 1;
-        }
-        read_location++;
-    }
-
-    return return_error;
-}
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
