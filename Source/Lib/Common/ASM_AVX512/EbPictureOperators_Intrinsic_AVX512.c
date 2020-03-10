@@ -209,7 +209,7 @@ static INLINE void SpatialFullDistortionKernel64_AVX512_INTRIN(const uint8_t *co
 
 uint64_t spatial_full_distortion_kernel32x_n_avx512_intrin(
     uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-    uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
+    int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
     int32_t row_count = area_height;
     __m512i sum       = _mm512_setzero_si512();
 
@@ -231,7 +231,7 @@ uint64_t spatial_full_distortion_kernel32x_n_avx512_intrin(
 
 uint64_t spatial_full_distortion_kernel64x_n_avx512_intrin(
     uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-    uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
+    int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
     int32_t row_count = area_height;
     __m512i sum       = _mm512_setzero_si512();
 
@@ -251,7 +251,7 @@ uint64_t spatial_full_distortion_kernel64x_n_avx512_intrin(
 
 uint64_t spatial_full_distortion_kernel128x_n_avx512_intrin(
     uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-    uint32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
+    int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
     int32_t row_count = area_height;
     __m512i sum       = _mm512_setzero_si512();
 
@@ -272,7 +272,7 @@ uint64_t spatial_full_distortion_kernel128x_n_avx512_intrin(
 
 uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset,
                                                uint32_t input_stride, uint8_t *recon,
-                                               uint32_t recon_offset, uint32_t recon_stride,
+                                               int32_t recon_offset, uint32_t recon_stride,
                                                uint32_t area_width, uint32_t area_height) {
     const uint32_t leftover = area_width & 31;
     int32_t        h;

@@ -1200,7 +1200,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
                                                               input_origin_index,
                                                               input_picture_ptr->stride_y,
                                                               prediction_ptr->buffer_y,
-                                                              cu_origin_index,
+                                                              (int32_t)cu_origin_index,
                                                               prediction_ptr->stride_y,
                                                               context_ptr->blk_geom->bwidth,
                                                               context_ptr->blk_geom->bheight));
@@ -1239,7 +1239,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
                                            input_cb_origin_in_index,
                                            input_picture_ptr->stride_cb,
                                            candidate_buffer->prediction_ptr->buffer_cb,
-                                           cu_chroma_origin_index,
+                                           (int32_t)cu_chroma_origin_index,
                                            prediction_ptr->stride_cb,
                                            context_ptr->blk_geom->bwidth_uv,
                                            context_ptr->blk_geom->bheight_uv);
@@ -1249,7 +1249,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
                                            input_cr_origin_in_index,
                                            input_picture_ptr->stride_cb,
                                            candidate_buffer->prediction_ptr->buffer_cr,
-                                           cu_chroma_origin_index,
+                                           (int32_t)cu_chroma_origin_index,
                                            prediction_ptr->stride_cr,
                                            context_ptr->blk_geom->bwidth_uv,
                                            context_ptr->blk_geom->bheight_uv);
@@ -2373,7 +2373,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                  refinement_pos_y <= search_position_end_y;
                  ++refinement_pos_y) {
 #endif
-                uint32_t ref_origin_index =
+                int32_t ref_origin_index =
                     ref_pic->origin_x +
                     (context_ptr->blk_origin_x + (mvx >> 3) + refinement_pos_x) +
                     (context_ptr->blk_origin_y + (mvy >> 3) + ref_pic->origin_y +
@@ -2490,7 +2490,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
              refinement_pos_y <= search_position_end_y;
              ++refinement_pos_y) {
 #endif
-            uint32_t ref_origin_index =
+            int32_t ref_origin_index =
                 ref_pic->origin_x + (context_ptr->blk_origin_x + (mvx >> 3) + refinement_pos_x) +
                 (context_ptr->blk_origin_y + (mvy >> 3) + ref_pic->origin_y + refinement_pos_y) *
                     ref_pic->stride_y;
@@ -2626,7 +2626,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
                                                                   input_origin_index,
                                                                   input_picture_ptr->stride_y,
                                                                   prediction_ptr->buffer_y,
-                                                                  blk_origin_index,
+                                                                  (int32_t)blk_origin_index,
                                                                   prediction_ptr->stride_y,
                                                                   context_ptr->blk_geom->bwidth,
                                                                   context_ptr->blk_geom->bheight);
@@ -2929,7 +2929,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                 EbPictureBufferDesc *ref_pic =
                     hbd_mode_decision ? ref_obj->reference_picture16bit : ref_obj->reference_picture;
 
-                uint32_t ref_origin_index =
+                int32_t ref_origin_index =
                     ref_pic->origin_x + (context_ptr->blk_origin_x + (me_mv_x >> 3)) +
                     (context_ptr->blk_origin_y + (me_mv_y >> 3) + ref_pic->origin_y) *
                     ref_pic->stride_y;
@@ -3015,7 +3015,7 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                        ? ref_obj->reference_picture16bit
                                                        : ref_obj->reference_picture;
 
-                    uint32_t ref_origin_index =
+                    int32_t ref_origin_index =
                         ref_pic->origin_x +
                         (context_ptr->blk_origin_x + (mvp_x_array[mvp_index] >> 3)) +
                         (context_ptr->blk_origin_y + (mvp_y_array[mvp_index] >> 3) +
@@ -4773,7 +4773,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             input_txb_origin_index,
             input_picture_ptr->stride_y,
             candidate_buffer->prediction_ptr->buffer_y,
-            txb_origin_index,
+            (int32_t)txb_origin_index,
             candidate_buffer->prediction_ptr->stride_y,
             context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
@@ -4783,7 +4783,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             input_txb_origin_index,
             input_picture_ptr->stride_y,
             candidate_buffer->recon_ptr->buffer_y,
-            txb_origin_index,
+            (int32_t)txb_origin_index,
             candidate_buffer->recon_ptr->stride_y,
             context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);

@@ -2127,7 +2127,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                                        input_txb_origin_index,
                                        input_picture_ptr->stride_y,
                                        candidate_buffer->prediction_ptr->buffer_y,
-                                       txb_origin_index,
+                                       (int32_t)txb_origin_index,
                                        candidate_buffer->prediction_ptr->stride_y,
                                        cropped_tx_width,
                                        cropped_tx_height);
@@ -2137,7 +2137,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                                        input_txb_origin_index,
                                        input_picture_ptr->stride_y,
                                        candidate_buffer->recon_ptr->buffer_y,
-                                       txb_origin_index,
+                                       (int32_t)txb_origin_index,
                                        candidate_buffer->recon_ptr->stride_y,
                                        cropped_tx_width,
                                        cropped_tx_height);
@@ -3023,7 +3023,7 @@ void cu_full_distortion_fast_txb_mode_r(
                         input_picture_ptr->stride_cb +
                     (((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1) +
                      (input_picture_ptr->origin_x >> 1));
-                uint32_t txb_uv_origin_index =
+                int32_t txb_uv_origin_index =
                     (((txb_origin_x >> 3) << 3) +
                      (((txb_origin_y >> 3) << 3) *
                       candidate_buffer->residual_quant_coeff_ptr->stride_cb)) >>
