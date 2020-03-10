@@ -623,6 +623,14 @@ static void release_frames(EncodeContext *encode_context_ptr, int frames) {
     encode_context_ptr->packetization_reorder_queue_head_index = get_reorder_queue_pos(encode_context_ptr, frames);
 }
 
+inline static void clear_eos_flag(EbBufferHeaderType *output_stream_ptr) {
+    output_stream_ptr->flags &= ~EB_BUFFERFLAG_EOS;
+}
+
+inline static void set_eos_flag(EbBufferHeaderType *output_stream_ptr) {
+    output_stream_ptr->flags |= EB_BUFFERFLAG_EOS;
+}
+
 void *packetization_kernel(void *input_ptr) {
     // Context
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -856,14 +864,21 @@ void *packetization_kernel(void *input_ptr) {
             queue_entry_ptr           = get_reorder_queue_entry(encode_context_ptr, frames - 1);
             output_stream_wrapper_ptr = queue_entry_ptr->output_stream_wrapper_ptr;
             output_stream_ptr         = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
+            EbBool eos                = output_stream_ptr->flags &  EB_BUFFERFLAG_EOS;
 
             encode_tu(encode_context_ptr, frames, total_bytes, output_stream_ptr);
+
+            if (eos && queue_entry_ptr->has_show_existing)
+                clear_eos_flag(output_stream_ptr);
+
             eb_post_full_object(output_stream_wrapper_ptr);
             if (queue_entry_ptr->has_show_existing) {
                 EbObjectWrapper *existed = pop_undisplayed_frame(encode_context_ptr);
                 if (existed) {
                     EbBufferHeaderType *existed_output_stream_ptr = (EbBufferHeaderType *)existed->object_ptr;
                     encode_show_existing(encode_context_ptr, queue_entry_ptr, existed_output_stream_ptr);
+                    if (eos)
+                        set_eos_flag(existed_output_stream_ptr);
                     eb_post_full_object(existed);
                 }
             }
