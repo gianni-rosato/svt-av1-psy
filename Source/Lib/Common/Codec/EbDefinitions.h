@@ -33,7 +33,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#define QPS_CHANGE_II            1 // Change the QP assignment for I
 #define OMARK_LAMBDA                1 // 2. fix lambda calculation for HBD0
 #define OMARK_HBD1_CDEF             1 // 3. fix CDEF lambda for hbd1/2
 #define OMARK_HBD0_ED               1 // 4. fix ED lambda for hbd0

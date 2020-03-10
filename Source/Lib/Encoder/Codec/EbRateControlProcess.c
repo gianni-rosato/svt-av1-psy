@@ -5115,7 +5115,11 @@ static int adaptive_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, in
 }
 
 #if QPS_CHANGE
+#if QPS_CHANGE_II
+#define DEFAULT_KF_BOOST 2700
+#else
 #define DEFAULT_KF_BOOST 2300
+#endif
 #define DEFAULT_GF_BOOST 1350
 /******************************************************
  * cqp_qindex_calc
@@ -5180,8 +5184,11 @@ static int cqp_qindex_calc(
             q_val * delta_rate_new[pcs_ptr->parent_pcs_ptr->hierarchical_levels]
             [pcs_ptr->parent_pcs_ptr->temporal_layer_index],
             bit_depth);
-
+#if QPS_CHANGE_II
+        active_best_quality = (int32_t)(qindex + delta_qindex);
+#else
         active_best_quality = MAX((int32_t)(qindex + delta_qindex), (pcs_ptr->ref_pic_qp_array[0][0] << 2) + 2);
+#endif
     }
     q = active_best_quality;
     clamp(q, active_best_quality, active_worst_quality);
