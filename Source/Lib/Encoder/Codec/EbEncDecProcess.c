@@ -1929,6 +1929,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         context_ptr->sq_weight = scs_ptr->static_config.sq_weight;
 #endif
 
+#if NSQ_HV
+    // nsq_hv_level  needs sq_weight to be ON
+    // 0: OFF
+    // 1: ON
+    //        if H > V + TH1% then skip HA / HB / H4
+    //        if V > H + TH1% then skip VA / VB / V4
+    // 2: ON  for  H4 / V4 use more agressive TH2% for faster mode
+    if (MR_MODE || context_ptr->pd_pass < PD_PASS_2)
+        context_ptr->nsq_hv_level = 0;
+    else if (pcs_ptr->enc_mode <= ENC_M3) {
+        context_ptr->nsq_hv_level = 1;
+        assert(context_ptr->sq_weight != (uint32_t)~0);
+    }
+    else {
+        context_ptr->nsq_hv_level = 2;
+        assert(context_ptr->sq_weight != (uint32_t)~0);
+    }
+#endif
     // Set pred ME full search area
     if (context_ptr->pd_pass == PD_PASS_0) {
         context_ptr->pred_me_full_pel_search_width  = PRED_ME_FULL_PEL_SEARCH_WIDTH;

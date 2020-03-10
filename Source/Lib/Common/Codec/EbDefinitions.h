@@ -34,6 +34,7 @@
 extern "C" {
 #endif
 #define QPS_CHANGE_II            1 // Change the QP assignment for I
+#define NSQ_HV                      1 // skip NSQ partitions based on H vs V costs
 #define OMARK_LAMBDA                1 // 2. fix lambda calculation for HBD0
 #define OMARK_HBD1_CDEF             1 // 3. fix CDEF lambda for hbd1/2
 #define OMARK_HBD0_ED               1 // 4. fix ED lambda for hbd0

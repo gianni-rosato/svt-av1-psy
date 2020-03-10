@@ -376,7 +376,9 @@ typedef struct ModeDecisionContext {
     uint8_t *    left_txfm_context;
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
-
+#if NSQ_HV
+    uint32_t nsq_hv_level;
+#endif
     // signal for enabling shortcut to skip search depths
     MD_COMP_TYPE compound_types_to_try;
     uint8_t      best_me_cand_only_flag;
