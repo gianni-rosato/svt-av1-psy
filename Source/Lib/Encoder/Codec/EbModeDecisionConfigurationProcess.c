@@ -154,6 +154,22 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
             parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] *= 2;
             parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] *= 2;
             parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] *= 2;
+            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
         }
 #endif
 #endif
