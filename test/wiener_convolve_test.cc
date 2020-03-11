@@ -28,6 +28,7 @@
 #include "EbDefinitions.h"
 #include "EbRestoration.h"
 #include "EbTime.h"
+#include "EbUtility.h"
 #include "random.h"
 #include "util.h"
 
@@ -112,40 +113,44 @@ class AV1WienerConvolveTest : public ::testing::TestWithParam<ParamType> {
         bd_ = 8;
     }
 
-    virtual ~AV1WienerConvolveTest() {
-        if (input_) {
-            delete[] input_;
-            input_ = nullptr;
-        }
-        if (output_) {
-            delete[] output_;
-            output_ = nullptr;
-        }
-        if (output_tst_) {
-            delete[] output_tst_;
-            output_tst_ = nullptr;
-        }
-        if (output_ref_) {
-            delete[] output_ref_;
-            output_ref_ = nullptr;
-        }
-        aom_clear_system_state();
-    }
-
     void SetUp() override {
         rnd_.reset();
         malloc_data();
     }
 
+    void TearDown() override {
+        if (input_) {
+            eb_aom_free(input_);
+            input_ = nullptr;
+        }
+        if (output_) {
+            eb_aom_free(output_);
+            output_ = nullptr;
+        }
+        if (output_tst_) {
+            eb_aom_free(output_tst_);
+            output_tst_ = nullptr;
+        }
+        if (output_ref_) {
+            eb_aom_free(output_ref_);
+            output_ref_ = nullptr;
+        }
+        aom_clear_system_state();
+    }
+
   protected:
     void malloc_data() {
-        input_ = new Sample[input_stride * h];
+        input_ = reinterpret_cast<Sample*>(
+            eb_aom_memalign(32, input_stride * h * sizeof(Sample)));
         ASSERT_NE(input_, nullptr) << "create input buffer failed!";
-        output_ = new Sample[output_stride * h];
+        output_ = reinterpret_cast<Sample*>(
+            eb_aom_memalign(32, output_stride * h * sizeof(Sample)));
         ASSERT_NE(output_, nullptr) << "create output buffer failed!";
-        output_tst_ = new Sample[output_stride * h];
+        output_tst_ = reinterpret_cast<Sample*>(
+            eb_aom_memalign(32, output_stride * h * sizeof(Sample)));
         ASSERT_NE(output_tst_, nullptr) << "create test output buffer failed!";
-        output_ref_ = new Sample[output_stride * h];
+        output_ref_ = reinterpret_cast<Sample*>(
+            eb_aom_memalign(32, output_stride * h * sizeof(Sample)));
         ASSERT_NE(output_ref_, nullptr) << "create ref output buffer failed!";
     }
 
@@ -224,7 +229,8 @@ class AV1WienerConvolveTest : public ::testing::TestWithParam<ParamType> {
 
     virtual void speed_and_check(const InterpKernel& hkernel,
                                  const InterpKernel& vkernel,
-                                 const ConvolveParams& params, const int tap) = 0;
+                                 const ConvolveParams& params,
+                                 const int tap) = 0;
 
     virtual void run_random_test(const int test_times) {
         // Generate random filter kernels
@@ -372,15 +378,15 @@ class AV1WienerConvolveLbdTest
 
         eb_start_time(&finish_time_seconds, &finish_time_useconds);
         eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
+                                           start_time_useconds,
+                                           middle_time_seconds,
+                                           middle_time_useconds,
+                                           &time_c);
         eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+                                           middle_time_useconds,
+                                           finish_time_seconds,
+                                           finish_time_useconds,
+                                           &time_o);
 
         printf("convolve(%3dx%3d, tap %d): %6.2f\n",
                out_w_,
