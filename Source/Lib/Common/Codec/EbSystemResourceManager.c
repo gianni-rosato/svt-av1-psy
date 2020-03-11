@@ -389,11 +389,11 @@ static EbErrorType eb_object_wrapper_ctor(EbObjectWrapper *wrapper, EbSystemReso
     EbErrorType ret;
 
     wrapper->dctor = eb_object_wrapper_dctor;
-    ret            = object_creator(&wrapper->object_ptr, object_init_data_ptr);
-    if (ret != EB_ErrorNone) return ret;
     wrapper->release_enable      = EB_TRUE;
     wrapper->system_resource_ptr = resource;
     wrapper->object_destroyer    = object_destroyer;
+    ret                          = object_creator(&wrapper->object_ptr, object_init_data_ptr);
+    if (ret != EB_ErrorNone) return ret;
     return EB_ErrorNone;
 }
 
