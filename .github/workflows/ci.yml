@@ -94,10 +94,15 @@ jobs:
         tar xf video.tar.gz
         mv -t $HOME akiyo_cif.y4m
         mv -t $HOME Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-    - name: Checkout SVT-AV1 (master)
+    - name: Checkout SVT-AV1 on pull request (master)
+      if: github.event_name == 'pull_request'
       uses: actions/checkout@v2
       with:
-        repository: 'OpenVisualCloud/SVT-AV1'
+        ref: ${{ github.base_ref }}
+    - name: Checkout SVT-AV1 on push (master)
+      if: github.event_name == 'push'
+      uses: actions/checkout@v2
+      with:
         ref: 'master'
     - name: Prepare cache hash
       id: cache_hash
