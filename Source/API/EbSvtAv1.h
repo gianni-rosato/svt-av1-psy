@@ -106,6 +106,7 @@ typedef enum EbErrorType {
     EB_ErrorMutexUnresponsive      = (int32_t)0x80002031,
     EB_ErrorDestroyMutexFailed     = (int32_t)0x80002032,
     EB_NoErrorEmptyQueue           = (int32_t)0x80002033,
+    EB_NoErrorFifoShutdown         = (int32_t)0x80002034,
     EB_ErrorMax                    = 0x7FFFFFFF
 } EbErrorType;
 

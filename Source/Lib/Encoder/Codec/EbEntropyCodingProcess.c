@@ -554,12 +554,12 @@ void *entropy_coding_kernel(void *input_ptr) {
     for (;;) {
         // Get Mode Decision Results
 #if TILES_PARALLEL
-        eb_get_full_object(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper_ptr);
+
         rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
         pcs_ptr          = (PictureControlSet *)rest_results_ptr->pcs_wrapper_ptr->object_ptr;
 #else
-        eb_get_full_object(context_ptr->enc_dec_input_fifo_ptr, &enc_dec_results_wrapper_ptr);
-        enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
+        EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &enc_dec_results_wrapper_ptr);
         pcs_ptr = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
 #endif
         scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;

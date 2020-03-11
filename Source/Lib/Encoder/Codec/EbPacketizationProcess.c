@@ -672,8 +672,9 @@ void *packetization_kernel(void *input_ptr) {
 
     for (;;) {
         // Get EntropyCoding Results
-        eb_get_full_object(context_ptr->entropy_coding_input_fifo_ptr,
+        EB_GET_FULL_OBJECT(context_ptr->entropy_coding_input_fifo_ptr,
                            &entropy_coding_results_wrapper_ptr);
+
         entropy_coding_results_ptr =
             (EntropyCodingResults *)entropy_coding_results_wrapper_ptr->object_ptr;
         pcs_ptr = (PictureControlSet *)entropy_coding_results_ptr->pcs_wrapper_ptr->object_ptr;

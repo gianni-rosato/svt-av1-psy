@@ -114,7 +114,7 @@ void *source_based_operations_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Input Full Object
-        eb_get_full_object(context_ptr->initial_rate_control_results_input_fifo_ptr,
+        EB_GET_FULL_OBJECT(context_ptr->initial_rate_control_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
         in_results_ptr = (InitialRateControlResults *)in_results_wrapper_ptr->object_ptr;

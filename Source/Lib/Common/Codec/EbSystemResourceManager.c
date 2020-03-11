@@ -76,6 +76,21 @@ static EbErrorType eb_fifo_pop_front(EbFifo *fifoPtr, EbObjectWrapper **wrapper_
     return return_error;
 }
 
+static EbErrorType eb_fifo_shutdown(EbFifo *fifo_ptr) {
+
+    EbErrorType return_error = EB_ErrorNone;
+
+    // Acquire lockout Mutex
+    eb_block_on_mutex(fifo_ptr->lockout_mutex);
+    fifo_ptr->quit_signal = EB_TRUE;
+    // Release Mutex
+    eb_release_mutex(fifo_ptr->lockout_mutex);
+    //Wake up the waiting process if any
+    eb_post_semaphore(fifo_ptr->counting_semaphore);
+
+    return return_error;
+}
+
 static void eb_circular_buffer_dctor(EbPtr p) {
     EbCircularBuffer *obj = (EbCircularBuffer *)p;
     EB_FREE(obj->array_ptr);
@@ -469,6 +484,15 @@ EbFifo *eb_system_resource_get_consumer_fifo(const EbSystemResource *resource_pt
     return eb_muxing_queue_get_fifo(resource_ptr->full_queue, index);
 }
 
+EbErrorType eb_shutdown_process(const EbSystemResource *resource_ptr) {
+    //notify all consumers we are shutting down
+    for (unsigned int i = 0; i < resource_ptr->full_queue->process_total_count; i++) {
+        EbFifo *fifo_ptr = eb_system_resource_get_consumer_fifo(resource_ptr, i);
+        eb_fifo_shutdown(fifo_ptr);
+    }
+    return EB_ErrorNone;
+}
+
 /*********************************************************************
  * EbSystemResourceReleaseProcess
  *********************************************************************/
@@ -612,7 +636,12 @@ EbErrorType eb_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_
     // Acquire lockout Mutex
     eb_block_on_mutex(full_fifo_ptr->lockout_mutex);
 
-    eb_fifo_pop_front(full_fifo_ptr, wrapper_dbl_ptr);
+    if (!full_fifo_ptr->quit_signal) {
+        eb_fifo_pop_front(full_fifo_ptr, wrapper_dbl_ptr);
+    } else {
+        *wrapper_dbl_ptr = NULL;
+        return_error = EB_NoErrorFifoShutdown;
+    }
 
     // Release Mutex
     eb_release_mutex(full_fifo_ptr->lockout_mutex);
@@ -643,7 +672,11 @@ EbErrorType eb_get_full_object_non_blocking(
     // Acquire lockout Mutex
     eb_block_on_mutex(full_fifo_ptr->lockout_mutex);
 
-    fifo_empty = eb_fifo_peak_front(full_fifo_ptr);
+    //if the fifo is shutting down, we will not give any buffer to caller
+    if (!full_fifo_ptr->quit_signal)
+        fifo_empty = eb_fifo_peak_front(full_fifo_ptr);
+    else
+        fifo_empty = EB_TRUE;
 
     // Release Mutex
     eb_release_mutex(full_fifo_ptr->lockout_mutex);

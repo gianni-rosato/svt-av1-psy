@@ -193,7 +193,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Input Full Object
-        eb_get_full_object(context_ptr->picture_input_fifo_ptr, &input_picture_demux_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->picture_input_fifo_ptr, &input_picture_demux_wrapper_ptr);
 
         input_picture_demux_ptr =
             (PictureDemuxResults *)input_picture_demux_wrapper_ptr->object_ptr;

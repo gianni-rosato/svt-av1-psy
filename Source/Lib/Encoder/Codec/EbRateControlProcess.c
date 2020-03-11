@@ -5497,7 +5497,7 @@ void *rate_control_kernel(void *input_ptr) {
 
     for (;;) {
         // Get RateControl Task
-        eb_get_full_object(context_ptr->rate_control_input_tasks_fifo_ptr,
+        EB_GET_FULL_OBJECT(context_ptr->rate_control_input_tasks_fifo_ptr,
                            &rate_control_tasks_wrapper_ptr);
 
         rate_control_tasks_ptr = (RateControlTasks *)rate_control_tasks_wrapper_ptr->object_ptr;

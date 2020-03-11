@@ -1732,6 +1732,26 @@ __attribute__((visibility("default")))
 EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component){
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
+
+    EbEncHandle *handle = (EbEncHandle*)svt_enc_component->p_component_private;
+    if (handle) {
+        eb_shutdown_process(handle->input_buffer_resource_ptr);
+        eb_shutdown_process(handle->resource_coordination_results_resource_ptr);
+        eb_shutdown_process(handle->picture_analysis_results_resource_ptr);
+        eb_shutdown_process(handle->picture_decision_results_resource_ptr);
+        eb_shutdown_process(handle->motion_estimation_results_resource_ptr);
+        eb_shutdown_process(handle->initial_rate_control_results_resource_ptr);
+        eb_shutdown_process(handle->picture_demux_results_resource_ptr);
+        eb_shutdown_process(handle->rate_control_tasks_resource_ptr);
+        eb_shutdown_process(handle->rate_control_results_resource_ptr);
+        eb_shutdown_process(handle->enc_dec_tasks_resource_ptr);
+        eb_shutdown_process(handle->enc_dec_results_resource_ptr);
+        eb_shutdown_process(handle->entropy_coding_results_resource_ptr);
+        eb_shutdown_process(handle->dlf_results_resource_ptr);
+        eb_shutdown_process(handle->cdef_results_resource_ptr);
+        eb_shutdown_process(handle->rest_results_resource_ptr);
+    }
+
     return EB_ErrorNone;
 }
 

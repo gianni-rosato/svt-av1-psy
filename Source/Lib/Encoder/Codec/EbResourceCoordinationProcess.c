@@ -740,7 +740,8 @@ void *resource_coordination_kernel(void *input_ptr) {
         instance_index = 0;
 
         // Get the Next svt Input Buffer [BLOCKING]
-        eb_get_full_object(context_ptr->input_buffer_fifo_ptr, &eb_input_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->input_buffer_fifo_ptr, &eb_input_wrapper_ptr);
+
         eb_input_ptr = (EbBufferHeaderType *)eb_input_wrapper_ptr->object_ptr;
         scs_ptr      = context_ptr->scs_instance_array[instance_index]->scs_ptr;
 

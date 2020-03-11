@@ -478,7 +478,7 @@ void *rest_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Cdef Results
-        eb_get_full_object(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper_ptr);
 
         cdef_results_ptr = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
         pcs_ptr          = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;

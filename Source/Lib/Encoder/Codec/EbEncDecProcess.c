@@ -2760,7 +2760,7 @@ void *enc_dec_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Mode Decision Results
-        eb_get_full_object(context_ptr->mode_decision_input_fifo_ptr, &enc_dec_tasks_wrapper_ptr);
+        EB_GET_FULL_OBJECT(context_ptr->mode_decision_input_fifo_ptr, &enc_dec_tasks_wrapper_ptr);
 
         enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
         pcs_ptr           = (PictureControlSet *)enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;

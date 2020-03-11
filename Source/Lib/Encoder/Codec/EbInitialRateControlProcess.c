@@ -864,7 +864,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
     uint32_t segment_index;
     for (;;) {
         // Get Input Full Object
-        eb_get_full_object(context_ptr->motion_estimation_results_input_fifo_ptr,
+        EB_GET_FULL_OBJECT(context_ptr->motion_estimation_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
         in_results_ptr = (MotionEstimationResults *)in_results_wrapper_ptr->object_ptr;

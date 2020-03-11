@@ -698,7 +698,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 
     for (;;) {
         // Get Input Full Object
-        eb_get_full_object(context_ptr->picture_decision_results_input_fifo_ptr,
+        EB_GET_FULL_OBJECT(context_ptr->picture_decision_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
         in_results_ptr = (PictureDecisionResults *)in_results_wrapper_ptr->object_ptr;
