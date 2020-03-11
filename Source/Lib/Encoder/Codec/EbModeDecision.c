@@ -5083,6 +5083,7 @@ void inject_intra_candidates_ois(PictureControlSet *pcs_ptr, ModeDecisionContext
         if (av1_is_directional_mode((PredictionMode)intra_mode)) {
             int32_t angle_delta                 = ois_blk_ptr[can_total_cnt].angle_delta;
             candidate_array[can_total_cnt].type = INTRA_MODE;
+            candidate_array[can_total_cnt].merge_flag = EB_FALSE;
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[0] = 0;
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[1] = 0;
             candidate_array[can_total_cnt].intra_luma_mode                  = intra_mode;
@@ -5125,6 +5126,7 @@ void inject_intra_candidates_ois(PictureControlSet *pcs_ptr, ModeDecisionContext
             INCRMENT_CAND_TOTAL_COUNT(can_total_cnt);
         } else {
             candidate_array[can_total_cnt].type                             = INTRA_MODE;
+            candidate_array[can_total_cnt].merge_flag                       = EB_FALSE;
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[0] = 0;
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[1] = 0;
             candidate_array[can_total_cnt].intra_luma_mode                  = intra_mode;
@@ -5631,6 +5633,7 @@ void  inject_intra_candidates(
                     int32_t  p_angle = mode_to_angle_map[(PredictionMode)open_loop_intra_candidate] + angle_delta * ANGLE_STEP;
                     if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
                         cand_array[cand_total_cnt].type = INTRA_MODE;
+                        cand_array[cand_total_cnt].merge_flag = EB_FALSE;
                         cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
                         cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
                         cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
@@ -5692,6 +5695,7 @@ void  inject_intra_candidates(
         }
         else {
             cand_array[cand_total_cnt].type = INTRA_MODE;
+            cand_array[cand_total_cnt].merge_flag = EB_FALSE;
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
             cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
@@ -5786,6 +5790,7 @@ void  inject_filter_intra_candidates(
                 continue;
 
             cand_array[cand_total_cnt].type = INTRA_MODE;
+            cand_array[cand_total_cnt].merge_flag = EB_FALSE;
             cand_array[cand_total_cnt].intra_luma_mode = DC_PRED;
             cand_array[cand_total_cnt].distortion_ready = 0;
             cand_array[cand_total_cnt].use_intrabc = 0;
@@ -5895,6 +5900,7 @@ void  inject_palette_candidates(
         assert(palette_cand_array[cand_i].pmi.palette_size[0] < 9);
         //to re check these fields
         cand_array[can_total_cnt].type = INTRA_MODE;
+        cand_array[can_total_cnt].merge_flag = EB_FALSE;
         cand_array[can_total_cnt].intra_luma_mode = DC_PRED;
         cand_array[can_total_cnt].distortion_ready = 0;
         cand_array[can_total_cnt].use_intrabc = 0;

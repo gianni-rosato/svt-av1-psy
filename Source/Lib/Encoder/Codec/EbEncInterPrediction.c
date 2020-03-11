@@ -55,12 +55,10 @@ void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint
                                      InterpFilterParams *filter_params_y, int32_t subpel_x,
                                      int32_t subpel_y, ConvolveParams *conv_params,
                                      InterInterCompoundData *comp_data, uint8_t bitdepth,
-                                     uint8_t plane) {
+                                     uint8_t plane, uint8_t *seg_mask) {
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
     //use regular path to generate a prediction for ref1 into  a temporary buffer,
     //then  blend that temporary buffer with that from  the first reference.
-
-    DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
 
 #define INTER_PRED_BYTES_PER_PIXEL 2
     DECLARE_ALIGNED(32, uint8_t, tmp_buf[INTER_PRED_BYTES_PER_PIXEL * MAX_SB_SQUARE]);
@@ -3870,6 +3868,8 @@ EbErrorType av1_inter_prediction(
         av1_get_convolve_filter_params(
                 interp_filters, &filter_params_x, &filter_params_y, bwidth, bheight);
 
+        DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
+
         //the luma data is applied to chroma below
         av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
@@ -3902,7 +3902,8 @@ EbErrorType av1_inter_prediction(
                     &conv_params,
                     interinter_comp,
                     bit_depth,
-                    0//plane=Luma  seg_mask is computed based on luma and used for chroma
+                    0,//plane=Luma  seg_mask is computed based on luma and used for chroma
+                    seg_mask
             );
         }
         else
@@ -3995,7 +3996,8 @@ EbErrorType av1_inter_prediction(
                         &conv_params,
                         interinter_comp,
                         bit_depth,
-                        1 //plane=cb  seg_mask is computed based on luma and used for chroma
+                        1, //plane=cb  seg_mask is computed based on luma and used for chroma
+                        seg_mask
                 );
             }
             else
@@ -4081,7 +4083,8 @@ EbErrorType av1_inter_prediction(
                         &conv_params,
                         interinter_comp,
                         bit_depth,
-                        1 //plane=Cr  seg_mask is computed based on luma and used for chroma
+                        1, //plane=Cr  seg_mask is computed based on luma and used for chroma
+                        seg_mask
                 );
             }
             else

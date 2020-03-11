@@ -3114,7 +3114,7 @@ static void print_lib_params(
             config->intra_refresh_type);
     else
         SVT_LOG("\nSVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d ", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
-    SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t: %d / %d / %d ", config->hierarchical_levels, config->pred_structure);
+    SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t: %d / %d", config->hierarchical_levels, config->pred_structure);
     if (config->rate_control_mode == 1)
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
     else if (config->rate_control_mode == 2)
