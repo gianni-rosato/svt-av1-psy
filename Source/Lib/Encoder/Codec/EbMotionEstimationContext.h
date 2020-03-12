@@ -485,6 +485,17 @@ typedef struct MeContext {
     int tf_frame_index;
     int tf_index_center;
 #endif
+#if ENHANCED_TF
+    signed short tf_16x16_mv_x[16];
+    signed short tf_16x16_mv_y[16];
+    uint64_t tf_16x16_block_error[16];
+
+    signed short tf_32x32_mv_x[4];
+    signed short tf_32x32_mv_y[4];
+    uint64_t tf_32x32_block_error[4];
+
+    int tf_32x32_block_split_flag[4];
+#endif
     // -------
 } MeContext;
 

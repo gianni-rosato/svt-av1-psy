@@ -4081,6 +4081,149 @@ static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
     return ahd;
 }
 
+#if ENHANCED_TF
+// Derive past_altref_nframes and future_altref_nframes using the central_frame activity compared to default past_altref_nframes and future_altref_nframes
+void derive_tf_window_params(
+    SequenceControlSet *scs_ptr,
+    EncodeContext *encode_context_ptr,
+    PictureParentControlSet *pcs_ptr,
+    uint32_t out_stride_diff64) {
+    int altref_nframes = scs_ptr->static_config.altref_nframes;
+    if (pcs_ptr->idr_flag) {
+
+        //initilize list
+        for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+            pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+
+        pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
+
+        uint32_t num_future_pics = 6;
+        uint32_t num_past_pics = 0;
+        uint32_t pic_i;
+        //search reord-queue to get the future pictures
+        for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+            int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
+            if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
+                pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+
+            }
+            else
+                break;
+        }
+
+        pcs_ptr->past_altref_nframes = 0;
+        pcs_ptr->future_altref_nframes = pic_i;
+        int index_center = 0;
+        uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
+        int pic_itr, ahd;
+
+        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
+
+        // Accumulative histogram absolute differences between the central and future frame
+        for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
+            ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+            if (ahd < ahd_th)
+                break;
+        }
+        pcs_ptr->future_altref_nframes = pic_itr - index_center;
+        //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", pcs_ptr->picture_number, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
+    }
+    else
+    {
+        int num_past_pics = altref_nframes / 2;
+        int num_future_pics = altref_nframes - num_past_pics - 1;
+        assert(altref_nframes <= ALTREF_MAX_NFRAMES);
+
+        //initilize list
+        for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+            pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+#if ALTREF_IMPROVEMENT
+        // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
+        num_past_pics = MIN(MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count - 1), (int)out_stride_diff64);
+#else
+        // Jing: Intra CRA case
+        num_past_pics = MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count - 1);
+#endif
+
+        //get previous+current pictures from the the pre-assign buffer
+        for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
+            PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64 - num_past_pics + pic_itr]->object_ptr;
+            pcs_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
+        }
+        int actual_past_pics = num_past_pics;
+        int actual_future_pics = 0;
+        int pic_i;
+        //search reord-queue to get the future pictures
+        for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+            int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
+            if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
+                pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+                actual_future_pics++;
+            }
+            else
+                break;
+        }
+
+        //search in pre-ass if still short
+        if (pic_i < num_future_pics) {
+            actual_future_pics = 0;
+            for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
+                for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
+                    PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
+                    if (pcs_itr->picture_number == pcs_ptr->picture_number + pic_i_future + 1) {
+                        pcs_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+                        actual_future_pics++;
+                        break; //exist the pre-ass loop, go search the next
+                    }
+                }
+            }
+        }
+        int index_center = actual_past_pics;
+        int pic_itr;
+        int ahd;
+
+        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
+
+        // Accumulative histogram absolute differences between the central and past frame
+        for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {
+            ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+
+            if (ahd < ahd_th)
+                break;
+        }
+        pcs_ptr->past_altref_nframes = actual_past_pics = index_center - pic_itr;
+
+        if (pcs_ptr->temporal_layer_index == 1)
+            pcs_ptr->past_altref_nframes = actual_past_pics = MIN(1, pcs_ptr->past_altref_nframes);
+
+        // Accumulative histogram absolute differences between the central and past frame
+        for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
+            ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+            if (ahd < ahd_th)
+                break;
+        }
+        pcs_ptr->future_altref_nframes = pic_itr - index_center;
+
+        if (pcs_ptr->temporal_layer_index == 1)
+            pcs_ptr->future_altref_nframes = MIN(1, pcs_ptr->future_altref_nframes);
+
+        //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", pcs_ptr->picture_number, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
+
+        // adjust the temporal filtering pcs buffer to remove unused past pictures
+        if (actual_past_pics != num_past_pics) {
+
+            pic_i = 0;
+            while (pcs_ptr->temp_filt_pcs_list[pic_i] != NULL) {
+                pcs_ptr->temp_filt_pcs_list[pic_i] = pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics - actual_past_pics];
+                pic_i++;
+            }
+        }
+    }
+}
+#endif
+
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -4903,6 +5046,13 @@ void* picture_decision_kernel(void *input_ptr)
                                     || (scs_ptr->use_input_stat_file && pcs_ptr->temporal_layer_index == 1 && pcs_ptr->sc_content_detected == 0)
                                     ) ) {
 #endif
+#if ENHANCED_TF
+                                derive_tf_window_params(
+                                    scs_ptr,
+                                    encode_context_ptr,
+                                    pcs_ptr,
+                                    out_stride_diff64);
+#else
                                 int altref_nframes = pcs_ptr->scs_ptr->static_config.altref_nframes;
                                 if (pcs_ptr->idr_flag) {
 
@@ -5030,7 +5180,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 }
                                 }
-
+#endif
                                 pcs_ptr->temp_filt_prep_done = 0;
 
                                 // Start Filtering in ME processes

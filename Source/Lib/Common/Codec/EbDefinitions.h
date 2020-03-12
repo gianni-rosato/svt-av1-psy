@@ -47,6 +47,13 @@ extern "C" {
 #define QUANT_HBD0_FIX              1
 #define NEW_MD_LAMBDA               1
 
+
+// Added plane wise TF
+// Tuned TF settings
+// Added the ability to use 32x32 MVs, and the ability to switch between using 16x16 MVs or 32x32 MVs
+// Optimized packing @ TF
+#define ENHANCED_TF              1
+#define DISABLE_QPSM_1PASS       1 // Disable 1 pass QPS and QPM
 #define CHROMA_SEARCH_OPT        1 // Move chroma search to be done on the best intra candidate survived from MD stage 2
 #if CHROMA_SEARCH_OPT
 #define INFR_OPT                 1 // Lossless: Infrastructure work to allow the protability of the chroma search

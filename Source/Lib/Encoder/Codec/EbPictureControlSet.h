@@ -854,6 +854,9 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
     uint8_t                         altref_strength;
+#if ENHANCED_TF
+    double                          noise_levels[MAX_MB_PLANE];
+#endif
     int32_t                         pic_decision_reorder_queue_idx;
     struct PictureParentControlSet *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
     EbByte                          save_enhanced_picture_ptr[3];
