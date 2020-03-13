@@ -1128,11 +1128,20 @@ EbErrorType signal_derivation_multi_processes_oq(
         // inter intra pred                      Settings
         // 0                                     OFF
         // 1                                     ON
+#if  CLEANUP_INTER_INTRA
+        //picture level switch,  has to follow the sequence level.
+        if (pcs_ptr->slice_type != I_SLICE && scs_ptr->seq_header.enable_interintra_compound) {
+            pcs_ptr->enable_inter_intra = 1;//shut for sc , if needed.
+        }
+        else {
+            pcs_ptr->enable_inter_intra = 0;
+        }
+#else
         if (scs_ptr->static_config.inter_intra_compound == DEFAULT)
             pcs_ptr->enable_inter_intra = pcs_ptr->slice_type != I_SLICE ? scs_ptr->seq_header.enable_interintra_compound : 0;
         else
             pcs_ptr->enable_inter_intra = scs_ptr->static_config.inter_intra_compound;
-
+#endif
         // Set compound mode      Settings
         // 0                 OFF: No compond mode search : AVG only
         // 1                 ON: compond mode search: AVG/DIST/DIFF
@@ -1206,6 +1215,53 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
 
     //SVT_LOG("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
 
+#if MRP_CTRL
+     //single ref - List0
+    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count_try; ++ref_idx0) {
+        rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
+        ref_frame_arr[(*tot_ref_frames)++] = rf[0];
+    }
+
+    //single ref - List1
+    for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count_try; ++ref_idx1) {
+        rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
+        ref_frame_arr[(*tot_ref_frames)++] = rf[1];
+    }
+
+    //compound Bi-Dir
+    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count_try; ++ref_idx0) {
+        for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count_try; ++ref_idx1) {
+            rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
+            rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
+            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+        }
+    }
+
+    if (scs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
+    {
+
+        //compound Uni-Dir
+        if (parent_pcs_ptr->ref_list0_count_try > 1) {
+            rf[0] = LAST_FRAME;
+            rf[1] = LAST2_FRAME;
+            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+            if (parent_pcs_ptr->ref_list0_count_try > 2) {
+                rf[1] = LAST3_FRAME;
+                ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+                if (parent_pcs_ptr->ref_list0_count_try > 3) {
+                    rf[1] = GOLDEN_FRAME;
+                    ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+                }
+            }
+        }
+        if (parent_pcs_ptr->ref_list1_count_try > 2) {
+            rf[0] = BWDREF_FRAME;
+            rf[1] = ALTREF_FRAME;
+            ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+        }
+    }
+
+#else
     //single ref - List0
     for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count; ++ref_idx0) {
         rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
@@ -1250,6 +1306,7 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
         }
     }
+#endif
 }
 
 static void prune_refs(PredictionStructureEntry *pred_position_ptr, Av1RpsNode *av1_rps)
@@ -4988,6 +5045,21 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list0_count = (picture_type == I_SLICE) ? 0 :
                                                                             (pcs_ptr->is_overlay) ? 1 : (uint8_t)pred_position_ptr->ref_list0.reference_list_count;
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
+
+#if MRP_CTRL
+                                // Set the number of references to try in ME/MD. Note: PicMgr/RPS will still use the original values to sync the references.
+                                if (pcs_ptr->sc_content_detected) {
+                                    pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+                                    pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                }
+                                else {
+                                    pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+                                    pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                }
+                                assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
+                                assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);
+#endif
+
                                 if (!pcs_ptr->is_overlay) {
                                     input_entry_ptr->list0_ptr = &pred_position_ptr->ref_list0;
                                     input_entry_ptr->list1_ptr = &pred_position_ptr->ref_list1;

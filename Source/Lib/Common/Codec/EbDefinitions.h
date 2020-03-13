@@ -46,6 +46,8 @@ extern "C" {
 #define QUANT_CLEANUP               1
 #define QUANT_HBD0_FIX              1
 #define NEW_MD_LAMBDA               1
+#define CLEANUP_INTER_INTRA  1  //shutting inter intra could be done via 2 ways.at the seq level(in ress coord), or at the pic level (in pic decision)
+#define MRP_CTRL             1  //add control to inject smaller number of references.
 
 
 // Added plane wise TF

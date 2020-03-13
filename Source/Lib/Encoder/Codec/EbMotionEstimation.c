@@ -9552,10 +9552,17 @@ void integer_search_sb(
         if (context_ptr->me_alt_ref == EB_TRUE) {
             num_of_ref_pic_to_search = 1;
         } else {
+#if MRP_CTRL
+            num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->ref_list0_count_try
+                : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count_try
+                : pcs_ptr->ref_list1_count_try;
+#else
             num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                                            ? pcs_ptr->ref_list0_count
                                            : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count
                                                                         : pcs_ptr->ref_list1_count;
+#endif
 
             reference_object =
                 (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
@@ -10037,12 +10044,21 @@ void prune_references_fp(
             num_of_ref_pic_to_search = 1;
         }
         else {
+#if MRP_CTRL
+            num_of_ref_pic_to_search =
+                (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->ref_list0_count_try
+                : (list_index == REF_LIST_0)
+                ? pcs_ptr->ref_list0_count_try
+                : pcs_ptr->ref_list1_count_try;
+#else
             num_of_ref_pic_to_search =
                 (pcs_ptr->slice_type == P_SLICE)
                 ? pcs_ptr->ref_list0_count
                 : (list_index == REF_LIST_0)
                 ? pcs_ptr->ref_list0_count
                 : pcs_ptr->ref_list1_count;
+#endif
         }
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
@@ -10173,10 +10189,17 @@ void hme_sb(
         if (context_ptr->me_alt_ref == EB_TRUE)
             num_of_ref_pic_to_search = 1;
         else {
+#if MRP_CTRL
+            num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->ref_list0_count_try
+                : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count_try
+                : pcs_ptr->ref_list1_count_try;
+#else
             num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                                            ? pcs_ptr->ref_list0_count
                                            : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count
                                                                         : pcs_ptr->ref_list1_count;
+#endif
             reference_object =
                 (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
             ref_0_poc = pcs_ptr->ref_pic_poc_array[0][0];
@@ -10842,10 +10865,17 @@ EbErrorType motion_estimate_sb(
         if (context_ptr->me_alt_ref == EB_TRUE) {
             num_of_ref_pic_to_search = 1;
         } else {
+#if MRP_CTRL
+            num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                ? pcs_ptr->ref_list0_count_try
+                : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count_try
+                : pcs_ptr->ref_list1_count_try;
+#else
             num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                                            ? pcs_ptr->ref_list0_count
                                            : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count
                                                                         : pcs_ptr->ref_list1_count;
+#endif
 
             reference_object =
                 (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[0][0]->object_ptr;
@@ -11983,11 +12013,19 @@ EbErrorType motion_estimate_sb(
             else
                 n_idx = pu_index;
             for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#if MRP_CTRL
+                num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                    ? pcs_ptr->ref_list0_count_try
+                    : (list_index == REF_LIST_0)
+                    ? pcs_ptr->ref_list0_count_try
+                    : pcs_ptr->ref_list1_count_try;
+#else
                 num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                                                ? pcs_ptr->ref_list0_count
                                                : (list_index == REF_LIST_0)
                                                      ? pcs_ptr->ref_list0_count
                                                      : pcs_ptr->ref_list1_count;
+#endif
 
                 // Ref Picture Loop
                 for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
@@ -12045,8 +12083,13 @@ EbErrorType motion_estimate_sb(
                                         context_ptr,
                                         pu_index,
                                         cand_index,
+#if MRP_CTRL
+                                        pcs_ptr->ref_list0_count_try,
+                                        pcs_ptr->ref_list1_count_try,
+#else
                                         pcs_ptr->ref_list0_count,
                                         pcs_ptr->ref_list1_count,
+#endif
                                         &total_me_candidate_index,
                                         ref_type_table,
                                         pcs_ptr);
@@ -12089,11 +12132,19 @@ EbErrorType motion_estimate_sb(
             }
 
             for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#if MRP_CTRL
+                num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                    ? pcs_ptr->ref_list0_count_try
+                    : (list_index == REF_LIST_0)
+                    ? pcs_ptr->ref_list0_count_try
+                    : pcs_ptr->ref_list1_count_try;
+#else
                 num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                                                ? pcs_ptr->ref_list0_count
                                                : (list_index == REF_LIST_0)
                                                      ? pcs_ptr->ref_list0_count
                                                      : pcs_ptr->ref_list1_count;
+#endif
 
                 // Ref Picture Loop
                 for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {

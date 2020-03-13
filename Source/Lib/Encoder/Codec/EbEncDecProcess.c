@@ -2014,6 +2014,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         context_ptr->md_pic_obmc_mode = pcs_ptr->parent_pcs_ptr->pic_obmc_mode;
 
     // Set enable_inter_intra @ MD
+#if  CLEANUP_INTER_INTRA
+    //Block level switch, has to follow the picture level
+#endif
     if (context_ptr->pd_pass == PD_PASS_0)
         context_ptr->md_enable_inter_intra = 0;
     else if (context_ptr->pd_pass == PD_PASS_1)

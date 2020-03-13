@@ -4785,8 +4785,13 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                 rf[1] = -1;
 
                 uint8_t inter_type;
+#if CLEANUP_INTER_INTRA
+                uint8_t is_ii_allowed = svt_is_interintra_allowed(
+                    context_ptr->md_enable_inter_intra, bsize, GLOBALMV, rf);
+#else
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
                     pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, GLOBALMV, rf);
+#endif
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                 //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(pcs_ptr, context_ptr->blk_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
                 //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
