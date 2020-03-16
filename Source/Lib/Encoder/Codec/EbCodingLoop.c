@@ -2418,6 +2418,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     while (blk_it < scs_ptr->max_block_cnt) {
         BlkStruct *blk_ptr = context_ptr->blk_ptr =
             &context_ptr->md_context->md_blk_arr_nsq[blk_it];
+#if R2R_FIX
+        //At the boundary when it's not a complete super block.
+        //We may only use part of the blocks in MD.
+        //And the mds_idx of the parent block is not set properly
+        //And it will generate the wrong cdf ctx and influence the MD for the next SB
+        blk_ptr->mds_idx = blk_it;
+#endif
         PartitionType part = blk_ptr->part;
 
         const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_it);
