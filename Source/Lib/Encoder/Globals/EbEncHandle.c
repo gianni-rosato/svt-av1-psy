@@ -1875,14 +1875,6 @@ void set_default_configuration_parameters(
     // SB Definitions
     scs_ptr->sb_sz = MAX_SB_SIZE;
     scs_ptr->max_sb_depth = (uint8_t)EB_MAX_SB_DEPTH;
-
-    // No Cropping Window
-    scs_ptr->conformance_window_flag = 0;
-    scs_ptr->cropping_left_offset = 0;
-    scs_ptr->cropping_right_offset = 0;
-    scs_ptr->cropping_top_offset = 0;
-    scs_ptr->cropping_bottom_offset = 0;
-
     scs_ptr->static_config.enable_adaptive_quantization = 2;
 
     return;
@@ -2037,35 +2029,11 @@ void copy_api_from_app(
     scs_ptr->min_blk_size = (uint8_t)8;
     scs_ptr->max_intra_size = (uint8_t)32;
     scs_ptr->min_intra_size = (uint8_t)8;
-    scs_ptr->intra4x4_flag = 1;
     scs_ptr->max_ref_count = 1;
-
-    // Cropping Definitions - Hardcoded(CleanUp)
-    scs_ptr->cropping_left_offset = -1;
-    scs_ptr->cropping_right_offset = -1;
-    scs_ptr->cropping_top_offset = -1;
-    scs_ptr->cropping_bottom_offset = -1;
 
     // Padding Offsets
     scs_ptr->sb_sz = (uint8_t)((EbSvtAv1EncConfiguration*)config_struct)->sb_sz;
     scs_ptr->max_sb_depth = (uint8_t)((EbSvtAv1EncConfiguration*)config_struct)->partition_depth;
-
-    if (scs_ptr->cropping_left_offset == -1 &&
-        scs_ptr->cropping_right_offset == -1 &&
-        scs_ptr->cropping_top_offset == -1 &&
-        scs_ptr->cropping_bottom_offset == -1) {
-        scs_ptr->conformance_window_flag = 0;
-    }
-    else
-        scs_ptr->conformance_window_flag = 1;
-    if (scs_ptr->cropping_left_offset == -1)
-        scs_ptr->cropping_left_offset = 0;
-    if (scs_ptr->cropping_right_offset == -1)
-        scs_ptr->cropping_right_offset = 0;
-    if (scs_ptr->cropping_top_offset == -1)
-        scs_ptr->cropping_top_offset = 0;
-    if (scs_ptr->cropping_bottom_offset == -1)
-        scs_ptr->cropping_bottom_offset = 0;
     scs_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)config_struct)->intra_period_length;
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;

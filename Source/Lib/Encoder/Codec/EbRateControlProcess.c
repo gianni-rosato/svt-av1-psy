@@ -82,7 +82,6 @@ typedef struct RateControlIntervalParamContext {
     uint16_t first_pic_actual_qp;
     EbBool   first_pic_actual_qp_assigned;
     EbBool   scene_change_in_gop;
-    EbBool   min_target_rate_assigned;
     int64_t  extra_ap_bit_ratio_i;
 } RateControlIntervalParamContext;
 

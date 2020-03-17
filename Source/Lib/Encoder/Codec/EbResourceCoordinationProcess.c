@@ -772,20 +772,8 @@ void *resource_coordination_kernel(void *input_ptr) {
 
                 context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_right =
                     context_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
-                context_ptr->scs_instance_array[instance_index]->scs_ptr->cropping_right_offset =
-                    context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_right;
                 context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_bottom =
                     context_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
-                context_ptr->scs_instance_array[instance_index]->scs_ptr->cropping_bottom_offset =
-                    context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_bottom;
-
-                if (context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_right != 0 ||
-                    context_ptr->scs_instance_array[instance_index]->scs_ptr->pad_bottom != 0)
-                    context_ptr->scs_instance_array[instance_index]
-                        ->scs_ptr->conformance_window_flag = 1;
-                else
-                    context_ptr->scs_instance_array[instance_index]
-                        ->scs_ptr->conformance_window_flag = 0;
                 input_size = context_ptr->scs_instance_array[instance_index]
                                  ->scs_ptr->seq_header.max_frame_width *
                              context_ptr->scs_instance_array[instance_index]
@@ -980,9 +968,6 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->scene_change_flag = EB_FALSE;
             pcs_ptr->qp_on_the_fly     = EB_FALSE;
             pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;
-            pcs_ptr->eos_coming =
-                (eb_input_ptr->flags & (EB_BUFFERFLAG_EOS << 1)) ? EB_TRUE : EB_FALSE;
-
             if (scs_ptr->static_config.speed_control_flag) {
                 speed_buffer_control(context_ptr, pcs_ptr, scs_ptr);
             } else

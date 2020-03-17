@@ -87,11 +87,8 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     scs_ptr->min_blk_size   = 8;
     scs_ptr->max_intra_size = 32;
     scs_ptr->min_intra_size = 8;
-    scs_ptr->intra4x4_flag  = EB_TRUE;
     // Rate Control
     scs_ptr->target_bitrate      = 0x1000;
-    scs_ptr->available_bandwidth = 0x1000;
-
     // Quantization
     scs_ptr->static_config.qp = 20;
     // Initialize SB params
@@ -201,18 +198,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     write_count += sizeof(EbSvtAv1EncConfiguration);
     dst->encode_context_ptr = src->encode_context_ptr;
     write_count += sizeof(EncodeContext *);
-    dst->sps_id = src->sps_id;
-    write_count += sizeof(uint32_t);
-    dst->vps_id = src->vps_id;
-    write_count += sizeof(uint32_t);
-    dst->profile_space = src->profile_space;
-    write_count += sizeof(uint32_t);
-    dst->profile_idc = src->profile_idc;
-    write_count += sizeof(uint32_t);
-    dst->level_idc = src->level_idc;
-    write_count += sizeof(uint32_t);
-    dst->tier_idc = src->tier_idc;
-    write_count += sizeof(uint32_t);
     dst->chroma_format_idc = src->chroma_format_idc;
     write_count += sizeof(uint32_t);
     dst->max_temporal_layers = src->max_temporal_layers;
@@ -242,16 +227,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->pad_right = src->pad_right;
     write_count += sizeof(uint32_t);
     dst->pad_bottom = src->pad_bottom;
-    write_count += sizeof(uint32_t);
-    dst->cropping_left_offset = src->cropping_left_offset;
-    write_count += sizeof(int32_t);
-    dst->cropping_right_offset = src->cropping_right_offset;
-    write_count += sizeof(int32_t);
-    dst->cropping_top_offset = src->cropping_top_offset;
-    write_count += sizeof(int32_t);
-    dst->cropping_bottom_offset = src->cropping_bottom_offset;
-    write_count += sizeof(int32_t);
-    dst->conformance_window_flag = src->conformance_window_flag;
     write_count += sizeof(uint32_t);
     dst->frame_rate = src->frame_rate;
     write_count += sizeof(uint32_t);
@@ -283,11 +258,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     write_count += sizeof(uint32_t);
     dst->min_intra_size = src->min_intra_size;
     write_count += sizeof(uint32_t);
-    dst->intra4x4_flag = src->intra4x4_flag;
-    write_count += sizeof(EbBool);
     dst->target_bitrate = src->target_bitrate;
-    write_count += sizeof(uint32_t);
-    dst->available_bandwidth = src->available_bandwidth;
     write_count += sizeof(uint32_t);
     dst->static_config.qp = src->static_config.qp;
     write_count += sizeof(uint32_t);
@@ -309,7 +280,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     write_count += sizeof(int32_t);
     dst->overlay_input_picture_buffer_init_count = src->overlay_input_picture_buffer_init_count;
     write_count += sizeof(int32_t);
-
     dst->output_stream_buffer_fifo_init_count = src->output_stream_buffer_fifo_init_count;
     write_count += sizeof(int32_t);
     dst->output_recon_buffer_fifo_init_count = src->output_recon_buffer_fifo_init_count;

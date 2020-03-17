@@ -1135,12 +1135,6 @@ void *picture_manager_kernel(void *input_ptr) {
                         cm->mi_stride = child_pcs_ptr->mi_stride;
                         // Picture edges
                         configure_picture_edges(entry_scs_ptr, child_pcs_ptr);
-
-                        // Reset the qp array for DLF
-                        EB_MEMSET(child_pcs_ptr->qp_array,
-                                  0,
-                                  sizeof(uint8_t) * child_pcs_ptr->qp_array_size);
-
                         // Error resilience related
                         child_pcs_ptr->colocated_pu_ref_list = REF_LIST_0; // to be modified
 

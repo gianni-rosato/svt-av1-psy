@@ -206,6 +206,7 @@ typedef struct SpeedFeatures {
 } SpeedFeatures;
 
 typedef struct PictureControlSet {
+    /*!< Pointer to the dtor of the struct*/
     EbDctor          dctor;
     EbObjectWrapper *scs_wrapper_ptr;
 
@@ -289,13 +290,8 @@ typedef struct PictureControlSet {
     uint8_t dif_blk_delta_qp_depth;
 
     // SB Array
-    uint8_t      sb_max_depth;
     uint16_t     sb_total_count;
     SuperBlock **sb_ptr_array;
-    // DLF
-    uint8_t *qp_array;
-    uint16_t qp_array_stride;
-    uint32_t qp_array_size;
     // EncDec Entropy Coder (for rate estimation)
     EntropyCoder *coeff_est_entropy_coder_ptr;
 
@@ -452,15 +448,6 @@ typedef struct PictureControlSet {
     int32_t   mi_stride; // TODO: needs to be retired, use pcs_ptr->av1_cm->mi_stride instead
     EbReflist colocated_pu_ref_list;
     EbBool    is_low_delay;
-
-    // slice level chroma QP offsets
-    EbBool slice_level_chroma_qp_flag;
-    int8_t slice_cb_qp_offset;
-    int8_t slice_cr_qp_offset;
-    int8_t cb_qp_offset;
-    int8_t cr_qp_offset;
-    EbBool adjust_min_qp_flag;
-
     EbEncMode enc_mode;
 #if TILES_PARALLEL
     int32_t     cdef_preset[MAX_TILE_CNTS][4];
@@ -583,10 +570,8 @@ typedef struct PictureParentControlSet {
 
     EbBool           idr_flag;
     EbBool           cra_flag;
-    EbBool           open_gop_cra_flag;
     EbBool           scene_change_flag;
     EbBool           end_of_sequence_flag;
-    EbBool           eos_coming;
     uint8_t          picture_qp;
     uint64_t         picture_number;
     uint8_t          wedge_mode;
@@ -595,8 +580,6 @@ typedef struct PictureParentControlSet {
     EbPicnoiseClass  pic_noise_class;
     EB_SLICE         slice_type;
     uint8_t          pred_struct_index;
-    EbBool           use_rps_in_sps;
-    uint8_t          reference_struct_index;
     uint8_t          temporal_layer_index;
     uint64_t         decode_order;
     EbBool           is_used_as_reference_flag;
@@ -623,7 +606,6 @@ typedef struct PictureParentControlSet {
     EbBool   percentage_updated;
     uint32_t target_bit_rate;
     uint32_t vbv_bufsize;
-    EbBool   min_target_rate_assigned;
     uint32_t frame_rate;
     uint16_t sb_total_count;
     EbBool   end_of_sequence_region;
@@ -653,7 +635,6 @@ typedef struct PictureParentControlSet {
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
     EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
-    EbBool           intensity_transition_flag;
     uint8_t          average_intensity[3];
     // Non moving index array
     uint8_t *non_moving_index_array;
@@ -667,25 +648,6 @@ typedef struct PictureParentControlSet {
     int16_t  non_moving_index_min_distance;
     int16_t  non_moving_index_max_distance;
     uint16_t qp_scaling_average_complexity;
-    EbBool   dark_back_groundlight_fore_ground;
-    uint8_t  very_low_var_pic_flag;
-    uint32_t intra_complexity_min[4];
-    uint32_t intra_complexity_max[4];
-    uint32_t intra_complexity_accum[4];
-    uint32_t intra_complexity_avg[4];
-    uint32_t inter_complexity_min[4];
-    uint32_t inter_complexity_max[4];
-    uint32_t inter_complexity_accum[4];
-    uint32_t inter_complexity_avg[4];
-    uint32_t processed_leaf_count[4];
-    uint32_t intra_complexity_min_pre;
-    uint32_t intra_complexity_max_pre;
-    uint32_t inter_complexity_min_pre;
-    uint32_t inter_complexity_max_pre;
-    int32_t  intra_min_distance[4];
-    int32_t  intra_max_distance[4];
-    int32_t  inter_min_distance[4];
-    int32_t  inter_max_distance[4];
     // Histograms
     uint32_t ****picture_histogram;
     uint64_t     average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
@@ -740,9 +702,6 @@ typedef struct PictureParentControlSet {
     EbEncMode         enc_mode;
     EbEncMode         snd_pass_enc_mode;
     EB_SB_DEPTH_MODE *sb_depth_mode_array;
-    EbBool            use_src_ref;
-    EbBool            limit_ois_to_dc_mode_flag;
-
     // Multi-modes signal(s)
     EbPictureDepthMode pic_depth_mode;
     uint8_t            loop_filter_mode;
@@ -795,7 +754,6 @@ typedef struct PictureParentControlSet {
     uint32_t                large_scale_tile;
     int32_t                 nb_cdef_strengths;
     // Resolution of delta quant
-    int32_t num_tg;
     int32_t monochrome;
 #if TILES_PARALLEL
     int32_t prev_qindex[MAX_TILE_CNTS];
@@ -810,8 +768,6 @@ typedef struct PictureParentControlSet {
     // lf and current delta lf. It is equivalent to the delta between previous
     // superblock's actual lf and current lf.
     int32_t prev_delta_lf_from_base;
-    int32_t current_delta_lf_from_base;
-
     // For this experiment, we have four frame filter levels for different plane
     // and direction. So, to support the per superblock update, we need to add
     // a few more params as below.

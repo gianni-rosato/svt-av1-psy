@@ -203,21 +203,6 @@ typedef struct SequenceControlSet {
     uint32_t rest_process_init_count;
     uint32_t total_process_init_count;
 
-    /*!< Signals to be cleaned up */
-    int32_t  cropping_left_offset;
-    int32_t  cropping_right_offset;
-    int32_t  cropping_top_offset;
-    int32_t  cropping_bottom_offset;
-    uint32_t conformance_window_flag;
-    uint32_t sps_id;
-    uint32_t vps_id;
-    uint32_t profile_space;
-    uint32_t profile_idc;
-    uint32_t level_idc;
-    uint32_t tier_idc;
-    uint32_t available_bandwidth;
-    EbBool  intra4x4_flag;
-
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

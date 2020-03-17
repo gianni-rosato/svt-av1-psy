@@ -368,39 +368,7 @@ void eb_av1_qm_init(PictureParentControlSet *pcs_ptr) {
     }
 }
 
-/******************************************************
-* Compute picture and slice level chroma QP offsets
-******************************************************/
-void set_slice_and_picture_chroma_qp_offsets(PictureControlSet *pcs_ptr) {
-    // This is a picture level chroma QP offset and is sent in the PPS
-    pcs_ptr->cb_qp_offset = 0;
-    pcs_ptr->cr_qp_offset = 0;
 
-    //In order to have QP offsets for chroma at a slice level set slice_level_chroma_qp_flag flag in pcs_ptr (can be done in the PCS Ctor)
-
-    // The below are slice level chroma QP offsets and is sent for each slice when slice_level_chroma_qp_flag is set
-
-    // IMPORTANT: Lambda tables assume that the cb and cr have the same QP offsets.
-    // However the offsets for each component can be very different for ENC DEC and we are conformant.
-    pcs_ptr->slice_cb_qp_offset = 0;
-    pcs_ptr->slice_cr_qp_offset = 0;
-
-    if (pcs_ptr->parent_pcs_ptr->pic_noise_class >= PIC_NOISE_CLASS_6) {
-        pcs_ptr->slice_cb_qp_offset = 10;
-        pcs_ptr->slice_cr_qp_offset = 10;
-    } else if (pcs_ptr->parent_pcs_ptr->pic_noise_class >= PIC_NOISE_CLASS_4) {
-        pcs_ptr->slice_cb_qp_offset = 8;
-        pcs_ptr->slice_cr_qp_offset = 8;
-    } else {
-        if (pcs_ptr->temporal_layer_index == 1) {
-            pcs_ptr->slice_cb_qp_offset = 2;
-            pcs_ptr->slice_cr_qp_offset = 2;
-        } else {
-            pcs_ptr->slice_cb_qp_offset = 0;
-            pcs_ptr->slice_cr_qp_offset = 0;
-        }
-    }
-}
 
 /******************************************************
 * Set the reference sg ep for a given picture
@@ -1530,10 +1498,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
-        // Compute picture and slice level chroma QP offsets
-        set_slice_and_picture_chroma_qp_offsets( // HT done
-            pcs_ptr);
-
         // Compute Tc, and Beta offsets for a given picture
         // Set reference cdef strength
         set_reference_cdef_strength(pcs_ptr);
