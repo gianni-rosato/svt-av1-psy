@@ -377,6 +377,11 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int enable_intra_edge_filter;
 
+    /* Picture based rate estimation
+    *
+    * Default is - 1. */
+    int pic_based_rate_est;
+
     /* Flag to enable the use of default ME HME parameters.
     *
     * Default is 1. */

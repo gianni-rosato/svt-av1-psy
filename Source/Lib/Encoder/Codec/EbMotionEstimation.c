@@ -12117,8 +12117,6 @@ EbErrorType motion_estimate_sb(
             // Assining the ME candidates to the me Results buffer
             for (cand_index = 0; cand_index < total_me_candidate_index; ++cand_index) {
                 me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].distortion =
-                    me_candidate->distortion;
                 pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].direction =
                     me_candidate->prediction_direction;
                 pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].ref_idx_l0 =
@@ -12167,9 +12165,11 @@ EbErrorType motion_estimate_sb(
             // Compute the sum of the distortion of all 16 16x16 (best) blocks
             // in the SB
             pcs_ptr->rc_me_distortion[sb_index] = 0;
-            for (i = 0; i < 16; i++)
+            for (i = 0; i < 16; i++) {
+                me_candidate = &(context_ptr->me_candidate[0].pu[5 + i]);
                 pcs_ptr->rc_me_distortion[sb_index] +=
-                    pcs_ptr->me_results[sb_index]->me_candidate[5 + i][0].distortion;
+                    me_candidate->distortion;
+            }
         }
     }
 

@@ -40,22 +40,10 @@ typedef struct ModeDecisionConfigurationContext {
     MdRateEstimationContext *md_rate_estimation_ptr;
     EbBool                   is_md_rate_estimation_ptr_owner;
     uint8_t                  qp;
-    uint64_t                 lambda;
-    MdcpLocalBlkStruct      local_blk_array[CU_MAX_COUNT];
-
-    // Inter depth decision
-    uint8_t  group_of8x8_blocks_count;
-    uint8_t  group_of16x16_blocks_count;
-    uint64_t inter_complexity_minimum;
-    uint64_t inter_complexity_maximum;
-    uint64_t inter_complexity_average;
-    uint64_t intra_complexity_minimum;
-    uint64_t intra_complexity_maximum;
-    uint64_t intra_complexity_average;
 
     // Adaptive Depth Partitioning
     uint32_t *sb_score_array;
-    uint8_t   cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE];
+    uint8_t   cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE];
     uint8_t * sb_cost_array;
     uint32_t  predicted_cost;
     uint32_t  budget;

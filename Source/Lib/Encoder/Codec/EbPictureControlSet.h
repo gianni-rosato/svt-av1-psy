@@ -481,6 +481,8 @@ typedef struct PictureControlSet {
 #endif
     uint16_t sb_total_count_pix;
     uint16_t sb_total_count_unscaled;
+    // pointer to a scratch buffer used by self-guided restoration
+    int32_t* rst_tmpbuf;
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -887,6 +889,7 @@ typedef struct PictureControlSetInitData {
     EbColorFormat  color_format;
     uint32_t       sb_sz;
     uint8_t        cfg_palette;
+    uint8_t        serial_rate_est;
     uint32_t
         sb_size_pix; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.

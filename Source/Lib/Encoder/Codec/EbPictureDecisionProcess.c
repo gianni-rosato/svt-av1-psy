@@ -821,14 +821,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         else if (pcs_ptr->enc_mode <= ENC_M2)
             // Use a single-stage PD if I_SLICE
             pcs_ptr->pic_depth_mode = (pcs_ptr->slice_type == I_SLICE) ? PIC_ALL_DEPTH_MODE : PIC_MULTI_PASS_PD_MODE_2;
-
-        else if (pcs_ptr->enc_mode <= ENC_M6)
-            pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
         else
-            if (pcs_ptr->slice_type == I_SLICE)
-                pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
-            else
-                pcs_ptr->pic_depth_mode = PIC_SB_SWITCH_DEPTH_MODE;
+            pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
+
         if (pcs_ptr->pic_depth_mode < PIC_SQ_DEPTH_MODE)
             assert(scs_ptr->nsq_present == 1 && "use nsq_present 1");
 

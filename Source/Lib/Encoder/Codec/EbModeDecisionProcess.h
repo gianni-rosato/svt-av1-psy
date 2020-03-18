@@ -96,6 +96,26 @@ typedef struct MdBlkStruct {
     CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
     uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
+    IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
+    uint32_t best_d1_blk;
+    uint8_t *neigh_left_recon[3]; //only for MD
+    uint8_t *neigh_top_recon[3];
+    uint16_t *neigh_left_recon_16bit[3];
+    uint16_t *neigh_top_recon_16bit[3];
+    uint8_t merge_flag;
+    // wm
+    EbWarpedMotionParams wm_params_l0;
+    EbWarpedMotionParams wm_params_l1;
+    // ref frame
+    int8_t ref_frame_index_l0;
+    int8_t ref_frame_index_l1;
+    // compound
+    uint8_t compound_idx;
+    InterInterCompoundData interinter_comp;
+    // txb
+    uint8_t u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t v_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
+    uint8_t y_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
 } MdBlkStruct;
 
 struct ModeDecisionCandidate;
@@ -178,7 +198,6 @@ typedef struct ModeDecisionContext {
 
     //  Context Variables---------------------------------
     SuperBlock *     sb_ptr;
-    TransformUnit *  txb_ptr;
     BlkStruct *     blk_ptr;
     const BlockGeom *blk_geom;
     PredictionUnit * pu_ptr;

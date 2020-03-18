@@ -356,6 +356,11 @@ typedef struct EbConfig {
     int enable_intra_edge_filter;
 
     /****************************************
+     * Picture based rate estimation
+     ****************************************/
+    int pic_based_rate_est;
+
+    /****************************************
      * ME Tools
      ****************************************/
     EbBool use_default_me_hme;

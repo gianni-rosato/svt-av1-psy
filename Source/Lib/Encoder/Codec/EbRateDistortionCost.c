@@ -2298,17 +2298,6 @@ void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct 
         get_neighbor_array_unit_top_index(leaf_partition_neighbor_array, blk_origin_x);
 
     // Intra Luma Neighbor Modes
-
-    blk_ptr->prediction_unit_array->intra_luma_left_mode = (uint32_t)(
-        (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] != INTRA_MODE)
-            ? (uint32_t)DC_PRED
-            : intra_luma_mode_neighbor_array->left_array[intra_luma_mode_left_neighbor_index]);
-
-    blk_ptr->prediction_unit_array->intra_luma_top_mode = (uint32_t)(
-        (mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] != INTRA_MODE)
-            ? (uint32_t)DC_PRED
-            : intra_luma_mode_neighbor_array->top_array[intra_luma_mode_top_neighbor_index]);
-
     int32_t context_index;
     if (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
             (uint8_t)INVALID_MODE &&
@@ -2712,17 +2701,17 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
             y_zero_cbf_cost = RDCOST(lambda, y_zero_cbf_rate, y_zero_cbf_distortion);
         // **Compute Cost
         y_non_zero_cbf_cost = RDCOST(lambda, y_non_zero_cbf_rate, y_non_zero_cbf_distortion);
-        blk_ptr->txb_array[txb_index].y_has_coeff =
+        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[txb_index] =
             ((y_count_non_zero_coeffs != 0) && (y_non_zero_cbf_cost < y_zero_cbf_cost)) ? EB_TRUE
-                                                                                        : EB_FALSE;
+            : EB_FALSE;
         *y_txb_coeff_bits = (y_non_zero_cbf_cost < y_zero_cbf_cost) ? *y_txb_coeff_bits : 0;
         y_txb_distortion[DIST_CALC_RESIDUAL] = (y_non_zero_cbf_cost < y_zero_cbf_cost)
                                                    ? y_txb_distortion[DIST_CALC_RESIDUAL]
                                                    : y_txb_distortion[DIST_CALC_PREDICTION];
     } else
-        blk_ptr->txb_array[txb_index].y_has_coeff = EB_FALSE;
-    blk_ptr->txb_array[txb_index].u_has_coeff = cb_count_non_zero_coeffs != 0 ? EB_TRUE : EB_FALSE;
-    blk_ptr->txb_array[txb_index].v_has_coeff = cr_count_non_zero_coeffs != 0 ? EB_TRUE : EB_FALSE;
+        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[txb_index] = EB_FALSE;
+    context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].u_has_coeff[txb_index] = cb_count_non_zero_coeffs != 0 ? EB_TRUE : EB_FALSE;
+    context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].v_has_coeff[txb_index] = cr_count_non_zero_coeffs != 0 ? EB_TRUE : EB_FALSE;
 
     return return_error;
 }

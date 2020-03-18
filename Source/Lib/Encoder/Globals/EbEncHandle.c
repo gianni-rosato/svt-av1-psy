@@ -1071,6 +1071,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
 #endif
+        input_data.serial_rate_est = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.pic_based_rate_est &&
+            input_data.enc_dec_segment_col == 1 && input_data.enc_dec_segment_row == 1 ? 1 : 0;
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -2121,6 +2123,9 @@ void copy_api_from_app(
     // Intra Edge Filter
     scs_ptr->static_config.enable_intra_edge_filter = ((EbSvtAv1EncConfiguration*)config_struct)->enable_intra_edge_filter;
 
+    // Picture based rate estimation
+    scs_ptr->static_config.pic_based_rate_est = ((EbSvtAv1EncConfiguration*)config_struct)->pic_based_rate_est;
+
     // ME Tools
     scs_ptr->static_config.use_default_me_hme = ((EbSvtAv1EncConfiguration*)config_struct)->use_default_me_hme;
     scs_ptr->static_config.enable_hme_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_flag;
@@ -2658,6 +2663,12 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    // Picture based rate estimation
+    if (config->pic_based_rate_est != 0 && config->pic_based_rate_est != 1 && config->pic_based_rate_est != -1) {
+        SVT_LOG("Error instance %u: Invalid pic_based_rate_est [0/1, -1], your input: %d\n", channel_number + 1, config->pic_based_rate_est);
+        return_error = EB_ErrorBadParameter;
+    }
+
     // HBD mode decision
     if (config->enable_hbd_mode_decision != 0 && config->enable_hbd_mode_decision != 1 && config->enable_hbd_mode_decision != 2) {
     SVT_LOG("Error instance %u: Invalid HBD mode decision flag [0 - 2], your input: %d\n", channel_number + 1, config->enable_hbd_mode_decision);
@@ -2957,6 +2968,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->compound_level = DEFAULT;
     config_ptr->enable_filter_intra = EB_TRUE;
     config_ptr->enable_intra_edge_filter = DEFAULT;
+    config_ptr->pic_based_rate_est = DEFAULT;
     config_ptr->ext_block_flag = EB_FALSE;
     config_ptr->use_default_me_hme = EB_TRUE;
     config_ptr->enable_hme_flag = EB_TRUE;

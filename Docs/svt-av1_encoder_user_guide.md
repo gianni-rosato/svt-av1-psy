@@ -203,6 +203,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **GlobalMotion** | -global-motion | [0-1, 1 for default] | 1 | Enable global motion (0: OFF, 1: ON [default]) |
 | **CombineClass12** | -class-12 | [0/1, -1 for default] | -1 | Enable combine MD Class1&2, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **EdgeSkipAngleIntra** | -intra-edge-skp | [0/1, -1 for default] | -1 | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
+| **PicBasedRateEst** | --enable-pic-based-rate-est | [0/1, -1 for default] | -1 | Enable picture based rate estimation. Only active with lp 1 (0: OFF, 1: ON, -1: DEFAULT)|
 | **IntraAngleDelta** | -intra-angle-delta | [0/1, -1 for default] | -1 | Enable intra angle delta filtering (0: OFF, 1: ON, -1 = DEFAULT |
 | **IntraEdgeFilter** | -intra-edge-filter | [0/1, -1 for default] | -1 | Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)|
 | **InterIntraCompound** | -interintra-comp | [0/1, -1 for default] | -1 | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|

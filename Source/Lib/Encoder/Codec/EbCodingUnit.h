@@ -227,9 +227,6 @@ typedef struct MacroBlockPlane {
 typedef struct macroblockd_plane {
     int          subsampling_x;
     int          subsampling_y;
-    struct Buf2D dst;
-    struct Buf2D pre[2];
-    uint8_t      width, height;
 } MACROBLOCKD_PLANE;
 
 typedef struct MacroBlockD {
@@ -300,8 +297,8 @@ typedef struct IntraBcContext {
 } IntraBcContext;
 
 typedef struct BlkStruct {
-    TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // 2-bytes * 21 = 42-bytes
-    PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // 35-bytes * 4 = 140 bytes
+    TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT];
+    PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU];
     InterInterCompoundData interinter_comp;
     uint8_t                compound_idx;
     uint8_t                comp_group_idx;
@@ -310,16 +307,9 @@ typedef struct BlkStruct {
     unsigned               block_has_coeff : 1;
     unsigned               split_flag_context : 2;
     uint16_t               qp;
-    uint16_t               ref_qp;
-    int16_t                delta_qp; // can be signed 8bits
-
-    // Coded Tree
-    struct {
-        unsigned leaf_index : 8;
-        unsigned split_flag : 1;
-        unsigned skip_flag : 1;
-        unsigned mdc_split_flag : 1;
-    };
+    uint8_t                split_flag;
+    uint8_t                skip_flag;
+    uint8_t                mdc_split_flag;
 #if NO_ENCDEC
     EbPictureBufferDesc *quant_tmp;
     EbPictureBufferDesc *coeff_tmp;
@@ -329,7 +319,6 @@ typedef struct BlkStruct {
     MacroBlockD *av1xd;
     // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
-    IntMv   ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
     uint8_t drl_index;
     PredictionMode pred_mode;
     IntMv          predmv[2];
@@ -342,20 +331,13 @@ typedef struct BlkStruct {
     uint8_t        segment_id;
     uint8_t        seg_id_predicted; // valid only when temporal_update is enabled
     PartitionType  part;
-    Part           shape;
     uint16_t
                    mds_idx; //equivalent of leaf_index in the nscu context. we will keep both for now and use the right one on a case by case basis.
-    uint8_t *      neigh_left_recon[3]; //only for MD
-    uint8_t *      neigh_top_recon[3];
-    uint16_t *     neigh_left_recon_16bit[3];
-    uint16_t *     neigh_top_recon_16bit[3];
-    uint32_t       best_d1_blk;
     uint8_t        tx_depth;
     InterIntraMode interintra_mode;
     uint8_t        is_interintra_used;
     uint8_t        use_wedge_interintra;
     int32_t        interintra_wedge_index;
-    int32_t        ii_wedge_sign;
     uint8_t        filter_intra_mode;
     PaletteInfo    palette_info;
 } BlkStruct;

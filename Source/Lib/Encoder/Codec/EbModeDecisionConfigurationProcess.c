@@ -485,32 +485,6 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     return EB_ErrorNone;
 }
 
-/******************************************************
-* Predict the SB partitionning
-******************************************************/
-void perform_early_sb_partitionning(ModeDecisionConfigurationContext *context_ptr,
-                                    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    SuperBlock *sb_ptr;
-    uint32_t    sb_index;
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-
-    // SB Loop : Partitionnig Decision
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-        sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
-        early_mode_decision_sb(scs_ptr, pcs_ptr, sb_ptr, sb_index, context_ptr);
-    } // End of SB Loop
-}
-
-void perform_early_sb_partitionning_sb(ModeDecisionConfigurationContext *context_ptr,
-                                       SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                                       uint32_t sb_index) {
-    SuperBlock *sb_ptr;
-
-    // SB Loop : Partitionnig Decision
-    sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
-    early_mode_decision_sb(scs_ptr, pcs_ptr, sb_ptr, sb_index, context_ptr);
-}
-
 void forward_all_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
     uint32_t sb_index;
     EbBool   split_flag;
@@ -656,9 +630,6 @@ void configure_adp(PictureControlSet *pcs_ptr, ModeDecisionConfigurationContext 
     UNUSED(pcs_ptr);
     context_ptr->cost_depth_mode[SB_SQ_BLOCKS_DEPTH_MODE - 1]      = SQ_BLOCKS_SEARCH_COST;
     context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1] = SQ_NON4_BLOCKS_SEARCH_COST;
-    context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1]      = SB_OPEN_LOOP_COST;
-    context_ptr->cost_depth_mode[SB_FAST_OPEN_LOOP_DEPTH_MODE - 1] = SB_FAST_OPEN_LOOP_COST;
-    context_ptr->cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE - 1] = SB_PRED_OPEN_LOOP_COST;
 
     // Initialize the score based TH
     context_ptr->score_th[0] = ~0;
@@ -684,16 +655,7 @@ void derive_search_method(PictureControlSet *               pcs_ptr,
 
     for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; sb_index++) {
         if (context_ptr->sb_cost_array[sb_index] ==
-            context_ptr->cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE - 1])
-            pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_PRED_OPEN_LOOP_DEPTH_MODE;
-        else if (context_ptr->sb_cost_array[sb_index] ==
-                 context_ptr->cost_depth_mode[SB_FAST_OPEN_LOOP_DEPTH_MODE - 1])
-            pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_FAST_OPEN_LOOP_DEPTH_MODE;
-        else if (context_ptr->sb_cost_array[sb_index] ==
-                 context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1])
-            pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_OPEN_LOOP_DEPTH_MODE;
-        else if (context_ptr->sb_cost_array[sb_index] ==
-                 context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1])
+            context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1])
             pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_SQ_NON4_BLOCKS_DEPTH_MODE;
         else
             pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_SQ_BLOCKS_DEPTH_MODE;
@@ -828,51 +790,20 @@ void derive_optimal_budget_per_sb(SequenceControlSet *scs_ptr, PictureControlSet
     }
 }
 
-EbErrorType derive_default_segments(SequenceControlSet *              scs_ptr,
-                                    ModeDecisionConfigurationContext *context_ptr) {
+EbErrorType derive_default_segments(ModeDecisionConfigurationContext *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    if (context_ptr->budget > (uint16_t)(scs_ptr->sb_tot_cnt * U_140)) {
-        context_ptr->number_of_segments = 2;
-        context_ptr->score_th[0]        = (int8_t)((1 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[1]        = (int8_t)((2 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[2]        = (int8_t)((3 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[3]        = (int8_t)((4 * 100) / context_ptr->number_of_segments);
-        context_ptr->interval_cost[0]   = context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1];
-        context_ptr->interval_cost[1] =
-            context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1];
-    } else if (context_ptr->budget > (uint16_t)(scs_ptr->sb_tot_cnt * U_115)) {
-        context_ptr->number_of_segments = 3;
-
-        context_ptr->score_th[0] = (int8_t)((1 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[1] = (int8_t)((2 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[2] = (int8_t)((3 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[3] = (int8_t)((4 * 100) / context_ptr->number_of_segments);
-
-        context_ptr->interval_cost[0] =
-            context_ptr->cost_depth_mode[SB_FAST_OPEN_LOOP_DEPTH_MODE - 1];
-        context_ptr->interval_cost[1] = context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1];
-        context_ptr->interval_cost[2] =
-            context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1];
-    } else {
-        context_ptr->number_of_segments = 4;
-
-        context_ptr->score_th[0] = (int8_t)((1 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[1] = (int8_t)((2 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[2] = (int8_t)((3 * 100) / context_ptr->number_of_segments);
-        context_ptr->score_th[3] = (int8_t)((4 * 100) / context_ptr->number_of_segments);
-
-        context_ptr->interval_cost[0] =
-            context_ptr->cost_depth_mode[SB_PRED_OPEN_LOOP_DEPTH_MODE - 1];
-        context_ptr->interval_cost[1] =
-            context_ptr->cost_depth_mode[SB_FAST_OPEN_LOOP_DEPTH_MODE - 1];
-        context_ptr->interval_cost[2] = context_ptr->cost_depth_mode[SB_OPEN_LOOP_DEPTH_MODE - 1];
-        context_ptr->interval_cost[3] =
-            context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1];
-    }
-
+    context_ptr->number_of_segments = 2;
+    context_ptr->score_th[0] = (int8_t)((1 * 100) / context_ptr->number_of_segments);
+    context_ptr->score_th[1] = (int8_t)((2 * 100) / context_ptr->number_of_segments);
+    context_ptr->score_th[2] = (int8_t)((3 * 100) / context_ptr->number_of_segments);
+    context_ptr->score_th[3] = (int8_t)((4 * 100) / context_ptr->number_of_segments);
+    context_ptr->interval_cost[0] = context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1];
+    context_ptr->interval_cost[1] =
+        context_ptr->cost_depth_mode[SB_SQ_BLOCKS_DEPTH_MODE - 1];
     return return_error;
 }
+
 /******************************************************
 * Compute the score of each SB
     Input   : distortion, detection signals
@@ -882,42 +813,18 @@ void derive_sb_score(PictureControlSet *pcs_ptr,
                      ModeDecisionConfigurationContext *context_ptr) {
     uint32_t sb_index;
     uint32_t sb_score = 0;
-    uint32_t distortion;
+
     uint64_t sb_tot_score     = 0;
     context_ptr->sb_min_score = ~0u;
     context_ptr->sb_max_score = 0u;
 
     for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; sb_index++) {
-        SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
+
         if (pcs_ptr->slice_type == I_SLICE)
             assert(0);
-        else {
-            if (sb_params->raster_scan_blk_validity[RASTER_SCAN_CU_INDEX_64x64] == EB_FALSE) {
-                uint8_t blk8x8_index;
-                uint8_t valid_blk_8x8_count = 0;
-                distortion                  = 0;
-                for (blk8x8_index = RASTER_SCAN_CU_INDEX_8x8_0;
-                     blk8x8_index <= RASTER_SCAN_CU_INDEX_8x8_63;
-                     blk8x8_index++) {
-                    if (sb_params->raster_scan_blk_validity[blk8x8_index]) {
-                        distortion = pcs_ptr->parent_pcs_ptr->me_results[sb_index]
-                                         ->me_candidate[blk8x8_index][0]
-                                         .distortion;
-                        valid_blk_8x8_count++;
-                    }
-                }
-                if (valid_blk_8x8_count > 0) distortion = (distortion / valid_blk_8x8_count) * 64;
+        else
+            sb_score = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];
 
-                // Do not perform SB score manipulation for incomplete SBs as not valid signals
-                sb_score = distortion;
-            } else {
-                distortion = pcs_ptr->parent_pcs_ptr->me_results[sb_index]
-                                 ->me_candidate[RASTER_SCAN_CU_INDEX_64x64][0]
-                                 .distortion;
-                // Perform SB score manipulation for incomplete SBs for SQ mode
-                sb_score = distortion;
-            }
-        }
         context_ptr->sb_score_array[sb_index] = sb_score;
         // Track MIN and MAX SB scores
         context_ptr->sb_min_score = MIN(sb_score, context_ptr->sb_min_score);
@@ -1001,7 +908,8 @@ void derive_sb_md_mode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     set_target_budget_oq(pcs_ptr, context_ptr);
 
     // Set the percentage based thresholds
-    derive_default_segments(scs_ptr, context_ptr);
+    derive_default_segments(context_ptr);
+
     // Perform Budgetting
     derive_optimal_budget_per_sb(scs_ptr, pcs_ptr, context_ptr);
 
@@ -1571,24 +1479,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // QP Index
         context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
 
-        // Lambda Assignement
-        uint32_t lambda_sse;
-        uint32_t lambdasad_;
-        (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
-            &lambdasad_,
-            &lambda_sse,
-#if !NEW_MD_LAMBDA
-            &lambdasad_,
-            &lambda_sse,
-#endif
-            (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-            context_ptr->qp_index,
-#if OMARK_LAMBDA
-            EB_TRUE);
-#else
-            pcs_ptr->hbd_mode_decision);
-#endif
-        context_ptr->lambda      = (uint64_t)lambdasad_;
         md_rate_estimation_array = pcs_ptr->md_rate_estimation_array;
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
         if (context_ptr->is_md_rate_estimation_ptr_owner) {
@@ -1628,8 +1518,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 } else if (pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] ==
                            SB_SQ_NON4_BLOCKS_DEPTH_MODE) {
                     sb_forward_sq_non4_blocks_to_md(scs_ptr, pcs_ptr, sb_index);
-                } else {
-                    perform_early_sb_partitionning_sb(context_ptr, scs_ptr, pcs_ptr, sb_index);
                 }
             }
         } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_DEPTH_MODE ||
@@ -1644,12 +1532,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             forward_sq_blocks_to_md(scs_ptr, pcs_ptr);
         } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SQ_NON4_DEPTH_MODE) {
             forward_sq_non4_blocks_to_md(scs_ptr, pcs_ptr);
-        } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode >= PIC_OPEN_LOOP_DEPTH_MODE) {
-            // Predict the SB partitionning
-            perform_early_sb_partitionning( // HT done
-                context_ptr,
-                scs_ptr,
-                pcs_ptr);
         } else { // (pcs_ptr->parent_pcs_ptr->mdMode == PICT_BDP_DEPTH_MODE || pcs_ptr->parent_pcs_ptr->mdMode == PICT_LIGHT_BDP_DEPTH_MODE )
             pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
         }

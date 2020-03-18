@@ -3254,7 +3254,7 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost = tot_cost;
         context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].part =
             from_shape_to_part[context_ptr->blk_geom->shape];
-        context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
+        context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].best_d1_blk = first_blk_idx;
     }
     return tot_cost;
 }

@@ -28,12 +28,11 @@ extern "C" {
 // i.e. no 4x4, 8x4, or 4x8 partitions
 #define SQUARE_PU_COUNT 85
 typedef struct MeCandidate {
-    unsigned distortion : 20; // 20-bits holds maximum SAD of 64x64 PU
-    unsigned direction : 2;
-    unsigned ref_idx_l0 : 2; // allows for up to 4 references
-    unsigned ref_idx_l1 : 2;
-    unsigned ref0_list : 1;
-    unsigned ref1_list : 1;
+    uint8_t direction : 2;
+    uint8_t ref_idx_l0 : 2; // allows for up to 4 references
+    uint8_t ref_idx_l1 : 2;
+    uint8_t ref0_list : 1;
+    uint8_t ref1_list : 1;
 } MeCandidate;
 typedef struct MvCandidate {
     signed short x_mv;

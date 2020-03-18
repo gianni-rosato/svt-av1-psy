@@ -112,13 +112,11 @@ typedef struct ModeDecisionCandidate {
     // Inter Mode
     PredictionMode         inter_mode;
     EbBool                 is_compound;
-    uint32_t               pred_mv_weight;
     uint8_t                ref_frame_type;
     uint8_t                ref_mv_index;
     int8_t                 ref_frame_index_l0;
     int8_t                 ref_frame_index_l1;
     EbBool                 is_new_mv;
-    EbBool                 is_zero_mv;
     TxType                 transform_type[MAX_TXB_COUNT];
     TxType                 transform_type_uv;
     MacroblockPlane        candidate_plane[MAX_MB_PLANE];
@@ -141,7 +139,6 @@ typedef struct ModeDecisionCandidate {
     uint8_t                is_interintra_used;
     uint8_t                use_wedge_interintra;
     int32_t                interintra_wedge_index; //inter_intra wedge index
-    int32_t                ii_wedge_sign; //inter_intra wedge sign=-1
 } ModeDecisionCandidate;
 
 /**************************************

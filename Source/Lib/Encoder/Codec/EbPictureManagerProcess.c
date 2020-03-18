@@ -848,6 +848,7 @@ void *picture_manager_kernel(void *input_ptr) {
 #if TILES_PARALLEL
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
 #endif
+                        child_pcs_ptr->parent_pcs_ptr->av1_cm->rst_tmpbuf = child_pcs_ptr->rst_tmpbuf;
 
                         //3.make all  init for ChildPCS
                         pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +
