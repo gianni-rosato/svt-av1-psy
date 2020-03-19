@@ -340,6 +340,7 @@ typedef struct BlkStruct {
     int32_t        interintra_wedge_index;
     uint8_t        filter_intra_mode;
     PaletteInfo    palette_info;
+    uint8_t        do_not_process_block;
 } BlkStruct;
 
 typedef struct OisCandidate {

@@ -317,6 +317,7 @@ typedef struct ModeDecisionContext {
     uint8_t              inject_inter_candidates;
     uint8_t              intra_similar_mode;
 #endif
+    uint8_t              skip_depth;
     uint8_t *            cfl_temp_luma_recon;
     uint16_t *           cfl_temp_luma_recon16bit;
     EbBool               spatial_sse_full_loop;

@@ -2118,6 +2118,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
     else
         context_ptr->best_me_cand_only_flag = EB_FALSE;
 
+    // Set skip_depth
+    if(MR_MODE || context_ptr->pd_pass <= PD_PASS_1)
+        context_ptr->skip_depth = 0;
+    else
+        context_ptr->skip_depth =
+        pcs_ptr->parent_pcs_ptr->sc_content_detected ? 1 : 0;
+
 #if ENHANCED_ME_MV
     // Set perform_me_mv_1_8_pel_ref
     if (context_ptr->pd_pass == PD_PASS_0)
