@@ -2154,8 +2154,8 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
 
     MV mv_l0;
 #if WARP_IMPROVEMENT
-    mv_l0.col = mv_unit->mv[mv_unit->pred_direction].x;
-    mv_l0.row = mv_unit->mv[mv_unit->pred_direction].y;
+    mv_l0.col = mv_unit->mv[mv_unit->pred_direction % BI_PRED].x;
+    mv_l0.row = mv_unit->mv[mv_unit->pred_direction % BI_PRED].y;
 #else
     mv_l0.col = mv_unit->mv[REF_LIST_0].x;
     mv_l0.row = mv_unit->mv[REF_LIST_0].y;
