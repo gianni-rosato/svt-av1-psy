@@ -6,8 +6,6 @@
 #ifndef EbMeSadCalculation_h
 #define EbMeSadCalculation_h
 
-#include "EbMeSadCalculation_SSE2.h"
-#include "EbComputeSAD_SSE4_1.h"
 
 #include "EbDefinitions.h"
 #ifdef __cplusplus

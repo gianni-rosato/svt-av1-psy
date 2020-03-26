@@ -14,7 +14,6 @@
 
 #include "EbDefinitions.h"
 #include "EbTemporalFiltering_constants.h"
-#include "EbTemporalFiltering_sse4.h"
 
 // Read in 8 pixels from a and b as 8-bit unsigned integers, compute the
 // difference squared, and store as unsigned 16-bit integer to dst.

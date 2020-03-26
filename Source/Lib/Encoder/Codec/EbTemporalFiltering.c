@@ -30,10 +30,7 @@
 #include "EbPictureAnalysisProcess.h"
 #include "EbMcp.h"
 #include "av1me.h"
-#include "EbTemporalFiltering_sse4.h"
-#if ENHANCED_TF
-#include "EbTemporalFiltering_AVX2.h"
-#endif
+#include "xmmintrin.h"
 #include "EbObject.h"
 #include "EbEncInterPrediction.h"
 #include "EbComputeVariance_C.h"

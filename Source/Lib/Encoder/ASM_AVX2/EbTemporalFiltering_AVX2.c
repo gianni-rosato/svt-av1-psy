@@ -14,7 +14,6 @@
 
 #include "EbDefinitions.h"
 #include "./../ASM_SSE4_1/EbTemporalFiltering_constants.h"
-#include "EbTemporalFiltering_AVX2.h"
 
 
 #if ENHANCED_TF

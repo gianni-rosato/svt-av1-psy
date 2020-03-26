@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "EbPictureOperators.h"
-#include "EbMcp_SSE2.h"
+
 
 #if (InternalBitDepthIncrement == 0)
 #define ChromaOffset4 (1 << (Shift4 - 1))

@@ -5,7 +5,6 @@
 
 #include <assert.h>
 
-#include "EbComputeSAD_SSE4_1.h"
 #include "EbDefinitions.h"
 #include "smmintrin.h"
 

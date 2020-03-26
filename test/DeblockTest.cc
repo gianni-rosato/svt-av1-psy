@@ -33,7 +33,6 @@
 #include "EbDeblockingFilter.h"
 #include "acm_random.h"
 #include "EbDeblockingFilter_SSE2.h"
-#include "loopfilter_ref.h"
 #include "EbDeblockingCommon.h"
 
 using libaom_test::ACMRandom;

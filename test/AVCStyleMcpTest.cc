@@ -45,7 +45,7 @@
 #include "random.h"
 #include "util.h"
 #include "EbUtility.h"
-
+#include "common_dsp_rtcd.h"
 void *eb_aom_memalign(size_t align, size_t size);
 void  eb_aom_free(void *memblk);
 

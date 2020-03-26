@@ -17,21 +17,11 @@
 #define RTCD_C
 #include "aom_dsp_rtcd.h"
 #include "EbComputeSAD_C.h"
-#include "EbComputeSAD_SSE4_1.h"
-#include "EbComputeSAD_AVX2.h"
 #include "EbPictureAnalysisProcess.h"
 #include "EbTemporalFiltering.h"
-#include "EbTemporalFiltering_sse4.h"
-#if ENHANCED_TF
-#include "EbTemporalFiltering_AVX2.h"
-#endif
 #include "EbComputeSAD.h"
 #include "EbMotionEstimation.h"
 #include "EbPictureOperators.h"
-#include "EbMcp_SSE2.h"
-#include "EbAvcStyleMcp_SSSE3.h"
-#include "EbComputeMean_SSE2.h"
-#include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbComputeMean.h"
 #include "EbMeSadCalculation.h"
 #include "EbAvcStyleMcp.h"
@@ -621,20 +611,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                    sad_loop_kernel_c,
                    sad_loop_kernel_sse4_1_hme_l0_intrin,
                    sad_loop_kernel_avx2_hme_l0_intrin);
-    SET_AVX2(
-        noise_extract_luma_weak, noise_extract_luma_weak_c, noise_extract_luma_weak_avx2_intrin);
-    SET_AVX2(noise_extract_luma_weak_sb,
-             noise_extract_luma_weak_sb_c,
-             noise_extract_luma_weak_sb_avx2_intrin);
-    SET_AVX2(noise_extract_luma_strong,
-             noise_extract_luma_strong_c,
-             noise_extract_luma_strong_avx2_intrin);
-    SET_AVX2(noise_extract_chroma_strong,
-             noise_extract_chroma_strong_c,
-             noise_extract_chroma_strong_avx2_intrin);
-    SET_AVX2(noise_extract_chroma_weak,
-             noise_extract_chroma_weak_c,
-             noise_extract_chroma_weak_avx2_intrin);
+
     SET_SSE41(
         svt_av1_apply_filtering, svt_av1_apply_filtering_c, svt_av1_apply_temporal_filter_sse4_1);
 #if ENHANCED_TF
@@ -692,6 +669,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2(compute_mean_square_values_8x8,
              compute_mean_squared_values_c,
              compute_mean_of_squared_values8x8_sse2_intrin);
+    SET_SSE2(compute_sub_mean_8x8,
+             compute_sub_mean_8x8_c,
+             compute_sub_mean8x8_sse2_intrin);
     SET_SSE2_AVX2(compute_interm_var_four8x8,
                   compute_interm_var_four8x8_c,
                   compute_interm_var_four8x8_helper_sse2,

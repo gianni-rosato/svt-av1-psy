@@ -7,9 +7,6 @@
 #define EbPictureOperators_h
 
 #include "EbPictureOperators_C.h"
-#include "EbPictureOperators_SSE2.h"
-#include "EbPictureOperators_AVX2.h"
-#include "EbPictureOperators_AVX512.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 #ifdef __cplusplus

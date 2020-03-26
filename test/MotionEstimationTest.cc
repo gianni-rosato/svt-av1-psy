@@ -8,7 +8,6 @@
 #include "EbDefinitions.h"
 #include "EbComputeSAD_AVX2.h"
 #include "EbComputeSAD_C.h"
-#include "EbComputeSAD_SSE4_1.h"
 #include "EbMeSadCalculation.h"
 #include "EbMotionEstimation.h"
 #include "EbUnitTest.h"

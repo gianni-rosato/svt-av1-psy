@@ -14,7 +14,7 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#include "EbDeblockingFilter_SSE2.h"
+
 #include "EbDefinitions.h"
 #include "EbAv1Structs.h"
 
@@ -85,89 +85,7 @@ static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
 void eb_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lf_info,
                                    int32_t plane_start, int32_t plane_end);
 
-void aom_highbd_lpf_horizontal_14_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                       const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_horizontal_14 aom_highbd_lpf_horizontal_14_sse2
 
-void aom_highbd_lpf_horizontal_4_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                   const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-void aom_highbd_lpf_horizontal_4_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                      const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_horizontal_4 aom_highbd_lpf_horizontal_4_sse2
-
-void aom_highbd_lpf_horizontal_6_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                      const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_horizontal_6 aom_highbd_lpf_horizontal_6_sse2
-
-void aom_highbd_lpf_horizontal_8_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                   const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-void aom_highbd_lpf_horizontal_8_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                      const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_horizontal_8 aom_highbd_lpf_horizontal_8_sse2
-
-void aom_highbd_lpf_vertical_14_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                     const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_vertical_14 aom_highbd_lpf_vertical_14_sse2
-
-void aom_highbd_lpf_vertical_4_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                 const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-void aom_highbd_lpf_vertical_4_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                    const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_vertical_4 aom_highbd_lpf_vertical_4_sse2
-
-void aom_highbd_lpf_vertical_6_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                    const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_vertical_6 aom_highbd_lpf_vertical_6_sse2
-
-void aom_highbd_lpf_vertical_8_c(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                 const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-void aom_highbd_lpf_vertical_8_sse2(uint16_t *s, int32_t pitch, const uint8_t *blimit,
-                                    const uint8_t *limit, const uint8_t *thresh, int32_t bd);
-#define aom_highbd_lpf_vertical_8 aom_highbd_lpf_vertical_8_sse2
-
-void aom_lpf_horizontal_14_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                                const uint8_t *limit, const uint8_t *thresh);
-#define aom_lpf_horizontal_14 aom_lpf_horizontal_14_sse2
-
-void aom_lpf_horizontal_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                            const uint8_t *thresh);
-void aom_lpf_horizontal_4_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                               const uint8_t *limit, const uint8_t *thresh);
-#define aom_lpf_horizontal_4 aom_lpf_horizontal_4_sse2
-
-void aom_lpf_horizontal_6_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                            const uint8_t *thresh);
-void aom_lpf_horizontal_6_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                               const uint8_t *limit, const uint8_t *thresh);
-#define aom_lpf_horizontal_6 aom_lpf_horizontal_6_sse2
-
-void aom_lpf_horizontal_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                            const uint8_t *thresh);
-void aom_lpf_horizontal_8_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                               const uint8_t *limit, const uint8_t *thresh);
-#define aom_lpf_horizontal_8 aom_lpf_horizontal_8_sse2
-
-void aom_lpf_vertical_14_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit,
-                              const uint8_t *limit, const uint8_t *thresh);
-#define aom_lpf_vertical_14 aom_lpf_vertical_14_sse2
-
-void aom_lpf_vertical_4_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                          const uint8_t *thresh);
-void aom_lpf_vertical_4_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                             const uint8_t *thresh);
-#define aom_lpf_vertical_4 aom_lpf_vertical_4_sse2
-
-void aom_lpf_vertical_6_c(uint8_t* s, int32_t pitch, const uint8_t* blimit, const uint8_t* limit,
-                          const uint8_t* thresh);
-void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                             const uint8_t *thresh);
-#define aom_lpf_vertical_6 aom_lpf_vertical_6_sse2
-
-void aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                          const uint8_t *thresh);
-void aom_lpf_vertical_8_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit,
-                             const uint8_t *thresh);
-#define aom_lpf_vertical_8 aom_lpf_vertical_8_sse2
 
 void update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl);
 

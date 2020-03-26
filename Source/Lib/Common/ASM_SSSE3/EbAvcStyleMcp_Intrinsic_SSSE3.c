@@ -8,7 +8,7 @@
 #include "EbMcp_SSE2.h"
 #include "EbDefinitions.h"
 #include "EbAvcStyleMcp_SSE2.h"
-
+#include "common_dsp_rtcd.h"
 #include "emmintrin.h"
 #include "tmmintrin.h"
 

@@ -18,7 +18,6 @@
 #define EbSourceBasedOperations_h
 
 #include "EbDefinitions.h"
-#include "EbNoiseExtractAVX2.h"
 
 /***************************************
  * Extern Function Declaration

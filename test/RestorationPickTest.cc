@@ -12,7 +12,6 @@
 #include <immintrin.h>  // AVX2
 #include "synonyms.h"
 #include "synonyms_avx2.h"
-#include "EbPictureOperators_AVX2.h"
 #include "EbRestorationPick.h"
 
 typedef void (*av1_compute_stats_func)(int32_t wiener_win, const uint8_t *dgd8,

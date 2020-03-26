@@ -24,13 +24,6 @@ void picture_average_kernel_sse2(EbByte src0, uint32_t src0_stride, EbByte src1,
                                  uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
                                  uint32_t area_width, uint32_t area_height);
 
-void picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
-                                        uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
-                                        uint32_t area_width, uint32_t area_height);
-
-void picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
-                                              uint32_t area_width);
-
 #ifdef __cplusplus
 }
 #endif

@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 #include "EbComputeMean.h"
 #include "random.h"
-
+#include "aom_dsp_rtcd.h"
 /**
  * @brief Unit test for compute mean function:
  * - compute_mean8x8_sse2_intrin
@@ -150,7 +150,7 @@ TEST(ComputeMeanTest, run_compute_sub_mean_test) {
             // compute mean
             uint64_t output_sse2_tst =
                 compute_sub_mean8x8_sse2_intrin(input_data, 8);
-            uint64_t output_c_ref = compute_sub_mean_c(input_data, 8, 8, 8);
+            uint64_t output_c_ref = compute_sub_mean_8x8_c(input_data, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)

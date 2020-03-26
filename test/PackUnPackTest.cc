@@ -35,16 +35,13 @@
 #endif
 
 #include "EbDefinitions.h"
-#include "EbPackUnPack_AVX2.h"
-#include "EbPictureOperators_AVX2.h"
-#include "EbPackUnPack_SSE2.h"
 #include "EbPackUnPack_C.h"
 #include "EbEncIntraPrediction.h"
 #include "EbUnitTestUtility.h"
 #include "EbUtility.h"
 #include "random.h"
 #include "util.h"
-
+#include "common_dsp_rtcd.h"
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {

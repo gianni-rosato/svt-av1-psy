@@ -7,7 +7,6 @@
 #ifndef NON_AVX512_SUPPORT
 
 #include <immintrin.h>
-#include "EbPictureOperators_AVX2.h"
 #include "EbPictureOperators_Inline_AVX2.h"
 #include "EbPictureOperators_SSE2.h"
 #include "EbMemory_AVX2.h"
@@ -205,69 +204,6 @@ static INLINE void SpatialFullDistortionKernel64_AVX512_INTRIN(const uint8_t *co
     const __m512i dist_h = _mm512_madd_epi16(diff_h, diff_h);
     const __m512i dist   = _mm512_add_epi32(dist_l, dist_h);
     *sum                 = _mm512_add_epi32(*sum, dist);
-}
-
-uint64_t spatial_full_distortion_kernel32x_n_avx512_intrin(
-    uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-    int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
-    int32_t row_count = area_height;
-    __m512i sum       = _mm512_setzero_si512();
-
-    (void)area_width;
-
-    input += input_offset;
-    recon += recon_offset;
-
-    do {
-        const __m256i in = _mm256_loadu_si256((__m256i *)input);
-        const __m256i re = _mm256_loadu_si256((__m256i *)recon);
-        Distortion_AVX512_INTRIN(in, re, &sum);
-        input += input_stride;
-        recon += recon_stride;
-    } while (--row_count);
-
-    return Hadd32_AVX512_INTRIN(sum);
-}
-
-uint64_t spatial_full_distortion_kernel64x_n_avx512_intrin(
-    uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-    int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
-    int32_t row_count = area_height;
-    __m512i sum       = _mm512_setzero_si512();
-
-    (void)area_width;
-
-    input += input_offset;
-    recon += recon_offset;
-
-    do {
-        SpatialFullDistortionKernel64_AVX512_INTRIN(input, recon, &sum);
-        input += input_stride;
-        recon += recon_stride;
-    } while (--row_count);
-
-    return Hadd32_AVX512_INTRIN(sum);
-}
-
-uint64_t spatial_full_distortion_kernel128x_n_avx512_intrin(
-    uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon,
-    int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height) {
-    int32_t row_count = area_height;
-    __m512i sum       = _mm512_setzero_si512();
-
-    (void)area_width;
-
-    input += input_offset;
-    recon += recon_offset;
-
-    do {
-        SpatialFullDistortionKernel64_AVX512_INTRIN(input, recon, &sum);
-        SpatialFullDistortionKernel64_AVX512_INTRIN(input + 64, recon + 64, &sum);
-        input += input_stride;
-        recon += recon_stride;
-    } while (--row_count);
-
-    return Hadd32_AVX512_INTRIN(sum);
 }
 
 uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset,

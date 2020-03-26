@@ -14,14 +14,14 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#include "EbDeblockingFilter_SSE2.h"
+//#include "EbDeblockingFilter_SSE2.h"
 
 #include "EbPredictionUnit.h"
 #include "EbNeighborArrays.h"
 #include "EbEncDecProcess.h"
 #include "EbDlfProcess.h"
 #include "EbDeblockingCommon.h"
-
+#include "common_dsp_rtcd.h"
 #ifndef EbDeblockingFilter_h
 #define EbDeblockingFilter_h
 #ifdef __cplusplus

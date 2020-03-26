@@ -27,7 +27,7 @@ Contains the Decoder Loop Filtering related functions*/
 #include "EbDeblockingCommon.h"
 #include "EbDecNbr.h"
 #include "EbDecLF.h"
-
+#include "common_dsp_rtcd.h"
 #define FILTER_LEN 4
 
 /*Filter_length is mapped to int indx for the filter tap arrays*/
