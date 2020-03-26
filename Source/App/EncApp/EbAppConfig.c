@@ -250,8 +250,11 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 };
 
 static void set_pred_struct_file(const char *value, EbConfig *cfg) {
-    if (cfg->input_pred_struct_file) { fclose(cfg->input_pred_struct_file); }
-    FOPEN(cfg->input_pred_struct_file, value, "rb");
+
+    if (cfg->input_pred_struct_filename) { free(cfg->input_pred_struct_filename); }
+    cfg->input_pred_struct_filename = (char *)malloc(strlen(value) + 1);
+    EB_STRCPY(cfg->input_pred_struct_filename, strlen(value) + 1, value);
+
     cfg->enable_manual_pred_struct = EB_TRUE;
 };
 
@@ -576,10 +579,7 @@ static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
     cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_enable_palette(const char *value, EbConfig *cfg) {
-    cfg->enable_palette = (int32_t)strtoul(value, NULL, 0);
-};
-static void set_enable_olpd_refinement(const char *value, EbConfig *cfg) {
-    cfg->olpd_refinement = (int32_t)strtoul(value, NULL, 0);
+    cfg->enable_palette = (int32_t)strtol(value, NULL, 0);
 };
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
     cfg->high_dynamic_range_input = strtol(value, NULL, 0);
@@ -938,7 +938,7 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
     {SINGLE_INPUT,
      DISABLE_CFL_NEW_TOKEN,
-     "Set chroma from luma (CFL) flag (0: OFF, 1: ON, -1: DEFAULT)",
+     "Disable chroma from luma (CFL) flag (0: OFF (do not disable), 1: ON (disable), -1: DEFAULT)",
      set_disable_cfl_flag},
 
     // LOCAL WARPED MOTION
@@ -962,6 +962,11 @@ ConfigEntry config_entry_specific[] = {
      EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
      "Enable intra edge filtering (0: OFF, 1: ON (default))",
      set_edge_skip_angle_intra_flag},
+    // INTRA ANGLE DELTA
+    {SINGLE_INPUT,
+        INTRA_ANGLE_DELTA_TOKEN,
+        "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
+        set_intra_angle_delta_flag},
     // INTER INTRA COMPOUND
     {SINGLE_INPUT,
      INTER_INTRA_COMPOUND_NEW_TOKEN,
@@ -1195,9 +1200,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", set_cfg_qp_file},
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
-    {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "input_stat_file", set_input_stat_file},
-    {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "output_stat_file", set_output_stat_file},
-    {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "pred_struct_file", set_pred_struct_file},
+    {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "InputStatFile", set_input_stat_file},
+    {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "OutputStatFile", set_output_stat_file},
+    {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
     // Picture Dimensions
     {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
     {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
@@ -1349,7 +1354,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
     {SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", set_enable_hbd_mode_decision},
     {SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", set_enable_palette},
-    {SINGLE_INPUT, OLPD_REFINEMENT_TOKEN, "OlpdRefinement", set_enable_olpd_refinement},
     // Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
     {SINGLE_INPUT, UNPIN_LP1_TOKEN, "UnpinSingleCoreExecution", set_unpin_single_core_execution},
@@ -1582,7 +1586,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_hbd_mode_decision                  = 2;
     config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->enable_palette                            = -1;
-    config_ptr->olpd_refinement                           = -1;
     config_ptr->injector_frame_rate                       = 60 << 16;
 
     // ASM Type
@@ -1639,6 +1642,16 @@ void eb_config_dtor(EbConfig *config_ptr) {
     if (config_ptr->recon_file) {
         fclose(config_ptr->recon_file);
         config_ptr->recon_file = (FILE *)NULL;
+    }
+
+    if (config_ptr->input_pred_struct_file) {
+        fclose(config_ptr->input_pred_struct_file);
+        config_ptr->input_pred_struct_file = (FILE *)NULL;
+    }
+
+    if (config_ptr->input_pred_struct_filename) {
+        free(config_ptr->input_pred_struct_filename);
+        config_ptr->input_pred_struct_filename = NULL;
     }
 
     if (config_ptr->error_log_file && config_ptr->error_log_file != stderr) {
@@ -2364,7 +2377,6 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
                                      uint32_t instance_idx) {
     int32_t return_error = 0;
 
-    // Open the config file
     FOPEN(config->input_pred_struct_file, PredStructPath, "rb");
 
     if (config->input_pred_struct_file != (FILE *)NULL) {
@@ -2610,19 +2622,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /***************************************************************************************************/
     for (index = 0; index < num_channels; ++index) {
         if ((configs[index])->enable_manual_pred_struct == EB_TRUE) {
-            if (find_token_multiple_inputs(
-                    argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_strings) == 0) {
-                mark_token_as_read(INPUT_PREDSTRUCT_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
-                return_errors[index] = (EbErrorType)read_pred_struct_file(
-                    configs[index], config_strings[index], index);
-                return_error = (EbErrorType)(return_error & return_errors[index]);
-            } else {
-                if (find_token(argc, argv, INPUT_PREDSTRUCT_FILE_TOKEN, config_string) == 0) {
-                    fprintf(stderr, "Error: Manual Prediction Structure File Token Not Found\n");
-                    return EB_ErrorBadParameter;
-                } else
-                    return_error = EB_ErrorNone;
-            }
+            return_errors[index] = (EbErrorType)read_pred_struct_file(configs[index], configs[index]->input_pred_struct_filename, index);
+            return_error = (EbErrorType)(return_error & return_errors[index]);
         }
     }
 

@@ -2161,7 +2161,6 @@ void copy_api_from_app(
     // MD Parameters
     scs_ptr->static_config.enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? ((EbSvtAv1EncConfiguration*)config_struct)->enable_hbd_mode_decision : 0;
     scs_ptr->static_config.enable_palette = ((EbSvtAv1EncConfiguration*)config_struct)->enable_palette;
-    scs_ptr->static_config.olpd_refinement = ((EbSvtAv1EncConfiguration*)config_struct)->olpd_refinement;
     // Adaptive Loop Filter
     scs_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
@@ -2816,15 +2815,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-    // mdc refinement
-    if (config->olpd_refinement < (int32_t)(-1) || config->olpd_refinement > 1) {
-        SVT_LOG("Error instance %u: Invalid OLPD Refinement Mode [0 .. 1], your input: %i\n", channel_number + 1, config->olpd_refinement);
-        return_error = EB_ErrorBadParameter;
-    }
-    else if (config->olpd_refinement == 1 && config->enc_mode >= ENC_M1) {
-        SVT_LOG("Error instance %u: Invalid OLPD Refinement mode for M%d [0], your input: %i\n", channel_number + 1, config->enc_mode, config->olpd_refinement);
-        return_error = EB_ErrorBadParameter;
-    }
     // prediction structure
     if(config->enable_manual_pred_struct) {
         if(config->manual_pred_struct_entry_num > (1<<(MAX_HIERARCHICAL_LEVEL-1))){
@@ -2995,7 +2985,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
     config_ptr->enable_hbd_mode_decision = 1;
     config_ptr->enable_palette = -1;
-    config_ptr->olpd_refinement = -1;
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;

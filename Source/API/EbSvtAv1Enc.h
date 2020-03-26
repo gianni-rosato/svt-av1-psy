@@ -427,11 +427,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int32_t enable_palette;
 
-    /* Open Loop Partitioning Decision refinement
-    *
-    * Default is -1. */
-    int32_t olpd_refinement;
-
     // Rate Control
 
     /* Rate control mode.
