@@ -4053,6 +4053,16 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
     else
         pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
 
+    // R2R FIX: copying input_picture_ptr to input_padded_picture_ptr for motion_estimate_sb needs it
+    {
+        uint8_t *pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
+                      input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+        uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+                      input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+        for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+            EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
+    }
+
     // Pad input picture to complete border SBs
     pad_picture_to_multiple_of_sb_dimensions(
         input_padded_picture_ptr);
