@@ -568,10 +568,10 @@ static void encode_tu(EncodeContext *encode_context_ptr, int frames, int total_b
         uint32_t size = src_stream_ptr->n_filled_len;
         dst -= size;
         memmove(dst, src_stream_ptr->p_buffer, size);
-        if (i != last) {
-            //lost frame is displayable frame, other are unsidplayed
+        //1. The last frame is a displayable frame, others are undisplayed.
+        //2. We do not push alt ref frame since the overlay frame will carry the pts.
+        if (i != last && !queue_entry_ptr->is_alt_ref)
             push_undisplayed_frame(encode_context_ptr, wrapper);
-        }
     }
     if (frames > 1)
         sort_undisplayed_frame(encode_context_ptr);
