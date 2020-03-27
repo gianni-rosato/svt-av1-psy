@@ -6,6 +6,7 @@
 
 **Detailed Encoder Documentation**:
   * [SVT-AV1 Encoder Design Guide](svt-av1-encoder-design.md)
+  * [SVT-AV1 Decoder Design Guide](svt-av1-decoder-design.md)
   * [Altref Appendix](Appendix-Alt-Refs.md)
   * [CDEF Appendix](Appendix-CDEF.md)
   * [CfL Appendix](Appendix-CfL.md)
