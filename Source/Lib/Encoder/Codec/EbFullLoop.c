@@ -1482,9 +1482,9 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
                        TranLow *dqcoeff_ptr, uint16_t *eob, const ScanOrder *sc,
                        const QuantParam *qparam, TxSize tx_size, TxType tx_type, EbBool is_inter,
 #if OMARK_HBD0_RDOQ
-                       uint32_t bit_increment, uint32_t lambda,int plane)
+                       uint32_t lambda,int plane)
 #else
-                       uint32_t bit_increment, int plane)
+                       int plane)
 #endif
 
 {
@@ -1492,7 +1492,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     (void)n_coeffs;
     (void)sc;
     (void)qparam;
-    (void)bit_increment;
     int                    sharpness       = 0; // No Sharpness
 #if FASTER_RDOQ
     // Perform a fast RDOQ stage for inter and chroma blocks
@@ -1709,7 +1708,7 @@ int32_t av1_quantize_inv_quantize(
     int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
     uint32_t *count_non_zero_coeffs,
 
-    uint32_t component_type, uint32_t bit_increment, TxType tx_type,
+    uint32_t component_type, uint32_t bit_depth, TxType tx_type,
     ModeDecisionCandidateBuffer *candidate_buffer,
     int16_t txb_skip_context,
     int16_t dc_sign_context,
@@ -1732,7 +1731,7 @@ int32_t av1_quantize_inv_quantize(
                            : pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
                                  segmentation_qp_offset;
 #if QUANT_CLEANUP
-    if (bit_increment == 0) {
+    if (bit_depth == EB_8BIT) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant[q_index];
             candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_8bit.y_quant_fp[q_index];
@@ -1795,7 +1794,7 @@ int32_t av1_quantize_inv_quantize(
         }
     }
 #else
-    if (bit_increment == 0) {
+    if (bit_depth == EB_8BIT) {
         if (component_type == COMPONENT_LUMA) {
             candidate_plane.quant_qtx    = pcs_ptr->parent_pcs_ptr->quants_md.y_quant[q_index];
             candidate_plane.quant_fp_qtx = pcs_ptr->parent_pcs_ptr->quants_md.y_quant_fp[q_index];
@@ -1883,8 +1882,8 @@ int32_t av1_quantize_inv_quantize(
     EbBool perform_rdoq = ((md_context->md_staging_skip_rdoq == EB_FALSE || is_encode_pass) &&
                            md_context->enable_rdoq && !is_intra_bc);
 #endif
-#if !RDQO_ON_HBD0
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#if !RDQO_ON_HBD0
     // Shut rdoq if 10BIT and hbd_mode_decision 0
     if (scs_ptr->static_config.encoder_bit_depth > 8 && pcs_ptr->hbd_mode_decision == 0)
         perform_rdoq = EB_FALSE;
@@ -1895,7 +1894,7 @@ int32_t av1_quantize_inv_quantize(
 #else
     if (perform_rdoq && !is_inter) {
 #endif
-        if (bit_increment) {
+        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
             eb_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                              n_coeffs,
                                              &candidate_plane,
@@ -1915,7 +1914,7 @@ int32_t av1_quantize_inv_quantize(
                                       &qparam);
         }
     } else {
-        if (bit_increment) {
+        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
             eb_av1_highbd_quantize_b_facade((TranLow *)coeff,
                                             n_coeffs,
                                             &candidate_plane,
@@ -1957,7 +1956,6 @@ int32_t av1_quantize_inv_quantize(
                               txsize,
                               tx_type,
                               is_inter,
-                              bit_increment,
 #if OMARK_HBD0_RDOQ
                               lambda,
 #endif
@@ -2041,7 +2039,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         NOT_USED_VALUE,
         context_ptr->blk_geom->txsize[tx_depth][txb_itr],
         &context_ptr->three_quad_energy,
-        context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
         candidate_buffer->candidate_ptr->transform_type[txb_itr],
         PLANE_TYPE_Y,
         DEFAULT_SHAPE);
@@ -2066,7 +2064,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         &candidate_buffer->candidate_ptr->eob[0][txb_itr],
         &(y_count_non_zero_coeffs[txb_itr]),
         COMPONENT_LUMA,
-        context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
         candidate_buffer->candidate_ptr->transform_type[txb_itr],
         candidate_buffer,
         context_ptr->luma_txb_skip_context,
@@ -2324,7 +2322,7 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             tx_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
@@ -2348,7 +2346,7 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             &eob[0],
             &y_count_non_zero_coeffs_temp,
             COMPONENT_LUMA,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             tx_type,
             &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
             0,
@@ -2510,7 +2508,7 @@ void encode_pass_tx_search_hbd(
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            BIT_INCREMENT_10BIT,
+            context_ptr->bit_depth,
             tx_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
@@ -2534,7 +2532,7 @@ void encode_pass_tx_search_hbd(
             &eob[0],
             &y_count_non_zero_coeffs_temp,
             COMPONENT_LUMA,
-            BIT_INCREMENT_10BIT,
+            context_ptr->bit_depth,
             tx_type,
             &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
             0,
@@ -2651,7 +2649,7 @@ void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uin
                                 CONVERT_TO_BYTEPTR(((uint16_t *)rec_buffer) + rec_offset),
                                 rec_stride,
                                 txsize,
-                                BIT_INCREMENT_10BIT,
+                                EB_10BIT,
                                 transform_type,
                                 component_type,
                                 eob,
@@ -2768,7 +2766,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
-                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -2795,7 +2793,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 &candidate_buffer->candidate_ptr->eob[1][txb_itr],
                 &(cb_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CB,
-                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
                 context_ptr->cb_txb_skip_context,
@@ -2861,7 +2859,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr],
                 &context_ptr->three_quad_energy,
-                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -2888,7 +2886,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 &candidate_buffer->candidate_ptr->eob[2][txb_itr],
                 &(cr_count_non_zero_coeffs[txb_itr]),
                 COMPONENT_CHROMA_CR,
-                context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 candidate_buffer,
                 context_ptr->cr_txb_skip_context,

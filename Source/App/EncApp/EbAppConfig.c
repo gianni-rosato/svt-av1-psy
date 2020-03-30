@@ -322,7 +322,7 @@ static void set_encoder_bit_depth(const char *value, EbConfig *cfg) {
     cfg->encoder_bit_depth = strtoul(value, NULL, 0);
 }
 static void set_encoder_16bit_pipeline(const char *value, EbConfig *cfg) {
-    cfg->encoder_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
+    cfg->is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
 }
 static void set_encoder_color_format(const char *value, EbConfig *cfg) {
     cfg->encoder_color_format = strtoul(value, NULL, 0);
@@ -762,6 +762,7 @@ ConfigEntry config_entry_global_options[] = {
      set_frame_rate_denominator},
     //{SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
+    {SINGLE_INPUT, ENCODER_16BIT_PIPELINE, "Bit depth for enc-dec(0: lbd[default], 1: hbd)", set_encoder_16bit_pipeline},
     //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
@@ -1511,7 +1512,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->error_log_file         = stderr;
     config_ptr->frame_rate             = 30 << 16;
     config_ptr->encoder_bit_depth      = 8;
-    config_ptr->encoder_16bit_pipeline = 0;
+    config_ptr->is_16bit_pipeline = 0;
     config_ptr->encoder_color_format   = 1; //EB_YUV420
     config_ptr->buffered_input         = -1;
 

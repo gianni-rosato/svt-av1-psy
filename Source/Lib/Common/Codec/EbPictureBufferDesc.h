@@ -63,6 +63,8 @@ typedef struct EbPictureBufferDesc {
 
     EbBool   film_grain_flag; // Indicates if film grain parameters are present for the frame
     uint32_t buffer_enable_mask;
+
+    EbBool is_16bit_pipeline; // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input bit-depth
 } EbPictureBufferDesc;
 
 #define YV12_FLAG_HIGHBITDEPTH 8
@@ -282,6 +284,7 @@ typedef struct EbPictureBufferDescInitData {
     EbBool         split_mode; //ON: allocate 8bit data seperately from nbit data
     EbBool         down_sampled_filtered;
     uint8_t        mfmv;
+    EbBool         is_16bit_pipeline;
 } EbPictureBufferDescInitData;
 
 /**************************************

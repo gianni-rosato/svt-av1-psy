@@ -30,6 +30,14 @@ static void set_limit_frame(const char *value, EbSvtAv1DecConfiguration *cfg) {
 static void set_bit_depth(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->max_bit_depth = strtoul(value, NULL, 0);
 };
+static void set_decoder_16bit_pipeline(const char *value, EbSvtAv1DecConfiguration *cfg) {
+    cfg->is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
+    if (cfg->is_16bit_pipeline != 1 && cfg->is_16bit_pipeline != 0) {
+        fprintf(stderr,
+            "Warning : Invalid value for is_16bit_pipeline, setting value to 0. \n");
+        cfg->is_16bit_pipeline = 0;
+    }
+};
 static void set_pic_width(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->max_picture_width = strtoul(value, NULL, 0);
 };
@@ -61,6 +69,7 @@ ConfigEntry config_entry[] = {
     {LIMIT_FRAME_TOKEN, "LimitFrame", 1, set_limit_frame},
     // Picture properties
     {BIT_DEPTH_TOKEN, "InputBitDepth", 1, set_bit_depth},
+    {DECODER_16BIT_PIPELINE, "Decoder16BitPipeline", 1, set_decoder_16bit_pipeline},
     {PIC_WIDTH_TOKEN, "PictureWidth", 1, set_pic_width},
     {PIC_HEIGHT_TOKEN, "PictureHeight", 1, set_pic_height},
     {COLOUR_SPACE_TOKEN, "InputColourSpace", 1, set_colour_space},
@@ -87,6 +96,7 @@ static void show_help() {
     H0( " -fps-frm                  Show fps after each frame decoded\n");
     H0( " -fps-summary              Show fps summary");
     H0( " -skip-film-grain          Disable Film Grain");
+    H0( " -16bit-pipeline           Enable 16b pipeline. [1 - enable, 0 - disable]");
 
     exit(1);
 }

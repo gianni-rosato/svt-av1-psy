@@ -127,7 +127,8 @@ void lr_pad_pic(EbPictureBufferDesc *recon_picture_buf, FrameHeader *frame_hdr,
     uint8_t    sx         = color_cfg->subsampling_x;
     uint8_t    sy         = color_cfg->subsampling_y;
 
-    if (recon_picture_buf->bit_depth == EB_8BIT) {
+    if (recon_picture_buf->bit_depth == EB_8BIT &&
+        (!recon_picture_buf->is_16bit_pipeline)) {
         // Y samples
         lr_generate_padding(recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
                                 recon_picture_buf->stride_y * recon_picture_buf->origin_y,
@@ -277,7 +278,8 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
     const int32_t num_planes = av1_num_planes(&dec_handle->seq_header.
         color_config);
     int bit_depth = dec_handle->seq_header.color_config.bit_depth;
-    int use_highbd = bit_depth > 8;
+    int use_highbd = (bit_depth > EB_8BIT ||
+        dec_handle->is_16bit_pipeline);
     int w_y = 0, tile_stripe0 = 0;
     int tile_w_y = tile_rect[AOM_PLANE_Y].right - tile_rect[AOM_PLANE_Y].left;
     int tile_h_y = tile_rect[AOM_PLANE_Y].bottom - tile_rect[AOM_PLANE_Y].top;
@@ -510,7 +512,8 @@ void dec_av1_loop_restoration_filter_frame(EbDecHandle *dec_handle, int optimize
 void dec_av1_loop_restoration_save_boundary_lines(EbDecHandle *dec_handle,
                                                   int after_cdef) {
     const int num_planes = av1_num_planes(&dec_handle->seq_header.color_config);
-    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > 8);
+    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+        dec_handle->is_16bit_pipeline);
 
     for (int p = 0; p < num_planes; ++p) {
         LrCtxt *   lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;

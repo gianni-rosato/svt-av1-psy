@@ -922,6 +922,7 @@ typedef struct PictureControlSetInitData {
 #if OIS_MEM
     uint8_t allocate_ois_struct; //allocate ois results
 #endif
+    EbBool is_16bit_pipeline;
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

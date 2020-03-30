@@ -203,7 +203,7 @@ void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
 }
 
 void cfl_predict_block(PartitionInfo *xd, CflCtx *cfl_ctx, uint8_t *dst, int32_t dst_stride,
-                       TxSize tx_size, int32_t plane, EbColorConfig *cc, FrameHeader *fh) {
+                       TxSize tx_size, int32_t plane, EbColorConfig *cc, FrameHeader *fh, EbBool is_16bit) {
     BlockModeInfo *mbmi                = xd->mi;
     CflAllowedType is_cfl_allowed_flag = is_cfl_allowed_with_frame_header(xd, cc, fh);
     assert(is_cfl_allowed_flag == CFL_ALLOWED);
@@ -215,7 +215,7 @@ void cfl_predict_block(PartitionInfo *xd, CflCtx *cfl_ctx, uint8_t *dst, int32_t
         cfl_idx_to_alpha(mbmi->cfl_alpha_idx, mbmi->cfl_alpha_signs, plane - 1);
     assert((tx_size_high[tx_size] - 1) * CFL_BUF_LINE + tx_size_wide[tx_size] <= CFL_BUF_SQUARE);
 
-    if (cc->bit_depth != AOM_BITS_8) {
+    if ((cc->bit_depth != EB_8BIT) || is_16bit) {
         eb_cfl_predict_hbd(cfl_ctx->recon_buf_q3,
                            (uint16_t *)dst,
                            dst_stride,
@@ -299,7 +299,7 @@ static INLINE void sub8x8_adjust_offset(PartitionInfo *xd, const CflCtx *cfl_ctx
 }
 
 void cfl_store_tx(PartitionInfo *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
-                  BlockSize bsize, EbColorConfig *cc, uint8_t *dst_buff, uint32_t dst_stride) {
+                  BlockSize bsize, EbColorConfig *cc, uint8_t *dst_buff, uint32_t dst_stride, EbBool is_16bit) {
     if (block_size_high[bsize] == 4 || block_size_wide[bsize] == 4) {
         // Only dimensions of size 4 can have an odd offset.
         assert(!((col & 1) && tx_size_wide[tx_size] != 4));
@@ -307,7 +307,7 @@ void cfl_store_tx(PartitionInfo *xd, CflCtx *cfl_ctx, int row, int col, TxSize t
         sub8x8_adjust_offset(xd, cfl_ctx, &row, &col);
     }
 
-    cfl_store(cfl_ctx, dst_buff, dst_stride, row, col, tx_size, cc->bit_depth != AOM_BITS_8);
+    cfl_store(cfl_ctx, dst_buff, dst_stride, row, col, tx_size, ((cc->bit_depth != EB_8BIT) || is_16bit));
 }
 //#####.....................Ending for wrapper of CFL...............................####//
 
@@ -675,7 +675,7 @@ void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size
                                 void *pv_pred_buf, int32_t pred_stride, void *top_neigh_array,
                                 void *left_neigh_array, int32_t ref_stride, SeqHeader *seq_header,
                                 const PredictionMode mode, int32_t blk_mi_col_off,
-                                int32_t blk_mi_row_off, EbBitDepthEnum bit_depth) {
+                                int32_t blk_mi_row_off, EbBitDepthEnum bit_depth, EbBool is_16bit) {
     //ToDo:are_parameters_computed variable for CFL so that cal part for V plane we can skip,
     //once we compute for U plane, this parameter is block level parameter.
     const EbColorConfig *cc    = &seq_header->color_config;
@@ -753,7 +753,7 @@ void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size
     const int32_t disable_edge_filter = !seq_header->enable_intra_edge_filter;
 
     //###..Calling all other intra predictors except CFL & pallate...//
-    if (bit_depth == EB_8BIT) {
+    if (bit_depth == EB_8BIT && !is_16bit) {
         decode_build_intra_predictors(xd,
                                       (uint8_t *)top_neigh_array, /*As per SVT Enc*/
                                       (uint8_t *)left_neigh_array,
@@ -797,10 +797,12 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
                            int32_t blk_mi_row_off) {
     void *pv_top_neighbor_array, *pv_left_neighbor_array;
 
+    EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
+    EbBool is16b = dec_handle->is_16bit_pipeline;
     const PredictionMode mode =
         (plane == AOM_PLANE_Y) ? part_info->mi->mode : get_uv_mode(part_info->mi->uv_mode);
 
-    if (bit_depth == EB_8BIT) {
+    if (bit_depth == EB_8BIT && !is16b) {
         EbByte buf             = (EbByte)pv_blk_recon_buf;
         pv_top_neighbor_array  = (void *)(buf - recon_stride);
         pv_left_neighbor_array = (void *)(buf - 1);
@@ -824,7 +826,8 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
                                    mode,
                                    blk_mi_col_off,
                                    blk_mi_row_off,
-                                   bit_depth);
+                                   bit_depth,
+                                   is16b);
 
         cfl_predict_block(part_info,
                           part_info->pv_cfl_ctxt,
@@ -833,7 +836,8 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
                           tx_size,
                           plane,
                           &dec_mod_ctxt->seq_header->color_config,
-                          dec_mod_ctxt->frame_header);
+                          dec_mod_ctxt->frame_header,
+                          is16b);
 
         return;
     }
@@ -851,5 +855,6 @@ void svt_av1_predict_intra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, i
                                mode,
                                blk_mi_col_off,
                                blk_mi_row_off,
-                               bit_depth);
+                               bit_depth,
+                               is16b);
 }

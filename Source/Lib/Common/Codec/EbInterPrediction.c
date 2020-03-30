@@ -1958,14 +1958,14 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
                                     int src0_stride, const CONV_BUF_TYPE *src1, int src1_stride,
                                     const InterInterCompoundData *const comp_data,
                                     uint8_t *seg_mask, BlockSize sb_type, int h, int w,
-                                    ConvolveParams *conv_params, uint8_t bit_depth) {
+                                    ConvolveParams *conv_params, uint8_t bit_depth, EbBool is_16bit) {
     // Derive subsampling from h and w passed in. May be refactored to
     // pass in subsampling factors directly.
     const int      subh = (2 << mi_size_high_log2[sb_type]) == h;
     const int      subw = (2 << mi_size_wide_log2[sb_type]) == w;
     const uint8_t *mask = av1_get_compound_type_mask(comp_data, seg_mask, sb_type);
 
-    if (bit_depth > EB_8BIT) {
+    if (is_16bit) {
         aom_highbd_blend_a64_d16_mask(dst,
                                       dst_stride,
                                       src0,

@@ -4176,6 +4176,7 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext *        md_context_pt
 
         mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
         eb_av1_predict_intra_block_16bit(
+            EB_10BIT,
             &md_context_ptr->sb_ptr->tile_info,
             !ED_STAGE,
             md_context_ptr->blk_geom,
@@ -4728,7 +4729,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
             tx_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
@@ -4750,7 +4751,7 @@ void tx_type_search(PictureControlSet *pcs_ptr,
             &candidate_buffer->candidate_ptr->eob[0][context_ptr->txb_itr],
             &y_count_non_zero_coeffs,
             COMPONENT_LUMA,
-            context_ptr->hbd_mode_decision ? BIT_INCREMENT_10BIT : BIT_INCREMENT_8BIT,
+            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
             tx_type,
             candidate_buffer,
             context_ptr->luma_txb_skip_context,

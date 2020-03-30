@@ -158,7 +158,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * 1: 16 bit pipeline.
      * Now 16bit pipeline is only enabled in filter
      * Default is 0. */
-    EbBool encoder_16bit_pipeline;
+    EbBool is_16bit_pipeline;
     /* Specifies the chroma subsampleing format of input video.
      *
      * 0 = mono.

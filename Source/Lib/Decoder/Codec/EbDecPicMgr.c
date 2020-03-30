@@ -110,8 +110,14 @@ static INLINE EbErrorType mvs_8x8_memory_alloc(TemporalMvRef **mvs, FrameHeader 
 *
 *******************************************************************************
 */
-EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecPicMgr *ps_pic_mgr, SeqHeader *seq_header,
-                                     FrameHeader *frame_info, EbColorFormat color_format) {
+
+EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
+    EbDecPicMgr *ps_pic_mgr = (EbDecPicMgr *)dec_handle_ptr->pv_pic_mgr;
+    SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
+    FrameHeader *frame_info = &dec_handle_ptr->frame_header;
+    EbColorFormat color_format = seq_header->color_config.mono_chrome
+        ? EB_YUV400
+        : dec_handle_ptr->dec_config.max_color_format;
     int32_t      i;
     EbDecPicBuf *pic_buf = NULL;
     /* TODO: Add lock and unlock for MT */
@@ -166,7 +172,10 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecPicMgr *ps_pic_mgr, SeqHeader *seq_hea
         input_pic_buf_desc_init_data.split_mode = EB_FALSE;
 
         EbErrorType return_error = dec_eb_recon_picture_buffer_desc_ctor(
-            (EbPtr *)&(ps_pic_mgr->as_dec_pic[i].ps_pic_buf), (EbPtr)&input_pic_buf_desc_init_data);
+            (EbPtr *)&(ps_pic_mgr->as_dec_pic[i].ps_pic_buf),
+            (EbPtr)&input_pic_buf_desc_init_data,
+            dec_handle_ptr->is_16bit_pipeline);
+
         if (return_error != EB_ErrorNone) return NULL;
 
         ps_pic_mgr->as_dec_pic[i].size = frame_size;

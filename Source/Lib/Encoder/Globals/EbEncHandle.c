@@ -1017,6 +1017,8 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 #if OIS_MEM
         input_data.allocate_ois_struct = 0;
 #endif
+        input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
+
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1071,6 +1073,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
 #endif
+        input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
         input_data.serial_rate_est = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.pic_based_rate_est &&
             input_data.enc_dec_segment_col == 1 && input_data.enc_dec_segment_row == 1 ? 1 : 0;
         EB_NEW(
@@ -1121,6 +1124,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
         ref_pic_buf_desc_init_data.top_padding = PAD_VALUE;
         ref_pic_buf_desc_init_data.bot_padding = PAD_VALUE;
         ref_pic_buf_desc_init_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
+        ref_pic_buf_desc_init_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
         // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
         if (is_16bit)
@@ -2199,7 +2203,8 @@ void copy_api_from_app(
     }
     scs_ptr->chroma_format_idc = (uint32_t)(scs_ptr->static_config.encoder_color_format);
     scs_ptr->encoder_bit_depth = (uint32_t)(scs_ptr->static_config.encoder_bit_depth);
-
+    //16bit pipeline
+    scs_ptr->static_config.is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_8BIT) ? EB_TRUE: ((EbSvtAv1EncConfiguration*)config_struct)->is_16bit_pipeline;
     scs_ptr->subsampling_x = (scs_ptr->chroma_format_idc == EB_YUV444 ? 1 : 2) - 1;
     scs_ptr->subsampling_y = (scs_ptr->chroma_format_idc >= EB_YUV422 ? 1 : 2) - 1;
     scs_ptr->static_config.ten_bit_format = ((EbSvtAv1EncConfiguration*)config_struct)->ten_bit_format;
@@ -2883,7 +2888,6 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: invalid superres-denom %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_denom, MIN_SUPERRES_DENOM, MAX_SUPERRES_DENOM);
         return_error = EB_ErrorBadParameter;
     }
-
     return return_error;
 }
 

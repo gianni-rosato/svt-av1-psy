@@ -24,7 +24,7 @@
 
 
 void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
-                                uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
+                                uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline);
 
 void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *frm_hdr,
                                             SeqHeader *seq_hdr, EbPictureBufferDesc *src,
@@ -47,7 +47,8 @@ void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *f
                                    dst_stride,
                                    frm_hdr->frame_size.frame_height >> sub_x,
                                    sub_x,
-                                   src->bit_depth);
+                                   src->bit_depth,
+                                   dst->is_16bit_pipeline);
     }
 }
 
@@ -78,7 +79,9 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
                                                 ? PICTURE_BUFFER_DESC_LUMA_MASK
                                                 : PICTURE_BUFFER_DESC_FULL_MASK;
 
-    uint32_t bytes_per_pixel = (recon_picture_dst->bit_depth == EB_8BIT) ? 1 : 2;
+    recon_picture_dst->is_16bit_pipeline = recon_picture_src->is_16bit_pipeline;
+    uint32_t bytes_per_pixel = (recon_picture_dst->bit_depth > EB_8BIT ||
+        recon_picture_dst->is_16bit_pipeline) ? 2 : 1;
 
     // Allocate the Picture Buffers (luma & chroma)
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
@@ -106,7 +109,8 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
     } else
         recon_picture_dst->buffer_cr = 0;
 
-    int use_highbd = (seq_hdr->color_config.bit_depth > 8);
+    int use_highbd = (seq_hdr->color_config.bit_depth > EB_8BIT ||
+        recon_picture_src->is_16bit_pipeline);
 
     for (int plane = 0; plane < num_planes; ++plane) {
         uint8_t *src_buf, *dst_buf;
@@ -151,7 +155,8 @@ void av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader *seq_hd
         assert(0);
     }
 
-    uint32_t bytes_per_pixel = (recon_picture_src->bit_depth == EB_8BIT) ? 1 : 2;
+    uint32_t bytes_per_pixel = (recon_picture_src->bit_depth > EB_8BIT ||
+        recon_picture_src->is_16bit_pipeline) ? 2 : 1;
 
     memset(recon_picture_src->buffer_y, 0, recon_picture_src->luma_size * bytes_per_pixel);
     memset(recon_picture_src->buffer_cb, 0, recon_picture_src->chroma_size * bytes_per_pixel);

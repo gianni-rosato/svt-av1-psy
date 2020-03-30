@@ -139,7 +139,7 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     // 2 - adaptive
 
     scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
-#if NO_ENCDEC || SHUT_FILTERING
+#if NO_ENCDEC
     if (scs_ptr->static_config.cdef_mode == DEFAULT)
         scs_ptr->seq_header.enable_cdef = 0;
     else

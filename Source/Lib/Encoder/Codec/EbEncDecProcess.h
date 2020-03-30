@@ -70,6 +70,7 @@ typedef struct EncDecContext {
     MvUnit        mv_unit;
     uint8_t       txb_itr;
     EbBool        is_16bit; //enable 10 bit encode in CL
+    uint32_t      bit_depth;
     EbColorFormat color_format;
     uint64_t      tot_intra_coded_area;
     uint8_t       intra_coded_area_sb

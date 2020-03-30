@@ -3472,7 +3472,7 @@ static void highbd_inv_txfm_add(const TranLow *input, uint8_t *dest_r, int32_t s
 EbErrorType av1_inv_transform_recon(int32_t *coeff_buffer, //1D buffer
                                     uint8_t *recon_buffer_r, uint32_t recon_stride_r,
                                     uint8_t *recon_buffer_w, uint32_t recon_stride_w, TxSize txsize,
-                                    uint32_t bit_increment, TxType transform_type,
+                                    uint32_t bit_depth, TxType transform_type,
                                     PlaneType component_type, uint32_t eob, uint8_t lossless) {
     UNUSED(component_type);
     EbErrorType return_error = EB_ErrorNone;
@@ -3481,7 +3481,7 @@ EbErrorType av1_inv_transform_recon(int32_t *coeff_buffer, //1D buffer
     txfm_param.tx_size  = txsize;
     txfm_param.eob      = eob;
     txfm_param.lossless = lossless;
-    txfm_param.bd       = bit_increment + EB_8BIT;
+    txfm_param.bd       = bit_depth;
     txfm_param.is_hbd   = 1;
     //TxfmParam.tx_set_type = av1_get_ext_tx_set_type(   txfm_param->tx_size, is_inter_block(xd->mi[0]), reduced_tx_set);
 

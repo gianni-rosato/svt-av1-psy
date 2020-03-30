@@ -18,7 +18,7 @@
 #include "EbLog.h"
 
 void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
-                                uint8_t *dst, int dst_stride, int rows, int sub_x, int bd);
+                                uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline);
 
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
                                     RestUnitVisitor on_rest_unit, void *priv);
@@ -1671,7 +1671,8 @@ void save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t s
                                    boundaries->stripe_boundary_stride,
                                    lines_to_save,
                                    sx,
-                                   cm->bit_depth);
+                                   cm->bit_depth,
+                                   use_highbd);
     } else {
         upscaled_width = src_width;
         line_bytes     = upscaled_width << use_highbd;

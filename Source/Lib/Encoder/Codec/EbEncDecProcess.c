@@ -23,6 +23,8 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbUtility.h"
 #include "grainSynthesis.h"
+//To fix warning C4013: 'convert_16bit_to_8bit' undefined; assuming extern returning int
+#include "common_dsp_rtcd.h"
 
 #define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010 110 // Fast cost skip tx search threshold.
@@ -103,12 +105,13 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
         init_data.color_format       = color_format;
 
         context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc *)EB_NULL;
-        if (is_16bit) {
+        if (is_16bit || static_config->is_16bit_pipeline) {
             init_data.bit_depth = EB_16BIT;
 
             EB_NEW(context_ptr->input_sample16bit_buffer,
                    eb_picture_buffer_desc_ctor,
                    (EbPtr)&init_data);
+            init_data.bit_depth = static_config->is_16bit_pipeline ? static_config->encoder_bit_depth : init_data.bit_depth;
         }
     }
 
@@ -191,7 +194,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16
     // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is_16bit==0?
     EbBool is_16bit =
         (EbBool)(pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-    if (is_16bit) {
+    if (is_16bit || pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline) {
         neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array16bit[tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array16bit[tile_idx]);
@@ -216,7 +219,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr) {
     // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is_16bit==0?
     EbBool is_16bit =
         (EbBool)(pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-    if (is_16bit) {
+    if (is_16bit || pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline) {
         neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array16bit);
         neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array16bit);
         neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array16bit);
@@ -230,7 +233,8 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr) {
  **************************************************/
 static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                           SequenceControlSet *scs_ptr, uint32_t segment_index) {
-    context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+    context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) || (EbBool)(scs_ptr->static_config.is_16bit_pipeline);
+    context_ptr->bit_depth = scs_ptr->static_config.encoder_bit_depth;
     uint16_t picture_qp   = pcs_ptr->picture_qp;
 #if TILES_PARALLEL
     uint16_t tile_group_idx = context_ptr->tile_group_index;
@@ -1234,6 +1238,63 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                   ref_pic_ptr->stride_bit_inc_cr,
                   (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
                   (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+    }
+    if ((scs_ptr->static_config.is_16bit_pipeline) && (!is_16bit)) {
+        // Y samples
+        generate_padding16_bit(ref_pic_16bit_ptr->buffer_y,
+            ref_pic_16bit_ptr->stride_y << 1,
+            (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right) << 1,
+            ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom,
+            ref_pic_16bit_ptr->origin_x << 1,
+            ref_pic_16bit_ptr->origin_y);
+
+        // Cb samples
+        generate_padding16_bit(ref_pic_16bit_ptr->buffer_cb,
+            ref_pic_16bit_ptr->stride_cb << 1,
+            (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right),
+            (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
+            ref_pic_16bit_ptr->origin_x,
+            ref_pic_16bit_ptr->origin_y >> 1);
+
+        // Cr samples
+        generate_padding16_bit(ref_pic_16bit_ptr->buffer_cr,
+            ref_pic_16bit_ptr->stride_cr << 1,
+            (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right),
+            (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
+            ref_pic_16bit_ptr->origin_x,
+            ref_pic_16bit_ptr->origin_y >> 1);
+
+        // Hsan: unpack ref samples (to be used @ MD)
+
+        //Y
+        uint16_t *buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_y);
+        uint8_t * buf_8bit = ref_pic_ptr->buffer_y;
+        convert_16bit_to_8bit(buf_16bit,
+            ref_pic_16bit_ptr->stride_y,
+            buf_8bit,
+            ref_pic_ptr->stride_y,
+            ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
+            ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
+
+        //CB
+        buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_cb);
+        buf_8bit = ref_pic_ptr->buffer_cb;
+        convert_16bit_to_8bit(buf_16bit,
+            ref_pic_16bit_ptr->stride_cb,
+            buf_8bit,
+            ref_pic_ptr->stride_cb,
+            (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
+            (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+
+        //CR
+        buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_cr);
+        buf_8bit = ref_pic_ptr->buffer_cr;
+        convert_16bit_to_8bit(buf_16bit,
+            ref_pic_16bit_ptr->stride_cr,
+            buf_8bit,
+            ref_pic_ptr->stride_cr,
+            (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
+            (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
     }
     // set up the ref POC
     reference_object->ref_poc = pcs_ptr->parent_pcs_ptr->picture_number;

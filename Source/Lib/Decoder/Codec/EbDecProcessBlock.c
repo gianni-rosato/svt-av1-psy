@@ -148,6 +148,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
 
     bool inter_block = is_inter_block(mode_info);
 
+    EbBool is16b = dec_handle->is_16bit_pipeline;
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);
     assert(mode_info->mi_col == mi_col);
@@ -155,7 +156,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
     int32_t bw4 = mi_size_wide[bsize];
     int32_t bh4 = mi_size_high[bsize];
 
-    int hbd = (recon_picture_buf->bit_depth > EB_8BIT);
+    int hbd = (recon_picture_buf->bit_depth > EB_8BIT) || is16b;
 
     int sub_x, sub_y, n_coeffs;
     sub_x                 = color_config->subsampling_x;
@@ -441,7 +442,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
                 if (n_coeffs != 0) {
                     dec_mod_ctxt->cur_coeff[plane] += (n_coeffs + 1);
 
-                    if (recon_picture_buf->bit_depth == EB_8BIT)
+                    if (recon_picture_buf->bit_depth == EB_8BIT && !is16b)
                         av1_inv_transform_recon8bit(qcoeffs,
                                                     (uint8_t *)txb_recon_buf,
                                                     recon_stride,
@@ -459,7 +460,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
                                                 CONVERT_TO_BYTEPTR(txb_recon_buf),
                                                 recon_stride,
                                                 tx_size,
-                                                recon_picture_buf->bit_depth - EB_8BIT,
+                                                recon_picture_buf->bit_depth,
                                                 tx_type,
                                                 plane,
                                                 n_coeffs,
@@ -478,7 +479,8 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
                              bsize,
                              color_config,
                              txb_recon_buf,
-                             recon_stride);
+                             recon_stride,
+                             is16b);
             }
 
             // increment transform pointer

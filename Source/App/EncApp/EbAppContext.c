@@ -177,7 +177,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.active_channel_count     = config->active_channel_count;
     callback_data->eb_enc_parameters.high_dynamic_range_input = config->high_dynamic_range_input;
     callback_data->eb_enc_parameters.encoder_bit_depth        = config->encoder_bit_depth;
-    callback_data->eb_enc_parameters.encoder_16bit_pipeline   = config->encoder_16bit_pipeline;
+    callback_data->eb_enc_parameters.is_16bit_pipeline   = config->is_16bit_pipeline;
     callback_data->eb_enc_parameters.encoder_color_format =
         (EbColorFormat)config->encoder_color_format;
     callback_data->eb_enc_parameters.compressed_ten_bit_format = config->compressed_ten_bit_format;

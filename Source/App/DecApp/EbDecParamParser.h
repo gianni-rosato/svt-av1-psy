@@ -34,6 +34,7 @@
 #define SKIP_FRAME_TOKEN "-skip"
 #define LIMIT_FRAME_TOKEN "-limit"
 #define BIT_DEPTH_TOKEN "-bit-depth"
+#define DECODER_16BIT_PIPELINE "-16bit-pipeline"
 #define PIC_WIDTH_TOKEN "-w"
 #define PIC_HEIGHT_TOKEN "-h"
 #define COLOUR_SPACE_TOKEN "-colour-space"

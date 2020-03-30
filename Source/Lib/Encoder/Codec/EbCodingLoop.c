@@ -409,7 +409,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
@@ -434,7 +434,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             &eob[0],
             &(count_non_zero_coeffs[0]),
             COMPONENT_LUMA,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
             &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
             context_ptr->md_context->luma_txb_skip_context,
@@ -625,7 +625,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
             DEFAULT_SHAPE);
@@ -650,7 +650,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             &eob[1],
             &(count_non_zero_coeffs[1]),
             COMPONENT_CHROMA_CB,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
             context_ptr->md_context->cb_txb_skip_context,
@@ -683,7 +683,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
             &context_ptr->three_quad_energy,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
             DEFAULT_SHAPE);
@@ -702,7 +702,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             &eob[2],
             &(count_non_zero_coeffs[2]),
             COMPONENT_CHROMA_CR,
-            BIT_INCREMENT_8BIT,
+            EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
             context_ptr->md_context->cr_txb_skip_context,
@@ -773,7 +773,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
     //    EB_SLICE               slice_type = sb_ptr->pcs_ptr->slice_type;
     //    uint32_t                 temporal_layer_index = sb_ptr->pcs_ptr->temporal_layer_index;
     uint32_t qp = blk_ptr->qp;
-
+    uint32_t             bit_depth = context_ptr->bit_depth;
     EbPictureBufferDesc *input_samples16bit = context_ptr->input_sample16bit_buffer;
     EbPictureBufferDesc *pred_samples16bit  = pred_samples;
     uint32_t             round_origin_x = (origin_x >> 3) << 3; // for Chroma blocks with size of 4
@@ -808,13 +808,39 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
     const uint32_t pred_cr_offset =
         (((pred_samples16bit->origin_y + round_origin_y) >> 1) * pred_samples16bit->stride_cr) +
         ((pred_samples16bit->origin_x + round_origin_x) >> 1);
-    const uint32_t scratch_luma_offset =
-        context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
-    const uint32_t scratch_cb_offset = ROUND_UV(context_ptr->blk_geom->origin_x) / 2 +
-                                       ROUND_UV(context_ptr->blk_geom->origin_y) / 2 * SB_STRIDE_UV;
-    const uint32_t scratch_cr_offset = ROUND_UV(context_ptr->blk_geom->origin_x) / 2 +
-                                       ROUND_UV(context_ptr->blk_geom->origin_y) / 2 * SB_STRIDE_UV;
-    const uint32_t coeff1d_offset        = context_ptr->coded_area_sb;
+
+    uint32_t scratch_luma_offset, scratch_cb_offset, scratch_cr_offset;
+
+    if (bit_depth != EB_8BIT) {
+        scratch_luma_offset =
+            context_ptr->blk_geom->origin_x + context_ptr->blk_geom->origin_y * SB_STRIDE_Y;
+        scratch_cb_offset = ROUND_UV(context_ptr->blk_geom->origin_x) / 2 +
+            ROUND_UV(context_ptr->blk_geom->origin_y) / 2 * SB_STRIDE_UV;
+        scratch_cr_offset = ROUND_UV(context_ptr->blk_geom->origin_x) / 2 +
+            ROUND_UV(context_ptr->blk_geom->origin_y) / 2 * SB_STRIDE_UV;
+    }
+    else {
+        scratch_luma_offset =
+            context_ptr->blk_geom->tx_org_x[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr] +
+            context_ptr->blk_geom->tx_org_y[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr] *
+            SB_STRIDE_Y;
+        scratch_cb_offset =
+            ROUND_UV(context_ptr->blk_geom
+                ->tx_org_x[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr]) /
+            2 +
+            ROUND_UV(context_ptr->blk_geom
+                ->tx_org_y[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr]) /
+            2 * SB_STRIDE_UV;
+        scratch_cr_offset =
+            ROUND_UV(context_ptr->blk_geom
+                ->tx_org_x[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr]) /
+            2 +
+            ROUND_UV(context_ptr->blk_geom
+                ->tx_org_y[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr]) /
+            2 * SB_STRIDE_UV;
+        context_ptr->three_quad_energy = 0;
+    }
+    const uint32_t coeff1d_offset = context_ptr->coded_area_sb;
     const uint32_t coeff1d_offset_chroma = context_ptr->coded_area_sb_uv;
     UNUSED(coeff1d_offset_chroma);
 
@@ -839,18 +865,34 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     : 1;
 
             if (!tx_search_skip_flag) {
-                encode_pass_tx_search_hbd(pcs_ptr,
-                                          context_ptr,
-                                          sb_ptr,
-                                          cb_qp,
-                                          coeff_samples_sb,
-                                          residual16bit,
-                                          transform16bit,
-                                          inverse_quant_buffer,
-                                          count_non_zero_coeffs,
-                                          component_mask,
-                                          eob,
-                                          candidate_plane);
+                if (context_ptr->is_16bit) {
+                    encode_pass_tx_search_hbd(pcs_ptr,
+                        context_ptr,
+                        sb_ptr,
+                        cb_qp,
+                        coeff_samples_sb,
+                        residual16bit,
+                        transform16bit,
+                        inverse_quant_buffer,
+                        count_non_zero_coeffs,
+                        component_mask,
+                        eob,
+                        candidate_plane);
+                }
+                else {
+                    encode_pass_tx_search(pcs_ptr,
+                        context_ptr,
+                        sb_ptr,
+                        cb_qp,
+                        coeff_samples_sb,
+                        residual16bit,
+                        transform16bit,
+                        inverse_quant_buffer,
+                        count_non_zero_coeffs,
+                        component_mask,
+                        eob,
+                        candidate_plane);
+                }
             }
 
             av1_estimate_transform(
@@ -860,7 +902,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                BIT_INCREMENT_10BIT,
+                bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 PLANE_TYPE_Y,
                 DEFAULT_SHAPE);
@@ -885,7 +927,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 &eob[0],
                 &(count_non_zero_coeffs[0]),
                 COMPONENT_LUMA,
-                BIT_INCREMENT_10BIT,
+                bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
                 context_ptr->md_context->luma_txb_skip_context,
@@ -894,7 +936,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 blk_ptr->av1xd->use_intrabc,
 #if OMARK_HBD0_RDOQ
 #if NEW_MD_LAMBDA
-                context_ptr->md_context->full_lambda_md[EB_10_BIT_MD],
+                context_ptr->md_context->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
 #else
                 context_ptr->md_context->full_lambda,
 #endif
@@ -918,6 +960,8 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
 
             txb_ptr->nz_coef_count[0] = (uint16_t)count_non_zero_coeffs[0];
         }
+        if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK ||
+            component_mask == PICTURE_BUFFER_DESC_CHROMA_MASK) {
 
         if (blk_ptr->prediction_mode_flag == INTRA_MODE &&
             blk_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
@@ -965,7 +1009,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 ((uint16_t *)pred_samples16bit->buffer_cb) + pred_cb_offset,
                 pred_samples16bit->stride_cb,
                 alpha_q3,
-                10,
+                context_ptr->bit_depth,
                 context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr]);
 
@@ -982,13 +1026,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 ((uint16_t *)pred_samples16bit->buffer_cr) + pred_cr_offset,
                 pred_samples16bit->stride_cr,
                 alpha_q3,
-                10,
+                context_ptr->bit_depth,
                 context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr]);
         }
 
-        if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK ||
-            component_mask == PICTURE_BUFFER_DESC_CHROMA_MASK) {
             //**********************************
             // Cb
             //**********************************
@@ -1019,7 +1061,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                BIT_INCREMENT_10BIT,
+                bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -1044,7 +1086,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 &eob[1],
                 &(count_non_zero_coeffs[1]),
                 COMPONENT_CHROMA_CB,
-                BIT_INCREMENT_10BIT,
+                bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
                 context_ptr->md_context->cb_txb_skip_context,
@@ -1053,7 +1095,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 blk_ptr->av1xd->use_intrabc,
 #if OMARK_HBD0_RDOQ
 #if NEW_MD_LAMBDA
-                context_ptr->md_context->full_lambda_md[EB_10_BIT_MD],
+                context_ptr->md_context->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
 #else
                 context_ptr->md_context->full_lambda,
 #endif
@@ -1077,7 +1119,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 &context_ptr->three_quad_energy,
-                BIT_INCREMENT_10BIT,
+                bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 DEFAULT_SHAPE);
@@ -1097,7 +1139,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 &eob[2],
                 &(count_non_zero_coeffs[2]),
                 COMPONENT_CHROMA_CR,
-                BIT_INCREMENT_10BIT,
+                bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 &(context_ptr->md_context->candidate_buffer_ptr_array[0][0]),
                 context_ptr->md_context->cr_txb_skip_context,
@@ -1106,7 +1148,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 blk_ptr->av1xd->use_intrabc,
 #if OMARK_HBD0_RDOQ
 #if NEW_MD_LAMBDA
-                context_ptr->md_context->full_lambda_md[EB_10_BIT_MD],
+                context_ptr->md_context->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
 #else
                 context_ptr->md_context->full_lambda,
 #endif
@@ -1294,7 +1336,7 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
                     CONVERT_TO_BYTEPTR(pred_buffer),
                     pred_samples->stride_y,
                     context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
-                    BIT_INCREMENT_10BIT,
+                    context_ptr->bit_depth,
                     txb_ptr->transform_type[PLANE_TYPE_Y],
                     PLANE_TYPE_Y,
                     eob[0],
@@ -1330,7 +1372,7 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
                 CONVERT_TO_BYTEPTR(pred_buffer),
                 pred_samples->stride_cb,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
-                BIT_INCREMENT_10BIT,
+                context_ptr->bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 eob[1],
@@ -1353,7 +1395,7 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
                 CONVERT_TO_BYTEPTR(pred_buffer),
                 pred_samples->stride_cr,
                 context_ptr->blk_geom->txsize_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
-                BIT_INCREMENT_10BIT,
+                context_ptr->bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 eob[2],
@@ -1423,6 +1465,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                BlkStruct *blk_ptr, PredictionUnit *pu_ptr,
                                EncDecContext *context_ptr) {
     EbBool is_16bit = context_ptr->is_16bit;
+    uint32_t bit_depth = context_ptr->bit_depth;
     uint8_t is_inter = 0; // set to 0 b/c this is the intra path
     EbPictureBufferDesc *recon_buffer =
         is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
@@ -1526,6 +1569,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
             mode = blk_ptr->pred_mode;
 
             eb_av1_predict_intra_block_16bit(
+                bit_depth,
                 &sb_ptr->tile_info,
                 ED_STAGE,
                 context_ptr->blk_geom,
@@ -1819,6 +1863,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                            : (PredictionMode)pu_ptr->intra_chroma_mode;
 
                 eb_av1_predict_intra_block_16bit(
+                    bit_depth,
                     &sb_ptr->tile_info,
                     ED_STAGE,
                     context_ptr->blk_geom,
@@ -2235,7 +2280,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     else // non ref pictures
         recon_buffer = is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
 
-    if (is_16bit) {
+    if (is_16bit && scs_ptr->static_config.encoder_bit_depth > EB_8BIT) {
         //SB128_TODO change 10bit SB creation
 
         if ((scs_ptr->static_config.ten_bit_format == 1) ||
@@ -2339,6 +2384,61 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                  sb_origin_y,
                                  sb_width,
                                  sb_height);
+    }
+
+    if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+        const uint32_t input_luma_offset =
+            ((sb_origin_y + input_picture->origin_y) * input_picture->stride_y) +
+            (sb_origin_x + input_picture->origin_x);
+        const uint32_t input_cb_offset =
+            (((sb_origin_y + input_picture->origin_y) >> 1) * input_picture->stride_cb) +
+            ((sb_origin_x + input_picture->origin_x) >> 1);
+        const uint32_t input_cr_offset =
+            (((sb_origin_y + input_picture->origin_y) >> 1) * input_picture->stride_cr) +
+            ((sb_origin_x + input_picture->origin_x) >> 1);
+
+        sb_width =
+            ((sb_width < MIN_SB_SIZE) || ((sb_width > MIN_SB_SIZE) && (sb_width < MAX_SB_SIZE)))
+            ? MIN(scs_ptr->sb_size_pix,
+            (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->right_padding) -
+                sb_origin_x)
+            : sb_width;
+        sb_height =
+            ((sb_height < MIN_SB_SIZE) || ((sb_height > MIN_SB_SIZE) && (sb_height < MAX_SB_SIZE)))
+            ? MIN(scs_ptr->sb_size_pix,
+            (pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->bot_padding) -
+                sb_origin_y)
+            : sb_height;
+
+        // PACK Y
+        uint16_t *buf_16bit = (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_y;
+        uint8_t * buf_8bit = input_picture->buffer_y + input_luma_offset;
+        convert_8bit_to_16bit(buf_8bit,
+            input_picture->stride_y,
+            buf_16bit,
+            context_ptr->input_sample16bit_buffer->stride_y,
+            sb_width,
+            sb_height);
+
+        // PACK CB
+        buf_16bit = (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cb;
+        buf_8bit = input_picture->buffer_cb + input_cb_offset;
+        convert_8bit_to_16bit(buf_8bit,
+            input_picture->stride_cb,
+            buf_16bit,
+            context_ptr->input_sample16bit_buffer->stride_cb,
+            sb_width >> 1,
+            sb_height >> 1);
+
+        // PACK CR
+        buf_16bit = (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cr;
+        buf_8bit = input_picture->buffer_cr + input_cr_offset;
+        convert_8bit_to_16bit(buf_8bit,
+            input_picture->stride_cr,
+            buf_16bit,
+            context_ptr->input_sample16bit_buffer->stride_cr,
+            sb_width >> 1,
+            sb_height >> 1);
     }
     context_ptr->intra_coded_area_sb[sb_addr] = 0;
     context_ptr->coded_area_sb                = 0;
@@ -2444,6 +2544,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 context_ptr->evaluate_cfl_ep =
                     (disable_cfl_flag == EB_FALSE &&
                      context_ptr->md_context->chroma_level == CHROMA_MODE_2);
+
                 // for now, segmentation independent of sharpness/delta QP.
                 if (pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled) {
                     apply_segmentation_based_quantization(blk_geom, pcs_ptr, sb_ptr, blk_ptr);
@@ -2625,6 +2726,39 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
 
+                                if (is_16bit) {
+                                    av1_inter_prediction_16bit_pipeline(
+                                        pcs_ptr,
+                                        blk_ptr->interp_filters,
+                                        blk_ptr,
+                                        blk_ptr->prediction_unit_array->ref_frame_type,
+                                        &context_ptr->mv_unit,
+                                        1, // use_intrabc,
+                                        SIMPLE_TRANSLATION,
+                                        0,
+                                        0,
+                                        1,
+                                        &blk_ptr->interinter_comp,
+                                        &sb_ptr->tile_info,
+                                        ep_luma_recon_neighbor_array,
+                                        ep_cb_recon_neighbor_array,
+                                        ep_cr_recon_neighbor_array,
+                                        blk_ptr->is_interintra_used,
+                                        blk_ptr->interintra_mode,
+                                        blk_ptr->use_wedge_interintra,
+                                        blk_ptr->interintra_wedge_index,
+                                        context_ptr->blk_origin_x,
+                                        context_ptr->blk_origin_y,
+                                        blk_geom->bwidth,
+                                        blk_geom->bheight,
+                                        ref_pic_list0,
+                                        0,
+                                        recon_buffer,
+                                        context_ptr->blk_origin_x,
+                                        context_ptr->blk_origin_y,
+                                        EB_TRUE,
+                                        (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                                } else {
                                 av1_inter_prediction(
                                     pcs_ptr,
                                     blk_ptr->interp_filters,
@@ -2656,6 +2790,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     context_ptr->blk_origin_y,
                                     EB_TRUE,
                                     (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                            }
                             }
 #if TXS_DEPTH_2
                             // Initialize the Transform Loop
@@ -3132,33 +3267,34 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     : (EbPictureBufferDesc *)EB_NULL;
                             }
 #endif
-                            warped_motion_prediction(
-                                pcs_ptr,
-                                &context_ptr->mv_unit,
-                                blk_ptr->prediction_unit_array[0].ref_frame_type,
-                                context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].compound_idx,
-                                &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].interinter_comp,
-                                context_ptr->blk_origin_x,
-                                context_ptr->blk_origin_y,
-                                blk_ptr,
-                                blk_geom,
+                                warped_motion_prediction(
+                                    pcs_ptr,
+                                    &context_ptr->mv_unit,
+                                    blk_ptr->prediction_unit_array[0].ref_frame_type,
+                                    context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].compound_idx,
+                                    &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].interinter_comp,
+                                    context_ptr->blk_origin_x,
+                                    context_ptr->blk_origin_y,
+                                    blk_ptr,
+                                    blk_geom,
 #if WARP_IMPROVEMENT
-                                ref_pic_list0,
-                                ref_pic_list1,
+                                    ref_pic_list0,
+                                    ref_pic_list1,
 #else
-                                is_16bit ? ref_obj_0->reference_picture16bit
-                                         : ref_obj_0->reference_picture,
-                                ref_idx_l1 >= 0 ? is_16bit ? ref_obj_1->reference_picture16bit
-                                                           : ref_obj_1->reference_picture
-                                                : NULL,
+                                    is_16bit ? ref_obj_0->reference_picture16bit
+                                    : ref_obj_0->reference_picture,
+                                    ref_idx_l1 >= 0 ? is_16bit ? ref_obj_1->reference_picture16bit
+                                    : ref_obj_1->reference_picture
+                                    : NULL,
 #endif
-                                recon_buffer,
-                                context_ptr->blk_origin_x,
-                                context_ptr->blk_origin_y,
-                                &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l0,
-                                &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1,
-                                (uint8_t)scs_ptr->static_config.encoder_bit_depth,
-                                EB_TRUE);
+                                    recon_buffer,
+                                    context_ptr->blk_origin_x,
+                                    context_ptr->blk_origin_y,
+                                    &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l0,
+                                    &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1,
+                                    (uint8_t)scs_ptr->static_config.encoder_bit_depth,
+                                    EB_TRUE,
+                                    EB_TRUE);
                         }
 
                         if (pu_ptr->motion_mode != WARPED_CAUSAL) {
@@ -3185,6 +3321,39 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     : (EbPictureBufferDesc *)EB_NULL;
                             }
 
+                                    if (is_16bit) {
+                                        av1_inter_prediction_16bit_pipeline(
+                                            pcs_ptr,
+                                            blk_ptr->interp_filters,
+                                            blk_ptr,
+                                            blk_ptr->prediction_unit_array->ref_frame_type,
+                                            &context_ptr->mv_unit,
+                                            0, //use_intrabc,
+                                            blk_ptr->prediction_unit_array->motion_mode,
+                                            0, //use_precomputed_obmc,
+                                            0,
+                                            blk_ptr->compound_idx,
+                                            &blk_ptr->interinter_comp,
+                                            &sb_ptr->tile_info,
+                                            ep_luma_recon_neighbor_array,
+                                            ep_cb_recon_neighbor_array,
+                                            ep_cr_recon_neighbor_array,
+                                            blk_ptr->is_interintra_used,
+                                            blk_ptr->interintra_mode,
+                                            blk_ptr->use_wedge_interintra,
+                                            blk_ptr->interintra_wedge_index,
+                                            context_ptr->blk_origin_x,
+                                            context_ptr->blk_origin_y,
+                                            blk_geom->bwidth,
+                                            blk_geom->bheight,
+                                            ref_pic_list0,
+                                            ref_pic_list1,
+                                            recon_buffer,
+                                            context_ptr->blk_origin_x,
+                                            context_ptr->blk_origin_y,
+                                            EB_TRUE,
+                                            (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                                    } else {
                             av1_inter_prediction(
                                 pcs_ptr,
                                 blk_ptr->interp_filters,
@@ -3219,7 +3388,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 (uint8_t)scs_ptr->static_config.encoder_bit_depth);
                         }
                     }
-
+                            }
                     context_ptr->txb_itr = 0;
                     // Transform Loop
                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[0] = EB_FALSE;
@@ -4115,7 +4284,91 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 } else {
                     CHECK_REPORT_ERROR_NC(encode_context_ptr->app_callback_ptr, EB_ENC_CL_ERROR2);
                 }
+                if (pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc && is_16bit && (context_ptr->bit_depth == EB_8BIT)) {
+                    EbPictureBufferDesc *recon_buffer_16bit;
+                    EbPictureBufferDesc *recon_buffer_8bit;
+                    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                        //get the 16bit form of the input SB
+                        recon_buffer_16bit = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                            ->reference_picture_wrapper_ptr->object_ptr)
+                        ->reference_picture16bit;
+                    else // non ref pictures
+                        recon_buffer_16bit = pcs_ptr->recon_picture16bit_ptr;
 
+                    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                        //get the 16bit form of the input SB
+                        recon_buffer_8bit = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                            ->reference_picture_wrapper_ptr->object_ptr)
+                        ->reference_picture;
+                    else // non ref pictures
+                        recon_buffer_8bit = pcs_ptr->recon_picture_ptr;
+
+                    uint32_t pred_buf_x_offest = context_ptr->blk_origin_x;
+                    uint32_t pred_buf_y_offest = context_ptr->blk_origin_y;
+
+                    uint16_t *dst_16bit = (uint16_t *)(recon_buffer_16bit->buffer_y) +
+                        pred_buf_x_offest + recon_buffer_16bit->origin_x +
+                        (pred_buf_y_offest + recon_buffer_16bit->origin_y) *
+                        recon_buffer_16bit->stride_y;
+                    int32_t dst_stride_16bit = recon_buffer_16bit->stride_y;
+
+                    uint8_t *dst;
+                    int32_t  dst_stride;
+
+                    dst = recon_buffer_8bit->buffer_y + pred_buf_x_offest + recon_buffer_8bit->origin_x +
+                        (pred_buf_y_offest + recon_buffer_8bit->origin_y) * recon_buffer_8bit->stride_y;
+                    dst_stride = recon_buffer_8bit->stride_y;
+
+                    convert_16bit_to_8bit(dst_16bit,
+                        dst_stride_16bit,
+                        dst,
+                        dst_stride,
+                        context_ptr->blk_geom->bwidth,
+                        context_ptr->blk_geom->bheight);
+
+                    //copy recon from 16bit to 8bit
+                    pred_buf_x_offest = ((context_ptr->blk_origin_x >> 3) << 3) >> 1;
+                    pred_buf_y_offest = ((context_ptr->blk_origin_y >> 3) << 3) >> 1;
+
+                    dst_16bit = (uint16_t *)(recon_buffer_16bit->buffer_cb) +
+                        pred_buf_x_offest + recon_buffer_16bit->origin_x / 2 +
+                        (pred_buf_y_offest + recon_buffer_16bit->origin_y / 2) *
+                        recon_buffer_16bit->stride_cb;
+                    dst_stride_16bit = recon_buffer_16bit->stride_cb;
+
+                    dst = recon_buffer_8bit->buffer_cb + pred_buf_x_offest +
+                        recon_buffer_8bit->origin_x / 2 +
+                        (pred_buf_y_offest + recon_buffer_8bit->origin_y / 2) *
+                        recon_buffer_8bit->stride_cb;
+                    dst_stride = recon_buffer_8bit->stride_cb;
+
+
+                    convert_16bit_to_8bit(dst_16bit,
+                        dst_stride_16bit,
+                        dst,
+                        dst_stride,
+                        context_ptr->blk_geom->bwidth_uv,
+                        context_ptr->blk_geom->bheight_uv);
+
+                    dst_16bit = (uint16_t *)(recon_buffer_16bit->buffer_cr) +
+                        (pred_buf_x_offest + recon_buffer_16bit->origin_x / 2 +
+                        (pred_buf_y_offest + recon_buffer_16bit->origin_y / 2) *
+                            recon_buffer_16bit->stride_cr);
+                    dst_stride_16bit = recon_buffer_16bit->stride_cr;
+                    dst = recon_buffer_8bit->buffer_cr + pred_buf_x_offest +
+                        recon_buffer_8bit->origin_x / 2 +
+                        (pred_buf_y_offest + recon_buffer_8bit->origin_y / 2) *
+                        recon_buffer_8bit->stride_cr;
+                    dst_stride = recon_buffer_8bit->stride_cr;
+
+
+                    convert_16bit_to_8bit(dst_16bit,
+                        dst_stride_16bit,
+                        dst,
+                        dst_stride,
+                        context_ptr->blk_geom->bwidth_uv,
+                        context_ptr->blk_geom->bheight_uv);
+                }
                 update_av1_mi_map(blk_ptr,
                                   context_ptr->blk_origin_x,
                                   context_ptr->blk_origin_y,

@@ -136,7 +136,7 @@ typedef struct WedgeParamsType
         const CONV_BUF_TYPE *src1, int src1_stride,
         const InterInterCompoundData *const comp_data, uint8_t *seg_mask,
         BlockSize sb_type, int h, int w, ConvolveParams *conv_params,
-        uint8_t bd);
+        uint8_t bd, EbBool is_16bit);
 
     void av1_get_convolve_filter_params(uint32_t interp_filters,
         InterpFilterParams *params_x, InterpFilterParams *params_y,

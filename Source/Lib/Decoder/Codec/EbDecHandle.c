@@ -252,10 +252,58 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
     /* Memcpy to dst buffer */
     {
         if (recon_picture_buf->bit_depth == EB_8BIT) {
+
+            if (dec_handle_ptr->is_16bit_pipeline) {
+                uint8_t *dst;
+                uint16_t *pu2_src;
+                uint32_t  j;
+                ASSERT(recon_picture_buf->is_16bit_pipeline);
+
+                /* Luma */
+                dst = luma;
+                pu2_src = (uint16_t *)recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
+                    (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
+
+                for (i = 0; i < ht; i++) {
+                    for (j = 0; j < wd; j++)
+                        dst[j] = (uint8_t)pu2_src[j];
+                    dst += out_img->y_stride;
+                    pu2_src += recon_picture_buf->stride_y;
+                }
+
+                if (recon_picture_buf->color_format != EB_YUV400) {
+                    /* Cb */
+                    dst = cb;
+                    pu2_src = (uint16_t *)recon_picture_buf->buffer_cb +
+                        (recon_picture_buf->origin_x >> sx) +
+                        ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+
+                    for (i = 0; i < ((ht + sy) >> sy); i++) {
+                        for (j = 0; j < ((wd + sx) >> sx); j++)
+                            dst[j] = (uint8_t)pu2_src[j];
+                        dst += out_img->cb_stride;
+                        pu2_src += recon_picture_buf->stride_cb;
+                    }
+
+                    /* Cr */
+                    dst = cr;
+                    pu2_src = (uint16_t *)recon_picture_buf->buffer_cr +
+                        (recon_picture_buf->origin_x >> sx) +
+                        ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
+
+                    for (i = 0; i < ((ht + sy) >> sy); i++) {
+                        for (j = 0; j < ((wd + sx) >> sx); j++)
+                            dst[j] = (uint8_t)pu2_src[j];
+                        dst += out_img->cr_stride;
+                        pu2_src += recon_picture_buf->stride_cr;
+                    }
+                }
+            }
+            else {
             uint8_t *src, *dst;
             dst = luma;
             src = recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
-                  (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
+                (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
             for (i = 0; i < ht; i++) {
                 memcpy(dst, src, wd);
@@ -267,7 +315,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                 /* Cb */
                 dst = cb;
                 src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
-                      ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
+                    ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
                 for (i = 0; i < ((ht + sy) >> sy); i++) {
                     memcpy(dst, src, ((wd + sx) >> sx));
@@ -278,7 +326,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                 /* Cr */
                 dst = cr;
                 src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
-                      ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
+                    ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
 
                 for (i = 0; i < ((ht + sy) >> sy); i++) {
                     memcpy(dst, src, ((wd + sx) >> sx));
@@ -286,6 +334,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                     src += recon_picture_buf->stride_cr;
                 }
             }
+        }
         } else {
             uint16_t *pu2_dst;
             uint16_t *pu2_src;
@@ -376,6 +425,7 @@ EbErrorType eb_svt_dec_set_default_parameter(EbSvtAv1DecConfiguration *config_pt
     config_ptr->max_picture_width  = 0;
     config_ptr->max_picture_height = 0;
     config_ptr->max_bit_depth      = EB_EIGHT_BIT;
+    config_ptr->is_16bit_pipeline = 0;
     config_ptr->max_color_format   = EB_YUV420;
     config_ptr->threads            = 1;
 
@@ -478,6 +528,7 @@ eb_svt_dec_set_parameter(EbComponentType *         svt_dec_component,
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
 
     dec_handle_ptr->dec_config = *config_struct;
+    dec_handle_ptr->is_16bit_pipeline = config_struct->is_16bit_pipeline;
 
     return EB_ErrorNone;
 }

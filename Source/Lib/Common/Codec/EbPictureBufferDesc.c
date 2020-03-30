@@ -65,6 +65,7 @@ EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPt
     pictureBufferDescPtr->width        = picture_buffer_desc_init_data_ptr->max_width;
     pictureBufferDescPtr->height       = picture_buffer_desc_init_data_ptr->max_height;
     pictureBufferDescPtr->bit_depth    = picture_buffer_desc_init_data_ptr->bit_depth;
+    pictureBufferDescPtr->is_16bit_pipeline = picture_buffer_desc_init_data_ptr->is_16bit_pipeline;
     pictureBufferDescPtr->color_format = picture_buffer_desc_init_data_ptr->color_format;
     pictureBufferDescPtr->stride_y     = picture_buffer_desc_init_data_ptr->max_width +
                                      picture_buffer_desc_init_data_ptr->left_padding +
@@ -231,7 +232,7 @@ void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc,
 
 void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc) {
     //NOTe:  Not all fileds are connected. add more connections as needed.
-    if (picBuffDsc->bit_depth == EB_8BIT) {
+    if ((picBuffDsc->bit_depth == EB_8BIT) && (picBuffDsc->is_16bit_pipeline != 1)) {
         aomBuffDsc->y_buffer = picBuffDsc->buffer_y + picBuffDsc->origin_x +
                                (picBuffDsc->origin_y * picBuffDsc->stride_y);
         aomBuffDsc->u_buffer = picBuffDsc->buffer_cb + picBuffDsc->origin_x / 2 +

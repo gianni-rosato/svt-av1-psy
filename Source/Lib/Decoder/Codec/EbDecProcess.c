@@ -391,8 +391,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
                 thread_ctxt_pa[i].dec_mod_ctxt = dec_mod_ctxt_arr[i];
                 EB_CREATE_SEMAPHORE(thread_ctxt_pa[i].thread_semaphore,
                     0, 100000);
-                int use_highbd =
-                    (dec_handle_ptr->seq_header.color_config.bit_depth > 8);
+                int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > EB_8BIT ||
+                    dec_handle_ptr->is_16bit_pipeline);
                 EB_MALLOC_DEC(uint8_t *,
                               thread_ctxt_pa[i].dst,
                               (MAX_SB_SIZE + 8) * RESTORATION_PROC_UNIT_SIZE *
@@ -645,7 +645,8 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
     FrameSize *frame_size = &dec_handle->frame_header.frame_size;
     EbBool     sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
     int32_t    num64s     = sb_128 ? 1 : 0;
-    const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > 8);
+    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+        dec_handle->is_16bit_pipeline);
     LrCtxt *   lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     int32_t frame_stripe /* 64 strip */, plane_height;
     for (int32_t p = 0; p < num_planes; ++p) {
@@ -714,8 +715,8 @@ static INLINE void dec_save_CDEF_boundary_lines_SB_row(
 {
     Av1Common *     cm         = &dec_handle->cm;
     FrameSize *     frame_size = &dec_handle->frame_header.frame_size;
-    const int       use_highbd =
-        (dec_handle->seq_header.color_config.bit_depth > 8);
+    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+        dec_handle->is_16bit_pipeline);
     LrCtxt *        lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     int32_t         frame_stripe /* 64 strip */;
     DecMtFrameData *dec_mt_frame_data =
@@ -1219,7 +1220,8 @@ void dec_av1_loop_restoration_filter_frame_mt(
     uint32_t pad_height = recon_picture_buf->origin_y;
 
     int32_t shift = 0;
-    if (recon_picture_buf->bit_depth != EB_8BIT) shift = 1;
+    if ((recon_picture_buf->bit_depth != EB_8BIT) ||
+        recon_picture_buf->is_16bit_pipeline) shift = 1;
 
     int32_t recon_stride[MAX_MB_PLANE];
     recon_stride[AOM_PLANE_Y] = recon_picture_buf->stride_y << shift;

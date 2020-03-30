@@ -337,7 +337,8 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2_AVX2(unpack_avg, unpack_avg_c, unpack_avg_sse2_intrin, unpack_avg_avx2_intrin);
     SET_AVX2(unpack_avg_safe_sub, unpack_avg_safe_sub_c, unpack_avg_safe_sub_avx2_intrin);
     SET_AVX2(un_pack8_bit_data, un_pack8_bit_data_c, eb_enc_un_pack8_bit_data_avx2_intrin);
-
+    SET_AVX2(convert_8bit_to_16bit, convert_8bit_to_16bit_c, convert_8bit_to_16bit_avx2);
+    SET_AVX2(convert_16bit_to_8bit, convert_16bit_to_8bit_c, convert_16bit_to_8bit_avx2);
     SET_SSE2_AVX2(pack2d_16_bit_src_mul4,
                   eb_enc_msb_pack2_d,
                   eb_enc_msb_pack2d_sse2_intrin,

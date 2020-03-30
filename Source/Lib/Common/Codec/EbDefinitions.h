@@ -260,6 +260,7 @@ enum {
 #define SB_STRIDE_UV (MAX_SB_SIZE >> 1)
 
 // Min superblock size
+#define MIN_SB_SIZE 64
 #define MIN_SB_SIZE_LOG2 6
 
 // Pixels per Mode Info (MI) unit
@@ -2566,9 +2567,6 @@ typedef enum DownSamplingMethod
 #define TRANSFORMS_SIZE_LEN         4
 #define TRANSFORM_MAX_SIZE          64
 #define TRANSFORM_MIN_SIZE          4
-
-#define BIT_INCREMENT_10BIT    2
-#define BIT_INCREMENT_8BIT     0
 
 #define TRANS_BIT_INCREMENT    0
 #define QUANT_IQUANT_SHIFT     20 // Q(QP%6) * IQ(QP%6) = 2^20
