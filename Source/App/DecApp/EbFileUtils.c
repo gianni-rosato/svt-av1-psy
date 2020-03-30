@@ -531,7 +531,7 @@ int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *
             fprintf(stderr, "obudec: Failure reading frame header\n");
             return 0;
         }
-        if (size == 0 && feof(f)) { return 0; }
+        if (size == 0 || feof(f)) { return 0; }
 
         fr_size  = (size_t)size;
         txb_size = fr_size;
