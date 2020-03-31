@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "aom_dsp_rtcd.h"
 #include "EbPictureControlSet.h"
@@ -6535,7 +6536,11 @@ static void set_quarter_pel_refinement_inputs_on_the_fly(uint8_t * pos_Full, //[
 
         break;
 
-    default: break;
+    default:
+        SVT_ERROR("Unhandled quarter_pel_refinement_method: %" PRIu32 "\n",
+            quarter_pel_refinement_method);
+        assert(0);
+        break;
     }
 
     return;
