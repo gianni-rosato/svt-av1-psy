@@ -32,3 +32,71 @@ jobs:
 
       - name: Build SVT-AV1
         run: cmake --build Build --target Install --config $env:configuration
+
+  unit-tests:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
+    name: 'Unit Tests (Windows, VS2019) Shard ${{ matrix.index }}'
+    env:
+      generator: Visual Studio 16 2019
+      MSVC: 2019
+      configuration: Release
+      GTEST_TOTAL_SHARDS: 8
+      GTEST_SHARD_INDEX: ${{ matrix.index }}
+    steps:
+      - name: Install dependencies
+        run: |
+          choco install -y nasm
+          cmake --version
+      - uses: actions/checkout@v2.0.0
+        with:
+          fetch-depth: 1
+      - name: Configure SVT-AV1
+        run: |
+          & "$( & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere" -latest -find "VC/Auxiliary/Build/vcvarsall.bat")" x64
+          cmake -S . -B Build -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=C:/SVT-AV1 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=ON
+      - name: Build SVT-AV1 (Release, Tests)
+        run: |
+          cmake --build Build --target Install -j 4 --config $env:configuration
+      - name: Run unit tests shard
+        run: |
+          cd Bin\Release
+          .\SvtAv1UnitTests.exe --gtest_filter=-*FFT*
+
+  e2e-tests:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
+    name: 'E2E Tests (Windows, VS2019) Shard ${{ matrix.index }}'
+    env:
+      generator: Visual Studio 16 2019
+      MSVC: 2019
+      configuration: Release
+      GTEST_TOTAL_SHARDS: 8
+      GTEST_SHARD_INDEX: ${{ matrix.index }}
+      SVT_AV1_TEST_VECTOR_PATH: ${{ github.workspace }}/test/vectors
+    steps:
+      - name: Install dependencies
+        run: |
+          choco install -y nasm
+          cmake --version
+      - uses: actions/checkout@v2.0.0
+        with:
+          fetch-depth: 1
+      - name: Configure SVT-AV1
+        run: |
+          & "$( & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere" -latest -find "VC/Auxiliary/Build/vcvarsall.bat")" x64
+          cmake -S . -B Build -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=C:/SVT-AV1 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=ON
+      - name: Build SVT-AV1 (Release, Tests, TestVectors)
+        run: |
+          cmake --build Build --target Install -j 4 --config $env:configuration
+          cmake --build Build --target TestVectors
+      - name: Run E2E tests shard
+        run: |
+          cd Bin\Release
+          .\SvtAv1E2ETests.exe --gtest_filter=-*DummySrcTest*
