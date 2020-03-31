@@ -640,6 +640,8 @@ void *packetization_kernel(void *input_ptr) {
     PacketizationReorderEntry *queue_entry_ptr;
     EbLinkedListNode *         app_data_ll_head_temp_ptr;
     uint32_t                   frames;
+    uint32_t                   allocated_size = 0;
+    int                        total_bytes    = 0;
 
     context_ptr->tot_shown_frames            = 0;
     context_ptr->disp_order_continuity_count = 0;
@@ -671,10 +673,8 @@ void *packetization_kernel(void *input_ptr) {
         queue_entry_ptr->is_alt_ref           = pcs_ptr->parent_pcs_ptr->is_alt_ref;
         eb_get_empty_object(scs_ptr->encode_context_ptr->stream_output_fifo_ptr,
                             &pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr);
-        output_stream_wrapper_ptr   = pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
-        output_stream_ptr           = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
-        output_stream_ptr->p_buffer = (uint8_t *)malloc(output_stream_ptr->n_alloc_len);
-        assert(output_stream_ptr->p_buffer != NULL && "bit-stream memory allocation failure");
+        output_stream_wrapper_ptr = pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
+        output_stream_ptr         = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
 
         output_stream_ptr->flags = 0;
         output_stream_ptr->flags |=
@@ -750,6 +750,12 @@ void *packetization_kernel(void *input_ptr) {
         if (frm_hdr->frame_type == KEY_FRAME) { encode_sps_av1(pcs_ptr->bitstream_ptr, scs_ptr); }
 
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
+
+        allocated_size = total_bytes + bitstream_get_bytes_count(pcs_ptr->bitstream_ptr);
+        output_stream_ptr->n_alloc_len = allocated_size + TD_SIZE;
+        output_stream_ptr->p_buffer    = (uint8_t *)malloc(output_stream_ptr->n_alloc_len);
+
+        assert(output_stream_ptr->p_buffer != NULL && "bit-stream memory allocation failure");
 
         copy_data_from_bitstream(encode_context_ptr,
                     pcs_ptr->bitstream_ptr,
@@ -830,7 +836,7 @@ void *packetization_kernel(void *input_ptr) {
         // Process the head of the queue
         //****************************************************
         // Look at head of queue and see if we got a td
-        int total_bytes;
+
         while ((frames = count_frames_in_next_tu(encode_context_ptr, &total_bytes))) {
             collect_frames_info(context_ptr, encode_context_ptr, frames);
             //last frame in a termporal unit is a displable frame. only the last frame has pts.
