@@ -16,5 +16,3 @@ assignees: ''
 ## Command line Sample
 
 ## Description
-
-## Debugging
