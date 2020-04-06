@@ -514,6 +514,7 @@ void *rest_kernel(void *input_ptr) {
             get_own_recon(scs_ptr, pcs_ptr, context_ptr,
                 scs_ptr->static_config.is_16bit_pipeline || is_16bit);
             Yv12BufferConfig cpi_source;
+            pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
             link_eb_to_aom_buffer_desc(scs_ptr->static_config.is_16bit_pipeline || is_16bit
                                        ? pcs_ptr->input_frame16bit
                                        : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
