@@ -115,6 +115,17 @@ static INLINE double get_noise_var(const uint8_t *data, const uint8_t *denoised,
     return get_noise_var_lowbd(data, denoised, w, h, stride, x_o, y_o, block_size_x, block_size_y);
 }
 
+static void equation_system_free(AomEquationSystem *eqns) {
+    if (!eqns) return;
+    free(eqns->A);
+    eqns->A = NULL;
+    free(eqns->b);
+    eqns->b = NULL;
+    free(eqns->x);
+    eqns->x = NULL;
+    eqns->n = 0;
+}
+
 static void equation_system_clear(AomEquationSystem *eqns) {
     const int32_t n = eqns->n;
     memset(eqns->A, 0, sizeof(*eqns->A) * n * n);
@@ -136,10 +147,7 @@ static int32_t equation_system_init(AomEquationSystem *eqns, int32_t n) {
     eqns->n = n;
     if (!eqns->A || !eqns->b || !eqns->x) {
         SVT_ERROR("Failed to allocate system of equations of size %d\n", n);
-        free(eqns->A);
-        free(eqns->b);
-        free(eqns->x);
-        memset(eqns, 0, sizeof(*eqns));
+        equation_system_free(eqns);
         return 0;
     }
     equation_system_clear(eqns);
@@ -178,13 +186,6 @@ static void equation_system_add(AomEquationSystem *dest,
   }
 }
 */
-static void equation_system_free(AomEquationSystem *eqns) {
-    if (!eqns) return;
-    free(eqns->A);
-    free(eqns->b);
-    free(eqns->x);
-    memset(eqns, 0, sizeof(*eqns));
-}
 
 static void noise_strength_solver_clear(AomNoiseStrengthSolver *solver) {
     equation_system_clear(&solver->eqns);
