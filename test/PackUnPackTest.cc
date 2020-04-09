@@ -187,7 +187,7 @@ class PackMsbTest : public ::testing::Test,
 
     void SetUp() override {
         inn_bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_ >> 4));
+            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_ >> 2));
         in_8bit_buffer_ =
             reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
         out_16bit_buffer1_ = reinterpret_cast<uint16_t *>(
@@ -228,7 +228,7 @@ class PackMsbTest : public ::testing::Test,
 
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u8(inn_bit_buffer_, test_size_ >> 4);
+            eb_buf_random_u8(inn_bit_buffer_, test_size_ >> 2);
             eb_buf_random_u8(in_8bit_buffer_, test_size_);
             compressed_packmsb_avx2_intrin(in_8bit_buffer_,
                                            in8_stride_,
