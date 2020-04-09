@@ -1265,10 +1265,10 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
             const uint8_t      inter_direction      = me_block_results_ptr->direction;
             const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
             const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
-            if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
-                list1_ref_index > context_ptr->md_max_ref_count - 1)
-                continue;
             if (inter_direction == 2) {
+                if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
+                    list1_ref_index > context_ptr->md_max_ref_count - 1)
+                    continue;
                 // (Best_L0, 8 Best_L1 neighbors)
                 for (bipred_index = 0; bipred_index < BIPRED_3x3_REFINMENT_POSITIONS;
                      ++bipred_index) {
