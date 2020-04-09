@@ -285,6 +285,8 @@ uint64_t compute_mean_c(uint8_t *input_samples, /**< input parameter, input samp
 {
     uint32_t hi, vi;
     uint64_t block_mean = 0;
+    assert(input_area_width > 0);
+    assert(input_area_height > 0);
 
     for (vi = 0; vi < input_area_height; vi++) {
         for (hi = 0; hi < input_area_width; hi++) { block_mean += input_samples[hi]; }
@@ -308,6 +310,8 @@ uint64_t compute_mean_squared_values_c(
 {
     uint32_t hi, vi;
     uint64_t block_mean = 0;
+    assert(input_area_width > 0);
+    assert(input_area_height > 0);
 
     for (vi = 0; vi < input_area_height; vi++) {
         for (hi = 0; hi < input_area_width; hi++) {
