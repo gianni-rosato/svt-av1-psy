@@ -11,5 +11,6 @@ void *create_enc_config();
 void release_enc_config(void *config_ptr);
 void set_enc_config(void *config, const char *name, const char *value);
 int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr);
+std::string get_enc_token(const char* name);
 
 #endif

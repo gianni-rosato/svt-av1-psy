@@ -525,7 +525,8 @@ void SvtAv1E2ETestFramework::run_death_test() {
             },
             ::testing::ExitedWithCode(0),
             ".*")
-            << "Fatal Error on running test case " << enc_setting.to_string(fn);
+            << "Fatal Error on running test case " << enc_setting.to_string(fn)
+            << "\ncli command: " << enc_setting.to_cli(test_vector);
     }
 }
 
@@ -582,13 +583,8 @@ static void write_ivf_frame_header(
 
 void SvtAv1E2ETestFramework::write_compress_data(
     const EbBufferHeaderType *output) {
-    write_ivf_frame_header(
-        output_file_,
-        output->n_filled_len);
-    fwrite(output->p_buffer,
-        1,
-        output->n_filled_len,
-        output_file_->file);
+    write_ivf_frame_header(output_file_, output->n_filled_len);
+    fwrite(output->p_buffer, 1, output->n_filled_len, output_file_->file);
 }
 
 void SvtAv1E2ETestFramework::process_compress_data(

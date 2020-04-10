@@ -18,6 +18,7 @@
 #include <map>
 #include "VideoSource.h"
 #include "EbDefinitions.h"
+#include "ConfigEncoder.h"
 
 /** @defgroup svt_av1_e2e_test_vector Test vectors for E2E test
  *  Defines the test vectors of E2E test, with file-type, width, height and
@@ -110,6 +111,14 @@ typedef struct EncTestSetting {
         return str;
     }
 
+    std::string to_cli(TestVideoVector& vector) const {
+        std::string str = "SvtAv1EncApp";
+        str += get_vector_cli(vector);
+        str += get_setting_cli();
+        str += " -b output.ivf -o recon.yuv";
+        return str;
+    }
+
     std::string get_setting_str() const {
         std::string str(name);
         str += ": ";
@@ -118,6 +127,45 @@ typedef struct EncTestSetting {
             str += "=";
             str += x.second;
             str += ", ";
+        }
+        return str;
+    }
+
+    int color_fmt(VideoColorFormat fmt) const {
+        switch (fmt) {
+        case IMG_FMT_420:
+        case IMG_FMT_420P10_PACKED: return 420;
+        case IMG_FMT_422:
+        case IMG_FMT_422P10_PACKED: return 422;
+        case IMG_FMT_444:
+        case IMG_FMT_444P10_PACKED: return 444;
+        default: break;
+        }
+        return -1;
+    }
+
+    std::string get_vector_cli(TestVideoVector& vector) const {
+        std::string str(" -i " + std::get<0>(vector));
+        if (std::get<1>(vector) != Y4M_VIDEO_FILE) {
+            str += " -w ";
+            str += std::to_string(std::get<3>(vector));
+            str += " -h ";
+            str += std::to_string(std::get<4>(vector));
+            str += " -bit-depth ";
+            str += std::to_string(std::get<5>(vector));
+            str += " -colour-space ";
+            str += std::to_string(color_fmt(std::get<2>(vector)));
+        }
+        return str;
+    }
+
+    std::string get_setting_cli() const {
+        std::string str;
+        for (auto x : setting) {
+            str += " ";
+            str += get_enc_token(x.first.c_str());
+            str += " ";
+            str += x.second;
         }
         return str;
     }

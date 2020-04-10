@@ -3,6 +3,8 @@
  * SPDX - License - Identifier: BSD - 2 - Clause - Patent
  */
 
+#include <string>
+
 extern "C" {
 #include "EbAppConfig.c"
 #include "EbAppContext.c"
@@ -44,4 +46,18 @@ int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr) {
            &app_ctx.eb_enc_parameters,
            sizeof(EbSvtAv1EncConfiguration));
     return 0;
+}
+
+extern ConfigEntry config_entry[];
+std::string get_enc_token(const char *name) {
+    std::string str;
+    int index = 0;
+    while (config_entry[index].name != NULL) {
+        if (EB_STRCMP(name, config_entry[index].name) == 0) {
+            str = config_entry[index].token;
+            break;
+        }
+        index++;
+    }
+    return str;
 }
