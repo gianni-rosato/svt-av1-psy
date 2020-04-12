@@ -6189,7 +6189,7 @@ static void highbd_inv_txfm2d_add_h_identity_avx2(const int32_t *input, uint16_t
     for (int32_t i = 0; i < (row_max >> 3); ++i) {
         __m256i        buf0[32];
         const int32_t *input_row = input + i * input_stride * 8;
-        for (int32_t j = 0; j < (buf_size_nonzero_w_div8 << 1); ++j) {
+        for (int32_t j = 0; j < buf_size_nonzero_w_div8; ++j) {
             __m256i *buf0_cur = buf0 + j * 8;
             load_buffer_32x32_new(input_row + j * 8, buf0_cur, input_stride, 8);
 
