@@ -3700,7 +3700,7 @@ static void cfl_prediction(PictureControlSet *          pcs_ptr,
 
         // Down sample Luma
         if (!context_ptr->hbd_mode_decision) {
-            cfl_luma_subsampling_420_lbd_c(
+            cfl_luma_subsampling_420_lbd(
                 &(context_ptr->cfl_temp_luma_recon[rec_luma_offset]),
                 candidate_buffer->recon_ptr->stride_y,
                 context_ptr->pred_buf_q3,
@@ -3711,7 +3711,7 @@ static void cfl_prediction(PictureControlSet *          pcs_ptr,
                     ? (context_ptr->blk_geom->bheight_uv << 1)
                     : context_ptr->blk_geom->bheight);
         } else {
-            cfl_luma_subsampling_420_hbd_c(
+            cfl_luma_subsampling_420_hbd(
                 context_ptr->cfl_temp_luma_recon16bit + rec_luma_offset,
                 candidate_buffer->recon_ptr->stride_y,
                 context_ptr->pred_buf_q3,

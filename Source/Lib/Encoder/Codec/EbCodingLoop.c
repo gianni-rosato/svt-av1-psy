@@ -479,7 +479,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 (recon_samples->origin_x + round_origin_x);
 
             // Down sample Luma
-            cfl_luma_subsampling_420_lbd_c(
+            cfl_luma_subsampling_420_lbd(
                 recon_samples->buffer_y + recon_luma_offset,
                 recon_samples->stride_y,
                 context_ptr->md_context->pred_buf_q3,
@@ -972,7 +972,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 (recon_samples->origin_x + round_origin_x);
 
             // Down sample Luma
-            cfl_luma_subsampling_420_hbd_c(
+            cfl_luma_subsampling_420_hbd(
                 ((uint16_t *)recon_samples->buffer_y) + recon_luma_offset,
                 recon_samples->stride_y,
                 context_ptr->md_context->pred_buf_q3,

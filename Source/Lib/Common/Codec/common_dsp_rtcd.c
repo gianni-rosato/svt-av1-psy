@@ -1548,6 +1548,11 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     }
 #endif
 
-
+    SET_AVX2(cfl_luma_subsampling_420_lbd,
+             cfl_luma_subsampling_420_lbd_c,
+             cfl_luma_subsampling_420_lbd_avx2);
+    SET_AVX2(cfl_luma_subsampling_420_hbd,
+             cfl_luma_subsampling_420_hbd_c,
+             cfl_luma_subsampling_420_hbd_avx2);
 
 }

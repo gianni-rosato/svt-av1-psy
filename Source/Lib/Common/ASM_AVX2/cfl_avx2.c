@@ -277,3 +277,109 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
         } while (src < end);
     }
 }
+
+void cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride,
+                                       int16_t *output_q3, int32_t width, int32_t height) {
+    const int      luma_stride = input_stride << 1;
+    __m256i *      row         = (__m256i *)output_q3;
+    const __m256i *row_end     = row + (height >> 1) * CFL_BUF_LINE_I256;
+    do {
+        if (width == 4) {
+            const __m128i top     = _mm_loadl_epi64((__m128i *)input);
+            const __m128i bot     = _mm_loadl_epi64((__m128i *)(input + input_stride));
+            __m128i       sum     = _mm_add_epi16(top, bot);
+            sum                   = _mm_hadd_epi16(sum, sum);
+            *((int *)row)         = _mm_cvtsi128_si32(_mm_add_epi16(sum, sum));
+        } else if (width == 8) {
+            const __m128i top = _mm_loadu_si128((__m128i *)input);
+            const __m128i bot = _mm_loadu_si128((__m128i *)(input + input_stride));
+            __m128i       sum = _mm_add_epi16(top, bot);
+            sum               = _mm_hadd_epi16(sum, sum);
+            _mm_storel_epi64((__m128i *)row, _mm_add_epi16(sum, sum));
+        } else if (width == 16) {
+            __m256i top = _mm256_loadu_si256((__m256i *)input);
+            __m256i bot = _mm256_loadu_si256((__m256i *)(input + input_stride));
+            __m256i sum = _mm256_add_epi16(top, bot);
+            sum         = _mm256_hadd_epi16(sum, sum);
+            sum         = _mm256_add_epi16(sum, sum);
+            _mm_storel_epi64((__m128i *)row, _mm256_castsi256_si128(sum));
+            int16_t *ptr = (int16_t *)row;
+            _mm_storel_epi64((__m128i *)(ptr+4), _mm256_extracti128_si256(sum,1));
+        } else {
+            __m256i top   = _mm256_loadu_si256((__m256i *)input);
+            __m256i bot   = _mm256_loadu_si256((__m256i *)(input + input_stride));
+            __m256i sum   = _mm256_add_epi16(top, bot);
+            __m256i top_1 = _mm256_loadu_si256((__m256i *)(input + 16));
+            __m256i bot_1 = _mm256_loadu_si256((__m256i *)(input + 16 + input_stride));
+            __m256i sum_1 = _mm256_add_epi16(top_1, bot_1);
+            __m256i hsum  = _mm256_hadd_epi16(sum, sum_1);
+            hsum          = _mm256_permute4x64_epi64(hsum, _MM_SHUFFLE(3, 1, 2, 0));
+            hsum          = _mm256_add_epi16(hsum, hsum);
+            _mm256_storeu_si256(row, hsum);
+            if (width == 64) {
+                top           = _mm256_loadu_si256((__m256i *)(input + 32));
+                bot           = _mm256_loadu_si256((__m256i *)(input + 32 +input_stride));
+                sum           = _mm256_add_epi16(top, bot);
+                top_1         = _mm256_loadu_si256((__m256i *)(input + 48));
+                bot_1         = _mm256_loadu_si256((__m256i *)(input + 48 + input_stride));
+                sum_1         = _mm256_add_epi16(top_1, bot_1);
+                hsum          = _mm256_hadd_epi16(sum, sum_1);
+                hsum          = _mm256_permute4x64_epi64(hsum, _MM_SHUFFLE(3, 1, 2, 0));
+                hsum          = _mm256_add_epi16(hsum, hsum);
+                _mm256_storeu_si256(row + 1, hsum);
+            }
+        }
+        input += luma_stride;
+    } while ((row += CFL_BUF_LINE_I256) < row_end);
+}
+
+void cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_stride,
+                                       int16_t *output_q3, int32_t width, int32_t height) {
+    const __m128i  twos_128    = _mm_set1_epi8(2);
+    const __m256i  twos_256    = _mm256_set1_epi8(2); // Thirty two twos
+    const int      luma_stride = input_stride << 1;
+    __m256i *      row         = (__m256i *)output_q3;
+    const __m256i *row_end     = row + (height >> 1) * CFL_BUF_LINE_I256;
+    do {
+        if (width == 4) {
+            __m128i top       = _mm_cvtsi32_si128(*((int *)input));
+            top               = _mm_maddubs_epi16(top, twos_128);
+            __m128i bot       = _mm_cvtsi32_si128(*((int *)(input + input_stride)));
+            bot               = _mm_maddubs_epi16(bot, twos_128);
+            const __m128i sum = _mm_add_epi16(top, bot);
+            _mm_storeh_epi32((__m128i *)row, sum);
+        } else if (width == 8) {
+            __m128i top       = _mm_loadl_epi64((__m128i *)input);
+            top               = _mm_maddubs_epi16(top, twos_128);
+            __m128i bot       = _mm_loadl_epi64((__m128i *)(input + input_stride));
+            bot               = _mm_maddubs_epi16(bot, twos_128);
+            const __m128i sum = _mm_add_epi16(top, bot);
+            _mm_storel_epi64((__m128i *)row, sum);
+        } else if (width == 16) {
+            __m128i top       = _mm_loadu_si128((__m128i *)input);
+            top               = _mm_maddubs_epi16(top, twos_128);
+            __m128i bot       = _mm_loadu_si128((__m128i *)(input + input_stride));
+            bot               = _mm_maddubs_epi16(bot, twos_128);
+            const __m128i sum = _mm_add_epi16(top, bot);
+            _mm_storeu_si128((__m128i *)row, sum);
+        } else {
+            __m256i top = _mm256_loadu_si256((__m256i *)input);
+            __m256i bot = _mm256_loadu_si256((__m256i *)(input + input_stride));
+
+            __m256i top_16x16 = _mm256_maddubs_epi16(top, twos_256);
+            __m256i bot_16x16 = _mm256_maddubs_epi16(bot, twos_256);
+            __m256i sum_16x16 = _mm256_add_epi16(top_16x16, bot_16x16);
+
+            _mm256_storeu_si256(row, sum_16x16);
+            if (width == 64) {
+                top       = _mm256_loadu_si256(((__m256i *)input) + 1);
+                bot       = _mm256_loadu_si256(((__m256i *)(input + input_stride)) + 1);
+                top_16x16 = _mm256_maddubs_epi16(top, twos_256);
+                bot_16x16 = _mm256_maddubs_epi16(bot, twos_256);
+                sum_16x16 = _mm256_add_epi16(top_16x16, bot_16x16);
+                _mm256_storeu_si256(row + 1, sum_16x16);
+            }
+        }
+        input += luma_stride;
+    } while ((row += CFL_BUF_LINE_I256) < row_end);
+}

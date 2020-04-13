@@ -3258,6 +3258,58 @@ int av1_get_palette_color_index_context(const uint8_t *color_map, int stride, in
     assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
     return color_index_ctx;
 }
+
+#if PALETTE_SPEEDUP
+int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
+                                                  int c, int palette_size, int *color_idx) {
+    assert(palette_size <= PALETTE_MAX_SIZE);
+    assert(r > 0 || c > 0);
+
+    uint8_t scores[PALETTE_MAX_SIZE]              = {0};
+    uint8_t inverse_color_order[PALETTE_MAX_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
+    uint8_t color_order[PALETTE_MAX_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
+    int8_t i;
+
+    if (c - 1 >= 0) scores[color_map[r * stride + c - 1]] = 2;
+    if (c - 1 >= 0 && r - 1 >= 0) scores[color_map[(r - 1) * stride + c - 1]] += 1;
+    if (r - 1 >= 0) scores[color_map[(r - 1) * stride + c]] += 2;
+
+    // Get the top NUM_PALETTE_NEIGHBORS scores (sorted from large to small).
+    for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
+        uint8_t max     = scores[i];
+        int8_t  max_idx = i;
+        for (int8_t j = i + 1; j < palette_size; ++j) {
+            if (scores[j] > max) {
+                max     = scores[j];
+                max_idx = j;
+            }
+        }
+        if (max_idx != i) {
+            const uint8_t max_color_order = color_order[max_idx];
+            for (int8_t k = max_idx; k > i; --k) {
+                scores[k]                           = scores[k - 1];
+                color_order[k]                      = color_order[k - 1];
+                inverse_color_order[color_order[k]] = k;
+            }
+            scores[i]                            = max;
+            color_order[i]                       = max_color_order;
+            inverse_color_order[max_color_order] = i;
+        }
+    }
+
+    if (color_idx != NULL) *color_idx = inverse_color_order[color_map[r * stride + c]];
+
+    int color_index_ctx_hash = scores[0] + scores[1] * 2 + scores[2] * 2;
+
+    assert(color_index_ctx_hash > 0);
+    assert(color_index_ctx_hash <= MAX_COLOR_CONTEXT_HASH);
+
+    const int color_index_ctx = palette_color_index_context_lookup[color_index_ctx_hash];
+    assert(color_index_ctx >= 0);
+    assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
+    return color_index_ctx;
+}
+#endif
 #undef NUM_PALETTE_NEIGHBORS
 #undef MAX_COLOR_CONTEXT_HASH
 
