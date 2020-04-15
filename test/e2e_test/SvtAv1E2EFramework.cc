@@ -167,12 +167,12 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     //
     // Init handle
     //
-    return_error = eb_init_handle(
+    return_error = svt_av1_enc_init_handle(
         &av1enc_ctx_.enc_handle, &av1enc_ctx_, &av1enc_ctx_.enc_params);
     ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_init_handle return error:" << return_error;
+        << "svt_av1_enc_init_handle return error:" << return_error;
     ASSERT_NE(av1enc_ctx_.enc_handle, nullptr)
-        << "eb_init_handle return null handle.";
+        << "svt_av1_enc_init_handle return null handle.";
     setup_src_param(video_src_, av1enc_ctx_.enc_params);
     av1enc_ctx_.enc_params.recon_enabled = 0;
 
@@ -219,23 +219,23 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     }
 
     // set the parameter to encoder
-    return_error = eb_svt_enc_set_parameter(av1enc_ctx_.enc_handle,
+    return_error = svt_av1_enc_set_parameter(av1enc_ctx_.enc_handle,
                                             &av1enc_ctx_.enc_params);
     ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_svt_enc_set_parameter return error:" << return_error;
+        << "svt_av1_enc_set_parameter return error:" << return_error;
 
     // initial encoder
-    return_error = eb_init_encoder(av1enc_ctx_.enc_handle);
+    return_error = svt_av1_enc_init(av1enc_ctx_.enc_handle);
     ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_init_encoder return error:" << return_error;
+        << "svt_av1_enc_init return error:" << return_error;
 
     // Get ivf header
-    return_error = eb_svt_enc_stream_header(av1enc_ctx_.enc_handle,
+    return_error = svt_av1_enc_stream_header(av1enc_ctx_.enc_handle,
                                             &av1enc_ctx_.output_stream_buffer);
     ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_svt_enc_stream_header return error:" << return_error;
+        << "svt_av1_enc_stream_header return error:" << return_error;
     ASSERT_NE(av1enc_ctx_.output_stream_buffer, nullptr)
-        << "eb_svt_enc_stream_header return null output buffer."
+        << "svt_av1_enc_stream_header return null output buffer."
         << return_error;
 
 #if TILES_PARALLEL
@@ -267,14 +267,14 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
 }
 
 void SvtAv1E2ETestFramework::deinit_test() {
-    EbErrorType return_error = eb_deinit_encoder(av1enc_ctx_.enc_handle);
+    EbErrorType return_error = svt_av1_enc_deinit(av1enc_ctx_.enc_handle);
     ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_deinit_encoder return error:" << return_error;
+        << "svt_av1_enc_deinit return error:" << return_error;
 
     // Destruct the component
-    return_error = eb_deinit_handle(av1enc_ctx_.enc_handle);
+    return_error = svt_av1_enc_deinit_handle(av1enc_ctx_.enc_handle);
     ASSERT_EQ(return_error, EB_ErrorNone)
-        << "eb_deinit_handle return error:" << return_error;
+        << "svt_av1_enc_deinit_handle return error:" << return_error;
     av1enc_ctx_.enc_handle = nullptr;
 
     // Clear the intput and output buffer
@@ -402,10 +402,10 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                         video_src_->get_frame_qp(video_src_->get_frame_index());
                     // Send the picture
                     EXPECT_EQ(EB_ErrorNone,
-                              return_error = eb_svt_enc_send_picture(
+                              return_error = svt_av1_enc_send_picture(
                                   av1enc_ctx_.enc_handle,
                                   av1enc_ctx_.input_picture_buffer))
-                        << "eb_svt_enc_send_picture error at: "
+                        << "svt_av1_enc_send_picture error at: "
                         << av1enc_ctx_.input_picture_buffer->pts;
                 }
 
@@ -422,9 +422,9 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     headerPtrLast.pic_type = EB_AV1_INVALID_PICTURE;
                     av1enc_ctx_.input_picture_buffer->flags = EB_BUFFERFLAG_EOS;
                     EXPECT_EQ(EB_ErrorNone,
-                              return_error = eb_svt_enc_send_picture(
+                              return_error = svt_av1_enc_send_picture(
                                   av1enc_ctx_.enc_handle, &headerPtrLast))
-                        << "eb_svt_enc_send_picture EOS error";
+                        << "svt_av1_enc_send_picture EOS error";
                 }
             }
         }
@@ -446,7 +446,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     TimeAutoCount counter(ENCODING, collect_);
                     uint8_t pic_send_done =
                         (src_file_eos && rec_file_eos) ? 1 : 0;
-                    return_error = eb_svt_get_packet(
+                    return_error = svt_av1_enc_get_packet(
                         av1enc_ctx_.enc_handle, &enc_out, pic_send_done);
                     ASSERT_NE(return_error, EB_ErrorMax)
                         << "Error while encoding, code:" << enc_out->flags;
@@ -477,7 +477,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
 
                 // Release the output buffer
                 if (enc_out != nullptr)
-                    eb_svt_release_out_buffer(&enc_out);
+                    svt_av1_enc_release_out_buffer(&enc_out);
             } while (src_file_eos);
         }  // if (!enc_file_eos)
     } while (!rec_file_eos || !src_file_eos || !enc_file_eos);
@@ -692,7 +692,7 @@ void SvtAv1E2ETestFramework::get_recon_frame(const SvtAv1Context &ctxt,
         recon_frame.p_app_private = nullptr;
         // non-blocking call until all input frames are sent
         EbErrorType recon_status =
-            eb_svt_get_recon(ctxt.enc_handle, &recon_frame);
+            svt_av1_get_recon(ctxt.enc_handle, &recon_frame);
         ASSERT_NE(recon_status, EB_ErrorMax)
             << "Error while outputing recon, code:" << recon_frame.flags;
         if (recon_status == EB_NoErrorEmptyQueue) {

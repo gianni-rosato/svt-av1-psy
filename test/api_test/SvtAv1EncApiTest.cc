@@ -25,13 +25,13 @@ namespace {
  *
  * Test strategy: <br>
  * Report a death caused by set a null pointer to function
- * eb_svt_enc_set_parameter, which should not happen <br>
+ * svt_av1_enc_set_parameter, which should not happen <br>
  *
  * Expected result: <br>
- * Capture a signal of death in function eb_svt_enc_set_parameter <br>
+ * Capture a signal of death in function svt_av1_enc_set_parameter <br>
  *
  * Test coverage:
- * eb_svt_enc_set_parameter.
+ * svt_av1_enc_set_parameter.
  */
 TEST(EncApiDeathTest, set_parameter_null_pointer) {
     // death tests: TODO: alert, fix me! fix me!! fix me!!!
@@ -41,12 +41,12 @@ TEST(EncApiDeathTest, set_parameter_null_pointer) {
 
     // initialize encoder and get handle
     EXPECT_EQ(EB_ErrorBadParameter,
-              eb_init_handle(&context.enc_handle, nullptr, nullptr));
+              svt_av1_enc_init_handle(&context.enc_handle, nullptr, nullptr));
     // watch out, function down
     EXPECT_EQ(EB_ErrorBadParameter,
-              eb_svt_enc_set_parameter(context.enc_handle, nullptr));
+              svt_av1_enc_set_parameter(context.enc_handle, nullptr));
     // destory encoder handle
-    EXPECT_EQ(EB_ErrorInvalidComponent, eb_deinit_handle(nullptr));
+    EXPECT_EQ(EB_ErrorInvalidComponent, svt_av1_enc_deinit_handle(nullptr));
     SUCCEED();
 }
 
@@ -69,34 +69,34 @@ TEST(EncApiTest, check_null_pointer) {
     memset(&context, 0, sizeof(context));
 
     // initialize encoder and with all null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, eb_init_handle(nullptr, nullptr, nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_init_handle(nullptr, nullptr, nullptr));
     // initialize encoder and with all null pointer and get handle
     EXPECT_EQ(EB_ErrorBadParameter,
-              eb_init_handle(&context.enc_handle, nullptr, nullptr));
+              svt_av1_enc_init_handle(&context.enc_handle, nullptr, nullptr));
     // setup encoder parameters with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_set_parameter(nullptr, nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_set_parameter(nullptr, nullptr));
     // TODO: Some function will crash with nullptr input,
     // and it will block test on linux platform. please refer to
     // EncApiDeathTest-->check_null_pointer
     // EXPECT_EQ(EB_ErrorBadParameter,
-    //          eb_svt_enc_set_parameter(context.enc_handle,
+    //          svt_av1_enc_set_parameter(context.enc_handle,
     //          nullptr));
     // open encoder with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, eb_init_encoder(nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_init(nullptr));
     // get stream header with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_stream_header(nullptr, nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_stream_header(nullptr, nullptr));
     // get end of sequence NAL with null pointer
-    //EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_eos_nal(nullptr, nullptr));
-    // EXPECT_EQ(EB_ErrorBadParameter, eb_svt_enc_send_picture(nullptr,
-    // nullptr)); EXPECT_EQ(EB_ErrorBadParameter, eb_svt_get_packet(nullptr,
-    // nullptr, 0)); EXPECT_EQ(EB_ErrorBadParameter, eb_svt_get_recon(nullptr,
+    //EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_eos_nal(nullptr, nullptr));
+    // EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_send_picture(nullptr,
+    // nullptr)); EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_get_packet(nullptr,
+    // nullptr, 0)); EXPECT_EQ(EB_ErrorBadParameter, svt_av1_get_recon(nullptr,
     // nullptr)); No return value, just feed nullptr as parameter.
     // release output buffer with null pointer
-    eb_svt_release_out_buffer(nullptr);
+    svt_av1_enc_release_out_buffer(nullptr);
     // close encoder with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, eb_deinit_encoder(nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_deinit(nullptr));
     // destory encoder handle with null pointer
-    EXPECT_EQ(EB_ErrorInvalidComponent, eb_deinit_handle(nullptr));
+    EXPECT_EQ(EB_ErrorInvalidComponent, svt_av1_enc_deinit_handle(nullptr));
     SUCCEED();
 }
 
@@ -127,24 +127,24 @@ TEST(EncApiTest, DISABLED_check_normal_setup) {
     // initialize encoder and get handle
     EXPECT_EQ(
         EB_ErrorNone,
-        eb_init_handle(&context.enc_handle, &context, &context.enc_params))
-        << "eb_init_handle failed";
+        svt_av1_enc_init_handle(&context.enc_handle, &context, &context.enc_params))
+        << "svt_av1_enc_init_handle failed";
     // setup source width/height with default value
     context.enc_params.source_width = width;
     context.enc_params.source_height = height;
     // setup encoder parameters with all default
     EXPECT_EQ(EB_ErrorNone,
-              eb_svt_enc_set_parameter(context.enc_handle, &context.enc_params))
-        << "eb_svt_enc_set_parameter failed";
+              svt_av1_enc_set_parameter(context.enc_handle, &context.enc_params))
+        << "svt_av1_enc_set_parameter failed";
     // open encoder
-    EXPECT_EQ(EB_ErrorNone, eb_init_encoder(context.enc_handle))
-        << "eb_init_encoder failed";
+    EXPECT_EQ(EB_ErrorNone, svt_av1_enc_init(context.enc_handle))
+        << "svt_av1_enc_init failed";
     // close encoder
-    EXPECT_EQ(EB_ErrorNone, eb_deinit_encoder(context.enc_handle))
-        << "eb_deinit_encoder failed";
+    EXPECT_EQ(EB_ErrorNone, svt_av1_enc_deinit(context.enc_handle))
+        << "svt_av1_enc_deinit failed";
     // destory encoder
-    EXPECT_EQ(EB_ErrorNone, eb_deinit_handle(context.enc_handle))
-        << "eb_deinit_handle failed";
+    EXPECT_EQ(EB_ErrorNone, svt_av1_enc_deinit_handle(context.enc_handle))
+        << "svt_av1_enc_deinit_handle failed";
 }
 
 /** @brief repeat_normal_setup is a api test case
@@ -175,23 +175,23 @@ TEST(EncApiTest, DISABLED_repeat_normal_setup) {
         // initialize encoder and get handle
         ASSERT_EQ(
             EB_ErrorNone,
-            eb_init_handle(&context.enc_handle, &context, &context.enc_params))
-            << "eb_init_handle failed at " << i << " times";
+            svt_av1_enc_init_handle(&context.enc_handle, &context, &context.enc_params))
+            << "svt_av1_enc_init_handle failed at " << i << " times";
         // setup source width/height with default value
         context.enc_params.source_width = width;
         context.enc_params.source_height = height;
         // setup encoder parameters with all default
         ASSERT_EQ(
             EB_ErrorNone,
-            eb_svt_enc_set_parameter(context.enc_handle, &context.enc_params))
-            << "eb_svt_enc_set_parameter failed at " << i << " times";
-        // TODO:if not calls eb_deinit_encoder, there is huge memory leak, fix
+            svt_av1_enc_set_parameter(context.enc_handle, &context.enc_params))
+            << "svt_av1_enc_set_parameter failed at " << i << " times";
+        // TODO:if not calls svt_av1_enc_deinit, there is huge memory leak, fix
         // me
-        // ASSERT_EQ(EB_ErrorNone, eb_deinit_encoder(context.enc_handle))
-        //    << "eb_deinit_encoder failed";
+        // ASSERT_EQ(EB_ErrorNone, svt_av1_enc_deinit(context.enc_handle))
+        //    << "svt_av1_enc_deinit failed";
         // destory encoder
-        ASSERT_EQ(EB_ErrorNone, eb_deinit_handle(context.enc_handle))
-            << "eb_deinit_handle failed at " << i << " times";
+        ASSERT_EQ(EB_ErrorNone, svt_av1_enc_deinit_handle(context.enc_handle))
+            << "svt_av1_enc_deinit_handle failed at " << i << " times";
     }
 }
 

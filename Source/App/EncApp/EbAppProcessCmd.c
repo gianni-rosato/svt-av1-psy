@@ -949,7 +949,7 @@ AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_ca
             header_ptr->flags    = 0;
 
             // Send the picture
-            eb_svt_enc_send_picture(component_handle, header_ptr);
+            svt_av1_enc_send_picture(component_handle, header_ptr);
         }
 
         if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) ||
@@ -962,7 +962,7 @@ AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_ca
             header_ptr->p_buffer      = NULL;
             header_ptr->pic_type      = EB_AV1_INVALID_PICTURE;
 
-            eb_svt_enc_send_picture(component_handle, header_ptr);
+            svt_av1_enc_send_picture(component_handle, header_ptr);
         }
 
         return_value =
@@ -1133,7 +1133,7 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
     while (is_alt_ref) {
         is_alt_ref = 0;
         // non-blocking call until all input frames are sent
-        stream_status = eb_svt_get_packet(component_handle, &header_ptr, pic_send_done);
+        stream_status = svt_av1_enc_get_packet(component_handle, &header_ptr, pic_send_done);
 
         if (stream_status == EB_ErrorMax) {
             fprintf(stderr, "\n");
@@ -1184,7 +1184,7 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
                                                                    : APP_ExitConditionNone;
 
             // Release the output buffer
-            eb_svt_release_out_buffer(&header_ptr);
+            svt_av1_enc_release_out_buffer(&header_ptr);
 
 #if DEADLOCK_DEBUG
             ++frame_count;
@@ -1227,7 +1227,7 @@ AppExitConditionType process_output_recon_buffer(EbConfig *config, EbAppContext 
     EbErrorType          recon_status     = EB_ErrorNone;
     int32_t              fseek_return_val;
     // non-blocking call until all input frames are sent
-    recon_status = eb_svt_get_recon(component_handle, header_ptr);
+    recon_status = svt_av1_get_recon(component_handle, header_ptr);
 
     if (recon_status == EB_ErrorMax) {
         fprintf(stderr, "\n");

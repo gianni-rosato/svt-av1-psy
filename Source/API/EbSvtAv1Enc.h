@@ -661,7 +661,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * @ *config_ptr     Pointer passed back to the client during callbacks, it will be
      *                  loaded with default params from the library. */
 EB_API EbErrorType
-eb_init_handle(EbComponentType **p_handle, void *p_app_data,
+svt_av1_enc_init_handle(EbComponentType **p_handle, void *p_app_data,
                EbSvtAv1EncConfiguration
                    *config_ptr); // config_ptr will be loaded with default params from the library
 
@@ -670,7 +670,7 @@ eb_init_handle(EbComponentType **p_handle, void *p_app_data,
      * Parameter:
      * @ *svt_enc_component              Encoder handler.
      * @ *pComponentParameterStructure  Encoder and buffer configurations will be copied to the library. */
-EB_API EbErrorType eb_svt_enc_set_parameter(
+EB_API EbErrorType svt_av1_enc_set_parameter(
     EbComponentType *svt_enc_component,
     EbSvtAv1EncConfiguration *
         pComponentParameterStructure); // pComponentParameterStructure contents will be copied to the library
@@ -679,21 +679,21 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
      *
      * Parameter:
      * @ *svt_enc_component  Encoder handler. */
-EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component);
+EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component);
 
 /* OPTIONAL: Get stream headers at init time.
      *
      * Parameter:
      * @ *svt_enc_component   Encoder handler.
      * @ **output_stream_ptr  Output buffer. */
-EB_API EbErrorType eb_svt_enc_stream_header(EbComponentType *    svt_enc_component,
+EB_API EbErrorType svt_av1_enc_stream_header(EbComponentType *    svt_enc_component,
                                             EbBufferHeaderType **output_stream_ptr);
 
 /* OPTIONAL: Release stream headers at init time.
      *
      * Parameter:
      * @ *stream_header_ptr  stream header buffer. */
-EB_API EbErrorType eb_svt_release_enc_stream_header(EbBufferHeaderType *stream_header_ptr);
+EB_API EbErrorType svt_av1_enc_stream_header_release(EbBufferHeaderType *stream_header_ptr);
 
 
 /* OPTIONAL: Get the end of sequence Network Abstraction Layer.
@@ -701,7 +701,7 @@ EB_API EbErrorType eb_svt_release_enc_stream_header(EbBufferHeaderType *stream_h
      * Parameter:
      * @ *svt_enc_component  Encoder handler.
      * @ **output_stream_ptr  Output stream. */
-EB_API EbErrorType eb_svt_enc_eos_nal(EbComponentType *    svt_enc_component,
+EB_API EbErrorType svt_av1_enc_eos_nal(EbComponentType *    svt_enc_component,
                                       EbBufferHeaderType **output_stream_ptr);
 
 /* STEP 4: Send the picture.
@@ -709,7 +709,7 @@ EB_API EbErrorType eb_svt_enc_eos_nal(EbComponentType *    svt_enc_component,
      * Parameter:
      * @ *svt_enc_component  Encoder handler.
      * @ *p_buffer           Header pointer, picture buffer. */
-EB_API EbErrorType eb_svt_enc_send_picture(EbComponentType *   svt_enc_component,
+EB_API EbErrorType svt_av1_enc_send_picture(EbComponentType *   svt_enc_component,
                                            EbBufferHeaderType *p_buffer);
 
 /* STEP 5: Receive packet.
@@ -718,34 +718,34 @@ EB_API EbErrorType eb_svt_enc_send_picture(EbComponentType *   svt_enc_component
      * @ **p_buffer          Header pointer to return packet with.
      * @ pic_send_done       Flag to signal that all input pictures have been sent, this call becomes locking one this signal is 1.
      * Non-locking call, returns EB_ErrorMax for an encode error, EB_NoErrorEmptyQueue when the library does not have any available packets.*/
-EB_API EbErrorType eb_svt_get_packet(EbComponentType *    svt_enc_component,
+EB_API EbErrorType svt_av1_enc_get_packet(EbComponentType *    svt_enc_component,
                                      EbBufferHeaderType **p_buffer, uint8_t pic_send_done);
 
 /* STEP 5-1: Release output buffer back into the pool.
      *
      * Parameter:
      * @ **p_buffer          Header pointer that contains the output packet to be released. */
-EB_API void eb_svt_release_out_buffer(EbBufferHeaderType **p_buffer);
+EB_API void svt_av1_enc_release_out_buffer(EbBufferHeaderType **p_buffer);
 
 /* OPTIONAL: Fill buffer with reconstructed picture.
      *
      * Parameter:
      * @ *svt_enc_component  Encoder handler.
      * @ *p_buffer           Output buffer. */
-EB_API EbErrorType eb_svt_get_recon(EbComponentType *   svt_enc_component,
+EB_API EbErrorType svt_av1_get_recon(EbComponentType *   svt_enc_component,
                                     EbBufferHeaderType *p_buffer);
 
 /* STEP 6: Deinitialize encoder library.
      *
      * Parameter:
      * @ *svt_enc_component  Encoder handler. */
-EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component);
+EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component);
 
 /* STEP 7: Deconstruct encoder handler.
      *
      * Parameter:
      * @ *svt_enc_component  Encoder handler. */
-EB_API EbErrorType eb_deinit_handle(EbComponentType *svt_enc_component);
+EB_API EbErrorType svt_av1_enc_deinit_handle(EbComponentType *svt_enc_component);
 
 #ifdef __cplusplus
 }

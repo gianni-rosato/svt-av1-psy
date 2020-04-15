@@ -69,8 +69,8 @@ class EncParamTestBase : public ::testing::Test {
     virtual void SetUp() override {
         // initialize encoder and get handle
         ASSERT_EQ(EB_ErrorNone,
-                  eb_init_handle(&ctxt_.enc_handle, &ctxt_, &ctxt_.enc_params))
-            << "eb_init_handle failed";
+                  svt_av1_enc_init_handle(&ctxt_.enc_handle, &ctxt_, &ctxt_.enc_params))
+            << "svt_av1_enc_init_handle failed";
         // setup encoder parameters with all default
         ASSERT_NE(nullptr, ctxt_.enc_handle) << "enc_handle is invalid";
         // setup source width/height with default if not in test source_width or
@@ -87,15 +87,15 @@ class EncParamTestBase : public ::testing::Test {
 
     // Tears down the test fixture.
     virtual void TearDown() override {
-        // TODO: eb_deinit_encoder should not be called here, for this test does
-        // not call eb_init_encoder, but there is huge memory leak if only calls
-        // eb_deinit_handle. please remmove it after we pass
+        // TODO: svt_av1_enc_deinit should not be called here, for this test does
+        // not call svt_av1_enc_init, but there is huge memory leak if only calls
+        // svt_av1_enc_deinit_handle. please remmove it after we pass
         // EncApiTest-->repeat_normal_setup
-        ASSERT_EQ(EB_ErrorNone, eb_deinit_encoder(ctxt_.enc_handle))
-            << "eb_deinit_encoder failed";
+        ASSERT_EQ(EB_ErrorNone, svt_av1_enc_deinit(ctxt_.enc_handle))
+            << "svt_av1_enc_deinit failed";
         // destory encoder
-        ASSERT_EQ(EB_ErrorNone, eb_deinit_handle(ctxt_.enc_handle))
-            << "eb_deinit_handle failed";
+        ASSERT_EQ(EB_ErrorNone, svt_av1_enc_deinit_handle(ctxt_.enc_handle))
+            << "svt_av1_enc_deinit_handle failed";
     }
 
     /** setup some of the params with related params modified before set
@@ -138,11 +138,11 @@ class EncParamTestBase : public ::testing::Test {
 
 /** Marcro defininition of printing parameter name when in failed */
 #define PRINT_PARAM_FATAL(p) \
-    << "eb_svt_enc_set_parameter " << #p << ": " << (int)(p) << " failed"
+    << "svt_av1_enc_set_parameter " << #p << ": " << (int)(p) << " failed"
 
 /** Marcro defininition of printing 2 parameters name when in failed */
 #define PRINT_2PARAM_FATAL(p1, p2)                                             \
-    << "eb_svt_enc_set_parameter " << #p1 << ": " << (int)(p1) << " + " << #p2 \
+    << "svt_av1_enc_set_parameter " << #p1 << ": " << (int)(p1) << " + " << #p2 \
     << ": " << (int)(p2) << " failed"
 
 /** Marcro defininition of batch processing check for default, valid, invalid
@@ -175,7 +175,7 @@ class EncParamTestBase : public ::testing::Test {
                 ctxt_.enc_params.param_name = GET_VALID_PARAM(param_name, i); \
                 config_enc_param();                                           \
                 EXPECT_EQ(EB_ErrorNone,                                       \
-                          eb_svt_enc_set_parameter(ctxt_.enc_handle,          \
+                          svt_av1_enc_set_parameter(ctxt_.enc_handle,          \
                                                    &ctxt_.enc_params))        \
                 PRINT_PARAM_FATAL(ctxt_.enc_params.param_name);               \
                 EncParamTestBase::TearDown();                                 \
@@ -188,7 +188,7 @@ class EncParamTestBase : public ::testing::Test {
                     GET_INVALID_PARAM(param_name, i);                         \
                 config_enc_param();                                           \
                 EXPECT_EQ(EB_ErrorBadParameter,                               \
-                          eb_svt_enc_set_parameter(ctxt_.enc_handle,          \
+                          svt_av1_enc_set_parameter(ctxt_.enc_handle,          \
                                                    &ctxt_.enc_params))        \
                 PRINT_PARAM_FATAL(ctxt_.enc_params.param_name);               \
                 EncParamTestBase::TearDown();                                 \

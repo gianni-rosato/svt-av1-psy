@@ -169,14 +169,14 @@ int32_t main(int32_t argc, char *argv[]) {
     EbComponentType *p_handle;
     void *           p_app_data = NULL;
 
-    return_error |= eb_dec_init_handle(&p_handle, p_app_data, config_ptr);
+    return_error |= svt_av1_dec_init_handle(&p_handle, p_app_data, config_ptr);
     if (return_error != EB_ErrorNone) goto fail;
 
     if (read_command_line(argc, argv, config_ptr, &cli, &obu_ctx) == 0 &&
-        !eb_svt_dec_set_parameter(p_handle, config_ptr)) {
-        return_error = eb_init_decoder(p_handle);
+        !svt_av1_dec_set_parameter(p_handle, config_ptr)) {
+        return_error = svt_av1_dec_init(p_handle);
         if (return_error != EB_ErrorNone) {
-            return_error |= eb_dec_deinit_handle(p_handle);
+            return_error |= svt_av1_dec_deinit_handle(p_handle);
             goto fail;
         }
 
@@ -222,14 +222,14 @@ int32_t main(int32_t argc, char *argv[]) {
                     dec_timer_start(&timer);
 
                     return_error |=
-                        eb_svt_decode_frame(p_handle, buf, bytes_in_buffer, obu_ctx.is_annexb);
+                        svt_av1_dec_frame(p_handle, buf, bytes_in_buffer, obu_ctx.is_annexb);
 
                     dec_timer_mark(&timer);
                     dx_time += dec_timer_elapsed(&timer);
 
                     in_frame++;
 
-                    if (eb_svt_dec_get_picture(p_handle, recon_buffer, stream_info, frame_info) !=
+                    if (svt_av1_dec_get_picture(p_handle, recon_buffer, stream_info, frame_info) !=
                         EB_DecNoOutputPicture) {
                         if (fps_frm) show_progress(in_frame, dx_time);
 
@@ -249,7 +249,7 @@ int32_t main(int32_t argc, char *argv[]) {
                 print_md5(md5_digest);
             }
 
-            return_error |= eb_deinit_decoder(p_handle);
+            return_error |= svt_av1_dec_deinit(p_handle);
 
             free(frame_info);
             free(stream_info);
@@ -264,7 +264,7 @@ int32_t main(int32_t argc, char *argv[]) {
         free(buf);
     } else
         fprintf(stderr, "Error in configuration. \n");
-    return_error |= eb_dec_deinit_handle(p_handle);
+    return_error |= svt_av1_dec_deinit_handle(p_handle);
 
 fail:
     if (cli.in_file) fclose(cli.in_file);

@@ -33,7 +33,7 @@ int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr) {
     EbAppContext app_ctx;
     EbConfig *config = (EbConfig *)config_ptr;
     // Initial app_ctx.eb_enc_parameters by copying from dst_enc_config,
-    // which should be initialed in eb_init_handle
+    // which should be initialed in svt_av1_enc_init_handle
     memcpy(&app_ctx.eb_enc_parameters,
            dst_enc_config,
            sizeof(EbSvtAv1EncConfiguration));

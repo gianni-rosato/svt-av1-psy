@@ -49,7 +49,7 @@ index 8f4f2884cf..d2ffecc9f6 100755
  enabled libssh            && require_pkg_config libssh libssh libssh/sftp.h sftp_init
  enabled libspeex          && require_pkg_config libspeex speex speex/speex.h speex_decoder_init
  enabled libsrt            && require_pkg_config libsrt "srt >= 1.3.0" srt/srt.h srt_socket
-+enabled libsvtav1         && require_pkg_config libsvtav1 SvtAv1Enc EbSvtAv1Enc.h eb_init_handle
++enabled libsvtav1         && require_pkg_config libsvtav1 SvtAv1Enc EbSvtAv1Enc.h svt_av1_enc_init_handle
  enabled libtensorflow     && require libtensorflow tensorflow/c/c_api.h TF_Version -ltensorflow
  enabled libtesseract      && require_pkg_config libtesseract tesseract tesseract/capi.h TessBaseAPICreate
  enabled libtheora         && require libtheora theora/theoraenc.h th_info_init -ltheoraenc -ltheoradec -logg
@@ -349,7 +349,7 @@ index 0000000000..4984816830
 +
 +    svt_enc->eos_flag = EOS_NOT_REACHED;
 +
-+    svt_ret = eb_init_handle(&svt_enc->svt_handle, svt_enc, &svt_enc->enc_params);
++    svt_ret = svt_av1_enc_init_handle(&svt_enc->svt_handle, svt_enc, &svt_enc->enc_params);
 +    if (svt_ret != EB_ErrorNone) {
 +        return svt_print_error(avctx, svt_ret, "Error init encoder handle");
 +    }
@@ -360,14 +360,14 @@ index 0000000000..4984816830
 +        return ret;
 +    }
 +
-+    svt_ret = eb_svt_enc_set_parameter(svt_enc->svt_handle, &svt_enc->enc_params);
++    svt_ret = svt_av1_enc_set_parameter(svt_enc->svt_handle, &svt_enc->enc_params);
 +    if (svt_ret != EB_ErrorNone) {
 +        return svt_print_error(avctx, svt_ret, "Error setting encoder parameters");
 +    }
 +
-+    svt_ret = eb_init_encoder(svt_enc->svt_handle);
++    svt_ret = svt_av1_enc_init(svt_enc->svt_handle);
 +    if (svt_ret != EB_ErrorNone) {
-+        eb_deinit_handle(svt_enc->svt_handle);
++        svt_av1_enc_deinit_handle(svt_enc->svt_handle);
 +        svt_enc->svt_handle = NULL;
 +        return svt_print_error(avctx, svt_ret, "Error init encoder");
 +    }
@@ -375,7 +375,7 @@ index 0000000000..4984816830
 +    if (avctx->flags & AV_CODEC_FLAG_GLOBAL_HEADER) {
 +        EbBufferHeaderType *headerPtr = NULL;
 +
-+        svt_ret = eb_svt_enc_stream_header(svt_enc->svt_handle, &headerPtr);
++        svt_ret = svt_av1_enc_stream_header(svt_enc->svt_handle, &headerPtr);
 +        if (svt_ret != EB_ErrorNone) {
 +            return svt_print_error(avctx, svt_ret, "Error when build stream header");
 +        }
@@ -390,7 +390,7 @@ index 0000000000..4984816830
 +
 +        memcpy(avctx->extradata, headerPtr->p_buffer, avctx->extradata_size);
 +
-+        svt_ret = eb_svt_release_enc_stream_header(headerPtr);
++        svt_ret = svt_av1_enc_stream_header_release(headerPtr);
 +        if (svt_ret != EB_ErrorNone) {
 +            return svt_print_error(avctx, svt_ret, "Error when destroy stream header");
 +        }
@@ -417,7 +417,7 @@ index 0000000000..4984816830
 +        headerPtrLast.p_buffer     = NULL;
 +        headerPtrLast.flags      = EB_BUFFERFLAG_EOS;
 +
-+        eb_svt_enc_send_picture(svt_enc->svt_handle, &headerPtrLast);
++        svt_av1_enc_send_picture(svt_enc->svt_handle, &headerPtrLast);
 +        svt_enc->eos_flag = EOS_SENT;
 +        av_log(avctx, AV_LOG_DEBUG, "Finish sending frames!!!\n");
 +        return 0;
@@ -429,7 +429,7 @@ index 0000000000..4984816830
 +    headerPtr->p_app_private  = NULL;
 +    headerPtr->pts          = frame->pts;
 +
-+    eb_svt_enc_send_picture(svt_enc->svt_handle, headerPtr);
++    svt_av1_enc_send_picture(svt_enc->svt_handle, headerPtr);
 +
 +    return 0;
 +}
@@ -445,14 +445,14 @@ index 0000000000..4984816830
 +    if (svt_enc->eos_flag == EOS_RECEIVED)
 +        return AVERROR_EOF;
 +
-+    svt_ret = eb_svt_get_packet(svt_enc->svt_handle, &headerPtr, svt_enc->eos_flag);
++    svt_ret = svt_av1_enc_get_packet(svt_enc->svt_handle, &headerPtr, svt_enc->eos_flag);
 +    if (svt_ret == EB_NoErrorEmptyQueue)
 +        return AVERROR(EAGAIN);
 +
 +    ref = av_buffer_pool_get(svt_enc->pool);
 +    if (!ref) {
 +        av_log(avctx, AV_LOG_ERROR, "Failed to allocate output packet.\n");
-+        eb_svt_release_out_buffer(&headerPtr);
++        svt_av1_enc_release_out_buffer(&headerPtr);
 +        return AVERROR(ENOMEM);
 +    }
 +    pkt->buf = ref;
@@ -480,7 +480,7 @@ index 0000000000..4984816830
 +
 +    ff_side_data_set_encoder_stats(pkt, headerPtr->qp * FF_QP2LAMBDA, NULL, 0, pict_type);
 +
-+    eb_svt_release_out_buffer(&headerPtr);
++    svt_av1_enc_release_out_buffer(&headerPtr);
 +
 +    return ret;
 +}
@@ -491,8 +491,8 @@ index 0000000000..4984816830
 +
 +    if (svt_enc) {
 +        if (svt_enc->svt_handle) {
-+            eb_deinit_encoder(svt_enc->svt_handle);
-+            eb_deinit_handle(svt_enc->svt_handle);
++            svt_av1_enc_deinit(svt_enc->svt_handle);
++            svt_av1_enc_deinit_handle(svt_enc->svt_handle);
 +        }
 +
 +        free_buffer(svt_enc);

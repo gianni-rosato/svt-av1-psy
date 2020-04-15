@@ -938,7 +938,7 @@ void av1_init_wedge_masks(void);
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
+EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 {
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
@@ -1735,7 +1735,7 @@ EB_API EbErrorType eb_init_encoder(EbComponentType *svt_enc_component)
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_deinit_encoder(EbComponentType *svt_enc_component){
+EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
 
@@ -1772,7 +1772,7 @@ EbErrorType init_svt_av1_encoder_handle(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_init_handle(
+EB_API EbErrorType svt_av1_enc_init_handle(
     EbComponentType** p_handle,               // Function to be called in the future for manipulating the component
     void*              p_app_data,
     EbSvtAv1EncConfiguration  *config_ptr)              // pointer passed back to the client during callbacks
@@ -1803,7 +1803,7 @@ EB_API EbErrorType eb_init_handle(
         return_error = eb_svt_enc_init_parameter(config_ptr);
     }
     if (return_error != EB_ErrorNone) {
-        eb_deinit_encoder(*p_handle);
+        svt_av1_enc_deinit(*p_handle);
         free(*p_handle);
         *p_handle = NULL;
         return return_error;
@@ -1830,12 +1830,12 @@ EbErrorType eb_av1_enc_component_de_init(EbComponentType  *svt_enc_component)
 }
 
 /**********************************
-* eb_deinit_handle
+* svt_av1_enc_deinit_handle
 **********************************/
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_deinit_handle(
+EB_API EbErrorType svt_av1_enc_deinit_handle(
     EbComponentType  *svt_enc_component)
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -3141,7 +3141,7 @@ static void print_lib_params(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_enc_set_parameter(
+EB_API EbErrorType svt_av1_enc_set_parameter(
     EbComponentType              *svt_enc_component,
     EbSvtAv1EncConfiguration     *config_struct)
 {
@@ -3201,7 +3201,7 @@ EB_API EbErrorType eb_svt_enc_set_parameter(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_enc_stream_header(
+EB_API EbErrorType svt_av1_enc_stream_header(
     EbComponentType           *svt_enc_component,
     EbBufferHeaderType        **output_stream_ptr)
 {
@@ -3253,7 +3253,7 @@ EB_API EbErrorType eb_svt_enc_stream_header(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_release_enc_stream_header(
+EB_API EbErrorType svt_av1_enc_stream_header_release(
     EbBufferHeaderType        *stream_header_ptr)
 {
     EbErrorType           return_error = EB_ErrorNone;
@@ -3271,7 +3271,7 @@ EB_API EbErrorType eb_svt_release_enc_stream_header(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_enc_eos_nal(
+EB_API EbErrorType svt_av1_enc_eos_nal(
     EbComponentType           *svt_enc_component,
     EbBufferHeaderType       **output_stream_ptr
 )
@@ -3465,7 +3465,7 @@ static void copy_input_buffer(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_enc_send_picture(
+EB_API EbErrorType svt_av1_enc_send_picture(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType   *p_buffer)
 {
@@ -3510,12 +3510,12 @@ static void copy_output_recon_buffer(
 }
 
 /**********************************
-* eb_svt_get_packet sends out packet
+* svt_av1_enc_get_packet sends out packet
 **********************************/
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_get_packet(
+EB_API EbErrorType svt_av1_enc_get_packet(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType  **p_buffer,
     unsigned char          pic_send_done)
@@ -3551,7 +3551,7 @@ EB_API EbErrorType eb_svt_get_packet(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API void eb_svt_release_out_buffer(
+EB_API void svt_av1_enc_release_out_buffer(
     EbBufferHeaderType  **p_buffer)
 {
     if (p_buffer && (*p_buffer)->wrapper_ptr)
@@ -3570,7 +3570,7 @@ EB_API void eb_svt_release_out_buffer(
 #ifdef __GNUC__
 __attribute__((visibility("default")))
 #endif
-EB_API EbErrorType eb_svt_get_recon(
+EB_API EbErrorType svt_av1_get_recon(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType   *p_buffer)
 {
