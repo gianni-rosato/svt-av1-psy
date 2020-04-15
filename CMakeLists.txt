@@ -4,7 +4,6 @@
 #
 
 cmake_minimum_required(VERSION 3.5)
-set(project_name "svt-av1")
 
 if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     message(WARNING "Building in-source is highly not recommended\n"
@@ -20,7 +19,7 @@ if(YASM)
     endif()
 endif()
 
-project(${project_name} C CXX ASM_NASM)
+project(svt-av1 C CXX ASM_NASM)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC OR CMAKE_GENERATOR STREQUAL "Xcode"))
     set(CMAKE_BUILD_TYPE Release)
@@ -38,19 +37,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
 
-if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
-    set(CMAKE_INSTALL_LIBDIR "lib")
-endif()
-
-if(NOT DEFINED CMAKE_INSTALL_INCLUDEDIR)
-    set(CMAKE_INSTALL_INCLUDEDIR "include")
-endif()
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
-set(CAN_USE_ASSEMBLER TRUE)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # BUILD_SHARED_LIBS is a standard CMake variable, but we declare it here to
 # make it prominent in the GUI.
@@ -110,8 +99,6 @@ else()
         list(APPEND flags_to_test -fstack-protector-strong -D_FORTIFY_SOURCE=2)
     endif()
 endif()
-set(release_flags_to_test)
-set(debug_flags_to_test)
 
 foreach(flag ${flags_to_test};${release_flags_to_test};${debug_flags_to_test})
     string(REGEX REPLACE "[^A-Za-z0-9]" "_" flag_var "${flag}")
