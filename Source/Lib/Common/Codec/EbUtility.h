@@ -7,7 +7,7 @@
 #define EbUtility_h
 
 #include "EbDefinitions.h"
-
+#include "common_dsp_rtcd.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -139,7 +139,6 @@ extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
 #define TU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
 #define TU_SIZE_ADJUST(cu_size, tuDepth) ((cu_size) >> (tuDepth))
 
-extern uint32_t Log2f(uint32_t x);
 extern uint64_t log2f_64(uint64_t x);
 
 /****************************
@@ -213,9 +212,6 @@ extern uint64_t log2f_64(uint64_t x);
     (x) += 1;                       \
     MULTI_LINE_MACRO_END
 
-// Calculates the Log2 floor of the integer 'x'
-//   Intended to only be used for macro definitions
-#define LOG2F Log2f_SSE2
 
 #define LOG2F_8(x)               \
     (((x) < 0x0002u)             \

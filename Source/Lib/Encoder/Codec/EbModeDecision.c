@@ -5931,7 +5931,7 @@ EbErrorType generate_md_stage_0_cand(
     context_ptr->injected_mv_count_l0 = 0;
     context_ptr->injected_mv_count_l1 = 0;
     context_ptr->injected_mv_count_bipred = 0;
-    uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+    uint8_t sq_index = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
     EbBool coeff_based_nsq_cand_reduction = EB_FALSE;
     if (slice_type != I_SLICE) {
         if (context_ptr->coeff_based_nsq_cand_reduction) {
@@ -6248,21 +6248,21 @@ uint32_t product_full_mode_decision(
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 = candidate_ptr->ref_frame_index_l1;
         if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_0)
         {
-            //EB_MEMCPY(&pu_ptr->mv[REF_LIST_0].x,&candidate_ptr->mvs_l0,4);
+            //eb_memcpy(&pu_ptr->mv[REF_LIST_0].x,&candidate_ptr->mvs_l0,4);
             pu_ptr->mv[REF_LIST_0].x = candidate_ptr->motion_vector_xl0;
             pu_ptr->mv[REF_LIST_0].y = candidate_ptr->motion_vector_yl0;
         }
 
         if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_1)
         {
-            //EB_MEMCPY(&pu_ptr->mv[REF_LIST_1].x,&candidate_ptr->mvs_l1,4);
+            //eb_memcpy(&pu_ptr->mv[REF_LIST_1].x,&candidate_ptr->mvs_l1,4);
             pu_ptr->mv[REF_LIST_1].x = candidate_ptr->motion_vector_xl1;
             pu_ptr->mv[REF_LIST_1].y = candidate_ptr->motion_vector_yl1;
         }
 
         if (pu_ptr->inter_pred_direction_index == BI_PRED)
         {
-            //EB_MEMCPY(&pu_ptr->mv[REF_LIST_0].x,&candidate_ptr->mvs,8);
+            //eb_memcpy(&pu_ptr->mv[REF_LIST_0].x,&candidate_ptr->mvs,8);
             pu_ptr->mv[REF_LIST_0].x = candidate_ptr->motion_vector_xl0;
             pu_ptr->mv[REF_LIST_0].y = candidate_ptr->motion_vector_yl0;
             pu_ptr->mv[REF_LIST_1].x = candidate_ptr->motion_vector_xl1;
@@ -6287,8 +6287,8 @@ uint32_t product_full_mode_decision(
         pu_ptr->motion_mode = candidate_ptr->motion_mode;
         pu_ptr->num_proj_ref = candidate_ptr->num_proj_ref;
         if (pu_ptr->motion_mode == WARPED_CAUSAL) {
-            EB_MEMCPY(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l0, &candidate_ptr->wm_params_l0, sizeof(EbWarpedMotionParams));
-            EB_MEMCPY(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1, &candidate_ptr->wm_params_l1, sizeof(EbWarpedMotionParams));
+            eb_memcpy(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l0, &candidate_ptr->wm_params_l0, sizeof(EbWarpedMotionParams));
+            eb_memcpy(&context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1, &candidate_ptr->wm_params_l1, sizeof(EbWarpedMotionParams));
         }
     }
 

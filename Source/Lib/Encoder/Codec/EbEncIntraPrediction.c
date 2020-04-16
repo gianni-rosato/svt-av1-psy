@@ -1280,7 +1280,7 @@ EbErrorType update_neighbor_samples_array_open_loop(
     if (src_origin_y != 0) {
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
-        EB_MEMCPY(above_ref, read_ptr, count);
+        eb_memcpy(above_ref, read_ptr, count);
         above_ref += (block_size_half - count);
     }else
         above_ref += count;

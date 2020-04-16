@@ -43,7 +43,7 @@
 /**************************************
  * Instruction Set Support
  **************************************/
-
+#ifdef ARCH_X86
 // Helper Functions
 static INLINE void run_cpuid(uint32_t eax, uint32_t ecx, int32_t* abcd) {
 #ifdef _WIN32
@@ -169,7 +169,7 @@ CPU_FLAGS get_cpu_flags_to_use() {
 #endif
     return flags;
 }
-
+#endif
 #ifndef NON_AVX512_SUPPORT
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
     do {                                                                                      \
@@ -218,90 +218,610 @@ CPU_FLAGS get_cpu_flags_to_use() {
 void setup_common_rtcd_internal(CPU_FLAGS flags) {
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */
-    flags &= get_cpu_flags_to_use();
 
     //to use C: flags=0
-
+    (void)flags;
     aom_blend_a64_mask = aom_blend_a64_mask_c;
-    if (flags & HAS_SSE4_1) aom_blend_a64_mask = aom_blend_a64_mask_sse4_1;
-    if (flags & HAS_AVX2) aom_blend_a64_mask = aom_blend_a64_mask_avx2;
     aom_blend_a64_hmask = aom_blend_a64_hmask_c;
-    if (flags & HAS_SSE4_1) aom_blend_a64_hmask = aom_blend_a64_hmask_sse4_1;
     aom_blend_a64_vmask = aom_blend_a64_vmask_c;
-    if (flags & HAS_SSE4_1) aom_blend_a64_vmask = aom_blend_a64_vmask_sse4_1;
 
     aom_highbd_blend_a64_mask = aom_highbd_blend_a64_mask_c;
-    if (flags & HAS_SSE4_1) aom_highbd_blend_a64_mask = aom_highbd_blend_a64_mask_sse4_1;
     aom_highbd_blend_a64_hmask = aom_highbd_blend_a64_hmask_c;
-    if (flags & HAS_SSE4_1) aom_highbd_blend_a64_hmask = aom_highbd_blend_a64_hmask_sse4_1;
     aom_highbd_blend_a64_vmask = aom_highbd_blend_a64_vmask_c;
-    if (flags & HAS_SSE4_1) aom_highbd_blend_a64_vmask = aom_highbd_blend_a64_vmask_sse4_1;
 
     eb_aom_highbd_blend_a64_vmask = eb_aom_highbd_blend_a64_vmask_c;
-    if (flags & HAS_SSE4_1) eb_aom_highbd_blend_a64_vmask = eb_aom_highbd_blend_a64_vmask_sse4_1;
     eb_aom_highbd_blend_a64_hmask = eb_aom_highbd_blend_a64_hmask_c;
-    if (flags & HAS_SSE4_1) eb_aom_highbd_blend_a64_hmask = eb_aom_highbd_blend_a64_hmask_sse4_1;
 
     eb_cfl_predict_lbd = eb_cfl_predict_lbd_c;
-    if (flags & HAS_AVX2) eb_cfl_predict_lbd = eb_cfl_predict_lbd_avx2;
     eb_cfl_predict_hbd = eb_cfl_predict_hbd_c;
-    if (flags & HAS_AVX2) eb_cfl_predict_hbd = eb_cfl_predict_hbd_avx2;
 
     eb_av1_filter_intra_predictor = eb_av1_filter_intra_predictor_c;
-    if (flags & HAS_SSE4_1) eb_av1_filter_intra_predictor = eb_av1_filter_intra_predictor_sse4_1;
 
     eb_av1_filter_intra_edge_high = eb_av1_filter_intra_edge_high_c;
-    if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge_high = eb_av1_filter_intra_edge_high_sse4_1;
 
     eb_av1_filter_intra_edge = eb_av1_filter_intra_edge_high_c_old;
-    if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge = eb_av1_filter_intra_edge_sse4_1;
 
     eb_av1_upsample_intra_edge = eb_av1_upsample_intra_edge_c;
-    if (flags & HAS_SSE4_1) eb_av1_upsample_intra_edge = eb_av1_upsample_intra_edge_sse4_1;
 
     av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_c;
-    if (flags & HAS_AVX2)
-        av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_avx2;
 
     eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_c;
-    if (flags & HAS_AVX2)
-        eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_avx2;
 
     eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_c;
-    if (flags & HAS_AVX2) eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_avx2;
 
     eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_c;
-    if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
 
     eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_c;
     eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_c;
-    eb_av1_inv_txfm2d_add_4x4   = eb_av1_inv_txfm2d_add_4x4_c;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_4x4 = eb_av1_inv_txfm2d_add_4x4_avx2;
+    eb_av1_inv_txfm2d_add_4x4 = eb_av1_inv_txfm2d_add_4x4_c;
     eb_av1_inv_txfm2d_add_64x64 = eb_av1_inv_txfm2d_add_64x64_c;
-    eb_av1_inv_txfm2d_add_8x8   = eb_av1_inv_txfm2d_add_8x8_c;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_8x8 = eb_av1_inv_txfm2d_add_8x8_avx2;
+    eb_av1_inv_txfm2d_add_8x8 = eb_av1_inv_txfm2d_add_8x8_c;
 
     eb_av1_inv_txfm2d_add_8x16 = eb_av1_inv_txfm2d_add_8x16_c;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_8x16 = eb_av1_highbd_inv_txfm_add_avx2;
     eb_av1_inv_txfm2d_add_16x8 = eb_av1_inv_txfm2d_add_16x8_c;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x8 = eb_av1_highbd_inv_txfm_add_avx2;
     eb_av1_inv_txfm2d_add_16x32 = eb_av1_inv_txfm2d_add_16x32_c;
     eb_av1_inv_txfm2d_add_32x16 = eb_av1_inv_txfm2d_add_32x16_c;
-    eb_av1_inv_txfm2d_add_32x8  = eb_av1_inv_txfm2d_add_32x8_c;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x8 = eb_av1_highbd_inv_txfm_add_avx2;
+    eb_av1_inv_txfm2d_add_32x8 = eb_av1_inv_txfm2d_add_32x8_c;
     eb_av1_inv_txfm2d_add_8x32 = eb_av1_inv_txfm2d_add_8x32_c;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_8x32 = eb_av1_highbd_inv_txfm_add_avx2;
     eb_av1_inv_txfm2d_add_32x64 = eb_av1_inv_txfm2d_add_32x64_c;
     eb_av1_inv_txfm2d_add_64x32 = eb_av1_inv_txfm2d_add_64x32_c;
     eb_av1_inv_txfm2d_add_16x64 = eb_av1_inv_txfm2d_add_16x64_c;
     eb_av1_inv_txfm2d_add_64x16 = eb_av1_inv_txfm2d_add_64x16_c;
-    eb_av1_inv_txfm2d_add_4x8   = eb_av1_inv_txfm2d_add_4x8_c;
-    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_4x8 = eb_av1_inv_txfm2d_add_4x8_sse4_1;
+    eb_av1_inv_txfm2d_add_4x8 = eb_av1_inv_txfm2d_add_4x8_c;
     eb_av1_inv_txfm2d_add_8x4 = eb_av1_inv_txfm2d_add_8x4_c;
-    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_8x4 = eb_av1_inv_txfm2d_add_8x4_sse4_1;
     eb_av1_inv_txfm2d_add_4x16 = eb_av1_inv_txfm2d_add_4x16_c;
-    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_4x16 = eb_av1_inv_txfm2d_add_4x16_sse4_1;
     eb_av1_inv_txfm2d_add_16x4 = eb_av1_inv_txfm2d_add_16x4_c;
+
+    eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_c;
+
+    compressed_packmsb = compressed_packmsb_c;
+    c_pack = c_pack_c;
+    unpack_avg = unpack_avg_c;
+    unpack_avg_safe_sub = unpack_avg_safe_sub_c;
+    un_pack8_bit_data = un_pack8_bit_data_c;
+    cfl_luma_subsampling_420_lbd = cfl_luma_subsampling_420_lbd_c;
+    cfl_luma_subsampling_420_hbd = cfl_luma_subsampling_420_hbd_c;
+    convert_8bit_to_16bit = convert_8bit_to_16bit_c;
+    convert_16bit_to_8bit = convert_16bit_to_8bit_c;
+    pack2d_16_bit_src_mul4 = eb_enc_msb_pack2_d;
+    un_pack2d_16_bit_src_mul4 = eb_enc_msb_un_pack2_d;
+
+    full_distortion_kernel_cbf_zero32_bits = full_distortion_kernel_cbf_zero32_bits_c;
+    full_distortion_kernel32_bits = full_distortion_kernel32_bits_c;
+
+    spatial_full_distortion_kernel = spatial_full_distortion_kernel_c;
+    full_distortion_kernel16_bits = full_distortion_kernel16_bits_c;
+    residual_kernel8bit = residual_kernel8bit_c;
+
+    residual_kernel16bit = residual_kernel16bit_c;
+
+    picture_average_kernel = picture_average_kernel_c;
+    picture_average_kernel1_line = picture_average_kernel1_line_c;
+
+    avc_style_luma_interpolation_filter = avc_style_luma_interpolation_filter_helper_c;
+
+    eb_av1_wiener_convolve_add_src = eb_av1_wiener_convolve_add_src_c,
+
+
+    eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_c;
+
+    eb_av1_convolve_2d_scale = eb_av1_convolve_2d_scale_c;
+
+    eb_av1_highbd_convolve_2d_copy_sr = eb_av1_highbd_convolve_2d_copy_sr_c;
+    eb_av1_highbd_jnt_convolve_2d_copy = eb_av1_highbd_jnt_convolve_2d_copy_c;
+    eb_av1_highbd_convolve_y_sr = eb_av1_highbd_convolve_y_sr_c;
+    eb_av1_highbd_convolve_2d_sr = eb_av1_highbd_convolve_2d_sr_c;
+
+    eb_av1_highbd_convolve_2d_scale = eb_av1_highbd_convolve_2d_scale_c;
+
+    eb_av1_highbd_jnt_convolve_2d = eb_av1_highbd_jnt_convolve_2d_c;
+    eb_av1_highbd_jnt_convolve_x = eb_av1_highbd_jnt_convolve_x_c;
+    eb_av1_highbd_jnt_convolve_y = eb_av1_highbd_jnt_convolve_y_c;
+    eb_av1_highbd_convolve_x_sr = eb_av1_highbd_convolve_x_sr_c;
+
+    eb_av1_convolve_2d_sr = eb_av1_convolve_2d_sr_c;
+    eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_c;
+    eb_av1_convolve_x_sr = eb_av1_convolve_x_sr_c;
+    eb_av1_convolve_y_sr = eb_av1_convolve_y_sr_c;
+    eb_av1_jnt_convolve_2d = eb_av1_jnt_convolve_2d_c;
+    eb_av1_jnt_convolve_2d_copy = eb_av1_jnt_convolve_2d_copy_c;
+    eb_av1_jnt_convolve_x = eb_av1_jnt_convolve_x_c;
+    eb_av1_jnt_convolve_y = eb_av1_jnt_convolve_y_c;
+
+    aom_convolve8_horiz = aom_convolve8_horiz_c;
+    aom_convolve8_vert = aom_convolve8_vert_c;
+
+
+    av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_c;
+    av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_c;
+    av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
+
+    aom_subtract_block = aom_subtract_block_c;
+
+    aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_c;
+    aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_c;
+
+    aom_highbd_subtract_block = aom_highbd_subtract_block_c;
+
+    eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_c;
+    eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_c;
+    eb_aom_highbd_smooth_v_predictor_16x4 = eb_aom_highbd_smooth_v_predictor_16x4_c;
+    eb_aom_highbd_smooth_v_predictor_16x64 = eb_aom_highbd_smooth_v_predictor_16x64_c;
+    eb_aom_highbd_smooth_v_predictor_16x8 = eb_aom_highbd_smooth_v_predictor_16x8_c;
+    eb_aom_highbd_smooth_v_predictor_2x2 = eb_aom_highbd_smooth_v_predictor_2x2_c;
+    eb_aom_highbd_smooth_v_predictor_32x16 = eb_aom_highbd_smooth_v_predictor_32x16_c;
+    eb_aom_highbd_smooth_v_predictor_32x32 = eb_aom_highbd_smooth_v_predictor_32x32_c;
+    eb_aom_highbd_smooth_v_predictor_32x64 = eb_aom_highbd_smooth_v_predictor_32x64_c;
+    eb_aom_highbd_smooth_v_predictor_32x8 = eb_aom_highbd_smooth_v_predictor_32x8_c;
+    eb_aom_highbd_smooth_v_predictor_4x16 = eb_aom_highbd_smooth_v_predictor_4x16_c;
+    eb_aom_highbd_smooth_v_predictor_4x4 = eb_aom_highbd_smooth_v_predictor_4x4_c;
+    eb_aom_highbd_smooth_v_predictor_4x8 = eb_aom_highbd_smooth_v_predictor_4x8_c;
+    eb_aom_highbd_smooth_v_predictor_64x16 = eb_aom_highbd_smooth_v_predictor_64x16_c;
+    eb_aom_highbd_smooth_v_predictor_64x32 = eb_aom_highbd_smooth_v_predictor_64x32_c;
+    eb_aom_highbd_smooth_v_predictor_64x64 = eb_aom_highbd_smooth_v_predictor_64x64_c;
+    eb_aom_highbd_smooth_v_predictor_8x16 = eb_aom_highbd_smooth_v_predictor_8x16_c;
+    eb_aom_highbd_smooth_v_predictor_8x32 = eb_aom_highbd_smooth_v_predictor_8x32_c;
+    eb_aom_highbd_smooth_v_predictor_8x4 = eb_aom_highbd_smooth_v_predictor_8x4_c;
+    eb_aom_highbd_smooth_v_predictor_8x8 = eb_aom_highbd_smooth_v_predictor_8x8_c;
+
+
+    eb_av1_dr_prediction_z1 = eb_av1_dr_prediction_z1_c;
+    eb_av1_dr_prediction_z2 = eb_av1_dr_prediction_z2_c;
+    eb_av1_dr_prediction_z3 = eb_av1_dr_prediction_z3_c;
+    eb_av1_highbd_dr_prediction_z1 = eb_av1_highbd_dr_prediction_z1_c;
+    eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_c;
+    eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_c;
+
+    eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_c;
+    eb_aom_paeth_predictor_16x32 = eb_aom_paeth_predictor_16x32_c;
+    eb_aom_paeth_predictor_16x4 = eb_aom_paeth_predictor_16x4_c;
+    eb_aom_paeth_predictor_16x64 = eb_aom_paeth_predictor_16x64_c;
+    eb_aom_paeth_predictor_16x8 = eb_aom_paeth_predictor_16x8_c;
+    eb_aom_paeth_predictor_32x16 = eb_aom_paeth_predictor_32x16_c;
+    eb_aom_paeth_predictor_32x32 = eb_aom_paeth_predictor_32x32_c;
+    eb_aom_paeth_predictor_32x64 = eb_aom_paeth_predictor_32x64_c;
+    eb_aom_paeth_predictor_32x8 = eb_aom_paeth_predictor_32x8_c;
+    eb_aom_paeth_predictor_4x16 = eb_aom_paeth_predictor_4x16_c;
+    eb_aom_paeth_predictor_4x4 = eb_aom_paeth_predictor_4x4_c;
+    eb_aom_paeth_predictor_4x8 = eb_aom_paeth_predictor_4x8_c;
+    eb_aom_paeth_predictor_64x16 = eb_aom_paeth_predictor_64x16_c;
+    eb_aom_paeth_predictor_64x32 = eb_aom_paeth_predictor_64x32_c;
+    eb_aom_paeth_predictor_64x64 = eb_aom_paeth_predictor_64x64_c;
+    eb_aom_paeth_predictor_8x16 = eb_aom_paeth_predictor_8x16_c;
+    eb_aom_paeth_predictor_8x32 = eb_aom_paeth_predictor_8x32_c;
+    eb_aom_paeth_predictor_8x4 = eb_aom_paeth_predictor_8x4_c;
+    eb_aom_paeth_predictor_8x8 = eb_aom_paeth_predictor_8x8_c;
+
+    eb_aom_highbd_paeth_predictor_16x16 = eb_aom_highbd_paeth_predictor_16x16_c;
+    eb_aom_highbd_paeth_predictor_16x32 = eb_aom_highbd_paeth_predictor_16x32_c;
+    eb_aom_highbd_paeth_predictor_16x4 = eb_aom_highbd_paeth_predictor_16x4_c;
+    eb_aom_highbd_paeth_predictor_16x64 = eb_aom_highbd_paeth_predictor_16x64_c;
+    eb_aom_highbd_paeth_predictor_16x8 = eb_aom_highbd_paeth_predictor_16x8_c;
+    eb_aom_highbd_paeth_predictor_2x2 = eb_aom_highbd_paeth_predictor_2x2_c;
+    eb_aom_highbd_paeth_predictor_32x16 = eb_aom_highbd_paeth_predictor_32x16_c;
+    eb_aom_highbd_paeth_predictor_32x32 = eb_aom_highbd_paeth_predictor_32x32_c;
+    eb_aom_highbd_paeth_predictor_32x64 = eb_aom_highbd_paeth_predictor_32x64_c;
+    eb_aom_highbd_paeth_predictor_32x8 = eb_aom_highbd_paeth_predictor_32x8_c;
+    eb_aom_highbd_paeth_predictor_4x16 = eb_aom_highbd_paeth_predictor_4x16_c;
+    eb_aom_highbd_paeth_predictor_4x4 = eb_aom_highbd_paeth_predictor_4x4_c;
+    eb_aom_highbd_paeth_predictor_4x8 = eb_aom_highbd_paeth_predictor_4x8_c;
+    eb_aom_highbd_paeth_predictor_64x16 = eb_aom_highbd_paeth_predictor_64x16_c;
+    eb_aom_highbd_paeth_predictor_64x32 = eb_aom_highbd_paeth_predictor_64x32_c;
+    eb_aom_highbd_paeth_predictor_64x64 = eb_aom_highbd_paeth_predictor_64x64_c;
+    eb_aom_highbd_paeth_predictor_8x16 = eb_aom_highbd_paeth_predictor_8x16_c;
+    eb_aom_highbd_paeth_predictor_8x32 = eb_aom_highbd_paeth_predictor_8x32_c;
+    eb_aom_highbd_paeth_predictor_8x4 = eb_aom_highbd_paeth_predictor_8x4_c;
+    eb_aom_highbd_paeth_predictor_8x8 = eb_aom_highbd_paeth_predictor_8x8_c;
+    aom_sum_squares_i16 = aom_sum_squares_i16_c;
+    eb_aom_dc_predictor_4x4 = eb_aom_dc_predictor_4x4_c;
+    eb_aom_dc_predictor_8x8 = eb_aom_dc_predictor_8x8_c;
+    eb_aom_dc_predictor_16x16 = eb_aom_dc_predictor_16x16_c;
+    eb_aom_dc_predictor_32x32 = eb_aom_dc_predictor_32x32_c;
+    eb_aom_dc_predictor_64x64 = eb_aom_dc_predictor_64x64_c;
+    eb_aom_dc_predictor_32x16 = eb_aom_dc_predictor_32x16_c;
+    eb_aom_dc_predictor_32x64 = eb_aom_dc_predictor_32x64_c;
+    eb_aom_dc_predictor_64x16 = eb_aom_dc_predictor_64x16_c;
+    eb_aom_dc_predictor_8x16 = eb_aom_dc_predictor_8x16_c;
+    eb_aom_dc_predictor_8x32 = eb_aom_dc_predictor_8x32_c;
+    eb_aom_dc_predictor_8x4 = eb_aom_dc_predictor_8x4_c;
+    eb_aom_dc_predictor_64x32 = eb_aom_dc_predictor_64x32_c;
+    eb_aom_dc_predictor_16x32 = eb_aom_dc_predictor_16x32_c;
+    eb_aom_dc_predictor_16x4 = eb_aom_dc_predictor_16x4_c;
+    eb_aom_dc_predictor_16x64 = eb_aom_dc_predictor_16x64_c;
+    eb_aom_dc_predictor_16x8 = eb_aom_dc_predictor_16x8_c;
+    eb_aom_dc_predictor_32x8 = eb_aom_dc_predictor_32x8_c;
+    eb_aom_dc_predictor_4x16 = eb_aom_dc_predictor_4x16_c;
+    eb_aom_dc_predictor_4x8 = eb_aom_dc_predictor_4x8_c;
+
+    eb_aom_dc_top_predictor_4x4 = eb_aom_dc_top_predictor_4x4_c;
+    eb_aom_dc_top_predictor_8x8 = eb_aom_dc_top_predictor_8x8_c;
+    eb_aom_dc_top_predictor_16x16 = eb_aom_dc_top_predictor_16x16_c;
+    eb_aom_dc_top_predictor_32x32 = eb_aom_dc_top_predictor_32x32_c;
+    eb_aom_dc_top_predictor_64x64 = eb_aom_dc_top_predictor_64x64_c;
+    eb_aom_dc_top_predictor_16x32 = eb_aom_dc_top_predictor_16x32_c;
+    eb_aom_dc_top_predictor_16x4 = eb_aom_dc_top_predictor_16x4_c;
+    eb_aom_dc_top_predictor_16x64 = eb_aom_dc_top_predictor_16x64_c;
+    eb_aom_dc_top_predictor_16x8 = eb_aom_dc_top_predictor_16x8_c;
+    eb_aom_dc_top_predictor_32x16 = eb_aom_dc_top_predictor_32x16_c;
+    eb_aom_dc_top_predictor_32x64 = eb_aom_dc_top_predictor_32x64_c;
+    eb_aom_dc_top_predictor_32x8 = eb_aom_dc_top_predictor_32x8_c;
+    eb_aom_dc_top_predictor_4x16 = eb_aom_dc_top_predictor_4x16_c;
+    eb_aom_dc_top_predictor_4x8 = eb_aom_dc_top_predictor_4x8_c;
+    eb_aom_dc_top_predictor_64x16 = eb_aom_dc_top_predictor_64x16_c;
+    eb_aom_dc_top_predictor_64x32 = eb_aom_dc_top_predictor_64x32_c;
+    eb_aom_dc_top_predictor_8x16 = eb_aom_dc_top_predictor_8x16_c;
+    eb_aom_dc_top_predictor_8x32 = eb_aom_dc_top_predictor_8x32_c;
+    eb_aom_dc_top_predictor_8x4 = eb_aom_dc_top_predictor_8x4_c;
+
+    eb_aom_dc_left_predictor_4x4 = eb_aom_dc_left_predictor_4x4_c;
+    eb_aom_dc_left_predictor_8x8 = eb_aom_dc_left_predictor_8x8_c;
+    eb_aom_dc_left_predictor_16x16 = eb_aom_dc_left_predictor_16x16_c;
+    eb_aom_dc_left_predictor_32x32 = eb_aom_dc_left_predictor_32x32_c;
+    eb_aom_dc_left_predictor_64x64 = eb_aom_dc_left_predictor_64x64_c;
+    eb_aom_dc_left_predictor_16x32 = eb_aom_dc_left_predictor_16x32_c;
+    eb_aom_dc_left_predictor_16x4 = eb_aom_dc_left_predictor_16x4_c;
+    eb_aom_dc_left_predictor_16x64 = eb_aom_dc_left_predictor_16x64_c;
+    eb_aom_dc_left_predictor_16x8 = eb_aom_dc_left_predictor_16x8_c;
+    eb_aom_dc_left_predictor_32x16 = eb_aom_dc_left_predictor_32x16_c;
+    eb_aom_dc_left_predictor_32x64 = eb_aom_dc_left_predictor_32x64_c;
+    eb_aom_dc_left_predictor_64x16 = eb_aom_dc_left_predictor_64x16_c;
+    eb_aom_dc_left_predictor_64x32 = eb_aom_dc_left_predictor_64x32_c;
+    eb_aom_dc_left_predictor_32x8 = eb_aom_dc_left_predictor_32x8_c;
+    eb_aom_dc_left_predictor_4x16 = eb_aom_dc_left_predictor_4x16_c;
+    eb_aom_dc_left_predictor_4x8 = eb_aom_dc_left_predictor_4x8_c;
+    eb_aom_dc_left_predictor_8x16 = eb_aom_dc_left_predictor_8x16_c;
+    eb_aom_dc_left_predictor_8x32 = eb_aom_dc_left_predictor_8x32_c;
+    eb_aom_dc_left_predictor_8x4 = eb_aom_dc_left_predictor_8x4_c;
+
+    eb_aom_dc_128_predictor_4x4 = eb_aom_dc_128_predictor_4x4_c;
+    eb_aom_dc_128_predictor_8x8 = eb_aom_dc_128_predictor_8x8_c;
+    eb_aom_dc_128_predictor_16x16 = eb_aom_dc_128_predictor_16x16_c;
+    eb_aom_dc_128_predictor_32x32 = eb_aom_dc_128_predictor_32x32_c;
+    eb_aom_dc_128_predictor_64x64 = eb_aom_dc_128_predictor_64x64_c;
+    eb_aom_dc_128_predictor_16x32 = eb_aom_dc_128_predictor_16x32_c;
+    eb_aom_dc_128_predictor_16x4 = eb_aom_dc_128_predictor_16x4_c;
+    eb_aom_dc_128_predictor_16x64 = eb_aom_dc_128_predictor_16x64_c;
+    eb_aom_dc_128_predictor_16x8 = eb_aom_dc_128_predictor_16x8_c;
+    eb_aom_dc_128_predictor_32x16 = eb_aom_dc_128_predictor_32x16_c;
+    eb_aom_dc_128_predictor_32x64 = eb_aom_dc_128_predictor_32x64_c;
+    eb_aom_dc_128_predictor_32x8 = eb_aom_dc_128_predictor_32x8_c;
+    eb_aom_dc_128_predictor_4x16 = eb_aom_dc_128_predictor_4x16_c;
+    eb_aom_dc_128_predictor_4x8 = eb_aom_dc_128_predictor_4x8_c;
+    eb_aom_dc_128_predictor_64x16 = eb_aom_dc_128_predictor_64x16_c;
+    eb_aom_dc_128_predictor_64x32 = eb_aom_dc_128_predictor_64x32_c;
+    eb_aom_dc_128_predictor_8x16 = eb_aom_dc_128_predictor_8x16_c;
+    eb_aom_dc_128_predictor_8x32 = eb_aom_dc_128_predictor_8x32_c;
+    eb_aom_dc_128_predictor_8x4 = eb_aom_dc_128_predictor_8x4_c;
+
+    eb_aom_smooth_h_predictor_16x32 = eb_aom_smooth_h_predictor_16x32_c;
+    eb_aom_smooth_h_predictor_16x4 = eb_aom_smooth_h_predictor_16x4_c;
+    eb_aom_smooth_h_predictor_16x64 = eb_aom_smooth_h_predictor_16x64_c;
+    eb_aom_smooth_h_predictor_16x8 = eb_aom_smooth_h_predictor_16x8_c;
+    eb_aom_smooth_h_predictor_32x16 = eb_aom_smooth_h_predictor_32x16_c;
+    eb_aom_smooth_h_predictor_32x64 = eb_aom_smooth_h_predictor_32x64_c;
+    eb_aom_smooth_h_predictor_32x8 = eb_aom_smooth_h_predictor_32x8_c;
+    eb_aom_smooth_h_predictor_4x16 = eb_aom_smooth_h_predictor_4x16_c;
+    eb_aom_smooth_h_predictor_4x8 = eb_aom_smooth_h_predictor_4x8_c;
+    eb_aom_smooth_h_predictor_64x16 = eb_aom_smooth_h_predictor_64x16_c;
+    eb_aom_smooth_h_predictor_64x32 = eb_aom_smooth_h_predictor_64x32_c;
+    eb_aom_smooth_h_predictor_8x16 = eb_aom_smooth_h_predictor_8x16_c;
+    eb_aom_smooth_h_predictor_8x32 = eb_aom_smooth_h_predictor_8x32_c;
+    eb_aom_smooth_h_predictor_8x4 = eb_aom_smooth_h_predictor_8x4_c;
+    eb_aom_smooth_h_predictor_64x64 = eb_aom_smooth_h_predictor_64x64_c;
+    eb_aom_smooth_h_predictor_32x32 = eb_aom_smooth_h_predictor_32x32_c;
+    eb_aom_smooth_h_predictor_16x16 = eb_aom_smooth_h_predictor_16x16_c;
+    eb_aom_smooth_h_predictor_8x8 = eb_aom_smooth_h_predictor_8x8_c;
+    eb_aom_smooth_h_predictor_4x4 = eb_aom_smooth_h_predictor_4x4_c;
+    eb_aom_smooth_v_predictor_16x32 = eb_aom_smooth_v_predictor_16x32_c;
+    eb_aom_smooth_v_predictor_16x4 = eb_aom_smooth_v_predictor_16x4_c;
+    eb_aom_smooth_v_predictor_16x64 = eb_aom_smooth_v_predictor_16x64_c;
+    eb_aom_smooth_v_predictor_16x8 = eb_aom_smooth_v_predictor_16x8_c;
+    eb_aom_smooth_v_predictor_32x16 = eb_aom_smooth_v_predictor_32x16_c;
+    eb_aom_smooth_v_predictor_32x64 = eb_aom_smooth_v_predictor_32x64_c;
+    eb_aom_smooth_v_predictor_32x8 = eb_aom_smooth_v_predictor_32x8_c;
+    eb_aom_smooth_v_predictor_4x16 = eb_aom_smooth_v_predictor_4x16_c;
+    eb_aom_smooth_v_predictor_4x8 = eb_aom_smooth_v_predictor_4x8_c;
+    eb_aom_smooth_v_predictor_64x16 = eb_aom_smooth_v_predictor_64x16_c;
+    eb_aom_smooth_v_predictor_64x32 = eb_aom_smooth_v_predictor_64x32_c;
+    eb_aom_smooth_v_predictor_8x16 = eb_aom_smooth_v_predictor_8x16_c;
+    eb_aom_smooth_v_predictor_8x32 = eb_aom_smooth_v_predictor_8x32_c;
+    eb_aom_smooth_v_predictor_8x4 = eb_aom_smooth_v_predictor_8x4_c;
+    eb_aom_smooth_v_predictor_64x64 = eb_aom_smooth_v_predictor_64x64_c;
+    eb_aom_smooth_v_predictor_32x32 = eb_aom_smooth_v_predictor_32x32_c;
+    eb_aom_smooth_v_predictor_16x16 = eb_aom_smooth_v_predictor_16x16_c;
+    eb_aom_smooth_v_predictor_8x8 = eb_aom_smooth_v_predictor_8x8_c;
+    eb_aom_smooth_v_predictor_4x4 = eb_aom_smooth_v_predictor_4x4_c;
+
+    eb_aom_smooth_predictor_16x32 = eb_aom_smooth_predictor_16x32_c;
+    eb_aom_smooth_predictor_16x4 = eb_aom_smooth_predictor_16x4_c;
+    eb_aom_smooth_predictor_16x64 = eb_aom_smooth_predictor_16x64_c;
+    eb_aom_smooth_predictor_16x8 = eb_aom_smooth_predictor_16x8_c;
+    eb_aom_smooth_predictor_32x16 = eb_aom_smooth_predictor_32x16_c;
+    eb_aom_smooth_predictor_32x64 = eb_aom_smooth_predictor_32x64_c;
+    eb_aom_smooth_predictor_32x8 = eb_aom_smooth_predictor_32x8_c;
+    eb_aom_smooth_predictor_4x16 = eb_aom_smooth_predictor_4x16_c;
+    eb_aom_smooth_predictor_4x8 = eb_aom_smooth_predictor_4x8_c;
+    eb_aom_smooth_predictor_64x16 = eb_aom_smooth_predictor_64x16_c;
+    eb_aom_smooth_predictor_64x32 = eb_aom_smooth_predictor_64x32_c;
+    eb_aom_smooth_predictor_8x16 = eb_aom_smooth_predictor_8x16_c;
+    eb_aom_smooth_predictor_8x32 = eb_aom_smooth_predictor_8x32_c;
+    eb_aom_smooth_predictor_8x4 = eb_aom_smooth_predictor_8x4_c;
+    eb_aom_smooth_predictor_64x64 = eb_aom_smooth_predictor_64x64_c;
+    eb_aom_smooth_predictor_32x32 = eb_aom_smooth_predictor_32x32_c;
+    eb_aom_smooth_predictor_16x16 = eb_aom_smooth_predictor_16x16_c;
+    eb_aom_smooth_predictor_8x8 = eb_aom_smooth_predictor_8x8_c;
+    eb_aom_smooth_predictor_4x4 = eb_aom_smooth_predictor_4x4_c;
+
+    eb_aom_v_predictor_4x4 = eb_aom_v_predictor_4x4_c;
+    eb_aom_v_predictor_8x8 = eb_aom_v_predictor_8x8_c;
+    eb_aom_v_predictor_16x16 = eb_aom_v_predictor_16x16_c;
+    eb_aom_v_predictor_32x32 = eb_aom_v_predictor_32x32_c;
+    eb_aom_v_predictor_64x64 = eb_aom_v_predictor_64x64_c;
+    eb_aom_v_predictor_16x32 = eb_aom_v_predictor_16x32_c;
+    eb_aom_v_predictor_16x4 = eb_aom_v_predictor_16x4_c;
+    eb_aom_v_predictor_16x64 = eb_aom_v_predictor_16x64_c;
+    eb_aom_v_predictor_16x8 = eb_aom_v_predictor_16x8_c;
+    eb_aom_v_predictor_32x16 = eb_aom_v_predictor_32x16_c;
+    eb_aom_v_predictor_32x64 = eb_aom_v_predictor_32x64_c;
+    eb_aom_v_predictor_32x8 = eb_aom_v_predictor_32x8_c;
+    eb_aom_v_predictor_4x16 = eb_aom_v_predictor_4x16_c;
+    eb_aom_v_predictor_4x8 = eb_aom_v_predictor_4x8_c;
+    eb_aom_v_predictor_64x16 = eb_aom_v_predictor_64x16_c;
+    eb_aom_v_predictor_64x32 = eb_aom_v_predictor_64x32_c;
+    eb_aom_v_predictor_8x16 = eb_aom_v_predictor_8x16_c;
+    eb_aom_v_predictor_8x32 = eb_aom_v_predictor_8x32_c;
+    eb_aom_v_predictor_8x4 = eb_aom_v_predictor_8x4_c;
+
+    eb_aom_h_predictor_4x4 = eb_aom_h_predictor_4x4_c;
+    eb_aom_h_predictor_8x8 = eb_aom_h_predictor_8x8_c;
+    eb_aom_h_predictor_16x16 = eb_aom_h_predictor_16x16_c;
+    eb_aom_h_predictor_32x32 = eb_aom_h_predictor_32x32_c;
+    eb_aom_h_predictor_64x64 = eb_aom_h_predictor_64x64_c;
+    eb_aom_h_predictor_16x32 = eb_aom_h_predictor_16x32_c;
+    eb_aom_h_predictor_16x4 = eb_aom_h_predictor_16x4_c;
+    eb_aom_h_predictor_16x64 = eb_aom_h_predictor_16x64_c;
+    eb_aom_h_predictor_16x8 = eb_aom_h_predictor_16x8_c;
+    eb_aom_h_predictor_32x16 = eb_aom_h_predictor_32x16_c;
+    eb_aom_h_predictor_32x64 = eb_aom_h_predictor_32x64_c;
+    eb_aom_h_predictor_32x8 = eb_aom_h_predictor_32x8_c;
+    eb_aom_h_predictor_4x16 = eb_aom_h_predictor_4x16_c;
+    eb_aom_h_predictor_4x8 = eb_aom_h_predictor_4x8_c;
+    eb_aom_h_predictor_64x16 = eb_aom_h_predictor_64x16_c;
+    eb_aom_h_predictor_64x32 = eb_aom_h_predictor_64x32_c;
+    eb_aom_h_predictor_8x16 = eb_aom_h_predictor_8x16_c;
+    eb_aom_h_predictor_8x32 = eb_aom_h_predictor_8x32_c;
+    eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_c;
+    aom_sum_squares_i16 = aom_sum_squares_i16_c;
+    eb_cdef_find_dir = eb_cdef_find_dir_c;
+
+    eb_cdef_filter_block = eb_cdef_filter_block_c;
+
+    eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_c;
+
+
+    eb_av1_highbd_warp_affine = eb_av1_highbd_warp_affine_c;
+
+    eb_av1_warp_affine = eb_av1_warp_affine_c;
+
+    aom_highbd_lpf_horizontal_14 = aom_highbd_lpf_horizontal_14_c;
+    aom_highbd_lpf_horizontal_4 = aom_highbd_lpf_horizontal_4_c;
+    aom_highbd_lpf_horizontal_6 = aom_highbd_lpf_horizontal_6_c;
+    aom_highbd_lpf_horizontal_8 = aom_highbd_lpf_horizontal_8_c;
+    aom_highbd_lpf_vertical_14 = aom_highbd_lpf_vertical_14_c;
+    aom_highbd_lpf_vertical_4 = aom_highbd_lpf_vertical_4_c;
+    aom_highbd_lpf_vertical_6 = aom_highbd_lpf_vertical_6_c;
+    aom_highbd_lpf_vertical_8 = aom_highbd_lpf_vertical_8_c;
+    aom_lpf_horizontal_14 = aom_lpf_horizontal_14_c;
+    aom_lpf_horizontal_4 = aom_lpf_horizontal_4_c;
+    aom_lpf_horizontal_6 = aom_lpf_horizontal_6_c;
+    aom_lpf_horizontal_8 = aom_lpf_horizontal_8_c;
+    aom_lpf_vertical_14 = aom_lpf_vertical_14_c;
+    aom_lpf_vertical_4 = aom_lpf_vertical_4_c;
+    aom_lpf_vertical_6 = aom_lpf_vertical_6_c;
+    aom_lpf_vertical_8 = aom_lpf_vertical_8_c;
+
+    // eb_aom_highbd_v_predictor
+    eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_c;
+    eb_aom_highbd_v_predictor_16x32 = eb_aom_highbd_v_predictor_16x32_c;
+    eb_aom_highbd_v_predictor_16x4 = eb_aom_highbd_v_predictor_16x4_c;
+    eb_aom_highbd_v_predictor_16x64 = eb_aom_highbd_v_predictor_16x64_c;
+    eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_c;
+    eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_c;
+    eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_c;
+    eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_c;
+    eb_aom_highbd_v_predictor_32x8 = eb_aom_highbd_v_predictor_32x8_c;
+    eb_aom_highbd_v_predictor_4x16 = eb_aom_highbd_v_predictor_4x16_c;
+    eb_aom_highbd_v_predictor_4x4 = eb_aom_highbd_v_predictor_4x4_c;
+    eb_aom_highbd_v_predictor_4x8 = eb_aom_highbd_v_predictor_4x8_c;
+    eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_c;
+    eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_c;
+    eb_aom_highbd_v_predictor_8x32 = eb_aom_highbd_v_predictor_8x32_c;
+    eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_c;
+    eb_aom_highbd_v_predictor_8x16 = eb_aom_highbd_v_predictor_8x16_c;
+    eb_aom_highbd_v_predictor_8x4 = eb_aom_highbd_v_predictor_8x4_c;
+    eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_c;
+
+    //aom_highbd_smooth_predictor
+    eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_c;
+    eb_aom_highbd_smooth_predictor_16x32 = eb_aom_highbd_smooth_predictor_16x32_c;
+    eb_aom_highbd_smooth_predictor_16x4 = eb_aom_highbd_smooth_predictor_16x4_c;
+    eb_aom_highbd_smooth_predictor_16x64 = eb_aom_highbd_smooth_predictor_16x64_c;
+    eb_aom_highbd_smooth_predictor_16x8 = eb_aom_highbd_smooth_predictor_16x8_c;
+    eb_aom_highbd_smooth_predictor_2x2 = eb_aom_highbd_smooth_predictor_2x2_c;
+    eb_aom_highbd_smooth_predictor_32x16 = eb_aom_highbd_smooth_predictor_32x16_c;
+    eb_aom_highbd_smooth_predictor_32x32 = eb_aom_highbd_smooth_predictor_32x32_c;
+    eb_aom_highbd_smooth_predictor_32x64 = eb_aom_highbd_smooth_predictor_32x64_c;
+    eb_aom_highbd_smooth_predictor_32x8 = eb_aom_highbd_smooth_predictor_32x8_c;
+    eb_aom_highbd_smooth_predictor_4x16 = eb_aom_highbd_smooth_predictor_4x16_c;
+    eb_aom_highbd_smooth_predictor_4x4 = eb_aom_highbd_smooth_predictor_4x4_c;
+    eb_aom_highbd_smooth_predictor_4x8 = eb_aom_highbd_smooth_predictor_4x8_c;
+    eb_aom_highbd_smooth_predictor_64x16 = eb_aom_highbd_smooth_predictor_64x16_c;
+    eb_aom_highbd_smooth_predictor_64x32 = eb_aom_highbd_smooth_predictor_64x32_c;
+    eb_aom_highbd_smooth_predictor_64x64 = eb_aom_highbd_smooth_predictor_64x64_c;
+    eb_aom_highbd_smooth_predictor_8x16 = eb_aom_highbd_smooth_predictor_8x16_c;
+    eb_aom_highbd_smooth_predictor_8x32 = eb_aom_highbd_smooth_predictor_8x32_c;
+    eb_aom_highbd_smooth_predictor_8x4 = eb_aom_highbd_smooth_predictor_8x4_c;
+    eb_aom_highbd_smooth_predictor_8x8 = eb_aom_highbd_smooth_predictor_8x8_c;
+
+
+    //aom_highbd_smooth_h_predictor
+    eb_aom_highbd_smooth_h_predictor_16x16 = eb_aom_highbd_smooth_h_predictor_16x16_c;
+    eb_aom_highbd_smooth_h_predictor_16x32 = eb_aom_highbd_smooth_h_predictor_16x32_c;
+    eb_aom_highbd_smooth_h_predictor_16x4 = eb_aom_highbd_smooth_h_predictor_16x4_c;
+    eb_aom_highbd_smooth_h_predictor_16x64 = eb_aom_highbd_smooth_h_predictor_16x64_c;
+    eb_aom_highbd_smooth_h_predictor_16x8 = eb_aom_highbd_smooth_h_predictor_16x8_c;
+    eb_aom_highbd_smooth_h_predictor_32x16 = eb_aom_highbd_smooth_h_predictor_32x16_c;
+    eb_aom_highbd_smooth_h_predictor_32x32 = eb_aom_highbd_smooth_h_predictor_32x32_c;
+    eb_aom_highbd_smooth_h_predictor_32x64 = eb_aom_highbd_smooth_h_predictor_32x64_c;
+    eb_aom_highbd_smooth_h_predictor_32x8 = eb_aom_highbd_smooth_h_predictor_32x8_c;
+    eb_aom_highbd_smooth_h_predictor_4x16 = eb_aom_highbd_smooth_h_predictor_4x16_c;
+    eb_aom_highbd_smooth_h_predictor_4x4 = eb_aom_highbd_smooth_h_predictor_4x4_c;
+    eb_aom_highbd_smooth_h_predictor_4x8 = eb_aom_highbd_smooth_h_predictor_4x8_c;
+    eb_aom_highbd_smooth_h_predictor_64x16 = eb_aom_highbd_smooth_h_predictor_64x16_c;
+    eb_aom_highbd_smooth_h_predictor_64x32 = eb_aom_highbd_smooth_h_predictor_64x32_c;
+    eb_aom_highbd_smooth_h_predictor_64x64 = eb_aom_highbd_smooth_h_predictor_64x64_c;
+    eb_aom_highbd_smooth_h_predictor_8x16 = eb_aom_highbd_smooth_h_predictor_8x16_c;
+    eb_aom_highbd_smooth_h_predictor_8x32 = eb_aom_highbd_smooth_h_predictor_8x32_c;
+    eb_aom_highbd_smooth_h_predictor_8x4 = eb_aom_highbd_smooth_h_predictor_8x4_c;
+    eb_aom_highbd_smooth_h_predictor_8x8 = eb_aom_highbd_smooth_h_predictor_8x8_c;
+
+    //aom_highbd_dc_128_predictor
+    eb_aom_highbd_dc_128_predictor_16x16 = eb_aom_highbd_dc_128_predictor_16x16_c;
+    eb_aom_highbd_dc_128_predictor_16x32 = eb_aom_highbd_dc_128_predictor_16x32_c;
+    eb_aom_highbd_dc_128_predictor_16x4 = eb_aom_highbd_dc_128_predictor_16x4_c;
+    eb_aom_highbd_dc_128_predictor_16x64 = eb_aom_highbd_dc_128_predictor_16x64_c;
+    eb_aom_highbd_dc_128_predictor_16x8 = eb_aom_highbd_dc_128_predictor_16x8_c;
+    eb_aom_highbd_dc_128_predictor_32x16 = eb_aom_highbd_dc_128_predictor_32x16_c;
+    eb_aom_highbd_dc_128_predictor_32x32 = eb_aom_highbd_dc_128_predictor_32x32_c;
+    eb_aom_highbd_dc_128_predictor_32x64 = eb_aom_highbd_dc_128_predictor_32x64_c;
+    eb_aom_highbd_dc_128_predictor_32x8 = eb_aom_highbd_dc_128_predictor_32x8_c;
+    eb_aom_highbd_dc_128_predictor_4x16 = eb_aom_highbd_dc_128_predictor_4x16_c;
+    eb_aom_highbd_dc_128_predictor_4x4 = eb_aom_highbd_dc_128_predictor_4x4_c;
+    eb_aom_highbd_dc_128_predictor_4x8 = eb_aom_highbd_dc_128_predictor_4x8_c;
+    eb_aom_highbd_dc_128_predictor_8x32 = eb_aom_highbd_dc_128_predictor_8x32_c;
+    eb_aom_highbd_dc_128_predictor_64x16 = eb_aom_highbd_dc_128_predictor_64x16_c;
+    eb_aom_highbd_dc_128_predictor_64x32 = eb_aom_highbd_dc_128_predictor_64x32_c;
+    eb_aom_highbd_dc_128_predictor_64x64 = eb_aom_highbd_dc_128_predictor_64x64_c;
+    eb_aom_highbd_dc_128_predictor_8x16 = eb_aom_highbd_dc_128_predictor_8x16_c;
+    eb_aom_highbd_dc_128_predictor_8x4 = eb_aom_highbd_dc_128_predictor_8x4_c;
+    eb_aom_highbd_dc_128_predictor_8x8 = eb_aom_highbd_dc_128_predictor_8x8_c;
+
+    //aom_highbd_dc_left_predictor
+    eb_aom_highbd_dc_left_predictor_16x16 = eb_aom_highbd_dc_left_predictor_16x16_c;
+    eb_aom_highbd_dc_left_predictor_16x32 = eb_aom_highbd_dc_left_predictor_16x32_c;
+    eb_aom_highbd_dc_left_predictor_16x4 = eb_aom_highbd_dc_left_predictor_16x4_c;
+    eb_aom_highbd_dc_left_predictor_16x64 = eb_aom_highbd_dc_left_predictor_16x64_c;
+    eb_aom_highbd_dc_left_predictor_16x8 = eb_aom_highbd_dc_left_predictor_16x8_c;
+    eb_aom_highbd_dc_left_predictor_2x2 = eb_aom_highbd_dc_left_predictor_2x2_c;
+    eb_aom_highbd_dc_left_predictor_32x16 = eb_aom_highbd_dc_left_predictor_32x16_c;
+    eb_aom_highbd_dc_left_predictor_32x32 = eb_aom_highbd_dc_left_predictor_32x32_c;
+    eb_aom_highbd_dc_left_predictor_32x64 = eb_aom_highbd_dc_left_predictor_32x64_c;
+    eb_aom_highbd_dc_left_predictor_32x8 = eb_aom_highbd_dc_left_predictor_32x8_c;
+    eb_aom_highbd_dc_left_predictor_4x16 = eb_aom_highbd_dc_left_predictor_4x16_c;
+    eb_aom_highbd_dc_left_predictor_4x4 = eb_aom_highbd_dc_left_predictor_4x4_c;
+    eb_aom_highbd_dc_left_predictor_4x8 = eb_aom_highbd_dc_left_predictor_4x8_c;
+    eb_aom_highbd_dc_left_predictor_8x32 = eb_aom_highbd_dc_left_predictor_8x32_c;
+    eb_aom_highbd_dc_left_predictor_64x16 = eb_aom_highbd_dc_left_predictor_64x16_c;
+    eb_aom_highbd_dc_left_predictor_64x32 = eb_aom_highbd_dc_left_predictor_64x32_c;
+    eb_aom_highbd_dc_left_predictor_64x64 = eb_aom_highbd_dc_left_predictor_64x64_c;
+    eb_aom_highbd_dc_left_predictor_8x16 = eb_aom_highbd_dc_left_predictor_8x16_c;
+    eb_aom_highbd_dc_left_predictor_8x4 = eb_aom_highbd_dc_left_predictor_8x4_c;
+    eb_aom_highbd_dc_left_predictor_8x8 = eb_aom_highbd_dc_left_predictor_8x8_c;
+
+    eb_aom_highbd_dc_predictor_16x16 = eb_aom_highbd_dc_predictor_16x16_c;
+    eb_aom_highbd_dc_predictor_16x32 = eb_aom_highbd_dc_predictor_16x32_c;
+    eb_aom_highbd_dc_predictor_16x4 = eb_aom_highbd_dc_predictor_16x4_c;
+    eb_aom_highbd_dc_predictor_16x64 = eb_aom_highbd_dc_predictor_16x64_c;
+    eb_aom_highbd_dc_predictor_16x8 = eb_aom_highbd_dc_predictor_16x8_c;
+    eb_aom_highbd_dc_predictor_2x2 = eb_aom_highbd_dc_predictor_2x2_c;
+    eb_aom_highbd_dc_predictor_32x16 = eb_aom_highbd_dc_predictor_32x16_c;
+    eb_aom_highbd_dc_predictor_32x32 = eb_aom_highbd_dc_predictor_32x32_c;
+    eb_aom_highbd_dc_predictor_32x64 = eb_aom_highbd_dc_predictor_32x64_c;
+    eb_aom_highbd_dc_predictor_32x8 = eb_aom_highbd_dc_predictor_32x8_c;
+    eb_aom_highbd_dc_predictor_4x16 = eb_aom_highbd_dc_predictor_4x16_c;
+    eb_aom_highbd_dc_predictor_4x4 = eb_aom_highbd_dc_predictor_4x4_c;
+    eb_aom_highbd_dc_predictor_4x8 = eb_aom_highbd_dc_predictor_4x8_c;
+    eb_aom_highbd_dc_predictor_64x16 = eb_aom_highbd_dc_predictor_64x16_c;
+    eb_aom_highbd_dc_predictor_64x32 = eb_aom_highbd_dc_predictor_64x32_c;
+    eb_aom_highbd_dc_predictor_64x64 = eb_aom_highbd_dc_predictor_64x64_c;
+    eb_aom_highbd_dc_predictor_8x16 = eb_aom_highbd_dc_predictor_8x16_c;
+    eb_aom_highbd_dc_predictor_8x4 = eb_aom_highbd_dc_predictor_8x4_c;
+    eb_aom_highbd_dc_predictor_8x8 = eb_aom_highbd_dc_predictor_8x8_c;
+    eb_aom_highbd_dc_predictor_8x32 = eb_aom_highbd_dc_predictor_8x32_c;
+
+    //aom_highbd_dc_top_predictor
+    eb_aom_highbd_dc_top_predictor_16x16 = eb_aom_highbd_dc_top_predictor_16x16_c;
+    eb_aom_highbd_dc_top_predictor_16x32 = eb_aom_highbd_dc_top_predictor_16x32_c;
+    eb_aom_highbd_dc_top_predictor_16x4 = eb_aom_highbd_dc_top_predictor_16x4_c;
+    eb_aom_highbd_dc_top_predictor_16x64 = eb_aom_highbd_dc_top_predictor_16x64_c;
+    eb_aom_highbd_dc_top_predictor_16x8 = eb_aom_highbd_dc_top_predictor_16x8_c;
+    eb_aom_highbd_dc_top_predictor_32x16 = eb_aom_highbd_dc_top_predictor_32x16_c;
+    eb_aom_highbd_dc_top_predictor_32x32 = eb_aom_highbd_dc_top_predictor_32x32_c;
+    eb_aom_highbd_dc_top_predictor_32x64 = eb_aom_highbd_dc_top_predictor_32x64_c;
+    eb_aom_highbd_dc_top_predictor_32x8 = eb_aom_highbd_dc_top_predictor_32x8_c;
+    eb_aom_highbd_dc_top_predictor_4x16 = eb_aom_highbd_dc_top_predictor_4x16_c;
+    eb_aom_highbd_dc_top_predictor_4x4 = eb_aom_highbd_dc_top_predictor_4x4_c;
+    eb_aom_highbd_dc_top_predictor_4x8 = eb_aom_highbd_dc_top_predictor_4x8_c;
+    eb_aom_highbd_dc_top_predictor_64x16 = eb_aom_highbd_dc_top_predictor_64x16_c;
+    eb_aom_highbd_dc_top_predictor_64x32 = eb_aom_highbd_dc_top_predictor_64x32_c;
+    eb_aom_highbd_dc_top_predictor_64x64 = eb_aom_highbd_dc_top_predictor_64x64_c;
+    eb_aom_highbd_dc_top_predictor_8x16 = eb_aom_highbd_dc_top_predictor_8x16_c;
+    eb_aom_highbd_dc_top_predictor_8x32 = eb_aom_highbd_dc_top_predictor_8x32_c;
+    eb_aom_highbd_dc_top_predictor_8x4 = eb_aom_highbd_dc_top_predictor_8x4_c;
+    eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_c;
+
+    // eb_aom_highbd_h_predictor
+    eb_aom_highbd_h_predictor_16x4 = eb_aom_highbd_h_predictor_16x4_c;
+    eb_aom_highbd_h_predictor_16x64 = eb_aom_highbd_h_predictor_16x64_c;
+    eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_c;
+    eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_c;
+    eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_c;
+    eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_c;
+    eb_aom_highbd_h_predictor_32x8 = eb_aom_highbd_h_predictor_32x8_c;
+    eb_aom_highbd_h_predictor_4x16 = eb_aom_highbd_h_predictor_4x16_c;
+    eb_aom_highbd_h_predictor_4x4 = eb_aom_highbd_h_predictor_4x4_c;
+    eb_aom_highbd_h_predictor_4x8 = eb_aom_highbd_h_predictor_4x8_c;
+    eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_c;
+    eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_c;
+    eb_aom_highbd_h_predictor_8x32 = eb_aom_highbd_h_predictor_8x32_c;
+    eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_c;
+    eb_aom_highbd_h_predictor_8x16 = eb_aom_highbd_h_predictor_8x16_c;
+    eb_aom_highbd_h_predictor_8x4 = eb_aom_highbd_h_predictor_8x4_c;
+    eb_aom_highbd_h_predictor_8x8 = eb_aom_highbd_h_predictor_8x8_c;
+    eb_aom_highbd_h_predictor_16x16 = eb_aom_highbd_h_predictor_16x16_c;
+    eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_c;
+    eb_log2f = log2f_32;
+    eb_memcpy = eb_memcpy_c;
+#ifdef ARCH_X86
+    flags &= get_cpu_flags_to_use();
+    if (flags & HAS_SSE4_1) aom_blend_a64_mask = aom_blend_a64_mask_sse4_1;
+    if (flags & HAS_AVX2) aom_blend_a64_mask = aom_blend_a64_mask_avx2;
+    if (flags & HAS_SSE4_1) aom_blend_a64_hmask = aom_blend_a64_hmask_sse4_1;
+    if (flags & HAS_SSE4_1) aom_blend_a64_vmask = aom_blend_a64_vmask_sse4_1;
+    if (flags & HAS_SSE4_1) aom_highbd_blend_a64_mask = aom_highbd_blend_a64_mask_sse4_1;
+    if (flags & HAS_SSE4_1) aom_highbd_blend_a64_hmask = aom_highbd_blend_a64_hmask_sse4_1;
+    if (flags & HAS_SSE4_1) aom_highbd_blend_a64_vmask = aom_highbd_blend_a64_vmask_sse4_1;
+    if (flags & HAS_SSE4_1) eb_aom_highbd_blend_a64_vmask = eb_aom_highbd_blend_a64_vmask_sse4_1;
+    if (flags & HAS_SSE4_1) eb_aom_highbd_blend_a64_hmask = eb_aom_highbd_blend_a64_hmask_sse4_1;
+    if (flags & HAS_AVX2) eb_cfl_predict_lbd = eb_cfl_predict_lbd_avx2;
+    if (flags & HAS_AVX2) eb_cfl_predict_hbd = eb_cfl_predict_hbd_avx2;
+    if (flags & HAS_SSE4_1) eb_av1_filter_intra_predictor = eb_av1_filter_intra_predictor_sse4_1;
+    if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge_high = eb_av1_filter_intra_edge_high_sse4_1;
+    if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge = eb_av1_filter_intra_edge_sse4_1;
+    if (flags & HAS_SSE4_1) eb_av1_upsample_intra_edge = eb_av1_upsample_intra_edge_sse4_1;
+    if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_avx2;
+    if (flags & HAS_AVX2) eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_avx2;
+    if (flags & HAS_AVX2) eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_avx2;
+    if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
+    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_4x4 = eb_av1_inv_txfm2d_add_4x4_avx2;
+    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_8x8 = eb_av1_inv_txfm2d_add_8x8_avx2;
+    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_8x16 = eb_av1_highbd_inv_txfm_add_avx2;
+    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x8 = eb_av1_highbd_inv_txfm_add_avx2;
+    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x8 = eb_av1_highbd_inv_txfm_add_avx2;
+    if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_8x32 = eb_av1_highbd_inv_txfm_add_avx2;
+    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_4x8 = eb_av1_inv_txfm2d_add_4x8_sse4_1;
+    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_8x4 = eb_av1_inv_txfm2d_add_8x4_sse4_1;
+    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_4x16 = eb_av1_inv_txfm2d_add_4x16_sse4_1;
     if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_16x4 = eb_av1_inv_txfm2d_add_16x4_sse4_1;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_avx2;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_avx2;
@@ -312,1247 +832,651 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x32 = eb_av1_highbd_inv_txfm_add_avx2;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x32 = eb_av1_highbd_inv_txfm_add_avx2;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x16 = eb_av1_highbd_inv_txfm_add_avx2;
-
-
 #ifndef NON_AVX512_SUPPORT
     if (flags & HAS_AVX512F) {
-        eb_av1_inv_txfm2d_add_16x16   = eb_av1_inv_txfm2d_add_16x16_avx512;
-        eb_av1_inv_txfm2d_add_32x32   = eb_av1_inv_txfm2d_add_32x32_avx512;
-        eb_av1_inv_txfm2d_add_64x64   = eb_av1_inv_txfm2d_add_64x64_avx512;
-        eb_av1_inv_txfm2d_add_16x64   = eb_av1_inv_txfm2d_add_16x64_avx512;
-        eb_av1_inv_txfm2d_add_64x16   = eb_av1_inv_txfm2d_add_64x16_avx512;
-        eb_av1_inv_txfm2d_add_32x64   = eb_av1_inv_txfm2d_add_32x64_avx512;
-        eb_av1_inv_txfm2d_add_64x32   = eb_av1_inv_txfm2d_add_64x32_avx512;
-        eb_av1_inv_txfm2d_add_16x32   = eb_av1_inv_txfm2d_add_16x32_avx512;
-        eb_av1_inv_txfm2d_add_32x16   = eb_av1_inv_txfm2d_add_32x16_avx512;
+        eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_avx512;
+        eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_avx512;
+        eb_av1_inv_txfm2d_add_64x64 = eb_av1_inv_txfm2d_add_64x64_avx512;
+        eb_av1_inv_txfm2d_add_16x64 = eb_av1_inv_txfm2d_add_16x64_avx512;
+        eb_av1_inv_txfm2d_add_64x16 = eb_av1_inv_txfm2d_add_64x16_avx512;
+        eb_av1_inv_txfm2d_add_32x64 = eb_av1_inv_txfm2d_add_32x64_avx512;
+        eb_av1_inv_txfm2d_add_64x32 = eb_av1_inv_txfm2d_add_64x32_avx512;
+        eb_av1_inv_txfm2d_add_16x32 = eb_av1_inv_txfm2d_add_16x32_avx512;
+        eb_av1_inv_txfm2d_add_32x16 = eb_av1_inv_txfm2d_add_32x16_avx512;
     }
 #endif
 
-    eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_c;
-    if (flags & HAS_SSSE3) eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_ssse3;
-    if (flags & HAS_AVX2) eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_avx2;
+        if (flags & HAS_SSSE3) eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_ssse3;
+        if (flags & HAS_AVX2) eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_avx2;
+        SET_AVX2(compressed_packmsb, compressed_packmsb_c, compressed_packmsb_avx2_intrin);
+        SET_AVX2(c_pack, c_pack_c, c_pack_avx2_intrin);
+        SET_SSE2_AVX2(unpack_avg, unpack_avg_c, unpack_avg_sse2_intrin, unpack_avg_avx2_intrin);
+        SET_AVX2(unpack_avg_safe_sub, unpack_avg_safe_sub_c, unpack_avg_safe_sub_avx2_intrin);
+        SET_AVX2(un_pack8_bit_data, un_pack8_bit_data_c, eb_enc_un_pack8_bit_data_avx2_intrin);
+        SET_AVX2(cfl_luma_subsampling_420_lbd, cfl_luma_subsampling_420_lbd_c, cfl_luma_subsampling_420_lbd_avx2);
+        SET_AVX2(cfl_luma_subsampling_420_hbd, cfl_luma_subsampling_420_hbd_c, cfl_luma_subsampling_420_hbd_avx2);
+        SET_AVX2(convert_8bit_to_16bit, convert_8bit_to_16bit_c, convert_8bit_to_16bit_avx2);
+        SET_AVX2(convert_16bit_to_8bit, convert_16bit_to_8bit_c, convert_16bit_to_8bit_avx2);
+        SET_SSE2_AVX2(pack2d_16_bit_src_mul4,
+            eb_enc_msb_pack2_d,
+            eb_enc_msb_pack2d_sse2_intrin,
+            eb_enc_msb_pack2d_avx2_intrin_al);
+        SET_SSE2(un_pack2d_16_bit_src_mul4, eb_enc_msb_un_pack2_d, eb_enc_msb_un_pack2d_sse2_intrin);
+        SET_AVX2(full_distortion_kernel_cbf_zero32_bits,
+            full_distortion_kernel_cbf_zero32_bits_c,
+            full_distortion_kernel_cbf_zero32_bits_avx2);
+        SET_AVX2(full_distortion_kernel32_bits,
+            full_distortion_kernel32_bits_c,
+            full_distortion_kernel32_bits_avx2);
 
-    SET_AVX2(compressed_packmsb, compressed_packmsb_c, compressed_packmsb_avx2_intrin);
-    SET_AVX2(c_pack, c_pack_c, c_pack_avx2_intrin);
-    SET_SSE2_AVX2(unpack_avg, unpack_avg_c, unpack_avg_sse2_intrin, unpack_avg_avx2_intrin);
-    SET_AVX2(unpack_avg_safe_sub, unpack_avg_safe_sub_c, unpack_avg_safe_sub_avx2_intrin);
-    SET_AVX2(un_pack8_bit_data, un_pack8_bit_data_c, eb_enc_un_pack8_bit_data_avx2_intrin);
-    SET_AVX2(convert_8bit_to_16bit, convert_8bit_to_16bit_c, convert_8bit_to_16bit_avx2);
-    SET_AVX2(convert_16bit_to_8bit, convert_16bit_to_8bit_c, convert_16bit_to_8bit_avx2);
-    SET_SSE2_AVX2(pack2d_16_bit_src_mul4,
-                  eb_enc_msb_pack2_d,
-                  eb_enc_msb_pack2d_sse2_intrin,
-                  eb_enc_msb_pack2d_avx2_intrin_al);
-    SET_SSE2(un_pack2d_16_bit_src_mul4, eb_enc_msb_un_pack2_d, eb_enc_msb_un_pack2d_sse2_intrin);
+        SET_AVX2_AVX512(spatial_full_distortion_kernel,
+            spatial_full_distortion_kernel_c,
+            spatial_full_distortion_kernel_avx2,
+            spatial_full_distortion_kernel_avx512);
+        SET_AVX2(full_distortion_kernel16_bits,
+            full_distortion_kernel16_bits_c,
+            full_distortion_kernel16_bits_avx2);
+        SET_AVX2_AVX512(residual_kernel8bit,
+            residual_kernel8bit_c,
+            residual_kernel8bit_avx2,
+            residual_kernel8bit_avx512);
 
-    SET_AVX2(full_distortion_kernel_cbf_zero32_bits,
-             full_distortion_kernel_cbf_zero32_bits_c,
-             full_distortion_kernel_cbf_zero32_bits_avx2);
-    SET_AVX2(full_distortion_kernel32_bits,
-             full_distortion_kernel32_bits_c,
-             full_distortion_kernel32_bits_avx2);
+        SET_SSE2(residual_kernel16bit, residual_kernel16bit_c, residual_kernel16bit_sse2_intrin);
+        SET_SSE2(picture_average_kernel, picture_average_kernel_c, picture_average_kernel_sse2_intrin);
+        SET_SSE2(picture_average_kernel1_line,
+            picture_average_kernel1_line_c,
+            picture_average_kernel1_line_sse2_intrin);
 
-    SET_AVX2_AVX512(spatial_full_distortion_kernel,
-                    spatial_full_distortion_kernel_c,
-                    spatial_full_distortion_kernel_avx2,
-                    spatial_full_distortion_kernel_avx512);
-    SET_AVX2(full_distortion_kernel16_bits,
-             full_distortion_kernel16_bits_c,
-             full_distortion_kernel16_bits_avx2);
-    SET_AVX2_AVX512(residual_kernel8bit,
-                    residual_kernel8bit_c,
-                    residual_kernel8bit_avx2,
-                    residual_kernel8bit_avx512);
+        SET_SSSE3(avc_style_luma_interpolation_filter,
+            avc_style_luma_interpolation_filter_helper_c,
+            avc_style_luma_interpolation_filter_helper_ssse3);
 
-    SET_SSE2(residual_kernel16bit, residual_kernel16bit_c, residual_kernel16bit_sse2_intrin);
+        SET_AVX2_AVX512(eb_av1_wiener_convolve_add_src,
+            eb_av1_wiener_convolve_add_src_c,
+            eb_av1_wiener_convolve_add_src_avx2,
+            eb_av1_wiener_convolve_add_src_avx512);
 
-    SET_SSE2(picture_average_kernel, picture_average_kernel_c, picture_average_kernel_sse2_intrin);
-    SET_SSE2(picture_average_kernel1_line,
-             picture_average_kernel1_line_c,
-             picture_average_kernel1_line_sse2_intrin);
+        if (flags & HAS_AVX2) eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_convolve_2d_copy_sr = eb_av1_highbd_convolve_2d_copy_sr_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_2d_copy = eb_av1_highbd_jnt_convolve_2d_copy_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_convolve_y_sr = eb_av1_highbd_convolve_y_sr_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_convolve_2d_sr = eb_av1_highbd_convolve_2d_sr_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_2d = eb_av1_highbd_jnt_convolve_2d_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_x = eb_av1_highbd_jnt_convolve_x_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_y = eb_av1_highbd_jnt_convolve_y_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_convolve_x_sr = eb_av1_highbd_convolve_x_sr_avx2;
+        SET_AVX2_AVX512(eb_av1_convolve_2d_sr,
+            eb_av1_convolve_2d_sr_c,
+            eb_av1_convolve_2d_sr_avx2,
+            eb_av1_convolve_2d_sr_avx512);
+        SET_AVX2_AVX512(eb_av1_convolve_2d_copy_sr,
+            eb_av1_convolve_2d_copy_sr_c,
+            eb_av1_convolve_2d_copy_sr_avx2,
+            eb_av1_convolve_2d_copy_sr_avx512);
+        SET_AVX2_AVX512(eb_av1_convolve_x_sr,
+            eb_av1_convolve_x_sr_c,
+            eb_av1_convolve_x_sr_avx2,
+            eb_av1_convolve_x_sr_avx512);
+        SET_AVX2_AVX512(eb_av1_convolve_y_sr,
+            eb_av1_convolve_y_sr_c,
+            eb_av1_convolve_y_sr_avx2,
+            eb_av1_convolve_y_sr_avx512);
+        SET_AVX2_AVX512(eb_av1_jnt_convolve_2d,
+            eb_av1_jnt_convolve_2d_c,
+            eb_av1_jnt_convolve_2d_avx2,
+            eb_av1_jnt_convolve_2d_avx512);
+        SET_AVX2_AVX512(eb_av1_jnt_convolve_2d_copy,
+            eb_av1_jnt_convolve_2d_copy_c,
+            eb_av1_jnt_convolve_2d_copy_avx2,
+            eb_av1_jnt_convolve_2d_copy_avx512);
+        SET_AVX2_AVX512(eb_av1_jnt_convolve_x,
+            eb_av1_jnt_convolve_x_c,
+            eb_av1_jnt_convolve_x_avx2,
+            eb_av1_jnt_convolve_x_avx512);
+        SET_AVX2_AVX512(eb_av1_jnt_convolve_y,
+            eb_av1_jnt_convolve_y_c,
+            eb_av1_jnt_convolve_y_avx2,
+            eb_av1_jnt_convolve_y_avx512);
 
-    SET_SSSE3(avc_style_luma_interpolation_filter,
-              avc_style_luma_interpolation_filter_helper_c,
-              avc_style_luma_interpolation_filter_helper_ssse3);
-
-    SET_AVX2_AVX512(eb_av1_wiener_convolve_add_src,
-                    eb_av1_wiener_convolve_add_src_c,
-                    eb_av1_wiener_convolve_add_src_avx2,
-                    eb_av1_wiener_convolve_add_src_avx512);
-
-    eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_c;
-    if (flags & HAS_AVX2) eb_av1_convolve_2d_copy_sr = eb_av1_convolve_2d_copy_sr_avx2;
-
-    eb_av1_convolve_2d_scale = eb_av1_convolve_2d_scale_c;
-
-    eb_av1_highbd_convolve_2d_copy_sr = eb_av1_highbd_convolve_2d_copy_sr_c;
-    if (flags & HAS_AVX2)
-        eb_av1_highbd_convolve_2d_copy_sr = eb_av1_highbd_convolve_2d_copy_sr_avx2;
-    eb_av1_highbd_jnt_convolve_2d_copy = eb_av1_highbd_jnt_convolve_2d_copy_c;
-    if (flags & HAS_AVX2)
-        eb_av1_highbd_jnt_convolve_2d_copy = eb_av1_highbd_jnt_convolve_2d_copy_avx2;
-    eb_av1_highbd_convolve_y_sr = eb_av1_highbd_convolve_y_sr_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_convolve_y_sr = eb_av1_highbd_convolve_y_sr_avx2;
-    eb_av1_highbd_convolve_2d_sr = eb_av1_highbd_convolve_2d_sr_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_convolve_2d_sr = eb_av1_highbd_convolve_2d_sr_avx2;
-
-    eb_av1_highbd_convolve_2d_scale = eb_av1_highbd_convolve_2d_scale_c;
-
-    eb_av1_highbd_jnt_convolve_2d = eb_av1_highbd_jnt_convolve_2d_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_2d = eb_av1_highbd_jnt_convolve_2d_avx2;
-    eb_av1_highbd_jnt_convolve_x = eb_av1_highbd_jnt_convolve_x_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_x = eb_av1_highbd_jnt_convolve_x_avx2;
-    eb_av1_highbd_jnt_convolve_y = eb_av1_highbd_jnt_convolve_y_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_jnt_convolve_y = eb_av1_highbd_jnt_convolve_y_avx2;
-    eb_av1_highbd_convolve_x_sr = eb_av1_highbd_convolve_x_sr_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_convolve_x_sr = eb_av1_highbd_convolve_x_sr_avx2;
-
-    SET_AVX2_AVX512(eb_av1_convolve_2d_sr,
-                    eb_av1_convolve_2d_sr_c,
-                    eb_av1_convolve_2d_sr_avx2,
-                    eb_av1_convolve_2d_sr_avx512);
-    SET_AVX2_AVX512(eb_av1_convolve_2d_copy_sr,
-                    eb_av1_convolve_2d_copy_sr_c,
-                    eb_av1_convolve_2d_copy_sr_avx2,
-                    eb_av1_convolve_2d_copy_sr_avx512);
-    SET_AVX2_AVX512(eb_av1_convolve_x_sr,
-                    eb_av1_convolve_x_sr_c,
-                    eb_av1_convolve_x_sr_avx2,
-                    eb_av1_convolve_x_sr_avx512);
-    SET_AVX2_AVX512(eb_av1_convolve_y_sr,
-                    eb_av1_convolve_y_sr_c,
-                    eb_av1_convolve_y_sr_avx2,
-                    eb_av1_convolve_y_sr_avx512);
-    SET_AVX2_AVX512(eb_av1_jnt_convolve_2d,
-                    eb_av1_jnt_convolve_2d_c,
-                    eb_av1_jnt_convolve_2d_avx2,
-                    eb_av1_jnt_convolve_2d_avx512);
-    SET_AVX2_AVX512(eb_av1_jnt_convolve_2d_copy,
-                    eb_av1_jnt_convolve_2d_copy_c,
-                    eb_av1_jnt_convolve_2d_copy_avx2,
-                    eb_av1_jnt_convolve_2d_copy_avx512);
-    SET_AVX2_AVX512(eb_av1_jnt_convolve_x,
-                    eb_av1_jnt_convolve_x_c,
-                    eb_av1_jnt_convolve_x_avx2,
-                    eb_av1_jnt_convolve_x_avx512);
-    SET_AVX2_AVX512(eb_av1_jnt_convolve_y,
-                    eb_av1_jnt_convolve_y_c,
-                    eb_av1_jnt_convolve_y_avx2,
-                    eb_av1_jnt_convolve_y_avx512);
-
-    aom_convolve8_horiz = aom_convolve8_horiz_c;
-    if (flags & HAS_AVX2) aom_convolve8_horiz = aom_convolve8_horiz_avx2;
-    aom_convolve8_vert = aom_convolve8_vert_c;
-    if (flags & HAS_AVX2) aom_convolve8_vert = aom_convolve8_vert_avx2;
-
-
-    av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_c;
-    if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_avx2;
-    av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_c;
-    if (flags & HAS_AVX2)
-        av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_avx2;
-    av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
-    if (flags & HAS_AVX2) av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_avx2;
-
-    aom_subtract_block = aom_subtract_block_c;
-    if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
-
-    aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_c;
-    if (flags & HAS_AVX2) aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_avx2;
-    aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_c;
-    if (flags & HAS_AVX2) aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_avx2;
-
-    aom_highbd_subtract_block = aom_highbd_subtract_block_c;
-    if (flags & HAS_AVX2) aom_highbd_subtract_block = aom_highbd_subtract_block_sse2;
-
-    eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_avx2;
-    eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_avx2;
-    eb_aom_highbd_smooth_v_predictor_16x4 = eb_aom_highbd_smooth_v_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_16x4 = eb_aom_highbd_smooth_v_predictor_16x4_avx2;
-    eb_aom_highbd_smooth_v_predictor_16x64 = eb_aom_highbd_smooth_v_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_16x64 = eb_aom_highbd_smooth_v_predictor_16x64_avx2;
-    eb_aom_highbd_smooth_v_predictor_16x8 = eb_aom_highbd_smooth_v_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_16x8 = eb_aom_highbd_smooth_v_predictor_16x8_avx2;
-    eb_aom_highbd_smooth_v_predictor_2x2   = eb_aom_highbd_smooth_v_predictor_2x2_c;
-    eb_aom_highbd_smooth_v_predictor_32x16 = eb_aom_highbd_smooth_v_predictor_32x16_c;
-    eb_aom_highbd_smooth_v_predictor_32x32 = eb_aom_highbd_smooth_v_predictor_32x32_c;
-    eb_aom_highbd_smooth_v_predictor_32x64 = eb_aom_highbd_smooth_v_predictor_32x64_c;
-    eb_aom_highbd_smooth_v_predictor_32x8  = eb_aom_highbd_smooth_v_predictor_32x8_c;
-    eb_aom_highbd_smooth_v_predictor_4x16  = eb_aom_highbd_smooth_v_predictor_4x16_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_v_predictor_4x16 = eb_aom_highbd_smooth_v_predictor_4x16_ssse3;
-    eb_aom_highbd_smooth_v_predictor_4x4 = eb_aom_highbd_smooth_v_predictor_4x4_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_v_predictor_4x4 = eb_aom_highbd_smooth_v_predictor_4x4_ssse3;
-    eb_aom_highbd_smooth_v_predictor_4x8 = eb_aom_highbd_smooth_v_predictor_4x8_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_v_predictor_4x8 = eb_aom_highbd_smooth_v_predictor_4x8_ssse3;
-    eb_aom_highbd_smooth_v_predictor_64x16 = eb_aom_highbd_smooth_v_predictor_64x16_c;
-    eb_aom_highbd_smooth_v_predictor_64x32 = eb_aom_highbd_smooth_v_predictor_64x32_c;
-    eb_aom_highbd_smooth_v_predictor_64x64 = eb_aom_highbd_smooth_v_predictor_64x64_c;
-    eb_aom_highbd_smooth_v_predictor_8x16  = eb_aom_highbd_smooth_v_predictor_8x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_8x16 = eb_aom_highbd_smooth_v_predictor_8x16_avx2;
-    eb_aom_highbd_smooth_v_predictor_8x32 = eb_aom_highbd_smooth_v_predictor_8x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_8x32 = eb_aom_highbd_smooth_v_predictor_8x32_avx2;
-    eb_aom_highbd_smooth_v_predictor_8x4 = eb_aom_highbd_smooth_v_predictor_8x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_8x4 = eb_aom_highbd_smooth_v_predictor_8x4_avx2;
-    eb_aom_highbd_smooth_v_predictor_8x8 = eb_aom_highbd_smooth_v_predictor_8x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_8x8 = eb_aom_highbd_smooth_v_predictor_8x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_32x8 = eb_aom_highbd_smooth_v_predictor_32x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_32x16 = eb_aom_highbd_smooth_v_predictor_32x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_32x32 = eb_aom_highbd_smooth_v_predictor_32x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_32x64 = eb_aom_highbd_smooth_v_predictor_32x64_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_64x16 = eb_aom_highbd_smooth_v_predictor_64x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_64x32 = eb_aom_highbd_smooth_v_predictor_64x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_v_predictor_64x64 = eb_aom_highbd_smooth_v_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) aom_convolve8_horiz = aom_convolve8_horiz_avx2;
+        if (flags & HAS_AVX2) aom_convolve8_vert = aom_convolve8_vert_avx2;
+        if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask = av1_build_compound_diffwtd_mask_avx2;
+        if (flags & HAS_AVX2) av1_build_compound_diffwtd_mask_highbd = av1_build_compound_diffwtd_mask_highbd_avx2;
+        if (flags & HAS_AVX2) av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_avx2;
+        if (flags & HAS_AVX2) aom_subtract_block = aom_subtract_block_avx2;
+        if (flags & HAS_AVX2) aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_avx2;
+        if (flags & HAS_AVX2) aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_avx2;
+        if (flags & HAS_AVX2) aom_highbd_subtract_block = aom_highbd_subtract_block_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x4 = eb_aom_highbd_smooth_v_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x64 = eb_aom_highbd_smooth_v_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x8 = eb_aom_highbd_smooth_v_predictor_16x8_avx2;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_v_predictor_4x16 = eb_aom_highbd_smooth_v_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_v_predictor_4x4 = eb_aom_highbd_smooth_v_predictor_4x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_v_predictor_4x8 = eb_aom_highbd_smooth_v_predictor_4x8_ssse3;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_8x16 = eb_aom_highbd_smooth_v_predictor_8x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_8x32 = eb_aom_highbd_smooth_v_predictor_8x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_8x4 = eb_aom_highbd_smooth_v_predictor_8x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_8x8 = eb_aom_highbd_smooth_v_predictor_8x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_32x8 = eb_aom_highbd_smooth_v_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_32x16 = eb_aom_highbd_smooth_v_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_32x32 = eb_aom_highbd_smooth_v_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_32x64 = eb_aom_highbd_smooth_v_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_64x16 = eb_aom_highbd_smooth_v_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_64x32 = eb_aom_highbd_smooth_v_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_64x64 = eb_aom_highbd_smooth_v_predictor_64x64_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_smooth_v_predictor_32x8  = aom_highbd_smooth_v_predictor_32x8_avx512;
-        eb_aom_highbd_smooth_v_predictor_32x16 = aom_highbd_smooth_v_predictor_32x16_avx512;
-        eb_aom_highbd_smooth_v_predictor_32x32 = aom_highbd_smooth_v_predictor_32x32_avx512;
-        eb_aom_highbd_smooth_v_predictor_32x64 = aom_highbd_smooth_v_predictor_32x64_avx512;
-        eb_aom_highbd_smooth_v_predictor_64x16 = aom_highbd_smooth_v_predictor_64x16_avx512;
-        eb_aom_highbd_smooth_v_predictor_64x32 = aom_highbd_smooth_v_predictor_64x32_avx512;
-        eb_aom_highbd_smooth_v_predictor_64x64 = aom_highbd_smooth_v_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_smooth_v_predictor_32x8 = aom_highbd_smooth_v_predictor_32x8_avx512;
+            eb_aom_highbd_smooth_v_predictor_32x16 = aom_highbd_smooth_v_predictor_32x16_avx512;
+            eb_aom_highbd_smooth_v_predictor_32x32 = aom_highbd_smooth_v_predictor_32x32_avx512;
+            eb_aom_highbd_smooth_v_predictor_32x64 = aom_highbd_smooth_v_predictor_32x64_avx512;
+            eb_aom_highbd_smooth_v_predictor_64x16 = aom_highbd_smooth_v_predictor_64x16_avx512;
+            eb_aom_highbd_smooth_v_predictor_64x32 = aom_highbd_smooth_v_predictor_64x32_avx512;
+            eb_aom_highbd_smooth_v_predictor_64x64 = aom_highbd_smooth_v_predictor_64x64_avx512;
+        }
 #endif // !NON_AVX512_SUPPORT
 
-    eb_av1_dr_prediction_z1 = eb_av1_dr_prediction_z1_c;
-    if (flags & HAS_AVX2) eb_av1_dr_prediction_z1 = eb_av1_dr_prediction_z1_avx2;
-    eb_av1_dr_prediction_z2 = eb_av1_dr_prediction_z2_c;
-    if (flags & HAS_AVX2) eb_av1_dr_prediction_z2 = eb_av1_dr_prediction_z2_avx2;
-    eb_av1_dr_prediction_z3 = eb_av1_dr_prediction_z3_c;
-    if (flags & HAS_AVX2) eb_av1_dr_prediction_z3 = eb_av1_dr_prediction_z3_avx2;
-    eb_av1_highbd_dr_prediction_z1 = eb_av1_highbd_dr_prediction_z1_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z1 = eb_av1_highbd_dr_prediction_z1_avx2;
-    eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_avx2;
-    eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_c;
-    if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
-
-    eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_avx2;
-    eb_aom_paeth_predictor_16x32 = eb_aom_paeth_predictor_16x32_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x32 = eb_aom_paeth_predictor_16x32_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x32 = eb_aom_paeth_predictor_16x32_avx2;
-    eb_aom_paeth_predictor_16x4 = eb_aom_paeth_predictor_16x4_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x4 = eb_aom_paeth_predictor_16x4_ssse3;
-    eb_aom_paeth_predictor_16x64 = eb_aom_paeth_predictor_16x64_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x64 = eb_aom_paeth_predictor_16x64_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x64 = eb_aom_paeth_predictor_16x64_avx2;
-    eb_aom_paeth_predictor_16x8 = eb_aom_paeth_predictor_16x8_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x8 = eb_aom_paeth_predictor_16x8_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x8 = eb_aom_paeth_predictor_16x8_avx2;
-    eb_aom_paeth_predictor_32x16 = eb_aom_paeth_predictor_32x16_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x16 = eb_aom_paeth_predictor_32x16_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_32x16 = eb_aom_paeth_predictor_32x16_avx2;
-    eb_aom_paeth_predictor_32x32 = eb_aom_paeth_predictor_32x32_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x32 = eb_aom_paeth_predictor_32x32_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_32x32 = eb_aom_paeth_predictor_32x32_avx2;
-    eb_aom_paeth_predictor_32x64 = eb_aom_paeth_predictor_32x64_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x64 = eb_aom_paeth_predictor_32x64_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_32x64 = eb_aom_paeth_predictor_32x64_avx2;
-    eb_aom_paeth_predictor_32x8 = eb_aom_paeth_predictor_32x8_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x8 = eb_aom_paeth_predictor_32x8_ssse3;
-    eb_aom_paeth_predictor_4x16 = eb_aom_paeth_predictor_4x16_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_4x16 = eb_aom_paeth_predictor_4x16_ssse3;
-    eb_aom_paeth_predictor_4x4 = eb_aom_paeth_predictor_4x4_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_4x4 = eb_aom_paeth_predictor_4x4_ssse3;
-    eb_aom_paeth_predictor_4x8 = eb_aom_paeth_predictor_4x8_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_4x8 = eb_aom_paeth_predictor_4x8_ssse3;
-    eb_aom_paeth_predictor_64x16 = eb_aom_paeth_predictor_64x16_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_64x16 = eb_aom_paeth_predictor_64x16_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_64x16 = eb_aom_paeth_predictor_64x16_avx2;
-    eb_aom_paeth_predictor_64x32 = eb_aom_paeth_predictor_64x32_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_64x32 = eb_aom_paeth_predictor_64x32_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_64x32 = eb_aom_paeth_predictor_64x32_avx2;
-    eb_aom_paeth_predictor_64x64 = eb_aom_paeth_predictor_64x64_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_64x64 = eb_aom_paeth_predictor_64x64_ssse3;
-    if (flags & HAS_AVX2) eb_aom_paeth_predictor_64x64 = eb_aom_paeth_predictor_64x64_avx2;
-    eb_aom_paeth_predictor_8x16 = eb_aom_paeth_predictor_8x16_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x16 = eb_aom_paeth_predictor_8x16_ssse3;
-    eb_aom_paeth_predictor_8x32 = eb_aom_paeth_predictor_8x32_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x32 = eb_aom_paeth_predictor_8x32_ssse3;
-    eb_aom_paeth_predictor_8x4 = eb_aom_paeth_predictor_8x4_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x4 = eb_aom_paeth_predictor_8x4_ssse3;
-    eb_aom_paeth_predictor_8x8 = eb_aom_paeth_predictor_8x8_c;
-    if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x8 = eb_aom_paeth_predictor_8x8_ssse3;
-
-    eb_aom_highbd_paeth_predictor_16x16 = eb_aom_highbd_paeth_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_16x16 = eb_aom_highbd_paeth_predictor_16x16_avx2;
-    eb_aom_highbd_paeth_predictor_16x32 = eb_aom_highbd_paeth_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_16x32 = eb_aom_highbd_paeth_predictor_16x32_avx2;
-    eb_aom_highbd_paeth_predictor_16x4 = eb_aom_highbd_paeth_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_16x4 = eb_aom_highbd_paeth_predictor_16x4_avx2;
-    eb_aom_highbd_paeth_predictor_16x64 = eb_aom_highbd_paeth_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_16x64 = eb_aom_highbd_paeth_predictor_16x64_avx2;
-    eb_aom_highbd_paeth_predictor_16x8 = eb_aom_highbd_paeth_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_16x8 = eb_aom_highbd_paeth_predictor_16x8_avx2;
-    eb_aom_highbd_paeth_predictor_2x2 = eb_aom_highbd_paeth_predictor_2x2_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_2x2 = eb_aom_highbd_paeth_predictor_2x2_avx2;
-    eb_aom_highbd_paeth_predictor_32x16 = eb_aom_highbd_paeth_predictor_32x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_32x16 = eb_aom_highbd_paeth_predictor_32x16_avx2;
-    eb_aom_highbd_paeth_predictor_32x32 = eb_aom_highbd_paeth_predictor_32x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_32x32 = eb_aom_highbd_paeth_predictor_32x32_avx2;
-    eb_aom_highbd_paeth_predictor_32x64 = eb_aom_highbd_paeth_predictor_32x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_32x64 = eb_aom_highbd_paeth_predictor_32x64_avx2;
-    eb_aom_highbd_paeth_predictor_32x8 = eb_aom_highbd_paeth_predictor_32x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_32x8 = eb_aom_highbd_paeth_predictor_32x8_avx2;
-    eb_aom_highbd_paeth_predictor_4x16 = eb_aom_highbd_paeth_predictor_4x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_4x16 = eb_aom_highbd_paeth_predictor_4x16_avx2;
-    eb_aom_highbd_paeth_predictor_4x4 = eb_aom_highbd_paeth_predictor_4x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_4x4 = eb_aom_highbd_paeth_predictor_4x4_avx2;
-    eb_aom_highbd_paeth_predictor_4x8 = eb_aom_highbd_paeth_predictor_4x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_4x8 = eb_aom_highbd_paeth_predictor_4x8_avx2;
-    eb_aom_highbd_paeth_predictor_64x16 = eb_aom_highbd_paeth_predictor_64x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_64x16 = eb_aom_highbd_paeth_predictor_64x16_avx2;
-    eb_aom_highbd_paeth_predictor_64x32 = eb_aom_highbd_paeth_predictor_64x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_64x32 = eb_aom_highbd_paeth_predictor_64x32_avx2;
-    eb_aom_highbd_paeth_predictor_64x64 = eb_aom_highbd_paeth_predictor_64x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_64x64 = eb_aom_highbd_paeth_predictor_64x64_avx2;
-    eb_aom_highbd_paeth_predictor_8x16 = eb_aom_highbd_paeth_predictor_8x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_8x16 = eb_aom_highbd_paeth_predictor_8x16_avx2;
-    eb_aom_highbd_paeth_predictor_8x32 = eb_aom_highbd_paeth_predictor_8x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_8x32 = eb_aom_highbd_paeth_predictor_8x32_avx2;
-    eb_aom_highbd_paeth_predictor_8x4 = eb_aom_highbd_paeth_predictor_8x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_8x4 = eb_aom_highbd_paeth_predictor_8x4_avx2;
-    eb_aom_highbd_paeth_predictor_8x8 = eb_aom_highbd_paeth_predictor_8x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_paeth_predictor_8x8 = eb_aom_highbd_paeth_predictor_8x8_avx2;
-
-    eb_aom_dc_predictor_4x4 = eb_aom_dc_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_4x4 = eb_aom_dc_predictor_4x4_sse2;
-    eb_aom_dc_predictor_8x8 = eb_aom_dc_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_8x8 = eb_aom_dc_predictor_8x8_sse2;
-    eb_aom_dc_predictor_16x16 = eb_aom_dc_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_16x16 = eb_aom_dc_predictor_16x16_sse2;
-    eb_aom_dc_predictor_32x32 = eb_aom_dc_predictor_32x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_predictor_32x32 = eb_aom_dc_predictor_32x32_avx2;
-    eb_aom_dc_predictor_64x64 = eb_aom_dc_predictor_64x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_predictor_64x64 = eb_aom_dc_predictor_64x64_avx2;
-    eb_aom_dc_predictor_32x16 = eb_aom_dc_predictor_32x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_predictor_32x16 = eb_aom_dc_predictor_32x16_avx2;
-    eb_aom_dc_predictor_32x64 = eb_aom_dc_predictor_32x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_predictor_32x64 = eb_aom_dc_predictor_32x64_avx2;
-    eb_aom_dc_predictor_64x16 = eb_aom_dc_predictor_64x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_predictor_64x16 = eb_aom_dc_predictor_64x16_avx2;
-    eb_aom_dc_predictor_8x16 = eb_aom_dc_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_8x16 = eb_aom_dc_predictor_8x16_sse2;
-    eb_aom_dc_predictor_8x32 = eb_aom_dc_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_8x32 = eb_aom_dc_predictor_8x32_sse2;
-    eb_aom_dc_predictor_8x4 = eb_aom_dc_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_8x4 = eb_aom_dc_predictor_8x4_sse2;
-    eb_aom_dc_predictor_64x32 = eb_aom_dc_predictor_64x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_predictor_64x32 = eb_aom_dc_predictor_64x32_avx2;
-    eb_aom_dc_predictor_16x32 = eb_aom_dc_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_16x32 = eb_aom_dc_predictor_16x32_sse2;
-    eb_aom_dc_predictor_16x4 = eb_aom_dc_predictor_16x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_16x4 = eb_aom_dc_predictor_16x4_sse2;
-    eb_aom_dc_predictor_16x64 = eb_aom_dc_predictor_16x64_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_16x64 = eb_aom_dc_predictor_16x64_sse2;
-    eb_aom_dc_predictor_16x8 = eb_aom_dc_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_16x8 = eb_aom_dc_predictor_16x8_sse2;
-    eb_aom_dc_predictor_32x8 = eb_aom_dc_predictor_32x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_32x8 = eb_aom_dc_predictor_32x8_sse2;
-    eb_aom_dc_predictor_4x16 = eb_aom_dc_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_4x16 = eb_aom_dc_predictor_4x16_sse2;
-    eb_aom_dc_predictor_4x8 = eb_aom_dc_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_predictor_4x8 = eb_aom_dc_predictor_4x8_sse2;
-
-    eb_aom_dc_top_predictor_4x4 = eb_aom_dc_top_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_4x4 = eb_aom_dc_top_predictor_4x4_sse2;
-    eb_aom_dc_top_predictor_8x8 = eb_aom_dc_top_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x8 = eb_aom_dc_top_predictor_8x8_sse2;
-    eb_aom_dc_top_predictor_16x16 = eb_aom_dc_top_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x16 = eb_aom_dc_top_predictor_16x16_sse2;
-    eb_aom_dc_top_predictor_32x32 = eb_aom_dc_top_predictor_32x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_top_predictor_32x32 = eb_aom_dc_top_predictor_32x32_avx2;
-    eb_aom_dc_top_predictor_64x64 = eb_aom_dc_top_predictor_64x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_top_predictor_64x64 = eb_aom_dc_top_predictor_64x64_avx2;
-    eb_aom_dc_top_predictor_16x32 = eb_aom_dc_top_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x32 = eb_aom_dc_top_predictor_16x32_sse2;
-    eb_aom_dc_top_predictor_16x4 = eb_aom_dc_top_predictor_16x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x4 = eb_aom_dc_top_predictor_16x4_sse2;
-    eb_aom_dc_top_predictor_16x64 = eb_aom_dc_top_predictor_16x64_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x64 = eb_aom_dc_top_predictor_16x64_sse2;
-    eb_aom_dc_top_predictor_16x8 = eb_aom_dc_top_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x8 = eb_aom_dc_top_predictor_16x8_sse2;
-    eb_aom_dc_top_predictor_32x16 = eb_aom_dc_top_predictor_32x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_top_predictor_32x16 = eb_aom_dc_top_predictor_32x16_avx2;
-    eb_aom_dc_top_predictor_32x64 = eb_aom_dc_top_predictor_32x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_top_predictor_32x64 = eb_aom_dc_top_predictor_32x64_avx2;
-    eb_aom_dc_top_predictor_32x8 = eb_aom_dc_top_predictor_32x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_32x8 = eb_aom_dc_top_predictor_32x8_sse2;
-    eb_aom_dc_top_predictor_4x16 = eb_aom_dc_top_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_4x16 = eb_aom_dc_top_predictor_4x16_sse2;
-    eb_aom_dc_top_predictor_4x8 = eb_aom_dc_top_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_4x8 = eb_aom_dc_top_predictor_4x8_sse2;
-    eb_aom_dc_top_predictor_64x16 = eb_aom_dc_top_predictor_64x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_top_predictor_64x16 = eb_aom_dc_top_predictor_64x16_avx2;
-    eb_aom_dc_top_predictor_64x32 = eb_aom_dc_top_predictor_64x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_top_predictor_64x32 = eb_aom_dc_top_predictor_64x32_avx2;
-    eb_aom_dc_top_predictor_8x16 = eb_aom_dc_top_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x16 = eb_aom_dc_top_predictor_8x16_sse2;
-    eb_aom_dc_top_predictor_8x32 = eb_aom_dc_top_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x32 = eb_aom_dc_top_predictor_8x32_sse2;
-    eb_aom_dc_top_predictor_8x4 = eb_aom_dc_top_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x4 = eb_aom_dc_top_predictor_8x4_sse2;
-
-    eb_aom_dc_left_predictor_4x4 = eb_aom_dc_left_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_4x4 = eb_aom_dc_left_predictor_4x4_sse2;
-    eb_aom_dc_left_predictor_8x8 = eb_aom_dc_left_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x8 = eb_aom_dc_left_predictor_8x8_sse2;
-    eb_aom_dc_left_predictor_16x16 = eb_aom_dc_left_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x16 = eb_aom_dc_left_predictor_16x16_sse2;
-    eb_aom_dc_left_predictor_32x32 = eb_aom_dc_left_predictor_32x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_left_predictor_32x32 = eb_aom_dc_left_predictor_32x32_avx2;
-    eb_aom_dc_left_predictor_64x64 = eb_aom_dc_left_predictor_64x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_left_predictor_64x64 = eb_aom_dc_left_predictor_64x64_avx2;
-    eb_aom_dc_left_predictor_16x32 = eb_aom_dc_left_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x32 = eb_aom_dc_left_predictor_16x32_sse2;
-    eb_aom_dc_left_predictor_16x4 = eb_aom_dc_left_predictor_16x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x4 = eb_aom_dc_left_predictor_16x4_sse2;
-    eb_aom_dc_left_predictor_16x64 = eb_aom_dc_left_predictor_16x64_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x64 = eb_aom_dc_left_predictor_16x64_sse2;
-    eb_aom_dc_left_predictor_16x8 = eb_aom_dc_left_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x8 = eb_aom_dc_left_predictor_16x8_sse2;
-    eb_aom_dc_left_predictor_32x16 = eb_aom_dc_left_predictor_32x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_left_predictor_32x16 = eb_aom_dc_left_predictor_32x16_avx2;
-    eb_aom_dc_left_predictor_32x64 = eb_aom_dc_left_predictor_32x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_left_predictor_32x64 = eb_aom_dc_left_predictor_32x64_avx2;
-    eb_aom_dc_left_predictor_64x16 = eb_aom_dc_left_predictor_64x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_left_predictor_64x16 = eb_aom_dc_left_predictor_64x16_avx2;
-    eb_aom_dc_left_predictor_64x32 = eb_aom_dc_left_predictor_64x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_left_predictor_64x32 = eb_aom_dc_left_predictor_64x32_avx2;
-    eb_aom_dc_left_predictor_32x8 = eb_aom_dc_left_predictor_32x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_32x8 = eb_aom_dc_left_predictor_32x8_sse2;
-    eb_aom_dc_left_predictor_4x16 = eb_aom_dc_left_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_4x16 = eb_aom_dc_left_predictor_4x16_sse2;
-    eb_aom_dc_left_predictor_4x8 = eb_aom_dc_left_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_4x8 = eb_aom_dc_left_predictor_4x8_sse2;
-    eb_aom_dc_left_predictor_8x16 = eb_aom_dc_left_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x16 = eb_aom_dc_left_predictor_8x16_sse2;
-    eb_aom_dc_left_predictor_8x32 = eb_aom_dc_left_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x32 = eb_aom_dc_left_predictor_8x32_sse2;
-    eb_aom_dc_left_predictor_8x4 = eb_aom_dc_left_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x4 = eb_aom_dc_left_predictor_8x4_sse2;
-
-    eb_aom_dc_128_predictor_4x4 = eb_aom_dc_128_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_4x4 = eb_aom_dc_128_predictor_4x4_sse2;
-    eb_aom_dc_128_predictor_8x8 = eb_aom_dc_128_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x8 = eb_aom_dc_128_predictor_8x8_sse2;
-    eb_aom_dc_128_predictor_16x16 = eb_aom_dc_128_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x16 = eb_aom_dc_128_predictor_16x16_sse2;
-    eb_aom_dc_128_predictor_32x32 = eb_aom_dc_128_predictor_32x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_128_predictor_32x32 = eb_aom_dc_128_predictor_32x32_avx2;
-    eb_aom_dc_128_predictor_64x64 = eb_aom_dc_128_predictor_64x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_128_predictor_64x64 = eb_aom_dc_128_predictor_64x64_avx2;
-    eb_aom_dc_128_predictor_16x32 = eb_aom_dc_128_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x32 = eb_aom_dc_128_predictor_16x32_sse2;
-    eb_aom_dc_128_predictor_16x4 = eb_aom_dc_128_predictor_16x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x4 = eb_aom_dc_128_predictor_16x4_sse2;
-    eb_aom_dc_128_predictor_16x64 = eb_aom_dc_128_predictor_16x64_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x64 = eb_aom_dc_128_predictor_16x64_sse2;
-    eb_aom_dc_128_predictor_16x8 = eb_aom_dc_128_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x8 = eb_aom_dc_128_predictor_16x8_sse2;
-    eb_aom_dc_128_predictor_32x16 = eb_aom_dc_128_predictor_32x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_128_predictor_32x16 = eb_aom_dc_128_predictor_32x16_avx2;
-    eb_aom_dc_128_predictor_32x64 = eb_aom_dc_128_predictor_32x64_c;
-    if (flags & HAS_AVX2) eb_aom_dc_128_predictor_32x64 = eb_aom_dc_128_predictor_32x64_avx2;
-    eb_aom_dc_128_predictor_32x8 = eb_aom_dc_128_predictor_32x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_32x8 = eb_aom_dc_128_predictor_32x8_sse2;
-    eb_aom_dc_128_predictor_4x16 = eb_aom_dc_128_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_4x16 = eb_aom_dc_128_predictor_4x16_sse2;
-    eb_aom_dc_128_predictor_4x8 = eb_aom_dc_128_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_4x8 = eb_aom_dc_128_predictor_4x8_sse2;
-    eb_aom_dc_128_predictor_64x16 = eb_aom_dc_128_predictor_64x16_c;
-    if (flags & HAS_AVX2) eb_aom_dc_128_predictor_64x16 = eb_aom_dc_128_predictor_64x16_avx2;
-    eb_aom_dc_128_predictor_64x32 = eb_aom_dc_128_predictor_64x32_c;
-    if (flags & HAS_AVX2) eb_aom_dc_128_predictor_64x32 = eb_aom_dc_128_predictor_64x32_avx2;
-    eb_aom_dc_128_predictor_8x16 = eb_aom_dc_128_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x16 = eb_aom_dc_128_predictor_8x16_sse2;
-    eb_aom_dc_128_predictor_8x32 = eb_aom_dc_128_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x32 = eb_aom_dc_128_predictor_8x32_sse2;
-    eb_aom_dc_128_predictor_8x4 = eb_aom_dc_128_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x4 = eb_aom_dc_128_predictor_8x4_sse2;
-
-    eb_aom_smooth_h_predictor_16x32 = eb_aom_smooth_h_predictor_16x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x32 = eb_aom_smooth_h_predictor_16x32_ssse3;
-    eb_aom_smooth_h_predictor_16x4 = eb_aom_smooth_h_predictor_16x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x4 = eb_aom_smooth_h_predictor_16x4_ssse3;
-    eb_aom_smooth_h_predictor_16x64 = eb_aom_smooth_h_predictor_16x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x64 = eb_aom_smooth_h_predictor_16x64_ssse3;
-    eb_aom_smooth_h_predictor_16x8 = eb_aom_smooth_h_predictor_16x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x8 = eb_aom_smooth_h_predictor_16x8_ssse3;
-    eb_aom_smooth_h_predictor_32x16 = eb_aom_smooth_h_predictor_32x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x16 = eb_aom_smooth_h_predictor_32x16_ssse3;
-    eb_aom_smooth_h_predictor_32x64 = eb_aom_smooth_h_predictor_32x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x64 = eb_aom_smooth_h_predictor_32x64_ssse3;
-    eb_aom_smooth_h_predictor_32x8 = eb_aom_smooth_h_predictor_32x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x8 = eb_aom_smooth_h_predictor_32x8_ssse3;
-    eb_aom_smooth_h_predictor_4x16 = eb_aom_smooth_h_predictor_4x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x16 = eb_aom_smooth_h_predictor_4x16_ssse3;
-    eb_aom_smooth_h_predictor_4x8 = eb_aom_smooth_h_predictor_4x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x8 = eb_aom_smooth_h_predictor_4x8_ssse3;
-    eb_aom_smooth_h_predictor_64x16 = eb_aom_smooth_h_predictor_64x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_64x16 = eb_aom_smooth_h_predictor_64x16_ssse3;
-    eb_aom_smooth_h_predictor_64x32 = eb_aom_smooth_h_predictor_64x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_64x32 = eb_aom_smooth_h_predictor_64x32_ssse3;
-    eb_aom_smooth_h_predictor_8x16 = eb_aom_smooth_h_predictor_8x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x16 = eb_aom_smooth_h_predictor_8x16_ssse3;
-    eb_aom_smooth_h_predictor_8x32 = eb_aom_smooth_h_predictor_8x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x32 = eb_aom_smooth_h_predictor_8x32_ssse3;
-    eb_aom_smooth_h_predictor_8x4 = eb_aom_smooth_h_predictor_8x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x4 = eb_aom_smooth_h_predictor_8x4_ssse3;
-    eb_aom_smooth_h_predictor_64x64 = eb_aom_smooth_h_predictor_64x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_64x64 = eb_aom_smooth_h_predictor_64x64_ssse3;
-    eb_aom_smooth_h_predictor_32x32 = eb_aom_smooth_h_predictor_32x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x32 = eb_aom_smooth_h_predictor_32x32_ssse3;
-    eb_aom_smooth_h_predictor_16x16 = eb_aom_smooth_h_predictor_16x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x16 = eb_aom_smooth_h_predictor_16x16_ssse3;
-    eb_aom_smooth_h_predictor_8x8 = eb_aom_smooth_h_predictor_8x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x8 = eb_aom_smooth_h_predictor_8x8_ssse3;
-    eb_aom_smooth_h_predictor_4x4 = eb_aom_smooth_h_predictor_4x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x4 = eb_aom_smooth_h_predictor_4x4_ssse3;
-    eb_aom_smooth_v_predictor_16x32 = eb_aom_smooth_v_predictor_16x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x32 = eb_aom_smooth_v_predictor_16x32_ssse3;
-    eb_aom_smooth_v_predictor_16x4 = eb_aom_smooth_v_predictor_16x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x4 = eb_aom_smooth_v_predictor_16x4_ssse3;
-    eb_aom_smooth_v_predictor_16x64 = eb_aom_smooth_v_predictor_16x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x64 = eb_aom_smooth_v_predictor_16x64_ssse3;
-    eb_aom_smooth_v_predictor_16x8 = eb_aom_smooth_v_predictor_16x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x8 = eb_aom_smooth_v_predictor_16x8_ssse3;
-    eb_aom_smooth_v_predictor_32x16 = eb_aom_smooth_v_predictor_32x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x16 = eb_aom_smooth_v_predictor_32x16_ssse3;
-    eb_aom_smooth_v_predictor_32x64 = eb_aom_smooth_v_predictor_32x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x64 = eb_aom_smooth_v_predictor_32x64_ssse3;
-    eb_aom_smooth_v_predictor_32x8 = eb_aom_smooth_v_predictor_32x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x8 = eb_aom_smooth_v_predictor_32x8_ssse3;
-    eb_aom_smooth_v_predictor_4x16 = eb_aom_smooth_v_predictor_4x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_4x16 = eb_aom_smooth_v_predictor_4x16_ssse3;
-    eb_aom_smooth_v_predictor_4x8 = eb_aom_smooth_v_predictor_4x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_4x8 = eb_aom_smooth_v_predictor_4x8_ssse3;
-    eb_aom_smooth_v_predictor_64x16 = eb_aom_smooth_v_predictor_64x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_64x16 = eb_aom_smooth_v_predictor_64x16_ssse3;
-    eb_aom_smooth_v_predictor_64x32 = eb_aom_smooth_v_predictor_64x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_64x32 = eb_aom_smooth_v_predictor_64x32_ssse3;
-    eb_aom_smooth_v_predictor_8x16 = eb_aom_smooth_v_predictor_8x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x16 = eb_aom_smooth_v_predictor_8x16_ssse3;
-    eb_aom_smooth_v_predictor_8x32 = eb_aom_smooth_v_predictor_8x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x32 = eb_aom_smooth_v_predictor_8x32_ssse3;
-    eb_aom_smooth_v_predictor_8x4 = eb_aom_smooth_v_predictor_8x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x4 = eb_aom_smooth_v_predictor_8x4_ssse3;
-    eb_aom_smooth_v_predictor_64x64 = eb_aom_smooth_v_predictor_64x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_64x64 = eb_aom_smooth_v_predictor_64x64_ssse3;
-    eb_aom_smooth_v_predictor_32x32 = eb_aom_smooth_v_predictor_32x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x32 = eb_aom_smooth_v_predictor_32x32_ssse3;
-    eb_aom_smooth_v_predictor_16x16 = eb_aom_smooth_v_predictor_16x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x16 = eb_aom_smooth_v_predictor_16x16_ssse3;
-    eb_aom_smooth_v_predictor_8x8 = eb_aom_smooth_v_predictor_8x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x8 = eb_aom_smooth_v_predictor_8x8_ssse3;
-    eb_aom_smooth_v_predictor_4x4 = eb_aom_smooth_v_predictor_4x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_4x4 = eb_aom_smooth_v_predictor_4x4_ssse3;
-
-    eb_aom_smooth_predictor_16x32 = eb_aom_smooth_predictor_16x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x32 = eb_aom_smooth_predictor_16x32_ssse3;
-    eb_aom_smooth_predictor_16x4 = eb_aom_smooth_predictor_16x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x4 = eb_aom_smooth_predictor_16x4_ssse3;
-    eb_aom_smooth_predictor_16x64 = eb_aom_smooth_predictor_16x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x64 = eb_aom_smooth_predictor_16x64_ssse3;
-    eb_aom_smooth_predictor_16x8 = eb_aom_smooth_predictor_16x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x8 = eb_aom_smooth_predictor_16x8_ssse3;
-    eb_aom_smooth_predictor_32x16 = eb_aom_smooth_predictor_32x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x16 = eb_aom_smooth_predictor_32x16_ssse3;
-    eb_aom_smooth_predictor_32x64 = eb_aom_smooth_predictor_32x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x64 = eb_aom_smooth_predictor_32x64_ssse3;
-    eb_aom_smooth_predictor_32x8 = eb_aom_smooth_predictor_32x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x8 = eb_aom_smooth_predictor_32x8_ssse3;
-    eb_aom_smooth_predictor_4x16 = eb_aom_smooth_predictor_4x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_4x16 = eb_aom_smooth_predictor_4x16_ssse3;
-    eb_aom_smooth_predictor_4x8 = eb_aom_smooth_predictor_4x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_4x8 = eb_aom_smooth_predictor_4x8_ssse3;
-    eb_aom_smooth_predictor_64x16 = eb_aom_smooth_predictor_64x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_64x16 = eb_aom_smooth_predictor_64x16_ssse3;
-    eb_aom_smooth_predictor_64x32 = eb_aom_smooth_predictor_64x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_64x32 = eb_aom_smooth_predictor_64x32_ssse3;
-    eb_aom_smooth_predictor_8x16 = eb_aom_smooth_predictor_8x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x16 = eb_aom_smooth_predictor_8x16_ssse3;
-    eb_aom_smooth_predictor_8x32 = eb_aom_smooth_predictor_8x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x32 = eb_aom_smooth_predictor_8x32_ssse3;
-    eb_aom_smooth_predictor_8x4 = eb_aom_smooth_predictor_8x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x4 = eb_aom_smooth_predictor_8x4_ssse3;
-    eb_aom_smooth_predictor_64x64 = eb_aom_smooth_predictor_64x64_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_64x64 = eb_aom_smooth_predictor_64x64_ssse3;
-    eb_aom_smooth_predictor_32x32 = eb_aom_smooth_predictor_32x32_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x32 = eb_aom_smooth_predictor_32x32_ssse3;
-    eb_aom_smooth_predictor_16x16 = eb_aom_smooth_predictor_16x16_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x16 = eb_aom_smooth_predictor_16x16_ssse3;
-    eb_aom_smooth_predictor_8x8 = eb_aom_smooth_predictor_8x8_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x8 = eb_aom_smooth_predictor_8x8_ssse3;
-    eb_aom_smooth_predictor_4x4 = eb_aom_smooth_predictor_4x4_c;
-    if (flags & HAS_SSSE3) eb_aom_smooth_predictor_4x4 = eb_aom_smooth_predictor_4x4_ssse3;
-
-    eb_aom_v_predictor_4x4 = eb_aom_v_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_4x4 = eb_aom_v_predictor_4x4_sse2;
-    eb_aom_v_predictor_8x8 = eb_aom_v_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_8x8 = eb_aom_v_predictor_8x8_sse2;
-    eb_aom_v_predictor_16x16 = eb_aom_v_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_16x16 = eb_aom_v_predictor_16x16_sse2;
-    eb_aom_v_predictor_32x32 = eb_aom_v_predictor_32x32_c;
-    if (flags & HAS_AVX2) eb_aom_v_predictor_32x32 = eb_aom_v_predictor_32x32_avx2;
-    eb_aom_v_predictor_64x64 = eb_aom_v_predictor_64x64_c;
-    if (flags & HAS_AVX2) eb_aom_v_predictor_64x64 = eb_aom_v_predictor_64x64_avx2;
-    eb_aom_v_predictor_16x32 = eb_aom_v_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_16x32 = eb_aom_v_predictor_16x32_sse2;
-    eb_aom_v_predictor_16x4 = eb_aom_v_predictor_16x4_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_16x4 = eb_aom_v_predictor_16x4_sse2;
-    eb_aom_v_predictor_16x64 = eb_aom_v_predictor_16x64_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_16x64 = eb_aom_v_predictor_16x64_sse2;
-    eb_aom_v_predictor_16x8 = eb_aom_v_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_16x8 = eb_aom_v_predictor_16x8_sse2;
-    eb_aom_v_predictor_32x16 = eb_aom_v_predictor_32x16_c;
-    if (flags & HAS_AVX2) eb_aom_v_predictor_32x16 = eb_aom_v_predictor_32x16_avx2;
-    eb_aom_v_predictor_32x64 = eb_aom_v_predictor_32x64_c;
-    if (flags & HAS_AVX2) eb_aom_v_predictor_32x64 = eb_aom_v_predictor_32x64_avx2;
-    eb_aom_v_predictor_32x8 = eb_aom_v_predictor_32x8_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_32x8 = eb_aom_v_predictor_32x8_sse2;
-    eb_aom_v_predictor_4x16 = eb_aom_v_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_4x16 = eb_aom_v_predictor_4x16_sse2;
-    eb_aom_v_predictor_4x8 = eb_aom_v_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_4x8 = eb_aom_v_predictor_4x8_sse2;
-    eb_aom_v_predictor_64x16 = eb_aom_v_predictor_64x16_c;
-    if (flags & HAS_AVX2) eb_aom_v_predictor_64x16 = eb_aom_v_predictor_64x16_avx2;
-    eb_aom_v_predictor_64x32 = eb_aom_v_predictor_64x32_c;
-    if (flags & HAS_AVX2) eb_aom_v_predictor_64x32 = eb_aom_v_predictor_64x32_avx2;
-    eb_aom_v_predictor_8x16 = eb_aom_v_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_8x16 = eb_aom_v_predictor_8x16_sse2;
-    eb_aom_v_predictor_8x32 = eb_aom_v_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_8x32 = eb_aom_v_predictor_8x32_sse2;
-    eb_aom_v_predictor_8x4 = eb_aom_v_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_v_predictor_8x4 = eb_aom_v_predictor_8x4_sse2;
-
-    eb_aom_h_predictor_4x4 = eb_aom_h_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_4x4 = eb_aom_h_predictor_4x4_sse2;
-    eb_aom_h_predictor_8x8 = eb_aom_h_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_8x8 = eb_aom_h_predictor_8x8_sse2;
-    eb_aom_h_predictor_16x16 = eb_aom_h_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_16x16 = eb_aom_h_predictor_16x16_sse2;
-    eb_aom_h_predictor_32x32 = eb_aom_h_predictor_32x32_c;
-    if (flags & HAS_AVX2) eb_aom_h_predictor_32x32 = eb_aom_h_predictor_32x32_avx2;
-    eb_aom_h_predictor_64x64 = eb_aom_h_predictor_64x64_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_64x64 = eb_aom_h_predictor_64x64_sse2;
-    eb_aom_h_predictor_16x32 = eb_aom_h_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_16x32 = eb_aom_h_predictor_16x32_sse2;
-    eb_aom_h_predictor_16x4 = eb_aom_h_predictor_16x4_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_16x4 = eb_aom_h_predictor_16x4_sse2;
-    eb_aom_h_predictor_16x64 = eb_aom_h_predictor_16x64_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_16x64 = eb_aom_h_predictor_16x64_sse2;
-    eb_aom_h_predictor_16x8 = eb_aom_h_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_16x8 = eb_aom_h_predictor_16x8_sse2;
-    eb_aom_h_predictor_32x16 = eb_aom_h_predictor_32x16_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_32x16 = eb_aom_h_predictor_32x16_sse2;
-    eb_aom_h_predictor_32x64 = eb_aom_h_predictor_32x64_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_32x64 = eb_aom_h_predictor_32x64_sse2;
-    eb_aom_h_predictor_32x8 = eb_aom_h_predictor_32x8_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_32x8 = eb_aom_h_predictor_32x8_sse2;
-    eb_aom_h_predictor_4x16 = eb_aom_h_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_4x16 = eb_aom_h_predictor_4x16_sse2;
-    eb_aom_h_predictor_4x8 = eb_aom_h_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_4x8 = eb_aom_h_predictor_4x8_sse2;
-    eb_aom_h_predictor_64x16 = eb_aom_h_predictor_64x16_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_64x16 = eb_aom_h_predictor_64x16_sse2;
-    eb_aom_h_predictor_64x32 = eb_aom_h_predictor_64x32_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_64x32 = eb_aom_h_predictor_64x32_sse2;
-    eb_aom_h_predictor_8x16 = eb_aom_h_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_8x16 = eb_aom_h_predictor_8x16_sse2;
-    eb_aom_h_predictor_8x32 = eb_aom_h_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_8x32 = eb_aom_h_predictor_8x32_sse2;
-    eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_sse2;
-
-    eb_cdef_find_dir = eb_cdef_find_dir_c;
-    if (flags & HAS_AVX2) eb_cdef_find_dir = eb_cdef_find_dir_avx2;
-
-    eb_cdef_filter_block = eb_cdef_filter_block_c;
-    if (flags & HAS_AVX2) eb_cdef_filter_block = eb_cdef_filter_block_avx2;
-
-    eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_c;
-    if (flags & HAS_AVX2) eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_avx2;
-
-    eb_cdef_filter_block_8x8_16 =
-            eb_cdef_filter_block_8x8_16_avx2; // It has no c version, and is only called in parent avx2 function, so it's safe to initialize to avx2 version.
+        if (flags & HAS_AVX2) eb_av1_dr_prediction_z1 = eb_av1_dr_prediction_z1_avx2;
+        if (flags & HAS_AVX2) eb_av1_dr_prediction_z2 = eb_av1_dr_prediction_z2_avx2;
+        if (flags & HAS_AVX2) eb_av1_dr_prediction_z3 = eb_av1_dr_prediction_z3_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z1 = eb_av1_highbd_dr_prediction_z1_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_avx2;
+        if (flags & HAS_AVX2) eb_av1_highbd_dr_prediction_z3 = eb_av1_highbd_dr_prediction_z3_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x16 = eb_aom_paeth_predictor_16x16_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x32 = eb_aom_paeth_predictor_16x32_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x32 = eb_aom_paeth_predictor_16x32_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x4 = eb_aom_paeth_predictor_16x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x64 = eb_aom_paeth_predictor_16x64_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x64 = eb_aom_paeth_predictor_16x64_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_16x8 = eb_aom_paeth_predictor_16x8_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_16x8 = eb_aom_paeth_predictor_16x8_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x16 = eb_aom_paeth_predictor_32x16_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_32x16 = eb_aom_paeth_predictor_32x16_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x32 = eb_aom_paeth_predictor_32x32_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_32x32 = eb_aom_paeth_predictor_32x32_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x64 = eb_aom_paeth_predictor_32x64_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_32x64 = eb_aom_paeth_predictor_32x64_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_32x8 = eb_aom_paeth_predictor_32x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_4x16 = eb_aom_paeth_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_4x4 = eb_aom_paeth_predictor_4x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_4x8 = eb_aom_paeth_predictor_4x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_64x16 = eb_aom_paeth_predictor_64x16_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_64x16 = eb_aom_paeth_predictor_64x16_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_64x32 = eb_aom_paeth_predictor_64x32_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_64x32 = eb_aom_paeth_predictor_64x32_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_64x64 = eb_aom_paeth_predictor_64x64_ssse3;
+        if (flags & HAS_AVX2) eb_aom_paeth_predictor_64x64 = eb_aom_paeth_predictor_64x64_avx2;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x16 = eb_aom_paeth_predictor_8x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x32 = eb_aom_paeth_predictor_8x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x4 = eb_aom_paeth_predictor_8x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_paeth_predictor_8x8 = eb_aom_paeth_predictor_8x8_ssse3;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_16x16 = eb_aom_highbd_paeth_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_16x32 = eb_aom_highbd_paeth_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_16x4 = eb_aom_highbd_paeth_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_16x64 = eb_aom_highbd_paeth_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_16x8 = eb_aom_highbd_paeth_predictor_16x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_2x2 = eb_aom_highbd_paeth_predictor_2x2_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_32x16 = eb_aom_highbd_paeth_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_32x32 = eb_aom_highbd_paeth_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_32x64 = eb_aom_highbd_paeth_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_32x8 = eb_aom_highbd_paeth_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_4x16 = eb_aom_highbd_paeth_predictor_4x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_4x4 = eb_aom_highbd_paeth_predictor_4x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_4x8 = eb_aom_highbd_paeth_predictor_4x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_64x16 = eb_aom_highbd_paeth_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_64x32 = eb_aom_highbd_paeth_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_64x64 = eb_aom_highbd_paeth_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_8x16 = eb_aom_highbd_paeth_predictor_8x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_8x32 = eb_aom_highbd_paeth_predictor_8x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_8x4 = eb_aom_highbd_paeth_predictor_8x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_paeth_predictor_8x8 = eb_aom_highbd_paeth_predictor_8x8_avx2;
+        if (flags & HAS_SSE2) aom_sum_squares_i16 = aom_sum_squares_i16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_4x4 = eb_aom_dc_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_8x8 = eb_aom_dc_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_16x16 = eb_aom_dc_predictor_16x16_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_predictor_32x32 = eb_aom_dc_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_predictor_64x64 = eb_aom_dc_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_predictor_32x16 = eb_aom_dc_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_predictor_32x64 = eb_aom_dc_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_predictor_64x16 = eb_aom_dc_predictor_64x16_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_8x16 = eb_aom_dc_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_8x32 = eb_aom_dc_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_8x4 = eb_aom_dc_predictor_8x4_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_predictor_64x32 = eb_aom_dc_predictor_64x32_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_16x32 = eb_aom_dc_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_16x4 = eb_aom_dc_predictor_16x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_16x64 = eb_aom_dc_predictor_16x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_16x8 = eb_aom_dc_predictor_16x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_32x8 = eb_aom_dc_predictor_32x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_4x16 = eb_aom_dc_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_predictor_4x8 = eb_aom_dc_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_4x4 = eb_aom_dc_top_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x8 = eb_aom_dc_top_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x16 = eb_aom_dc_top_predictor_16x16_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_top_predictor_32x32 = eb_aom_dc_top_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_top_predictor_64x64 = eb_aom_dc_top_predictor_64x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x32 = eb_aom_dc_top_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x4 = eb_aom_dc_top_predictor_16x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x64 = eb_aom_dc_top_predictor_16x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_16x8 = eb_aom_dc_top_predictor_16x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_top_predictor_32x16 = eb_aom_dc_top_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_top_predictor_32x64 = eb_aom_dc_top_predictor_32x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_32x8 = eb_aom_dc_top_predictor_32x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_4x16 = eb_aom_dc_top_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_4x8 = eb_aom_dc_top_predictor_4x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_top_predictor_64x16 = eb_aom_dc_top_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_top_predictor_64x32 = eb_aom_dc_top_predictor_64x32_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x16 = eb_aom_dc_top_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x32 = eb_aom_dc_top_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_top_predictor_8x4 = eb_aom_dc_top_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_4x4 = eb_aom_dc_left_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x8 = eb_aom_dc_left_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x16 = eb_aom_dc_left_predictor_16x16_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_left_predictor_32x32 = eb_aom_dc_left_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_left_predictor_64x64 = eb_aom_dc_left_predictor_64x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x32 = eb_aom_dc_left_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x4 = eb_aom_dc_left_predictor_16x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x64 = eb_aom_dc_left_predictor_16x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_16x8 = eb_aom_dc_left_predictor_16x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_left_predictor_32x16 = eb_aom_dc_left_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_left_predictor_32x64 = eb_aom_dc_left_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_left_predictor_64x16 = eb_aom_dc_left_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_left_predictor_64x32 = eb_aom_dc_left_predictor_64x32_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_32x8 = eb_aom_dc_left_predictor_32x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_4x16 = eb_aom_dc_left_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_4x8 = eb_aom_dc_left_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x16 = eb_aom_dc_left_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x32 = eb_aom_dc_left_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_left_predictor_8x4 = eb_aom_dc_left_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_4x4 = eb_aom_dc_128_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x8 = eb_aom_dc_128_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x16 = eb_aom_dc_128_predictor_16x16_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_128_predictor_32x32 = eb_aom_dc_128_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_128_predictor_64x64 = eb_aom_dc_128_predictor_64x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x32 = eb_aom_dc_128_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x4 = eb_aom_dc_128_predictor_16x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x64 = eb_aom_dc_128_predictor_16x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_16x8 = eb_aom_dc_128_predictor_16x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_128_predictor_32x16 = eb_aom_dc_128_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_128_predictor_32x64 = eb_aom_dc_128_predictor_32x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_32x8 = eb_aom_dc_128_predictor_32x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_4x16 = eb_aom_dc_128_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_4x8 = eb_aom_dc_128_predictor_4x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_dc_128_predictor_64x16 = eb_aom_dc_128_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_dc_128_predictor_64x32 = eb_aom_dc_128_predictor_64x32_avx2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x16 = eb_aom_dc_128_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x32 = eb_aom_dc_128_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_dc_128_predictor_8x4 = eb_aom_dc_128_predictor_8x4_sse2;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x32 = eb_aom_smooth_h_predictor_16x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x4 = eb_aom_smooth_h_predictor_16x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x64 = eb_aom_smooth_h_predictor_16x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x8 = eb_aom_smooth_h_predictor_16x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x16 = eb_aom_smooth_h_predictor_32x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x64 = eb_aom_smooth_h_predictor_32x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x8 = eb_aom_smooth_h_predictor_32x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x16 = eb_aom_smooth_h_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x8 = eb_aom_smooth_h_predictor_4x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_64x16 = eb_aom_smooth_h_predictor_64x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_64x32 = eb_aom_smooth_h_predictor_64x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x16 = eb_aom_smooth_h_predictor_8x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x32 = eb_aom_smooth_h_predictor_8x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x4 = eb_aom_smooth_h_predictor_8x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_64x64 = eb_aom_smooth_h_predictor_64x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_32x32 = eb_aom_smooth_h_predictor_32x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_16x16 = eb_aom_smooth_h_predictor_16x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_8x8 = eb_aom_smooth_h_predictor_8x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_h_predictor_4x4 = eb_aom_smooth_h_predictor_4x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x32 = eb_aom_smooth_v_predictor_16x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x4 = eb_aom_smooth_v_predictor_16x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x64 = eb_aom_smooth_v_predictor_16x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x8 = eb_aom_smooth_v_predictor_16x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x16 = eb_aom_smooth_v_predictor_32x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x64 = eb_aom_smooth_v_predictor_32x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x8 = eb_aom_smooth_v_predictor_32x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_4x16 = eb_aom_smooth_v_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_4x8 = eb_aom_smooth_v_predictor_4x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_64x16 = eb_aom_smooth_v_predictor_64x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_64x32 = eb_aom_smooth_v_predictor_64x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x16 = eb_aom_smooth_v_predictor_8x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x32 = eb_aom_smooth_v_predictor_8x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x4 = eb_aom_smooth_v_predictor_8x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_64x64 = eb_aom_smooth_v_predictor_64x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_32x32 = eb_aom_smooth_v_predictor_32x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_16x16 = eb_aom_smooth_v_predictor_16x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_8x8 = eb_aom_smooth_v_predictor_8x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_v_predictor_4x4 = eb_aom_smooth_v_predictor_4x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x32 = eb_aom_smooth_predictor_16x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x4 = eb_aom_smooth_predictor_16x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x64 = eb_aom_smooth_predictor_16x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x8 = eb_aom_smooth_predictor_16x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x16 = eb_aom_smooth_predictor_32x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x64 = eb_aom_smooth_predictor_32x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x8 = eb_aom_smooth_predictor_32x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_4x16 = eb_aom_smooth_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_4x8 = eb_aom_smooth_predictor_4x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_64x16 = eb_aom_smooth_predictor_64x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_64x32 = eb_aom_smooth_predictor_64x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x16 = eb_aom_smooth_predictor_8x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x32 = eb_aom_smooth_predictor_8x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x4 = eb_aom_smooth_predictor_8x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_64x64 = eb_aom_smooth_predictor_64x64_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_32x32 = eb_aom_smooth_predictor_32x32_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_16x16 = eb_aom_smooth_predictor_16x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_8x8 = eb_aom_smooth_predictor_8x8_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_smooth_predictor_4x4 = eb_aom_smooth_predictor_4x4_ssse3;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_4x4 = eb_aom_v_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_8x8 = eb_aom_v_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_16x16 = eb_aom_v_predictor_16x16_sse2;
+        if (flags & HAS_AVX2) eb_aom_v_predictor_32x32 = eb_aom_v_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_v_predictor_64x64 = eb_aom_v_predictor_64x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_16x32 = eb_aom_v_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_16x4 = eb_aom_v_predictor_16x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_16x64 = eb_aom_v_predictor_16x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_16x8 = eb_aom_v_predictor_16x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_v_predictor_32x16 = eb_aom_v_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_v_predictor_32x64 = eb_aom_v_predictor_32x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_32x8 = eb_aom_v_predictor_32x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_4x16 = eb_aom_v_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_4x8 = eb_aom_v_predictor_4x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_v_predictor_64x16 = eb_aom_v_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_v_predictor_64x32 = eb_aom_v_predictor_64x32_avx2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_8x16 = eb_aom_v_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_8x32 = eb_aom_v_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_v_predictor_8x4 = eb_aom_v_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_4x4 = eb_aom_h_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_8x8 = eb_aom_h_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_16x16 = eb_aom_h_predictor_16x16_sse2;
+        if (flags & HAS_AVX2) eb_aom_h_predictor_32x32 = eb_aom_h_predictor_32x32_avx2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_64x64 = eb_aom_h_predictor_64x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_16x32 = eb_aom_h_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_16x4 = eb_aom_h_predictor_16x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_16x64 = eb_aom_h_predictor_16x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_16x8 = eb_aom_h_predictor_16x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_32x16 = eb_aom_h_predictor_32x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_32x64 = eb_aom_h_predictor_32x64_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_32x8 = eb_aom_h_predictor_32x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_4x16 = eb_aom_h_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_4x8 = eb_aom_h_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_64x16 = eb_aom_h_predictor_64x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_64x32 = eb_aom_h_predictor_64x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_8x16 = eb_aom_h_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_8x32 = eb_aom_h_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_sse2;
+        if (flags & HAS_AVX2) eb_cdef_find_dir = eb_cdef_find_dir_avx2;
+        if (flags & HAS_AVX2) eb_cdef_filter_block = eb_cdef_filter_block_avx2;
+        if (flags & HAS_AVX2) eb_copy_rect8_8bit_to_16bit = eb_copy_rect8_8bit_to_16bit_avx2;
+        if (flags & HAS_AVX2) eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx2;
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
+        }
 #endif
-
-    SET_SSE41(
+        SET_SSE41(
             eb_av1_highbd_warp_affine, eb_av1_highbd_warp_affine_c, eb_av1_highbd_warp_affine_sse4_1);
-
-    eb_av1_warp_affine = eb_av1_warp_affine_c;
-    if (flags & HAS_AVX2) eb_av1_warp_affine = eb_av1_warp_affine_avx2;
-
-    SET_SSE2(aom_highbd_lpf_horizontal_14, aom_highbd_lpf_horizontal_14_c, aom_highbd_lpf_horizontal_14_sse2);
-    SET_SSE2(aom_highbd_lpf_horizontal_4, aom_highbd_lpf_horizontal_4_c, aom_highbd_lpf_horizontal_4_sse2);
-    SET_SSE2(aom_highbd_lpf_horizontal_6, aom_highbd_lpf_horizontal_6_c, aom_highbd_lpf_horizontal_6_sse2);
-    SET_SSE2(aom_highbd_lpf_horizontal_8, aom_highbd_lpf_horizontal_8_c, aom_highbd_lpf_horizontal_8_sse2);
-    SET_SSE2(aom_highbd_lpf_vertical_14, aom_highbd_lpf_vertical_14_c, aom_highbd_lpf_vertical_14_sse2);
-    SET_SSE2(aom_highbd_lpf_vertical_4, aom_highbd_lpf_vertical_4_c, aom_highbd_lpf_vertical_4_sse2);
-    SET_SSE2(aom_highbd_lpf_vertical_6, aom_highbd_lpf_vertical_6_c, aom_highbd_lpf_vertical_6_sse2);
-    SET_SSE2(aom_highbd_lpf_vertical_8, aom_highbd_lpf_vertical_8_c, aom_highbd_lpf_vertical_8_sse2);
-    SET_SSE2(aom_lpf_horizontal_14, aom_lpf_horizontal_14_c, aom_lpf_horizontal_14_sse2);
-    SET_SSE2(aom_lpf_horizontal_4, aom_lpf_horizontal_4_c, aom_lpf_horizontal_4_sse2);
-    SET_SSE2(aom_lpf_horizontal_6, aom_lpf_horizontal_6_c, aom_lpf_horizontal_6_sse2);
-    SET_SSE2(aom_lpf_horizontal_8, aom_lpf_horizontal_8_c, aom_lpf_horizontal_8_sse2);
-    SET_SSE2(aom_lpf_vertical_14, aom_lpf_vertical_14_c, aom_lpf_vertical_14_sse2);
-    SET_SSE2(aom_lpf_vertical_4, aom_lpf_vertical_4_c, aom_lpf_vertical_4_sse2);
-    SET_SSE2(aom_lpf_vertical_6, aom_lpf_vertical_6_c, aom_lpf_vertical_6_sse2);
-    SET_SSE2(aom_lpf_vertical_8, aom_lpf_vertical_8_c, aom_lpf_vertical_8_sse2);
-
-    // eb_aom_highbd_v_predictor
-    eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_avx2;
-    eb_aom_highbd_v_predictor_16x32 = eb_aom_highbd_v_predictor_16x32_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x32 = eb_aom_highbd_v_predictor_16x32_avx2;
-    eb_aom_highbd_v_predictor_16x4 = eb_aom_highbd_v_predictor_16x4_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x4 = eb_aom_highbd_v_predictor_16x4_avx2;
-    eb_aom_highbd_v_predictor_16x64 = eb_aom_highbd_v_predictor_16x64_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x64 = eb_aom_highbd_v_predictor_16x64_avx2;
-    eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_avx2;
-    eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_c;
-    eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_c;
-    eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_c;
-    eb_aom_highbd_v_predictor_32x8  = eb_aom_highbd_v_predictor_32x8_c;
-    eb_aom_highbd_v_predictor_4x16  = eb_aom_highbd_v_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x16 = eb_aom_highbd_v_predictor_4x16_sse2;
-    eb_aom_highbd_v_predictor_4x4 = eb_aom_highbd_v_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x4 = eb_aom_highbd_v_predictor_4x4_sse2;
-    eb_aom_highbd_v_predictor_4x8 = eb_aom_highbd_v_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x8 = eb_aom_highbd_v_predictor_4x8_sse2;
-    eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_c;
-    eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_c;
-    eb_aom_highbd_v_predictor_8x32  = eb_aom_highbd_v_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x32 = eb_aom_highbd_v_predictor_8x32_sse2;
-    eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_c;
-    eb_aom_highbd_v_predictor_8x16  = eb_aom_highbd_v_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x16 = eb_aom_highbd_v_predictor_8x16_sse2;
-    eb_aom_highbd_v_predictor_8x4 = eb_aom_highbd_v_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x4 = eb_aom_highbd_v_predictor_8x4_sse2;
-    eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_sse2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x8 = eb_aom_highbd_v_predictor_32x8_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) eb_av1_warp_affine = eb_av1_warp_affine_avx2;
+        SET_SSE2(aom_highbd_lpf_horizontal_14, aom_highbd_lpf_horizontal_14_c, aom_highbd_lpf_horizontal_14_sse2);
+        SET_SSE2(aom_highbd_lpf_horizontal_4, aom_highbd_lpf_horizontal_4_c, aom_highbd_lpf_horizontal_4_sse2);
+        SET_SSE2(aom_highbd_lpf_horizontal_6, aom_highbd_lpf_horizontal_6_c, aom_highbd_lpf_horizontal_6_sse2);
+        SET_SSE2(aom_highbd_lpf_horizontal_8, aom_highbd_lpf_horizontal_8_c, aom_highbd_lpf_horizontal_8_sse2);
+        SET_SSE2(aom_highbd_lpf_vertical_14, aom_highbd_lpf_vertical_14_c, aom_highbd_lpf_vertical_14_sse2);
+        SET_SSE2(aom_highbd_lpf_vertical_4, aom_highbd_lpf_vertical_4_c, aom_highbd_lpf_vertical_4_sse2);
+        SET_SSE2(aom_highbd_lpf_vertical_6, aom_highbd_lpf_vertical_6_c, aom_highbd_lpf_vertical_6_sse2);
+        SET_SSE2(aom_highbd_lpf_vertical_8, aom_highbd_lpf_vertical_8_c, aom_highbd_lpf_vertical_8_sse2);
+        SET_SSE2(aom_lpf_horizontal_14, aom_lpf_horizontal_14_c, aom_lpf_horizontal_14_sse2);
+        SET_SSE2(aom_lpf_horizontal_4, aom_lpf_horizontal_4_c, aom_lpf_horizontal_4_sse2);
+        SET_SSE2(aom_lpf_horizontal_6, aom_lpf_horizontal_6_c, aom_lpf_horizontal_6_sse2);
+        SET_SSE2(aom_lpf_horizontal_8, aom_lpf_horizontal_8_c, aom_lpf_horizontal_8_sse2);
+        SET_SSE2(aom_lpf_vertical_14, aom_lpf_vertical_14_c, aom_lpf_vertical_14_sse2);
+        SET_SSE2(aom_lpf_vertical_4, aom_lpf_vertical_4_c, aom_lpf_vertical_4_sse2);
+        SET_SSE2(aom_lpf_vertical_6, aom_lpf_vertical_6_c, aom_lpf_vertical_6_sse2);
+        SET_SSE2(aom_lpf_vertical_8, aom_lpf_vertical_8_c, aom_lpf_vertical_8_sse2);
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x32 = eb_aom_highbd_v_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x4 = eb_aom_highbd_v_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x64 = eb_aom_highbd_v_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x8 = eb_aom_highbd_v_predictor_16x8_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x16 = eb_aom_highbd_v_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x4 = eb_aom_highbd_v_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_4x8 = eb_aom_highbd_v_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x32 = eb_aom_highbd_v_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x16 = eb_aom_highbd_v_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x4 = eb_aom_highbd_v_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_v_predictor_8x8 = eb_aom_highbd_v_predictor_8x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x8 = eb_aom_highbd_v_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x16 = eb_aom_highbd_v_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x32 = eb_aom_highbd_v_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_32x64 = eb_aom_highbd_v_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x16 = eb_aom_highbd_v_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x32 = eb_aom_highbd_v_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_64x64 = eb_aom_highbd_v_predictor_64x64_avx2;
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_v_predictor_32x8  = aom_highbd_v_predictor_32x8_avx512;
-        eb_aom_highbd_v_predictor_32x16 = aom_highbd_v_predictor_32x16_avx512;
-        eb_aom_highbd_v_predictor_32x32 = aom_highbd_v_predictor_32x32_avx512;
-        eb_aom_highbd_v_predictor_32x64 = aom_highbd_v_predictor_32x64_avx512;
-        eb_aom_highbd_v_predictor_64x16 = aom_highbd_v_predictor_64x16_avx512;
-        eb_aom_highbd_v_predictor_64x32 = aom_highbd_v_predictor_64x32_avx512;
-        eb_aom_highbd_v_predictor_64x64 = aom_highbd_v_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_v_predictor_32x8 = aom_highbd_v_predictor_32x8_avx512;
+            eb_aom_highbd_v_predictor_32x16 = aom_highbd_v_predictor_32x16_avx512;
+            eb_aom_highbd_v_predictor_32x32 = aom_highbd_v_predictor_32x32_avx512;
+            eb_aom_highbd_v_predictor_32x64 = aom_highbd_v_predictor_32x64_avx512;
+            eb_aom_highbd_v_predictor_64x16 = aom_highbd_v_predictor_64x16_avx512;
+            eb_aom_highbd_v_predictor_64x32 = aom_highbd_v_predictor_64x32_avx512;
+            eb_aom_highbd_v_predictor_64x64 = aom_highbd_v_predictor_64x64_avx512;
+        }
 #endif // !NON_AVX512_SUPPORT
 
-    //aom_highbd_smooth_predictor
-    eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_avx2;
-    eb_aom_highbd_smooth_predictor_16x32 = eb_aom_highbd_smooth_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_16x32 = eb_aom_highbd_smooth_predictor_16x32_avx2;
-    eb_aom_highbd_smooth_predictor_16x4 = eb_aom_highbd_smooth_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_16x4 = eb_aom_highbd_smooth_predictor_16x4_avx2;
-    eb_aom_highbd_smooth_predictor_16x64 = eb_aom_highbd_smooth_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_16x64 = eb_aom_highbd_smooth_predictor_16x64_avx2;
-    eb_aom_highbd_smooth_predictor_16x8 = eb_aom_highbd_smooth_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_16x8 = eb_aom_highbd_smooth_predictor_16x8_avx2;
-    eb_aom_highbd_smooth_predictor_2x2   = eb_aom_highbd_smooth_predictor_2x2_c;
-    eb_aom_highbd_smooth_predictor_32x16 = eb_aom_highbd_smooth_predictor_32x16_c;
-    eb_aom_highbd_smooth_predictor_32x32 = eb_aom_highbd_smooth_predictor_32x32_c;
-    eb_aom_highbd_smooth_predictor_32x64 = eb_aom_highbd_smooth_predictor_32x64_c;
-    eb_aom_highbd_smooth_predictor_32x8  = eb_aom_highbd_smooth_predictor_32x8_c;
-    eb_aom_highbd_smooth_predictor_4x16  = eb_aom_highbd_smooth_predictor_4x16_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_predictor_4x16 = eb_aom_highbd_smooth_predictor_4x16_ssse3;
-    eb_aom_highbd_smooth_predictor_4x4 = eb_aom_highbd_smooth_predictor_4x4_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_predictor_4x4 = eb_aom_highbd_smooth_predictor_4x4_ssse3;
-    eb_aom_highbd_smooth_predictor_4x8 = eb_aom_highbd_smooth_predictor_4x8_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_predictor_4x8 = eb_aom_highbd_smooth_predictor_4x8_ssse3;
-    eb_aom_highbd_smooth_predictor_64x16 = eb_aom_highbd_smooth_predictor_64x16_c;
-    eb_aom_highbd_smooth_predictor_64x32 = eb_aom_highbd_smooth_predictor_64x32_c;
-    eb_aom_highbd_smooth_predictor_64x64 = eb_aom_highbd_smooth_predictor_64x64_c;
-    eb_aom_highbd_smooth_predictor_8x16  = eb_aom_highbd_smooth_predictor_8x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_8x16 = eb_aom_highbd_smooth_predictor_8x16_avx2;
-    eb_aom_highbd_smooth_predictor_8x32 = eb_aom_highbd_smooth_predictor_8x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_8x32 = eb_aom_highbd_smooth_predictor_8x32_avx2;
-    eb_aom_highbd_smooth_predictor_8x4 = eb_aom_highbd_smooth_predictor_8x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_8x4 = eb_aom_highbd_smooth_predictor_8x4_avx2;
-    eb_aom_highbd_smooth_predictor_8x8 = eb_aom_highbd_smooth_predictor_8x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_8x8 = eb_aom_highbd_smooth_predictor_8x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_16x32 = eb_aom_highbd_smooth_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_16x4 = eb_aom_highbd_smooth_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_16x64 = eb_aom_highbd_smooth_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_16x8 = eb_aom_highbd_smooth_predictor_16x8_avx2;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_predictor_4x16 = eb_aom_highbd_smooth_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_predictor_4x4 = eb_aom_highbd_smooth_predictor_4x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_predictor_4x8 = eb_aom_highbd_smooth_predictor_4x8_ssse3;
 
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_32x8 = eb_aom_highbd_smooth_predictor_32x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_32x16 = eb_aom_highbd_smooth_predictor_32x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_32x32 = eb_aom_highbd_smooth_predictor_32x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_32x64 = eb_aom_highbd_smooth_predictor_32x64_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_64x16 = eb_aom_highbd_smooth_predictor_64x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_64x32 = eb_aom_highbd_smooth_predictor_64x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_predictor_64x64 = eb_aom_highbd_smooth_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_8x16 = eb_aom_highbd_smooth_predictor_8x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_8x32 = eb_aom_highbd_smooth_predictor_8x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_8x4 = eb_aom_highbd_smooth_predictor_8x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_8x8 = eb_aom_highbd_smooth_predictor_8x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_32x8 = eb_aom_highbd_smooth_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_32x16 = eb_aom_highbd_smooth_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_32x32 = eb_aom_highbd_smooth_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_32x64 = eb_aom_highbd_smooth_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_64x16 = eb_aom_highbd_smooth_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_64x32 = eb_aom_highbd_smooth_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_predictor_64x64 = eb_aom_highbd_smooth_predictor_64x64_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_smooth_predictor_32x8  = aom_highbd_smooth_predictor_32x8_avx512;
-        eb_aom_highbd_smooth_predictor_32x16 = aom_highbd_smooth_predictor_32x16_avx512;
-        eb_aom_highbd_smooth_predictor_32x32 = aom_highbd_smooth_predictor_32x32_avx512;
-        eb_aom_highbd_smooth_predictor_32x64 = aom_highbd_smooth_predictor_32x64_avx512;
-        eb_aom_highbd_smooth_predictor_64x16 = aom_highbd_smooth_predictor_64x16_avx512;
-        eb_aom_highbd_smooth_predictor_64x32 = aom_highbd_smooth_predictor_64x32_avx512;
-        eb_aom_highbd_smooth_predictor_64x64 = aom_highbd_smooth_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_smooth_predictor_32x8 = aom_highbd_smooth_predictor_32x8_avx512;
+            eb_aom_highbd_smooth_predictor_32x16 = aom_highbd_smooth_predictor_32x16_avx512;
+            eb_aom_highbd_smooth_predictor_32x32 = aom_highbd_smooth_predictor_32x32_avx512;
+            eb_aom_highbd_smooth_predictor_32x64 = aom_highbd_smooth_predictor_32x64_avx512;
+            eb_aom_highbd_smooth_predictor_64x16 = aom_highbd_smooth_predictor_64x16_avx512;
+            eb_aom_highbd_smooth_predictor_64x32 = aom_highbd_smooth_predictor_64x32_avx512;
+            eb_aom_highbd_smooth_predictor_64x64 = aom_highbd_smooth_predictor_64x64_avx512;
+        }
 #endif // !NON_AVX512_SUPPORT
 
-    //aom_highbd_smooth_h_predictor
-    eb_aom_highbd_smooth_h_predictor_16x16 = eb_aom_highbd_smooth_h_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_16x16 = eb_aom_highbd_smooth_h_predictor_16x16_avx2;
-    eb_aom_highbd_smooth_h_predictor_16x32 = eb_aom_highbd_smooth_h_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_16x32 = eb_aom_highbd_smooth_h_predictor_16x32_avx2;
-    eb_aom_highbd_smooth_h_predictor_16x4 = eb_aom_highbd_smooth_h_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_16x4 = eb_aom_highbd_smooth_h_predictor_16x4_avx2;
-    eb_aom_highbd_smooth_h_predictor_16x64 = eb_aom_highbd_smooth_h_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_16x64 = eb_aom_highbd_smooth_h_predictor_16x64_avx2;
-    eb_aom_highbd_smooth_h_predictor_16x8 = eb_aom_highbd_smooth_h_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_16x8 = eb_aom_highbd_smooth_h_predictor_16x8_avx2;
-    eb_aom_highbd_smooth_h_predictor_32x16 = eb_aom_highbd_smooth_h_predictor_32x16_c;
-    eb_aom_highbd_smooth_h_predictor_32x32 = eb_aom_highbd_smooth_h_predictor_32x32_c;
-    eb_aom_highbd_smooth_h_predictor_32x64 = eb_aom_highbd_smooth_h_predictor_32x64_c;
-    eb_aom_highbd_smooth_h_predictor_32x8  = eb_aom_highbd_smooth_h_predictor_32x8_c;
-    eb_aom_highbd_smooth_h_predictor_4x16  = eb_aom_highbd_smooth_h_predictor_4x16_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_h_predictor_4x16 = eb_aom_highbd_smooth_h_predictor_4x16_ssse3;
-    eb_aom_highbd_smooth_h_predictor_4x4 = eb_aom_highbd_smooth_h_predictor_4x4_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_h_predictor_4x4 = eb_aom_highbd_smooth_h_predictor_4x4_ssse3;
-    eb_aom_highbd_smooth_h_predictor_4x8 = eb_aom_highbd_smooth_h_predictor_4x8_c;
-    if (flags & HAS_SSSE3)
-        eb_aom_highbd_smooth_h_predictor_4x8 = eb_aom_highbd_smooth_h_predictor_4x8_ssse3;
-    eb_aom_highbd_smooth_h_predictor_64x16 = eb_aom_highbd_smooth_h_predictor_64x16_c;
-    eb_aom_highbd_smooth_h_predictor_64x32 = eb_aom_highbd_smooth_h_predictor_64x32_c;
-    eb_aom_highbd_smooth_h_predictor_64x64 = eb_aom_highbd_smooth_h_predictor_64x64_c;
-    eb_aom_highbd_smooth_h_predictor_8x16  = eb_aom_highbd_smooth_h_predictor_8x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_8x16 = eb_aom_highbd_smooth_h_predictor_8x16_avx2;
-    eb_aom_highbd_smooth_h_predictor_8x32 = eb_aom_highbd_smooth_h_predictor_8x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_8x32 = eb_aom_highbd_smooth_h_predictor_8x32_avx2;
-    eb_aom_highbd_smooth_h_predictor_8x4 = eb_aom_highbd_smooth_h_predictor_8x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_8x4 = eb_aom_highbd_smooth_h_predictor_8x4_avx2;
-    eb_aom_highbd_smooth_h_predictor_8x8 = eb_aom_highbd_smooth_h_predictor_8x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_8x8 = eb_aom_highbd_smooth_h_predictor_8x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_32x8 = eb_aom_highbd_smooth_h_predictor_32x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_32x16 = eb_aom_highbd_smooth_h_predictor_32x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_32x32 = eb_aom_highbd_smooth_h_predictor_32x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_32x64 = eb_aom_highbd_smooth_h_predictor_32x64_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_64x16 = eb_aom_highbd_smooth_h_predictor_64x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_64x32 = eb_aom_highbd_smooth_h_predictor_64x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_smooth_h_predictor_64x64 = eb_aom_highbd_smooth_h_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x16 = eb_aom_highbd_smooth_h_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x32 = eb_aom_highbd_smooth_h_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x4 = eb_aom_highbd_smooth_h_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x64 = eb_aom_highbd_smooth_h_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_16x8 = eb_aom_highbd_smooth_h_predictor_16x8_avx2;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_h_predictor_4x16 = eb_aom_highbd_smooth_h_predictor_4x16_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_h_predictor_4x4 = eb_aom_highbd_smooth_h_predictor_4x4_ssse3;
+        if (flags & HAS_SSSE3) eb_aom_highbd_smooth_h_predictor_4x8 = eb_aom_highbd_smooth_h_predictor_4x8_ssse3;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_8x16 = eb_aom_highbd_smooth_h_predictor_8x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_8x32 = eb_aom_highbd_smooth_h_predictor_8x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_8x4 = eb_aom_highbd_smooth_h_predictor_8x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_8x8 = eb_aom_highbd_smooth_h_predictor_8x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_32x8 = eb_aom_highbd_smooth_h_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_32x16 = eb_aom_highbd_smooth_h_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_32x32 = eb_aom_highbd_smooth_h_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_32x64 = eb_aom_highbd_smooth_h_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_64x16 = eb_aom_highbd_smooth_h_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_64x32 = eb_aom_highbd_smooth_h_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_smooth_h_predictor_64x64 = eb_aom_highbd_smooth_h_predictor_64x64_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_smooth_h_predictor_32x8  = aom_highbd_smooth_h_predictor_32x8_avx512;
-        eb_aom_highbd_smooth_h_predictor_32x16 = aom_highbd_smooth_h_predictor_32x16_avx512;
-        eb_aom_highbd_smooth_h_predictor_32x32 = aom_highbd_smooth_h_predictor_32x32_avx512;
-        eb_aom_highbd_smooth_h_predictor_32x64 = aom_highbd_smooth_h_predictor_32x64_avx512;
-        eb_aom_highbd_smooth_h_predictor_64x16 = aom_highbd_smooth_h_predictor_64x16_avx512;
-        eb_aom_highbd_smooth_h_predictor_64x32 = aom_highbd_smooth_h_predictor_64x32_avx512;
-        eb_aom_highbd_smooth_h_predictor_64x64 = aom_highbd_smooth_h_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_smooth_h_predictor_32x8 = aom_highbd_smooth_h_predictor_32x8_avx512;
+            eb_aom_highbd_smooth_h_predictor_32x16 = aom_highbd_smooth_h_predictor_32x16_avx512;
+            eb_aom_highbd_smooth_h_predictor_32x32 = aom_highbd_smooth_h_predictor_32x32_avx512;
+            eb_aom_highbd_smooth_h_predictor_32x64 = aom_highbd_smooth_h_predictor_32x64_avx512;
+            eb_aom_highbd_smooth_h_predictor_64x16 = aom_highbd_smooth_h_predictor_64x16_avx512;
+            eb_aom_highbd_smooth_h_predictor_64x32 = aom_highbd_smooth_h_predictor_64x32_avx512;
+            eb_aom_highbd_smooth_h_predictor_64x64 = aom_highbd_smooth_h_predictor_64x64_avx512;
+        }
 #endif
 
-    //aom_highbd_dc_128_predictor
-    eb_aom_highbd_dc_128_predictor_16x16 = eb_aom_highbd_dc_128_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_16x16 = eb_aom_highbd_dc_128_predictor_16x16_avx2;
-    eb_aom_highbd_dc_128_predictor_16x32 = eb_aom_highbd_dc_128_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_16x32 = eb_aom_highbd_dc_128_predictor_16x32_avx2;
-    eb_aom_highbd_dc_128_predictor_16x4 = eb_aom_highbd_dc_128_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_16x4 = eb_aom_highbd_dc_128_predictor_16x4_avx2;
-    eb_aom_highbd_dc_128_predictor_16x64 = eb_aom_highbd_dc_128_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_16x64 = eb_aom_highbd_dc_128_predictor_16x64_avx2;
-    eb_aom_highbd_dc_128_predictor_16x8 = eb_aom_highbd_dc_128_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_16x8 = eb_aom_highbd_dc_128_predictor_16x8_avx2;
-    eb_aom_highbd_dc_128_predictor_32x16 = eb_aom_highbd_dc_128_predictor_32x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_32x16 = eb_aom_highbd_dc_128_predictor_32x16_avx2;
-    eb_aom_highbd_dc_128_predictor_32x32 = eb_aom_highbd_dc_128_predictor_32x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_32x32 = eb_aom_highbd_dc_128_predictor_32x32_avx2;
-    eb_aom_highbd_dc_128_predictor_32x64 = eb_aom_highbd_dc_128_predictor_32x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_32x64 = eb_aom_highbd_dc_128_predictor_32x64_avx2;
-    eb_aom_highbd_dc_128_predictor_32x8 = eb_aom_highbd_dc_128_predictor_32x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_32x8 = eb_aom_highbd_dc_128_predictor_32x8_avx2;
-    eb_aom_highbd_dc_128_predictor_4x16 = eb_aom_highbd_dc_128_predictor_4x16_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_4x16 = eb_aom_highbd_dc_128_predictor_4x16_sse2;
-    eb_aom_highbd_dc_128_predictor_4x4 = eb_aom_highbd_dc_128_predictor_4x4_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_4x4 = eb_aom_highbd_dc_128_predictor_4x4_sse2;
-    eb_aom_highbd_dc_128_predictor_4x8 = eb_aom_highbd_dc_128_predictor_4x8_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_4x8 = eb_aom_highbd_dc_128_predictor_4x8_sse2;
-    eb_aom_highbd_dc_128_predictor_8x32 = eb_aom_highbd_dc_128_predictor_8x32_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_8x32 = eb_aom_highbd_dc_128_predictor_8x32_sse2;
-    eb_aom_highbd_dc_128_predictor_64x16 = eb_aom_highbd_dc_128_predictor_64x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_64x16 = eb_aom_highbd_dc_128_predictor_64x16_avx2;
-    eb_aom_highbd_dc_128_predictor_64x32 = eb_aom_highbd_dc_128_predictor_64x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_64x32 = eb_aom_highbd_dc_128_predictor_64x32_avx2;
-    eb_aom_highbd_dc_128_predictor_64x64 = eb_aom_highbd_dc_128_predictor_64x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_128_predictor_64x64 = eb_aom_highbd_dc_128_predictor_64x64_avx2;
-    eb_aom_highbd_dc_128_predictor_8x16 = eb_aom_highbd_dc_128_predictor_8x16_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_8x16 = eb_aom_highbd_dc_128_predictor_8x16_sse2;
-    eb_aom_highbd_dc_128_predictor_8x4 = eb_aom_highbd_dc_128_predictor_8x4_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_8x4 = eb_aom_highbd_dc_128_predictor_8x4_sse2;
-    eb_aom_highbd_dc_128_predictor_8x8 = eb_aom_highbd_dc_128_predictor_8x8_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_128_predictor_8x8 = eb_aom_highbd_dc_128_predictor_8x8_sse2;
+        //aom_highbd_dc_128_predictor
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x16 = eb_aom_highbd_dc_128_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x32 = eb_aom_highbd_dc_128_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x4 = eb_aom_highbd_dc_128_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x64 = eb_aom_highbd_dc_128_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_16x8 = eb_aom_highbd_dc_128_predictor_16x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_32x16 = eb_aom_highbd_dc_128_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_32x32 = eb_aom_highbd_dc_128_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_32x64 = eb_aom_highbd_dc_128_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_32x8 = eb_aom_highbd_dc_128_predictor_32x8_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_4x16 = eb_aom_highbd_dc_128_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_4x4 = eb_aom_highbd_dc_128_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_4x8 = eb_aom_highbd_dc_128_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_8x32 = eb_aom_highbd_dc_128_predictor_8x32_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_64x16 = eb_aom_highbd_dc_128_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_64x32 = eb_aom_highbd_dc_128_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_128_predictor_64x64 = eb_aom_highbd_dc_128_predictor_64x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_8x16 = eb_aom_highbd_dc_128_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_8x4 = eb_aom_highbd_dc_128_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_128_predictor_8x8 = eb_aom_highbd_dc_128_predictor_8x8_sse2;
 
-    //aom_highbd_dc_left_predictor
-    eb_aom_highbd_dc_left_predictor_16x16 = eb_aom_highbd_dc_left_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_16x16 = eb_aom_highbd_dc_left_predictor_16x16_avx2;
-    eb_aom_highbd_dc_left_predictor_16x32 = eb_aom_highbd_dc_left_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_16x32 = eb_aom_highbd_dc_left_predictor_16x32_avx2;
-    eb_aom_highbd_dc_left_predictor_16x4 = eb_aom_highbd_dc_left_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_16x4 = eb_aom_highbd_dc_left_predictor_16x4_avx2;
-    eb_aom_highbd_dc_left_predictor_16x64 = eb_aom_highbd_dc_left_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_16x64 = eb_aom_highbd_dc_left_predictor_16x64_avx2;
-    eb_aom_highbd_dc_left_predictor_16x8 = eb_aom_highbd_dc_left_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_16x8 = eb_aom_highbd_dc_left_predictor_16x8_avx2;
-    eb_aom_highbd_dc_left_predictor_2x2   = eb_aom_highbd_dc_left_predictor_2x2_c;
-    eb_aom_highbd_dc_left_predictor_32x16 = eb_aom_highbd_dc_left_predictor_32x16_c;
-    eb_aom_highbd_dc_left_predictor_32x32 = eb_aom_highbd_dc_left_predictor_32x32_c;
-    eb_aom_highbd_dc_left_predictor_32x64 = eb_aom_highbd_dc_left_predictor_32x64_c;
-    eb_aom_highbd_dc_left_predictor_32x8  = eb_aom_highbd_dc_left_predictor_32x8_c;
-    eb_aom_highbd_dc_left_predictor_4x16  = eb_aom_highbd_dc_left_predictor_4x16_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_4x16 = eb_aom_highbd_dc_left_predictor_4x16_sse2;
-    eb_aom_highbd_dc_left_predictor_4x4 = eb_aom_highbd_dc_left_predictor_4x4_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_4x4 = eb_aom_highbd_dc_left_predictor_4x4_sse2;
-    eb_aom_highbd_dc_left_predictor_4x8 = eb_aom_highbd_dc_left_predictor_4x8_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_4x8 = eb_aom_highbd_dc_left_predictor_4x8_sse2;
-    eb_aom_highbd_dc_left_predictor_8x32 = eb_aom_highbd_dc_left_predictor_8x32_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_8x32 = eb_aom_highbd_dc_left_predictor_8x32_sse2;
-    eb_aom_highbd_dc_left_predictor_64x16 = eb_aom_highbd_dc_left_predictor_64x16_c;
-    eb_aom_highbd_dc_left_predictor_64x32 = eb_aom_highbd_dc_left_predictor_64x32_c;
-    eb_aom_highbd_dc_left_predictor_64x64 = eb_aom_highbd_dc_left_predictor_64x64_c;
-    eb_aom_highbd_dc_left_predictor_8x16  = eb_aom_highbd_dc_left_predictor_8x16_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_8x16 = eb_aom_highbd_dc_left_predictor_8x16_sse2;
-    eb_aom_highbd_dc_left_predictor_8x4 = eb_aom_highbd_dc_left_predictor_8x4_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_8x4 = eb_aom_highbd_dc_left_predictor_8x4_sse2;
-    eb_aom_highbd_dc_left_predictor_8x8 = eb_aom_highbd_dc_left_predictor_8x8_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_left_predictor_8x8 = eb_aom_highbd_dc_left_predictor_8x8_sse2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_32x8 = eb_aom_highbd_dc_left_predictor_32x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_32x16 = eb_aom_highbd_dc_left_predictor_32x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_32x32 = eb_aom_highbd_dc_left_predictor_32x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_32x64 = eb_aom_highbd_dc_left_predictor_32x64_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_64x16 = eb_aom_highbd_dc_left_predictor_64x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_64x32 = eb_aom_highbd_dc_left_predictor_64x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_left_predictor_64x64 = eb_aom_highbd_dc_left_predictor_64x64_avx2;
+        //aom_highbd_dc_left_predictor
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_16x16 = eb_aom_highbd_dc_left_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_16x32 = eb_aom_highbd_dc_left_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_16x4 = eb_aom_highbd_dc_left_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_16x64 = eb_aom_highbd_dc_left_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_16x8 = eb_aom_highbd_dc_left_predictor_16x8_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_4x16 = eb_aom_highbd_dc_left_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_4x4 = eb_aom_highbd_dc_left_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_4x8 = eb_aom_highbd_dc_left_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_8x32 = eb_aom_highbd_dc_left_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_8x16 = eb_aom_highbd_dc_left_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_8x4 = eb_aom_highbd_dc_left_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_left_predictor_8x8 = eb_aom_highbd_dc_left_predictor_8x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x8 = eb_aom_highbd_dc_left_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x16 = eb_aom_highbd_dc_left_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x32 = eb_aom_highbd_dc_left_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_32x64 = eb_aom_highbd_dc_left_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_64x16 = eb_aom_highbd_dc_left_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_64x32 = eb_aom_highbd_dc_left_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_left_predictor_64x64 = eb_aom_highbd_dc_left_predictor_64x64_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_dc_left_predictor_32x8  = aom_highbd_dc_left_predictor_32x8_avx512;
-        eb_aom_highbd_dc_left_predictor_32x16 = aom_highbd_dc_left_predictor_32x16_avx512;
-        eb_aom_highbd_dc_left_predictor_32x32 = aom_highbd_dc_left_predictor_32x32_avx512;
-        eb_aom_highbd_dc_left_predictor_32x64 = aom_highbd_dc_left_predictor_32x64_avx512;
-        eb_aom_highbd_dc_left_predictor_64x16 = aom_highbd_dc_left_predictor_64x16_avx512;
-        eb_aom_highbd_dc_left_predictor_64x32 = aom_highbd_dc_left_predictor_64x32_avx512;
-        eb_aom_highbd_dc_left_predictor_64x64 = aom_highbd_dc_left_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_dc_left_predictor_32x8 = aom_highbd_dc_left_predictor_32x8_avx512;
+            eb_aom_highbd_dc_left_predictor_32x16 = aom_highbd_dc_left_predictor_32x16_avx512;
+            eb_aom_highbd_dc_left_predictor_32x32 = aom_highbd_dc_left_predictor_32x32_avx512;
+            eb_aom_highbd_dc_left_predictor_32x64 = aom_highbd_dc_left_predictor_32x64_avx512;
+            eb_aom_highbd_dc_left_predictor_64x16 = aom_highbd_dc_left_predictor_64x16_avx512;
+            eb_aom_highbd_dc_left_predictor_64x32 = aom_highbd_dc_left_predictor_64x32_avx512;
+            eb_aom_highbd_dc_left_predictor_64x64 = aom_highbd_dc_left_predictor_64x64_avx512;
+        }
 #endif // !NON_AVX512_SUPPORT
-
-    eb_aom_highbd_dc_predictor_16x16 = eb_aom_highbd_dc_predictor_16x16_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x16 = eb_aom_highbd_dc_predictor_16x16_avx2;
-    eb_aom_highbd_dc_predictor_16x32 = eb_aom_highbd_dc_predictor_16x32_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x32 = eb_aom_highbd_dc_predictor_16x32_avx2;
-    eb_aom_highbd_dc_predictor_16x4 = eb_aom_highbd_dc_predictor_16x4_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x4 = eb_aom_highbd_dc_predictor_16x4_avx2;
-    eb_aom_highbd_dc_predictor_16x64 = eb_aom_highbd_dc_predictor_16x64_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x64 = eb_aom_highbd_dc_predictor_16x64_avx2;
-    eb_aom_highbd_dc_predictor_16x8 = eb_aom_highbd_dc_predictor_16x8_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x8 = eb_aom_highbd_dc_predictor_16x8_avx2;
-    eb_aom_highbd_dc_predictor_2x2   = eb_aom_highbd_dc_predictor_2x2_c;
-    eb_aom_highbd_dc_predictor_32x16 = eb_aom_highbd_dc_predictor_32x16_c;
-    eb_aom_highbd_dc_predictor_32x32 = eb_aom_highbd_dc_predictor_32x32_c;
-    eb_aom_highbd_dc_predictor_32x64 = eb_aom_highbd_dc_predictor_32x64_c;
-    eb_aom_highbd_dc_predictor_32x8  = eb_aom_highbd_dc_predictor_32x8_c;
-    eb_aom_highbd_dc_predictor_4x16  = eb_aom_highbd_dc_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_4x16 = eb_aom_highbd_dc_predictor_4x16_sse2;
-    eb_aom_highbd_dc_predictor_4x4 = eb_aom_highbd_dc_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_4x4 = eb_aom_highbd_dc_predictor_4x4_sse2;
-    eb_aom_highbd_dc_predictor_4x8 = eb_aom_highbd_dc_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_4x8 = eb_aom_highbd_dc_predictor_4x8_sse2;
-    eb_aom_highbd_dc_predictor_64x16 = eb_aom_highbd_dc_predictor_64x16_c;
-    eb_aom_highbd_dc_predictor_64x32 = eb_aom_highbd_dc_predictor_64x32_c;
-    eb_aom_highbd_dc_predictor_64x64 = eb_aom_highbd_dc_predictor_64x64_c;
-    eb_aom_highbd_dc_predictor_8x16  = eb_aom_highbd_dc_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x16 = eb_aom_highbd_dc_predictor_8x16_sse2;
-    eb_aom_highbd_dc_predictor_8x4 = eb_aom_highbd_dc_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x4 = eb_aom_highbd_dc_predictor_8x4_sse2;
-    eb_aom_highbd_dc_predictor_8x8 = eb_aom_highbd_dc_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x8 = eb_aom_highbd_dc_predictor_8x8_sse2;
-    eb_aom_highbd_dc_predictor_8x32 = eb_aom_highbd_dc_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x32 = eb_aom_highbd_dc_predictor_8x32_sse2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x8 = eb_aom_highbd_dc_predictor_32x8_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x16 = eb_aom_highbd_dc_predictor_32x16_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x32 = eb_aom_highbd_dc_predictor_32x32_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x64 = eb_aom_highbd_dc_predictor_32x64_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x16 = eb_aom_highbd_dc_predictor_64x16_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x32 = eb_aom_highbd_dc_predictor_64x32_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x64 = eb_aom_highbd_dc_predictor_64x64_avx2;
-
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x16 = eb_aom_highbd_dc_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x32 = eb_aom_highbd_dc_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x4 = eb_aom_highbd_dc_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x64 = eb_aom_highbd_dc_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_16x8 = eb_aom_highbd_dc_predictor_16x8_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_4x16 = eb_aom_highbd_dc_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_4x4 = eb_aom_highbd_dc_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_4x8 = eb_aom_highbd_dc_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x16 = eb_aom_highbd_dc_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x4 = eb_aom_highbd_dc_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x8 = eb_aom_highbd_dc_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_predictor_8x32 = eb_aom_highbd_dc_predictor_8x32_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x8 = eb_aom_highbd_dc_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x16 = eb_aom_highbd_dc_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x32 = eb_aom_highbd_dc_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_32x64 = eb_aom_highbd_dc_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x16 = eb_aom_highbd_dc_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x32 = eb_aom_highbd_dc_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_predictor_64x64 = eb_aom_highbd_dc_predictor_64x64_avx2;
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_dc_predictor_32x8  = aom_highbd_dc_predictor_32x8_avx512;
-        eb_aom_highbd_dc_predictor_32x16 = aom_highbd_dc_predictor_32x16_avx512;
-        eb_aom_highbd_dc_predictor_32x32 = aom_highbd_dc_predictor_32x32_avx512;
-        eb_aom_highbd_dc_predictor_32x64 = aom_highbd_dc_predictor_32x64_avx512;
-        eb_aom_highbd_dc_predictor_64x16 = aom_highbd_dc_predictor_64x16_avx512;
-        eb_aom_highbd_dc_predictor_64x32 = aom_highbd_dc_predictor_64x32_avx512;
-        eb_aom_highbd_dc_predictor_64x64 = aom_highbd_dc_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_dc_predictor_32x8 = aom_highbd_dc_predictor_32x8_avx512;
+            eb_aom_highbd_dc_predictor_32x16 = aom_highbd_dc_predictor_32x16_avx512;
+            eb_aom_highbd_dc_predictor_32x32 = aom_highbd_dc_predictor_32x32_avx512;
+            eb_aom_highbd_dc_predictor_32x64 = aom_highbd_dc_predictor_32x64_avx512;
+            eb_aom_highbd_dc_predictor_64x16 = aom_highbd_dc_predictor_64x16_avx512;
+            eb_aom_highbd_dc_predictor_64x32 = aom_highbd_dc_predictor_64x32_avx512;
+            eb_aom_highbd_dc_predictor_64x64 = aom_highbd_dc_predictor_64x64_avx512;
+        }
 #endif // !NON_AVX512_SUPPORT
-    //aom_highbd_dc_top_predictor
-    eb_aom_highbd_dc_top_predictor_16x16 = eb_aom_highbd_dc_top_predictor_16x16_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_16x16 = eb_aom_highbd_dc_top_predictor_16x16_avx2;
-    eb_aom_highbd_dc_top_predictor_16x32 = eb_aom_highbd_dc_top_predictor_16x32_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_16x32 = eb_aom_highbd_dc_top_predictor_16x32_avx2;
-    eb_aom_highbd_dc_top_predictor_16x4 = eb_aom_highbd_dc_top_predictor_16x4_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_16x4 = eb_aom_highbd_dc_top_predictor_16x4_avx2;
-    eb_aom_highbd_dc_top_predictor_16x64 = eb_aom_highbd_dc_top_predictor_16x64_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_16x64 = eb_aom_highbd_dc_top_predictor_16x64_avx2;
-    eb_aom_highbd_dc_top_predictor_16x8 = eb_aom_highbd_dc_top_predictor_16x8_c;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_16x8 = eb_aom_highbd_dc_top_predictor_16x8_avx2;
-    eb_aom_highbd_dc_top_predictor_32x16 = eb_aom_highbd_dc_top_predictor_32x16_c;
-    eb_aom_highbd_dc_top_predictor_32x32 = eb_aom_highbd_dc_top_predictor_32x32_c;
-    eb_aom_highbd_dc_top_predictor_32x64 = eb_aom_highbd_dc_top_predictor_32x64_c;
-    eb_aom_highbd_dc_top_predictor_32x8  = eb_aom_highbd_dc_top_predictor_32x8_c;
-    eb_aom_highbd_dc_top_predictor_4x16  = eb_aom_highbd_dc_top_predictor_4x16_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_top_predictor_4x16 = eb_aom_highbd_dc_top_predictor_4x16_sse2;
-    eb_aom_highbd_dc_top_predictor_4x4 = eb_aom_highbd_dc_top_predictor_4x4_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_top_predictor_4x4 = eb_aom_highbd_dc_top_predictor_4x4_sse2;
-    eb_aom_highbd_dc_top_predictor_4x8 = eb_aom_highbd_dc_top_predictor_4x8_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_top_predictor_4x8 = eb_aom_highbd_dc_top_predictor_4x8_sse2;
-    eb_aom_highbd_dc_top_predictor_64x16 = eb_aom_highbd_dc_top_predictor_64x16_c;
-    eb_aom_highbd_dc_top_predictor_64x32 = eb_aom_highbd_dc_top_predictor_64x32_c;
-    eb_aom_highbd_dc_top_predictor_64x64 = eb_aom_highbd_dc_top_predictor_64x64_c;
-    eb_aom_highbd_dc_top_predictor_8x16  = eb_aom_highbd_dc_top_predictor_8x16_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_top_predictor_8x16 = eb_aom_highbd_dc_top_predictor_8x16_sse2;
-    /*if (flags & HAS_SSE2) */ eb_aom_highbd_dc_top_predictor_8x32 =
-                                       eb_aom_highbd_dc_top_predictor_8x32_c;
-    eb_aom_highbd_dc_top_predictor_8x4 = eb_aom_highbd_dc_top_predictor_8x4_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_top_predictor_8x4 = eb_aom_highbd_dc_top_predictor_8x4_sse2;
-    eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_c;
-    if (flags & HAS_SSE2)
-        eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_sse2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_32x8 = eb_aom_highbd_dc_top_predictor_32x8_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_32x16 = eb_aom_highbd_dc_top_predictor_32x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_32x32 = eb_aom_highbd_dc_top_predictor_32x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_32x64 = eb_aom_highbd_dc_top_predictor_32x64_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_64x16 = eb_aom_highbd_dc_top_predictor_64x16_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_64x32 = eb_aom_highbd_dc_top_predictor_64x32_avx2;
-    if (flags & HAS_AVX2)
-        eb_aom_highbd_dc_top_predictor_64x64 = eb_aom_highbd_dc_top_predictor_64x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x16 = eb_aom_highbd_dc_top_predictor_16x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x32 = eb_aom_highbd_dc_top_predictor_16x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x4 = eb_aom_highbd_dc_top_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x64 = eb_aom_highbd_dc_top_predictor_16x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_16x8 = eb_aom_highbd_dc_top_predictor_16x8_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_4x16 = eb_aom_highbd_dc_top_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_4x4 = eb_aom_highbd_dc_top_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_4x8 = eb_aom_highbd_dc_top_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x16 = eb_aom_highbd_dc_top_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x4 = eb_aom_highbd_dc_top_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_dc_top_predictor_8x8 = eb_aom_highbd_dc_top_predictor_8x8_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x8 = eb_aom_highbd_dc_top_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x16 = eb_aom_highbd_dc_top_predictor_32x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x32 = eb_aom_highbd_dc_top_predictor_32x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_32x64 = eb_aom_highbd_dc_top_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_64x16 = eb_aom_highbd_dc_top_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_64x32 = eb_aom_highbd_dc_top_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_dc_top_predictor_64x64 = eb_aom_highbd_dc_top_predictor_64x64_avx2;
 
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_dc_top_predictor_32x8  = aom_highbd_dc_top_predictor_32x8_avx512;
-        eb_aom_highbd_dc_top_predictor_32x16 = aom_highbd_dc_top_predictor_32x16_avx512;
-        eb_aom_highbd_dc_top_predictor_32x32 = aom_highbd_dc_top_predictor_32x32_avx512;
-        eb_aom_highbd_dc_top_predictor_32x64 = aom_highbd_dc_top_predictor_32x64_avx512;
-        eb_aom_highbd_dc_top_predictor_64x16 = aom_highbd_dc_top_predictor_64x16_avx512;
-        eb_aom_highbd_dc_top_predictor_64x32 = aom_highbd_dc_top_predictor_64x32_avx512;
-        eb_aom_highbd_dc_top_predictor_64x64 = aom_highbd_dc_top_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_dc_top_predictor_32x8 = aom_highbd_dc_top_predictor_32x8_avx512;
+            eb_aom_highbd_dc_top_predictor_32x16 = aom_highbd_dc_top_predictor_32x16_avx512;
+            eb_aom_highbd_dc_top_predictor_32x32 = aom_highbd_dc_top_predictor_32x32_avx512;
+            eb_aom_highbd_dc_top_predictor_32x64 = aom_highbd_dc_top_predictor_32x64_avx512;
+            eb_aom_highbd_dc_top_predictor_64x16 = aom_highbd_dc_top_predictor_64x16_avx512;
+            eb_aom_highbd_dc_top_predictor_64x32 = aom_highbd_dc_top_predictor_64x32_avx512;
+            eb_aom_highbd_dc_top_predictor_64x64 = aom_highbd_dc_top_predictor_64x64_avx512;
+        }
 #endif
-    // eb_aom_highbd_h_predictor
-    eb_aom_highbd_h_predictor_16x4 = eb_aom_highbd_h_predictor_16x4_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_16x4 = eb_aom_highbd_h_predictor_16x4_avx2;
-    eb_aom_highbd_h_predictor_16x64 = eb_aom_highbd_h_predictor_16x64_c;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_16x64 = eb_aom_highbd_h_predictor_16x64_avx2;
-    eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_sse2;
-    eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_c;
-    eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_c;
-    eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_c;
-    eb_aom_highbd_h_predictor_32x8  = eb_aom_highbd_h_predictor_32x8_c;
-    eb_aom_highbd_h_predictor_4x16  = eb_aom_highbd_h_predictor_4x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x16 = eb_aom_highbd_h_predictor_4x16_sse2;
-    eb_aom_highbd_h_predictor_4x4 = eb_aom_highbd_h_predictor_4x4_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x4 = eb_aom_highbd_h_predictor_4x4_sse2;
-    eb_aom_highbd_h_predictor_4x8 = eb_aom_highbd_h_predictor_4x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x8 = eb_aom_highbd_h_predictor_4x8_sse2;
-    eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_c;
-    eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_c;
-    eb_aom_highbd_h_predictor_8x32  = eb_aom_highbd_h_predictor_8x32_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x32 = eb_aom_highbd_h_predictor_8x32_sse2;
-    eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_c;
-    eb_aom_highbd_h_predictor_8x16  = eb_aom_highbd_h_predictor_8x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x16 = eb_aom_highbd_h_predictor_8x16_sse2;
-    eb_aom_highbd_h_predictor_8x4 = eb_aom_highbd_h_predictor_8x4_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x4 = eb_aom_highbd_h_predictor_8x4_sse2;
-    eb_aom_highbd_h_predictor_8x8 = eb_aom_highbd_h_predictor_8x8_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x8 = eb_aom_highbd_h_predictor_8x8_sse2;
-    eb_aom_highbd_h_predictor_16x16 = eb_aom_highbd_h_predictor_16x16_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x16 = eb_aom_highbd_h_predictor_16x16_sse2;
-    eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_c;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_sse2;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_sse2;
-    if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_sse2;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x8 = eb_aom_highbd_h_predictor_32x8_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_avx2;
-    if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_avx2;
-
-
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_16x4 = eb_aom_highbd_h_predictor_16x4_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_16x64 = eb_aom_highbd_h_predictor_16x64_avx2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x8 = eb_aom_highbd_h_predictor_16x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x16 = eb_aom_highbd_h_predictor_4x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x4 = eb_aom_highbd_h_predictor_4x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_4x8 = eb_aom_highbd_h_predictor_4x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x32 = eb_aom_highbd_h_predictor_8x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x16 = eb_aom_highbd_h_predictor_8x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x4 = eb_aom_highbd_h_predictor_8x4_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_8x8 = eb_aom_highbd_h_predictor_8x8_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x16 = eb_aom_highbd_h_predictor_16x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x16 = eb_aom_highbd_h_predictor_32x16_sse2;
+        if (flags & HAS_SSE2) eb_aom_highbd_h_predictor_32x32 = eb_aom_highbd_h_predictor_32x32_sse2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x64 = eb_aom_highbd_h_predictor_32x64_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_32x8 = eb_aom_highbd_h_predictor_32x8_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_avx2;
+        if (flags & HAS_SSE2) eb_log2f = Log2f_SSE2;
+        if (flags & HAS_SSE2) eb_memcpy = eb_memcpy_intrin_sse;
 #ifndef NON_AVX512_SUPPORT
-    if (flags & HAS_AVX512F) {
-        eb_aom_highbd_h_predictor_32x16 = aom_highbd_h_predictor_32x16_avx512;
-        eb_aom_highbd_h_predictor_32x32 = aom_highbd_h_predictor_32x32_avx512;
-        eb_aom_highbd_h_predictor_32x64 = aom_highbd_h_predictor_32x64_avx512;
-        eb_aom_highbd_h_predictor_32x8  = aom_highbd_h_predictor_32x8_avx512;
-        eb_aom_highbd_h_predictor_64x16 = aom_highbd_h_predictor_64x16_avx512;
-        eb_aom_highbd_h_predictor_64x32 = aom_highbd_h_predictor_64x32_avx512;
-        eb_aom_highbd_h_predictor_64x64 = aom_highbd_h_predictor_64x64_avx512;
-    }
+        if (flags & HAS_AVX512F) {
+            eb_aom_highbd_h_predictor_32x16 = aom_highbd_h_predictor_32x16_avx512;
+            eb_aom_highbd_h_predictor_32x32 = aom_highbd_h_predictor_32x32_avx512;
+            eb_aom_highbd_h_predictor_32x64 = aom_highbd_h_predictor_32x64_avx512;
+            eb_aom_highbd_h_predictor_32x8 = aom_highbd_h_predictor_32x8_avx512;
+            eb_aom_highbd_h_predictor_64x16 = aom_highbd_h_predictor_64x16_avx512;
+            eb_aom_highbd_h_predictor_64x32 = aom_highbd_h_predictor_64x32_avx512;
+            eb_aom_highbd_h_predictor_64x64 = aom_highbd_h_predictor_64x64_avx512;
+        }
 #endif
 
-    SET_AVX2(cfl_luma_subsampling_420_lbd,
-             cfl_luma_subsampling_420_lbd_c,
-             cfl_luma_subsampling_420_lbd_avx2);
-    SET_AVX2(cfl_luma_subsampling_420_hbd,
-             cfl_luma_subsampling_420_hbd_c,
-             cfl_luma_subsampling_420_hbd_avx2);
+#endif
+
 
 }

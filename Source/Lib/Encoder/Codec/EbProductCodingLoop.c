@@ -3728,7 +3728,7 @@ static void cfl_prediction(PictureControlSet *          pcs_ptr,
                             chroma_width,
                             chroma_height,
                             round_offset,
-                            LOG2F(chroma_width) + LOG2F(chroma_height));
+                            eb_log2f(chroma_width) + eb_log2f(chroma_height));
 
         // 3: Loop over alphas and find the best or choose DC
         cfl_rd_pick_alpha(pcs_ptr,
@@ -7398,7 +7398,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 
     bestcandidate_buffers[0] = candidate_buffer;
-    uint8_t sq_index         = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+    uint8_t sq_index         = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
     if (context_ptr->blk_geom->shape == PART_N) {
         context_ptr->parent_sq_type[sq_index] = candidate_buffer->candidate_ptr->type;
 
@@ -8215,7 +8215,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                    sizeof(MdEncPassCuData));
 
             if (context_ptr->blk_geom->shape == PART_N) {
-                uint8_t sq_index                      = LOG2F(context_ptr->blk_geom->sq_size) - 2;
+                uint8_t sq_index                      = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
                 context_ptr->parent_sq_type[sq_index] = src_cu->prediction_mode_flag;
                 context_ptr->parent_sq_has_coeff[sq_index] = src_cu->block_has_coeff;
                 context_ptr->parent_sq_pred_mode[sq_index] = src_cu->pred_mode;

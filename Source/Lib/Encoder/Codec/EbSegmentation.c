@@ -17,6 +17,7 @@
 #include "EbSegmentation.h"
 #include "EbSegmentationParams.h"
 #include "EbMotionEstimationContext.h"
+#include "common_dsp_rtcd.h"
 
 
 static const uint8_t q_index_to_quantizer[] = {
@@ -166,11 +167,11 @@ void find_segment_qps(SegmentationParams *segmentation_params,
         avg_var += (local_avg >> 6);
     }
     avg_var /= pcs_ptr->sb_total_count;
-    avg_var = Log2f(avg_var);
+    avg_var = eb_log2f(avg_var);
 
     //get variance bin edges & QPs
-    uint16_t min_var_log = Log2f(MAX(1, min_var));
-    uint16_t max_var_log = Log2f(MAX(1, max_var));
+    uint16_t min_var_log = eb_log2f(MAX(1, min_var));
+    uint16_t max_var_log = eb_log2f(MAX(1, max_var));
     uint16_t step_size   = (uint16_t)(max_var_log - min_var_log) <= MAX_SEGMENTS
                              ? 1
                              : ROUND(((max_var_log - min_var_log)) / MAX_SEGMENTS);

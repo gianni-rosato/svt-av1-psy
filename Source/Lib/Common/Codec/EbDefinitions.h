@@ -30,6 +30,17 @@
 #define inline
 #endif
 
+#if defined(_MSC_VER)
+#if defined(_M_IX86) || defined(_M_X64)
+#define ARCH_X86
+#endif
+#endif
+
+#if __GNUC__
+#if defined(__i386__) || defined(__x86_64__)
+#define ARCH_X86
+#endif
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -369,9 +380,10 @@ typedef int16_t InterpKernel[SUBPEL_TAPS];
 /***************************************************/
 /****************** Helper Macros ******************/
 /***************************************************/
-void        aom_reset_mmx_state(void);
+#ifdef ARCH_X86
 extern void RunEmms();
-#define aom_clear_system_state() RunEmms() //aom_reset_mmx_state()
+#define aom_clear_system_state() RunEmms()
+#endif
 
 /* Shift down with rounding for use when n >= 0, value >= 0 */
 #define ROUND_POWER_OF_TWO(value, n) (((value) + (((1 << (n)) >> 1))) >> (n))
@@ -1923,7 +1935,6 @@ static const EbWarpedMotionParams default_warp_params = {
 
 #define MAX_NUM_TOKENS          200
 
-#define    Log2f                              Log2f_SSE2
 
 #define INPUT_SIZE_576p_TH                  0x90000        // 0.58 Million
 #define INPUT_SIZE_1080i_TH                 0xB71B0        // 0.75 Million
@@ -2322,10 +2333,14 @@ typedef int32_t errno_t;
 #endif  /* _ERRNO_T_DEFINED */
 
 extern void
-    eb_memcpy(void  *dst_ptr, void  *src_ptr, size_t size);
-
+    eb_memcpy_app(void  *dst_ptr, void  *src_ptr, size_t size);
+#ifdef ARCH_X86
 #define EB_MEMCPY(dst, src, size) \
-    eb_memcpy(dst, src, size)
+    eb_memcpy_app(dst, src, size)
+#else
+#define EB_MEMCPY(dst, src, size) \
+    memcpy(dst, src, size)
+#endif
 
 #define EB_MEMSET(dst, val, count) \
 memset(dst, val, count)

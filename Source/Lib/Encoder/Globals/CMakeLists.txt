@@ -4,7 +4,12 @@
 #
 
 # Globals Directory CMakeLists.txt
-
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+    set (X86 TRUE)
+else ()
+    set (X86 FALSE)
+endif ()
+if(X86)
 # Include Encoder Subdirectories
 include_directories(../../../API
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec
@@ -16,6 +21,14 @@ include_directories(../../../API
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/
         ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
         )
+else()
+# Include Encoder Subdirectories
+include_directories(../../../API
+        ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec
+        ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
+        ${PROJECT_SOURCE_DIR}/third_party/fastfeat/
+        )
+endif()
 
 file(GLOB all_files
     "*.h"

@@ -78,9 +78,6 @@ matrix:
     - name: Coveralls osx+clang
     - name: Unit Tests Linux+gcc
     - name: Unit Tests osx+clang
-    - arch: arm64
-    - arch: ppc64le
-    - arch: s390x
     # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
   include:
     # GCC & Clang builds
@@ -134,14 +131,14 @@ matrix:
             - *native_deps
             - clang-10
     # Multiple CPU Architectures
-    - name: Arm64 GCC 9 build
-      env: build_type=release CC=gcc-9 CXX=g++-9
+    - name: Arm64 GCC 7 build
+      env: build_type=release CC=gcc-7 CXX=g++-7
       arch: arm64
-    - name: PowerPC GCC 9 build
-      env: build_type=release CC=gcc-9 CXX=g++-9
+    - name: PowerPC GCC 7 build
+      env: build_type=release CC=gcc-7 CXX=g++-7
       arch: ppc64le
-    - name: IBM Z GCC 9 build
-      env: build_type=release CC=gcc-9 CXX=g++-9
+    - name: IBM Z GCC 7 build
+      env: build_type=release CC=gcc-7 CXX=g++-7
       arch: s390x
     # FFmpeg interation build
     - name: FFmpeg patch

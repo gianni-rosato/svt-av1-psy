@@ -5,7 +5,7 @@
 
 #include "EbPictureOperators_C.h"
 #include "EbUtility.h"
-
+#include "common_dsp_rtcd.h"
 /*********************************
 * Picture Average
 *********************************/
@@ -30,6 +30,10 @@ void picture_average_kernel1_line_c(EbByte src0, EbByte src1, EbByte dst, uint32
 /*********************************
 * Picture Copy Kernel
 *********************************/
+void eb_memcpy_c(void  *dst_ptr, void  *src_ptr, size_t size)
+{
+    memcpy(dst_ptr, src_ptr, size);
+}
 void picture_copy_kernel(EbByte src, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
                          uint32_t area_width, uint32_t area_height,
                          uint32_t bytes_per_sample) //=1 always)
@@ -42,7 +46,7 @@ void picture_copy_kernel(EbByte src, uint32_t src_stride, EbByte dst, uint32_t d
     dst_stride *= bytes_per_sample;
 
     while (sample_count < sample_total_count) {
-        EB_MEMCPY(dst, src, copy_length);
+        eb_memcpy_c(dst, src, copy_length);
         src += src_stride;
         dst += dst_stride;
         sample_count += area_width;
@@ -77,3 +81,5 @@ uint64_t spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset,
     }
     return spatial_distortion;
 }
+
+

@@ -23,6 +23,7 @@
 #include "EbRateControlTasks.h"
 #include "EbCabacContextModel.h"
 #include "EbLog.h"
+#include "common_dsp_rtcd.h"
 #define AV1_MIN_TILE_SIZE_BYTES 1
 #if TILES_PARALLEL
 void eb_av1_reset_loop_restoration(PictureControlSet *piCSetPtr, uint16_t tile_idx);
@@ -567,7 +568,7 @@ void *entropy_coding_kernel(void *input_ptr) {
 
         sb_sz = (uint8_t)scs_ptr->sb_size_pix;
 
-        sb_size_log2       = (uint8_t)Log2f(sb_sz);
+        sb_size_log2       = (uint8_t)eb_log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
         pic_width_in_sb    = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
 #if TILES_PARALLEL

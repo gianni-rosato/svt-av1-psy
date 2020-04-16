@@ -3559,7 +3559,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                 uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
                               input_picture_ptr->origin_y * input_picture_ptr->stride_y;
                 for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-                    EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y,
+                    eb_memcpy(pa + row * input_padded_picture_ptr->stride_y,
                               in + row * input_picture_ptr->stride_y,
                               sizeof(uint8_t) * input_picture_ptr->width);
             }

@@ -491,7 +491,7 @@ void *rest_kernel(void *input_ptr) {
         scs_ptr          = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         frm_hdr          = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 #if !TILES_PARALLEL
-        uint8_t sb_size_log2 = (uint8_t)Log2f(scs_ptr->sb_size_pix);
+        uint8_t sb_size_log2 = (uint8_t)eb_log2f(scs_ptr->sb_size_pix);
 #endif
         EbBool     is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;

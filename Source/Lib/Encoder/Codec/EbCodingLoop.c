@@ -499,8 +499,8 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 round_offset,
-                LOG2F(context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr]) +
-                    LOG2F(context_ptr->blk_geom
+                eb_log2f(context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr]) +
+                eb_log2f(context_ptr->blk_geom
                               ->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr]));
 
             if (context_ptr->evaluate_cfl_ep) {
@@ -992,8 +992,8 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 round_offset,
-                LOG2F(context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr]) +
-                    LOG2F(context_ptr->blk_geom
+                eb_log2f(context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr]) +
+                eb_log2f(context_ptr->blk_geom
                               ->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr]));
 
             int32_t alpha_q3 = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,

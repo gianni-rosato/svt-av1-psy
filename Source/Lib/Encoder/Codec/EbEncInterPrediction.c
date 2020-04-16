@@ -286,9 +286,11 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
         if (dist) *dist = 0;
         return;
     }
+#ifdef ARCH_X86
     aom_clear_system_state();
+#endif
     const double sse_norm = (double)sse / num_samples;
-    const double xqr      = (double)LOG2F((uint32_t)sse_norm / (qstep * qstep));
+    const double xqr      = (double)eb_log2f((uint32_t)sse_norm / (qstep * qstep));
 
     double rate_f, dist_by_sse_norm_f;
     av1_model_rd_curvfit(plane_bsize, sse_norm, xqr, &rate_f, &dist_by_sse_norm_f);
@@ -296,7 +298,9 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     const double dist_f = dist_by_sse_norm_f * sse_norm;
     int          rate_i = (int)((rate_f * num_samples) + 0.5);
     int64_t      dist_i = (int64_t)((dist_f * num_samples) + 0.5);
+#ifdef ARCH_X86
     aom_clear_system_state();
+#endif
 
     // Check if skip is better
     if (rate_i == 0) {

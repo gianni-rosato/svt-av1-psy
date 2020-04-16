@@ -23,7 +23,7 @@
 #include "EbDecRestoration.h"
 #include "EbPictureOperators.h"
 #include "EbRestoration.h"
-
+#include "common_dsp_rtcd.h"
 void save_tile_row_boundary_lines(uint8_t *src, int32_t src_stride, int32_t src_width,
                                   int32_t src_height, int32_t use_highbd, int32_t plane,
                                   Av1Common *cm, int32_t after_cdef,
@@ -62,11 +62,11 @@ void lr_generate_padding(
     for (vertical_idx = LR_PAD_SIDE; vertical_idx > 0; --vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        EB_MEMCPY(
+        eb_memcpy(
             temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        EB_MEMCPY(
+        eb_memcpy(
             temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
     }
     return;
@@ -107,12 +107,12 @@ void lr_generate_padding16_bit(
     for (vertical_idx = LR_PAD_SIDE; vertical_idx > 0; --vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        EB_MEMCPY(temp_src_pic2,
+        eb_memcpy(temp_src_pic2,
                   temp_src_pic0,
                   sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        EB_MEMCPY(temp_src_pic3,
+        eb_memcpy(temp_src_pic3,
                   temp_src_pic1,
                   sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
     }

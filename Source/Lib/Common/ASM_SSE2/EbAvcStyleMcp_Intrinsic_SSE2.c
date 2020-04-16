@@ -6,6 +6,7 @@
 #include "EbAvcStyleMcp_SSE2.h"
 #include "EbMcp_SSE2.h" // THIS SHOULD BE _SSE2 in the future
 #include "emmintrin.h"
+#include "common_dsp_rtcd.h"
 void avc_style_copy_sse2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
                          uint32_t pu_width, uint32_t pu_height, EbByte temp_buf, EbBool skip,
                          uint32_t frac_pos) {
@@ -13,7 +14,7 @@ void avc_style_copy_sse2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32
     (void)frac_pos;
     if (skip) {
         //do the last row too.
-        EB_MEMCPY(
+        eb_memcpy(
             dst + (pu_height - 1) * dst_stride, ref_pic + (pu_height - 1) * src_stride, pu_width);
 
         src_stride <<= 1;

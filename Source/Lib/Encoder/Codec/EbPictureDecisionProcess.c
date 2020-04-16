@@ -26,7 +26,7 @@
 #include "EbObject.h"
 #include "EbUtility.h"
 #include "EbLog.h"
-
+#include "common_dsp_rtcd.h"
 /************************************************
  * Defines
  ************************************************/
@@ -252,7 +252,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define SCENE_TH                            3000
 #define NOISY_SCENE_TH                      4500    // SCD TH in presence of noise
 #define HIGH_PICTURE_VARIANCE_TH            1500
-#define NUM64x64INPIC(w,h)          ((w*h)>> (LOG2F(BLOCK_SIZE_64)<<1))
+#define NUM64x64INPIC(w,h)          ((w*h)>> (eb_log2f(BLOCK_SIZE_64)<<1))
 #define QUEUE_GET_PREVIOUS_SPOT(h)  ((h == 0) ? PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1 : h - 1)
 #define QUEUE_GET_NEXT_SPOT(h,off)  (( (h+off) >= PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH) ? h+off - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH  : h + off)
 
@@ -4060,7 +4060,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
                       input_picture_ptr->origin_y * input_picture_ptr->stride_y;
         for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-            EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
+            eb_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
     }
 
     // Pad input picture to complete border SBs

@@ -646,7 +646,7 @@ void eb_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControlS
         (SequenceControlSet *)pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     //SuperBlock                     *sb_ptr;
     //uint16_t                                   sb_index;
-    uint8_t  sb_size_log2 = (uint8_t)Log2f(scs_ptr->sb_size_pix);
+    uint8_t  sb_size_log2 = (uint8_t)eb_log2f(scs_ptr->sb_size_pix);
     uint32_t x_sb_index;
     uint32_t y_sb_index;
     uint32_t sb_origin_x;
@@ -715,7 +715,7 @@ void eb_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuff
         dstBuffer->stride_bit_inc_y = srcBuffer->stride_bit_inc_y;
 
         for (int32_t input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-            EB_MEMCPY((dstBuffer->buffer_y + luma_buffer_offset + stride_y * input_row_index),
+            eb_memcpy((dstBuffer->buffer_y + luma_buffer_offset + stride_y * input_row_index),
                       (srcBuffer->buffer_y + luma_buffer_offset + stride_y * input_row_index),
                       luma_width);
         }
@@ -728,7 +728,7 @@ void eb_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuff
             (srcBuffer->origin_x / 2 + srcBuffer->origin_y / 2 * srcBuffer->stride_cb) << is_16bit;
 
         for (int32_t input_row_index = 0; input_row_index < luma_height / 2; input_row_index++) {
-            EB_MEMCPY((dstBuffer->buffer_cb + chroma_buffer_offset + stride_cb * input_row_index),
+            eb_memcpy((dstBuffer->buffer_cb + chroma_buffer_offset + stride_cb * input_row_index),
                       (srcBuffer->buffer_cb + chroma_buffer_offset + stride_cb * input_row_index),
                       chroma_width);
         }
@@ -742,7 +742,7 @@ void eb_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuff
             (srcBuffer->origin_x / 2 + srcBuffer->origin_y / 2 * srcBuffer->stride_cr) << is_16bit;
 
         for (int32_t input_row_index = 0; input_row_index< luma_height/2; input_row_index++) {
-            EB_MEMCPY((dstBuffer->buffer_cr + chroma_buffer_offset + stride_cr * input_row_index),
+            eb_memcpy((dstBuffer->buffer_cr + chroma_buffer_offset + stride_cr * input_row_index),
                       (srcBuffer->buffer_cr + chroma_buffer_offset + stride_cr * input_row_index),
                       chroma_width);
         }

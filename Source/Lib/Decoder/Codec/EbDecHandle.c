@@ -542,8 +542,11 @@ svt_av1_dec_init(EbComponentType *svt_dec_component) {
     if (svt_dec_component == NULL) return EB_ErrorBadParameter;
 
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
+#ifdef ARCH_X86
     CPU_FLAGS    cpu_flags = get_cpu_flags_to_use();
-
+#else
+    CPU_FLAGS    cpu_flags = 0;
+#endif
     dec_handle_ptr->dec_cnt       = -1;
     dec_handle_ptr->num_frms_prll = 1;
     if (dec_handle_ptr->num_frms_prll > DEC_MAX_NUM_FRM_PRLL)

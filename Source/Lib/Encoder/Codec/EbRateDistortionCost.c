@@ -2365,7 +2365,7 @@ void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct 
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition =
         (((PartitionContext *)
               leaf_partition_neighbor_array->top_array)[partition_above_neighbor_index]
-             .above == (int8_t)INVALID_NEIGHBOR_DATA)
+             .above == (char)INVALID_NEIGHBOR_DATA)
             ? 0
             : ((PartitionContext *)
                    leaf_partition_neighbor_array->top_array)[partition_above_neighbor_index]
@@ -2374,7 +2374,7 @@ void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct 
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition =
         (((PartitionContext *)
               leaf_partition_neighbor_array->left_array)[partition_left_neighbor_index]
-             .left == (int8_t)INVALID_NEIGHBOR_DATA)
+             .left == (char)INVALID_NEIGHBOR_DATA)
             ? 0
             : ((PartitionContext *)
                    leaf_partition_neighbor_array->left_array)[partition_left_neighbor_index]
@@ -2596,12 +2596,12 @@ EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr, ModeDecisionCo
 
         const PartitionContextType left_ctx =
             context_ptr->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition ==
-                    (int8_t)(INVALID_NEIGHBOR_DATA)
+                    (char)(INVALID_NEIGHBOR_DATA)
                 ? 0
                 : context_ptr->md_local_blk_unit[blk_ptr->mds_idx].left_neighbor_partition;
         const PartitionContextType above_ctx =
             context_ptr->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition ==
-                    (int8_t)(INVALID_NEIGHBOR_DATA)
+                    (char)(INVALID_NEIGHBOR_DATA)
                 ? 0
                 : context_ptr->md_local_blk_unit[blk_ptr->mds_idx].above_neighbor_partition;
 

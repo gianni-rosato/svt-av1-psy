@@ -2849,7 +2849,7 @@ void *enc_dec_kernel(void *input_ptr) {
         (void)end_of_row_flag;
         // SB Constants
         sb_sz              = (uint8_t)scs_ptr->sb_size_pix;
-        sb_size_log2       = (uint8_t)Log2f(sb_sz);
+        sb_size_log2       = (uint8_t)eb_log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
         pic_width_in_sb    = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
 #if TILES_PARALLEL
@@ -3227,13 +3227,13 @@ void *enc_dec_kernel(void *input_ptr) {
                     ((EbReferenceObject *)
                          pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                         ->global_motion[frame] = pcs_ptr->parent_pcs_ptr->global_motion[frame];
-            EB_MEMCPY(pcs_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost,
+            eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost,
                       context_ptr->md_rate_estimation_ptr->sgrproj_restore_fac_bits,
                       2 * sizeof(int32_t));
-            EB_MEMCPY(pcs_ptr->parent_pcs_ptr->av1x->switchable_restore_cost,
+            eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->switchable_restore_cost,
                       context_ptr->md_rate_estimation_ptr->switchable_restore_fac_bits,
                       3 * sizeof(int32_t));
-            EB_MEMCPY(pcs_ptr->parent_pcs_ptr->av1x->wiener_restore_cost,
+            eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->wiener_restore_cost,
                       context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits,
                       2 * sizeof(int32_t));
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;

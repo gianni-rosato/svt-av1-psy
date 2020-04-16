@@ -18,7 +18,7 @@
 #include "EbEntropyCoding.h"
 #include "EbObject.h"
 #include "EbLog.h"
-
+#include "common_dsp_rtcd.h"
 typedef struct ResourceCoordinationContext {
     EbFifo *                       input_buffer_fifo_ptr;
     EbFifo *                       resource_coordination_results_output_fifo_ptr;
@@ -522,7 +522,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
         //uint16_t     luma_height  = input_picture_ptr->max_height;
         // Y
         for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-            EB_MEMCPY(
+            eb_memcpy(
                 (dst_picture_ptr->buffer_y + luma_buffer_offset + luma_stride * input_row_index),
                 (src_picture_ptr->buffer_y + luma_buffer_offset + luma_stride * input_row_index),
                 luma_width);
@@ -530,7 +530,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
         // U
         for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-            EB_MEMCPY((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
+            eb_memcpy((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
                        chroma_stride * input_row_index),
                       (src_picture_ptr->buffer_cb + chroma_buffer_offset +
                        chroma_stride * input_row_index),
@@ -539,7 +539,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
         // V
         for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-            EB_MEMCPY((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
+            eb_memcpy((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
                        chroma_stride * input_row_index),
                       (src_picture_ptr->buffer_cr + chroma_buffer_offset +
                        chroma_stride * input_row_index),
@@ -561,7 +561,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
             // Y 8bit
             for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-                EB_MEMCPY((dst_picture_ptr->buffer_y + luma_buffer_offset +
+                eb_memcpy((dst_picture_ptr->buffer_y + luma_buffer_offset +
                            luma_stride * input_row_index),
                           (src_picture_ptr->buffer_y + luma_buffer_offset +
                            luma_stride * input_row_index),
@@ -570,7 +570,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
             // U 8bit
             for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-                EB_MEMCPY((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
+                eb_memcpy((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
                            chroma_stride * input_row_index),
                           (src_picture_ptr->buffer_cb + chroma_buffer_offset +
                            chroma_stride * input_row_index),
@@ -579,7 +579,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
             // V 8bit
             for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-                EB_MEMCPY((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
+                eb_memcpy((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
                            chroma_stride * input_row_index),
                           (src_picture_ptr->buffer_cr + chroma_buffer_offset +
                            chroma_stride * input_row_index),
@@ -596,35 +596,35 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
             //    uint16_t source_chroma_2bit_stride = source_luma_2bit_stride >> 1;
 
             //    for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-            //        EB_MEMCPY(input_picture_ptr->buffer_bit_inc_y + luma_2bit_width * input_row_index, input_ptr->luma_ext + source_luma_2bit_stride * input_row_index, luma_2bit_width);
+            //        eb_memcpy(input_picture_ptr->buffer_bit_inc_y + luma_2bit_width * input_row_index, input_ptr->luma_ext + source_luma_2bit_stride * input_row_index, luma_2bit_width);
             //    }
             //    for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
-            //        EB_MEMCPY(input_picture_ptr->buffer_bit_inc_cb + (luma_2bit_width >> 1)*input_row_index, input_ptr->cb_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
+            //        eb_memcpy(input_picture_ptr->buffer_bit_inc_cb + (luma_2bit_width >> 1)*input_row_index, input_ptr->cb_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
             //    }
             //    for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
-            //        EB_MEMCPY(input_picture_ptr->buffer_bit_inc_cr + (luma_2bit_width >> 1)*input_row_index, input_ptr->cr_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
+            //        eb_memcpy(input_picture_ptr->buffer_bit_inc_cr + (luma_2bit_width >> 1)*input_row_index, input_ptr->cr_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
             //    }
             //}
         }
     } else { // 10bit packed
 
-        EB_MEMCPY(dst_picture_ptr->buffer_y, src_picture_ptr->buffer_y, src_picture_ptr->luma_size);
+        eb_memcpy(dst_picture_ptr->buffer_y, src_picture_ptr->buffer_y, src_picture_ptr->luma_size);
 
-        EB_MEMCPY(
+        eb_memcpy(
             dst_picture_ptr->buffer_cb, src_picture_ptr->buffer_cb, src_picture_ptr->chroma_size);
 
-        EB_MEMCPY(
+        eb_memcpy(
             dst_picture_ptr->buffer_cr, src_picture_ptr->buffer_cr, src_picture_ptr->chroma_size);
 
-        EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_y,
+        eb_memcpy(dst_picture_ptr->buffer_bit_inc_y,
                   src_picture_ptr->buffer_bit_inc_y,
                   src_picture_ptr->luma_size);
 
-        EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cb,
+        eb_memcpy(dst_picture_ptr->buffer_bit_inc_cb,
                   src_picture_ptr->buffer_bit_inc_cb,
                   src_picture_ptr->chroma_size);
 
-        EB_MEMCPY(dst_picture_ptr->buffer_bit_inc_cr,
+        eb_memcpy(dst_picture_ptr->buffer_bit_inc_cr,
                   src_picture_ptr->buffer_bit_inc_cr,
                   src_picture_ptr->chroma_size);
     }

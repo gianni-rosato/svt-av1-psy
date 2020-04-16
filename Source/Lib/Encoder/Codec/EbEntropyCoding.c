@@ -1224,7 +1224,7 @@ static void encode_partition_av1(PictureControlSet *pcs_ptr, FRAME_CONTEXT *fram
     const PartitionContextType above_ctx =
         (((PartitionContext *)
               partition_context_neighbor_array->top_array)[partition_context_top_neighbor_index]
-             .above == (int8_t)INVALID_NEIGHBOR_DATA)
+             .above == (char)INVALID_NEIGHBOR_DATA)
             ? 0
             : ((PartitionContext *)partition_context_neighbor_array
                    ->top_array)[partition_context_top_neighbor_index]
@@ -1232,7 +1232,7 @@ static void encode_partition_av1(PictureControlSet *pcs_ptr, FRAME_CONTEXT *fram
     const PartitionContextType left_ctx =
         (((PartitionContext *)
               partition_context_neighbor_array->left_array)[partition_context_left_neighbor_index]
-             .left == (int8_t)INVALID_NEIGHBOR_DATA)
+             .left == (char)INVALID_NEIGHBOR_DATA)
             ? 0
             : ((PartitionContext *)partition_context_neighbor_array
                    ->left_array)[partition_context_left_neighbor_index]

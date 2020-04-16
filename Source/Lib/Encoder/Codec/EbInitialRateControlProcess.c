@@ -12,7 +12,7 @@
 #include "EbUtility.h"
 #include "EbReferenceObject.h"
 #include "EbResize.h"
-
+#include "common_dsp_rtcd.h"
 /**************************************
  * Context
  **************************************/
@@ -757,11 +757,11 @@ void get_histogram_queue_data(SequenceControlSet *scs_ptr, EncodeContext *encode
     histogram_queue_entry_ptr->is_coded             = EB_FALSE;
     histogram_queue_entry_ptr->total_num_bits_coded = 0;
     histogram_queue_entry_ptr->frames_in_sw         = 0;
-    EB_MEMCPY(histogram_queue_entry_ptr->me_distortion_histogram,
+    eb_memcpy(histogram_queue_entry_ptr->me_distortion_histogram,
               pcs_ptr->me_distortion_histogram,
               sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS);
 
-    EB_MEMCPY(histogram_queue_entry_ptr->ois_distortion_histogram,
+    eb_memcpy(histogram_queue_entry_ptr->ois_distortion_histogram,
               pcs_ptr->ois_distortion_histogram,
               sizeof(uint16_t) * NUMBER_OF_INTRA_SAD_INTERVALS);
 

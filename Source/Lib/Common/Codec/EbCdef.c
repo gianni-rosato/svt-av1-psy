@@ -256,7 +256,7 @@ void copy_sb16_16(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t s
     int32_t         r, c;
     const uint16_t *base = &src[src_voffset * sstride + src_hoffset];
     for (r = 0; r < vsize; r++) {
-        EB_MEMCPY(dst, (void *)base, 2 * hsize);
+        eb_memcpy(dst, (void *)base, 2 * hsize);
         dst += dstride;
         base += sstride;
     }
