@@ -853,10 +853,10 @@ void set_target_budget_oq(PictureControlSet *pcs_ptr,
             ref_obj__l1 =
                 (pcs_ptr->parent_pcs_ptr->slice_type == B_SLICE)
                     ? (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr
-                    : (EbReferenceObject *)EB_NULL;
+                    : (EbReferenceObject *)NULL;
             luminosity_change_boost =
                 ABS(pcs_ptr->parent_pcs_ptr->average_intensity[0] - ref_obj__l0->average_intensity);
-            luminosity_change_boost += (ref_obj__l1 != EB_NULL)
+            luminosity_change_boost += (ref_obj__l1 != NULL)
                                            ? ABS(pcs_ptr->parent_pcs_ptr->average_intensity[0] -
                                                  ref_obj__l1->average_intensity)
                                            : 0;
@@ -1715,5 +1715,5 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         eb_release_object(rate_control_results_wrapper_ptr);
     }
 
-    return EB_NULL;
+    return NULL;
 }

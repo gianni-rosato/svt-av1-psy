@@ -640,5 +640,5 @@ void *rest_kernel(void *input_ptr) {
         eb_release_object(cdef_results_wrapper_ptr);
     }
 
-    return EB_NULL;
+    return NULL;
 }

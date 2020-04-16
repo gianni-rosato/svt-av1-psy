@@ -3635,5 +3635,5 @@ void *picture_analysis_kernel(void *input_ptr) {
         // Post the Full Results Object
         eb_post_full_object(out_results_wrapper_ptr);
     }
-    return EB_NULL;
+    return NULL;
 }

@@ -44,7 +44,7 @@ static EbErrorType eb_fifo_push_back(EbFifo *fifoPtr, EbObjectWrapper *wrapper_p
     EbErrorType return_error = EB_ErrorNone;
 
     // If FIFO is empty
-    if (fifoPtr->first_ptr == (EbObjectWrapper *)EB_NULL) {
+    if (fifoPtr->first_ptr == (EbObjectWrapper *)NULL) {
         fifoPtr->first_ptr = wrapper_ptr;
         fifoPtr->last_ptr  = wrapper_ptr;
     } else {
@@ -52,7 +52,7 @@ static EbErrorType eb_fifo_push_back(EbFifo *fifoPtr, EbObjectWrapper *wrapper_p
         fifoPtr->last_ptr           = wrapper_ptr;
     }
 
-    fifoPtr->last_ptr->next_ptr = (EbObjectWrapper *)EB_NULL;
+    fifoPtr->last_ptr->next_ptr = (EbObjectWrapper *)NULL;
 
     return return_error;
 }
@@ -68,7 +68,7 @@ static EbErrorType eb_fifo_pop_front(EbFifo *fifoPtr, EbObjectWrapper **wrapper_
 
     // Update tail of BufferPool if the BufferPool is now empty
     fifoPtr->last_ptr =
-        (fifoPtr->first_ptr == fifoPtr->last_ptr) ? (EbObjectWrapper *)EB_NULL : fifoPtr->last_ptr;
+        (fifoPtr->first_ptr == fifoPtr->last_ptr) ? (EbObjectWrapper *)NULL : fifoPtr->last_ptr;
 
     // Update head of BufferPool
     fifoPtr->first_ptr = fifoPtr->first_ptr->next_ptr;
@@ -115,7 +115,7 @@ static EbErrorType eb_circular_buffer_ctor(EbCircularBuffer *bufferPtr,
  **************************************/
 static EbBool eb_circular_buffer_empty_check(EbCircularBuffer *bufferPtr) {
     return ((bufferPtr->head_index == bufferPtr->tail_index) &&
-            (bufferPtr->array_ptr[bufferPtr->head_index] == EB_NULL))
+            (bufferPtr->array_ptr[bufferPtr->head_index] == NULL))
                ? EB_TRUE
                : EB_FALSE;
 }
@@ -128,7 +128,7 @@ static EbErrorType eb_circular_buffer_pop_front(EbCircularBuffer *bufferPtr, EbP
 
     // Copy the head of the buffer into the object_ptr
     *object_ptr                                 = bufferPtr->array_ptr[bufferPtr->head_index];
-    bufferPtr->array_ptr[bufferPtr->head_index] = EB_NULL;
+    bufferPtr->array_ptr[bufferPtr->head_index] = NULL;
 
     // Increment the head & check for rollover
     bufferPtr->head_index = (bufferPtr->head_index == bufferPtr->buffer_total_count - 1)
@@ -214,8 +214,8 @@ static EbErrorType eb_muxing_queue_ctor(EbMuxingQueue *queue_ptr, uint32_t objec
                eb_fifo_ctor,
                0,
                object_total_count,
-               (EbObjectWrapper *)EB_NULL,
-               (EbObjectWrapper *)EB_NULL,
+               (EbObjectWrapper *)NULL,
+               (EbObjectWrapper *)NULL,
                queue_ptr);
     }
 
@@ -470,7 +470,7 @@ EbErrorType eb_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t obj
                resource_ptr->object_total_count,
                consumer_process_total_count);
     } else {
-        resource_ptr->full_queue = (EbMuxingQueue *)EB_NULL;
+        resource_ptr->full_queue = (EbMuxingQueue *)NULL;
     }
 
     return return_error;
@@ -654,7 +654,7 @@ EbErrorType eb_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **wrapper_
 **************************************/
 static EbBool eb_fifo_peak_front(EbFifo *fifoPtr) {
     // Set wrapper_ptr to head of BufferPool
-    if (fifoPtr->first_ptr == (EbObjectWrapper *)EB_NULL)
+    if (fifoPtr->first_ptr == (EbObjectWrapper *)NULL)
         return EB_TRUE;
     else
         return EB_FALSE;
@@ -684,7 +684,7 @@ EbErrorType eb_get_full_object_non_blocking(
     if (fifo_empty == EB_FALSE)
         eb_get_full_object(full_fifo_ptr, wrapper_dbl_ptr);
     else
-        *wrapper_dbl_ptr = (EbObjectWrapper *)EB_NULL;
+        *wrapper_dbl_ptr = (EbObjectWrapper *)NULL;
 
     return return_error;
 }

@@ -6043,5 +6043,5 @@ void *rate_control_kernel(void *input_ptr) {
         }
     }
 
-    return EB_NULL;
+    return NULL;
 }

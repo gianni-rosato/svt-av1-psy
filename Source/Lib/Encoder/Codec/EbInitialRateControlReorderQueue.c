@@ -9,7 +9,7 @@
 EbErrorType initial_rate_control_reorder_entry_ctor(InitialRateControlReorderEntry *entry_ptr,
                                                     uint32_t picture_number) {
     entry_ptr->picture_number         = picture_number;
-    entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+    entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
     return EB_ErrorNone;
 }

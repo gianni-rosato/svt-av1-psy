@@ -104,7 +104,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
         init_data.split_mode         = EB_FALSE;
         init_data.color_format       = color_format;
 
-        context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc *)EB_NULL;
+        context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc *)NULL;
         if (is_16bit || static_config->is_16bit_pipeline) {
             init_data.bit_depth = EB_16BIT;
 
@@ -3254,7 +3254,7 @@ void *enc_dec_kernel(void *input_ptr) {
         // Release Mode Decision Results
         eb_release_object(enc_dec_tasks_wrapper_ptr);
     }
-    return EB_NULL;
+    return NULL;
 }
 
 void eb_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,

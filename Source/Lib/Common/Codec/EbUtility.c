@@ -265,13 +265,13 @@ EbLinkedListNode* concat_eb_linked_list(EbLinkedListNode* a, EbLinkedListNode* b
 EbLinkedListNode* split_eb_linked_list(EbLinkedListNode* input, EbLinkedListNode** restLL,
                                        EbBool (*predicate_func)(EbLinkedListNode*)) {
     EbLinkedListNode* ll_true_ptr =
-        (EbLinkedListNode*)EB_NULL; // list of nodes satifying predicate_func(node) == TRUE
+        (EbLinkedListNode*)NULL; // list of nodes satifying predicate_func(node) == TRUE
     EbLinkedListNode* ll_rest_ptr =
-        (EbLinkedListNode*)EB_NULL; // list of nodes satifying predicate_func(node) != TRUE
+        (EbLinkedListNode*)NULL; // list of nodes satifying predicate_func(node) != TRUE
 
     while (input) {
         EbLinkedListNode* next = input->next;
-        input->next            = (EbLinkedListNode*)EB_NULL;
+        input->next            = (EbLinkedListNode*)NULL;
         if (predicate_func(input))
             ll_true_ptr = concat_eb_linked_list(input, ll_true_ptr);
         else

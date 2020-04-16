@@ -21,11 +21,11 @@ extern EbMemoryMapEntry                 *memory_map_end_address;
 #ifdef _WIN32
 #define EB_ALLIGN_MALLOC_DEC(type, pointer, n_elements, pointer_class)                  \
     pointer = (type)_aligned_malloc(n_elements, ALVALUE);                               \
-    if (pointer == (type)EB_NULL)                                                       \
+    if (pointer == (type)NULL)                                                       \
         return EB_ErrorInsufficientResources;                                           \
     else {                                                                              \
         EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry));                      \
-        if (node == (EbMemoryMapEntry *)EB_NULL) return EB_ErrorInsufficientResources;  \
+        if (node == (EbMemoryMapEntry *)NULL) return EB_ErrorInsufficientResources;  \
         node->ptr_type     = pointer_class;                                             \
         node->ptr          = (EbPtr)pointer;                                            \
         node->prev_entry   = (EbPtr)svt_dec_memory_map;                                 \
@@ -45,7 +45,7 @@ extern EbMemoryMapEntry                 *memory_map_end_address;
     else {                                                                              \
         pointer                = (type)pointer;                                         \
         EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry));                      \
-        if (node == (EbMemoryMapEntry *)EB_NULL) return EB_ErrorInsufficientResources;  \
+        if (node == (EbMemoryMapEntry *)NULL) return EB_ErrorInsufficientResources;  \
         node->ptr_type     = pointer_class;                                             \
         node->ptr          = (EbPtr)pointer;                                            \
         node->prev_entry   = (EbPtr)svt_dec_memory_map;                                 \
@@ -61,11 +61,11 @@ extern EbMemoryMapEntry                 *memory_map_end_address;
 #endif
 #define EB_MALLOC_DEC(type, pointer, n_elements, pointer_class)                         \
     pointer = (type)malloc(n_elements);                                                 \
-    if (pointer == (type)EB_NULL)                                                       \
+    if (pointer == (type)NULL)                                                       \
         return EB_ErrorInsufficientResources;                                           \
     else {                                                                              \
         EbMemoryMapEntry *node = malloc(sizeof(EbMemoryMapEntry));                      \
-        if (node == (EbMemoryMapEntry *)EB_NULL) return EB_ErrorInsufficientResources;  \
+        if (node == (EbMemoryMapEntry *)NULL) return EB_ErrorInsufficientResources;  \
         node->ptr_type     = pointer_class;                                             \
         node->ptr          = (EbPtr)pointer;                                            \
         node->prev_entry   = (EbPtr)svt_dec_memory_map;                                 \

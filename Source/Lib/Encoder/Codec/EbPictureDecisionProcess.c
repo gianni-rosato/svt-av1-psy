@@ -496,7 +496,7 @@ EbErrorType release_prev_picture_from_reorder_queue(
         // Reset the Picture Decision Reordering Queue Entry
         // P.S. The reset of the Picture Decision Reordering Queue Entry could not be done before running the Scene Change Detector
         queue_previous_entry_ptr->picture_number += PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH;
-        queue_previous_entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+        queue_previous_entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)NULL;
     }
 
     return return_error;
@@ -3797,7 +3797,7 @@ static EbErrorType av1_generate_minigop_rps_info_from_user_config(
     uint32_t                       mini_gop_index
 )
 {
-    PictureParentControlSet       *picture_control_set_ptr = EB_NULL;
+    PictureParentControlSet       *picture_control_set_ptr = NULL;
     if (encode_context_ptr->is_mini_gop_changed) {
         PredictionStructure          *next_pred_struct_ptr;
         PredictionStructureEntry     *next_base_layer_pred_position_ptr;
@@ -4411,7 +4411,7 @@ void* picture_decision_kernel(void *input_ptr)
 
     int32_t                           previous_entry_index;
 
-    PaReferenceQueueEntry         *input_entry_ptr = (PaReferenceQueueEntry*)EB_NULL;;
+    PaReferenceQueueEntry         *input_entry_ptr = (PaReferenceQueueEntry*)NULL;;
     uint32_t                           input_queue_index;
 
     PaReferenceQueueEntry         *pa_reference_entry_ptr;
@@ -4474,7 +4474,7 @@ void* picture_decision_kernel(void *input_ptr)
         // P.S. The Picture Decision Reordering Queue should be parsed in the display order to be able to construct a pred structure
         queue_entry_ptr = encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index];
 
-        while (queue_entry_ptr->parent_pcs_wrapper_ptr != EB_NULL) {
+        while (queue_entry_ptr->parent_pcs_wrapper_ptr != NULL) {
             if (((PictureParentControlSet *)(queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr))->end_of_sequence_flag == EB_TRUE) {
                 frame_passthrough = EB_TRUE;
             }
@@ -4770,7 +4770,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     eb_release_object(pcs_ptr->overlay_ppcs_ptr->pa_reference_picture_wrapper_ptr);
                                     // release the parent pcs
                                     eb_release_object(pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
-                                    pcs_ptr->overlay_ppcs_ptr = EB_NULL;
+                                    pcs_ptr->overlay_ppcs_ptr = NULL;
                                 }
                             }
                             PictureParentControlSet       *cur_picture_control_set_ptr = pcs_ptr;
@@ -5006,7 +5006,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 else if (pcs_ptr->idr_flag == EB_TRUE) {
                                     // Set the Picture Decision PA Reference Entry pointer
-                                    input_entry_ptr = (PaReferenceQueueEntry*)EB_NULL;
+                                    input_entry_ptr = (PaReferenceQueueEntry*)NULL;
                                 }
 
                                 // Place Picture in Picture Decision PA Reference Queue
@@ -5024,7 +5024,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     // Check if the Picture Decision PA Reference is full
                                     CHECK_REPORT_ERROR(
                                         (((encode_context_ptr->picture_decision_pa_reference_queue_head_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) ||
-                                        (encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_head_index]->input_object_ptr == EB_NULL))),
+                                        (encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_head_index]->input_object_ptr == NULL))),
                                         encode_context_ptr->app_callback_ptr,
                                         EB_ENC_PD_ERROR4);
                                 }
@@ -5484,7 +5484,7 @@ void* picture_decision_kernel(void *input_ptr)
                         (input_entry_ptr->input_object_ptr)) {
                         // Release the nominal live_count value
                         eb_release_object(input_entry_ptr->input_object_ptr);
-                        input_entry_ptr->input_object_ptr = (EbObjectWrapper*)EB_NULL;
+                        input_entry_ptr->input_object_ptr = (EbObjectWrapper*)NULL;
                     }
 
                     // Increment the head_index if the head is null
@@ -5495,7 +5495,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                     CHECK_REPORT_ERROR(
                         (((encode_context_ptr->picture_decision_pa_reference_queue_head_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) ||
-                        (encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_head_index]->input_object_ptr == EB_NULL))),
+                        (encode_context_ptr->picture_decision_pa_reference_queue[encode_context_ptr->picture_decision_pa_reference_queue_head_index]->input_object_ptr == NULL))),
                         encode_context_ptr->app_callback_ptr,
                         EB_ENC_PD_ERROR4);
 
@@ -5517,6 +5517,6 @@ void* picture_decision_kernel(void *input_ptr)
         eb_release_object(in_results_wrapper_ptr);
     }
 
-    return EB_NULL;
+    return NULL;
 }
 // clang-format on

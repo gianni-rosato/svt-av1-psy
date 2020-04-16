@@ -82,7 +82,7 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
                 thread_handle = (pthread_t *)malloc(sizeof(pthread_t));
                 if (thread_handle != NULL) {
                     pthread_create((pthread_t *)thread_handle, // Thread handle
-                                   (const pthread_attr_t *)EB_NULL, // attributes
+                                   (const pthread_attr_t *)NULL, // attributes
                                    thread_function, // function to be run by new thread
                                    thread_context);
                 }

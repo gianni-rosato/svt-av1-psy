@@ -475,14 +475,14 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
                           : MIN(pcs_ptr->ref_list1_count, scs_ptr->reference_count);
 
             for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-                if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != EB_NULL) {
+                if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
                     eb_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
                 }
             }
         }
     }
 
-    if (pcs_ptr->pa_reference_picture_wrapper_ptr != EB_NULL) {
+    if (pcs_ptr->pa_reference_picture_wrapper_ptr != NULL) {
         eb_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
     }
 
@@ -924,7 +924,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 queue_entry_index_temp =
                     encode_context_ptr->initial_rate_control_reorder_queue_head_index;
                 if (encode_context_ptr->initial_rate_control_reorder_queue[queue_entry_index_temp]
-                        ->parent_pcs_wrapper_ptr != EB_NULL)
+                        ->parent_pcs_wrapper_ptr != NULL)
                     end_of_sequence_flag =
                         (((PictureParentControlSet
                                *)(encode_context_ptr
@@ -951,10 +951,10 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         (EbBool)(move_slide_window_flag &&
                                  (encode_context_ptr
                                       ->initial_rate_control_reorder_queue[queue_entry_index_temp2]
-                                      ->parent_pcs_wrapper_ptr != EB_NULL));
+                                      ->parent_pcs_wrapper_ptr != NULL));
                     if (encode_context_ptr
                             ->initial_rate_control_reorder_queue[queue_entry_index_temp2]
-                            ->parent_pcs_wrapper_ptr != EB_NULL) {
+                            ->parent_pcs_wrapper_ptr != NULL) {
                         // check if it is the last frame. If we have reached the last frame, we would output the buffered frames in the Queue.
                         end_of_sequence_flag =
                             ((PictureParentControlSet *)(encode_context_ptr
@@ -1106,7 +1106,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     }
                     // Reset the Reorder Queue Entry
                     queue_entry_ptr->picture_number += INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
-                    queue_entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+                    queue_entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
                     // Increment the Reorder Queue head Ptr
                     encode_context_ptr->initial_rate_control_reorder_queue_head_index =
@@ -1125,5 +1125,5 @@ void *initial_rate_control_kernel(void *input_ptr) {
         // Release the Input Results
         eb_release_object(in_results_wrapper_ptr);
     }
-    return EB_NULL;
+    return NULL;
 }

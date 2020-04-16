@@ -1366,7 +1366,7 @@ void *dec_all_stage_kernel(void *input_ptr) {
             break;
         }
     }
-    return EB_NULL;
+    return NULL;
 }
 
 void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {

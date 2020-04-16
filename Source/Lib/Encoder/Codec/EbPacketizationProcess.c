@@ -615,10 +615,10 @@ static void encode_show_existing(EncodeContext *encode_context_ptr,
 static void release_frames(EncodeContext *encode_context_ptr, int frames) {
     for (int i = 0; i < frames; i++) {
         PacketizationReorderEntry *queue_entry_ptr = get_reorder_queue_entry(encode_context_ptr, i);
-        queue_entry_ptr->out_meta_data = (EbLinkedListNode *)EB_NULL;
+        queue_entry_ptr->out_meta_data = (EbLinkedListNode *)NULL;
         // Reset the Reorder Queue Entry
         queue_entry_ptr->picture_number += PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
-        queue_entry_ptr->output_stream_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+        queue_entry_ptr->output_stream_wrapper_ptr = (EbObjectWrapper *)NULL;
     }
     encode_context_ptr->packetization_reorder_queue_head_index = get_reorder_queue_pos(encode_context_ptr, frames);
 }
@@ -766,7 +766,7 @@ void *packetization_kernel(void *input_ptr) {
             picture_manager_results_ptr->picture_type    = EB_PIC_FEEDBACK;
             picture_manager_results_ptr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
         } else {
-            picture_manager_results_wrapper_ptr = EB_NULL;
+            picture_manager_results_wrapper_ptr = NULL;
             (void)picture_manager_results_ptr;
             (void)picture_manager_results_wrapper_ptr;
         }
@@ -820,12 +820,12 @@ void *packetization_kernel(void *input_ptr) {
         queue_entry_ptr->out_meta_data = concat_eb_linked_list(
             extract_passthrough_data(&(pcs_ptr->parent_pcs_ptr->data_ll_head_ptr)),
             pcs_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr);
-        pcs_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)EB_NULL;
+        pcs_ptr->parent_pcs_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
 
         // Calling callback functions to release the memory allocated for data linked list in the application
-        while (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr != EB_NULL) {
+        while (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr != NULL) {
             app_data_ll_head_temp_ptr = pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->next;
-            if (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr != EB_NULL)
+            if (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr != NULL)
                 pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr(
                     pcs_ptr->parent_pcs_ptr->data_ll_head_ptr);
             pcs_ptr->parent_pcs_ptr->data_ll_head_ptr = app_data_ll_head_temp_ptr;
@@ -886,6 +886,6 @@ void *packetization_kernel(void *input_ptr) {
             release_frames(encode_context_ptr, frames);
         }
     }
-    return EB_NULL;
+    return NULL;
 
 }

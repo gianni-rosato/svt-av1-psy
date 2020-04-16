@@ -2505,7 +2505,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(d1_itr);
 
                 // PU Stack variables
-                PredictionUnit *     pu_ptr           = (PredictionUnit *)EB_NULL; //  done
+                PredictionUnit *     pu_ptr           = (PredictionUnit *)NULL; //  done
                 EbPictureBufferDesc *residual_buffer  = context_ptr->residual_buffer;
                 EbPictureBufferDesc *transform_buffer = context_ptr->transform_buffer;
 
@@ -3185,12 +3185,12 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                         ref_idx_l0 >= 0
                             ? (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]
                                   ->object_ptr
-                            : (EbReferenceObject *)EB_NULL;
+                            : (EbReferenceObject *)NULL;
                     EbReferenceObject *ref_obj_1 =
                         ref_idx_l1 >= 0
                             ? (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]
                                   ->object_ptr
-                            : (EbReferenceObject *)EB_NULL;
+                            : (EbReferenceObject *)NULL;
                     uint16_t txb_origin_x;
                     uint16_t txb_origin_y;
                     EbBool   is_blk_skip = EB_FALSE;
@@ -3250,21 +3250,21 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                                 ref_pic_list1 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                             }
                             else {
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture16bit
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                                 ref_pic_list1 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture16bit
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                             }
 #endif
                                 warped_motion_prediction(
@@ -3305,20 +3305,20 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                                 ref_pic_list1 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                             } else {
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture16bit
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                                 ref_pic_list1 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture16bit
-                                    : (EbPictureBufferDesc *)EB_NULL;
+                                    : (EbPictureBufferDesc *)NULL;
                             }
 
                                     if (is_16bit) {

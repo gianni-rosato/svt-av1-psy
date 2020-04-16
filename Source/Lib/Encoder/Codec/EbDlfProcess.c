@@ -55,8 +55,8 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
     context_ptr->dlf_output_fifo_ptr =
         eb_system_resource_get_producer_fifo(enc_handle_ptr->dlf_results_resource_ptr, index);
 
-    context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
-    context_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)EB_NULL;
+    context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
+    context_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
     temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
     temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
@@ -357,5 +357,5 @@ void *dlf_kernel(void *input_ptr) {
         eb_release_object(enc_dec_results_wrapper_ptr);
     }
 
-    return EB_NULL;
+    return NULL;
 }

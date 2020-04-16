@@ -6112,7 +6112,7 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                             ->object_ptr)
                                     ->reference_picture;
         else
-            ref_pic_list0 = (EbPictureBufferDesc *)EB_NULL;
+            ref_pic_list0 = (EbPictureBufferDesc *)NULL;
 
         if (ref_idx_l1 >= 0)
             ref_pic_list1 = hbd_mode_decision ? ((EbReferenceObject *)picture_control_set_ptr
@@ -6124,7 +6124,7 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                             ->object_ptr)
                                     ->reference_picture;
         else
-            ref_pic_list1 = (EbPictureBufferDesc *)EB_NULL;
+            ref_pic_list1 = (EbPictureBufferDesc *)NULL;
 
         //CHKN get seperate prediction of each ref(Luma only)
         //ref0 prediction
@@ -6274,8 +6274,8 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                                     PictureControlSet *          picture_control_set_ptr,
                                     ModeDecisionCandidateBuffer *candidate_buffer_ptr) {
     EbErrorType                  return_error  = EB_ErrorNone;
-    EbPictureBufferDesc *        ref_pic_list0 = (EbPictureBufferDesc *)EB_NULL;
-    EbPictureBufferDesc *        ref_pic_list1 = (EbPictureBufferDesc *)EB_NULL;
+    EbPictureBufferDesc *        ref_pic_list0 = (EbPictureBufferDesc *)NULL;
+    EbPictureBufferDesc *        ref_pic_list1 = (EbPictureBufferDesc *)NULL;
     ModeDecisionCandidate *const candidate_ptr = candidate_buffer_ptr->candidate_ptr;
     SequenceControlSet *         scs_ptr =
             ((SequenceControlSet *)(picture_control_set_ptr->scs_wrapper_ptr->object_ptr));

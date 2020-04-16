@@ -322,7 +322,7 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                        ->object_ptr)
                       ->reference_picture;
     else
-        ref_pic_list0 = (EbPictureBufferDesc *)EB_NULL;
+        ref_pic_list0 = (EbPictureBufferDesc *)NULL;
 
     if (ref_idx_l1 >= 0)
         ref_pic_list1 =
@@ -334,7 +334,7 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                        ->object_ptr)
                       ->reference_picture;
     else
-        ref_pic_list1 = (EbPictureBufferDesc *)EB_NULL;
+        ref_pic_list1 = (EbPictureBufferDesc *)NULL;
 
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
 
@@ -673,7 +673,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     thirty_two_width_picture_buffer_desc_init_data.split_mode    = EB_FALSE;
 
     // Candidate Ptr
-    buffer_ptr->candidate_ptr = (ModeDecisionCandidate *)EB_NULL;
+    buffer_ptr->candidate_ptr = (ModeDecisionCandidate *)NULL;
 
     // Video Buffers
     EB_NEW(buffer_ptr->prediction_ptr,
@@ -753,7 +753,7 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     thirty_two_width_picture_buffer_desc_init_data.split_mode    = EB_FALSE;
 
     // Candidate Ptr
-    buffer_ptr->candidate_ptr = (ModeDecisionCandidate *)EB_NULL;
+    buffer_ptr->candidate_ptr = (ModeDecisionCandidate *)NULL;
 
     // Video Buffers
     EB_NEW(buffer_ptr->prediction_ptr,

@@ -2161,10 +2161,6 @@ typedef struct {
     uint8_t  *color_idx_map;
 } PaletteInfo;
 
-/** The EB_NULL type is used to define the C style NULL pointer.
-*/
-#define EB_NULL ((void*) 0)
-
 /** The EbHandle type is used to define OS object handles for threads,
 semaphores, mutexs, etc.
 */

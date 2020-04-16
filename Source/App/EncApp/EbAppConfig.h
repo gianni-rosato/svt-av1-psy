@@ -35,10 +35,6 @@ API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
 */
 typedef void *EbPtr;
 
-/** The EB_NULL type is used to define the C style NULL pointer.
-*/
-#define EB_NULL ((void *)0)
-
 #define WARNING_LENGTH 100
 
 // memory map to be removed and replaced by malloc / free
@@ -63,7 +59,7 @@ extern uint32_t          app_malloc_count;
 
 #define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
     pointer = (type)malloc(n_elements);                                      \
-    if (pointer == (type)EB_NULL) {                                          \
+    if (pointer == (type)NULL) {                                             \
         return return_type;                                                  \
     } else {                                                                 \
         app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class;    \
@@ -80,7 +76,7 @@ extern uint32_t          app_malloc_count;
 #define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class, return_type) \
     (void)return_type;                                                          \
     pointer = (type)malloc(n_elements);                                         \
-    if (pointer == (type)EB_NULL) {                                             \
+    if (pointer == (type)NULL) {                                                \
         return_type = EB_ErrorInsufficientResources;                            \
         fprintf(stderr, "Malloc has failed due to insuffucient resources");     \
         return;                                                                 \

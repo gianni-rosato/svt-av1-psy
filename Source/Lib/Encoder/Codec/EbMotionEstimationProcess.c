@@ -93,7 +93,7 @@ void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_c
                 scs_ptr->static_config.hme_level2_search_area_in_height_array[hme_region_index];
     }
 
-    return EB_NULL;
+    return NULL;
 }
 
 /************************************************
@@ -188,7 +188,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     if (input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER)
         me_context_ptr->update_hme_search_center_flag = 0;
 
-    return EB_NULL;
+    return NULL;
 };
 
 /******************************************************
@@ -396,7 +396,7 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
     if (input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER)
         me_context_ptr->update_hme_search_center_flag = 0;
 
-    return EB_NULL;
+    return NULL;
 };
 
 /******************************************************
@@ -1080,5 +1080,5 @@ void *motion_estimation_kernel(void *input_ptr) {
         }
     }
 
-    return EB_NULL;
+    return NULL;
 }

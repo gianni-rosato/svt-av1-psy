@@ -802,7 +802,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             eb_object_release_disable(
                 context_ptr->sequence_control_set_active_array[instance_index]);
 
-            if (prev_scs_wrapper_ptr != EB_NULL) {
+            if (prev_scs_wrapper_ptr != NULL) {
                 // Enable releaseFlag of old SequenceControlSet
                 eb_object_release_enable(prev_scs_wrapper_ptr);
 
@@ -1112,5 +1112,5 @@ void *resource_coordination_kernel(void *input_ptr) {
         }
     }
 
-    return EB_NULL;
+    return NULL;
 }

@@ -606,5 +606,5 @@ void *cdef_kernel(void *input_ptr) {
         eb_release_object(dlf_results_wrapper_ptr);
     }
 
-    return EB_NULL;
+    return NULL;
 }

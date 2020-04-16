@@ -421,10 +421,10 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.split_mode = EB_FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
 
-    object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+    object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
-    object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)EB_NULL;
-    object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)EB_NULL;
+    object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
+    object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
     object_ptr->color_format           = init_data_ptr->color_format;
 
     EbPictureBufferDescInitData coeff_buffer_desc_32bit_init_data;
@@ -439,7 +439,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_32bit_init_data.bot_padding        = 0;
     coeff_buffer_desc_32bit_init_data.split_mode         = EB_FALSE;
 
-    object_ptr->recon_picture32bit_ptr = (EbPictureBufferDesc *)EB_NULL;
+    object_ptr->recon_picture32bit_ptr = (EbPictureBufferDesc *)NULL;
     EB_NEW(object_ptr->recon_picture32bit_ptr,
            eb_recon_picture_buffer_desc_ctor,
            (EbPtr)&coeff_buffer_desc_32bit_init_data);
@@ -1895,12 +1895,12 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     object_ptr->dctor = picture_parent_control_set_dctor;
 
-    object_ptr->scs_wrapper_ptr               = (EbObjectWrapper *)EB_NULL;
-    object_ptr->input_picture_wrapper_ptr     = (EbObjectWrapper *)EB_NULL;
-    object_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
-    object_ptr->enhanced_picture_ptr          = (EbPictureBufferDesc *)EB_NULL;
-    object_ptr->enhanced_downscaled_picture_ptr = (EbPictureBufferDesc *)EB_NULL;
-    object_ptr->enhanced_unscaled_picture_ptr   = (EbPictureBufferDesc *)EB_NULL;
+    object_ptr->scs_wrapper_ptr               = (EbObjectWrapper *)NULL;
+    object_ptr->input_picture_wrapper_ptr     = (EbObjectWrapper *)NULL;
+    object_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)NULL;
+    object_ptr->enhanced_picture_ptr          = (EbPictureBufferDesc *)NULL;
+    object_ptr->enhanced_downscaled_picture_ptr = (EbPictureBufferDesc *)NULL;
+    object_ptr->enhanced_unscaled_picture_ptr   = (EbPictureBufferDesc *)NULL;
 
     if (init_data_ptr->color_format >= EB_YUV422) {
         EbPictureBufferDescInitData input_pic_buf_desc_init_data;
@@ -1932,8 +1932,8 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->sb_total_count       = picture_sb_width * picture_sb_height;
     object_ptr->sb_total_count_unscaled = object_ptr->sb_total_count;
 
-    object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)EB_NULL;
-    object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)EB_NULL;
+    object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
+    object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
     EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
     EB_MALLOC_2D(object_ptr->y_mean, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
     EB_MALLOC_2D(object_ptr->cb_mean, object_ptr->sb_total_count, 21);

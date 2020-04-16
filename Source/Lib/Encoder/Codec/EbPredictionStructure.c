@@ -737,7 +737,7 @@ static PredictionStructureConfig prediction_structure_config_array[] = {
     {8, four_level_hierarchical_pred_struct},
     {16, five_level_hierarchical_pred_struct},
     {32, six_level_hierarchical_pred_struct},
-    {0, (PredictionStructureConfigEntry *)EB_NULL} // Terminating Code, must always come last!
+    {0, (PredictionStructureConfigEntry *)NULL} // Terminating Code, must always come last!
 };
 
 /************************************************
@@ -1100,7 +1100,7 @@ static EbErrorType prediction_structure_ctor(
                                     ->ref_list0.reference_list_count);
             } else
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                    ->ref_list0.reference_list = (int32_t *)EB_NULL;
+                    ->ref_list0.reference_list = (int32_t *)NULL;
             // Copy Config List1 => LeadingPic Reference List 0
             for (ref_index = 0;
                  ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1114,7 +1114,7 @@ static EbErrorType prediction_structure_ctor(
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                 ->ref_list1.reference_list_count = 0;
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                ->ref_list1.reference_list = (int32_t *)NULL;
 
             // Set the Temporal Layer Index
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->temporal_layer_index =
@@ -1169,7 +1169,7 @@ static EbErrorType prediction_structure_ctor(
                                     ->ref_list0.reference_list_count);
             } else
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                    ->ref_list0.reference_list = (int32_t *)EB_NULL;
+                    ->ref_list0.reference_list = (int32_t *)NULL;
             // Copy Reference List 0
             for (ref_index = 0;
                  ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1187,7 +1187,7 @@ static EbErrorType prediction_structure_ctor(
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                     ->ref_list1.reference_list_count = 0;
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                    ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                    ->ref_list1.reference_list = (int32_t *)NULL;
 
                 break;
 
@@ -1210,7 +1210,7 @@ static EbErrorType prediction_structure_ctor(
                                         ->ref_list1.reference_list_count);
                 } else
                     predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                        ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                        ->ref_list1.reference_list = (int32_t *)NULL;
                 // Copy Reference List 1
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1249,7 +1249,7 @@ static EbErrorType prediction_structure_ctor(
                                         ->ref_list1.reference_list_count);
                 } else
                     predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                        ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                        ->ref_list1.reference_list = (int32_t *)NULL;
                 // Copy Reference List 1
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1324,7 +1324,7 @@ static EbErrorType prediction_structure_ctor(
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                     ->ref_list1.reference_list_count = 0;
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                    ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                    ->ref_list1.reference_list = (int32_t *)NULL;
 
                 break;
 
@@ -1347,7 +1347,7 @@ static EbErrorType prediction_structure_ctor(
                                         ->ref_list1.reference_list_count);
                 } else
                     predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                        ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                        ->ref_list1.reference_list = (int32_t *)NULL;
                 // Copy Reference List 1
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1380,7 +1380,7 @@ static EbErrorType prediction_structure_ctor(
                                         ->ref_list1.reference_list_count);
                 } else
                     predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                        ->ref_list1.reference_list = (int32_t *)EB_NULL;
+                        ->ref_list1.reference_list = (int32_t *)NULL;
                 // Copy Reference List 1
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1437,7 +1437,7 @@ static EbErrorType prediction_structure_ctor(
     //
     //        // Null out List 1
     //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->ref_list1.reference_list_count = 0;
-    //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->ref_list1.reference_list = (int32_t*) EB_NULL;
+    //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->ref_list1.reference_list = (int32_t*) NULL;
     //
     //        // Set the Temporal Layer Index
     //        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->temporal_layer_index = predictionStructureConfigPtr->entry_array[config_entry_index].temporal_layer_index;
@@ -1523,7 +1523,7 @@ static EbErrorType prediction_structure_ctor(
                                     ->dep_list0.list_count);
             } else
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->dep_list0.list =
-                    (int32_t *)EB_NULL;
+                    (int32_t *)NULL;
         }
 
         // Third, reset the Dependent List Length (they are re-derived)
@@ -1671,7 +1671,7 @@ static EbErrorType prediction_structure_ctor(
                                     ->dep_list1.list_count);
             } else
                 predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->dep_list1.list =
-                    (int32_t *)EB_NULL;
+                    (int32_t *)NULL;
         }
 
         // Third, reset the Dependent List Length (they are re-derived)

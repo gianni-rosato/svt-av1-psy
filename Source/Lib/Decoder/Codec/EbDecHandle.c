@@ -102,7 +102,7 @@ static EbErrorType eb_dec_handle_ctor(EbDecHandle **decHandleDblPtr, EbComponent
     // Allocate Memory
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)malloc(sizeof(EbDecHandle));
     *decHandleDblPtr            = dec_handle_ptr;
-    if (dec_handle_ptr == (EbDecHandle *)EB_NULL) return EB_ErrorInsufficientResources;
+    if (dec_handle_ptr == (EbDecHandle *)NULL) return EB_ErrorInsufficientResources;
     dec_handle_ptr->memory_map       = (EbMemoryMapEntry *)malloc(sizeof(EbMemoryMapEntry));
     dec_handle_ptr->memory_map_index = 0;
     dec_handle_ptr->total_lib_memory =

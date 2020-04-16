@@ -59,7 +59,7 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     }
 
     // Encode Context
-    if (scs_init_data != EB_NULL) scs_ptr->encode_context_ptr = scs_init_data->encode_context_ptr;
+    if (scs_init_data != NULL) scs_ptr->encode_context_ptr = scs_init_data->encode_context_ptr;
 
     // Profile & ID
     scs_ptr->chroma_format_idc   = EB_YUV420;
@@ -395,7 +395,7 @@ EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *
 
     object_ptr->dctor = eb_sequence_control_set_instance_dctor;
 
-    EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, EB_NULL);
+    EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, NULL);
     scs_init_data.encode_context_ptr = object_ptr->encode_context_ptr;
 
     scs_init_data.sb_size = 64;
