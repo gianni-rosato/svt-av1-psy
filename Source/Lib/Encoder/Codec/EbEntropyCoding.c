@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "EbEntropyCoding.h"
 #include "EbEntropyCodingUtil.h"
@@ -3323,18 +3324,18 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
     }
 }
 
-static void write_render_size(struct AomWriteBitBuffer *wb, SequenceControlSet *scs) {
-    uint16_t width                           = scs->max_input_luma_width;
-    uint16_t render_width                    = width - scs->max_input_pad_right;
-    uint16_t height                          = scs->max_input_luma_height;
-    uint16_t render_height                   = height - scs->max_input_pad_bottom;
-    int      render_and_frame_size_different = (width != render_width) || (height != render_height);
+static void write_render_size(struct AomWriteBitBuffer *wb, SequenceControlSet *scs)
+{
+    (void) scs;
+    int render_and_frame_size_different = 0;
     eb_aom_wb_write_bit(wb, render_and_frame_size_different);
+    /*
     if (!render_and_frame_size_different) return;
     uint32_t render_width_minus_1  = render_width - 1;
     uint32_t render_height_minus_1 = render_height - 1;
     eb_aom_wb_write_literal(wb, render_width_minus_1, 16);
     eb_aom_wb_write_literal(wb, render_height_minus_1, 16);
+    */
 }
 
 static AOM_INLINE void write_superres_scale(struct AomWriteBitBuffer *wb,
@@ -3473,27 +3474,18 @@ static void write_color_config(SequenceControlSet *      scs_ptr /*Av1Common *co
     //eb_aom_wb_write_bit(wb, cm->separate_uv_delta_q);
 }
 
-void write_sequence_header(SequenceControlSet *      scs_ptr /*Av1Comp *cpi*/,
-                           struct AomWriteBitBuffer *wb) {
-    //    Av1Common *const cm = &cpi->common;
-    //    SequenceHeader *seq_params = &cm->seq_params;
-    //
-
-    int32_t max_frame_width = scs_ptr->seq_header.max_frame_width;
-    /*        cpi->oxcf.forced_max_frame_width
-    ? cpi->oxcf.forced_max_frame_width
-    : cpi->oxcf.width;*/
-    int32_t max_frame_height = scs_ptr->seq_header.max_frame_height;
-    /*cpi->oxcf.forced_max_frame_height
-    ? cpi->oxcf.forced_max_frame_height
-    : cpi->oxcf.height;*/
-
-    eb_aom_wb_write_literal(wb, scs_ptr->seq_header.frame_width_bits - 1, 4);
-    eb_aom_wb_write_literal(wb, scs_ptr->seq_header.frame_height_bits - 1, 4);
-    eb_aom_wb_write_literal(wb, max_frame_width - 1, scs_ptr->seq_header.frame_width_bits);
-    eb_aom_wb_write_literal(wb, max_frame_height - 1, scs_ptr->seq_header.frame_height_bits);
-    //
-    /* Placeholder for actually writing to the Bitstream */
+void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer *wb)
+{
+    const int32_t max_frame_width =
+        scs_ptr->seq_header.max_frame_width - scs_ptr->max_input_pad_right;
+    const int32_t max_frame_height =
+        scs_ptr->seq_header.max_frame_height - scs_ptr->max_input_pad_bottom;
+    const unsigned frame_width_bits = (unsigned) ceil(log2(max_frame_width));
+    const unsigned frame_height_bits = (unsigned) ceil(log2(max_frame_height));
+    eb_aom_wb_write_literal(wb, frame_width_bits - 1, 4);
+    eb_aom_wb_write_literal(wb, frame_height_bits - 1, 4);
+    eb_aom_wb_write_literal(wb, max_frame_width - 1, frame_width_bits);
+    eb_aom_wb_write_literal(wb, max_frame_height - 1, frame_height_bits);
 
     if (!scs_ptr->seq_header.reduced_still_picture_header) {
         //scs_ptr->frame_id_numbers_present_flag = 0;

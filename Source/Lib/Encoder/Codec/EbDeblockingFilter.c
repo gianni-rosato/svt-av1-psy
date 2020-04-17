@@ -332,12 +332,27 @@ void eb_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
     const uint32_t scale_vert = plane_ptr->subsampling_y;
     uint8_t *const dst_ptr    = plane_ptr->dst.buf;
     const int32_t  dst_stride = plane_ptr->dst.stride;
-    const int32_t  y_range    = scs_ptr->seq_header.sb_size == BLOCK_128X128
+    int32_t  y_range    = scs_ptr->seq_header.sb_size == BLOCK_128X128
                                 ? (MAX_MIB_SIZE >> scale_vert)
                                 : (SB64_MIB_SIZE >> scale_vert);
-    const int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128
+    int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128
                                 ? (MAX_MIB_SIZE >> scale_horz)
                                 : (SB64_MIB_SIZE >> scale_horz);
+    const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
+    if (mi_row == (scs_ptr->max_input_luma_height / sb_size * sb_size) >> MI_SIZE_LOG2) {
+        y_range = (((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        if (plane) {
+            y_range = ((((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) >> scale_vert) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        }
+    }
+
+    if (mi_col == (scs_ptr->max_input_luma_width / sb_size * sb_size) >> MI_SIZE_LOG2) {
+        x_range = (((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        if (plane) {
+            x_range = ((((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) % sb_size) >> scale_horz) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        }
+    }
+
     for (int32_t y = 0; y < y_range; y += row_step) {
         uint8_t *p = dst_ptr + ((y * MI_SIZE * dst_stride) << plane_ptr->is_16bit);
         for (int32_t x = 0; x < x_range;) {
@@ -443,13 +458,29 @@ void eb_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
     const uint32_t scale_vert = plane_ptr->subsampling_y;
     uint8_t *const dst_ptr    = plane_ptr->dst.buf;
     const int32_t  dst_stride = plane_ptr->dst.stride;
-    const int32_t  y_range    = scs_ptr->seq_header.sb_size == BLOCK_128X128
+    int32_t  y_range    = scs_ptr->seq_header.sb_size == BLOCK_128X128
                                 ? (MAX_MIB_SIZE >> scale_vert)
                                 : (SB64_MIB_SIZE >> scale_vert);
-    const int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128
+    int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128
                                 ? (MAX_MIB_SIZE >> scale_horz)
                                 : (SB64_MIB_SIZE >> scale_horz);
     uint32_t mi_stride = pcs_ptr->mi_stride;
+
+    const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
+    if (mi_row == (scs_ptr->max_input_luma_height / sb_size * sb_size) >> MI_SIZE_LOG2) {
+        y_range = (((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        if (plane) {
+            y_range = ((((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) >> scale_vert) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        }
+    }
+
+    if (mi_col == (scs_ptr->max_input_luma_width / sb_size * sb_size) >> MI_SIZE_LOG2) {
+        x_range = (((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        if (plane) {
+            x_range = ((((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) % sb_size) >> scale_horz) + MI_SIZE - 1) >> MI_SIZE_LOG2;
+        }
+    }
+
     for (int32_t x = 0; x < x_range; x += col_step) {
         uint8_t *p = dst_ptr + ((x * MI_SIZE) << plane_ptr->is_16bit);
         for (int32_t y = 0; y < y_range;) {
@@ -703,10 +734,11 @@ void eb_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuff
 
     uint32_t luma_buffer_offset = (srcBuffer->origin_x + srcBuffer->origin_y * srcBuffer->stride_y)
                                   << is_16bit;
-    uint16_t luma_width = (uint16_t)(srcBuffer->width - pcs_ptr->parent_pcs_ptr->scs_ptr->pad_right)
+    uint16_t luma_width = (uint16_t)(srcBuffer->width)
                           << is_16bit;
     uint16_t luma_height =
-        (uint16_t)(srcBuffer->height - pcs_ptr->parent_pcs_ptr->scs_ptr->pad_bottom);
+        (uint16_t)(srcBuffer->height);
+
     uint16_t chroma_width = (luma_width >> 1);
     if (plane == 0) {
         uint16_t stride_y = srcBuffer->stride_y << is_16bit;

@@ -712,9 +712,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
         residual_distortion = 0;
 
-        while (row_index < input_picture_ptr->height) {
+        while (row_index < (uint32_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)) {
             column_index = 0;
-            while (column_index < input_picture_ptr->width) {
+            while (column_index < (uint32_t)(input_picture_ptr->width - scs_ptr->max_input_pad_right)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -735,9 +735,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
         residual_distortion = 0;
         row_index           = 0;
-        while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
+        while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
             column_index = 0;
-            while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
+            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_bottom) >> ss_x)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -758,9 +758,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         residual_distortion = 0;
         row_index           = 0;
 
-        while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
+        while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
             column_index = 0;
-            while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
+            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_bottom) >> ss_x)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -802,13 +802,13 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         uint16_t *recon_coeff_buffer;
 
         if (scs_ptr->static_config.ten_bit_format == 1) {
-            const uint32_t luma_width        = input_picture_ptr->width;
-            const uint32_t luma_height       = input_picture_ptr->height;
-            const uint32_t chroma_width      = input_picture_ptr->width >> ss_x;
+            const uint32_t luma_width        = input_picture_ptr->width - scs_ptr->max_input_pad_right;
+            const uint32_t luma_height       = input_picture_ptr->height - scs_ptr->max_input_pad_bottom;
+            const uint32_t chroma_width      = luma_width >> ss_x;
             const uint32_t pic_width_in_sb   = (luma_width + 64 - 1) / 64;
             const uint32_t pic_height_in_sb  = (luma_height + 64 - 1) / 64;
             const uint32_t luma_2bit_width   = luma_width / 4;
-            const uint32_t chroma_height     = input_picture_ptr->height >> ss_y;
+            const uint32_t chroma_height     = luma_height >> ss_y;
             const uint32_t chroma_2bit_width = chroma_width / 4;
             uint32_t       sb_num_in_height, sb_num_in_width;
 
@@ -1053,9 +1053,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
             residual_distortion = 0;
 
-            while (row_index < input_picture_ptr->height) {
+            while (row_index < (uint32_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)) {
                 column_index = 0;
-                while (column_index < input_picture_ptr->width) {
+                while (column_index < (uint32_t)(input_picture_ptr->width - scs_ptr->max_input_pad_right)) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
@@ -1085,9 +1085,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
             residual_distortion = 0;
             row_index           = 0;
-            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
+            while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
                 column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
+                while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
@@ -1117,9 +1117,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
             residual_distortion = 0;
             row_index           = 0;
 
-            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
+            while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
                 column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
+                while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
@@ -1163,24 +1163,24 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         // Y samples
         generate_padding(ref_pic_ptr->buffer_y,
                          ref_pic_ptr->stride_y,
-                         ref_pic_ptr->width,
-                         ref_pic_ptr->height,
+                         ref_pic_ptr->width - scs_ptr->max_input_pad_right,
+                         ref_pic_ptr->height - scs_ptr->max_input_pad_bottom,
                          ref_pic_ptr->origin_x,
                          ref_pic_ptr->origin_y);
 
         // Cb samples
         generate_padding(ref_pic_ptr->buffer_cb,
                          ref_pic_ptr->stride_cb,
-                         ref_pic_ptr->width >> 1,
-                         ref_pic_ptr->height >> 1,
+                         (ref_pic_ptr->width - scs_ptr->max_input_pad_right) >> 1,
+                         (ref_pic_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
                          ref_pic_ptr->origin_x >> 1,
                          ref_pic_ptr->origin_y >> 1);
 
         // Cr samples
         generate_padding(ref_pic_ptr->buffer_cr,
                          ref_pic_ptr->stride_cr,
-                         ref_pic_ptr->width >> 1,
-                         ref_pic_ptr->height >> 1,
+                         (ref_pic_ptr->width - scs_ptr->max_input_pad_right) >> 1,
+                         (ref_pic_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
                          ref_pic_ptr->origin_x >> 1,
                          ref_pic_ptr->origin_y >> 1);
     }
@@ -1242,27 +1242,27 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
     if ((scs_ptr->static_config.is_16bit_pipeline) && (!is_16bit)) {
         // Y samples
         generate_padding16_bit(ref_pic_16bit_ptr->buffer_y,
-            ref_pic_16bit_ptr->stride_y << 1,
-            (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right) << 1,
-            ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom,
-            ref_pic_16bit_ptr->origin_x << 1,
-            ref_pic_16bit_ptr->origin_y);
+                               ref_pic_16bit_ptr->stride_y << 1,
+                               (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right) << 1,
+                               ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom,
+                               ref_pic_16bit_ptr->origin_x << 1,
+                               ref_pic_16bit_ptr->origin_y);
 
         // Cb samples
         generate_padding16_bit(ref_pic_16bit_ptr->buffer_cb,
-            ref_pic_16bit_ptr->stride_cb << 1,
-            (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right),
-            (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
-            ref_pic_16bit_ptr->origin_x,
-            ref_pic_16bit_ptr->origin_y >> 1);
+                               ref_pic_16bit_ptr->stride_cb << 1,
+                               (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right),
+                               (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
+                               ref_pic_16bit_ptr->origin_x,
+                               ref_pic_16bit_ptr->origin_y >> 1);
 
         // Cr samples
         generate_padding16_bit(ref_pic_16bit_ptr->buffer_cr,
-            ref_pic_16bit_ptr->stride_cr << 1,
-            (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right),
-            (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
-            ref_pic_16bit_ptr->origin_x,
-            ref_pic_16bit_ptr->origin_y >> 1);
+                               ref_pic_16bit_ptr->stride_cr << 1,
+                               (ref_pic_16bit_ptr->width - scs_ptr->max_input_pad_right),
+                               (ref_pic_16bit_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
+                               ref_pic_16bit_ptr->origin_x,
+                               ref_pic_16bit_ptr->origin_y >> 1);
 
         // Hsan: unpack ref samples (to be used @ MD)
 

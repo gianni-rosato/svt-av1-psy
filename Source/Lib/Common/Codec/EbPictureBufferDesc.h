@@ -230,7 +230,8 @@ typedef struct Yv12BufferConfig {
     int32_t flags;
 } Yv12BufferConfig;
 
-void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc);
+void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc,
+                                uint16_t pad_right, uint16_t pad_bottom, EbBool is_16bit);
 
 void link_eb_to_aom_buffer_desc_8bit(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfig *aomBuffDsc);
 

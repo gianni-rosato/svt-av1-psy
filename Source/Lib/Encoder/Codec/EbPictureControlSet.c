@@ -2020,10 +2020,18 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->av1_cm->color_format                      = init_data_ptr->color_format;
     object_ptr->av1_cm->subsampling_x                     = subsampling_x;
     object_ptr->av1_cm->subsampling_y                     = subsampling_y;
+#if NON8_FIX_REST
+    object_ptr->av1_cm->frm_size.frame_width = init_data_ptr->picture_width- init_data_ptr->non_m8_pad_w;
+    object_ptr->av1_cm->frm_size.frame_height = init_data_ptr->picture_height- init_data_ptr->non_m8_pad_h;
+    object_ptr->av1_cm->frm_size.superres_upscaled_width = init_data_ptr->picture_width - init_data_ptr->non_m8_pad_w;;
+    object_ptr->av1_cm->frm_size.superres_upscaled_height = init_data_ptr->picture_height - init_data_ptr->non_m8_pad_h;
+
+#else
     object_ptr->av1_cm->frm_size.frame_width              = init_data_ptr->picture_width;
     object_ptr->av1_cm->frm_size.frame_height             = init_data_ptr->picture_height;
     object_ptr->av1_cm->frm_size.superres_upscaled_width  = init_data_ptr->picture_width;
     object_ptr->av1_cm->frm_size.superres_upscaled_height = init_data_ptr->picture_height;
+#endif
     object_ptr->av1_cm->frm_size.superres_denominator     = SCALE_NUMERATOR;
 
     object_ptr->av1_cm->mi_cols = init_data_ptr->picture_width >> MI_SIZE_LOG2;

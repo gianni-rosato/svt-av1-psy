@@ -265,7 +265,7 @@ void *dlf_kernel(void *input_ptr) {
                     recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
                 }
             }
-            link_eb_to_aom_buffer_desc(recon_picture_ptr, cm->frame_to_show);
+            link_eb_to_aom_buffer_desc(recon_picture_ptr, cm->frame_to_show, scs_ptr->max_input_pad_right, scs_ptr->max_input_pad_bottom, is_16bit || scs_ptr->static_config.is_16bit_pipeline);
             if (scs_ptr->seq_header.enable_restoration)
                 eb_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             if (scs_ptr->seq_header.enable_cdef && pcs_ptr->parent_pcs_ptr->cdef_filter_mode) {

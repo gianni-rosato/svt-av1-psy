@@ -120,6 +120,7 @@ extern "C" {
 #define TXS_DEPTH_2 1 // TXS for Depth_2
 
 #define HIGH_PRECISION_MV_QTHRESH 150
+#define NON8_FIX_REST 1
 
 #define ENHANCED_MULTI_PASS_PD_MD_STAGING_SETTINGS 1 // Updated Multi-Pass-PD and MD-Staging Settings
 #define IFS_MD_STAGE_3 1 // Moved IFS from MD_STAGE_1 to MD_STAGE_3
