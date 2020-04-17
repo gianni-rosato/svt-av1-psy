@@ -382,32 +382,6 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
     return EB_ErrorNone;
 }
 
-EbErrorType allocate_output_buffers(EbConfig *config, EbAppContext *callback_data) {
-    uint32_t output_stream_buffer_size = (uint32_t)(
-        EB_OUTPUTSTREAMBUFFERSIZE_MACRO(config->input_padded_height * config->input_padded_width));
-
-    EB_APP_MALLOC(EbBufferHeaderType *,
-                  callback_data->stream_buffer_pool,
-                  sizeof(EbBufferHeaderType),
-                  EB_N_PTR,
-                  EB_ErrorInsufficientResources);
-
-    // Initialize Header
-    callback_data->stream_buffer_pool->size = sizeof(EbBufferHeaderType);
-
-    EB_APP_MALLOC(uint8_t *,
-                  callback_data->stream_buffer_pool->p_buffer,
-                  output_stream_buffer_size,
-                  EB_N_PTR,
-                  EB_ErrorInsufficientResources);
-
-    callback_data->stream_buffer_pool->n_alloc_len   = output_stream_buffer_size;
-    callback_data->stream_buffer_pool->p_app_private = NULL;
-    callback_data->stream_buffer_pool->pic_type      = EB_AV1_INVALID_PICTURE;
-
-    return EB_ErrorNone;
-}
-
 EbErrorType preload_frames_info_ram(EbConfig *config) {
     EbErrorType         return_error = EB_ErrorNone;
     int32_t             processed_frame_count;
@@ -498,11 +472,7 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
     return_error = allocate_input_buffers(config, callback_data);
 
     if (return_error != EB_ErrorNone) return return_error;
-    // STEP 7: Allocate output buffers carrying the Bitstream out
-    return_error = allocate_output_buffers(config, callback_data);
-
-    if (return_error != EB_ErrorNone) return return_error;
-    // STEP 8: Allocate output Recon Buffer
+    // STEP 7: Allocate output Recon Buffer
     return_error = allocate_output_recon_buffers(config, callback_data);
 
     if (return_error != EB_ErrorNone) return return_error;

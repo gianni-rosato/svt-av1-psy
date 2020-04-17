@@ -24,7 +24,6 @@ typedef struct EbAppContext {
 
     // Buffer Pools
     EbBufferHeaderType *input_buffer_pool;
-    EbBufferHeaderType *stream_buffer_pool;
     EbBufferHeaderType *recon_buffer;
 
     // Instance Index
