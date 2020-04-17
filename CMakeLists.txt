@@ -19,7 +19,8 @@ if(YASM)
     endif()
 endif()
 
-project(svt-av1 C CXX ASM_NASM)
+project(svt-av1 VERSION 0.8.1
+    LANGUAGES C CXX ASM_NASM)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT (MSVC OR CMAKE_GENERATOR STREQUAL "Xcode"))
     set(CMAKE_BUILD_TYPE Release)

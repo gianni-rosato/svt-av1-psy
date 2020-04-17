@@ -17,7 +17,8 @@ endif ()
 
 if(X86)
 # Include Decoder Subdirectories
-include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+include_directories(${PROJECT_BINARY_DIR}/Source/Lib/Common/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
@@ -74,7 +75,8 @@ add_library(SvtAv1Dec
     $<TARGET_OBJECTS:COMMON_ASM_AVX512>)
 else ()
 # Include Decoder Subdirectories
-include_directories(${PROJECT_SOURCE_DIR}/Source/API/
+include_directories(${PROJECT_BINARY_DIR}/Source/Lib/Common/Codec/
+    ${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/

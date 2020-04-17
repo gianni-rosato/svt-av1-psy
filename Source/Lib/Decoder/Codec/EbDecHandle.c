@@ -11,6 +11,7 @@
  **************************************/
 #include <stdlib.h>
 
+#include "EbVersion.h"
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 
@@ -448,10 +449,7 @@ static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
     EbErrorType      return_error      = EB_ErrorNone;
     EbComponentType *svt_dec_component = (EbComponentType *)hComponent;
 
-    SVT_LOG("SVT [version]:\tSVT-AV1 Decoder Lib v%d.%d.%d\n",
-            SVT_VERSION_MAJOR,
-            SVT_VERSION_MINOR,
-            SVT_VERSION_PATCHLEVEL);
+    SVT_LOG("SVT [version]:\tSVT-AV1 Decoder Lib %s\n", SVT_AV1_CVS_VERSION);
 #if ( defined( _MSC_VER ) && (_MSC_VER >= 1920) )
     SVT_LOG("SVT [build]  :\tVisual Studio 2019");
 #elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )

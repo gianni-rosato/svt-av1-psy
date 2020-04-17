@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "EbVersion.h"
 #include "EbThreads.h"
 #include "EbUtility.h"
 #include "EbString.h"
@@ -3668,7 +3669,7 @@ EbErrorType init_svt_av1_encoder_handle(
     EbComponentType  *svt_enc_component = (EbComponentType*)hComponent;
     EbEncHandle      *handle;
 
-    SVT_LOG("SVT [version]:\tSVT-AV1 Encoder Lib v%d.%d.%d\n", SVT_VERSION_MAJOR, SVT_VERSION_MINOR, SVT_VERSION_PATCHLEVEL);
+    SVT_LOG("SVT [version]:\tSVT-AV1 Encoder Lib %s\n", SVT_AV1_CVS_VERSION);
 #if ( defined( _MSC_VER ) && (_MSC_VER >= 1920) )
     SVT_LOG("SVT [build]  :\tVisual Studio 2019");
 #elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )

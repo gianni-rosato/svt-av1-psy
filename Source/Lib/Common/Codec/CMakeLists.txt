@@ -9,6 +9,17 @@ else ()
     set (X86 FALSE)
 endif ()
 
+add_custom_target(EbVersionHeaderGen
+    ${CMAKE_COMMAND}
+        -D INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in
+        -D OUTPUT_FILE=EbVersion.h
+        -D GIT_ROOT_DIR=${CMAKE_SOURCE_DIR}
+        -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/ConfigureGitVersion.cmake
+    BYPRODUCTS EbVersion.h
+    COMMENT "Generating version header"
+    VERBATIM)
+
 if(X86)
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
@@ -34,3 +45,4 @@ file(GLOB all_files
     "*.c")
 
 add_library(COMMON_CODEC OBJECT ${all_files})
+add_dependencies(COMMON_CODEC EbVersionHeaderGen)
