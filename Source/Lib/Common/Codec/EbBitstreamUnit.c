@@ -213,8 +213,6 @@ the one to be encoded.*/
 static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s, int32_t nsyms) {
     OdEcWindow l;
     unsigned   r;
-    unsigned   u;
-    unsigned   v;
     l = enc->low;
     r = enc->rng;
     assert(32768U <= r);
@@ -223,6 +221,8 @@ static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s, 
     assert(7 - EC_PROB_SHIFT - CDF_SHIFT >= 0);
     const int32_t N = nsyms - 1;
     if (fl < CDF_PROB_TOP) {
+        unsigned u;
+        unsigned v;
         u = ((r >> 8) * (uint32_t)(fl >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
             EC_MIN_PROB * (N - (s - 1));
         v = ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT)) +

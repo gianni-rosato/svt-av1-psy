@@ -1805,7 +1805,6 @@ static void init_wedge_masks() {
     BlockSize bsize;
     memset(wedge_masks, 0, sizeof(wedge_masks));
     for (bsize = BLOCK_4X4; bsize < BlockSizeS_ALL; ++bsize) {
-        const uint8_t *        mask;
         const int              bw           = block_size_wide[bsize];
         const int              bh           = block_size_high[bsize];
         const WedgeParamsType *wedge_params = &wedge_params_lookup[bsize];
@@ -1814,6 +1813,7 @@ static void init_wedge_masks() {
         int                    w;
         if (wbits == 0) continue;
         for (w = 0; w < wtypes; ++w) {
+            const uint8_t *mask;
             mask = get_wedge_mask_inplace(w, 0, bsize);
             aom_convolve_copy_c(mask, MASK_MASTER_STRIDE, dst, bw, NULL, 0, NULL, 0, bw, bh);
             wedge_params->masks[0][w] = dst;

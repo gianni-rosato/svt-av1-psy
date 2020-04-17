@@ -245,7 +245,7 @@ static INLINE uint16_t get_dx(int32_t angle) {
 void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left,
     int32_t upsample_left, int32_t dx, int32_t dy) {
-    int32_t r, c, y, base, shift, val;
+    int32_t y;
 
     (void)above;
     (void)dx;
@@ -257,12 +257,14 @@ void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const int32_t frac_bits = 6 - upsample_left;
     const int32_t base_inc = 1 << upsample_left;
     y = dy;
-    for (c = 0; c < bw; ++c, y += dy) {
+    for (int32_t c = 0; c < bw; ++c, y += dy) {
+        int32_t base, shift;
         base = y >> frac_bits;
         shift = ((y << upsample_left) & 0x3F) >> 1;
 
-        for (r = 0; r < bh; ++r, base += base_inc) {
+        for (int32_t r = 0; r < bh; ++r, base += base_inc) {
             if (base < max_base_y) {
+                int32_t val;
                 val = left[base] * (32 - shift) + left[base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
                 dst[r * stride + c] = (uint8_t)clip_pixel_highbd(val, 8);
@@ -277,7 +279,7 @@ void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
 void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left,
     int32_t upsample_above, int32_t dx, int32_t dy) {
-    int32_t r, c, x, base, shift, val;
+    int32_t x;
 
     (void)left;
     (void)dy;
@@ -288,7 +290,8 @@ void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const int32_t frac_bits = 6 - upsample_above;
     const int32_t base_inc = 1 << upsample_above;
     x = dx;
-    for (r = 0; r < bh; ++r, dst += stride, x += dx) {
+    for (int32_t r = 0; r < bh; ++r, dst += stride, x += dx) {
+        int32_t base, shift;
         base = x >> frac_bits;
         shift = ((x << upsample_above) & 0x3F) >> 1;
 
@@ -300,8 +303,9 @@ void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
             return;
         }
 
-        for (c = 0; c < bw; ++c, base += base_inc) {
+        for (int32_t c = 0; c < bw; ++c, base += base_inc) {
             if (base < max_base_x) {
+                int32_t val;
                 val = above[base] * (32 - shift) + above[base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
                 dst[c] = (uint8_t)clip_pixel_highbd(val, 8);
