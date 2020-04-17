@@ -28,6 +28,9 @@
 #include <semaphore.h>
 #include <unistd.h>
 #endif // _WIN32
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#endif
 #if PRINTF_TIME
 #include <time.h>
 #ifdef _WIN32
@@ -158,12 +161,6 @@ EbErrorType eb_destroy_thread(EbHandle thread_handle) {
 
     return error_return;
 }
-#if defined(__APPLE__)
-static int32_t semaphore_id(void) {
-    static unsigned id = 0;
-    return id++;
-}
-#endif
 
 /***************************************
  * eb_create_semaphore
@@ -180,16 +177,12 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count) {
     return semaphore_handle;
 
 #elif defined(__APPLE__)
+    EbHandle semaphore_handle = NULL;
     UNUSED(max_count);
-    char name[15];
-    sprintf(name, "/sem_%05d_%03d", getpid(), semaphore_id());
-    sem_t *s = sem_open(name, O_CREAT | O_EXCL, 0644, initial_count);
-    if (s == SEM_FAILED) {
-        SVT_ERROR("errno: %d\n", errno);
-        return NULL;
-    }
-    sem_unlink(name);
-    return s;
+
+    semaphore_handle = (EbHandle)dispatch_semaphore_create(initial_count);
+    return semaphore_handle;
+
 #else
     EbHandle semaphore_handle = NULL;
     (void)max_count;
@@ -215,6 +208,8 @@ EbErrorType eb_post_semaphore(EbHandle semaphore_handle) {
                                      NULL) // pointer to previous count (optional)
                        ? EB_ErrorSemaphoreUnresponsive
                        : EB_ErrorNone;
+#elif defined(__APPLE__)
+    dispatch_semaphore_signal((dispatch_semaphore_t)semaphore_handle);
 #else
     return_error =
         sem_post((sem_t *)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
@@ -233,6 +228,12 @@ EbErrorType eb_block_on_semaphore(EbHandle semaphore_handle) {
     return_error = WaitForSingleObject((HANDLE)semaphore_handle, INFINITE)
                        ? EB_ErrorSemaphoreUnresponsive
                        : EB_ErrorNone;
+#elif defined(__APPLE__)
+    return_error =
+        dispatch_semaphore_wait((dispatch_semaphore_t)semaphore_handle, DISPATCH_TIME_FOREVER)
+            ? EB_ErrorSemaphoreUnresponsive
+            : EB_ErrorNone;
+
 #else
     return_error =
         sem_wait((sem_t *)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
@@ -251,7 +252,7 @@ EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle) {
     return_error =
         !CloseHandle((HANDLE)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;
 #elif defined(__APPLE__)
-    return_error = sem_close(semaphore_handle);
+    dispatch_release((dispatch_semaphore_t)semaphore_handle);
 #else
     return_error =
         sem_destroy((sem_t *)semaphore_handle) ? EB_ErrorDestroySemaphoreFailed : EB_ErrorNone;

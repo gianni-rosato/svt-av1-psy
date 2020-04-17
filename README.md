@@ -90,19 +90,6 @@ The SVT-AV1 Encoder library supports the x86 architecture
   - `cd Build/linux`
   - `./build.sh <release | debug>`
 
-  - __Note about macOS__
-
-    If you get
-
-    ``` none
-    errno: 24
-    Encoding
-    Could not allocate enough memory for channel 1
-    ```
-
-    while encoding, this can mean that the fd limit is too low.\
-    It is necessary to increase the amount of available file descriptors and the instructions to do so can be found [here](https://apple.lib.utah.edu/open-file-limits-on-os-x-what-they-are-why-increase-them-and-how-to-increase-them/).
-
 - __Sample Binaries location__
   - Binaries can be found under `Bin/Release` and/or `Bin/Debug`
 
