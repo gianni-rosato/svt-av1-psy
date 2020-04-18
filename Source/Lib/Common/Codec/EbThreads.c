@@ -62,37 +62,35 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
 
 #else
 
-    pthread_attr_t     attr;
-    struct sched_param param = {.sched_priority = 99};
+    int ret;
+    pthread_t *th;
+    pthread_attr_t attr;
+
+    th = malloc(sizeof(pthread_t));
+    if (th == NULL)
+        return NULL;
+
     pthread_attr_init(&attr);
     pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-    pthread_attr_setschedparam(&attr, &param);
-
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
-    thread_handle = (pthread_t *)malloc(sizeof(pthread_t));
-    if (thread_handle != NULL) {
-        int32_t ret = pthread_create((pthread_t *)thread_handle, // Thread handle
-                                     &attr, // attributes
-                                     thread_function, // function to be run by new thread
-                                     thread_context);
+    struct sched_param param = {.sched_priority = 99};
+    pthread_attr_setschedparam(&attr, &param);
 
-        if (ret != 0) {
-            if (ret == EPERM) {
-                pthread_cancel(*((pthread_t *)thread_handle));
-                free(thread_handle);
-
-                thread_handle = (pthread_t *)malloc(sizeof(pthread_t));
-                if (thread_handle != NULL) {
-                    pthread_create((pthread_t *)thread_handle, // Thread handle
-                                   (const pthread_attr_t *)NULL, // attributes
-                                   thread_function, // function to be run by new thread
-                                   thread_context);
-                }
-            }
-        }
-    }
+    ret = pthread_create(th, &attr, thread_function, thread_context);
     pthread_attr_destroy(&attr);
+
+    if (ret == EPERM) {
+        // When creating the thread failed because setting scheduling
+        // parameters failed, retry creating the thread without them.
+        ret = pthread_create(th, NULL, thread_function, thread_context);
+    }
+
+    if (ret != 0) {
+        free(th);
+        return NULL;
+    }
+    thread_handle = th;
 #endif // _WIN32
 
     return thread_handle;
