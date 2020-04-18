@@ -45,4 +45,3 @@ file(GLOB all_files
     "*.c")
 
 add_library(COMMON_CODEC OBJECT ${all_files})
-add_dependencies(COMMON_CODEC EbVersionHeaderGen)

@@ -37,6 +37,4 @@ file(GLOB all_files
     "*.c")
 
 add_library(ENCODER_GLOBALS OBJECT ${all_files})
-
-
-
+add_dependencies(ENCODER_GLOBALS EbVersionHeaderGen)

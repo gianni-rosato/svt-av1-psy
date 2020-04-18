@@ -119,6 +119,7 @@ add_library(SvtAv1Dec
 endif ()
 set_target_properties(SvtAv1Dec PROPERTIES VERSION ${DEC_VERSION})
 set_target_properties(SvtAv1Dec PROPERTIES SOVERSION ${DEC_VERSION_MAJOR})
+add_dependencies(SvtAv1Dec EbVersionHeaderGen)
 target_link_libraries(SvtAv1Dec ${PLATFORM_LIBS})
 install(TARGETS SvtAv1Dec DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
