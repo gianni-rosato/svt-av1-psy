@@ -1,6 +1,6 @@
 name: svt-av1-enc
 base: core18
-version: '0.8.1+dev'
+version: 'git'
 summary: Scalable Video Technology implementation of AV1 encoder
 description: |
   An AV1-compliant cpu-based encoder library and sample application
