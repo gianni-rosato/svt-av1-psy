@@ -211,8 +211,8 @@ typedef struct RestorationLineBuffers {
     uint16_t tmp_save_below[RESTORATION_BORDER][RESTORATION_LINEBUFFER_WIDTH];
 
     // Temporary buffers to save/restore 4 column left/right of a processing unit.
-    uint16_t tmp_save_cdef[MAX_SB_SIZE][RESTORATION_EXTRA_HORZ];
-    uint16_t tmp_save_lr[MAX_SB_SIZE][RESTORATION_EXTRA_HORZ];
+    uint16_t tmp_save_cdef[MAX_SB_SIZE + RESTORATION_UNIT_OFFSET][RESTORATION_EXTRA_HORZ];
+    uint16_t tmp_save_lr[MAX_SB_SIZE + RESTORATION_UNIT_OFFSET][RESTORATION_EXTRA_HORZ];
 } RestorationLineBuffers;
 
 typedef struct RestorationStripeBoundaries {

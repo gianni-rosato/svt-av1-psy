@@ -392,7 +392,7 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
             uint8_t *bdry_lr_ptr = bdry_lr;
             int width = RESTORATION_EXTRA_HORZ << use_highbd;
             int height = tile_limit.v_end - tile_limit.v_start;
-            assert(height <= MAX_SB_SIZE);
+            assert(height <= MAX_SB_SIZE + voffset);
             int stride = use_highbd ? src_stride << use_highbd : src_stride;
             proc_width = proc_width << use_highbd;
 

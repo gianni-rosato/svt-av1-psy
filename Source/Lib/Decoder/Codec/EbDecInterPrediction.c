@@ -812,8 +812,7 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     //temporary buffer for joint compound, move this to context if stack does not hold.
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[128 * 128]);
 
-    EbBool is16b = dec_hdl->is_16bit_pipeline;
-    int32_t highbd = bit_depth > EB_8BIT || is16b;
+    EbBool is16b = (bit_depth > EB_8BIT) || dec_hdl->is_16bit_pipeline;
 
     const BlockSize bsize     = mi->sb_type;
     const int32_t   ss_x      = plane ? part_info->subsampling_x : 0;
@@ -851,7 +850,7 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
 
     int32_t dst_offset =
         ((MI_SIZE * col_start) >> ss_x) + ((MI_SIZE * row_start * dst_stride) >> ss_y);
-    void *dst_mod = (void *)((uint8_t *)dst + (dst_offset << highbd));
+    void *dst_mod = (void *)((uint8_t *)dst + (dst_offset << is16b));
 
     assert(IMPLIES(is_intrabc, !is_compound));
     {
