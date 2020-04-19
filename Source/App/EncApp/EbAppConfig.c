@@ -1079,7 +1079,7 @@ ConfigEntry config_entry_specific[] = {
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
-     "Set screen content detection level([0-2], 2: DEFAULT)",
+     "Set screen content detection level([0-2], 0: DEFAULT)",
      set_screen_content_mode},
     {SINGLE_INPUT,
      INTRABC_MODE_TOKEN,
