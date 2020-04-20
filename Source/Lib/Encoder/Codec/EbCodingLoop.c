@@ -1467,8 +1467,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     EbBool is_16bit = context_ptr->is_16bit;
     uint32_t bit_depth = context_ptr->bit_depth;
     uint8_t is_inter = 0; // set to 0 b/c this is the intra path
-    EbPictureBufferDesc *recon_buffer =
-        is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
+    EbPictureBufferDesc *recon_buffer;
     EbPictureBufferDesc *coeff_buffer_sb = sb_ptr->quantized_coeff;
 
 #if TILES_PARALLEL
@@ -2720,13 +2719,12 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                          ->reference_picture_wrapper_ptr->object_ptr)
                                         ->reference_picture;
 
-                                if (is_16bit)
+                                if (is_16bit) {
                                     ref_pic_list0 =
                                         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
 
-                                if (is_16bit) {
                                     av1_inter_prediction_16bit_pipeline(
                                         pcs_ptr,
                                         blk_ptr->interp_filters,
@@ -2759,38 +2757,38 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                         EB_TRUE,
                                         (uint8_t)scs_ptr->static_config.encoder_bit_depth);
                                 } else {
-                                av1_inter_prediction(
-                                    pcs_ptr,
-                                    blk_ptr->interp_filters,
-                                    blk_ptr,
-                                    blk_ptr->prediction_unit_array->ref_frame_type,
-                                    &context_ptr->mv_unit,
-                                    1, // use_intrabc,
-                                    SIMPLE_TRANSLATION,
-                                    0,
-                                    0,
-                                    1,
-                                    &blk_ptr->interinter_comp,
-                                    &sb_ptr->tile_info,
-                                    ep_luma_recon_neighbor_array,
-                                    ep_cb_recon_neighbor_array,
-                                    ep_cr_recon_neighbor_array,
-                                    blk_ptr->is_interintra_used,
-                                    blk_ptr->interintra_mode,
-                                    blk_ptr->use_wedge_interintra,
-                                    blk_ptr->interintra_wedge_index,
-                                    context_ptr->blk_origin_x,
-                                    context_ptr->blk_origin_y,
-                                    blk_geom->bwidth,
-                                    blk_geom->bheight,
-                                    ref_pic_list0,
-                                    0,
-                                    recon_buffer,
-                                    context_ptr->blk_origin_x,
-                                    context_ptr->blk_origin_y,
-                                    EB_TRUE,
-                                    (uint8_t)scs_ptr->static_config.encoder_bit_depth);
-                            }
+                                    av1_inter_prediction(
+                                        pcs_ptr,
+                                        blk_ptr->interp_filters,
+                                        blk_ptr,
+                                        blk_ptr->prediction_unit_array->ref_frame_type,
+                                        &context_ptr->mv_unit,
+                                        1, // use_intrabc,
+                                        SIMPLE_TRANSLATION,
+                                        0,
+                                        0,
+                                        1,
+                                        &blk_ptr->interinter_comp,
+                                        &sb_ptr->tile_info,
+                                        ep_luma_recon_neighbor_array,
+                                        ep_cb_recon_neighbor_array,
+                                        ep_cr_recon_neighbor_array,
+                                        blk_ptr->is_interintra_used,
+                                        blk_ptr->interintra_mode,
+                                        blk_ptr->use_wedge_interintra,
+                                        blk_ptr->interintra_wedge_index,
+                                        context_ptr->blk_origin_x,
+                                        context_ptr->blk_origin_y,
+                                        blk_geom->bwidth,
+                                        blk_geom->bheight,
+                                        ref_pic_list0,
+                                        0,
+                                        recon_buffer,
+                                        context_ptr->blk_origin_x,
+                                        context_ptr->blk_origin_y,
+                                        EB_TRUE,
+                                        (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                                }
                             }
 #if TXS_DEPTH_2
                             // Initialize the Transform Loop
@@ -2985,9 +2983,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
                             }
 
-                            // Update the cb Dc Sign Level Coeff Neighbor Array
                             if (context_ptr->blk_geom->has_uv && uv_pass)
                             {
+                                // Update the cb Dc Sign Level Coeff Neighbor Array
                                 uint8_t dcSignLevelCoeff = (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
@@ -2997,12 +2995,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                                     context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-                            }
 
-                            // Update the cr DC Sign Level Coeff Neighbor Array
-                            if (context_ptr->blk_geom->has_uv && uv_pass)
-                            {
-                                uint8_t dcSignLevelCoeff = (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
+                                // Update the cr DC Sign Level Coeff Neighbor Array
+                                dcSignLevelCoeff = (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t*)&dcSignLevelCoeff,
@@ -3704,8 +3699,8 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
                             }
 
-                            // Update the cb Dc Sign Level Coeff Neighbor Array
                             if (context_ptr->blk_geom->has_uv && uv_pass) {
+                                // Update the cb Dc Sign Level Coeff Neighbor Array
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
@@ -3722,11 +3717,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     context_ptr->blk_geom
                                         ->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-                            }
 
-                            // Update the cr DC Sign Level Coeff Neighbor Array
-                            if (context_ptr->blk_geom->has_uv && uv_pass) {
-                                uint8_t dc_sign_level_coeff =
+                                // Update the cr DC Sign Level Coeff Neighbor Array
+                                dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
                                 neighbor_array_unit_mode_write(
 #if TILES_PARALLEL

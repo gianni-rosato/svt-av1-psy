@@ -53,13 +53,12 @@ int is_masked_compound_type(COMPOUND_TYPE type) {
 void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
                                  const uint8_t *src8, ptrdiff_t src_stride, const uint8_t *pred8,
                                  ptrdiff_t pred_stride, int bd) {
-    int       r, c;
     uint16_t *src  = (uint16_t *)(src8);
     uint16_t *pred = (uint16_t *)(pred8);
     (void)bd;
 
-    for (r = 0; r < rows; r++) {
-        for (c = 0; c < cols; c++) { diff[c] = src[c] - pred[c]; }
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) { diff[c] = src[c] - pred[c]; }
 
         diff += diff_stride;
         pred += pred_stride;
@@ -70,10 +69,9 @@ void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t di
 void aom_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
                           const uint8_t *src, ptrdiff_t src_stride, const uint8_t *pred,
                           ptrdiff_t pred_stride) {
-    int r, c;
 
-    for (r = 0; r < rows; r++) {
-        for (c = 0; c < cols; c++) diff[c] = src[c] - pred[c];
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) diff[c] = src[c] - pred[c];
 
         diff += diff_stride;
         pred += pred_stride;
@@ -83,11 +81,10 @@ void aom_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stri
 
 static void diffwtd_mask(uint8_t *mask, int which_inverse, int mask_base, const uint8_t *src0,
                          int src0_stride, const uint8_t *src1, int src1_stride, int h, int w) {
-    int i, j, m, diff;
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
-            diff            = abs((int)src0[i * src0_stride + j] - (int)src1[i * src1_stride + j]);
-            m               = clamp(mask_base + (diff / DIFF_FACTOR), 0, AOM_BLEND_A64_MAX_ALPHA);
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int diff        = abs((int)src0[i * src0_stride + j] - (int)src1[i * src1_stride + j]);
+            int m           = clamp(mask_base + (diff / DIFF_FACTOR), 0, AOM_BLEND_A64_MAX_ALPHA);
             mask[i * w + j] = which_inverse ? AOM_BLEND_A64_MAX_ALPHA - m : m;
         }
     }
@@ -1094,7 +1091,6 @@ void eb_av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride, ui
                                      ConvolveParams *conv_params, int32_t bd)
 
 {
-    int32_t       x, y, k;
     int16_t       im_block[(MAX_SB_SIZE + MAX_FILTER_TAP - 1) * MAX_SB_SIZE];
     ConvBufType * dst        = conv_params->dst;
     int32_t       dst_stride = conv_params->dst_stride;
@@ -1110,10 +1106,10 @@ void eb_av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride, ui
     const uint16_t *src_horiz = src - fo_vert * src_stride;
     const int16_t * x_filter =
         av1_get_interp_filter_subpel_kernel(*filter_params_x, subpel_x_q4 & SUBPEL_MASK);
-    for (y = 0; y < im_h; ++y) {
-        for (x = 0; x < w; ++x) {
+    for (int y = 0; y < im_h; ++y) {
+        for (int x = 0; x < w; ++x) {
             int32_t sum = (1 << (bd + FILTER_BITS - 1));
-            for (k = 0; k < filter_params_x->taps; ++k)
+            for (int k = 0; k < filter_params_x->taps; ++k)
                 sum += x_filter[k] * src_horiz[y * src_stride + x - fo_horiz + k];
             assert(0 <= sum && sum < (1 << (bd + FILTER_BITS + 1)));
             (void)bd;
@@ -1126,10 +1122,10 @@ void eb_av1_highbd_jnt_convolve_2d_c(const uint16_t *src, int32_t src_stride, ui
     const int32_t  offset_bits = bd + 2 * FILTER_BITS - conv_params->round_0;
     const int16_t *y_filter =
         av1_get_interp_filter_subpel_kernel(*filter_params_y, subpel_y_q4 & SUBPEL_MASK);
-    for (y = 0; y < h; ++y) {
-        for (x = 0; x < w; ++x) {
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
             int32_t sum = 1 << offset_bits;
-            for (k = 0; k < filter_params_y->taps; ++k)
+            for (int k = 0; k < filter_params_y->taps; ++k)
                 sum += y_filter[k] * src_vert[(y - fo_vert + k) * im_stride + x];
             assert(0 <= sum && sum < (1 << (offset_bits + 2)));
             ConvBufType res = (ConvBufType)ROUND_POWER_OF_TWO(sum, conv_params->round_1);
@@ -1644,14 +1640,13 @@ const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign,
 void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
                          ptrdiff_t dst_stride, const int16_t *filter_x, int filter_x_stride,
                          const int16_t *filter_y, int filter_y_stride, int w, int h) {
-    int r;
 
     (void)filter_x;
     (void)filter_x_stride;
     (void)filter_y;
     (void)filter_y_stride;
 
-    for (r = h; r > 0; --r) {
+    for (int r = h; r > 0; --r) {
         memcpy(dst, src, w);
         src += src_stride;
         dst += dst_stride;
@@ -1685,7 +1680,6 @@ DECLARE_ALIGNED(16, static uint8_t,
 DECLARE_ALIGNED(16, static uint8_t, wedge_mask_buf[2 * MAX_WEDGE_TYPES * 4 * MAX_WEDGE_SQUARE]);
 
 static void init_wedge_master_masks() {
-    int       i, j;
     const int w      = MASK_MASTER_SIZE;
     const int h      = MASK_MASTER_SIZE;
     const int stride = MASK_MASTER_STRIDE;
@@ -1693,7 +1687,7 @@ static void init_wedge_master_masks() {
 #if USE_PRECOMPUTED_WEDGE_MASK
     // Generate prototype by shifting the masters
     int shift = h / 4;
-    for (i = 0; i < h; i += 2) {
+    for (int i = 0; i < h; i += 2) {
         shift_copy(wedge_master_oblique_even,
                    &wedge_mask_obl[0][WEDGE_OBLIQUE63][i * stride],
                    shift,
@@ -1714,8 +1708,8 @@ static void init_wedge_master_masks() {
     static const double smoother_param = 2.85;
     const int           a[2]           = {2, 1};
     const double        asqrt          = sqrt(a[0] * a[0] + a[1] * a[1]);
-    for (i = 0; i < h; i++) {
-        for (j = 0; j < w; ++j) {
+    for (int i = 0; i < h; i++) {
+        for (int j = 0; j < w; ++j) {
             int       x   = (2 * j + 1 - w);
             int       y   = (2 * i + 1 - h);
             double    d   = (a[0] * x + a[1] * y) / asqrt;
@@ -1726,8 +1720,8 @@ static void init_wedge_master_masks() {
         }
     }
 #endif // USE_PRECOMPUTED_WEDGE_MASK
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
             const int msk = wedge_mask_obl[0][WEDGE_OBLIQUE63][i * stride + j];
             wedge_mask_obl[0][WEDGE_OBLIQUE27][j * stride + i] = msk;
             wedge_mask_obl[0][WEDGE_OBLIQUE117][i * stride + w - 1 - j] =
@@ -1751,22 +1745,21 @@ static void init_wedge_master_masks() {
 // inconsistent flip the sign flag. Do it only once for every
 // wedge codebook.
 static void init_wedge_signs() {
-    BLOCK_SIZE sb_type;
     memset(wedge_signflip_lookup, 0, sizeof(wedge_signflip_lookup));
-    for (sb_type = BLOCK_4X4; sb_type < BLOCK_SIZES_ALL; ++sb_type) {
+    for (BLOCK_SIZE sb_type = BLOCK_4X4; sb_type < BLOCK_SIZES_ALL; ++sb_type) {
         const int               bw           = block_size_wide[sb_type];
         const int               bh           = block_size_high[sb_type];
         const wedge_params_type wedge_params = wedge_params_lookup[sb_type];
         const int               wbits        = wedge_params.bits;
         const int               wtypes       = 1 << wbits;
-        int                     i, w;
+
         if (wbits) {
-            for (w = 0; w < wtypes; ++w) {
+            for (int w = 0; w < wtypes; ++w) {
                 // Get the mask master, i.e. index [0]
                 const uint8_t *mask = get_wedge_mask_inplace(w, 0, sb_type);
                 int            avg  = 0;
-                for (i = 0; i < bw; ++i) avg += mask[i];
-                for (i = 1; i < bh; ++i) avg += mask[i * MASK_MASTER_STRIDE];
+                for (int i = 0; i < bw; ++i) avg += mask[i];
+                for (int i = 1; i < bh; ++i) avg += mask[i * MASK_MASTER_STRIDE];
                 avg = (avg + (bw + bh - 1) / 2) / (bw + bh - 1);
                 // Default sign of this wedge is 1 if the average < 32, 0 otherwise.
                 // If default sign is 1:
@@ -1802,17 +1795,15 @@ static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg, BlockSize
 
 static void init_wedge_masks() {
     uint8_t * dst = wedge_mask_buf;
-    BlockSize bsize;
     memset(wedge_masks, 0, sizeof(wedge_masks));
-    for (bsize = BLOCK_4X4; bsize < BlockSizeS_ALL; ++bsize) {
+    for (BlockSize bsize = BLOCK_4X4; bsize < BlockSizeS_ALL; ++bsize) {
         const int              bw           = block_size_wide[bsize];
         const int              bh           = block_size_high[bsize];
         const WedgeParamsType *wedge_params = &wedge_params_lookup[bsize];
         const int              wbits        = wedge_params->bits;
         const int              wtypes       = 1 << wbits;
-        int                    w;
         if (wbits == 0) continue;
-        for (w = 0; w < wtypes; ++w) {
+        for (int w = 0; w < wtypes; ++w) {
             const uint8_t *mask;
             mask = get_wedge_mask_inplace(w, 0, bsize);
             aom_convolve_copy_c(mask, MASK_MASTER_STRIDE, dst, bw, NULL, 0, NULL, 0, bw, bh);
@@ -1858,36 +1849,35 @@ static uint8_t ii_size_scales[BlockSizeS_ALL] = {
 
 void build_smooth_interintra_mask(uint8_t *mask, int stride, BlockSize plane_bsize,
                                   InterIntraMode mode) {
-    int       i, j;
     const int bw         = block_size_wide[plane_bsize];
     const int bh         = block_size_high[plane_bsize];
     const int size_scale = ii_size_scales[plane_bsize];
 
     switch (mode) {
         case II_V_PRED:
-            for (i = 0; i < bh; ++i) {
+            for (int i = 0; i < bh; ++i) {
                 memset(mask, ii_weights1d[i * size_scale], bw * sizeof(mask[0]));
                 mask += stride;
             }
             break;
 
         case II_H_PRED:
-            for (i = 0; i < bh; ++i) {
-                for (j = 0; j < bw; ++j) mask[j] = ii_weights1d[j * size_scale];
+            for (int i = 0; i < bh; ++i) {
+                for (int j = 0; j < bw; ++j) mask[j] = ii_weights1d[j * size_scale];
                 mask += stride;
             }
             break;
 
         case II_SMOOTH_PRED:
-            for (i = 0; i < bh; ++i) {
-                for (j = 0; j < bw; ++j) mask[j] = ii_weights1d[(i < j ? i : j) * size_scale];
+            for (int i = 0; i < bh; ++i) {
+                for (int j = 0; j < bw; ++j) mask[j] = ii_weights1d[(i < j ? i : j) * size_scale];
                 mask += stride;
             }
             break;
 
         case II_DC_PRED:
         default:
-            for (i = 0; i < bh; ++i) {
+            for (int i = 0; i < bh; ++i) {
                 memset(mask, 32, bw * sizeof(mask[0]));
                 mask += stride;
             }
@@ -2162,9 +2152,8 @@ int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int 
 uint64_t av1_wedge_sse_from_residuals_c(const int16_t *r1, const int16_t *d, const uint8_t *m,
                                         int N) {
     uint64_t csse = 0;
-    int      i;
 
-    for (i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         int32_t t = MAX_MASK_VALUE * r1[i] + m[i] * d[i];
         t         = clamp(t, INT16_MIN, INT16_MAX);
         csse += t * t;
@@ -2222,7 +2211,6 @@ void eb_aom_highbd_blend_a64_hmask_c(uint16_t *dst, uint32_t dst_stride, const u
                                      uint32_t src1_stride, const uint8_t *mask, int w, int h,
                                      int bd) {
     (void)bd;
-    int i, j;
 
     assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
     assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
@@ -2234,8 +2222,8 @@ void eb_aom_highbd_blend_a64_hmask_c(uint16_t *dst, uint32_t dst_stride, const u
 
     assert(bd == 8 || bd == 10 || bd == 12);
 
-    for (i = 0; i < h; ++i) {
-        for (j = 0; j < w; ++j) {
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
             dst[i * dst_stride + j] =
                     AOM_BLEND_A64(mask[j], src0[i * src0_stride + j], src1[i * src1_stride + j]);
         }

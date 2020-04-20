@@ -31,12 +31,12 @@ void picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByt
                                         uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
                                         uint32_t area_width, uint32_t area_height) {
     __m128i  xmm_avg1, xmm_avg2;
-    uint32_t x, y;
+    uint32_t y;
     assert((area_width & 3) == 0);
     assert((area_height & 1) == 0);
 
     if (area_width >= 16) {
-        for (x = 0; x < area_height; ++x) {
+        for (uint32_t x = 0; x < area_height; ++x) {
             for (y = 0; y + 15 < area_width; y += 16) {
                 xmm_avg1 = _mm_avg_epu8(_mm_loadu_si128((__m128i *)(src0 + y)),
                                         _mm_loadu_si128((__m128i *)(src1 + y)));

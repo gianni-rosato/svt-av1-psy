@@ -233,7 +233,6 @@ void pad_input_picture(
 {
     uint32_t vertical_idx;
     EbByte   temp_src_pic0;
-    EbByte   temp_src_pic1;
 
     if (pad_right) {
         // Add padding @ the right
@@ -250,6 +249,7 @@ void pad_input_picture(
     }
 
     if (pad_bottom) {
+        EbByte   temp_src_pic1;
         // Add padding @ the bottom
         vertical_idx  = pad_bottom;
         temp_src_pic0 = src_pic + (original_src_height - 1) * src_stride;

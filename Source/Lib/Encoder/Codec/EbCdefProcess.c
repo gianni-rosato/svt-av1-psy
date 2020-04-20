@@ -498,8 +498,6 @@ void *cdef_kernel(void *input_ptr) {
     PictureControlSet * pcs_ptr;
     SequenceControlSet *scs_ptr;
 
-    FrameHeader *frm_hdr;
-
     //// Input
     EbObjectWrapper *dlf_results_wrapper_ptr;
     DlfResults *     dlf_results_ptr;
@@ -511,6 +509,8 @@ void *cdef_kernel(void *input_ptr) {
     // SB Loop variables
 
     for (;;) {
+        FrameHeader *frm_hdr;
+
         // Get DLF Results
         EB_GET_FULL_OBJECT(context_ptr->cdef_input_fifo_ptr, &dlf_results_wrapper_ptr);
 
@@ -521,7 +521,6 @@ void *cdef_kernel(void *input_ptr) {
         EbBool     is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
         frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        int32_t selected_strength_cnt[64] = {0};
 
         if (scs_ptr->seq_header.enable_cdef && pcs_ptr->parent_pcs_ptr->cdef_filter_mode) {
             if (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
@@ -537,6 +536,7 @@ void *cdef_kernel(void *input_ptr) {
         if (pcs_ptr->tot_seg_searched_cdef == pcs_ptr->cdef_segments_total_count) {
             // SVT_LOG("    CDEF all seg here  %i\n", pcs_ptr->picture_number);
             if (scs_ptr->seq_header.enable_cdef && pcs_ptr->parent_pcs_ptr->cdef_filter_mode) {
+                int32_t selected_strength_cnt[64] = {0};
                 finish_cdef_search(0, pcs_ptr, selected_strength_cnt);
 
                 if (scs_ptr->seq_header.enable_restoration != 0 ||

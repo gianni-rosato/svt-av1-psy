@@ -110,11 +110,10 @@ Computes the residual data
 void residual_kernel16bit_c(uint16_t *input, uint32_t input_stride, uint16_t *pred,
                             uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,
                             uint32_t area_width, uint32_t area_height) {
-    uint32_t column_index;
     uint32_t row_index = 0;
 
     while (row_index < area_height) {
-        column_index = 0;
+        uint32_t column_index = 0;
         while (column_index < area_width) {
             residual[column_index] = ((int16_t)input[column_index]) - ((int16_t)pred[column_index]);
             ++column_index;
@@ -135,11 +134,10 @@ Computes the residual data
 void residual_kernel8bit_c(uint8_t *input, uint32_t input_stride, uint8_t *pred,
                            uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,
                            uint32_t area_width, uint32_t area_height) {
-    uint32_t column_index;
     uint32_t row_index = 0;
 
     while (row_index < area_height) {
-        column_index = 0;
+        uint32_t column_index = 0;
         while (column_index < area_width) {
             residual[column_index] = ((int16_t)input[column_index]) - ((int16_t)pred[column_index]);
             ++column_index;
@@ -163,13 +161,12 @@ void full_distortion_kernel32_bits_c(int32_t *coeff, uint32_t coeff_stride, int3
                                      uint32_t recon_coeff_stride,
                                      uint64_t distortion_result[DIST_CALC_TOTAL],
                                      uint32_t area_width, uint32_t area_height) {
-    uint32_t column_index;
     uint32_t row_index             = 0;
     uint64_t residual_distortion   = 0;
     uint64_t prediction_distortion = 0;
 
     while (row_index < area_height) {
-        column_index = 0;
+        uint32_t column_index = 0;
         while (column_index < area_width) {
             residual_distortion +=
                 (int64_t)SQR((int64_t)(coeff[column_index]) - (recon_coeff[column_index]));
@@ -190,7 +187,6 @@ uint64_t full_distortion_kernel16_bits_c(uint8_t *input, uint32_t input_offset,
                                          uint32_t input_stride, uint8_t *pred, int32_t pred_offset,
                                          uint32_t pred_stride, uint32_t area_width,
                                          uint32_t area_height) {
-    uint32_t column_index;
     uint32_t row_index      = 0;
     uint64_t sse_distortion = 0;
 
@@ -200,7 +196,7 @@ uint64_t full_distortion_kernel16_bits_c(uint8_t *input, uint32_t input_offset,
     pred_16bit += pred_offset;
 
     while (row_index < area_height) {
-        column_index = 0;
+        uint32_t column_index = 0;
         while (column_index < area_width) {
             sse_distortion +=
                 (int64_t)SQR((int64_t)(input_16bit[column_index]) - (pred_16bit[column_index]));
@@ -221,14 +217,13 @@ void full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff_str
                                               int32_t *recon_coeff, uint32_t recon_coeff_stride,
                                               uint64_t distortion_result[DIST_CALC_TOTAL],
                                               uint32_t area_width, uint32_t area_height) {
-    uint32_t column_index;
     uint32_t row_index             = 0;
     uint64_t prediction_distortion = 0;
     (void)recon_coeff;
     (void)recon_coeff_stride;
 
     while (row_index < area_height) {
-        column_index = 0;
+        uint32_t column_index = 0;
         while (column_index < area_width) {
             prediction_distortion += (int64_t)SQR((int64_t)(coeff[column_index]));
             ++column_index;
