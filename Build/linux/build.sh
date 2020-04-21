@@ -307,16 +307,52 @@ else
             while [ $i -ne $((${#match} + 1)) ]; do
                 case "$(echo "$match" | cut -c$i | tr '[:upper:]' '[:lower:]')" in
                 h) parse_options help ;;
-                a) parse_options all && i=$((i + 1)) ;;
-                b) parse_options bindir="$1" && i=$((i + 1)) ;;
-                g) parse_options generator="$1" && i=$((i + 1)) ;;
-                i) parse_options install && i=$((i + 1)) ;;
-                j) parse_options jobs="$1" && i=$((i + 1)) ;;
-                p) parse_options prefix="$1" && i=$((i + 1)) ;;
-                s) parse_options target_system="$1" && i=$((i + 1)) ;;
-                t) parse_options toolchain="$1" && i=$((i + 1)) ;;
-                x) parse_options build_static && i=$((i + 1)) ;;
-                v) parse_options verbose && i=$((i + 1)) ;;
+                a)
+                    parse_options all
+                    i=$((i + 1))
+                    ;;
+                b)
+                    parse_options bindir="$1"
+                    i=$((i + 1))
+                    shift
+                    ;;
+                g)
+                    parse_options generator="$1"
+                    i=$((i + 1))
+                    shift
+                    ;;
+                i)
+                    parse_options install
+                    i=$((i + 1))
+                    ;;
+                j)
+                    parse_options jobs="$1"
+                    i=$((i + 1))
+                    shift
+                    ;;
+                p)
+                    parse_options prefix="$1"
+                    i=$((i + 1))
+                    shift
+                    ;;
+                s)
+                    parse_options target_system="$1"
+                    i=$((i + 1))
+                    shift
+                    ;;
+                t)
+                    parse_options toolchain="$1"
+                    i=$((i + 1))
+                    shift
+                    ;;
+                x)
+                    parse_options build_static
+                    i=$((i + 1))
+                    ;;
+                v)
+                    parse_options verbose
+                    i=$((i + 1))
+                    ;;
                 *) die "Error, unknown option: -$(echo "$match" | cut -c$i | tr '[:upper:]' '[:lower:]')" ;;
                 esac
             done
