@@ -6,7 +6,7 @@ This plugin provides svtav1enc element to GStreamer in order to use the Scalable
 
 ## Requirements
 
-* GStreamer 1.8 or later
+* GStreamer 1.13.1 or later (https://github.com/GStreamer/gst-plugins-good/commit/de8f080a5c04db505dd754820aea1fc479302ee8)
 * Scalable Video Technology for AV1 Encoder
   * `SvtAv1Enc.dll` or `libSvtAv1Enc.so` has to be in the `PATH` or next to the plugin's DLL/.so.
 * Windows or Linux operating system
@@ -40,7 +40,7 @@ If you're not familiar with GStreamer, gst-launch-1.0 is part of GStreamer tools
 
 ### Build Dependencies
 
-* GStreamer and GStreamer-plugins-base dev 1.8 or later
+* GStreamer and GStreamer-plugins-base dev 1.13.1 or later
   * on Debian/Ubuntu: `sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
   * on Windows: [gstreamer-1.0-devel-x86_64-*.msi](https://gstreamer.freedesktop.org/data/pkg/windows/)
 * Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://github.com/OpenVisualCloud/SVT-AV1))
@@ -60,7 +60,7 @@ This plugin uses `meson` build tools and the dependency on SVT-AV1 library is se
 Make sure first that SVT-AV1 library is installed and can be found using pkg-config. You can do that using CMake:
 
 ``` bash
-cmake -P SVT-AV1/Build/linux/release/Source/Lib/Encoder/cmake_install.cmake
+cmake -P SVT-AV1/Build/linux/Release/Source/Lib/Encoder/cmake_install.cmake
 ```
 
 Then you can compile and install the plugin the following way:

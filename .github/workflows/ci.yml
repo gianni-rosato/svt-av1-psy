@@ -239,6 +239,9 @@ jobs:
           sudo apt-get install -y ${native_deps} \
             libgstreamer-plugins-base1.0-dev \
             libgstreamer1.0-dev \
+            gstreamer1.0-tools \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
             pkg-config \
             ninja-build \
             python3 \
@@ -264,12 +267,24 @@ jobs:
       - name: Build Gstreamer
         run: |
           [ -d "$HOME/.ccache" ] && sudo chown -R $USER: $HOME/.ccache
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"
+          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib:/usr/lib/x86_64-linux-gnu/"
           export PATH="${PATH}:~/.local/bin"
           cd $GITHUB_WORKSPACE/gstreamer-plugin
           meson -Dprefix=/usr build
           ninja -C build
           sudo ninja -C build install
+      - name: Download videos
+        run: |
+          wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
+          tar xf video.tar.gz
+      - name: Run Gstreamer
+        run: |
+          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib:/usr/lib/x86_64-linux-gnu/"
+          gst-launch-1.0 -v filesrc location=akiyo_cif.y4m ! \
+            y4mdec ! \
+            svtav1enc ! \
+            webmmux ! \
+            filesink location=akiyo.mkv
 
   ffmpeg-patch:
     runs-on: [ubuntu-18.04]

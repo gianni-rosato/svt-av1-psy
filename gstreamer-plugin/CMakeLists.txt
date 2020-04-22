@@ -9,9 +9,9 @@ set(POSITION_INDEPENDENT_CODE ON)
 include(CheckCCompilerFlag)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0>=1.8)
-pkg_check_modules(GSTREAMER_BASE REQUIRED gstreamer-base-1.0>=1.8)
-pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.8)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0>=1.13.1)
+pkg_check_modules(GSTREAMER_BASE REQUIRED gstreamer-base-1.0>=1.13.1)
+pkg_check_modules(GSTREAMER_VIDEO REQUIRED gstreamer-video-1.0>=1.13.1)
 pkg_check_modules(SVT_AV1 REQUIRED SvtAv1Enc)
 
 include_directories(${GSTREAMER_INCLUDE_DIRS}
