@@ -154,6 +154,50 @@ if(NOT HAS_AVX512)
     add_definitions(-DNON_AVX512_SUPPORT)
 endif()
 
+# ASM compiler macro
+macro(ASM_COMPILE_TO_TARGET target)
+    if(CMAKE_GENERATOR STREQUAL "Xcode")
+        if(CMAKE_BUILD_TYPE MATCHES Release)
+            set(ASM_FLAGS "${CMAKE_ASM_NASM_FLAGS_RELEASE}")
+        elseif(CMAKE_BUILD_TYPE MATCHES Debug)
+            set(ASM_FLAGS "${CMAKE_ASM_NASM_FLAGS_DEBUG}")
+        elseif(CMAKE_BUILD_TYPE MATCHES MinSizeRel)
+            set(ASM_FLAGS "${CMAKE_ASM_NASM_FLAGS_MINSIZEREL}")
+        elseif(CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+            set(ASM_FLAGS "${CMAKE_ASM_NASM_FLAGS_RELWITHDEBINFO}")
+        endif()
+
+        get_property(inc_dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+        foreach(inc_dir ${inc_dirs})
+            set(ASM_FLAGS "${ASM_FLAGS} -I${inc_dir}")
+        endforeach()
+
+        string(REGEX REPLACE " " ";" ASM_FLAGS "${ASM_FLAGS} ${CMAKE_ASM_NASM_FLAGS}")
+
+        foreach(asm_file ${ARGN})
+            get_filename_component(filename "${asm_file}" NAME_WE)
+            set(SIMD_OBJ "${CMAKE_CURRENT_BINARY_DIR}/${filename}${CMAKE_C_OUTPUT_EXTENSION}")
+            message(STATUS "Pregenerating ASM_NASM file ${filename}${CMAKE_C_OUTPUT_EXTENSION}")
+            execute_process(COMMAND ${CMAKE_ASM_NASM_COMPILER}
+                    -f${CMAKE_ASM_NASM_OBJECT_FORMAT}
+                    -I${CMAKE_CURRENT_SOURCE_DIR}
+                    -o${SIMD_OBJ}
+                    ${ASM_FLAGS}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/${asm_file}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+            list(APPEND SIMD_OBJS "${SIMD_OBJ}")
+        endforeach()
+        #target_sources(${target} PUBLIC ${SIMD_OBJS})
+        target_sources(common_lib INTERFACE ${SIMD_OBJS})
+    else()
+        # For every other generator
+        foreach(asm_file ${ARGN})
+            get_filename_component(filename "${asm_file}" ABSOLUTE)
+            target_sources(${target} PUBLIC ${filename})
+        endforeach()
+    endif()
+endmacro()
+
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)
 if(BUILD_ENC)

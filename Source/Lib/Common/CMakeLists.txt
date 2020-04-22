@@ -24,6 +24,8 @@ else ()
     set (X86 FALSE)
 endif ()
 
+add_library(common_lib INTERFACE)
+
 if(X86)
 add_subdirectory(Codec)
 add_subdirectory(C_DEFAULT)

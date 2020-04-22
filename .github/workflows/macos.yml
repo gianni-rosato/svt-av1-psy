@@ -1,0 +1,44 @@
+name: macOS
+on:
+  - push
+  - pull_request
+env:
+  build_type: Release
+  native_deps: nasm yasm cmake ccache
+
+jobs:
+  build:
+    runs-on: macos-10.15
+    env:
+      CC: clang
+      CXX: clang++
+      generator: Xcode
+    steps:
+    - name: Install dependencies
+      run: |
+        brew update
+        brew install yasm ccache python || true
+        echo "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH"
+        clang -v
+        clang++ -v
+    - name: Print system info
+      run: |
+        sysctl -n machdep.cpu.brand_string
+        sysctl machdep.cpu.features
+        sysctl machdep.cpu.leaf7_features
+    - uses: actions/checkout@v2
+    - name: Cache ccache files
+      uses: actions/cache@v1.1.2
+      with:
+        path: ~/.ccache
+        key: ${{ runner.os }}-svt-av1-clang-${{ hashFiles('**/*.c') }}
+        restore-keys: |
+          ${{ runner.os }}-svt-av1-clang-
+    - name: Run CMake
+      run: cmake -S "$GITHUB_WORKSPACE" -B Build -G"${generator:=Unix Makefiles}" -DCMAKE_BUILD_TYPE="${build_type:=Release}" $CMAKE_EFLAGS
+
+    - name: Run Build
+      run: cmake --build Build --parallel 4 --config "${build_type:=Release}"
+
+    - name: Install
+      run: sudo cmake --build Build --config "${build_type:=Release}" --target install

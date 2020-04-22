@@ -25,11 +25,11 @@ test_apply_compiler_flags(${flags_to_test})
 
 file(GLOB all_files
     "*.h"
-    "*.asm"
     "*.c")
 
-file(GLOB asm_includes "../ASM_SSE2/x86_abi_support.asm")
-
-#list(REMOVE_ITEM all_files ${asm_includes})
+set(asm_files
+    aom_subpixel_bilinear_ssse3.asm)
 
 add_library(COMMON_ASM_SSSE3 OBJECT ${all_files})
+
+asm_compile_to_target(COMMON_ASM_SSSE3 ${asm_files})

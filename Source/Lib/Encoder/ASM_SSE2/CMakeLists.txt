@@ -23,13 +23,12 @@ test_apply_compiler_flags(${flags_to_test})
 
 file(GLOB all_files
     "*.h"
-    "*.asm"
     "*.c")
 
-file(GLOB asm_includes
-    "x86_abi_support.asm")
-
-#list(REMOVE_ITEM all_files)
-
+set(asm_files
+    highbd_variance_impl_sse2.asm
+    x64RegisterUtil.asm)
 
 add_library(ENCODER_ASM_SSE2 OBJECT ${all_files})
+
+asm_compile_to_target(ENCODER_ASM_SSE2 ${asm_files})

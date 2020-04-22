@@ -3,6 +3,42 @@
 ; SPDX - License - Identifier: BSD - 2 - Clause - Patent
 ;
 
+%undef WIN64
+%undef UNIX64
+%ifidn __OUTPUT_FORMAT__,win32
+    %define WIN64  1
+%elifidn __OUTPUT_FORMAT__,win64
+    %define WIN64  1
+%elifidn __OUTPUT_FORMAT__,x64
+    %define WIN64  1
+%else
+    %define UNIX64 1
+%endif
+
+%undef FORMAT_ELF
+%ifidn __OUTPUT_FORMAT__,elf
+    %define FORMAT_ELF 1
+%elifidn __OUTPUT_FORMAT__,elf32
+    %define FORMAT_ELF 1
+%elifidn __OUTPUT_FORMAT__,elf64
+    %define FORMAT_ELF 1
+%endif
+
+%undef FORMAT_MACHO
+%ifidn __OUTPUT_FORMAT__,macho32
+     %define FORMAT_MACHO 1
+%elifidn __OUTPUT_FORMAT__,macho64
+     %define FORMAT_MACHO 1
+%endif
+
+%ifdef FORMAT_ELF
+    %undef PREFIX
+%elif WIN64
+    %undef PREFIX
+%else
+    %define PREFIX
+%endif
+
 %ifdef PREFIX
     %define mangle(x) _ %+ x
 %else
