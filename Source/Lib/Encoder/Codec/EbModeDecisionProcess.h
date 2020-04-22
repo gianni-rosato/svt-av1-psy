@@ -36,10 +36,18 @@ extern "C" {
 #define DEPTH_THREE_STEP 1
 #define PRED_ME_MAX_MVP_CANIDATES 4
 #define PRED_ME_DEVIATION_TH 50
+#if CS2_ADOPTIONS_1
+#define PRED_ME_FULL_PEL_REF_WINDOW_WIDTH_15 15
+#define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_15 15
+#define PRED_ME_FULL_PEL_REF_WINDOW_WIDTH_7 7
+#define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_7 7
+#define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_5 5
+#else
 #define PRED_ME_FULL_PEL_SEARCH_WIDTH 7
 #define PRED_ME_FULL_PEL_SEARCH_HEIGHT 5
 #define PRED_ME_FULL_PEL_SEARCH_WIDTH_EXTENDED 15
 #define PRED_ME_FULL_PEL_SEARCH_HEIGHT_EXTENDED 15
+#endif
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
@@ -353,6 +361,12 @@ typedef struct ModeDecisionContext {
     uint32_t md_stage_3_total_count;
 #if COMP_OPT
     uint32_t md_stage_3_total_intra_count;
+#endif
+#if CS2_ADOPTIONS_1
+    uint64_t best_intra_cost;
+    uint64_t best_inter_cost;
+    uint16_t skip_cfl_cost_dev_th;
+    uint16_t mds3_intra_prune_th;
 #endif
     uint8_t combine_class12; // 1:class1 and 2 are combined.
 

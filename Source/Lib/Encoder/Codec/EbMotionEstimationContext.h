@@ -485,6 +485,9 @@ typedef struct MeContext {
     int tf_frame_index;
     int tf_index_center;
 #endif
+#if CS2_ADOPTIONS_1
+    uint8_t h_pel_search_wind;
+#endif
 #if ENHANCED_TF
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];

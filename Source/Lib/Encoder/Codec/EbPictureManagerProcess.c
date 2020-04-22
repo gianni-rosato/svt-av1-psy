@@ -1202,8 +1202,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                             ((EbReferenceObject *)reference_entry_ptr
                                                  ->reference_object_ptr->object_ptr)
                                                 ->frame_context;
+#if PRED_STR_UPDATE
+                                        if (max_temporal_index <
+                                                (int8_t)reference_entry_ptr->temporal_layer_index &&
+                                            (int8_t)reference_entry_ptr->temporal_layer_index <=
+                                                child_pcs_ptr->temporal_layer_index) {
+#else
                                         if (max_temporal_index <
                                             (int8_t)reference_entry_ptr->temporal_layer_index) {
+#endif
                                             max_temporal_index =
                                                 (int8_t)reference_entry_ptr->temporal_layer_index;
                                             ref_index =
@@ -1285,10 +1292,19 @@ void *picture_manager_kernel(void *input_ptr) {
                                             ((EbReferenceObject *)reference_entry_ptr
                                                  ->reference_object_ptr->object_ptr)
                                                 ->frame_context;
+#if PRED_STR_UPDATE
+                                        if (max_temporal_index <
+                                                (int8_t)reference_entry_ptr->temporal_layer_index &&
+                                            reference_entry_ptr->slice_type != I_SLICE &&
+                                            (int8_t)reference_entry_ptr->temporal_layer_index <=
+                                                child_pcs_ptr->temporal_layer_index) {
+
+#else
                                         if (max_temporal_index <
                                                 (int8_t)reference_entry_ptr->temporal_layer_index &&
                                             reference_entry_ptr->slice_type !=
                                                 I_SLICE /* && child_pcs_ptr->temporal_layer_index != 0*/) {
+#endif
                                             max_temporal_index =
                                                 (int8_t)reference_entry_ptr->temporal_layer_index;
                                             ref_index =

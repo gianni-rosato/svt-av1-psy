@@ -304,8 +304,13 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         1, // GOP Index 8 - Temporal Layer
         1, // GOP Index 8 - Decode Order
+#if PRED_STR_UPDATE
+        {  8, 16, 24, 0},       // GOP Index 8 - Ref List 0
+        { -8, 12, 10, 0}        // GOP Index 8 - Ref List 1
+#else
         {8, 16, 24, 0}, // GOP Index 8 - Ref List 0
         {-8, 0, 0, 0} // GOP Index 8 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 9 - Temporal Layer
@@ -328,8 +333,13 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
     {
         2, // GOP Index 12 - Temporal Layer
         9, // GOP Index 12 - Decode Order
+#if PRED_STR_UPDATE
+        { 4, 8, 12, 6},         // GOP Index 12 - Ref List 0
+        { -4, 11, 0, 0}          // GOP Index 12 - Ref List 1
+#else
         {4, 8, 12, 0}, // GOP Index 12 - Ref List 0
         {-4, 0, 0, 0} // GOP Index 12 - Ref List 1
+#endif
     },
     {
         4, // GOP Index 13 - Temporal Layer
@@ -341,14 +351,22 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
         3, // GOP Index 14 - Temporal Layer
         13, // GOP Index 14 - Decode Order
         {2, 4, 6, 14}, // GOP Index 14 - Ref List 0
+#if PRED_STR_UPDATE
+        {-2, 5, 0, 0}          // GOP Index 14 - Ref List 1
+#else
         {-2, 0, 0, 0} // GOP Index 14 - Ref List 1
+#endif
 
     },
     {
         4, // GOP Index 15 - Temporal Layer
         15, // GOP Index 15 - Decode Order
         {1, 3, 6, 7}, // GOP Index 15 - Ref List 0
+#if PRED_STR_UPDATE
+        {-1, 15, 0, 0}          // GOP Index 15 - Ref List 1
+#else
         {-1, 0, 0, 0} // GOP Index 15 - Ref List 1
+#endif
     }};
 
 /**********************************************************************************************************************************************************************************************************************
@@ -2145,8 +2163,15 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
+#if CS2_ADOPTIONS_1
+    uint8_t ref_count_used;
+    if (config->screen_content_mode == 1)
+        ref_count_used = MR_MODE ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
+    else
+        ref_count_used = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
+#else
     uint8_t ref_count_used       = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
-
+#endif
     // Insert manual prediction structure into array
     if (config->enable_manual_pred_struct) {
         prediction_structure_config_array[config->hierarchical_levels].entry_count = config->manual_pred_struct_entry_num;

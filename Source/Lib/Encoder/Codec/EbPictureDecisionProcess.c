@@ -813,11 +813,27 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
             else
                 pcs_ptr->pic_depth_mode = PIC_SQ_NON4_DEPTH_MODE;
+#if CS2_ADOPTIONS_1
+        else if (MR_MODE)
+            pcs_ptr->pic_depth_mode =
+            (pcs_ptr->slice_type == I_SLICE)
+            ? PIC_ALL_DEPTH_MODE
+            : PIC_MULTI_PASS_PD_MODE_0;
+        else if (pcs_ptr->enc_mode <= ENC_M1)
+            // Use a single-stage PD if I_SLICE
+            pcs_ptr->pic_depth_mode =
+            (pcs_ptr->slice_type == I_SLICE)
+            ? PIC_ALL_DEPTH_MODE
+            : pcs_ptr->hierarchical_levels < 3
+            ? PIC_MULTI_PASS_PD_MODE_0
+            : PIC_MULTI_PASS_PD_MODE_1;
+#else
         else if (MR_MODE)
             pcs_ptr->pic_depth_mode = PIC_ALL_DEPTH_MODE;
         else if (pcs_ptr->enc_mode == ENC_M0)
             // Use a single-stage PD if I_SLICE
             pcs_ptr->pic_depth_mode = (pcs_ptr->slice_type == I_SLICE) ? PIC_ALL_DEPTH_MODE : PIC_MULTI_PASS_PD_MODE_1;
+#endif
         else if (pcs_ptr->enc_mode <= ENC_M2)
             // Use a single-stage PD if I_SLICE
             pcs_ptr->pic_depth_mode = (pcs_ptr->slice_type == I_SLICE) ? PIC_ALL_DEPTH_MODE : PIC_MULTI_PASS_PD_MODE_2;
@@ -848,6 +864,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
             pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
         }
+#if !CS2_ADOPTIONS_1
         else if (sc_content_detected)
 
             if (MR_MODE)
@@ -862,8 +879,12 @@ EbErrorType signal_derivation_multi_processes_oq(
                     pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL2;
             else
                 pcs_ptr->nsq_search_level = NSQ_SEARCH_OFF;
-
+#endif
+#if CS2_ADOPTIONS_1
+        else if (pcs_ptr->enc_mode <= ENC_M1)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M0)
+#endif
             pcs_ptr->nsq_search_level = NSQ_SEARCH_LEVEL6;
         else if (pcs_ptr->enc_mode <= ENC_M1)
             pcs_ptr->nsq_search_level = (pcs_ptr->is_used_as_reference_flag) ? NSQ_SEARCH_LEVEL6 : NSQ_SEARCH_LEVEL3;
@@ -954,7 +975,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     */
     if (frm_hdr->allow_screen_content_tools)
         if (scs_ptr->static_config.enable_palette == -1)//auto mode; if not set by cfg
+#if CS2_ADOPTIONS_1
+            pcs_ptr->palette_mode = pcs_ptr->enc_mode <= ENC_M1 ? 6 : 0;
+#else
             pcs_ptr->palette_mode = pcs_ptr->enc_mode == ENC_M0 ? 6 : 0;
+#endif
         else
             pcs_ptr->palette_mode = scs_ptr->static_config.enable_palette;
     else
@@ -963,6 +988,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     assert(pcs_ptr->palette_mode<7);
 
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+#if !CS2_ADOPTIONS_1
     if (sc_content_detected)
         if (MR_MODE)
             pcs_ptr->loop_filter_mode = 3;
@@ -971,6 +997,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->loop_filter_mode = 0;
     else
+#endif
         if (pcs_ptr->enc_mode <= ENC_M7)
             pcs_ptr->loop_filter_mode = 3;
         else
@@ -988,12 +1015,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                            64 step refinement
     if (scs_ptr->seq_header.enable_cdef && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_mode == DEFAULT) {
+#if !CS2_ADOPTIONS_1
             if (sc_content_detected)
                 if (pcs_ptr->enc_mode <= ENC_M5)
                     pcs_ptr->cdef_filter_mode = 4;
                 else
                     pcs_ptr->cdef_filter_mode = 0;
             else
+#endif
                 if (pcs_ptr->enc_mode <= ENC_M7)
                     pcs_ptr->cdef_filter_mode = 5;
                 else
@@ -1071,7 +1100,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->intra_pred_mode = 4;
     else {
     if (sc_content_detected)
+#if CS2_ADOPTIONS_1
+        if (pcs_ptr->enc_mode <= ENC_M1)
+#else
         if (MR_MODE)
+#endif
             pcs_ptr->intra_pred_mode = 0;
         else if (pcs_ptr->enc_mode <= ENC_M2)
             if (pcs_ptr->temporal_layer_index == 0)
@@ -1143,9 +1176,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 2                 ON: AVG/DIST/DIFF/WEDGE
         if (scs_ptr->static_config.compound_level == DEFAULT) {
             if (scs_ptr->compound_mode)
+#if !CS2_ADOPTIONS_1
                 if (pcs_ptr->sc_content_detected)
                     pcs_ptr->compound_mode = (pcs_ptr->enc_mode <= ENC_M0) ? 2 : 0;
                 else
+#endif
                     pcs_ptr->compound_mode = pcs_ptr->enc_mode <= ENC_M1 ? 2 : 1;
             else
                 pcs_ptr->compound_mode = 0;
@@ -1165,7 +1200,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
 
         if (scs_ptr->static_config.prune_unipred_me == DEFAULT)
+#if CS2_ADOPTIONS_1
+            if (pcs_ptr->enc_mode >= ENC_M4)
+#else
             if (MR_MODE || pcs_ptr->sc_content_detected || pcs_ptr->enc_mode >= ENC_M4)
+ #endif
                 pcs_ptr->prune_unipred_at_me = 0;
             else
                 pcs_ptr->prune_unipred_at_me = 1;
@@ -1183,7 +1222,15 @@ EbErrorType signal_derivation_multi_processes_oq(
         // GM_FULL                                    Exhaustive search mode.
         // GM_DOWN                                    Downsampled resolution with a downsampling factor of 2 in each dimension
         // GM_TRAN_ONLY                               Translation only using ME MV.
+#if CS2_ADOPTIONS_1
+    if (pcs_ptr->enc_mode <= ENC_M0 ||
+        (pcs_ptr->enc_mode <= ENC_M1 && pcs_ptr->sc_content_detected))
         pcs_ptr->gm_level = GM_FULL;
+    else
+        pcs_ptr->gm_level = GM_DOWN;
+#else
+        pcs_ptr->gm_level = GM_FULL;
+#endif
 #endif
         //Exit TX size search when all coefficients are zero
         // 0: OFF
@@ -2154,8 +2201,13 @@ static void  av1_generate_rps_info(
             av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
 
             av1_rps->ref_dpb_index[BWD] = base2_idx;
+#if PRED_STR_UPDATE
+            av1_rps->ref_dpb_index[ALT2] = lay2_1_idx;
+            av1_rps->ref_dpb_index[ALT] = lay3_idx;
+#else
             av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
             av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
+#endif
 
             gop_i = 8;
             av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
@@ -2164,8 +2216,13 @@ static void  av1_generate_rps_info(
             av1_rps->ref_poc_array[GOLD] = av1_rps->ref_poc_array[LAST];
 
             av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
+#if PRED_STR_UPDATE
+            av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
+            av1_rps->ref_poc_array[ALT] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[2]);
+#else
             av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
             av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
+#endif
             av1_rps->refresh_frame_mask = 1 << (LAY1_OFF + context_ptr->lay1_toggle);
 
             break;
@@ -2199,19 +2256,35 @@ static void  av1_generate_rps_info(
                 av1_rps->ref_dpb_index[LAST] = lay1_1_idx;
                 av1_rps->ref_dpb_index[LAST2] = lay2_1_idx;
                 av1_rps->ref_dpb_index[LAST3] = base1_idx;
+#if PRED_STR_UPDATE
+                av1_rps->ref_dpb_index[GOLD] = lay3_idx;
+#else
                 av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
+#endif
 
                 av1_rps->ref_dpb_index[BWD] = base2_idx;
+#if PRED_STR_UPDATE
+                av1_rps->ref_dpb_index[ALT2] = lay4_idx;
+#else
                 av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
+#endif
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
                 gop_i = 12;
                 av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
                 av1_rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[1]);
                 av1_rps->ref_poc_array[LAST3] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[2]);
+#if PRED_STR_UPDATE
+                av1_rps->ref_poc_array[GOLD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[3]);
+#else
                 av1_rps->ref_poc_array[GOLD] = av1_rps->ref_poc_array[LAST];
+#endif
 
                 av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
+#if PRED_STR_UPDATE
+                av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
+#else
                 av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
+#endif
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             av1_rps->refresh_frame_mask = 1 << (LAY2_OFF);
@@ -2291,7 +2364,11 @@ static void  av1_generate_rps_info(
                 av1_rps->ref_dpb_index[GOLD] = base1_idx;
 
                 av1_rps->ref_dpb_index[BWD] = base2_idx;
+#if PRED_STR_UPDATE
+                av1_rps->ref_dpb_index[ALT2] = lay4_idx;
+#else
                 av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
+#endif
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
                 gop_i = 14;
                 av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
@@ -2300,7 +2377,11 @@ static void  av1_generate_rps_info(
                 av1_rps->ref_poc_array[GOLD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[3]);
 
                 av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
+#if PRED_STR_UPDATE
+                av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
+#else
                 av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
+#endif
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else
@@ -2478,7 +2559,11 @@ static void  av1_generate_rps_info(
                 av1_rps->ref_dpb_index[LAST3] = lay4_idx;
                 av1_rps->ref_dpb_index[GOLD] = lay1_1_idx;
                 av1_rps->ref_dpb_index[BWD] = base2_idx;
+#if PRED_STR_UPDATE
+                av1_rps->ref_dpb_index[ALT2] = base1_idx;
+#else
                 av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
+#endif
                 av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
                 gop_i = 15;
                 av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
@@ -2487,7 +2572,11 @@ static void  av1_generate_rps_info(
                 av1_rps->ref_poc_array[GOLD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list0[3]);
 
                 av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
+#if PRED_STR_UPDATE
+                av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, five_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
+#else
                 av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
+#endif
                 av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
             }
             else
@@ -4926,6 +5015,27 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] =
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
                                 }
+#if PRED_STR_UPDATE
+                                if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT &&
+                                    pcs_ptr->temporal_layer_index &&
+                                    scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS)
+                                {
+                                    if (pcs_ptr->av1_ref_signal.ref_poc_array[ALT] >= pcs_ptr->picture_number)
+                                        pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] = 1;
+                                    else
+                                        pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF_FRAME] = 0;
+
+                                    if (pcs_ptr->av1_ref_signal.ref_poc_array[ALT2] >= pcs_ptr->picture_number)
+                                        pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] = 1;
+                                    else
+                                        pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] = 0;
+
+                                    if (pcs_ptr->av1_ref_signal.ref_poc_array[BWD] >= pcs_ptr->picture_number)
+                                        pcs_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
+                                    else
+                                        pcs_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 0;
+                                }
+#endif
 
                                 if (pcs_ptr->slice_type == I_SLICE)
                                     context_ptr->last_i_picture_sc_detection = pcs_ptr->sc_content_detected;
@@ -5087,6 +5197,15 @@ void* picture_decision_kernel(void *input_ptr)
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
 #if ALTREF_IMPROVEMENT
+#if CS2_ADOPTIONS_1
+                            uint8_t perform_filtering =
+                                (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
+                                 scs_ptr->static_config.hierarchical_levels >= 2) &&  pcs_ptr->sc_content_detected == 0 &&
+                                (pcs_ptr->temporal_layer_index == 0 ||
+                                  (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                                ? 1 : 0;
+
+#else
                             uint8_t perform_filtering =
                                 (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
                                  scs_ptr->static_config.hierarchical_levels >= 2) &&
@@ -5094,7 +5213,7 @@ void* picture_decision_kernel(void *input_ptr)
                                   (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0) ||
                                   (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3 && pcs_ptr->sc_content_detected == 0))
                                 ? 1 : 0;
-
+#endif
                             if (perform_filtering){
 #else
                             if ((scs_ptr->enable_altrefs == EB_TRUE &&

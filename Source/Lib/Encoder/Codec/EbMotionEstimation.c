@@ -33,7 +33,12 @@
 #define MAX_INTRA_IN_MD 9
 #define REFERENCE_PIC_LIST_0 0
 #define REFERENCE_PIC_LIST_1 1
-
+#if CS2_ADOPTIONS_1
+#define SC_HME_TH_STILL 1000
+#define SC_HME_TH_EASY  100
+#define SC_SR_DENOM_STILL 16
+#define SC_SR_DENOM_EASY 8
+#endif
 /*******************************************
  * Compute8x4SAD_Default
  *   Unoptimized 8x4 SAD
@@ -3736,8 +3741,15 @@ static void half_pel_refinement_block(
     (void)ineteger_mv;
     // copute distance between best mv and the integer mv candidate
     int16_t offset_x, offset_y;
+#if CS2_ADOPTIONS_1
+    int8_t h_pel_search_wind = context_ptr->h_pel_search_wind;
+
+    for (offset_x = -h_pel_search_wind; offset_x <= h_pel_search_wind; offset_x++) {
+        for (offset_y = -h_pel_search_wind; offset_y <= h_pel_search_wind; offset_y++) {
+#else
     for (offset_x = -H_PEL_SEARCH_WIND; offset_x <= H_PEL_SEARCH_WIND; offset_x++) {
         for (offset_y = -H_PEL_SEARCH_WIND; offset_y <= H_PEL_SEARCH_WIND; offset_y++) {
+#endif
             x_best_mv            = _MVXT(*best_pervious_stage_mv);
             y_best_mv            = _MVYT(*best_pervious_stage_mv);
             x_mv                 = x_best_mv + (offset_x * 4);
@@ -9613,7 +9625,7 @@ void integer_search_sb(
 #if SKIP_ME_BASED_ON_HME
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data
-#if SC_HME_PRUNING
+#if CS2_ADOPTIONS_1
             if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index] == SC_HME_TH_STILL) {
                 search_area_width = ((search_area_width / SC_SR_DENOM_STILL) + 7) & ~0x07;
                 search_area_height = (search_area_height / SC_SR_DENOM_STILL);
@@ -10634,6 +10646,24 @@ void hme_sb(
         }
     }
 }
+#if CS2_ADOPTIONS_1
+void prune_references_sc(
+    MeContext *context_ptr)
+{
+    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
+        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
+            if (context_ptr->hme_results[li][ri].hme_sc_x == 0 &&
+                context_ptr->hme_results[li][ri].hme_sc_y == 0 &&
+                context_ptr->hme_results[li][ri].hme_sad < SC_HME_TH_EASY)
+
+                context_ptr->reduce_me_sr_flag[li][ri] = SC_HME_TH_STILL;
+
+            else if (context_ptr->hme_results[li][ri].hme_sad < SC_HME_TH_EASY)
+                context_ptr->reduce_me_sr_flag[li][ri] = SC_HME_TH_EASY;
+        }
+    }
+}
+#endif
 void prune_references(
     MeContext                 *context_ptr)
 {
@@ -10847,6 +10877,11 @@ EbErrorType motion_estimate_sb(
     if (pcs_ptr->prune_ref_based_me && prune_ref)
         prune_references(
             context_ptr);
+#if CS2_ADOPTIONS_1
+    else if (pcs_ptr->sc_content_detected && prune_ref)
+        prune_references_sc(
+            context_ptr);
+#endif
 #if MUS_ME_FP
     // Full pel: Perform the Integer Motion Estimation on the allowed refrence frames.
     integer_search_sb(
