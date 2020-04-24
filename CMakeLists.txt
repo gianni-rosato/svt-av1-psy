@@ -19,7 +19,7 @@ if(YASM)
     endif()
 endif()
 
-project(svt-av1 VERSION 0.8.2
+project(svt-av1 VERSION 0.8.3
     LANGUAGES C CXX ASM_NASM)
 
 # Default build type to release if the generator does not has its own set of build types

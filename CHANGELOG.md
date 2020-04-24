@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.8.3] - 2020-04-24
+
+Encoder
+- Presets optimization
+
+Build and Testing
+- Bug fixes
+- Xcode build support
+
+
 ## [0.8.2] - 2020-04-18
 
 Encoder
