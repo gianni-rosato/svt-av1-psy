@@ -122,8 +122,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 #### Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
-| **InputFile** | -i | any string | None | Input file path |
-| **StreamFile** | -b | any string | null | output bitstream file path |
+| **InputFile** | -i | any string | None | Input file path; "stdin" to take input from standard input stream |
+| **StreamFile** | -b | any string | null | Output bitstream file path; "stdout" to emit output to standard output stream |
 | **ConfigFile** | -c | any string | null | Configuration file path |
 | **ErrorFile** | --errlog | any string | stderr | error log displaying configuration or encode errors |
 | **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |

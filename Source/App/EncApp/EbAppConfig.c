@@ -259,8 +259,13 @@ static void set_pred_struct_file(const char *value, EbConfig *cfg) {
 };
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
-    if (cfg->bitstream_file) { fclose(cfg->bitstream_file); }
-    FOPEN(cfg->bitstream_file, value, "wb");
+    if (cfg->bitstream_file && cfg->bitstream_file != stdout) { fclose(cfg->bitstream_file); }
+
+    if (!strcmp(value, "stdout")) {
+        cfg->bitstream_file = stdout;
+    } else {
+        FOPEN(cfg->bitstream_file, value, "wb");
+    }
 };
 static void set_cfg_error_file(const char *value, EbConfig *cfg) {
     if (cfg->error_log_file && cfg->error_log_file != stderr) { fclose(cfg->error_log_file); }
