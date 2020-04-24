@@ -3222,6 +3222,16 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                                        ? ref_obj->reference_picture16bit
                                                        : ref_obj->reference_picture;
 
+#if BOUNDARY_CHECK
+                    // Skip the pred_me at the boundary
+                    if (context_ptr->blk_origin_x + (mvp_x_array[mvp_index] >> 3) +
+                                context_ptr->blk_geom->bwidth >
+                            ref_pic->max_width + ref_pic->origin_x ||
+                        context_ptr->blk_origin_y + (mvp_y_array[mvp_index] >> 3) +
+                                context_ptr->blk_geom->bheight >
+                            ref_pic->max_height + ref_pic->origin_y)
+                        continue;
+#endif
                     int32_t ref_origin_index =
                         ref_pic->origin_x +
                         (context_ptr->blk_origin_x + (mvp_x_array[mvp_index] >> 3)) +
