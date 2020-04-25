@@ -28,9 +28,9 @@ EbErrorType neighbor_array_unit_ctor32(NeighborArrayUnit32 *na_unit_ptr, uint32_
     na_unit_ptr->dctor                     = neighbor_array_unit_dctor32;
     na_unit_ptr->unit_size                 = (uint8_t)(unit_size);
     na_unit_ptr->granularity_normal        = (uint8_t)(granularity_normal);
-    na_unit_ptr->granularity_normal_log2   = (uint8_t)(eb_log2f(na_unit_ptr->granularity_normal));
+    na_unit_ptr->granularity_normal_log2   = (uint8_t)(Log2f(na_unit_ptr->granularity_normal));
     na_unit_ptr->granularity_top_left      = (uint8_t)(granularity_top_left);
-    na_unit_ptr->granularity_top_left_log2 = (uint8_t)(eb_log2f(na_unit_ptr->granularity_top_left));
+    na_unit_ptr->granularity_top_left_log2 = (uint8_t)(Log2f(na_unit_ptr->granularity_top_left));
     na_unit_ptr->left_array_size =
         (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK)
                        ? max_picture_height >> na_unit_ptr->granularity_normal_log2
@@ -73,9 +73,9 @@ EbErrorType neighbor_array_unit_ctor(NeighborArrayUnit *na_unit_ptr, uint32_t ma
     na_unit_ptr->dctor                     = neighbor_array_unit_dctor;
     na_unit_ptr->unit_size                 = (uint8_t)(unit_size);
     na_unit_ptr->granularity_normal        = (uint8_t)(granularity_normal);
-    na_unit_ptr->granularity_normal_log2   = (uint8_t)(eb_log2f(na_unit_ptr->granularity_normal));
+    na_unit_ptr->granularity_normal_log2   = (uint8_t)(Log2f(na_unit_ptr->granularity_normal));
     na_unit_ptr->granularity_top_left      = (uint8_t)(granularity_top_left);
-    na_unit_ptr->granularity_top_left_log2 = (uint8_t)(eb_log2f(na_unit_ptr->granularity_top_left));
+    na_unit_ptr->granularity_top_left_log2 = (uint8_t)(Log2f(na_unit_ptr->granularity_top_left));
     na_unit_ptr->left_array_size =
         (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK)
                        ? max_picture_height >> na_unit_ptr->granularity_normal_log2

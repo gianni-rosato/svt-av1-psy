@@ -1945,7 +1945,11 @@ static const EbWarpedMotionParams default_warp_params = {
 
 #define MAX_NUM_TOKENS          200
 
-
+#ifdef ARCH_X86
+#define    Log2f                              Log2f_SSE2
+#else
+#define    Log2f                              log2f_32
+#endif
 #define INPUT_SIZE_576p_TH                  0x90000        // 0.58 Million
 #define INPUT_SIZE_1080i_TH                 0xB71B0        // 0.75 Million
 #define INPUT_SIZE_1080p_TH                 0x1AB3F0    // 1.75 Million

@@ -790,7 +790,6 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_highbd_h_predictor_8x8 = eb_aom_highbd_h_predictor_8x8_c;
     eb_aom_highbd_h_predictor_16x16 = eb_aom_highbd_h_predictor_16x16_c;
     eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_c;
-    eb_log2f = log2f_32;
     eb_memcpy = eb_memcpy_c;
 #ifdef ARCH_X86
     flags &= get_cpu_flags_to_use();
@@ -1462,7 +1461,6 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
         if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x16 = eb_aom_highbd_h_predictor_64x16_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x32 = eb_aom_highbd_h_predictor_64x32_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_64x64 = eb_aom_highbd_h_predictor_64x64_avx2;
-        if (flags & HAS_SSE2) eb_log2f = Log2f_SSE2;
         if (flags & HAS_SSE2) eb_memcpy = eb_memcpy_intrin_sse;
 #ifndef NON_AVX512_SUPPORT
         if (flags & HAS_AVX512F) {

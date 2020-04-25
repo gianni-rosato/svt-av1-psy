@@ -290,7 +290,7 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     aom_clear_system_state();
 #endif
     const double sse_norm = (double)sse / num_samples;
-    const double xqr      = (double)eb_log2f((uint32_t)sse_norm / (qstep * qstep));
+    const double xqr      = (double)LOG2F((uint32_t)sse_norm / (qstep * qstep));
 
     double rate_f, dist_by_sse_norm_f;
     av1_model_rd_curvfit(plane_bsize, sse_norm, xqr, &rate_f, &dist_by_sse_norm_f);

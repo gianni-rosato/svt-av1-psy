@@ -5931,7 +5931,7 @@ EbErrorType generate_md_stage_0_cand(
     context_ptr->injected_mv_count_l0 = 0;
     context_ptr->injected_mv_count_l1 = 0;
     context_ptr->injected_mv_count_bipred = 0;
-    uint8_t sq_index = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
+    uint8_t sq_index = LOG2F(context_ptr->blk_geom->sq_size) - 2;
     EbBool coeff_based_nsq_cand_reduction = EB_FALSE;
     if (slice_type != I_SLICE) {
         if (context_ptr->coeff_based_nsq_cand_reduction) {

@@ -252,7 +252,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define SCENE_TH                            3000
 #define NOISY_SCENE_TH                      4500    // SCD TH in presence of noise
 #define HIGH_PICTURE_VARIANCE_TH            1500
-#define NUM64x64INPIC(w,h)          ((w*h)>> (eb_log2f(BLOCK_SIZE_64)<<1))
+#define NUM64x64INPIC(w,h)          ((w*h)>> (LOG2F(BLOCK_SIZE_64)<<1))
 #define QUEUE_GET_PREVIOUS_SPOT(h)  ((h == 0) ? PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1 : h - 1)
 #define QUEUE_GET_NEXT_SPOT(h,off)  (( (h+off) >= PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH) ? h+off - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH  : h + off)
 

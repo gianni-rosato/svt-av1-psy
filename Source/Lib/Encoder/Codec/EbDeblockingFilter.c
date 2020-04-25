@@ -677,7 +677,7 @@ void eb_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControlS
         (SequenceControlSet *)pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     //SuperBlock                     *sb_ptr;
     //uint16_t                                   sb_index;
-    uint8_t  sb_size_log2 = (uint8_t)eb_log2f(scs_ptr->sb_size_pix);
+    uint8_t  sb_size_log2 = (uint8_t)Log2f(scs_ptr->sb_size_pix);
     uint32_t x_sb_index;
     uint32_t y_sb_index;
     uint32_t sb_origin_x;
