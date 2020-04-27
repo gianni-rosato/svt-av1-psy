@@ -3013,6 +3013,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
     config_ptr->enable_hbd_mode_decision = 1;
     config_ptr->enable_palette = -1;
+    config_ptr->enable_manual_pred_struct = EB_FALSE;
+    config_ptr->encoder_color_format = EB_YUV420;
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;
