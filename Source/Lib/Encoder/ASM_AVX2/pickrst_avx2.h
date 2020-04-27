@@ -471,7 +471,7 @@ static INLINE void step3_win3_avx2(const int16_t **const d, const int32_t d_stri
                                          15);
 
     int32_t y = h4;
-    do {
+    while (y) {
         __m256i ds[WIENER_WIN_3TAP];
 
         // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e
@@ -499,7 +499,7 @@ static INLINE void step3_win3_avx2(const int16_t **const d, const int32_t d_stri
         *dd = _mm256_srli_si256(*dd, 8);
         *d += 4 * d_stride;
         y -= 4;
-    } while (y);
+    };
 }
 
 static INLINE void step3_win5_avx2(const int16_t **const d, const int32_t d_stride,
@@ -565,6 +565,41 @@ static INLINE void step3_win5_avx2(const int16_t **const d, const int32_t d_stri
         ds[2] = ds[4];
         y -= 2;
     } while (y);
+}
+
+static INLINE void step3_win5_oneline_avx2(const int16_t **const d, const int32_t d_stride,
+                                   const int32_t width, const int32_t height,
+                                   __m256i ds[WIENER_WIN_CHROMA],
+                                   __m256i deltas[WIENER_WIN_CHROMA]) {
+
+    const __m256i const_n1_0 = _mm256_setr_epi16(
+        0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0);
+
+    int32_t y = height;
+    do {
+        __m256i dd;
+
+        dd = ds[0];
+        dd = _mm256_xor_si256(dd, const_n1_0);
+        dd = _mm256_sub_epi16(dd, const_n1_0);
+
+        // 60s 60e 61s 61e 62s 62e 63s 63e  64s 64e 65s 65e 66s 66e 67s 67e
+        ds[4] = load_win7_avx2(*d, width);
+
+        madd_avx2(dd, ds[0], &deltas[0]);
+        madd_avx2(dd, ds[1], &deltas[1]);
+        madd_avx2(dd, ds[2], &deltas[2]);
+        madd_avx2(dd, ds[3], &deltas[3]);
+        madd_avx2(dd, ds[4], &deltas[4]);
+
+        ds[0] = ds[1];
+        ds[1] = ds[2];
+        ds[2] = ds[3];
+        ds[3] = ds[4];
+
+        *d += d_stride;
+    } while (--y);
+
 }
 
 static INLINE void step3_win7_avx2(const int16_t **const d, const int32_t d_stride,

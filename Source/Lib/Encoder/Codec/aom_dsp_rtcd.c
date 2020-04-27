@@ -62,11 +62,6 @@
     } while (0)
 #endif
 
-void setup_rtcd_non8(CPU_FLAGS flags) {
-    (void) flags;
-    eb_av1_compute_stats = eb_av1_compute_stats_c;
-    eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
-}
 void setup_rtcd_internal(CPU_FLAGS flags) {
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */

@@ -75,15 +75,26 @@ typedef std::tuple<BlkSize, HbdWienerConvolveFunc, int32_t>
     HbdWienerConvolveParam;
 
 static const BlkSize test_block_size_table[] = {BlkSize(96, 96),
+                                                BlkSize(96, 97),
                                                 BlkSize(88, 88),
+                                                BlkSize(88, 85),
                                                 BlkSize(80, 80),
+                                                BlkSize(80, 79),
                                                 BlkSize(72, 72),
+                                                BlkSize(72, 71),
                                                 BlkSize(64, 64),
+                                                BlkSize(64, 63),
                                                 BlkSize(56, 56),
+                                                BlkSize(56, 57),
                                                 BlkSize(48, 48),
+                                                BlkSize(48, 49),
                                                 BlkSize(32, 32),
+                                                BlkSize(32, 33),
                                                 BlkSize(24, 24),
+                                                BlkSize(24, 23),
                                                 BlkSize(16, 16),
+                                                BlkSize(16, 15),
+                                                BlkSize(8, 9),
                                                 BlkSize(8, 8)};
 
 static const int test_tap_table[] = {7, 5, 3};
@@ -180,7 +191,7 @@ class AV1WienerConvolveTest : public ::testing::TestWithParam<ParamType> {
             hkernel[0] = vkernel[0] = WIENER_FILT_TAP0_MAXV;
             hkernel[1] = vkernel[1] = WIENER_FILT_TAP1_MAXV;
             hkernel[2] = vkernel[2] = WIENER_FILT_TAP2_MAXV;
-        } else {
+        } else if (kernel_type == 2) {
             // Randomly generated values for filter coefficients
             hkernel[0] = WIENER_FILT_TAP0_MINV +
                          pseudo_uniform(WIENER_FILT_TAP0_MAXV + 1 -
@@ -201,6 +212,19 @@ class AV1WienerConvolveTest : public ::testing::TestWithParam<ParamType> {
             vkernel[2] = WIENER_FILT_TAP2_MINV +
                          pseudo_uniform(WIENER_FILT_TAP2_MAXV + 2 -
                                         WIENER_FILT_TAP2_MINV);
+        } else if (kernel_type == 3) {
+            // Check zerocoff path
+            hkernel[0] = vkernel[0] = 0;
+            hkernel[1] = vkernel[1] = 0;
+            hkernel[2] = vkernel[2] = 0;
+        } else if (kernel_type == 4) {
+            hkernel[0] = vkernel[0] = 0;
+            hkernel[1] = vkernel[1] = 0;
+            hkernel[2] = vkernel[2] = WIENER_FILT_TAP2_MAXV;
+        } else if (kernel_type == 5) {
+            hkernel[0] = vkernel[0] = 0;
+            hkernel[1] = vkernel[1] = WIENER_FILT_TAP1_MAXV;
+            hkernel[2] = vkernel[2] = WIENER_FILT_TAP2_MAXV;
         }
 
         if (tap <= 5) {
@@ -244,7 +268,7 @@ class AV1WienerConvolveTest : public ::testing::TestWithParam<ParamType> {
         for (unsigned int tap_idx = 0;
              tap_idx < sizeof(test_tap_table) / sizeof(*test_tap_table);
              tap_idx++) {
-            for (int kernel_type = 0; kernel_type < 3; kernel_type++) {
+            for (int kernel_type = 0; kernel_type < 6; kernel_type++) {
                 generate_kernels(
                     hkernel, vkernel, test_tap_table[tap_idx], kernel_type);
                 for (int i = 0;

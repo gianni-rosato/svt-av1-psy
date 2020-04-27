@@ -967,12 +967,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     setup_common_rtcd_internal(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.use_cpu_flags);
     setup_rtcd_internal(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.use_cpu_flags);
 
-#if NON8_FIX_REST
-    if(enc_handle_ptr->scs_instance_array[0]->scs_ptr->max_input_pad_right>0 ||
-       enc_handle_ptr->scs_instance_array[0]->scs_ptr->max_input_pad_bottom>0)
-        setup_rtcd_non8(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.use_cpu_flags);
-#endif
-
     asm_set_convolve_asm_table();
 
     init_intra_dc_predictors_c_internal();
