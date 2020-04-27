@@ -29,7 +29,7 @@ static INLINE int RENAME(calc_dist)(const int *p1, const int *p2) {
     return dist;
 }
 
-INLINE void RENAME(av1_calc_indices)(const int *data, const int *centroids, uint8_t *indices, int n,
+void RENAME(av1_calc_indices)(const int *data, const int *centroids, uint8_t *indices, int n,
                                      int k) {
     for (int i = 0; i < n; ++i) {
         int min_dist = RENAME(calc_dist)(data + i * AV1_K_MEANS_DIM, centroids);
