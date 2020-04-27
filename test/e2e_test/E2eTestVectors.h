@@ -115,7 +115,10 @@ typedef struct EncTestSetting {
         std::string str = "SvtAv1EncApp";
         str += get_vector_cli(vector);
         str += get_setting_cli();
-        str += " -b output.ivf -o recon.yuv";
+        append_token(str, "StreamFile");
+        str += "output.ivf";
+        append_token(str, "ReconFile");
+        str += "recon.yuv";
         return str;
     }
 
@@ -145,26 +148,32 @@ typedef struct EncTestSetting {
     }
 
     std::string get_vector_cli(TestVideoVector& vector) const {
-        std::string str(" -i " + std::get<0>(vector));
+        std::string str;
+        append_token(str, "InputFile");
+        str += std::get<0>(vector);
         if (std::get<1>(vector) != Y4M_VIDEO_FILE) {
-            str += " -w ";
+            append_token(str, "SourceWidth");
             str += std::to_string(std::get<3>(vector));
-            str += " -h ";
+            append_token(str, "SourceHeight");
             str += std::to_string(std::get<4>(vector));
-            str += " -bit-depth ";
+            append_token(str, "EncoderBitDepth");
             str += std::to_string(std::get<5>(vector));
-            str += " -colour-space ";
+            append_token(str, "EncoderColorFormat");
             str += std::to_string(color_fmt(std::get<2>(vector)));
         }
         return str;
     }
 
+    void append_token(std::string& str, const char* name) const {
+        str += " ";
+        str += get_enc_token(name);
+        str += " ";
+    }
+
     std::string get_setting_cli() const {
         std::string str;
         for (auto x : setting) {
-            str += " ";
-            str += get_enc_token(x.first.c_str());
-            str += " ";
+            append_token(str, x.first.c_str());
             str += x.second;
         }
         return str;
