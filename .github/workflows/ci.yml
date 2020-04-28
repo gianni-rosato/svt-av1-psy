@@ -287,15 +287,45 @@ jobs:
             filesink location=akiyo.mkv
 
   ffmpeg-patch:
-    runs-on: [ubuntu-18.04]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-18.04
+            CC: ccache gcc
+            CXX: ccache g++
+          - os: macos-10.15
+            CC: ccache clang
+            CXX: ccache clang++
+
+    runs-on: ${{ matrix.os }}
     needs: [build]
     env:
-      CMAKE_EFLAGS: '-DBUILD_SHARED_LIBS=OFF'
+      CMAKE_EFLAGS: -DBUILD_SHARED_LIBS=OFF
+      CC: ${{ matrix.CC }}
+      CXX: ${{ matrix.CXX }}
+      LD_LIBRARY_PATH: /usr/local/lib
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+
     steps:
-      - name: Install dependencies
+      - name: Install dependencies (ubuntu)
+        if: matrix.os == 'ubuntu-18.04'
         run: |
-          sudo apt-get update
+          sudo apt-get update &&
           sudo apt-get install -y ${native_deps}
+          $CC --version
+          yasm --version
+          cmake --version
+          ccache --version
+      - name: Install dependencies (mac)
+        if: matrix.os == 'macos-10.15'
+        run: |
+          brew update
+          brew install yasm ccache pkg-config
+          $CC --version
+          yasm --version
+          cmake --version
+          ccache --version
       - uses: actions/checkout@v2
       - name: Cache ccache files
         uses: actions/cache@v1.1.0
@@ -305,27 +335,27 @@ jobs:
           restore-keys: |
               ${{ runner.os }}-ffmpeg-
       - name: Compile SVT-AV1
-        env:
-          CC: 'ccache gcc'
-          CXX: 'ccache g++'
         run: |
           chmod +x .ci/ci.sh
           .ci/ci.sh
       - name: Setup ffmpeg enviornment
         run: |
-          cd $HOME
-          git clone https://github.com/FFmpeg/FFmpeg --branch release/4.2 --depth=1 ffmpeg
           [ -d "$HOME/.ccache" ] && sudo chown -R $USER: $HOME/.ccache
-          cd $HOME/ffmpeg
-          git apply $GITHUB_WORKSPACE/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
+          git clone --branch release/4.2 --depth 1 https://github.com/FFmpeg/FFmpeg "$HOME/ffmpeg"
+          git -C "$HOME/ffmpeg" apply "$GITHUB_WORKSPACE/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch"
       - name: Configure ffmpeg
         run: |
-          cd $HOME/ffmpeg
-          export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
-          export CFLAGS=""
-          ./configure --enable-libsvtav1 --cc="ccache gcc" --cxx="ccache g++" || less ffbuild/config.log
+          cd "$HOME/ffmpeg"
+          ./configure --enable-libsvtav1 --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" || { less ffbuild/config.log; exit 1; }
       - name: Build ffmpeg
         run: |
-          cd $HOME/ffmpeg
-          make --quiet -j$(nproc)
+          cd "$HOME/ffmpeg"
+          make --quiet -j$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu)
           sudo make install
+      - name: Download videos
+        run: |
+          wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
+          tar xf video.tar.gz
+      - name: Run ffmpeg
+        run: |
+          ffmpeg -i akiyo_cif.y4m -c:v libsvt_av1 akiyo.webm
