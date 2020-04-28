@@ -2990,7 +2990,7 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
     // TODO: apply further refinements to the filter parameters according to 1st pass statistics
 }
 
-static void pad_and_decimate_filtered_pic(
+void pad_and_decimate_filtered_pic(
     PictureParentControlSet *picture_control_set_ptr_central) {
     // reference structures (padded pictures + downsampled versions)
     EbPaReferenceObject *src_object =

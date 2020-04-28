@@ -24,6 +24,7 @@
 #include "EbLambdaRateTables.h"
 
 #include "EbLog.h"
+#include "EbResize.h"
 
 #define AVCCODEL
 /********************************************
@@ -10246,6 +10247,17 @@ void hme_sb(
                 (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                     ? (EbPictureBufferDesc *)reference_object->sixteenth_filtered_picture_ptr
                     : (EbPictureBufferDesc *)reference_object->sixteenth_decimated_picture_ptr;
+
+            EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+
+            // Use scaled source references if resolution of the reference is different that of the input
+            use_scaled_source_refs_if_needed(pcs_ptr,
+                                             input_picture_ptr,
+                                             reference_object,
+                                             &ref_pic_ptr,
+                                             &quarter_ref_pic_ptr,
+                                             &sixteenth_ref_pic_ptr);
+
             if (pcs_ptr->temporal_layer_index > 0 || list_index == 0) {
                 if (context_ptr->update_hme_search_center_flag)
                     hme_mv_center_check(ref_pic_ptr,
@@ -10960,14 +10972,28 @@ EbErrorType motion_estimate_sb(
 #else
             // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
             quarter_ref_pic_ptr =
-                (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+                    (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                     ? (EbPictureBufferDesc *)reference_object->quarter_filtered_picture_ptr
                     : (EbPictureBufferDesc *)reference_object->quarter_decimated_picture_ptr;
 
             sixteenth_ref_pic_ptr =
-                (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+                    (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                     ? (EbPictureBufferDesc *)reference_object->sixteenth_filtered_picture_ptr
                     : (EbPictureBufferDesc *)reference_object->sixteenth_decimated_picture_ptr;
+
+            uint16_t ref_picture_number = (uint16_t)pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
+            UNUSED(ref_picture_number);
+
+            // Use scaled source references if resolution of the reference is different that of the input
+            use_scaled_source_refs_if_needed(pcs_ptr,
+                                             input_picture_ptr,
+                                             reference_object,
+                                             &ref_pic_ptr,
+                                             &quarter_ref_pic_ptr,
+                                             &sixteenth_ref_pic_ptr);
+
+            //printf("frame #%d, width=%d, ref pic=%d, ALT-REF %d\n", (int)pcs_ptr->picture_number, input_picture_ptr->width, ref_picture_number, (int)context_ptr->me_alt_ref);
+
             if (pcs_ptr->temporal_layer_index > 0 || list_index == 0) {
                 // A - The MV center for Tier0 search could be either (0,0), or
                 // HME A - Set HME MV Center

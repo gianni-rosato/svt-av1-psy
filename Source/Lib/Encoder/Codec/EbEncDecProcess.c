@@ -1547,8 +1547,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
         // Level                Settings
         // 0                    Injection off (Hsan: but not derivation as used by MV ref derivation)
         // 1                    On
+        // Note: global motion is off for frames with super-res enabled
 #if GLOBAL_WARPED_MOTION
-    if (scs_ptr->static_config.enable_global_motion == EB_TRUE) {
+    if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
+        pcs_ptr->parent_pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (context_ptr->pd_pass == PD_PASS_0)
             context_ptr->global_mv_injection = 0;
         else if (context_ptr->pd_pass == PD_PASS_1)

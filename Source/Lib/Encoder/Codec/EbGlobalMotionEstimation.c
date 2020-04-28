@@ -35,14 +35,14 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     EbPictureBufferDesc *ref_picture_ptr;
     SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     pa_reference_object =
-        (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+            (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
     quarter_picture_ptr =
-        (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+            (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
             ? (EbPictureBufferDesc *)pa_reference_object->quarter_filtered_picture_ptr
             : (EbPictureBufferDesc *)pa_reference_object->quarter_decimated_picture_ptr;
 #endif
     uint32_t num_of_list_to_search =
-        (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
+            (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         uint32_t num_of_ref_pic_to_search;
@@ -73,15 +73,15 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
                 reference_object = (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
             else
                 reference_object =
-                    (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                        ->object_ptr;
+                        (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
+                                ->object_ptr;
 
 #if GLOBAL_WARPED_MOTION
             // Set the source and the reference picture to be used by the global motion search
             // based on the input search mode
             if (pcs_ptr->gm_level == GM_DOWN) {
                 quarter_ref_pic_ptr =
-                    (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+                        (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                         ? (EbPictureBufferDesc *)reference_object->quarter_filtered_picture_ptr
                         : (EbPictureBufferDesc *)reference_object->quarter_decimated_picture_ptr;
                 ref_picture_ptr   = quarter_ref_pic_ptr;

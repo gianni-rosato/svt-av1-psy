@@ -21,6 +21,8 @@
 #include "EbTemporalFiltering.h"
 #include "EbGlobalMotionEstimation.h"
 
+#include "EbResize.h"
+
 /* --32x32-
 |00||01|
 |02||03|
@@ -321,7 +323,8 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
 #endif
 
-    if (scs_ptr->static_config.enable_global_motion == EB_TRUE) {
+    if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
+        pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (enc_mode <= ENC_M1)
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
         else
@@ -759,7 +762,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 : (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr;
         input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
 
-        input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
+        input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
 
         context_ptr->me_context_ptr->me_alt_ref =
             in_results_ptr->task_type == 1 ? EB_TRUE : EB_FALSE;
@@ -821,6 +824,15 @@ void *motion_estimation_kernel(void *input_ptr) {
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             // *** MOTION ESTIMATION CODE ***
             if (pcs_ptr->slice_type != I_SLICE) {
+
+                // Use scaled source references if resolution of the reference is different that of the input
+                use_scaled_source_refs_if_needed(pcs_ptr,
+                                                 input_picture_ptr,
+                                                 pa_ref_obj_,
+                                                 &input_padded_picture_ptr,
+                                                 &quarter_picture_ptr,
+                                                 &sixteenth_picture_ptr);
+
                 // SB Loop
                 for (y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index; ++y_sb_index) {
                     for (x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index; ++x_sb_index) {

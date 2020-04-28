@@ -32,6 +32,8 @@
 #include "EbRateDistortionCost.h"
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
+#include "EbResize.h"
+
 #if INFR_OPT
 #define INCRMENT_CAND_TOTAL_COUNT(cnt)                                                     \
     MULTI_LINE_MACRO_BEGIN cnt++;                                                          \
@@ -45,6 +47,7 @@
         SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
     MULTI_LINE_MACRO_END
 #endif
+
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 int    av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 #define INT_MAX 2147483647 // maximum (signed) int value
@@ -335,6 +338,18 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                       ->reference_picture;
     else
         ref_pic_list1 = (EbPictureBufferDesc *)NULL;
+
+    // Use scaled references if resolution of the reference is different from that of the input
+    if(ref_pic_list0 != NULL)
+        use_scaled_rec_refs_if_needed(pcs_ptr,
+                                      pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                                      (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][list_idx0]->object_ptr,
+                                      &ref_pic_list0);
+    if(ref_pic_list1 != NULL)
+        use_scaled_rec_refs_if_needed(pcs_ptr,
+                                      pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                                      (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr,
+                                      &ref_pic_list1);
 
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
 
@@ -3463,9 +3478,16 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
     {
         uint8_t              ref_idx  = get_ref_frame_idx(candidate->ref_frame_type);
         uint8_t              list_idx = get_list_idx(candidate->ref_frame_type);
+
         EbPictureBufferDesc *reference_picture =
             ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)
                 ->reference_picture;
+
+        use_scaled_rec_refs_if_needed(pcs_ptr,
+                                      pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                                      (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr,
+                                      &reference_picture);
+
         Yv12BufferConfig ref_buf;
         link_eb_to_aom_buffer_desc_8bit(reference_picture, &ref_buf);
 

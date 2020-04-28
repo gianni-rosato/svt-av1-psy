@@ -166,6 +166,7 @@ void generate_padding(
 /** generate_padding16_bit()
 is used to pad the target picture. The horizontal padding happens first and then the vertical padding.
 */
+// TODO: generate_padding() and generate_padding16() functions are not aligned, inputs according to comments are wrong
 void generate_padding16_bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.

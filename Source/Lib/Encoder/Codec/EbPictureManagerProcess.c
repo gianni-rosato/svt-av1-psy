@@ -1010,7 +1010,6 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         // Update pcs_ptr->mi_stride
                         child_pcs_ptr->mi_stride = pic_width_in_sb * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
-                        assert(child_pcs_ptr->mi_stride == entry_pcs_ptr->av1_cm->mi_stride);
 
                         // copy buffer info from the downsampled picture to the input frame 16 bit buffer
                         if(entry_pcs_ptr->frame_superres_enabled && scs_ptr->static_config.encoder_bit_depth > EB_8BIT){
@@ -1041,7 +1040,6 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         // Update pcs_ptr->mi_stride
                         child_pcs_ptr->mi_stride = pic_width_in_sb * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
-                        assert(child_pcs_ptr->mi_stride == entry_pcs_ptr->av1_cm->mi_stride);
 
                         // copy buffer info from the downsampled picture to the input frame 16 bit buffer
                         if(entry_pcs_ptr->frame_superres_enabled && scs_ptr->static_config.encoder_bit_depth > EB_8BIT){

@@ -2093,6 +2093,8 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->frame_width = init_data_ptr->picture_width;
     object_ptr->frame_height = init_data_ptr->picture_height;
 
+    object_ptr->superres_denom = SCALE_NUMERATOR;
+
     return return_error;
 }
 

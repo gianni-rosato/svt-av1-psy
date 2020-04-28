@@ -49,6 +49,9 @@ typedef struct RestContext {
     int32_t *rst_tmpbuf;
 } RestContext;
 
+void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+                     uint32_t ss_y, EbBool include_padding);
+void copy_buffer_info(EbPictureBufferDesc *src_ptr, EbPictureBufferDesc *dst_ptr);
 void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                           int32_t optimized_lr);
@@ -255,6 +258,16 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     }
 }
 
+void set_unscaled_input_16bit(PictureControlSet *pcs_ptr){
+    uint16_t *unscaled_input_frame16bit[MAX_MB_PLANE];
+    unscaled_input_frame16bit[0] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_y;
+    unscaled_input_frame16bit[1] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_cb;
+    unscaled_input_frame16bit[2] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_cr;
+
+    pack_highbd_pic(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr, unscaled_input_frame16bit, 1, 1, EB_TRUE);
+    copy_buffer_info(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr, pcs_ptr->input_frame16bit);
+}
+
 void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                              int32_t blk_col_px, int32_t blk_row_px,
                              void **pp_blk_recon_buf, int32_t *recon_stride,
@@ -437,6 +450,9 @@ void eb_av1_superres_upscale_frame(struct Av1Common *cm,
     EbPictureBufferDesc *src = ps_recon_pic_temp;
     EbPictureBufferDesc *dst = recon_ptr;
 
+    // get the bit-depth from the encoder config instead of from the recon ptr
+    int bit_depth = scs_ptr->static_config.encoder_bit_depth;
+
     for (int plane = 0; plane < num_planes; ++plane) {
         uint8_t *src_buf, *dst_buf;
         int32_t src_stride, dst_stride;
@@ -450,7 +466,7 @@ void eb_av1_superres_upscale_frame(struct Av1Common *cm,
 
         av1_upscale_normative_rows(cm, (const uint8_t *) src_buf, src_stride, dst_buf,
                                    dst_stride, src->height >> sub_x,
-                                   sub_x, src->bit_depth, is_16bit);
+                                   sub_x, bit_depth, is_16bit);
     }
 
     // free the memory
@@ -500,15 +516,13 @@ void *rest_kernel(void *input_ptr) {
 
             // ------- start: Normative upscaling - super-resolution tool
             if(!av1_superres_unscaled(&cm->frm_size)) {
-
                 eb_av1_superres_upscale_frame(cm,
                                               pcs_ptr,
                                               scs_ptr);
 
-                uint16_t picture_sb_width = (uint16_t)(
-                        (cm->frm_size.superres_upscaled_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
-                cm->mi_stride = picture_sb_width * (BLOCK_SIZE_64 / 4);
-                cm->mi_cols = cm->frm_size.superres_upscaled_width >> MI_SIZE_LOG2;
+                if(scs_ptr->static_config.is_16bit_pipeline || is_16bit){
+                    set_unscaled_input_16bit(pcs_ptr);
+                }
             }
             // ------- end: Normative upscaling - super-resolution tool
             get_own_recon(scs_ptr, pcs_ptr, context_ptr,

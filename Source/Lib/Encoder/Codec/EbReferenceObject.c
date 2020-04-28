@@ -10,6 +10,7 @@
 #include "EbReferenceObject.h"
 #include "EbPictureBufferDesc.h"
 
+// TODO: is this just padding with zeros? Is this needed?
 void initialize_samples_neighboring_reference_picture16_bit(EbByte   recon_samples_buffer_ptr,
                                                             uint16_t stride, uint16_t recon_width,
                                                             uint16_t recon_height,
@@ -128,6 +129,15 @@ static void eb_reference_object_dctor(EbPtr p) {
     EB_DELETE(obj->reference_picture);
     EB_FREE_ALIGNED_ARRAY(obj->mvs);
     EB_DESTROY_MUTEX(obj->referenced_area_mutex);
+
+    for(uint8_t denom_idx = 0; denom_idx < NUM_SCALES; denom_idx++){
+        if(obj->downscaled_reference_picture[denom_idx] != NULL){
+            EB_DELETE(obj->downscaled_reference_picture[denom_idx]);
+        }
+        if(obj->downscaled_reference_picture16bit[denom_idx] != NULL){
+            EB_DELETE(obj->downscaled_reference_picture16bit[denom_idx]);
+        }
+    }
 }
 
 /*****************************************
@@ -189,15 +199,26 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
         }
     }
 
+    uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;
+    uint32_t mi_cols = reference_object->reference_picture->width >> MI_SIZE_LOG2;
+
     if (picture_buffer_desc_init_data_ptr->mfmv) {
         //MFMV map is 8x8 based.
-        uint32_t  mi_rows  = reference_object->reference_picture->height >> MI_SIZE_LOG2;
-        uint32_t  mi_cols  = reference_object->reference_picture->width >> MI_SIZE_LOG2;
         const int mem_size = ((mi_rows + 1) >> 1) * ((mi_cols + 1) >> 1);
         EB_CALLOC_ALIGNED_ARRAY(reference_object->mvs, mem_size);
     }
     memset(&reference_object->film_grain_params, 0, sizeof(reference_object->film_grain_params));
     EB_CREATE_MUTEX(reference_object->referenced_area_mutex);
+
+    // set all supplemental downscaled reference picture pointers to NULL
+    for(uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++){
+        reference_object->downscaled_reference_picture[down_idx] = NULL;
+        reference_object->downscaled_reference_picture16bit[down_idx] = NULL;
+    }
+
+    reference_object->mi_rows = mi_rows;
+    reference_object->mi_cols = mi_cols;
+
     return EB_ErrorNone;
 }
 
@@ -218,6 +239,16 @@ static void eb_pa_reference_object_dctor(EbPtr p) {
     EB_DELETE(obj->sixteenth_decimated_picture_ptr);
     EB_DELETE(obj->quarter_filtered_picture_ptr);
     EB_DELETE(obj->sixteenth_filtered_picture_ptr);
+
+    for(uint8_t denom_idx = 0; denom_idx < NUM_SCALES; denom_idx++){
+        if(obj->downscaled_input_padded_picture_ptr[denom_idx] != NULL){
+            EB_DELETE(obj->downscaled_input_padded_picture_ptr[denom_idx]);
+            EB_DELETE(obj->downscaled_quarter_decimated_picture_ptr[denom_idx]);
+            EB_DELETE(obj->downscaled_quarter_filtered_picture_ptr[denom_idx]);
+            EB_DELETE(obj->downscaled_sixteenth_decimated_picture_ptr[denom_idx]);
+            EB_DELETE(obj->downscaled_sixteenth_filtered_picture_ptr[denom_idx]);
+        }
+    }
 }
 
 /*****************************************
@@ -255,6 +286,15 @@ EbErrorType eb_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
         EB_NEW(pa_ref_obj_->sixteenth_filtered_picture_ptr,
                eb_picture_buffer_desc_ctor,
                (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
+    }
+
+    // set all supplemental downscaled reference picture pointers to NULL
+    for(uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++){
+        pa_ref_obj_->downscaled_input_padded_picture_ptr[down_idx] = NULL;
+        pa_ref_obj_->downscaled_quarter_decimated_picture_ptr[down_idx] = NULL;
+        pa_ref_obj_->downscaled_quarter_filtered_picture_ptr[down_idx] = NULL;
+        pa_ref_obj_->downscaled_sixteenth_decimated_picture_ptr[down_idx] = NULL;
+        pa_ref_obj_->downscaled_sixteenth_filtered_picture_ptr[down_idx] = NULL;
     }
 
     return EB_ErrorNone;

@@ -2719,12 +2719,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                          ->reference_picture_wrapper_ptr->object_ptr)
                                         ->reference_picture;
 
-                                if (is_16bit) {
+                                if (is_16bit)
                                     ref_pic_list0 =
                                         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
 
+                                if (is_16bit && !(scs_ptr->static_config.superres_mode > SUPERRES_NONE)) {
                                     av1_inter_prediction_16bit_pipeline(
                                         pcs_ptr,
                                         blk_ptr->interp_filters,
@@ -3316,74 +3317,75 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     : (EbPictureBufferDesc *)NULL;
                             }
 
-                                    if (is_16bit) {
-                                        av1_inter_prediction_16bit_pipeline(
-                                            pcs_ptr,
-                                            blk_ptr->interp_filters,
-                                            blk_ptr,
-                                            blk_ptr->prediction_unit_array->ref_frame_type,
-                                            &context_ptr->mv_unit,
-                                            0, //use_intrabc,
-                                            blk_ptr->prediction_unit_array->motion_mode,
-                                            0, //use_precomputed_obmc,
-                                            0,
-                                            blk_ptr->compound_idx,
-                                            &blk_ptr->interinter_comp,
-                                            &sb_ptr->tile_info,
-                                            ep_luma_recon_neighbor_array,
-                                            ep_cb_recon_neighbor_array,
-                                            ep_cr_recon_neighbor_array,
-                                            blk_ptr->is_interintra_used,
-                                            blk_ptr->interintra_mode,
-                                            blk_ptr->use_wedge_interintra,
-                                            blk_ptr->interintra_wedge_index,
-                                            context_ptr->blk_origin_x,
-                                            context_ptr->blk_origin_y,
-                                            blk_geom->bwidth,
-                                            blk_geom->bheight,
-                                            ref_pic_list0,
-                                            ref_pic_list1,
-                                            recon_buffer,
-                                            context_ptr->blk_origin_x,
-                                            context_ptr->blk_origin_y,
-                                            EB_TRUE,
-                                            (uint8_t)scs_ptr->static_config.encoder_bit_depth);
-                                    } else {
-                            av1_inter_prediction(
-                                pcs_ptr,
-                                blk_ptr->interp_filters,
-                                blk_ptr,
-                                blk_ptr->prediction_unit_array->ref_frame_type,
-                                &context_ptr->mv_unit,
-                                0, //use_intrabc,
-                                blk_ptr->prediction_unit_array->motion_mode,
-                                0, //use_precomputed_obmc,
-                                0,
-                                blk_ptr->compound_idx,
-                                &blk_ptr->interinter_comp,
-                                &sb_ptr->tile_info,
-                                ep_luma_recon_neighbor_array,
-                                ep_cb_recon_neighbor_array,
-                                ep_cr_recon_neighbor_array,
-                                blk_ptr->is_interintra_used,
-                                blk_ptr->interintra_mode,
-                                blk_ptr->use_wedge_interintra,
-                                blk_ptr->interintra_wedge_index,
 
-                                context_ptr->blk_origin_x,
-                                context_ptr->blk_origin_y,
-                                blk_geom->bwidth,
-                                blk_geom->bheight,
-                                ref_pic_list0,
-                                ref_pic_list1,
-                                recon_buffer,
-                                context_ptr->blk_origin_x,
-                                context_ptr->blk_origin_y,
-                                EB_TRUE,
-                                (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                            if (is_16bit && !(scs_ptr->static_config.superres_mode > SUPERRES_NONE)) {
+                                av1_inter_prediction_16bit_pipeline(
+                                    pcs_ptr,
+                                    blk_ptr->interp_filters,
+                                    blk_ptr,
+                                    blk_ptr->prediction_unit_array->ref_frame_type,
+                                    &context_ptr->mv_unit,
+                                    0, //use_intrabc,
+                                    blk_ptr->prediction_unit_array->motion_mode,
+                                    0, //use_precomputed_obmc,
+                                    0,
+                                    blk_ptr->compound_idx,
+                                    &blk_ptr->interinter_comp,
+                                    &sb_ptr->tile_info,
+                                    ep_luma_recon_neighbor_array,
+                                    ep_cb_recon_neighbor_array,
+                                    ep_cr_recon_neighbor_array,
+                                    blk_ptr->is_interintra_used,
+                                    blk_ptr->interintra_mode,
+                                    blk_ptr->use_wedge_interintra,
+                                    blk_ptr->interintra_wedge_index,
+                                    context_ptr->blk_origin_x,
+                                    context_ptr->blk_origin_y,
+                                    blk_geom->bwidth,
+                                    blk_geom->bheight,
+                                    ref_pic_list0,
+                                    ref_pic_list1,
+                                    recon_buffer,
+                                    context_ptr->blk_origin_x,
+                                    context_ptr->blk_origin_y,
+                                    EB_TRUE,
+                                    (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                            } else {
+                                av1_inter_prediction(
+                                    pcs_ptr,
+                                    blk_ptr->interp_filters,
+                                    blk_ptr,
+                                    blk_ptr->prediction_unit_array->ref_frame_type,
+                                    &context_ptr->mv_unit,
+                                    0, //use_intrabc,
+                                    blk_ptr->prediction_unit_array->motion_mode,
+                                    0, //use_precomputed_obmc,
+                                    0,
+                                    blk_ptr->compound_idx,
+                                    &blk_ptr->interinter_comp,
+                                    &sb_ptr->tile_info,
+                                    ep_luma_recon_neighbor_array,
+                                    ep_cb_recon_neighbor_array,
+                                    ep_cr_recon_neighbor_array,
+                                    blk_ptr->is_interintra_used,
+                                    blk_ptr->interintra_mode,
+                                    blk_ptr->use_wedge_interintra,
+                                    blk_ptr->interintra_wedge_index,
+
+                                    context_ptr->blk_origin_x,
+                                    context_ptr->blk_origin_y,
+                                    blk_geom->bwidth,
+                                    blk_geom->bheight,
+                                    ref_pic_list0,
+                                    ref_pic_list1,
+                                    recon_buffer,
+                                    context_ptr->blk_origin_x,
+                                    context_ptr->blk_origin_y,
+                                    EB_TRUE,
+                                    (uint8_t)scs_ptr->static_config.encoder_bit_depth);
+                            }
                         }
                     }
-                            }
                     context_ptr->txb_itr = 0;
                     // Transform Loop
                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[0] = EB_FALSE;

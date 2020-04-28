@@ -27,6 +27,8 @@
 #include "EbUtility.h"
 #include "EbLog.h"
 #include "common_dsp_rtcd.h"
+#include "EbResize.h"
+
 /************************************************
  * Defines
  ************************************************/
@@ -83,6 +85,8 @@ typedef struct PictureDecisionContext
     uint8_t       last_i_picture_sc_detection;
     uint64_t      key_poc;
 } PictureDecisionContext;
+
+void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
 {
@@ -5551,6 +5555,18 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count  * pcs_ptr->me_segments_row_count);
                             pcs_ptr->me_segments_completion_mask = 0;
+
+                            //****************************************************
+                            // Picture resizing for super-res tool
+                            //****************************************************
+
+                            // Scale picture if super-res is used
+                            if(scs_ptr->static_config.superres_mode > SUPERRES_NONE){
+                                init_resize_picture(pcs_ptr->scs_ptr,
+                                                    pcs_ptr);
+                            }
+
+                            //****************************************************
 
                             // Post the results to the ME processes
                             {

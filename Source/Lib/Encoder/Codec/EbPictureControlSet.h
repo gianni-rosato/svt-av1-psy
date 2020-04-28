@@ -873,6 +873,7 @@ typedef struct PictureParentControlSet {
     uint16_t frame_height;
 
     EbBool frame_superres_enabled;
+    uint8_t superres_denom;
 #if MUS_ME
     uint8_t prune_ref_based_me;
 #endif

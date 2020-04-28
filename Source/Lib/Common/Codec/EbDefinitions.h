@@ -1264,6 +1264,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define SCALE_NUMERATOR 8
 #define SUPERRES_SCALE_BITS 3
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)
+#define NUM_SCALES 8
 
 //*********************************************************************************************************************//
 // assert.h

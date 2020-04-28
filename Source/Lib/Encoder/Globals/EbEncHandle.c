@@ -2887,8 +2887,8 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->superres_mode > 0 && (config->input_stat_file || config->output_stat_file)){
-        SVT_LOG("Error instance %u: superres cannot be enabled in 2-pass mode yet \n", channel_number + 1);
+    if (config->superres_mode > 0 && ((config->input_stat_file || config->output_stat_file))){
+        SVT_LOG("Error instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 

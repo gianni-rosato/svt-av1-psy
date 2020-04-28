@@ -30,6 +30,7 @@
 #include "EbLog.h"
 #include "EbCoefficients.h"
 #include "EbCommonUtils.h"
+#include "EbResize.h"
 
 
 int32_t get_qzbin_factor(int32_t q, AomBitDepth bit_depth);
@@ -976,18 +977,24 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
+    // Note: local warp should be disabled when super-res is ON
+    // according to the AV1 spec 5.11.27
     frm_hdr->allow_warped_motion =
         enable_wm &&
         !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME) &&
-        !frm_hdr->error_resilient_mode;
+        !frm_hdr->error_resilient_mode &&
+        !pcs_ptr->parent_pcs_ptr->frame_superres_enabled;
+
     frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
+
     // OBMC Level                                   Settings
     // 0                                            OFF
     // 1                                            OBMC @(MVP, PME and ME) + 16 NICs
     // 2                                            OBMC @(MVP, PME and ME) + Opt NICs
     // 3                                            OBMC @(MVP, PME ) + Opt NICs
     // 4                                            OBMC @(MVP, PME ) + Opt2 NICs
-    if (scs_ptr->static_config.enable_obmc) {
+    // Note: OBMC is currently disabled when super-res is ON
+    if (scs_ptr->static_config.enable_obmc && !pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
 #if CS2_ADOPTIONS_1
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
             pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
@@ -1231,6 +1238,13 @@ static int motion_field_projection(Av1Common *cm, PictureControlSet *pcs_ptr,
     if (start_frame_buf->frame_type == KEY_FRAME || start_frame_buf->frame_type == INTRA_ONLY_FRAME)
         return 0;
 
+    // MFMV is not applied when the reference picture is of a different spatial resolution
+    // (described in the AV1 spec section 7.9.2.)
+    if (start_frame_buf->mi_rows != cm->mi_rows ||
+        start_frame_buf->mi_cols != cm->mi_cols){
+        return 0;
+    }
+
     const int                 start_frame_order_hint = start_frame_buf->order_hint;
     const unsigned int *const ref_order_hints        = &start_frame_buf->ref_order_hint[0];
     const int                 cur_order_hint         = pcs_ptr->parent_pcs_ptr->cur_order_hint;
@@ -1406,6 +1420,24 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             (RateControlResults *)rate_control_results_wrapper_ptr->object_ptr;
         pcs_ptr = (PictureControlSet *)rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+
+        // -------
+        // Scale references if resolution of the reference is different than the input
+        // -------
+        if(pcs_ptr->parent_pcs_ptr->frame_superres_enabled == 1 && pcs_ptr->slice_type != I_SLICE) {
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL){
+                // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)
+                EbReferenceObject *reference_object = pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+                reference_object->mi_rows = pcs_ptr->parent_pcs_ptr->aligned_height >> MI_SIZE_LOG2;
+                reference_object->mi_cols = pcs_ptr->parent_pcs_ptr->aligned_width >> MI_SIZE_LOG2;
+            }
+
+            scale_rec_references(pcs_ptr,
+                                 pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                                 pcs_ptr->hbd_mode_decision);
+        }
+
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
             av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
 
