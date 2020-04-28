@@ -31,6 +31,12 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(WARNING "32-bit is not supported")
 endif()
 
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+    set(X86 TRUE)
+else()
+    set(X86 FALSE)
+endif()
+
 include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
