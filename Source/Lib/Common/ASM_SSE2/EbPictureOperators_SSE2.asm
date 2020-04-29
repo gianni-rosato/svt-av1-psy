@@ -480,6 +480,8 @@ Label_PictureAverageKernel_SSE2_WIDTH16:
     ret
 
 ; ----------------------------------------------------------------------------------------
-    cglobal Log2f_SSE2
+    cglobal Log2f_ASM
+;   If (r0 == 0) then bsr return undefined behavior. For 0 return 0
+    or r0, 1
     bsr rax, r0
     ret

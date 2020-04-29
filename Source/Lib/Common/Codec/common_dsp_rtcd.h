@@ -1086,6 +1086,8 @@ extern "C" {
     RTCD_EXTERN void(*aom_lpf_vertical_6)(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
     void aom_lpf_vertical_8_c(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
     RTCD_EXTERN void(*aom_lpf_vertical_8)(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
+    uint32_t log2f_32(uint32_t x);
+    RTCD_EXTERN uint32_t(*eb_log2f)(uint32_t x);
     void eb_memcpy_c(void  *dst_ptr, void  *src_ptr, size_t size);
     RTCD_EXTERN void (*eb_memcpy)(void  *dst_ptr, void  *src_ptr, size_t size);
 #ifdef ARCH_X86
@@ -2209,6 +2211,8 @@ extern "C" {
             void aom_lpf_vertical_6_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
 
             void aom_lpf_vertical_8_sse2(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
+
+            uint32_t Log2f_ASM(uint32_t x);
 
             extern void eb_memcpy_intrin_sse (void  *dst_ptr, void  *src_ptr, size_t size);
 #endif
