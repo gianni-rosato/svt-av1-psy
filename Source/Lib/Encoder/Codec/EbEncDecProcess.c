@@ -28,6 +28,9 @@
 #if CS2_ADOPTIONS_1
 #include "EbRateDistortionCost.h"
 #endif
+#if R2R_FIX_PADDING
+#include "EbPictureDecisionProcess.h"
+#endif
 
 #define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010 110 // Fast cost skip tx search threshold.
@@ -1163,27 +1166,46 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
     EbBool is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
 
     if (!is_16bit) {
+#if R2R_FIX_PADDING
+        pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, ref_pic_ptr);
+#endif
         // Y samples
         generate_padding(ref_pic_ptr->buffer_y,
                          ref_pic_ptr->stride_y,
+#if R2R_FIX_PADDING
+                         ref_pic_ptr->width,
+                         ref_pic_ptr->height,
+#else
                          ref_pic_ptr->width - scs_ptr->max_input_pad_right,
                          ref_pic_ptr->height - scs_ptr->max_input_pad_bottom,
+#endif
                          ref_pic_ptr->origin_x,
                          ref_pic_ptr->origin_y);
 
         // Cb samples
         generate_padding(ref_pic_ptr->buffer_cb,
                          ref_pic_ptr->stride_cb,
+#if R2R_FIX_PADDING
+                         ref_pic_ptr->width >> 1,
+                         ref_pic_ptr->height >> 1,
+#else
                          (ref_pic_ptr->width - scs_ptr->max_input_pad_right) >> 1,
                          (ref_pic_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
+
+#endif
                          ref_pic_ptr->origin_x >> 1,
                          ref_pic_ptr->origin_y >> 1);
 
         // Cr samples
         generate_padding(ref_pic_ptr->buffer_cr,
                          ref_pic_ptr->stride_cr,
+#if R2R_FIX_PADDING
+                         ref_pic_ptr->width >> 1,
+                         ref_pic_ptr->height >> 1,
+#else
                          (ref_pic_ptr->width - scs_ptr->max_input_pad_right) >> 1,
                          (ref_pic_ptr->height - scs_ptr->max_input_pad_bottom) >> 1,
+#endif
                          ref_pic_ptr->origin_x >> 1,
                          ref_pic_ptr->origin_y >> 1);
     }

@@ -2993,6 +2993,10 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
 void pad_and_decimate_filtered_pic(
     PictureParentControlSet *picture_control_set_ptr_central) {
     // reference structures (padded pictures + downsampled versions)
+#if R2R_FIX_PADDING
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
+#endif
     EbPaReferenceObject *src_object =
         (EbPaReferenceObject *)
             picture_control_set_ptr_central->pa_reference_picture_wrapper_ptr->object_ptr;
@@ -3004,6 +3008,7 @@ void pad_and_decimate_filtered_pic(
                       padded_pic_ptr->origin_y * padded_pic_ptr->stride_y;
         uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
                       input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+#if !R2R_FIX_PADDING
         for (uint32_t row = 0; row < input_picture_ptr->height; row++)
             eb_memcpy(pa + row * padded_pic_ptr->stride_y,
                       in + row * input_picture_ptr->stride_y,
@@ -3015,6 +3020,22 @@ void pad_and_decimate_filtered_pic(
                          input_picture_ptr->height,
                          input_picture_ptr->origin_x,
                          input_picture_ptr->origin_y);
+#else
+        // Refine the non-8 padding
+        pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
+
+        //Generate padding first, then copy
+        generate_padding(&(input_picture_ptr->buffer_y[C_Y]),
+                         input_picture_ptr->stride_y,
+                         input_picture_ptr->width,
+                         input_picture_ptr->height,
+                         input_picture_ptr->origin_x,
+                         input_picture_ptr->origin_y);
+        for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+            eb_memcpy(pa + row * padded_pic_ptr->stride_y,
+                      in + row * input_picture_ptr->stride_y,
+                      sizeof(uint8_t) * input_picture_ptr->width);
+#endif
     }
     generate_padding(&(padded_pic_ptr->buffer_y[C_Y]),
                      padded_pic_ptr->stride_y,
@@ -3030,8 +3051,10 @@ void pad_and_decimate_filtered_pic(
                                         src_object->sixteenth_decimated_picture_ptr);
 
     // 1/4 & 1/16 input picture downsampling through filtering
+#if !R2R_FIX_PADDING
     SequenceControlSet *scs_ptr =
         (SequenceControlSet *)picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
+#endif
     if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
         downsample_filtering_input_picture(picture_control_set_ptr_central,
                                            padded_pic_ptr,
