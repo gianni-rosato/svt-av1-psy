@@ -2235,6 +2235,10 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     uint32_t frame_size;
     uint64_t curr_loc;
 
+    // Pipes contain data streams whose end we cannot know before we reach it.
+    // For pipes, we leave it up to the eof logic to detect how many frames to eventually encode.
+    if (config->input_file == stdin || config->input_file_is_fifo) return -1;
+
     if (config->input_file) {
         curr_loc = ftello(config->input_file); // get current fp location
         fseeko(config->input_file, 0L, SEEK_END);
@@ -2802,7 +2806,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
                     configs[index]->frames_to_be_encoded =
                         compute_frames_to_be_encoded(configs[index]);
 
-                if (configs[index]->frames_to_be_encoded == -1) {
+                // For pipe input it is fine if we have -1 here (we will update on end of stream)
+                if (configs[index]->frames_to_be_encoded == -1
+                    && configs[index]->input_file != stdin
+                    && !configs[index]->input_file_is_fifo) {
                     fprintf(configs[index]->error_log_file,
                             "Error instance %u: Input yuv does not contain enough frames \n",
                             index + 1);

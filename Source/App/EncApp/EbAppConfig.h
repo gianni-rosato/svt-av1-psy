@@ -181,6 +181,8 @@ typedef struct EbConfig {
     uint32_t input_padded_width;
     uint32_t input_padded_height;
 
+    // -1 indicates unknown (auto-detect at earliest opportunity)
+    // auto-detect is performed on load for files and at end of stream for pipes
     int64_t   frames_to_be_encoded;
     int32_t   frames_encoded;
     int32_t   buffered_input;
