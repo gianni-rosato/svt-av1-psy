@@ -7,7 +7,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
 
 static SvtLogLevel g_log_level;

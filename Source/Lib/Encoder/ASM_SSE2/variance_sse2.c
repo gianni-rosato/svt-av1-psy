@@ -271,6 +271,7 @@ void aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const cm, 
     (void)mi_col;
     (void)mv;
     const InterpFilterParams *filter = av1_get_filter(subpel_search);
+    assert(filter!=NULL);
     // (TODO:yunqing) 2-tap case uses 4-tap functions since there is no SIMD for
     // 2-tap yet.
     int filter_taps = (subpel_search <= USE_4_TAPS) ? 4 : SUBPEL_TAPS;

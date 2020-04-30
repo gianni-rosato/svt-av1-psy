@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include <stdlib.h>
 #include "EbPictureDecisionReorderQueue.h"
 
 EbErrorType picture_decision_reorder_entry_ctor(PictureDecisionReorderEntry *entry_ptr,

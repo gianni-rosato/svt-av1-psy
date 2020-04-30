@@ -10,25 +10,11 @@
  */
 
 #include "EbDefinitions.h"
-// #include <immintrin.h>
-// #include "convolve.h"
 #include "aom_dsp_rtcd.h"
-// #include "convolve_avx2.h"
-// #include "EbInterPrediction.h"
-// #include "EbMemory_AVX2.h"
 #include "synonyms.h"
 
 #include <assert.h>
 #include <immintrin.h>
-
-// #include "config/aom_config.h"
-
-// #include "mem.h"
-// #include "aom_integer.h"
-
-// #include "aom_dsp_common.h"
-// #include "obmc_intrinsic_ssse3.h"
-#include "synonyms.h"
 
 // Loads and stores to do away with the tedium of casting the address
 // to the right type.

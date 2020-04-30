@@ -24,8 +24,6 @@
 #include "EbPictureOperators.h"
 #include "EbComputeMean.h"
 #include "EbMeSadCalculation.h"
-#include "EbAvcStyleMcp.h"
-
 
 /**************************************
  * Instruction Set Support

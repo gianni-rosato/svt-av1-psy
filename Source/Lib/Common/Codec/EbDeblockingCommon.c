@@ -15,7 +15,6 @@
 */
 
 #include "EbDeblockingCommon.h"
-#include "EbLog.h"
 #include "EbCommonUtils.h"
 
 static const int delta_lf_id_lut[MAX_MB_PLANE][2] = {{0, 1}, {2, 2}, {3, 3}};

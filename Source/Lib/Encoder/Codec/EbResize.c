@@ -1602,6 +1602,7 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
         const uint32_t ss_y       = scs_ptr->subsampling_y;
 
         // downsample picture buffer
+        assert(pcs_ptr->enhanced_downscaled_picture_ptr);
         av1_resize_frame(input_picture_ptr,
                          pcs_ptr->enhanced_downscaled_picture_ptr,
                          pcs_ptr->enhanced_downscaled_picture_ptr->bit_depth,
@@ -1610,8 +1611,6 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                          ss_y,
                          0 // is_packed
                          );
-
-        // TODO: apply padding to enchanced picture ptr? The original one is padded
 
         // use downscaled picture instead of original res for mode decision, encoding loop etc
         // after temporal filtering and motion estimation

@@ -21,7 +21,6 @@
 #include "EbEntropyCoding.h"
 #include "EbEntropyCodingUtil.h"
 #include "EbUtility.h"
-#include "EbSvtAv1ErrorCodes.h"
 #include "EbTransforms.h"
 #include "EbEntropyCodingProcess.h"
 #include "EbCommonUtils.h"
@@ -534,6 +533,9 @@ void av1_write_tx_type(PictureParentControlSet *pcs_ptr, FRAME_CONTEXT *frame_co
                 intra_dir = fimode_to_intradir[blk_ptr->filter_intra_mode];
             else
                 intra_dir = intraDir;
+
+            assert(intra_dir < 13);
+            assert(square_tx_size < 4);
             aom_write_symbol(ec_writer,
                              av1_ext_tx_ind[tx_set_type][tx_type],
                              frame_context->intra_ext_tx_cdf[eset][square_tx_size][intra_dir],
@@ -5159,6 +5161,7 @@ static INLINE int max_block_high(const MacroBlockD *xd, BlockSize bsize, int pla
 static INLINE void txfm_partition_update(TXFM_CONTEXT *above_ctx, TXFM_CONTEXT *left_ctx,
                                          TxSize tx_size, TxSize txb_size) {
     BlockSize bsize = txsize_to_bsize[txb_size];
+    assert(bsize <BlockSizeS_ALL);
     int       bh    = mi_size_high[bsize];
     int       bw    = mi_size_wide[bsize];
     uint8_t   txw   = tx_size_wide[tx_size];
@@ -5321,6 +5324,7 @@ static void write_selected_tx_size(const MacroBlockD *xd, FRAME_CONTEXT *ec_ctx,
     if (block_signals_txsize(bsize)) {
         const TxSize  tx_size     = mbmi->tx_size;
         const int     tx_size_ctx = get_tx_size_context(xd);
+        assert(bsize < BlockSizeS_ALL);
         const int     depth       = tx_size_to_depth(tx_size, bsize);
         const int     max_depths  = bsize_to_max_depth(bsize);
         const int32_t tx_size_cat = bsize_to_tx_size_cat(bsize);

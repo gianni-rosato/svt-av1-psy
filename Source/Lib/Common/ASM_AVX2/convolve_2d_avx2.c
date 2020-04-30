@@ -15,7 +15,6 @@
 #include "common_dsp_rtcd.h"
 #include "convolve.h"
 #include "convolve_avx2.h"
-#include "synonyms.h"
 
 static void convolve_2d_sr_hor_2tap_avx2(const uint8_t *const src, const int32_t src_stride,
                                          const int32_t w, const int32_t h,

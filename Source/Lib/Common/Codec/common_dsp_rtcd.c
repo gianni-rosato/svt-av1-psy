@@ -45,7 +45,7 @@
  **************************************/
 #ifdef ARCH_X86
 // Helper Functions
-static INLINE void run_cpuid(uint32_t eax, uint32_t ecx, int32_t* abcd) {
+static INLINE void run_cpuid(uint32_t eax, uint32_t ecx, uint32_t* abcd) {
 #ifdef _WIN32
     __cpuidex(abcd, eax, ecx);
 #else
@@ -79,9 +79,9 @@ static INLINE int32_t check_xcr0_ymm() {
 }
 
 static int32_t check_4thgen_intel_core_features() {
-    int32_t abcd[4];
-    int32_t fma_movbe_osxsave_mask = ((1 << 12) | (1 << 22) | (1 << 27));
-    int32_t avx2_bmi12_mask        = (1 << 5) | (1 << 3) | (1 << 8);
+    uint32_t abcd[4];
+    uint32_t fma_movbe_osxsave_mask = ((1 << 12) | (1 << 22) | (1 << 27));
+    uint32_t avx2_bmi12_mask        = (1 << 5) | (1 << 3) | (1 << 8);
 
     /* CPUID.(EAX=01H, ECX=0H):ECX.FMA[bit 12]==1   &&
     CPUID.(EAX=01H, ECX=0H):ECX.MOVBE[bit 22]==1 &&
@@ -115,7 +115,7 @@ static INLINE int check_xcr0_zmm() {
 }
 
 static int32_t can_use_intel_avx512() {
-    int abcd[4];
+    uint32_t abcd[4];
 
     /*  CPUID.(EAX=07H, ECX=0):EBX[bit 16]==1 AVX512F
     CPUID.(EAX=07H, ECX=0):EBX[bit 17] AVX512DQ
@@ -123,11 +123,11 @@ static int32_t can_use_intel_avx512() {
     CPUID.(EAX=07H, ECX=0):EBX[bit 30] AVX512BW
     CPUID.(EAX=07H, ECX=0):EBX[bit 31] AVX512VL */
 
-    int avx512_ebx_mask = (1 << 16) // AVX-512F
-                          | (1 << 17) // AVX-512DQ
-                          | (1 << 28) // AVX-512CD
-                          | (1 << 30) // AVX-512BW
-                          | (1 << 31); // AVX-512VL
+    uint32_t avx512_ebx_mask = (1u << 16) // AVX-512F
+                             | (1u << 17) // AVX-512DQ
+                             | (1u << 28) // AVX-512CD
+                             | (1u << 30) // AVX-512BW
+                             | (1u << 31); // AVX-512VL
 
     if (!check_4thgen_intel_core_features()) return 0;
 

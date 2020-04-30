@@ -3479,6 +3479,7 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
         uint8_t              ref_idx  = get_ref_frame_idx(candidate->ref_frame_type);
         uint8_t              list_idx = get_list_idx(candidate->ref_frame_type);
 
+        assert(list_idx < MAX_NUM_OF_REF_PIC_LIST);
         EbPictureBufferDesc *reference_picture =
             ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr)
                 ->reference_picture;

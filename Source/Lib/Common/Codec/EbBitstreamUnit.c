@@ -135,8 +135,8 @@ static void od_ec_enc_normalize(OdEcEnc *enc, OdEcWindow low, unsigned rng) {
         offs    = enc->offs;
         if (offs + 2 > storage) {
             storage = 2 * storage + 2;
-            buf     = (uint16_t *)realloc(buf, sizeof(*buf) * storage);
-            if (buf == NULL) {
+            buf = realloc(enc->precarry_buf, sizeof(*buf) * storage);
+            if (!buf) {
                 enc->error = -1;
                 enc->offs  = 0;
                 return;
@@ -314,8 +314,8 @@ uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
         storage = enc->precarry_storage;
         if (offs + ((s + 7) >> 3) > storage) {
             storage = storage * 2 + ((s + 7) >> 3);
-            buf     = (uint16_t *)realloc(buf, sizeof(*buf) * storage);
-            if (buf == NULL) {
+            buf = realloc(enc->precarry_buf, sizeof(*buf) * storage);
+            if (!buf) {
                 enc->error = -1;
                 return NULL;
             }
@@ -338,8 +338,8 @@ uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     c       = OD_MAXI((s + 7) >> 3, 0);
     if (offs + c > storage) {
         storage = offs + c;
-        out     = (uint8_t *)realloc(out, sizeof(*out) * storage);
-        if (out == NULL) {
+        out = realloc(enc->buf, sizeof(*buf) * storage);
+        if (!out) {
             enc->error = -1;
             return NULL;
         }

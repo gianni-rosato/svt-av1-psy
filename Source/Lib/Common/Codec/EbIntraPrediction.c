@@ -62,7 +62,8 @@ static const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM] = {
 #define MIDRANGE_VALUE_8BIT    128
 #define MIDRANGE_VALUE_10BIT   512
 
-int is_smooth(const BlockModeInfo *block_mi, int plane) {
+int is_smooth(const BlockModeInfo *block_mi, int plane)
+{
     if (plane == 0) {
         const PredictionMode mode = block_mi->mode;
         return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED ||
@@ -79,7 +80,8 @@ int is_smooth(const BlockModeInfo *block_mi, int plane) {
     }
 }
 
-int32_t use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type) {
+int32_t use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
+{
     const int32_t d = abs(delta);
     const int32_t blk_wh = bs0 + bs1;
     if (d <= 0 || d >= 40) return 0;
@@ -88,7 +90,8 @@ int32_t use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t
 
 #define INTRA_EDGE_FILT 3
 #define INTRA_EDGE_TAPS 5
-void eb_av1_filter_intra_edge_high_c_old(uint8_t *p, int32_t sz, int32_t strength) {
+void eb_av1_filter_intra_edge_high_c_old(uint8_t *p, int32_t sz, int32_t strength)
+{
     if (!strength) return;
 
     const int32_t kernel[INTRA_EDGE_FILT][INTRA_EDGE_TAPS] = {
@@ -111,7 +114,8 @@ void eb_av1_filter_intra_edge_high_c_old(uint8_t *p, int32_t sz, int32_t strengt
     }
 }
 
-int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type) {
+int32_t intra_edge_filter_strength(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
+{
     const int32_t d = abs(delta);
     int32_t strength = 0;
 
@@ -216,7 +220,8 @@ const uint16_t eb_dr_intra_derivative[90] = {
 
 #define divide_round(value, bits) (((value) + (1 << ((bits)-1))) >> (bits))
 
-static INLINE uint16_t get_dy(int32_t angle) {
+static INLINE uint16_t get_dy(int32_t angle)
+{
     if (angle > 90 && angle < 180)
         return eb_dr_intra_derivative[angle - 90];
     else if (angle > 180 && angle < 270)
@@ -230,7 +235,8 @@ static INLINE uint16_t get_dy(int32_t angle) {
 // If angle > 0 && angle < 90, dx = -((int32_t)(256 / t));
 // If angle > 90 && angle < 180, dx = (int32_t)(256 / t);
 // If angle > 180 && angle < 270, dx = 1;
-static INLINE uint16_t get_dx(int32_t angle) {
+static INLINE uint16_t get_dx(int32_t angle)
+{
     if (angle > 0 && angle < 90)
         return eb_dr_intra_derivative[angle];
     else if (angle > 90 && angle < 180)
@@ -244,7 +250,8 @@ static INLINE uint16_t get_dx(int32_t angle) {
 // Directional prediction, zone 3: 180 < angle < 270
 void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left,
-    int32_t upsample_left, int32_t dx, int32_t dy) {
+    int32_t upsample_left, int32_t dx, int32_t dy)
+{
     int32_t y;
 
     (void)above;
@@ -278,7 +285,8 @@ void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
 }
 void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left,
-    int32_t upsample_above, int32_t dx, int32_t dy) {
+    int32_t upsample_above, int32_t dx, int32_t dy)
+{
     int32_t x;
 
     (void)left;
@@ -320,8 +328,9 @@ void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
 void eb_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left,
     int32_t upsample_above, int32_t upsample_left, int32_t dx,
-    int32_t dy) {
-    int32_t r, c, x, y, shift1, shift2, val, base1, base2;
+    int32_t dy)
+{
+    int32_t x;
 
     assert(dx > 0);
     assert(dy > 0);
@@ -331,19 +340,20 @@ void eb_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const int32_t frac_bits_y = 6 - upsample_left;
     const int32_t base_inc_x = 1 << upsample_above;
     x = -dx;
-    for (r = 0; r < bh; ++r, x -= dx, dst += stride) {
-        base1 = x >> frac_bits_x;
-        y = (r << 6) - dy;
-        for (c = 0; c < bw; ++c, base1 += base_inc_x, y -= dy) {
+    for (int32_t r = 0; r < bh; ++r, x -= dx, dst += stride) {
+        int32_t val;
+        int32_t base1 = x >> frac_bits_x;
+        int32_t y = (r << 6) - dy;
+        for (int32_t c = 0; c < bw; ++c, base1 += base_inc_x, y -= dy) {
             if (base1 >= min_base_x) {
-                shift1 = ((x * (1 << upsample_above)) & 0x3F) >> 1;
+                int32_t shift1 = ((x * (1 << upsample_above)) & 0x3F) >> 1;
                 val = above[base1] * (32 - shift1) + above[base1 + 1] * shift1;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
             else {
-                base2 = y >> frac_bits_y;
+                int32_t base2 = y >> frac_bits_y;
                 assert(base2 >= -(1 << upsample_left));
-                shift2 = ((y * (1 << upsample_left)) & 0x3F) >> 1;
+                int32_t shift2 = ((y * (1 << upsample_left)) & 0x3F) >> 1;
                 val = left[base2] * (32 - shift2) + left[base2 + 1] * shift2;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
@@ -2309,7 +2319,8 @@ void init_intra_dc_predictors_c_internal(void)
 }
 void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size,
     const uint8_t *above, const uint8_t *left,
-    int32_t upsample_above, int32_t upsample_left, int32_t angle) {
+    int32_t upsample_above, int32_t upsample_left, int32_t angle)
+{
     const int32_t dx = get_dx(angle);
     const int32_t dy = get_dy(angle);
     const int32_t bw = tx_size_wide[tx_size];
@@ -2334,7 +2345,8 @@ void dr_predictor(uint8_t *dst, ptrdiff_t stride, TxSize tx_size,
         pred[H_PRED][tx_size](dst, stride, above, left);
 }
 
-void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left) {
+void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left)
+{
     const int32_t kernel[3] = { 5, 6, 5 };
 
     int32_t s = (p_left[0] * kernel[0]) + (p_above[-1] * kernel[1]) +
@@ -2348,7 +2360,8 @@ void filter_intra_edge_corner(uint8_t *p_above, uint8_t *p_left) {
 void eb_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint16_t *above,
     const uint16_t *left, int32_t upsample_above,
-    int32_t dx, int32_t dy, int32_t bd) {
+    int32_t dx, int32_t dy, int32_t bd)
+{
     int32_t r, c, x, base, shift, val;
 
     (void)left;
@@ -2389,7 +2402,8 @@ void eb_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t b
 void eb_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint16_t *above,
     const uint16_t *left, int32_t upsample_above,
-    int32_t upsample_left, int32_t dx, int32_t dy, int32_t bd) {
+    int32_t upsample_left, int32_t dx, int32_t dy, int32_t bd)
+{
     int32_t r, c, x, y, shift, val, base;
 
     (void)bd;
@@ -2426,7 +2440,8 @@ void eb_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t b
 void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride,
     TxSize tx_size, const uint16_t *above,
     const uint16_t *left, int32_t upsample_above,
-    int32_t upsample_left, int32_t angle, int32_t bd) {
+    int32_t upsample_left, int32_t angle, int32_t bd)
+{
     const int32_t dx = get_dx(angle);
     const int32_t dy = get_dy(angle);
     const int32_t bw = tx_size_wide[tx_size];
@@ -2451,7 +2466,8 @@ void highbd_dr_predictor(uint16_t *dst, ptrdiff_t stride,
         pred_high[H_PRED][tx_size](dst, stride, above, left, bd);
 }
 
-void eb_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength) {
+void eb_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength)
+{
     if (!strength) return;
 
     const int32_t kernel[INTRA_EDGE_FILT][INTRA_EDGE_TAPS] = {
@@ -2474,7 +2490,8 @@ void eb_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength) 
     }
 }
 
-void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
+void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left)
+{
     const int32_t kernel[3] = { 5, 6, 5 };
 
     int32_t s = (p_left[0] * kernel[0]) + (p_above[-1] * kernel[1]) +
@@ -2485,7 +2502,8 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
 }
 
 /*static INLINE*/ BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x,
-    int32_t subsampling_y) {
+    int32_t subsampling_y)
+{
     BlockSize bs = bsize;
     switch (bsize) {
     case BLOCK_4X4:
@@ -2537,11 +2555,10 @@ void filter_intra_edge_corner_high(uint16_t *p_above, uint16_t *p_left) {
 
 
 
- void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
-                                          TxSize tx_size,
-                                          const uint16_t *above,
-                                          const uint16_t *left, int mode,
-                                          int bd) {
+void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
+    TxSize tx_size, const uint16_t *above, const uint16_t *left,
+    int mode, int bd)
+{
     int r, c;
     uint16_t buffer[33][33];
     const int bw = tx_size_wide[tx_size];

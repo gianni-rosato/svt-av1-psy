@@ -9,9 +9,6 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#include <math.h>
-
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

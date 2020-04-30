@@ -21,7 +21,6 @@
 #include "EbEncDecResults.h"
 #include "EbThreads.h"
 #include "EbPictureDemuxResults.h"
-#include "EbPsnr.h"
 #include "EbReferenceObject.h"
 #include "EbPictureControlSet.h"
 

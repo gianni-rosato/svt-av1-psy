@@ -222,7 +222,7 @@ void aom_upsampled_pred_c(MacroBlockD *                 xd,
     (void)mi_col;
     (void)mv;
     const InterpFilterParams *filter = av1_get_filter(subpel_search);
-
+    assert(filter!=NULL);
     if (!subpel_x_q3 && !subpel_y_q3) {
         for (int i = 0; i < height; i++) {
             memcpy(comp_pred, ref, width * sizeof(*comp_pred));

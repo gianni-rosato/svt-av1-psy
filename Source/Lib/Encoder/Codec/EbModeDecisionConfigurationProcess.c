@@ -22,7 +22,6 @@
 #include "EbModeDecisionConfigurationProcess.h"
 #include "EbRateControlResults.h"
 #include "EbEncDecTasks.h"
-#include "EbModeDecisionConfiguration.h"
 #include "EbReferenceObject.h"
 #include "EbModeDecisionProcess.h"
 #include "av1me.h"

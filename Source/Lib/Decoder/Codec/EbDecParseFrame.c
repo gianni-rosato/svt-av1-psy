@@ -13,7 +13,6 @@
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 
-#include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
 #include "EbDecBitReader.h"
 #include "EbDecProcessFrame.h"

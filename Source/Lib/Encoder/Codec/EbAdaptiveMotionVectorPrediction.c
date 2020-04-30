@@ -1485,7 +1485,7 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
 
     const int32_t    offset = mi_row * mi_stride + mi_col;
     ModeInfo *       mi_ptr = *(pcs_ptr->mi_grid_base + offset);
-    MvReferenceFrame rf[2];
+    MvReferenceFrame rf[2] = {0,0};
     if (avail_blk_flag)
         av1_set_ref_frame(rf, blk_ptr->prediction_unit_array->ref_frame_type);
 

@@ -77,8 +77,8 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
 
 #define EB_FREE(pointer)                        \
     do {                                        \
-        free(pointer);                          \
         EB_REMOVE_MEM_ENTRY(pointer, EB_N_PTR); \
+        free(pointer);                          \
         pointer = NULL;                         \
     } while (0)
 

@@ -16,8 +16,8 @@
 #include "EbVersion.h"
 #include "EbThreads.h"
 #include "EbUtility.h"
-#include "EbString.h"
 #include "EbEncHandle.h"
+#include "EbString.h"
 #include "EbPictureControlSet.h"
 #include "EbPictureOperators.h"
 #include "EbReferenceObject.h"
@@ -1811,6 +1811,7 @@ EB_API EbErrorType svt_av1_enc_init_handle(
     if (*p_handle == (EbComponentType*)NULL) {
         SVT_LOG("Error: Component Struct Malloc Failed\n");
         return_error = EB_ErrorInsufficientResources;
+        return return_error;
     }
     // Init Component OS objects (threads, semaphores, etc.)
     // also links the various Component control functions

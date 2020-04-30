@@ -13,7 +13,6 @@
 #include <tmmintrin.h>
 #include "synonyms.h"
 #include "convolve_avx2.h"
-#include "EbBlend_sse4.h"
 
 static INLINE int64_t summary_all_avx2(const __m256i *sum_all) {
     int64_t       sum;

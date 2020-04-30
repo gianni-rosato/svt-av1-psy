@@ -17,7 +17,6 @@
 #include "EbDefinitions.h"
 #include "EbPictureBufferDesc.h"
 
-#include "EbSvtAv1Dec.h"
 #include "EbDecHandle.h"
 #include "EbDecBitReader.h"
 #include "EbObuParse.h"
@@ -414,6 +413,7 @@ int read_skip(ParseCtxt *parse_ctxt, PartitionInfo *xd, int segment_id) {
 int read_skip_mode(ParseCtxt *parse_ctxt, PartitionInfo *xd, int segment_id) {
     SvtReader *         r   = &parse_ctxt->r;
     SegmentationParams *seg = &parse_ctxt->frame_header->segmentation_params;
+    assert(xd->mi->sb_type < BlockSizeS_ALL);
     if (seg_feature_active(seg, segment_id, SEG_LVL_SKIP) ||
         seg_feature_active(seg, segment_id, SEG_LVL_REF_FRAME) ||
         seg_feature_active(seg, segment_id, SEG_LVL_GLOBALMV) ||

@@ -1781,11 +1781,12 @@ static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg, BlockSize
     const uint8_t *      master;
     const int            bh = block_size_high[sb_type];
     const int            bw = block_size_wide[sb_type];
+
+    assert(wedge_index >= 0 && wedge_index < (1 << get_wedge_bits_lookup(sb_type)));
     const WedgeCodeType *a  = wedge_params_lookup[sb_type].codebook + wedge_index;
     int                  woff, hoff;
     const uint8_t        wsignflip = wedge_params_lookup[sb_type].signflip[wedge_index];
 
-    assert(wedge_index >= 0 && wedge_index < (1 << get_wedge_bits_lookup(sb_type)));
     woff   = (a->x_offset * bw) >> 3;
     hoff   = (a->y_offset * bh) >> 3;
     master = wedge_mask_obl[neg ^ wsignflip][a->direction] +

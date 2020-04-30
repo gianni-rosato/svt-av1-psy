@@ -1459,11 +1459,12 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                                                               md_pass,
                                                               candidate_ptr->is_compound);
 
-    if (candidate_ptr->is_compound)
+    if (candidate_ptr->is_compound){
+        assert(INTER_COMPOUND_OFFSET(inter_mode) < INTER_COMPOUND_MODES);
         inter_mode_bits_num +=
             candidate_ptr->md_rate_estimation_ptr
                 ->inter_compound_mode_fac_bits[mode_context][INTER_COMPOUND_OFFSET(inter_mode)];
-    else {
+    } else {
         //uint32_t newmv_ctx = mode_context & NEWMV_CTX_MASK;
         //inter_mode_bits_num = candidate_buffer_ptr->candidate_ptr->md_rate_estimation_ptr->new_mv_mode_fac_bits[mode_ctx][0];
 

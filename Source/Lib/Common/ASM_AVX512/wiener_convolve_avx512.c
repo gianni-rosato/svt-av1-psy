@@ -8,7 +8,9 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
+#include "EbDefinitions.h"
 
+#ifndef NON_AVX512_SUPPORT
 #include <assert.h>
 #include <immintrin.h>
 
@@ -16,13 +18,10 @@
 #include "convolve.h"
 #include "convolve_avx2.h"
 #include "convolve_avx512.h"
-#include "EbDefinitions.h"
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 #include "synonyms_avx512.h"
 #include "wiener_convolve_avx2.h"
-
-#ifndef NON_AVX512_SUPPORT
 
 SIMD_INLINE __m512i wiener_clip_avx512(const __m512i s, const __m512i r, const __m512i filt_center,
                                        const __m512i round_h0, const __m512i round_h1,

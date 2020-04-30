@@ -3,7 +3,6 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include <time.h>
 #include <stdio.h>
 
 #ifdef _WIN32

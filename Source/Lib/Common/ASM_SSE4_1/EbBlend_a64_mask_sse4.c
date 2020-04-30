@@ -419,6 +419,7 @@ void aom_blend_a64_mask_sse4_1(uint8_t *dst, uint32_t dst_stride, const uint8_t 
                              subx,
                              suby);
     } else {
+        assert(((w >> 2) & 3) < 3);
         blend[(w >> 2) & 3][subx != 0][suby != 0](
             dst, dst_stride, src0, src0_stride, src1, src1_stride, mask, mask_stride, w, h);
     }

@@ -75,7 +75,7 @@ static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t 
     }
     at_a = scratch;
     atb = scratch + n * n;
-
+    assert(at_a);
     for (i = 0; i < n; ++i) {
         for (j = i; j < n; ++j) {
             at_a[i * n + j] = 0.0;
@@ -230,6 +230,7 @@ static INLINE int32_t svdcmp(double **u, int32_t m, int32_t n, double w[], doubl
                 c = 0.0;
                 s = 1.0;
                 for (i = l; i <= k; i++) {
+                    assert(i > 0);
                     f      = s * rv1[i];
                     rv1[i] = c * rv1[i];
                     if ((double)(fabs(f) + anorm) == anorm) break;

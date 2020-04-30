@@ -16,7 +16,6 @@
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
-#include "EbComputeSAD.h"
 #include "aom_dsp_rtcd.h"
 #include "EbModeDecisionProcess.h"
 #include "EbAdaptiveMotionVectorPrediction.h"
