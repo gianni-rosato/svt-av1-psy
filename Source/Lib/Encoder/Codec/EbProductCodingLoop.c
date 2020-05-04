@@ -744,15 +744,16 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     if (avail_blk_flag) {
         mode_decision_update_neighbor_arrays(
             pcs_ptr, context_ptr, last_blk_index_mds, EB_FALSE);
-    }
 
-    update_mi_map(context_ptr,
+        update_mi_map(context_ptr,
                   context_ptr->blk_ptr,
                   context_ptr->blk_origin_x,
                   context_ptr->blk_origin_y,
                   context_ptr->blk_geom,
                   avail_blk_flag,
                   pcs_ptr);
+    }
+
 }
 
 void md_update_all_neighbour_arrays_multiple(PictureControlSet *  pcs_ptr,

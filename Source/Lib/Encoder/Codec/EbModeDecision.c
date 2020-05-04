@@ -3875,10 +3875,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                NEW_NEWMV
             ************* */
             if (allow_bipred) {
-                if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
-                    list1_ref_index > context_ptr->md_max_ref_count - 1)
-                    continue;
                 if (inter_direction == 2) {
+                    if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
+                        list1_ref_index > context_ptr->md_max_ref_count - 1)
+                        continue;
 #if ENHANCED_ME_MV
                     int16_t to_inject_mv_x_l0 =
                         context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds]
@@ -5860,7 +5860,7 @@ void  inject_palette_candidates(
         &tot_palette_cands);
 
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
-
+        cand_array[can_total_cnt].is_interintra_used = 0;
         palette_cand_array[cand_i].pmi.palette_size[1] = 0;
         memcpy(cand_array[can_total_cnt].palette_info.color_idx_map, palette_cand_array[cand_i].color_idx_map, 64 * 64);
         memcpy(&cand_array[can_total_cnt].palette_info.pmi, &palette_cand_array[cand_i].pmi, sizeof(PaletteModeInfo));
