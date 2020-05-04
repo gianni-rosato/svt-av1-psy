@@ -114,7 +114,6 @@ void eb_av1_txb_init_levels_c(const TranLow *const coeff, const int32_t width, c
     }
 }
 
-// TODO(angiebird): use this function whenever it's possible
 int32_t av1_transform_type_rate_estimation(uint8_t allow_update_cdf, FRAME_CONTEXT *fc,
                                            struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                            EbBool is_inter, TxSize transform_size,
@@ -1504,7 +1503,6 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
         if (have_nearmv_in_inter_mode(inter_mode)) {
             int32_t idx;
-            // TODO(jingning): Temporary solution to compensate the NEARESTMV offset.
             for (idx = 1; idx < 3; ++idx) {
                 if (blk_ptr->av1xd->ref_mv_count[candidate_ptr->ref_frame_type] > idx + 1) {
                     uint8_t drl_ctx = av1_drl_ctx(ref_mv_stack, idx);

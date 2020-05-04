@@ -210,7 +210,6 @@ static void scan_row_mbmi(const Av1Common *cm, const MacroBlockD *xd, int32_t mi
     int32_t       i;
     int32_t       col_offset = 0;
     const int32_t shift      = 0;
-    // TODO(jingning): Revisit this part after cb4x4 is stable.
     if (abs(row_offset) > 1) {
         col_offset = 1;
         if (mi_col & 0x01 && xd->n8_w < n8_w_8) --col_offset;
@@ -641,7 +640,6 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
     nearest_match[ref_frame] = (row_match_count[ref_frame] > 0) + (col_match_count[ref_frame] > 0);
     nearest_refmv_count[ref_frame] = refmv_count[ref_frame];
 
-    // TODO(yunqing): for comp_search, do it for all 3 cases.
     for (int32_t idx = 0; idx < nearest_refmv_count[ref_frame]; ++idx)
         ref_mv_stack[ref_frame][idx].weight += REF_CAT_LEVEL;
 
@@ -827,8 +825,6 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
     //CHKN finish the Tables.
 
     if (rf[1] > NONE_FRAME) {
-        // TODO(jingning, yunqing): Refactor and consolidate the compound and
-        // single reference frame modes. Reduce unnecessary redundancy.
 
         //CHKN we get here only when refMVCount=0 or 1
 
@@ -967,7 +963,6 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
             const MbModeInfo *const candidate       = &candidate_mi->mbmi;
             const int32_t           candidate_bsize = candidate->block_mi.sb_type;
 
-            // TODO(jingning): Refactor the following code.
             for (int32_t rf_idx = 0; rf_idx < 2; ++rf_idx) {
                 if (candidate->block_mi.ref_frame[rf_idx] > INTRA_FRAME) {
                     IntMv this_mv = candidate->block_mi.mv[rf_idx];
@@ -985,8 +980,6 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                     if (stack_idx == refmv_count[ref_frame]) {
                         ref_mv_stack[ref_frame][stack_idx].this_mv = this_mv;
 
-                        // TODO(jingning): Set an arbitrary small number here. The weight
-                        // doesn't matter as long as it is properly initialized.
                         ref_mv_stack[ref_frame][stack_idx].weight = 2;
                         ++refmv_count[ref_frame];
                     }
@@ -1002,7 +995,6 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
             const MbModeInfo *const candidate       = &candidate_mi->mbmi;
             const int32_t           candidate_bsize = candidate->block_mi.sb_type;
 
-            // TODO(jingning): Refactor the following code.
             for (int32_t rf_idx = 0; rf_idx < 2; ++rf_idx) {
                 if (candidate->block_mi.ref_frame[rf_idx] > INTRA_FRAME) {
                     IntMv this_mv = candidate->block_mi.mv[rf_idx];
@@ -1020,8 +1012,6 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                     if (stack_idx == refmv_count[ref_frame]) {
                         ref_mv_stack[ref_frame][stack_idx].this_mv = this_mv;
 
-                        // TODO(jingning): Set an arbitrary small number here. The weight
-                        // doesn't matter as long as it is properly initialized.
                         ref_mv_stack[ref_frame][stack_idx].weight = 2;
                         ++refmv_count[ref_frame];
                     }
@@ -1329,7 +1319,6 @@ void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
         // mbmi->ref_mv_idx (like NEWMV)
         if (mode == NEAR_NEWMV || mode == NEW_NEARMV) ref_mv_idx = 1 + drl_index;
 
-        // TODO(jingning, yunqing): Do we need a lower_mv_precision() call here?
         if (compound_ref0_mode(mode) == NEWMV)
             ref_mv[0] = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                             .ed_ref_mv_stack[ref_frame][ref_mv_idx]

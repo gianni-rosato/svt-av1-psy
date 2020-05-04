@@ -238,8 +238,8 @@ enum {
 #define NUMBER_OF_SHAPES 10
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
-#define BLOCK_MAX_COUNT_SB_128 4421 // TODO: reduce alloction for 64x64
-#define BLOCK_MAX_COUNT_SB_64 1101 // TODO: reduce alloction for 64x64
+#define BLOCK_MAX_COUNT_SB_128 4421
+#define BLOCK_MAX_COUNT_SB_64 1101
 #if TXS_DEPTH_2
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
 #else
@@ -367,9 +367,6 @@ one more than the minimum. */
 #define DIST_PRECISION_BITS 4
 #define DIST_PRECISION (1 << DIST_PRECISION_BITS) // 16
 
-// TODO(chengchen): Temporal flag serve as experimental flag for WIP
-// bitmask construction.
-// Shall be removed when bitmask code is completely checkedin
 #define LOOP_FILTER_BITMASK 0
 #define PROFILE_BITS 3
 
@@ -449,7 +446,6 @@ extern void RunEmms();
 #define AOM_INLINE __inline
 #else
 #define AOM_FORCE_INLINE __inline__ __attribute__((always_inline))
-// TODO(jbb): Allow a way to force inline off for older compilers.
 #define AOM_INLINE inline
 #endif
 
@@ -873,8 +869,6 @@ typedef enum ATTRIBUTE_PACKED {
     ADST_1D,
     FLIPADST_1D,
     IDTX_1D,
-    // TODO(sarahparker) need to eventually put something here for the
-    // mrc experiment to make this work with the ext-tx pruning functions
     TX_TYPES_1D,
 } TxType1D;
 
@@ -1041,8 +1035,6 @@ typedef enum ATTRIBUTE_PACKED {
 
 #define MAX_UPSAMPLE_SZ 16
 
-// TODO(ltrudeau) Do we really want to pack this?
-// TODO(ltrudeau) Do we match with PredictionMode?
 typedef enum ATTRIBUTE_PACKED {
     UV_DC_PRED, // Average of above and left pixels
     UV_V_PRED, // Vertical
@@ -1288,10 +1280,6 @@ typedef enum ATTRIBUTE_PACKED {
 
 // 4 scratch frames for the new frames to support a maximum of 4 cores decoding
 // in parallel, 3 for scaled references on the encoder.
-// TODO(hkuang): Add ondemand frame buffers instead of hardcoding the number
-// of framebuffers.
-// TODO(jkoleszar): These 3 extra references could probably come from the
-// normal reference pool.
 #define FRAME_BUFFERS (REF_FRAMES + 7)
 
 /* Constant values while waiting for the sequence header */
@@ -1317,8 +1305,6 @@ MAX_NUM_TEMPORAL_LAYERS * MAX_NUM_SPATIAL_LAYERS
 static INLINE int32_t is_valid_seq_level_idx(uint8_t seq_level_idx) {
     return seq_level_idx < 24 || seq_level_idx == 31;
 }
-// TODO(jingning): Turning this on to set up transform coefficient
-// processing timer.
 #define TXCOEFF_TIMER 0
 #define TXCOEFF_COST_TIMER 0
 

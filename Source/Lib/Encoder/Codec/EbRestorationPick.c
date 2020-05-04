@@ -148,8 +148,6 @@ static int64_t try_restoration_unit_seg(const RestSearchCtxt *       rsc,
 
     const Yv12BufferConfig *fts = rsc->org_frame_to_show;
 
-    // TODO(yunqing): For now, only use optimized LR filter in decoder. Can be
-    // also used in encoder.
     const int32_t optimized_lr = 0;
 
     eb_av1_loop_restoration_filter_unit(1,

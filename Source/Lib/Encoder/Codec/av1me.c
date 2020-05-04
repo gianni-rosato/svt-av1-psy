@@ -810,9 +810,6 @@ static unsigned int setup_obmc_center_error(const int32_t *mask, const MV *bestm
         v = INT_MAX;                                                                \
     }
 
-// TODO(yunqingwang): SECOND_LEVEL_CHECKS_BEST was a rewrote of
-// SECOND_LEVEL_CHECKS, and SECOND_LEVEL_CHECKS should be rewritten
-// later in the same way.
 #define SECOND_LEVEL_CHECKS_BEST(k)                                                  \
     {                                                                                \
         unsigned int second;                                                         \

@@ -24,9 +24,6 @@ double eb_aom_sse_to_psnr(double samples, double peak, double sse) {
         return MAX_PSNR;
 }
 
-/* TODO(yaowu): The block_variance calls the unoptimized versions of variance()
- * and highbd_8_variance(). It should not.
- */
 static int32_t encoder_variance(const uint8_t *a, int32_t a_stride, const uint8_t *b,
                                 int32_t b_stride, int32_t w, int32_t h) {
     int32_t i, j;

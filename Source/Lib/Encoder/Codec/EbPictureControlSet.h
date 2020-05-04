@@ -74,7 +74,6 @@ typedef struct Quants {
     DECLARE_ALIGNED(16, int16_t, y_zbin[QINDEX_RANGE][8]);
     DECLARE_ALIGNED(16, int16_t, y_round[QINDEX_RANGE][8]);
 
-    // TODO(jingning): in progress of re-working the quantization. will decide
     // if we want to deprecate the current use of y_quant.
     DECLARE_ALIGNED(16, int16_t, y_quant_fp[QINDEX_RANGE][8]);
     DECLARE_ALIGNED(16, int16_t, u_quant_fp[QINDEX_RANGE][8]);
@@ -186,7 +185,6 @@ typedef struct MeshPattern {
 } MeshPattern;
 
 typedef struct SpeedFeatures {
-    // TODO(jingning): combine the related motion search speed features
     // This allows us to use motion search at other sizes as a starting
     // point for this motion search and limits the search range around it.
     int adaptive_motion_search;
@@ -445,7 +443,7 @@ typedef struct PictureControlSet {
 
     ModeInfo *mip;
 
-    int32_t   mi_stride; // TODO: needs to be retired, use pcs_ptr->av1_cm->mi_stride instead
+    int32_t   mi_stride;
     EbReflist colocated_pu_ref_list;
     EbBool    is_low_delay;
     EbEncMode enc_mode;

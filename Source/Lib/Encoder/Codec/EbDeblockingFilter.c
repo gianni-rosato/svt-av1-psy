@@ -1287,7 +1287,6 @@ void eb_av1_pick_filter_level(DlfContext *         context_ptr,
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
-        // TODO(chengchen): retrain the model for Y, U, V filter levels
         lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level[1] = clamp(filt_guess, min_filter_level, max_filter_level);
         lf->filter_level_u  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);

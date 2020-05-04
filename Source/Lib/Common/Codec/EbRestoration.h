@@ -84,8 +84,6 @@ void eb_apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int32
 #define RESTORATION_UNITPELS_MAX (RESTORATION_UNITPELS_HORZ_MAX * RESTORATION_UNITPELS_VERT_MAX)
 
 // Two 32-bit buffers needed for the restored versions from two filters
-// TODO(debargha, rupert): Refactor to not need the large tilesize to be stored
-// on the decoder side.
 #define SGRPROJ_TMPBUF_SIZE (RESTORATION_UNITPELS_MAX * 2 * sizeof(int32_t))
 
 #define SGRPROJ_EXTBUF_SIZE (0)

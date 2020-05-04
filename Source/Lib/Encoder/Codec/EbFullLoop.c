@@ -565,8 +565,6 @@ static void quantize_fp_helper_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
     int       i, eob = -1;
     const int rounding[2] = {ROUND_POWER_OF_TWO(round_ptr[0], log_scale),
                              ROUND_POWER_OF_TWO(round_ptr[1], log_scale)};
-    // TODO(jingning) Decide the need of these arguments after the
-    // quantization process is completed.
     (void)zbin_ptr;
     (void)quant_shift_ptr;
     (void)iscan;
@@ -652,8 +650,6 @@ static void eb_highbd_quantize_fp_helper_c(
     int       i;
     int       eob   = -1;
     const int shift = 16 - log_scale;
-    // TODO(jingning) Decide the need of these arguments after the
-    // quantization process is completed.
     (void)zbin_ptr;
     (void)quant_shift_ptr;
     (void)iscan;
@@ -721,8 +717,6 @@ static void highbd_quantize_fp_helper_c(
     int       i;
     int       eob   = -1;
     const int shift = 16 - log_scale;
-    // TODO(jingning) Decide the need of these arguments after the
-    // quantization process is completed.
     (void)zbin_ptr;
     (void)quant_shift_ptr;
     (void)iscan;
@@ -1540,7 +1534,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     uint8_t *const levels = set_levels(levels_buf, width);
 
     if (*eob > 1) eb_av1_txb_init_levels(qcoeff_ptr, width, height, levels);
-    // TODO(angirbird): check iqmatrix
     const int non_skip_cost = txb_costs->txb_skip_cost[txb_skip_context][0];
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
 #if TXS_DEPTH_2

@@ -179,7 +179,6 @@ void av1_build_compound_diffwtd_mask_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_typ
 }
 
 
-/* TODO: Add scaling of reference frame support later */
 // Note: Expect val to be in q4 precision
 static INLINE int32_t scaled_x(int32_t val, const ScaleFactors *sf) {
     const int     off  = (sf->x_scale_fp - (1 << REF_SCALE_SHIFT)) * (1 << (SUBPEL_BITS - 1));

@@ -2596,7 +2596,6 @@ void av1_inverse_transform_2d_64x64_c(int32_t *input, uint32_t input_stride, int
                                       uint32_t outputStride, TxType transform_type,
                                       uint8_t bit_depth) {
     (void)input_stride;
-    // TODO(urvang): Can the same array be reused, instead of using a new array?
     // Remap 32x32 input into a modified 64x64 by:
     // - Copying over these values in top-left 32x32 locations.
     // - Setting the rest of the locations to 0.
@@ -2772,7 +2771,6 @@ void eb_av1_inv_txfm2d_add_32x32_c(const int32_t *input, uint16_t *output_r, int
 void eb_av1_inv_txfm2d_add_64x64_c(const int32_t *input, uint16_t *output_r, int32_t stride_r,
                                    uint16_t *output_w, int32_t stride_w, TxType tx_type,
                                    int32_t bd) {
-    // TODO(urvang): Can the same array be reused, instead of using a new array?
     // Remap 32x32 input into a modified 64x64 by:
     // - Copying over these values in top-left 32x32 locations.
     // - Setting the rest of the locations to 0.

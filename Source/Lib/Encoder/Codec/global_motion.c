@@ -28,8 +28,6 @@
 // Border over which to compute the global motion
 #define ERRORADV_BORDER 0
 
-// TODO(sarahparker) These need to be retuned for speed 0 and 1 to
-// maximize gains from segmented error metric
 static const double erroradv_tr[]      = {0.65, 0.60, 0.65};
 static const double erroradv_prod_tr[] = {20000, 18000, 16000};
 

@@ -305,7 +305,6 @@ void eb_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t
             by = dlist[bi].by << bsizey;
             bx = dlist[bi].bx << bsizex;
             int32_t iy, ix;
-            // TODO(stemidts/jmvalin): SIMD optimisations
             if (dst8) {
                 for (iy = 0; iy < 1 << bsizey; iy++)
                     for (ix = 0; ix < 1 << bsizex; ix++)

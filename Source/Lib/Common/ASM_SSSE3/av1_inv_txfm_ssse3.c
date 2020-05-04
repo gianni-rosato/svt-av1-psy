@@ -17,8 +17,6 @@
 #include "av1_txfm_sse2.h"
 #include "transpose_sse2.h"
 
-// TODO(binpengsmail@gmail.com): replace some for loop with do {} while
-
 // Sqrt2, Sqrt2^2, Sqrt2^3, Sqrt2^4, Sqrt2^5
 static int32_t new_sqrt2list[TX_SIZES] = {5793, 2 * 4096, 2 * 5793, 4 * 4096, 4 * 5793};
 
@@ -1643,9 +1641,6 @@ static void iadst4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bi
     }
 }
 
-// TODO(binpengsmail@gmail.com):
-// To explore the reuse of VP9 versions of corresponding SSE2 functions and
-// evaluate whether there is a possibility for further speedup.
 static void iadst4_w4_new_sse2(const __m128i *input, __m128i *output, int8_t cos_bit) {
     (void)cos_bit;
     const int32_t *sinpi         = sinpi_arr(INV_COS_BIT);

@@ -76,8 +76,6 @@ typedef struct LoopFilterWorkerData {
     EbPictureBufferDesc *   frame_buffer; //reconpicture,
     PictureControlSet *     pcs_ptr;
     struct MacroblockdPlane planes[MAX_MB_PLANE];
-    // TODO(Ranjit): When the filter functions are modified to use xd->lossless
-    // add lossless as a member here.
     MacroBlockD *xd;
 } LFWorkerData;
 

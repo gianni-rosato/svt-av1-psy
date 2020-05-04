@@ -402,8 +402,6 @@ static INLINE void highbd_transpose8x16_16x8_avx2(__m256i *x, __m256i *d) {
     d[7] = _mm256_unpackhi_epi64(ww0, ww1); // 07 17 27 37 47 57 67 77
 }
 
-// TODO(luoyi) The following two functions are shared with intrapred_sse2.c.
-// Use a header file, intrapred_common_x86.h
 static INLINE __m128i dc_sum_16_sse2(const uint8_t *ref) {
     __m128i       x    = _mm_loadu_si128((__m128i const *)ref);
     const __m128i zero = _mm_setzero_si128();

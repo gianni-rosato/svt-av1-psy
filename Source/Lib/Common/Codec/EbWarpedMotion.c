@@ -417,9 +417,6 @@ static int find_affine_int(int np, const int *pts1, const int *pts2, BlockSize b
         const int dy = pts2[i * 2 + 1] - duy;
         const int sx = pts1[i * 2] - sux;
         const int sy = pts1[i * 2 + 1] - suy;
-        // (TODO)yunqing: This comparison wouldn't be necessary if the sample
-        // selection is done in find_samples(). Also, global offset can be removed
-        // while collecting samples.
         if (abs(sx - dx) < LS_MV_MAX && abs(sy - dy) < LS_MV_MAX) {
             A[0][0] += LS_SQUARE(sx);
             A[0][1] += LS_PRODUCT1(sx, sy);
@@ -526,7 +523,6 @@ EbBool eb_find_projection(int np, int *pts1, int *pts2, BlockSize bsize, int mvy
    are set appropriately (if using a ROTZOOM model), and that alpha, beta,
    gamma, delta are all in range.
 
-   TODO(david.barker): Maybe support scaled references?
 */
 /* A note on hardware implementation:
     The warp filter is intended to be implementable using the same hardware as

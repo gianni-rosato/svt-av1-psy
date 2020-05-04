@@ -136,7 +136,7 @@ static INLINE int32_t does_level_match(int32_t width, int32_t height, double fps
 }
 
 static void set_bitstream_level_tier(SequenceControlSet *scs_ptr) {
-    // TODO(any): This is a placeholder function that only addresses dimensions
+    // This is a placeholder function that only addresses dimensions
     // and max display sample rates.
     // Need to add checks for max bit rate, max decoded luma sample rate, header
     // rate, etc. that are not covered by this function.
@@ -1824,7 +1824,6 @@ void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct
 
     if (have_nearmv_in_inter_mode(blk_ptr->pred_mode)) {
         int32_t idx;
-        // TODO(jingning): Temporary solution to compensate the NEARESTMV offset.
         for (idx = 1; idx < 3; ++idx) {
             if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
                 uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
@@ -3790,7 +3789,7 @@ static void write_global_motion(PictureParentControlSet *pcs_ptr, struct AomWrit
                                                      : &default_warp_params;
         write_global_motion_params(
             &pcs_ptr->global_motion[frame], ref_params, wb, frm_hdr->allow_high_precision_mv);
-        // TODO(sarahparker, debargha): The logic in the commented out code below
+        // The logic in the commented out code below
         // does not work currently and causes mismatches when resize is on.
         // Fix it before turning the optimization back on.
         /*

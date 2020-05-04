@@ -32,11 +32,9 @@ extern "C" {
 /********************************************************************************************************************************/
 //prob.h
 
-// TODO(negge): Rename this AomProb once we remove vpxbool.
 typedef uint16_t AomCdfProb;
 typedef struct {
     AomCdfProb *color_map_cdf;
-    // TODO( use packed enum type if appropriate)
     uint8_t token;
 } TOKENEXTRA;
 
