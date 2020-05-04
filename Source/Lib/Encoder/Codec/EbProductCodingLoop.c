@@ -2538,14 +2538,31 @@ void md_full_pel_search(ModeDecisionContext *context_ptr,
     if ((context_ptr->blk_origin_x + (mvx >> 3) + search_position_start_x) < (-ref_pic->origin_x + 1))
         search_position_start_x = (-ref_pic->origin_x + 1) - (context_ptr->blk_origin_x + (mvx >> 3));
 
+#if !BOUNDARY_CHECK
     if ((context_ptr->blk_origin_x + (mvx >> 3) + search_position_end_x) > (ref_pic->origin_x + ref_pic->max_width - 1))
         search_position_end_x = (ref_pic->origin_x + ref_pic->max_width - 1) - (context_ptr->blk_origin_x + (mvx >> 3));
+#else
+    if ((context_ptr->blk_origin_x + context_ptr->blk_geom->bwidth +
+                (mvx >> 3) + search_position_end_x) >
+            (ref_pic->origin_x + ref_pic->max_width - 1))
+        search_position_end_x = (ref_pic->origin_x + ref_pic->max_width - 1) -
+            (context_ptr->blk_origin_x + context_ptr->blk_geom->bwidth + (mvx >> 3));
+#endif
 
     if ((context_ptr->blk_origin_y + (mvy >> 3) + search_position_start_y) < (-ref_pic->origin_y + 1))
         search_position_start_y = (-ref_pic->origin_y + 1) - (context_ptr->blk_origin_y + (mvy >> 3));
 
+#if !BOUNDARY_CHECK
     if ((context_ptr->blk_origin_y + (mvy >> 3) + search_position_end_y) > (ref_pic->origin_y + ref_pic->max_height - 1))
         search_position_end_y = (ref_pic->origin_y + ref_pic->max_height - 1) - (context_ptr->blk_origin_y + (mvy >> 3) + search_position_end_y);
+#else
+    if ((context_ptr->blk_origin_y + context_ptr->blk_geom->bheight +
+                (mvy >> 3) + search_position_end_y) >
+            (ref_pic->origin_y + ref_pic->max_height - 1))
+        search_position_end_y = (ref_pic->origin_y + ref_pic->max_height - 1) -
+            (context_ptr->blk_origin_y + context_ptr->blk_geom->bheight + (mvy >> 3));
+#endif
+
 #endif
 #if RESTRUCTURE_SAD
     if (use_ssd) {
@@ -3244,7 +3261,11 @@ void    predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                             ref_pic->max_width + ref_pic->origin_x ||
                         context_ptr->blk_origin_y + (mvp_y_array[mvp_index] >> 3) +
                                 context_ptr->blk_geom->bheight >
-                            ref_pic->max_height + ref_pic->origin_y)
+                            ref_pic->max_height + ref_pic->origin_y ||
+                        context_ptr->blk_origin_x +
+                            (mvp_x_array[mvp_index] >> 3) < -ref_pic->origin_x ||
+                        context_ptr->blk_origin_y +
+                            (mvp_y_array[mvp_index] >> 3) < -ref_pic->origin_y)
                         continue;
 #endif
                     int32_t ref_origin_index =
