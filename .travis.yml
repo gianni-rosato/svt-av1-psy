@@ -24,7 +24,6 @@ addons:
 # Pipeline stages
 stages:
   - name: test
-    if: type != pull_request
 
 # Default scripts
 before_install:
