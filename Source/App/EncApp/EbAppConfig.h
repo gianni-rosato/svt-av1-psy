@@ -164,6 +164,7 @@ typedef struct EbConfig {
     EbBool        y4m_input;
     unsigned char y4m_buf[9];
     EbBool        use_qp_file;
+    EbBool        no_progress;
     uint8_t       stat_report;
     uint32_t      frame_rate;
     uint32_t      frame_rate_numerator;

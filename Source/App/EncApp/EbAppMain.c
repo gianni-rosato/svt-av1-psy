@@ -98,8 +98,6 @@ int32_t main(int32_t argc, char *argv[]) {
     uint32_t      inst_cnt     = 0;
     EbAppContext *app_callbacks[MAX_CHANNEL_NUMBER]; // Instances App callback data
     signal(SIGINT, event_handler);
-    fprintf(stderr, "-------------------------------------------\n");
-    fprintf(stderr, "SVT-AV1 Encoder\n");
     if (!get_help(argc, argv)) {
         // Get num_channels
         num_channels = get_number_of_channels(argc, argv);

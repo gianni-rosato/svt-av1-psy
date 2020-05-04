@@ -160,10 +160,6 @@ int32_t main(int32_t argc, char *argv[]) {
     uint8_t *buf             = NULL;
     size_t   bytes_in_buffer = 0, buffer_size = 0;
 
-    // Print Decoder Info
-    fprintf(stderr, "-------------------------------------\n");
-    fprintf(stderr, "SVT-AV1 Decoder\n");
-
     // Initialize config
     if (!config_ptr) return EB_ErrorInsufficientResources;
     EbComponentType *p_handle;

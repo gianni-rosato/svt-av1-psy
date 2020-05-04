@@ -1186,13 +1186,9 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
             // Release the output buffer
             svt_av1_enc_release_out_buffer(&header_ptr);
 
-#if DEADLOCK_DEBUG
             ++frame_count;
-#else
-            //++frame_count;
-            if (!(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
-                fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", ++frame_count);
-#endif
+            if (!config->no_progress && !(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
+                fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", frame_count);
 
             //++frame_count;
             fflush(stdout);

@@ -3665,22 +3665,22 @@ EbErrorType init_svt_av1_encoder_handle(
     EbErrorType       return_error = EB_ErrorNone;
     EbComponentType  *svt_enc_component = (EbComponentType*)hComponent;
     EbEncHandle      *handle;
-
+    SVT_LOG("-------------------------------------------\n");
     SVT_LOG("SVT [version]:\tSVT-AV1 Encoder Lib %s\n", SVT_AV1_CVS_VERSION);
-#if ( defined( _MSC_VER ) && (_MSC_VER >= 1920) )
+#if defined( _MSC_VER ) && (_MSC_VER >= 1920)
     SVT_LOG("SVT [build]  :\tVisual Studio 2019");
-#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1910) )
+#elif defined( _MSC_VER ) && (_MSC_VER >= 1910)
     SVT_LOG("SVT [build]  :\tVisual Studio 2017");
-#elif ( defined( _MSC_VER ) && (_MSC_VER >= 1900) )
+#elif defined( _MSC_VER ) && (_MSC_VER >= 1900)
     SVT_LOG("SVT [build]  :\tVisual Studio 2015");
-#elif ( defined( _MSC_VER ) && (_MSC_VER < 1900) )
+#elif defined( _MSC_VER )
     SVT_LOG("SVT [build]  :\tVisual Studio (old)");
 #elif defined(__GNUC__)
     SVT_LOG("SVT [build]  :\tGCC %s\t", __VERSION__);
 #else
     SVT_LOG("SVT [build]  :\tunknown compiler");
 #endif
-    SVT_LOG(" %u bit\n", (unsigned) sizeof(void*) * 8);
+    SVT_LOG(" %zu bit\n", sizeof(void*) * 8);
     SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
     SVT_LOG("-------------------------------------------\n");
 

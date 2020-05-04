@@ -41,6 +41,7 @@
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
 #define BUFFERED_INPUT_TOKEN "-nb"
+#define NO_PROGRESS_TOKEN "--no-progress"
 #define BASE_LAYER_SWITCH_MODE_TOKEN "-base-layer-switch-mode" // no Eval
 #define QP_TOKEN "-q"
 #define USE_QP_FILE_TOKEN "-use-q-file"
@@ -309,6 +310,9 @@ static void set_cfg_frames_to_be_encoded(const char *value, EbConfig *cfg) {
 static void set_buffered_input(const char *value, EbConfig *cfg) {
     cfg->buffered_input = strtol(value, NULL, 0);
 };
+static void set_no_progress(const char*value, EbConfig *cfg) {
+    cfg->no_progress = (EbBool)strtoul(value, NULL, 0);
+}
 static void set_frame_rate(const char *value, EbConfig *cfg) {
     cfg->frame_rate = strtoul(value, NULL, 0);
     if (cfg->frame_rate > 1000)
@@ -747,6 +751,7 @@ ConfigEntry config_entry_global_options[] = {
      set_cfg_frames_to_be_encoded},
 
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "Buffer n input frames", set_buffered_input},
+    {SINGLE_INPUT, NO_PROGRESS_TOKEN, "Do not print out progress", set_no_progress},
     {SINGLE_INPUT,
      ENCODER_COLOR_FORMAT,
      "Set encoder color format(EB_YUV400, EB_YUV420, EB_YUV422, EB_YUV444)",
@@ -1215,6 +1220,7 @@ ConfigEntry config_entry[] = {
     // Prediction Structure
     {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", set_buffered_input},
+    {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", set_enc_mode},
     {SINGLE_INPUT, ENCMODE2P_TOKEN, "EncoderMode2p", set_snd_pass_enc_mode},
     {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
@@ -1536,6 +1542,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hierarchical_levels                       = 4;
     config_ptr->pred_structure                            = 2;
     config_ptr->enable_global_motion                      = EB_TRUE;
+    config_ptr->no_progress                               = EB_FALSE;
     config_ptr->enable_warped_motion                      = DEFAULT;
     config_ptr->cdef_mode                                 = DEFAULT;
     config_ptr->enable_restoration_filtering              = DEFAULT;
@@ -2017,8 +2024,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         char *      token_options_format = "\t%-5s\t%-25s\t%-25s\n";
         const char *empty_string         = "";
         fprintf(stderr,
-                "\n%-25s\n",
-                "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename");
+                "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n");
         fprintf(stderr, "\n%-25s\n", "Options:");
         while (config_entry_options[++options_token_index].token != NULL) {
             uint32_t check = check_long(
