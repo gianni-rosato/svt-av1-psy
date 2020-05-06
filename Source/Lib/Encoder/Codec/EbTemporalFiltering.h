@@ -37,7 +37,6 @@
 #define BW 64
 #define BH 64
 #define BLK_PELS 4096 // Pixels in the block
-#if ENHANCED_TF
 #define TF_ENABLE_PLANEWISE_STRATEGY 1
 // Window size for plane-wise temporal filtering.
 // This is particually used for function `av1_apply_temporal_filter_planewise()`
@@ -45,7 +44,6 @@
 // A scale factor used in plane-wise temporal filtering to raise the filter
 // weight from `double` with range [0, 1] to `int` with range [0, 1000].
 #define TF_PLANEWISE_FILTER_WEIGHT_SCALE 1000
-#endif
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
 
@@ -62,11 +60,7 @@
 #define THRES_DIFF_HIGH 12000
 
 #define OD_DIVU_DMAX (1024)
-#if ENHANCED_TF
 #define AHD_TH_WEIGHT 33
-#else
-#define AHD_TH_WEIGHT 20
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -91,14 +85,12 @@ void svt_av1_apply_filtering_highbd_c(
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
     int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#if ENHANCED_TF
 void svt_av1_apply_temporal_filter_planewise_c(
     const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
     const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
     int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#endif
 #ifdef __cplusplus
 }
 #endif

@@ -197,15 +197,10 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
 }
 
 void detect_global_motion(PictureParentControlSet *pcs_ptr) {
-#if GLOBAL_WARPED_MOTION
     //initilize global motion to be OFF for all references frames.
     memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-#endif
 
-#if GLOBAL_WARPED_MOTION
-#if GLOBAL_WARPED_MOTION
     if (pcs_ptr->gm_level <= GM_DOWN) {
-#endif
         uint32_t num_of_list_to_search =
             (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
@@ -229,11 +224,7 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
                     pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_TRUE;
             }
         }
-#endif
-#if GLOBAL_WARPED_MOTION && GLOBAL_WARPED_MOTION || !GLOBAL_WARPED_MOTION
-#if GLOBAL_WARPED_MOTION && GLOBAL_WARPED_MOTION
     } else {
-#endif
         uint32_t sb_count;
         uint32_t pic_width_in_sb =
             (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
@@ -421,10 +412,7 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
                 pcs_ptr->tilt_mvy = (int16_t)(y_tilt_mv_sum / total_tilt_sbs);
             }
         }
-#if GLOBAL_WARPED_MOTION && GLOBAL_WARPED_MOTION
     }
-#endif
-#endif
 }
 
 static void initial_rate_control_context_dctor(EbPtr p) {

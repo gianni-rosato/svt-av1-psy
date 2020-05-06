@@ -56,11 +56,6 @@ typedef struct ResourceCoordinationContext {
     EbBool   start_flag;
 } ResourceCoordinationContext;
 
-#if !TILES_PARALLEL
-//Jing: move to EncHandle, since we need to know the tile count to alloc resources in child pcs
-void set_tile_info(PictureParentControlSet *pcs_ptr);
-#endif
-
 static void resource_coordination_context_dctor(EbPtr p) {
     EbThreadContext *thread_contxt_ptr = (EbThreadContext *)p;
     if (thread_contxt_ptr->priv) {
@@ -1043,9 +1038,6 @@ void *resource_coordination_kernel(void *input_ptr) {
                 eb_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             else
                 eb_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
-#if !TILES_PARALLEL
-            set_tile_info(pcs_ptr);
-#endif
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;

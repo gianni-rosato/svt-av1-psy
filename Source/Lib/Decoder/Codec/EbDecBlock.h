@@ -187,10 +187,8 @@ typedef struct PartitionInfo {
     int8_t *cdef_strength;
 
     int32_t is_chroma_ref;
-#if MC_DYNAMIC_PAD
     /*MC temp buff for dynamic padding*/
     uint8_t *mc_buf[2];
-#endif
 } PartitionInfo;
 
 #endif //EbDecBlock_h

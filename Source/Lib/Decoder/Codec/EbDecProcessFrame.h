@@ -52,10 +52,8 @@ typedef struct DecModCtxt {
 
     /*Mask for Comp mode blending*/
     DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
-#if MC_DYNAMIC_PAD
     /*MC temp buff for dynamic padding*/
     uint8_t *mc_buf[2];
-#endif
 } DecModCtxt;
 
 typedef struct LrCtxt {

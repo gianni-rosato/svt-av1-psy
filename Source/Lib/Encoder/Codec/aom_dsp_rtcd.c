@@ -328,9 +328,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     sad_loop_kernel_hme_l0 = sad_loop_kernel_c;
 
     svt_av1_apply_filtering = svt_av1_apply_filtering_c;
-#if ENHANCED_TF
     svt_av1_apply_temporal_filter_planewise = svt_av1_apply_temporal_filter_planewise_c;
-#endif
     svt_av1_apply_filtering_highbd = svt_av1_apply_filtering_highbd_c;
     combined_averaging_ssd = combined_averaging_ssd_c;
     ext_sad_calculation_8x8_16x16 = ext_sad_calculation_8x8_16x16_c;
@@ -634,11 +632,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 
                     SET_SSE41(
                         svt_av1_apply_filtering, svt_av1_apply_filtering_c, svt_av1_apply_temporal_filter_sse4_1);
-#if ENHANCED_TF
                     SET_AVX2(svt_av1_apply_temporal_filter_planewise,
                         svt_av1_apply_temporal_filter_planewise_c,
                         svt_av1_apply_temporal_filter_planewise_c);
-#endif
                     SET_SSE41(svt_av1_apply_filtering_highbd,
                         svt_av1_apply_filtering_highbd_c,
                         svt_av1_highbd_apply_temporal_filter_sse4_1);

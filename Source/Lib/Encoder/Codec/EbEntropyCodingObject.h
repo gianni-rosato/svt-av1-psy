@@ -27,7 +27,6 @@ typedef struct EntropyCoder {
     uint64_t       ec_frame_size;
 } EntropyCoder;
 
-#if TILES_PARALLEL
 typedef struct EntropyTileInfo
 {
     EbDctor           dctor;
@@ -44,7 +43,6 @@ typedef struct EntropyTileInfo
 extern EbErrorType entropy_tile_info_ctor(
         EntropyTileInfo *entropy_tile_info_ptr,
         uint32_t buf_size);
-#endif
 
 extern EbErrorType bitstream_ctor(Bitstream *bitstream_ptr, uint32_t buffer_size);
 

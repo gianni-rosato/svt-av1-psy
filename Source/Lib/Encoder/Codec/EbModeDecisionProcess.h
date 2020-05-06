@@ -24,30 +24,19 @@ extern "C" {
 /**************************************
      * Defines
      **************************************/
-#if INFR_OPT
 #define MODE_DECISION_CANDIDATE_MAX_COUNT_Y 1855
 #define MODE_DECISION_CANDIDATE_MAX_COUNT \
     (MODE_DECISION_CANDIDATE_MAX_COUNT_Y + 84)
-#else
-#define MODE_DECISION_CANDIDATE_MAX_COUNT 1855
-#endif
 #define DEPTH_ONE_STEP 21
 #define DEPTH_TWO_STEP 5
 #define DEPTH_THREE_STEP 1
 #define PRED_ME_MAX_MVP_CANIDATES 4
 #define PRED_ME_DEVIATION_TH 50
-#if CS2_ADOPTIONS_1
 #define PRED_ME_FULL_PEL_REF_WINDOW_WIDTH_15 15
 #define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_15 15
 #define PRED_ME_FULL_PEL_REF_WINDOW_WIDTH_7 7
 #define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_7 7
 #define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_5 5
-#else
-#define PRED_ME_FULL_PEL_SEARCH_WIDTH 7
-#define PRED_ME_FULL_PEL_SEARCH_HEIGHT 5
-#define PRED_ME_FULL_PEL_SEARCH_WIDTH_EXTENDED 15
-#define PRED_ME_FULL_PEL_SEARCH_HEIGHT_EXTENDED 15
-#endif
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
@@ -98,9 +87,7 @@ typedef struct MdBlkStruct {
     PartitionContextType left_neighbor_partition;
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
-#if ENHANCED_SQ_WEIGHT
     uint64_t             default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
-#endif
     CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
     uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
@@ -139,12 +126,8 @@ typedef struct ModeDecisionContext {
     ModeDecisionCandidate **      fast_candidate_ptr_array;
     ModeDecisionCandidate *       fast_candidate_array;
     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array;
-#if TXS_DEPTH_2
     ModeDecisionCandidateBuffer *candidate_buffer_tx_depth_1;
     ModeDecisionCandidateBuffer *candidate_buffer_tx_depth_2;
-#else
-    ModeDecisionCandidateBuffer * scratch_candidate_buffer;
-#endif
     MdRateEstimationContext *     md_rate_estimation_ptr;
     EbBool                        is_md_rate_estimation_ptr_owner;
     InterPredictionContext *      inter_prediction_context;
@@ -193,16 +176,8 @@ typedef struct ModeDecisionContext {
     // Lambda
     uint16_t qp;
     uint8_t  chroma_qp;
-#if NEW_MD_LAMBDA
     uint32_t fast_lambda_md[2];
     uint32_t full_lambda_md[2];
-#else
-    uint32_t fast_lambda;
-    uint32_t full_lambda;
-    uint32_t fast_chroma_lambda;
-    uint32_t full_chroma_lambda;
-    uint32_t full_chroma_lambda_sao;
-#endif
 
     //  Context Variables---------------------------------
     SuperBlock *     sb_ptr;
@@ -295,16 +270,10 @@ typedef struct ModeDecisionContext {
     uint8_t              parent_sq_has_coeff[MAX_PARENT_SQ];
     uint8_t              parent_sq_pred_mode[MAX_PARENT_SQ];
     uint8_t              chroma_level;
-#if MOVE_OPT
     uint8_t              chroma_at_last_md_stage;
-#endif
     uint8_t              full_loop_escape;
     uint8_t              global_mv_injection;
-#if ENHANCED_ME_MV
     uint8_t              perform_me_mv_1_8_pel_ref;
-#else
-    uint8_t              nx4_4xn_parent_mv_injection;
-#endif
     uint8_t              new_nearest_injection;
     uint8_t              new_nearest_near_comb_injection;
     uint8_t              warped_motion_injection;
@@ -313,33 +282,23 @@ typedef struct ModeDecisionContext {
     uint8_t              predictive_me_level;
     uint8_t              interpolation_filter_search_blk_size;
     uint8_t              redundant_blk;
-#if NICS_CLEANUP
     uint8_t              nic_level;
-#endif
-#if COMP_SIMILAR
     uint8_t              similar_blk_avail;
     uint16_t             similar_blk_mds;
     uint8_t              comp_similar_mode;
-#endif
-#if INTRA_SIMILAR
     uint8_t              inject_inter_candidates;
     uint8_t              intra_similar_mode;
-#endif
     uint8_t              skip_depth;
     uint8_t *            cfl_temp_luma_recon;
     uint16_t *           cfl_temp_luma_recon16bit;
     EbBool               spatial_sse_full_loop;
     EbBool               blk_skip_decision;
     EbBool               enable_rdoq;
-#if ENHANCED_ME_MV
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
-#endif
     int16_t              best_spatial_pred_mv[2][4][2];
     int8_t               valid_refined_mv[2][4];
     EbPictureBufferDesc *input_sample16bit_buffer;
-#if TILES_PARALLEL
     uint16_t             tile_index;
-#endif
     DECLARE_ALIGNED(16, uint8_t, pred0[2 * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, pred1[2 * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
@@ -359,15 +318,11 @@ typedef struct ModeDecisionContext {
     uint32_t md_stage_1_total_count;
     uint32_t md_stage_2_total_count;
     uint32_t md_stage_3_total_count;
-#if COMP_OPT
     uint32_t md_stage_3_total_intra_count;
-#endif
-#if CS2_ADOPTIONS_1
     uint64_t best_intra_cost;
     uint64_t best_inter_cost;
     uint16_t skip_cfl_cost_dev_th;
     uint16_t mds3_intra_prune_th;
-#endif
     uint8_t combine_class12; // 1:class1 and 2 are combined.
 
     CandClass target_class;
@@ -410,9 +365,7 @@ typedef struct ModeDecisionContext {
     uint8_t *    left_txfm_context;
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
-#if NSQ_HV
     uint32_t nsq_hv_level;
-#endif
     // signal for enabling shortcut to skip search depths
     MD_COMP_TYPE compound_types_to_try;
     uint8_t      best_me_cand_only_flag;
@@ -442,15 +395,8 @@ typedef struct ModeDecisionContext {
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
-#if !NEW_MD_LAMBDA
-                                      uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
-#endif
                                       uint8_t bit_depth, uint16_t qp_index,
-#if OMARK_LAMBDA
                                       EbBool multiply_lambda);
-#else
-                                      EbBool hbd_mode_decision);
-#endif
 
 typedef void (*EbLambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                    uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
@@ -466,10 +412,6 @@ extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
                                               EbFifo *mode_decision_output_fifo_ptr,
                                               uint8_t enable_hbd_mode_decision,
                                               uint8_t cfg_palette);
-
-#if !TILES_PARALLEL
-extern void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr);
-#endif
 
 extern void lambda_assign_low_delay(uint32_t *fast_lambda, uint32_t *full_lambda,
                                     uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
@@ -494,13 +436,8 @@ static const uint8_t quantizer_to_qindex[] = {
     128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 176, 180, 184, 188,
     192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255};
 
-#if TILES_PARALLEL
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                                 PictureControlSet *pcs_ptr, uint16_t tile_row_idx, uint32_t segment_index);
-#else
-extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
-                                PictureControlSet *pcs_ptr, uint32_t segment_index);
-#endif
 
 extern void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                        uint8_t sb_qp);

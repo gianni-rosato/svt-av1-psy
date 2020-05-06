@@ -54,10 +54,6 @@ typedef struct EncDecContext {
     uint8_t  chroma_qp;
     uint32_t fast_lambda;
     uint32_t full_lambda;
-#if !NEW_MD_LAMBDA
-    uint32_t fast_chroma_lambda;
-    uint32_t full_chroma_lambda;
-#endif
     uint32_t full_chroma_lambda_sao;
 
     //  Context Variables---------------------------------
@@ -90,11 +86,9 @@ typedef struct EncDecContext {
             evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
     uint8_t md_skip_blk;
 
-#if TILES_PARALLEL
     uint16_t tile_group_index;
     uint16_t tile_index;
     uint32_t coded_sb_count;
-#endif
 } EncDecContext;
 
 /**************************************

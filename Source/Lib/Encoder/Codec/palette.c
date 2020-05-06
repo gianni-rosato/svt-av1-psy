@@ -430,15 +430,9 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         // TODO: Try to avoid duplicate computation in cases
         // where the dominant colors and the k-means results are similar.
 
-#if CS2_ADOPTIONS_1
         int step = (pcs_ptr->parent_pcs_ptr->palette_mode == 6)
                        ? 2
                        : 1;
-#else
-        int step = (pcs_ptr->parent_pcs_ptr->palette_mode == 6 && pcs_ptr->temporal_layer_index > 0)
-                       ? 2
-                       : 1;
-#endif
         for (n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {
             for (i = 0; i < n; ++i) centroids[i] = top_colors[i];
 
@@ -450,14 +444,6 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             assert((*tot_palette_cands) <= 14);
         }
 
-#if !CS2_ADOPTIONS_1
-        if (pcs_ptr->parent_pcs_ptr->palette_mode == 3)
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == 0) return;
-
-        if (pcs_ptr->parent_pcs_ptr->palette_mode == 5 ||
-            pcs_ptr->parent_pcs_ptr->palette_mode == 6)
-            if (pcs_ptr->temporal_layer_index > 0) return;
-#endif
         // K-means clustering.
         for (n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; --n) {
             if (colors == PALETTE_MIN_SIZE) {
@@ -564,9 +550,6 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
     const int            n                 = param->n_colors;
     const int            palette_size_idx  = n - PALETTE_MIN_SIZE;
     int                  this_rate         = 0;
-#if !PALETTE_SPEEDUP
-    uint8_t              color_order[PALETTE_MAX_SIZE];
-#endif
 
     (void)plane;
 
@@ -574,13 +557,8 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
         for (int j = AOMMIN(k, cols - 1); j >= AOMMAX(0, k - rows + 1); --j) {
             int       i = k - j;
             int       color_new_idx;
-#if PALETTE_SPEEDUP
             const int color_ctx = av1_get_palette_color_index_context_optimized(
                 color_map, plane_block_width, i, j, n, &color_new_idx);
-#else
-            const int color_ctx = av1_get_palette_color_index_context(
-                color_map, plane_block_width, i, j, n, color_order, &color_new_idx);
-#endif
             assert(color_new_idx >= 0 && color_new_idx < n);
             if (calc_rate) {
                 this_rate += (*color_cost)[palette_size_idx][color_ctx][color_new_idx];
@@ -600,12 +578,7 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
             }
         }
     }
-#if PALETTE_SPEEDUP
     return this_rate;
-#else
-    if (calc_rate) return this_rate;
-    return 0;
-#endif
 }
 
 void av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,

@@ -3547,11 +3547,9 @@ void *picture_analysis_kernel(void *input_ptr) {
             pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
             sb_total_count = pic_width_in_sb * pic_height_in_sb;
 
-#if R2R_FIX_PADDING
             // Put it at the begining, for non-8 aligned case, like 426x240, padding to 432x240 first
             // Pad pictures to multiple min cu size
             pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
-#endif
             generate_padding(input_picture_ptr->buffer_y,
                              input_picture_ptr->stride_y,
                              input_picture_ptr->width,
@@ -3559,7 +3557,6 @@ void *picture_analysis_kernel(void *input_ptr) {
                              input_picture_ptr->origin_x,
                              input_picture_ptr->origin_y);
 
-#if R2R_FIX
             // Padding the chroma if over_boundary_block_mode is enabled
             if (scs_ptr->over_boundary_block_mode == 1) {
                 generate_padding(input_picture_ptr->buffer_cb,
@@ -3576,7 +3573,6 @@ void *picture_analysis_kernel(void *input_ptr) {
                         input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
                         input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
             }
-#endif
             {
                 uint8_t *pa =
                     input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
@@ -3591,11 +3587,6 @@ void *picture_analysis_kernel(void *input_ptr) {
 
             // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
             set_picture_parameters_for_statistics_gathering(scs_ptr);
-
-#if !R2R_FIX_PADDING
-            // Pad pictures to multiple min cu size
-            pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
-#endif
 
             // Pre processing operations performed on the input picture
             picture_pre_processing_operations(pcs_ptr, scs_ptr, sb_total_count);

@@ -67,7 +67,6 @@ static INLINE MV dec_clamp_mv_to_umv_border_sb(int32_t mb_to_left_edge, int32_t 
     return clamped_mv;
 }
 
-#if MC_DYNAMIC_PAD
 #define OPT_DYN_PAD        0
 void *aom_memset16(void *dest, int val, size_t length) {
     size_t i;
@@ -399,7 +398,6 @@ static INLINE void extend_mc_border(void *src, int32_t *src_stride,
         *src_stride = b_w;
     }
 }
-#endif //MC_DYNAMIC_PAD
 
 void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, int32_t src_stride,
                               void *dst_mod, int32_t dst_stride, EbDecPicBuf *ref_buf,
@@ -422,10 +420,8 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
     void *       src_mod;
     SubpelParams subpel_params;
     do_warp = do_warp && !av1_is_scaled(sf);
-#if MC_DYNAMIC_PAD
     PadBlock block;
     MV32 scaled_mv;
-#endif
 
     const int32_t is_scaled = av1_is_scaled(sf);
     if (is_scaled) {
@@ -453,12 +449,6 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         subpel_params.xs       = sf->x_step_q4;
         subpel_params.ys       = sf->y_step_q4;
 
-#if !MC_DYNAMIC_PAD
-        pos_y = pos_y >> SCALE_SUBPEL_BITS;
-        pos_x = pos_x >> SCALE_SUBPEL_BITS;
-#endif
-
-#if MC_DYNAMIC_PAD
         // Get reference block top left coordinate.
         block.x0 = pos_x >> SCALE_SUBPEL_BITS;;
         block.y0 = pos_y >> SCALE_SUBPEL_BITS;;
@@ -468,7 +458,6 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
             ((pos_x + (bw - 1) * subpel_params.xs) >> SCALE_SUBPEL_BITS) + 1;
         block.y1 =
             ((pos_y + (bh - 1) * subpel_params.ys) >> SCALE_SUBPEL_BITS) + 1;
-#endif //MC_DYNAMIC_PAD
 
         MV temp_mv;
         temp_mv = dec_clamp_mv_to_umv_border_sb(part_info->mb_to_left_edge,
@@ -480,17 +469,10 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
                                                 bh,
                                                 ss_x,
                                                 ss_y);
-#if !MC_DYNAMIC_PAD
-        MV32 scaled_mv;
-#endif
         scaled_mv = av1_scale_mv(&temp_mv, (pre_x + 0), (pre_y + 0), sf);
         scaled_mv.row += SCALE_EXTRA_OFF;
         scaled_mv.col += SCALE_EXTRA_OFF;
-#if MC_DYNAMIC_PAD
         int32_t src_offset = (block.y0 * src_stride ) + block.x0;
-#else
-        int32_t src_offset = (pos_y * src_stride) + pos_x;
-#endif
         src_mod            = (void *)((uint8_t *)src + (src_offset << highbd));
     } else {
         mv_q4 = dec_clamp_mv_to_umv_border_sb(part_info->mb_to_left_edge,
@@ -504,7 +486,6 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
                                               ss_y);
 
 
-#if MC_DYNAMIC_PAD
         // Get block position in current frame.
         int pos_x = (pre_x + 0) << SUBPEL_BITS;
         int pos_y = (pre_y + 0) << SUBPEL_BITS;
@@ -519,7 +500,6 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         block.y1 = (pos_y >> SUBPEL_BITS) + (bh - 1) + 1;
         scaled_mv.row =(int32_t) mv_q4.row;
         scaled_mv.col = (int32_t)mv_q4.col;
-#endif //MC_DYNAMIC_PAD
         int32_t src_offset = (((pre_y) + (mv_q4.row >> SUBPEL_BITS)) * src_stride) + (pre_x) +
                              (mv_q4.col >> SUBPEL_BITS);
         src_mod = (void *)((uint8_t *)src + (src_offset << highbd));
@@ -530,12 +510,10 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK) << SCALE_EXTRA_BITS;
     }
 
-#if MC_DYNAMIC_PAD
     if ((!do_warp && !is_intrabc) || (is_scaled && !do_warp && !is_intrabc)) {
         extend_mc_border(src, &src_stride, &block, scaled_mv, sf, highbd,
             part_info->mc_buf[ref], ref_buf, &src_mod, ss_x, ss_y);
     }
-#endif
     assert(IMPLIES(is_intrabc, !do_warp));
 
     if (do_warp) {

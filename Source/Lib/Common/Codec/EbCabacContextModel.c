@@ -3259,7 +3259,6 @@ int av1_get_palette_color_index_context(const uint8_t *color_map, int stride, in
     return color_index_ctx;
 }
 
-#if PALETTE_SPEEDUP
 int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
                                                   int c, int palette_size, int *color_idx) {
     assert(palette_size <= PALETTE_MAX_SIZE);
@@ -3309,7 +3308,6 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
     assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
     return color_index_ctx;
 }
-#endif
 #undef NUM_PALETTE_NEIGHBORS
 #undef MAX_COLOR_CONTEXT_HASH
 

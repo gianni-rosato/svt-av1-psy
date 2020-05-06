@@ -287,7 +287,6 @@ typedef struct MePredUnit {
 typedef struct MotionEstimationTierZero {
     MePredUnit pu[MAX_ME_PU_COUNT];
 } MotionEstimationTierZero;
-#if MUS_ME
 typedef struct HmeResults {
     uint8_t  list_i;   // list index of this ref
     uint8_t  ref_i;    // ref list index of this ref
@@ -296,7 +295,6 @@ typedef struct HmeResults {
     uint64_t hme_sad;  // hme sad
     uint8_t  do_ref;   // to process this ref in ME or not
 } HmeResults;
-#endif
 typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
@@ -321,7 +319,6 @@ typedef struct MeContext {
     uint8_t * one_d_intermediate_results_buf1;
     int16_t   x_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     int16_t   y_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#if MUS_ME_FP
     // ME Parameters
     /* Number of search positions in the horizontal direction.
     *
@@ -331,7 +328,6 @@ typedef struct MeContext {
     *
     * Default depends on input resolution. */
     uint32_t sa_height[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#endif
     uint8_t * avctemp_buffer;
     uint32_t *p_best_sad_8x8;
     uint32_t *p_best_sad_16x16;
@@ -447,10 +443,8 @@ typedef struct MeContext {
     // ME
     uint16_t search_area_width;
     uint16_t search_area_height;
-#if DIST_BASED_ME_SEARCH_AREA
     uint16_t max_me_search_width;
     uint16_t max_me_search_height;
-#endif
     uint8_t inherit_rec_mv_from_sq_block;
     uint8_t best_list_idx;
     uint8_t best_ref_idx;
@@ -466,29 +460,18 @@ typedef struct MeContext {
     uint16_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint8_t  update_hme_search_center_flag;
-#if  MUS_ME
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
-#if SKIP_ME_BASED_ON_HME
     uint32_t reduce_me_sr_flag[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
-#if SWITCHED_HALF_PEL_MODE
     EbBool local_hp_mode[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
     // ------- Context for Alt-Ref ME ------
     uint16_t adj_search_area_width;
     uint16_t adj_search_area_height;
     EbBool   me_alt_ref;
     void *   alt_ref_reference_ptr;
-#if DIST_BASED_ME_SEARCH_AREA
     // tf
     int tf_frame_index;
     int tf_index_center;
-#endif
-#if CS2_ADOPTIONS_1
     uint8_t h_pel_search_wind;
-#endif
-#if ENHANCED_TF
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t tf_16x16_block_error[16];
@@ -498,7 +481,6 @@ typedef struct MeContext {
     uint64_t tf_32x32_block_error[4];
 
     int tf_32x32_block_split_flag[4];
-#endif
     // -------
 } MeContext;
 

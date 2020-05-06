@@ -343,10 +343,8 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
         dst->me_segment_row_count_array[i]      = src->me_segment_row_count_array[i];
         dst->enc_dec_segment_col_count_array[i] = src->enc_dec_segment_col_count_array[i];
         dst->enc_dec_segment_row_count_array[i] = src->enc_dec_segment_row_count_array[i];
-#if TILES_PARALLEL
         dst->tile_group_col_count_array[i] = src->tile_group_col_count_array[i];
         dst->tile_group_row_count_array[i] = src->tile_group_row_count_array[i];
-#endif
     }
 
     dst->cdef_segment_column_count = src->cdef_segment_column_count;

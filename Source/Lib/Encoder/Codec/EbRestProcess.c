@@ -505,9 +505,6 @@ void *rest_kernel(void *input_ptr) {
         pcs_ptr          = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr          = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         frm_hdr          = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-#if !TILES_PARALLEL
-        uint8_t sb_size_log2 = (uint8_t)eb_log2f(scs_ptr->sb_size_pix);
-#endif
         EbBool     is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 
@@ -614,7 +611,6 @@ void *rest_kernel(void *input_ptr) {
                 // Post Reference Picture
                 eb_post_full_object(picture_demux_results_wrapper_ptr);
             }
-#if TILES_PARALLEL
             //Jing: TODO
             //Consider to add parallelism here, sending line by line, not waiting for a full frame
             int sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
@@ -643,18 +639,6 @@ void *rest_kernel(void *input_ptr) {
                     eb_post_full_object(rest_results_wrapper_ptr);
                 }
             }
-#else
-
-            // Get Empty rest Results to EC
-            eb_get_empty_object(context_ptr->rest_output_fifo_ptr, &rest_results_wrapper_ptr);
-            rest_results_ptr = (struct RestResults *)rest_results_wrapper_ptr->object_ptr;
-            rest_results_ptr->pcs_wrapper_ptr              = cdef_results_ptr->pcs_wrapper_ptr;
-            rest_results_ptr->completed_sb_row_index_start = 0;
-            rest_results_ptr->completed_sb_row_count =
-                ((scs_ptr->seq_header.max_frame_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
-            // Post Rest Results
-            eb_post_full_object(rest_results_wrapper_ptr);
-#endif
         }
         eb_release_mutex(pcs_ptr->rest_search_mutex);
 

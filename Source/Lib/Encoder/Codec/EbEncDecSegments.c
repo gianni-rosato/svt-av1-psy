@@ -67,13 +67,11 @@ void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, u
                            uint32_t pic_width_sb, uint32_t pic_height_sb) {
     unsigned x, y, y_last;
     unsigned row_index, band_index, segment_index;
-#if TILES_PARALLEL
     segColCount = (segColCount < pic_width_sb) ? segColCount : pic_width_sb;
     segRowCount = (segRowCount < pic_height_sb) ? segRowCount : pic_height_sb;
     segRowCount = (segRowCount < segments_ptr->segment_max_row_count)
                       ? segRowCount
                       : segments_ptr->segment_max_row_count;
-#endif
 
     segments_ptr->sb_row_count       = pic_height_sb;
     segments_ptr->sb_band_count      = BAND_TOTAL_COUNT(pic_height_sb, pic_width_sb);

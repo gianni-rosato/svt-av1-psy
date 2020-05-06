@@ -927,7 +927,6 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 blk_geom_mds[*idx_mds].tx_height_uv[tx_depth][txb_itr] =
                     blk_geom_mds[*idx_mds].tx_height_uv[0][0];
             }
-#if TXS_DEPTH_2
             // tx_depth 2 geom settings
             tx_depth = 2;
 
@@ -1322,7 +1321,6 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                 blk_geom_mds[*idx_mds].tx_height_uv[tx_depth][txb_itr] =
                     blk_geom_mds[*idx_mds].tx_height_uv[0][0];
             }
-#endif
             blk_geom_mds[*idx_mds].blkidx_mds = (*idx_mds);
             (*idx_mds)                        = (*idx_mds) + 1;
         }

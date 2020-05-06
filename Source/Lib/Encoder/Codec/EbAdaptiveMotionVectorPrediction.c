@@ -1895,13 +1895,8 @@ EbBool warped_motion_parameters(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, 
     if (nsamples == 0) return apply_wm;
 
     MV mv;
-#if WARP_IMPROVEMENT
     mv.col = mv_unit->mv[mv_unit->pred_direction % BI_PRED].x;
     mv.row = mv_unit->mv[mv_unit->pred_direction % BI_PRED].y;
-#else
-    mv.col = mv_unit->mv[REF_LIST_0].x;
-    mv.row = mv_unit->mv[REF_LIST_0].y;
-#endif
     if (nsamples > 1) nsamples = select_samples(&mv, pts, pts_inref, nsamples, bsize);
     *num_samples = nsamples;
 

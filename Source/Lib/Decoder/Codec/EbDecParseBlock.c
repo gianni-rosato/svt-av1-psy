@@ -1787,11 +1787,7 @@ static INLINE void read_coeffs_reverse(SvtReader *r, TxSize tx_size, TxType tx_t
         const int nsymbs    = 4;
         int       level     = svt_read_symbol(r, base_cdf[coeff_ctx], nsymbs, ACCT_STR);
         if (level > NUM_BASE_LEVELS) {
-#if TXS_DEPTH_2
             const int br_ctx = get_br_ctx(levels, pos, bwl, tx_class);
-#else
-            const int   br_ctx = get_br_ctx(levels, pos, bwl, tx_type);
-#endif
             AomCdfProb *cdf    = br_cdf[br_ctx];
             for (int idx = 0; idx < COEFF_BASE_RANGE; idx += BR_CDF_SIZE - 1) {
                 const int k = svt_read_symbol(r, cdf, BR_CDF_SIZE, ACCT_STR);

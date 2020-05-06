@@ -29,7 +29,6 @@ typedef struct PictureManagerContext {
     EbFifo *picture_control_set_fifo_ptr;
 } PictureManagerContext;
 
-#if TILES_PARALLEL
 // Token buffer is only used for palette tokens.
 static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size_log2,
                                            const int num_planes) {
@@ -45,7 +44,6 @@ static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size
 
     return sb_rows * sb_cols * sb_palette_toks;
 }
-#endif
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 /************************************************
  * Defines
@@ -845,9 +843,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->enc_mode = entry_pcs_ptr->enc_mode;
                         child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
 
-#if TILES_PARALLEL
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
-#endif
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->rst_tmpbuf = child_pcs_ptr->rst_tmpbuf;
 
                         //3.make all  init for ChildPCS
@@ -859,7 +855,6 @@ void *picture_manager_kernel(void *input_ptr) {
                                        entry_scs_ptr->sb_size_pix - 1) /
                                       entry_scs_ptr->sb_size_pix);
 
-#if TILES_PARALLEL
                         set_tile_info(entry_pcs_ptr);
 
                         int      sb_size_log2    = entry_scs_ptr->seq_header.sb_size_log2;
@@ -1016,78 +1011,10 @@ void *picture_manager_kernel(void *input_ptr) {
                             copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr, child_pcs_ptr->input_frame16bit);
                         }
 
-#else
-                        child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
-
-                        if(entry_pcs_ptr->frame_superres_enabled){
-                            // Modify sb_prt_array in child pcs
-                            uint16_t    sb_index;
-                            uint16_t    sb_origin_x = 0;
-                            uint16_t    sb_origin_y = 0;
-                            for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count_pix; ++sb_index) {
-                                largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
-                                largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
-                                                         (uint8_t)scs_ptr->sb_size_pix,
-                                                         (uint16_t)(sb_origin_x * scs_ptr->sb_size_pix),
-                                                         (uint16_t)(sb_origin_y * scs_ptr->sb_size_pix),
-                                                         (uint16_t)sb_index,
-                                                         child_pcs_ptr);
-                                // Increment the Order in coding order (Raster Scan Order)
-                                sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
-                                sb_origin_x = (sb_origin_x == pic_width_in_sb - 1) ? 0 : sb_origin_x + 1;
-                            }
-                        }
-
-                        // Update pcs_ptr->mi_stride
-                        child_pcs_ptr->mi_stride = pic_width_in_sb * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
-
-                        // copy buffer info from the downsampled picture to the input frame 16 bit buffer
-                        if(entry_pcs_ptr->frame_superres_enabled && scs_ptr->static_config.encoder_bit_depth > EB_8BIT){
-                            copy_buffer_info(entry_pcs_ptr->enhanced_downscaled_picture_ptr, child_pcs_ptr->input_frame16bit);
-                        }
-
-                        uint32_t enc_dec_seg_w = (scs_ptr->static_config.super_block_size == 128) ?
-                                                 ((entry_pcs_ptr->aligned_width + 64) / 128) :
-                                                 ((entry_pcs_ptr->aligned_width + 32) / 64);
-
-                        // EncDec Segments
-                        enc_dec_segments_init(child_pcs_ptr->enc_dec_segment_ctrl,
-                                              enc_dec_seg_w,
-                                              entry_scs_ptr->enc_dec_segment_row_count_array
-                                                  [entry_pcs_ptr->temporal_layer_index],
-                                              pic_width_in_sb,
-                                              picture_height_in_sb);
-
-                        // Entropy Coding Rows
-                        {
-                            unsigned row_index;
-
-                            child_pcs_ptr->entropy_coding_current_row           = 0;
-                            child_pcs_ptr->entropy_coding_current_available_row = 0;
-                            child_pcs_ptr->entropy_coding_row_count   = picture_height_in_sb;
-                            child_pcs_ptr->entropy_coding_in_progress = EB_FALSE;
-
-                            for (row_index = 0; row_index < MAX_SB_ROWS; ++row_index)
-                                child_pcs_ptr->entropy_coding_row_array[row_index] = EB_FALSE;
-                        }
-#endif
-
 //                        child_pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr = child_pcs_ptr;
-#if !TILES_PARALLEL
-                        struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->parent_pcs_ptr;
-                        Av1Common *const                cm       = ppcs_ptr->av1_cm;
-                        int                             tile_row, tile_col;
-                        uint32_t                        x_sb_index, y_sb_index;
-                        const int tile_cols = ppcs_ptr->av1_cm->tiles_info.tile_cols;
-                        const int tile_rows = ppcs_ptr->av1_cm->tiles_info.tile_rows;
-                        TileInfo  tile_info;
-                        int       sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
-#endif
-#if TILES_PARALLEL
                         // Palette
                         TOKENEXTRA * pre_tok  = child_pcs_ptr->tile_tok[0][0];
                         unsigned int tile_tok = 0;
-#endif
                         //Tile Loop
                         for (tile_row = 0; tile_row < tile_rows; tile_row++) {
                             eb_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
@@ -1095,7 +1022,6 @@ void *picture_manager_kernel(void *input_ptr) {
                             for (tile_col = 0; tile_col < tile_cols; tile_col++) {
                                 eb_av1_tile_set_col(
                                     &tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
-#if TILES_PARALLEL
                                 tile_info.tile_rs_index = tile_col + tile_row * tile_cols;
 
                                 // Palette
@@ -1110,7 +1036,6 @@ void *picture_manager_kernel(void *input_ptr) {
                                     tile_tok = get_token_alloc(
                                         tile_mb_rows, tile_mb_cols, (sb_size_log2 + 2), 2);
                                 }
-#endif
                                 for ((y_sb_index = cm->tiles_info.tile_row_start_mi[tile_row] >>
                                                    sb_size_log2);
                                      (y_sb_index <
@@ -1200,15 +1125,10 @@ void *picture_manager_kernel(void *input_ptr) {
                                             ((EbReferenceObject *)reference_entry_ptr
                                                  ->reference_object_ptr->object_ptr)
                                                 ->frame_context;
-#if PRED_STR_UPDATE
                                         if (max_temporal_index <
                                                 (int8_t)reference_entry_ptr->temporal_layer_index &&
                                             (int8_t)reference_entry_ptr->temporal_layer_index <=
                                                 child_pcs_ptr->temporal_layer_index) {
-#else
-                                        if (max_temporal_index <
-                                            (int8_t)reference_entry_ptr->temporal_layer_index) {
-#endif
                                             max_temporal_index =
                                                 (int8_t)reference_entry_ptr->temporal_layer_index;
                                             ref_index =
@@ -1290,19 +1210,12 @@ void *picture_manager_kernel(void *input_ptr) {
                                             ((EbReferenceObject *)reference_entry_ptr
                                                  ->reference_object_ptr->object_ptr)
                                                 ->frame_context;
-#if PRED_STR_UPDATE
                                         if (max_temporal_index <
                                                 (int8_t)reference_entry_ptr->temporal_layer_index &&
                                             reference_entry_ptr->slice_type != I_SLICE &&
                                             (int8_t)reference_entry_ptr->temporal_layer_index <=
                                                 child_pcs_ptr->temporal_layer_index) {
 
-#else
-                                        if (max_temporal_index <
-                                                (int8_t)reference_entry_ptr->temporal_layer_index &&
-                                            reference_entry_ptr->slice_type !=
-                                                I_SLICE /* && child_pcs_ptr->temporal_layer_index != 0*/) {
-#endif
                                             max_temporal_index =
                                                 (int8_t)reference_entry_ptr->temporal_layer_index;
                                             ref_index =

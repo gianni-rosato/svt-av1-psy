@@ -363,7 +363,6 @@ EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
         iq_size * sizeof(int32_t), EB_N_PTR);
     av1_inverse_qm_init(p_dec_mod_ctxt, seq_header);
 
-#if MC_DYNAMIC_PAD
     EbColorConfig *cc = &dec_handle_ptr->seq_header.color_config;
     uint32_t use_highbd = (cc->bit_depth > EB_8BIT ||
         dec_handle_ptr->is_16bit_pipeline);
@@ -387,8 +386,6 @@ EbErrorType init_dec_mod_ctxt(EbDecHandle  *dec_handle_ptr,
                 sizeof(uint8_t), EB_N_PTR);
         }
     }
-
-#endif //MC_DYNAMIC_PAD
 
     return return_error;
 }

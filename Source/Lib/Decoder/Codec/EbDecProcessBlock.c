@@ -170,10 +170,8 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
     part_info.mi_row      = mi_row;
     part_info.mi_col      = mi_col;
     part_info.pv_cfl_ctxt = &dec_mod_ctxt->cfl_ctx;
-#if MC_DYNAMIC_PAD
     part_info.mc_buf[0] = dec_mod_ctxt->mc_buf[0];
     part_info.mc_buf[1] = dec_mod_ctxt->mc_buf[1];
-#endif
     part_info.is_chroma_ref = is_chroma_ref;
 
     /*!< Distance of MB away from frame edges in subpixels (1/8th pixel). */

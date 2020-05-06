@@ -217,9 +217,6 @@ typedef struct PictureControlSet {
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
     EbObjectWrapper *               picture_parent_control_set_wrapper_ptr;
-#if !TILES_PARALLEL
-    EntropyCoder *entropy_coder_ptr;
-#endif
     // Packetization (used to encode SPS, PPS, etc)
     Bitstream *bitstream_ptr;
 
@@ -235,28 +232,14 @@ typedef struct PictureControlSet {
     uint64_t      picture_number;
     uint8_t       temporal_layer_index;
     EbColorFormat color_format;
-#if TILES_PARALLEL
     EncDecSegments **enc_dec_segment_ctrl;
     uint16_t         enc_dec_coded_sb_count;
-#else
-    EncDecSegments *   enc_dec_segment_ctrl;
-#endif
 
     // Entropy Process Rows
-#if TILES_PARALLEL
     EntropyTileInfo **entropy_coding_info;
     EbHandle          entropy_coding_pic_mutex;
     EbBool            entropy_coding_pic_reset_flag;
     uint8_t           tile_size_bytes_minus_1;
-#else
-    int8_t             entropy_coding_current_available_row;
-    EbBool             entropy_coding_row_array[MAX_SB_ROWS];
-    int8_t             entropy_coding_current_row;
-    int8_t             entropy_coding_row_count;
-    EbHandle           entropy_coding_mutex;
-    EbBool             entropy_coding_in_progress;
-    EbBool             entropy_coding_pic_done;
-#endif
     EbHandle intra_mutex;
     uint32_t intra_coded_area;
     uint32_t tot_seg_searched_cdef;
@@ -294,7 +277,6 @@ typedef struct PictureControlSet {
     EntropyCoder *coeff_est_entropy_coder_ptr;
 
     // Mode Decision Neighbor Arrays
-#if TILES_PARALLEL
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_intra_chroma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_mv_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -303,18 +285,14 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **md_leaf_depth_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#if TXS_DEPTH_2
     NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#endif
     NeighborArrayUnit **md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
     uint8_t             hbd_mode_decision;
     NeighborArrayUnit **md_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#if TXS_DEPTH_2
     NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#endif
     NeighborArrayUnit **md_cb_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_cr_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_skip_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -330,40 +308,8 @@ typedef struct PictureControlSet {
     NeighborArrayUnit32 **md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
     NeighborArrayUnit **mdleaf_partition_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#else
-    NeighborArrayUnit *md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_intra_chroma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_mv_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_leaf_depth_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_cb_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_cr_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-
-    uint8_t            hbd_mode_decision;
-    NeighborArrayUnit *md_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_tx_depth_1_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_cb_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_cr_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_skip_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit
-        *md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_cb_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_cr_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_txfm_context_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_inter_pred_dir_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-    NeighborArrayUnit *md_ref_frame_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-
-    NeighborArrayUnit32 *md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-
-    NeighborArrayUnit *mdleaf_partition_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#endif
 
     // Encode Pass Neighbor Arrays
-#if TILES_PARALLEL
     NeighborArrayUnit **ep_intra_luma_mode_neighbor_array;
     NeighborArrayUnit **ep_intra_chroma_mode_neighbor_array;
     NeighborArrayUnit **ep_mv_neighbor_array;
@@ -380,27 +326,8 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **ep_cr_dc_sign_level_coeff_neighbor_array;
     NeighborArrayUnit **ep_cb_dc_sign_level_coeff_neighbor_array;
     NeighborArrayUnit **ep_partition_context_neighbor_array;
-#else
-    NeighborArrayUnit *ep_intra_luma_mode_neighbor_array;
-    NeighborArrayUnit *ep_intra_chroma_mode_neighbor_array;
-    NeighborArrayUnit *ep_mv_neighbor_array;
-    NeighborArrayUnit *ep_skip_flag_neighbor_array;
-    NeighborArrayUnit *ep_mode_type_neighbor_array;
-    NeighborArrayUnit *ep_leaf_depth_neighbor_array;
-    NeighborArrayUnit *ep_luma_recon_neighbor_array;
-    NeighborArrayUnit *ep_cb_recon_neighbor_array;
-    NeighborArrayUnit *ep_cr_recon_neighbor_array;
-    NeighborArrayUnit *ep_luma_recon_neighbor_array16bit;
-    NeighborArrayUnit *ep_cb_recon_neighbor_array16bit;
-    NeighborArrayUnit *ep_cr_recon_neighbor_array16bit;
-    NeighborArrayUnit *ep_luma_dc_sign_level_coeff_neighbor_array;
-    NeighborArrayUnit *ep_cr_dc_sign_level_coeff_neighbor_array;
-    NeighborArrayUnit *ep_cb_dc_sign_level_coeff_neighbor_array;
-    NeighborArrayUnit *ep_partition_context_neighbor_array;
-#endif
 
     // Entropy Coding Neighbor Arrays
-#if TILES_PARALLEL
     NeighborArrayUnit **mode_type_neighbor_array;
     NeighborArrayUnit **partition_context_neighbor_array;
     NeighborArrayUnit **intra_luma_mode_neighbor_array;
@@ -418,25 +345,6 @@ typedef struct PictureControlSet {
     NeighborArrayUnit32 **interpolation_type_neighbor_array;
 
     NeighborArrayUnit **segmentation_id_pred_array;
-#else
-    NeighborArrayUnit *mode_type_neighbor_array;
-    NeighborArrayUnit *partition_context_neighbor_array;
-    NeighborArrayUnit *intra_luma_mode_neighbor_array;
-    NeighborArrayUnit *skip_flag_neighbor_array;
-    NeighborArrayUnit *skip_coeff_neighbor_array;
-    NeighborArrayUnit *
-        luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit *
-        cr_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit *
-                         cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
-    NeighborArrayUnit *  txfm_context_array;
-    NeighborArrayUnit *  inter_pred_dir_neighbor_array;
-    NeighborArrayUnit *  ref_frame_type_neighbor_array;
-    NeighborArrayUnit32 *interpolation_type_neighbor_array;
-
-    NeighborArrayUnit *segmentation_id_pred_array;
-#endif
     SegmentationNeighborMap *segmentation_neighbor_map;
 
     ModeInfo **mi_grid_base; //2 SB Rows of mi Data are enough
@@ -447,15 +355,9 @@ typedef struct PictureControlSet {
     EbReflist colocated_pu_ref_list;
     EbBool    is_low_delay;
     EbEncMode enc_mode;
-#if TILES_PARALLEL
     int32_t     cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo  wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];
     SgrprojInfo sgrproj_info[MAX_TILE_CNTS][MAX_MB_PLANE];
-#else
-    int32_t            cdef_preset[4];
-    WienerInfo         wiener_info[MAX_MB_PLANE];
-    SgrprojInfo        sgrproj_info[MAX_MB_PLANE];
-#endif
     SpeedFeatures    sf;
     SearchSiteConfig ss_cfg; //CHKN this might be a seq based
     HashTable        hash_table;
@@ -472,11 +374,9 @@ typedef struct PictureControlSet {
     TPL_MV_REF *                    tpl_mvs;
     uint8_t                         pic_filter_intra_mode;
     TOKENEXTRA *                    tile_tok[64][64];
-#if TILES_PARALLEL
     //Put it here for deinit, don't need to go pcs->ppcs->av1_cm which may already be released
     uint16_t tile_row_count;
     uint16_t tile_column_count;
-#endif
     uint16_t sb_total_count_pix;
     uint16_t sb_total_count_unscaled;
     // pointer to a scratch buffer used by self-guided restoration
@@ -513,7 +413,6 @@ typedef struct SbGeom {
     EbBool   block_is_allowed[BLOCK_MAX_COUNT_SB_128];
 } SbGeom;
 
-#if TILES_PARALLEL
 typedef struct TileGroupInfo {
     uint16_t tile_group_sb_start_x;
     uint16_t tile_group_sb_start_y;
@@ -527,7 +426,6 @@ typedef struct TileGroupInfo {
     uint16_t tile_group_tile_end_x;
     uint16_t tile_group_tile_end_y;
 } TileGroupInfo;
-#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -559,14 +457,12 @@ typedef struct PictureParentControlSet {
     EbLinkedListNode *app_out_data_ll_head_ptr;
 
     EbBufferHeaderType *input_ptr; // input picture buffer
-#if TILES_PARALLEL
     uint8_t        log2_tile_rows;
     uint8_t        log2_tile_cols;
     uint8_t        log2_sb_sz;
     TileGroupInfo *tile_group_info;
     uint8_t        tile_group_cols;
     uint8_t        tile_group_rows;
-#endif
 
     EbBool           idr_flag;
     EbBool           cra_flag;
@@ -585,10 +481,8 @@ typedef struct PictureParentControlSet {
     EbBool           is_used_as_reference_flag;
     uint8_t          ref_list0_count;
     uint8_t          ref_list1_count;
-#if MRP_CTRL
     uint8_t          ref_list0_count_try;  //The number of references to try (in ME / MD) in list0.Should be <= ref_list0_count.
     uint8_t          ref_list1_count_try;  // The number of references to try (in ME/MD) in list1. Should be <= ref_list1_count.
-#endif
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t          tot_ref_frame_types;
     // Rate Control
@@ -729,17 +623,10 @@ typedef struct PictureParentControlSet {
     // Global quant matrix tables
     const QmVal *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
     const QmVal *gqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
-#if QUANT_CLEANUP
     Quants quants_bd; // follows input bit depth
     Dequants deq_bd;  // follows input bit depth
     Quants quants_8bit;  // 8bit
     Dequants deq_8bit; // 8bit
-#else
-    Quants       quants;
-    Dequants     deq;
-    Quants       quants_md;
-    Dequants     deq_md;
-#endif
     int32_t      min_qmlevel;
     int32_t      max_qmlevel;
     // Encoder
@@ -755,11 +642,7 @@ typedef struct PictureParentControlSet {
     int32_t                 nb_cdef_strengths;
     // Resolution of delta quant
     int32_t monochrome;
-#if TILES_PARALLEL
     int32_t prev_qindex[MAX_TILE_CNTS];
-#else
-    int32_t            prev_qindex;
-#endif
 
     // Since actual frame level loop filtering level value is not available
     // at the beginning of the tile (only available during actual filtering)
@@ -814,9 +697,7 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
     uint8_t                         altref_strength;
-#if ENHANCED_TF
     double                          noise_levels[MAX_MB_PLANE];
-#endif
     int32_t                         pic_decision_reorder_queue_idx;
     struct PictureParentControlSet *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
     EbByte                          save_enhanced_picture_ptr[3];
@@ -848,9 +729,7 @@ typedef struct PictureParentControlSet {
     struct StatStruct stat_struct; // stat_struct used in the second pass
     uint64_t          referenced_area_avg; // average referenced area per frame
     uint8_t           referenced_area_has_non_zero;
-#if GLOBAL_WARPED_MOTION
     uint8_t gm_level;
-#endif
     uint8_t tx_size_early_exit;
 
     SbParams *sb_params_array;
@@ -872,9 +751,7 @@ typedef struct PictureParentControlSet {
 
     EbBool frame_superres_enabled;
     uint8_t superres_denom;
-#if MUS_ME
     uint8_t prune_ref_based_me;
-#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {
@@ -908,7 +785,6 @@ typedef struct PictureControlSetInitData {
     uint8_t   nsq_present;
     uint8_t   over_boundary_block_mode;
     uint8_t   mfmv;
-#if TILES_PARALLEL
     //init value for child pcs
     uint8_t tile_row_count;
     uint8_t tile_column_count;
@@ -917,16 +793,11 @@ typedef struct PictureControlSetInitData {
     uint8_t log2_tile_rows; //from command line
     uint8_t log2_tile_cols;
     uint8_t log2_sb_sz; //in mi unit
-#endif
-#if OIS_MEM
     uint8_t allocate_ois_struct; //allocate ois results
-#endif
     EbBool is_16bit_pipeline;
 
-#if NON8_FIX_REST
     uint16_t  non_m8_pad_w;
     uint16_t  non_m8_pad_h;
-#endif
 
 } PictureControlSetInitData;
 

@@ -131,17 +131,10 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
     uint16_t       frame_width  = frame_info->frame_size.frame_width;
     uint16_t       frame_height = frame_info->frame_size.frame_height;
     EbColorConfig *cc           = &seq_header->color_config;
-#if MC_DYNAMIC_PAD
     size_t y_size = (frame_width + 2 * DEC_PAD_VALUE) * (frame_height + 2 * DEC_PAD_VALUE);
     size_t uv_size = cc->mono_chrome ? 0 :
                      (((frame_width + 2 * DEC_PAD_VALUE) >> cc->subsampling_x) *
                       ((frame_height + 2 * DEC_PAD_VALUE) >> cc->subsampling_y));
-#else
-    size_t         y_size       = (frame_width + 2 * PAD_VALUE) * (frame_height + 2 * PAD_VALUE);
-    size_t         uv_size      = cc->mono_chrome ? 0
-                                     : (((frame_width + 2 * PAD_VALUE) >> cc->subsampling_x) *
-                                        ((frame_height + 2 * PAD_VALUE) >> cc->subsampling_y));
-#endif
     size_t frame_size = y_size + uv_size;
 
     if (ps_pic_mgr->as_dec_pic[i].size < frame_size) {
@@ -157,17 +150,10 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
         input_pic_buf_desc_init_data.buffer_enable_mask =
             cc->mono_chrome ? PICTURE_BUFFER_DESC_LUMA_MASK : PICTURE_BUFFER_DESC_FULL_MASK;
 
-#if MC_DYNAMIC_PAD
         input_pic_buf_desc_init_data.left_padding  = DEC_PAD_VALUE;
         input_pic_buf_desc_init_data.right_padding = DEC_PAD_VALUE;
         input_pic_buf_desc_init_data.top_padding = DEC_PAD_VALUE;
         input_pic_buf_desc_init_data.bot_padding = DEC_PAD_VALUE;
-#else
-        input_pic_buf_desc_init_data.left_padding  = PAD_VALUE;
-        input_pic_buf_desc_init_data.right_padding = PAD_VALUE;
-        input_pic_buf_desc_init_data.top_padding   = PAD_VALUE;
-        input_pic_buf_desc_init_data.bot_padding   = PAD_VALUE;
-#endif
 
         input_pic_buf_desc_init_data.split_mode = EB_FALSE;
 
