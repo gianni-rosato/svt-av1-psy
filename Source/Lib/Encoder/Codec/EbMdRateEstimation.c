@@ -822,7 +822,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     }
     if (av1_is_directional_mode(get_uv_mode(uv_mode)) && av1_use_angle_delta(bsize, pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.intra_angle_delta)) {
         assert((uv_mode - UV_V_PRED) < DIRECTIONAL_MODES);
-        assert((uv_mode - UV_V_PRED) > 0);
+        assert((uv_mode - UV_V_PRED) >= 0);
         update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
                    mbmi->block_mi.angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
