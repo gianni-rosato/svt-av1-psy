@@ -9296,6 +9296,10 @@ static void hme_mv_center_check(EbPictureBufferDesc *ref_pic_ptr, MeContext *con
             ? search_center_y - ((origin_y + search_center_y) - ((int16_t)ref_pic_ptr->height - 1))
             : search_center_y;
 
+    search_region_index =
+        (int16_t)(ref_pic_ptr->origin_x + origin_x) + search_center_x +
+        ((int16_t)(ref_pic_ptr->origin_y + origin_y) + search_center_y) * ref_pic_ptr->stride_y;
+
     uint64_t mv_a_sad = nxm_sad_kernel(context_ptr->sb_src_ptr,
                                        context_ptr->sb_src_stride << sub_sampled_sad,
                                        &(ref_pic_ptr->buffer_y[search_region_index]),
