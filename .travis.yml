@@ -3,132 +3,93 @@ language: c
 cache: ccache
 os: linux
 dist: bionic
-osx_image: xcode11.2
-env: build_type=release
+osx_image: xcode11.3
 git:
-  depth: 5
+  depth: false
   quiet: true
   submodules: false
 addons:
   apt:
-    packages: &native_deps
-      - cmake
-      - yasm
+    update: true
+    packages:
+      - &native_deps cmake yasm
   homebrew:
+    update: true
     packages:
       - yasm
       - ccache
       - python
-    update: true # Remove when Travis macOS images get updated
 
-# Pipeline stages
-stages:
-  - name: test
+env:
+  global:
+    - build_type=release LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 # Default scripts
-before_install:
+install:
   - "sudo chown -R travis: $HOME/.ccache"
   - |
-    if [ "$(uname -s)" == "Darwin" ]; then
+    case $(uname -s) in
+    Darwin)
+      export PATH="/usr/local/opt/ccache/libexec:$PATH"
       sysctl -n machdep.cpu.brand_string
-      sysctl machdep.cpu.features
-      sysctl machdep.cpu.leaf7_features
-    elif [ -f "/proc/cpuinfo" ]; then
-      grep -Ei " sse*| ssse*| avx|model name" /proc/cpuinfo  | sort -u
-    fi
-  - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig PATH="/usr/local/opt/ccache/libexec:$PATH"
-  - cd $TRAVIS_BUILD_DIR
+      sysctl -n machdep.cpu.features machdep.cpu.leaf7_features | sort -u
+      ;;
+    Linux)
+      sort -u /proc/cpuinfo
+      test -f "/usr/lib/ccache/${CC##*/}" || sudo ln -s /usr/bin/ccache "/usr/lib/ccache/${CC##*/}"
+      test -f "/usr/lib/ccache/${CXX##*/}" || sudo ln -s /usr/bin/ccache "/usr/lib/ccache/${CXX##*/}"
+      CFLAGS="-Werror"
+      case $CC in
+      *clang*) CFLAGS+=" -Wno-error=array-bounds" ;;
+      esac
+      export CFLAGS
+      ;;
+    esac
+    cmake --version
+    $CC --version
+  - cd "$TRAVIS_BUILD_DIR"
   - wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
   - tar xf video.tar.gz
-  - mkdir -p $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
-  - |
-    if [ "$TRAVIS_OS_NAME" != "osx" ]; then
-      test -f "/usr/lib/ccache/${CC##*/}" || sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CC##*/}
-      test -f "/usr/lib/ccache/${CXX##*/}" || sudo ln -s /usr/bin/ccache /usr/lib/ccache/${CXX##*/}
-    fi
-install:
-  - |
-    if [ "$TRAVIS_OS_NAME" != "osx" ]; then
-      export CFLAGS="-Werror"
-      if [ "$CC" = "clang" ]; then export CFLAGS+=" -Wno-error=array-bounds"; fi
-    fi
+  - mkdir -p "$TRAVIS_BUILD_DIR/Build/linux/${build_type:=Release}"
 script:
   - &base_script |
-    cd $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}
-    cmake $TRAVIS_BUILD_DIR -G"${generator:-Unix Makefiles}" -DCMAKE_BUILD_TYPE=${build_type:-Release} ${CMAKE_EFLAGS}
-    cmake -j $(if [ $TRAVIS_OS_NAME = osx ]; then sysctl -n hw.ncpu; else nproc; fi) --build . &&
-    sudo cmake --build . --target install && cd $TRAVIS_BUILD_DIR
+    cd "$TRAVIS_BUILD_DIR/Build/linux/$build_type" &&
+    cmake "$TRAVIS_BUILD_DIR" -G"Unix Makefiles" -DCMAKE_BUILD_TYPE="$build_type" ${CMAKE_EFLAGS} &&
+    case $(cmake --version | grep version) in
+    *3.10*) cmake --build "$TRAVIS_BUILD_DIR/Build/linux/$build_type" ;;
+    *) cmake --build "$TRAVIS_BUILD_DIR/Build/linux/$build_type" -j $(($(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) + 1)) ;;
+    esac &&
+    sudo cmake --build "$TRAVIS_BUILD_DIR/Build/linux/$build_type" --target install &&
+    cd "$TRAVIS_BUILD_DIR"
   - &8bit_test |
-    SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 && SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 150
+    SvtAv1EncApp --preset 0 -i akiyo_cif.y4m -n 3 &&
+    SvtAv1EncApp --preset 8 -i akiyo_cif.y4m -n 150
   - &10bit_test |
-    SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -lp 1 && SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
+    SvtAv1EncApp --preset 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 --lp 1 &&
+    SvtAv1EncApp --preset 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
 before_cache:
   - "sudo chown -R travis: $HOME/.ccache"
   - ccache -c
   - ccache -s
 
 # Build matrix
-matrix:
+jobs:
   fast_finish: true
-  allow_failures:
-    - name: Binary Identical?
-    - name: Valgrind
-    - name: Coveralls Linux+gcc
-    - name: Coveralls osx+clang
-    - name: Unit Tests Linux+gcc
-    - name: Unit Tests osx+clang
-    # Exclude these because if the encoder can run with a release build, the commit is probably fine. Also required for fast_finish.
   include:
-    # GCC & Clang builds
-    - name: Linux GCC 7 build
-      stage: test
-      env: build_type=release CC=gcc-7 CXX=g++-7
-      addons:
-        apt:
-          packages:
-            - *native_deps
-            - gcc-7
-            - g++-7
-    - name: Linux GCC 8 build
-      env: build_type=release CC=gcc-8 CXX=g++-8
-      addons:
-        apt:
-          packages:
-            - *native_deps
-            - gcc-8
-            - g++-8
-    - name: Linux GCC 9 build
-      env: build_type=release CC=gcc-9 CXX=g++-9
-      addons:
-        apt:
-          sources:
-            - sourceline: "ppa:ubuntu-toolchain-r/test"
-          packages:
-            - *native_deps
-            - gcc-9
-            - g++-9
-    - name: Linux Clang 6 build
+    # macOS builds and 8-bit test
+    - name: macOS Clang build and 8-bit test
+      os: osx
       compiler: clang
-      env: build_type=release CC=clang-6.0 CXX=clang++-6.0
-      addons:
-        apt:
-          sources:
-            - sourceline: "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic main"
-              key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
-          packages:
-            - *native_deps
-            - clang-6.0
-    - name: Linux Clang 10 build
+      script:
+        - *base_script
+        - *8bit_test
+    # macOS builds and 10-bit test
+    - name: macOS 10-bit test
+      os: osx
       compiler: clang
-      env: build_type=release CC=clang-10 CXX=clang++-10
-      addons:
-        apt:
-          sources:
-            - sourceline: "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main"
-              key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
-          packages:
-            - *native_deps
-            - clang-10
+      script:
+        - *base_script
+        - *10bit_test
     # Multiple CPU Architectures
     - name: Arm64 GCC 7 build
       env: build_type=release CC=gcc-7 CXX=g++-7
@@ -139,83 +100,7 @@ matrix:
     - name: IBM Z GCC 7 build
       env: build_type=release CC=gcc-7 CXX=g++-7
       arch: s390x
-    # FFmpeg interation build
-    - name: FFmpeg patch
-      env: build_type=release CMAKE_EFLAGS="-DBUILD_SHARED_LIBS=OFF"
-      script:
-        # Build and install SVT-AV1
-        - *base_script
-        # Apply SVT-AV1 plugin and enable libsvtav1 to FFmpeg
-        - git clone https://github.com/FFmpeg/FFmpeg --branch release/4.2 --depth=1 ffmpeg && cd ffmpeg
-        - git apply $TRAVIS_BUILD_DIR/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
-        - export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig
-        - "sudo chown -R travis: $HOME/.ccache"
-        - export CFLAGS=""
-        - ./configure --enable-libsvtav1 || less ffbuild/config.log
-        - make --quiet -j$(nproc) && sudo make install
-    # macOS builds and 8-bit test
-    - name: macOS Clang build and 8-bit test
-      os: osx
-      compiler: clang
-      script:
-        # Build and install SVT-AV1
-        - *base_script
-        # Run the 8-bit test
-        - *8bit_test
-    # macOS builds and 10-bit test
-    - name: macOS 10-bit test # allowed to fail for now
-      os: osx
-      compiler: clang
-      script:
-        # Build and install SVT-AV1
-        - *base_script
-        # Run the 10-bit test
-        - *10bit_test
-    # GStreamer interation build
-    - name: GStreamer patch
-      env: build_type=release
-      addons:
-        apt:
-          packages:
-            - *native_deps
-            - libgstreamer-plugins-base1.0-dev
-            - libgstreamer1.0-dev
-      script:
-        # Build and install SVT-AV1
-        - *base_script
-        # Build GST-SVT-AV1 plugin
-        - cd $TRAVIS_BUILD_DIR/gstreamer-plugin
-        - "sudo chown -R travis: $HOME/.ccache"
-        - CFLAGS="" cmake .
-        - make --quiet -j$(nproc)
-        - sudo make install
-    # Tests if .ivf files are identical on binary level
-    - name: Binary Identical?
-      script:
-        - mv -t $HOME akiyo_cif.y4m
-        - mv -t $HOME Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-        - *base_script
-        - cd $HOME
-        - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-pr-8bit-m8.ivf
-        - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-pr-8bit-m0.ivf
-        - SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b test-pr-10bit-m8.ivf
-        - SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b test-pr-10bit-m0.ivf
-        - cd $TRAVIS_BUILD_DIR
-        - git fetch https://github.com/OpenVisualCloud/SVT-AV1.git master
-        - git checkout FETCH_HEAD
-        - rm -rf $TRAVIS_BUILD_DIR/Build/linux/${build_type:-Release}/*
-        - *base_script
-        - cd $HOME
-        - SvtAv1EncApp -enc-mode 8 -i akiyo_cif.y4m -n 120 -b test-master-8bit-m8.ivf
-        - SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3 -b test-master-8bit-m0.ivf
-        - SvtAv1EncApp -enc-mode 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b test-master-10bit-m8.ivf
-        - SvtAv1EncApp -enc-mode 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b test-master-10bit-m0.ivf
-        - diff test-pr-8bit-m8.ivf test-master-8bit-m8.ivf
-        - diff test-pr-8bit-m0.ivf test-master-8bit-m0.ivf
-        - diff test-pr-10bit-m8.ivf test-master-10bit-m8.ivf
-        - diff test-pr-10bit-m0.ivf test-master-10bit-m0.ivf
-
-    # Valgrind on Linux and macOS
+    # Valgrind on Linux
     - name: Valgrind
       env: build_type=debug
       addons:
@@ -225,4 +110,4 @@ matrix:
             - valgrind
       script:
         - *base_script
-        - travis_wait 60 valgrind -- SvtAv1EncApp -enc-mode 4 -i akiyo_cif.y4m -n 20 -b test1.ivf
+        - travis_wait 60 valgrind -- SvtAv1EncApp --preset 4 -i akiyo_cif.y4m -n 20 -b test1.ivf
