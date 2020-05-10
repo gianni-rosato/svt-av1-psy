@@ -105,12 +105,59 @@ message(STATUS "BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 
 option(BUILD_TESTING "Build SvtAv1UnitTests, SvtAv1ApiTests, and SvtAv1E2ETests unit tests")
 option(COVERAGE "Generate coverage report")
+if(NOT MSVC)
+    option(SVT_AV1_PGO "Enable profile guided optimization. Creates the RunPGO and CompilePGO targets")
+    # options for internal use
+    option(SVT_INTERNAL_PGO_GENERATE "Generate a profile guided optimization profile")
+    option(SVT_INTERNAL_PGO_USE "Use a profile for profile guided optimization")
+    mark_as_advanced(SVT_INTERNAL_PGO_GENERATE SVT_INTERNAL_PGO_USE)
+    set(SVT_AV1_PGO_DIR "${CMAKE_BINARY_DIR}" CACHE PATH "Path to the directory passed to -fprofile-dir for use with profile guided optimization")
+    set(SVT_AV1_PGO_CUSTOM_VIDEOS "" CACHE STRING "Semi-colon separated list of directories with y4m videos to run PGO on instead of objective-1-fast")
+else()
+    set(SVT_AV1_PGO OFF)
+endif()
+
+if(MSVC AND SVT_AV1_PGO)
+    message(WARNING "PGO is not yet supported for MSVC, disabling")
+    unset(SVT_AV1_PGO)
+    unset(SVT_AV1_PGO CACHE)
+endif()
+
 option(BUILD_APPS "Build Enc and Dec Apps" ON)
 option(REPRODUCIBLE_BUILDS "Disable use of certain C macros to always generate reproducable builds")
 option(BUILD_ENC "Build Encoder lib and app" ON)
 option(BUILD_DEC "Build Decoder lib and app" ON)
 if(NOT BUILD_ENC AND NOT BUILD_DEC)
     message(FATAL_ERROR "Not building either the encoder and decoder doesn't make sense.")
+endif()
+if(SVT_AV1_PGO AND NOT BUILD_APPS)
+    message(FATAL_ERROR "Can't use pgo and not build the apps")
+endif()
+
+if(SVT_INTERNAL_PGO_USE)
+    if(MSVC)
+        set(PGO_COMPILER_FLAGS "/GL")
+        set(PGO_LINKER_FLAGS "/LTCG /USEPROFILE")
+    else()
+        set(PGO_COMPILER_FLAGS "-fprofile-use=${SVT_AV1_PGO_DIR} -fprofile-correction")
+        set(PGO_LINKER_FLAGS "-fprofile-use=${SVT_AV1_PGO_DIR} -fprofile-correction")
+    endif()
+elseif(SVT_INTERNAL_PGO_GENERATE)
+    if(MSVC)
+        set(PGO_COMPILER_FLAGS "/GL")
+        set(PGO_LINKER_FLAGS "/LTCG /GENPROFILE")
+    else()
+        set(PGO_COMPILER_FLAGS "-fprofile-generate=${SVT_AV1_PGO_DIR} -fprofile-correction")
+        set(PGO_LINKER_FLAGS "-fprofile-generate=${SVT_AV1_PGO_DIR} -fprofile-correction")
+    endif()
+endif()
+
+if(SVT_AV1_PGO)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${PGO_COMPILER_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PGO_COMPILER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${PGO_LINKER_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${PGO_LINKER_FLAGS}")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${PGO_LINKER_FLAGS}")
 endif()
 
 if(REPRODUCIBLE_BUILDS)
@@ -390,6 +437,68 @@ endif()
 if(BUILD_APPS AND BUILD_DEC)
     add_subdirectory(Source/App/DecApp)
 endif()
+if(SVT_AV1_PGO)
+    set_target_properties(SvtAv1EncApp SvtAv1DecApp PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    string(REPLACE ";" "::" SVT_AV1_PGO_CUSTOM_VIDEOS "${SVT_AV1_PGO_CUSTOM_VIDEOS}")
+
+    add_custom_target(PGOCompileGen
+        ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=ON -DSVT_INTERNAL_PGO_USE=OFF
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+        --clean-first
+        --target SvtAv1EncApp
+        --target SvtAv1DecApp
+        COMMENT "Compiling with PGO generate"
+        DEPENDS SvtAv1EncApp SvtAv1DecApp)
+    add_custom_target(PGOCompileGenUse
+        ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=ON -DSVT_INTERNAL_PGO_USE=ON
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+        --clean-first
+        --target SvtAv1EncApp
+        --target SvtAv1DecApp
+        COMMENT "Compiling PGO gen+use"
+        DEPENDS SvtAv1EncApp SvtAv1DecApp)
+    add_custom_target(PGOCompileUse
+        ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR} -DSVT_INTERNAL_PGO_GENERATE=OFF -DSVT_INTERNAL_PGO_USE=ON
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+        --clean-first
+        --target SvtAv1EncApp
+        --target SvtAv1DecApp
+        COMMENT "Compiling PGO use"
+        DEPENDS SvtAv1EncApp SvtAv1DecApp)
+
+    if(SVT_AV1_PGO_CUSTOM_VIDEOS)
+        add_custom_target(PGOGenerateProfile ${CMAKE_COMMAND} -P
+            ${PROJECT_SOURCE_DIR}/Build/pgohelper.cmake
+            ${CMAKE_BINARY_DIR}
+            ${SVT_AV1_PGO_CUSTOM_VIDEOS}
+            $<TARGET_FILE:SvtAv1EncApp>
+            $<TARGET_FILE:SvtAv1DecApp>
+            COMMENT "Generating PGO profile")
+    else()
+        add_custom_target(DownloadObjOneFast ${CMAKE_COMMAND} -P
+            ${PROJECT_SOURCE_DIR}/Build/obj1fastdownloader.cmake
+            ${CMAKE_BINARY_DIR}
+            COMMENT "Downloading objective-1-fast")
+        add_custom_target(PGOGenerateProfile ${CMAKE_COMMAND} -P
+            ${PROJECT_SOURCE_DIR}/Build/pgohelper.cmake
+            ${CMAKE_BINARY_DIR}
+            ${CMAKE_BINARY_DIR}/objective-1-fast
+            $<TARGET_FILE:SvtAv1EncApp>
+            $<TARGET_FILE:SvtAv1DecApp>
+            COMMENT "Generating PGO profile"
+            DEPENDS DownloadObjOneFast)
+    endif()
+
+    add_custom_target(RunPGO ALL
+        ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOCompileGen
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOGenerateProfile
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOCompileGenUse
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOGenerateProfile
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --config $<CONFIG> --target PGOCompileUse
+        COMMENT "Compiling PGO Binary"
+        DEPENDS PGOCompileUse)
+endif()
+
 if(BUILD_TESTING)
     include(CTest)
     message(STATUS "Building UnitTests")

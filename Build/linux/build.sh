@@ -76,6 +76,8 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
     enable-avx512
     --enable-lto,       Enable link time optimization
     enable-lto
+    --enable-pgo,       Enable profile guided optimization
+    enable-pgo
     --shared, shared    Build shared libs
 -x, --static, static    Build static libs
 -g, --gen, gen=*        Set CMake generator
@@ -84,6 +86,14 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
     --no-enc, no-enc    Don't build the encoder app and libs
     --no-dec, no-dec    Don't build the decoder app and libs
 -p, --prefix, prefix=*  Set installation prefix
+    --pgo-dir,          Directory to store the pgo profiles
+    pgo-dir=*
+    --pgo-compile-gen,  Compile PGO up to the generate stage
+    pgo-compile-gen
+    --pgo-compile-use,  Compile PGO up to the use stage
+    pgo-compile-use
+    --pgo-videos,       Directory of y4m videos to use for PGO instead
+    pgo-videos=         of objective-1-fast
     --release, release  Build release
     --sanitizer,        Build and enable using sanitizer
     sanitizer=*
@@ -102,35 +112,34 @@ Example usage:
 EOF
 }
 
-# Usage: build <release|debug> [test]
-build() (
-    build_type=Release
+configure() (
+    build_type=Release clean=true
     while [ -n "$*" ]; do
         case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
         release) build_type=Release && shift ;;
         debug) build_type=Debug && shift ;;
+        no_clean) clean=false && shift ;;
         *) break ;;
         esac
     done
-
-    rm -rf $build_type
+    $clean && rm -rf $build_type
     mkdir -p $build_type > /dev/null 2>&1
     cd_safe $build_type
-
     cmake ../../.. -DCMAKE_BUILD_TYPE=$build_type $CMAKE_EXTRA_FLAGS "$@"
+)
 
-    if [ -f Makefile ]; then
-        make -j "$jobs"
-        return
-    fi
-
-    set --
-    if cmake --build 2>&1 | grep -q parallel; then
-        set -- --parallel "$jobs"
-    fi
-
-    # Compile the Library
-    cmake --build . --config $build_type "$@"
+# Usage: build <release|debug> [test]
+build() (
+    build_type=Release clean=''
+    while [ -n "$*" ]; do
+        case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
+        release) build_type=Release && shift ;;
+        debug) build_type=Debug && shift ;;
+        clean) clean=true && shift ;;
+        *) break ;;
+        esac
+    done
+    cmake --build $build_type --config $build_type ${clean:+--clean-first} "$@"
 )
 
 check_executable() (
@@ -199,6 +208,8 @@ build_release=false
 build_debug=false
 build_install=false
 
+PGO_COMPILE_STAGE=none
+
 parse_options() {
     while true; do
         [ -z "$1" ] && break
@@ -245,6 +256,8 @@ parse_options() {
         disable*)
             case ${1#disable-} in
             avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=OFF" ;;
+            lto) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_LTO=OFF" ;;
+            pgo) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO=OFF" PGO_COMPILE_STAGE=none ;;
             *) print_message "Unknown option: $1" ;;
             esac
             shift
@@ -253,6 +266,12 @@ parse_options() {
             case ${1#enable-} in
             avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=ON" ;;
             lto) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_LTO=ON" ;;
+            pgo)
+                CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO=ON"
+                case $PGO_COMPILE_STAGE in
+                none) PGO_COMPILE_STAGE=all ;;
+                esac
+                ;;
             *) print_message "Unknown option: $1" ;;
             esac
             shift
@@ -265,6 +284,10 @@ parse_options() {
         no-enc) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_ENC=OFF" && shift ;;
         no-dec) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_DEC=OFF" && shift ;;
         prefix=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_PREFIX=${1#*=}" && shift ;;
+        pgo-dir=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO_DIR=${1#*=}" && shift ;;
+        pgo-compile-gen) PGO_COMPILE_STAGE=gen && shift ;;
+        pgo-compile-use) PGO_COMPILE_STAGE=use && shift ;;
+        pgo-videos=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO_CUSTOM_VIDEOS=${1#*=}" && shift ;;
         release) build_release=true && shift ;;
         sanitizer=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSANITIZER=${1#*=}" && shift ;;
         target_system=*)
@@ -322,17 +345,19 @@ else
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
-            disable* | enable* ) parse_options "$match" && shift ;;
+            disable* | enable*) parse_options "$match" && shift ;;
             install) parse_options install && shift ;;
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
+            pgo-compile-gen) parse_options pgo-compile-gen && shift ;;
+            pgo-compile-use) parse_options pgo-compile-use && shift ;;
             release) parse_options release && shift ;;
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
             toolchain) parse_options toolchain="$2" && shift ;;
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
-            asm | bindir | cc | cxx | gen | jobs | prefix | sanitizer | target_system)
+            asm | bindir | cc | cxx | gen | jobs | pgo-dir | pgo-videos | prefix | sanitizer | target_system)
                 parse_equal_option "$1" "$2"
                 case $1 in
                 *=*) shift ;;
@@ -432,19 +457,23 @@ else
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
-            disable* | enable* ) parse_options "$match" && shift ;;
+            disable* | enable*) parse_options "$match" && shift ;;
             gen=*) parse_options gen="${1#*=}" && shift ;;
             help) parse_options help && shift ;;
             install) parse_options install && shift ;;
             jobs=*) parse_options jobs="${1#*=}" && shift ;;
             prefix=*) parse_options prefix="${1#*=}" && shift ;;
+            pgo-dir=*) parse_options pgo-dir="${1#*=}" && shift ;;
+            pgo-compile-gen) parse_options pgo-compile-gen && shift ;;
+            pgo-compile-use) parse_options pgo-compile-use && shift ;;
+            pgo-videos=*) parse_options pgo-videos="${1#*=}" && shift ;;
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
             release) parse_options release && shift ;;
-            sanitizer=*) parse_options sanitizer="${1#*=}" && shift;;
+            sanitizer=*) parse_options sanitizer="${1#*=}" && shift ;;
             test) parse_options tests && shift ;;
             toolchain=*) parse_options toolchain="${1#*=}" && shift ;;
             verbose) parse_options verbose && shift ;;
@@ -462,14 +491,22 @@ esac
 
 [ "${PATH#*\/usr\/local\/bin}" = "$PATH" ] && PATH=$PATH:/usr/local/bin
 
-if $build_debug && $build_release; then
-    build release "$@"
-    build debug "$@"
-elif $build_debug; then
-    build debug "$@"
-else
+build_args='' compile_args=''
+
+case $PGO_COMPILE_STAGE in
+all) build_args='--target RunPGO' ;;
+gen) build_args='--target PGOCompileGen' ;;
+use) compile_args=no_clean build_args='--target PGOCompileUse' ;;
+esac
+
+$build_debug && {
+    configure debug $compile_args "$@"
+    build debug $build_args
+}
+if $build_release || ! $build_debug; then
     build_release=true
-    build release "$@"
+    configure release $compile_args "$@"
+    build release $build_args
 fi
 
 if $build_install; then
