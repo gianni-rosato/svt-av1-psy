@@ -546,6 +546,12 @@ EbErrorType load_default_buffer_configuration_settings(
 
         //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
         min_paref = 25 +  scs_ptr->scd_delay + eos_delay;
+#if MRP_31B_SUPPORT
+        if (scs_ptr->static_config.hierarchical_levels == 5 &&
+            core_count == SINGLE_CORE_COUNT) {
+            min_paref += 8;
+        }
+#endif
         if (scs_ptr->static_config.enable_overlays)
             min_paref *= 2;
 
