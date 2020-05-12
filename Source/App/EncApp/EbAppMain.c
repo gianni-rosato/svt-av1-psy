@@ -24,7 +24,7 @@
 #include "EbTime.h"
 #include "EbAppString.h"
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <io.h> /* _setmode() */
 #include <fcntl.h> /* _O_BINARY */
 #else
