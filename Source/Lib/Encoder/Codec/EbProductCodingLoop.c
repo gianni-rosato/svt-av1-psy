@@ -31,6 +31,8 @@
 #include "EbCommonUtils.h"
 #include "EbResize.h"
 
+#define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
+
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                                      uint32_t *         fast_candidate_total_count,
                                      PictureControlSet *pcs_ptr);
@@ -1322,8 +1324,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 : (uint32_t)pd2_nic[MD_STAGE_1 - 1][frm_type][cand_it];
             // apply scale factor and set MIN to 1 candidate
             context_ptr->md_stage_1_count[cand_it] = MAX(
-                (uint32_t)(round((scale_num * ((float)context_ptr->md_stage_1_count[cand_it])) /
-                                 scale_denum)),
+                DIVIDE_AND_ROUND(scale_num * context_ptr->md_stage_1_count[cand_it], scale_denum),
                 1);
 
             context_ptr->md_stage_2_count[cand_it] = (pd2_nic[MD_STAGE_2 - 1][frm_type][cand_it] ==
@@ -1332,8 +1333,8 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 : (uint32_t)pd2_nic[MD_STAGE_2 - 1][frm_type][cand_it];
             // apply scale factor and set MIN to 1 candidate
             context_ptr->md_stage_2_count[cand_it] = MAX(
-                (uint32_t)(round((scale_num * ((float)context_ptr->md_stage_2_count[cand_it])) /
-                                 scale_denum)),
+                DIVIDE_AND_ROUND(scale_num * context_ptr->md_stage_2_count[cand_it],
+                                 scale_denum),
                 1);
 
             context_ptr->md_stage_3_count[cand_it] = (pd2_nic[MD_STAGE_3 - 1][frm_type][cand_it] ==
@@ -1342,8 +1343,8 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 : (uint32_t)pd2_nic[MD_STAGE_3 - 1][frm_type][cand_it];
             // apply scale factor and set MIN to 1 candidate
             context_ptr->md_stage_3_count[cand_it] = MAX(
-                (uint32_t)(round((scale_num * ((float)context_ptr->md_stage_3_count[cand_it])) /
-                                 scale_denum)),
+                DIVIDE_AND_ROUND(scale_num * context_ptr->md_stage_3_count[cand_it],
+                                 scale_denum),
                 1);
         }
 
@@ -1373,11 +1374,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                         mult_factor_denum = 4;
                     }
                 }
-                context_ptr->md_stage_1_count[i] = (uint32_t)round(
-                    (mult_factor_num * ((float)context_ptr->md_stage_1_count[i])) /
+                context_ptr->md_stage_1_count[i] = DIVIDE_AND_ROUND(
+                    mult_factor_num * context_ptr->md_stage_1_count[i],
                     mult_factor_denum);
-                context_ptr->md_stage_3_count[i] = (uint32_t)round(
-                    (mult_factor_num * ((float)context_ptr->md_stage_3_count[i])) /
+                context_ptr->md_stage_3_count[i] = DIVIDE_AND_ROUND(
+                    mult_factor_num * context_ptr->md_stage_3_count[i],
                     mult_factor_denum);
             }
         }
@@ -1386,11 +1387,11 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             uint8_t mult_factor_num   = 4;
             uint8_t mult_factor_denum = 3;
             for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
-                context_ptr->md_stage_1_count[i] = (uint32_t)round(
-                    (mult_factor_num * ((float)context_ptr->md_stage_1_count[i])) /
+                context_ptr->md_stage_1_count[i] = DIVIDE_AND_ROUND(
+                    mult_factor_num * context_ptr->md_stage_1_count[i],
                     mult_factor_denum);
-                context_ptr->md_stage_3_count[i] = (uint32_t)round(
-                    (mult_factor_num * ((float)context_ptr->md_stage_3_count[i])) /
+                context_ptr->md_stage_3_count[i] = DIVIDE_AND_ROUND(
+                    mult_factor_num * context_ptr->md_stage_3_count[i],
                     mult_factor_denum);
             }
         }
@@ -1412,12 +1413,12 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
             for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
                 if (i != CAND_CLASS_0 && i != CAND_CLASS_6 && i != CAND_CLASS_7) {
-                    context_ptr->md_stage_1_count[i] = (uint32_t)round(
-                        (division_factor_num * ((float)context_ptr->md_stage_1_count[i])) /
+                    context_ptr->md_stage_1_count[i] = DIVIDE_AND_ROUND(
+                        division_factor_num * context_ptr->md_stage_1_count[i],
                         division_factor_denum);
                     context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
-                    context_ptr->md_stage_3_count[i] = (uint32_t)round(
-                        (division_factor_num * ((float)context_ptr->md_stage_3_count[i])) /
+                    context_ptr->md_stage_3_count[i] = DIVIDE_AND_ROUND(
+                        division_factor_num * context_ptr->md_stage_3_count[i],
                         division_factor_denum);
                     context_ptr->md_stage_3_count[i] = MAX(context_ptr->md_stage_3_count[i], 1);
                 }
@@ -1439,12 +1440,12 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
             for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
                 if (i != CAND_CLASS_0 && i != CAND_CLASS_6 && i != CAND_CLASS_7) {
-                    context_ptr->md_stage_1_count[i] = (uint32_t)round(
-                        (division_factor_num * ((float)context_ptr->md_stage_1_count[i])) /
+                    context_ptr->md_stage_1_count[i] = DIVIDE_AND_ROUND(
+                        division_factor_num * context_ptr->md_stage_1_count[i],
                         division_factor_denum);
                     context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
-                    context_ptr->md_stage_3_count[i] = (uint32_t)round(
-                        (division_factor_num * ((float)context_ptr->md_stage_3_count[i])) /
+                    context_ptr->md_stage_3_count[i] = DIVIDE_AND_ROUND(
+                        division_factor_num * context_ptr->md_stage_3_count[i],
                         division_factor_denum);
                     context_ptr->md_stage_3_count[i] = MAX(context_ptr->md_stage_3_count[i], 1);
                 }
@@ -1470,12 +1471,12 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
 
             for (uint8_t i = 0; i < CAND_CLASS_TOTAL; ++i) {
-                context_ptr->md_stage_1_count[i] = (uint32_t)round(
-                    (division_factor_num * ((float)context_ptr->md_stage_1_count[i])) /
+                context_ptr->md_stage_1_count[i] = DIVIDE_AND_ROUND(
+                    division_factor_num * context_ptr->md_stage_1_count[i],
                     division_factor_denum);
                 context_ptr->md_stage_1_count[i] = MAX(context_ptr->md_stage_1_count[i], 1);
-                context_ptr->md_stage_3_count[i] = (uint32_t)round(
-                    (division_factor_num * ((float)context_ptr->md_stage_3_count[i])) /
+                context_ptr->md_stage_3_count[i] = DIVIDE_AND_ROUND(
+                    division_factor_num * context_ptr->md_stage_3_count[i],
                     division_factor_denum);
                 context_ptr->md_stage_3_count[i] = MAX(context_ptr->md_stage_3_count[i], 1);
             }
