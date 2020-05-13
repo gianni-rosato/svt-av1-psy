@@ -15,6 +15,7 @@
 */
 
 #include <stdlib.h>
+#include <limits.h>
 
 #include "EbDefinitions.h"
 #include "EbUtility.h"
@@ -64,8 +65,6 @@ void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle,
                                               DecThreadCtxt *thread_ctxt);
 
 #define CONFIG_MAX_DECODE_PROFILE 2
-
-#define INT_MAX 2147483647 // maximum (signed) int value
 
 void dec_init_intra_predictors_12b_internal(void);
 

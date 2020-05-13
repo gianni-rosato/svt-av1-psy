@@ -14,7 +14,7 @@
 * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
 */
 
-#define RTCD_C
+#define AOM_RTCD_C
 #include "aom_dsp_rtcd.h"
 #include "EbComputeSAD_C.h"
 #include "EbPictureAnalysisProcess.h"

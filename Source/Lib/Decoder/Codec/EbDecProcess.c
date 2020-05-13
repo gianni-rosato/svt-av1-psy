@@ -34,6 +34,13 @@
 
 #include <stdlib.h>
 
+#ifdef _WIN32
+extern uint8_t        num_groups;
+extern GROUP_AFFINITY group_affinity;
+extern EbBool         alternate_groups;
+#elif defined(__linux__)
+extern cpu_set_t      group_affinity;
+#endif
 void *dec_all_stage_kernel(void *input_ptr);
 /*ToDo : Remove all these replications */
 void eb_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,

@@ -3806,7 +3806,7 @@ uint8_t get_end_tx_depth(BlockSize bsize) {
     return tx_depth;
 }
 
-uint8_t allowed_tx_set_a[TX_SIZES_ALL][TX_TYPES];
+extern uint8_t allowed_tx_set_a[TX_SIZES_ALL][TX_TYPES];
 
 void tx_initialize_neighbor_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                    EbBool is_inter) {

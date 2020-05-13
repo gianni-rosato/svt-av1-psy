@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        compiler: ['gcc-7', 'gcc-8', 'gcc-9', 'clang-6', 'clang-10']
+        compiler: ['gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'clang-6', 'clang-10']
         include:
           - compiler: gcc-7
             packages: gcc-7 g++-7
@@ -27,6 +27,13 @@ jobs:
             env:
               CC: 'ccache gcc-9'
               CXX: 'ccache g++-9'
+          - compiler: gcc-10
+            packages: gcc
+            env:
+              CC: ccache gcc
+              CXX: ccache g++
+              CFLAGS: -fno-common
+              CXXFLAGS: -fno-common
           - compiler: clang-6
             packages: ''
             env:

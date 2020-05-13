@@ -18,6 +18,7 @@
 * Includes
 ***************************************/
 #include <stdlib.h>
+#include <limits.h>
 
 #include "EbCommonUtils.h"
 #include "EbSequenceControlSet.h"
@@ -42,7 +43,6 @@
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 int    av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
-#define INT_MAX 2147483647 // maximum (signed) int value
 
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 

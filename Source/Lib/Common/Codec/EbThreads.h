@@ -52,9 +52,6 @@ extern EbMemoryMapEntry *memory_map; // library Memory table
 extern uint32_t *        memory_map_index; // library memory index
 extern uint64_t *        total_lib_memory; // library Memory malloc'd
 #ifdef _WIN32
-extern GROUP_AFFINITY group_affinity;
-extern uint8_t        num_groups;
-extern EbBool         alternate_groups;
 
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)   \
     do {                                                             \
@@ -78,7 +75,6 @@ extern EbBool         alternate_groups;
 #endif
 #include <sched.h>
 #include <pthread.h>
-extern cpu_set_t group_affinity;
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)                           \
     do {                                                                                     \
         pointer = eb_create_thread(thread_function, thread_context);                         \
