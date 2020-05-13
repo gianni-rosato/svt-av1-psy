@@ -7331,6 +7331,12 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
             skip_next_depth = context_ptr->blk_ptr->do_not_process_block;
             if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx] &&
                 !skip_next_nsq && !skip_next_sq && !sq_weight_based_nsq_skip && !skip_next_depth) {
+
+                if (context_ptr->blk_geom->shape != PART_N) {
+                    // Don't do the prune if parent sq block is out of boundary
+                    if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[context_ptr->blk_geom->sqi_mds])
+                        context_ptr->prune_ref_frame_for_rec_partitions = 0;
+                }
                 md_encode_block(pcs_ptr, context_ptr, input_picture_ptr, bestcandidate_buffers);
             } else if (sq_weight_based_nsq_skip || skip_next_depth) {
                 if (context_ptr->blk_geom->shape != PART_N)
