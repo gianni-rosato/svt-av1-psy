@@ -11,8 +11,10 @@ git:
 addons:
   apt:
     update: true
+    sources:
+      - sourceline: "ppa:ubuntu-toolchain-r/test"
     packages:
-      - &native_deps cmake yasm
+      - &native_deps cmake yasm gcc-10 g++-10
   homebrew:
     update: true
     packages:
@@ -91,20 +93,23 @@ jobs:
         - *base_script
         - *10bit_test
     # Multiple CPU Architectures
-    - name: Arm64 GCC 7 build
-      env: build_type=release CC=gcc-7 CXX=g++-7
+    - name: Arm64 GCC 10 build
+      env: build_type=release CC=gcc-10 CXX=g++-10
       arch: arm64
-    - name: PowerPC GCC 7 build
-      env: build_type=release CC=gcc-7 CXX=g++-7
+    - name: PowerPC GCC 10 build
+      env: build_type=release CC=gcc-10 CXX=g++-10
       arch: ppc64le
-    - name: IBM Z GCC 7 build
-      env: build_type=release CC=gcc-7 CXX=g++-7
+    - name: IBM Z GCC 10 build
+      env: build_type=release CC=gcc-10 CXX=g++-10
       arch: s390x
     # Valgrind on Linux
     - name: Valgrind
-      env: build_type=debug
+      env: build_type=debug CC=gcc-10 CXX=g++-10
       addons:
         apt:
+          update: true
+          sources:
+            - sourceline: "ppa:ubuntu-toolchain-r/test"
           packages:
             - *native_deps
             - valgrind
