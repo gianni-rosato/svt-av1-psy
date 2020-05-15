@@ -16,11 +16,11 @@
 set(PACKAGE_VERSION_STRING "v${PACKAGE_VERSION_STRING}")
 
 find_package(Git QUIET)
-if((Git_FOUND) AND (EXISTS "${GIT_ROOT_DIR}/.git"))
+if(Git_FOUND AND EXISTS "${GIT_ROOT_DIR}/.git")
     execute_process(COMMAND
         ${GIT_EXECUTABLE}  -C ${GIT_ROOT_DIR}
             describe
-            --tags --dirty --broken --abbrev
+            --tags --dirty --abbrev
             --match "v[0-9].[0-9]*"
         RESULT_VARIABLE git_describe_status
         OUTPUT_VARIABLE git_describe_output
