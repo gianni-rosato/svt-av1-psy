@@ -171,8 +171,8 @@ static int64_t highbd_get_sse(const uint8_t *a, int32_t a_stride, const uint8_t 
 static void highbd_variance64(const uint8_t *a8, int a_stride,
                               const uint8_t *b8, int b_stride, int w, int h,
                               uint64_t *sse, int64_t *sum) {
-  const uint16_t *a = (uint16_t *)a8;
-  const uint16_t *b = (uint16_t *)b8;
+  const uint16_t *a = CONVERT_TO_SHORTPTR(a8);
+  const uint16_t *b = CONVERT_TO_SHORTPTR(b8);
   int64_t tsum = 0;
   uint64_t tsse = 0;
   for (int i = 0; i < h; ++i) {

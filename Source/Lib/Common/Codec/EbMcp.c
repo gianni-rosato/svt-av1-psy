@@ -266,3 +266,51 @@ void pad_input_picture(
 
     return;
 }
+
+/** pad_input_picture_16bit()
+is used to pad the input picture in order to get . The horizontal padding happens first and then the vertical padding.
+*/
+void pad_input_picture_16bit(
+    uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
+    uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
+    uint32_t
+        original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t
+             original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t pad_right, //input paramter, the padding right.
+    uint32_t pad_bottom) //input paramter, the padding bottom.
+{
+    uint32_t vertical_idx;
+    uint16_t* temp_src_pic0;
+
+    if (pad_right) {
+        // Add padding @ the right
+        vertical_idx  = original_src_height;
+        temp_src_pic0 = src_pic;
+
+        while (vertical_idx) {
+            memset16bit(temp_src_pic0 + original_src_width,
+                        *(temp_src_pic0 + original_src_width - 1),
+                        pad_right);
+            temp_src_pic0 += src_stride;
+            --vertical_idx;
+        }
+    }
+
+    if (pad_bottom) {
+        uint16_t* temp_src_pic1;
+        // Add padding @ the bottom
+        vertical_idx  = pad_bottom;
+        temp_src_pic0 = (uint16_t*)(src_pic + (original_src_height - 1) * src_stride);
+        temp_src_pic1 = temp_src_pic0;
+
+        while (vertical_idx) {
+            temp_src_pic1 += src_stride;
+            eb_memcpy(
+                temp_src_pic1, temp_src_pic0, sizeof(uint16_t) * (original_src_width + pad_right));
+            --vertical_idx;
+        }
+    }
+
+    return;
+}

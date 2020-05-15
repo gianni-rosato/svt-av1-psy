@@ -687,7 +687,7 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
         row_index           = 0;
         while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
             column_index = 0;
-            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_bottom) >> ss_x)) {
+            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -710,7 +710,7 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) 
 
         while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
             column_index = 0;
-            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_bottom) >> ss_x)) {
+            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
                 ++column_index;
@@ -1138,6 +1138,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 
     //We need this for MCP
     if (is_16bit) {
+        pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(scs_ptr, ref_pic_16bit_ptr);
         // Y samples
         generate_padding16_bit(ref_pic_16bit_ptr->buffer_y,
                                ref_pic_16bit_ptr->stride_y << 1,
