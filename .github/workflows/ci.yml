@@ -3,6 +3,7 @@ on: [push, pull_request]
 env:
   build_type: 'Release'
   native_deps: nasm yasm cmake ccache
+  CFLAGS: '-Werror'
 
 jobs:
   build:
@@ -313,6 +314,7 @@ jobs:
       CXX: ${{ matrix.CXX }}
       LD_LIBRARY_PATH: /usr/local/lib
       PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+      CFLAGS: ''
 
     steps:
       - name: Install dependencies (ubuntu)
