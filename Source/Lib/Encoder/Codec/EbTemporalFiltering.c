@@ -2512,15 +2512,14 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
         }
         adj_strength += noiselevel_adj;
     }
-
+    // Decrease the filter strength for low QPs
+    if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH){
+        adj_strength = adj_strength - 1;
+    }
     if (adj_strength > 0)
         strength = adj_strength;
     else
         strength = 0;
-    // Decrease the filter strength for low QPs
-    if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH){
-        strength = strength - 1;
-    }
     // if highbd, adjust filter strength strength = strength + 2*(bit depth - 8)
     if (is_highbd) strength = strength + 2 * (encoder_bit_depth - 8);
 
