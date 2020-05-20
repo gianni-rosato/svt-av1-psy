@@ -9,6 +9,12 @@
 // and mutexs.  The goal is to eliminiate platform #define
 // in the code.
 
+#if defined(__has_feature)
+#  if __has_feature(thread_sanitizer)
+#    define EB_THREAD_SANITIZER_ENABLED
+#  endif
+#endif
+
 /****************************************
  * Universal Includes
  ****************************************/
@@ -70,6 +76,7 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
     if (th == NULL)
         return NULL;
 
+#ifndef EB_THREAD_SANITIZER_ENABLED
     pthread_attr_init(&attr);
     pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
@@ -85,6 +92,15 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
         // parameters failed, retry creating the thread without them.
         ret = pthread_create(th, NULL, thread_function, thread_context);
     }
+#else
+    // When running with thread sanitizer, we are not running as root
+    // so the above priority change will always fail, which will cause
+    // issues with the thread sanitizer.
+    // See https://github.com/google/sanitizers/issues/1088
+    // Therefore we never try this, with the thread sanitizer
+    // and just create a normal thread here.
+    ret = pthread_create(th, NULL, thread_function, thread_context);
+#endif
 
     if (ret != 0) {
         free(th);
