@@ -78,9 +78,12 @@ typedef struct EbBufferHeaderType {
     uint32_t luma_sse;
     uint32_t cr_sse;
     uint32_t cb_sse;
-
     // pic flags
     uint32_t flags;
+
+    double luma_ssim;
+    double cr_ssim;
+    double cb_ssim;
 } EbBufferHeaderType;
 
 typedef struct EbComponentType {

@@ -698,10 +698,16 @@ void *packetization_kernel(void *input_ptr) {
             output_stream_ptr->luma_sse = pcs_ptr->parent_pcs_ptr->luma_sse;
             output_stream_ptr->cr_sse   = pcs_ptr->parent_pcs_ptr->cr_sse;
             output_stream_ptr->cb_sse   = pcs_ptr->parent_pcs_ptr->cb_sse;
+            output_stream_ptr->luma_ssim = pcs_ptr->parent_pcs_ptr->luma_ssim;
+            output_stream_ptr->cr_ssim   = pcs_ptr->parent_pcs_ptr->cr_ssim;
+            output_stream_ptr->cb_ssim   = pcs_ptr->parent_pcs_ptr->cb_ssim;
         } else {
             output_stream_ptr->luma_sse = 0;
             output_stream_ptr->cr_sse   = 0;
             output_stream_ptr->cb_sse   = 0;
+            output_stream_ptr->luma_ssim = 0;
+            output_stream_ptr->cr_ssim   = 0;
+            output_stream_ptr->cb_ssim   = 0;
         }
 
         // Get Empty Rate Control Input Tasks

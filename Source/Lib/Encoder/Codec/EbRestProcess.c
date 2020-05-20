@@ -55,7 +55,8 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                           int32_t optimized_lr);
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
-void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, EbBool free_memory);
+void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, EbBool free_memory);
 void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
                       uint32_t original_src_height, uint32_t padding_width,
@@ -587,8 +588,12 @@ void *rest_kernel(void *input_ptr) {
                 copy_statistics_to_ref_obj_ect(pcs_ptr, scs_ptr);
             }
 
-            // PSNR Calculation
-            if (scs_ptr->static_config.stat_report) psnr_calculations(pcs_ptr, scs_ptr);
+            // PSNR and SSIM Calculation.
+            // Note: if temporal_filtering is used, memory needs to be freed in the last of these calls
+            if (scs_ptr->static_config.stat_report) {
+                psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
+                ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE /* free memory here */);
+            }
 
             // Pad the reference picture and set ref POC
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)

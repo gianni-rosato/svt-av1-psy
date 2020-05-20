@@ -283,16 +283,18 @@ int32_t main(int32_t argc, char *argv[]) {
                                             "------------------------------------------------------"
                                             "---------------\n");
                                     fprintf(configs[inst_cnt]->stat_file,
-                                            "\n\t\t\t\t\t\t\tAverage PSNR (using per-frame "
-                                            "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\n");
+                                            "\n\t\t\t\tAverage PSNR (using per-frame "
+                                            "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|"
+                                            "\tAverage SSIM\n");
                                     fprintf(configs[inst_cnt]->stat_file,
                                             "Total Frames\tAverage QP  \tY-PSNR   \tU-PSNR   "
-                                            "\tV-PSNR\t\t| \tY-PSNR   \tU-PSNR   \tV-PSNR   "
+                                            "\tV-PSNR\t\t| \tY-PSNR   \tU-PSNR   \tV-PSNR   \t|"
+                                            "\tY-SSIM   \tU-SSIM   \tV-SSIM   "
                                             "\t|\tBitrate\n");
                                     fprintf(
                                         configs[inst_cnt]->stat_file,
                                         "%10ld  \t   %2.2f    \t%3.2f dB\t%3.2f dB\t%3.2f dB  "
-                                        "\t|\t%3.2f dB\t%3.2f dB\t%3.2f dB \t|\t%.2f kbps\n",
+                                        "\t|\t%3.2f dB\t%3.2f dB\t%3.2f dB \t|\t%1.5f \t%1.5f \t%1.5f\t\t|\t%.2f kbps\n",
                                         (long int)frame_count,
                                         (float)configs[inst_cnt]->performance_context.sum_qp /
                                             frame_count,
@@ -315,6 +317,9 @@ int32_t main(int32_t argc, char *argv[]) {
                                             (configs[inst_cnt]->performance_context.sum_cr_sse /
                                              frame_count),
                                             max_chroma_sse)),
+                                         (float)configs[inst_cnt]->performance_context.sum_luma_ssim / frame_count,
+                                         (float)configs[inst_cnt]->performance_context.sum_cb_ssim   / frame_count,
+                                         (float)configs[inst_cnt]->performance_context.sum_cr_ssim   / frame_count,
                                         ((double)(configs[inst_cnt]->performance_context.byte_count
                                                   << 3) *
                                          frame_rate / (configs[inst_cnt]->frames_encoded * 1000)));
@@ -340,16 +345,17 @@ int32_t main(int32_t argc, char *argv[]) {
 
                             if (configs[inst_cnt]->stat_report) {
                                 fprintf(stderr,
-                                        "\n\t\t\t\tAverage PSNR (using per-frame "
-                                        "PSNR)\t\t\t|\t\tOverall PSNR (using per-frame MSE)\n");
+                                        "\n\t\tAverage PSNR (using per-frame "
+                                        "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|\t"
+                                        "Average SSIM\n");
                                 fprintf(stderr,
                                         "Average "
-                                        "QP\t\tY-PSNR\t\t\tU-PSNR\t\t\tV-PSNR\t\t|\tY-PSNR\t\t\tU-"
-                                        "PSNR\t\t\tV-PSNR\t\n");
+                                        "QP\tY-PSNR\t\tU-PSNR\t\tV-PSNR\t\t|\tY-PSNR\t\tU-"
+                                        "PSNR\t\tV-PSNR\t\t|\tY-SSIM\tU-SSIM\tV-SSIM\n");
                                 fprintf(
                                     stderr,
-                                    "%11.2f\t\t%4.2f dB\t\t%4.2f dB\t\t%4.2f dB\t|\t%4.2f "
-                                    "dB\t\t%4.2f dB\t\t%4.2f dB\n",
+                                    "%11.2f\t%4.2f dB\t%4.2f dB\t%4.2f dB\t|\t%4.2f "
+                                    "dB\t%4.2f dB\t%4.2f dB\t|\t%1.5f\t%1.5f\t%1.5f\n",
                                     (float)configs[inst_cnt]->performance_context.sum_qp /
                                         frame_count,
                                     (float)configs[inst_cnt]->performance_context.sum_luma_psnr /
@@ -369,7 +375,10 @@ int32_t main(int32_t argc, char *argv[]) {
                                     (float)(get_psnr(
                                         (configs[inst_cnt]->performance_context.sum_cr_sse /
                                          frame_count),
-                                        max_chroma_sse)));
+                                        max_chroma_sse)),
+                                    (float)configs[inst_cnt]->performance_context.sum_luma_ssim / frame_count,
+                                    (float)configs[inst_cnt]->performance_context.sum_cb_ssim / frame_count,
+                                    (float)configs[inst_cnt]->performance_context.sum_cr_ssim / frame_count);
                             }
 
                             fflush(stdout);

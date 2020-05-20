@@ -1061,6 +1061,7 @@ double get_psnr(double sse, double max) {
 void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *config) {
     uint32_t max_luma_value = (config->encoder_bit_depth == 8) ? 255 : 1023;
     uint64_t picture_stream_size, luma_sse, cr_sse, cb_sse, picture_number, picture_qp;
+    double   luma_ssim, cr_ssim, cb_ssim;
     double   temp_var, luma_psnr, cb_psnr, cr_psnr;
 
     picture_stream_size = header_ptr->n_filled_len;
@@ -1069,6 +1070,9 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
     cb_sse              = header_ptr->cb_sse;
     picture_number      = header_ptr->pts;
     picture_qp          = header_ptr->qp;
+    luma_ssim           = header_ptr->luma_ssim;
+    cr_ssim             = header_ptr->cr_ssim;
+    cb_ssim             = header_ptr->cb_ssim;
 
     temp_var =
         (double)max_luma_value * max_luma_value * (config->source_width * config->source_height);
@@ -1091,12 +1095,18 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
     config->performance_context.sum_cb_sse += cb_sse;
 
     config->performance_context.sum_qp += picture_qp;
+    config->performance_context.sum_luma_ssim    += luma_ssim;
+    config->performance_context.sum_cr_ssim      += cr_ssim;
+    config->performance_context.sum_cb_ssim      += cb_ssim;
 
     // Write statistic Data to file
     if (config->stat_file)
         fprintf(config->stat_file,
-                "Picture Number: %4d\t QP: %4d  [ PSNR-Y: %.2f dB,\tPSNR-U: %.2f dB,\tPSNR-V: %.2f "
-                "dB,\tMSE-Y: %.2f,\tMSE-U: %.2f,\tMSE-V: %.2f ]\t %6d bytes\n",
+                "Picture Number: %4d\t QP: %4d  [ "
+                "PSNR-Y: %.2f dB,\tPSNR-U: %.2f dB,\tPSNR-V: %.2f "
+                "dB,\tMSE-Y: %.2f,\tMSE-U: %.2f,\tMSE-V: %.2f,\t"
+                "SSIM-Y: %.5f,\tSSIM-U: %.5f,\tSSIM-V: %.5f"
+                " ]\t %6d bytes\n",
                 (int)picture_number,
                 (int)picture_qp,
                 luma_psnr,
@@ -1105,6 +1115,9 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
                 (double)luma_sse / (config->source_width * config->source_height),
                 (double)cb_sse / (config->source_width / 2 * config->source_height / 2),
                 (double)cr_sse / (config->source_width / 2 * config->source_height / 2),
+                luma_ssim,
+                cr_ssim,
+                cb_ssim,
                 (int)picture_stream_size);
 
     return;

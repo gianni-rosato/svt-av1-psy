@@ -138,6 +138,10 @@ typedef struct EbPerformanceContext {
     double sum_cr_sse;
     double sum_cb_sse;
 
+    double sum_luma_ssim;
+    double sum_cr_ssim;
+    double sum_cb_ssim;
+
     uint64_t sum_qp;
 
 } EbPerformanceContext;

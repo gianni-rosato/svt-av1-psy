@@ -518,6 +518,9 @@ typedef struct PictureParentControlSet {
     uint32_t luma_sse;
     uint32_t cr_sse;
     uint32_t cb_sse;
+    double   luma_ssim;
+    double   cr_ssim;
+    double   cb_ssim;
 
     // Pre Analysis
     EbObjectWrapper *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
