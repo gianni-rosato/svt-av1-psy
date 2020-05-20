@@ -3,92 +3,39 @@ configuration: Release
 skip_branch_with_pr: true
 skip_commits:
   files:
-    - '.github/*'
-    - 'Docs/*'
-    - '.travis.yml'
-    - '.gitignore'
-    - '*.md'
+    - ".github/*"
+    - "Docs/*"
+    - ".travis.yml"
+    - ".gitignore"
+    - "*.md"
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
   MSYSTEM: MINGW64
   MSYS2_PATH_TYPE: inherit
   PKG_CONFIG_PATH: C:/msys64/mingw64/lib/pkgconfig
-  matrix:
-    - generator: Visual Studio 2019
-      CFLAGS: /WX
-      CXXFLAGS: /WX
-    - generator: Unix Makefiles
-
-matrix:
-  exclude:
-    - configuration: Debug
-      generator: Unix Makefiles
 
 install:
   - set "PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;%PATH%"
   - ps: (New-Object System.Net.WebClient).DownloadFile('https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz', "$PWD\video.tar.gz")
   - tar xf video.tar.gz
   - pacman -Syyuu --ask=20 --noconfirm --noprogressbar --needed
-  - ps: if ("$env:generator" -match "Unix") { $env:packages = "mingw-w64-x86_64-ccache mingw-w64-x86_64-gcc pkg-config make" }
-  - pacman -Suu --ask=20 --noconfirm --noprogressbar --needed mingw-w64-x86_64-yasm %packages%
+  - pacman -Suu --ask=20 --noconfirm --noprogressbar --needed mingw-w64-x86_64-yasm mingw-w64-x86_64-ccache mingw-w64-x86_64-gcc pkg-config make
+  - cmake -S . -B Build -G"Unix Makefiles" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64 -DBUILD_SHARED_LIBS=off
+
+build_script:
+  - make -C Build -j install
+  - pkg-config --debug --exists --print-errors SvtAv1Enc
+  - git clone https://github.com/FFmpeg/FFmpeg.git --depth=1 --branch=master ffmpeg
+  - cd ffmpeg
+  - git apply --ignore-space-change --ignore-whitespace %APPVEYOR_BUILD_FOLDER%/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
   - ps: |
-      if ("$env:generator" -match "Visual*") {
-        cmake -S . -B Build -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64 -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=ON
-      } elseif ($null -ne $env:generator){
-        cmake -S . -B Build -G "$env:generator" -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE="$env:CONFIGURATION" -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64 -DBUILD_SHARED_LIBS=off
-      } else {
-        cmake -S . -B Build -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE="$env:CONFIGURATION" -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64 -DBUILD_SHARED_LIBS=off
-      }
-
-for:
-  - matrix:
-      only:
-        - generator: Unix Makefiles
-          configuration: Release
-    build_script:
-      - make -C Build -j install
-      - pkg-config --debug --exists --print-errors SvtAv1Enc
-      - git clone https://github.com/FFmpeg/FFmpeg.git --depth=1 --branch=master ffmpeg
-      - cd ffmpeg
-      - git apply --ignore-space-change --ignore-whitespace %APPVEYOR_BUILD_FOLDER%/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch
-      - ps: |
-          $path = ([System.Environment]::GetEnvironmentVariable('PATH', 'Machine').Split(';') | Where-Object { $_ -notmatch 'Git' }) -join ';'
-          [System.Environment]::SetEnvironmentVariable('PATH', $path, 'Machine')
-      - bash -c './configure --arch=x86_64 --cc="ccache gcc" --cxx="ccache g++" --enable-libsvtav1 --enable-encoder=libsvt_av1 || cat ffbuild/config.log'
-      - make -j 10
-      - ffmpeg -i ../akiyo_cif.y4m -c:v libsvt_av1 akiyo.mp4
-      - cd ..
-      - ps: if ($env:APPVEYOR_REPO_BRANCH -eq "master" -and $null -eq $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { Push-AppveyorArtifact -FileName ffmpeg.exe $(Get-ChildItem "ffmpeg\ffmpeg.exe").FullName }
-
-  - branches:
-      only:
-        - master
-    matrix:
-      only:
-        - generator: Visual Studio 2019
-          configuration: Release
-    artifacts:
-      - path: bin\Release\SvtAv1EncApp.exe
-        name: $(APPVEYOR_PROJECT_NAME)
-      - path: bin\Release\SvtAv1Enc.dll
-        name: $(APPVEYOR_PROJECT_NAME)
-      - path: bin\Release\SvtAv1DecApp.exe
-        name: $(APPVEYOR_PROJECT_NAME)
-      - path: bin\Release\SvtAv1Dec.dll
-        name: $(APPVEYOR_PROJECT_NAME)
-    deploy:
-      - provider: GitHub
-        artifact: $(APPVEYOR_PROJECT_NAME)
-        auth_token:
-          secure: "sf0pQXlPI+X6LoAR8QUJB74jjzNxcLGOXI3H0nbxJq8llvGPG/TAUd87hq5iHZXo"
-        prerelease: true
-        on:
-          appveyor_repo_tag: true
-          generator: Visual Studio 2019
-          configuration: Release
-
-build:
-  project: Build\svt-av1.sln
+      $path = ([System.Environment]::GetEnvironmentVariable('PATH', 'Machine').Split(';') | Where-Object { $_ -notmatch 'Git' }) -join ';'
+      [System.Environment]::SetEnvironmentVariable('PATH', $path, 'Machine')
+  - bash -c './configure --arch=x86_64 --cc="ccache gcc" --cxx="ccache g++" --enable-libsvtav1 --enable-encoder=libsvt_av1 || { cat ffbuild/config.log; exit 1; }'
+  - make -j 10
+  - ffmpeg -i ../akiyo_cif.y4m -c:v libsvt_av1 akiyo.mp4
+  - cd ..
+  - ps: if ($env:APPVEYOR_REPO_BRANCH -eq "master" -and $null -eq $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { Push-AppveyorArtifact -FileName ffmpeg.exe $(Get-ChildItem "ffmpeg\ffmpeg.exe").FullName }
 
 test_script:
   - Bin\%CONFIGURATION%\SvtAv1EncApp -enc-mode 0 -i akiyo_cif.y4m -n 3
