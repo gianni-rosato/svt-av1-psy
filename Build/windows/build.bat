@@ -4,24 +4,41 @@
 
 setlocal
 cd /d "%~dp0"
-set instdir=%CD%
 
+:: Set defaults to prevent inheriting
 set "build=y"
+:: Default is debug
+set "buildtype=Debug"
+:: Default is shared
+set "shared=ON"
+set "GENERATOR="
+:: (cmake -G 2>&1 | Select-String -SimpleMatch '*').Line.Split('=')[0].TrimEnd().Replace('* ','')
+:: Default is not building unit tests
+set "unittest=OFF"
 if NOT -%1-==-- call :args %*
 if exist CMakeCache.txt del /f /s /q CMakeCache.txt 1>nul
 if exist CMakeFiles rmdir /s /q CMakeFiles 1>nul
 if NOT "%GENERATOR%"=="" set GENERATOR=-G"%GENERATOR%"
-if NOT "%unittest%"=="" set "cmake_eflags=%cmake_eflags% -DBUILD_TESTING=ON"
-if "%vs%"=="2019" (
-    cmake ../.. %GENERATOR% -A x64 -DCMAKE_INSTALL_PREFIX=%SYSTEMDRIVE%\svt-encoders -DCMAKE_CONFIGURATION_TYPES="Debug;Release" %cmake_eflags%
+
+echo Building in %buildtype% configuration
+
+if NOT "%build%"=="y" echo Generating build files
+
+if "%shared%"=="ON" (
+    echo Building shared
 ) else (
-    cmake ../.. %GENERATOR% -DCMAKE_INSTALL_PREFIX=%SYSTEMDRIVE%\svt-encoders -DCMAKE_CONFIGURATION_TYPES="Debug;Release" %cmake_eflags%
+    echo Building static
 )
 
-if "%build%"=="y" (
-    if NOT "%buildtype%"=="" set "buildtype=--config %buildtype%"
-    cmake --build . %buildtype%
+if "%unittest%"=="ON" echo Building unit tests
+
+if "%vs%"=="2019" (
+    cmake ../.. %GENERATOR% -A x64 -DCMAKE_INSTALL_PREFIX=%SYSTEMDRIVE%\svt-encoders -DBUILD_SHARED_LIBS=%shared% -DBUILD_TESTING=%unittest% %cmake_eflags% || exit 1
+) else (
+    cmake ../.. %GENERATOR% -DCMAKE_INSTALL_PREFIX=%SYSTEMDRIVE%\svt-encoders -DBUILD_SHARED_LIBS=%shared% -DBUILD_TESTING=%unittest% %cmake_eflags% || exit 1
 )
+
+if "%build%"=="y" cmake --build . --config %buildtype%
 goto :EOF
 
 :args
@@ -99,26 +116,31 @@ if -%1-==-- (
     set "GENERATOR=Unix Makefiles"
     shift
 ) else if /I "%1"=="release" (
-    echo Building for release
-    set "buildtype=release"
+    set "buildtype=Release"
     shift
 ) else if /I "%1"=="debug" (
-    echo Building for debug
-    set "buildtype=debug"
+    set "buildtype=Debug"
     shift
 ) else if /I "%1"=="test" (
-    echo Building unit tests
-    set "unittest=y"
+    set "unittest=ON"
+    shift
+) else if /I "%1"=="static" (
+    set "shared=OFF"
+    shift
+) else if /I "%1"=="shared" (
+    set "shared=ON"
     shift
 ) else if /I "%1"=="nobuild" (
-    echo Building files
     set "build=n"
     shift
+) else (
+    echo Unknown argument "%1"
+    call :help
 )
 goto :args
 
 :help
     echo Batch file to build SVT-AV1 on Windows
-    echo Usage: generate.bat 2019^|2017^|2015^|clean [release|debug] [nobuild] [test]
+    echo Usage: build.bat [2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static]
     exit
 goto :EOF
