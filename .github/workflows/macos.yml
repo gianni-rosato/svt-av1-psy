@@ -42,3 +42,65 @@ jobs:
 
     - name: Install
       run: sudo cmake --build Build --config "${build_type:=Release}" --target install
+
+  unit-tests:
+    runs-on: [self-hosted, macos]
+    env:
+      CC: 'ccache gcc'
+      CXX: 'ccache g++'
+      # Build unit tests
+      testing: 'ON'
+      NOTROOT: 1
+    name: 'Unit Tests (MacOS, GCC)'
+    steps:
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install ${native_deps}
+      - uses: actions/checkout@v2
+      - name: Cache ccache files
+        uses: actions/cache@v1.1.2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-unit-tests-${{ hashFiles('**/*.c') }}
+          restore-keys: ${{ runner.os }}-unit-tests-
+      - name: Compile SVT-AV1 (Release, Tests)
+        run: |
+          chmod +x .ci/ci.sh
+          .ci/ci.sh
+      - name: Run unit tests
+        run: |
+          export GTEST_TOTAL_SHARDS=10
+          seq 0 $(( $GTEST_TOTAL_SHARDS - 1 )) | xargs -n 1 -P 10 -I{} env GTEST_SHARD_INDEX={} ./Bin/Release/SvtAv1UnitTests
+          unset GTEST_TOTAL_SHARDS
+
+  e2e-tests:
+    runs-on: [self-hosted, macos]
+    env:
+      CC: 'ccache gcc'
+      CXX: 'ccache g++'
+      # Build unit tests
+      testing: 'ON'
+      NOTROOT: 1
+    name: 'E2E Tests (MacOS, GCC)'
+    steps:
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install ${native_deps}
+      - uses: actions/checkout@v2
+      - name: Cache ccache files
+        uses: actions/cache@v1.1.2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-e2e-${{ hashFiles('**/*.c') }}
+          restore-keys: ${{ runner.os }}-e2e-
+      - name: Compile SVT-AV1 (Release, Tests and TestVectors)
+        run: |
+          chmod +x .ci/ci.sh
+          .ci/ci.sh
+          pushd ./Build/linux/Release
+          make TestVectors
+          popd
+      - name: Run e2e tests
+        run: env SVT_AV1_TEST_VECTOR_PATH="./test/vectors" ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
