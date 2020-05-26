@@ -2607,8 +2607,8 @@ static EbErrorType verify_settings(
     }
 
     if (config->use_cpu_flags & CPU_FLAGS_INVALID) {
-        SVT_LOG("Error Instance %u: param '-asm' have invalid value.\n"
-            "Value should be [0 - 11, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]\n", channel_number + 1);
+        SVT_LOG("Error Instance %u: param '--asm' have invalid value.\n"
+            "Value should be [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 

@@ -793,8 +793,8 @@ ConfigEntry config_entry_global_options[] = {
     // Asm Type
     {SINGLE_INPUT,
      ASM_TYPE_TOKEN,
-     "Assembly instruction set (0: Automatically select lowest assembly instruction set supported, "
-     "1: Automatically select highest assembly instruction set supported)",
+     "Limit assembly instruction set [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2,"
+     " avx, avx2, avx512, max], by default highest level supported by CPU",
      set_asm_type},
     {SINGLE_INPUT, THREAD_MGMNT, "number of logical processors to be used", set_logical_processors},
     {SINGLE_INPUT,
