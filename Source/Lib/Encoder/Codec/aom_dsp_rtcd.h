@@ -535,6 +535,12 @@ extern "C" {
         const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+    RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise_hbd)(
+        const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
+        const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
+        const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
+        int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
+        uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
     RTCD_EXTERN uint32_t(*combined_averaging_ssd)(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
     RTCD_EXTERN void(*ext_sad_calculation_8x8_16x16)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv, uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad);
     void ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
@@ -1203,6 +1209,12 @@ extern "C" {
         const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
         const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
+        int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
+        uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+    void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
+        const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
+        const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
+        const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 

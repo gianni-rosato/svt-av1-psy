@@ -1430,7 +1430,7 @@ static void apply_filtering_block_plane_wise(
 
         // Apply the temporal filtering strategy
         // TODO(any): avx2 version should also support high bit-depth.
-        svt_av1_apply_temporal_filter_planewise_hbd_c(src_ptr_16bit[C_Y],
+        svt_av1_apply_temporal_filter_planewise_hbd(src_ptr_16bit[C_Y],
             stride[C_Y],
             pred_ptr_16bit[C_Y],
             stride_pred[C_Y],

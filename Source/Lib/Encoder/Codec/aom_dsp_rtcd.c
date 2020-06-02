@@ -329,6 +329,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 
     svt_av1_apply_filtering = svt_av1_apply_filtering_c;
     svt_av1_apply_temporal_filter_planewise = svt_av1_apply_temporal_filter_planewise_c;
+    svt_av1_apply_temporal_filter_planewise_hbd = svt_av1_apply_temporal_filter_planewise_hbd_c;
     svt_av1_apply_filtering_highbd = svt_av1_apply_filtering_highbd_c;
     combined_averaging_ssd = combined_averaging_ssd_c;
     ext_sad_calculation_8x8_16x16 = ext_sad_calculation_8x8_16x16_c;
@@ -635,6 +636,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     SET_AVX2(svt_av1_apply_temporal_filter_planewise,
                         svt_av1_apply_temporal_filter_planewise_c,
                         svt_av1_apply_temporal_filter_planewise_avx2);
+                    SET_AVX2(svt_av1_apply_temporal_filter_planewise_hbd,
+                        svt_av1_apply_temporal_filter_planewise_hbd_c,
+                        svt_av1_apply_temporal_filter_planewise_hbd_avx2);
                     SET_SSE41(svt_av1_apply_filtering_highbd,
                         svt_av1_apply_filtering_highbd_c,
                         svt_av1_highbd_apply_temporal_filter_sse4_1);
