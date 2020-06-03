@@ -316,7 +316,7 @@ static inline PacketizationReorderEntry* get_reorder_queue_entry(const EncodeCon
     return encode_context_ptr->packetization_reorder_queue[pos];
 }
 
-static uint32_t count_frames_in_next_tu(const EncodeContext *encode_context_ptr, int *data_size) {
+static uint32_t count_frames_in_next_tu(const EncodeContext *encode_context_ptr, uint32_t *data_size) {
     const PacketizationReorderEntry *queue_entry_ptr;
     const EbBufferHeaderType *       output_stream_ptr;
     int                              i = 0;
@@ -529,17 +529,27 @@ static void collect_frames_info(PacketizationContext* context_ptr, const EncodeC
 #define TD_SIZE 2
 
 //a tu start with a td, + 0 more not displable frame, + 1 display frame
-static void encode_tu(EncodeContext *encode_context_ptr, int frames, int total_bytes,
-                      EbBufferHeaderType *output_stream_ptr) {
+static EbErrorType encode_tu(EncodeContext *encode_context_ptr, int frames, uint32_t total_bytes,
+                             EbBufferHeaderType *output_stream_ptr) {
     total_bytes += TD_SIZE;
-    if (total_bytes > (int)output_stream_ptr->n_alloc_len) {
-        SVT_ERROR("encode size(%d) is too large", total_bytes);
-        return;
+    if (total_bytes > output_stream_ptr->n_alloc_len) {
+        uint8_t *pbuff;
+        EB_MALLOC(pbuff, total_bytes);
+        if (!pbuff) {
+            SVT_ERROR("failed to allocate more memory in encode_tu");
+            return EB_ErrorInsufficientResources;
+        }
+        EB_MEMCPY(pbuff,
+                  output_stream_ptr->p_buffer,
+                  output_stream_ptr->n_alloc_len > total_bytes ? total_bytes
+                                                               : output_stream_ptr->n_alloc_len);
+        EB_FREE(output_stream_ptr->p_buffer);
+        output_stream_ptr->p_buffer    = pbuff;
+        output_stream_ptr->n_alloc_len = total_bytes;
     }
     uint8_t *dst                    = output_stream_ptr->p_buffer + total_bytes;
     //we use last frame's output_stream_ptr to hold entire tu, so we need copy backward.
-    int last = frames - 1;
-    for (int i = last; i >= 0; i--) {
+    for (int i = frames - 1; i >= 0; i--) {
         PacketizationReorderEntry *queue_entry_ptr = get_reorder_queue_entry(encode_context_ptr, i);
         EbObjectWrapper* wrapper = queue_entry_ptr->output_stream_wrapper_ptr;
         EbBufferHeaderType *       src_stream_ptr = (EbBufferHeaderType *)wrapper->object_ptr;
@@ -548,7 +558,7 @@ static void encode_tu(EncodeContext *encode_context_ptr, int frames, int total_b
         memmove(dst, src_stream_ptr->p_buffer, size);
         //1. The last frame is a displayable frame, others are undisplayed.
         //2. We do not push alt ref frame since the overlay frame will carry the pts.
-        if (i != last && !queue_entry_ptr->is_alt_ref)
+        if (i != frames - 1 && !queue_entry_ptr->is_alt_ref)
             push_undisplayed_frame(encode_context_ptr, wrapper);
     }
     if (frames > 1)
@@ -557,6 +567,7 @@ static void encode_tu(EncodeContext *encode_context_ptr, int frames, int total_b
     encode_td_av1(dst);
     output_stream_ptr->n_filled_len = total_bytes;
     output_stream_ptr->flags |= EB_BUFFERFLAG_HAS_TD;
+    return EB_ErrorNone;
 }
 
 static EbErrorType copy_data_from_bitstream(EncodeContext *encode_context_ptr, Bitstream *bitstream_ptr, EbBufferHeaderType *output_stream_ptr) {
@@ -609,6 +620,12 @@ inline static void set_eos_flag(EbBufferHeaderType *output_stream_ptr) {
     output_stream_ptr->flags |= EB_BUFFERFLAG_EOS;
 }
 
+/* Wrapper function to capture the return of EB_MALLOC */
+static inline EbErrorType malloc_p_buffer(EbBufferHeaderType *output_stream_ptr) {
+    EB_MALLOC(output_stream_ptr->p_buffer, output_stream_ptr->n_alloc_len);
+    return EB_ErrorNone;
+}
+
 void *packetization_kernel(void *input_ptr) {
     // Context
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -639,9 +656,6 @@ void *packetization_kernel(void *input_ptr) {
     int32_t                    queue_entry_index;
     PacketizationReorderEntry *queue_entry_ptr;
     EbLinkedListNode *         app_data_ll_head_temp_ptr;
-    uint32_t                   frames;
-    uint32_t                   allocated_size = 0;
-    int                        total_bytes    = 0;
 
     context_ptr->tot_shown_frames            = 0;
     context_ptr->disp_order_continuity_count = 0;
@@ -751,9 +765,8 @@ void *packetization_kernel(void *input_ptr) {
 
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
 
-        allocated_size = total_bytes + bitstream_get_bytes_count(pcs_ptr->bitstream_ptr);
-        output_stream_ptr->n_alloc_len = allocated_size + TD_SIZE;
-        output_stream_ptr->p_buffer    = (uint8_t *)malloc(output_stream_ptr->n_alloc_len);
+        output_stream_ptr->n_alloc_len = bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) + TD_SIZE;
+        malloc_p_buffer(output_stream_ptr);
 
         assert(output_stream_ptr->p_buffer != NULL && "bit-stream memory allocation failure");
 
@@ -836,7 +849,7 @@ void *packetization_kernel(void *input_ptr) {
         // Process the head of the queue
         //****************************************************
         // Look at head of queue and see if we got a td
-
+        uint32_t frames, total_bytes;
         while ((frames = count_frames_in_next_tu(encode_context_ptr, &total_bytes))) {
             collect_frames_info(context_ptr, encode_context_ptr, frames);
             //last frame in a termporal unit is a displable frame. only the last frame has pts.

@@ -13,18 +13,7 @@
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
 
-#define INPUT_SIZE_576p_TH 0x90000 // 0.58 Million
-#define INPUT_SIZE_1080i_TH 0xB71B0 // 0.75 Million
-#define INPUT_SIZE_1080p_TH 0x1AB3F0 // 1.75 Million
-#define INPUT_SIZE_4K_TH 0x29F630 // 2.75 Million
-
 #define IS_16_BIT(bit_depth) (bit_depth == 10 ? 1 : 0)
-#define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize) \
-    ((ResolutionSize) < (INPUT_SIZE_1080i_TH)           \
-         ? 0x1E8480                                     \
-         : (ResolutionSize) < (INPUT_SIZE_1080p_TH)     \
-               ? 0x2DC6C0                               \
-               : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0)
 
 /***************************************
  * Variables Defining a memory table

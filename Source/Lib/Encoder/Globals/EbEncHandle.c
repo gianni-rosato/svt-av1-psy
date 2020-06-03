@@ -86,7 +86,6 @@
 #define EB_OUTPUTRECONBUFFERSIZE                                        (MAX_PICTURE_WIDTH_SIZE*MAX_PICTURE_HEIGHT_SIZE*2)   // Recon Slice Size
 #define EB_OUTPUTSTATISTICSBUFFERSIZE                                   0x30            // 6X8 (8 Bytes for Y, U, V, number of bits, picture number, QP)
 #define EOS_NAL_BUFFER_SIZE                                             0x0010 // Bitstream used to code EOS NAL
-#define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize)                ((ResolutionSize) < (INPUT_SIZE_1080i_TH) ? 0x1E8480 : (ResolutionSize) < (INPUT_SIZE_1080p_TH) ? 0x2DC6C0 : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0  )
 
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
@@ -3581,7 +3580,7 @@ EB_API void svt_av1_enc_release_out_buffer(
     if (p_buffer && (*p_buffer)->wrapper_ptr)
     {
         if((*p_buffer)->p_buffer)
-           free((*p_buffer)->p_buffer);
+           EB_FREE((*p_buffer)->p_buffer);
         // Release out put buffer back into the pool
         eb_release_object((EbObjectWrapper  *)(*p_buffer)->wrapper_ptr);
      }
@@ -3806,9 +3805,7 @@ EbErrorType eb_output_buffer_header_creator(
     EbPtr *object_dbl_ptr,
     EbPtr object_init_data_ptr)
 {
-    EbSvtAv1EncConfiguration   * config = (EbSvtAv1EncConfiguration*)object_init_data_ptr;
-    uint32_t n_stride =
-        (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(config->source_width * config->source_height));
+    (void)object_init_data_ptr;
     EbBufferHeaderType* out_buf_ptr;
 
     *object_dbl_ptr = NULL;
@@ -3817,10 +3814,9 @@ EbErrorType eb_output_buffer_header_creator(
 
     // Initialize Header
     out_buf_ptr->size = sizeof(EbBufferHeaderType);
-    out_buf_ptr->n_alloc_len = n_stride;
+    // p_buffer and n_alloc_len are dynamically set in EbPacketizationProcess
+    // out_buf_ptr->n_alloc_len;
     out_buf_ptr->p_app_private = NULL;
-
-    (void)object_init_data_ptr;
 
     return EB_ErrorNone;
 }
