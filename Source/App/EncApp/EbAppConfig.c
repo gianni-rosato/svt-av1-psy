@@ -801,7 +801,7 @@ ConfigEntry config_entry_global_options[] = {
      UNPIN_TOKEN,
     "Allows the execution to be pined/unpined to/from a specific number of cores \n"
     "The combinational use of --unpin with --lp results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores \n"
-    "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF [default] ,1: ON) \n"
+    "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF ,1: ON [default]) \n"
     "Example: 72 core machine: \n"
     "72 jobs x -- lp 1 -- unpin 1 \n"
     "36 jobs x -- lp 2 -- unpin 1 \n"
@@ -1617,7 +1617,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // ASM Type
     config_ptr->cpu_flags_limit = CPU_FLAGS_ALL;
 
-    config_ptr->unpin     = 0;
+    config_ptr->unpin     = 1;
     config_ptr->target_socket = -1;
 
     config_ptr->unrestricted_motion_vector = EB_TRUE;

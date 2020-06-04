@@ -149,7 +149,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HighDynamicRangeInput** | --enable-hdr | [0-1, 0 for default] | 0 | Enable high dynamic range(0: OFF[default], ON: 1) |
 | **Asm** | --asm |  [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max] | 11 or max | Limit assembly instruction set ("0" is equivalent to "c", "1" is "mmx" etc, max value is "11" or "max"), by default select highest assembly instruction that is supported by CPU |
 | **LogicalProcessorNumber** | --lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
-| **UnpinExecution** | --unpin | [0, 1] | 0 | Allows the execution to be pined/unpined to/from a specific number of cores.--unpin is overwritten to 0 when --ss is set to 0 or 1. 0=OFF, 1= ON |
+| **UnpinExecution** | --unpin | [0, 1] | 1 | Allows the execution to be pined/unpined to/from a specific number of cores.--unpin is overwritten to 0 when --ss is set to 0 or 1. 0=OFF, 1= ON |
 | **TargetSocket** | --ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
 
 #### Rate Control Options

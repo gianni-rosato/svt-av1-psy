@@ -3037,7 +3037,7 @@ EbErrorType eb_svt_enc_init_parameter(
 
     // Channel info
     config_ptr->logical_processors = 0;
-    config_ptr->unpin = 0;
+    config_ptr->unpin = 1;
     config_ptr->target_socket = -1;
     config_ptr->channel_id = 0;
     config_ptr->active_channel_count = 1;

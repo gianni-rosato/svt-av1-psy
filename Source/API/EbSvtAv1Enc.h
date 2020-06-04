@@ -557,8 +557,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * of multiple encodes on the CPU wihtout having to pin them to a specific mask
     * 1: unpinned
     * 0: pinned
-    *
-    * If logical_processors is set to 1 default is 1 otherwise it is 0. */
+    * default 1 */
     uint32_t unpin;
 
     /* Target socket to run on. For dual socket systems, this can specify which
