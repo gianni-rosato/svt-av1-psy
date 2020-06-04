@@ -424,7 +424,7 @@ int32_t main(int32_t argc, char *argv[]) {
             }
         } else {
             fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
-            fprintf(stderr, "Run %s -help for a list of options\n", argv[0]);
+            fprintf(stderr, "Run %s --help for a list of options\n", argv[0]);
         }
         // Destruct the App memory variables
         for (inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {

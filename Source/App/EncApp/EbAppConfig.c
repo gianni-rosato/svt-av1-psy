@@ -474,7 +474,7 @@ static void set_tile_col(const char *value, EbConfig *cfg) {
 };
 static void set_scene_change_detection(const char *value, EbConfig *cfg) {
     cfg->scene_change_detection = strtoul(value, NULL, 0);
-};
+}
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
     cfg->look_ahead_distance = strtoul(value, NULL, 0);
 };
@@ -975,9 +975,9 @@ ConfigEntry config_entry_specific[] = {
      set_edge_skip_angle_intra_flag},
     // INTRA ANGLE DELTA
     {SINGLE_INPUT,
-        INTRA_ANGLE_DELTA_TOKEN,
-        "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
-        set_intra_angle_delta_flag},
+     INTRA_ANGLE_DELTA_TOKEN,
+     "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
+     set_intra_angle_delta_flag},
     // INTER INTRA COMPOUND
     {SINGLE_INPUT,
      INTER_INTRA_COMPOUND_NEW_TOKEN,
@@ -1128,27 +1128,33 @@ ConfigEntry config_entry_specific[] = {
     // HME
     {ARRAY_INPUT,
      HME_LEVEL0_WIDTH,
-     "Set hierarchical motion estimation level0 search area in Width",
+     "Set hierarchical motion estimation level0 search width (Requires numbers whose sum "
+     "equal the total search width and amount equals the search regions)",
      set_hme_level_0_search_area_in_width_array},
     {ARRAY_INPUT,
      HME_LEVEL0_HEIGHT,
-     "Set hierarchical motion estimation level0 search area in height",
+     "Set hierarchical motion estimation level0 search height (Requires numbers whose sum "
+     "equal the total search height and amount equals the search regions)",
      set_hme_level_0_search_area_in_height_array},
     {ARRAY_INPUT,
      HME_LEVEL1_WIDTH,
-     "Set hierarchical motion estimation level1 search area in Width",
+     "Set hierarchical motion estimation level1 search width (Requires numbers whose sum "
+     "equal the total search width and amount equals the search regions)",
      set_hme_level_1_search_area_in_width_array},
     {ARRAY_INPUT,
      HME_LEVEL1_HEIGHT,
-     "Set hierarchical motion estimation level1 search area in height",
+     "Set hierarchical motion estimation level1 search height (Requires numbers whose sum "
+     "equal the total search height and amount equals the search regions)",
      set_hme_level_1_search_area_in_height_array},
     {ARRAY_INPUT,
      HME_LEVEL2_WIDTH,
-     "Set hierarchical motion estimation level2 search area in Width",
+     "Set hierarchical motion estimation level2 search width (Requires numbers whose sum "
+     "equal the total search width and amount equals the search regions)",
      set_hme_level_2_search_area_in_width_array},
     {ARRAY_INPUT,
      HME_LEVEL2_HEIGHT,
-     "Set hierarchical motion estimation level2 search area in height",
+     "Set hierarchical motion estimation level2 search height (Requires numbers whose sum "
+     "equal the total search height and amount equals the search regions)",
      set_hme_level_2_search_area_in_height_array},
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
@@ -2647,11 +2653,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /***********   Find SPECIAL configuration parameter tokens and call respective functions  **********/
     /***************************************************************************************************/
     // Parse command line for search region at level 0 width token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL0_WIDTH, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_WIDTH, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_WIDTH, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level0_column_index = 0;
@@ -2671,11 +2679,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     //// Parse command line for search region at level 0 height token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_HEIGHT, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level0_row_index = 0;
@@ -2695,11 +2705,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 1 Height token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_HEIGHT, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level1_row_index = 0;
@@ -2719,11 +2731,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 1 width token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_WIDTH, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level1_column_index = 0;
@@ -2743,11 +2757,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 2 width token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_WIDTH, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level2_column_index = 0;
@@ -2767,11 +2783,13 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     }
 
     // Parse command line for search region at level 2 height token
-    if (find_token_multiple_inputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) == 0) {
+    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) ||
+        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_HEIGHT, config_strings)) {
         uint32_t input_index = 0, last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
+        mark_token_as_read("-" HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level2_row_index = 0;

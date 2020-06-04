@@ -69,7 +69,7 @@ A text file that contains encoder parameters such as input file name, quantizati
 
 `-i filename` **[Required]**
 
-A YUV file (e.g. 8 bit 4:2:0 planar) containing the video sequence that will be encoded. The dimensions of each image are specified by `–w` and `–h` as indicated below.
+A YUV file (e.g. 8 bit 4:2:0 planar) containing the video sequence that will be encoded. The dimensions of each image are specified by `-w` and `-h` as indicated below.
 
 `-b filename` **[Optional]**
 
@@ -87,17 +87,17 @@ The height of each input image in units of picture luma pixels, e.g. 1080
 
 The number of frames of the sequence to encode. e.g. 100. If the input frame count is larger than the number of frames in the input video, the encoder will loopback to the first frame when it is done.
 
-`-intra-period integer` **[Optional]**
+`--keyint integer` **[Optional]**
 
 The intra period defines the interval of frames after which you insert an Intra refresh. It is strongly recommended to use (multiple of 8) -1 the closest to 1 second (e.g. 55, 47, 31, 23 should be used for 60, 50, 30, (24 or 25) respectively). When using closed gop (-irefresh-type 2) add 1 to the value above (e.g. 56 instead of 55).
 
-`-rc integer` **[Optional]**
+`--rc integer` **[Optional]**
 
-This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP]. When `-rc` is set to 1, it is best to match the `–lad` (lookahead distance described in the next section) parameter to the `-intra-period`. When `–rc` is set to 0, a qp value is expected with the use of the `–q` command line option otherwise a default value is assigned (25).
+This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP]. When `--rc` is set to 1, it is best to match the `--lookahead` (lookahead distance described in the next section) parameter to the `--keyint`. When `--rc` is set to 0, a qp value is expected with the use of the `-q` command line option otherwise a default value is assigned (25).
 
 For example, the following command encodes 100 frames of the YUV video sequence into the bin bit stream file. The picture is 1920 luma pixels wide and 1080 pixels high using the `Sample.cfg` configuration. The QP equals 30 and the md5 checksum is not included in the bit stream.
 
-`SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun\_1920x1080.yuv -w 1920 -h 1080 -n 100 -q 30 -intra-period 31 -b CrowdRun\_1920x1080\_qp30.bin`
+`SvtAv1EncApp.exe -c Sample.cfg -i CrowdRun_1920x1080.yuv -w 1920 -h 1080 -n 100 -q 30 --keyint 31 -b CrowdRun_1920x1080_qp30.bin`
 
 It should be noted that not all the encoder parameters present in the `Sample.cfg` can be changed using the command line.
 
@@ -106,14 +106,14 @@ It should be noted that not all the encoder parameters present in the `Sample.cf
 Here are some sample encode command lines
 
 #### 1 pass fixed QP at maximum speed from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 0 -q 30 -enc-mode 8 -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 8 -b output.ivf`
 
 #### 1 pass VBR 10000 Kbps at medium speed from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 2 -tbr 10000 -enc-mode 5 -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 10000 --preset 5 -b output.ivf`
 
 #### 2 pass fixed QP at maximum quality from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 0 -q 30 -enc-mode 8 -b output.ivf -output-stat-file stat_file.stat`
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 -fps 24 -rc 0 -q 30 -enc-mode 0 -b output.ivf -input-stat-file stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 8 -b output.ivf --output-stat-file stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 0 -b output.ivf --input-stat-file stat_file.stat`
 
 ### List of all configuration parameters
 
@@ -136,7 +136,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **SourceWidth** | -w | [64 - 4096] | None | Input source width |
 | **SourceHeight** | -h | [0 - 2304] | None | Input source height |
 | **FrameToBeEncoded** | -n | [0 - 2^64 -1] | 0 | Number of frames to be encoded, if number of frames is > number of frames in file, the encoder will loop to the beginning and continue the encode. Use -1 to not buffer. |
-| **BufferedInput** | --nb | [-1, 1 to 2^31 -1] | -1 | number of frames to preload to the RAM before the start of the encode If -nb = 100 and -n 1000 -- > the encoder will encode the first 100 frames of the video 10 times |
+| **BufferedInput** | --nb | [-1, 1 to 2^31 -1] | -1 | number of frames to preload to the RAM before the start of the encode If --nb = 100 and -n 1000 -- > the encoder will encode the first 100 frames of the video 10 times |
 | **EncoderColorFormat** | --color-format | [1 for default] | 1 | Set encoder color format(EB_YUV400, EB_YUV420, EB_YUV422, EB_YUV444) |
 | **Profile** | --profile | [0-2, 0 for default] | 0 | Bitstream profile number to use (0: main profile[default], 1: high profile, 2: professional profile) |
 | **FrameRate** | --fps | [0 - 2^64 -1] | 25 | If the number is less than 1000, the input frame rate is an integer number between 1 and 60, else the input number is in Q16 format (shifted by 16 bits) [Max allowed is 240 fps] |
@@ -225,33 +225,33 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HMELevel1** | --hme-l1 | [0 - 1] | Depends on input resolution | Enable HME Level 1 , 0 = OFF, 1 = ON |
 | **HMELevel2** | --hme-l2 | [0 - 1] | Depends on input resolution | Enable HME Level 2 , 0 = OFF, 1 = ON |
 | **ExtBlockFlag** | --ext-block | [0 - 1] | Depends on --preset | Enable the non-square block 0=OFF, 1= ON |
-| **SearchAreaWidth** | --search-w | [1 - 256] | Depends on input resolution | Search Area in Width |
-| **SearchAreaHeight** | --search-h | [1 - 256] | Depends on input resolution | Search Area in Height |
+| **SearchAreaWidth** | --search-w | [1 - 480] | Depends on input resolution | Search Area in Width |
+| **SearchAreaHeight** | --search-h | [1 - 480] | Depends on input resolution | Search Area in Height |
 | **NumberHmeSearchRegionInWidth** | --num-hme-w | [1 - 2] | Depends on input resolution | Search Regions in Width |
 | **NumberHmeSearchRegionInHeight** | --num-hme-h | [1 - 2] | Depends on input resolution | Search Regions in Height |
-| **HmeLevel0TotalSearchAreaWidth** | --hme-tot-l0-w | [1 - 256] | Depends on input resolution | Total HME Level 0 Search Area in Width |
-| **HmeLevel0TotalSearchAreaHeight** | --hme-tot-l0-h | [1 - 256] | Depends on input resolution | Total HME Level 1 Search Area in Width |
+| **HmeLevel0TotalSearchAreaWidth** | --hme-tot-l0-w | [1 - 480] | Depends on input resolution | Total HME Level 0 Search Area in Width |
+| **HmeLevel0TotalSearchAreaHeight** | --hme-tot-l0-h | [1 - 480] | Depends on input resolution | Total HME Level 1 Search Area in Width |
 | **ScreenContentMode** | --scm | [0 - 2] | 0 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
 | **IntraBCMode** | --intrabc-mode | [0 - 3], -1 for default] | -1 | IntraBC mode (0 = OFF, 1 = ON slow, 1 = ON faster, 2 = ON fastest, -1 = DEFAULT) |
 | **HighBitDepthModeDecision** | --hbd-md | [0-2, 1 for default] | 1 | Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON) |
 | **PaletteMode** | --palette | [0 - 6] | -1 | Enable Palette mode (-1: DEFAULT (ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
-| **UnrestrictedMotionVector** | --umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set -umv 0 |
+| **UnrestrictedMotionVector** | --umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set --umv 0 |
 | **Injector** | --inj | [0-1, 0 for default] | 0 | Inject pictures at defined frame rate(0: OFF[default],1: ON) |
 | **InjectorFrameRate** | --inj-frm-rt | Null | Null | Set injector frame rate |
 | **SpeedControlFlag** | --speed-ctrl | [0-1, 0 for default] | 0 | Enable speed control(0: OFF[default], 1: ON) |
 | **FilmGrain** | --film-grain | [0-50, 0 for default] | 0 | Enable film grain(0: OFF[default], 1 - 50: Level of denoising for film grain) |
-| **HmeLevel0SearchAreaInWidth** | --hme-l0-w | [1 - 256] | Depends on input resolution | HME Level 0 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth, and the sum must equal toHmeLevel0TotalSearchAreaWidth |
-| **HmeLevel0SearchAreaInHeight** | --hme-l0-h | [1 - 256] | Depends on input resolution | HME Level 0 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight, and the sum must equal toHmeLevel0TotalSearchAreaHeight |
-| **HmeLevel1SearchAreaInWidth** | --hme-l1-w | [1 - 256] | Depends on input resolution | HME Level 1 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth |
-| **HmeLevel1SearchAreaInHeight** | --hme-l1-h | [1 - 256] | Depends on input resolution | HME Level 1 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight |
-| **HmeLevel2SearchAreaInWidth** | --hme-l2-w | [1 - 256] | Depends on input resolution | HME Level 2 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth |
-| **HmeLevel2SearchAreaInHeight** | --hme-l2-h | [1 - 256] | Depends on input resolution | HME Level 2 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight |
+| **HmeLevel0SearchAreaInWidth** | --hme-l0-w | [1 - 480] | Depends on input resolution | HME Level 0 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth, and the sum must equal toHmeLevel0TotalSearchAreaWidth |
+| **HmeLevel0SearchAreaInHeight** | --hme-l0-h | [1 - 480] | Depends on input resolution | HME Level 0 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight, and the sum must equal toHmeLevel0TotalSearchAreaHeight |
+| **HmeLevel1SearchAreaInWidth** | --hme-l1-w | [1 - 480] | Depends on input resolution | HME Level 1 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth |
+| **HmeLevel1SearchAreaInHeight** | --hme-l1-h | [1 - 480] | Depends on input resolution | HME Level 1 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight |
+| **HmeLevel2SearchAreaInWidth** | --hme-l2-w | [1 - 480] | Depends on input resolution | HME Level 2 Search Area in Width for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInWidth |
+| **HmeLevel2SearchAreaInHeight** | --hme-l2-h | [1 - 480] | Depends on input resolution | HME Level 2 Search Area in Height for each region, separated in spaces, the number of input search areas must equal to NumberHmeSearchRegionInHeight |
 | **EnableAltRefs** | --enable-altrefs | [0-1, 1 for default] | 1 | Enable automatic alt reference frames(0: OFF, 1: ON[default]) |
 | **AltRefStrength** | --altref-strength | [0-6, 5 for default] | 5 | AltRef filter strength([0-6], default: 5) |
 | **AltRefNframes** | --altref-nframes | [0-10, 7 for default] | 7 | AltRef max frames([0-10], default: 7) |
 | **EnableOverlays** | --enable-overlays | [0-1, 0 for default] | 0 | Enable the insertion of an extra picture called overlayer picture which will be used as an extra reference frame for the base-layer picture(0: OFF[default], 1: ON) |
 | **SquareWeight** | --sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
-| **ChannelNumber** | -nch | [1 - 6] | 1 | Number of encode instances |
+| **ChannelNumber** | --nch | [1 - 6] | 1 | Number of encode instances |
 | **MDS1PruneClassThreshold** | --mds-1-class-th | 0 for off and any whole number percentage | 100 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 1 |
 | **MDS1PruneCandThreshold** | --mds-1-cand-th | 0 for off and any whole number percentage | 75 | Deviation threshold (expressed as a percentage) of an intra-class candidate pruning mechanism before MD Stage 1 |
 | **MDS23PruneClassThreshold** | --mds-2-3-class-th | 0 for off and any whole number percentage | 25 | Deviation threshold (expressed as a percentage) of an inter-class class pruning mechanism before MD Stage 2/3 |
@@ -262,21 +262,21 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 
 ### 1. Thread management parameters
 
-LogicalProcessorNumber (`-lp`) and TargetSocket (`-ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
+LogicalProcessorNumber (`--lp`) and TargetSocket (`--ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
 
 If LogicalProcessorNumber and TargetSocket are not set, threads are managed by OS thread scheduler.
 
-`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 40`
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 40`
 
 If only LogicalProcessorNumber is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
 
 NOTE: On Windows, thread affinity can be set only by group on system with more than 64 logical processors. So, if 40 is larger than logical processor number of a single socket, threads run on all logical processors of both sockets.
 
-`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –ss 1`
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --ss 1`
 
 If only TargetSocket is set, threads run on all the logical processors of socket 1.
 
-`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 –lp 20 –ss 0`
+`SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 20 --ss 0`
 
 If both LogicalProcessorNumber and TargetSocket are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
 

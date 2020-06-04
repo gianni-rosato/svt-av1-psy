@@ -2304,7 +2304,7 @@ static int verify_hme_dimension(unsigned int index, unsigned int HmeLevel0Search
     for (i = 0; i < number_hme_search_region_in_width; i++)
         total_search_width += number_hme_search_region_in_width_array[i];
     if ((total_search_width) != (HmeLevel0SearchAreaInWidth)) {
-        SVT_LOG("Error Instance %u: Invalid  HME Total Search Area. \n", index);
+        SVT_LOG("Error Instance %u: Summed values of HME area does not equal the total area. \n", index);
         return_error = -1;
         return return_error;
     }
@@ -2319,8 +2319,8 @@ static int verify_hme_dimension_l1_l2(unsigned int index, uint32_t number_hme_se
 
     for (i = 0; i < number_hme_search_region_in_width; i++)
         total_search_width += number_hme_search_region_in_width_array[i];
-    if ((total_search_width > 256) || (total_search_width == 0)) {
-        SVT_LOG("Error Instance %u: Invalid  HME Total Search Area. Must be [1 - 256].\n", index);
+    if ((total_search_width > 480) || (total_search_width == 0)) {
+        SVT_LOG("Error Instance %u: Invalid HME Total Search Area. Must be [1 - 480].\n", index);
         return_error = -1;
         return return_error;
     }
@@ -2431,13 +2431,13 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((config->search_area_width > 256) || (config->search_area_width == 0)) {
-        SVT_LOG("Error Instance %u: Invalid search_area_width. search_area_width must be [1 - 256]\n", channel_number + 1);
+    if ((config->search_area_width > 480) || (config->search_area_width == 0)) {
+        SVT_LOG("Error Instance %u: Invalid search_area_width. search_area_width must be [1 - 480]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((config->search_area_height > 256) || (config->search_area_height == 0)) {
-        SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 256]\n", channel_number + 1);
+    if ((config->search_area_height > 480) || (config->search_area_height == 0)) {
+        SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 480]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2452,12 +2452,12 @@ static EbErrorType verify_settings(
             return_error = EB_ErrorBadParameter;
         }
 
-        if ((config->hme_level0_total_search_area_height > 256) || (config->hme_level0_total_search_area_height == 0)) {
-            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_height. hme_level0_total_search_area_height must be [1 - 256]\n", channel_number + 1);
+        if ((config->hme_level0_total_search_area_height > 480) || (config->hme_level0_total_search_area_height == 0)) {
+            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_height. hme_level0_total_search_area_height must be [1 - 480]\n", channel_number + 1);
             return_error = EB_ErrorBadParameter;
         }
-        if ((config->hme_level0_total_search_area_width > 256) || (config->hme_level0_total_search_area_width == 0)) {
-            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_width. hme_level0_total_search_area_width must be [1 - 256]\n", channel_number + 1);
+        if ((config->hme_level0_total_search_area_width > 480) || (config->hme_level0_total_search_area_width == 0)) {
+            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_width. hme_level0_total_search_area_width must be [1 - 480]\n", channel_number + 1);
             return_error = EB_ErrorBadParameter;
         }
         if (verify_hme_dimension(channel_number + 1, config->hme_level0_total_search_area_height, config->hme_level0_search_area_in_height_array, config->number_hme_search_region_in_height))
@@ -2520,8 +2520,8 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->scene_change_detection > 1) {
-        SVT_LOG("Error Instance %u: The scene change detection must be [0 - 1] \n", channel_number + 1);
+    if (config->scene_change_detection) {
+        SVT_LOG("Error Instance %u: Scene change detection is currently not supported\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     if (config->max_qp_allowed > MAX_QP_VALUE) {
