@@ -188,7 +188,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.speed_control_flag        = config->speed_control_flag;
     callback_data->eb_enc_parameters.use_cpu_flags             = config->cpu_flags_limit;
     callback_data->eb_enc_parameters.logical_processors        = config->logical_processors;
-    callback_data->eb_enc_parameters.unpin_lp1                 = config->unpin_lp1;
+    callback_data->eb_enc_parameters.unpin                 = config->unpin;
     callback_data->eb_enc_parameters.target_socket             = config->target_socket;
     callback_data->eb_enc_parameters.unrestricted_motion_vector =
         config->unrestricted_motion_vector;

@@ -149,7 +149,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **HighDynamicRangeInput** | --enable-hdr | [0-1, 0 for default] | 0 | Enable high dynamic range(0: OFF[default], ON: 1) |
 | **Asm** | --asm |  [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max] | 11 or max | Limit assembly instruction set ("0" is equivalent to "c", "1" is "mmx" etc, max value is "11" or "max"), by default select highest assembly instruction that is supported by CPU |
 | **LogicalProcessorNumber** | --lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
-| **UnpinSingleCoreExecution** | --unpin-lp1 | [0, 1] | 1 | Unpin the execution . If logical_processors is set to 1, this option does not set the execution to be pinned to core #0 when set to 1. this allows the execution of multiple encodes on the CPU without having to pin them to a specific mask  0=OFF, 1= ON |
+| **UnpinExecution** | --unpin | [0, 1] | 0 | Allows the execution to be pined/unpined to/from a specific number of cores.--unpin is overwritten to 0 when --ss is set to 0 or 1. 0=OFF, 1= ON |
 | **TargetSocket** | --ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
 
 #### Rate Control Options
@@ -280,6 +280,23 @@ If only TargetSocket is set, threads run on all the logical processors of socket
 
 If both LogicalProcessorNumber and TargetSocket are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
 
+The (`-unpin`) option allows the user to pin/unpin the execution to/from a specific number of cores.
+
+The combinational use of (`-unpin`)  with (`-lp`) results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores.
+
+This is an example on how to use them together.
+
+so -lp 4 with -unpin 0 would restrict the encoder to work on cpu0-3 and reduce the resource allocation to only what's needed to using 4 cores. -lp 4 with -unpin 1, would reduce the allocation to what's needed for 4 cores but not restrict the encoder to run on cpu 0-3, in this case the encoder might end up using more than 4 cores due to the multi-threading nature of the encoder, but would at least allow for more multiple -lp4 encodes to run on the same machine without them being all restricted to run on cpu 0-3 or overflow the memory usage.
+
+Example: 72 core machine:
+
+72 jobs x --lp 1 --unpin 1 (In order to maximize the CPU utilization 72 jobs are run simultaneously with each job utilitizing 1 core without being pined to a specific core)
+
+36 jobs x --lp 2 --unpin 1
+
+18 jobs x --lp 4 --unpin 1
+
+(`-ss`) and (`-unpin 1`) is not a valid combination.(`-unpin`) is overwritten to 0 when (`-ss`) is used.
 ## Legal Disclaimer
 
 ### Optimization Notice

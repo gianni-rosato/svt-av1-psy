@@ -152,7 +152,7 @@
 #define SPEED_CONTROL_TOKEN "-speed-ctrl"
 #define ASM_TYPE_TOKEN "-asm"
 #define THREAD_MGMNT "-lp"
-#define UNPIN_LP1_TOKEN "-unpin-lp1"
+#define UNPIN_TOKEN "-unpin"
 #define TARGET_SOCKET "-ss"
 #define UNRESTRICTED_MOTION_VECTOR "-umv"
 #define CONFIG_FILE_COMMENT_CHAR '#'
@@ -664,8 +664,8 @@ static void set_asm_type(const char *value, EbConfig *cfg) {
 static void set_logical_processors(const char *value, EbConfig *cfg) {
     cfg->logical_processors = (uint32_t)strtoul(value, NULL, 0);
 };
-static void set_unpin_single_core_execution(const char *value, EbConfig *cfg) {
-    cfg->unpin_lp1 = (uint32_t)strtoul(value, NULL, 0);
+static void set_unpin_execution(const char *value, EbConfig *cfg) {
+    cfg->unpin = (uint32_t)strtoul(value, NULL, 0);
 };
 static void set_target_socket(const char *value, EbConfig *cfg) {
     cfg->target_socket = (int32_t)strtol(value, NULL, 0);
@@ -798,11 +798,18 @@ ConfigEntry config_entry_global_options[] = {
      set_asm_type},
     {SINGLE_INPUT, THREAD_MGMNT, "number of logical processors to be used", set_logical_processors},
     {SINGLE_INPUT,
-     UNPIN_LP1_TOKEN,
-     "allows the execution of multiple encodes on the CPU without having to pin them to a "
-     "specific mask( 0: OFF ,1: ON[default]) ",
-     set_unpin_single_core_execution},
-    {SINGLE_INPUT, TARGET_SOCKET, "Specify  which socket the encoder runs on", set_target_socket},
+     UNPIN_TOKEN,
+    "Allows the execution to be pined/unpined to/from a specific number of cores \n"
+    "The combinational use of --unpin with --lp results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores \n"
+    "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF [default] ,1: ON) \n"
+    "Example: 72 core machine: \n"
+    "72 jobs x -- lp 1 -- unpin 1 \n"
+    "36 jobs x -- lp 2 -- unpin 1 \n"
+    "18 jobs x -- lp 4 -- unpin 1 ",
+     set_unpin_execution},
+    {SINGLE_INPUT, TARGET_SOCKET, "Specify  which socket the encoder runs on"
+    "--unpin is overwritten to 0 when --ss is set to 0 or 1",
+    set_target_socket},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1374,7 +1381,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", set_enable_palette},
     // Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
-    {SINGLE_INPUT, UNPIN_LP1_TOKEN, "UnpinSingleCoreExecution", set_unpin_single_core_execution},
+    {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
     {SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", set_target_socket},
     // Optional Features
     {SINGLE_INPUT,
@@ -1610,7 +1617,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // ASM Type
     config_ptr->cpu_flags_limit = CPU_FLAGS_ALL;
 
-    config_ptr->unpin_lp1     = 1;
+    config_ptr->unpin     = 0;
     config_ptr->target_socket = -1;
 
     config_ptr->unrestricted_motion_vector = EB_TRUE;
