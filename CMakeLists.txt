@@ -90,6 +90,7 @@ set(flags_to_test
     -fPIE
     -fPIC)
 if(MSVC)
+    list(INSERT flags_to_test 0 /W3)
     list(APPEND flags_to_test /MP)
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Od")
