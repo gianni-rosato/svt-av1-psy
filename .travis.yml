@@ -3,74 +3,42 @@ language: c
 cache: ccache
 os: linux
 dist: bionic
-osx_image: xcode11.3
 git:
   depth: false
   quiet: true
   submodules: false
 addons:
   apt:
-    update: true
     sources:
-      - sourceline: "ppa:ubuntu-toolchain-r/test"
+      - sourceline: ppa:ubuntu-toolchain-r/test
     packages:
-      - &native_deps cmake yasm gcc-10 g++-10
-  homebrew:
-    update: true
-    packages:
-      - yasm
-      - ccache
-      - python
+      - &native_deps cmake yasm gcc-10 g++-10 ninja-build
 
 env:
   global:
-    - build_type=release LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+    - build_type=Release CC="ccache gcc-10" CXX="ccache g++-10" CCACHE_DIR=$HOME/.ccache CFLAGS=-Werror
 
 # Default scripts
 install:
-  - "sudo chown -R travis: $HOME/.ccache"
-  - |
-    case $(uname -s) in
-    Darwin)
-      export PATH="/usr/local/opt/ccache/libexec:$PATH"
-      sysctl -n machdep.cpu.brand_string
-      sysctl -n machdep.cpu.features machdep.cpu.leaf7_features | sort -u
-      ;;
-    Linux)
-      sort -u /proc/cpuinfo
-      test -f "/usr/lib/ccache/${CC##*/}" || sudo ln -s /usr/bin/ccache "/usr/lib/ccache/${CC##*/}"
-      test -f "/usr/lib/ccache/${CXX##*/}" || sudo ln -s /usr/bin/ccache "/usr/lib/ccache/${CXX##*/}"
-      CFLAGS="-Werror"
-      case $CC in
-      *clang*) CFLAGS+=" -Wno-error=array-bounds" ;;
-      esac
-      export CFLAGS
-      ;;
-    esac
-    cmake --version
-    $CC --version
-  - cd "$TRAVIS_BUILD_DIR"
-  - wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
+  - "sudo chown -R travis: $CCACHE_DIR"
+  - sort -u /proc/cpuinfo
+  - cmake --version
+  - $CC --version
+  - for url in raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master randomderp.com; do curl -LO https://$url/video.tar.gz && break; done
   - tar xf video.tar.gz
-  - mkdir -p "$TRAVIS_BUILD_DIR/Build/linux/${build_type:=Release}"
 script:
   - &base_script |
-    cd "$TRAVIS_BUILD_DIR/Build/linux/$build_type" &&
-    cmake "$TRAVIS_BUILD_DIR" -G"Unix Makefiles" -DCMAKE_BUILD_TYPE="$build_type" ${CMAKE_EFLAGS} &&
-    case $(cmake --version | grep version) in
-    *3.10*) cmake --build "$TRAVIS_BUILD_DIR/Build/linux/$build_type" ;;
-    *) cmake --build "$TRAVIS_BUILD_DIR/Build/linux/$build_type" -j $(($(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) + 1)) ;;
-    esac &&
-    sudo cmake --build "$TRAVIS_BUILD_DIR/Build/linux/$build_type" --target install &&
+    mkdir -p "$TRAVIS_BUILD_DIR/Build/linux/${build_type:=Release}"
+    cd "$TRAVIS_BUILD_DIR/Build/linux/$build_type"
+    cmake "$TRAVIS_BUILD_DIR" -GNinja -DCMAKE_BUILD_TYPE="$build_type" -DCMAKE_INSTALL_PREFIX=/usr
+    sudo -E ninja install
     cd "$TRAVIS_BUILD_DIR"
-  - &8bit_test |
-    SvtAv1EncApp --preset 0 -i akiyo_cif.y4m -n 3 &&
-    SvtAv1EncApp --preset 8 -i akiyo_cif.y4m -n 150
-  - &10bit_test |
-    SvtAv1EncApp --preset 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 --lp 1 &&
-    SvtAv1EncApp --preset 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
+  - SvtAv1EncApp --preset 0 -i akiyo_cif.y4m -n 3
+  - SvtAv1EncApp --preset 8 -i akiyo_cif.y4m -n 150
+  - SvtAv1EncApp --preset 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3
+  - SvtAv1EncApp --preset 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 150
 before_cache:
-  - "sudo chown -R travis: $HOME/.ccache"
+  - "sudo chown -R travis: $CCACHE_DIR"
   - ccache -c
   - ccache -s
 
@@ -78,38 +46,20 @@ before_cache:
 jobs:
   fast_finish: true
   include:
-    # macOS builds and 8-bit test
-    - name: macOS Clang build and 8-bit test
-      os: osx
-      compiler: clang
-      script:
-        - *base_script
-        - *8bit_test
-    # macOS builds and 10-bit test
-    - name: macOS 10-bit test
-      os: osx
-      compiler: clang
-      script:
-        - *base_script
-        - *10bit_test
     # Multiple CPU Architectures
-    - name: Arm64 GCC 10 build
-      env: build_type=release CC=gcc-10 CXX=g++-10
+    - name: Arm64 GCC build
       arch: arm64
-    - name: PowerPC GCC 10 build
-      env: build_type=release CC=gcc-10 CXX=g++-10
+    - name: PowerPC GCC build
       arch: ppc64le
-    - name: IBM Z GCC 10 build
-      env: build_type=release CC=gcc-10 CXX=g++-10
+    - name: IBM Z GCC build
       arch: s390x
     # Valgrind on Linux
     - name: Valgrind
-      env: build_type=debug CC=gcc-10 CXX=g++-10
+      env: build_type=debug
       addons:
         apt:
-          update: true
           sources:
-            - sourceline: "ppa:ubuntu-toolchain-r/test"
+            - sourceline: ppa:ubuntu-toolchain-r/test
           packages:
             - *native_deps
             - valgrind

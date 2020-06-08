@@ -1,13 +1,14 @@
 name: Style Check
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
+      # Default depth is 1
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
       - name: Tab check
         if: always()
         run: |
@@ -27,7 +28,12 @@ jobs:
       - name: newline at EOF check
         if: always()
         run: |
-          for file in $(git diff --name-only --diff-filter=d FETCH_HEAD  -- . ':!third_party' ':!test/e2e_test/test_vector_list.txt' ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' ':!*.png'); do
+          for file in $(
+            git diff --name-only --diff-filter=d FETCH_HEAD -- . \
+              ':!third_party' ':!test/e2e_test/test_vector_list.txt' \
+              ':!test/vectors/smoking_test.cfg' ':!test/vectors/video_src.cfg' \
+              ':!*.png'
+          ); do
             if [ -n "$(tail -c1 "$file")" ]; then
               echo "No newline at end of $file"
               false
@@ -38,12 +44,12 @@ jobs:
         run: |
           for i in $(git rev-list HEAD ^FETCH_HEAD); do
             echo "Checking commit message of $i"
-            msg="$(git log --format=%B -n 1 $i)"
-            if [ -n "$(sed -n 2p <<<"$msg")" ]; then
+            msg="$(git log --format=%B -n 1 "$i")"
+            if [ -n "$(sed -n 2p <<< "$msg")" ]; then
               echo "Malformed commit message in $i, second line must be empty"
               false
             fi
-            if head -1 <<<"$msg" | grep -q '\.$'; then
+            if grep -q '\.$' <(head -1 <<< "$msg"); then
               echo "Malformed commit message in $i, trailing period in subject line"
               false
             fi

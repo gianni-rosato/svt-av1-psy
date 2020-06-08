@@ -9,7 +9,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - name: Install dependencies
@@ -32,21 +32,21 @@ jobs:
         run: echo "::set-output name=upload_url::$(curl -L https://api.github.com/repos/${{ github.repository }}/releases/tags/$(cut -d/ -f3 <<< ${{ github.ref }}) | jq -r ."upload_url")"
 
       - name: Upload static SvtAv1EncApp.exe
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: static/Release/SvtAv1EncApp.exe
           asset_name: SvtAv1EncApp.exe
           asset_content_type: application/vnd.microsoft.portable-executable
       - name: Upload static SvtAv1DecApp.exe
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: static/Release/SvtAv1DecApp.exe
           asset_name: SvtAv1DecApp.exe
           asset_content_type: application/vnd.microsoft.portable-executable
       - name: Upload static SvtAv1Enc.lib
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: static/Release/SvtAv1Enc.lib
@@ -54,7 +54,7 @@ jobs:
           asset_content_type: application/octet-stream
 
       - name: Upload SvtAv1Enc-shared.zip
-        uses: actions/upload-release-asset@v1.0.2
+        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: SvtAv1Enc-shared.zip

@@ -15,62 +15,63 @@ on:
       - .gitignore
       - "*.md"
 env:
-  CC: clang
-  CXX: clang++
+  CC: ccache clang
+  CXX: ccache clang++
 
 jobs:
   sanitizers:
-    name: Sanitizer
+    name: Sanitizer (${{ matrix.sanitizer }})
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
-        sanitizer: ['address', 'memory', 'thread']
         include:
           - sanitizer: address
             allows-failure: false
-            env:
-              ASAN_OPTIONS: detect_leaks=1
-              CFLAGS: -fsanitize=address
-              CXXFLAGS: -fsanitize=address
-              LDFLAGS: -fsanitize=address
+            ASAN_OPTIONS: detect_leaks=1
 
           - sanitizer: memory
             allows-failure: false
-            env:
-              CFLAGS: -fsanitize=memory -fno-omit-frame-pointer
-              CXXFLAGS: -fsanitize=memory -fno-omit-frame-pointer
-              LDFLAGS: -fsanitize=memory
-            svt-args: '--asm 0'
+            CFLAGS: -fno-omit-frame-pointer
+            CXXFLAGS: -fno-omit-frame-pointer
+            svt-args: --asm 0
 
           - sanitizer: thread
             allows-failure: true
-            env:
-              CFLAGS: -fsanitize=thread
-              CXXFLAGS: -fsanitize=thread
-              LDFLAGS: -fsanitize=thread
     env:
-        ${{ matrix.env }}
+      CFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.CFLAGS }}
+      CXXFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.CXXFLAGS }}
+      LDFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.LDFLAGS }}
+      ASAN_OPTIONS: ${{ matrix.ASAN_OPTIONS }}
 
     steps:
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y yasm ninja-build
+      - name: Install dependencies
+        run: |
+          [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
+          echo "::set-env name=CCACHE_DIR::$HOME/.ccache"
+          sudo apt-get update
+          sudo apt-get install -y yasm ninja-build ccache
 
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Run CMake
-      run: cmake -S . -B Build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+      - name: Cache ccache files
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-${{ matrix.sanitizer }}-${{ hashFiles('**/*.c') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.sanitizer }}-
 
-    - name: Build
-      run: cmake --build Build
+      - name: Run CMake
+        run: cmake -S . -B Build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 
-    - name: Fetch test videos
-      run: |
-        wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz
-        tar xzf video.tar.gz
+      - name: Build
+        run: cmake --build Build
 
-    - name: Run Encoder
-      run: ./Bin/Debug/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${{ matrix.svt-args }} -n 120 --preset 8 -b output.ivf
-      continue-on-error: ${{ matrix.allows-failure }}
+      - name: Fetch test videos
+        run: |
+          curl -LO https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz
+          tar xzf video.tar.gz
+
+      - name: Run Encoder
+        run: ./Bin/Debug/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${{ matrix.svt-args }} -n 120 --preset 8 -b output.ivf
+        continue-on-error: ${{ matrix.allows-failure }}

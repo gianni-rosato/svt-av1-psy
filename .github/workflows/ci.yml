@@ -1,370 +1,258 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - "Docs/*"
+      - .travis.yml
+      - appveyor.yml
+      - .gitignore
+      - "*.md"
+  pull_request:
+    paths-ignore:
+      - "Docs/*"
+      - .travis.yml
+      - appveyor.yml
+      - .gitignore
+      - "*.md"
+
 env:
-  build_type: 'Release'
-  native_deps: nasm yasm cmake ccache
-  CFLAGS: '-Werror'
+  native_deps: yasm cmake ccache
+  GTEST_TOTAL_SHARDS: 8
 
 jobs:
   build:
-    runs-on: [ubuntu-18.04]
+    name: build (${{ matrix.CC }})
+    runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
-        compiler: ['gcc-7', 'gcc-8', 'gcc-9', 'gcc-10', 'clang-6', 'clang-10']
         include:
-          - compiler: gcc-7
-            packages: gcc-7 g++-7
-            env:
-              CC: 'ccache gcc-7'
-              CXX: 'ccache g++-7'
-          - compiler: gcc-8
-            packages: gcc-8 g++-8
-            env:
-              CC: 'ccache gcc-8'
-              CXX: 'ccache g++-8'
-          - compiler: gcc-9
-            packages: gcc-9 g++-9
-            env:
-              CC: 'ccache gcc-9'
-              CXX: 'ccache g++-9'
-          - compiler: gcc-10
-            packages: gcc
-            env:
-              CC: ccache gcc
-              CXX: ccache g++
-              CFLAGS: -fno-common
-              CXXFLAGS: -fno-common
-          - compiler: clang-6
-            packages: ''
-            env:
-              CC: 'ccache clang-6.0'
-              CXX: 'ccache clang++-6.0'
-          - compiler: clang-10
-            packages: clang-10
-            env:
-              CC: 'ccache clang-10'
-              CXX: 'ccache clang++-10'
+          - packages: gcc-7 g++-7
+            CC: gcc-7
+            CXX: g++-7
+          - packages: gcc-8 g++-8
+            CC: gcc-8
+            CXX: g++-8
+          - packages: gcc-9 g++-9
+            CC: gcc-9
+            CXX: g++-9
+          - packages: gcc-10 g++-10
+            CC: gcc-10
+            CXX: g++-10
+            CMAKE_EFLAGS: -DBUILD_TESTING=ON
+            CFLAGS: -Wno-error
+            CXXFLAGS: -Wno-error
+            # Currently requires -Wno-error since building the unit-tests will cause warnings
+          - CC: clang-6.0
+            CXX: clang++-6.0
+          - packages: clang-10
+            CC: clang-10
+            CXX: clang++-10
     env:
-      ${{ matrix.env }}
+      CC: ccache ${{ matrix.CC }}
+      CXX: ccache ${{ matrix.CXX }}
+      CFLAGS: -Werror ${{ matrix.CFLAGS }}
+      CXXFLAGS: -Werror ${{ matrix.CXXFLAGS }}
     steps:
-    - name: Add Clang apt repository
-      if: matrix.compiler == 'clang-10'
-      run: |
-        echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main" \
-        | sudo tee -a /etc/apt/sources.list.d/llvm.list
-        curl -L https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ${native_deps} ${{ matrix.packages }}
-    - uses: actions/checkout@v2
-    - name: Cache ccache files
-      uses: actions/cache@v1.1.0
-      with:
-        path: ~/.ccache
-        key: ${{ runner.os }}-svt-av1-${{ matrix.compiler }}-${{ hashFiles('**/*.c') }}
-        restore-keys: |
-          ${{ runner.os }}-svt-av1-${{ matrix.compiler }}-
-    - name: Compile SVT-AV1
-      env:
-        # Build static
-        shared_libs: 'OFF'
-      run: |
-        chmod +x .ci/ci.sh
-        .ci/ci.sh
-    - name: Compress SVT-AV1 binaries
-      if: matrix.compiler == 'gcc-9'
-      run: tar czf ./svtav1-current.tar.gz ./Bin/Release/*
-    - name: Upload artifact SVT-AV1 (current)
-      if: matrix.compiler == 'gcc-9'
-      uses: actions/upload-artifact@v1
-      with:
-        name: svtav1-current
-        path: ./svtav1-current.tar.gz
+      - uses: actions/checkout@v2
+      - name: Cache ccache files
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-${{ matrix.CC }}-${{ hashFiles('**/*.c') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.CC }}-
+      - name: Add Clang apt repository
+        if: matrix.CC == 'clang-10'
+        run: |
+          echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main" |
+            sudo tee -a /etc/apt/sources.list.d/llvm.list
+          curl -L https://apt.llvm.org/llvm-snapshot.gpg.key |
+            sudo apt-key add -
+      - name: Install dependencies
+        run: |
+          [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
+          echo "::set-env name=CCACHE_DIR::$HOME/.ccache"
+          sudo apt-get update
+          sudo apt-get install -y ${{ env.native_deps }} ${{ matrix.packages }}
+      - name: Configure SVT-AV1
+        run: cmake -S "$GITHUB_WORKSPACE" -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ${{ matrix.CMAKE_EFLAGS }}
+      - name: Build and install SVT-AV1
+        run: sudo -E cmake --build Build --parallel 4 --target install
+      - name: Get test vectors
+        if: matrix.CC == 'gcc-10'
+        run: cmake --build Build --parallel 4 --target TestVectors
+      - name: Upload vectors
+        if: matrix.CC == 'gcc-10'
+        uses: actions/upload-artifact@v2
+        with:
+          name: svtav1-vectors-${{ hashFiles('test/e2e_test/test_vector_list.txt') }}
+          path: test/vectors
+      - name: Download videos
+        if: matrix.CC == 'gcc-7'
+        run: |
+          for url in raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master randomderp.com; do
+            curl -LO https://$url/video.tar.gz && break
+          done
+          tar xf video.tar.gz
+      - name: Upload binaries SVT-AV1 (ubuntu)
+        if: matrix.CC == 'gcc-10'
+        uses: actions/upload-artifact@v2
+        with:
+          name: svtav1-ubuntu-binaries
+          path: Bin/Release
+      - name: Upload videos
+        if: matrix.CC == 'gcc-7'
+        uses: actions/upload-artifact@v2
+        with:
+          name: svtav1-videos
+          path: "*.y4m"
+
+  bit-depth-tests:
+    name: ${{ matrix.bit }} tests
+    runs-on: ubuntu-18.04
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - bit: 8
+            video: akiyo_cif.y4m
+          - bit: 10
+            video: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+    steps:
+      - name: Download binaries SVT-AV1 (ubuntu)
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-ubuntu-binaries
+      - name: Download videos
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-videos
+      - name: Print system info
+        run: sort -u /proc/cpuinfo
+      - name: ${{ matrix.bit }}bit tests
+        run: |
+          chmod +x SvtAv1EncApp
+          ./SvtAv1EncApp --preset 0 -i ${{ matrix.video }} -n 3 -b test-pr-${{ matrix.bit }}bit-m0.ivf
+          ./SvtAv1EncApp --preset 8 -i ${{ matrix.video }} -n 120 -b test-pr-${{ matrix.bit }}bit-m8.ivf
+      - uses: actions/upload-artifact@v2
+        with:
+          name: svtav1-${{ matrix.bit }}bit-pr-tests
+          path: "*.ivf"
 
   binary-identical-test:
-    runs-on: [ubuntu-18.04]
-    needs: [build]
+    runs-on: ubuntu-18.04
+    needs:
+      - build
+      - bit-depth-tests
     env:
-      CC: 'ccache gcc-9'
-      CXX: 'ccache g++-9'
-      # Build static
-      shared_libs: 'OFF'
+      CC: ccache gcc-9
+      CXX: ccache g++-9
     steps:
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ${native_deps} gcc-9 g++-9
-    - name: Download videos
-      run: |
-        wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
-        tar xf video.tar.gz
-        mv -t $HOME akiyo_cif.y4m
-        mv -t $HOME Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-    - name: Checkout SVT-AV1 on pull request (master)
-      if: github.event_name == 'pull_request'
-      uses: actions/checkout@v2
-      with:
-        ref: ${{ github.base_ref }}
-    - name: Checkout SVT-AV1 on push (master)
-      if: github.event_name == 'push'
-      uses: actions/checkout@v2
-      with:
-        ref: 'master'
-    - name: Prepare cache hash
-      id: cache_hash
-      run: |
-        echo "::set-output name=hash::${{ hashFiles('**/*.c') }}"
-    - name: Cache ccache files
-      uses: actions/cache@v1.1.0
-      with:
-        path: ~/.ccache
-        key: ${{ runner.os }}-binary-test-${{ steps.cache_hash.outputs.hash }}
-        restore-keys: |
-          ${{ runner.os }}-binary-test-
-    - name: Build SVT-AV1 (master)
-      run: |
-        mkdir $HOME/master
-        mv * $HOME/master
-        $HOME/master/Build/linux/build.sh static
-    - name: Encode videos (master)
-      run: |
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-master-8bit-m8.ivf
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-master-8bit-m0.ivf
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-master-10bit-m8.ivf
-        $HOME/master/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-master-10bit-m0.ivf
-    - name: Download artifact SVT-AV1 (current)
-      uses: actions/download-artifact@v1
-      with:
-        name: svtav1-current
-    - name: Extract artifact SVT-AV1 (current)
-      run: |
-        mkdir $HOME/current
-        tar xf svtav1-current/svtav1-current.tar.gz -C $HOME/current
-    - name: Encode videos (current)
-      run: |
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/akiyo_cif.y4m -n 120 -b $HOME/test-pr-8bit-m8.ivf
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/akiyo_cif.y4m -n 3 -b $HOME/test-pr-8bit-m0.ivf
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 8 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b $HOME/test-pr-10bit-m8.ivf
-        $HOME/current/Bin/Release/SvtAv1EncApp -enc-mode 0 -i $HOME/Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b $HOME/test-pr-10bit-m0.ivf
-    - name: Binary compare
-      id: binary_compare
-      continue-on-error: true
-      run: |
-        echo Comparing 8-bit M8: akiyo_cif.y4m
-        diff $HOME/test-pr-8bit-m8.ivf $HOME/test-master-8bit-m8.ivf
-        echo Comparing 8-bit M0: akiyo_cif.y4m
-        diff $HOME/test-pr-8bit-m0.ivf $HOME/test-master-8bit-m0.ivf
-        echo Comparing 10-bit M8: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-        diff $HOME/test-pr-10bit-m8.ivf $HOME/test-master-10bit-m8.ivf
-        echo Comparing 10-bit M0: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-        diff $HOME/test-pr-10bit-m0.ivf $HOME/test-master-10bit-m0.ivf
-        # Create variable that job succeded
-        # if it does not exist then the job failed and artifact will be uploaded
-        echo ::set-output name=status::success
-    - name: On fail, compress SVT-AV1 (master)
-      if: steps.binary_compare.outputs.status != 'success'
-      run: tar czf ./svtav1-master.tar.gz $HOME/master/Bin/Release/*
-    - name: On fail, upload artifact SVT-AV1 (master)
-      if: steps.binary_compare.outputs.status != 'success'
-      uses: actions/upload-artifact@v1
-      with:
-        name: svtav1-master
-        path: ./svtav1-master.tar.gz
-
-  # Compile and run tests in shards with only one compiler
-  unit-tests:
-    runs-on: [ubuntu-18.04]
-    env:
-      CC: 'ccache gcc-9'
-      CXX: 'ccache g++-9'
-      # Build unit tests
-      testing: 'ON'
-    strategy:
-      matrix:
-        index: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
-    name: 'Unit Tests (Ubuntu 18.04, GCC 9.x) Shard ${{ matrix.index }}'
-    steps:
+      - name: Checkout SVT-AV1 on pull request (master)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.base_ref }}
+      - name: Checkout SVT-AV1 on push (master)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v2
+        with:
+          ref: master
+      - name: Cache ccache files
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-binary-test-${{ hashFiles('**/*.c') }}
+          restore-keys: ${{ runner.os }}-binary-test-
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ${native_deps} gcc-9 g++-9
-      - uses: actions/checkout@v2
-      - name: Cache ccache files
-        uses: actions/cache@v1.1.0
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-unit-tests-${{ matrix.index }}-${{ hashFiles('**/*.c') }}
-          restore-keys: ${{ runner.os }}-unit-tests-${{ matrix.index }}-
-      - name: Compile SVT-AV1 (Release, Tests)
-        run: |
-          chmod +x .ci/ci.sh
-          .ci/ci.sh
-      - name: Run unit tests shard
-        run: env GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Bin/Release/SvtAv1UnitTests
-
-  e2e-tests:
-    runs-on: [ubuntu-18.04]
-    env:
-      CC: 'ccache gcc-9'
-      CXX: 'ccache g++-9'
-      # Build unit tests
-      testing: 'ON'
-    strategy:
-      matrix:
-        index: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
-    name: 'E2E Tests (Ubuntu 18.04, GCC 9.x) Shard ${{ matrix.index }}'
-    steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ${native_deps} gcc-9 g++-9
-      - uses: actions/checkout@v2
-      - name: Cache ccache files
-        uses: actions/cache@v1.1.0
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-e2e-${{ matrix.index }}-${{ hashFiles('**/*.c') }}
-          restore-keys: ${{ runner.os }}-e2e-${{ matrix.index }}-
-      - name: Compile SVT-AV1 (Release, Tests and TestVectors)
-        run: |
-          chmod +x .ci/ci.sh
-          .ci/ci.sh
-          pushd ./Build/linux/Release
-          make TestVectors
-          popd
-      - name: Run unit tests shard
-        run: env SVT_AV1_TEST_VECTOR_PATH="./test/vectors" GTEST_TOTAL_SHARDS=8 GTEST_SHARD_INDEX=${{ matrix.index }} ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
-
-  gstreamer-patch:
-    runs-on: [ubuntu-18.04]
-    needs: [build]
-    steps:
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ${native_deps} \
-            libgstreamer-plugins-base1.0-dev \
-            libgstreamer1.0-dev \
-            gstreamer1.0-tools \
-            gstreamer1.0-plugins-good \
-            gstreamer1.0-plugins-bad \
-            pkg-config \
-            ninja-build \
-            python3 \
-            python3-pip \
-            python3-setuptools\
-            python3-wheel
-          pip3 install --user meson
-      - uses: actions/checkout@v2
-      - name: Cache ccache files
-        uses: actions/cache@v1.1.0
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-gstreamer-${{ hashFiles('**/*.c') }}
-          restore-keys: |
-              ${{ runner.os }}-gstreamer-
-      - name: Compile SVT-AV1
-        env:
-          CC: 'ccache gcc'
-          CXX: 'ccache g++'
-        run: |
-          chmod +x .ci/ci.sh
-          .ci/ci.sh
-      - name: Build Gstreamer
-        run: |
-          [ -d "$HOME/.ccache" ] && sudo chown -R $USER: $HOME/.ccache
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib:/usr/lib/x86_64-linux-gnu/"
-          export PATH="${PATH}:~/.local/bin"
-          cd $GITHUB_WORKSPACE/gstreamer-plugin
-          meson -Dprefix=/usr build
-          ninja -C build
-          sudo ninja -C build install
+          sudo apt-get install -y ${{ env.native_deps }} gcc-9 g++-9
       - name: Download videos
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-videos
+      - name: Configure SVT-AV1 (master)
+        run: cmake -S "$GITHUB_WORKSPACE" -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+      - name: Build SVT-AV1 (master)
+        run: cmake --build Build --parallel 4
+      - name: Encode videos (master)
         run: |
-          wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
-          tar xf video.tar.gz
-      - name: Run Gstreamer
+          ./Bin/Release/SvtAv1EncApp --preset 0 -i akiyo_cif.y4m -n 3 -b test-master-8bit-m0.ivf
+          ./Bin/Release/SvtAv1EncApp --preset 8 -i akiyo_cif.y4m -n 120 -b test-master-8bit-m8.ivf
+          ./Bin/Release/SvtAv1EncApp --preset 0 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 3 -b test-master-10bit-m0.ivf
+          ./Bin/Release/SvtAv1EncApp --preset 8 -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m -n 120 -b test-master-10bit-m8.ivf
+      - name: Download 8bit pr tests
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-8bit-pr-tests
+      - name: Download 10bit pr tests
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-10bit-pr-tests
+      - name: Binary compare
+        id: binary_compare
+        continue-on-error: true
         run: |
-          export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib:/usr/lib/x86_64-linux-gnu/"
-          gst-launch-1.0 -v filesrc location=akiyo_cif.y4m ! \
-            y4mdec ! \
-            svtav1enc ! \
-            webmmux ! \
-            filesink location=akiyo.mkv
+          echo Comparing 8-bit M8: akiyo_cif.y4m
+          diff test-{pr,master}-8bit-m8.ivf
+          echo Comparing 8-bit M0: akiyo_cif.y4m
+          diff test-{pr,master}-8bit-m0.ivf
+          echo Comparing 10-bit M8: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+          diff test-{pr,master}-10bit-m8.ivf
+          echo Comparing 10-bit M0: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+          diff test-{pr,master}-10bit-m0.ivf
+      - name: On fail, upload artifact SVT-AV1 (master)
+        if: steps.binary_compare.outcome != 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: svtav1-master-binaries
+          path: master/Bin/Release
 
-  ffmpeg-patch:
+  # Compile and run tests in shards
+  unit-tests:
+    name: Unit Tests (Ubuntu 18.04, GCC 9.x) Shard ${{ matrix.index }}
+    needs: build
+    runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-18.04
-            CC: ccache gcc
-            CXX: ccache g++
-          - os: macos-10.15
-            CC: ccache clang
-            CXX: ccache clang++
-
-    runs-on: ${{ matrix.os }}
-    needs: [build]
+        index: [0, 1, 2, 3, 4, 5, 6, 7]
     env:
-      CMAKE_EFLAGS: -DBUILD_SHARED_LIBS=OFF
-      CC: ${{ matrix.CC }}
-      CXX: ${{ matrix.CXX }}
-      LD_LIBRARY_PATH: /usr/local/lib
-      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
-      CFLAGS: ''
-
+      GTEST_SHARD_INDEX: ${{ matrix.index }}
     steps:
-      - name: Install dependencies (ubuntu)
-        if: matrix.os == 'ubuntu-18.04'
-        run: |
-          sudo apt-get update &&
-          sudo apt-get install -y ${native_deps}
-          $CC --version
-          yasm --version
-          cmake --version
-          ccache --version
-      - name: Install dependencies (mac)
-        if: matrix.os == 'macos-10.15'
-        run: |
-          brew update
-          brew install yasm ccache pkg-config
-          $CC --version
-          yasm --version
-          cmake --version
-          ccache --version
       - uses: actions/checkout@v2
-      - name: Cache ccache files
-        uses: actions/cache@v1.1.0
+      - name: Download binaries SVT-AV1 (ubuntu)
+        uses: actions/download-artifact@v2
         with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-ffmpeg-${{ hashFiles('**/*.c') }}
-          restore-keys: |
-              ${{ runner.os }}-ffmpeg-
-      - name: Compile SVT-AV1
-        run: |
-          chmod +x .ci/ci.sh
-          .ci/ci.sh
-      - name: Setup ffmpeg enviornment
-        run: |
-          [ -d "$HOME/.ccache" ] && sudo chown -R $USER: $HOME/.ccache
-          git clone --branch release/4.2 --depth 1 https://github.com/FFmpeg/FFmpeg "$HOME/ffmpeg"
-          git -C "$HOME/ffmpeg" apply "$GITHUB_WORKSPACE/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch"
-      - name: Configure ffmpeg
-        run: |
-          cd "$HOME/ffmpeg"
-          ./configure --enable-libsvtav1 --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" || { less ffbuild/config.log; exit 1; }
-      - name: Build ffmpeg
-        run: |
-          cd "$HOME/ffmpeg"
-          make --quiet -j$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu)
-          sudo make install
-      - name: Download videos
-        run: |
-          wget -nc https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz || wget -nc http://randomderp.com/video.tar.gz
-          tar xf video.tar.gz
-      - name: Run ffmpeg
-        run: |
-          ffmpeg -i akiyo_cif.y4m -c:v libsvt_av1 akiyo.webm
+          name: svtav1-ubuntu-binaries
+          path: Bin/Release
+      - name: Run unit tests shard
+        run: chmod +x ./Bin/Release/SvtAv1UnitTests; ./Bin/Release/SvtAv1UnitTests
+
+  e2e-tests:
+    name: E2E Tests (Ubuntu 18.04, GCC 9.x) Shard ${{ matrix.index }}
+    needs: build
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        index: [0, 1, 2, 3, 4, 5, 6, 7]
+    env:
+      GTEST_SHARD_INDEX: ${{ matrix.index }}
+      SVT_AV1_TEST_VECTOR_PATH: ${{ github.workspace }}/test/vectors
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download binaries SVT-AV1 (ubuntu)
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-ubuntu-binaries
+          path: Bin/Release
+      - name: Download vectors
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-vectors-${{ hashFiles('test/e2e_test/test_vector_list.txt') }}
+          path: test/vectors
+      - name: Run unit tests shard
+        run: chmod +x ./Bin/Release/SvtAv1E2ETests; ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*

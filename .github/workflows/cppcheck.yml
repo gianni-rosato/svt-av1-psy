@@ -1,25 +1,34 @@
 name: Cppcheck
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - "Docs/*"
+      - .travis.yml
+      - appveyor.yml
+      - .gitignore
+      - "*.md"
+  pull_request:
+    paths-ignore:
+      - "Docs/*"
+      - .travis.yml
+      - appveyor.yml
+      - .gitignore
+      - "*.md"
 
 jobs:
   check:
     runs-on: ubuntu-18.04
     steps:
+      # Default depth is 1
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
       - name: Install dependencies
-        run: |
-          sudo apt-get install -y nasm cppcheck
+        run: sudo apt-get install -y nasm cppcheck
       - name: Run CMake
-        run: |
-          cd Build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+        run: cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Run Cppcheck
         run: |
-          cd Build
           cppcheck \
-            --project=compile_commands.json \
+            --project=Build/compile_commands.json \
             --error-exitcode=0 \
             --enable=all \
             --template="::error file={file},line={line},col={column}::{severity}: {message} ({id})" \
