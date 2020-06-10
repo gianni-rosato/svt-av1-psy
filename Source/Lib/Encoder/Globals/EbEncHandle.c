@@ -288,6 +288,7 @@ void eb_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
     }
 #else
     UNUSED(config_ptr);
+    UNUSED(num_groups);
 #endif
 }
 
