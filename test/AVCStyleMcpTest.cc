@@ -90,19 +90,15 @@ SearchArea TEST_AREAS[] = {SearchArea(64, 64),
 
 PUSize TEST_PU_HELPER[] = {PUSize(64, 64)};
 
-typedef void (*MCP_REF_FUNC)(EbByte refPic, uint32_t srcStride, EbByte dst,
+typedef void (*MCP_FUNC)(EbByte refPic, uint32_t srcStride, EbByte dst,
                              uint32_t dstStride, uint32_t puWidth,
                              uint32_t puHeight, EbByte tempBuf,
                              uint32_t fracPos);
-typedef void (*MCP_TEST_FUNC)(EbByte ref_pic, uint32_t src_stride, EbByte dst,
-                              uint32_t dst_stride, uint32_t pu_width,
-                              uint32_t pu_height, EbByte temp_buf,
-                              uint32_t frac_pos);
 
 typedef struct {
     const char *name;
-    MCP_REF_FUNC ref_func;
-    MCP_TEST_FUNC test_func;
+    MCP_FUNC ref_func;
+    MCP_FUNC test_func;
 } AVCStyleMcpFuncPair;
 static const AVCStyleMcpFuncPair AVC_style_c_sse3_func_pairs[] = {
     {"posA", avc_style_copy_c, avc_style_copy_sse2},
