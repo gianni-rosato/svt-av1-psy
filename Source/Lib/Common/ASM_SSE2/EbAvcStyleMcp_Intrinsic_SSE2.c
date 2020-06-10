@@ -8,19 +8,10 @@
 #include <emmintrin.h>
 #include "common_dsp_rtcd.h"
 void avc_style_copy_sse2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
-                         uint32_t pu_width, uint32_t pu_height, EbByte temp_buf, EbBool skip,
+                         uint32_t pu_width, uint32_t pu_height, EbByte temp_buf,
                          uint32_t frac_pos) {
     (void)temp_buf;
     (void)frac_pos;
-    if (skip) {
-        //do the last row too.
-        eb_memcpy(
-            dst + (pu_height - 1) * dst_stride, ref_pic + (pu_height - 1) * src_stride, pu_width);
-
-        src_stride <<= 1;
-        dst_stride <<= 1;
-        pu_height >>= 1;
-    }
 
     picture_copy_kernel_sse2(ref_pic, src_stride, dst, dst_stride, pu_width, pu_height);
 }
