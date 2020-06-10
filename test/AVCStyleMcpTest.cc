@@ -278,7 +278,6 @@ class AVCStyleMcpTestBase : public ::testing::Test {
                                                 block_width_,
                                                 block_height_,
                                                 tmp_buf_,
-                                                EB_FALSE,
                                                 2,
                                                 i);
 
@@ -290,7 +289,6 @@ class AVCStyleMcpTestBase : public ::testing::Test {
                                                 block_width_,
                                                 block_height_,
                                                 tmp_buf_,
-                                                EB_FALSE,
                                                 2,
                                                 i);
 

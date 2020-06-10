@@ -61,7 +61,7 @@ void avc_style_luma_interpolation_filter_posr_c(EbByte ref_pic, uint32_t src_str
 
 void avc_style_luma_interpolation_filter_helper_c(EbByte ref_pic, uint32_t src_stride, EbByte dst,
                                                   uint32_t dst_stride, uint32_t pu_width,
-                                                  uint32_t pu_height, EbByte temp_buf, EbBool skip,
+                                                  uint32_t pu_height, EbByte temp_buf,
                                                   uint32_t frac_pos, uint8_t fractional_position);
 
 #ifdef __cplusplus

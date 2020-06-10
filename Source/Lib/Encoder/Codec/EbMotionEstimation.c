@@ -4742,7 +4742,6 @@ void interpolate_search_region_avc(
             search_area_width_for_asm,
             search_area_height + ME_FILTER_TAP,
             context_ptr->avctemp_buffer,
-            EB_FALSE,
             2,
             2);
     }
@@ -4757,7 +4756,6 @@ void interpolate_search_region_avc(
             search_area_width_for_asm,
             search_area_height + 1,
             context_ptr->avctemp_buffer,
-            EB_FALSE,
             2,
             8);
     }
@@ -4772,7 +4770,6 @@ void interpolate_search_region_avc(
             search_area_width_for_asm,
             search_area_height + 1,
             context_ptr->avctemp_buffer,
-            EB_FALSE,
             2,
             8);
     }

@@ -409,10 +409,9 @@ void avc_style_luma_interpolation_filter_vertical_ssse3_intrin(EbByte ref_pic, u
 void avc_style_luma_interpolation_filter_helper_ssse3(EbByte ref_pic, uint32_t src_stride,
                                                       EbByte dst, uint32_t dst_stride,
                                                       uint32_t pu_width, uint32_t pu_height,
-                                                      EbByte temp_buf, EbBool skip,
+                                                      EbByte temp_buf,
                                                       uint32_t frac_pos,
                                                       uint8_t  fractional_position) {
-    assert(skip == EB_FALSE);
     switch (fractional_position) {
     case 0:
         avc_style_copy_sse2(
