@@ -2034,7 +2034,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         int32_t sp_token_index             = -1;
         //fprintf(stderr, "\n%-25s\t%-25s\n", "TOKEN", "DESCRIPTION");
         //fprintf(stderr, "%-25s\t%-25s\n", "-nch", "NumberOfChannels");
-        char *      token_options_format = "\t%-5s\t%-25s\t%-25s\n";
+        const char *token_options_format = "\t%-5s\t%-25s\t%-25s\n";
         const char *empty_string         = "";
         fprintf(stderr,
                 "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n");
@@ -2453,8 +2453,8 @@ EbErrorType handle_short_tokens(char *string) {
     return EB_ErrorNone;
 }
 
-char *handle_warnings(const char *token, char *print_message, uint8_t double_dash_token) {
-    char *linked_token = "";
+const char *handle_warnings(const char *token, char *print_message, uint8_t double_dash_token) {
+    const char *linked_token = "";
 
     if (EB_STRCMP(token, ENCMODE_TOKEN) == 0) linked_token = PRESET_TOKEN;
     if (EB_STRCMP(token, ENCODER_BIT_DEPTH) == 0) linked_token = INPUT_DEPTH_TOKEN;
@@ -2498,7 +2498,7 @@ char *handle_warnings(const char *token, char *print_message, uint8_t double_das
     if (EB_STRCMP(token, SMOOTH_TOKEN) == 0) linked_token = SMOOTH_NEW_TOKEN;
 
     if (EB_STRLEN(linked_token, WARNING_LENGTH) > 1) {
-        char *message_str = " will be deprecated soon, please use ";
+        const char *message_str = " will be deprecated soon, please use ";
         EB_STRCPY(print_message, WARNING_LENGTH, token);
         EB_STRCPY(
             print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, message_str);
@@ -2506,7 +2506,7 @@ char *handle_warnings(const char *token, char *print_message, uint8_t double_das
             print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, linked_token);
         return print_message;
     } else if (double_dash_token == 0) {
-        char *message_str = " will be deprecated soon, please use -";
+        const char *message_str = " will be deprecated soon, please use -";
         EB_STRCPY(print_message, WARNING_LENGTH, token);
         EB_STRCPY(
             print_message + EB_STRLEN(print_message, WARNING_LENGTH), WARNING_LENGTH, message_str);
