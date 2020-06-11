@@ -6,7 +6,7 @@
 #ifndef EbCombinedAveragingSAD_Inline_AVX2_h
 #define EbCombinedAveragingSAD_Inline_AVX2_h
 
-#include "immintrin.h"
+#include <immintrin.h>
 #include "EbDefinitions.h"
 #include "EbMemory_AVX2.h"
 

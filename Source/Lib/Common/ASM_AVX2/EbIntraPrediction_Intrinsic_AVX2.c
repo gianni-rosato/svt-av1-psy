@@ -4,7 +4,7 @@
 */
 
 #include "EbDefinitions.h"
-#include "immintrin.h"
+#include <immintrin.h>
 #include "lpf_common_sse2.h"
 #include "txfm_common_avx2.h"
 #include "common_dsp_rtcd.h"

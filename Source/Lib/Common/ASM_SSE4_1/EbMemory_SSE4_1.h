@@ -7,7 +7,7 @@
 #define EbMemory_SSE4_1_h
 
 #include "EbDefinitions.h"
-#include "smmintrin.h"
+#include <smmintrin.h>
 
 static INLINE __m128i load8bit_4x2_sse4_1(const void *const src, const ptrdiff_t strideInByte) {
     const __m128i s = _mm_cvtsi32_si128(*(int32_t *)((uint8_t *)src));

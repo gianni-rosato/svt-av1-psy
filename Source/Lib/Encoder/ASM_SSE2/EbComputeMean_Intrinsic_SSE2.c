@@ -3,7 +3,7 @@
 * SPDX - License - Identifier: BSD - 2 - Clause - Patent
 */
 
-#include "emmintrin.h"
+#include <emmintrin.h>
 #include "EbComputeMean_SSE2.h"
 
 uint64_t compute_subd_mean_of_squared_values8x8_sse2_intrin(

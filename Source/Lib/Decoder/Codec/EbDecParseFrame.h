@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#include "assert.h"
+#include <assert.h>
 
 typedef struct ParseAboveNbr4x4Ctxt {
     /* Buffer holding the transform sizes of the previous 4x4 block row. */

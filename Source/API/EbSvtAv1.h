@@ -10,7 +10,7 @@
 extern "C" {
 #endif // __cplusplus
 
-#include "stdint.h"
+#include <stdint.h>
 #include "EbSvtAv1Formats.h"
 
 // API Version

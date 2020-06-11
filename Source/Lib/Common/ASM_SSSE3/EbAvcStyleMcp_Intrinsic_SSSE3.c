@@ -9,8 +9,8 @@
 #include "EbDefinitions.h"
 #include "EbAvcStyleMcp_SSE2.h"
 #include "common_dsp_rtcd.h"
-#include "emmintrin.h"
-#include "tmmintrin.h"
+#include <emmintrin.h>
+#include <tmmintrin.h>
 
 EB_EXTERN EB_ALIGN(16) const int8_t avc_style_luma_if_coeff8_ssse3[] = {
     -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, 9,  -1, 9,  -1, 9,  -1, 9,  -1,

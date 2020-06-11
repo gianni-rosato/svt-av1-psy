@@ -8,7 +8,7 @@
 #ifndef NON_AVX512_SUPPORT
 #include <assert.h>
 #include "EbComputeSAD_AVX2.h"
-#include "immintrin.h"
+#include <immintrin.h>
 #include "EbMemory_AVX2.h"
 #include "transpose_avx2.h"
 

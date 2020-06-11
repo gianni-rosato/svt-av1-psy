@@ -15,7 +15,7 @@
  */
 
 #include <assert.h>
-#include "smmintrin.h"
+#include <smmintrin.h>
 #include "EbDefinitions.h"
 #include "EbBlend_sse4.h"
 #include "common_dsp_rtcd.h"

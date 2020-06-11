@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include "EbEncCdef.h"
-#include "stdint.h"
+#include <stdint.h>
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
 

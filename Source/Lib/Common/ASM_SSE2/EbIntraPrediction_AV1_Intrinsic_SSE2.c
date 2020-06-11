@@ -4,7 +4,7 @@
 */
 
 #include "EbDefinitions.h"
-#include "emmintrin.h"
+#include <emmintrin.h>
 #include "common_dsp_rtcd.h"
 
 static INLINE __m128i dc_sum_16(const uint8_t *ref) {

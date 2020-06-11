@@ -5,7 +5,7 @@
 
 #include "EbDefinitions.h"
 #include <emmintrin.h>
-#include "stdint.h"
+#include <stdint.h>
 
 static INLINE void sad8x4x2_sse2_intrin(const uint8_t *src, const uint32_t src_stride,
                                         const uint8_t *ref, const uint32_t ref_stride,

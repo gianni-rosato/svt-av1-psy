@@ -6,7 +6,7 @@
 #ifndef EbDecObuParser_h
 #define EbDecObuParser_h
 
-#include "assert.h"
+#include <assert.h>
 #include "EbCabacContextModel.h" //for ENTROPY_CONTEXT
 #include "EbDecBitstream.h"
 #include "EbDecBitReader.h"

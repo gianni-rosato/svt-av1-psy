@@ -16,7 +16,7 @@
 #include "EbLambdaRateTables.h"
 #include "EbComputeSAD.h"
 #ifdef ARCH_X86
-#include "emmintrin.h"
+#include <emmintrin.h>
 #endif
 #include "EbTemporalFiltering.h"
 #include "EbGlobalMotionEstimation.h"

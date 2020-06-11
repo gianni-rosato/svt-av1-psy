@@ -10,7 +10,7 @@
 extern "C" {
 #endif // __cplusplus
 
-#include "stdint.h"
+#include <stdint.h>
 #include "EbSvtAv1.h"
 #include "EbSvtAv1ExtFrameBuf.h"
 

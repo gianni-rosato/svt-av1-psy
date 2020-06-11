@@ -31,13 +31,13 @@
 #include "EbMcp.h"
 #include "av1me.h"
 #ifdef ARCH_X86
-#include "xmmintrin.h"
+#include <xmmintrin.h>
 #endif
 #include "EbObject.h"
 #include "EbEncInterPrediction.h"
 #include "EbComputeVariance_C.h"
 #include "EbLog.h"
-#include "limits.h"
+#include <limits.h>
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 

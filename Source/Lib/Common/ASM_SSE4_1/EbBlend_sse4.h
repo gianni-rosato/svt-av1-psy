@@ -20,7 +20,7 @@
 #include <assert.h>
 
 #include "EbDefinitions.h"
-#include "smmintrin.h"
+#include <smmintrin.h>
 #include "synonyms.h"
 
 static const uint8_t g_blend_a64_mask_shuffle[32] = {

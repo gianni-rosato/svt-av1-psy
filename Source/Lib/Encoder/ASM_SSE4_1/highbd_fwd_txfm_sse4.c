@@ -19,7 +19,7 @@
 
 #include "EbDefinitions.h"
 #include "aom_dsp_rtcd.h"
-#include "emmintrin.h"
+#include <emmintrin.h>
 #include "EbTransforms.h"
 
 static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {

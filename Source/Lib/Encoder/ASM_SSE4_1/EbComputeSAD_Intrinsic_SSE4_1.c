@@ -6,7 +6,7 @@
 #include <assert.h>
 
 #include "EbDefinitions.h"
-#include "smmintrin.h"
+#include <smmintrin.h>
 
 #define UPDATE_BEST(s, k, offset)      \
     tem_sum = _mm_extract_epi32(s, k); \

@@ -11,7 +11,7 @@
 
 #ifndef AV1_TXMF1D_SSE2_H_
 #define AV1_TXMF1D_SSE2_H_
-#include "emmintrin.h"
+#include <emmintrin.h>
 #include <smmintrin.h>
 #include "av1_txfm_sse4.h"
 

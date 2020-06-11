@@ -7,7 +7,7 @@
 
 #include "EbComputeSAD_AVX2.h"
 #include "EbDefinitions.h"
-#include "immintrin.h"
+#include <immintrin.h>
 #include "EbMemory_AVX2.h"
 #include "EbComputeSAD.h"
 
