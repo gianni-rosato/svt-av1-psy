@@ -22,7 +22,7 @@ jobs:
       # Default depth is 1
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: sudo apt-get install -y nasm cppcheck
+        run: sudo apt-get install -y yasm cppcheck
       - name: Run CMake
         run: cmake -S . -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Run Cppcheck
