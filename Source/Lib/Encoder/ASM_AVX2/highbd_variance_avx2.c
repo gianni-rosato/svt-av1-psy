@@ -138,3 +138,46 @@ VAR_FN(16, 64, 16, 10);
 VAR_FN(64, 16, 16, 10);
 
 #undef VAR_FN
+
+/*
+* Compute variance for 16bit input, only for blocks 32x32
+* This kernel is only used by variance_highbd_avx2()
+* Return: SAD and sum of square differences
+*/
+static inline void variance_highbd_32x32_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
+                                int ref_stride, uint32_t *sse, int *sum) {
+    uint32_t sse0;
+    int      sum0;
+
+    for (int i = 0; i < 32; i += 16) {
+        for (int j = 0; j < 32; j += 16) {
+            aom_highbd_calc16x16var_avx2(src + src_stride * i + j,
+                                         src_stride,
+                                         ref + ref_stride * i + j,
+                                         ref_stride,
+                                         &sse0,
+                                         &sum0);
+            *sum += sum0;
+            *sse += sse0;
+        }
+    }
+}
+
+/*
+* Helper function to compute variance with 16 bit input for square blocks of size 16 and 32
+*/
+uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
+                              int w, int h, uint32_t *sse) {
+    assert(w == h);
+
+    int sum = 0;
+    *sse    = 0;
+
+    switch (w) {
+    case 16: aom_highbd_calc16x16var_avx2(a, a_stride, b, b_stride, sse,&sum); break;
+    case 32: variance_highbd_32x32_avx2(a, a_stride, b, b_stride, sse, &sum); break;
+    default: assert(0);
+    }
+
+    return *sse - (sum * sum) / (w * h);
+}

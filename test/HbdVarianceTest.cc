@@ -459,4 +459,155 @@ static const HbdSquareVarianceParam HbdSquareVarTestVector[] = {
 INSTANTIATE_TEST_CASE_P(Variance, HbdSquareVarianceTest,
                         ::testing::ValuesIn(HbdSquareVarTestVector));
 
+
+/**
+ * @brief Unit test for different implementation of HBD variance with size 16x16 and 32x32
+ * functions:
+ * - variance_highbd_c
+ * - variance_highbd_avx2
+ *
+ * Test strategy:
+ *  This test case use random source, max source, zero source as test
+ * pattern.
+ *
+ * Expected result:
+ *  Results come from reference function and target function are
+ * equal.
+ *
+ * Test cases:
+ * - ZeroTest
+ * - MaximumTest
+ * - MatchTest
+ *
+ * @author  intel tszumski
+ *
+ */
+using HighBdVarianceNoRoundFunc = uint32_t (*)(const uint16_t* src,
+                                               int32_t src_stride,
+                                               const uint16_t* ref,
+                                               int32_t ref_stride, int w,
+                                               int h, uint32_t* sse);
+
+using HbdSquareVarianceNoRoundParam =
+    std::tuple<uint32_t,                   /**< square length */
+               HighBdVarianceNoRoundFunc>; /**< test function */
+
+class HbdSquareVarianceNoRoundTest
+    : public ::testing::TestWithParam<HbdSquareVarianceNoRoundParam> {
+  public:
+    HbdSquareVarianceNoRoundTest()
+        : rnd_(16, false),
+          bd_(10),
+          length_(TEST_GET_PARAM(0)),
+          tst_func_(TEST_GET_PARAM(1)) {
+        src_data_ = reinterpret_cast<uint16_t*>(
+            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+        ref_data_ = reinterpret_cast<uint16_t*>(
+            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+    }
+
+    ~HbdSquareVarianceNoRoundTest() {
+        eb_aom_free(src_data_);
+        src_data_ = nullptr;
+        eb_aom_free(ref_data_);
+        ref_data_ = nullptr;
+    }
+
+    void run_zero_test(int times) {
+        for (int i = 0; i < times; ++i) {
+            for (int j = 0; j < MAX_BLOCK_SIZE; ++j) {
+                src_data_[j] = rnd_.random() & ((1 << bd_) - 1);
+                ref_data_[j] = src_data_[j];
+            }
+            int32_t distortion_tst = 0;
+            uint32_t sse_tst = 0;
+            distortion_tst = tst_func_(src_data_,
+                      length_,
+                      ref_data_,
+                      length_,
+                      length_,
+                      length_,
+                      &sse_tst);
+            ASSERT_EQ(sse_tst, 0u) << "Expect 0 sse, got: " << sse_tst;
+            ASSERT_EQ(distortion_tst, 0)
+                << "Expect 0 distortion, got: " << distortion_tst;
+        }
+    }
+
+    void run_maximum_test() {
+        for (int j = 0; j < MAX_BLOCK_SIZE; ++j) {
+            src_data_[j] = 0;
+            ref_data_[j] = (1 << bd_) - 1;
+        }
+
+        int32_t distortion_tst = 0, distortion_ref = 0;
+        uint32_t sse_tst = 0, sse_ref = 0;
+
+        distortion_tst = tst_func_(
+            src_data_, length_, ref_data_, length_, length_, length_, &sse_tst);
+
+        distortion_ref = variance_highbd_c(
+            src_data_, length_, ref_data_, length_, length_, length_, &sse_ref);
+        ASSERT_EQ(distortion_tst, distortion_ref)
+            << "Error at distortion in variance test";
+        ASSERT_EQ(sse_tst, sse_ref) << "Error at error sse in variance test";
+    }
+
+    void run_match_test(int times) {
+        for (int i = 0; i < times; ++i) {
+            for (int j = 0; j < MAX_BLOCK_SIZE; ++j) {
+                src_data_[j] = rnd_.random() & ((1 << bd_) - 1);
+                ref_data_[j] = rnd_.random() & ((1 << bd_) - 1);
+            }
+            int32_t distortion_tst = 0, distortion_ref = 0;
+            uint32_t sse_tst = 0, sse_ref = 0;
+
+            distortion_tst = tst_func_(src_data_,
+                                       length_,
+                                       ref_data_,
+                                       length_,
+                                       length_,
+                                       length_,
+                                       &sse_tst);
+
+            distortion_ref = variance_highbd_c(src_data_,
+                                               length_,
+                                               ref_data_,
+                                               length_,
+                                               length_,
+                                               length_,
+                                               &sse_ref);
+            ASSERT_EQ(distortion_tst, distortion_ref)
+                << "Error at distortion in variance test";
+            ASSERT_EQ(sse_tst, sse_ref)
+                << "Error at error sse in variance test";
+        }
+    }
+
+  private:
+    SVTRandom rnd_;
+    uint16_t* src_data_;
+    uint16_t* ref_data_;
+    uint32_t length_;
+    uint32_t bd_;
+    HighBdVarianceNoRoundFunc tst_func_;
+};
+
+TEST_P(HbdSquareVarianceNoRoundTest, ZeroTest) {
+    run_zero_test(10);
+};
+
+TEST_P(HbdSquareVarianceNoRoundTest, MaximumTest) {
+    run_maximum_test();
+};
+
+TEST_P(HbdSquareVarianceNoRoundTest, MatchTest) {
+    run_match_test(10);
+};
+
+INSTANTIATE_TEST_CASE_P(
+    Variance, HbdSquareVarianceNoRoundTest,
+    ::testing::Combine(::testing::Values(16, 32),
+                       ::testing::Values(variance_highbd_avx2)));
+
 }  // namespace

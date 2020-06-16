@@ -364,6 +364,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 #if RESTRUCTURE_SAD
     pme_sad_loop_kernel = pme_sad_loop_kernel_c;
 #endif
+    variance_highbd = variance_highbd_c;
 
 #ifdef ARCH_X86
     flags &= get_cpu_flags_to_use();
@@ -707,7 +708,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 #if RESTRUCTURE_SAD
                     SET_AVX2(pme_sad_loop_kernel, pme_sad_loop_kernel_c, pme_sad_loop_kernel_avx2);
 #endif
-
+                    SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
 #endif
 
 }

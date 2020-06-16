@@ -571,7 +571,8 @@ extern "C" {
     RTCD_EXTERN void(*compute_interm_var_four8x8)(uint8_t *input_samples, uint16_t input_stride, uint64_t *mean_of8x8_blocks, uint64_t *mean_of_squared8x8_blocks);
     RTCD_EXTERN uint32_t(*sad_16b_kernel)(uint16_t *src, uint32_t src_stride, uint16_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width);
     RTCD_EXTERN void(*pme_sad_loop_kernel)(uint8_t* src, uint32_t src_stride, uint8_t* ref, uint32_t ref_stride, uint32_t block_height, uint32_t block_width, uint32_t* best_sad, int16_t* best_mvx, int16_t* best_mvy, int16_t search_position_start_x, int16_t search_position_start_y, int16_t search_area_width, int16_t search_area_height, int16_t search_step, int16_t mvx, int16_t mvy);
-
+    RTCD_EXTERN uint32_t(*variance_highbd)(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w, int h, uint32_t *sse);
+    uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w, int h, uint32_t *sse);
 #ifdef ARCH_X86
     uint32_t combined_averaging_ssd_avx2(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
     uint32_t combined_averaging_ssd_avx512(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
@@ -1217,6 +1218,8 @@ extern "C" {
         const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+    uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
+                              int w, int h, uint32_t *sse);
 
 #if RESTRUCTURE_SAD
 #endif
