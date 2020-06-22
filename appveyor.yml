@@ -1,6 +1,9 @@
 image: Visual Studio 2019
 configuration: Release
 skip_branch_with_pr: true
+branches:
+  only:
+    - none
 skip_commits:
   files:
     - ".github/*"

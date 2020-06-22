@@ -1,0 +1,110 @@
+name: mingw-w64 builds
+on:
+  push:
+    paths-ignore:
+      - "Docs/*"
+      - .travis.yml
+      - .gitignore
+      - "*.md"
+  pull_request:
+    paths-ignore:
+      - "Docs/*"
+      - .travis.yml
+      - .gitignore
+      - "*.md"
+
+env:
+  MSYSTEM: MINGW64
+  MSYS2_PATH_TYPE: inherit
+  CHERE_INVOKING: true
+  CC: ccache gcc
+  CXX: ccache g++
+  CFLAGS: -pipe -static -O3 -mtune=generic -D_FILE_OFFSET_BITS=64 -mthreads -D__USE_MINGW_ANSI_STDIO=1
+  CXXFLAGS: -pipe -static -O3 -mtune=generic -D_FILE_OFFSET_BITS=64 -mthreads -D__USE_MINGW_ANSI_STDIO=1
+  LDFLAGS: -pipe -static -static-libgcc
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+      - name: Clone SVT-AV1
+        uses: actions/checkout@v2
+      - name: Clone FFmpeg for caching
+        uses: actions/checkout@v2
+        with:
+          repository: FFmpeg/FFmpeg
+          path: ffmpeg
+      - name: Cache ccache files
+        uses: actions/cache@v2
+        with:
+          path: |
+            /home/runneradmin/.ccache
+            /c/Users/runneradmin/AppData/Roaming/.ccache
+          key: ${{ runner.os }}-msys64-${{ hashFiles('Source/**/*.c') }}-${{ hashFiles('ffmpeg/**/*.c') }}
+          restore-keys: |
+            ${{ runner.os }}-msys64-${{ hashFiles('Source/**/*.c') }}-
+            ${{ runner.os }}-msys64-
+      - name: Setup PATH
+        run: Write-Output "::add-path::C:/msys64/usr/bin" "::add-path::C:/msys64/mingw64/bin"
+      - name: First run
+        run: bash -lc exit
+      - name: Remove mingw32
+        run: sed -i 's/.*mingw32.*//g' C:/msys64/etc/pacman.conf
+      - name: Update pacman db
+        run:  |
+          pacman -Syy
+          Copy-Item C:/msys64/var/lib/pacman/sync/mingw64.db mingw64.db
+      - name: Cache pacman packages
+        uses: actions/cache@v2
+        with:
+          path: /var/cache/pacman/pkg
+          key: ${{ runner.os }}-pacman-${{ hashFiles('mingw64.db') }}
+          restore-keys: ${{ runner.os }}-pacman-
+      - name: Setup msys2
+        run: |
+          Copy-Item $env:GITHUB_WORKSPACE/ffmpeg_plugin/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch $HOME
+          pacman -Suu --ask=20 --noconfirm --noprogressbar
+          pacman -Su --ask=20 --noconfirm --noprogressbar
+          pacman -Sy --ask=20 --noconfirm --noprogressbar --needed mingw-w64-x86_64-ccache mingw-w64-x86_64-yasm mingw-w64-x86_64-cmake mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-dav1d make
+
+      - name: Configure SVT-AV1
+        run: cmake -B Build -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64 -DBUILD_SHARED_LIBS=OFF
+      - name: Build SVT-AV1
+        run: make -j $(nproc) -C Build install
+      - name: Clone FFmpeg
+        uses: actions/checkout@v2
+        with:
+          repository: FFmpeg/FFmpeg
+      - name: Patch FFmpeg
+        run: git apply -3 --ignore-whitespace "$HOME/0001-Add-ability-for-ffmpeg-to-run-svt-av1.patch"
+      - name: Configure FFmpeg
+        shell: bash -eo pipefail {0}
+        run: |
+          ./configure --arch=x86_64 --cc="ccache gcc" --cxx="ccache g++" --enable-gpl --enable-libsvtav1 --enable-libdav1d --enable-static --disable-shared || {
+            cat ffbuild/config.log
+            exit 1
+          }
+      - name: Build FFmpeg
+        run: make -j $(nproc)
+
+      - name: Get Current Release
+        id: get_release
+        shell: bash
+        run: echo "::set-output name=upload_url::$(curl -L https://api.github.com/repos/${{ github.repository }}/releases/tags/$(cut -d/ -f3 <<< ${{ github.ref }}) | jq -r ."upload_url")"
+
+      - name: Upload ffmpeg (mingw-w64)
+        if: steps.get_release.outputs.upload_url == 'null'
+        uses: actions/upload-artifact@v2
+        with:
+          name: svtav1-mingw-w64-ffmpeg
+          path: ffmpeg.exe
+      - name: Upload static ffmpeg.exe
+        if: steps.get_release.outputs.upload_url != 'null'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ffmpeg.exe
+          asset_name: ffmpeg.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
