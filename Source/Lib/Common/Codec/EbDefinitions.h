@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
+#include <assert.h>
 #include "EbSvtAv1.h"
 #include "EbSvtAv1Enc.h"
 #ifdef _WIN32
@@ -1146,18 +1147,6 @@ typedef enum ATTRIBUTE_PACKED {
 #define SUPERRES_SCALE_DENOMINATOR_MIN (SCALE_NUMERATOR + 1)
 #define NUM_SCALES 8
 
-//*********************************************************************************************************************//
-// assert.h
-#undef assert
-
-#ifdef NDEBUG
-
-#define assert(expression) ((void)0)
-
-#else
-#define assert(expression) ((void)0)
-
-#endif
 //**********************************************************************************************************************//
 // onyxc_int.h
 #define CDEF_MAX_STRENGTHS 16
