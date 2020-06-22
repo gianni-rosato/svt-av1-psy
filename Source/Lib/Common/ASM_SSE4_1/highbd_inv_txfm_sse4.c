@@ -157,21 +157,23 @@ static void idct4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_co
 
 static void iadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_cols, int32_t bd,
                             int32_t out_shift) {
-    (void)*out;
-    (void)do_cols;
-    (void)bd;
     (void)out_shift;
     const int32_t *sinpi  = sinpi_arr(bit);
-    const __m128i  rnding = _mm_set1_epi32(1 << (bit - 1));
-    const __m128i  sinpi1 = _mm_set1_epi32((int32_t)sinpi[1]);
-    const __m128i  sinpi2 = _mm_set1_epi32((int32_t)sinpi[2]);
-    const __m128i  sinpi3 = _mm_set1_epi32((int32_t)sinpi[3]);
-    const __m128i  sinpi4 = _mm_set1_epi32((int32_t)sinpi[4]);
-    __m128i        t;
-    __m128i        s0, s1, s2, s3, s4, s5, s6, s7;
-    __m128i        x0, x1, x2, x3;
-    __m128i        u0, u1, u2, u3;
-    __m128i        v0, v1, v2, v3;
+    const __m128i  zero   = _mm_set1_epi32(0);
+    __m128i        rnding = _mm_set1_epi32(1 << (bit + 4 - 1));
+    rnding                = _mm_unpacklo_epi32(rnding, zero);
+    const __m128i mul     = _mm_set1_epi32(1 << 4);
+    const __m128i sinpi1  = _mm_set1_epi32((int)sinpi[1]);
+    const __m128i sinpi2  = _mm_set1_epi32((int)sinpi[2]);
+    const __m128i sinpi3  = _mm_set1_epi32((int)sinpi[3]);
+    const __m128i sinpi4  = _mm_set1_epi32((int)sinpi[4]);
+    __m128i       t;
+    __m128i       s0, s1, s2, s3, s4, s5, s6, s7;
+    __m128i       x0, x1, x2, x3;
+    __m128i       u0, u1, u2, u3;
+    __m128i       v0, v1, v2, v3;
+    __m128i       u0_low, u1_low, u2_low, u3_low;
+    __m128i       u0_high, u1_high, u2_high, u3_high;
 
     v0 = _mm_unpacklo_epi32(in[0], in[1]);
     v1 = _mm_unpackhi_epi32(in[0], in[1]);
@@ -206,22 +208,85 @@ static void iadst4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_c
     t  = _mm_add_epi32(s0, s1);
     u3 = _mm_sub_epi32(t, s3);
 
-    u0 = _mm_add_epi32(u0, rnding);
-    u0 = _mm_srai_epi32(u0, bit);
+    // u0
+    u0_low = _mm_mul_epi32(u0, mul);
+    u0_low = _mm_add_epi64(u0_low, rnding);
 
-    u1 = _mm_add_epi32(u1, rnding);
-    u1 = _mm_srai_epi32(u1, bit);
+    u0      = _mm_srli_si128(u0, 4);
+    u0_high = _mm_mul_epi32(u0, mul);
+    u0_high = _mm_add_epi64(u0_high, rnding);
 
-    u2 = _mm_add_epi32(u2, rnding);
-    u2 = _mm_srai_epi32(u2, bit);
+    u0_low  = _mm_srli_si128(u0_low, 2);
+    u0_high = _mm_srli_si128(u0_high, 2);
 
-    u3 = _mm_add_epi32(u3, rnding);
-    u3 = _mm_srai_epi32(u3, bit);
+    u0      = _mm_unpacklo_epi32(u0_low, u0_high);
+    u0_high = _mm_unpackhi_epi32(u0_low, u0_high);
+    u0      = _mm_unpacklo_epi64(u0, u0_high);
 
-    in[0] = u0;
-    in[1] = u1;
-    in[2] = u2;
-    in[3] = u3;
+    // u1
+    u1_low = _mm_mul_epi32(u1, mul);
+    u1_low = _mm_add_epi64(u1_low, rnding);
+
+    u1      = _mm_srli_si128(u1, 4);
+    u1_high = _mm_mul_epi32(u1, mul);
+    u1_high = _mm_add_epi64(u1_high, rnding);
+
+    u1_low  = _mm_srli_si128(u1_low, 2);
+    u1_high = _mm_srli_si128(u1_high, 2);
+
+    u1      = _mm_unpacklo_epi32(u1_low, u1_high);
+    u1_high = _mm_unpackhi_epi32(u1_low, u1_high);
+    u1      = _mm_unpacklo_epi64(u1, u1_high);
+
+    // u2
+    u2_low = _mm_mul_epi32(u2, mul);
+    u2_low = _mm_add_epi64(u2_low, rnding);
+
+    u2      = _mm_srli_si128(u2, 4);
+    u2_high = _mm_mul_epi32(u2, mul);
+    u2_high = _mm_add_epi64(u2_high, rnding);
+
+    u2_low  = _mm_srli_si128(u2_low, 2);
+    u2_high = _mm_srli_si128(u2_high, 2);
+
+    u2      = _mm_unpacklo_epi32(u2_low, u2_high);
+    u2_high = _mm_unpackhi_epi32(u2_low, u2_high);
+    u2      = _mm_unpacklo_epi64(u2, u2_high);
+
+    // u3
+    u3_low = _mm_mul_epi32(u3, mul);
+    u3_low = _mm_add_epi64(u3_low, rnding);
+
+    u3      = _mm_srli_si128(u3, 4);
+    u3_high = _mm_mul_epi32(u3, mul);
+    u3_high = _mm_add_epi64(u3_high, rnding);
+
+    u3_low  = _mm_srli_si128(u3_low, 2);
+    u3_high = _mm_srli_si128(u3_high, 2);
+
+    u3      = _mm_unpacklo_epi32(u3_low, u3_high);
+    u3_high = _mm_unpackhi_epi32(u3_low, u3_high);
+    u3      = _mm_unpacklo_epi64(u3, u3_high);
+
+    if (!do_cols) {
+        const int     log_range = AOMMAX(16, bd + 6);
+        const __m128i clamp_lo  = _mm_set1_epi32(-(1 << (log_range - 1)));
+        const __m128i clamp_hi  = _mm_set1_epi32((1 << (log_range - 1)) - 1);
+
+        u0 = _mm_max_epi32(u0, clamp_lo);
+        u0 = _mm_min_epi32(u0, clamp_hi);
+        u1 = _mm_max_epi32(u1, clamp_lo);
+        u1 = _mm_min_epi32(u1, clamp_hi);
+        u2 = _mm_max_epi32(u2, clamp_lo);
+        u2 = _mm_min_epi32(u2, clamp_hi);
+        u3 = _mm_max_epi32(u3, clamp_lo);
+        u3 = _mm_min_epi32(u3, clamp_hi);
+    }
+
+    out[0] = u0;
+    out[1] = u1;
+    out[2] = u2;
+    out[3] = u3;
 }
 
 static INLINE void round_shift_4x4(__m128i *in, int32_t shift) {
@@ -2491,23 +2556,28 @@ static void iidentity4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do
     (void)bit;
     (void)out_shift;
     __m128i v[4];
+    __m128i zero   = _mm_set1_epi32(0);
     __m128i fact   = _mm_set1_epi32(new_sqrt2);
     __m128i offset = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
-    __m128i a0, a1;
+    __m128i a0_low, a1_low;
+    __m128i a0_high, a1_high;
 
-    a0     = _mm_mullo_epi32(in[0], fact);
-    a1     = _mm_mullo_epi32(in[1], fact);
-    a0     = _mm_add_epi32(a0, offset);
-    a1     = _mm_add_epi32(a1, offset);
-    out[0] = _mm_srai_epi32(a0, new_sqrt2_bits);
-    out[1] = _mm_srai_epi32(a1, new_sqrt2_bits);
+    offset = _mm_unpacklo_epi32(offset, zero);
 
-    a0     = _mm_mullo_epi32(in[2], fact);
-    a1     = _mm_mullo_epi32(in[3], fact);
-    a0     = _mm_add_epi32(a0, offset);
-    a1     = _mm_add_epi32(a1, offset);
-    out[2] = _mm_srai_epi32(a0, new_sqrt2_bits);
-    out[3] = _mm_srai_epi32(a1, new_sqrt2_bits);
+    for (int i = 0; i < 4; i++) {
+        a0_low = _mm_mul_epi32(in[i], fact);
+        a0_low = _mm_add_epi32(a0_low, offset);
+        a0_low = _mm_srli_epi64(a0_low, new_sqrt2_bits);
+
+        a0_high = _mm_srli_si128(in[i], 4);
+        a0_high = _mm_mul_epi32(a0_high, fact);
+        a0_high = _mm_add_epi32(a0_high, offset);
+        a0_high = _mm_srli_epi64(a0_high, new_sqrt2_bits);
+
+        a1_low  = _mm_unpacklo_epi32(a0_low, a0_high);
+        a1_high = _mm_unpackhi_epi32(a0_low, a0_high);
+        out[i]  = _mm_unpacklo_epi64(a1_low, a1_high);
+    }
 
     if (!do_cols) {
         const int32_t log_range = AOMMAX(16, bd + 6);
@@ -2566,36 +2636,23 @@ static void iidentity16_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t d
     __m128i       v[16];
     __m128i       fact   = _mm_set1_epi32(2 * new_sqrt2);
     __m128i       offset = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
-    __m128i       a0, a1, a2, a3;
+    __m128i       a0_low, a0_high, a1_low, a1_high;
+    __m128i       zero = _mm_set1_epi32(0);
+    offset             = _mm_unpacklo_epi32(offset, zero);
 
-    for (int32_t i = 0; i < 16; i += 8) {
-        a0       = _mm_mullo_epi32(in[i], fact);
-        a1       = _mm_mullo_epi32(in[i + 1], fact);
-        a0       = _mm_add_epi32(a0, offset);
-        a1       = _mm_add_epi32(a1, offset);
-        v[i]     = _mm_srai_epi32(a0, new_sqrt2_bits);
-        v[i + 1] = _mm_srai_epi32(a1, new_sqrt2_bits);
+    for (int i = 0; i < 16; i++) {
+        a0_low = _mm_mul_epi32(in[i], fact);
+        a0_low = _mm_add_epi32(a0_low, offset);
+        a0_low = _mm_srli_epi64(a0_low, new_sqrt2_bits);
 
-        a2       = _mm_mullo_epi32(in[i + 2], fact);
-        a3       = _mm_mullo_epi32(in[i + 3], fact);
-        a2       = _mm_add_epi32(a2, offset);
-        a3       = _mm_add_epi32(a3, offset);
-        v[i + 2] = _mm_srai_epi32(a2, new_sqrt2_bits);
-        v[i + 3] = _mm_srai_epi32(a3, new_sqrt2_bits);
+        a0_high = _mm_srli_si128(in[i], 4);
+        a0_high = _mm_mul_epi32(a0_high, fact);
+        a0_high = _mm_add_epi32(a0_high, offset);
+        a0_high = _mm_srli_epi64(a0_high, new_sqrt2_bits);
 
-        a0       = _mm_mullo_epi32(in[i + 4], fact);
-        a1       = _mm_mullo_epi32(in[i + 5], fact);
-        a0       = _mm_add_epi32(a0, offset);
-        a1       = _mm_add_epi32(a1, offset);
-        v[i + 4] = _mm_srai_epi32(a0, new_sqrt2_bits);
-        v[i + 5] = _mm_srai_epi32(a1, new_sqrt2_bits);
-
-        a2       = _mm_mullo_epi32(in[i + 6], fact);
-        a3       = _mm_mullo_epi32(in[i + 7], fact);
-        a2       = _mm_add_epi32(a2, offset);
-        a3       = _mm_add_epi32(a3, offset);
-        v[i + 6] = _mm_srai_epi32(a2, new_sqrt2_bits);
-        v[i + 7] = _mm_srai_epi32(a3, new_sqrt2_bits);
+        a1_low  = _mm_unpacklo_epi32(a0_low, a0_high);
+        a1_high = _mm_unpackhi_epi32(a0_low, a0_high);
+        v[i]    = _mm_unpacklo_epi64(a1_low, a1_high);
     }
 
     if (!do_cols) {
