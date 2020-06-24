@@ -591,7 +591,6 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_h_predictor_8x16 = eb_aom_h_predictor_8x16_c;
     eb_aom_h_predictor_8x32 = eb_aom_h_predictor_8x32_c;
     eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_c;
-    aom_sum_squares_i16 = aom_sum_squares_i16_c;
     eb_cdef_find_dir = eb_cdef_find_dir_c;
 
     eb_cdef_filter_block = eb_cdef_filter_block_c;

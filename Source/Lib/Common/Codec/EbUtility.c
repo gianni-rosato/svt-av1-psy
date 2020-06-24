@@ -206,9 +206,6 @@ static CodedBlockStats coded_unit_stats_array[] = {
  * Get Coded Unit Statistics
  **************************************************************/
 const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx) {
-    //ASSERT(cu_idx < CU_MAX_COUNT && "get_coded_blk_stats: Out-of-range CU Idx\n");
-    if (cu_idx == 255) SVT_LOG("Invalid CuIndex\n");
-
     return &coded_unit_stats_array[cu_idx];
 }
 

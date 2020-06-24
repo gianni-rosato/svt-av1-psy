@@ -51,7 +51,7 @@ void eb_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride, 
     const int32_t bits             = FILTER_BITS * 2 - conv_params->round_0 - conv_params->round_1;
     const __m128i round_shift_bits = _mm_cvtsi32_si128(bits);
     const __m256i round_const_bits = _mm256_set1_epi32((1 << bits) >> 1);
-    const __m256i clip_pixel       = _mm256_set1_epi16(bd == 10 ? 1023 : (bd == 12 ? 4095 : 255));
+    const __m256i clp_pxl          = _mm256_set1_epi16(bd == 10 ? 1023 : (bd == 12 ? 4095 : 255));
     const __m256i zero             = _mm256_setzero_si256();
 
     prepare_coeffs_8tap_avx2(filter_params_x, subpel_x_q4, coeffs_x);
@@ -137,7 +137,7 @@ void eb_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride, 
                                                    round_shift_bits);
 
                     __m256i res_16bit = _mm256_packs_epi32(res_a_round, res_b_round);
-                    res_16bit         = _mm256_min_epi16(res_16bit, clip_pixel);
+                    res_16bit         = _mm256_min_epi16(res_16bit, clp_pxl);
                     res_16bit         = _mm256_max_epi16(res_16bit, zero);
 
                     _mm_storeu_si128((__m128i *)&dst[i * dst_stride + j],
@@ -146,7 +146,7 @@ void eb_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride, 
                                      _mm256_extracti128_si256(res_16bit, 1));
                 } else if (w == 4) {
                     res_a_round = _mm256_packs_epi32(res_a_round, res_a_round);
-                    res_a_round = _mm256_min_epi16(res_a_round, clip_pixel);
+                    res_a_round = _mm256_min_epi16(res_a_round, clp_pxl);
                     res_a_round = _mm256_max_epi16(res_a_round, zero);
 
                     _mm_storel_epi64((__m128i *)&dst[i * dst_stride + j],
@@ -155,7 +155,7 @@ void eb_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride, 
                                      _mm256_extracti128_si256(res_a_round, 1));
                 } else {
                     res_a_round = _mm256_packs_epi32(res_a_round, res_a_round);
-                    res_a_round = _mm256_min_epi16(res_a_round, clip_pixel);
+                    res_a_round = _mm256_min_epi16(res_a_round, clp_pxl);
                     res_a_round = _mm256_max_epi16(res_a_round, zero);
 
                     xx_storel_32((__m128i *)&dst[i * dst_stride + j],

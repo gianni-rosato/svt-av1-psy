@@ -40,6 +40,7 @@ void eb_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3, uint8_t *pred, int32_t 
                              uint8_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth,
                              int32_t width, int32_t height) {
     (void)bit_depth;
+    (void)pred_stride;
     if (width <= 16) {
         const __m128i  alpha_sign = _mm_set1_epi16(alpha_q3);
         const __m128i  alpha_q12  = _mm_slli_epi16(_mm_abs_epi16(alpha_sign), 9);
@@ -75,7 +76,6 @@ void eb_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3, uint8_t *pred, int32_t 
             res          = _mm256_permute4x64_epi64(res, _MM_SHUFFLE(3, 1, 2, 0));
             _mm256_storeu_si256((__m256i *)dst, res);
             dst += dst_stride;
-            pred += pred_stride;
         } while ((row += CFL_BUF_LINE_I256) < row_end);
     }
 }
@@ -106,6 +106,7 @@ void eb_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
                              uint16_t *     dst, // AMIR changed to 8 bit
                              int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
                              int32_t height) {
+    (void)pred_stride;
     // Use SSSE3 version for smaller widths
     if (width < 16) {
         const __m128i  alpha_sign = _mm_set1_epi16(alpha_q3);
@@ -143,7 +144,6 @@ void eb_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
                                     highbd_clamp_epi16(res_1, _mm256_setzero_si256(), max));
             }
             dst += dst_stride;
-            pred += pred_stride;
         } while ((row += CFL_BUF_LINE_I256) < row_end);
     }
 }

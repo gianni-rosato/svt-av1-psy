@@ -61,14 +61,12 @@ uint64_t spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset,
                                           uint32_t input_stride, uint8_t *recon,
                                           int32_t recon_offset, uint32_t recon_stride,
                                           uint32_t area_width, uint32_t area_height) {
-    uint32_t column_index;
-    uint32_t row_index          = 0;
     uint64_t spatial_distortion = 0;
     input += input_offset;
     recon += recon_offset;
 
-    while (row_index < area_height) {
-        column_index = 0;
+    for (uint32_t row_index = 0; row_index < area_height; ++row_index) {
+        uint32_t column_index = 0;
         while (column_index < area_width) {
             spatial_distortion +=
                 (int64_t)SQR((int64_t)(input[column_index]) - (recon[column_index]));
@@ -77,9 +75,6 @@ uint64_t spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset,
 
         input += input_stride;
         recon += recon_stride;
-        ++row_index;
     }
     return spatial_distortion;
 }
-
-

@@ -1145,7 +1145,7 @@ static INLINE __m256i y_convolve_4tap_8x2_avx2(const uint8_t *const src, const p
 
 static INLINE void y_convolve_4tap_16x2_avx2(const uint8_t *const src, const ptrdiff_t stride,
                                              const __m256i coeffs[2], __m128i s_128[4],
-                                             __m256i ss_256[2], __m256i r[2]) {
+                                             __m256i ss_256[4], __m256i r[2]) {
     s_128[3]            = _mm_loadu_si128((__m128i *)(src + stride));
     const __m256i src23 = _mm256_setr_m128i(s_128[2], s_128[3]);
     s_128[2]            = _mm_loadu_si128((__m128i *)(src + 2 * stride));
@@ -1206,7 +1206,7 @@ static INLINE __m256i y_convolve_6tap_8x2_avx2(const uint8_t *const src, const p
 
 static INLINE void y_convolve_6tap_16x2_avx2(const uint8_t *const src, const ptrdiff_t stride,
                                              const __m256i coeffs[3], __m128i s_128[6],
-                                             __m256i ss_256[3], __m256i r[2]) {
+                                             __m256i ss_256[6], __m256i r[2]) {
     s_128[5]            = _mm_loadu_si128((__m128i *)(src + 3 * stride));
     const __m256i src45 = _mm256_setr_m128i(s_128[4], s_128[5]);
     s_128[4]            = _mm_loadu_si128((__m128i *)(src + 4 * stride));
@@ -1267,7 +1267,7 @@ static INLINE __m256i y_convolve_8tap_8x2_avx2(const uint8_t *const src, const p
 
 static INLINE void y_convolve_8tap_16x2_avx2(const uint8_t *const src, const ptrdiff_t stride,
                                              const __m256i coeffs[4], __m128i s_128[8],
-                                             __m256i ss_256[4], __m256i r[2]) {
+                                             __m256i ss_256[8], __m256i r[2]) {
     s_128[7]            = _mm_loadu_si128((__m128i *)(src + 7 * stride));
     const __m256i src67 = _mm256_setr_m128i(s_128[6], s_128[7]);
     s_128[6]            = _mm_loadu_si128((__m128i *)(src + 8 * stride));
@@ -1635,7 +1635,7 @@ static INLINE void xy_y_convolve_6tap_8x2_avx2(const int16_t *const src, __m256i
 }
 
 static INLINE void xy_y_convolve_6tap_8x2_half_pel_avx2(const int16_t *const src,
-                                                        const __m256i coeffs[2], __m256i s_256[4],
+                                                        const __m256i coeffs[2], __m256i s_256[6],
                                                         __m256i r[2]) {
     __m256i a_256[2], ss_256[4];
     s_256[4]  = _mm256_loadu_si256((__m256i *)(src + 4 * 8));

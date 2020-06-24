@@ -80,8 +80,6 @@ void eb_av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int32_t b
                                       int32_t bh, const uint16_t *above,
                                       const uint16_t *left, int32_t upsample_left,
                                       int32_t dx, int32_t dy, int32_t bd) {
-    int32_t r, c, y, base, shift, val;
-
     (void)above;
     (void)dx;
     (void)bd;
@@ -91,14 +89,13 @@ void eb_av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     const int32_t max_base_y = (bw + bh - 1) << upsample_left;
     const int32_t frac_bits = 6 - upsample_left;
     const int32_t base_inc = 1 << upsample_left;
-    y = dy;
-    for (c = 0; c < bw; ++c, y += dy) {
-        base = y >> frac_bits;
-        shift = ((y << upsample_left) & 0x3F) >> 1;
+    for (int32_t c = 0, y = dy; c < bw; ++c, y += dy) {
+        int32_t base = y >> frac_bits;
+        int32_t shift = ((y << upsample_left) & 0x3F) >> 1;
 
-        for (r = 0; r < bh; ++r, base += base_inc) {
+        for (int32_t r = 0; r < bh; ++r, base += base_inc) {
             if (base < max_base_y) {
-                val = left[base] * (32 - shift) + left[base + 1] * shift;
+                int32_t val         = left[base] * (32 - shift) + left[base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
                 dst[r * stride + c] = (uint16_t)clip_pixel_highbd(val, bd);
             }

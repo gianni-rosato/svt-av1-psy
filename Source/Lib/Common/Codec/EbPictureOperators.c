@@ -214,13 +214,10 @@ uint64_t full_distortion_kernel16_bits_c(uint8_t *input, uint32_t input_offset,
 * Picture Distortion Full Kernel CbfZero
 *******************************************/
 void full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff_stride,
-                                              int32_t *recon_coeff, uint32_t recon_coeff_stride,
                                               uint64_t distortion_result[DIST_CALC_TOTAL],
                                               uint32_t area_width, uint32_t area_height) {
     uint32_t row_index             = 0;
     uint64_t prediction_distortion = 0;
-    (void)recon_coeff;
-    (void)recon_coeff_stride;
 
     while (row_index < area_height) {
         uint32_t column_index = 0;
@@ -270,8 +267,6 @@ EbErrorType picture_full_distortion32_bits(
             full_distortion_kernel_cbf_zero32_bits(
                 &(((int32_t *)coeff->buffer_y)[coeff_luma_origin_index]),
                 bwidth,
-                &(((int32_t *)recon_coeff->buffer_y)[recon_coeff_luma_origin_index]),
-                bwidth,
                 y_distortion,
                 bwidth,
                 bheight);
@@ -297,8 +292,6 @@ EbErrorType picture_full_distortion32_bits(
             full_distortion_kernel_cbf_zero32_bits(
                 &(((int32_t *)coeff->buffer_cb)[coeff_chroma_origin_index]),
                 bwidth_uv,
-                &(((int32_t *)recon_coeff->buffer_cb)[recon_coeff_chroma_origin_index]),
-                bwidth_uv,
                 cb_distortion,
                 bwidth_uv,
                 bheight_uv);
@@ -321,8 +314,6 @@ EbErrorType picture_full_distortion32_bits(
         } else {
             full_distortion_kernel_cbf_zero32_bits(
                 &(((int32_t *)coeff->buffer_cr)[coeff_chroma_origin_index]),
-                bwidth_uv,
-                &(((int32_t *)recon_coeff->buffer_cr)[recon_coeff_chroma_origin_index]),
                 bwidth_uv,
                 cr_distortion,
                 bwidth_uv,

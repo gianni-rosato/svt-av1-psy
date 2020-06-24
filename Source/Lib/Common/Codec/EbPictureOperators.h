@@ -49,7 +49,6 @@ static INLINE void memset32bit(uint32_t *in_ptr, uint32_t value, uint64_t num_of
 }
 
 void full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff_stride,
-                                              int32_t *recon_coeff, uint32_t recon_coeff_stride,
                                               uint64_t distortion_result[DIST_CALC_TOTAL],
                                               uint32_t area_width, uint32_t area_height);
 
