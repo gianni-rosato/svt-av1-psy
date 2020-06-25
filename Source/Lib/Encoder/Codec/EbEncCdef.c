@@ -1040,14 +1040,11 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
 
 ///-------search
 
-static int32_t priconv[REDUCED_PRI_STRENGTHS] = {0, 1, 2, 3, 5, 7, 10, 13};
-
 /* Search for the best strength to add as an option, knowing we
 already selected nb_strengths options. */
 static uint64_t search_one(int32_t *lev, int32_t nb_strengths, uint64_t mse[][TOTAL_STRENGTHS],
-                           int32_t sb_count, int32_t fast, int32_t start_gi, int32_t end_gi) {
+                           int32_t sb_count, int32_t start_gi, int32_t end_gi) {
     uint64_t tot_mse[TOTAL_STRENGTHS];
-    (void)fast;
     const int32_t total_strengths = end_gi;
     int32_t       i, j;
     uint64_t      best_tot_mse = (uint64_t)1 << 63;
@@ -1081,14 +1078,13 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths, uint64_t mse[][TO
 /* Search for the best luma+chroma strength to add as an option, knowing we
 already selected nb_strengths options. */
 uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
-                           uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count, int fast, int start_gi,
+                           uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count, int start_gi,
                            int end_gi) {
     uint64_t tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS];
     int32_t  i, j;
     uint64_t best_tot_mse = (uint64_t)1 << 63;
     int32_t  best_id0     = 0;
     int32_t  best_id1     = 0;
-    (void)fast;
     const int32_t total_strengths = end_gi;
     memset(tot_mse, 0, sizeof(tot_mse));
     for (i = 0; i < sb_count; i++) {
@@ -1131,22 +1127,20 @@ uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
 /* Search for the set of strengths that minimizes mse. */
 static uint64_t joint_strength_search(int32_t *best_lev, int32_t nb_strengths,
                                       uint64_t mse[][TOTAL_STRENGTHS], int32_t sb_count,
-                                      int32_t fast, int32_t start_gi, int32_t end_gi) {
+                                      int32_t start_gi, int32_t end_gi) {
     uint64_t best_tot_mse;
     int32_t  i;
     best_tot_mse = (uint64_t)1 << 63;
     /* Greedy search: add one strength options at a time. */
     for (i = 0; i < nb_strengths; i++)
-        best_tot_mse = search_one(best_lev, i, mse, sb_count, fast, start_gi, end_gi);
+        best_tot_mse = search_one(best_lev, i, mse, sb_count, start_gi, end_gi);
     /* Trying to refine the greedy search by reconsidering each
     already-selected option. */
-    if (!fast) {
-        for (i = 0; i < 4 * nb_strengths; i++) {
-            int32_t j;
-            for (j = 0; j < nb_strengths - 1; j++) best_lev[j] = best_lev[j + 1];
-            best_tot_mse =
-                search_one(best_lev, nb_strengths - 1, mse, sb_count, fast, start_gi, end_gi);
-        }
+    for (i = 0; i < 4 * nb_strengths; i++) {
+        int32_t j;
+        for (j = 0; j < nb_strengths - 1; j++) best_lev[j] = best_lev[j + 1];
+        best_tot_mse =
+            search_one(best_lev, nb_strengths - 1, mse, sb_count, start_gi, end_gi);
     }
     return best_tot_mse;
 }
@@ -1154,7 +1148,7 @@ static uint64_t joint_strength_search(int32_t *best_lev, int32_t nb_strengths,
 /* Search for the set of luma+chroma strengths that minimizes mse. */
 static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev1,
                                            int32_t nb_strengths, uint64_t (**mse)[TOTAL_STRENGTHS],
-                                           int32_t sb_count, int32_t fast, int32_t start_gi,
+                                           int32_t sb_count, int32_t start_gi,
                                            int32_t end_gi) {
     uint64_t best_tot_mse;
     int32_t  i;
@@ -1162,7 +1156,7 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     /* Greedy search: add one strength options at a time. */
     for (i = 0; i < nb_strengths; i++)
         best_tot_mse =
-            search_one_dual(best_lev0, best_lev1, i, mse, sb_count, fast, start_gi, end_gi);
+            search_one_dual(best_lev0, best_lev1, i, mse, sb_count, start_gi, end_gi);
     /* Trying to refine the greedy search by reconsidering each
     already-selected option. */
     for (i = 0; i < 4 * nb_strengths; i++) {
@@ -1172,7 +1166,7 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
             best_lev1[j] = best_lev1[j + 1];
         }
         best_tot_mse = search_one_dual(
-            best_lev0, best_lev1, nb_strengths - 1, mse, sb_count, fast, start_gi, end_gi);
+            best_lev0, best_lev1, nb_strengths - 1, mse, sb_count, start_gi, end_gi);
     }
     return best_tot_mse;
 }
@@ -1180,7 +1174,6 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
 void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                         int32_t selected_strength_cnt[64]) {
     (void)context_ptr;
-    int32_t                         fast    = 0;
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
     FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
     Av1Common *                     cm      = ppcs->av1_cm;
@@ -1199,7 +1192,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t *     sb_index          = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
     int32_t *     selected_strength = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
     int32_t       best_frame_gi_cnt = 0;
-    const int32_t total_strengths   = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
+    const int32_t total_strengths   = TOTAL_STRENGTHS;
     int32_t       gi_step;
     int32_t       mid_gi;
     int32_t       start_gi;
@@ -1278,10 +1271,10 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         nb_strengths                          = 1 << i;
         if (num_planes >= 3)
             tot_mse = joint_strength_search_dual(
-                best_lev0, best_lev1, nb_strengths, mse, sb_count, fast, start_gi, end_gi);
+                best_lev0, best_lev1, nb_strengths, mse, sb_count, start_gi, end_gi);
         else
             tot_mse = joint_strength_search(
-                best_lev0, nb_strengths, mse[0], sb_count, fast, start_gi, end_gi);
+                best_lev0, nb_strengths, mse[0], sb_count, start_gi, end_gi);
         /* Count superblock signalling cost. */
         const int total_bits =
             sb_count * i + nb_strengths * CDEF_STRENGTH_BITS * (num_planes > 1 ? 2 : 1);
@@ -1343,18 +1336,6 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         }
     }
 
-    if (fast) {
-        for (int32_t j = 0; j < nb_strengths; j++) {
-            frm_hdr->cdef_params.cdef_y_strength[j] =
-                priconv[frm_hdr->cdef_params.cdef_y_strength[j] / CDEF_SEC_STRENGTHS] *
-                    CDEF_SEC_STRENGTHS +
-                (frm_hdr->cdef_params.cdef_y_strength[j] % CDEF_SEC_STRENGTHS);
-            frm_hdr->cdef_params.cdef_uv_strength[j] =
-                priconv[frm_hdr->cdef_params.cdef_uv_strength[j] / CDEF_SEC_STRENGTHS] *
-                    CDEF_SEC_STRENGTHS +
-                (frm_hdr->cdef_params.cdef_uv_strength[j] % CDEF_SEC_STRENGTHS);
-        }
-    }
     //cdef_pri_damping & cdef_sec_damping consolidated to cdef_damping
     frm_hdr->cdef_params.cdef_damping = pri_damping;
     for (int i = 0; i < total_strengths; i++)

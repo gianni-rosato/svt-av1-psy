@@ -126,7 +126,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t  nvfb        = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t  nhfb        = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t  pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
-    int32_t  sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
+    int32_t  sec_damping = pri_damping;
 
     const int32_t num_planes      = 3;
     const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;

@@ -128,29 +128,23 @@ EbBool check_mv_for_non_uniform_motion(int32_t *x_current_mv, int32_t *y_current
 }
 
 void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr) {
-    uint32_t sb_count;
-    uint32_t pic_width_in_sb =
-        (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-    uint32_t sb_origin_x;
-    uint32_t sb_origin_y;
+    uint32_t pic_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) /
+        BLOCK_SIZE_64;
 
-    int32_t  x_current_mv                   = 0;
-    int32_t  y_current_mv                   = 0;
-    int32_t  x_left_mv                      = 0;
-    int32_t  y_left_mv                      = 0;
-    int32_t  x_top_mv                       = 0;
-    int32_t  y_top_mv                       = 0;
-    int32_t  x_right_mv                     = 0;
-    int32_t  y_right_mv                       = 0;
-    int32_t  x_bottom_mv                    = 0;
-    int32_t  y_bottom_mv                    = 0;
-    uint32_t count_of_non_uniform_neighbors = 0;
+    int32_t x_current_mv = 0;
+    int32_t y_current_mv = 0;
+    int32_t x_left_mv    = 0;
+    int32_t y_left_mv    = 0;
+    int32_t x_top_mv     = 0;
+    int32_t y_top_mv     = 0;
+    int32_t x_right_mv   = 0;
+    int32_t y_right_mv   = 0;
+    int32_t x_bottom_mv  = 0;
+    int32_t y_bottom_mv  = 0;
 
-    for (sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
-        count_of_non_uniform_neighbors = 0;
-
-        sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
-        sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
+    for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
+        uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
+        uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
 
         if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
             ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
@@ -163,8 +157,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_left_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_left_mv, &y_left_mv);
 
             // Top MV
             if (sb_origin_y == 0) {
@@ -172,8 +164,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_top_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
-            count_of_non_uniform_neighbors +=
-                check_mv_for_non_uniform_motion(&x_current_mv, &y_current_mv, &x_top_mv, &y_top_mv);
 
             // Right MV
             if ((sb_origin_x + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->width) {
@@ -181,8 +171,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_right_mv   = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_right_mv, &y_right_mv);
 
             // Bottom MV
             if ((sb_origin_y + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->height) {
@@ -190,8 +178,6 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
                 y_bottom_mv = 0;
             } else
                 eb_get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
-            count_of_non_uniform_neighbors += check_mv_for_non_uniform_motion(
-                &x_current_mv, &y_current_mv, &x_bottom_mv, &y_bottom_mv);
         }
     }
 }
@@ -225,11 +211,8 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
             }
         }
     } else {
-        uint32_t sb_count;
-        uint32_t pic_width_in_sb =
-            (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-        uint32_t sb_origin_x;
-        uint32_t sb_origin_y;
+        uint32_t pic_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) /
+            BLOCK_SIZE_64;
 
         uint32_t total_checked_sbs = 0;
         uint32_t total_pan_sbs     = 0;
@@ -253,9 +236,9 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
         uint32_t total_tilt_high_amp_sbs = 0;
         uint32_t total_pan_high_amp_sbs  = 0;
 
-        for (sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
-            sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
-            sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
+        for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
+            uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
+            uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
             if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
                 ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
                 // Current MV
@@ -446,14 +429,11 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
 ************************************************/
 void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     // PA Reference Pictures
-    uint32_t num_of_list_to_search;
-    uint32_t list_index;
-    uint32_t ref_pic_index;
     if (pcs_ptr->slice_type != I_SLICE) {
-        num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
+        uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
 
         // List Loop
-        for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
             // Release PA Reference Pictures
             uint8_t num_of_ref_pic_to_search =
                 (pcs_ptr->slice_type == P_SLICE)
@@ -462,7 +442,8 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
                           ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)
                           : MIN(pcs_ptr->ref_list1_count, scs_ptr->reference_count);
 
-            for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+            for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
+                 ++ref_pic_index) {
                 if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
                     eb_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
                 }
@@ -503,29 +484,22 @@ void me_based_global_motion_detection(PictureParentControlSet *pcs_ptr) {
 void update_global_motion_detection_over_time(EncodeContext *          encode_context_ptr,
                                               SequenceControlSet *     scs_ptr,
                                               PictureParentControlSet *pcs_ptr) {
-    InitialRateControlReorderEntry *temp_queue_entry_ptr;
-    PictureParentControlSet *       temp_pcs_ptr;
-
     uint32_t total_pan_pictures     = 0;
     uint32_t total_checked_pictures = 0;
     uint32_t total_tilt_pictures    = 0;
-    uint32_t update_is_pan_frames_to_check;
-    uint32_t input_queue_index;
-    uint32_t frames_to_check_index;
-
     (void)scs_ptr;
 
     // Determine number of frames to check (8 frames)
-    update_is_pan_frames_to_check = MIN(8, pcs_ptr->frames_in_sw);
+    uint32_t update_is_pan_frames_to_check = MIN(8, pcs_ptr->frames_in_sw);
 
     // Walk the first N entries in the sliding window
-    input_queue_index = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
+    uint32_t input_queue_index = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
     uint32_t update_frames_to_check = update_is_pan_frames_to_check;
-    for (frames_to_check_index = 0; frames_to_check_index < update_frames_to_check;
+    for (uint32_t frames_to_check_index = 0; frames_to_check_index < update_frames_to_check;
          frames_to_check_index++) {
-        temp_queue_entry_ptr =
+        InitialRateControlReorderEntry *temp_queue_entry_ptr =
             encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-        temp_pcs_ptr =
+        PictureParentControlSet *temp_pcs_ptr =
             ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
 
         if (temp_pcs_ptr->slice_type != I_SLICE) {
@@ -657,27 +631,23 @@ void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
 void update_motion_field_uniformity_over_time(EncodeContext *          encode_context_ptr,
                                               SequenceControlSet *     scs_ptr,
                                               PictureParentControlSet *pcs_ptr) {
-    InitialRateControlReorderEntry *temp_queue_entry_ptr;
-    PictureParentControlSet *       temp_pcs_ptr;
-    uint32_t                        input_queue_index;
-    uint32_t                        no_frames_to_check;
-    uint32_t                        frames_to_check_index;
     //SVT_LOG("To update POC %d\tframesInSw = %d\n", pcs_ptr->picture_number, pcs_ptr->frames_in_sw);
     // Determine number of frames to check N
-    no_frames_to_check =
-        MIN(MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
-            scs_ptr->static_config.look_ahead_distance);
+    uint32_t no_frames_to_check = MIN(
+        MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
+        scs_ptr->static_config.look_ahead_distance);
 
     // Walk the first N entries in the sliding window starting picture + 1
-    input_queue_index = (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
-                         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                            ? 0
-                            : encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    for (frames_to_check_index = 0; frames_to_check_index < no_frames_to_check - 1;
+    uint32_t input_queue_index =
+        (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
+         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
+        ? 0
+        : encode_context_ptr->initial_rate_control_reorder_queue_head_index;
+    for (uint32_t frames_to_check_index = 0; frames_to_check_index < no_frames_to_check - 1;
          frames_to_check_index++) {
-        temp_queue_entry_ptr =
+        InitialRateControlReorderEntry *temp_queue_entry_ptr =
             encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-        temp_pcs_ptr =
+        PictureParentControlSet *temp_pcs_ptr =
             ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
 
         if (temp_pcs_ptr->end_of_sequence_flag) break;

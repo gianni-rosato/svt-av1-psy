@@ -104,16 +104,12 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
             malloc(sizeof(*(params_by_motion[m].inliers)) * 2 * MAX_CORNERS);
     }
 
-    const double *       params_this_motion;
-    int                  inliers_by_motion[RANSAC_NUM_MOTIONS];
-    EbWarpedMotionParams tmp_wm_params;
     // clang-format off
     static const double k_indentity_params[MAX_PARAMDIM - 1] = {
         0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0
     };
     // clang-format on
 
-    int            frm_corners[2 * MAX_CORNERS];
     unsigned char *frm_buffer =
         input_pic->buffer_y + input_pic->origin_x + input_pic->origin_y * input_pic->stride_y;
     unsigned char *ref_buffer =
@@ -125,6 +121,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
     const EbWarpedMotionParams *ref_params = &default_warp_params;
 
     {
+        int frm_corners[2 * MAX_CORNERS], inliers_by_motion[RANSAC_NUM_MOTIONS];
         // compute interest points using FAST features
         int num_frm_corners = av1_fast_corner_detect(frm_buffer,
                                                      input_pic->width,
@@ -134,6 +131,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                                                      MAX_CORNERS);
 
         TransformationType model;
+        EbWarpedMotionParams tmp_wm_params;
 #define GLOBAL_TRANS_TYPES_ENC 3
 
         const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
@@ -163,9 +161,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {
                 if (inliers_by_motion[i] == 0) continue;
-
-                params_this_motion = params_by_motion[i].params;
-                av1_convert_model_to_params(params_this_motion, &tmp_wm_params);
+                av1_convert_model_to_params(params_by_motion[i].params, &tmp_wm_params);
 
                 if (tmp_wm_params.wmtype != IDENTITY) {
                     const int64_t warp_error = av1_refine_integerized_param(&tmp_wm_params,

@@ -830,8 +830,6 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                        ->buffer_y)[input_picture_ptr->origin_x +
                                    input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
 
-            residual_distortion = 0;
-
             while (row_index < input_picture_ptr->height) {
                 column_index = 0;
                 while (column_index < input_picture_ptr->width) {
@@ -855,8 +853,6 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                                             input_picture_ptr->origin_y / 2 *
                                                                 input_picture_ptr->stride_cb]);
 
-            residual_distortion = 0;
-            row_index           = 0;
             while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
                 column_index = 0;
                 while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
@@ -878,9 +874,6 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
             input_buffer        = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 +
                                                             input_picture_ptr->origin_y / 2 *
                                                                 input_picture_ptr->stride_cr]);
-
-            residual_distortion = 0;
-            row_index           = 0;
 
             while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
                 column_index = 0;
@@ -917,8 +910,6 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                   input_picture_ptr->origin_y * input_picture_ptr->stride_y)
                                  << is_16bit]);
 
-            residual_distortion = 0;
-
             while (row_index < input_picture_ptr->height) {
                 column_index = 0;
                 while (column_index < input_picture_ptr->width) {
@@ -947,8 +938,6 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                                    input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb)
                                   << is_16bit]);
 
-            residual_distortion = 0;
-            row_index           = 0;
             while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
                 column_index = 0;
                 while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
@@ -974,8 +963,6 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
                      ->buffer_cr)[(input_picture_ptr->origin_x / 2 +
                                    input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr)
                                   << is_16bit]);
-            residual_distortion = 0;
-            row_index           = 0;
 
             while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
                 column_index = 0;

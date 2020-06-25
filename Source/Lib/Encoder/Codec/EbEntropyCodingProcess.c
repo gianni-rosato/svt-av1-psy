@@ -349,43 +349,30 @@ void *entropy_coding_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
     EntropyCodingContext *context_ptr        = (EntropyCodingContext *)thread_context_ptr->priv;
-    PictureControlSet *   pcs_ptr;
-    SequenceControlSet *  scs_ptr;
 
     // Input
     EbObjectWrapper *rest_results_wrapper_ptr;
-    RestResults *    rest_results_ptr;
 
     // Output
     EbObjectWrapper *     entropy_coding_results_wrapper_ptr;
     EntropyCodingResults *entropy_coding_results_ptr;
 
-    // SB Loop variables
-    SuperBlock *sb_ptr;
-    uint16_t    sb_index;
-    uint8_t     sb_sz;
-    uint8_t     sb_size_log2;
-    uint32_t    x_sb_index;
-    uint32_t    y_sb_index;
-    uint32_t    sb_origin_x;
-    uint32_t    sb_origin_y;
-    uint32_t    pic_width_in_sb;
-    // Variables
-    EbBool initial_process_call;
     for (;;) {
         // Get Mode Decision Results
         EB_GET_FULL_OBJECT(context_ptr->enc_dec_input_fifo_ptr, &rest_results_wrapper_ptr);
 
-        rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
-        pcs_ptr          = (PictureControlSet *)rest_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        RestResults *      rest_results_ptr = (RestResults *)rest_results_wrapper_ptr->object_ptr;
+        PictureControlSet *pcs_ptr = (PictureControlSet *)
+                                         rest_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         // SB Constants
 
-        sb_sz = (uint8_t)scs_ptr->sb_size_pix;
+        uint8_t sb_sz = (uint8_t)scs_ptr->sb_size_pix;
 
-        sb_size_log2       = (uint8_t)eb_log2f(sb_sz);
+        uint8_t sb_size_log2      = (uint8_t)eb_log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
-        pic_width_in_sb    = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
+        uint32_t pic_width_in_sb  = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >>
+            sb_size_log2;
         uint16_t         tile_idx = rest_results_ptr->tile_index;
         Av1Common *const cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
         const uint16_t   tile_cnt = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
@@ -399,10 +386,9 @@ void *entropy_coding_kernel(void *input_ptr) {
                                      cm->tiles_info.tile_col_start_mi[tile_col]) >>
                                     scs_ptr->seq_header.sb_size_log2;
 
-        EbBool frame_entropy_done = EB_FALSE;
         {
-            initial_process_call = EB_TRUE;
-            y_sb_index           = rest_results_ptr->completed_sb_row_index_start;
+            EbBool   frame_entropy_done = EB_FALSE, initial_process_call = EB_TRUE;
+            uint32_t y_sb_index = rest_results_ptr->completed_sb_row_index_start;
 
             // SB-loops
             while (update_entropy_coding_rows(pcs_ptr,
@@ -423,23 +409,16 @@ void *entropy_coding_kernel(void *input_ptr) {
                     pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = EB_FALSE;
                 }
 
-                for (x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
-                    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
-                                          (y_sb_index + tile_sb_start_y) * pic_width_in_sb);
-                    sb_ptr   = pcs_ptr->sb_ptr_array[sb_index];
+                for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
+                    uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
+                                                   (y_sb_index + tile_sb_start_y) *
+                                                       pic_width_in_sb);
+                    SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
 
-                    sb_origin_x = x_sb_index << sb_size_log2;
-                    sb_origin_y = y_sb_index << sb_size_log2;
-
-                    sb_origin_x = (x_sb_index + tile_sb_start_x) << sb_size_log2;
-                    sb_origin_y = (y_sb_index + tile_sb_start_y) << sb_size_log2;
-
-                    context_ptr->sb_origin_x = sb_origin_x;
-                    context_ptr->sb_origin_y = sb_origin_y;
-                    if (x_sb_index == 0 && y_sb_index == 0)
-                        eb_av1_reset_loop_restoration(pcs_ptr, tile_idx);
-
+                    context_ptr->sb_origin_x = (x_sb_index + tile_sb_start_x) << sb_size_log2;
+                    context_ptr->sb_origin_y = (y_sb_index + tile_sb_start_y) << sb_size_log2;
                     if (x_sb_index == 0 && y_sb_index == 0) {
+                        eb_av1_reset_loop_restoration(pcs_ptr, tile_idx);
                         context_ptr->tok = pcs_ptr->tile_tok[tile_row][tile_col];
                     }
                     sb_ptr->total_bits = 0;
@@ -492,7 +471,6 @@ void *entropy_coding_kernel(void *input_ptr) {
                     // If the picture is complete, terminate the slice
                     if (pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_current_row ==
                         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_row_count) {
-                        uint32_t ref_idx;
 
                         EbBool pic_ready = EB_TRUE;
 
@@ -520,7 +498,8 @@ void *entropy_coding_kernel(void *input_ptr) {
                                                pcs_ptr->parent_pcs_ptr->picture_number);
                         if (pic_ready) {
                             // Release the List 0 Reference Pictures
-                            for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
+                            for (uint32_t ref_idx = 0;
+                                 ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                                  ++ref_idx) {
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL &&
@@ -539,7 +518,8 @@ void *entropy_coding_kernel(void *input_ptr) {
                             }
 
                             // Release the List 1 Reference Pictures
-                            for (ref_idx = 0; ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
+                            for (uint32_t ref_idx = 0;
+                                 ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                                  ++ref_idx) {
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL &&

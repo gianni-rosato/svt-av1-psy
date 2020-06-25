@@ -38,9 +38,11 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
         }                                                                                \
     } while (0)
 
-#define EB_CHECK_MEM(p)                                   \
-    do {                                                  \
-        if (!p) { return EB_ErrorInsufficientResources; } \
+#define EB_CHECK_MEM(p)                           \
+    do {                                          \
+        if (!p) {                                 \
+            return EB_ErrorInsufficientResources; \
+        }                                         \
     } while (0)
 
 #define EB_ADD_MEM(p, size, type)           \
@@ -53,7 +55,7 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
     do {                                        \
         void* p = malloc(size);                 \
         EB_NO_THROW_ADD_MEM(p, size, EB_N_PTR); \
-        *(void**)&(pointer) = p;                \
+        pointer = p;                            \
     } while (0)
 
 #define EB_MALLOC(pointer, size)           \
@@ -66,7 +68,7 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
     do {                                               \
         void* p = calloc(count, size);                 \
         EB_NO_THROW_ADD_MEM(p, count* size, EB_C_PTR); \
-        *(void**)&(pointer) = p;                       \
+        pointer = p;                                   \
     } while (0)
 
 #define EB_CALLOC(pointer, count, size)           \
@@ -125,10 +127,11 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
         for (uint32_t w = 1; w < width; w++) { p2d[w] = p2d[0] + w * height; } \
     } while (0)
 
-#define EB_FREE_2D(p2d)                 \
-    do {                                \
-        if (p2d) EB_FREE_ARRAY(p2d[0]); \
-        EB_FREE_ARRAY(p2d);             \
+#define EB_FREE_2D(p2d)            \
+    do {                           \
+        if (p2d)                   \
+            EB_FREE_ARRAY(p2d[0]); \
+        EB_FREE_ARRAY(p2d);        \
     } while (0)
 
 #ifdef _WIN32

@@ -13,7 +13,7 @@
 #include "synonyms_avx512.h"
 
 uint64_t search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
-                                uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count, int fast,
+                                uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count,
                                 int start_gi, int end_gi) {
     const int start        = start_gi & ~7;
     uint64_t  best_tot_mse = (uint64_t)1 << 63;
@@ -21,8 +21,6 @@ uint64_t search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
     int32_t   best_id1     = 0;
     int32_t   i, j;
     DECLARE_ALIGNED(64, uint64_t, tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS]);
-
-    (void)fast;
 
     memset(tot_mse + start_gi * TOTAL_STRENGTHS,
            0,

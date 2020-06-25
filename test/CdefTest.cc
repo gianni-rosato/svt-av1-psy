@@ -676,7 +676,7 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
 
 typedef uint64_t (*search_one_dual_func)(int *lev0, int *lev1, int nb_strengths,
                                          uint64_t (**mse)[64], int sb_count,
-                                         int fast, int start_gi, int end_gi);
+                                         int start_gi, int end_gi);
 
 static const search_one_dual_func search_one_dual_func_table[] = {
     search_one_dual_avx2,
@@ -688,7 +688,6 @@ static const search_one_dual_func search_one_dual_func_table[] = {
 TEST(CdefToolTest, SearchOneDualMatchTest) {
     // setup enviroment
     const int sb_count = 100;
-    const int fast = 0;  // unused
     const int start_gi = 0;
     const int end_gi = TOTAL_STRENGTHS;
     int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
@@ -719,7 +718,6 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
                                                           j,
                                                           mse,
                                                           sb_count,
-                                                          fast,
                                                           start_gi,
                                                           end_gi);
                 for (int l = 0; l < (int) (sizeof(search_one_dual_func_table) /
@@ -731,7 +729,6 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
                                                       j,
                                                       mse,
                                                       sb_count,
-                                                      fast,
                                                       start_gi,
                                                       end_gi);
 
@@ -760,7 +757,6 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
 TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
     // setup enviroment
     const int sb_count = 100;
-    const int fast = 0;  // unused
     const int start_gi = 0;
     const int end_gi = TOTAL_STRENGTHS;
     const int nb_strengths = 8;
@@ -802,7 +798,6 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                                                  j,
                                                  mse,
                                                  sb_count,
-                                                 fast,
                                                  start_gi,
                                                  end_gi);
             }
@@ -815,7 +810,6 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                                                              j,
                                                              mse,
                                                              sb_count,
-                                                             fast,
                                                              start_gi,
                                                              end_gi);
             }

@@ -187,24 +187,21 @@ void *dlf_kernel(void *input_ptr) {
         if ((dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode >= 2) ||
             (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 &&
              total_tile_cnt > 1)) {
-            EbPictureBufferDesc *recon_buffer =
-                is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
+            EbPictureBufferDesc *recon_buffer;
 
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-                if (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
-                    recon_buffer =
-                        ((EbReferenceObject *)
-                             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                            ->reference_picture16bit;
-                else
-                    recon_buffer =
-                        ((EbReferenceObject *)
-                             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                            ->reference_picture;
-            } else {
-                recon_buffer = scs_ptr->static_config.is_16bit_pipeline ||
-                    is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
-            }
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                recon_buffer = (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
+                    ? ((EbReferenceObject *)
+                           pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                          ->reference_picture16bit
+                    : ((EbReferenceObject *)
+                           pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                          ->reference_picture;
+            else
+                recon_buffer = scs_ptr->static_config.is_16bit_pipeline || is_16bit
+                    ? pcs_ptr->recon_picture16bit_ptr
+                    : pcs_ptr->recon_picture_ptr;
+
             eb_av1_loop_filter_init(pcs_ptr);
 
             if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
