@@ -473,9 +473,6 @@ static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_init_handle(EbComponentType **p_handle, void *p_app_data,
                    EbSvtAv1DecConfiguration *config_ptr) {
@@ -509,9 +506,6 @@ svt_av1_dec_init_handle(EbComponentType **p_handle, void *p_app_data,
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_set_parameter(EbComponentType *         svt_dec_component,
                          EbSvtAv1DecConfiguration *config_struct) {
@@ -525,9 +519,6 @@ svt_av1_dec_set_parameter(EbComponentType *         svt_dec_component,
     return EB_ErrorNone;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_init(EbComponentType *svt_dec_component) {
     EbErrorType return_error = EB_ErrorNone;
@@ -573,9 +564,6 @@ svt_av1_dec_init(EbComponentType *svt_dec_component) {
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_frame(EbComponentType *svt_dec_component, const uint8_t *data, const size_t data_size,
                     uint32_t is_annexb) {
@@ -619,9 +607,6 @@ svt_av1_dec_frame(EbComponentType *svt_dec_component, const uint8_t *data, const
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_get_picture(EbComponentType *svt_dec_component, EbBufferHeaderType *p_buffer,
                        EbAV1StreamInfo *stream_info, EbAV1FrameInfo *frame_info) {
@@ -637,9 +622,6 @@ svt_av1_dec_get_picture(EbComponentType *svt_dec_component, EbBufferHeaderType *
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_deinit(EbComponentType *svt_dec_component) {
     if (svt_dec_component == NULL) return EB_ErrorBadParameter;
@@ -692,9 +674,6 @@ EbErrorType eb_dec_component_de_init(EbComponentType *svt_dec_component) {
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType
 svt_av1_dec_deinit_handle(EbComponentType *svt_dec_component) {
     EbErrorType return_error = EB_ErrorNone;

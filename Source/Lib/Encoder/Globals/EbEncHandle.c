@@ -950,9 +950,6 @@ void av1_init_wedge_masks(void);
 /**********************************
 * Initialize Encoder Library
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 {
     if(svt_enc_component == NULL)
@@ -1744,9 +1741,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 /**********************************
 * DeInitialize Encoder Library
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
@@ -1781,9 +1775,6 @@ EbErrorType init_svt_av1_encoder_handle(
 /**********************************
 * GetHandle
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_init_handle(
     EbComponentType** p_handle,               // Function to be called in the future for manipulating the component
     void*              p_app_data,
@@ -1845,9 +1836,6 @@ EbErrorType eb_av1_enc_component_de_init(EbComponentType  *svt_enc_component)
 /**********************************
 * svt_av1_enc_deinit_handle
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_deinit_handle(
     EbComponentType  *svt_enc_component)
 {
@@ -3155,9 +3143,6 @@ static void print_lib_params(
 
 * Set Parameter
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_set_parameter(
     EbComponentType              *svt_enc_component,
     EbSvtAv1EncConfiguration     *config_struct)
@@ -3215,9 +3200,6 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
 
     return return_error;
 }
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_stream_header(
     EbComponentType           *svt_enc_component,
     EbBufferHeaderType        **output_stream_ptr)
@@ -3267,9 +3249,6 @@ EB_API EbErrorType svt_av1_enc_stream_header(
 
     return return_error;
 }
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_stream_header_release(
     EbBufferHeaderType        *stream_header_ptr)
 {
@@ -3285,9 +3264,6 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(
     return return_error;
 }
 //
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_eos_nal(
     EbComponentType           *svt_enc_component,
     EbBufferHeaderType       **output_stream_ptr
@@ -3486,9 +3462,6 @@ static void copy_input_buffer(
 /**********************************
 * Empty This Buffer
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_send_picture(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType   *p_buffer)
@@ -3536,9 +3509,6 @@ static void copy_output_recon_buffer(
 /**********************************
 * svt_av1_enc_get_packet sends out packet
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_enc_get_packet(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType  **p_buffer,
@@ -3572,9 +3542,6 @@ EB_API EbErrorType svt_av1_enc_get_packet(
     return return_error;
 }
 
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API void svt_av1_enc_release_out_buffer(
     EbBufferHeaderType  **p_buffer)
 {
@@ -3591,9 +3558,6 @@ EB_API void svt_av1_enc_release_out_buffer(
 /**********************************
 * Fill This Buffer
 **********************************/
-#ifdef __GNUC__
-__attribute__((visibility("default")))
-#endif
 EB_API EbErrorType svt_av1_get_recon(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType   *p_buffer)

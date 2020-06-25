@@ -13,6 +13,7 @@ endif()
 project(svt-av1 VERSION 0.8.3
     LANGUAGES C CXX)
 
+set(CMAKE_C_VISIBILITY_PRESET hidden)
 # Default build type to release if the generator does not has its own set of build types
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release)

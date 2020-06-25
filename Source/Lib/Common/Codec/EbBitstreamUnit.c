@@ -19,6 +19,7 @@
 #include "EbBitstreamUnit.h"
 #include "EbDefinitions.h"
 #include "EbUtility.h"
+#include "EbLog.h"
 
 #if OD_MEASURE_EC_OVERHEAD
 #include <stdio.h>
@@ -71,12 +72,16 @@ void eb_aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
 }
 
 int32_t eb_aom_daala_stop_encode(DaalaWriter *br) {
-    int32_t  nb_bits;
-    uint32_t daala_bytes;
+    int32_t  nb_bits = -1;
+    uint32_t daala_bytes = 0;
     uint8_t *daala_data;
     daala_data = eb_od_ec_enc_done(&br->ec, &daala_bytes);
-    nb_bits    = eb_od_ec_enc_tell(&br->ec);
-    memcpy(br->buffer, daala_data, daala_bytes);
+    if (daala_data) {
+        nb_bits    = eb_od_ec_enc_tell(&br->ec);
+        memcpy(br->buffer, daala_data, daala_bytes);
+    } else {
+        SVT_ERROR("eb_od_ec_enc_done returns null ptr");
+    }
     br->pos = daala_bytes;
     eb_od_ec_enc_clear(&br->ec);
     return nb_bits;
