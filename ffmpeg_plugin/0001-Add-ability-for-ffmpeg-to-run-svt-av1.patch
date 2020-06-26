@@ -1,4 +1,4 @@
-From f2614046d711bab7803981dc53511699b569b351 Mon Sep 17 00:00:00 2001
+From 51534a68b6ad6ebf797ddc8b8ffd29401b5a698f Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH] Add ability for ffmpeg to run svt-av1
@@ -13,76 +13,76 @@ Signed-off-by: Xu Guangxin <guangxin.xu@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 581 ++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 587 insertions(+)
+ libavcodec/libsvt_av1.c | 577 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 583 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
-index 7495f35faa..95a0e6229a 100755
+index 7495f35faa..e0a466b968 100755
 --- a/configure
 +++ b/configure
-@@ -267,6 +267,7 @@ External library support:
-   --enable-libspeex        enable Speex de/encoding via libspeex [no]
-   --enable-libsrt          enable Haivision SRT protocol via libsrt [no]
-   --enable-libssh          enable SFTP protocol via libssh [no]
+@@ -249,6 +249,7 @@ External library support:
+   --enable-libmp3lame      enable MP3 encoding via libmp3lame [no]
+   --enable-libopencore-amrnb enable AMR-NB de/encoding via libopencore-amrnb [no]
+   --enable-libopencore-amrwb enable AMR-WB decoding via libopencore-amrwb [no]
 +  --enable-libsvtav1       enable AV1 encoding via svt [no]
-   --enable-libtensorflow   enable TensorFlow as a DNN module backend
-                            for DNN based filters like sr [no]
-   --enable-libtesseract    enable Tesseract, needed for ocr filter [no]
-@@ -1803,6 +1804,7 @@ EXTERNAL_LIBRARY_LIST="
-     libspeex
-     libsrt
-     libssh
+   --enable-libopencv       enable video filtering via libopencv [no]
+   --enable-libopenh264     enable H.264 encoding via OpenH264 [no]
+   --enable-libopenjpeg     enable JPEG 2000 de/encoding via OpenJPEG [no]
+@@ -1786,6 +1787,7 @@ EXTERNAL_LIBRARY_LIST="
+     libmodplug
+     libmp3lame
+     libmysofa
 +    libsvtav1
-     libtensorflow
-     libtesseract
-     libtheora
-@@ -3240,6 +3242,7 @@ libshine_encoder_select="audio_frame_queue"
- libspeex_decoder_deps="libspeex"
- libspeex_encoder_deps="libspeex"
- libspeex_encoder_select="audio_frame_queue"
+     libopencv
+     libopenh264
+     libopenjpeg
+@@ -3223,6 +3225,7 @@ libopencore_amrnb_decoder_deps="libopencore_amrnb"
+ libopencore_amrnb_encoder_deps="libopencore_amrnb"
+ libopencore_amrnb_encoder_select="audio_frame_queue"
+ libopencore_amrwb_decoder_deps="libopencore_amrwb"
 +libsvt_av1_encoder_deps="libsvtav1"
- libtheora_encoder_deps="libtheora"
- libtwolame_encoder_deps="libtwolame"
- libvo_amrwbenc_encoder_deps="libvo_amrwbenc"
-@@ -6372,6 +6375,7 @@ enabled libsoxr           && require libsoxr soxr.h soxr_create -lsoxr
- enabled libssh            && require_pkg_config libssh libssh libssh/sftp.h sftp_init
- enabled libspeex          && require_pkg_config libspeex speex speex/speex.h speex_decoder_init
- enabled libsrt            && require_pkg_config libsrt "srt >= 1.3.0" srt/srt.h srt_socket
+ libopenh264_decoder_deps="libopenh264"
+ libopenh264_decoder_select="h264_mp4toannexb_bsf"
+ libopenh264_encoder_deps="libopenh264"
+@@ -6342,6 +6345,7 @@ enabled libnpp            && { check_lib libnpp npp.h nppGetLibVersion -lnppig -
+                                die "ERROR: libnpp not found"; }
+ enabled libopencore_amrnb && require libopencore_amrnb opencore-amrnb/interf_dec.h Decoder_Interface_init -lopencore-amrnb
+ enabled libopencore_amrwb && require libopencore_amrwb opencore-amrwb/dec_if.h D_IF_init -lopencore-amrwb
 +enabled libsvtav1         && require_pkg_config libsvtav1 SvtAv1Enc EbSvtAv1Enc.h svt_av1_enc_init_handle
- enabled libtensorflow     && require libtensorflow tensorflow/c/c_api.h TF_Version -ltensorflow
- enabled libtesseract      && require_pkg_config libtesseract tesseract tesseract/capi.h TessBaseAPICreate
- enabled libtheora         && require libtheora theora/theoraenc.h th_info_init -ltheoraenc -ltheoradec -logg
+ enabled libopencv         && { check_headers opencv2/core/core_c.h &&
+                                { check_pkg_config libopencv opencv opencv2/core/core_c.h cvCreateImageHeader ||
+                                  require libopencv opencv2/core/core_c.h cvCreateImageHeader -lopencv_core -lopencv_imgproc; } ||
 diff --git a/libavcodec/Makefile b/libavcodec/Makefile
-index 5a6ea59715..67d5da04d6 100644
+index 5a6ea59715..b4dbca54d5 100644
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -1024,6 +1024,7 @@ OBJS-$(CONFIG_LIBRAV1E_ENCODER)           += librav1e.o
- OBJS-$(CONFIG_LIBSHINE_ENCODER)           += libshine.o
- OBJS-$(CONFIG_LIBSPEEX_DECODER)           += libspeexdec.o
- OBJS-$(CONFIG_LIBSPEEX_ENCODER)           += libspeexenc.o
+@@ -971,6 +971,7 @@ OBJS-$(CONFIG_WEBM_MUXER)              += mpeg4audio.o
+ OBJS-$(CONFIG_ELBG_FILTER)             += elbg.o
+ 
+ # external codec libraries
 +OBJS-$(CONFIG_LIBSVT_AV1_ENCODER)         += libsvt_av1.o
- OBJS-$(CONFIG_LIBTHEORA_ENCODER)          += libtheoraenc.o
- OBJS-$(CONFIG_LIBTWOLAME_ENCODER)         += libtwolame.o
- OBJS-$(CONFIG_LIBVO_AMRWBENC_ENCODER)     += libvo-amrwbenc.o
+ OBJS-$(CONFIG_AAC_AT_DECODER)             += audiotoolboxdec.o
+ OBJS-$(CONFIG_AC3_AT_DECODER)             += audiotoolboxdec.o
+ OBJS-$(CONFIG_ADPCM_IMA_QT_AT_DECODER)    += audiotoolboxdec.o
 diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
-index 80f128cade..a79758f0ca 100644
+index 80f128cade..2e45683b38 100644
 --- a/libavcodec/allcodecs.c
 +++ b/libavcodec/allcodecs.c
-@@ -728,6 +728,7 @@ extern AVCodec ff_librsvg_decoder;
- extern AVCodec ff_libshine_encoder;
- extern AVCodec ff_libspeex_encoder;
- extern AVCodec ff_libspeex_decoder;
+@@ -719,6 +719,7 @@ extern AVCodec ff_libmp3lame_encoder;
+ extern AVCodec ff_libopencore_amrnb_encoder;
+ extern AVCodec ff_libopencore_amrnb_decoder;
+ extern AVCodec ff_libopencore_amrwb_decoder;
 +extern AVCodec ff_libsvt_av1_encoder;
- extern AVCodec ff_libtheora_encoder;
- extern AVCodec ff_libtwolame_encoder;
- extern AVCodec ff_libvo_amrwbenc_encoder;
+ extern AVCodec ff_libopenjpeg_encoder;
+ extern AVCodec ff_libopenjpeg_decoder;
+ extern AVCodec ff_libopus_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000000..ffb8861af4
+index 0000000000..6e0b9da832
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,581 @@
+@@ -0,0 +1,577 @@
 +
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
@@ -252,7 +252,6 @@ index 0000000000..ffb8861af4
 +{
 +    SvtContext *svt_enc = avctx->priv_data;
 +    const AVPixFmtDescriptor *desc;
-+    int ret;
 +
 +    param->source_width     = avctx->width;
 +    param->source_height    = avctx->height;
@@ -609,9 +608,9 @@ index 0000000000..ffb8861af4
 +
 +    { "rc", "Bit rate control mode", OFFSET(rc_mode),
 +      AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, VE , "rc"},
-+        { "cqp", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 0 },  INT_MIN, INT_MAX, VE, "rc" },
-+        { "vbr", NULL, 0, AV_OPT_TYPE_CONST, { .i64 = 2 },  INT_MIN, INT_MAX, VE, "rc" },
-+        { "cvbr", NULL, 0, AV_OPT_TYPE_CONST,{ .i64 = 3 },  INT_MIN, INT_MAX, VE, "rc" },
++        { "cqp", "Const QP", 0, AV_OPT_TYPE_CONST, { .i64 = 0 },  INT_MIN, INT_MAX, VE, "rc" },
++        { "vbr", "Variable bit rate, achieve the target bitrate at entire stream", 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "rc" },
++        { "cvbr", "Constrained variable bit rate, achieve the target bitrate at each gop", 0, AV_OPT_TYPE_CONST,{ .i64 = 2 },  INT_MIN, INT_MAX, VE, "rc" },
 +
 +    { "qp", "QP value for intra frames", OFFSET(qp),
 +      AV_OPT_TYPE_INT, { .i64 = 50 }, 0, 63, VE },
@@ -619,11 +618,8 @@ index 0000000000..ffb8861af4
 +    { "sc_detection", "Scene change detection", OFFSET(scd),
 +      AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
 +
-+
-+
-+
 +    { "forced-idr", "If forcing keyframes, force them as IDR frames.", OFFSET(forced_idr),
-+      AV_OPT_TYPE_BOOL,   { .i64 = 0 }, 0, 1, VE },
++      AV_OPT_TYPE_BOOL,   { .i64 = 1 }, 0, 1, VE },
 +
 +    {NULL},
 +};
@@ -664,6 +660,6 @@ index 0000000000..ffb8861af4
 +    .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
 +    .wrapper_name   = "libsvt_av1",
 +};
---
+-- 
 2.17.1
 

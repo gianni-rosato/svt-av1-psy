@@ -20,7 +20,7 @@ jobs:
       - name: Trailing spaces
         if: always()
         run: |
-          ! git grep -InP --heading " $" -- . ':!third_party/**/*'
+          ! git grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch'
       - name: Fetch upstream
         if: always()
         run: |
