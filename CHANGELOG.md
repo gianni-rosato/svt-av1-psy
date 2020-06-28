@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.8.4] - 2020-06-26
+
+Build and Testing
+- Bug fixes
+- Improve CI
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+- Fix static analysis warnings / errors
+- Add address sanitizer
+- Various ffmpeg patch fixes
+
 ## [0.8.3] - 2020-04-24
 
 Encoder
