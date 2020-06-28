@@ -1,4 +1,4 @@
-From 51534a68b6ad6ebf797ddc8b8ffd29401b5a698f Mon Sep 17 00:00:00 2001
+From 726a9def395d40aa0d8a4b8fe5ebc1af13015dbb Mon Sep 17 00:00:00 2001
 From: Daryl Seah <daryl.seah@intel.com>
 Date: Fri, 18 Jan 2019 02:11:38 +0000
 Subject: [PATCH] Add ability for ffmpeg to run svt-av1
@@ -13,8 +13,8 @@ Signed-off-by: Xu Guangxin <guangxin.xu@intel.com>
  configure               |   4 +
  libavcodec/Makefile     |   1 +
  libavcodec/allcodecs.c  |   1 +
- libavcodec/libsvt_av1.c | 577 ++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 583 insertions(+)
+ libavcodec/libsvt_av1.c | 583 ++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 589 insertions(+)
  create mode 100644 libavcodec/libsvt_av1.c
 
 diff --git a/configure b/configure
@@ -66,10 +66,10 @@ index 5a6ea59715..b4dbca54d5 100644
  OBJS-$(CONFIG_AC3_AT_DECODER)             += audiotoolboxdec.o
  OBJS-$(CONFIG_ADPCM_IMA_QT_AT_DECODER)    += audiotoolboxdec.o
 diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
-index 80f128cade..2e45683b38 100644
+index fa0c08d42e..ec1e0d48ba 100644
 --- a/libavcodec/allcodecs.c
 +++ b/libavcodec/allcodecs.c
-@@ -719,6 +719,7 @@ extern AVCodec ff_libmp3lame_encoder;
+@@ -716,6 +716,7 @@ extern AVCodec ff_libmp3lame_encoder;
  extern AVCodec ff_libopencore_amrnb_encoder;
  extern AVCodec ff_libopencore_amrnb_decoder;
  extern AVCodec ff_libopencore_amrwb_decoder;
@@ -79,10 +79,10 @@ index 80f128cade..2e45683b38 100644
  extern AVCodec ff_libopus_encoder;
 diff --git a/libavcodec/libsvt_av1.c b/libavcodec/libsvt_av1.c
 new file mode 100644
-index 0000000000..6e0b9da832
+index 0000000000..541ba228fa
 --- /dev/null
 +++ b/libavcodec/libsvt_av1.c
-@@ -0,0 +1,577 @@
+@@ -0,0 +1,583 @@
 +
 +/*
 +* Scalable Video Technology for AV1 encoder library plugin
@@ -161,7 +161,8 @@ index 0000000000..6e0b9da832
 +    int level;
 +    int profile;
 +
-+
++    int tile_columns;
++    int tile_rows;
 +} SvtContext;
 +
 +static const struct {
@@ -315,6 +316,9 @@ index 0000000000..6e0b9da832
 +
 +    if (svt_enc->la_depth != -1)
 +        param->look_ahead_distance  = svt_enc->la_depth;
++
++    param->tile_columns = svt_enc->tile_columns;
++    param->tile_rows = svt_enc->tile_rows;
 +
 +    return 0;
 +}
@@ -608,9 +612,9 @@ index 0000000000..6e0b9da832
 +
 +    { "rc", "Bit rate control mode", OFFSET(rc_mode),
 +      AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 3, VE , "rc"},
-+        { "cqp", "Const QP", 0, AV_OPT_TYPE_CONST, { .i64 = 0 },  INT_MIN, INT_MAX, VE, "rc" },
-+        { "vbr", "Variable bit rate, achieve the target bitrate at entire stream", 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "rc" },
-+        { "cvbr", "Constrained variable bit rate, achieve the target bitrate at each gop", 0, AV_OPT_TYPE_CONST,{ .i64 = 2 },  INT_MIN, INT_MAX, VE, "rc" },
++        { "cqp", "Const Quantization Parameter", 0, AV_OPT_TYPE_CONST, { .i64 = 0 },  INT_MIN, INT_MAX, VE, "rc" },
++        { "vbr", "Variable Bit Rate, use a target bitrate for the entire stream", 0, AV_OPT_TYPE_CONST, { .i64 = 1 },  INT_MIN, INT_MAX, VE, "rc" },
++        { "cvbr", "Constrained Variable Bit Rate, use a target bitrate for each GOP", 0, AV_OPT_TYPE_CONST,{ .i64 = 2 },  INT_MIN, INT_MAX, VE, "rc" },
 +
 +    { "qp", "QP value for intra frames", OFFSET(qp),
 +      AV_OPT_TYPE_INT, { .i64 = 50 }, 0, 63, VE },
@@ -620,6 +624,8 @@ index 0000000000..6e0b9da832
 +
 +    { "forced-idr", "If forcing keyframes, force them as IDR frames.", OFFSET(forced_idr),
 +      AV_OPT_TYPE_BOOL,   { .i64 = 1 }, 0, 1, VE },
++    { "tile-columns",     "Log2 of number of tile columns to use", OFFSET(tile_columns), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 4, VE},
++    { "tile-rows",        "Log2 of number of tile rows to use",    OFFSET(tile_rows), AV_OPT_TYPE_INT, {.i64 = 0}, 0, 6, VE},
 +
 +    {NULL},
 +};

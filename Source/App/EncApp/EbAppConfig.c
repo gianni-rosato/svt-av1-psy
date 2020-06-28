@@ -877,7 +877,7 @@ ConfigEntry config_entry_specific[] = {
      "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
      set_compressed_ten_bit_format},
     {SINGLE_INPUT, TILE_ROW_TOKEN, "Number of tile rows to use, log2[0-6]", set_tile_row},
-    {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, log2[0-6]", set_tile_col},
+    {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, log2[0-4]", set_tile_col},
     {SINGLE_INPUT, QP_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
     {SINGLE_INPUT, QP_LONG_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
 

@@ -485,6 +485,10 @@ EbFifo *eb_system_resource_get_consumer_fifo(const EbSystemResource *resource_pt
 }
 
 EbErrorType eb_shutdown_process(const EbSystemResource *resource_ptr) {
+    //not fully constructed
+    if (!resource_ptr || !resource_ptr->full_queue)
+        return EB_ErrorNone;
+
     //notify all consumers we are shutting down
     for (unsigned int i = 0; i < resource_ptr->full_queue->process_total_count; i++) {
         EbFifo *fifo_ptr = eb_system_resource_get_consumer_fifo(resource_ptr, i);
