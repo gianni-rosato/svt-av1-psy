@@ -5,7 +5,7 @@
 
 //#include "EbUtility.h"
 #include "EbDefinitions.h"
-
+#include "common_dsp_rtcd.h"
 #define FILTER_INTRA_SCALE_BITS 4
 
 DECLARE_ALIGNED(16, const int8_t,
@@ -79,7 +79,7 @@ void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
         memset(buffer[r], 0, (bw + 1) * sizeof(buffer[0][0]));
 
     for (r = 0; r < bh; ++r) buffer[r + 1][0] = left[r];
-    memcpy(buffer[0], &above[-1], (bw + 1) * sizeof(uint8_t));
+    eb_memcpy_c(buffer[0], &above[-1], (bw + 1) * sizeof(uint8_t));
 
     for (r = 1; r < bh + 1; r += 2)
         for (c = 1; c < bw + 1; c += 4) {
@@ -107,7 +107,7 @@ void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
         }
 
     for (r = 0; r < bh; ++r) {
-        memcpy(dst, &buffer[r + 1][1], bw * sizeof(uint8_t));
+        eb_memcpy_c(dst, &buffer[r + 1][1], bw * sizeof(uint8_t));
         dst += stride;
     }
 }

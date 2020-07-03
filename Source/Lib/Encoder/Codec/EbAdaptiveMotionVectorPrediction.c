@@ -1436,7 +1436,7 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
             mi_ptr[mi_x + mi_y * mi_stride]
                 .mbmi.block_mi.interintra_mode_params.interintra_wedge_index =
                 blk_ptr->interintra_wedge_index; //in
-            memcpy(&mi_ptr[mi_x + mi_y * mi_stride].mbmi.palette_mode_info,
+            eb_memcpy(&mi_ptr[mi_x + mi_y * mi_stride].mbmi.palette_mode_info,
                    &blk_ptr->palette_info.pmi,
                    sizeof(PaletteModeInfo));
             //needed for CDEF
@@ -1562,7 +1562,7 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
             mi_ptr[mi_x + mi_y * mi_stride]
                 .mbmi.block_mi.interintra_mode_params.interintra_wedge_index =
                 blk_ptr->interintra_wedge_index; //in
-            memcpy(&mi_ptr[mi_x + mi_y * mi_stride].mbmi.palette_mode_info,
+            eb_memcpy(&mi_ptr[mi_x + mi_y * mi_stride].mbmi.palette_mode_info,
                    &blk_ptr->palette_info.pmi,
                    sizeof(PaletteModeInfo));
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip_mode  = (int8_t)blk_ptr->skip_flag;

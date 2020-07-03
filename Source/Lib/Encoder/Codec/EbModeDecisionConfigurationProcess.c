@@ -1467,7 +1467,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         entropy_coding_qp = frm_hdr->quantization_params.base_q_idx;
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
-            memcpy(pcs_ptr->coeff_est_entropy_coder_ptr->fc,
+            eb_memcpy(pcs_ptr->coeff_est_entropy_coder_ptr->fc,
                    &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
                    sizeof(FRAME_CONTEXT));
         else

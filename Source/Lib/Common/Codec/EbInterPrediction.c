@@ -1646,7 +1646,7 @@ void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
     (void)filter_y_stride;
 
     for (int r = h; r > 0; --r) {
-        memcpy(dst, src, w);
+        eb_memcpy(dst, src, w);
         src += src_stride;
         dst += dst_stride;
     }
@@ -1654,11 +1654,11 @@ void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
 
 static void shift_copy(const uint8_t *src, uint8_t *dst, int shift, int width) {
     if (shift >= 0) {
-        memcpy(dst + shift, src, width - shift);
+        eb_memcpy(dst + shift, src, width - shift);
         memset(dst, src[0], shift);
     } else {
         shift = -shift;
-        memcpy(dst, src + shift, width - shift);
+        eb_memcpy(dst, src + shift, width - shift);
         memset(dst + width - shift, src[width - 1], shift);
     }
 }
@@ -1696,11 +1696,11 @@ static void init_wedge_master_masks() {
                    &wedge_mask_obl[0][WEDGE_OBLIQUE63][(i + 1) * stride],
                    shift,
                    MASK_MASTER_SIZE);
-        memcpy(&wedge_mask_obl[0][WEDGE_VERTICAL][i * stride],
-               wedge_master_vertical,
+        eb_memcpy(&wedge_mask_obl[0][WEDGE_VERTICAL][i * stride],
+                wedge_master_vertical,
                MASK_MASTER_SIZE * sizeof(wedge_master_vertical[0]));
-        memcpy(&wedge_mask_obl[0][WEDGE_VERTICAL][(i + 1) * stride],
-               wedge_master_vertical,
+        eb_memcpy(&wedge_mask_obl[0][WEDGE_VERTICAL][(i + 1) * stride],
+                wedge_master_vertical,
                MASK_MASTER_SIZE * sizeof(wedge_master_vertical[0]));
     }
 #else

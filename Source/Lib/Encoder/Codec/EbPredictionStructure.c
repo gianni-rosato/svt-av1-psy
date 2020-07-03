@@ -1997,7 +1997,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     // Insert manual prediction structure into array
     if (config->enable_manual_pred_struct) {
         prediction_structure_config_array[config->hierarchical_levels].entry_count = config->manual_pred_struct_entry_num;
-        EB_MEMCPY(prediction_structure_config_array[config->hierarchical_levels].entry_array,
+        eb_memcpy(prediction_structure_config_array[config->hierarchical_levels].entry_array,
           &config->pred_struct[config->manual_pred_struct_entry_num - 1],
           sizeof(PredictionStructureConfigEntry));
         if (config->manual_pred_struct_entry_num > 1) {

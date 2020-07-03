@@ -150,11 +150,11 @@ static void build_intra_predictors(
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            memcpy(above_row, above_ref, n_top_px);
+            eb_memcpy(above_row, above_ref, n_top_px);
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
+                eb_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
                 i += n_topright_px;
             }
             if (i < num_top_pixels_needed)
@@ -339,11 +339,11 @@ static void build_intra_predictors_high(
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
+            eb_memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                memcpy(above_row + txwpx, above_ref + txwpx,
+                eb_memcpy(above_row + txwpx, above_ref + txwpx,
                        n_topright_px * sizeof(above_ref[0]));
                 i += n_topright_px;
             }
@@ -938,29 +938,29 @@ EbErrorType eb_av1_intra_prediction_cl(
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane == 0) {
                 if (md_context_ptr->blk_origin_y != 0)
-                    memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2);
+                    eb_memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2);
                 if (md_context_ptr->blk_origin_x != 0)
-                    memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2);
+                    eb_memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2);
                 if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
                     top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
             }
 
             else if (plane == 1) {
                 if (md_context_ptr->round_origin_y != 0)
-                    memcpy(top_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2);
+                    eb_memcpy(top_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2);
 
                 if (md_context_ptr->round_origin_x != 0)
-                    memcpy(left_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2);
+                    eb_memcpy(left_neigh_array + 1, md_context_ptr->cb_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2);
 
                 if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
                     top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->cb_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2];
             }
             else {
                 if (md_context_ptr->round_origin_y != 0)
-                    memcpy(top_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2);
+                    eb_memcpy(top_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->top_array + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2);
 
                 if (md_context_ptr->round_origin_x != 0)
-                    memcpy(left_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2);
+                    eb_memcpy(left_neigh_array + 1, md_context_ptr->cr_recon_neighbor_array->left_array + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2);
 
                 if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
                     top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->cr_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2];
@@ -1012,30 +1012,30 @@ EbErrorType eb_av1_intra_prediction_cl(
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane == 0) {
                 if (md_context_ptr->blk_origin_y != 0)
-                    memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
+                    eb_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
 
                 if (md_context_ptr->blk_origin_x != 0)
-                    memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2 * sizeof(uint16_t));
+                    eb_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2 * sizeof(uint16_t));
 
                 if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
                     top_neigh_array[0] = left_neigh_array[0] = ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y)[0];
             }
             else if (plane == 1) {
                 if (md_context_ptr->round_origin_y != 0)
-                    memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
+                    eb_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
 
                 if (md_context_ptr->round_origin_x != 0)
-                    memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
+                    eb_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cb_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
 
                 if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
                     top_neigh_array[0] = left_neigh_array[0] = ((uint16_t*) (md_context_ptr->cb_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE / 2 + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2)[0];
             }
             else {
                 if (md_context_ptr->round_origin_y != 0)
-                    memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
+                    eb_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->top_array) + md_context_ptr->round_origin_x / 2, md_context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
 
                 if (md_context_ptr->round_origin_x != 0)
-                    memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
+                    eb_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->cr_recon_neighbor_array16bit->left_array) + md_context_ptr->round_origin_y / 2, md_context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
 
                 if (md_context_ptr->round_origin_y != 0 && md_context_ptr->round_origin_x != 0)
                     top_neigh_array[0] = left_neigh_array[0] = ((uint16_t*) (md_context_ptr->cr_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE / 2 + md_context_ptr->round_origin_x / 2 - md_context_ptr->round_origin_y / 2)[0];
@@ -1120,9 +1120,9 @@ EbErrorType  intra_luma_prediction_for_interintra(
         uint8_t    left_neigh_array[64 * 2 + 1];
 
         if (md_context_ptr->blk_origin_y != 0)
-            memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2);
+            eb_memcpy(top_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->top_array + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2);
         if (md_context_ptr->blk_origin_x != 0)
-            memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2);
+            eb_memcpy(left_neigh_array + 1, md_context_ptr->luma_recon_neighbor_array->left_array + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2);
         if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
             top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
 
@@ -1160,9 +1160,9 @@ EbErrorType  intra_luma_prediction_for_interintra(
         uint16_t left_neigh_array[64 * 2 + 1];
 
         if (md_context_ptr->blk_origin_y != 0)
-            memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
+            eb_memcpy(top_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_array) + md_context_ptr->blk_origin_x, md_context_ptr->blk_geom->bwidth * 2 * sizeof(uint16_t));
         if (md_context_ptr->blk_origin_x != 0)
-            memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2 * sizeof(uint16_t));
+            eb_memcpy(left_neigh_array + 1, (uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->left_array) + md_context_ptr->blk_origin_y, md_context_ptr->blk_geom->bheight * 2 * sizeof(uint16_t));
         if (md_context_ptr->blk_origin_y != 0 && md_context_ptr->blk_origin_x != 0)
             top_neigh_array[0] = left_neigh_array[0] = ((uint16_t*)(md_context_ptr->luma_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y)[0];
 

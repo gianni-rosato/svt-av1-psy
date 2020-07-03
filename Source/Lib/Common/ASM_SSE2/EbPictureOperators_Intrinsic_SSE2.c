@@ -272,7 +272,7 @@ static void eb_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     // copy the remainder
     if (i < size) eb_memcpy_small(dst + i, src + i, size - i);
 }
-extern void eb_memcpy_intrin_sse(void* dst_ptr, void* src_ptr, size_t size) {
+extern void eb_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     if (size > 64)
         eb_memcpy_sse(dst_ptr, src_ptr, size);
     else

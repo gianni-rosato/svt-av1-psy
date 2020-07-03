@@ -354,14 +354,6 @@ extern void RunEmms();
 /* shift right or left depending on sign of n */
 #define RIGHT_SIGNED_SHIFT(value, n) ((n) < 0 ? ((value) << (-(n))) : ((value) >> (n)))
 //*********************************************************************************************************************//
-// cpmmom.h
-// Only need this for fixed-size arrays, for structs just assign.
-#define av1_copy(dest, src)                  \
-    {                                        \
-        assert(sizeof(dest) == sizeof(src)); \
-        memcpy(dest, src, sizeof(src));      \
-    }
-
 // mem_ops.h
 #ifndef MAU_T
 /* Minimum Access Unit for this target */

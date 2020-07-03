@@ -397,11 +397,11 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            memcpy(above_row, above_ref, n_top_px);
+            eb_memcpy(above_row, above_ref, n_top_px);
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
+                eb_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
                 i += n_topright_px;
             }
             if (i < num_top_pixels_needed)
@@ -578,11 +578,11 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
+            eb_memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px * sizeof(above_ref[0]));
+                eb_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px * sizeof(above_ref[0]));
                 i += n_topright_px;
             }
             if (i < num_top_pixels_needed)

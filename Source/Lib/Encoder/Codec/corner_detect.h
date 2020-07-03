@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-
+#include"common_dsp_rtcd.h"
 int av1_fast_corner_detect(unsigned char *buf, int width, int height, int stride, int *points,
                            int max_points);
 

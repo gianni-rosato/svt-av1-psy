@@ -17,7 +17,7 @@
 #define AOM_AOM_GRAIN_SYNTHESIS_H_
 
 #include "EbDefinitions.h"
-
+#include "common_dsp_rtcd.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

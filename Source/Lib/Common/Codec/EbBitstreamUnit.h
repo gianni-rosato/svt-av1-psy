@@ -135,7 +135,7 @@ extern uint32_t od_divu_small_consts[OD_DIVU_DMAX][2];
 /** Copy n elements of memory from src to dst. The 0* term provides
 compile-time type checking  */
 #if !defined(OVERRIDE_OD_COPY)
-#define OD_COPY(dst, src, n) (memcpy((dst), (src), sizeof(*(dst)) * (n) + 0 * ((dst) - (src))))
+#define OD_COPY(dst, src, n) (eb_memcpy((dst), (src), sizeof(*(dst)) * (n) + 0 * ((dst) - (src))))
 #endif
 
 /** Copy n elements of memory from src to dst, allowing overlapping regions.

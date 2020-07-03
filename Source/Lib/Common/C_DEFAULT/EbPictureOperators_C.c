@@ -30,7 +30,7 @@ void picture_average_kernel1_line_c(EbByte src0, EbByte src1, EbByte dst, uint32
 /*********************************
 * Picture Copy Kernel
 *********************************/
-void eb_memcpy_c(void  *dst_ptr, void  *src_ptr, size_t size)
+void eb_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size)
 {
     memcpy(dst_ptr, src_ptr, size);
 }

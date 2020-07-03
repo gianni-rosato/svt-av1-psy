@@ -216,7 +216,7 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
 
         // ADD Reset here
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
-            memcpy(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc,
+            eb_memcpy(pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc,
                    &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
                    sizeof(FRAME_CONTEXT));
         else

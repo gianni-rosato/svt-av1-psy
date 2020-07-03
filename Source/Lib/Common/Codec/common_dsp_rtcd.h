@@ -1089,8 +1089,8 @@ extern "C" {
     RTCD_EXTERN void(*aom_lpf_vertical_8)(uint8_t *s, int32_t pitch, const uint8_t *blimit, const uint8_t *limit, const uint8_t *thresh);
     uint32_t log2f_32(uint32_t x);
     RTCD_EXTERN uint32_t(*eb_log2f)(uint32_t x);
-    void eb_memcpy_c(void  *dst_ptr, void  *src_ptr, size_t size);
-    RTCD_EXTERN void (*eb_memcpy)(void  *dst_ptr, void  *src_ptr, size_t size);
+    void eb_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size);
+    RTCD_EXTERN void (*eb_memcpy)(void  *dst_ptr, void  const*src_ptr, size_t size);
 #ifdef ARCH_X86
 
     void aom_blend_a64_vmask_sse4_1(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, int w, int h);
@@ -2214,7 +2214,7 @@ extern "C" {
 
             uint32_t Log2f_ASM(uint32_t x);
 
-            extern void eb_memcpy_intrin_sse (void  *dst_ptr, void  *src_ptr, size_t size);
+            extern void eb_memcpy_intrin_sse (void  *dst_ptr, void  const *src_ptr, size_t size);
 #endif
 
 

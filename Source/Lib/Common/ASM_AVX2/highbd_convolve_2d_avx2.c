@@ -224,10 +224,10 @@ void eb_av1_highbd_convolve_2d_copy_sr_avx2(const uint16_t *src, int32_t src_str
 
     if (w == 2) {
         do {
-            memcpy(dst, src, 2 * sizeof(*src));
+            eb_memcpy_intrin_sse(dst, src, 2 * sizeof(*src));
             src += src_stride;
             dst += dst_stride;
-            memcpy(dst, src, 2 * sizeof(*src));
+            eb_memcpy_intrin_sse(dst, src, 2 * sizeof(*src));
             src += src_stride;
             dst += dst_stride;
             h -= 2;

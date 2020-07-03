@@ -266,7 +266,7 @@ static AOM_INLINE void extend_palette_color_map(uint8_t *const color_map, int or
     }
     // Copy last row to extra rows.
     for (j = orig_height; j < new_height; ++j) {
-        memcpy(color_map + j * new_width, color_map + (orig_height - 1) * new_width, new_width);
+        eb_memcpy(color_map + j * new_width, color_map + (orig_height - 1) * new_width, new_width);
     }
 }
 void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, BlockSize bsize,

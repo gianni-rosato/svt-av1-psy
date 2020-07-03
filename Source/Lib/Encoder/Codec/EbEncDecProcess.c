@@ -1676,7 +1676,7 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
             ->frame_type = pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type;
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->order_hint = pcs_ptr->parent_pcs_ptr->cur_order_hint;
-        memcpy(((EbReferenceObject *)
+        eb_memcpy(((EbReferenceObject *)
                     pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                    ->ref_order_hint,
                pcs_ptr->parent_pcs_ptr->ref_order_hint,

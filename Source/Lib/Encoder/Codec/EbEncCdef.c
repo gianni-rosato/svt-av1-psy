@@ -1249,11 +1249,11 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
 
             for (pli = 0; pli < num_planes; pli++) {
                 if (pli == 0)
-                    memcpy(mse[0][sb_count],
+                    eb_memcpy(mse[0][sb_count],
                            pcs_ptr->mse_seg[0][fbr * nhfb + fbc],
                            TOTAL_STRENGTHS * sizeof(uint64_t));
                 if (pli == 2)
-                    memcpy(mse[1][sb_count],
+                    eb_memcpy(mse[1][sb_count],
                            pcs_ptr->mse_seg[1][fbr * nhfb + fbc],
                            TOTAL_STRENGTHS * sizeof(uint64_t));
                 sb_index[sb_count] = MI_SIZE_64X64 * fbr * pcs_ptr->mi_stride + MI_SIZE_64X64 * fbc;

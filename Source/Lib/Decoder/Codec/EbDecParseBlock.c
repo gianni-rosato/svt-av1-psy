@@ -167,7 +167,7 @@ static void read_palette_colors_y(ParseCtxt *parse_ctx, PartitionInfo *pi, int b
         }
         merge_colors(parse_ctx->palette_colors[AOM_PLANE_Y], cached_colors, n, n_cached_colors);
     } else {
-        memcpy(parse_ctx->palette_colors[AOM_PLANE_Y], cached_colors, n * sizeof(cached_colors[0]));
+        eb_memcpy(parse_ctx->palette_colors[AOM_PLANE_Y], cached_colors, n * sizeof(cached_colors[0]));
     }
 }
 
@@ -202,7 +202,7 @@ static void read_palette_colors_uv(ParseCtxt *parse_ctx, PartitionInfo *pi, int 
         }
         merge_colors(parse_ctx->palette_colors[AOM_PLANE_U], cached_colors, n, n_cached_colors);
     } else {
-        memcpy(parse_ctx->palette_colors[AOM_PLANE_U], cached_colors, n * sizeof(cached_colors[0]));
+        eb_memcpy(parse_ctx->palette_colors[AOM_PLANE_U], cached_colors, n * sizeof(cached_colors[0]));
     }
 
     // V channel colors.
@@ -573,13 +573,13 @@ static INLINE void update_palette_context(ParseCtxt *parse_ctx, int mi_row, int 
         uint16_t *left_pal_col = left_ctx->left_palette_colors[plane] +
                                  (PALETTE_MAX_SIZE * (mi_row - parse_ctx->sb_row_mi));
         for (int i = 0; i < bw; i++) {
-            memcpy(above_pal_col,
+            eb_memcpy(above_pal_col,
                    &parse_ctx->palette_colors[plane][0],
                    mi->palette_size[plane != 0] * sizeof(uint16_t));
             above_pal_col += PALETTE_MAX_SIZE;
         }
         for (int i = 0; i < bh; i++) {
-            memcpy(left_pal_col,
+            eb_memcpy(left_pal_col,
                    &parse_ctx->palette_colors[plane][0],
                    mi->palette_size[plane != 0] * sizeof(uint16_t));
             left_pal_col += PALETTE_MAX_SIZE;
@@ -1325,7 +1325,7 @@ void update_chroma_trans_info(ParseCtxt *parse_ctx, PartitionInfo *part_info, Bl
     if (total_chroma_tus) {
         assert((chroma_trans_info - total_chroma_tus) ==
                sb_info->sb_trans_info[AOM_PLANE_U] + mbmi->first_txb_offset[AOM_PLANE_U]);
-        memcpy(chroma_trans_info,
+        eb_memcpy(chroma_trans_info,
                chroma_trans_info - total_chroma_tus,
                total_chroma_tus * sizeof(*chroma_trans_info));
     }
@@ -1482,7 +1482,7 @@ void update_flat_trans_info(ParseCtxt *parse_ctx, PartitionInfo *part_info, Bloc
     if (total_chroma_tus) {
         assert((chroma_trans_info - total_chroma_tus) ==
                sb_info->sb_trans_info[AOM_PLANE_U] + mbmi->first_txb_offset[AOM_PLANE_U]);
-        memcpy(chroma_trans_info,
+        eb_memcpy(chroma_trans_info,
                chroma_trans_info - total_chroma_tus,
                total_chroma_tus * sizeof(*chroma_trans_info));
     }
@@ -2702,7 +2702,7 @@ void read_wiener_filter(int wiener_win, WienerInfo *wiener_info, WienerInfo *ref
     wiener_info->hfilter[WIENER_HALFWIN] =
         -2 * (wiener_info->hfilter[0] + wiener_info->hfilter[1] + wiener_info->hfilter[2]);
 
-    memcpy(ref_wiener_info, wiener_info, sizeof(*wiener_info));
+    eb_memcpy(ref_wiener_info, wiener_info, sizeof(*wiener_info));
 }
 
 void read_sgrproj_filter(SgrprojInfo *sgrproj_info, SgrprojInfo *ref_sgrproj_info,
@@ -2738,7 +2738,7 @@ void read_sgrproj_filter(SgrprojInfo *sgrproj_info, SgrprojInfo *ref_sgrproj_inf
                                                                   reader);
     }
 
-    memcpy(ref_sgrproj_info, sgrproj_info, sizeof(*sgrproj_info));
+    eb_memcpy(ref_sgrproj_info, sgrproj_info, sizeof(*sgrproj_info));
 }
 
 void read_lr_unit(ParseCtxt *parse_ctxt, int32_t plane, RestorationUnitInfo *lr_unit) {

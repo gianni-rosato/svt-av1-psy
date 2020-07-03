@@ -882,7 +882,7 @@ static void update_a_sep_sym(int32_t wiener_win, int64_t **mc, int64_t **hc, int
             S[i] = S[wiener_win - 1 - i];
             S[wiener_halfwin1 - 1] -= 2 * S[i];
         }
-        memcpy(a, S, wiener_win * sizeof(*a));
+        eb_memcpy(a, S, wiener_win * sizeof(*a));
     }
 }
 
@@ -935,7 +935,7 @@ static void update_b_sep_sym(int32_t wiener_win, int64_t **Mc, int64_t **hc, int
             S[i] = S[wiener_win - 1 - i];
             S[wiener_halfwin1 - 1] -= 2 * S[i];
         }
-        memcpy(b, S, wiener_win * sizeof(*b));
+        eb_memcpy(b, S, wiener_win * sizeof(*b));
     }
 }
 

@@ -128,7 +128,7 @@ static void copy_even(uint8_t *luma, uint32_t wd,
         wd = wd + 1;
     }
     if (ht & 1) {
-        memcpy(&luma[ht *  (stride << use_hbd)], &luma[(ht - 1) * (stride << use_hbd)],
+        eb_memcpy(&luma[ht *  (stride << use_hbd)], &luma[(ht - 1) * (stride << use_hbd)],
             sizeof(*luma) * (wd << use_hbd));
     }
 }
@@ -301,7 +301,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                 (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
             for (i = 0; i < ht; i++) {
-                memcpy(dst, src, wd);
+                eb_memcpy(dst, src, wd);
                 dst += out_img->y_stride;
                 src += recon_picture_buf->stride_y;
             }
@@ -313,7 +313,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
                 for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(dst, src, ((wd + sx) >> sx));
+                    eb_memcpy(dst, src, ((wd + sx) >> sx));
                     dst += out_img->cb_stride;
                     src += recon_picture_buf->stride_cb;
                 }
@@ -324,7 +324,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
 
                 for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(dst, src, ((wd + sx) >> sx));
+                    eb_memcpy(dst, src, ((wd + sx) >> sx));
                     dst += out_img->cr_stride;
                     src += recon_picture_buf->stride_cr;
                 }
@@ -340,7 +340,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                       (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
             for (i = 0; i < ht; i++) {
-                memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd);
+                eb_memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd);
                 pu2_dst += out_img->y_stride;
                 pu2_src += recon_picture_buf->stride_y;
             }
@@ -353,7 +353,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                           ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
                 for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
+                    eb_memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
                     pu2_dst += out_img->cb_stride;
                     pu2_src += recon_picture_buf->stride_cb;
                 }
@@ -365,7 +365,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                           ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
 
                 for (i = 0; i < ((ht + sy) >> sy); i++) {
-                    memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
+                    eb_memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
                     pu2_dst += out_img->cr_stride;
                     pu2_src += recon_picture_buf->stride_cr;
                 }
@@ -617,7 +617,7 @@ svt_av1_dec_get_picture(EbComponentType *svt_dec_component, EbBufferHeaderType *
     if (svt_dec_component == NULL) return EB_ErrorBadParameter;
 
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
-    /* Copy from recon pointer and return! TODO: Should remove the memcpy! */
+    /* Copy from recon pointer and return! TODO: Should remove the eb_memcpy! */
     if (0 == svt_dec_out_buf(dec_handle_ptr, p_buffer)) return_error = EB_DecNoOutputPicture;
     return return_error;
 }

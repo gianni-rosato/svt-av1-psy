@@ -413,7 +413,7 @@ static void interpolate(const uint8_t *const input, int in_length, uint8_t *outp
 static void resize_multistep(const uint8_t *const input, int length, uint8_t *output, int olength,
                              uint8_t *otmp) {
     if (length == olength) {
-        memcpy(output, input, sizeof(output[0]) * length);
+        eb_memcpy(output, input, sizeof(output[0]) * length);
         return;
     }
     const int steps = get_down2_steps(length, olength);
@@ -685,7 +685,7 @@ static void highbd_down2_symodd(const uint16_t *const input, int length, uint16_
 static void highbd_resize_multistep(const uint16_t *const input, int length, uint16_t *output,
                                     int olength, uint16_t *otmp, int bd) {
     if (length == olength) {
-        memcpy(output, input, sizeof(output[0]) * length);
+        eb_memcpy(output, input, sizeof(output[0]) * length);
         return;
     }
     const int steps = get_down2_steps(length, olength);

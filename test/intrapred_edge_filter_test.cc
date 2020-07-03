@@ -155,7 +155,7 @@ static void eb_av1_filter_intra_edge_c(uint8_t *p, int sz, int strength) {
     const int filt = strength - 1;
     uint8_t edge[129];
 
-    memcpy(edge, p, sz * sizeof(*p));
+    eb_memcpy_c(edge, p, sz * sizeof(*p));
     for (int i = 1; i < sz; i++) {
         int s = 0;
         for (int j = 0; j < INTRA_EDGE_TAPS; j++) {

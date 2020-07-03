@@ -2273,7 +2273,7 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
     if(scs_ptr->static_config.enable_manual_pred_struct){
         scs_ptr->static_config.manual_pred_struct_entry_num = config_struct->manual_pred_struct_entry_num;
-        memcpy(&scs_ptr->static_config.pred_struct[0], &config_struct->pred_struct[0],config_struct->manual_pred_struct_entry_num*sizeof(PredictionStructureConfigEntry));
+        eb_memcpy(&scs_ptr->static_config.pred_struct[0], &config_struct->pred_struct[0],config_struct->manual_pred_struct_entry_num*sizeof(PredictionStructureConfigEntry));
         switch (scs_ptr->static_config.manual_pred_struct_entry_num) {
             case 1:
                 scs_ptr->static_config.hierarchical_levels =  0;

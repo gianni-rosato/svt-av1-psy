@@ -200,15 +200,15 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                org_rec->origin_y / 2 * org_rec->stride_cr;
 
         for (int r = 0; r < recon_picture_ptr->height; ++r)
-            memcpy(org_ptr + r * org_rec->stride_y,
+            eb_memcpy(org_ptr + r * org_rec->stride_y,
                    rec_ptr + r * recon_picture_ptr->stride_y,
                    recon_picture_ptr->width << 1);
 
         for (int r = 0; r < (recon_picture_ptr->height >> ss_y); ++r) {
-            memcpy(org_ptr_cb + r * org_rec->stride_cb,
+            eb_memcpy(org_ptr_cb + r * org_rec->stride_cb,
                    rec_ptr_cb + r * recon_picture_ptr->stride_cb,
                    (recon_picture_ptr->width >> ss_x) << 1);
-            memcpy(org_ptr_cr + r * org_rec->stride_cr,
+            eb_memcpy(org_ptr_cr + r * org_rec->stride_cr,
                    rec_ptr_cr + r * recon_picture_ptr->stride_cr,
                    (recon_picture_ptr->width >> ss_x) << 1);
         }
@@ -243,15 +243,15 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                                      org_rec->origin_y / 2 * org_rec->stride_cr]);
 
         for (int r = 0; r < recon_picture_ptr->height; ++r)
-            memcpy(org_ptr + r * org_rec->stride_y,
+            eb_memcpy(org_ptr + r * org_rec->stride_y,
                    rec_ptr + r * recon_picture_ptr->stride_y,
                    recon_picture_ptr->width);
 
         for (int r = 0; r < (recon_picture_ptr->height >> ss_y); ++r) {
-            memcpy(org_ptr_cb + r * org_rec->stride_cb,
+            eb_memcpy(org_ptr_cb + r * org_rec->stride_cb,
                    rec_ptr_cb + r * recon_picture_ptr->stride_cb,
                    (recon_picture_ptr->width >> ss_x));
-            memcpy(org_ptr_cr + r * org_rec->stride_cr,
+            eb_memcpy(org_ptr_cr + r * org_rec->stride_cr,
                    rec_ptr_cr + r * recon_picture_ptr->stride_cr,
                    (recon_picture_ptr->width >> ss_x));
         }
@@ -390,7 +390,7 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr,
 
             int height = (recon_picture_src->height >> sub_y);
             for (int row = 0; row < height; ++row) {
-                memcpy(dst_buf, src_buf, (recon_picture_src->width >> sub_x) *
+                eb_memcpy(dst_buf, src_buf, (recon_picture_src->width >> sub_x) *
                                          sizeof(*src_buf) << use_highbd);
                 src_buf += src_stride << use_highbd;
                 dst_buf += dst_stride << use_highbd;

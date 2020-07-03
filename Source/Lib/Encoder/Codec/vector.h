@@ -25,7 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <stdbool.h>
 #include <stddef.h>
-
+#include "common_dsp_rtcd.h"
 /***** DEFINITIONS *****/
 
 #define VECTOR_MINIMUM_CAPACITY 2

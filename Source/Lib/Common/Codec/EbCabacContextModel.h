@@ -18,7 +18,7 @@
 #define EbCabacContextModel_h
 
 #include "EbDefinitions.h"
-
+#include "common_dsp_rtcd.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

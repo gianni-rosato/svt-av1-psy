@@ -9986,7 +9986,7 @@ void prune_references_fp(
             }
         }
     }
-    memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
+    eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
     HmeResults     * res_p = sorted[0];
     uint32_t i, j;
     for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
@@ -10561,7 +10561,7 @@ void prune_references(
 {
     HmeResults    sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t      num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
-    memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
+    eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
     HmeResults     * res_p = sorted[0];
     uint32_t i, j;
     for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
@@ -10885,7 +10885,7 @@ EbErrorType motion_estimate_sb(
                                 52,
                                 1,
                                 MAX_SSE_VALUE);
-                            memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
+                            eb_memcpy(context_ptr->p_sb_best_full_pel_mv[list_index][ref_pic_index],
                                    context_ptr->p_sb_best_mv[list_index][ref_pic_index],
                                    MAX_ME_PU_COUNT * sizeof(uint32_t));
                             context_ptr->full_quarter_pel_refinement = 1;

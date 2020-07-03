@@ -139,7 +139,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
             int64_t best_warp_error = INT64_MAX;
             // Initially set all params to identity.
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {
-                memcpy(params_by_motion[i].params,
+                eb_memcpy(params_by_motion[i].params,
                        k_indentity_params,
                        (MAX_PARAMDIM - 1) * sizeof(*(params_by_motion[i].params)));
             }
@@ -183,7 +183,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                         // Save the wm_params modified by
                         // av1_refine_integerized_param() rather than motion index to
                         // avoid rerunning refine() below.
-                        memcpy(&global_motion, &tmp_wm_params, sizeof(EbWarpedMotionParams));
+                        eb_memcpy(&global_motion, &tmp_wm_params, sizeof(EbWarpedMotionParams));
                     }
                 }
             }

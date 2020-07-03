@@ -265,7 +265,7 @@ static void get_inliers_from_indices(MotionModel *params, int *correspondences) 
         inliers_tmp[2 * i]     = correspondences[4 * index];
         inliers_tmp[2 * i + 1] = correspondences[4 * index + 1];
     }
-    memcpy(params->inliers, inliers_tmp, sizeof(*inliers_tmp) * 2 * MAX_CORNERS);
+    eb_memcpy(params->inliers, inliers_tmp, sizeof(*inliers_tmp) * 2 * MAX_CORNERS);
     eb_aom_free(inliers_tmp);
 }
 
