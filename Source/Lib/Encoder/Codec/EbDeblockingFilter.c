@@ -1003,8 +1003,7 @@ static int64_t try_filter_frame(
 
     EbBool is_16bit =
         (EbBool)(pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-    EbPictureBufferDesc *recon_buffer =
-        is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
+    EbPictureBufferDesc *recon_buffer;
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
         //get the 16bit form of the input SB
         if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
@@ -1082,8 +1081,7 @@ static int32_t search_filter_level(
 
     EbBool is_16bit =
         (EbBool)(pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-    EbPictureBufferDesc *recon_buffer =
-        is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
+    EbPictureBufferDesc *recon_buffer;
 
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
         //get the 16bit form of the input SB
@@ -1231,12 +1229,11 @@ void eb_av1_pick_filter_level(DlfContext *         context_ptr,
     const int32_t num_planes = 3;
     (void)srcBuffer;
     struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
-    lf->sharpness_level         = frm_hdr->frame_type == KEY_FRAME ? 0 : 0;
+    lf->sharpness_level         = 0;
 
-    if (method == LPF_PICK_MINIMAL_LPF) {
-        lf->filter_level[0] = 0;
-        lf->filter_level[1] = 0;
-    } else if (method >= LPF_PICK_FROM_Q) {
+    if (method == LPF_PICK_MINIMAL_LPF)
+        lf->filter_level[0] = lf->filter_level[1] = 0;
+    else if (method >= LPF_PICK_FROM_Q) {
         const int32_t min_filter_level = 0;
         const int32_t max_filter_level = MAX_LOOP_FILTER; // av1_get_max_filter_level(cpi);
         const int32_t q                = eb_av1_ac_quant_q3(frm_hdr->quantization_params.base_q_idx,

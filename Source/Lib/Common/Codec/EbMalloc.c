@@ -288,7 +288,6 @@ static int g_component_count;
 void eb_print_memory_usage() {
 #ifdef DEBUG_MEMORY_USAGE
     MemSummary sum;
-    double     fulless;
     double     usage;
     char       scale;
     memset(&sum, 0, sizeof(MemSummary));
@@ -308,10 +307,9 @@ void eb_print_memory_usage() {
     SVT_INFO("    mutex count: %d\r\n", (int)sum.amount[EB_MUTEX]);
     SVT_INFO("    semaphore count: %d\r\n", (int)sum.amount[EB_SEMAPHORE]);
     SVT_INFO("    thread count: %d\r\n", (int)sum.amount[EB_THREAD]);
-    fulless = (double)sum.occupied / MEM_ENTRY_SIZE;
     SVT_INFO("    hash table fulless: %f, hash bucket is %s\r\n",
-             fulless,
-             fulless < .3 ? "healthy" : "too full");
+             (double)sum.occupied / MEM_ENTRY_SIZE,
+             (double)sum.occupied / MEM_ENTRY_SIZE < .3 ? "healthy" : "too full");
 #ifdef PROFILE_MEMORY_USAGE
     print_top_10_locations();
 #endif

@@ -1118,8 +1118,6 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     const int32_t bw     = mi_size_wide[bsize];
     const int32_t bh     = mi_size_high[bsize];
 
-    xd->n8_w = context_ptr->blk_geom->bwidth >> MI_SIZE_LOG2;
-    xd->n8_h = context_ptr->blk_geom->bheight >> MI_SIZE_LOG2;
     xd->n4_w = context_ptr->blk_geom->bwidth >> MI_SIZE_LOG2;
     xd->n4_h = context_ptr->blk_geom->bheight >> MI_SIZE_LOG2;
 

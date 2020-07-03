@@ -2389,12 +2389,8 @@ static INLINE __m256i jnt_2d_comp_avg_round_pack_half_pel_avx2(const __m256i res
 static INLINE void jnt_2d_comp_avg_round_store_4x2_avx2(
     const __m256i res, const __m256i factor, const __m256i offset, const ConvBufType *const dst,
     const ptrdiff_t dst_stride, uint8_t *const dst8, const int32_t dst8_stride) {
-    __m128i d_128[2];
     __m256i d;
 
-    d_128[0]         = _mm_loadl_epi64((__m128i *)dst);
-    d_128[1]         = _mm_loadl_epi64((__m128i *)(dst + dst_stride));
-    d                = _mm256_setr_m128i(d_128[0], d_128[1]);
     d                = loadu_u16_8x2_avx2(dst, dst_stride);
     d                = jnt_2d_comp_avg_round_pack_8_avx2(res, factor, offset, d);
     d                = _mm256_packus_epi16(d, d);

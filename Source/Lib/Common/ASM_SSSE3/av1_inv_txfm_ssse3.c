@@ -1307,7 +1307,6 @@ static void idct64_low8_new_ssse3(const __m128i *input, __m128i *output, int8_t 
     x[6] = x[1];
     x[5] = x[2];
     x[4] = x[3];
-    x[9] = x[9];
     btf_16_sse2(cospi_m32_p32, cospi_p32_p32, x[10], x[13], x[10], x[13]);
     btf_16_sse2(cospi_m32_p32, cospi_p32_p32, x[11], x[12], x[11], x[12]);
     idct64_stage8_high48_sse2(x, cospi, __rounding, cos_bit);

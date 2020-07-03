@@ -903,7 +903,6 @@ void eb_av1_iadst8_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     //range_check_buf(stage, input, bf1, size, stage_range[stage]);
 
     // stage 6
-    stage++;
     bf0    = output;
     bf1    = step;
     bf1[0] = bf0[0];
@@ -917,7 +916,6 @@ void eb_av1_iadst8_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     //range_check_buf(stage, input, bf1, size, stage_range[stage]);
 
     // stage 7
-    stage++;
     bf0    = step;
     bf1    = output;
     bf1[0] = bf0[0];
@@ -1094,7 +1092,6 @@ void eb_av1_iadst16_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     //range_check_buf(stage, input, bf1, size, stage_range[stage]);
 
     // stage 8
-    stage++;
     bf0     = output;
     bf1     = step;
     bf1[0]  = bf0[0];
@@ -1116,7 +1113,6 @@ void eb_av1_iadst16_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     //range_check_buf(stage, input, bf1, size, stage_range[stage]);
 
     // stage 9
-    stage++;
     bf0     = step;
     bf1     = output;
     bf1[0]  = bf0[0];
@@ -3765,4 +3761,3 @@ void invert_quant(int16_t *quant, int16_t *shift, int32_t d) {
     *quant = (int16_t)(m - (1 << 16));
     *shift = 1 << (16 - l);
 }
-

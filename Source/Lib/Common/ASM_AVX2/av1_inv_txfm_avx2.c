@@ -1285,7 +1285,6 @@ static void idct64_low8_new_avx2(const __m256i *input, __m256i *output, int8_t c
     x[6] = x[1];
     x[5] = x[2];
     x[4] = x[3];
-    x[9] = x[9];
     btf_16_w16_avx2(cospi_m32_p32, cospi_p32_p32, &x[10], &x[13], _r, cos_bit);
     btf_16_w16_avx2(cospi_m32_p32, cospi_p32_p32, &x[11], &x[12], _r, cos_bit);
     idct64_stage8_high48_avx2(x, cospi, _r, cos_bit);

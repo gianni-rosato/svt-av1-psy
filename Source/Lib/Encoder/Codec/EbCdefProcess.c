@@ -29,8 +29,6 @@
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 
-static int32_t priconv[REDUCED_PRI_STRENGTHS] = {0, 1, 2, 3, 5, 7, 10, 13};
-
 void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src_voffset,
                  int32_t src_hoffset, int32_t sstride, int32_t vsize, int32_t hsize);
 
@@ -103,7 +101,6 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     uint32_t y_b64_end_idx =
         SEGMENT_END_IDX(y_seg_idx, picture_height_in_b64, pcs_ptr->cdef_segments_row_count);
 
-    int32_t fast    = 0;
     int32_t mi_rows = ppcs->av1_cm->mi_rows;
     int32_t mi_cols = ppcs->av1_cm->mi_cols;
 
@@ -129,7 +126,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t  sec_damping = pri_damping;
 
     const int32_t num_planes      = 3;
-    const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
+    const int32_t total_strengths = TOTAL_STRENGTHS;
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint8_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
@@ -241,7 +238,6 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                     uint64_t curr_mse;
                     int32_t  sec_strength;
                     threshold = gi / CDEF_SEC_STRENGTHS;
-                    if (fast) threshold = priconv[threshold];
                     /* We avoid filtering the pixels for which some of the pixels to
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
@@ -316,7 +312,6 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     uint32_t y_b64_end_idx =
         SEGMENT_END_IDX(y_seg_idx, picture_height_in_b64, pcs_ptr->cdef_segments_row_count);
 
-    int32_t fast    = 0;
     int32_t mi_rows = ppcs->av1_cm->mi_rows;
     int32_t mi_cols = ppcs->av1_cm->mi_cols;
 
@@ -339,10 +334,10 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     int32_t   nvfb        = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t   nhfb        = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t   pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
-    int32_t   sec_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
+    int32_t   sec_damping = pri_damping;
 
     const int32_t num_planes      = 3;
-    const int32_t total_strengths = fast ? REDUCED_TOTAL_STRENGTHS : TOTAL_STRENGTHS;
+    const int32_t total_strengths = TOTAL_STRENGTHS;
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
@@ -443,7 +438,6 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                     uint64_t curr_mse;
                     int32_t  sec_strength;
                     threshold = gi / CDEF_SEC_STRENGTHS;
-                    if (fast) threshold = priconv[threshold];
                     /* We avoid filtering the pixels for which some of the pixels to
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;

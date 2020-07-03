@@ -2362,8 +2362,6 @@ void eb_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     const uint16_t *left, int32_t upsample_above,
     int32_t dx, int32_t dy, int32_t bd)
 {
-    int32_t r, c, x, base, shift, val;
-
     (void)left;
     (void)dy;
     (void)bd;
@@ -2373,10 +2371,9 @@ void eb_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     const int32_t max_base_x = ((bw + bh) - 1) << upsample_above;
     const int32_t frac_bits = 6 - upsample_above;
     const int32_t base_inc = 1 << upsample_above;
-    x = dx;
-    for (r = 0; r < bh; ++r, dst += stride, x += dx) {
-        base = x >> frac_bits;
-        shift = ((x << upsample_above) & 0x3F) >> 1;
+    for (int32_t r = 0, x = dx; r < bh; ++r, dst += stride, x += dx) {
+        int32_t base = x >> frac_bits;
+        int32_t shift = ((x << upsample_above) & 0x3F) >> 1;
 
         if (base >= max_base_x) {
             for (int32_t i = r; i < bh; ++i) {
@@ -2386,9 +2383,9 @@ void eb_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t b
             return;
         }
 
-        for (c = 0; c < bw; ++c, base += base_inc) {
+        for (int32_t c = 0; c < bw; ++c, base += base_inc) {
             if (base < max_base_x) {
-                val = above[base] * (32 - shift) + above[base + 1] * shift;
+                int32_t val = above[base] * (32 - shift) + above[base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
                 dst[c] = (uint16_t)clip_pixel_highbd(val, bd);
             }
@@ -2604,6 +2601,3 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
         dst += stride;
     }
 }
-
-
-
