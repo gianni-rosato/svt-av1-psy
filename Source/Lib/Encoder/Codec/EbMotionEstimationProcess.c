@@ -211,20 +211,31 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         max_me_search_width[sc_content_detected][input_resolution][hme_me_level];
     context_ptr->me_context_ptr->max_me_search_height =
         max_me_search_height[sc_content_detected][input_resolution][hme_me_level];
+#if !REMOVE_ME_SUBPEL_CODE
     if (sc_content_detected)
+#if MAR11_ADOPTIONS
+        // fractional_search_method is not used if subpel is OFF
+        context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
+#else
         context_ptr->me_context_ptr->fractional_search_method =
             (enc_mode <= ENC_M1) ? FULL_SAD_SEARCH : SUB_SAD_SEARCH;
-    else if (enc_mode <= ENC_M6)
+#endif
+    else
+#if MAR2_M8_ADOPTIONS
+        context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
+#else
+        if (enc_mode <= ENC_M6)
         context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
     else
         context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
-
+#endif
+#endif
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
-
+#if !REMOVE_ME_SUBPEL_CODE
     if (scs_ptr->static_config.enable_subpel == DEFAULT)
         // Set the default settings of subpel
         if (sc_content_detected)
@@ -233,16 +244,36 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             context_ptr->me_context_ptr->use_subpel_flag = 1;
     else
         context_ptr->me_context_ptr->use_subpel_flag = scs_ptr->static_config.enable_subpel;
+#if M1_C2_ADOPTIONS
     if (enc_mode <= ENC_M0) {
+#else
+#if APR23_ADOPTIONS
+    if (enc_mode <= ENC_M2) {
+#else
+#if MAR10_ADOPTIONS
+    if (enc_mode <= ENC_M1) {
+#else
+    if (enc_mode <= ENC_M0) {
+#endif
+#endif
+#endif
         context_ptr->me_context_ptr->half_pel_mode =
             (sc_content_detected) ? REFINEMENT_HP_MODE : EX_HP_MODE;
-    }else if (enc_mode <= ENC_M2) {
-        context_ptr->me_context_ptr->half_pel_mode =
-            (sc_content_detected) ? REFINEMENT_HP_MODE : SWITCHABLE_HP_MODE;
-    } else {
-        context_ptr->me_context_ptr->half_pel_mode    = REFINEMENT_HP_MODE;
     }
 
+#if !MAR11_ADOPTIONS
+#if MAR3_M2_ADOPTIONS
+    else if (enc_mode <= ENC_M2) {
+#else
+    else if (enc_mode <= ENC_M2) {
+#endif
+        context_ptr->me_context_ptr->half_pel_mode =
+            (sc_content_detected) ? REFINEMENT_HP_MODE : SWITCHABLE_HP_MODE;
+    }
+#endif
+    else {
+        context_ptr->me_context_ptr->half_pel_mode    = REFINEMENT_HP_MODE;
+    }
     context_ptr->me_context_ptr->h_pel_search_wind = H_PEL_SEARCH_WIND_2;
     // Set fractional search model
     // 0: search all blocks
@@ -255,7 +286,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             context_ptr->me_context_ptr->fractional_search_model = 1;
     } else
         context_ptr->me_context_ptr->fractional_search_model = 2;
-
+#endif
     // HME Search Method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
     // ME Search Method
@@ -263,23 +294,135 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
-        if (enc_mode <= ENC_M1)
+#if UNIFY_SC_NSC
+#if JUNE26_ADOPTIONS
+        if (enc_mode <= ENC_M6)
+#else
+        if (enc_mode <= ENC_M5)
+#endif
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
         else
             context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#else
+#if MAR4_M6_ADOPTIONS
+        if (pcs_ptr->sc_content_detected)
+#if MAY19_ADOPTIONS
+#if JUNE17_ADOPTIONS
+            if (enc_mode <= ENC_M5)
+#else
+#if PRESET_SHIFITNG
+            if (enc_mode <= ENC_M4)
+#else
+            if (enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+#if MAY12_ADOPTIONS
+            if (enc_mode <= ENC_M4)
+#else
+#if SHIFT_M5_SC_TO_M3
+            if (enc_mode <= ENC_M2)
+#else
+#if PRESETS_SHIFT
+            if (enc_mode <= ENC_M4)
+#else
+#if MAR12_ADOPTIONS
+#if MAR17_ADOPTIONS
+            if (enc_mode <= ENC_M7)
+#else
+            if (enc_mode <= ENC_M3)
+#endif
+#else
+#if MAR10_ADOPTIONS
+#if MAR11_ADOPTIONS
+            if (enc_mode <= ENC_M1)
+#else
+            if (enc_mode <= ENC_M2)
+#endif
+#else
+            if (enc_mode <= ENC_M3)
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+                context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
+            else
+                context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#if MAY19_ADOPTIONS
+#if JUNE17_ADOPTIONS
+        else if (enc_mode <= ENC_M5)
+#else
+#if PRESET_SHIFITNG
+        else if (enc_mode <= ENC_M4)
+#else
+        else if (enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+#if PRESETS_SHIFT
+        else if (enc_mode <= ENC_M4)
+#else
+#if MAR17_ADOPTIONS
+        else if (enc_mode <= ENC_M7)
+#else
+        else if (enc_mode <= ENC_M5)
+#endif
+#endif
+#endif
+#else
+        if (enc_mode <= ENC_M1)
+#endif
+            context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
+        else
+            context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#endif
+#if GM_LIST1
+        //TODO: enclose all gm signals into a control
+        context_ptr->me_context_ptr->gm_identiy_exit = EB_FALSE;
+#endif
     } else
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 
+#if !SHUT_ME_NSQ_SEARCH
     // Me nsq search levels.
     // 0: feature off -> perform nsq_search.
     // 1: perform me nsq_search only for the best refrenece picture.
     // 2: perform me nsq_search only for the nearest refrenece pictures.
     // 3: me nsq_search off.
+#if APR23_ADOPTIONS
+    if (MR_MODE)
+#else
+#if MAR30_ADOPTIONS
+    if (enc_mode <= ENC_M0)
+#else
+#if MAR10_ADOPTIONS
+    if (enc_mode <= ENC_M1 && pcs_ptr->sc_content_detected == 0)
+#else
     if (MR_MODE && pcs_ptr->sc_content_detected == 0)
+#endif
+#endif
+#endif
         context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 0;
+#if UPGRADE_M8
+#if MAY19_ADOPTIONS
+    else if (enc_mode <= ENC_M5 || (!pcs_ptr->sc_content_detected && enc_mode <= ENC_M6))
+#else
+#if NSQ_OFF_IN_M6_M7_ME
+    else if (enc_mode <= ENC_M5)
+#else
+    else if (enc_mode <= ENC_M7)
+#endif
+#endif
+        context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 2;
+    else
+        context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 3;
+#else
     else
         context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 2;
-
+#endif
+#endif
     return return_error;
 };
 
@@ -383,36 +526,72 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
         max_metf_search_width[sc_content_detected][input_resolution][hme_me_level];
     context_ptr->me_context_ptr->max_me_search_height =
         max_metf_search_height[sc_content_detected][input_resolution][hme_me_level];
+#if !REMOVE_ME_SUBPEL_CODE
     if (sc_content_detected)
+#if MAR11_ADOPTIONS
+        // fractional_search_method is irrelevant if subpel is OFF
+        context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
+#else
         if (enc_mode <= ENC_M1)
             context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
         else
             context_ptr->me_context_ptr->fractional_search_method = SUB_SAD_SEARCH;
-    else if (enc_mode <= ENC_M6)
+#endif
+    else
+#if MAR2_M8_ADOPTIONS
+        context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
+#else
+    if (enc_mode <= ENC_M6)
         context_ptr->me_context_ptr->fractional_search_method = SSD_SEARCH;
     else
         context_ptr->me_context_ptr->fractional_search_method = FULL_SAD_SEARCH;
-
+#endif
+#endif
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->tf_enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->tf_enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->tf_enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->tf_enable_hme_level2_flag;
+#if !REMOVE_ME_SUBPEL_CODE
     if (scs_ptr->static_config.enable_subpel == DEFAULT)
         // Set the default settings of subpel
         if (sc_content_detected)
+#if MAR11_ADOPTIONS
+            context_ptr->me_context_ptr->use_subpel_flag = 0;
+#else
                 context_ptr->me_context_ptr->use_subpel_flag = 0;
+#endif
         else
             context_ptr->me_context_ptr->use_subpel_flag = 1;
     else
         context_ptr->me_context_ptr->use_subpel_flag = scs_ptr->static_config.enable_subpel;
+#if M1_C2_ADOPTIONS
     if (enc_mode <= ENC_M0) {
+#else
+#if APR23_ADOPTIONS
+    if (enc_mode <= ENC_M2) {
+#else
+#if MAR10_ADOPTIONS
+    if (enc_mode <= ENC_M1) {
+#else
+    if (enc_mode <= ENC_M0) {
+#endif
+#endif
+#endif
         context_ptr->me_context_ptr->half_pel_mode =
             (sc_content_detected) ? REFINEMENT_HP_MODE : EX_HP_MODE;
-    }else if (enc_mode <= ENC_M1) {
+    }
+#if !MAR11_ADOPTIONS
+#if MAR3_M2_ADOPTIONS
+    else if (enc_mode <= ENC_M2) {
+#else
+    else if (enc_mode <= ENC_M1) {
+#endif
         context_ptr->me_context_ptr->half_pel_mode =
             (sc_content_detected) ? REFINEMENT_HP_MODE : SWITCHABLE_HP_MODE;
-    } else {
+    }
+#endif
+    else {
         context_ptr->me_context_ptr->half_pel_mode    = REFINEMENT_HP_MODE;
     }
     context_ptr->me_context_ptr->h_pel_search_wind =   H_PEL_SEARCH_WIND_3;
@@ -427,7 +606,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
             context_ptr->me_context_ptr->fractional_search_model = 1;
     } else
         context_ptr->me_context_ptr->fractional_search_model = 2;
-
+#endif
     // HME Search Method
     if (sc_content_detected)
         if (enc_mode <= ENC_M6)
@@ -437,21 +616,32 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     else
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
     // ME Search Method
+#if !UNIFY_SC_NSC
     if (sc_content_detected)
+#if MAR10_ADOPTIONS
+        if (enc_mode <= ENC_M8)
+#else
         if (enc_mode <= ENC_M3)
+#endif
             context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
         else
             context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
     else
+#endif
+#if MAR10_ADOPTIONS
+        context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+#else
         context_ptr->me_context_ptr->me_search_method =
             (enc_mode <= ENC_M4) ? FULL_SAD_SEARCH : SUB_SAD_SEARCH;
+#endif
+#if !SHUT_ME_NSQ_SEARCH
     // Me nsq search levels.
     // 0: feature off -> perform nsq_search.
     // 1: perform me nsq_search for the best refrenece picture.
     // 2: perform me nsq_search for the nearest refrenece pictures.
     // 3: me nsq_search off.
     context_ptr->me_context_ptr->inherit_rec_mv_from_sq_block = 0;
-
+#endif
     return return_error;
 };
 
@@ -777,7 +967,11 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                quarter_picture_ptr->stride_y +
                                            quarter_picture_ptr->origin_x + (sb_origin_x >> 1);
 
+#if ENABLE_HME_AT_INC_SB
+                            for (sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 1); sb_row++) {
+#else
                             for (sb_row = 0; sb_row < (sb_height >> 1); sb_row++) {
+#endif
                                 eb_memcpy(
                                     (&(context_ptr->me_context_ptr
                                            ->quarter_sb_buffer[sb_row *
@@ -802,7 +996,11 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     context_ptr->me_context_ptr->sixteenth_sb_buffer;
                                 if (context_ptr->me_context_ptr->hme_search_method ==
                                     FULL_SAD_SEARCH) {
+#if ENABLE_HME_AT_INC_SB
+                                    for (sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 2); sb_row++) {
+#else
                                     for (sb_row = 0; sb_row < (sb_height >> 2); sb_row += 1) {
+#endif
                                         eb_memcpy(local_ptr,
                                                   frame_ptr,
                                                   (sb_width >> 2) * sizeof(uint8_t));
@@ -810,7 +1008,15 @@ void *motion_estimation_kernel(void *input_ptr) {
                                         frame_ptr += sixteenth_picture_ptr->stride_y;
                                     }
                                 } else {
+#if ENABLE_HME_AT_INC_SB
+#if FIX_HME_LOAD
+                                    for (sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 2); sb_row += 2) {
+#else
+                                    for (sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 2); sb_row++) {
+#endif
+#else
                                     for (sb_row = 0; sb_row < (sb_height >> 2); sb_row += 2) {
+#endif
                                         eb_memcpy(local_ptr,
                                                   frame_ptr,
                                                   (sb_width >> 2) * sizeof(uint8_t));

@@ -922,14 +922,84 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
 
+#if M8_CDF
+#if UPGRADE_M6_M7_M8
+#if !UNIFY_SC_NSC
     if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if APR25_12AM_ADOPTIONS
+#if JUNE17_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
+#if PRESET_SHIFITNG
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+        if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+            pcs_ptr->update_cdf = 1;
+        else
+#if M5_I_CDF
+            pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#else
+            pcs_ptr->update_cdf = 0;
+#endif
+    else
+#endif
+#if MAY19_ADOPTIONS
+#if JUNE17_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
+#if PRESET_SHIFITNG
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+        if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
+            pcs_ptr->update_cdf = 1;
+        else
+#if M5_I_CDF
+            pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#else
+            pcs_ptr->update_cdf = 0;
+#endif
+#else
+    pcs_ptr->update_cdf = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#endif
+#else
+    if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if MAR2_M7_ADOPTIONS
+#if MAR10_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M8)
+#else
+        if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+#else
+        if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
             pcs_ptr->update_cdf = 1;
         else
             pcs_ptr->update_cdf = 0;
     else
-        pcs_ptr->update_cdf = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+        pcs_ptr->update_cdf =
+#if MAR3_M6_ADOPTIONS
+#if MAR10_ADOPTIONS
+        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) ? 1 : 0;
+#else
+        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
+#endif
+#else
+        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#endif
+#if !REMOVED_MEM_OPT_CDF
     if (pcs_ptr->update_cdf) assert(scs_ptr->cdf_mode == 0 && "use cdf_mode 0");
+#endif
+#endif
     //Filter Intra Mode : 0: OFF  1: ON
     if (scs_ptr->seq_header.enable_filter_intra)
         pcs_ptr->pic_filter_intra_mode = 1 ;
@@ -937,18 +1007,148 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         pcs_ptr->pic_filter_intra_mode = 0;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv =
+#if !MAR2_M8_ADOPTIONS
         pcs_ptr->enc_mode <= ENC_M7 &&
+#endif
                 frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
                 (scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
             ? 1
             : 0;
     EbBool enable_wm;
+#if PRESETS_SHIFT
+#if M8_WM
+#if !UNIFY_SC_NSC
+#if UPGRADE_M6_M7_M8
+    if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+#if JUNE8_ADOPTIONS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
+#else
+#if SHIFT_M5_SC_TO_M3
+#if PRESET_SHIFITNG
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1) {
+#else
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+#else
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#endif
+#endif
+            enable_wm = EB_TRUE;
+        }
+#if MAY12_ADOPTIONS
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
+#else
+#if SHIFT_M6_SC_TO_M5
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#else
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#endif
+            enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
+        }
+        else {
+            enable_wm = EB_FALSE;
+        }
+    } else
+#endif
+#endif
+#if JUNE8_ADOPTIONS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
+#else
+#if MAY12_ADOPTIONS
+#if PRESET_SHIFITNG
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1) {
+#else
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+#else
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#endif
+#endif
+        enable_wm = EB_TRUE;
+#if UPGRADE_M8
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
+#else
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+        enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
+    } else {
+        enable_wm = EB_FALSE;
+    }
+#else
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4 ||
+        (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+        ? EB_TRUE
+        : EB_FALSE;
+#endif
+#else
+#if MAR30_ADOPTIONS
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 ||
+            (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+        ? EB_TRUE
+        : EB_FALSE;
+#else
+#if MAR20_M4_ADOPTIONS
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3 ||
+        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 &&
+            !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
+            (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+        ? EB_TRUE
+        : EB_FALSE;
+#else
+#if MAR17_ADOPTIONS
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4 ||
+                    (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 &&
+                    !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
+                        (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+        ? EB_TRUE
+        : EB_FALSE;
+#else
+#if MAR12_ADOPTIONS
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3 ||
+        (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+        ? EB_TRUE
+        : EB_FALSE;
+#else
+#if MAR12_M8_ADOPTIONS
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
+                    (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+                    ? EB_TRUE
+                    : EB_FALSE;
+#else
+#if MAR2_M7_ADOPTIONS
+#if MAR10_ADOPTIONS
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
+        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
+            pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ||
+            (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 &&
+                !(pcs_ptr->parent_pcs_ptr->sc_content_detected) &&
+                pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+        ? EB_TRUE
+        : EB_FALSE;
+#else
+    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3 ||
+                (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
+                    pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ||
+                    (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 &&
+                        !(pcs_ptr->parent_pcs_ptr->sc_content_detected) &&
+                        pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
+                ? EB_TRUE
+                : EB_FALSE;
+#endif
+#else
         enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
                      (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
                       pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
                         ? EB_TRUE
                         : EB_FALSE;
-
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
@@ -970,8 +1170,103 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // 4                                            OBMC @(MVP, PME ) + Opt2 NICs
     // Note: OBMC is currently disabled when super-res is ON
     if (scs_ptr->static_config.enable_obmc && !pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+#if !UNIFY_SC_NSC
+#if MAR4_M6_ADOPTIONS
+        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#if JUNE8_ADOPTIONS
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#else
+#if SHIFT_M5_SC_TO_M3
+#if PRESET_SHIFITNG
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+#else
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#endif
+#else
+#if PRESETS_SHIFT
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
+#if MAR17_ADOPTIONS
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#else
+#if MAR10_ADOPTIONS
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
+            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
+#endif
+#endif
+#endif
+#endif
+#endif
+                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
+#if OBMC_FAST
+#if M8_OBMC
+#if UPGRADE_M6_M7_M8
+#if APR24_ADOPTIONS_M6_M7
+#if JUNE17_ADOPTIONS
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#else
+#if PRESET_SHIFITNG
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
+#endif
+#endif
+#else
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#endif
+#else
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
+#else
+            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
+                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 3;
+#endif
+            else
+                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
+#if PRESETS_SHIFT
+#if PRESET_SHIFITNG
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#else
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#endif
+#else
+#if MAR17_ADOPTIONS
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#else
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
+#endif
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+#endif
+#else
+#if JUNE25_ADOPTIONS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
+#else
+#if JUNE23_ADOPTIONS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#endif
+#endif
+#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
+#if !JUNE23_ADOPTIONS
+#if OBMC_FAST
+#if M8_OBMC
+#if PRESET_SHIFITNG
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
+#else
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
+#else
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
+            pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 3;
+#endif
+#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
 #if MR_MODE

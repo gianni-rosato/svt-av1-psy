@@ -1946,12 +1946,90 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
+#if TPL_240P_IMP
+    // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
+    // in 240P resolution, sb size is set to 64
+    if (scs_ptr->use_output_stat_file ||
+        (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE))
+#else
     // In two pass encoding, the first pass uses sb size=64
     if (scs_ptr->use_output_stat_file)
+#endif
         scs_ptr->static_config.super_block_size = 64;
     else
+#if UNIFY_SC_NSC
+#if JUNE26_ADOPTIONS
+        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
+#else
+#if JUNE25_ADOPTIONS
+        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+#else
+        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
+#endif
+#endif
+#else
+#if MAR10_ADOPTIONS
+        if (scs_ptr->static_config.screen_content_mode == 1)
+#if DEPTH_PART_CLEAN_UP
+#if APR08_ADOPTIONS
+#if M8_SB_SIZE
+#if UPGRADE_M6_M7_M8
+#if JUNE17_ADOPTIONS
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
+#else
+#if PRESET_SHIFITNG
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+#else
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 128 : 64;
+#endif
+#endif
+#else
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
+#endif
+#else
+            scs_ptr->static_config.super_block_size = 128;
+#endif
+#else
+            scs_ptr->static_config.super_block_size = 64;
+#endif
+#else
+#if MAR11_ADOPTIONS
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M1) ? 128 : 64;
+#else
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
+#endif
+#endif
+        else
+#if DEPTH_PART_CLEAN_UP
+#if M8_SB_SIZE
+#if UPGRADE_M6_M7_M8
+#if JUNE17_ADOPTIONS
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
+#else
+#if PRESET_SHIFITNG
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+#else
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 128 : 64;
+#endif
+#endif
+#else
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
+#endif
+#else
+            scs_ptr->static_config.super_block_size = 128;
+#endif
+#else
+            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+#endif
+#else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
+#endif
+#endif
+#if FIX_RC_SB_SIZE
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
+#else
+    scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
+#endif
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     // Configure the padding
     scs_ptr->left_padding = BLOCK_SIZE_64 + 4;
@@ -1963,28 +2041,66 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         (scs_ptr->static_config.rate_control_mode > 0) ||
         scs_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : scs_ptr->static_config.enable_overlays;
-
+#if !REMOVE_MRP_MODE
+#if MAR2_M8_ADOPTIONS
+    // Memory Footprint reduction tool ONLY if no MRP (should be controlled using an API signal and not f(enc_mode))
+    scs_ptr->mrp_mode = 0;
+#else
     //0: MRP Mode 0 (4,3)
     //1: MRP Mode 1 (2,2)
     scs_ptr->mrp_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#endif
     //0: ON
     //1: OFF
+#if MAR2_M7_ADOPTIONS
+#if MAR10_ADOPTIONS
+    // Memory Footprint reduction tool ONLY if no CDF (should be controlled using an API signal and not f(enc_mode))
+    scs_ptr->cdf_mode = 0;
+#else
+    scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#else
     scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M6) ? 0 : 1;
-
+#endif
     //0: NSQ absent
     //1: NSQ present
+#if MAR10_ADOPTIONS
+        // Memory Footprint reduction tool ONLY if no NSQ (should be controlled using an API signal and not f(enc_mode))
+    scs_ptr->nsq_present = 1;
+#else
     scs_ptr->nsq_present = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-
+#endif
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
+#if !UNIFY_SC_NSC
     if (scs_ptr->static_config.screen_content_mode == 1)
+#if MAR3_M6_ADOPTIONS
+#if MAR10_ADOPTIONS
+        if (scs_ptr->static_config.enc_mode <= ENC_M8)
+#else
+        if (scs_ptr->static_config.enc_mode <= ENC_M6)
+#endif
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
+#endif
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
     else
+#if MAR17_ADOPTIONS
+        if (scs_ptr->static_config.enc_mode <= ENC_M8)
+#else
+#if MAR3_M6_ADOPTIONS
+        if (scs_ptr->static_config.enc_mode <= ENC_M6)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
+#endif
+#endif
+#else
+        if (scs_ptr->static_config.enc_mode <= ENC_M8)
+#endif
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
@@ -2001,10 +2117,24 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
+#if !UNIFY_SC_NSC
         if (scs_ptr->static_config.screen_content_mode == 1)
             scs_ptr->mfmv_enabled = 0;
         else
+#endif
+#if MAR3_M2_ADOPTIONS
+#if MAR4_M3_ADOPTIONS
+#if MAR10_ADOPTIONS
+            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
+#else
+            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
+#endif
+#else
+            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
+#endif
+#else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
+#endif
     else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
 

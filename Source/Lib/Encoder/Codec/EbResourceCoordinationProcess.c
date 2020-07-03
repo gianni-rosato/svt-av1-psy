@@ -182,10 +182,28 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
+#if !MAR10_ADOPTIONS
         if (pcs_ptr->enc_mode >= ENC_M8)
             scs_ptr->seq_header.enable_restoration = 0;
         else
+#endif
+#if M8_RESTORATION && !UPGRADE_M8
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#else
+#if REVERT_BLUE
+#if JUNE17_ADOPTIONS
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
+#else
+#if PRESET_SHIFITNG
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#else
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M7) ? 1 : 0;
+#endif
+#endif
+#else
             scs_ptr->seq_header.enable_restoration = 1;
+#endif
+#endif
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
@@ -195,8 +213,17 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
     else
         scs_ptr->seq_header.enable_cdef = (uint8_t)(scs_ptr->static_config.cdef_mode>0);
 
+#if !M8_CDF
+#if MAR2_M7_ADOPTIONS
+#if MAR10_ADOPTIONS
+    scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M8) ? 0 : 1;
+#else
+    scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#else
     scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M6) ? 0 : 1;
-
+#endif
+#endif
     if (scs_ptr->static_config.enable_warped_motion == DEFAULT) {
         scs_ptr->seq_header.enable_warped_motion = 1;
     } else
@@ -832,10 +859,61 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 0                 OFF
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound =
+#if MAY12_ADOPTIONS
+#if UNIFY_SC_NSC
+                (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
+#else
+#if PRESET_SHIFITNG
+                (scs_ptr->static_config.enc_mode <= ENC_M2 &&
+#else
+                (scs_ptr->static_config.enc_mode <= ENC_M4 &&
+#endif
+                    scs_ptr->static_config.screen_content_mode != 1)
+                    ? 1
+                    : 0;
+#endif
+#else
+#if APR24_M3_ADOPTIONS
+                (scs_ptr->static_config.enc_mode <= ENC_M2 &&
+                    scs_ptr->static_config.screen_content_mode != 1)
+                    ? 1
+                    : 0;
+#else
+#if APR23_ADOPTIONS
+                (scs_ptr->static_config.enc_mode <= ENC_M5 &&
+                    scs_ptr->static_config.screen_content_mode != 1)
+                    ? 1
+                    : 0;
+#else
+#if PRESETS_SHIFT
+                    (scs_ptr->static_config.enc_mode <= ENC_M2 &&
+                    scs_ptr->static_config.screen_content_mode != 1)
+                    ? 1
+                    : 0;
+#else
+#if MAR18_MR_TESTS_ADOPTIONS
+                    (scs_ptr->static_config.enc_mode <= ENC_M3 &&
+                    scs_ptr->static_config.screen_content_mode != 1)
+                    ? 1
+                    : 0;
+#else
+#if MAR3_M2_ADOPTIONS
+#if MAR4_M3_ADOPTIONS
+                    MR_MODE || (scs_ptr->static_config.enc_mode <= ENC_M3 &&
+#else
+                    MR_MODE || (scs_ptr->static_config.enc_mode <= ENC_M2 &&
+#endif
+#else
                     MR_MODE || (scs_ptr->static_config.enc_mode <= ENC_M1 &&
+#endif
                                 scs_ptr->static_config.screen_content_mode != 1)
                         ? 1
                         : 0;
+#endif
+#endif
+#endif
+#endif
+#endif
 
             } else
                 scs_ptr->seq_header.enable_interintra_compound =
@@ -844,8 +922,57 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                 OFF
             // 1                 ON
             if (scs_ptr->static_config.enable_filter_intra)
+#if MAY19_ADOPTIONS
+                scs_ptr->seq_header.enable_filter_intra =
+#if JUNE17_ADOPTIONS
+                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#else
+#if PRESET_SHIFITNG
+                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#else
+                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
+#endif
+#else
+#if APR23_ADOPTIONS_2
+                scs_ptr->seq_header.enable_filter_intra =
+                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#else
+#if PRESETS_SHIFT
+                scs_ptr->seq_header.enable_filter_intra =
+                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#else
+#if MAR10_ADOPTIONS
+                if (scs_ptr->static_config.screen_content_mode == 1)
+#if MAR17_ADOPTIONS
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
+#else
+#if MAR12_ADOPTIONS
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
+#else
+#if MAR11_ADOPTIONS
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
+#else
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
+#endif
+#endif
+#endif
+                else
+#endif
+#if MAR17_ADOPTIONS
+                scs_ptr->seq_header.enable_filter_intra =
+                (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
+#else
                 scs_ptr->seq_header.enable_filter_intra =
                     (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#endif
+#endif
+#endif
+#endif
             else
                 scs_ptr->seq_header.enable_filter_intra = 0;
 
@@ -853,10 +980,17 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
+#if MAR11_ADOPTIONS
+                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
+#else
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#endif
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 
+#if M8_NEW_REF
+                scs_ptr->compound_mode = 1 ;
+#endif
             if (scs_ptr->compound_mode) {
                 scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
                 scs_ptr->seq_header.enable_masked_compound          = 1; //DIFF+WEDGE
