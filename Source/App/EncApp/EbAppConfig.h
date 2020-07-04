@@ -159,8 +159,12 @@ typedef struct EbConfig {
     FILE *        stat_file;
     FILE *        buffer_file;
     FILE *        qp_file;
+    /* two pass */
+    int           pass;
+    const char*   stats;
     FILE *        input_stat_file;
     FILE *        output_stat_file;
+
     FILE *        input_pred_struct_file;
     char *        input_pred_struct_filename;
     EbBool        use_input_stat_file;

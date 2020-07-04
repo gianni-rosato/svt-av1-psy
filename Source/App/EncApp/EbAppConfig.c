@@ -33,8 +33,13 @@
 #define OUTPUT_RECON_TOKEN "-o"
 #define ERROR_FILE_TOKEN "-errlog"
 #define QP_FILE_TOKEN "-qp-file"
+
+/* two pass token */
+#define PASS_TOKEN "--pass"
+#define TWO_PASS_STATS_TOKEN "--stats"
 #define INPUT_STAT_FILE_TOKEN "-input-stat-file"
 #define OUTPUT_STAT_FILE_TOKEN "-output-stat-file"
+
 #define STAT_FILE_TOKEN "-stat-file"
 #define INPUT_PREDSTRUCT_FILE_TOKEN "-pred-struct-file"
 #define WIDTH_TOKEN "-w"
@@ -307,6 +312,19 @@ static void set_cfg_qp_file(const char *value, EbConfig *cfg) {
     if (cfg->qp_file) { fclose(cfg->qp_file); }
     FOPEN(cfg->qp_file, value, "r");
 };
+
+static void set_pass(const char* value, EbConfig *cfg) {
+    cfg->pass = strtol(value, NULL, 0);
+}
+
+static void set_two_pass_stats(const char* value, EbConfig *cfg) {
+#ifndef _WIN32
+    cfg->stats = strdup(value);
+#else
+    cfg->stats = _strdup(value);
+#endif
+}
+
 static void set_input_stat_file(const char *value, EbConfig *cfg) {
     if (cfg->input_stat_file) { fclose(cfg->input_stat_file); }
     FOPEN(cfg->input_stat_file, value, "rb");
@@ -900,6 +918,8 @@ ConfigEntry config_entry_rc[] = {
     {SINGLE_INPUT, NULL, NULL, NULL}};
 ConfigEntry config_entry_2p[] = {
     // 2 pass
+    {SINGLE_INPUT, PASS_TOKEN, "Multipass bitrate control (1: first pass, generates stats file , 2: second pass, uses stats file)", set_pass},
+    {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Filename for 2 pass stats(\"svtav1_2pass.log\" : [Default])", set_two_pass_stats},
     {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "First pass stat file output", set_output_stat_file},
     {SINGLE_INPUT,
      INPUT_STAT_FILE_TOKEN,
@@ -1307,8 +1327,13 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", set_cfg_qp_file},
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
+
+    // two pass
+    {SINGLE_INPUT, PASS_TOKEN, "Pass", set_pass},
+    {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Two pass stat", set_two_pass_stats},
     {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "InputStatFile", set_input_stat_file},
     {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "OutputStatFile", set_output_stat_file},
+
     {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
     // Picture Dimensions
     {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
@@ -1786,6 +1811,8 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->md_stage_2_3_cand_prune_th  = 15;
     config_ptr->md_stage_2_3_class_prune_th = 25;
 
+    config_ptr->pass = DEFAULT;
+
     return;
 }
 
@@ -1846,6 +1873,7 @@ void eb_config_dtor(EbConfig *config_ptr) {
         fclose(config_ptr->output_stat_file);
         config_ptr->output_stat_file = (FILE *)NULL;
     }
+    free((void*)config_ptr->stats);
     return;
 }
 
@@ -2118,6 +2146,54 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->input_stat_file && config->output_stat_file) {
+        fprintf(config->error_log_file,
+                "Error instance %u: do not set input_stat_file and output_stat_file at same time\n",
+                channel_number + 1);
+        return EB_ErrorBadParameter;
+    }
+    int pass = config->pass;
+
+    if (pass != 2 && pass != 1 && pass != DEFAULT) {
+        fprintf(config->error_log_file,
+                "Error instance %u: %d pass encode is not supported\n",
+                channel_number + 1, config->pass);
+        return EB_ErrorBadParameter;
+    }
+
+    if (pass != DEFAULT  && (config->input_stat_file || config->output_stat_file)) {
+        fprintf(config->error_log_file,
+                "Error instance %u: --pass can't work with -input-stat-file or -output-stat-file \n",
+                channel_number + 1);
+        return EB_ErrorBadParameter;
+    }
+
+    if ((pass != DEFAULT || config->input_stat_file || config->output_stat_file) && channel_number > 0) {
+        fprintf(config->error_log_file,
+                "Error instance %u: 2 pass encode for multi instance is not supported\n",
+                channel_number + 1);
+        return EB_ErrorBadParameter;
+    }
+
+    const char* stats = config->stats ? config->stats : "svtav1_2pass.log";
+    if (pass == 1) {
+        FOPEN(config->output_stat_file, stats, "wb");
+        if (!config->output_stat_file) {
+            fprintf(config->error_log_file,
+                "Error instance %u: can't open stats file %s for write \n",
+                channel_number + 1, stats);
+            return EB_ErrorBadParameter;
+        }
+    } else if (pass == 2) {
+        FOPEN(config->input_stat_file, stats, "rb");
+        if (!config->input_stat_file) {
+            fprintf(config->error_log_file,
+                "Error instance %u: can't read stats file %s for read\n",
+                channel_number + 1, stats);
+            return EB_ErrorBadParameter;
+        }
+    }
+
     return return_error;
 }
 
@@ -2182,6 +2258,10 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         const char *empty_string         = "";
         fprintf(stderr,
                 "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n");
+        fprintf(stderr, "\n%-25s\n", "Examples:");
+        fprintf(stderr, "\n%-25s", "Two passes encode:");
+        fprintf(stderr, "\n\t%s", "SvtAv1EncApp --pass 1 -i <input> -b <output>");
+        fprintf(stderr, "\n\t%s\n", "SvtAv1EncApp --pass 2 -i <input> -b <output>");
         fprintf(stderr, "\n%-25s\n", "Options:");
         while (config_entry_options[++options_token_index].token != NULL) {
             uint32_t check = check_long(
@@ -2643,6 +2723,8 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, PAETH_TOKEN) == 0) linked_token = PAETH_NEW_TOKEN;
     if (EB_STRCMP(token, SMOOTH_TOKEN) == 0) linked_token = SMOOTH_NEW_TOKEN;
     if (EB_STRCMP(token, PIC_BASED_RATE_EST_TOKEN) == 0) linked_token = PIC_BASED_RATE_EST_NEW_TOKEN;
+    if (EB_STRCMP(token, INPUT_STAT_FILE_TOKEN) == 0) linked_token = TWO_PASS_STATS_TOKEN;
+    if (EB_STRCMP(token, OUTPUT_STAT_FILE_TOKEN) == 0) linked_token = TWO_PASS_STATS_TOKEN;
 
     if (EB_STRLEN(linked_token, WARNING_LENGTH) > 1) {
         const char *message_str = " will be deprecated soon, please use ";
