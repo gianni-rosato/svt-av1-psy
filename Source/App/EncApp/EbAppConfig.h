@@ -30,6 +30,13 @@ the App.
 */
 typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortActiveType;
 
+typedef enum EncodePass {
+    ENCODE_SINGLE_PASS, //single pass mode
+    ENCODE_FIRST_PASS,  // first pass of multi pass mode
+    ENCODE_LAST_PASS,   // last pass of multi pass mode
+    MAX_ENCODE_PASS = 2,
+} EncodePass;
+
 /** The EbPtr type is intended to be used to pass pointers to and from the svt
 API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
 */
@@ -541,5 +548,6 @@ extern EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig 
                                      char *warning_str[WARNING_LENGTH]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
+uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[]);
 
 #endif //EbAppConfig_h

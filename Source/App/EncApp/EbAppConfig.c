@@ -37,6 +37,7 @@
 /* two pass token */
 #define PASS_TOKEN "--pass"
 #define TWO_PASS_STATS_TOKEN "--stats"
+#define PASSES_TOKEN "--passes"
 #define INPUT_STAT_FILE_TOKEN "-input-stat-file"
 #define OUTPUT_STAT_FILE_TOKEN "-output-stat-file"
 
@@ -323,6 +324,13 @@ static void set_two_pass_stats(const char* value, EbConfig *cfg) {
 #else
     cfg->stats = _strdup(value);
 #endif
+}
+
+static void set_passes(const char* value, EbConfig *cfg) {
+    (void)value;
+    (void)cfg;
+    /* empty function, we will handle passes at higher level*/
+    return;
 }
 
 static void set_input_stat_file(const char *value, EbConfig *cfg) {
@@ -920,6 +928,7 @@ ConfigEntry config_entry_2p[] = {
     // 2 pass
     {SINGLE_INPUT, PASS_TOKEN, "Multipass bitrate control (1: first pass, generates stats file , 2: second pass, uses stats file)", set_pass},
     {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Filename for 2 pass stats(\"svtav1_2pass.log\" : [Default])", set_two_pass_stats},
+    {SINGLE_INPUT, PASSES_TOKEN, "Number of passes (1: one pass encode, 2: two passes encode)", set_passes},
     {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "First pass stat file output", set_output_stat_file},
     {SINGLE_INPUT,
      INPUT_STAT_FILE_TOKEN,
@@ -2260,8 +2269,10 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                 "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n");
         fprintf(stderr, "\n%-25s\n", "Examples:");
         fprintf(stderr, "\n%-25s", "Two passes encode:");
-        fprintf(stderr, "\n\t%s", "SvtAv1EncApp --pass 1 -i <input> -b <output>");
-        fprintf(stderr, "\n\t%s\n", "SvtAv1EncApp --pass 2 -i <input> -b <output>");
+        fprintf(stderr, "\n\t%s", "SvtAv1EncApp <--stats svtav1_2pass.log> --pass 1 -b dst_filename -i src_filename");
+        fprintf(stderr, "\n\t%s", "SvtAv1EncApp <--stats svtav1_2pass.log> --pass 2 -b dst_filename -i src_filename");
+        fprintf(stderr, "\n    Or a combined cli:");
+        fprintf(stderr, "\n\t%s\n", "SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 -b dst_filename -i src_filename");
         fprintf(stderr, "\n%-25s\n", "Options:");
         while (config_entry_options[++options_token_index].token != NULL) {
             uint32_t check = check_long(
@@ -2451,6 +2462,53 @@ uint32_t get_number_of_channels(int32_t argc, char *const argv[]) {
         }
     }
     return 1;
+}
+
+static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[])
+{
+    char     config_string[COMMAND_LINE_MAX_SIZE];
+    const char* conflicts[] = {
+        PASS_TOKEN,
+        INPUT_STAT_FILE_TOKEN,
+        OUTPUT_STAT_FILE_TOKEN,
+        NULL,
+    };
+    int i = 0;
+    const char* token;
+    while ((token = conflicts[i])) {
+        if (find_token(argc, argv, token, config_string) == 0) {
+            fprintf(stderr,
+                "--passes 2 conflicts with %s\n", token);
+            return EB_TRUE;
+        }
+        i++;
+    }
+    return EB_FALSE;
+}
+
+uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
+    char     config_string[COMMAND_LINE_MAX_SIZE];
+    uint32_t passes;
+    if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+        pass[0] = ENCODE_SINGLE_PASS;
+        return 1;
+    }
+    passes = strtol(config_string, NULL, 0);
+    if (passes == 0 || passes > 2) {
+        fprintf(stderr,
+            "Error: The number of passes has to be within the range [1,%u]\n",
+            (uint32_t)MAX_ENCODE_PASS);
+        return 0;
+    }
+    if (passes == 1) {
+        pass[0] = ENCODE_SINGLE_PASS;
+        return 1;
+    }
+    if (check_two_pass_conflicts(argc, argv))
+        return 0;
+    pass[0] = ENCODE_FIRST_PASS;
+    pass[1] = ENCODE_LAST_PASS;
+    return 2;
 }
 
 void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_cnt) {
@@ -2762,11 +2820,12 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
         config_strings[index] = (char *)malloc(sizeof(char) * COMMAND_LINE_MAX_SIZE);
-    // Copy tokens (except for CHANNEL_NUMBER_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
-    size_t len = EB_STRLEN(CHANNEL_NUMBER_TOKEN, COMMAND_LINE_MAX_SIZE);
+    // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
+    size_t len = COMMAND_LINE_MAX_SIZE;
     for (token_index = 0; token_index < argc; ++token_index) {
         if ((argv[token_index][0] == '-') &&
             strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
+            strncmp(argv[token_index], PASSES_TOKEN, len) &&
             !is_negative_number(argv[token_index]))
             cmd_copy[cmd_token_cnt++] = argv[token_index];
     }
