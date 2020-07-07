@@ -23,35 +23,39 @@ jobs:
         run: cmake --build Build-static --parallel 4 --config Release
       - name: Build shared SVT-AV1
         run: cmake --build Build-shared --parallel 4 --config Release
-      - name: Zip shared build
-        run: 7z.exe a SvtAv1Enc-shared.zip ./shared/Release/SvtAv1Enc.dll ./shared/Release/SvtAv1Enc.lib ./shared/Release/SvtAv1EncApp.exe
+      - name: Pack artifacts
+        run: |
+          7z.exe a SvtAv1Enc-shared.zip ./shared/Release/SvtAv1Enc.dll ./shared/Release/SvtAv1Enc.lib ./shared/Release/SvtAv1EncApp.exe
+          7z.exe a SvtAv1EncApp.zip ./static/Release/SvtAv1EncApp.exe
+          7z.exe a SvtAv1DecApp.zip ./static/Release/SvtAv1DecApp.exe
+          7z.exe a SvtAv1Enclib.zip ./static/Release/SvtAv1Enc.lib
 
       - name: Get Current Release
         id: get_release
         shell: bash
         run: echo "::set-output name=upload_url::$(curl -L https://api.github.com/repos/${{ github.repository }}/releases/tags/$(cut -d/ -f3 <<< ${{ github.ref }}) | jq -r ."upload_url")"
 
-      - name: Upload static SvtAv1EncApp.exe
+      - name: Upload static SvtAv1EncApp.zip
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: static/Release/SvtAv1EncApp.exe
-          asset_name: SvtAv1EncApp.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
-      - name: Upload static SvtAv1DecApp.exe
+          asset_path: SvtAv1EncApp.zip
+          asset_name: SvtAv1EncApp.zip
+          asset_content_type: application/zip
+      - name: Upload static SvtAv1DecApp.zip
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: static/Release/SvtAv1DecApp.exe
-          asset_name: SvtAv1DecApp.exe
-          asset_content_type: application/vnd.microsoft.portable-executable
-      - name: Upload static SvtAv1Enc.lib
+          asset_path: SvtAv1DecApp.zip
+          asset_name: SvtAv1DecApp.zip
+          asset_content_type: application/zip
+      - name: Upload static SvtAv1Enclib.zip
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: static/Release/SvtAv1Enc.lib
-          asset_name: SvtAv1Enc.lib
-          asset_content_type: application/octet-stream
+          asset_path: SvtAv1Enclib.zip
+          asset_name: SvtAv1Enclib.zip
+          asset_content_type: application/zip
 
       - name: Upload SvtAv1Enc-shared.zip
         uses: actions/upload-release-asset@v1
