@@ -2506,6 +2506,19 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     }
     if (check_two_pass_conflicts(argc, argv))
         return 0;
+
+    int preset = MAX_ENC_PRESET;
+    if (find_token(argc, argv, PRESET_TOKEN, config_string) == 0
+        || find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0) {
+        preset = strtol(config_string, NULL, 0);
+    }
+    if (preset > 4) {
+        fprintf(stderr,
+            "\nWarn: --passes 2 for preset > 4 is not supported yet, force single pass\n\n");
+        pass[0] = ENCODE_SINGLE_PASS;
+        return 1;
+    }
+
     pass[0] = ENCODE_FIRST_PASS;
     pass[1] = ENCODE_LAST_PASS;
     return 2;
