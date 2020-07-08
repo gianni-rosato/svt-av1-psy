@@ -161,6 +161,11 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass)
                     (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
                     (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
 
+                //TODO: remove this if we can use a quick first pass in svt av1 library.
+                if (pass == ENCODE_FIRST_PASS) {
+                    configs[inst_cnt]->enc_mode = MAX_ENC_PRESET;
+                }
+
                 return_errors[inst_cnt] =
                     init_encoder(configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
                 return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
