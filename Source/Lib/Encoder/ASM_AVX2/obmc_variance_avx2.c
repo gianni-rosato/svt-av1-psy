@@ -63,18 +63,17 @@ static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, co
 static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
                                      const int32_t *mask, unsigned int *const sse, int *const sum,
                                      const int w, const int h) {
-    int            n = 0, width, height = h;
+    int            n = 0, height = h;
     __m128i        v_sum_d  = _mm_setzero_si128();
     __m128i        v_sse_d  = _mm_setzero_si128();
     const __m256i  v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
     __m128i        v_d;
-    const uint8_t *pre_temp;
     assert(w >= 8);
     assert(IS_POWER_OF_TWO(w));
     assert(IS_POWER_OF_TWO(h));
     do {
-        width    = w;
-        pre_temp = pre;
+        int width    = w;
+        const uint8_t *pre_temp = pre;
         do {
             const __m128i v_p_b  = _mm_loadl_epi64((const __m128i *)pre_temp);
             const __m256i v_m_d  = _mm256_loadu_si256((__m256i const *)(mask + n));
@@ -117,10 +116,9 @@ static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, c
 static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
                                       const int32_t *mask, unsigned int *const sse, int *const sum,
                                       const int w, const int h) {
-    int            n = 0, width, height = h;
+    int            n = 0, height = h;
     __m256i        v_d;
     __m128i        res0;
-    const uint8_t *pre_temp;
     const __m256i  v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
     __m256i        v_sum_d  = _mm256_setzero_si256();
     __m256i        v_sse_d  = _mm256_setzero_si256();
@@ -129,8 +127,8 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
     assert(IS_POWER_OF_TWO(w));
     assert(IS_POWER_OF_TWO(h));
     do {
-        width    = w;
-        pre_temp = pre;
+        int width = w;
+        const uint8_t *pre_temp = pre;
         do {
             const __m128i v_p_b  = _mm_loadu_si128((__m128i *)pre_temp);
             const __m256i v_m0_d = _mm256_loadu_si256((__m256i const *)(mask + n));

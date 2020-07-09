@@ -464,12 +464,8 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
     assert(N >= 64);
     int            rate;
     int64_t        dist;
-    int64_t        rd, best_rd = INT64_MAX;
-    int8_t         wedge_index;
-    int8_t         wedge_sign;
+    int64_t        best_rd = INT64_MAX;
     int8_t         wedge_types = (1 << get_wedge_bits_lookup(bsize));
-    const uint8_t *mask;
-    uint64_t       sse;
     const int      bd_round = 0;
     DECLARE_ALIGNED(32, int16_t, residual0[MAX_SB_SQUARE]); // src - pred0
     if (hbd_mode_decision) {
@@ -498,19 +494,19 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
 
     av1_wedge_compute_delta_squares(ds, residual0, residual1, N);
 
-    for (wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
-        mask = av1_get_contiguous_soft_mask(wedge_index, 0, bsize);
+    for (int8_t wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
+        const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, 0, bsize);
 
-        wedge_sign = av1_wedge_sign_from_residuals(ds, mask, N, sign_limit);
+        int8_t wedge_sign = av1_wedge_sign_from_residuals(ds, mask, N, sign_limit);
 
         mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
-        sse  = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
+        uint64_t sse = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse  = ROUND_POWER_OF_TWO(sse, bd_round);
 
         model_rd_with_curvfit(
                 picture_control_set_ptr, bsize, sse, N, &rate, &dist,context_ptr, full_lambda);
 
-        rd = RDCOST(full_lambda, rate, dist);
+        int64_t rd = RDCOST(full_lambda, rate, dist);
 
         if (rd < best_rd) {
             *best_wedge_index = wedge_index;
@@ -626,23 +622,20 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
     assert(N >= 64);
     int            rate;
     int64_t        dist;
-    int64_t        rd, best_rd = INT64_MAX;
-    int8_t         wedge_index;
+    int64_t        best_rd = INT64_MAX;
     int8_t         wedge_types = (1 << get_wedge_bits_lookup(bsize));
-    const uint8_t *mask;
-    uint64_t       sse;
     //const int hbd = 0;// is_cur_buf_hbd(xd);
     const int bd_round = 0;
-    for (wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
-        mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
-        sse  = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
-        sse  = ROUND_POWER_OF_TWO(sse, bd_round);
+    for (int8_t wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
+        const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
+        uint64_t       sse  = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
+        sse                 = ROUND_POWER_OF_TWO(sse, bd_round);
         model_rd_with_curvfit(
-                picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
+            picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
         // model_rd_sse_fn[MODELRD_TYPE_MASKED_COMPOUND](cpi, x, bsize, 0, sse, N, &rate, &dist);
         // rate += x->wedge_idx_cost[bsize][wedge_index];
         rate += candidate_ptr->md_rate_estimation_ptr->wedge_idx_fac_bits[bsize][wedge_index];
-        rd = RDCOST(full_lambda, rate, dist);
+        int64_t rd = RDCOST(full_lambda, rate, dist);
 
         if (rd < best_rd) {
             *best_wedge_index = wedge_index;
@@ -1100,7 +1093,6 @@ EbErrorType get_single_prediction_for_obmc_luma_hbd(
     DECLARE_ALIGNED(
             32, uint16_t, tmp_dstY[128 * 128]); //move this to context if stack does not hold.
 
-    MV                 mv, mv_q4;
     int32_t            subpel_x, subpel_y;
     uint16_t *         src_ptr;
     uint16_t *         dst_ptr;
@@ -1109,45 +1101,41 @@ EbErrorType get_single_prediction_for_obmc_luma_hbd(
     ConvolveParams     conv_params;
     InterpFilterParams filter_params_x, filter_params_y;
 
-    {
-        //List0-Y
-        mv.col = mv_unit->mv[REF_LIST_0].x;
-        mv.row = mv_unit->mv[REF_LIST_0].y;
-        assert(ref_pic_list0 != NULL);
-        src_ptr = (uint16_t *)ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pu_origin_x +
-                  (ref_pic_list0->origin_y + pu_origin_y) * ref_pic_list0->stride_y;
-        dst_ptr = (uint16_t *)prediction_ptr->buffer_y + prediction_ptr->origin_x + dst_origin_x +
-                  (prediction_ptr->origin_y + dst_origin_y) * prediction_ptr->stride_y;
-        src_stride = ref_pic_list0->stride_y;
-        dst_stride = prediction_ptr->stride_y;
+    //List0-Y
+    assert(ref_pic_list0 != NULL);
+    src_ptr = (uint16_t *)ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pu_origin_x +
+        (ref_pic_list0->origin_y + pu_origin_y) * ref_pic_list0->stride_y;
+    dst_ptr = (uint16_t *)prediction_ptr->buffer_y + prediction_ptr->origin_x + dst_origin_x +
+        (prediction_ptr->origin_y + dst_origin_y) * prediction_ptr->stride_y;
+    src_stride = ref_pic_list0->stride_y;
+    dst_stride = prediction_ptr->stride_y;
 
-        mv_q4 = clamp_mv_to_umv_border_sb(
-                xd,
-                &mv,
-                bwidth,
-                bheight,
-                0,
-                0); //mv_q4 has 1 extra bit for fractionnal to accomodate chroma when accessing filter coeffs.
-        subpel_x = mv_q4.col & SUBPEL_MASK;
-        subpel_y = mv_q4.row & SUBPEL_MASK;
-        src_ptr  = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
-        conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstY, 128, is_compound, bit_depth);
-        av1_get_convolve_filter_params(
-                interp_filters, &filter_params_x, &filter_params_y, bwidth, bheight);
+    MV mv_q4 = clamp_mv_to_umv_border_sb(
+        xd,
+        &(const MV){.col = mv_unit->mv[REF_LIST_0].x, .row = mv_unit->mv[REF_LIST_0].y},
+        bwidth,
+        bheight,
+        0,
+        0); //mv_q4 has 1 extra bit for fractionnal to accomodate chroma when accessing filter coeffs.
+    subpel_x    = mv_q4.col & SUBPEL_MASK;
+    subpel_y    = mv_q4.row & SUBPEL_MASK;
+    src_ptr     = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
+    conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstY, 128, is_compound, bit_depth);
+    av1_get_convolve_filter_params(
+        interp_filters, &filter_params_x, &filter_params_y, bwidth, bheight);
 
-        convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](src_ptr,
-                                                               src_stride,
-                                                               dst_ptr,
-                                                               dst_stride,
-                                                               bwidth,
-                                                               bheight,
-                                                               &filter_params_x,
-                                                               &filter_params_y,
-                                                               subpel_x,
-                                                               subpel_y,
-                                                               &conv_params,
-                                                               bit_depth);
-    }
+    convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](src_ptr,
+                                                           src_stride,
+                                                           dst_ptr,
+                                                           dst_stride,
+                                                           bwidth,
+                                                           bheight,
+                                                           &filter_params_x,
+                                                           &filter_params_y,
+                                                           subpel_x,
+                                                           subpel_y,
+                                                           &conv_params,
+                                                           bit_depth);
     return return_error;
 }
 EbErrorType get_single_prediction_for_obmc_chroma_hbd(
@@ -1256,11 +1244,10 @@ EbErrorType get_single_prediction_for_obmc_luma(uint32_t interp_filters, MacroBl
                                                 EbPictureBufferDesc *prediction_ptr,
                                                 uint16_t dst_origin_x, uint16_t dst_origin_y) {
     EbErrorType return_error = EB_ErrorNone;
-    uint8_t     is_compound  = 0;
+    const int   is_compound  = 0;
     DECLARE_ALIGNED(
             32, uint16_t, tmp_dstY[128 * 128]); //move this to context if stack does not hold.
 
-    MV                 mv, mv_q4;
     int32_t            subpel_x, subpel_y;
     uint8_t *          src_ptr;
     uint8_t *          dst_ptr;
@@ -1269,44 +1256,40 @@ EbErrorType get_single_prediction_for_obmc_luma(uint32_t interp_filters, MacroBl
     ConvolveParams     conv_params;
     InterpFilterParams filter_params_x, filter_params_y;
 
-    {
-        //List0-Y
-        mv.col = mv_unit->mv[REF_LIST_0].x;
-        mv.row = mv_unit->mv[REF_LIST_0].y;
-        assert(ref_pic_list0 != NULL);
-        src_ptr = ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pu_origin_x +
-                  (ref_pic_list0->origin_y + pu_origin_y) * ref_pic_list0->stride_y;
-        dst_ptr = prediction_ptr->buffer_y + prediction_ptr->origin_x + dst_origin_x +
-                  (prediction_ptr->origin_y + dst_origin_y) * prediction_ptr->stride_y;
-        src_stride = ref_pic_list0->stride_y;
-        dst_stride = prediction_ptr->stride_y;
+    //List0-Y
+    assert(ref_pic_list0 != NULL);
+    src_ptr = ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pu_origin_x +
+        (ref_pic_list0->origin_y + pu_origin_y) * ref_pic_list0->stride_y;
+    dst_ptr = prediction_ptr->buffer_y + prediction_ptr->origin_x + dst_origin_x +
+        (prediction_ptr->origin_y + dst_origin_y) * prediction_ptr->stride_y;
+    src_stride = ref_pic_list0->stride_y;
+    dst_stride = prediction_ptr->stride_y;
 
-        mv_q4 = clamp_mv_to_umv_border_sb(
-                xd,
-                &mv,
-                bwidth,
-                bheight,
-                0,
-                0); //mv_q4 has 1 extra bit for fractionnal to accomodate chroma when accessing filter coeffs.
-        subpel_x = mv_q4.col & SUBPEL_MASK;
-        subpel_y = mv_q4.row & SUBPEL_MASK;
-        src_ptr  = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
-        conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstY, 128, is_compound, EB_8BIT);
-        av1_get_convolve_filter_params(
-                interp_filters, &filter_params_x, &filter_params_y, bwidth, bheight);
+    MV mv_q4 = clamp_mv_to_umv_border_sb(
+        xd,
+        &(const MV){.row = mv_unit->mv[REF_LIST_0].y, .col = mv_unit->mv[REF_LIST_0].x},
+        bwidth,
+        bheight,
+        0,
+        0); //mv_q4 has 1 extra bit for fractionnal to accomodate chroma when accessing filter coeffs.
+    subpel_x    = mv_q4.col & SUBPEL_MASK;
+    subpel_y    = mv_q4.row & SUBPEL_MASK;
+    src_ptr     = src_ptr + (mv_q4.row >> SUBPEL_BITS) * src_stride + (mv_q4.col >> SUBPEL_BITS);
+    conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstY, 128, is_compound, EB_8BIT);
+    av1_get_convolve_filter_params(
+        interp_filters, &filter_params_x, &filter_params_y, bwidth, bheight);
 
-        convolve[subpel_x != 0][subpel_y != 0][is_compound](src_ptr,
-                                                            src_stride,
-                                                            dst_ptr,
-                                                            dst_stride,
-                                                            bwidth,
-                                                            bheight,
-                                                            &filter_params_x,
-                                                            &filter_params_y,
-                                                            subpel_x,
-                                                            subpel_y,
-                                                            &conv_params);
-    }
+    convolve[subpel_x != 0][subpel_y != 0][is_compound](src_ptr,
+                                                        src_stride,
+                                                        dst_ptr,
+                                                        dst_stride,
+                                                        bwidth,
+                                                        bheight,
+                                                        &filter_params_x,
+                                                        &filter_params_y,
+                                                        subpel_x,
+                                                        subpel_y,
+                                                        &conv_params);
     return return_error;
 }
 
@@ -3081,9 +3064,6 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             ? EB_TRUE
             : EB_FALSE;
     const int32_t num_planes      = use_uv ? MAX_MB_PLANE : 1;
-    int64_t       rd              = INT64_MAX;
-    int32_t       switchable_rate = 0;
-    int32_t       i;
     int32_t       tmp_rate;
     int64_t       tmp_dist;
 
@@ -3099,7 +3079,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters = //EIGHTTAP_REGULAR ;
                      av1_broadcast_interp_filter(av1_unswitchable_filter(assign_filter));
 
-    switchable_rate = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
+    int32_t switchable_rate = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
 
     av1_inter_prediction(
             picture_control_set_ptr,
@@ -3142,7 +3122,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                     &tmp_dist,
                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
-    rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
+    int64_t rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
 
     if (assign_filter == SWITCHABLE) {
         // do interp_filter search
@@ -3150,24 +3130,22 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                 candidate_buffer_ptr,
                 picture_control_set_ptr,
                 md_context_ptr->blk_geom->bsize) /*&& av1_is_interp_search_needed(xd)*/) {
-            const int32_t filter_set_size = DUAL_FILTER_SET_SIZE;
+            const int filter_set_size = DUAL_FILTER_SET_SIZE;
             int32_t       best_in_temp    = 0;
             uint32_t      best_filters    = 0; // mbmi->interp_filters;
             if (md_context_ptr->interpolation_search_level &&
                 picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter) {
-                int32_t tmp_rs;
-                int64_t tmp_rd;
 
                 // default to (R,R): EIGHTTAP_REGULARxEIGHTTAP_REGULAR
-                int32_t best_dual_mode = 0;
+                int best_dual_mode = 0;
                 // Find best of {R}x{R,Sm,Sh}
                 // EIGHTTAP_REGULAR mode is calculated beforehand
-                for (i = 1; i < SWITCHABLE_FILTERS; ++i) {
+                for (int i = 1; i < SWITCHABLE_FILTERS; ++i) {
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      (InterpFilter)av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                                            (InterpFilter)filter_sets[i][1]);
 
-                    tmp_rs = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
+                    const int32_t tmp_rs = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
 
                     av1_inter_prediction(
                             picture_control_set_ptr,
@@ -3208,7 +3186,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
-                    tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+                    const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
                         best_dual_mode  = i;
@@ -3220,13 +3198,14 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                 }
 
                 // From best of horizontal EIGHTTAP_REGULAR modes, check vertical modes
-                for (i = best_dual_mode + SWITCHABLE_FILTERS; i < filter_set_size;
+                for (int i = best_dual_mode + SWITCHABLE_FILTERS; i < filter_set_size;
                      i += SWITCHABLE_FILTERS) {
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                              (InterpFilter)filter_sets[i][1]);
 
-                    tmp_rs = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
+                    const int32_t tmp_rs = eb_av1_get_switchable_rate(
+                        candidate_buffer_ptr, cm, md_context_ptr);
 
                     av1_inter_prediction(
                             picture_control_set_ptr,
@@ -3267,7 +3246,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
-                    tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+                    const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
@@ -3278,10 +3257,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                 }
             } else {
                 // EIGHTTAP_REGULAR mode is calculated beforehand
-                for (i = 1; i < filter_set_size; ++i) {
-                    int32_t tmp_rs;
-                    int64_t tmp_rd;
-
+                for (int i = 1; i < filter_set_size; ++i) {
                     if (/*cm->seq_params.enable_dual_filter*/ picture_control_set_ptr
                                                                       ->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter == 0)
                         if (filter_sets[i][0] != filter_sets[i][1]) continue;
@@ -3290,7 +3266,8 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                      av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                              (InterpFilter)filter_sets[i][1]);
 
-                    tmp_rs = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
+                    const int32_t tmp_rs = eb_av1_get_switchable_rate(
+                        candidate_buffer_ptr, cm, md_context_ptr);
 
                     av1_inter_prediction(
                             picture_control_set_ptr,
@@ -3332,7 +3309,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
-                    tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+                    const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
 
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
@@ -3372,8 +3349,6 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
     int32_t  dst_stride;
     uint16_t buf_width;
     uint16_t buf_height;
-    uint8_t  ss_x = 1; // subsamplings
-    uint8_t  ss_y = 1;
 
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
@@ -3435,6 +3410,8 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
 
     if (perform_chroma) {
         if (blk_geom->bwidth >= 16 && blk_geom->bheight >= 16) {
+            const uint8_t ss_x = 1; // subsamplings
+            const uint8_t ss_y = 1;
             // Cb
             if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
                 src_ptr_l0 = ref_pic_list0->buffer_cb + (is16bit ? 2 : 1)
@@ -3830,8 +3807,6 @@ EbErrorType warped_motion_prediction_16bit_pipeline(
     int32_t  dst_stride;
     uint16_t buf_width;
     uint16_t buf_height;
-    uint8_t  ss_x = 1; // subsamplings
-    uint8_t  ss_y = 1;
 
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, ref_frame_type);
@@ -3897,6 +3872,8 @@ EbErrorType warped_motion_prediction_16bit_pipeline(
 
     if (perform_chroma) {
         if (blk_geom->bwidth >= 16 && blk_geom->bheight >= 16) {
+            const uint8_t ss_x = 1; // subsamplings
+            const uint8_t ss_y = 1;
             // Cb
             if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
                 src_ptr_l0 = ref_pic_list0->buffer_cb + (is16bit ? 2 : 1)

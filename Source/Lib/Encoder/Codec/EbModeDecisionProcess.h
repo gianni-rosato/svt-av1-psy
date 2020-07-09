@@ -424,6 +424,8 @@ extern void lambda_assign_random_access(uint32_t *fast_lambda, uint32_t *full_la
                                         uint32_t *full_chroma_lambda_sao,
                                         uint8_t qp_hierarchical_position, uint8_t qp,
                                         uint8_t chroma_qp);
+void        av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint8_t bit_depth,
+                              uint16_t qp_index, EbBool multiply_lambda);
 
 extern const EbLambdaAssignFunc    lambda_assignment_function_table[4];
 extern const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4];

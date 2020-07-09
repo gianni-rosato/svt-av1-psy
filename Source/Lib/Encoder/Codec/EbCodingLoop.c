@@ -1157,8 +1157,6 @@ static void av1_encode_generate_recon(EncDecContext *context_ptr, uint32_t origi
                                       EbPictureBufferDesc *residual16bit, // no basis/offset
                                       uint32_t component_mask, uint16_t *eob)
 {
-    uint32_t       pred_luma_offset;
-    uint32_t       pred_chroma_offset;
     BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
 
@@ -1170,8 +1168,9 @@ static void av1_encode_generate_recon(EncDecContext *context_ptr, uint32_t origi
     //**********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
         {
-            pred_luma_offset = (pred_samples->origin_y + origin_y) * pred_samples->stride_y +
-                               (pred_samples->origin_x + origin_x);
+            uint32_t pred_luma_offset = (pred_samples->origin_y + origin_y) *
+                    pred_samples->stride_y +
+                (pred_samples->origin_x + origin_x);
             if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .y_has_coeff[context_ptr->txb_itr] == EB_TRUE &&
                 blk_ptr->skip_flag == EB_FALSE) {
@@ -1199,8 +1198,8 @@ static void av1_encode_generate_recon(EncDecContext *context_ptr, uint32_t origi
 
         uint32_t round_origin_x = (origin_x >> 3) << 3; // for Chroma blocks with size of 4
         uint32_t round_origin_y = (origin_y >> 3) << 3; // for Chroma blocks with size of 4
-        pred_chroma_offset =
-            (((pred_samples->origin_y + round_origin_y) >> 1) * pred_samples->stride_cb) +
+        uint32_t pred_chroma_offset = (((pred_samples->origin_y + round_origin_y) >> 1) *
+                                       pred_samples->stride_cb) +
             ((pred_samples->origin_x + round_origin_x) >> 1);
 
         //**********************************
@@ -1277,9 +1276,6 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
                                             EbPictureBufferDesc *pred_samples, // no basis/offset
                                             EbPictureBufferDesc *residual16bit, // no basis/offset
                                             uint32_t component_mask, uint16_t *eob) {
-    uint32_t pred_luma_offset;
-    uint32_t pred_chroma_offset;
-
     BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
 
@@ -1288,8 +1284,9 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
     //**********************************
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
         {
-            pred_luma_offset = (pred_samples->origin_y + origin_y) * pred_samples->stride_y +
-                               (pred_samples->origin_x + origin_x);
+            uint32_t pred_luma_offset = (pred_samples->origin_y + origin_y) *
+                    pred_samples->stride_y +
+                (pred_samples->origin_x + origin_x);
             if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].y_has_coeff[context_ptr->txb_itr] == EB_TRUE && blk_ptr->skip_flag == EB_FALSE) {
 
                 uint16_t *pred_buffer = ((uint16_t *)pred_samples->buffer_y) + pred_luma_offset;
@@ -1322,8 +1319,8 @@ static void av1_encode_generate_recon_16bit(EncDecContext *context_ptr, uint32_t
         uint32_t round_origin_x = (origin_x >> 3) << 3; // for Chroma blocks with size of 4
         uint32_t round_origin_y = (origin_y >> 3) << 3; // for Chroma blocks with size of 4
 
-        pred_chroma_offset =
-            (((pred_samples->origin_y + round_origin_y) >> 1) * pred_samples->stride_cb) +
+        uint32_t pred_chroma_offset = (((pred_samples->origin_y + round_origin_y) >> 1) *
+                                       pred_samples->stride_cb) +
             ((pred_samples->origin_x + round_origin_x) >> 1);
 
         if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].u_has_coeff[context_ptr->txb_itr] == EB_TRUE && blk_ptr->skip_flag == EB_FALSE) {

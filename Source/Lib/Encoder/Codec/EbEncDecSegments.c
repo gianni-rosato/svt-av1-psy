@@ -88,9 +88,11 @@ void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, u
     for (unsigned y = 0; y < pic_height_sb; ++y) {
         for (unsigned x = 0; x < pic_width_sb; ++x) {
             unsigned band_index = BAND_INDEX(
-                x, y, segments_ptr->segment_band_count, segments_ptr->sb_band_count),
-            row_index = ROW_INDEX(y, segments_ptr->segment_row_count, segments_ptr->sb_row_count),
-            segment_index = SEGMENT_INDEX(row_index, band_index, segments_ptr->segment_band_count);
+                x, y, segments_ptr->segment_band_count, segments_ptr->sb_band_count);
+            unsigned row_index = ROW_INDEX(
+                y, segments_ptr->segment_row_count, segments_ptr->sb_row_count);
+            unsigned segment_index = SEGMENT_INDEX(
+                row_index, band_index, segments_ptr->segment_band_count);
 
             //++segments_ptr->inputMap.inputDependencyMap[segment_index];
             ++segments_ptr->valid_sb_count_array[segment_index];
@@ -106,16 +108,16 @@ void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, u
     }
 
     // Initialize the row-based controls
-    for (uint32_t row_index = 0; row_index < segments_ptr->segment_row_count; ++row_index) {
+    for (unsigned row_index = 0; row_index < segments_ptr->segment_row_count; ++row_index) {
         unsigned y = ((row_index * segments_ptr->sb_row_count) +
                       (segments_ptr->segment_row_count - 1)) /
-            segments_ptr->segment_row_count,
-        y_last = ((((row_index + 1) * segments_ptr->sb_row_count) +
-                   (segments_ptr->segment_row_count - 1)) /
-                  segments_ptr->segment_row_count) -
-                 1,
-        band_index =
-            BAND_INDEX(0, y, segments_ptr->segment_band_count, segments_ptr->sb_band_count);
+            segments_ptr->segment_row_count;
+        unsigned y_last = ((((row_index + 1) * segments_ptr->sb_row_count) +
+                           (segments_ptr->segment_row_count - 1)) /
+                          segments_ptr->segment_row_count) -
+            1;
+        unsigned band_index = BAND_INDEX(
+            0, y, segments_ptr->segment_band_count, segments_ptr->sb_band_count);
 
         segments_ptr->row_array[row_index].starting_seg_index =
             (uint16_t)SEGMENT_INDEX(row_index, band_index, segments_ptr->segment_band_count);

@@ -1306,7 +1306,7 @@ static EbErrorType prediction_structure_ctor(
             // Go through a single pass of the Leading Pictures and Init pictures
             for (picture_number = 0, entry_index = 0;
                  picture_number < predictionStructurePtr->steady_state_index;
-                 ++picture_number) {
+                 ++picture_number, ++entry_index) {
                 // Go through each Reference picture and accumulate counts
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1322,9 +1322,6 @@ static EbErrorType prediction_structure_ctor(
                         ++predictionStructurePtr->pred_struct_entry_ptr_array[dep_index]
                               ->dep_list0.list_count;
                 }
-
-                // Increment the entry_index
-                ++entry_index;
             }
 
             // Go through an entire maximum extent pass for the Steady-state pictures
@@ -1380,7 +1377,7 @@ static EbErrorType prediction_structure_ctor(
             // Go through a single pass of the Leading Pictures and Init pictures
             for (picture_number = 0, entry_index = 0;
                  picture_number < predictionStructurePtr->steady_state_index;
-                 ++picture_number) {
+                 ++picture_number, ++entry_index) {
                 // Go through each Reference picture and accumulate counts
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1401,9 +1398,6 @@ static EbErrorType prediction_structure_ctor(
                                 ->ref_list0.reference_list[ref_index];
                     }
                 }
-
-                // Increment the entry_index
-                ++entry_index;
             }
 
             // Go through an entire maximum extent pass for the Steady-state pictures
@@ -1454,7 +1448,7 @@ static EbErrorType prediction_structure_ctor(
             // Go through a single pass of the Leading Pictures and Init pictures
             for (picture_number = 0, entry_index = 0;
                  picture_number < predictionStructurePtr->steady_state_index;
-                 ++picture_number) {
+                 ++picture_number, ++entry_index) {
                 // Go through each Reference picture and accumulate counts
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1470,9 +1464,6 @@ static EbErrorType prediction_structure_ctor(
                         ++predictionStructurePtr->pred_struct_entry_ptr_array[dep_index]
                               ->dep_list1.list_count;
                 }
-
-                // Increment the entry_index
-                ++entry_index;
             }
 
             // Go through an entire maximum extent pass for the Steady-state pictures
@@ -1528,7 +1519,7 @@ static EbErrorType prediction_structure_ctor(
             // Go through a single pass of the Leading Pictures and Init pictures
             for (picture_number = 0, entry_index = 0;
                  picture_number < predictionStructurePtr->steady_state_index;
-                 ++picture_number) {
+                 ++picture_number, ++entry_index) {
                 // Go through each Reference picture and accumulate counts
                 for (ref_index = 0;
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1549,9 +1540,6 @@ static EbErrorType prediction_structure_ctor(
                                 ->ref_list1.reference_list[ref_index];
                     }
                 }
-
-                // Increment the entry_index
-                ++entry_index;
             }
 
             // Go through an entire maximum extent pass for the Steady-state pictures
@@ -1606,30 +1594,22 @@ static EbErrorType prediction_structure_ctor(
     //----------------------------------------
     {
         // Counts & Indicies
-        uint32_t ref_index;
         uint32_t dep_index;
-        uint32_t entry_index;
         uint32_t current_poc_index;
         uint32_t ref_poc_index;
 
         uint32_t  decode_order_table_size;
         int32_t * decode_order_table;
         uint32_t *display_order_table;
-        uint32_t  gop_number;
-        uint32_t  base_number;
 
         // Timeline Map Variables
         EbBool * timeline_map;
         uint32_t timeline_size;
 
-        int32_t dep_list_max;
-        int32_t dep_list_min;
-
         int32_t lifetime_start;
         int32_t lifetime_span;
 
         int32_t delta_poc;
-        int32_t prev_delta_poc;
         EbBool  poc_in_reference_list0;
         EbBool  poc_in_reference_list1;
         EbBool  poc_in_timeline;
@@ -1654,8 +1634,8 @@ static EbErrorType prediction_structure_ctor(
         for (current_poc_index = 0, entry_index = 0; current_poc_index < decode_order_table_size;
              ++current_poc_index) {
             // Set the Decode Order
-            gop_number  = (current_poc_index / predictionStructurePtr->pred_struct_period);
-            base_number = gop_number * predictionStructurePtr->pred_struct_period;
+            const uint32_t gop_number = current_poc_index / predictionStructurePtr->pred_struct_period;
+            const uint32_t base_number = gop_number * predictionStructurePtr->pred_struct_period;
 
             if (predType == EB_PRED_RANDOM_ACCESS)
                 decode_order_table[current_poc_index] =
@@ -1675,8 +1655,8 @@ static EbErrorType prediction_structure_ctor(
         // Construct the timeline map from the dependency lists
         for (ref_poc_index = 0, entry_index = 0; ref_poc_index < timeline_size; ++ref_poc_index) {
             // Initialize Max to most negative signed value and Min to most positive signed value
-            dep_list_max = MIN_SIGNED_VALUE;
-            dep_list_min = MAX_SIGNED_VALUE;
+            int32_t dep_list_max = MIN_SIGNED_VALUE;
+            int32_t dep_list_min = MAX_SIGNED_VALUE;
 
             // Find dep_list_max and dep_list_min for the entry_index in the prediction structure for dep_list0
             for (dep_index = 0;
@@ -1795,7 +1775,7 @@ static EbErrorType prediction_structure_ctor(
                 ->ref_pics_list1_total_count_minus1 = ~0;
 
             // Create the Negative List
-            prev_delta_poc = 0;
+            int32_t prev_delta_poc = 0;
             for (ref_poc_index = current_poc_index - 1; (int32_t)ref_poc_index >= 0;
                  --ref_poc_index) {
                 // Find the delta_poc value

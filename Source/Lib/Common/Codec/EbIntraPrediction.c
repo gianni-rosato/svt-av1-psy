@@ -52,13 +52,14 @@ static const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM] = {
     13, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4,
 };
 // Some basic checks on weights for smooth predictor.
-#define sm_weights_sanity_checks(weights_w, weights_h, weights_scale, \
-                                 pred_scale)                          \
-  assert(weights_w[0] < weights_scale);                               \
-  assert(weights_h[0] < weights_scale);                               \
-  assert(weights_scale - weights_w[bw - 1] < weights_scale);          \
-  assert(weights_scale - weights_h[bh - 1] < weights_scale);          \
-  assert(pred_scale < 31)  // ensures no overflow when calculating predictor.
+#define sm_weights_sanity_checks(weights_w, weights_h, weights_scale, pred_scale) \
+    do {                                                                          \
+        assert(weights_w[0] < weights_scale);                                     \
+        assert(weights_h[0] < weights_scale);                                     \
+        assert(weights_scale - weights_w[bw - 1] < weights_scale);                \
+        assert(weights_scale - weights_h[bh - 1] < weights_scale);                \
+        assert(pred_scale < 31);                                                  \
+    } while (0) // ensures no overflow when calculating predictor.
 #define MIDRANGE_VALUE_8BIT    128
 #define MIDRANGE_VALUE_10BIT   512
 
@@ -252,8 +253,6 @@ void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const uint8_t *above, const uint8_t *left,
     int32_t upsample_left, int32_t dx, int32_t dy)
 {
-    int32_t y;
-
     (void)above;
     (void)dx;
 
@@ -263,11 +262,8 @@ void eb_av1_dr_prediction_z3_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const int32_t max_base_y = (bw + bh - 1) << upsample_left;
     const int32_t frac_bits = 6 - upsample_left;
     const int32_t base_inc = 1 << upsample_left;
-    y = dy;
-    for (int32_t c = 0; c < bw; ++c, y += dy) {
-        int32_t base, shift;
-        base = y >> frac_bits;
-        shift = ((y << upsample_left) & 0x3F) >> 1;
+    for (int32_t c = 0, y = dy; c < bw; ++c, y += dy) {
+        int32_t base = y >> frac_bits, shift = ((y << upsample_left) & 0x3F) >> 1;
 
         for (int32_t r = 0; r < bh; ++r, base += base_inc) {
             if (base < max_base_y) {
@@ -287,8 +283,6 @@ void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const uint8_t *above, const uint8_t *left,
     int32_t upsample_above, int32_t dx, int32_t dy)
 {
-    int32_t x;
-
     (void)left;
     (void)dy;
     assert(dy == 1);
@@ -297,11 +291,8 @@ void eb_av1_dr_prediction_z1_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const int32_t max_base_x = ((bw + bh) - 1) << upsample_above;
     const int32_t frac_bits = 6 - upsample_above;
     const int32_t base_inc = 1 << upsample_above;
-    x = dx;
-    for (int32_t r = 0; r < bh; ++r, dst += stride, x += dx) {
-        int32_t base, shift;
-        base = x >> frac_bits;
-        shift = ((x << upsample_above) & 0x3F) >> 1;
+    for (int32_t r = 0, x = dx; r < bh; ++r, dst += stride, x += dx) {
+        int32_t base = x >> frac_bits, shift = ((x << upsample_above) & 0x3F) >> 1;
 
         if (base >= max_base_x) {
             for (int32_t i = r; i < bh; ++i) {
@@ -330,8 +321,6 @@ void eb_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     int32_t upsample_above, int32_t upsample_left, int32_t dx,
     int32_t dy)
 {
-    int32_t x;
-
     assert(dx > 0);
     assert(dy > 0);
 
@@ -339,8 +328,7 @@ void eb_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
     const int32_t frac_bits_x = 6 - upsample_above;
     const int32_t frac_bits_y = 6 - upsample_left;
     const int32_t base_inc_x = 1 << upsample_above;
-    x = -dx;
-    for (int32_t r = 0; r < bh; ++r, x -= dx, dst += stride) {
+    for (int32_t r = 0, x = -dx; r < bh; ++r, x -= dx, dst += stride) {
         int32_t val;
         int32_t base1 = x >> frac_bits_x;
         int32_t y = (r << 6) - dy;
@@ -384,14 +372,12 @@ void cfl_luma_subsampling_420_hbd_c(
     int32_t input_stride, int16_t *output_q3,
     int32_t width, int32_t height)
 {
-    for (int32_t j = 0; j < height; j += 2) {
+    for (int32_t j = 0; j < height; j += 2, input += input_stride << 1, output_q3 += CFL_BUF_LINE) {
         for (int32_t i = 0; i < width; i += 2) {
             const int32_t bot = i + input_stride;
             output_q3[i >> 1] =
                 (input[i] + input[i + 1] + input[bot] + input[bot + 1]) << 1;
         }
-        input += input_stride << 1;
-        output_q3 += CFL_BUF_LINE;
     }
 }
 void eb_subtract_average_c(
@@ -843,11 +829,10 @@ IntraHighPredFn dc_pred_high[2][2][TX_SIZES_ALL];
 static INLINE void dc_128_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint8_t *above,
     const uint8_t *left) {
-    int32_t r;
     (void)above;
     (void)left;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         memset(dst, 128, bw);
         dst += stride;
     }
@@ -856,13 +841,13 @@ static INLINE void dc_128_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
 static INLINE void dc_left_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint8_t *above,
     const uint8_t *left) {
-    int32_t i, r, expected_dc, sum = 0;
+    int32_t sum = 0;
     (void)above;
 
-    for (i = 0; i < bh; i++) sum += left[i];
-    expected_dc = (sum + (bh >> 1)) / bh;
+    for (int32_t i = 0; i < bh; i++) sum += left[i];
+    int32_t expected_dc = (sum + (bh >> 1)) / bh;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         memset(dst, expected_dc, bw);
         dst += stride;
     }
@@ -870,39 +855,36 @@ static INLINE void dc_left_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
 static INLINE void dc_top_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint8_t *above,
     const uint8_t *left) {
-    int32_t i, r, expected_dc, sum = 0;
+    int32_t sum = 0;
     (void)left;
 
-    for (i = 0; i < bw; i++) sum += above[i];
-    expected_dc = (sum + (bw >> 1)) / bw;
+    for (int32_t i = 0; i < bw; i++) sum += above[i];
+    int32_t expected_dc = (sum + (bw >> 1)) / bw;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         memset(dst, expected_dc, bw);
         dst += stride;
     }
 }
 static INLINE void dc_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left) {
-    int32_t i, r, expected_dc, sum = 0;
+    int32_t sum = 0;
     const int32_t count = bw + bh;
 
-    for (i = 0; i < bw; i++)
-        sum += above[i];
-    for (i = 0; i < bh; i++)
-        sum += left[i];
-    expected_dc = (sum + (count >> 1)) / count;
+    for (int32_t i = 0; i < bw; i++) sum += above[i];
+    for (int32_t i = 0; i < bh; i++) sum += left[i];
+    int32_t expected_dc = (sum + (count >> 1)) / count;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         memset(dst, expected_dc, bw);
         dst += stride;
     }
 }
 static INLINE void v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left) {
-    int32_t r;
     (void)left;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_memcpy(dst, above, bw);
         dst += stride;
     }
@@ -910,10 +892,9 @@ static INLINE void v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
 
 static INLINE void h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh,
     const uint8_t *above, const uint8_t *left) {
-    int32_t r;
     (void)above;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         memset(dst, left[r], bw);
         dst += stride;
     }
@@ -930,22 +911,17 @@ static INLINE void smooth_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw,
     const int32_t log2_scale = 1 + sm_weight_log2_scale;
     const uint16_t scale = (1 << sm_weight_log2_scale);
     sm_weights_sanity_checks(sm_weights_w, sm_weights_h, scale,
-        log2_scale + sizeof(*dst));
-    int32_t r;
-    for (r = 0; r < bh; ++r) {
-        int32_t c;
-        for (c = 0; c < bw; ++c) {
+        log2_scale + 1);
+    for (int32_t r = 0; r < bh; ++r, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
             const uint8_t pixels[] = { above[c], below_pred, left[r], right_pred };
             const uint8_t weights[] = { sm_weights_h[r], (uint8_t)(scale - sm_weights_h[r]),
                 sm_weights_w[c], (uint8_t)(scale - sm_weights_w[c]) };
             uint32_t this_pred = 0;
-            int32_t i;
             assert(scale >= sm_weights_h[r] && scale >= sm_weights_w[c]);
-            for (i = 0; i < 4; ++i)
-                this_pred += weights[i] * pixels[i];
+            for (int i = 0; i < 4; ++i) this_pred += weights[i] * pixels[i];
             dst[c] = (uint8_t)divide_round(this_pred, log2_scale);
         }
-        dst += stride;
     }
 }
 
@@ -958,22 +934,18 @@ static INLINE void smooth_v_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw
     const int32_t log2_scale = sm_weight_log2_scale;
     const uint16_t scale = (1 << sm_weight_log2_scale);
     sm_weights_sanity_checks(sm_weights, sm_weights, scale,
-        log2_scale + sizeof(*dst));
+        log2_scale + 1);
 
-    int32_t r;
-    for (r = 0; r < bh; r++) {
-        int32_t c;
-        for (c = 0; c < bw; ++c) {
+    for (int32_t r = 0; r < bh; ++r, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
             const uint8_t pixels[] = { above[c], below_pred };
             const uint8_t weights[] = { sm_weights[r], (uint8_t)(scale - sm_weights[r]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[r]);
-            int32_t i;
-            for (i = 0; i < 2; ++i)
+            for (unsigned i = 0; i < 2; ++i)
                 this_pred += weights[i] * pixels[i];
             dst[c] = (uint8_t)divide_round(this_pred, log2_scale);
         }
-        dst += stride;
     }
 }
 
@@ -986,22 +958,18 @@ static INLINE void smooth_h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw
     const int32_t log2_scale = sm_weight_log2_scale;
     const uint16_t scale = (1 << sm_weight_log2_scale);
     sm_weights_sanity_checks(sm_weights, sm_weights, scale,
-        log2_scale + sizeof(*dst));
+        log2_scale + 1);
 
-    int32_t r;
-    for (r = 0; r < bh; r++) {
-        int32_t c;
-        for (c = 0; c < bw; ++c) {
+    for (int32_t r = 0; r < bh; ++r, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
             const uint8_t pixels[] = { left[r], right_pred };
             const uint8_t weights[] = { sm_weights[c], (uint8_t)(scale - sm_weights[c]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[c]);
-            int32_t i;
-            for (i = 0; i < 2; ++i)
+            for (unsigned i = 0; i < 2; ++i)
                 this_pred += weights[i] * pixels[i];
             dst[c] = (uint8_t)divide_round(this_pred, log2_scale);
         }
-        dst += stride;
     }
 }
 #undef DC_MULTIPLIER_1X2
@@ -1010,10 +978,9 @@ static INLINE void smooth_h_predictor(uint8_t *dst, ptrdiff_t stride, int32_t bw
 static INLINE void highbd_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint16_t *above,
     const uint16_t *left, int32_t bd) {
-    int32_t r;
     (void)left;
     (void)bd;
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_memcpy(dst, above, bw * sizeof(uint16_t));
         dst += stride;
     }
@@ -1022,10 +989,9 @@ static INLINE void highbd_v_predictor(uint16_t *dst, ptrdiff_t stride, int32_t b
 static INLINE void highbd_h_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint16_t *above,
     const uint16_t *left, int32_t bd) {
-    int32_t r;
     (void)above;
     (void)bd;
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_aom_memset16(dst, left[r], bw);
         dst += stride;
     }
@@ -1047,28 +1013,21 @@ static INLINE uint16_t paeth_predictor_single(uint16_t left, uint16_t top,
 static INLINE void paeth_predictor(uint8_t *dst, ptrdiff_t stride, int bw,
                                    int bh, const uint8_t *above,
                                    const uint8_t *left) {
-  int r, c;
   const uint8_t ytop_left = above[-1];
 
-  for (r = 0; r < bh; r++) {
-    for (c = 0; c < bw; c++)
-      dst[c] = (uint8_t)paeth_predictor_single(left[r], above[c], ytop_left);
-    dst += stride;
-  }
+  for (int r = 0; r < bh; ++r, dst += stride)
+      for (int c = 0; c < bw; ++c)
+          dst[c] = (uint8_t)paeth_predictor_single(left[r], above[c], ytop_left);
 }
 
 static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride,
                                           int bw, int bh, const uint16_t *above,
                                           const uint16_t *left, int bd) {
-  int r, c;
   const uint16_t ytop_left = above[-1];
   (void)bd;
 
-  for (r = 0; r < bh; r++) {
-    for (c = 0; c < bw; c++)
-      dst[c] = paeth_predictor_single(left[r], above[c], ytop_left);
-    dst += stride;
-  }
+  for (int r = 0; r < bh; ++r, dst += stride)
+      for (int c = 0; c < bw; ++c) dst[c] = paeth_predictor_single(left[r], above[c], ytop_left);
 }
 //static INLINE void highbd_paeth_predictor(uint16_t *dst, ptrdiff_t stride,
 //    int32_t bw, int32_t bh, const uint16_t *above,
@@ -1097,22 +1056,18 @@ static INLINE void highbd_smooth_predictor(uint16_t *dst, ptrdiff_t stride,
     const int32_t log2_scale = 1 + sm_weight_log2_scale;
     const uint16_t scale = (1 << sm_weight_log2_scale);
     sm_weights_sanity_checks(sm_weights_w, sm_weights_h, scale,
-        log2_scale + sizeof(*dst));
-    int32_t r;
-    for (r = 0; r < bh; ++r) {
-        int32_t c;
-        for (c = 0; c < bw; ++c) {
+        log2_scale + 2);
+    for (int32_t r = 0; r < bh; ++r, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
             const uint16_t pixels[] = { above[c], below_pred, left[r], right_pred };
             const uint8_t weights[] = { sm_weights_h[r], (uint8_t)(scale - sm_weights_h[r]),
                 sm_weights_w[c], (uint8_t)(scale - sm_weights_w[c]) };
             uint32_t this_pred = 0;
-            int32_t i;
             assert(scale >= sm_weights_h[r] && scale >= sm_weights_w[c]);
-            for (i = 0; i < 4; ++i)
+            for (int i = 0; i < 4; ++i)
                 this_pred += weights[i] * pixels[i];
             dst[c] = (uint16_t)divide_round(this_pred, log2_scale);
         }
-        dst += stride;
     }
 }
 
@@ -1129,20 +1084,16 @@ static INLINE void highbd_smooth_v_predictor(uint16_t *dst, ptrdiff_t stride,
     sm_weights_sanity_checks(sm_weights, sm_weights, scale,
         log2_scale + sizeof(*dst));
 
-    int32_t r;
-    for (r = 0; r < bh; r++) {
-        int32_t c;
-        for (c = 0; c < bw; ++c) {
+    for (int32_t r = 0; r < bh; ++r, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
             const uint16_t pixels[] = { above[c], below_pred };
             const uint8_t weights[] = { sm_weights[r], (uint8_t)(scale - sm_weights[r]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[r]);
-            int32_t i;
-            for (i = 0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
                 this_pred += weights[i] * pixels[i];
             dst[c] = (uint16_t)divide_round(this_pred, log2_scale);
         }
-        dst += stride;
     }
 }
 
@@ -1159,20 +1110,16 @@ static INLINE void highbd_smooth_h_predictor(uint16_t *dst, ptrdiff_t stride,
     sm_weights_sanity_checks(sm_weights, sm_weights, scale,
         log2_scale + sizeof(*dst));
 
-    int32_t r;
-    for (r = 0; r < bh; r++) {
-        int32_t c;
-        for (c = 0; c < bw; ++c) {
+    for (int32_t r = 0; r < bh; r++, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
             const uint16_t pixels[] = { left[r], right_pred };
             const uint8_t weights[] = { sm_weights[c], (uint8_t)(scale - sm_weights[c]) };
             uint32_t this_pred = 0;
             assert(scale >= sm_weights[c]);
-            int32_t i;
-            for (i = 0; i < 2; ++i)
+            for (int i = 0; i < 2; ++i)
                 this_pred += weights[i] * pixels[i];
             dst[c] = (uint16_t)divide_round(this_pred, log2_scale);
         }
-        dst += stride;
     }
 }
 
@@ -1180,11 +1127,10 @@ static INLINE void highbd_dc_128_predictor(uint16_t *dst, ptrdiff_t stride,
     int32_t bw, int32_t bh,
     const uint16_t *above,
     const uint16_t *left, int32_t bd) {
-    int32_t r;
     (void)above;
     (void)left;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_aom_memset16(dst, 128 << (bd - 8), bw);
         dst += stride;
     }
@@ -1194,14 +1140,14 @@ static INLINE void highbd_dc_left_predictor(uint16_t *dst, ptrdiff_t stride,
     int32_t bw, int32_t bh,
     const uint16_t *above,
     const uint16_t *left, int32_t bd) {
-    int32_t i, r, expected_dc, sum = 0;
+    int32_t sum = 0;
     (void)above;
     (void)bd;
 
-    for (i = 0; i < bh; i++) sum += left[i];
-    expected_dc = (sum + (bh >> 1)) / bh;
+    for (int32_t i = 0; i < bh; i++) sum += left[i];
+    int32_t expected_dc = (sum + (bh >> 1)) / bh;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_aom_memset16(dst, expected_dc, bw);
         dst += stride;
     }
@@ -1211,14 +1157,14 @@ static INLINE void highbd_dc_top_predictor(uint16_t *dst, ptrdiff_t stride,
     int32_t bw, int32_t bh,
     const uint16_t *above,
     const uint16_t *left, int32_t bd) {
-    int32_t i, r, expected_dc, sum = 0;
+    int32_t sum = 0;
     (void)left;
     (void)bd;
 
-    for (i = 0; i < bw; i++) sum += above[i];
-    expected_dc = (sum + (bw >> 1)) / bw;
+    for (int32_t i = 0; i < bw; i++) sum += above[i];
+    int32_t expected_dc = (sum + (bw >> 1)) / bw;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_aom_memset16(dst, expected_dc, bw);
         dst += stride;
     }
@@ -1227,17 +1173,17 @@ static INLINE void highbd_dc_top_predictor(uint16_t *dst, ptrdiff_t stride,
 static INLINE void highbd_dc_predictor(uint16_t *dst, ptrdiff_t stride, int32_t bw,
     int32_t bh, const uint16_t *above,
     const uint16_t *left, int32_t bd) {
-    int32_t i, r, expected_dc, sum = 0;
+    int32_t sum = 0;
     const int32_t count = bw + bh;
     (void)bd;
 
-    for (i = 0; i < bw; i++)
+    for (int32_t i = 0; i < bw; i++)
         sum += above[i];
-    for (i = 0; i < bh; i++)
+    for (int32_t i = 0; i < bh; i++)
         sum += left[i];
-    expected_dc = (sum + (count >> 1)) / count;
+    int32_t expected_dc = (sum + (count >> 1)) / count;
 
-    for (r = 0; r < bh; r++) {
+    for (int32_t r = 0; r < bh; r++) {
         eb_aom_memset16(dst, expected_dc, bw);
         dst += stride;
     }
@@ -2373,7 +2319,7 @@ void eb_av1_highbd_dr_prediction_z1_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     const int32_t base_inc = 1 << upsample_above;
     for (int32_t r = 0, x = dx; r < bh; ++r, dst += stride, x += dx) {
         int32_t base = x >> frac_bits;
-        int32_t shift = ((x << upsample_above) & 0x3F) >> 1;
+        const int32_t shift = ((x << upsample_above) & 0x3F) >> 1;
 
         if (base >= max_base_x) {
             for (int32_t i = r; i < bh; ++i) {
@@ -2401,8 +2347,6 @@ void eb_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     const uint16_t *left, int32_t upsample_above,
     int32_t upsample_left, int32_t dx, int32_t dy, int32_t bd)
 {
-    int32_t r, c, x, y, shift, val, base;
-
     (void)bd;
     assert(dx > 0);
     assert(dy > 0);
@@ -2410,27 +2354,26 @@ void eb_av1_highbd_dr_prediction_z2_c(uint16_t *dst, ptrdiff_t stride, int32_t b
     const int32_t min_base_x = -(1 << upsample_above);
     const int32_t frac_bits_x = 6 - upsample_above;
     const int32_t frac_bits_y = 6 - upsample_left;
-    for (r = 0; r < bh; ++r) {
-        for (c = 0; c < bw; ++c) {
-            y = r + 1;
-            x = (c << 6) - y * dx;
-            base = x >> frac_bits_x;
+    for (int32_t r = 0; r < bh; ++r, dst += stride) {
+        for (int32_t c = 0; c < bw; ++c) {
+            int32_t y = r + 1;
+            int32_t x = (c << 6) - y * dx;
+            int32_t base = x >> frac_bits_x;
+            int32_t val;
             if (base >= min_base_x) {
-                shift = ((x * (1 << upsample_above)) & 0x3F) >> 1;
-                val = above[base] * (32 - shift) + above[base + 1] * shift;
+                const int32_t shift = ((x * (1 << upsample_above)) & 0x3F) >> 1;
+                val   = above[base] * (32 - shift) + above[base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
-            }
-            else {
+            } else {
                 x = c + 1;
                 y = (r << 6) - x * dy;
                 base = y >> frac_bits_y;
-                shift = ((y * (1 << upsample_left)) & 0x3F) >> 1;
-                val = left[base] * (32 - shift) + left[base + 1] * shift;
+                const int32_t shift = ((y * (1 << upsample_left)) & 0x3F) >> 1;
+                val   = left[base] * (32 - shift) + left[base + 1] * shift;
                 val = ROUND_POWER_OF_TWO(val, 5);
             }
-            dst[c] = (uint16_t)clip_pixel_highbd(val, bd);
+            dst[c] = clip_pixel_highbd(val, bd);
         }
-        dst += stride;
     }
 }
 
@@ -2476,7 +2419,7 @@ void eb_av1_filter_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t strength)
     eb_memcpy_c(edge, p, sz * sizeof(*p));
     for (int32_t i = 1; i < sz; i++) {
         int32_t s = 0;
-        for (int32_t j = 0; j < INTRA_EDGE_TAPS; j++) {
+        for (unsigned j = 0; j < INTRA_EDGE_TAPS; j++) {
             int32_t k = i - 2 + j;
             k = (k < 0) ? 0 : k;
             k = (k > sz - 1) ? sz - 1 : k;

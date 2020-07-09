@@ -2876,31 +2876,23 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
                                         EbPictureBufferDesc *    input_picture_ptr,
                                         EbPictureBufferDesc *    input_padded_picture_ptr,
                                         uint32_t                 sb_total_count) {
-    uint32_t sb_index;
-    uint32_t sb_origin_x; // to avoid using child PCS
-    uint32_t sb_origin_y;
-    uint32_t input_luma_origin_index;
-    uint32_t input_cb_origin_index;
-    uint32_t input_cr_origin_index;
-    uint64_t pic_tot_variance;
-
     // Variance
-    pic_tot_variance = 0;
+    uint64_t pic_tot_variance = 0;
 
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
+    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
         SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
 
-        sb_origin_x             = sb_params->origin_x;
-        sb_origin_y             = sb_params->origin_y;
-        input_luma_origin_index = (input_padded_picture_ptr->origin_y + sb_origin_y) *
-                                      input_padded_picture_ptr->stride_y +
-                                  input_padded_picture_ptr->origin_x + sb_origin_x;
+        uint16_t sb_origin_x    = sb_params->origin_x; // to avoid using child PCS
+        uint16_t sb_origin_y    = sb_params->origin_y;
+        uint32_t input_luma_origin_index = (input_padded_picture_ptr->origin_y + sb_origin_y) *
+                input_padded_picture_ptr->stride_y +
+            input_padded_picture_ptr->origin_x + sb_origin_x;
 
-        input_cb_origin_index =
-            ((input_picture_ptr->origin_y + sb_origin_y) >> 1) * input_picture_ptr->stride_cb +
+        uint32_t input_cb_origin_index = ((input_picture_ptr->origin_y + sb_origin_y) >> 1) *
+                input_picture_ptr->stride_cb +
             ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
-        input_cr_origin_index =
-            ((input_picture_ptr->origin_y + sb_origin_y) >> 1) * input_picture_ptr->stride_cr +
+        uint32_t input_cr_origin_index = ((input_picture_ptr->origin_y + sb_origin_y) >> 1) *
+                input_picture_ptr->stride_cr +
             ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
 
         compute_block_mean_compute_variance(

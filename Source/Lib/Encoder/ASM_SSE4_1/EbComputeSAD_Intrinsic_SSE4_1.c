@@ -3426,17 +3426,14 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
     int16_t        x_best = *x_search_center, y_best = *y_search_center;
     uint32_t       low_sum = 0xffffff;
     uint32_t       tem_sum = 0;
-    int16_t        i, j;
     uint32_t       k, l;
-    const uint8_t *p_ref, *p_src;
     __m128i        s0, s1, s2, s3, s4, s5, s6, s7, s9, s10, s11;
 
     switch (block_width) {
     case 4:
-        for (i = 0; i < search_area_height; i++) {
-            for (j = 0; j <= search_area_width - 8; j += 8) {
-                p_src = src;
-                p_ref = ref + j;
+        for (int i = 0; i < search_area_height; i++) {
+            for (int j = 0; j <= search_area_width - 8; j += 8) {
+                const uint8_t *p_src = src, *p_ref = ref + j;
                 s3    = _mm_setzero_si128();
                 for (k = 0; k < block_height; k += 2) {
                     s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3461,10 +3458,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
         break;
 
     case 8:
-        for (i = 0; i < search_area_height; i++) {
-            for (j = 0; j <= search_area_width - 8; j += 8) {
-                p_src = src;
-                p_ref = ref + j;
+        for (int i = 0; i < search_area_height; i++) {
+            for (int j = 0; j <= search_area_width - 8; j += 8) {
+                const uint8_t *p_src = src, *p_ref = ref + j;
                 s3 = s4 = _mm_setzero_si128();
                 for (k = 0; k < block_height; k += 2) {
                     s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3494,10 +3490,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
 
     case 16:
         if (block_height <= 16) {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 16; j += 16) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 16; j += 16) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     s7 = s9 = s10 = s11 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
@@ -3538,10 +3533,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else if (block_height <= 32) {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3581,10 +3575,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3634,10 +3627,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
 
     case 24:
         if (block_height <= 16) {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3680,10 +3672,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3738,10 +3729,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
 
     case 32:
         if (block_height < 16) {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3789,10 +3779,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else if (block_height <= 32) {
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3846,11 +3835,10 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else {
-            __m128i s9, s10, s11, s12;
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            __m128i s12;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < (block_height >> 1); k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -3942,11 +3930,10 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
 
     case 48:
         if (block_height <= 32) {
-            __m128i s9, s10, s11, s12;
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            __m128i s12;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < (block_height >> 1); k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -4048,11 +4035,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else {
-            __m128i s9, s10;
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s9 = s10 = _mm_setzero_si128();
                     k        = 0;
                     while (k < block_height) {
@@ -4124,11 +4109,10 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
 
     case 64:
         if (block_height <= 32) {
-            __m128i s9, s10, s11, s12;
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            __m128i s12;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
                     for (k = 0; k < (block_height >> 1); k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
@@ -4244,11 +4228,9 @@ void sad_loop_kernel_sse4_1_hme_l0_intrin(
                 ref += src_stride_raw;
             }
         } else {
-            __m128i s9, s10;
-            for (i = 0; i < search_area_height; i++) {
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-                    p_src = src;
-                    p_ref = ref + j;
+            for (int i = 0; i < search_area_height; i++) {
+                for (int j = 0; j <= search_area_width - 8; j += 8) {
+                    const uint8_t *p_src = src, *p_ref = ref + j;
                     s9 = s10 = _mm_setzero_si128();
                     k        = 0;
                     while (k < block_height) {

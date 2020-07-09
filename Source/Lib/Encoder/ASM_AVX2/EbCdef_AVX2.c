@@ -26,39 +26,30 @@ uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
                               uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count,
                               int start_gi, int end_gi) {
     DECLARE_ALIGNED(32, uint64_t, tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS]);
-    int      i, j;
     uint64_t best_tot_mse = (uint64_t)1 << 62;
     int      best_id0     = 0;
     int      best_id1     = 0;
     const int total_strengths = end_gi;
-    __m256i   best_mse_;
-    __m256i   curr;
-    __m256i   v_tot;
-    __m256i   v_mse;
-    __m256i   mask;
-    __m256i   tmp;
 
     memset(tot_mse, 0, sizeof(tot_mse));
 
-    for (i = 0; i < sb_count; i++) {
-        int      gi;
+    for (int i = 0; i < sb_count; i++) {
         uint64_t best_mse = (uint64_t)1 << 62;
         /* Find best mse among already selected options. */
-        for (gi = 0; gi < nb_strengths; gi++) {
-            uint64_t curr = mse[0][i][lev0[gi]];
-            curr += mse[1][i][lev1[gi]];
+        for (int gi = 0; gi < nb_strengths; gi++) {
+            uint64_t curr = mse[0][i][lev0[gi]] + mse[1][i][lev1[gi]];
             if (curr < best_mse) best_mse = curr;
         }
-        best_mse_ = _mm256_set1_epi64x(best_mse);
+        __m256i best_mse_ = _mm256_set1_epi64x(best_mse);
         /* Find best mse when adding each possible new option. */
         //assert(~total_strengths % 4);
         for (int j = start_gi; j < total_strengths; ++j) { // process by 4x4
-            tmp = _mm256_set1_epi64x(mse[0][i][j]);
+            __m256i tmp = _mm256_set1_epi64x(mse[0][i][j]);
             for (int k = 0; k < total_strengths; k += 4) {
-                v_mse = _mm256_loadu_si256((const __m256i *)&mse[1][i][k]);
-                v_tot = _mm256_loadu_si256((const __m256i *)&tot_mse[j][k]);
-                curr  = _mm256_add_epi64(tmp, v_mse);
-                mask  = _mm256_cmpgt_epi64(best_mse_, curr);
+                __m256i v_mse = _mm256_loadu_si256((const __m256i *)&mse[1][i][k]);
+                __m256i v_tot = _mm256_loadu_si256((const __m256i *)&tot_mse[j][k]);
+                __m256i curr = _mm256_add_epi64(tmp, v_mse);
+                __m256i mask = _mm256_cmpgt_epi64(best_mse_, curr);
                 v_tot = _mm256_add_epi64(v_tot,
                                          _mm256_or_si256(_mm256_andnot_si256(mask, best_mse_),
                                                          _mm256_and_si256(mask, curr)));
@@ -66,9 +57,8 @@ uint64_t search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
             }
         }
     }
-    for (j = start_gi; j < total_strengths; j++) {
-        int k;
-        for (k = start_gi; k < total_strengths; k++) {
+    for (int j = start_gi; j < total_strengths; j++) {
+        for (int k = start_gi; k < total_strengths; k++) {
             if (tot_mse[j][k] < best_tot_mse) {
                 best_tot_mse = tot_mse[j][k];
                 best_id0     = j;

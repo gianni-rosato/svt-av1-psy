@@ -534,40 +534,34 @@ void update_global_motion_detection_over_time(EncodeContext *          encode_co
 
 void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
                                PictureParentControlSet *pcs_ptr) {
-    InitialRateControlReorderEntry *temp_queue_entry_ptr;
-    PictureParentControlSet *       temp_pcs_ptr;
-    uint32_t                        update_non_moving_index_array_frames_to_check;
-    uint16_t                        sb_idx;
-    uint16_t                        frames_to_check_index;
-    uint64_t                        non_moving_index_sum = 0;
-    uint32_t                        input_queue_index;
+    uint64_t non_moving_index_sum = 0;
 
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     // Update motionIndexArray of the current picture by averaging the motionIndexArray of the N future pictures
     // Determine number of frames to check N
-    update_non_moving_index_array_frames_to_check =
-        MIN(MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
-            scs_ptr->static_config.look_ahead_distance);
+    uint32_t update_non_moving_index_array_frames_to_check = MIN(
+        MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
+        scs_ptr->static_config.look_ahead_distance);
     uint64_t me_dist           = 0;
     uint8_t  me_dist_pic_count = 0;
     // SB Loop
-    for (sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
+    for (uint16_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
         uint16_t non_moving_index_over_sliding_window = pcs_ptr->non_moving_index_array[sb_idx];
-
+        uint16_t frames_to_check_index;
         // Walk the first N entries in the sliding window starting picture + 1
-        input_queue_index =
-            (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
-             INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                ? 0
-                : encode_context_ptr->initial_rate_control_reorder_queue_head_index + 1;
+        uint32_t input_queue_index =
+            encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
+                INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1
+            ? 0
+            : encode_context_ptr->initial_rate_control_reorder_queue_head_index + 1;
         for (frames_to_check_index = 0;
              frames_to_check_index < update_non_moving_index_array_frames_to_check - 1;
              frames_to_check_index++) {
-            temp_queue_entry_ptr =
+            InitialRateControlReorderEntry *temp_queue_entry_ptr =
                 encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-            temp_pcs_ptr =
-                ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)
-                     ->object_ptr);
+            PictureParentControlSet *temp_pcs_ptr =
+                (PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)
+                    ->object_ptr;
 
             if (temp_pcs_ptr->slice_type == I_SLICE || temp_pcs_ptr->end_of_sequence_flag) break;
             // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
@@ -793,39 +787,25 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
 void *initial_rate_control_kernel(void *input_ptr) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
     InitialRateControlContext *context_ptr = (InitialRateControlContext *)thread_context_ptr->priv;
-    PictureParentControlSet *  pcs_ptr;
-    PictureParentControlSet *  pcs_ptr_temp;
-    EncodeContext *            encode_context_ptr;
-    SequenceControlSet *       scs_ptr;
 
     EbObjectWrapper *        in_results_wrapper_ptr;
-    MotionEstimationResults *in_results_ptr;
 
     EbObjectWrapper *          out_results_wrapper_ptr;
-    InitialRateControlResults *out_results_ptr;
 
-    // Queue variables
-    uint32_t                        queue_entry_index_temp;
-    uint32_t                        queue_entry_index_temp2;
-    InitialRateControlReorderEntry *queue_entry_ptr;
-
-    EbBool           move_slide_window_flag = EB_TRUE;
-    EbBool           end_of_sequence_flag   = EB_TRUE;
-    uint8_t          frames_in_sw;
-    uint8_t          temporal_layer_index;
     EbObjectWrapper *reference_picture_wrapper_ptr;
 
     // Segments
-    uint32_t segment_index;
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(context_ptr->motion_estimation_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
-        in_results_ptr = (MotionEstimationResults *)in_results_wrapper_ptr->object_ptr;
-        pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+        MotionEstimationResults *in_results_ptr = (MotionEstimationResults *)
+                                                      in_results_wrapper_ptr->object_ptr;
+        PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
+                                               in_results_ptr->pcs_wrapper_ptr->object_ptr;
 
-        segment_index = in_results_ptr->segment_index;
+        uint32_t segment_index = in_results_ptr->segment_index;
 
         // Set the segment mask
         SEGMENT_COMPLETION_MASK_SET(pcs_ptr->me_segments_completion_mask, segment_index);
@@ -833,8 +813,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
         // If the picture is complete, proceed
         if (SEGMENT_COMPLETION_MASK_TEST(pcs_ptr->me_segments_completion_mask,
                                          pcs_ptr->me_segments_total_count)) {
-            scs_ptr            = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-            encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+            SequenceControlSet *scs_ptr = (SequenceControlSet *)
+                                              pcs_ptr->scs_wrapper_ptr->object_ptr;
+            EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
             // Mark picture when global motion is detected using ME results
             //reset intra_coded_estimation_sb
             me_based_global_motion_detection(pcs_ptr);
@@ -847,8 +828,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
             if (!pcs_ptr->is_overlay)
                 // Determine offset from the Head Ptr
-                queue_entry_ptr =
-                    determine_picture_offset_in_queue(encode_context_ptr, pcs_ptr, in_results_ptr);
+                determine_picture_offset_in_queue(
+                    encode_context_ptr, pcs_ptr, in_results_ptr);
 
             if (scs_ptr->static_config.rate_control_mode) {
                 if (scs_ptr->static_config.look_ahead_distance != 0) {
@@ -857,29 +838,28 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
 
-            for (temporal_layer_index = 0; temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
+            for (uint8_t temporal_layer_index = 0; temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
                  temporal_layer_index++)
                 pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
             pcs_ptr->frames_in_sw          = 0;
             pcs_ptr->historgram_life_count = 0;
             pcs_ptr->scene_change_in_gop   = EB_FALSE;
-            move_slide_window_flag = EB_TRUE;
+            EbBool move_slide_window_flag  = EB_TRUE;
             while (move_slide_window_flag) {
                 // Check if the sliding window condition is valid
-                queue_entry_index_temp =
+                uint32_t queue_entry_index_temp =
                     encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-                if (encode_context_ptr->initial_rate_control_reorder_queue[queue_entry_index_temp]
-                        ->parent_pcs_wrapper_ptr != NULL)
-                    end_of_sequence_flag =
-                        (((PictureParentControlSet
-                               *)(encode_context_ptr
-                                      ->initial_rate_control_reorder_queue[queue_entry_index_temp]
-                                      ->parent_pcs_wrapper_ptr)
-                              ->object_ptr))
-                            ->end_of_sequence_flag;
-                else
-                    end_of_sequence_flag = EB_FALSE;
-                frames_in_sw = 0;
+                EbBool end_of_sequence_flag =
+                    encode_context_ptr->initial_rate_control_reorder_queue[queue_entry_index_temp]
+                        ->parent_pcs_wrapper_ptr
+                    ? (((PictureParentControlSet
+                             *)(encode_context_ptr
+                                    ->initial_rate_control_reorder_queue[queue_entry_index_temp]
+                                    ->parent_pcs_wrapper_ptr)
+                            ->object_ptr))
+                          ->end_of_sequence_flag
+                    : EB_FALSE;
+                uint8_t frames_in_sw = 0;
                 while (move_slide_window_flag && !end_of_sequence_flag &&
                        queue_entry_index_temp <=
                            encode_context_ptr->initial_rate_control_reorder_queue_head_index +
@@ -887,10 +867,10 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     // frames_in_sw <= scs_ptr->static_config.look_ahead_distance){
                     frames_in_sw++;
 
-                    queue_entry_index_temp2 =
+                    uint32_t queue_entry_index_temp2 =
                         (queue_entry_index_temp > INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                            ? queue_entry_index_temp - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
-                            : queue_entry_index_temp;
+                        ? queue_entry_index_temp - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
+                        : queue_entry_index_temp;
 
                     move_slide_window_flag =
                         (EbBool)(move_slide_window_flag &&
@@ -915,7 +895,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
                 if (move_slide_window_flag) {
                     //get a new entry spot
-                    queue_entry_ptr =
+                    InitialRateControlReorderEntry *queue_entry_ptr =
                         encode_context_ptr->initial_rate_control_reorder_queue
                             [encode_context_ptr->initial_rate_control_reorder_queue_head_index];
                     pcs_ptr = ((PictureParentControlSet *)(queue_entry_ptr->parent_pcs_wrapper_ptr)
@@ -935,18 +915,19 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             queue_entry_index_temp <=
                                 encode_context_ptr->initial_rate_control_reorder_queue_head_index +
                                     scs_ptr->static_config.look_ahead_distance) {
-                            queue_entry_index_temp2 =
+                            uint32_t queue_entry_index_temp2 =
                                 (queue_entry_index_temp >
                                  INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                                    ? queue_entry_index_temp -
-                                          INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
-                                    : queue_entry_index_temp;
-                            pcs_ptr_temp = ((PictureParentControlSet
-                                                 *)(encode_context_ptr
-                                                        ->initial_rate_control_reorder_queue
-                                                            [queue_entry_index_temp2]
-                                                        ->parent_pcs_wrapper_ptr)
-                                                ->object_ptr);
+                                ? queue_entry_index_temp -
+                                    INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
+                                : queue_entry_index_temp;
+                            PictureParentControlSet *pcs_ptr_temp =
+                                ((PictureParentControlSet
+                                      *)(encode_context_ptr
+                                             ->initial_rate_control_reorder_queue
+                                                 [queue_entry_index_temp2]
+                                             ->parent_pcs_wrapper_ptr)
+                                     ->object_ptr);
                             if (scs_ptr->intra_period_length != -1) {
                                 if (pcs_ptr->picture_number %
                                         ((scs_ptr->intra_period_length + 1)) ==
@@ -1038,7 +1019,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             context_ptr->initialrate_control_results_output_fifo_ptr,
                             &out_results_wrapper_ptr);
 
-                        out_results_ptr =
+                        InitialRateControlResults *out_results_ptr =
                             (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
 
                         if (loop_index)

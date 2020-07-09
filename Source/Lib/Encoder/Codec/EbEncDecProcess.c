@@ -445,20 +445,19 @@ EbBool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOu
     return continue_processing_flag;
 }
 void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-    EbObjectWrapper *   output_recon_wrapper_ptr;
-    EbBufferHeaderType *output_recon_ptr;
     EncodeContext *     encode_context_ptr = scs_ptr->encode_context_ptr;
-    EbBool              is_16bit           = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     // The totalNumberOfReconFrames counter has to be write/read protected as
     //   it is used to determine the end of the stream.  If it is not protected
     //   the encoder might not properly terminate.
     eb_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 
     if (!pcs_ptr->parent_pcs_ptr->is_alt_ref) {
+        EbBool           is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        EbObjectWrapper *output_recon_wrapper_ptr;
         // Get Recon Buffer
         eb_get_empty_object(scs_ptr->encode_context_ptr->recon_output_fifo_ptr,
                             &output_recon_wrapper_ptr);
-        output_recon_ptr        = (EbBufferHeaderType *)output_recon_wrapper_ptr->object_ptr;
+        EbBufferHeaderType *output_recon_ptr = (EbBufferHeaderType *)output_recon_wrapper_ptr->object_ptr;
         output_recon_ptr->flags = 0;
 
         // START READ/WRITE PROTECTED SECTION
@@ -821,7 +820,6 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
         EbByte    input_buffer;
-        EbByte    input_buffer_bit_inc;
         uint16_t *recon_coeff_buffer;
 
         double luma_ssim = 0.0;
@@ -963,7 +961,10 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
             shift = 0 ; // both input and output are 10 bit (bitdepth - input_bd)
 
             input_buffer = &((buffer_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
-            input_buffer_bit_inc = &((buffer_bit_inc_y)[input_picture_ptr->origin_x + input_picture_ptr->origin_y * input_picture_ptr->stride_bit_inc_y]);
+            EbByte input_buffer_bit_inc = &(
+                (buffer_bit_inc_y)[input_picture_ptr->origin_x +
+                                   input_picture_ptr->origin_y *
+                                       input_picture_ptr->stride_bit_inc_y]);
             luma_ssim = aom_highbd_ssim2(input_buffer, input_picture_ptr->stride_y, input_buffer_bit_inc, input_picture_ptr->stride_bit_inc_y,
                                          recon_coeff_buffer, recon_ptr->stride_y, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, bd, shift);
 
@@ -1016,8 +1017,6 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
             (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         uint64_t sse_total[3] = {0};
-        uint32_t column_index;
-        uint32_t row_index           = 0;
         uint64_t residual_distortion = 0;
         EbByte   input_buffer;
         EbByte   recon_coeff_buffer;
@@ -1045,17 +1044,18 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
 
         residual_distortion = 0;
 
-        while (row_index < (uint32_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)) {
-            column_index = 0;
-            while (column_index < (uint32_t)(input_picture_ptr->width - scs_ptr->max_input_pad_right)) {
+        for (int row_index = 0;
+             row_index < input_picture_ptr->height - scs_ptr->max_input_pad_bottom;
+             ++row_index) {
+            for (int column_index = 0;
+                 column_index < input_picture_ptr->width - scs_ptr->max_input_pad_right;
+                 ++column_index) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
-                ++column_index;
             }
 
             input_buffer += input_picture_ptr->stride_y;
             recon_coeff_buffer += recon_ptr->stride_y;
-            ++row_index;
         }
 
         sse_total[0] = residual_distortion;
@@ -1067,18 +1067,18 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
                                    input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
 
         residual_distortion = 0;
-        row_index           = 0;
-        while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
-            column_index = 0;
-            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
+        for (int row_index = 0; row_index <
+             (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
+             ++row_index) {
+            for (int column_index = 0; column_index <
+                 (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
+                 ++column_index) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
-                ++column_index;
             }
 
             input_buffer += input_picture_ptr->stride_cb;
             recon_coeff_buffer += recon_ptr->stride_cb;
-            ++row_index;
         }
 
         sse_total[1] = residual_distortion;
@@ -1089,19 +1089,19 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         input_buffer        = &(buffer_cr[input_picture_ptr->origin_x / 2 +
                                    input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
         residual_distortion = 0;
-        row_index           = 0;
 
-        while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
-            column_index = 0;
-            while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
+        for (int row_index = 0; row_index <
+             (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
+             ++row_index) {
+            for (int column_index = 0; column_index <
+                 (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
+                 ++column_index) {
                 residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
                                                     (recon_coeff_buffer[column_index]));
-                ++column_index;
             }
 
             input_buffer += input_picture_ptr->stride_cr;
             recon_coeff_buffer += recon_ptr->stride_cr;
-            ++row_index;
         }
 
         sse_total[2]                      = residual_distortion;
@@ -1128,8 +1128,6 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
             (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         uint64_t  sse_total[3] = {0};
-        uint32_t  column_index;
-        uint32_t  row_index           = 0;
         uint64_t  residual_distortion = 0;
         EbByte    input_buffer;
         EbByte    input_buffer_bit_inc;
@@ -1387,21 +1385,21 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
 
             residual_distortion = 0;
 
-            while (row_index < (uint32_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom)) {
-                column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width - scs_ptr->max_input_pad_right)) {
+            for (int row_index = 0;
+                 row_index < input_picture_ptr->height - scs_ptr->max_input_pad_bottom;
+                 ++row_index) {
+                for (int column_index = 0; column_index <
+                     input_picture_ptr->width - scs_ptr->max_input_pad_right;
+                     ++column_index) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
                                      (recon_coeff_buffer[column_index]));
-
-                    ++column_index;
                 }
 
                 input_buffer += input_picture_ptr->stride_y;
                 input_buffer_bit_inc += input_picture_ptr->stride_bit_inc_y;
                 recon_coeff_buffer += recon_ptr->stride_y;
-                ++row_index;
             }
 
             sse_total[0] = residual_distortion;
@@ -1418,21 +1416,21 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
                                                              input_picture_ptr->stride_bit_inc_cb]);
 
             residual_distortion = 0;
-            row_index           = 0;
-            while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
-                column_index = 0;
-                while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
+            for (int row_index = 0; row_index <
+                 (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
+                 ++row_index) {
+                for (int column_index = 0; column_index <
+                     (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
+                     ++column_index) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
                                      (recon_coeff_buffer[column_index]));
-                    ++column_index;
                 }
 
                 input_buffer += input_picture_ptr->stride_cb;
                 input_buffer_bit_inc += input_picture_ptr->stride_bit_inc_cb;
                 recon_coeff_buffer += recon_ptr->stride_cb;
-                ++row_index;
             }
 
             sse_total[1] = residual_distortion;
@@ -1449,22 +1447,22 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
                                                              input_picture_ptr->stride_bit_inc_cr]);
 
             residual_distortion = 0;
-            row_index           = 0;
 
-            while (row_index < (uint32_t)((input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y)) {
-                column_index = 0;
-                while (column_index < (uint32_t)((input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x)) {
+            for (int row_index = 0; row_index <
+                 (input_picture_ptr->height - scs_ptr->max_input_pad_bottom) >> ss_y;
+                 ++row_index) {
+                for (int column_index = 0; column_index <
+                     (input_picture_ptr->width - scs_ptr->max_input_pad_right) >> ss_x;
+                     ++column_index) {
                     residual_distortion +=
                         (int64_t)SQR((int64_t)((((input_buffer[column_index]) << 2) |
                                                 ((input_buffer_bit_inc[column_index] >> 6) & 3))) -
                                      (recon_coeff_buffer[column_index]));
-                    ++column_index;
                 }
 
                 input_buffer += input_picture_ptr->stride_cr;
                 input_buffer_bit_inc += input_picture_ptr->stride_bit_inc_cr;
                 recon_coeff_buffer += recon_ptr->stride_cr;
-                ++row_index;
             }
 
             sse_total[2] = residual_distortion;
@@ -2473,11 +2471,10 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
 
 static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_index, int32_t sb_size,
                                         int8_t depth_step) {
-    uint32_t         parent_depth_idx_mds, block_1d_idx;
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
     if (blk_geom->sq_size < ((sb_size == BLOCK_128X128) ? 128 : 64)) {
         //Set parent to be considered
-        parent_depth_idx_mds =
+        uint32_t parent_depth_idx_mds =
             (blk_geom->sqi_mds -
              (blk_geom->quadi - 3) * ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth]) -
             parent_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
@@ -2486,7 +2483,7 @@ static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_ind
             parent_blk_geom->sq_size == 128
                 ? 17
                 : parent_blk_geom->sq_size > 8 ? 25 : parent_blk_geom->sq_size == 8 ? 5 : 1;
-        for (block_1d_idx = 0; block_1d_idx < parent_tot_d1_blocks; block_1d_idx++) {
+        for (uint32_t block_1d_idx = 0; block_1d_idx < parent_tot_d1_blocks; block_1d_idx++) {
             results_ptr->leaf_data_array[parent_depth_idx_mds + block_1d_idx].consider_block = 1;
         }
 
@@ -2497,25 +2494,25 @@ static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_ind
 
 static void set_child_to_be_considered(MdcSbData *results_ptr, uint32_t blk_index, int32_t sb_size,
                                        int8_t depth_step) {
-    uint32_t         child_block_idx_1, child_block_idx_2, child_block_idx_3, child_block_idx_4;
-    uint32_t         tot_d1_blocks, block_1d_idx;
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-    tot_d1_blocks =
-        blk_geom->sq_size == 128 ? 17 : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
+    unsigned         tot_d1_blocks = blk_geom->sq_size == 128
+        ? 17
+        : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
     if (blk_geom->sq_size > 4) {
-        for (block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
+        for (uint32_t block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
             results_ptr->leaf_data_array[blk_index + block_1d_idx].consider_block     = 1;
             results_ptr->leaf_data_array[blk_index + block_1d_idx].refined_split_flag = EB_TRUE;
         }
         //Set first child to be considered
-        child_block_idx_1 = blk_index + d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
+        uint32_t child_block_idx_1 = blk_index +
+            d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
         const BlockGeom *child1_blk_geom = get_blk_geom_mds(child_block_idx_1);
         uint32_t         child1_tot_d1_blocks =
             child1_blk_geom->sq_size == 128
                 ? 17
                 : child1_blk_geom->sq_size > 8 ? 25 : child1_blk_geom->sq_size == 8 ? 5 : 1;
 
-        for (block_1d_idx = 0; block_1d_idx < child1_tot_d1_blocks; block_1d_idx++) {
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child1_tot_d1_blocks; block_1d_idx++) {
             results_ptr->leaf_data_array[child_block_idx_1 + block_1d_idx].consider_block = 1;
             results_ptr->leaf_data_array[child_block_idx_1 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
@@ -2523,14 +2520,14 @@ static void set_child_to_be_considered(MdcSbData *results_ptr, uint32_t blk_inde
         if (depth_step > 1)
             set_child_to_be_considered(results_ptr, child_block_idx_1, sb_size, depth_step - 1);
         //Set second child to be considered
-        child_block_idx_2 =
-            child_block_idx_1 + ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
+        uint32_t child_block_idx_2 = child_block_idx_1 +
+            ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
         const BlockGeom *child2_blk_geom = get_blk_geom_mds(child_block_idx_2);
         uint32_t         child2_tot_d1_blocks =
             child2_blk_geom->sq_size == 128
                 ? 17
                 : child2_blk_geom->sq_size > 8 ? 25 : child2_blk_geom->sq_size == 8 ? 5 : 1;
-        for (block_1d_idx = 0; block_1d_idx < child2_tot_d1_blocks; block_1d_idx++) {
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child2_tot_d1_blocks; block_1d_idx++) {
             results_ptr->leaf_data_array[child_block_idx_2 + block_1d_idx].consider_block = 1;
             results_ptr->leaf_data_array[child_block_idx_2 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
@@ -2538,15 +2535,15 @@ static void set_child_to_be_considered(MdcSbData *results_ptr, uint32_t blk_inde
         if (depth_step > 1)
             set_child_to_be_considered(results_ptr, child_block_idx_2, sb_size, depth_step - 1);
         //Set third child to be considered
-        child_block_idx_3 =
-            child_block_idx_2 + ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
+        uint32_t child_block_idx_3 = child_block_idx_2 +
+            ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
         const BlockGeom *child3_blk_geom = get_blk_geom_mds(child_block_idx_3);
         uint32_t         child3_tot_d1_blocks =
             child3_blk_geom->sq_size == 128
                 ? 17
                 : child3_blk_geom->sq_size > 8 ? 25 : child3_blk_geom->sq_size == 8 ? 5 : 1;
 
-        for (block_1d_idx = 0; block_1d_idx < child3_tot_d1_blocks; block_1d_idx++) {
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child3_tot_d1_blocks; block_1d_idx++) {
             results_ptr->leaf_data_array[child_block_idx_3 + block_1d_idx].consider_block = 1;
             results_ptr->leaf_data_array[child_block_idx_3 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
@@ -2554,14 +2551,14 @@ static void set_child_to_be_considered(MdcSbData *results_ptr, uint32_t blk_inde
         if (depth_step > 1)
             set_child_to_be_considered(results_ptr, child_block_idx_3, sb_size, depth_step - 1);
         //Set forth child to be considered
-        child_block_idx_4 =
-            child_block_idx_3 + ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
+        uint32_t child_block_idx_4 = child_block_idx_3 +
+            ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
         const BlockGeom *child4_blk_geom = get_blk_geom_mds(child_block_idx_4);
         uint32_t         child4_tot_d1_blocks =
             child4_blk_geom->sq_size == 128
                 ? 17
                 : child4_blk_geom->sq_size > 8 ? 25 : child4_blk_geom->sq_size == 8 ? 5 : 1;
-        for (block_1d_idx = 0; block_1d_idx < child4_tot_d1_blocks; block_1d_idx++) {
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child4_tot_d1_blocks; block_1d_idx++) {
             results_ptr->leaf_data_array[child_block_idx_4 + block_1d_idx].consider_block = 1;
             results_ptr->leaf_data_array[child_block_idx_4 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
@@ -2578,10 +2575,9 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
     uint32_t blk_index      = 0;
     uint32_t d1_blocks_accumlated, tot_d1_blocks = 0, d1_block_idx;
 
-    EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        split_flag                = blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+        EbBool           split_flag = blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
         //if the parent sq is inside inject this block
         uint8_t is_blk_allowed =
             pcs_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
@@ -2755,14 +2751,13 @@ static uint64_t generate_best_part_cost(
     uint32_t             sb_index) {
     uint32_t  blk_index = 0;
     uint64_t best_part_cost = 0;
-    EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
             (blk_geom->sq_size < 128) ? 1 : 0;
         // derive split_flag
-        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
@@ -2797,21 +2792,18 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 
     SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
 
-    uint32_t tot_d1_blocks, block_1d_idx;
-    EbBool   split_flag;
-
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        tot_d1_blocks             = blk_geom->sq_size == 128
-                            ? 17
-                            : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
+        const unsigned   tot_d1_blocks = blk_geom->sq_size == 128
+            ? 17
+            : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed =
             pcs_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
 
         // derive split_flag
-        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
 
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
@@ -3017,7 +3009,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                     }
 
                     // Add current pred depth block(s)
-                    for (block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
+                    for (unsigned block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].consider_block = 1;
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].refined_split_flag =
                             EB_FALSE;
@@ -3097,21 +3089,11 @@ void *enc_dec_kernel(void *input_ptr) {
     // SB Loop variables
     SuperBlock *sb_ptr;
     uint16_t    sb_index;
-    uint8_t     sb_sz;
-    uint8_t     sb_size_log2;
     uint32_t    x_sb_index;
     uint32_t    y_sb_index;
     uint32_t    sb_origin_x;
     uint32_t    sb_origin_y;
-    EbBool      last_sb_flag;
-    EbBool      end_of_row_flag;
-    uint32_t    sb_row_index_start;
-    uint32_t    sb_row_index_count;
-    uint32_t    pic_width_in_sb;
     MdcSbData * mdc_ptr;
-
-    // Variables
-    EbBool is_16bit;
 
     // Segments
     uint16_t        segment_index;
@@ -3125,8 +3107,6 @@ void *enc_dec_kernel(void *input_ptr) {
     uint32_t        segment_band_size;
     EncDecSegments *segments_ptr;
 
-    uint16_t tile_group_width_in_sb;
-
     segment_index = 0;
 
     for (;;) {
@@ -3139,20 +3119,17 @@ void *enc_dec_kernel(void *input_ptr) {
         context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
         context_ptr->coded_sb_count   = 0;
         segments_ptr = pcs_ptr->enc_dec_segment_ctrl[context_ptr->tile_group_index];
-        last_sb_flag = EB_FALSE;
-        is_16bit     = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-        (void)is_16bit;
-        (void)end_of_row_flag;
+        EbBool last_sb_flag           = EB_FALSE;
         // SB Constants
-        sb_sz              = (uint8_t)scs_ptr->sb_size_pix;
-        sb_size_log2       = (uint8_t)eb_log2f(sb_sz);
+        uint8_t sb_sz      = (uint8_t)scs_ptr->sb_size_pix;
+        uint8_t sb_size_log2 = (uint8_t)eb_log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
-        pic_width_in_sb    = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >> sb_size_log2;
-        tile_group_width_in_sb =
-            pcs_ptr->parent_pcs_ptr->tile_group_info[context_ptr->tile_group_index]
-                .tile_group_width_in_sb;
-        end_of_row_flag    = EB_FALSE;
-        sb_row_index_start = sb_row_index_count = 0;
+        uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >>
+            sb_size_log2;
+        uint16_t tile_group_width_in_sb = pcs_ptr->parent_pcs_ptr
+                                              ->tile_group_info[context_ptr->tile_group_index]
+                                              .tile_group_width_in_sb;
+        uint32_t sb_row_index_start = 0, sb_row_index_count = 0;
         context_ptr->tot_intra_coded_area       = 0;
 
         // Segment-loop
@@ -3217,8 +3194,6 @@ void *enc_dec_kernel(void *input_ptr) {
                     context_ptr->tile_index             = sb_ptr->tile_info.tile_rs_index;
                     context_ptr->md_context->tile_index = sb_ptr->tile_info.tile_rs_index;
 
-                    end_of_row_flag =
-                        (x_sb_index + 1 == tile_group_width_in_sb) ? EB_TRUE : EB_FALSE;
                     sb_row_index_start =
                         (x_sb_index + 1 == tile_group_width_in_sb && sb_row_index_count == 0)
                             ? y_sb_index
@@ -3475,9 +3450,6 @@ void *enc_dec_kernel(void *input_ptr) {
                       context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits,
                       2 * sizeof(int32_t));
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
-        }
-
-        if (last_sb_flag) {
             // Get Empty EncDec Results
             eb_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;

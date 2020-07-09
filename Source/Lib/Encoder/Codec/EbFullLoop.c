@@ -45,7 +45,7 @@ void quantize_b_helper_c_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t
     const int32_t zbins[2]  = {ROUND_POWER_OF_TWO(zbin_ptr[0], log_scale),
                               ROUND_POWER_OF_TWO(zbin_ptr[1], log_scale)};
     const int32_t nzbins[2] = {zbins[0] * -1, zbins[1] * -1};
-    int32_t       i, non_zero_count = (int32_t)n_coeffs, eob = -1;
+    intptr_t      non_zero_count = n_coeffs, eob = -1;
     (void)iscan;
 
     memset(qcoeff_ptr, 0, n_coeffs * sizeof(*qcoeff_ptr));
@@ -53,7 +53,7 @@ void quantize_b_helper_c_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t
 
     if (!skip_block) {
         // Pre-scan pass
-        for (i = (int32_t)n_coeffs - 1; i >= 0; i--) {
+        for (intptr_t i = n_coeffs - 1; i >= 0; i--) {
             const int32_t rc    = scan[i];
             const QmVal   wt    = qm_ptr != NULL ? qm_ptr[rc] : (1 << AOM_QM_BITS);
             const int32_t coeff = coeff_ptr[rc] * wt;
@@ -67,12 +67,11 @@ void quantize_b_helper_c_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t
 
         // Quantization pass: All coefficients with index >= zero_flag are
         // skippable. Note: zero_flag can be zero.
-        for (i = 0; i < non_zero_count; i++) {
+        for (intptr_t i = 0; i < non_zero_count; i++) {
             const int32_t rc         = scan[i];
             const int32_t coeff      = coeff_ptr[rc];
-            const int32_t coeff_sign = (coeff >> 31);
+            const int     coeff_sign = coeff < 0 ? -1 : 0;
             const int32_t abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
-            int32_t       tmp32;
 
             const QmVal wt = qm_ptr != NULL ? qm_ptr[rc] : (1 << AOM_QM_BITS);
             if (abs_coeff * wt >= (zbins[rc != 0] << AOM_QM_BITS)) {
@@ -80,7 +79,7 @@ void quantize_b_helper_c_ii(const TranLow *coeff_ptr, intptr_t n_coeffs, int32_t
                                     INT16_MIN,
                                     INT16_MAX);
                 tmp *= wt;
-                tmp32 = (int32_t)(
+                int32_t tmp32 = (int32_t)(
                     ((((tmp * quant_ptr[rc != 0]) >> 16) + tmp) * quant_shift_ptr[rc != 0]) >>
                     (16 - log_scale + AOM_QM_BITS)); // quantization
                 qcoeff_ptr[rc]    = (tmp32 ^ coeff_sign) - coeff_sign;
@@ -175,10 +174,10 @@ void eb_quantize_b_helper_c(const TranLow *coeff_ptr, int32_t stride,
                             TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr, const int16_t *dequant_ptr,
                             uint16_t *eob_ptr, const int16_t *scan, const int16_t *iscan,
                             const QmVal *qm_ptr, const QmVal *iqm_ptr, const int32_t log_scale) {
-    const int32_t zbins[2]  = {ROUND_POWER_OF_TWO(zbin_ptr[0], log_scale),
+    const int32_t zbins[2]       = {ROUND_POWER_OF_TWO(zbin_ptr[0], log_scale),
                               ROUND_POWER_OF_TWO(zbin_ptr[1], log_scale)};
-    const int32_t nzbins[2] = {zbins[0] * -1, zbins[1] * -1};
-    int32_t       i, non_zero_count = (int32_t)n_coeffs, eob = -1;
+    const int32_t nzbins[2]      = {zbins[0] * -1, zbins[1] * -1};
+    intptr_t      non_zero_count = n_coeffs, eob = -1;
     (void)iscan;
 
     // Nader quantisation
@@ -189,7 +188,7 @@ void eb_quantize_b_helper_c(const TranLow *coeff_ptr, int32_t stride,
 
     if (!skip_block) {
         // Pre-scan pass
-        for (i = (int32_t)n_coeffs - 1; i >= 0; i--) {
+        for (intptr_t i = n_coeffs - 1; i >= 0; i--) {
             const int32_t map_rc = scan[i];
 
             const int32_t rc = ((map_rc / MIN(32, height)) * stride) + (map_rc % MIN(32, width));
@@ -208,14 +207,13 @@ void eb_quantize_b_helper_c(const TranLow *coeff_ptr, int32_t stride,
         }
         // Quantization pass: All coefficients with index >= zero_flag are
         // skippable. Note: zero_flag can be zero.
-        for (i = 0; i < non_zero_count; i++) {
+        for (intptr_t i = 0; i < non_zero_count; i++) {
             const int32_t map_rc = scan[i];
 
             const int32_t rc    = ((map_rc / MIN(32, height)) * stride) + (map_rc % MIN(32, width));
             const int32_t coeff = coeff_ptr[rc];
-            const int32_t coeff_sign = (coeff >> 31);
+            const int  coeff_sign = coeff < 0 ? -1 : 0;
             const int32_t abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
-            int32_t       tmp32;
 
             const QmVal wt = qm_ptr != NULL ? qm_ptr[map_rc] : (1 << AOM_QM_BITS);
 
@@ -226,7 +224,7 @@ void eb_quantize_b_helper_c(const TranLow *coeff_ptr, int32_t stride,
 
                 tmp *= wt;
 
-                tmp32 = (int32_t)(
+                int32_t tmp32 = (int32_t)(
                     ((((tmp * quant_ptr[rc != 0]) >> 16) + tmp) * quant_shift_ptr[rc != 0]) >>
                     (16 - log_scale + AOM_QM_BITS)); // quantization
 
@@ -253,21 +251,20 @@ void eb_highbd_quantize_b_helper_c(const TranLow *coeff_ptr, intptr_t n_coeffs, 
                                    const int16_t *dequant_ptr, uint16_t *eob_ptr,
                                    const int16_t *scan, const int16_t *iscan, const QmVal *qm_ptr,
                                    const QmVal *iqm_ptr, const int32_t log_scale) {
-    int32_t       i, eob = -1;
-    const int32_t zbins[2]  = {ROUND_POWER_OF_TWO(zbin_ptr[0], log_scale),
-                              ROUND_POWER_OF_TWO(zbin_ptr[1], log_scale)};
-    const int32_t nzbins[2] = {zbins[0] * -1, zbins[1] * -1};
-    int32_t       dequant;
-    int32_t       idx_arr[4096];
+    intptr_t      eob = -1;
     (void)iscan;
-    int32_t idx = 0;
 
     memset(qcoeff_ptr, 0, n_coeffs * sizeof(*qcoeff_ptr));
     memset(dqcoeff_ptr, 0, n_coeffs * sizeof(*dqcoeff_ptr));
 
     if (!skip_block) {
+        const int32_t zbins[2]  = {ROUND_POWER_OF_TWO(zbin_ptr[0], log_scale),
+                                  ROUND_POWER_OF_TWO(zbin_ptr[1], log_scale)};
+        const int32_t nzbins[2] = {zbins[0] * -1, zbins[1] * -1};
+        intptr_t      idx_arr[4096];
+        int idx = 0;
         // Pre-scan pass
-        for (i = 0; i < n_coeffs; i++) {
+        for (intptr_t i = 0; i < n_coeffs; i++) {
             const int32_t rc    = scan[i];
             const QmVal   wt    = qm_ptr != NULL ? qm_ptr[rc] : (1 << AOM_QM_BITS);
             const int32_t coeff = coeff_ptr[rc] * wt;
@@ -281,10 +278,10 @@ void eb_highbd_quantize_b_helper_c(const TranLow *coeff_ptr, intptr_t n_coeffs, 
 
         // Quantization pass: only process the coefficients selected in
         // pre-scan pass. Note: idx can be zero.
-        for (i = 0; i < idx; i++) {
+        for (int i = 0; i < idx; i++) {
             const int32_t rc         = scan[idx_arr[i]];
             const int32_t coeff      = coeff_ptr[rc];
-            const int32_t coeff_sign = (coeff >> 31);
+            const int     coeff_sign = coeff < 0 ? -1 : 0;
             const QmVal   wt         = qm_ptr != NULL ? qm_ptr[rc] : (1 << AOM_QM_BITS);
             const QmVal   iwt        = iqm_ptr != NULL ? iqm_ptr[rc] : (1 << AOM_QM_BITS);
             const int32_t abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
@@ -294,7 +291,8 @@ void eb_highbd_quantize_b_helper_c(const TranLow *coeff_ptr, intptr_t n_coeffs, 
             const int32_t abs_qcoeff =
                 (int32_t)((tmp2 * quant_shift_ptr[rc != 0]) >> (16 - log_scale + AOM_QM_BITS));
             qcoeff_ptr[rc] = (TranLow)((abs_qcoeff ^ coeff_sign) - coeff_sign);
-            dequant        = (dequant_ptr[rc != 0] * iwt + (1 << (AOM_QM_BITS - 1))) >> AOM_QM_BITS;
+            int32_t dequant = (dequant_ptr[rc != 0] * iwt + (1 << (AOM_QM_BITS - 1))) >>
+                AOM_QM_BITS;
             const TranLow abs_dqcoeff = (abs_qcoeff * dequant) >> log_scale;
             dqcoeff_ptr[rc]           = (TranLow)((abs_dqcoeff ^ coeff_sign) - coeff_sign);
             if (abs_qcoeff) eob = idx_arr[i];
@@ -577,7 +575,7 @@ static void quantize_fp_helper_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
             const int     rc         = scan[i];
             const int32_t thresh     = (int32_t)(dequant_ptr[rc != 0]);
             const int     coeff      = coeff_ptr[rc];
-            const int     coeff_sign = (coeff >> 31);
+            const int     coeff_sign = coeff < 0 ? -1 : 0;
             int64_t       abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
             int           tmp32      = 0;
             if ((abs_coeff << (1 + log_scale)) >= thresh) {
@@ -601,7 +599,7 @@ static void quantize_fp_helper_c(const TranLow *coeff_ptr, intptr_t n_coeffs,
             const QmVal iwt   = iqm_ptr ? iqm_ptr[rc] : (1 << AOM_QM_BITS);
             const int   dequant =
                 (dequant_ptr[rc != 0] * iwt + (1 << (AOM_QM_BITS - 1))) >> AOM_QM_BITS;
-            const int coeff_sign = (coeff >> 31);
+            const int coeff_sign = coeff < 0 ? -1 : 0;
             int64_t   abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
             int       tmp32      = 0;
             if (abs_coeff * wt >= (dequant_ptr[rc != 0] << (AOM_QM_BITS - (1 + log_scale)))) {
@@ -647,7 +645,6 @@ static void eb_highbd_quantize_fp_helper_c(
     const int16_t *quant_ptr, const int16_t *quant_shift_ptr, TranLow *qcoeff_ptr,
     TranLow *dqcoeff_ptr, const int16_t *dequant_ptr, uint16_t *eob_ptr, const int16_t *scan,
     const int16_t *iscan, const QmVal *qm_ptr, const QmVal *iqm_ptr, int16_t log_scale) {
-    int       i;
     int       eob   = -1;
     const int shift = 16 - log_scale;
     (void)zbin_ptr;
@@ -657,19 +654,19 @@ static void eb_highbd_quantize_fp_helper_c(
     if (qm_ptr || iqm_ptr) {
         // Quantization pass: All coefficients with index >= zero_flag are
         // skippable. Note: zero_flag can be zero.
-        for (i = 0; i < count; i++) {
+        for (uint16_t i = 0; i < count; i++) {
             const int   rc    = scan[i];
             const int   coeff = coeff_ptr[rc];
             const QmVal wt    = qm_ptr != NULL ? qm_ptr[rc] : (1 << AOM_QM_BITS);
             const QmVal iwt   = iqm_ptr != NULL ? iqm_ptr[rc] : (1 << AOM_QM_BITS);
             const int   dequant =
                 (dequant_ptr[rc != 0] * iwt + (1 << (AOM_QM_BITS - 1))) >> AOM_QM_BITS;
-            const int     coeff_sign = (coeff >> 31);
+            const int     coeff_sign = coeff < 0 ? -1 : 0;
             const int64_t abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
-            int           abs_qcoeff = 0;
             if (abs_coeff * wt >= (dequant_ptr[rc != 0] << (AOM_QM_BITS - (1 + log_scale)))) {
                 const int64_t tmp = abs_coeff + ROUND_POWER_OF_TWO(round_ptr[rc != 0], log_scale);
-                abs_qcoeff        = (int)((tmp * quant_ptr[rc != 0] * wt) >> (shift + AOM_QM_BITS));
+                const int     abs_qcoeff  = (int)((tmp * quant_ptr[rc != 0] * wt) >>
+                                             (shift + AOM_QM_BITS));
                 qcoeff_ptr[rc]    = (TranLow)((abs_qcoeff ^ coeff_sign) - coeff_sign);
                 const TranLow abs_dqcoeff = (abs_qcoeff * dequant) >> log_scale;
                 dqcoeff_ptr[rc]           = (TranLow)((abs_dqcoeff ^ coeff_sign) - coeff_sign);
@@ -684,11 +681,11 @@ static void eb_highbd_quantize_fp_helper_c(
             ROUND_POWER_OF_TWO(round_ptr[0], log_scale),
             ROUND_POWER_OF_TWO(round_ptr[1], log_scale),
         };
-        for (i = 0; i < count; i++) {
+        for (uint16_t i = 0; i < count; i++) {
             const int rc               = scan[i];
             const int coeff            = coeff_ptr[rc];
             const int rc01             = (rc != 0);
-            const int coeff_sign       = (coeff >> 31);
+            const int coeff_sign       = coeff < 0 ? -1 : 0;
             const int abs_coeff        = (coeff ^ coeff_sign) - coeff_sign;
             const int log_scaled_round = log_scaled_round_arr[rc01];
             if ((abs_coeff << (1 + log_scale)) >= dequant_ptr[rc01]) {
@@ -731,12 +728,12 @@ static void highbd_quantize_fp_helper_c(
             const QmVal iwt   = iqm_ptr != NULL ? iqm_ptr[rc] : (1 << AOM_QM_BITS);
             const int   dequant =
                 (dequant_ptr[rc != 0] * iwt + (1 << (AOM_QM_BITS - 1))) >> AOM_QM_BITS;
-            const int     coeff_sign = (coeff >> 31);
+            const int     coeff_sign = coeff < 0 ? -1 : 0;
             const int64_t abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
-            int           abs_qcoeff = 0;
             if (abs_coeff * wt >= (dequant_ptr[rc != 0] << (AOM_QM_BITS - (1 + log_scale)))) {
                 const int64_t tmp = abs_coeff + ROUND_POWER_OF_TWO(round_ptr[rc != 0], log_scale);
-                abs_qcoeff        = (int)((tmp * quant_ptr[rc != 0] * wt) >> (shift + AOM_QM_BITS));
+                const int     abs_qcoeff  = (int)((tmp * quant_ptr[rc != 0] * wt) >>
+                                             (shift + AOM_QM_BITS));
                 qcoeff_ptr[rc]    = (TranLow)((abs_qcoeff ^ coeff_sign) - coeff_sign);
                 const TranLow abs_dqcoeff = (abs_qcoeff * dequant) >> log_scale;
                 dqcoeff_ptr[rc]           = (TranLow)((abs_dqcoeff ^ coeff_sign) - coeff_sign);
@@ -755,7 +752,7 @@ static void highbd_quantize_fp_helper_c(
             const int rc               = scan[i];
             const int coeff            = coeff_ptr[rc];
             const int rc01             = (rc != 0);
-            const int coeff_sign       = (coeff >> 31);
+            const int coeff_sign       = coeff < 0 ? -1 : 0;
             const int abs_coeff        = (coeff ^ coeff_sign) - coeff_sign;
             const int log_scaled_round = log_scaled_round_arr[rc01];
             if ((abs_coeff << (1 + log_scale)) >= dequant_ptr[rc01]) {
@@ -2505,34 +2502,28 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
     (void)cr_qp;
     (void)input_picture_ptr;
     int16_t *chroma_residual_ptr;
-    uint32_t txb_origin_index;
-    UNUSED(txb_origin_index);
-    uint32_t tu_cb_origin_index;
-    uint32_t tu_cr_origin_index;
-    uint32_t tu_count;
-    uint32_t txb_itr;
-    uint32_t txb_origin_x;
-    uint32_t txb_origin_y;
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
 
     context_ptr->three_quad_energy = 0;
 
-    uint8_t tx_depth = candidate_buffer->candidate_ptr->tx_depth;
-    int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
-                        candidate_buffer->candidate_ptr->use_intrabc)
-                           ? EB_TRUE
-                           : EB_FALSE;
+    const uint8_t tx_depth = candidate_buffer->candidate_ptr->tx_depth;
+    const int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
+                              candidate_buffer->candidate_ptr->use_intrabc)
+        ? EB_TRUE
+        : EB_FALSE;
 
-    tu_count = context_ptr->blk_geom->txb_count[candidate_buffer->candidate_ptr->tx_depth];
+    const int tu_count = tx_depth
+        ? 1
+        : context_ptr->blk_geom
+              ->txb_count[candidate_buffer->candidate_ptr->tx_depth]; //NM: 128x128 exeption
     uint32_t txb_1d_offset = 0;
-    tu_count               = tx_depth ? 1 : tu_count; //NM: 128x128 exeption
 
-    txb_itr = 0;
+    int txb_itr = 0;
     do {
-        txb_origin_x = context_ptr->blk_geom->tx_org_x[is_inter][tx_depth][txb_itr];
-        txb_origin_y = context_ptr->blk_geom->tx_org_y[is_inter][tx_depth][txb_itr];
+        const uint32_t txb_origin_x = context_ptr->blk_geom->tx_org_x[is_inter][tx_depth][txb_itr];
+        const uint32_t txb_origin_y = context_ptr->blk_geom->tx_org_y[is_inter][tx_depth][txb_itr];
 
         context_ptr->cb_txb_skip_context = 0;
         context_ptr->cb_dc_sign_context  = 0;
@@ -2559,16 +2550,16 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                     &context_ptr->cr_dc_sign_context);
 
         // NADER - TU
-        txb_origin_index =
-            txb_origin_x + txb_origin_y * candidate_buffer->residual_quant_coeff_ptr->stride_y;
-        tu_cb_origin_index = (((txb_origin_x >> 3) << 3) +
-                              (((txb_origin_y >> 3) << 3) *
-                               candidate_buffer->residual_quant_coeff_ptr->stride_cb)) >>
-                             1;
-        tu_cr_origin_index = (((txb_origin_x >> 3) << 3) +
-                              (((txb_origin_y >> 3) << 3) *
-                               candidate_buffer->residual_quant_coeff_ptr->stride_cr)) >>
-                             1;
+        const uint32_t tu_cb_origin_index =
+            (((txb_origin_x >> 3) << 3) +
+             (((txb_origin_y >> 3) << 3) *
+              candidate_buffer->residual_quant_coeff_ptr->stride_cb)) >>
+            1;
+        const uint32_t tu_cr_origin_index =
+            (((txb_origin_x >> 3) << 3) +
+             (((txb_origin_y >> 3) << 3) *
+              candidate_buffer->residual_quant_coeff_ptr->stride_cr)) >>
+            1;
 
         //    This function replaces the previous Intra Chroma mode if the LM fast
         //    cost is better.
@@ -2766,55 +2757,46 @@ void cu_full_distortion_fast_txb_mode_r(
     uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, EbBool is_full_loop) {
     (void)sb_ptr;
 
-    uint64_t              y_txb_coeff_bits;
-    uint64_t              cb_txb_coeff_bits;
-    uint64_t              cr_txb_coeff_bits;
-    uint32_t              txb_origin_index;
-    uint32_t              txb_origin_x;
-    uint32_t              txb_origin_y;
-    uint32_t              current_txb_index;
-    int32_t               chroma_shift;
-    uint32_t              txb_chroma_origin_index;
     EB_ALIGN(16) uint64_t txb_full_distortion[3][DIST_CALC_TOTAL];
-    EbPictureBufferDesc * transform_buffer;
-    uint32_t              tu_total_count;
-    uint32_t              txb_itr  = 0;
-    uint8_t               tx_depth = candidate_buffer->candidate_ptr->tx_depth;
-    tu_total_count                 = context_ptr->blk_geom->txb_count[tx_depth];
-    current_txb_index              = 0;
-    transform_buffer = context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
+    uint16_t              txb_itr           = 0;
+    uint8_t               tx_depth          = candidate_buffer->candidate_ptr->tx_depth;
+    int                   current_txb_index = 0;
+    EbPictureBufferDesc * transform_buffer =
+        context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr;
 
-    uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
-        context_ptr->full_lambda_md[EB_10_BIT_MD] :
-        context_ptr->full_lambda_md[EB_8_BIT_MD];
+    uint32_t full_lambda = context_ptr->hbd_mode_decision
+        ? context_ptr->full_lambda_md[EB_10_BIT_MD]
+        : context_ptr->full_lambda_md[EB_8_BIT_MD];
     int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                         candidate_buffer->candidate_ptr->use_intrabc)
-                           ? EB_TRUE
-                           : EB_FALSE;
+        ? EB_TRUE
+        : EB_FALSE;
 
     uint32_t txb_1d_offset     = 0;
     candidate_ptr->u_has_coeff = 0;
     candidate_ptr->v_has_coeff = 0;
-    tu_total_count             = tx_depth ? 1 : tu_total_count; //NM: 128x128 exeption
+    uint16_t tu_total_count    = tx_depth
+        ? 1
+        : context_ptr->blk_geom->txb_count[tx_depth]; //NM: 128x128 exeption
     do {
-        txb_origin_x = context_ptr->blk_geom->tx_org_x[is_inter][tx_depth][txb_itr];
-        txb_origin_y = context_ptr->blk_geom->tx_org_y[is_inter][tx_depth][txb_itr];
+        const uint32_t txb_origin_x = context_ptr->blk_geom->tx_org_x[is_inter][tx_depth][txb_itr];
+        const uint32_t txb_origin_y = context_ptr->blk_geom->tx_org_y[is_inter][tx_depth][txb_itr];
 
-        int32_t cropped_tx_width_uv =
-            MIN(context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                pcs_ptr->parent_pcs_ptr->aligned_width / 2 -
-                    ((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1));
-        int32_t cropped_tx_height_uv =
-            MIN(context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
-                pcs_ptr->parent_pcs_ptr->aligned_height / 2 -
-                    ((context_ptr->sb_origin_y + ((txb_origin_y >> 3) << 3)) >> 1));
-        txb_origin_index =
-            txb_origin_x + txb_origin_y * candidate_buffer->residual_quant_coeff_ptr->stride_y;
-        txb_chroma_origin_index = txb_1d_offset;
+        int32_t cropped_tx_width_uv = MIN(
+            context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
+            pcs_ptr->parent_pcs_ptr->aligned_width / 2 -
+                ((context_ptr->sb_origin_x + ((txb_origin_x >> 3) << 3)) >> 1));
+        int32_t cropped_tx_height_uv = MIN(
+            context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
+            pcs_ptr->parent_pcs_ptr->aligned_height / 2 -
+                ((context_ptr->sb_origin_y + ((txb_origin_y >> 3) << 3)) >> 1));
+        const uint32_t txb_origin_index = txb_origin_x +
+            txb_origin_y * candidate_buffer->residual_quant_coeff_ptr->stride_y;
+        const uint32_t txb_chroma_origin_index = txb_1d_offset;
         // Reset the Bit Costs
-        y_txb_coeff_bits  = 0;
-        cb_txb_coeff_bits = 0;
-        cr_txb_coeff_bits = 0;
+        uint64_t y_txb_coeff_bits  = 0;
+        uint64_t cb_txb_coeff_bits = 0;
+        uint64_t cr_txb_coeff_bits = 0;
 
         if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR ||
             component_type == COMPONENT_CHROMA || component_type == COMPONENT_ALL) {
@@ -2908,7 +2890,7 @@ void cu_full_distortion_fast_txb_mode_r(
                     count_nonzero_coeffs_all[2],
                     component_type);
                 TxSize tx_size = context_ptr->blk_geom->txsize_uv[tx_depth][txb_itr];
-                chroma_shift   = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
+                const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
                 txb_full_distortion[1][DIST_CALC_RESIDUAL] =
                     RIGHT_SIGNED_SHIFT(txb_full_distortion[1][DIST_CALC_RESIDUAL], chroma_shift);
                 txb_full_distortion[1][DIST_CALC_PREDICTION] =
@@ -3064,8 +3046,7 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
-    uint64_t above_non_split_rate = 0;
-    uint64_t above_split_rate     = 0;
+    uint64_t above_split_rate = 0;
 
     /*
     ___________
@@ -3102,6 +3083,7 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
 
     // Compute above depth  cost
     if (context_ptr->md_local_blk_unit[above_depth_mds].tested_blk_flag == EB_TRUE) {
+        uint64_t above_non_split_rate = 0;
         *above_depth_cost =
             context_ptr->md_local_blk_unit[above_depth_mds].cost + above_non_split_rate;
         // Compute curr depth  cost
@@ -3251,7 +3233,6 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
-    uint64_t above_non_split_rate = 0;
     uint64_t above_split_rate     = 0;
     *curr_depth_cost              = 0;
     // sum the previous ones
@@ -3301,6 +3282,7 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
 
     // Compute above depth  cost
     if (context_ptr->md_local_blk_unit[above_depth_mds].tested_blk_flag == EB_TRUE) {
+        uint64_t above_non_split_rate = 0;
         *above_depth_cost =
             context_ptr->md_local_blk_unit[above_depth_mds].cost + above_non_split_rate;
         // Compute curr depth  cost

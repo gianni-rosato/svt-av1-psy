@@ -391,17 +391,13 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
 ***************************************************************************/
 void av1_estimate_coefficients_rate(MdRateEstimationContext *md_rate_estimation_array,
                                     FRAME_CONTEXT *          fc) {
-    int32_t       num_planes     = 3; // NM - Hardcoded to 3
+    const int32_t num_planes     = 3; // NM - Hardcoded to 3
     const int32_t nplanes        = AOMMIN(num_planes, PLANE_TYPES);
-    int32_t       eob_multi_size = 0;
-    int32_t       plane          = 0;
-    int32_t       ctx            = 0;
-    int32_t       tx_size        = 0;
 
-    for (eob_multi_size = 0; eob_multi_size < 7; ++eob_multi_size) {
-        for (plane = 0; plane < nplanes; ++plane) {
+    for (int eob_multi_size = 0; eob_multi_size < 7; ++eob_multi_size) {
+        for (int plane = 0; plane < nplanes; ++plane) {
             LvMapEobCost *pcost = &md_rate_estimation_array->eob_frac_bits[eob_multi_size][plane];
-            for (ctx = 0; ctx < 2; ++ctx) {
+            for (int ctx = 0; ctx < 2; ++ctx) {
                 AomCdfProb *pcdf;
                 switch (eob_multi_size) {
                 case 0: pcdf = fc->eob_flag_cdf16[plane][ctx]; break;
@@ -417,18 +413,18 @@ void av1_estimate_coefficients_rate(MdRateEstimationContext *md_rate_estimation_
             }
         }
     }
-    for (tx_size = 0; tx_size < TX_SIZES; ++tx_size) {
-        for (plane = 0; plane < nplanes; ++plane) {
+    for (int tx_size = 0; tx_size < TX_SIZES; ++tx_size) {
+        for (int plane = 0; plane < nplanes; ++plane) {
             LvMapCoeffCost *pcost = &md_rate_estimation_array->coeff_fac_bits[tx_size][plane];
 
-            for (ctx = 0; ctx < TXB_SKIP_CONTEXTS; ++ctx)
+            for (int ctx = 0; ctx < TXB_SKIP_CONTEXTS; ++ctx)
                 av1_get_syntax_rate_from_cdf(
                     pcost->txb_skip_cost[ctx], fc->txb_skip_cdf[tx_size][ctx], NULL);
 
-            for (ctx = 0; ctx < SIG_COEF_CONTEXTS_EOB; ++ctx)
+            for (int ctx = 0; ctx < SIG_COEF_CONTEXTS_EOB; ++ctx)
                 av1_get_syntax_rate_from_cdf(
                     pcost->base_eob_cost[ctx], fc->coeff_base_eob_cdf[tx_size][plane][ctx], NULL);
-            for (ctx = 0; ctx < SIG_COEF_CONTEXTS; ++ctx)
+            for (int ctx = 0; ctx < SIG_COEF_CONTEXTS; ++ctx)
                 av1_get_syntax_rate_from_cdf(
                     pcost->base_cost[ctx], fc->coeff_base_cdf[tx_size][plane][ctx], NULL);
             for (int ctx = 0; ctx < SIG_COEF_CONTEXTS; ++ctx) {
@@ -438,15 +434,15 @@ void av1_estimate_coefficients_rate(MdRateEstimationContext *md_rate_estimation_
                 pcost->base_cost[ctx][6] = pcost->base_cost[ctx][2] - pcost->base_cost[ctx][1];
                 pcost->base_cost[ctx][7] = pcost->base_cost[ctx][3] - pcost->base_cost[ctx][2];
             }
-            for (ctx = 0; ctx < EOB_COEF_CONTEXTS; ++ctx)
+            for (int ctx = 0; ctx < EOB_COEF_CONTEXTS; ++ctx)
                 av1_get_syntax_rate_from_cdf(
                     pcost->eob_extra_cost[ctx], fc->eob_extra_cdf[tx_size][plane][ctx], NULL);
 
-            for (ctx = 0; ctx < DC_SIGN_CONTEXTS; ++ctx)
+            for (int ctx = 0; ctx < DC_SIGN_CONTEXTS; ++ctx)
                 av1_get_syntax_rate_from_cdf(
                     pcost->dc_sign_cost[ctx], fc->dc_sign_cdf[plane][ctx], NULL);
 
-            for (ctx = 0; ctx < LEVEL_CONTEXTS; ++ctx) {
+            for (int ctx = 0; ctx < LEVEL_CONTEXTS; ++ctx) {
                 int32_t br_rate[BR_CDF_SIZE];
                 int32_t prev_cost = 0;
                 int32_t i, j;
@@ -468,10 +464,9 @@ void av1_estimate_coefficients_rate(MdRateEstimationContext *md_rate_estimation_
             }
             for (int ctx = 0; ctx < LEVEL_CONTEXTS; ++ctx) {
                 pcost->lps_cost[ctx][0 + COEFF_BASE_RANGE + 1] = pcost->lps_cost[ctx][0];
-                for (int i = 1; i <= COEFF_BASE_RANGE; ++i) {
+                for (int i = 1; i <= COEFF_BASE_RANGE; ++i)
                     pcost->lps_cost[ctx][i + COEFF_BASE_RANGE + 1] =
                         pcost->lps_cost[ctx][i] - pcost->lps_cost[ctx][i - 1];
-                }
             }
         }
     }

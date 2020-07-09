@@ -306,17 +306,16 @@ static inline PacketizationReorderEntry* get_reorder_queue_entry(const EncodeCon
 }
 
 static uint32_t count_frames_in_next_tu(const EncodeContext *encode_context_ptr, uint32_t *data_size) {
-    const PacketizationReorderEntry *queue_entry_ptr;
-    const EbBufferHeaderType *       output_stream_ptr;
     int                              i = 0;
     *data_size                         = 0;
     do {
-        queue_entry_ptr                = get_reorder_queue_entry(encode_context_ptr, i);
+        const PacketizationReorderEntry *queue_entry_ptr = get_reorder_queue_entry(
+            encode_context_ptr, i);
         const EbObjectWrapper *wrapper = queue_entry_ptr->output_stream_wrapper_ptr;
         //not a completed td
         if (!wrapper) return 0;
 
-        output_stream_ptr = (EbBufferHeaderType *)wrapper->object_ptr;
+        const EbBufferHeaderType *output_stream_ptr = (EbBufferHeaderType *)wrapper->object_ptr;
         *data_size += output_stream_ptr->n_filled_len;
 
         i++;
@@ -620,64 +619,47 @@ void *packetization_kernel(void *input_ptr) {
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
     PacketizationContext *context_ptr        = (PacketizationContext *)thread_context_ptr->priv;
 
-    PictureControlSet *pcs_ptr;
-
-    // Config
-    SequenceControlSet *scs_ptr;
-
-    FrameHeader *frm_hdr;
-
-    // Encoding Context
-    EncodeContext *encode_context_ptr;
-
     // Input
     EbObjectWrapper *     entropy_coding_results_wrapper_ptr;
-    EntropyCodingResults *entropy_coding_results_ptr;
 
     // Output
-    EbObjectWrapper *    output_stream_wrapper_ptr;
-    EbBufferHeaderType * output_stream_ptr;
     EbObjectWrapper *    rate_control_tasks_wrapper_ptr;
-    RateControlTasks *   rate_control_tasks_ptr;
     EbObjectWrapper *    picture_manager_results_wrapper_ptr;
-    PictureDemuxResults *picture_manager_results_ptr;
-    // Queue variables
-    int32_t                    queue_entry_index;
-    PacketizationReorderEntry *queue_entry_ptr;
-    EbLinkedListNode *         app_data_ll_head_temp_ptr;
 
     context_ptr->tot_shown_frames            = 0;
     context_ptr->disp_order_continuity_count = 0;
-
-    uint16_t tile_cnt = 0;
 
     for (;;) {
         // Get EntropyCoding Results
         EB_GET_FULL_OBJECT(context_ptr->entropy_coding_input_fifo_ptr,
                            &entropy_coding_results_wrapper_ptr);
 
-        entropy_coding_results_ptr =
+        EntropyCodingResults *entropy_coding_results_ptr =
             (EntropyCodingResults *)entropy_coding_results_wrapper_ptr->object_ptr;
-        pcs_ptr = (PictureControlSet *)entropy_coding_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
-        frm_hdr            = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+        PictureControlSet *pcs_ptr = (PictureControlSet *)
+                                         entropy_coding_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        EncodeContext *     encode_context_ptr = scs_ptr->encode_context_ptr;
+        FrameHeader *    frm_hdr    = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
-        tile_cnt            = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
+        uint16_t            tile_cnt = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
         //****************************************************
         // Input Entropy Results into Reordering Queue
         //****************************************************
         //get a new entry spot
-        queue_entry_index =
-            pcs_ptr->parent_pcs_ptr->decode_order % PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
-        queue_entry_ptr = encode_context_ptr->packetization_reorder_queue[queue_entry_index];
+        int32_t queue_entry_index = pcs_ptr->parent_pcs_ptr->decode_order %
+            PACKETIZATION_REORDER_QUEUE_MAX_DEPTH;
+        PacketizationReorderEntry *queue_entry_ptr =
+            encode_context_ptr->packetization_reorder_queue[queue_entry_index];
         queue_entry_ptr->start_time_seconds   = pcs_ptr->parent_pcs_ptr->start_time_seconds;
         queue_entry_ptr->start_time_u_seconds = pcs_ptr->parent_pcs_ptr->start_time_u_seconds;
         queue_entry_ptr->is_alt_ref           = pcs_ptr->parent_pcs_ptr->is_alt_ref;
         eb_get_empty_object(scs_ptr->encode_context_ptr->stream_output_fifo_ptr,
                             &pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr);
-        output_stream_wrapper_ptr = pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
-        output_stream_ptr         = (EbBufferHeaderType *)output_stream_wrapper_ptr->object_ptr;
+        EbObjectWrapper *output_stream_wrapper_ptr =
+            pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
+        EbBufferHeaderType *output_stream_ptr = (EbBufferHeaderType *)
+                                                    output_stream_wrapper_ptr->object_ptr;
 
         output_stream_ptr->flags = 0;
         output_stream_ptr->flags |=
@@ -716,7 +698,8 @@ void *packetization_kernel(void *input_ptr) {
         // Get Empty Rate Control Input Tasks
         eb_get_empty_object(context_ptr->rate_control_tasks_output_fifo_ptr,
                             &rate_control_tasks_wrapper_ptr);
-        rate_control_tasks_ptr = (RateControlTasks *)rate_control_tasks_wrapper_ptr->object_ptr;
+        RateControlTasks *rate_control_tasks_ptr = (RateControlTasks *)
+                                                       rate_control_tasks_wrapper_ptr->object_ptr;
         rate_control_tasks_ptr->pcs_wrapper_ptr = pcs_ptr->picture_parent_control_set_wrapper_ptr;
         rate_control_tasks_ptr->task_type       = RC_PACKETIZATION_FEEDBACK_RESULT;
 
@@ -736,15 +719,11 @@ void *packetization_kernel(void *input_ptr) {
             eb_get_empty_object(context_ptr->picture_manager_input_fifo_ptr,
                                 &picture_manager_results_wrapper_ptr);
 
-            picture_manager_results_ptr =
+            PictureDemuxResults *picture_manager_results_ptr =
                 (PictureDemuxResults *)picture_manager_results_wrapper_ptr->object_ptr;
             picture_manager_results_ptr->picture_number  = pcs_ptr->picture_number;
             picture_manager_results_ptr->picture_type    = EB_PIC_FEEDBACK;
             picture_manager_results_ptr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
-        } else {
-            picture_manager_results_wrapper_ptr = NULL;
-            (void)picture_manager_results_ptr;
-            (void)picture_manager_results_wrapper_ptr;
         }
         // Reset the Bitstream before writing to it
         bitstream_reset(pcs_ptr->bitstream_ptr);
@@ -805,7 +784,8 @@ void *packetization_kernel(void *input_ptr) {
 
         // Calling callback functions to release the memory allocated for data linked list in the application
         while (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr != NULL) {
-            app_data_ll_head_temp_ptr = pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->next;
+            EbLinkedListNode *app_data_ll_head_temp_ptr =
+                pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->next;
             if (pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr != NULL)
                 pcs_ptr->parent_pcs_ptr->data_ll_head_ptr->release_cb_fnc_ptr(
                     pcs_ptr->parent_pcs_ptr->data_ll_head_ptr);

@@ -7421,7 +7421,6 @@ SIMD_INLINE void eb_aom_sad8xhx4d_calc_avx2(const uint8_t *src, int src_stride,
     __m256i  ymm1 = _mm256_setzero_si256();
     __m256i  ymm2 = _mm256_setzero_si256();
     __m256i  ymm3 = _mm256_setzero_si256();
-    uint32_t y;
 
     const uint8_t *ref0, *ref1, *ref2, *ref3;
 
@@ -7430,46 +7429,46 @@ SIMD_INLINE void eb_aom_sad8xhx4d_calc_avx2(const uint8_t *src, int src_stride,
     ref2 = ref[2];
     ref3 = ref[3];
 
-    for (y = 0; y < height; y += 4) {
+    for (uint32_t y = 0; y < height; y += 4) {
         __m128i src01, src23;
         src01 = _mm_loadl_epi64((__m128i *)(src + 0 * src_stride));
-        src01 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(src + 1 * src_stride)));
+        src01 = _mm_castpd_si128(_mm_loadh_pd(
+            _mm_castsi128_pd(src01), (const double *)(const void *)(src + 1 * src_stride)));
         src23 = _mm_loadl_epi64((__m128i *)(src + 2 * src_stride));
-        src23 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(src + 3 * src_stride)));
+        src23                 = _mm_castpd_si128(_mm_loadh_pd(
+            _mm_castsi128_pd(src23), (const double *)(const void *)(src + 3 * src_stride)));
         const __m256i src0123 = _mm256_setr_m128i(src01, src23);
 
         src01 = _mm_loadl_epi64((__m128i *)(ref0 + 0 * ref_stride));
         src01 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(ref0 + 1 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src01), (const double *)(const void*)(ref0 + 1 * ref_stride)));
         src23 = _mm_loadl_epi64((__m128i *)(ref0 + 2 * ref_stride));
         src23 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(ref0 + 3 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src23), (const double *)(const void*)(ref0 + 3 * ref_stride)));
         const __m256i ref0123_0 = _mm256_setr_m128i(src01, src23);
 
         src01 = _mm_loadl_epi64((__m128i *)(ref1 + 0 * ref_stride));
         src01 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(ref1 + 1 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src01), (const double *)(const void*)(ref1 + 1 * ref_stride)));
         src23 = _mm_loadl_epi64((__m128i *)(ref1 + 2 * ref_stride));
         src23 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(ref1 + 3 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src23), (const double *)(const void*)(ref1 + 3 * ref_stride)));
         const __m256i ref0123_1 = _mm256_setr_m128i(src01, src23);
 
         src01 = _mm_loadl_epi64((__m128i *)(ref2 + 0 * ref_stride));
         src01 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(ref2 + 1 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src01), (const double *)(const void*)(ref2 + 1 * ref_stride)));
         src23 = _mm_loadl_epi64((__m128i *)(ref2 + 2 * ref_stride));
         src23 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(ref2 + 3 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src23), (const double *)(const void*)(ref2 + 3 * ref_stride)));
         const __m256i ref0123_2 = _mm256_setr_m128i(src01, src23);
 
         src01 = _mm_loadl_epi64((__m128i *)(ref3 + 0 * ref_stride));
         src01 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(ref3 + 1 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src01), (const double *)(const void*)(ref3 + 1 * ref_stride)));
         src23 = _mm_loadl_epi64((__m128i *)(ref3 + 2 * ref_stride));
         src23 = _mm_castpd_si128(
-            _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(ref3 + 3 * ref_stride)));
+            _mm_loadh_pd(_mm_castsi128_pd(src23), (const double *)(const void*)(ref3 + 3 * ref_stride)));
         const __m256i ref0123_3 = _mm256_setr_m128i(src01, src23);
 
         ymm0 = _mm256_add_epi32(ymm0, _mm256_sad_epu8(src0123, ref0123_0));

@@ -1185,7 +1185,6 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t pli;
 
     uint64_t      best_tot_mse = (uint64_t)1 << 63;
-    uint64_t      tot_mse;
     int32_t       sb_count;
     int32_t       nvfb              = (mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t       nhfb              = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
@@ -1219,12 +1218,11 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     const int32_t num_planes = 3; // av1_num_planes(cm);
     uint16_t qp_index = (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     uint32_t fast_lambda, full_lambda;
-    (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
-        &fast_lambda,
-        &full_lambda,
-        (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
-        qp_index,
-        EB_FALSE);
+    av1_lambda_assign(&fast_lambda,
+                      &full_lambda,
+                      (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
+                      qp_index,
+                      EB_FALSE);
     lambda = full_lambda;
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);
@@ -1265,26 +1263,22 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     nb_strength_bits = 0;
     /* Search for different number of signalling bits. */
     for (i = 0; i <= 3; i++) {
-        int32_t j;
         int32_t best_lev0[CDEF_MAX_STRENGTHS];
         int32_t best_lev1[CDEF_MAX_STRENGTHS] = {0};
         nb_strengths                          = 1 << i;
-        if (num_planes >= 3)
-            tot_mse = joint_strength_search_dual(
-                best_lev0, best_lev1, nb_strengths, mse, sb_count, start_gi, end_gi);
-        else
-            tot_mse = joint_strength_search(
-                best_lev0, nb_strengths, mse[0], sb_count, start_gi, end_gi);
+        uint64_t tot_mse                      = joint_strength_search_dual(
+            best_lev0, best_lev1, nb_strengths, mse, sb_count, start_gi, end_gi);
+        (void)joint_strength_search;
         /* Count superblock signalling cost. */
         const int total_bits =
-            sb_count * i + nb_strengths * CDEF_STRENGTH_BITS * (num_planes > 1 ? 2 : 1);
+            sb_count * i + nb_strengths * CDEF_STRENGTH_BITS * 2;
         const int      rate_cost = av1_cost_literal(total_bits);
         const uint64_t dist      = tot_mse * 16;
         tot_mse                  = RDCOST(lambda, rate_cost, dist);
         if (tot_mse < best_tot_mse) {
             best_tot_mse     = tot_mse;
             nb_strength_bits = i;
-            for (j = 0; j < 1 << nb_strength_bits; j++) {
+            for (int32_t j = 0; j < 1 << nb_strength_bits; j++) {
                 frm_hdr->cdef_params.cdef_y_strength[j]  = best_lev0[j];
                 frm_hdr->cdef_params.cdef_uv_strength[j] = best_lev1[j];
             }
@@ -1301,7 +1295,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         best_gi           = 0;
         for (gi = 0; gi < ppcs->nb_cdef_strengths; gi++) {
             uint64_t curr = mse[0][i][frm_hdr->cdef_params.cdef_y_strength[gi]];
-            if (num_planes >= 3) curr += mse[1][i][frm_hdr->cdef_params.cdef_uv_strength[gi]];
+            curr += mse[1][i][frm_hdr->cdef_params.cdef_uv_strength[gi]];
             if (curr < best_mse) {
                 best_gi  = gi;
                 best_mse = curr;
@@ -1338,7 +1332,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
 
     //cdef_pri_damping & cdef_sec_damping consolidated to cdef_damping
     frm_hdr->cdef_params.cdef_damping = pri_damping;
-    for (int i = 0; i < total_strengths; i++)
+    for (i = 0; i < total_strengths; i++)
         best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
     ppcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
 

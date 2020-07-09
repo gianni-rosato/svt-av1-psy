@@ -4960,8 +4960,8 @@ static void idct64_low8_avx2(__m256i *in, __m256i *out, int32_t bit, int32_t do_
         temp2 = half_btf_avx2(&cospim48, &u[21], &cospim16, &u[26], &rnding, bit);
         u[26] = half_btf_avx2(&cospim16, &u[21], &cospi48, &u[26], &rnding, bit);
         u[21] = temp2;
-        for (int32_t i = 32; i < 64; i += 16) {
-            for (int32_t j = i; j < i + 4; j++) {
+        for (unsigned i = 32; i < 64; i += 16) {
+            for (unsigned j = i; j < i + 4; j++) {
                 addsub_avx2(u[j], u[j ^ 7], &u[j], &u[j ^ 7], &clamp_lo, &clamp_hi);
                 addsub_avx2(u[j ^ 15], u[j ^ 8], &u[j ^ 15], &u[j ^ 8], &clamp_lo, &clamp_hi);
             }
@@ -5188,7 +5188,7 @@ static void idct64_low16_avx2(__m256i *in, __m256i *out, int32_t bit, int32_t do
         u[21] = tmp3;
         u[22] = tmp4;
 
-        for (int32_t i = 32; i < 64; i += 8) {
+        for (unsigned i = 32; i < 64; i += 8) {
             addsub_avx2(u[i + 0], u[i + 3], &u[i + 0], &u[i + 3], &clamp_lo, &clamp_hi);
             addsub_avx2(u[i + 1], u[i + 2], &u[i + 1], &u[i + 2], &clamp_lo, &clamp_hi);
 
@@ -5210,7 +5210,7 @@ static void idct64_low16_avx2(__m256i *in, __m256i *out, int32_t bit, int32_t do
         u[13] = half_btf_avx2(&cospim16, &u[10], &cospi48, &u[13], &rnding, bit);
         u[10] = tmp2;
 
-        for (int32_t i = 16; i < 32; i += 8) {
+        for (unsigned i = 16; i < 32; i += 8) {
             addsub_avx2(u[i + 0], u[i + 3], &u[i + 0], &u[i + 3], &clamp_lo, &clamp_hi);
             addsub_avx2(u[i + 1], u[i + 2], &u[i + 1], &u[i + 2], &clamp_lo, &clamp_hi);
 
@@ -5268,16 +5268,15 @@ static void idct64_low16_avx2(__m256i *in, __m256i *out, int32_t bit, int32_t do
         u[20] = tmp3;
         u[21] = tmp4;
 
-        for (int32_t i = 32; i < 64; i += 16) {
-            for (int32_t j = i; j < i + 4; j++) {
+        for (unsigned i = 32; i < 64; i += 16) {
+            for (unsigned j = i; j < i + 4; j++) {
                 addsub_avx2(u[j], u[j ^ 7], &u[j], &u[j ^ 7], &clamp_lo, &clamp_hi);
                 addsub_avx2(u[j ^ 15], u[j ^ 8], &u[j ^ 15], &u[j ^ 8], &clamp_lo, &clamp_hi);
             }
         }
 
         // stage 8
-        for (int32_t i = 0; i < 4; ++i)
-            addsub_avx2(u[i], u[7 - i], &u[i], &u[7 - i], &clamp_lo, &clamp_hi);
+        for (unsigned i = 0; i < 4; ++i) addsub_avx2(u[i], u[7 - i], &u[i], &u[7 - i], &clamp_lo, &clamp_hi);
         idct64_stage8_avx2(u,
                            &cospim32,
                            &cospi32,
