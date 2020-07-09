@@ -4193,11 +4193,9 @@ static INLINE void load_buffer_16_avx2(const int16_t *input, __m256i *in, int32_
 static INLINE void load_buffer_32x8n(const int16_t *input, __m256i *out, int32_t stride,
                                      int32_t flipud, int32_t fliplr, int32_t shift,
                                      const int32_t height) {
-    const int16_t *in     = input;
-    __m256i *      output = out;
     for (int32_t col = 0; col < height; col++) {
-        in     = input + col * stride;
-        output = out + col * 4;
+        const int16_t *in     = input + col * stride;
+        __m256i *      output = out + col * 4;
         load_buffer_32_avx2(in, output, 8, flipud, fliplr, shift);
     }
 }

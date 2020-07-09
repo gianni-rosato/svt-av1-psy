@@ -198,13 +198,12 @@ int64_t     pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr, PictureC
                                   ModeDecisionContext *context_ptr, const BlockSize bsize,
                                   const int16_t *const residual1, const int16_t *const diff10,
                                   const int8_t wedge_sign, int8_t *const best_wedge_index);
-void model_rd_for_sb_with_curvfit(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                                  BlockSize bsize, int bw, int bh, uint8_t *src_buf,
-                                  uint32_t src_stride, uint8_t *pred_buf, uint32_t pred_stride,
-                                  int plane_from, int plane_to, int mi_row, int mi_col,
-                                  int *out_rate_sum, int64_t *out_dist_sum, int *skip_txfm_sb,
-                                  int64_t *skip_sse_sb, int *plane_rate, int64_t *plane_sse,
-                                  int64_t *plane_dist);
+void        model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
+                                         ModeDecisionContext *context_ptr, BlockSize bsize, int bw, int bh,
+                                         uint8_t *src_buf, uint32_t src_stride, uint8_t *pred_buf,
+                                         uint32_t pred_stride, int plane_from, int plane_to, int mi_row,
+                                         int mi_col, int *out_rate_sum, int64_t *out_dist_sum,
+                                         int *plane_rate, int64_t *plane_sse, int64_t *plane_dist);
 
 static int64_t pick_interintra_wedge(ModeDecisionCandidate *candidate_ptr,
                                      PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -453,8 +452,6 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                                  &dist_sum,
                                                  NULL,
                                                  NULL,
-                                                 NULL,
-                                                 NULL,
                                                  NULL);
                 } else {
                     model_rd_for_sb_with_curvfit(pcs_ptr,
@@ -472,8 +469,6 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                                  0,
                                                  &rate_sum,
                                                  &dist_sum,
-                                                 NULL,
-                                                 NULL,
                                                  NULL,
                                                  NULL,
                                                  NULL);

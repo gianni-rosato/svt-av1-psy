@@ -5715,7 +5715,6 @@ void pme_sad_loop_kernel_avx2(uint8_t * src, // input parameter, source samples 
                     ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
                     ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
                     ss6 = _mm256_adds_epu16(ss6, _mm256_mpsadbw_epu8(ss1, ss2, 63)); // 111 111
-                    p_ref += ref_stride << 2;
                     ss3 =
                         _mm256_adds_epu16(_mm256_adds_epu16(ss3, ss4), _mm256_adds_epu16(ss5, ss6));
                     s3      = _mm_adds_epu16(_mm256_castsi256_si128(ss3),

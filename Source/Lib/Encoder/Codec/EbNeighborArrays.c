@@ -477,8 +477,6 @@ void neighbor_array_unit16bit_sample_write(NeighborArrayUnit *na_unit_ptr, uint1
                   get_neighbor_array_unit_top_index(na_unit_ptr,
                                                     pic_origin_x); //CHKN * na_unit_ptr->unit_size;
 
-        dst_step  = na_unit_ptr->unit_size;
-        read_step = na_unit_ptr->unit_size;
         count     = block_width;
 
         for (idx = 0; idx < count; ++idx) {

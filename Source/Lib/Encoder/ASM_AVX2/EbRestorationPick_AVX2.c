@@ -25,7 +25,6 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_
                             const uint8_t *dat8, int dat_stride, int use_highbitdepth,
                             int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq,
                             const SgrParamsType *params) {
-    int       i, j;
     double    H[2][2] = {{0, 0}, {0, 0}};
     double    C[2]    = {0, 0};
     double    det;
@@ -50,13 +49,13 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_
     __m256i u_256, s_256, f1_256, f2_256;
     __m256i f1_256_tmp, f2_256_tmp;
     __m256i out[2];
-    int     avx2_cnt = 0;
 
     if (!use_highbitdepth) {
         const uint8_t *src = src8;
         const uint8_t *dat = dat8;
-        for (i = 0; i < height; ++i) {
-            for (j = 0, avx2_cnt = 0; avx2_cnt < width / 16; j += 16, ++avx2_cnt) {
+        for (int i = 0; i < height; ++i) {
+            int j=0, avx2_cnt =0;
+            for (; avx2_cnt < width / 16; j += 16, ++avx2_cnt) {
                 u_256 = _mm256_cvtepu8_epi16(
                     _mm_loadu_si128((const __m128i *)(dat + i * dat_stride + j)));
                 u_256 = _mm256_slli_epi16(u_256, SGRPROJ_RST_BITS);
@@ -155,8 +154,9 @@ void get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_
         const uint16_t *src = CONVERT_TO_SHORTPTR(src8);
         const uint16_t *dat = CONVERT_TO_SHORTPTR(dat8);
 
-        for (i = 0; i < height; ++i) {
-            for (j = 0, avx2_cnt = 0; avx2_cnt < width / 16; j += 16, ++avx2_cnt) {
+        for (int i = 0; i < height; ++i) {
+            int j = 0, avx2_cnt = 0;
+            for (; avx2_cnt < width / 16; j += 16, ++avx2_cnt) {
                 u_256 = _mm256_loadu_si256((const __m256i *)(dat + i * dat_stride + j));
                 u_256 = _mm256_slli_epi16(u_256, SGRPROJ_RST_BITS);
 

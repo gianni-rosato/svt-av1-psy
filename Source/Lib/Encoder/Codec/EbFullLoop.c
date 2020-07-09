@@ -1451,10 +1451,6 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
     int                    sharpness       = 0; // No Sharpness
     // Perform a fast RDOQ stage for inter and chroma blocks
     int                    fast_mode       = (is_inter && plane);
-    AQ_MODE                aq_mode         = NO_AQ;
-    DELTAQ_MODE            deltaq_mode     = NO_DELTA_Q;
-    int8_t                 segment_id      = 0;
-    int                    sb_energy_level = 0;
     const ScanOrder *const scan_order      = &av1_scan_orders[tx_size][tx_type];
     const int16_t *        scan            = scan_order->scan;
     const int              shift           = av1_get_tx_scale(tx_size);
@@ -1475,11 +1471,7 @@ void eb_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_context
         update_coeff_eob_fast(eob, shift, p->dequant_qtx, scan, coeff_ptr, qcoeff_ptr, dqcoeff_ptr);
         if (*eob == 0) return;
     }
-    const int rshift =
-        (sharpness + (aq_mode == VARIANCE_AQ && segment_id < 4 ? 7 - segment_id : 2) +
-         (aq_mode != VARIANCE_AQ && deltaq_mode > NO_DELTA_Q && sb_energy_level < 0
-              ? (3 - sb_energy_level)
-              : 0));
+    const int     rshift = sharpness + 2;
     const int64_t rdmult =
         (((int64_t)lambda * plane_rd_mult[is_inter][plane_type]) + 2) >> rshift;
     uint8_t        levels_buf[TX_PAD_2D];

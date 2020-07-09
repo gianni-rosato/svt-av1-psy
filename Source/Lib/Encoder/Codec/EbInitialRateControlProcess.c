@@ -486,7 +486,6 @@ void update_global_motion_detection_over_time(EncodeContext *          encode_co
                                               PictureParentControlSet *pcs_ptr) {
     uint32_t total_pan_pictures     = 0;
     uint32_t total_checked_pictures = 0;
-    uint32_t total_tilt_pictures    = 0;
     (void)scs_ptr;
 
     // Determine number of frames to check (8 frames)
@@ -504,8 +503,6 @@ void update_global_motion_detection_over_time(EncodeContext *          encode_co
 
         if (temp_pcs_ptr->slice_type != I_SLICE) {
             total_pan_pictures += (temp_pcs_ptr->is_pan == EB_TRUE);
-
-            total_tilt_pictures += (temp_pcs_ptr->is_tilt == EB_TRUE);
 
             // Keep track of checked pictures
             total_checked_pictures++;

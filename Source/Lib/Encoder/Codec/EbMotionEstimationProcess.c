@@ -601,20 +601,9 @@ void *motion_estimation_kernel(void *input_ptr) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)input_ptr;
     MotionEstimationContext_t *context_ptr = (MotionEstimationContext_t *)thread_context_ptr->priv;
 
-    PictureParentControlSet *pcs_ptr;
-    SequenceControlSet *     scs_ptr;
-
     EbObjectWrapper *       in_results_wrapper_ptr;
-    PictureDecisionResults *in_results_ptr;
 
     EbObjectWrapper *        out_results_wrapper_ptr;
-    MotionEstimationResults *out_results_ptr;
-
-    EbPictureBufferDesc *input_picture_ptr;
-
-    EbPictureBufferDesc *input_padded_picture_ptr;
-
-    uint32_t buffer_index;
 
     uint32_t sb_index;
     uint32_t x_sb_index;
@@ -646,9 +635,11 @@ void *motion_estimation_kernel(void *input_ptr) {
         EB_GET_FULL_OBJECT(context_ptr->picture_decision_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
-        in_results_ptr = (PictureDecisionResults *)in_results_wrapper_ptr->object_ptr;
-        pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr        = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        PictureDecisionResults *in_results_ptr = (PictureDecisionResults *)
+                                                     in_results_wrapper_ptr->object_ptr;
+        PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
+                                               in_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
         pa_ref_obj_ = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
         // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
@@ -661,9 +652,9 @@ void *motion_estimation_kernel(void *input_ptr) {
             (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                 ? (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr
                 : (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr;
-        input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
+        EbPictureBufferDesc *input_padded_picture_ptr = pa_ref_obj_->input_padded_picture_ptr;
 
-        input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
 
         context_ptr->me_context_ptr->me_alt_ref =
             in_results_ptr->task_type == 1 ? EB_TRUE : EB_FALSE;
@@ -745,9 +736,9 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 : BLOCK_SIZE_64;
 
                         // Load the SB from the input to the intermediate SB buffer
-                        buffer_index = (input_picture_ptr->origin_y + sb_origin_y) *
-                                           input_picture_ptr->stride_y +
-                                       input_picture_ptr->origin_x + sb_origin_x;
+                        uint32_t buffer_index = (input_picture_ptr->origin_y + sb_origin_y) *
+                                input_picture_ptr->stride_y +
+                            input_picture_ptr->origin_x + sb_origin_x;
 
                         context_ptr->me_context_ptr->hme_search_type = HME_RECTANGULAR;
 
@@ -846,9 +837,6 @@ void *motion_estimation_kernel(void *input_ptr) {
                 // SB Loop
                 for (y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index; ++y_sb_index) {
                     for (x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index; ++x_sb_index) {
-                        sb_origin_x = x_sb_index * scs_ptr->sb_sz;
-                        sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-
                         sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
 
                         open_loop_intra_search_sb(
@@ -1004,7 +992,8 @@ void *motion_estimation_kernel(void *input_ptr) {
             eb_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,
                                 &out_results_wrapper_ptr);
 
-            out_results_ptr = (MotionEstimationResults *)out_results_wrapper_ptr->object_ptr;
+            MotionEstimationResults *out_results_ptr = (MotionEstimationResults *)
+                                                           out_results_wrapper_ptr->object_ptr;
             out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
             out_results_ptr->segment_index   = segment_index;
 

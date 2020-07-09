@@ -825,10 +825,9 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
             recon_coeff_buffer = &(
                 (recon_ptr
                      ->buffer_y)[recon_ptr->origin_x + recon_ptr->origin_y * recon_ptr->stride_y]);
-            input_buffer =
-                &((input_picture_ptr
-                       ->buffer_y)[input_picture_ptr->origin_x +
-                                   input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
+            input_buffer = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x +
+                                                           input_picture_ptr->origin_y *
+                                                               input_picture_ptr->stride_y]);
 
             while (row_index < input_picture_ptr->height) {
                 column_index = 0;

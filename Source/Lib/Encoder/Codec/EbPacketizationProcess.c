@@ -81,32 +81,25 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
 }
 
 void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-    EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
-
-    uint32_t intra_sad_interval_index;
-    uint32_t sad_interval_index;
-
-    SuperBlock *sb_ptr;
-    SbParams *  sb_params_ptr;
-
-    uint32_t     sb_index;
-    int32_t      qp_index;
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-
     // SB Loop
     if (scs_ptr->static_config.rate_control_mode > 0) {
+        EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+
+        int32_t      qp_index;
+        FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+        uint32_t sad_interval_index;
         uint64_t sad_bits[NUMBER_OF_SAD_INTERVALS] = {0};
         uint32_t count[NUMBER_OF_SAD_INTERVALS]    = {0};
 
         encode_context_ptr->rate_control_tables_array_updated = EB_TRUE;
 
-        for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-            sb_ptr        = pcs_ptr->sb_ptr_array[sb_index];
-            sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
+        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
+            SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
+            SbParams *  sb_params_ptr = &pcs_ptr->parent_pcs_ptr->sb_params_array[sb_index];
 
             if (sb_params_ptr->is_complete_sb) {
                 if (pcs_ptr->slice_type == I_SLICE) {
-                    intra_sad_interval_index =
+                    uint32_t intra_sad_interval_index =
                         pcs_ptr->parent_pcs_ptr->intra_sad_interval_index[sb_index];
 
                     sad_bits[intra_sad_interval_index] += sb_ptr->total_bits;
@@ -120,190 +113,186 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                 }
             }
         }
-        {
-            eb_block_on_mutex(encode_context_ptr->rate_table_update_mutex);
+        eb_block_on_mutex(encode_context_ptr->rate_table_update_mutex);
 
-            uint64_t ref_qindex_dequant =
-                (uint64_t)pcs_ptr->parent_pcs_ptr->deq_bd
-                    .y_dequant_qtx[frm_hdr->quantization_params.base_q_idx][1];
-            uint64_t sad_bits_ref_dequant = 0;
-            uint64_t weight               = 0;
-            {
-                if (pcs_ptr->slice_type == I_SLICE) {
-                    if (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
-                        for (sad_interval_index = 0;
-                             sad_interval_index < NUMBER_OF_INTRA_SAD_INTERVALS;
-                             sad_interval_index++) {
-                            if (count[sad_interval_index] > 5)
-                                weight = 8;
-                            else if (count[sad_interval_index] > 1)
-                                weight = 5;
-                            else if (count[sad_interval_index] == 1)
-                                weight = 2;
-                            if (count[sad_interval_index] > 0) {
-                                sad_bits[sad_interval_index] /= count[sad_interval_index];
-                                sad_bits_ref_dequant =
-                                    sad_bits[sad_interval_index] * ref_qindex_dequant;
-                                for (qp_index = scs_ptr->static_config.min_qp_allowed;
-                                     qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
-                                     qp_index++) {
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                             [sad_interval_index] = (EbBitNumber)(
-                                        ((weight * sad_bits_ref_dequant /
-                                          pcs_ptr->parent_pcs_ptr->deq_bd
-                                              .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
-                                         (10 - weight) *
-                                             (uint32_t)encode_context_ptr
-                                                 ->rate_control_tables_array[qp_index]
-                                                 .intra_sad_bits_array[pcs_ptr
-                                                                           ->temporal_layer_index]
-                                                                      [sad_interval_index] +
-                                         5) /
-                                        10);
+        uint64_t ref_qindex_dequant =
+            (uint64_t)pcs_ptr->parent_pcs_ptr->deq_bd
+                .y_dequant_qtx[frm_hdr->quantization_params.base_q_idx][1];
+        uint64_t sad_bits_ref_dequant;
+        uint64_t weight               = 0;
+        if (pcs_ptr->slice_type == I_SLICE) {
+            if (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
+                for (sad_interval_index = 0;
+                        sad_interval_index < NUMBER_OF_INTRA_SAD_INTERVALS;
+                        sad_interval_index++) {
+                    if (count[sad_interval_index] > 5)
+                        weight = 8;
+                    else if (count[sad_interval_index] > 1)
+                        weight = 5;
+                    else if (count[sad_interval_index] == 1)
+                        weight = 2;
+                    if (count[sad_interval_index] > 0) {
+                        sad_bits[sad_interval_index] /= count[sad_interval_index];
+                        sad_bits_ref_dequant =
+                            sad_bits[sad_interval_index] * ref_qindex_dequant;
+                        for (qp_index = scs_ptr->static_config.min_qp_allowed;
+                                qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
+                                qp_index++) {
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index] = (EbBitNumber)(
+                                ((weight * sad_bits_ref_dequant /
+                                    pcs_ptr->parent_pcs_ptr->deq_bd
+                                        .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+                                    (10 - weight) *
+                                        (uint32_t)encode_context_ptr
+                                            ->rate_control_tables_array[qp_index]
+                                            .intra_sad_bits_array[pcs_ptr
+                                                                    ->temporal_layer_index]
+                                                                [sad_interval_index] +
+                                    5) /
+                                10);
 
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index] =
+                                MIN((uint16_t)encode_context_ptr
+                                        ->rate_control_tables_array[qp_index]
                                         .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                             [sad_interval_index] =
-                                        MIN((uint16_t)encode_context_ptr
-                                                ->rate_control_tables_array[qp_index]
-                                                .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                                     [sad_interval_index],
-                                            (uint16_t)((1 << 15) - 1));
-                                }
-                            }
-                        }
-                    } else {
-                        for (sad_interval_index = 0;
-                             sad_interval_index < NUMBER_OF_INTRA_SAD_INTERVALS;
-                             sad_interval_index++) {
-                            if (count[sad_interval_index] > 10)
-                                weight = 8;
-                            else if (count[sad_interval_index] > 5)
-                                weight = 5;
-                            else if (count[sad_interval_index] >= 1)
-                                weight = 1;
-                            if (count[sad_interval_index] > 0) {
-                                sad_bits[sad_interval_index] /= count[sad_interval_index];
-                                sad_bits_ref_dequant =
-                                    sad_bits[sad_interval_index] * ref_qindex_dequant;
-                                for (qp_index = scs_ptr->static_config.min_qp_allowed;
-                                     qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
-                                     qp_index++) {
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                             [sad_interval_index] = (EbBitNumber)(
-                                        ((weight * sad_bits_ref_dequant /
-                                          pcs_ptr->parent_pcs_ptr->deq_bd
-                                              .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
-                                         (10 - weight) *
-                                             (uint32_t)encode_context_ptr
-                                                 ->rate_control_tables_array[qp_index]
-                                                 .intra_sad_bits_array[pcs_ptr
-                                                                           ->temporal_layer_index]
-                                                                      [sad_interval_index] +
-                                         5) /
-                                        10);
-
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                             [sad_interval_index] =
-                                        MIN((uint16_t)encode_context_ptr
-                                                ->rate_control_tables_array[qp_index]
-                                                .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                                     [sad_interval_index],
-                                            (uint16_t)((1 << 15) - 1));
-                                }
-                            }
+                                                                [sad_interval_index],
+                                    (uint16_t)((1 << 15) - 1));
                         }
                     }
-                } else {
-                    if (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
-                        for (sad_interval_index = 0; sad_interval_index < NUMBER_OF_SAD_INTERVALS;
-                             sad_interval_index++) {
-                            if (count[sad_interval_index] > 5)
-                                weight = 8;
-                            else if (count[sad_interval_index] > 1)
-                                weight = 5;
-                            else if (count[sad_interval_index] == 1)
-                                weight = 1;
-                            if (count[sad_interval_index] > 0) {
-                                sad_bits[sad_interval_index] /= count[sad_interval_index];
-                                sad_bits_ref_dequant =
-                                    sad_bits[sad_interval_index] * ref_qindex_dequant;
-                                for (qp_index = scs_ptr->static_config.min_qp_allowed;
-                                     qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
-                                     qp_index++) {
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                       [sad_interval_index] = (EbBitNumber)(
-                                        ((weight * sad_bits_ref_dequant /
-                                          pcs_ptr->parent_pcs_ptr->deq_bd
-                                              .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
-                                         (10 - weight) *
-                                             (uint32_t)encode_context_ptr
-                                                 ->rate_control_tables_array[qp_index]
-                                                 .sad_bits_array[pcs_ptr->temporal_layer_index]
+                }
+            } else {
+                for (sad_interval_index = 0;
+                        sad_interval_index < NUMBER_OF_INTRA_SAD_INTERVALS;
+                        sad_interval_index++) {
+                    if (count[sad_interval_index] > 10)
+                        weight = 8;
+                    else if (count[sad_interval_index] > 5)
+                        weight = 5;
+                    else if (count[sad_interval_index] >= 1)
+                        weight = 1;
+                    if (count[sad_interval_index] > 0) {
+                        sad_bits[sad_interval_index] /= count[sad_interval_index];
+                        sad_bits_ref_dequant =
+                            sad_bits[sad_interval_index] * ref_qindex_dequant;
+                        for (qp_index = scs_ptr->static_config.min_qp_allowed;
+                                qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
+                                qp_index++) {
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index] = (EbBitNumber)(
+                                ((weight * sad_bits_ref_dequant /
+                                    pcs_ptr->parent_pcs_ptr->deq_bd
+                                        .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+                                    (10 - weight) *
+                                        (uint32_t)encode_context_ptr
+                                            ->rate_control_tables_array[qp_index]
+                                            .intra_sad_bits_array[pcs_ptr
+                                                                    ->temporal_layer_index]
                                                                 [sad_interval_index] +
-                                         5) /
-                                        10);
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                       [sad_interval_index] =
-                                        MIN((uint16_t)encode_context_ptr
-                                                ->rate_control_tables_array[qp_index]
-                                                .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                               [sad_interval_index],
-                                            (uint16_t)((1 << 15) - 1));
-                                }
-                            }
-                        }
-                    } else {
-                        for (sad_interval_index = 0; sad_interval_index < NUMBER_OF_SAD_INTERVALS;
-                             sad_interval_index++) {
-                            if (count[sad_interval_index] > 10)
-                                weight = 7;
-                            else if (count[sad_interval_index] > 5)
-                                weight = 5;
-                            else if (sad_interval_index > ((NUMBER_OF_SAD_INTERVALS >> 1) - 1) &&
-                                     count[sad_interval_index] > 1)
-                                weight = 1;
-                            if (count[sad_interval_index] > 0) {
-                                sad_bits[sad_interval_index] /= count[sad_interval_index];
-                                sad_bits_ref_dequant =
-                                    sad_bits[sad_interval_index] * ref_qindex_dequant;
-                                for (qp_index = scs_ptr->static_config.min_qp_allowed;
-                                     qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
-                                     qp_index++) {
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                       [sad_interval_index] = (EbBitNumber)(
-                                        ((weight * sad_bits_ref_dequant /
-                                          pcs_ptr->parent_pcs_ptr->deq_bd
-                                              .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
-                                         (10 - weight) *
-                                             (uint32_t)encode_context_ptr
-                                                 ->rate_control_tables_array[qp_index]
-                                                 .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                                [sad_interval_index] +
-                                         5) /
-                                        10);
-                                    encode_context_ptr->rate_control_tables_array[qp_index]
-                                        .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                       [sad_interval_index] =
-                                        MIN((uint16_t)encode_context_ptr
-                                                ->rate_control_tables_array[qp_index]
-                                                .sad_bits_array[pcs_ptr->temporal_layer_index]
-                                                               [sad_interval_index],
-                                            (uint16_t)((1 << 15) - 1));
-                                }
-                            }
+                                    5) /
+                                10);
+
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index] =
+                                MIN((uint16_t)encode_context_ptr
+                                        ->rate_control_tables_array[qp_index]
+                                        .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                                [sad_interval_index],
+                                    (uint16_t)((1 << 15) - 1));
                         }
                     }
                 }
             }
-            eb_release_mutex(encode_context_ptr->rate_table_update_mutex);
+        } else {
+            if (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
+                for (sad_interval_index = 0; sad_interval_index < NUMBER_OF_SAD_INTERVALS;
+                        sad_interval_index++) {
+                    if (count[sad_interval_index] > 5)
+                        weight = 8;
+                    else if (count[sad_interval_index] > 1)
+                        weight = 5;
+                    else if (count[sad_interval_index] == 1)
+                        weight = 1;
+                    if (count[sad_interval_index] > 0) {
+                        sad_bits[sad_interval_index] /= count[sad_interval_index];
+                        sad_bits_ref_dequant =
+                            sad_bits[sad_interval_index] * ref_qindex_dequant;
+                        for (qp_index = scs_ptr->static_config.min_qp_allowed;
+                                qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
+                                qp_index++) {
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                [sad_interval_index] = (EbBitNumber)(
+                                ((weight * sad_bits_ref_dequant /
+                                    pcs_ptr->parent_pcs_ptr->deq_bd
+                                        .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+                                    (10 - weight) *
+                                        (uint32_t)encode_context_ptr
+                                            ->rate_control_tables_array[qp_index]
+                                            .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index] +
+                                    5) /
+                                10);
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                [sad_interval_index] =
+                                MIN((uint16_t)encode_context_ptr
+                                        ->rate_control_tables_array[qp_index]
+                                        .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index],
+                                    (uint16_t)((1 << 15) - 1));
+                        }
+                    }
+                }
+            } else {
+                for (sad_interval_index = 0; sad_interval_index < NUMBER_OF_SAD_INTERVALS;
+                        sad_interval_index++) {
+                    if (count[sad_interval_index] > 10)
+                        weight = 7;
+                    else if (count[sad_interval_index] > 5)
+                        weight = 5;
+                    else if (sad_interval_index > ((NUMBER_OF_SAD_INTERVALS >> 1) - 1) &&
+                                count[sad_interval_index] > 1)
+                        weight = 1;
+                    if (count[sad_interval_index] > 0) {
+                        sad_bits[sad_interval_index] /= count[sad_interval_index];
+                        sad_bits_ref_dequant =
+                            sad_bits[sad_interval_index] * ref_qindex_dequant;
+                        for (qp_index = scs_ptr->static_config.min_qp_allowed;
+                                qp_index <= (int32_t)scs_ptr->static_config.max_qp_allowed;
+                                qp_index++) {
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                [sad_interval_index] = (EbBitNumber)(
+                                ((weight * sad_bits_ref_dequant /
+                                    pcs_ptr->parent_pcs_ptr->deq_bd
+                                        .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+                                    (10 - weight) *
+                                        (uint32_t)encode_context_ptr
+                                            ->rate_control_tables_array[qp_index]
+                                            .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index] +
+                                    5) /
+                                10);
+                            encode_context_ptr->rate_control_tables_array[qp_index]
+                                .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                [sad_interval_index] =
+                                MIN((uint16_t)encode_context_ptr
+                                        ->rate_control_tables_array[qp_index]
+                                        .sad_bits_array[pcs_ptr->temporal_layer_index]
+                                                        [sad_interval_index],
+                                    (uint16_t)((1 << 15) - 1));
+                        }
+                    }
+                }
+            }
         }
+        eb_release_mutex(encode_context_ptr->rate_table_update_mutex);
     }
 }
 
