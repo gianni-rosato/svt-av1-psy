@@ -104,23 +104,23 @@ extern "C" {
 #define ADD_SAD_AT_PME_SIGNAL      1 // Add signal for using SAD at PME
 #define MAR17_ADOPTIONS            1 // Push features with bad slope to M8 & beyond.
     // it3
-#define M5_CHROMA_NICS             0
-#define INTER_COMP_REDESIGN        0 // new fast mode, cleaner signaling and code
-#define MAR18_MR_TESTS_ADOPTIONS   0 // adoptions for MR, M0, and M2
-#define SKIP_DEPTH_SYNCH           0
-#define MAR18_ADOPTIONS            0 // adoptions in M5/M8
-#define REU_UPDATE                 0 // use top right instead of top SB for CDF calculation
-#define ADD_NEW_MPPD_LEVEL         0 // add a new MPPD level with PD0 | PD1 | PD2 w/o sq/nsq decision
-#define LOG_MV_VALIDITY            0 //report error message if MV is beyond av1 limits
-#define MD_CFL                     0 // Modified cfl search in MD
+#define M5_CHROMA_NICS             1
+#define INTER_COMP_REDESIGN        1 // new fast mode, cleaner signaling and code
+#define MAR18_MR_TESTS_ADOPTIONS   1 // adoptions for MR, M0, and M2
+#define SKIP_DEPTH_SYNCH           1
+#define MAR18_ADOPTIONS            1 // adoptions in M5/M8
+#define REU_UPDATE                 1 // use top right instead of top SB for CDF calculation
+#define ADD_NEW_MPPD_LEVEL         1 // add a new MPPD level with PD0 | PD1 | PD2 w/o sq/nsq decision
+#define LOG_MV_VALIDITY            1 //report error message if MV is beyond av1 limits
+#define MD_CFL                     1 // Modified cfl search in MD
 #if MD_CFL
 #define CFL_REDUCED_ALPHA    1 // use faster libaom_short_cuts_ths
 #endif
-#define UV_SEARCH_MODE_INJCECTION  0 // use the luma mode ijection method in chroma independent mode search
-#define MAR19_ADOPTIONS            0 // Adoptions for all modes
-#define MAR20_M4_ADOPTIONS         0 // Adoptions in M4
-#define ADOPT_SQ_ME_SEARCH_AREA    0 // Adopt a square search area for ME (all modes)
-#define MAR20_ADOPTIONS            0 // Adoptions affecting all modes
+#define UV_SEARCH_MODE_INJCECTION  1 // use the luma mode ijection method in chroma independent mode search
+#define MAR19_ADOPTIONS            1 // Adoptions for all modes
+#define MAR20_M4_ADOPTIONS         1 // Adoptions in M4
+#define ADOPT_SQ_ME_SEARCH_AREA    1 // Adopt a square search area for ME (all modes)
+#define MAR20_ADOPTIONS            1 // Adoptions affecting all modes
 #define MD_CONFIG_SB               0
 #endif
 

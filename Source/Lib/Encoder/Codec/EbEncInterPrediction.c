@@ -6195,7 +6195,7 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
         else {
             uint8_t *src_buf = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
                 (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
-            aom_subtract_block(bheight,
+            eb_aom_subtract_block(bheight,
                 bwidth,
                 context_ptr->residual1,
                 bwidth,
@@ -6203,7 +6203,7 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
                 src_pic->stride_y,
                 context_ptr->pred1,
                 bwidth);
-            aom_subtract_block(bheight,
+            eb_aom_subtract_block(bheight,
                 bwidth,
                 context_ptr->diff10,
                 bwidth,
