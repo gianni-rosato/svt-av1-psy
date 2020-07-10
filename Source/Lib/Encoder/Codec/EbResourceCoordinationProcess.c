@@ -177,7 +177,11 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
         scs_ptr->seq_header.enable_intra_edge_filter = (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
 
     if (scs_ptr->static_config.pic_based_rate_est == DEFAULT)
+#if PIC_BASED_RE_OFF
+        scs_ptr->seq_header.pic_based_rate_est = 0;
+#else
         scs_ptr->seq_header.pic_based_rate_est = 1;
+#endif
     else
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 

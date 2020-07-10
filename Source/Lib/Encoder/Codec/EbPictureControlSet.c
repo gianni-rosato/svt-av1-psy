@@ -209,9 +209,15 @@ void picture_control_set_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->mip);
     EB_FREE_ARRAY(obj->md_rate_estimation_array);
     EB_FREE_ARRAY(obj->ec_ctx_array);
+#if !REU_MEM_OPT
     EB_FREE_ARRAY(obj->rate_est_array);
+#endif
+#if !PAL_MEM_OPT
     if (obj->tile_tok[0][0]) EB_FREE_ARRAY(obj->tile_tok[0][0]);
+#endif
+#if !DEPTH_PART_CLEAN_UP
     EB_FREE_ARRAY(obj->mdc_sb_array);
+#endif
     EB_DESTROY_MUTEX(obj->entropy_coding_pic_mutex);
     EB_DESTROY_MUTEX(obj->intra_mutex);
     EB_DESTROY_MUTEX(obj->cdef_search_mutex);
@@ -437,8 +443,15 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         EB_CALLOC_ARRAY(object_ptr->tile_tok[0][0], tokens);
     } else
         object_ptr->tile_tok[0][0] = NULL;
+#if !DEPTH_PART_CLEAN_UP
     // Mode Decision Control config
     EB_MALLOC_ARRAY(object_ptr->mdc_sb_array, object_ptr->sb_total_count);
+#endif
+#if CHANGE_HBD_MODE
+    if (init_data_ptr->hbd_mode_decision == DEFAULT)
+        object_ptr->hbd_mode_decision = init_data_ptr->hbd_mode_decision = 2;
+    else
+#endif
     object_ptr->hbd_mode_decision = init_data_ptr->hbd_mode_decision;
     // Mode Decision Neighbor Arrays
     uint8_t depth;

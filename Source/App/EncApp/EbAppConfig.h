@@ -247,10 +247,13 @@ typedef struct EbConfig {
     int sg_filter_mode;
     int wn_filter_mode;
 
+#if !REMOVE_COMBINE_CLASS12
+
     /****************************************
      * class12
     ****************************************/
     int combine_class_12;
+#endif
     /****************************************
      * edge based skip angle intra
     ****************************************/

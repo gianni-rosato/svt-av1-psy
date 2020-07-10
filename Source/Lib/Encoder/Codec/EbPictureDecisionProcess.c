@@ -905,9 +905,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         (pcs_ptr->slice_type == I_SLICE)
         ? MULTI_PASS_PD_OFF
         : MULTI_PASS_PD_LEVEL_2;
+#if !DEPTH_PART_CLEAN_UP
     // If ADP then set multi_pass_pd_level to INVALID
     if(pcs_ptr->adp_level != ADP_OFF)
         pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_INVALID;
+#endif
 #endif
 
 
@@ -2194,10 +2196,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         }
         else
             pcs_ptr->compound_mode = scs_ptr->static_config.compound_level;
-
+#if !WEDGE_SYNCH
         if (pcs_ptr->wedge_mode > 0 && pcs_ptr->compound_mode != 2)
             SVT_LOG("wedge_mode set but will not be active\n");
-
+#endif
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON
@@ -2310,10 +2312,179 @@ EbErrorType signal_derivation_multi_processes_oq(
         //Prune reference and reduce ME SR based on HME/ME distortion
         // 0: OFF
         // 1: ON
+#if !ME_HME_PRUNING_CLEANUP
+#if MAR30_ADOPTIONS
+    if (MR_MODE || pcs_ptr->sc_content_detected)
+        pcs_ptr->prune_ref_based_me = 0;
+    else
+        pcs_ptr->prune_ref_based_me = 1;
+#else
+#if MAR20_ADOPTIONS
+    if (MR_MODE)
+        pcs_ptr->prune_ref_based_me = 0;
+    else
+        pcs_ptr->prune_ref_based_me = 1;
+#else
         if (pcs_ptr->sc_content_detected)
             pcs_ptr->prune_ref_based_me = 0;
         else
             pcs_ptr->prune_ref_based_me = 1;
+#endif
+#endif
+#endif
+#if TF_LEVELS
+#if UNIFY_SC_NSC
+    uint8_t perform_filtering =
+        (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && scs_ptr->static_config.hierarchical_levels >= 1)
+        ? 1 : 0;
+#else
+#if UPGRADE_M6_M7_M8
+    uint8_t perform_filtering =
+        (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && pcs_ptr->sc_content_detected == 0 && scs_ptr->static_config.hierarchical_levels >= 1)
+        ? 1 : 0;
+#else
+    uint8_t perform_filtering =
+        (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && pcs_ptr->sc_content_detected == 0 && scs_ptr->static_config.hierarchical_levels >= 1) &&
+        (pcs_ptr->temporal_layer_index == 0 ||(pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+        ? 1 : 0;
+#endif
+#endif
+
+
+#if IMPROVED_TF_LEVELS
+    if (perform_filtering) {
+#if JUNE26_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if JUNE25_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#endif
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 1;
+            else
+                context_ptr->tf_level = 0;
+        }
+        else if (pcs_ptr->enc_mode <= ENC_M6) {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 2;
+            else
+                context_ptr->tf_level = 0;
+        }
+        else {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 3;
+            else
+                context_ptr->tf_level = 0;
+        }
+    }
+    else
+        context_ptr->tf_level = 0;
+#else
+    if (perform_filtering) {
+#if UPGRADE_M6_M7_M8
+#if PRESET_SHIFITNG
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 0;
+            else
+                context_ptr->tf_level = 3;
+        }
+        else {
+#if ADD_SKIP_INTRA_SIGNAL
+            if (pcs_ptr->enc_mode <= ENC_M6) {
+                if (pcs_ptr->temporal_layer_index == 0)
+                    context_ptr->tf_level = 0;
+                else
+                    context_ptr->tf_level = 3;
+            }
+            else
+                context_ptr->tf_level = 3;
+#else
+            if (pcs_ptr->temporal_layer_index == 0)
+                context_ptr->tf_level = 0;
+            else
+                context_ptr->tf_level = 3;
+#endif
+        }
+#else
+#if UPGRADE_M8
+        if (pcs_ptr->enc_mode <= ENC_M8) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+            context_ptr->tf_level = 0;
+        }
+        else {
+            context_ptr->tf_level = 2;
+        }
+#endif
+    }
+    else
+        context_ptr->tf_level = 3;
+#endif
+    set_tf_controls(context_ptr, context_ptr->tf_level);
+#endif
+#if ON_OFF_FEATURE_MRP
+    // MRP control
+    // 0: OFF (1,1)  ; override features
+    // 1: FULL (4,3) ; override features
+    // 2: (4,3) ; No-override features
+    // 3: (3,3) ; No-override features
+    // 4: (3,2) ; No-override features
+    // 5: (2,3) ; No-override features
+    // 6: (2,2) ; No-override features
+    // 7: (2,1) ; No-override features
+    // 8: (1,2) ; No-override features
+    // 9: (1,1) ; No-override features
+
+    // Level 0 , 1  : set ref_list0_count_try and ref_list1_count_try and Override MRP-related features
+    // Level 2 .. 9 : Only set ref_list0_count_try and ref_list1_count_try
+
+    if (scs_ptr->static_config.mrp_level == DEFAULT) {
+#if !UNIFY_SC_NSC
+        if (pcs_ptr->sc_content_detected)
+            if (MRS_MODE)
+                pcs_ptr->mrp_level = 3;
+            else if (MR_MODE)
+                pcs_ptr->mrp_level = 4;
+            else if (pcs_ptr->enc_mode <= ENC_M4)
+                pcs_ptr->mrp_level = 6;
+            else if (pcs_ptr->enc_mode <= ENC_M5)
+                pcs_ptr->mrp_level = 7;
+            else
+                pcs_ptr->mrp_level = 9;
+        else
+#endif
+#if JUNE26_ADOPTIONS
+            if (pcs_ptr->enc_mode <= ENC_M6)
+                pcs_ptr->mrp_level = 2;
+#else
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                pcs_ptr->mrp_level = 2;
+#if NEW_M7_MRP
+            else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+                pcs_ptr->mrp_level = 6;
+#endif
+            else
+                pcs_ptr->mrp_level = pcs_ptr->is_used_as_reference_flag  ? 6 : 9;
+    }else
+        pcs_ptr->mrp_level = scs_ptr->static_config.mrp_level;
+#endif
+#if TPL_OPT
+    if (pcs_ptr->enc_mode <= ENC_M5)
+        pcs_ptr->tpl_opt_flag = 0;
+    else
+        pcs_ptr->tpl_opt_flag = 1;
+#endif
     return return_error;
 }
 

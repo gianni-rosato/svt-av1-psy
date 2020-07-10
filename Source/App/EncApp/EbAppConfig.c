@@ -383,9 +383,11 @@ static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
 static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
     cfg->wn_filter_mode = strtol(value, NULL, 0);
 };
+#if !REMOVE_COMBINE_CLASS12
 static void set_class_12_flag(const char *value, EbConfig *cfg) {
     cfg->combine_class_12 = strtol(value, NULL, 0);
 };
+#endif
 static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
     cfg->edge_skp_angle_intra = strtol(value, NULL, 0);
 };
@@ -1563,7 +1565,9 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_restoration_filtering              = DEFAULT;
     config_ptr->sg_filter_mode                            = DEFAULT;
     config_ptr->wn_filter_mode                            = DEFAULT;
+#if !REMOVE_COMBINE_CLASS12
     config_ptr->combine_class_12                          = DEFAULT;
+#endif
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
     config_ptr->intra_angle_delta                         = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;

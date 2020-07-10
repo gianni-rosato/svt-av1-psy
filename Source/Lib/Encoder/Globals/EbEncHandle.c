@@ -2110,10 +2110,18 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // 0                            0: not allowed
     // 1                            1: allowed
     if (scs_ptr->static_config.over_bndry_blk == DEFAULT)
+#if OVER_BOUNDARY_BLOCK_MODE_1_FOR_ALL
+        scs_ptr->over_boundary_block_mode = 1;
+#else
+#if MAR17_ADOPTIONS
+        if (scs_ptr->static_config.enc_mode <= ENC_M7)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M5)
+#endif
             scs_ptr->over_boundary_block_mode = 1;
         else
             scs_ptr->over_boundary_block_mode = 0;
+#endif
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
@@ -2193,8 +2201,10 @@ void copy_api_from_app(
     scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
     scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
 
+#if !REMOVE_COMBINE_CLASS12
     //combine class 12
     scs_ptr->static_config.combine_class_12             = ((EbSvtAv1EncConfiguration*)config_struct)->combine_class_12;
+#endif
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
     // redundant block
@@ -2868,11 +2878,12 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
+#if !REMOVE_COMBINE_CLASS12
     if (config->combine_class_12 != 0 && config->combine_class_12 != 1 && config->combine_class_12 != -1) {
       SVT_LOG("Error instance %u: Invalid combine MD Class1&2 flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->combine_class_12);
       return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->edge_skp_angle_intra != 0 && config->edge_skp_angle_intra != 1 && config->edge_skp_angle_intra != -1) {
       SVT_LOG("Error instance %u: Invalid Enable skip angle intra based on edge flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->edge_skp_angle_intra);
       return_error = EB_ErrorBadParameter;
@@ -3067,7 +3078,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->wn_filter_mode = DEFAULT;
     config_ptr->edge_skp_angle_intra = DEFAULT;
     config_ptr->intra_angle_delta = DEFAULT;
+#if !REMOVE_COMBINE_CLASS12
     config_ptr->combine_class_12 = DEFAULT;
+#endif
     config_ptr->inter_intra_compound = DEFAULT;
     config_ptr->enable_paeth = DEFAULT;
     config_ptr->enable_smooth = DEFAULT;
@@ -3298,11 +3311,18 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
     // Initialize the Prediction Structure Group
+#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8)
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
         &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#else
+    EB_NO_THROW_NEW(
+        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        prediction_structure_group_ctor,
+        &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#endif
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         eb_release_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
         return EB_ErrorInsufficientResources;

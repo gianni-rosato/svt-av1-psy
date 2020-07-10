@@ -1960,7 +1960,9 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
+#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8)
                                             uint8_t enc_mode,
+#endif
                                             EbSvtAv1EncConfiguration *config) {
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;

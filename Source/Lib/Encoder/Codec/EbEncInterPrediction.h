@@ -87,6 +87,12 @@ void search_compound_diff_wedge(
         PictureControlSet                    *pcs_ptr,
         struct ModeDecisionContext                  *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
+#if INTER_COMP_REDESIGN
+void calc_pred_masked_compound(
+        PictureControlSet                    *pcs_ptr,
+        struct ModeDecisionContext           *context_ptr,
+        ModeDecisionCandidate                *candidate_ptr);
+#endif
 
 
 EbErrorType inter_pu_prediction_av1(

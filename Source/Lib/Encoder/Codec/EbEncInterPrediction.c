@@ -662,8 +662,12 @@ static void pick_interinter_wedge(ModeDecisionCandidate * candidate_ptr,
 
     // Two method
     // Fast seatch method to be added  OMK
+#if INTER_COMP_REDESIGN
+    if (context_ptr->inter_comp_ctrls.wedge_search_mode == 0){
+#else
     if (picture_control_set_ptr->parent_pcs_ptr->wedge_mode == 2 ||
         picture_control_set_ptr->parent_pcs_ptr->wedge_mode == 3) {
+#endif
         wedge_sign =
                 estimate_wedge_sign(picture_control_set_ptr, context_ptr, bsize, p0, bw, p1, bw);
         pick_wedge_fixed_sign(candidate_ptr, picture_control_set_ptr, context_ptr, bsize, residual1, diff10, wedge_sign, &wedge_index);
@@ -6027,9 +6031,203 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
     return return_error;
 }
 
+#if INTER_COMP_REDESIGN
+void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
+    ModeDecisionContext *  context_ptr,
+    ModeDecisionCandidate *candidate_ptr) {
+
+        uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
+            ? EB_8_BIT_MD
+            : context_ptr->hbd_mode_decision;
+        EbPictureBufferDesc *src_pic =
+            hbd_mode_decision ? pcs_ptr->input_frame16bit
+            : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        uint32_t            bwidth = context_ptr->blk_geom->bwidth;
+        uint32_t            bheight = context_ptr->blk_geom->bheight;
+        EbPictureBufferDesc pred_desc;
+        pred_desc.origin_x = pred_desc.origin_y = 0;
+        pred_desc.stride_y = bwidth;
+
+        EbPictureBufferDesc *ref_pic_list0;
+        EbPictureBufferDesc *ref_pic_list1 = NULL;
+        Mv                   mv_0;
+        Mv                   mv_1;
+        mv_0.x = candidate_ptr->motion_vector_xl0;
+        mv_0.y = candidate_ptr->motion_vector_yl0;
+        mv_1.x = candidate_ptr->motion_vector_xl1;
+        mv_1.y = candidate_ptr->motion_vector_yl1;
+        MvUnit mv_unit;
+        mv_unit.mv[0] = mv_0;
+        mv_unit.mv[1] = mv_1;
+        int8_t           ref_idx_l0 = candidate_ptr->ref_frame_index_l0;
+        int8_t           ref_idx_l1 = candidate_ptr->ref_frame_index_l1;
+        MvReferenceFrame rf[2];
+        av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
+        uint8_t list_idx0, list_idx1;
+        list_idx0 = get_list_idx(rf[0]);
+        if (rf[1] == NONE_FRAME)
+            list_idx1 = get_list_idx(rf[0]);
+        else
+            list_idx1 = get_list_idx(rf[1]);
+        assert(list_idx0 < MAX_NUM_OF_REF_PIC_LIST);
+        assert(list_idx1 < MAX_NUM_OF_REF_PIC_LIST);
+        if (ref_idx_l0 >= 0)
+            ref_pic_list0 = hbd_mode_decision ? ((EbReferenceObject *)pcs_ptr
+                ->ref_pic_ptr_array[list_idx0][ref_idx_l0]
+                ->object_ptr)
+            ->reference_picture16bit
+            : ((EbReferenceObject *)pcs_ptr
+                ->ref_pic_ptr_array[list_idx0][ref_idx_l0]
+                ->object_ptr)
+            ->reference_picture;
+        else
+            ref_pic_list0 = (EbPictureBufferDesc *)NULL;
+
+        if (ref_idx_l1 >= 0)
+            ref_pic_list1 = hbd_mode_decision ? ((EbReferenceObject *)pcs_ptr
+                ->ref_pic_ptr_array[list_idx1][ref_idx_l1]
+                ->object_ptr)
+            ->reference_picture16bit
+            : ((EbReferenceObject *)pcs_ptr
+                ->ref_pic_ptr_array[list_idx1][ref_idx_l1]
+                ->object_ptr)
+            ->reference_picture;
+        else
+            ref_pic_list1 = (EbPictureBufferDesc *)NULL;
+
+        //CHKN get seperate prediction of each ref(Luma only)
+        //ref0 prediction
+        mv_unit.pred_direction = UNI_PRED_LIST_0;
+        pred_desc.buffer_y = context_ptr->pred0;
+
+        //we call the regular inter prediction path here(no compound)
+        av1_inter_prediction(
+            pcs_ptr,
+            0, //fixed interpolation filter for compound search
+            context_ptr->blk_ptr,
+            candidate_ptr->ref_frame_type,
+            &mv_unit,
+            0, //use_intrabc,
+            SIMPLE_TRANSLATION,
+            0,
+            0,
+            1, //compound_idx not used
+            NULL, // interinter_comp not used
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            0,
+            0,
+            0,
+            0,
+            context_ptr->blk_origin_x,
+            context_ptr->blk_origin_y,
+            bwidth,
+            bheight,
+            ref_pic_list0,
+            ref_pic_list1,
+            &pred_desc, //output
+            0, //output origin_x,
+            0, //output origin_y,
+            0, //do chroma
+            hbd_mode_decision ? EB_10BIT : EB_8BIT);
+
+        //ref1 prediction
+        mv_unit.pred_direction = UNI_PRED_LIST_1;
+        pred_desc.buffer_y = context_ptr->pred1;
+
+        //we call the regular inter prediction path here(no compound)
+        av1_inter_prediction(
+            pcs_ptr,
+            0, //fixed interpolation filter for compound search
+            context_ptr->blk_ptr,
+            candidate_ptr->ref_frame_type,
+            &mv_unit,
+            0, //use_intrabc,
+            SIMPLE_TRANSLATION,
+            0,
+            0,
+            1, //compound_idx not used
+            NULL, // interinter_comp not useds
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            0,
+            0,
+            0,
+            0,
+            context_ptr->blk_origin_x,
+            context_ptr->blk_origin_y,
+            bwidth,
+            bheight,
+            ref_pic_list0,
+            ref_pic_list1,
+            &pred_desc, //output
+            0, //output origin_x,
+            0, //output origin_y,
+            0, //do chroma
+            hbd_mode_decision ? EB_10BIT : EB_8BIT);
+        if (hbd_mode_decision) {
+            uint16_t *src_buf_hbd =
+                (uint16_t *)src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
+                (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+            aom_highbd_subtract_block(bheight,
+                bwidth,
+                context_ptr->residual1,
+                bwidth,
+                (uint8_t *)src_buf_hbd,
+                src_pic->stride_y,
+                (uint8_t *)context_ptr->pred1,
+                bwidth,
+                EB_10BIT);
+            aom_highbd_subtract_block(bheight,
+                bwidth,
+                context_ptr->diff10,
+                bwidth,
+                (uint8_t *)context_ptr->pred1,
+                bwidth,
+                (uint8_t *)context_ptr->pred0,
+                bwidth,
+                EB_10BIT);
+        }
+        else {
+            uint8_t *src_buf = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
+                (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
+            aom_subtract_block(bheight,
+                bwidth,
+                context_ptr->residual1,
+                bwidth,
+                src_buf,
+                src_pic->stride_y,
+                context_ptr->pred1,
+                bwidth);
+            aom_subtract_block(bheight,
+                bwidth,
+                context_ptr->diff10,
+                bwidth,
+                context_ptr->pred1,
+                bwidth,
+                context_ptr->pred0,
+                bwidth);
+        }
+
+        if (context_ptr->inter_comp_ctrls.similar_predictions) {
+            const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
+            unsigned int sse;
+            (void)fn_ptr->vf(
+                context_ptr->pred0, bwidth, context_ptr->pred1, pred_desc.stride_y, &sse);
+
+            context_ptr->prediction_mse =
+                ROUND_POWER_OF_TWO(sse, num_pels_log2_lookup[context_ptr->blk_geom->bsize]);
+        }
+}
+#endif
 void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                                 ModeDecisionContext *  context_ptr,
                                 ModeDecisionCandidate *candidate_ptr) {
+#if !INTER_COMP_REDESIGN
     //if (*calc_pred_masked_compound)
     {
         uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
@@ -6236,6 +6434,7 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                 context_ptr->variance_ready = 1;
             }
     }
+#endif
     pick_interinter_mask(candidate_ptr,
                          picture_control_set_ptr,
                          context_ptr,

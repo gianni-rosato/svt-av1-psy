@@ -30,6 +30,26 @@
 /********************************************
  * Constants
  ********************************************/
+#if LOG_MV_VALIDITY
+void check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
+    MV mv;
+    //go to 1/8th if input is 1/4pel
+    mv.row = y_mv << need_shift;
+    mv.col = x_mv << need_shift;
+    /* AV1 limits
+      -16384 < MV_x_in_1/8 or MV_y_in_1/8 < 16384
+      which means in full pel:
+      -2048 < MV_x_in_full_pel or MV_y_in_full_pel < 2048
+    */
+    if(! is_mv_valid(&mv))
+        printf("Corrupted-MV (%i %i) not in range  (%i %i) \n",
+            mv.col,
+            mv.row,
+            MV_LOW,
+            MV_UPP);
+
+}
+#endif
 
 #define MAX_INTRA_IN_MD 9
 #define REFERENCE_PIC_LIST_0 0
@@ -4144,7 +4164,11 @@ void half_pel_refinement_sb(
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 0: perform_nsq_flag;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3 ) ? 0 : perform_nsq_flag;
     if(perform_nsq_flag){
+#if DEPTH_PART_CLEAN_UP // disallow_nsq
+        if (!pcs_ptr->disallow_nsq) {
+#else
         if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+#endif
             // 64x32
             for (pu_index = 0; pu_index < 2; ++pu_index) {
                 block_index_shift_x = 0;
@@ -4510,15 +4534,18 @@ static void open_loop_me_half_pel_search_sblock(
         list_index,
         ref_pic_index,
         0);
-
+#if !DEPTH_PART_CLEAN_UP
     if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+#endif
         uint8_t gather_nsq_flag = 0;
         gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 1 : gather_nsq_flag;
         gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 1 : gather_nsq_flag;
         gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3) ? 1 : gather_nsq_flag;
         if (gather_nsq_flag)
             generate_nsq_mv(context_ptr);
+#if !DEPTH_PART_CLEAN_UP
     }
+#endif
 }
 
 /*******************************************
@@ -4528,8 +4555,12 @@ static void open_loop_me_fullpel_search_sblock(MeContext *context_ptr, uint32_t 
                                                uint32_t ref_pic_index, int16_t x_search_area_origin,
                                                int16_t  y_search_area_origin,
                                                uint32_t search_area_width,
+#if DEPTH_PART_CLEAN_UP
+                                               uint32_t search_area_height){
+#else
                                                uint32_t search_area_height,
                                                uint8_t pic_depth_mode) {
+#endif
     uint32_t x_search_index, y_search_index;
     uint32_t search_area_width_rest_8 = search_area_width & 7;
     uint32_t search_area_width_mult_8 = search_area_width - search_area_width_rest_8;
@@ -4561,14 +4592,18 @@ static void open_loop_me_fullpel_search_sblock(MeContext *context_ptr, uint32_t 
                 (int32_t)y_search_index + y_search_area_origin);
         }
     }
+#if !DEPTH_PART_CLEAN_UP
     if (pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+#endif
         uint8_t gather_nsq_flag = 0;
         gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 1 : gather_nsq_flag;
         gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 1 : gather_nsq_flag;
         gather_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3) ? 1 : gather_nsq_flag;
         if (gather_nsq_flag)
             generate_nsq_mv(context_ptr);
+#if !DEPTH_PART_CLEAN_UP
     }
+#endif
 }
 
 #ifndef AVCCODEL
@@ -5443,7 +5478,18 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                 &context_ptr->psub_pel_direction8x8[idx]);
         }
     }
+#if !SHUT_ME_NSQ_SEARCH
+#if DEPTH_PART_CLEAN_UP // disallow_nsq
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    uint8_t perform_nsq_flag = !pcs_ptr->disallow_nsq ? 1 : 0;
+    perform_nsq_flag = (context_ptr->me_alt_ref) ? 0 : perform_nsq_flag;
+    if (perform_nsq_flag){
+#else
+    if (!pcs_ptr->disallow_nsq) {
+#endif
+#else
     if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+#endif
         // 64x32
         for (pu_index = 0; pu_index < 2; ++pu_index) {
             pu_shift_x_index = 0;
@@ -5774,7 +5820,7 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                                    &context_ptr->psub_pel_direction16x64[idx]);
         }
     }
-
+#endif
     return;
 }
 /*******************************************
@@ -9730,7 +9776,13 @@ void integer_search_sb(
                 (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) + y_search_area_origin;
             search_region_index =
                 x_top_left_search_region + y_top_left_search_region * ref_pic_ptr->stride_y;
+#if !NSQ_ME_CONTEXT_CLEAN_UP
+#if DEPTH_PART_CLEAN_UP // disallow_nsq
+            if (!pcs_ptr->disallow_nsq) {
+#else
             if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
+#endif
+#endif
                 initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
                             52,
@@ -9871,8 +9923,12 @@ void integer_search_sb(
                                                            x_search_area_origin,
                                                            y_search_area_origin,
                                                            search_area_width,
+#if DEPTH_PART_CLEAN_UP
+                                                           search_area_height);
+#else
                                                            search_area_height,
                                                            pcs_ptr->pic_depth_mode);
+#endif
 
             }
             else {
@@ -9944,6 +10000,9 @@ void integer_search_sb(
 */
 void prune_references_fp(
     PictureParentControlSet   *pcs_ptr,
+#if INTER_COMP_REDESIGN
+    uint32_t                   sb_index,
+#endif
     MeContext                 *context_ptr)
 {
     HmeResults sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -10000,16 +10059,67 @@ void prune_references_fp(
             }
         }
     }
+#if !ADD_ME_SIGNAL_FOR_PRUNING_TH
     uint8_t  BIGGER_THAN_TH = 30;
+#endif
     uint64_t best = sorted[0][0].hme_sad;//is this always the best?
+#if INTER_COMP_REDESIGN
+    uint8_t counter = 0;
+#define NUMBER_REF_INTER_COMP   2
+#endif
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
+#if INTER_COMP_REDESIGN
+#if DECOUPLE_ME_RES
+            if (context_ptr->me_alt_ref == EB_FALSE)
+            {
+                if (counter < NUMBER_REF_INTER_COMP)
+                    pcs_ptr->pa_me_data->me_results[sb_index]->
+                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
+                else
+                    pcs_ptr->pa_me_data->me_results[sb_index]->
+                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
+                counter++;
+
+            }
+#else
+            if (counter < NUMBER_REF_INTER_COMP)
+                pcs_ptr->me_results[sb_index]->
+                do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
+            else
+                pcs_ptr->me_results[sb_index]->
+                do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
+            counter ++;
+#endif
+#endif
+#if ME_HME_PRUNING_CLEANUP
+            // Prune references based on ME sad
+            uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
+            if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
+                (prune_ref_th != (uint16_t)~0) &&
+                (context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best))
+            {
+                context_ptr->hme_results[li][ri].do_ref = 0;
+            }
+#else
+#if ADD_ME_SIGNAL_FOR_PRUNING_TH
+#if MAR19_ADOPTIONS
+            // If th is infinite, the feature should be OFF; add check to avoid overflow errors with multiplication
+            if ((context_ptr->prune_ref_if_me_sad_dev_bigger_than_th != (uint16_t)~0) && (context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (context_ptr->prune_ref_if_me_sad_dev_bigger_than_th * best))
+#else
+            if ((context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (context_ptr->prune_ref_if_me_sad_dev_bigger_than_th * best))
+#endif
+#else
            // uint32_t dev = ((context_ptr->hme_results[li][ri].hme_sad - best) * 100) / best;
             if ((context_ptr->hme_results[li][ri].hme_sad - best) * 100  > BIGGER_THAN_TH*best)
+#endif
                 context_ptr->hme_results[li][ri].do_ref = 0;
+#endif
+#if !REMOVE_ME_SUBPEL_CODE
             if (context_ptr->half_pel_mode == SWITCHABLE_HP_MODE)
                 if (context_ptr->hme_results[li][ri].hme_sad > sorted[0][1].hme_sad)
                     context_ptr->local_hp_mode[li][ri] = REFINEMENT_HP_MODE;
+#endif
         }
     }
 }
@@ -11573,9 +11683,13 @@ void prune_references_sc(
         }
     }
 }
+#if ME_HME_PRUNING_CLEANUP
+void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
+#else
 void prune_references(
     MeContext                 *context_ptr)
 {
+#endif
     HmeResults    sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t      num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
     eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
@@ -11590,13 +11704,48 @@ void prune_references(
             }
         }
     }
+#if !ADD_ME_SIGNAL_FOR_PRUNING_TH
     uint8_t  BIGGER_THAN_TH = 80;
+#endif
     uint64_t best = sorted[0][0].hme_sad;//is this always the best?
+#if ME_HME_PRUNING_CLEANUP
+    uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_hme_sad_dev_bigger_than_th;
+    uint16_t mv_length_th = context_ptr->me_sr_adjustment_ctrls.reduce_me_sr_based_on_mv_length_th;
+    uint16_t stationary_hme_sad_abs_th = context_ptr->me_sr_adjustment_ctrls.stationary_hme_sad_abs_th;
+    uint16_t reduce_me_sr_based_on_hme_sad_abs_th = context_ptr->me_sr_adjustment_ctrls.reduce_me_sr_based_on_hme_sad_abs_th;
+#else
     uint64_t REDUCE_SR_TH = 6000;
     int16_t  displacement_th = 4;
+#endif
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
+#if ME_HME_PRUNING_CLEANUP
+            // Prune references based on HME sad
+            if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
+                (prune_ref_th != (uint16_t)~0) &&
+                ((context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)))
+            {
+                context_ptr->hme_results[li][ri].do_ref = 0;
+            }
+
+            // Reduce the ME search region if the hme sad is low
+            if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment) {
+                if (ABS(context_ptr->hme_results[li][ri].hme_sc_x) <= mv_length_th &&
+                    ABS(context_ptr->hme_results[li][ri].hme_sc_y) <= mv_length_th &&
+                    context_ptr->hme_results[li][ri].hme_sad < stationary_hme_sad_abs_th)
+                {
+                    context_ptr->reduce_me_sr_divisor[li][ri] = context_ptr->me_sr_adjustment_ctrls.stationary_me_sr_divisor;
+                }
+                else if (context_ptr->hme_results[li][ri].hme_sad < reduce_me_sr_based_on_hme_sad_abs_th) {
+                    context_ptr->reduce_me_sr_divisor[li][ri] = context_ptr->me_sr_adjustment_ctrls.me_sr_divisor_for_low_hme_sad;
+                }
+            }
+#else
+#if ADD_ME_SIGNAL_FOR_PRUNING_TH
+            if ((context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (context_ptr->prune_ref_if_hme_sad_dev_bigger_than_th * best))
+#else
             if ((context_ptr->hme_results[li][ri].hme_sad - best) * 100  > BIGGER_THAN_TH*best)
+#endif
                 context_ptr->hme_results[li][ri].do_ref = 0;
             if (context_ptr->hme_results[li][ri].hme_sad < REDUCE_SR_TH)
                 context_ptr->reduce_me_sr_flag[li][ri] = 1;
@@ -11606,6 +11755,7 @@ void prune_references(
             if (context_ptr->hme_results[li][ri].hme_sc_x <= displacement_th && context_ptr->hme_results[li][ri].hme_sc_y <= displacement_th && context_ptr->hme_results[li][ri].hme_sad < (2*REDUCE_SR_TH))
 #endif
                 context_ptr->reduce_me_sr_flag[li][ri] = 1;
+#endif
         }
     }
 }
@@ -11824,6 +11974,14 @@ EbErrorType motion_estimate_sb(
     //init hme results buffer
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+#if INTER_COMP_REDESIGN
+#if DECOUPLE_ME_RES
+            if(context_ptr->me_alt_ref == EB_FALSE)
+                pcs_ptr->pa_me_data->me_results[sb_index]->do_comp[li][ri] = 1;
+#else
+            pcs_ptr->me_results[sb_index]->do_comp[li][ri] = 1;
+#endif
+#endif
             context_ptr->hme_results[li][ri].list_i = li;
             context_ptr->hme_results[li][ri].ref_i = ri;
             context_ptr->hme_results[li][ri].do_ref = 1;
@@ -11864,6 +12022,9 @@ EbErrorType motion_estimate_sb(
     if (pcs_ptr->prune_ref_based_me && prune_ref)
         prune_references_fp(
             pcs_ptr,
+#if INTER_COMP_REDESIGN
+            sb_index,
+#endif
             context_ptr );
 
     if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
@@ -11906,8 +12067,13 @@ EbErrorType motion_estimate_sb(
                            //we can also make the ME small and shut subpel
             {
                 {
+#if !NSQ_ME_CONTEXT_CLEAN_UP
+#if DEPTH_PART_CLEAN_UP // disallow_nsq
+                    if (!pcs_ptr->disallow_nsq) {
+#else
                     if (pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE) {
-
+#endif
+#endif
                         context_ptr->p_best_sad_64x64 = &(
                             context_ptr
                                 ->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
@@ -12253,6 +12419,11 @@ EbErrorType motion_estimate_sb(
                                 ((ME_FILTER_TAP >> 1) *
                                  context_ptr->interpolated_full_stride[list_index][ref_pic_index]),
                             context_ptr->interpolated_full_stride[list_index][ref_pic_index],
+#if REMOVE_ME_BIPRED_SEARCH
+                            &(context_ptr->pos_b_buffer[(ME_FILTER_TAP >> 1) * context_ptr->interpolated_stride]), // points to b position of the figure above
+                            &(context_ptr->pos_h_buffer[1]), // points to h position of the figure above
+                            &(context_ptr->pos_j_buffer[0]), // points to j position of the figure above
+#else
                             &(context_ptr
                                   ->pos_b_buffer[list_index][ref_pic_index]
                                                 [(ME_FILTER_TAP >> 1) *
@@ -12261,6 +12432,7 @@ EbErrorType motion_estimate_sb(
                             // the figure
                             // above
 
+#endif
                             &(context_ptr->pos_h_buffer[list_index][ref_pic_index]
                                                        [1]), // points to h position
                             // of the figure above
@@ -12272,8 +12444,19 @@ EbErrorType motion_estimate_sb(
                             enable_half_pel_32x32,
                             enable_half_pel_16x16,
                             enable_half_pel_8x8,
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+                            enable_quarter_pel);
+#else
                             enable_quarter_pel,
+#if DEPTH_PART_CLEAN_UP // disallow_nsq
+                            !pcs_ptr->disallow_nsq);
+#else
                             pcs_ptr->pic_depth_mode <= PIC_ALL_C_DEPTH_MODE);
+#endif
+#if SHUT_ME_NSQ_SEARCH
+                        generate_nsq_mv(context_ptr);
+#endif
+#endif
                     }
                 }
             }
@@ -12434,6 +12617,11 @@ EbErrorType motion_estimate_sb(
                                                      : list_index ? 2 : 0) +
                                                 ref_pic_index]
                         .y_mv = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#if LOG_MV_VALIDITY
+                    //check if final MV is within AV1 limits
+                    check_mv_validity(_MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]),
+                        _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]), 1);
+#endif
                 }
             }
         }

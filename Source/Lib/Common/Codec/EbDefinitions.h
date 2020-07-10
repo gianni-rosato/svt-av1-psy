@@ -83,6 +83,45 @@ extern "C" {
 #define NICS_SYNCH                        1
 #define MAR11_ADOPTIONS                   1 // Adoptions for M2, M3, M4, M5
 #define WEDGE_SYNCH                       1
+#define DEPTH_PART_CLEAN_UP               1 // sb_128x128 if NSC, sb_64x64 if SC, and multi-pass PD till M8
+
+#define REMOVE_COMBINE_CLASS12            1 // remove code associated with combine_class12 feature
+#define REMOVE_OLD_NICS                   1 // Remove code for old NICS levels
+#define ADD_ME_SIGNAL_FOR_PRUNING_TH      1 // Add signals for mode-dependent ME thresholds
+#define ADD_HME_MIN_MAX_MULTIPLIER_SIGNAL 1 // Add ME signal for the max HME search area multiplier
+#define MAR12_M8_ADOPTIONS                1
+#define MAR12_ADOPTIONS                   1 // Adoptions for all modes
+#define REMOVED_MEM_OPT_CDF               1
+#define FIX_MR_PD1                        1 // Disable PD1 refinement changes for MR.
+#define PME_SORT_REF                      1 //add reference sorting of pme results
+#define OBMC_FAST                         1 //faster obmc mode (3). cleaner obmc signalling.
+#define REMOVE_MD_EXIT                    1 // remove md_exit
+#define MAR16_M8_ADOPTIONS                1 // M8 adoption for TH value
+#define ADDED_CFL_OFF                     1
+#define ADOPT_CHROMA_MODE1_CFL_OFF        1
+#define PIC_BASED_RE_OFF                  0 //-------------------------------------------------------
+#define MR_MODE_FOR_PIC_MULTI_PASS_PD_MODE_1 1 // shut SQ vs. NSQ if MR (for multi_pass_pd_level = PIC_MULTI_PASS_PD_MODE_1 or PIC_MULTI_PASS_PD_MODE_2 or PIC_MULTI_PASS_PD_MODE_3)
+#define ADD_SAD_AT_PME_SIGNAL      1 // Add signal for using SAD at PME
+#define MAR17_ADOPTIONS            1 // Push features with bad slope to M8 & beyond.
+    // it3
+#define M5_CHROMA_NICS             0
+#define INTER_COMP_REDESIGN        0 // new fast mode, cleaner signaling and code
+#define MAR18_MR_TESTS_ADOPTIONS   0 // adoptions for MR, M0, and M2
+#define SKIP_DEPTH_SYNCH           0
+#define MAR18_ADOPTIONS            0 // adoptions in M5/M8
+#define REU_UPDATE                 0 // use top right instead of top SB for CDF calculation
+#define ADD_NEW_MPPD_LEVEL         0 // add a new MPPD level with PD0 | PD1 | PD2 w/o sq/nsq decision
+#define LOG_MV_VALIDITY            0 //report error message if MV is beyond av1 limits
+#define MD_CFL                     0 // Modified cfl search in MD
+#if MD_CFL
+#define CFL_REDUCED_ALPHA    1 // use faster libaom_short_cuts_ths
+#endif
+#define UV_SEARCH_MODE_INJCECTION  0 // use the luma mode ijection method in chroma independent mode search
+#define MAR19_ADOPTIONS            0 // Adoptions for all modes
+#define MAR20_M4_ADOPTIONS         0 // Adoptions in M4
+#define ADOPT_SQ_ME_SEARCH_AREA    0 // Adopt a square search area for ME (all modes)
+#define MAR20_ADOPTIONS            0 // Adoptions affecting all modes
+#define MD_CONFIG_SB               0
 #endif
 
 ///////// END MASTER_SYNCH
@@ -190,7 +229,19 @@ enum {
 #define BLOCK_MAX_COUNT_SB_128 4421
 #define BLOCK_MAX_COUNT_SB_64 1101
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
+#if REMOVE_MR_MACRO
+#define MAX_NFL 250 // Maximum number of candidates MD can support
+#else
+#if MAR12_ADOPTIONS && MR_MODE
+#define MAX_NFL 250 // Maximum number of candidates MD can support
+#else
+#if M0_NIC
+#define MAX_NFL 150 // Maximum number of candidates MD can support
+#else
 #define MAX_NFL 125 // Maximum number of candidates MD can support
+#endif
+#endif
+#endif
 #define MAX_NFL_BUFF_Y \
     (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
 #define MAX_NFL_BUFF (MAX_NFL_BUFF_Y + 84) //need one extra temp buffer for each fast loop call
@@ -2604,6 +2655,38 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 
 // Multi-Pass Partitioning Depth(Multi - Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure
 // As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
+#if DEPTH_PART_CLEAN_UP
+#if ADD_NEW_MPPD_LEVEL
+typedef enum MultiPassPdLevel
+{
+    MULTI_PASS_PD_OFF     = 0, // Multi-Pass PD OFF = 1-single PD Pass (e.g. I_SLICE, SC)
+    MULTI_PASS_PD_LEVEL_0 = 1, // Multi-Pass PD Mode 0: PD0 | PD0_REFINEMENT
+    MULTI_PASS_PD_LEVEL_1 = 2, // Multi-Pass PD Mode 1: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT
+    MULTI_PASS_PD_LEVEL_2 = 3, // Multi-Pass PD Mode 1: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ only
+    MULTI_PASS_PD_LEVEL_3 = 4, // Multi-Pass PD Mode 2: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ and SQ coeff info
+    MULTI_PASS_PD_LEVEL_4 = 5, // reserved = MULTI_PASS_PD_LEVEL_3
+    MULTI_PASS_PD_INVALID = 6, // Invalid Multi-Pass PD Mode
+} MultiPassPdLevel;
+#else
+typedef enum MultiPassPdLevel
+{
+    MULTI_PASS_PD_OFF = 0, // Multi-Pass PD OFF = 1-single PD Pass (e.g. I_SLICE, SC)
+    MULTI_PASS_PD_LEVEL_0 = 1, // Multi-Pass PD Mode 0: PD0 | PD0_REFINEMENT
+    MULTI_PASS_PD_LEVEL_1 = 2, // Multi-Pass PD Mode 1: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ only
+    MULTI_PASS_PD_LEVEL_2 = 3, // Multi-Pass PD Mode 2: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ and SQ coeff info
+    MULTI_PASS_PD_LEVEL_3 = 4, // reserved = MULTI_PASS_PD_LEVEL_2
+    MULTI_PASS_PD_INVALID = 5, // Invalid Multi-Pass PD Mode
+} MultiPassPdLevel;
+#endif
+
+typedef enum AdpLevel
+{
+    ADP_OFF = 0, // All SBs use the same Multi-Pass PD level
+    ADP_LEVEL_1 = 1, // read @ ADP budget derivation (e.g. high budget_boost)
+    ADP_LEVEL_2 = 2, // read @ ADP budget derivation (e.g. moderate budget_boost)
+    ADP_LEVEL_3 = 3, // read @ ADP budget derivation (e.g. low budget_boost)
+} AdpLevel;
+#else
 typedef enum EbPictureDepthMode
 {
     PIC_MULTI_PASS_PD_MODE_0    = 0, // Multi-Pass PD Mode 0: PD0 | PD0_REFINEMENT
@@ -2622,7 +2705,7 @@ typedef enum EbPictureDepthMode
 #endif
 
 } EbPictureDepthMode;
-
+#endif
 #define EB_SB_DEPTH_MODE              uint8_t
 #define SB_SQ_BLOCKS_DEPTH_MODE             1
 #define SB_SQ_NON4_BLOCKS_DEPTH_MODE        2

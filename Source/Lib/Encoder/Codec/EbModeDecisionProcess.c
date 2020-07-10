@@ -64,6 +64,25 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->md_local_blk_unit);
     EB_FREE_ARRAY(obj->md_blk_arr_nsq);
     EB_FREE_ARRAY(obj->md_ep_pipe_sb);
+#if DEPTH_PART_CLEAN_UP
+    EB_FREE_ARRAY(obj->mdc_sb_array);
+#endif
+#if UNIFY_TXT
+    for (uint32_t txt_itr = 0; txt_itr < TX_TYPES; ++txt_itr) {
+        EB_DELETE(obj->recon_coeff_ptr[txt_itr]);
+        EB_DELETE(obj->recon_ptr[txt_itr]);
+    }
+#endif
+#if CAND_MEM_OPT
+    EB_DELETE(obj->prediction_ptr_temp);
+    EB_DELETE(obj->cfl_temp_prediction_ptr);
+    EB_DELETE(obj->residual_quant_coeff_ptr);
+#endif
+
+#if MEM_OPT_MD_BUF_DESC
+    EB_DELETE(obj->temp_residual_ptr);
+    EB_DELETE(obj->temp_recon_ptr);
+#endif
 }
 
 /******************************************************
@@ -187,6 +206,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     }
     context_ptr->md_blk_arr_nsq[0].av1xd                     = NULL;
     EB_MALLOC_ARRAY(context_ptr->md_blk_arr_nsq[0].av1xd, BLOCK_MAX_COUNT_SB_128);
+
+#if DEPTH_PART_CLEAN_UP
+    EB_MALLOC_ARRAY(context_ptr->mdc_sb_array, 1);
+#endif
     for (coded_leaf_index = 0; coded_leaf_index < BLOCK_MAX_COUNT_SB_128; ++coded_leaf_index) {
         context_ptr->md_blk_arr_nsq[coded_leaf_index].av1xd =
             context_ptr->md_blk_arr_nsq[0].av1xd + coded_leaf_index;

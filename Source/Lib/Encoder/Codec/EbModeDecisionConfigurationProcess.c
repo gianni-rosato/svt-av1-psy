@@ -477,6 +477,7 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     return EB_ErrorNone;
 }
 
+#if !DEPTH_PART_CLEAN_UP
 void forward_all_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
     uint32_t sb_index;
     EbBool   split_flag;
@@ -612,7 +613,7 @@ void sb_forward_sq_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *
     }
     pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
 }
-
+#endif
 /******************************************************
 * Load the cost of the different partitioning method into a local array and derive sensitive picture flag
     Input   : the offline derived cost per search method, detection signals
@@ -1284,6 +1285,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     return return_error;
 }
 
+#if !DEPTH_PART_CLEAN_UP
 void forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
     uint32_t sb_index;
     EbBool   split_flag;
@@ -1422,6 +1424,7 @@ void forward_all_c_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *
 
     pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
 }
+#endif
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -1776,6 +1779,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // Initial Rate Estimation of the quantized coefficients
         av1_estimate_coefficients_rate(md_rate_estimation_array,
                                        pcs_ptr->coeff_est_entropy_coder_ptr->fc);
+#if !DEPTH_PART_CLEAN_UP
         if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE) {
             derive_sb_md_mode(scs_ptr, pcs_ptr, context_ptr);
 
@@ -1803,6 +1807,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         } else { // (pcs_ptr->parent_pcs_ptr->mdMode == PICT_BDP_DEPTH_MODE || pcs_ptr->parent_pcs_ptr->mdMode == PICT_LIGHT_BDP_DEPTH_MODE )
             pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
         }
+#endif
         if (frm_hdr->allow_intrabc) {
             int            i;
             int            speed          = 1;

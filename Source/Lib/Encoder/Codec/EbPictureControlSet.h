@@ -150,11 +150,13 @@ typedef struct EbMdcLeafData {
 } EbMdcLeafData;
 
 typedef struct MdcSbData {
+#if !DEPTH_PART_CLEAN_UP
     // Rate Control
     uint8_t qp;
 
     // ME Results
     uint64_t      treeblock_variance;
+#endif
     uint32_t      leaf_count;
     EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
 } MdcSbData;
@@ -259,10 +261,11 @@ typedef struct PictureControlSet {
     uint16_t rest_segments_total_count;
     uint8_t  rest_segments_column_count;
     uint8_t  rest_segments_row_count;
-
+    
+#if !DEPTH_PART_CLEAN_UP
     // Mode Decision Config
     MdcSbData *mdc_sb_array;
-
+#endif
     // Slice Type
     EB_SLICE slice_type;
 
@@ -470,7 +473,9 @@ typedef struct PictureParentControlSet {
     EbBool           end_of_sequence_flag;
     uint8_t          picture_qp;
     uint64_t         picture_number;
+#if !INTER_COMP_REDESIGN
     uint8_t          wedge_mode;
+#endif
     uint32_t         cur_order_hint;
     uint32_t         ref_order_hint[7];
     EbPicnoiseClass  pic_noise_class;
@@ -600,10 +605,42 @@ typedef struct PictureParentControlSet {
     EbEncMode         snd_pass_enc_mode;
     EB_SB_DEPTH_MODE *sb_depth_mode_array;
     // Multi-modes signal(s)
+#if DEPTH_PART_CLEAN_UP
+    MultiPassPdLevel multi_pass_pd_level;
+#if !REMOVE_UNUSED_CODE_PH2
+    EbBool sb_64x64_simulated;
+#endif
+#if !M8_4x4
+    EbBool disallow_4x4;
+#endif
+    EbBool disallow_nsq;
+    EbBool disallow_all_nsq_blocks_below_8x8;
+    EbBool disallow_all_nsq_blocks_below_16x16;
+    EbBool disallow_all_non_hv_nsq_blocks_below_16x16;
+    EbBool disallow_all_h4_v4_blocks_below_16x16;
+#else
     EbPictureDepthMode pic_depth_mode;
+#endif
+
+#if NO_NSQ_B32
+    EbBool disallow_all_nsq_blocks_below_64x64;  //disallow nsq in 64x64 and below
+    EbBool disallow_all_nsq_blocks_below_32x32;  //disallow nsq in 32x32 and below
+#endif
+#if NO_NSQ_ABOVE
+    EbBool disallow_all_nsq_blocks_above_64x64;  //disallow nsq in 64x64 and above
+    EbBool disallow_all_nsq_blocks_above_32x32;  //disallow nsq in 32x32 and above
+    EbBool disallow_all_nsq_blocks_above_16x16;  //disallow nsq in 16x16 and above
+#endif
+#if NO_AB_HV4
+    EbBool disallow_HV4;          //disallow             H4/V4
+    EbBool disallow_HVA_HVB_HV4;  //disallow HA/HB/VA/VB H4/V4
+#endif
     uint8_t            loop_filter_mode;
     uint8_t            intra_pred_mode;
     uint8_t            tx_size_search_mode;
+#if APR22_ADOPTIONS
+    uint8_t            txs_in_inter_classes;
+#endif
     uint8_t            frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
     //**********************************************************************************************************//
     Av1RpsNode av1_ref_signal;
@@ -688,9 +725,13 @@ typedef struct PictureParentControlSet {
     int32_t             cdef_frame_strength;
     int32_t             cdf_ref_frame_strength;
     int32_t             use_ref_frame_cdef_strength;
+#if !DEPTH_PART_CLEAN_UP
     uint8_t             nsq_search_level;
+#endif
     uint8_t             palette_mode;
+#if !DEPTH_PART_CLEAN_UP
     uint8_t             nsq_max_shapes_md; // max number of shapes to be tested in MD
+#endif
     uint8_t             sc_content_detected;
     uint8_t             ibc_mode;
     SkipModeInfo        skip_mode_info;

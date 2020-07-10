@@ -434,18 +434,33 @@ typedef struct MeContext {
     EbBool enable_hme_level0_flag;
     EbBool enable_hme_level1_flag;
     EbBool enable_hme_level2_flag;
+#if !REMOVE_ME_SUBPEL_CODE
 
     EbBool use_subpel_flag;
     EbBool half_pel_mode;
-
+#endif
     EbBool compute_global_motion;
+#if ME_HME_PRUNING_CLEANUP
+    MeHmeRefPruneCtrls me_hme_prune_ctrls;
+    MeSrCtrls me_sr_adjustment_ctrls;
+#else
+#if ADD_ME_SIGNAL_FOR_PRUNING_TH
+    uint16_t prune_ref_if_hme_sad_dev_bigger_than_th;
+    uint16_t prune_ref_if_me_sad_dev_bigger_than_th;
+#endif
+#endif
+#if ADD_HME_MIN_MAX_MULTIPLIER_SIGNAL
+    uint8_t max_hme_sr_area_multipler;
+#endif
 
     // ME
     uint16_t search_area_width;
     uint16_t search_area_height;
     uint16_t max_me_search_width;
     uint16_t max_me_search_height;
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t inherit_rec_mv_from_sq_block;
+#endif
     uint8_t best_list_idx;
     uint8_t best_ref_idx;
     // HME
@@ -455,14 +470,29 @@ typedef struct MeContext {
     uint16_t hme_level0_total_search_area_height;
     uint16_t hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+#if ADD_MAX_HME_SIGNAL
+    uint16_t hme_level0_max_total_search_area_width;
+    uint16_t hme_level0_max_total_search_area_height;
+    uint16_t hme_level0_max_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint16_t hme_level0_max_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+#endif
     uint16_t hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint16_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+#if ADD_HME_DECIMATION_SIGNAL
+    uint8_t hme_decimation;
+#endif
     uint8_t  update_hme_search_center_flag;
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if ME_HME_PRUNING_CLEANUP
+    uint32_t reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#else
     uint32_t reduce_me_sr_flag[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
+#if !REMOVE_ME_SUBPEL_CODE
     EbBool local_hp_mode[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
 #if MULTI_STAGE_HME
     int16_t x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
