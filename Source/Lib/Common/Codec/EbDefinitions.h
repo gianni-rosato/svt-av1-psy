@@ -121,7 +121,39 @@ extern "C" {
 #define MAR20_M4_ADOPTIONS         1 // Adoptions in M4
 #define ADOPT_SQ_ME_SEARCH_AREA    1 // Adopt a square search area for ME (all modes)
 #define MAR20_ADOPTIONS            1 // Adoptions affecting all modes
-#define MD_CONFIG_SB               0
+#define MD_CONFIG_SB               1
+#define MAR23_ADOPTIONS            1 // Adoptions for all modes.  Make ME/HME SR square for TF and normal
+#define CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL 1 // lossless
+#define MD_REFERENCE_MASKING       1 // ref pruning @ MD
+#if MD_REFERENCE_MASKING
+#define NEW_MV_REF_MASKING 1
+#define UNIPRED_3x3_REF_MASKING 1
+#define BIPRED_3x3_REF_MASKING 1
+#define NEW_NEAREST_NEW_NEAR_REF_MASKING 1
+#define WARP_REF_MASKING 1
+#define NEAREST_NEAR_REF_MASKING 1
+#define PRED_ME_REF_MASKING 1
+#endif
+#define MAR25_ADOPTIONS            1 // Adoptions for all modes. Adopt uniform HME/ME sizes (non-TF)
+#define MAR26_ADOPTIONS            1 // Adoptions for all modes. Adopt uniform TF HME/ME sizes
+#define PASS1_FIX                  1 // Fix bugs related to pass 1QPS_UPDATE
+#define QPS_UPDATE                 1 // 2 PASS QPS improvement
+#define INCOMPLETE_SB_FIX          1 // Enable the block_is_allowed for some block sizes,//which were removed due to lack of intrinsics
+#define INTRA_COMPOUND_OPT         1  // new fast mode
+#define ME_REFACTOR_FOR_CLEANUP    1 // refactor HME/ME code and improve resolution granularity for future cleanup and features
+#if ME_REFACTOR_FOR_CLEANUP
+#define REFACTOR_ME_HME           1 // Refactor the HME/ME search code
+#define ADD_HME_DECIMATION_SIGNAL 1 // Add a signal to control the number of HME levels used
+#define NEW_RESOLUTION_RANGES     1 // Make new resolution ranges
+#endif
+#define MAR30_ADOPTIONS            1 // Adoptions in all modes; create a new M1
+#define REDUCE_COMPLEX_CLIP_CYCLES    0 // Add picture classifier
+#define BLOCK_REDUCTION_ALGORITHM_1   1 // block_based_depth_reduction (1)
+#define BLOCK_REDUCTION_ALGORITHM_2   1 // block_based_depth_reduction (2)
+#define REMOVE_SQ_WEIGHT_QP_CHECK     1
+#define SHUT_SQ_WEIGHT_INTRA_FILTER   1
+#define APR02_ADOPTIONS               1 // adoptions in all modes
+#define APR08_ADOPTIONS               1 // adoptions in all modes
 #endif
 
 ///////// END MASTER_SYNCH
@@ -1896,13 +1928,27 @@ static const EbWarpedMotionParams default_warp_params = {
 
 #define MAX_NUM_TOKENS          200
 
-
+#if NEW_RESOLUTION_RANGES
+#define INPUT_SIZE_240p_TH                  0x28500      // 0.165 Million
+#define INPUT_SIZE_360p_TH                  0x4CE00      // 0.315 Million
+#define INPUT_SIZE_480p_TH                  0xA1400      // 0.661 Million
+#define INPUT_SIZE_720p_TH                  0x16DA00     // 1.5 Million
+#define INPUT_SIZE_1080p_TH                 0x535200     // 5.46 Million
+#define INPUT_SIZE_4K_TH                    0x140A000    // 21 Million
+#else
 #define INPUT_SIZE_576p_TH                  0x90000        // 0.58 Million
 #define INPUT_SIZE_1080i_TH                 0xB71B0        // 0.75 Million
 #define INPUT_SIZE_1080p_TH                 0x1AB3F0    // 1.75 Million
 #define INPUT_SIZE_4K_TH                    0x29F630    // 2.75 Million
 #define INPUT_SIZE_8K_TH                    0xA7D8C0    // 11 Million
-
+#endif
+#if OUTPUT_MEM_OPT
+#if NEW_RESOLUTION_RANGES
+#define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize)                ((ResolutionSize) < (INPUT_SIZE_720p_TH) ? 0x1E8480 : (ResolutionSize) < (INPUT_SIZE_1080p_TH) ? 0x2DC6C0 : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0  )
+#else
+#define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(ResolutionSize)                ((ResolutionSize) < (INPUT_SIZE_1080i_TH) ? 0x1E8480 : (ResolutionSize) < (INPUT_SIZE_1080p_TH) ? 0x2DC6C0 : (ResolutionSize) < (INPUT_SIZE_4K_TH) ? 0x2DC6C0 : 0x2DC6C0  )
+#endif
+#endif
 /** Redefine ASSERT() to avoid warnings
 */
 #if defined _DEBUG || _DEBUG_
@@ -1921,11 +1967,25 @@ static const EbWarpedMotionParams default_warp_params = {
 /************************ INPUT CLASS **************************/
 
 #define EbInputResolution             uint8_t
+#if NEW_RESOLUTION_RANGES
+typedef enum ResolutionRange
+{
+    INPUT_SIZE_240p_RANGE   = 0,
+    INPUT_SIZE_360p_RANGE   = 1,
+    INPUT_SIZE_480p_RANGE   = 2,
+    INPUT_SIZE_720p_RANGE   = 3,
+    INPUT_SIZE_1080p_RANGE  = 4,
+    INPUT_SIZE_4K_RANGE     = 5,
+    INPUT_SIZE_8K_RANGE     = 6,
+    INPUT_SIZE_COUNT        = 7
+} ResolutionRange;
+#else
 #define INPUT_SIZE_576p_RANGE_OR_LOWER     0
 #define INPUT_SIZE_1080i_RANGE             1
 #define INPUT_SIZE_1080p_RANGE             2
 #define INPUT_SIZE_4K_RANGE                3
 #define INPUT_SIZE_COUNT                   INPUT_SIZE_4K_RANGE + 1
+#endif
 
 /** The EbPtr type is intended to be used to pass pointers to and from the eBrisk
 API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
@@ -3030,6 +3090,14 @@ typedef struct StatStruct
                                 // the referenced area is normalized
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
 
+#if ADD_HME_DECIMATION_SIGNAL
+typedef enum HmeDecimation
+{
+    ZERO_DECIMATION_HME = 0, // Perform HME search on full-res picture; no refinement
+    ONE_DECIMATION_HME = 1, // HME search on quarter-res picture; 1 refinement level
+    TWO_DECIMATION_HME = 2, // HME search on sixteenth-res picture; 2 refinement level
+} HmeDecimation;
+#endif
 #if !REFACTOR_ME_HME
 /******************************************************************************
                             ME/HME settings

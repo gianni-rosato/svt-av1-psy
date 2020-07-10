@@ -502,8 +502,12 @@ void *entropy_coding_kernel(void *input_ptr) {
                                  ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                                  ++ref_idx) {
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+#if PASS1_FIX
+                                    pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL)
+#else
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL &&
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx]->live_count == 1)
+#endif
                                     write_stat_to_file(
                                         scs_ptr,
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
@@ -522,8 +526,12 @@ void *entropy_coding_kernel(void *input_ptr) {
                                  ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                                  ++ref_idx) {
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+#if PASS1_FIX
+                                    pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL)
+#else
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL &&
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx]->live_count == 1)
+#endif
                                     write_stat_to_file(
                                         scs_ptr,
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]

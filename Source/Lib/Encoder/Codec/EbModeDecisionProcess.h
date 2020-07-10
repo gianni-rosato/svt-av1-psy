@@ -88,8 +88,10 @@ typedef struct MdBlkStruct {
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
     uint64_t             default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
+#if !MEM_OPT_MV_STACK
     CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
+#endif
     uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
     IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
     uint32_t best_d1_blk;
@@ -98,6 +100,22 @@ typedef struct MdBlkStruct {
     uint16_t *neigh_left_recon_16bit[3];
     uint16_t *neigh_top_recon_16bit[3];
     uint8_t merge_flag;
+#if !M8_CLEAN_UP
+#if BLOCK_REDUCTION_ALGORITHM_1
+    uint64_t luma_quant_coeff_energy;
+    uint64_t cb_quant_coeff_energy;
+    uint64_t cr_quant_coeff_energy;
+#endif
+#endif
+#if SSE_BASED_SPLITTING
+    uint8_t sse_gradian_band[NUMBER_OF_SHAPES];
+#endif
+#if TRACK_PER_DEPTH_DELTA
+    int8_t pred_depth_refinement;
+#endif
+#if ADAPTIVE_DEPTH_CR
+    int8_t pred_depth;
+#endif
     // wm
     EbWarpedMotionParams wm_params_l0;
     EbWarpedMotionParams wm_params_l1;
@@ -545,18 +563,30 @@ typedef struct ModeDecisionContext {
     CandClass target_class;
 
     // fast_loop_core signals
+#if !USE_REGULAR_MD_STAGE_0
     EbBool md_staging_use_bilinear;
+#endif
     EbBool md_staging_skip_interpolation_search;
+#if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
+    EbBool md_staging_skip_chroma_pred;
+#else
     EbBool md_staging_skip_inter_chroma_pred;
-
+#endif
     // full_loop_core signals
+#if REFACTOR_SIGNALS
+    EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
+#else
     EbBool
            md_staging_skip_full_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
+#endif
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
     EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
     EbBool md_staging_skip_full_chroma;
     EbBool md_staging_skip_rdoq;
     EbBool md_staging_spatial_sse_full_loop;
+#if FIX_CFL_OFF
+    EbBool md_staging_perform_intra_chroma_pred;
+#endif
     DECLARE_ALIGNED(
         16, uint8_t,
         intrapred_buf[INTERINTRA_MODES][2 * 32 * 32]); //MAX block size for inter intra is 32x32
@@ -657,7 +687,7 @@ typedef struct ModeDecisionContext {
 #endif
     // Signal to control initial and final pass PD setting(s)
     PdPass pd_pass;
-    
+
 #if ADDED_CFL_OFF
     EbBool        md_disable_cfl;
 #endif

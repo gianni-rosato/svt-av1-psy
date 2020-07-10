@@ -2306,12 +2306,35 @@ static EbErrorType produce_temporally_filtered_pic(
                 // ------------
                 // Step 2: temporal filtering using the motion compensated blocks
                 // ------------
+#if NEW_RESOLUTION_RANGES
+                int use_planewise_strategy = 1;
+                // Hyper-parameter for filter weight adjustment.
+                int decay_control = (picture_control_set_ptr_central->scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 3 : 4;
+#else
                 int use_planewise_strategy = 1;
                 // Hyper-parameter for filter weight adjustment.
                 int decay_control = (picture_control_set_ptr_central->scs_ptr->input_resolution ==
                                      INPUT_SIZE_576p_RANGE_OR_LOWER)
                                         ? 3
                                         : 4;
+#endif
+#if QPS_UPDATE
+                if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
+                    picture_control_set_ptr_central->temporal_layer_index == 0 &&
+#if UNIFY_SC_NSC
+                    noise_levels[0] > 0.5) {
+#else
+                    noise_levels[0] > 0.5 &&
+                    picture_control_set_ptr_central->sc_content_detected == 0) {
+#endif
+                    if ((picture_control_set_ptr_central->referenced_area_avg < 20 &&
+                         picture_control_set_ptr_central->slice_type == 2) ||
+                        (picture_control_set_ptr_central->referenced_area_avg < 30 &&
+                         picture_control_set_ptr_central->slice_type != 2)) {
+                        decay_control--;
+                    }
+                }
+#endif
                 // Decrease the filter strength for low QPs
                 if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
                     decay_control--;
@@ -2329,8 +2352,17 @@ static EbErrorType produce_temporally_filtered_pic(
                     // TODO: implement a 64x64 SIMD version
                     for (int block_row = 0; block_row < 2; block_row++) {
                         for (int block_col = 0; block_col < 2; block_col++) {
+#if TF_IMP
+                            context_ptr->tf_block_col = block_col;
+                            context_ptr->tf_block_row = block_row;
+#endif
                             if (use_planewise_strategy)
+#if TF_IMP
+                                apply_filtering_block_plane_wise(context_ptr,
+                                                                 block_row,
+#else
                                 apply_filtering_block_plane_wise(block_row,
+#endif
                                     block_col,
                                     src_center_ptr,
                                     altref_buffer_highbd_ptr,

@@ -325,7 +325,11 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
         if (core_count <= SINGLE_CORE_COUNT)
             ppcs_count = min_ppcs_count;
         else{
+#if NEW_RESOLUTION_RANGES
+            if (res_class <= INPUT_SIZE_480p_RANGE) {
+#else
             if (res_class < INPUT_SIZE_1080i_RANGE){
+#endif
                 if (core_count < CONS_CORE_COUNT)
                     ppcs_count = ppcs_count * 1;                // 1 sec
                 else if (core_count < LOW_SERVER_CORE_COUNT)

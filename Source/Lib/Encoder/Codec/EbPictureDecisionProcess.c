@@ -793,8 +793,108 @@ EbErrorType signal_derivation_multi_processes_oq(
     EbErrorType return_error = EB_ErrorNone;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
+#if !UNIFY_SC_NSC
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
+#endif
+#if !REFACTOR_ME_HME
     uint8_t enc_mode_hme = scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#endif
+#if REFACTOR_ME_HME
+    // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
+    // to ensure that resources are allocated for the downsampled pictures used in HME
+    pcs_ptr->enable_hme_flag        = 1;
+    pcs_ptr->enable_hme_level0_flag = 1;
+
+#if ALLOW_HME_L1L2_REFINEMENT
+    pcs_ptr->enable_hme_level1_flag = 1;
+    pcs_ptr->enable_hme_level2_flag = 1;
+#else
+    if (sc_content_detected)
+#if APR23_ADOPTIONS_2
+        // HME refinement was turned on everywhere before the branch was used for M8 testing;
+        // this restores the previous settings
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if PRESETS_SHIFT
+        if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
+#endif
+            pcs_ptr->enable_hme_level1_flag = 1;
+            pcs_ptr->enable_hme_level2_flag = 1;
+        }
+        else {
+#if 0//APR23_ADOPTIONS
+            pcs_ptr->enable_hme_level1_flag = 1;
+            pcs_ptr->enable_hme_level2_flag = 1;
+#else
+            pcs_ptr->enable_hme_level1_flag = 0;
+            pcs_ptr->enable_hme_level2_flag = 0;
+#endif
+        }
+    else {
+#if UPGRADE_M6_M7_M8
+        if (pcs_ptr->enc_mode <= ENC_M7) {
+            pcs_ptr->enable_hme_level1_flag = 1;
+            pcs_ptr->enable_hme_level2_flag = 1;
+        }
+        else {
+            pcs_ptr->enable_hme_level1_flag = 1;
+            pcs_ptr->enable_hme_level2_flag = 0;
+        }
+#else
+        pcs_ptr->enable_hme_level1_flag = 1;
+        pcs_ptr->enable_hme_level2_flag = 1;
+#endif
+    }
+#endif
+
+    pcs_ptr->tf_enable_hme_flag = 1;
+    pcs_ptr->tf_enable_hme_level0_flag = 1;
+#if PRESETS_SHIFT
+    // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
+#if UPGRADE_M6_M7_M8
+#if JUNE26_ADOPTIONS
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if JUNE25_ADOPTIONS
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+#if PRESET_SHIFITNG
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+    if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+#endif
+#endif
+        pcs_ptr->tf_enable_hme_level1_flag = 1;
+        pcs_ptr->tf_enable_hme_level2_flag = 1;
+    }
+    else {
+        pcs_ptr->tf_enable_hme_level1_flag = 1;
+        pcs_ptr->tf_enable_hme_level2_flag = 0;
+    }
+#else
+    pcs_ptr->tf_enable_hme_level1_flag = 1;
+    pcs_ptr->tf_enable_hme_level2_flag = 1;
+#endif
+#else
+    if (sc_content_detected)
+        if (pcs_ptr->enc_mode <= ENC_M3) {
+            pcs_ptr->tf_enable_hme_level1_flag = 1;
+            pcs_ptr->tf_enable_hme_level2_flag = 1;
+        }
+        else {
+            pcs_ptr->tf_enable_hme_level1_flag = 0;
+            pcs_ptr->tf_enable_hme_level2_flag = 0;
+        }
+    else {
+        pcs_ptr->tf_enable_hme_level1_flag = 1;
+        pcs_ptr->tf_enable_hme_level2_flag = 1;
+    }
+#endif
+#else
     pcs_ptr->enable_hme_flag = enable_hme_flag[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][enc_mode_hme];
 
     pcs_ptr->enable_hme_level0_flag = enable_hme_level0_flag[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][enc_mode_hme];
@@ -806,6 +906,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tf_enable_hme_level1_flag = tf_enable_hme_level1_flag[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][enc_mode_hme];
     pcs_ptr->tf_enable_hme_level2_flag = tf_enable_hme_level2_flag[pcs_ptr->sc_content_detected][scs_ptr->input_resolution][enc_mode_hme];
 
+#endif
 #if DEPTH_PART_CLEAN_UP
     // Set the Multi-Pass PD level
 #if ADD_NEW_MPPD_LEVEL

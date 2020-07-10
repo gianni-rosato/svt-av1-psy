@@ -864,9 +864,17 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     uint32_t           bipred_index;
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if DECOUPLE_ME_RES
+    MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+#else
     const MeSbResults *me_results     = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+#endif
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+#if ME_MEM_OPT
+    const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
+#else
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#endif
     ModeDecisionCandidate *cand_array   = context_ptr->fast_candidate_array;
     EbBool       is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv        best_pred_mv[2]        = {{0}, {0}};
@@ -877,12 +885,25 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     uint32_t     mi_col                 = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
 
     // (8 Best_L0 neighbors)
+#if !PRUNING_PER_INTER_TYPE
+#if ADD_BEST_CAND_COUNT_SIGNAL
+    total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
+#else
     total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
+#endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
-
+#if UNIPRED_3x3_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+        if (!is_valid_unipred_ref(context_ptr, UNI_3x3_GROUP, REF_LIST_0, list0_ref_index)) continue;
+#else
+        if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
+#endif
+#endif
+        if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
         if (inter_direction == 0) {
             if (list0_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -925,6 +946,12 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                                                           mi_row,
                                                           context_ptr->blk_geom->bsize);
                 skip_cand = skip_cand || (!inside_tile);
+
+#if INTRA_COMPOUND_OPT
+                    MvReferenceFrame rf[2];
+                    rf[0] = to_inject_ref_type;
+                    rf[1] = -1;
+#endif
                 if (!skip_cand &&
                     (context_ptr->injected_mv_count_l0 == 0 ||
                      mrp_is_already_injected_mv_l0(
@@ -932,7 +959,20 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                          EB_FALSE)) {
                     uint8_t inter_type;
                     uint8_t is_ii_allowed =
+#if INTRA_COMPOUND_OPT
+                        svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1 , context_ptr->blk_geom->bsize, NEWMV, rf);
+#else
                         0; //svt_is_interintra_allowed(pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+#endif
+#if INTRA_COMPOUND_OPT
+                    if (context_ptr->md_enable_inter_intra > 2)
+#if DECOUPLE_ME_RES
+                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0)
+#else
+                        if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 )
+#endif
+                            is_ii_allowed = 0;
+#endif
                     uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                     //uint8_t is_obmc_allowed =  obmc_motion_mode_allowed(pcs_ptr, context_ptr->blk_ptr, bsize, rf[0], rf[1], NEWMV) == OBMC_CAUSAL;
                     //tot_inter_types = is_obmc_allowed ? tot_inter_types+1 : tot_inter_types;
@@ -1021,12 +1061,25 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     }
 
     // (8 Best_L1 neighbors)
+#if !PRUNING_PER_INTER_TYPE
+#if ADD_BEST_CAND_COUNT_SIGNAL
+    total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
+#else
     total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
+#endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
-
+#if UNIPRED_3x3_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+        if (!is_valid_unipred_ref(context_ptr, UNI_3x3_GROUP, REF_LIST_1, list1_ref_index)) continue;
+#else
+        if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
+#endif
+#endif
+        if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
         if (inter_direction == 1) {
             if (list1_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -1071,13 +1124,33 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                                                               mi_row,
                                                               context_ptr->blk_geom->bsize);
                     skip_cand = skip_cand || (!inside_tile);
+
+#if INTRA_COMPOUND_OPT
+                    MvReferenceFrame rf[2];
+                    rf[0] = to_inject_ref_type;
+                    rf[1] = -1;
+#endif
                     if (!skip_cand &&
                         (context_ptr->injected_mv_count_l1 == 0 ||
                          mrp_is_already_injected_mv_l1(
                              context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) ==
                              EB_FALSE)) {
                         uint8_t inter_type;
+#if INTRA_COMPOUND_OPT
+                        uint8_t is_ii_allowed   = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1,
+                            context_ptr->blk_geom->bsize, NEWMV, rf);
+#else
                         uint8_t is_ii_allowed   = 0;
+#endif
+#if INTRA_COMPOUND_OPT
+                    if (context_ptr->md_enable_inter_intra > 2)
+#if DECOUPLE_ME_RES
+                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+#else
+                        if  ( pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+#endif
+                                is_ii_allowed = 0;
+#endif
                         uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                         for (inter_type = 0; inter_type < tot_inter_types; inter_type++) {
                             cand_array[cand_total_cnt].type                    = INTER_MODE;
@@ -1221,6 +1294,14 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
             const uint8_t      inter_direction      = me_block_results_ptr->direction;
             const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
             const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
+#if BIPRED_3x3_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+           if (!is_valid_bipred_ref(
+                context_ptr, BI_3x3_GROUP, me_block_results_ptr->ref0_list, list0_ref_index, me_block_results_ptr->ref1_list, list1_ref_index)) continue;
+#else
+            if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref) continue;
+#endif
+#endif
             if (inter_direction == 2) {
                 if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
                     list1_ref_index > context_ptr->md_max_ref_count - 1)
@@ -1378,7 +1459,6 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_1] =
                                 best_pred_mv[1].as_mv.col;
                             cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
-                                best_pred_mv[1].as_mv.row;
                                 best_pred_mv[1].as_mv.row;
 #if INTER_COMP_REDESIGN
                             if (cur_type == MD_COMP_AVG && tot_comp_types > MD_COMP_AVG)
@@ -1683,6 +1763,14 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         MvReferenceFrame frame_type = rf[0];
         uint8_t          list_idx   = get_list_idx(rf[0]);
         uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
+#if NEAREST_NEAR_REF_MASKING
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
+#if PRUNING_PER_INTER_TYPE
+        if (!is_valid_unipred_ref(context_ptr, NRST_NEAR_GROUP, list_idx, ref_idx)) return;
+#else
+        if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref && ref_idx) return;
+#endif
+#endif
         if (ref_idx > context_ptr->md_max_ref_count - 1) return;
         //NEAREST
         int16_t to_inject_mv_x = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -1712,6 +1800,13 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
             uint8_t inter_type;
             uint8_t is_ii_allowed =
                 svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEARESTMV, rf);
+#if INTRA_COMPOUND_OPT
+            uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
+
+            if (context_ptr->md_enable_inter_intra > 2)
+                if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
+                    is_ii_allowed = 0;
+#endif
             uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
             uint8_t is_obmc_allowed =
                 obmc_motion_mode_allowed(pcs_ptr, context_ptr, bsize, rf[0], rf[1], NEARESTMV) ==
@@ -1822,6 +1917,13 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                 uint8_t inter_type;
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
                     context_ptr->md_enable_inter_intra, bsize, NEARMV, rf);
+#if INTRA_COMPOUND_OPT
+            uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
+
+            if (context_ptr->md_enable_inter_intra > 2)
+                if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
+                    is_ii_allowed = 0;
+#endif
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                 uint8_t is_obmc_allowed =
                     obmc_motion_mode_allowed(pcs_ptr, context_ptr, bsize, rf[0], rf[1], NEARMV) ==
@@ -1907,27 +2009,55 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
     } else if (allow_compound) {
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
+#if NEAREST_NEAR_REF_MASKING
+
+        uint8_t list_idx_0 = get_list_idx(rf[0]);
+        uint8_t list_idx_1 = get_list_idx(rf[1]);
+        // Always consider the 2 closet ref frames (i.e. ref_idx=0) @ MVP cand generation
+#if PRUNING_PER_INTER_TYPE
+        if (!is_valid_bipred_ref(
+            context_ptr, NRST_NEAR_GROUP, list_idx_0, ref_idx_0, list_idx_1, ref_idx_1)) return;
+ #else
+        if ((!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref || !context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) && (ref_idx_0 || ref_idx_1)) return;
+#endif
+#endif
         if (ref_idx_0 > context_ptr->md_max_ref_count - 1 ||
             ref_idx_1 > context_ptr->md_max_ref_count - 1)
             return;
         {
             //NEAREST_NEAREST
             int16_t to_inject_mv_x_l0 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .this_mv.as_mv.col;
+#endif
             int16_t to_inject_mv_y_l0 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.row;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .this_mv.as_mv.row;
+#endif
             int16_t to_inject_mv_x_l1 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.col;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .comp_mv.as_mv.col;
+#endif
             int16_t to_inject_mv_y_l1 =
+#if MEM_OPT_MV_STACK
+                context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.row;
+#else
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                     .ed_ref_mv_stack[ref_pair][0]
                     .comp_mv.as_mv.row;
+#endif
 
             inj_mv = context_ptr->injected_mv_count_bipred == 0 ||
                      mrp_is_already_injected_mv_bipred(context_ptr,
@@ -2220,6 +2350,22 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
     {
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
         uint8_t ref_idx_1 = get_ref_frame_idx(rf[1]);
+#if NEW_NEAREST_NEW_NEAR_REF_MASKING
+        uint8_t list_idx_0 = get_list_idx(rf[0]);
+        uint8_t list_idx_1 = get_list_idx(rf[1]);
+        if (list_idx_0 != INVALID_REF)
+#if PRUNING_PER_INTER_TYPE
+            if (!is_valid_unipred_ref(context_ptr, NRST_NEW_NEAR_GROUP, list_idx_0, ref_idx_0)) return;
+#else
+            if (!context_ptr->ref_filtering_res[list_idx_0][ref_idx_0].do_ref) return;
+#endif
+        if (list_idx_1 != INVALID_REF)
+#if PRUNING_PER_INTER_TYPE
+            if (!is_valid_unipred_ref(context_ptr, NRST_NEW_NEAR_GROUP, list_idx_1, ref_idx_1)) return;
+#else
+            if (!context_ptr->ref_filtering_res[list_idx_1][ref_idx_1].do_ref) return;
+#endif
+#endif
         if (ref_idx_0 > context_ptr->md_max_ref_count - 1 ||
             ref_idx_1 > context_ptr->md_max_ref_count - 1)
             return;
@@ -2782,6 +2928,13 @@ void inject_warped_motion_candidates(
             MvReferenceFrame frame_type = rf[0];
             uint8_t list_idx = get_list_idx(rf[0]);
             uint8_t ref_idx = get_ref_frame_idx(rf[0]);
+#if WARP_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+            if (!is_valid_unipred_ref(context_ptr, WARP_GROUP, list_idx, ref_idx)) continue;
+#else
+            if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
+#endif
+#endif
             if (ref_idx > context_ptr->md_max_ref_count - 1)
                 continue;
             //NEAREST
@@ -2930,6 +3083,13 @@ void inject_warped_motion_candidates(
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
+#if WARP_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+            if (!is_valid_unipred_ref(context_ptr, WARP_GROUP, REF_LIST_0, list0_ref_index)) continue;
+#else
+            if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
+#endif
+#endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
             to_inject_mv_x =
@@ -3020,6 +3180,13 @@ void inject_warped_motion_candidates(
            NEWMV L1
        ************* */
         if (inter_direction == 1) {
+#if WARP_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+            if (!is_valid_unipred_ref(context_ptr, WARP_GROUP, REF_LIST_1, list1_ref_index)) continue;
+#else
+            if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
+#endif
+#endif
             if (list1_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
             to_inject_mv_x =
@@ -3398,6 +3565,14 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
             NEWMV L0
         ************* */
         if (inter_direction == 0) {
+#if NEW_MV_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+            if (!is_valid_unipred_ref(context_ptr, PA_ME_GROUP, REF_LIST_0, list0_ref_index))
+#else
+            if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref)
+#endif
+                continue;
+#endif
             if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
             int16_t to_inject_mv_x =
                 context_ptr
@@ -3430,6 +3605,17 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     bsize,
                     NEWMV,
                     (const MvReferenceFrame[]){to_inject_ref_type, -1});
+#if INTRA_COMPOUND_OPT
+#if DECOUPLE_ME_RES
+                if (context_ptr->md_enable_inter_intra > 2)
+                    if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0)
+                        is_ii_allowed = 0;
+#else
+                if (context_ptr->md_enable_inter_intra > 2)
+                    if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 )
+                        is_ii_allowed = 0;
+#endif
+#endif
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                 uint8_t is_obmc_allowed =
                     obmc_motion_mode_allowed(
@@ -3536,6 +3722,14 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                NEWMV L1
            ************* */
             if (inter_direction == 1) {
+#if NEW_MV_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+                if (!is_valid_unipred_ref(context_ptr, PA_ME_GROUP, REF_LIST_1, list1_ref_index))
+#else
+                if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref)
+#endif
+                    continue;
+#endif
                 if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
                 int16_t to_inject_mv_x = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds]
                     [REF_LIST_1][list1_ref_index][0];
@@ -3567,6 +3761,17 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         bsize,
                         NEWMV,
                         (const MvReferenceFrame[]){to_inject_ref_type, -1});
+#if INTRA_COMPOUND_OPT
+#if DECOUPLE_ME_RES
+                    if (context_ptr->md_enable_inter_intra > 2)
+                        if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                            is_ii_allowed = 0;
+#else
+                    if (context_ptr->md_enable_inter_intra > 2)
+                        if  ( pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
+                                is_ii_allowed = 0;
+#endif
+#endif
                     uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                     uint8_t is_obmc_allowed =
                         obmc_motion_mode_allowed(
@@ -3666,6 +3871,14 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                NEW_NEWMV
             ************* */
             if (allow_bipred) {
+#if NEW_MV_REF_MASKING
+#if PRUNING_PER_INTER_TYPE
+                if (!is_valid_bipred_ref(context_ptr, PA_ME_GROUP, me_block_results_ptr->ref0_list, list0_ref_index, me_block_results_ptr->ref1_list, list1_ref_index))
+#else
+                if (!context_ptr->ref_filtering_res[me_block_results_ptr->ref0_list][list0_ref_index].do_ref || !context_ptr->ref_filtering_res[me_block_results_ptr->ref1_list][list1_ref_index].do_ref)
+#endif
+                    continue;
+#endif
                 if (inter_direction == 2) {
                     if (list0_ref_index > context_ptr->md_max_ref_count - 1 ||
                         list1_ref_index > context_ptr->md_max_ref_count - 1)
@@ -3899,8 +4112,23 @@ void inject_predictive_me_candidates(
                         context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) ==
                         EB_FALSE) {
                     uint8_t inter_type;
+#if INTRA_COMPOUND_OPT
+                    MvReferenceFrame rf[2];
+                    rf[0] = to_inject_ref_type;
+                    rf[1] = -1;
+#endif
                     uint8_t is_ii_allowed =
+#if INTRA_COMPOUND_OPT
+                        svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1, bsize, NEWMV, rf);
+#else
                         0; // svt_is_interintra_allowed(pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+#endif
+#if INTRA_COMPOUND_OPT
+                    if (context_ptr->md_enable_inter_intra > 2)
+                        if (is_reference_best_pme(context_ptr , 0 ,ref_pic_index ,1)  == 0)
+                            is_ii_allowed = 0;
+#endif
+
                     uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                     uint8_t is_obmc_allowed = obmc_motion_mode_allowed(pcs_ptr,
                                                                        context_ptr,
@@ -4000,8 +4228,22 @@ void inject_predictive_me_candidates(
                             context_ptr, to_inject_mv_x, to_inject_mv_y, to_inject_ref_type) ==
                             EB_FALSE) {
                         uint8_t inter_type;
+#if INTRA_COMPOUND_OPT
+                        MvReferenceFrame rf[2];
+                        rf[0] = to_inject_ref_type;
+                        rf[1] = -1;
+#endif
                         uint8_t is_ii_allowed =
+#if INTRA_COMPOUND_OPT
+                        svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1, bsize, NEWMV, rf);
+#else
                             0; // svt_is_interintra_allowed(pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
+#endif
+#if INTRA_COMPOUND_OPT
+                    if (context_ptr->md_enable_inter_intra > 2)
+                        if (is_reference_best_pme(context_ptr , 0 ,ref_pic_index ,1)  == 0)
+                            is_ii_allowed = 0;
+#endif
                         uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
                         uint8_t is_obmc_allowed = obmc_motion_mode_allowed(pcs_ptr,
                                                                            context_ptr,
@@ -5952,7 +6194,7 @@ EbErrorType generate_md_stage_0_cand(
         fast_accum += context_ptr->md_stage_0_count[cand_class_it];
     }
     assert(fast_accum == cand_total_cnt);
-    
+
 #if LOG_MV_VALIDITY
 
     //check if final MV is within AV1 limits

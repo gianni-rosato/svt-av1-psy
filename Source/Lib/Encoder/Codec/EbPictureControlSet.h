@@ -261,7 +261,7 @@ typedef struct PictureControlSet {
     uint16_t rest_segments_total_count;
     uint8_t  rest_segments_column_count;
     uint8_t  rest_segments_row_count;
-    
+
 #if !DEPTH_PART_CLEAN_UP
     // Mode Decision Config
     MdcSbData *mdc_sb_array;

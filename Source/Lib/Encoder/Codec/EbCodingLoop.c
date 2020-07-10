@@ -3763,6 +3763,10 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     context_ptr->sb_sz;
                                 uint16_t sb_origin_y1 = origin_y / context_ptr->sb_sz *
                                     context_ptr->sb_sz;
+#if PASS1_FIX
+                                uint16_t sb_origin_x_org = sb_origin_x1;
+                                uint16_t sb_origin_y_org = sb_origin_y1;
+#endif
                                 uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width +
                                                             scs_ptr->sb_sz - 1) /
                                     scs_ptr->sb_sz;
@@ -3781,7 +3785,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     weight;
 
                                 if (origin_x + blk_geom->bwidth >
+#if PASS1_FIX
+                                    sb_origin_x_org + context_ptr->sb_sz) {
+#else
                                     sb_origin_x1 + context_ptr->sb_sz) {
+#endif
                                     sb_origin_x1 = (origin_x / context_ptr->sb_sz + 1) *
                                         context_ptr->sb_sz;
                                     sb_origin_y1 = origin_y / context_ptr->sb_sz *
@@ -3796,8 +3804,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     ref_obj_0->stat_struct.referenced_area[sb_index] += width *
                                         height * weight;
                                 }
+#if PASS1_FIX
+                                if (origin_y + blk_geom->bheight >
+                                sb_origin_y_org + context_ptr->sb_sz) {
+#else
                                 if (origin_y + blk_geom->bheight >
                                     sb_origin_y1 + context_ptr->sb_sz) {
+#endif
                                     sb_origin_x1 = (origin_x / context_ptr->sb_sz) *
                                         context_ptr->sb_sz;
                                     sb_origin_y1 = (origin_y / context_ptr->sb_sz + 1) *
@@ -3812,10 +3825,17 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     ref_obj_0->stat_struct.referenced_area[sb_index] += width *
                                         height * weight;
                                 }
+#if PASS1_FIX
+                                if (origin_x + blk_geom->bwidth >
+                                        sb_origin_x_org + context_ptr->sb_sz &&
+                                    origin_y + blk_geom->bheight >
+                                        sb_origin_y_org + context_ptr->sb_sz) {
+#else
                                 if (origin_x + blk_geom->bwidth >
                                         sb_origin_x1 + context_ptr->sb_sz &&
                                     origin_y + blk_geom->bheight >
                                         sb_origin_y1 + context_ptr->sb_sz) {
+#endif
                                     sb_origin_x1 = (origin_x / context_ptr->sb_sz + 1) *
                                         context_ptr->sb_sz;
                                     sb_origin_y1 = (origin_y / context_ptr->sb_sz + 1) *
@@ -3856,6 +3876,10 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     context_ptr->sb_sz;
                                 uint16_t sb_origin_y2 = origin_y / context_ptr->sb_sz *
                                     context_ptr->sb_sz;
+#if PASS1_FIX
+                                uint16_t sb_origin_x_org = sb_origin_x2;
+                                uint16_t sb_origin_y_org = sb_origin_y2;
+#endif
                                 uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width +
                                                             scs_ptr->sb_sz - 1) /
                                     scs_ptr->sb_sz;
@@ -3872,8 +3896,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     origin_y;
                                 ref_obj_1->stat_struct.referenced_area[sb_index] += width * height *
                                     weight;
+#if PASS1_FIX
+                                if (origin_x + blk_geom->bwidth >
+                                    sb_origin_x_org + context_ptr->sb_sz) {
+#else
                                 if (origin_x + blk_geom->bwidth >
                                     sb_origin_x2 + context_ptr->sb_sz) {
+#endif
                                     sb_origin_x2 = (origin_x / context_ptr->sb_sz + 1) *
                                         context_ptr->sb_sz;
                                     sb_origin_y2 = origin_y / context_ptr->sb_sz *
@@ -3888,8 +3917,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     ref_obj_1->stat_struct.referenced_area[sb_index] += width *
                                         height * weight;
                                 }
+#if PASS1_FIX
+                                if (origin_y + blk_geom->bheight >
+                                    sb_origin_y_org + context_ptr->sb_sz) {
+#else
                                 if (origin_y + blk_geom->bheight >
                                     sb_origin_y2 + context_ptr->sb_sz) {
+#endif
                                     sb_origin_x2 = (origin_x / context_ptr->sb_sz) *
                                         context_ptr->sb_sz;
                                     sb_origin_y2 = (origin_y / context_ptr->sb_sz + 1) *
@@ -3904,10 +3938,17 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     ref_obj_1->stat_struct.referenced_area[sb_index] += width *
                                         height * weight;
                                 }
+#if PASS1_FIX
+                                if (origin_x + blk_geom->bwidth >
+                                        sb_origin_x_org + context_ptr->sb_sz &&
+                                    origin_y + blk_geom->bheight >
+                                        sb_origin_y_org + context_ptr->sb_sz) {
+#else
                                 if (origin_x + blk_geom->bwidth >
                                         sb_origin_x2 + context_ptr->sb_sz &&
                                     origin_y + blk_geom->bheight >
                                         sb_origin_y2 + context_ptr->sb_sz) {
+#endif
                                     sb_origin_x2 = (origin_x / context_ptr->sb_sz + 1) *
                                         context_ptr->sb_sz;
                                     sb_origin_y2 = (origin_y / context_ptr->sb_sz + 1) *

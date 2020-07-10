@@ -6709,6 +6709,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->skip_intra = 0;
 #endif
+    // skip cfl based on inter/intra cost deviation (skip if intra_cost is
+    // skip_cfl_cost_dev_th % greater than inter_cost)
+    if (MR_MODE)
+        context_ptr->skip_cfl_cost_dev_th = (uint16_t)~0;
+    else
+        context_ptr->skip_cfl_cost_dev_th = 30;
+
+    // set intra count to zero for md stage 3 if intra_cost is
+    // mds3_intra_prune_th % greater than inter_cost
+    if (MR_MODE)
+        context_ptr->mds3_intra_prune_th = (uint16_t)~0;
+    else
+        context_ptr->mds3_intra_prune_th = 30;
+
     return return_error;
 }
 #else
@@ -9060,7 +9074,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             s_depth = 0;
                             e_depth = 0;
                         } else
-                            
+
 #if MR_MODE_FOR_PIC_MULTI_PASS_PD_MODE_1 || ADD_NEW_MPPD_LEVEL
 #if ADD_NEW_MPPD_LEVEL
                             // This removes the SQ-versus-NSQ decision for the new MULTI_PASS_PD_LEVEL_1
@@ -9712,7 +9726,7 @@ void *enc_dec_kernel(void *input_ptr) {
                                               0,
                                               sb_origin_x,
                                               sb_origin_y);
-                        
+
 #if DEPTH_PART_CLEAN_UP
 #if ADD_NEW_MPPD_LEVEL
                         if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_1 ||

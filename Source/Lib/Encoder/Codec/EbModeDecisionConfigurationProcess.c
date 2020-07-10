@@ -1012,7 +1012,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         pcs_ptr->enc_mode <= ENC_M7 &&
 #endif
                 frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
+#if NEW_RESOLUTION_RANGES
+                (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+#else
                 (scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
+#endif
             ? 1
             : 0;
     EbBool enable_wm;

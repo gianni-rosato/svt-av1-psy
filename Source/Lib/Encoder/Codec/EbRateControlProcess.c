@@ -4909,6 +4909,12 @@ static int adaptive_qindex_calc_two_pass(PictureControlSet *pcs_ptr, RATE_CONTRO
             (int)((referenced_area_avg * (kf_high - kf_low)) / referenced_area_max) + kf_low;
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality = get_kf_active_quality(rc, active_worst_quality, bit_depth);
+#if QPS_UPDATE
+        // Allow somewhat lower kf minq with small image formats.
+        if ((pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_width *
+             pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_height) <= (352 * 288))
+            q_adj_factor -= 0.25;
+#endif
         // Make a further adjustment based on the kf zero motion measure.
         q_adj_factor +=
             0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
@@ -4920,7 +4926,11 @@ static int adaptive_qindex_calc_two_pass(PictureControlSet *pcs_ptr, RATE_CONTRO
         active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (!is_src_frame_alt_ref &&
                (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame)) {
+#if NEW_RESOLUTION_RANGES
+        referenced_area_max = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE
+#else
         referenced_area_max = scs_ptr->input_resolution < 2
+#endif
                                   ? MAX_REF_AREA_NONI_LOW_RES
                                   : ((int)referenced_area_avg -
                                          (int)pcs_ptr->ref_pic_referenced_area_avg_array[0][0] >=
@@ -4929,7 +4939,12 @@ static int adaptive_qindex_calc_two_pass(PictureControlSet *pcs_ptr, RATE_CONTRO
                                         : MAX_REF_AREA_NONI;
 
         // Clip the complexity of highly complex pictures to maximum.
+#if QPS_UPDATE
+        if (pcs_ptr->parent_pcs_ptr->qp_scaling_average_complexity > HIGH_QPS_COMP_THRESHOLD &&
+            referenced_area_avg < 20)
+#else
         if (pcs_ptr->parent_pcs_ptr->qp_scaling_average_complexity > HIGH_QPS_COMP_THRESHOLD)
+#endif
             referenced_area_avg = 0;
 
         rc->arf_boost_factor =
@@ -5038,7 +5053,15 @@ static int cqp_qindex_calc(
             q_val * delta_rate_new[pcs_ptr->parent_pcs_ptr->hierarchical_levels]
             [pcs_ptr->parent_pcs_ptr->temporal_layer_index],
             bit_depth);
+#if QPS_UPDATE
+        if (scs_ptr->use_input_stat_file && pcs_ptr->parent_pcs_ptr->frames_in_sw < QPS_SW_THRESH)
+            active_best_quality =
+                MAX((int32_t)(qindex + delta_qindex), (pcs_ptr->ref_pic_qp_array[0][0] << 2) + 2);
+        else
+            active_best_quality = (int32_t)(qindex + delta_qindex);
+#else
         active_best_quality = (int32_t)(qindex + delta_qindex);
+#endif
     }
     q = active_best_quality;
     clamp(q, active_best_quality, active_worst_quality);

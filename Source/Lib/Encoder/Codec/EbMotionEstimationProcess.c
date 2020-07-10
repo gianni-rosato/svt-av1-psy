@@ -104,14 +104,535 @@ void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_c
 void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
                            SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
+#if !REFACTOR_ME_HME
     uint8_t hme_me_level =
         scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#endif
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width  = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
 
+#if !UNIFY_SC_NSC
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
+#endif
 
+#if REFACTOR_ME_HME
+    // Set the minimum ME search area
+#if UNIFY_SC_NSC
+    if (pcs_ptr->sc_content_detected)
+#else
+    if (sc_content_detected)
+#endif
+#if !APR02_ADOPTIONS
+#if MAR30_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M1)
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 500;
+        else
+#endif
+#endif
+#if NEW_HME_ME_SIZES
+#if PRESETS_SHIFT
+#if JUNE17_ADOPTIONS
+            if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
+#if JUNE11_ADOPTIONS
+            if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
+#if MAY12_ADOPTIONS
+            if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
+#if SHIFT_M5_SC_TO_M3
+            if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+#if APR23_ADOPTIONS_2
+            if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+            if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+#endif
+#endif
+#endif
+#endif
+#else
+            if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
+#if NEW_M0_M1_ME_NICS
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 175;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 750;
+#else
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 200;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 800;
+#endif
+            }
+#if !JUNE17_ADOPTIONS
+#if MAY12_ADOPTIONS
+#if JUNE8_ADOPTIONS
+            else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M1) {
+#endif
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 175;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 700;
+            }
+#endif
+#endif
+#if M8_HME_ME
+#if !JUNE8_ADOPTIONS
+#if SHIFT_M6_SC_TO_M5
+#if PRESET_SHIFITNG
+            else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
+#else
+#if APR25_3AM_ADOPTIONS
+            else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if APR24_ADOPTIONS_M6_M7
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#endif
+#endif
+#if APR23_ADOPTIONS_2
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 150;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 600;
+#else
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 225;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 450;
+#endif
+            }
+#endif
+#if APR25_3AM_ADOPTIONS
+#if APR23_4AM_M6_ADOPTIONS && !APR25_10AM_ADOPTIONS
+            else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if UNIFY_SC_NSC
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+#if JUNE17_ADOPTIONS
+            else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if PRESET_SHIFITNG
+            else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
+#endif
+#endif
+#endif
+#if MAY19_ADOPTIONS
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 125;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
+#else
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 150;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 450;
+#endif
+            }
+#endif
+#if UNIFY_SC_NSC
+#if NEW_M8
+            else {
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 350;
+            }
+#else
+#if JUNE17_ADOPTIONS
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 100;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 400;
+            }
+#endif
+#endif
+#if APR23_4AM_M6_ADOPTIONS && !APR25_10AM_ADOPTIONS
+            else if (pcs_ptr->enc_mode <= ENC_M6) {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 100;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 300;
+            }
+#endif
+#if !NEW_M8
+#if UPGRADE_M6_M7_M8
+            else {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 300;
+            }
+#else
+            else {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 150;
+            }
+#endif
+#endif
+#else
+            else {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 225;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 450;
+            }
+#endif
+#if NEW_M0_M1_ME_NICS
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+    me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+#if JUNE23_ADOPTIONS
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
+#else
+#if MAY17_ADOPTIONS
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 192 : 256;
+#else
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
+#endif
+#endif
+    }
+#else
+#if APR22_ADOPTIONS
+#if APR23_ADOPTIONS
+#if M2_COMBO_1 || M1_COMBO_3 || NEW_M1_CAND
+    else if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M0) {
+#endif
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 120;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 480;
+    }
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+#if PRESETS_SHIFT
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
+#endif
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 80;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 320;
+    }
+#endif
+#if M8_HME_ME
+#if JUNE23_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
+    }
+#else
+#if JUNE8_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
+#if NEW_M5_HME_ME
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#endif
+#if MAY12_ADOPTIONS
+    me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+#if MAY17_ADOPTIONS
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = (input_resolution <= INPUT_SIZE_1080p_RANGE) ? 192 : 256;
+#else
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
+#endif
+#else
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 150;
+#endif
+    }
+#endif
+#if NEW_M5_HME_ME
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
+    }
+#endif
+#if APR25_1PM_ADOPTIONS
+#if JUNE25_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+#if JUNE17_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if PRESET_SHIFITNG
+    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
+#endif
+#endif
+    me_context_ptr->search_area_width = me_context_ptr->search_area_height = 32;
+    me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
+    }
+#endif
+#if UPGRADE_M6_M7_M8
+#if !APR25_11AM_ADOPTIONS
+#if APR25_10AM_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 25;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 100;
+    }
+#endif
+    else {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
+    }
+#else
+    else {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 25;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 50;
+    }
+#endif
+#else
+    else {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 150;
+    }
+#endif
+#else
+        if (pcs_ptr->enc_mode <= ENC_M3)
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 390;
+        else
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 225;
+    else if (pcs_ptr->enc_mode <= ENC_M3)
+#if MAR30_ADOPTIONS
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 120;
+#else
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 150;
+#endif
+    else
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+
+    me_context_ptr->max_me_search_width = me_context_ptr->search_area_width * 2;
+    me_context_ptr->max_me_search_height = me_context_ptr->search_area_height * 2;
+
+    me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = me_context_ptr->max_me_search_height;
+#endif
+
+#if ADD_MAX_HME_SIGNAL
+#if NEW_HME_ME_SIZES
+#if !UNIFY_SC_NSC
+    if (sc_content_detected) {
+#if UPGRADE_M6_M7_M8
+#if MAY19_ADOPTIONS
+#if PRESET_SHIFITNG
+        if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#else
+#if APR25_10AM_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+#endif
+#if MAY16_M0_ADOPTIONS
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 240;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
+#else
+#if HME_4K_ADOPTIONS
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
+#else
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 150;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 600;
+#endif
+#endif
+        }
+        else {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 75;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 300;
+        }
+#else
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 150;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 600;
+#endif
+    }
+    else {
+#endif
+#if APR22_ADOPTIONS
+#if MAY19_ADOPTIONS
+#if JUNE23_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+#if PRESET_SHIFITNG
+        if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#endif
+#else
+#if MAY12_ADOPTIONS
+        if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+#if APR23_ADOPTIONS
+#if M1_COMBO_3 || M2_COMBO_2 || M2_COMBO_3 || NEW_M1_CAND
+        if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+#else
+        if (pcs_ptr->enc_mode <= ENC_M0) {
+#endif
+#endif
+#endif
+#if HME_4K_ADOPTIONS
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
+#else
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 120;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
+#endif
+        }
+#if UNIFY_SC_NSC
+#if !JUNE23_ADOPTIONS
+        else if (pcs_ptr->enc_mode <= ENC_M4) {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 75;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 300;
+        }
+#endif
+#if !JUNE25_ADOPTIONS
+        else if (pcs_ptr->enc_mode <= ENC_M5) {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 48;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
+        }
+#endif
+        else if (pcs_ptr->enc_mode <= ENC_M6) {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
+        }
+#endif
+#if UPGRADE_M6_M7_M8
+#if !MAY12_ADOPTIONS
+#if NEW_M5_HME_ME
+        else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+#if APR25_1PM_ADOPTIONS
+        else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if APR25_12AM_ADOPTIONS
+        else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+        else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+#endif
+#endif
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 100;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 400;
+        }
+#endif
+#if !MAY19_ADOPTIONS
+#if NEW_M5_HME_ME
+        else if (pcs_ptr->enc_mode <= ENC_M5) {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 64;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 256;
+        }
+#endif
+#endif
+        else {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 128;
+        }
+#else
+        else {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 100;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 400;
+        }
+#endif
+#else
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 100;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 400;
+#endif
+#if !UNIFY_SC_NSC
+    }
+#endif
+#else
+    me_context_ptr->hme_level0_max_total_search_area_width =
+        me_context_ptr->hme_level0_max_total_search_area_height =
+        me_context_ptr->hme_level0_total_search_area_width * 3;
+#endif
+
+    me_context_ptr->hme_level0_max_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_max_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+#endif
+    me_context_ptr->hme_level0_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+
+    me_context_ptr->hme_level1_search_area_in_width_array[0] =
+        me_context_ptr->hme_level1_search_area_in_width_array[1] =
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =
+        me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
+
+    me_context_ptr->hme_level2_search_area_in_width_array[0] =
+        me_context_ptr->hme_level2_search_area_in_width_array[1] =
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =
+        me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+
+#if ADD_HME_DECIMATION_SIGNAL
+#if MAR30_ADOPTIONS
+#if !UNIFY_SC_NSC
+    if (pcs_ptr->sc_content_detected)
+#if APR02_ADOPTIONS
+        me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+#else
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
+    else if (input_resolution <= INPUT_SIZE_720p_RANGE)
+#else
+    if (input_resolution <= INPUT_SIZE_720p_RANGE)
+#endif
+#if PRESETS_SHIFT
+#if PRESET_SHIFITNG
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#else
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M2 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
+#else
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M3 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
+    else
+        me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+#else
+    me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+#endif
+#endif
+
+    // Scale up the MIN ME area if low frame rate
+#if UNIFY_SC_NSC
+    uint8_t  low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+#else
+    uint8_t  low_frame_rate_flag = sc_content_detected ? 0 :
+        (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+#endif
+    if (low_frame_rate_flag) {
+        me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
+        me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
+    }
+#else
     // sequence frame rate based mutiplier
     uint8_t  fr_rate_mult_num   = sc_content_detected ? 1 :
         (scs_ptr->static_config.frame_rate >> 16) < 50 ? 3 : 1;
@@ -168,19 +689,118 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     me_context_ptr->search_area_height =
         (min_me_search_height[sc_content_detected][input_resolution][hme_me_level]
             *fr_rate_mult_num)/fr_rate_mult_denum ;
+
+#endif
+
+#if !REMOVE_ME_SUBPEL_CODE
     assert(me_context_ptr->search_area_width <= MAX_SEARCH_AREA_WIDTH &&
            "increase MAX_SEARCH_AREA_WIDTH");
     assert(me_context_ptr->search_area_height <= MAX_SEARCH_AREA_HEIGHT &&
            "increase MAX_SEARCH_AREA_HEIGHT");
+#if ME_MEM_OPT2
+    assert(me_context_ptr->max_me_search_width <= MAX_SEARCH_AREA_WIDTH && "increase MAX_SEARCH_AREA_WIDTH");
+    assert(me_context_ptr->max_me_search_height <= MAX_SEARCH_AREA_HEIGHT && "increase MAX_SEARCH_AREA_HEIGHT");
+#endif
+#endif
 
     me_context_ptr->update_hme_search_center_flag = 1;
 
+#if NEW_RESOLUTION_RANGES
+    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+#else
     if (input_resolution <= INPUT_SIZE_576p_RANGE_OR_LOWER)
+#endif
         me_context_ptr->update_hme_search_center_flag = 0;
 
     return NULL;
 };
+#if ME_HME_PRUNING_CLEANUP
+void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
+    MeHmeRefPruneCtrls* me_hme_prune_ctrls = &context_ptr->me_hme_prune_ctrls;
 
+    switch (prune_level)
+    {
+    case 0:
+#if ON_OFF_FEATURE_MRP
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = override_feature_level (context_ptr->mrp_level, 0, 0, 1);
+#else
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 0;
+#endif
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = (uint16_t)~0;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = (uint16_t)~0;
+        break;
+    case 1:
+#if ON_OFF_FEATURE_MRP
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = override_feature_level(context_ptr->mrp_level, 1, 0, 1);
+#else
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+#endif
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 160;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = (uint16_t)~0;
+        break;
+    case 2:
+#if ON_OFF_FEATURE_MRP
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = override_feature_level(context_ptr->mrp_level, 1, 0, 1);
+#else
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+#endif
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 80;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+        break;
+    case 3:
+#if ON_OFF_FEATURE_MRP
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = override_feature_level(context_ptr->mrp_level, 1, 0, 1);
+#else
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+#endif
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 50;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+        break;
+    case 4:
+#if ON_OFF_FEATURE_MRP
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = override_feature_level(context_ptr->mrp_level, 1, 0, 1);
+#else
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+#endif
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 30;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+
+void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_level) {
+    MeSrCtrls* me_sr_adjustment_ctrls = &context_ptr->me_sr_adjustment_ctrls;
+
+    switch (sr_adjustment_level)
+    {
+    case 0:
+        me_sr_adjustment_ctrls->enable_me_sr_adjustment = 0;
+        break;
+    case 1:
+        me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 0;
+        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 100;
+        me_sr_adjustment_ctrls->stationary_me_sr_divisor = 16;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 100;
+        me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+        break;
+    case 2:
+        me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 4;
+        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 12000;
+        me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 6000;
+        me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive ME Settings for OQ
   Input   : encoder mode and tune
@@ -191,13 +811,22 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
                                            MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
+#if REMOVE_MR_MACRO
+    EbEncMode enc_mode = scs_ptr->use_output_stat_file ?
+        pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#else
     uint8_t enc_mode =
         scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#endif
+#if ON_OFF_FEATURE_MRP
+    context_ptr->me_context_ptr->mrp_level = pcs_ptr->mrp_level;
+#endif
     EbInputResolution input_resolution = scs_ptr->input_resolution;
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
+#if !REFACTOR_ME_HME
     uint8_t  hme_me_level = scs_ptr->use_output_stat_file ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
-
+#endif
     // Set ME/HME search regions
     if (scs_ptr->static_config.use_default_me_hme)
         set_me_hme_params_oq(
@@ -206,11 +835,13 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
         set_me_hme_params_from_config(scs_ptr, context_ptr->me_context_ptr);
 
+#if !REFACTOR_ME_HME
     // ME
     context_ptr->me_context_ptr->max_me_search_width =
         max_me_search_width[sc_content_detected][input_resolution][hme_me_level];
     context_ptr->me_context_ptr->max_me_search_height =
         max_me_search_height[sc_content_detected][input_resolution][hme_me_level];
+#endif
 #if !REMOVE_ME_SUBPEL_CODE
     if (sc_content_detected)
 #if MAR11_ADOPTIONS
@@ -590,9 +1221,9 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width  = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
-
+#if !REFACTOR_ME_HME
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
-    
+#endif
 #if REFACTOR_ME_HME
     // Set the minimum ME search area
 #if APR22_ADOPTIONS
@@ -778,11 +1409,12 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     // Set ME/HME search regions
     tf_set_me_hme_params_oq(
         context_ptr->me_context_ptr, pcs_ptr, scs_ptr, input_resolution);
-
+#if !REFACTOR_ME_HME
     context_ptr->me_context_ptr->max_me_search_width =
         max_metf_search_width[sc_content_detected][input_resolution][hme_me_level];
     context_ptr->me_context_ptr->max_me_search_height =
         max_metf_search_height[sc_content_detected][input_resolution][hme_me_level];
+#endif
 #if !REMOVE_ME_SUBPEL_CODE
     if (sc_content_detected)
 #if MAR11_ADOPTIONS

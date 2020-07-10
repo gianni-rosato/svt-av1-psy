@@ -1072,8 +1072,13 @@ void *picture_manager_kernel(void *input_ptr) {
                                          ->positive_ref_pics_total_count == 0);
 
                         // Rate Control
+#if NEW_RESOLUTION_RANGES
+                        child_pcs_ptr->dif_blk_delta_qp_depth =
+                            (uint8_t)entry_scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2 : 3;
+#else
                         child_pcs_ptr->dif_blk_delta_qp_depth =
                             (uint8_t)entry_scs_ptr->input_resolution == INPUT_SIZE_4K_RANGE ? 3 : 2;
+#endif
 
                         // Reset the Reference Lists
                         EB_MEMSET(child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0],
@@ -1348,6 +1353,7 @@ void *picture_manager_kernel(void *input_ptr) {
                     (reference_entry_ptr->release_enable) &&
                     (reference_entry_ptr->reference_object_ptr)) {
                     // Release the nominal live_count value
+#if !PASS1_FIX
                     if (scs_ptr->use_output_stat_file &&
                         reference_entry_ptr->reference_object_ptr->live_count == 1)
                         write_stat_to_file(
@@ -1358,6 +1364,7 @@ void *picture_manager_kernel(void *input_ptr) {
                             ((EbReferenceObject *)
                                  reference_entry_ptr->reference_object_ptr->object_ptr)
                                 ->ref_poc);
+#endif
                     eb_release_object(reference_entry_ptr->reference_object_ptr);
                     reference_entry_ptr->reference_object_ptr      = (EbObjectWrapper *)NULL;
                     reference_entry_ptr->reference_available       = EB_FALSE;

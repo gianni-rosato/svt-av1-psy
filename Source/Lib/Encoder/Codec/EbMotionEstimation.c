@@ -7859,6 +7859,14 @@ void hme_level_1(
     // area in width
     int16_t hme_level1_search_area_in_height, // input parameter, hme level 1 search
     // area in height
+#if ADD_MAX_HME_SIGNAL
+    int16_t hme_level1_max_search_area_in_width, // input parameter, hme level 1 search area in width
+    int16_t hme_level1_max_search_area_in_height, // input parameter, hme level 1 search
+#endif
+#if ADD_HME_DECIMATION_SIGNAL
+    uint32_t hme_sr_factor_x,
+    uint32_t hme_sr_factor_y,
+#endif
     int16_t xLevel0SearchCenter, // input parameter, best Level0 xMV at
     // (search_region_number_in_width,
     // search_region_number_in_height)
@@ -7879,6 +7887,18 @@ void hme_level_1(
     int16_t  y_top_left_search_region;
     uint32_t search_region_index;
     // Round up x_HME_L0 to be a multiple of 8
+#if ADD_HME_DECIMATION_SIGNAL
+    // Don't change TWO_DECIMATION_HME refinement; use the HME distance algorithm only for non-2D HME
+    if (context_ptr->hme_decimation <= ONE_DECIMATION_HME) {
+#if ADD_MAX_HME_SIGNAL
+        hme_level1_search_area_in_width = MIN((((int16_t)hme_sr_factor_x  * hme_level1_search_area_in_width) / 100), hme_level1_max_search_area_in_width);
+        hme_level1_search_area_in_height = MIN((((int16_t)hme_sr_factor_y  * hme_level1_search_area_in_height) / 100), hme_level1_max_search_area_in_height);
+#else
+        hme_level1_search_area_in_width = (hme_sr_factor_x  * hme_level1_search_area_in_width) / 100;
+        hme_level1_search_area_in_height = (hme_sr_factor_y  * hme_level1_search_area_in_height) / 100;
+#endif
+    }
+#endif
     int16_t search_area_width  = (int16_t)((hme_level1_search_area_in_width + 7) & ~0x07);
     int16_t search_area_height = hme_level1_search_area_in_height;
 
@@ -8014,9 +8034,21 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
                  uint32_t sb_width, // input parameter, SB pwidth - full resolution
                  uint32_t sb_height, // input parameter, SB height - full resolution
                  EbPictureBufferDesc *ref_pic_ptr, // input parameter, reference Picture Ptr
+#if !ADD_HME_DECIMATION_SIGNAL
                  uint32_t search_region_number_in_width, // input parameter, search region
                  // number in the horizontal direction
                  uint32_t search_region_number_in_height, // input parameter, search region
+#endif
+#if ADD_HME_DECIMATION_SIGNAL
+                int16_t hme_level2_search_area_in_width,
+                int16_t hme_level2_search_area_in_height,
+#if ADD_MAX_HME_SIGNAL
+                int16_t hme_level2_max_search_area_in_width, // input parameter, hme level 1 search area in width
+                int16_t hme_level2_max_search_area_in_height, // input parameter, hme level 1 search
+#endif
+                uint32_t hme_sr_factor_x,
+                uint32_t hme_sr_factor_y,
+#endif
                  // number in the vertical direction
                  int16_t xLevel1SearchCenter, // input parameter, best Level1 xMV
                  // at(search_region_number_in_width,
@@ -8042,6 +8074,21 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
     // 8 or non multiple of 8 SAD calculation performance is the same for
     // searchregion width from 1 to 8
     (void)pcs_ptr;
+#if ADD_HME_DECIMATION_SIGNAL
+    // Don't change TWO_DECIMATION_HME or ONE_DECIMATION_HME refinement; use the HME distance algorithm only for 0D HME
+    if (context_ptr->hme_decimation <= ZERO_DECIMATION_HME) {
+#if ADD_MAX_HME_SIGNAL
+        hme_level2_search_area_in_width = MIN((((int16_t)hme_sr_factor_x  * hme_level2_search_area_in_width) / 100), hme_level2_max_search_area_in_width);
+        hme_level2_search_area_in_height = MIN((((int16_t)hme_sr_factor_y  * hme_level2_search_area_in_height) / 100), hme_level2_max_search_area_in_height);
+#else
+        hme_level2_search_area_in_width = (hme_sr_factor_x  * hme_level2_search_area_in_width) / 100;
+        hme_level2_search_area_in_height = (hme_sr_factor_y  * hme_level2_search_area_in_height) / 100;
+#endif
+    }
+    // Round up x_HME_L0 to be a multiple of 8
+    int16_t search_area_width = (int16_t)((hme_level2_search_area_in_width + 7) & ~0x07);
+    int16_t search_area_height = hme_level2_search_area_in_height;
+#else
     int16_t hme_level2_search_area_in_width =
         (int16_t)context_ptr->hme_level2_search_area_in_width_array[search_region_number_in_width];
     // Round up x_HME_L0 to be a multiple of 8
@@ -8049,6 +8096,7 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
     int16_t search_area_height =
         (int16_t)
             context_ptr->hme_level2_search_area_in_height_array[search_region_number_in_height];
+#endif
     int16_t x_search_area_origin;
     int16_t y_search_area_origin;
 
@@ -9590,8 +9638,13 @@ void integer_search_sb(
             // Get hme results
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                 continue;  //so will not get ME results for those references.
+#if MAR30_ADOPTIONS && !START_ME_AT_HME_MV
+            x_search_center = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x;
+            y_search_center = pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 0 : context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y;
+#else
             x_search_center = context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x;
             y_search_center = context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y;
+#endif
             search_area_width = context_ptr->search_area_width;
             search_area_height = context_ptr->search_area_height;
 
@@ -12625,6 +12678,26 @@ EbErrorType motion_estimate_sb(
                 }
             }
         }
+#if QPS_UPDATE
+        pcs_ptr->rc_me_distortion[sb_index] = 0;
+        // Compute the sum of the distortion of all 16 16x16 (720 and above) and
+        // 64 8x8 (for lower resolutions) blocks in the SB
+#if NEW_RESOLUTION_RANGES
+        if (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) {
+#else
+        if (scs_ptr->input_resolution < INPUT_SIZE_1080i_RANGE) {
+#endif
+            for (i = 0; i < 64; i++) {
+                me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
+                pcs_ptr->rc_me_distortion[sb_index] += me_candidate->distortion;
+            }
+        } else {
+            for (i = 0; i < 16; i++) {
+                me_candidate = &(context_ptr->me_candidate[0].pu[5 + i]);
+                pcs_ptr->rc_me_distortion[sb_index] += me_candidate->distortion;
+            }
+        }
+#else
         {
             // Compute the sum of the distortion of all 16 16x16 (best) blocks
             // in the SB
@@ -12635,6 +12708,7 @@ EbErrorType motion_estimate_sb(
                     me_candidate->distortion;
             }
         }
+#endif
     }
 
     return return_error;

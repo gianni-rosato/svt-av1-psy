@@ -372,7 +372,22 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 
 extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, uint32_t inputSize) {
     EbErrorType return_error = EB_ErrorNone;
-
+#if NEW_RESOLUTION_RANGES
+    if (inputSize < INPUT_SIZE_240p_TH)
+        *input_resolution = INPUT_SIZE_240p_RANGE;
+    else if (inputSize < INPUT_SIZE_360p_TH)
+        *input_resolution = INPUT_SIZE_360p_RANGE;
+    else if (inputSize < INPUT_SIZE_480p_TH)
+        *input_resolution = INPUT_SIZE_480p_RANGE;
+    else if (inputSize < INPUT_SIZE_720p_TH)
+        *input_resolution = INPUT_SIZE_720p_RANGE;
+    else if (inputSize < INPUT_SIZE_1080p_TH)
+        *input_resolution = INPUT_SIZE_1080p_RANGE;
+    else if (inputSize < INPUT_SIZE_4K_TH)
+        *input_resolution = INPUT_SIZE_4K_RANGE;
+    else
+        *input_resolution = INPUT_SIZE_8K_RANGE;
+#else
     if(inputSize < INPUT_SIZE_1080i_TH)
         *input_resolution = INPUT_SIZE_576p_RANGE_OR_LOWER;
     else if(inputSize < INPUT_SIZE_1080p_TH)
@@ -381,6 +396,7 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, 
         *input_resolution = INPUT_SIZE_1080p_RANGE;
     else
         *input_resolution = INPUT_SIZE_4K_RANGE;
+#endif
 
     return return_error;
 }
@@ -534,7 +550,7 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
                       scs_ptr->seq_header.max_frame_height))
                         ? EB_TRUE
                         : EB_FALSE;
-
+#if !INCOMPLETE_SB_FIX
                 // Temporary if the cropped width is not 4, 8, 16, 32, 64 and 128, the block is not allowed. To be removed after intrinsic functions for NxM spatial_full_distortion_kernel_func_ptr_array are added
                 int32_t cropped_width =
                     MIN(blk_geom->bwidth,
@@ -543,6 +559,7 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
                 if (cropped_width != 4 && cropped_width != 8 && cropped_width != 16 &&
                     cropped_width != 32 && cropped_width != 64 && cropped_width != 128)
                     scs_ptr->sb_geom[sb_index].block_is_allowed[md_scan_block_index] = EB_FALSE;
+#endif
 
                 if (blk_geom->shape != PART_N) blk_geom = get_blk_geom_mds(blk_geom->sqi_mds);
                 scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[md_scan_block_index] =

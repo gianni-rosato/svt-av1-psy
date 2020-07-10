@@ -544,9 +544,17 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
         scs_ptr->static_config.look_ahead_distance);
     uint64_t me_dist           = 0;
     uint8_t  me_dist_pic_count = 0;
+#if QPS_UPDATE
+    uint32_t complete_sb_count = 0;
+#endif
     // SB Loop
     for (uint16_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
         uint16_t non_moving_index_over_sliding_window = pcs_ptr->non_moving_index_array[sb_idx];
+#if QPS_UPDATE
+        SbParams *sb_params = &pcs_ptr->sb_params_array[sb_idx];
+        complete_sb_count++;
+#endif
+
         uint16_t frames_to_check_index;
         // Walk the first N entries in the sliding window starting picture + 1
         uint32_t input_queue_index =
@@ -565,7 +573,11 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
 
             if (temp_pcs_ptr->slice_type == I_SLICE || temp_pcs_ptr->end_of_sequence_flag) break;
             // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
+#if QPS_UPDATE
+            if (sb_params->is_complete_sb && temp_pcs_ptr->temporal_layer_index <
+#else
             if (temp_pcs_ptr->temporal_layer_index <
+#endif
                 MAX((int8_t)pcs_ptr->hierarchical_levels - 1, 2)) {
                 if (sb_idx == 0) me_dist_pic_count++;
                 me_dist += (temp_pcs_ptr->slice_type == I_SLICE)
@@ -595,7 +607,11 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
     pcs_ptr->non_moving_index_average = (uint16_t)non_moving_index_sum / pcs_ptr->sb_total_count;
     me_dist_pic_count                 = MAX(me_dist_pic_count, 1);
     pcs_ptr->qp_scaling_average_complexity =
+#if QPS_UPDATE
+        (uint16_t)((uint64_t)me_dist / complete_sb_count / 256 / me_dist_pic_count);
+#else
         (uint16_t)((uint64_t)me_dist / pcs_ptr->sb_total_count / 256 / me_dist_pic_count);
+#endif
     return;
 }
 
