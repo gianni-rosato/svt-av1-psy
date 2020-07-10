@@ -574,7 +574,7 @@ PredictionStructureConfigEntry five_level_hierarchical_pred_struct[] = {
 /************************************************
  * Prediction Structure Config Array
  ************************************************/
-static PredictionStructureConfig prediction_structure_config_array[] = {
+static const PredictionStructureConfig g_prediction_structure_config_array[] = {
     {1, flat_pred_struct},
     {2, two_level_hierarchical_pred_struct},
     {4, three_level_hierarchical_pred_struct},
@@ -584,6 +584,39 @@ static PredictionStructureConfig prediction_structure_config_array[] = {
     {0, (PredictionStructureConfigEntry *)NULL} // Terminating Code, must always come last!
 };
 
+typedef struct PredictionStructureConfigArray {
+    EbDctor                     dctor;
+    PredictionStructureConfig*  prediction_structure_config_array;
+} PredictionStructureConfigArray;
+
+static void prediction_structure_config_array_dctor(EbPtr p)
+{
+    PredictionStructureConfigArray* obj = (PredictionStructureConfigArray*)p;
+    PredictionStructureConfig* config = obj->prediction_structure_config_array;
+    if (!config)
+        return;
+    for (int i = 0; config[i].entry_count; i++) {
+        EB_FREE_ARRAY(config[i].entry_array);
+    }
+    EB_FREE_ARRAY(config);
+}
+
+#define DIM(array) (sizeof(array) / sizeof(array[0]))
+static EbErrorType prediction_structure_config_array_ctor(PredictionStructureConfigArray* array_ptr)
+{
+    array_ptr->dctor = prediction_structure_config_array_dctor;
+    EB_CALLOC_ARRAY(array_ptr->prediction_structure_config_array, DIM(g_prediction_structure_config_array));
+    const PredictionStructureConfig* src = &g_prediction_structure_config_array[0];
+    PredictionStructureConfig* dest = &array_ptr->prediction_structure_config_array[0];
+    for ( ;src->entry_count; src++, dest++) {
+        const uint32_t count = src->entry_count;
+
+        dest->entry_count = count;
+        EB_CALLOC_ARRAY(dest->entry_array, count);
+        memcpy(dest->entry_array, src->entry_array, sizeof(PredictionStructureConfigEntry)*count);
+    }
+    return EB_ErrorNone;
+}
 /************************************************
  * Get Prediction Structure
  ************************************************/
@@ -1938,6 +1971,8 @@ static EbErrorType prediction_structure_ctor(
 static void prediction_structure_group_dctor(EbPtr p) {
     PredictionStructureGroup *obj = (PredictionStructureGroup *)p;
     EB_DELETE_PTR_ARRAY(obj->prediction_structure_ptr_array, obj->prediction_structure_count);
+    PredictionStructureConfigArray* array = (PredictionStructureConfigArray*)obj->priv;
+    EB_DELETE(array);
 }
 /*************************************************
  * Prediction Structure Group Ctor
@@ -1996,6 +2031,13 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
         ref_count_used = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
 #endif
 #endif
+
+    PredictionStructureConfigArray* config_array;
+    EB_NEW(config_array, prediction_structure_config_array_ctor);
+    pred_struct_group_ptr->priv = config_array;
+
+    PredictionStructureConfig* prediction_structure_config_array = config_array->prediction_structure_config_array;
+
     // Insert manual prediction structure into array
     if (config->enable_manual_pred_struct) {
         prediction_structure_config_array[config->hierarchical_levels].entry_count = config->manual_pred_struct_entry_num;
