@@ -43,6 +43,15 @@ extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
+#if TF_LEVELS
+typedef struct  TfControls {
+    uint8_t enabled;
+    uint8_t window_size;
+#if IMPROVED_TF_LEVELS
+    uint8_t noise_based_window_adjust;
+#endif
+}TfControls;
+#endif
 
 /**************************************
  * Context
@@ -84,6 +93,16 @@ typedef struct PictureDecisionContext
     EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t       last_i_picture_sc_detection;
     uint64_t      key_poc;
+#if TF_LEVELS
+    uint8_t tf_level;
+    TfControls tf_ctrls;
+#endif
+#if DECOUPLE_ME_RES
+    PictureParentControlSet* mg_pictures_array[1<<MAX_TEMPORAL_LAYERS];
+    DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
+                                                      //this array will store all others pictures needing a dep-cnt clean up.
+    uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
+#endif
 } PictureDecisionContext;
 
 void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
@@ -782,14 +801,82 @@ EbErrorType generate_mini_gop_rps(
     return return_error;
 }
 
+#if TF_LEVELS
+#if IMPROVED_TF_LEVELS
+void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
+
+    TfControls *tf_ctrls = &context_ptr->tf_ctrls;
+
+    switch (tf_level)
+    {
+    case 0:
+        tf_ctrls->enabled = 0;
+        break;
+    case 1:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 7;
+        tf_ctrls->noise_based_window_adjust = 1;
+        break;
+    case 2:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 1;
+        break;
+    case 3:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 0;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#else
+void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
+
+    TfControls *tf_ctrls = &context_ptr->tf_ctrls;
+
+    switch (tf_level)
+    {
+    case 0:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 7;
+        break;
+    case 1:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 5;
+        break;
+    case 2:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        break;
+    case 3:
+        tf_ctrls->enabled = 0;
+        tf_ctrls->window_size = 3;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
+#if TF_LEVELS
+EbErrorType signal_derivation_multi_processes_oq(
+    SequenceControlSet *scs_ptr,
+    PictureParentControlSet *pcs_ptr,
+    PictureDecisionContext *context_ptr) {
+#else
 EbErrorType signal_derivation_multi_processes_oq(
     SequenceControlSet        *scs_ptr,
     PictureParentControlSet   *pcs_ptr) {
+#endif
     EbErrorType return_error = EB_ErrorNone;
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
@@ -5254,13 +5341,163 @@ static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
     return ahd;
 }
 
+#if NOISE_BASED_TF_FRAMES
+double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height,
+    uint16_t stride_y);
+
+double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride,
+    int bd);
+
+void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
+    uint32_t ss_y, EbBool include_padding);
+
+EbErrorType derive_tf_window_params(
+#else
 // Derive past_altref_nframes and future_altref_nframes using the central_frame activity compared to default past_altref_nframes and future_altref_nframes
 void derive_tf_window_params(
+#endif
     SequenceControlSet *scs_ptr,
     EncodeContext *encode_context_ptr,
     PictureParentControlSet *pcs_ptr,
+#if TF_LEVELS
+    PictureDecisionContext *context_ptr,
+#endif
     uint32_t out_stride_diff64) {
+#if NOISE_BASED_TF_FRAMES
+    PictureParentControlSet * picture_control_set_ptr_central = pcs_ptr;
+    EbPictureBufferDesc * central_picture_ptr = picture_control_set_ptr_central->enhanced_picture_ptr;
+    uint32_t encoder_bit_depth = picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
+    EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
+
+    // chroma subsampling
+    uint32_t ss_x = picture_control_set_ptr_central->scs_ptr->subsampling_x;
+    uint32_t ss_y = picture_control_set_ptr_central->scs_ptr->subsampling_y;
+    double *noise_levels = &(picture_control_set_ptr_central->noise_levels[0]);
+
+    // allocate 16 bit buffer
+    if (is_highbd) {
+        EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y],
+            central_picture_ptr->luma_size);
+        EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U],
+            central_picture_ptr->chroma_size);
+        EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V],
+            central_picture_ptr->chroma_size);
+
+        // pack byte buffers to 16 bit buffer
+        pack_highbd_pic(central_picture_ptr,
+            picture_control_set_ptr_central->altref_buffer_highbd,
+            ss_x,
+            ss_y,
+            EB_TRUE);
+    }
+
+    // Estimate source noise level
+    if (is_highbd) {
+        uint16_t *altref_buffer_highbd_start[COLOR_CHANNELS];
+        altref_buffer_highbd_start[C_Y] =
+            picture_control_set_ptr_central->altref_buffer_highbd[C_Y] +
+            central_picture_ptr->origin_y * central_picture_ptr->stride_y +
+            central_picture_ptr->origin_x;
+
+        altref_buffer_highbd_start[C_U] =
+            picture_control_set_ptr_central->altref_buffer_highbd[C_U] +
+            (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_bit_inc_cb +
+            (central_picture_ptr->origin_x >> ss_x);
+
+        altref_buffer_highbd_start[C_V] =
+            picture_control_set_ptr_central->altref_buffer_highbd[C_V] +
+            (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_bit_inc_cr +
+            (central_picture_ptr->origin_x >> ss_x);
+
+        noise_levels[0] = estimate_noise_highbd(altref_buffer_highbd_start[C_Y], // Y only
+            central_picture_ptr->width,
+            central_picture_ptr->height,
+            central_picture_ptr->stride_y,
+            encoder_bit_depth);
+
+        noise_levels[1] = estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
+            (central_picture_ptr->width >> 1),
+            (central_picture_ptr->height >> 1),
+            central_picture_ptr->stride_cb,
+            encoder_bit_depth);
+
+        noise_levels[2] = estimate_noise_highbd(altref_buffer_highbd_start[C_V], // V only
+            (central_picture_ptr->width >> 1),
+            (central_picture_ptr->height >> 1),
+            central_picture_ptr->stride_cb,
+            encoder_bit_depth);
+
+    }
+    else {
+        EbByte buffer_y = central_picture_ptr->buffer_y +
+            central_picture_ptr->origin_y * central_picture_ptr->stride_y +
+            central_picture_ptr->origin_x;
+        EbByte buffer_u =
+            central_picture_ptr->buffer_cb +
+            (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_cb +
+            (central_picture_ptr->origin_x >> ss_x);
+        EbByte buffer_v =
+            central_picture_ptr->buffer_cr +
+            (central_picture_ptr->origin_y >> ss_x) * central_picture_ptr->stride_cr +
+            (central_picture_ptr->origin_x >> ss_x);
+
+        noise_levels[0] = estimate_noise(buffer_y, // Y
+            central_picture_ptr->width,
+            central_picture_ptr->height,
+            central_picture_ptr->stride_y);
+
+        noise_levels[1] = estimate_noise(buffer_u, // U
+            (central_picture_ptr->width >> ss_x),
+            (central_picture_ptr->height >> ss_y),
+            central_picture_ptr->stride_cb);
+
+        noise_levels[2] = estimate_noise(buffer_v, // V
+            (central_picture_ptr->width >> ss_x),
+            (central_picture_ptr->height >> ss_y),
+            central_picture_ptr->stride_cr);
+    }
+
+    // Adjust number of filtering frames based on noise and quantization factor.
+    // Basically, we would like to use more frames to filter low-noise frame such
+    // that the filtered frame can provide better predictions for more frames.
+    // Also, when the quantization factor is small enough (lossless compression),
+    // we will not change the number of frames for key frame filtering, which is
+    // to avoid visual quality drop.
+    int adjust_num = 0;
+#if IMPROVED_TF_LEVELS
+    if (context_ptr->tf_ctrls.noise_based_window_adjust) {
+#endif
+#if 0
+    if (num_frames == 1) {  // `arnr_max_frames = 1` is used to disable filtering.
+        adjust_num = 0;
+    }
+    else if (filter_frame_lookahead_idx < 0 && q <= 10) {
+        adjust_num = 0;
+    }
+    else
+#endif
+    if (noise_levels[0] < 0.5) {
+        adjust_num = 6;
+    }
+    else if (noise_levels[0] < 1.0) {
+        adjust_num = 4;
+    }
+    else if (noise_levels[0] < 2.0) {
+        adjust_num = 2;
+    }
+#endif
+#if IMPROVED_TF_LEVELS
+    }
+#endif
+#if TF_LEVELS
+#if NOISE_BASED_TF_FRAMES
+    int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
+#else
+    int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size);
+#endif
+#else
     int altref_nframes = scs_ptr->static_config.altref_nframes;
+#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -5268,8 +5505,11 @@ void derive_tf_window_params(
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
         pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
-
+#if TF_LEVELS
+        uint32_t num_future_pics = altref_nframes - 1;
+#else
         uint32_t num_future_pics = 6;
+#endif
         uint32_t num_past_pics = 0;
         uint32_t pic_i;
         //search reord-queue to get the future pictures
@@ -5388,8 +5628,95 @@ void derive_tf_window_params(
             }
         }
     }
+#if NOISE_BASED_TF_FRAMES
+    return EB_ErrorNone;
+#endif
 }
 
+#if DECOUPLE_ME_RES
+PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
+    EncodeContext *encode_context_ptr,
+    uint64_t ref_poc)
+{
+    PaReferenceQueueEntry * ref_entry_ptr = NULL;
+    uint32_t ref_queue_i = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
+    // Find the Reference in the Reference Queue
+    do {
+        ref_entry_ptr =
+            encode_context_ptr->picture_decision_pa_reference_queue[ref_queue_i];
+        if (ref_entry_ptr->picture_number == ref_poc)
+            return ref_entry_ptr;
+
+        // Increment the reference_queue_index Iterator
+        ref_queue_i = (ref_queue_i == REFERENCE_QUEUE_MAX_DEPTH - 1)
+            ? 0
+            : ref_queue_i + 1;
+
+    } while (ref_queue_i != encode_context_ptr->picture_decision_pa_reference_queue_tail_index);
+
+
+    return NULL;
+}
+#endif
+#if ON_OFF_FEATURE_MRP
+
+/***************************************************************************************************
+// set number of references to try based on mrp level
+***************************************************************************************************/
+void set_mrp_controls(PictureParentControlSet *pcs_ptr) {
+
+    MrpControls *mrp_ctrls = &pcs_ptr->mrp_ctrls;
+
+    switch (pcs_ptr->mrp_level)
+    {
+    case 0:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+        break;
+    case 1:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+        break;
+    case 2:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+        break;
+    case 3:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 3);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+        break;
+    case 4:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 3);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+        break;
+    case 5:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+        break;
+    case 6:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+        break;
+    case 7:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+        break;
+    case 8:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+        break;
+    case 9:
+        mrp_ctrls->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+        mrp_ctrls->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+    assert(mrp_ctrls->ref_list0_count_try <= pcs_ptr->ref_list0_count);
+    assert(mrp_ctrls->ref_list1_count_try <= pcs_ptr->ref_list1_count);
+}
+#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -6059,9 +6386,16 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
+#if TF_LEVELS
+                                signal_derivation_multi_processes_oq(
+                                    scs_ptr,
+                                    pcs_ptr,
+                                    context_ptr);
+#else
                                 signal_derivation_multi_processes_oq(
                                 scs_ptr,
                                     pcs_ptr);
+#endif
 
                             // Set tx_mode
                             frm_hdr->tx_mode = (pcs_ptr->tx_size_search_mode) ?
@@ -6209,6 +6543,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
+#if TF_LEVELS
+                            if(context_ptr->tf_ctrls.enabled) {
+#else
                             uint8_t perform_filtering =
                                 (scs_ptr->enable_altrefs == EB_TRUE && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS &&
                                  scs_ptr->static_config.hierarchical_levels >= 2) &&  pcs_ptr->sc_content_detected == 0 &&
@@ -6217,10 +6554,14 @@ void* picture_decision_kernel(void *input_ptr)
                                 ? 1 : 0;
 
                             if (perform_filtering){
+#endif
                                 derive_tf_window_params(
                                     scs_ptr,
                                     encode_context_ptr,
                                     pcs_ptr,
+#if TF_LEVELS
+                                    context_ptr,
+#endif
                                     out_stride_diff64);
                                 pcs_ptr->temp_filt_prep_done = 0;
 

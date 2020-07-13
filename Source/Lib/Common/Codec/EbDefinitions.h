@@ -172,6 +172,47 @@ extern "C" {
 #define SB_CLASSIFIER_R2R_FIX 1
 #endif
 #endif
+#define FIX_HME_LOAD                         1 //fix to ENABLE_HME_AT_INC_SB
+#define PRESETS_SHIFT         1 // Shift M4->M3, M5->M4, M8->M5 to avoid empty presets
+#define OPT_BLOCK_INDICES_GEN 1 // Optimized block indices derivation towards less overhead when looping over a subset of blocks (e.g. when enabling disallow_nsq)
+
+#if OPT_BLOCK_INDICES_GEN
+#define OPT_BLOCK_INDICES_GEN_0 1 // refactor block indices derivation
+#define OPT_BLOCK_INDICES_GEN_1 1 // removed useless checks
+#define OPT_BLOCK_INDICES_GEN_2 1 // unify the action(s) of disallow_nsq and complex sb
+#define OPT_BLOCK_INDICES_GEN_3 1 // apply disallow_all_nsq_blocks_below_8x8, disallow_all_nsq_blocks_below_16x16, ..
+#endif
+#define TF_LEVELS               1 // Defined levels for temporal filtering based on the filtering window size
+#define M8_SETTINGS             1 // M8 settings
+#if M8_SETTINGS
+// Part
+#define M8_4x4      1 // Done
+#define M8_NSQ      1 // Done
+#define M8_SB_SIZE  1 // Done
+// MRP
+#define M8_MRP      1 // Done
+//MD
+#define M8_BIPRED_3x3 1 // Done
+#define M8_PRED_ME    1 // Done
+#define M8_CDF        1 // Done
+#define M8_WM         1 // Done
+#define M8_OBMC       1 // Done
+#define M8_INTRA_MODE 1 // Done
+#define M8_RDOQ       1 // Done
+// Filtering
+#define M8_SG          1 // Done
+#define M8_RESTORATION 1// Done
+#define M8_LOOP_FILTER 1// Done
+#define M8_CDEF        1 // Done
+// SC
+#define M8_PALETTE     1 // Done
+#define M8_IBC         1 // Done
+// NIC
+#define M8_NIC         1 // Done
+// HME/ME
+#define M8_HME_ME      1 // Done
+#define M8_MPPD        1 // Done
+#endif
 #endif
 
 ///////// END MASTER_SYNCH

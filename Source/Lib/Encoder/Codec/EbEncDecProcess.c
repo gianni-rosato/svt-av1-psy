@@ -10525,6 +10525,11 @@ void *enc_dec_kernel(void *input_ptr) {
                         // Input : mdc_blk_ptr built @ mdc process (up to 4421)
                         // Output: md_blk_arr_nsq reduced set of block(s)
 
+#if OPT_BLOCK_INDICES_GEN_0
+                        // Build the t=0 cand_block_array
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
+
                         // PD0 MD Tool(s) : Best ME candidate only as INTER candidate(s), DC only as INTRA candidate(s), Chroma blind, Spatial SSE,
                         // no MVP table generation, no fast rate @ full cost derivation, Md-Stage 0 and Md-Stage 2 using count=1 (i.e. only best md-stage-0 candidate)
                         mode_decision_sb(scs_ptr,
@@ -10554,10 +10559,12 @@ void *enc_dec_kernel(void *input_ptr) {
                             scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 
                         // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
+#if !OPT_BLOCK_INDICES_GEN_0
 #if DEPTH_PART_CLEAN_UP
                         build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #else
                         build_cand_block_array(scs_ptr, pcs_ptr, sb_index);
+#endif
 #endif
                         // Reset neighnor information to current SB @ position (0,0)
                         copy_neighbour_arrays(pcs_ptr,
@@ -10588,6 +10595,10 @@ void *enc_dec_kernel(void *input_ptr) {
                             context_ptr->md_context->pd_pass = PD_PASS_1;
                             signal_derivation_enc_dec_kernel_oq(
                                 scs_ptr, pcs_ptr, context_ptr->md_context);
+#if OPT_BLOCK_INDICES_GEN_0
+                            // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
+                            build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
 
                             // [PD_PASS_1] Mode Decision - Further reduce the number of
                             // partitions to be considered in later PD stages. This pass uses more accurate
@@ -10626,10 +10637,24 @@ void *enc_dec_kernel(void *input_ptr) {
                                                   sb_origin_y);
                         }
                     }
-
+#if OPT_BLOCK_INDICES_GEN_0 && !OPT_BLOCK_INDICES_GEN_4
+                    else
+                        // Build the t=0 cand_block_array
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
                     signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
+#if OPT_BLOCK_INDICES_GEN_0
+                    // Re-build mdc_blk_ptr for the 2nd PD Pass [PD_PASS_1]
+                    if(pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_OFF)
+                    build_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#if OPT_BLOCK_INDICES_GEN_4
+                    else
+                        // Build the t=0 cand_block_array
+                        build_starting_cand_block_array(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
+#endif
 
                     // [PD_PASS_2] Mode Decision - Obtain the final partitioning decision using more accurate info
                     // than previous stages.  Reduce the total number of partitions to 1.

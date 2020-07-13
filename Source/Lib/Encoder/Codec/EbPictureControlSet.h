@@ -143,10 +143,20 @@ struct PredictionUnit;
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
     uint32_t tot_d1_blocks; //how many d1 bloks every parent square would have
+#if !OPT_BLOCK_INDICES_GEN_0
     uint8_t  leaf_index;
+#endif
     EbBool   split_flag;
     uint8_t  consider_block;
     uint8_t  refined_split_flag;
+#if TRACK_PER_DEPTH_DELTA
+    int8_t  pred_depth_refinement;
+    int8_t  final_pred_depth_refinement;
+#endif
+#if ADAPTIVE_DEPTH_CR
+    int8_t  pred_depth;
+    int8_t  final_pred_depth;
+#endif
 } EbMdcLeafData;
 
 typedef struct MdcSbData {
