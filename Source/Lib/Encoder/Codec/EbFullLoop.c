@@ -2043,6 +2043,141 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
     context_ptr->txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] *
                                   context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
 }
+#if TXT_CONTROL
+uint8_t allowed_txt[6][TX_SIZES_ALL][TX_TYPES] = {
+{
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+},
+//txt_th2
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+// th4
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,0,1,0,0,0,1,1,1,0,1,0,1},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+//th_35d
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,1,0,0,0,1,1,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,1},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1},
+{1,1,1,1,1,0,0,0,0,1,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,0,1,0,1,1,1,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+// th5d
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,1,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+// dct_dct and IDXT for SC
+{
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0}
+}
+};
+#else
 // t1
 uint8_t allowed_tx_set_a[TX_SIZES_ALL][TX_TYPES] = {
     {1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0},
@@ -2085,23 +2220,38 @@ uint8_t allowed_tx_set_b[TX_SIZES_ALL][TX_TYPES] = {
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+#endif
 
+#if !REMOVE_UNUSED_CODE_PH2
 void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_ptr,
-                           SuperBlock *sb_ptr, uint32_t cb_qp,
+                           SuperBlock *sb_ptr,
+#if QP2QINDEX
+                           uint32_t cb_qindex,
+#else
+                           uint32_t cb_qp,
+#endif
                            EbPictureBufferDesc *coeff_samples_sb,
                            EbPictureBufferDesc *residual16bit, EbPictureBufferDesc *transform16bit,
                            EbPictureBufferDesc *inverse_quant_buffer,
                            uint32_t *count_non_zero_coeffs,
                            uint32_t component_mask, uint16_t *eob,
                            MacroblockPlane *candidate_plane) {
+#if QP2QINDEX
+    (void)cb_qindex;
+#else
     (void)cb_qp;
+#endif
     (void)candidate_plane;
     UNUSED(count_non_zero_coeffs);
     UNUSED(component_mask);
 
     BlkStruct *   blk_ptr        = context_ptr->blk_ptr;
     TransformUnit *txb_ptr        = &blk_ptr->txb_array[context_ptr->txb_itr];
+#if QP2QINDEX
+    uint32_t       qindex        = blk_ptr->qindex;
+#else
     uint32_t       qp             = blk_ptr->qp;
+#endif
     const uint32_t coeff1d_offset = context_ptr->coded_area_sb;
 
     uint64_t              y_txb_coeff_bits;
@@ -2122,14 +2272,19 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
         get_ext_tx_set_type(tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
 
     TxType best_tx_type = DCT_DCT;
+#if !TXT_CONTROL
     if (context_ptr->md_context->tx_search_reduced_set == 2) txk_end = 2;
+#endif
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
+#if !TXT_CONTROL
         if (context_ptr->md_context->tx_search_reduced_set == 2)
             tx_type_index = (tx_type_index == 1) ? IDTX : tx_type_index;
+#endif
         tx_type = (TxType)tx_type_index;
-
+#if !TXT_CONTROL
         if (context_ptr->md_context->tx_search_reduced_set)
             if (!allowed_tx_set_a[tx_size][tx_type]) continue;
+#endif
         const int32_t eset =
             get_ext_tx_set(tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
         // eset == 0 should correspond to a set with only DCT_DCT and there
@@ -2164,7 +2319,11 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
             ((int32_t *)inverse_quant_buffer->buffer_y) + coeff1d_offset,
+#if QP2QINDEX
+            qindex,
+#else
             qp,
+#endif
             seg_qp,
             context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -2178,8 +2337,16 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             0,
             0,
             0,
+#if SB_MEM_OPT
+            blk_ptr->use_intrabc,
+#else
             blk_ptr->av1xd->use_intrabc,
+#endif
+#if QP2QINDEX
+            context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
+#else
             context_ptr->full_lambda,
+#endif
             EB_FALSE);
 
         //tx_type not equal to DCT_DCT and no coeff is not an acceptable option in AV1.
@@ -2223,8 +2390,10 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
 
         // Set the Candidate Buffer
         candidate_buffer = candidate_buffer_ptr_array[0];
+#if !MD_FRAME_CONTEXT_MEM_OPT
         // Rate estimation function uses the values from CandidatePtr. The right values are copied from blk_ptr to CandidatePtr
         EntropyCoder *coeff_est_entropy_coder_ptr          = pcs_ptr->coeff_est_entropy_coder_ptr;
+#endif
         candidate_buffer->candidate_ptr->type              = blk_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode         = blk_ptr->pred_mode;
         candidate_buffer->candidate_ptr->filter_intra_mode = blk_ptr->filter_intra_mode;
@@ -2237,7 +2406,9 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             candidate_buffer,
             coeff1d_offset,
             0,
+#if !MD_FRAME_CONTEXT_MEM_OPT
             coeff_est_entropy_coder_ptr,
+#endif
             coeff_samples_sb,
             y_count_non_zero_coeffs_temp,
             0,
@@ -2260,7 +2431,12 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
             txb_full_distortion[0],
             &y_txb_coeff_bits,
             &y_full_cost,
+#if QP2QINDEX
+            context_ptr->md_context->full_lambda_md[EB_8_BIT_MD]);
+#else
             context_ptr->full_lambda);
+#endif
+
 
         if (y_full_cost < best_full_cost) {
             best_full_cost = y_full_cost;
@@ -2275,12 +2451,21 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
 }
 
 void encode_pass_tx_search_hbd(
-    PictureControlSet *pcs_ptr, EncDecContext *context_ptr, SuperBlock *sb_ptr, uint32_t cb_qp,
+    PictureControlSet *pcs_ptr, EncDecContext *context_ptr, SuperBlock *sb_ptr,
+#if QP2QINDEX
+    uint32_t cb_qindex,
+#else
+    uint32_t cb_qp,
+#endif
     EbPictureBufferDesc *coeff_samples_sb, EbPictureBufferDesc *residual16bit,
     EbPictureBufferDesc *transform16bit, EbPictureBufferDesc *inverse_quant_buffer,
     uint32_t *count_non_zero_coeffs, uint32_t component_mask,
     uint16_t *eob, MacroblockPlane *candidate_plane) {
+#if QP2QINDEX
+    (void)cb_qindex;
+#else
     (void)cb_qp;
+#endif
     (void)candidate_plane;
     UNUSED(component_mask);
     UNUSED(count_non_zero_coeffs);
@@ -2310,8 +2495,10 @@ void encode_pass_tx_search_hbd(
 
     for (int32_t tx_type_index = txk_start; tx_type_index < txk_end; ++tx_type_index) {
         tx_type = (TxType)tx_type_index;
+#if !TXT_CONTROL
         if (context_ptr->md_context->tx_search_reduced_set)
             if (!allowed_tx_set_a[tx_size][tx_type]) continue;
+#endif
 
         const int32_t eset =
             get_ext_tx_set(tx_size, is_inter, pcs_ptr->parent_pcs_ptr->frm_hdr.reduced_tx_set);
@@ -2457,6 +2644,7 @@ void encode_pass_tx_search_hbd(
     if (is_inter) txb_ptr->transform_type[PLANE_TYPE_UV] = txb_ptr->transform_type[PLANE_TYPE_Y];
 }
 
+#endif
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
                                  int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,

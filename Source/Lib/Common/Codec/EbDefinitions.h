@@ -111,6 +111,7 @@ extern "C" {
 #define MAR18_ADOPTIONS            1 // adoptions in M5/M8
 #define REU_UPDATE                 1 // use top right instead of top SB for CDF calculation
 #define ADD_NEW_MPPD_LEVEL         1 // add a new MPPD level with PD0 | PD1 | PD2 w/o sq/nsq decision
+#define INT_RECON_OFFSET_FIX       1
 #define LOG_MV_VALIDITY            1 //report error message if MV is beyond av1 limits
 #define MD_CFL                     1 // Modified cfl search in MD
 #if MD_CFL
@@ -154,6 +155,23 @@ extern "C" {
 #define SHUT_SQ_WEIGHT_INTRA_FILTER   1
 #define APR02_ADOPTIONS               1 // adoptions in all modes
 #define APR08_ADOPTIONS               1 // adoptions in all modes
+#define FIX_RC_SB_SIZE                       1 // Force SB size to 64x64 when rate control is on
+#define ADOPT_SKIPPING_PD1                   1 // Skip PD1 for all modes; remove the PD0 thresholds
+#define ADD_MAX_HME_SIGNAL                   1 // Add a signal for MAX HME size
+#define NEW_HME_ME_SIZES                     1 // New HME/ME size adoptions
+#define CLASS_MERGING                        1 // merge classes into class 0 to 4
+#define INJECT_BACKUP_CANDIDATE              1 // handle the case of no candidate(s) @ md_stage_0()
+#define MULTI_PASS_PD_FOR_INCOMPLETE         1 // add the ability to perform MPPD for incomplete SB
+#define SHUT_PALETTE_BC_PD_PASS_0_1          1 // shut Palette/BlockCopy @ PD0/PD1
+#define OVER_BOUNDARY_BLOCK_MODE_1_FOR_ALL   1 // over_boundary_block_mode=1 for all presets
+#define TXT_CONTROL                          1 // Add TXT search optimizations
+#if TXT_CONTROL
+#define MAX_TX_WEIGHT        500
+#define SB_CLASSIFIER          1 // Classify the SBs based on the PD0 output and apply specific settings for the detected SBs
+#if SB_CLASSIFIER
+#define SB_CLASSIFIER_R2R_FIX 1
+#endif
+#endif
 #endif
 
 ///////// END MASTER_SYNCH
@@ -592,11 +610,13 @@ typedef enum CandClass {
     CAND_CLASS_1,
     CAND_CLASS_2,
     CAND_CLASS_3,
+#if !CLASS_MERGING
     CAND_CLASS_4,
     CAND_CLASS_5,
     CAND_CLASS_6,
     CAND_CLASS_7,
     CAND_CLASS_8,
+#endif
     CAND_CLASS_TOTAL
 } CandClass;
 
@@ -5306,6 +5326,47 @@ static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
 };
+#if SB_CLASSIFIER
+#if MULTI_BAND_ACTIONS
+typedef enum ATTRIBUTE_PACKED {
+    NONE_CLASS, // Do nothing class
+    SB_CLASS_1,
+    SB_CLASS_2,
+    SB_CLASS_3,
+    SB_CLASS_4,
+    SB_CLASS_5,
+    SB_CLASS_6,
+    SB_CLASS_7,
+    SB_CLASS_8,
+    SB_CLASS_9,
+    SB_CLASS_10,
+    SB_CLASS_11,
+    SB_CLASS_12,
+    SB_CLASS_13,
+    SB_CLASS_14,
+    SB_CLASS_15,
+    SB_CLASS_16,
+    SB_CLASS_17,
+    SB_CLASS_18,
+#if !NON_UNIFORM_NSQ_BANDING
+    SB_CLASS_19,
+    SB_CLASS_20,
+#endif
+    NUMBER_OF_SB_CLASS, // Total number of SB classes
+} SB_CLASS;
+#else
+typedef enum ATTRIBUTE_PACKED {
+    NONE_CLASS, // Do nothing class
+#if NEW_CYCLE_ALLOCATION
+    VERY_LOW_COMPLEX_CLASS,// Very Low complex SB Class
+#endif
+    LOW_COMPLEX_CLASS, // Low complex SB Class
+    MEDIUM_COMPLEX_CLASS, // Meduim complex SB Class
+    HIGH_COMPLEX_CLASS, // High complex SB Class
+    NUMBER_OF_SB_CLASS, // Total number of SB classes
+} SB_CLASS;
+#endif
+#endif
 typedef struct _EbEncHandle EbEncHandle;
 typedef struct _EbThreadContext EbThreadContext;
 #ifdef __cplusplus

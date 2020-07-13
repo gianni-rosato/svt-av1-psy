@@ -619,21 +619,33 @@ typedef struct ModeDecisionContext {
     uint32_t nsq_hv_level;
     // signal for enabling shortcut to skip search depths
     MD_COMP_TYPE compound_types_to_try;
+#if !PD0_INTER_CAND
     uint8_t      best_me_cand_only_flag;
+#endif
     uint8_t      dc_cand_only_flag;
     EbBool       disable_angle_z2_intra_flag;
     uint8_t      full_cost_shut_fast_rate_flag;
     EbBool       coeff_based_nsq_cand_reduction;
     uint8_t      tx_search_level;
+#if !TXT_CONTROL
     uint64_t     tx_weight;
     uint8_t      tx_search_reduced_set;
+#endif
     uint8_t      interpolation_search_level;
     uint8_t      md_tx_size_search_mode;
+#if OBMC_CLI
+    uint8_t      md_pic_obmc_level;
+#else
     uint8_t      md_pic_obmc_mode;
+#endif
     uint8_t      md_enable_paeth;
     uint8_t      md_enable_smooth;
     uint8_t      md_enable_inter_intra;
+#if FILTER_INTRA_CLI
+    uint8_t      md_filter_intra_level;
+#else
     uint8_t      md_filter_intra_mode;
+#endif
     uint8_t      md_intra_angle_delta;
 #if SHUT_PALETTE_BC_PD_PASS_0_1
     uint8_t      md_allow_intrabc;

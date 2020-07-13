@@ -5913,6 +5913,64 @@ void  inject_filter_intra_candidates(
 
     return;
 }
+#if INJECT_BACKUP_CANDIDATE
+void inject_zz_backup_candidate(
+    struct ModeDecisionContext *context_ptr,
+    uint32_t *candidate_total_cnt) {
+    ModeDecisionCandidate *cand_array = context_ptr->fast_candidate_array;
+    IntMv                  best_pred_mv[2] = { {0}, {0} };
+    uint32_t               cand_total_cnt = (*candidate_total_cnt);
+
+    cand_array[cand_total_cnt].type = INTER_MODE;
+    cand_array[cand_total_cnt].distortion_ready = 0;
+    cand_array[cand_total_cnt].use_intrabc = 0;
+    cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+    cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)0;
+    cand_array[cand_total_cnt].inter_mode = NEWMV;
+    cand_array[cand_total_cnt].pred_mode = NEWMV;
+    cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+    cand_array[cand_total_cnt].is_compound = 0;
+    cand_array[cand_total_cnt].is_new_mv = 1;
+    cand_array[cand_total_cnt].drl_index = 0;
+
+    // zz
+    cand_array[cand_total_cnt].motion_vector_xl0 = 0;
+    cand_array[cand_total_cnt].motion_vector_yl0 = 0;
+
+    // will be needed later by the rate estimation
+    cand_array[cand_total_cnt].ref_mv_index = 0;
+    cand_array[cand_total_cnt].ref_frame_type = svt_get_ref_frame_type(REF_LIST_0, 0);
+    cand_array[cand_total_cnt].ref_frame_index_l0 = 0;
+    cand_array[cand_total_cnt].ref_frame_index_l1 = -1;
+
+    cand_array[cand_total_cnt].transform_type[0] = DCT_DCT;
+    cand_array[cand_total_cnt].transform_type_uv = DCT_DCT;
+
+    choose_best_av1_mv_pred(context_ptr,
+        cand_array[cand_total_cnt].md_rate_estimation_ptr,
+        context_ptr->blk_ptr,
+        cand_array[cand_total_cnt].ref_frame_type,
+        cand_array[cand_total_cnt].is_compound,
+        cand_array[cand_total_cnt].pred_mode,
+        cand_array[cand_total_cnt].motion_vector_xl0,
+        cand_array[cand_total_cnt].motion_vector_yl0,
+        0,
+        0,
+        &cand_array[cand_total_cnt].drl_index,
+        best_pred_mv);
+
+    cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_0] = best_pred_mv[0].as_mv.col;
+    cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_0] = best_pred_mv[0].as_mv.row;
+
+    cand_array[cand_total_cnt].is_interintra_used = 0;
+    cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+
+    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt);
+
+    // update the total number of candidates injected
+    (*candidate_total_cnt) = cand_total_cnt;
+}
+#endif
 int svt_av1_allow_palette(int allow_palette,
     BlockSize sb_type) {
     assert(sb_type < BlockSizeS_ALL);
@@ -6040,7 +6098,9 @@ EbErrorType generate_md_stage_0_cand(
     PictureControlSet   *pcs_ptr)
 {
 
+#if !SHUT_PALETTE_BC_PD_PASS_0_1
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     const SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
     const EB_SLICE slice_type = pcs_ptr->slice_type;
     uint32_t cand_total_cnt = 0;
@@ -6059,6 +6119,7 @@ EbErrorType generate_md_stage_0_cand(
     //----------------------
     // Intra
     if (context_ptr->blk_geom->sq_size < 128) {
+#if !REMOVE_UNUSED_CODE_PH2
         if (!context_ptr->dc_cand_only_flag && !coeff_based_nsq_cand_reduction && pcs_ptr->parent_pcs_ptr->intra_pred_mode >= 5 && context_ptr->blk_geom->sq_size > 4 && context_ptr->blk_geom->shape == PART_N)
             inject_intra_candidates_ois(
                 pcs_ptr,
@@ -6066,6 +6127,7 @@ EbErrorType generate_md_stage_0_cand(
                 sb_ptr,
                 &cand_total_cnt);
         else
+#endif
                 inject_intra_candidates(
                     pcs_ptr,
                     context_ptr,
@@ -6075,14 +6137,21 @@ EbErrorType generate_md_stage_0_cand(
                 &cand_total_cnt);
     }
     if (!coeff_based_nsq_cand_reduction)
+#if FILTER_INTRA_CLI
+       if (context_ptr->md_filter_intra_level > 0 && av1_filter_intra_allowed_bsize(scs_ptr->seq_header.filter_intra_level, context_ptr->blk_geom->bsize))
+#else
        if (context_ptr->md_filter_intra_mode > 0 && av1_filter_intra_allowed_bsize(scs_ptr->seq_header.enable_filter_intra, context_ptr->blk_geom->bsize))
-
+#endif
             inject_filter_intra_candidates(
                 pcs_ptr,
                 context_ptr,
                 &cand_total_cnt);
 
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+    if (context_ptr->md_allow_intrabc)
+#else
     if (frm_hdr->allow_intrabc)
+#endif
         inject_intra_bc_candidates(
             pcs_ptr,
             context_ptr,
@@ -6090,23 +6159,42 @@ EbErrorType generate_md_stage_0_cand(
             context_ptr->blk_ptr,
             &cand_total_cnt
         );
-
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+    if (context_ptr->md_palette_mode) {
+#endif
     //can be removed later if need be
     for (uint16_t i = 0; i < cand_total_cnt; i++) {
+#if MEM_OPT_PALETTE
+        assert(context_ptr->fast_candidate_array[i].palette_info == NULL);
+#else
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] == 0);
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
+#endif
     }
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+    if (svt_av1_allow_palette(context_ptr->md_palette_mode, context_ptr->blk_geom->bsize)) {
+#else
     if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize)) {
+#endif
         inject_palette_candidates(
             pcs_ptr,
             context_ptr,
             &cand_total_cnt);
     }
     for (uint16_t i = 0; i < cand_total_cnt; i++) {
+#if MEM_OPT_PALETTE
+        assert(context_ptr->fast_candidate_array[i].palette_info == NULL ||
+                context_ptr->fast_candidate_array[i].palette_info->pmi.palette_size[0] < 9);
+        assert(context_ptr->fast_candidate_array[i].palette_info == NULL ||
+                context_ptr->fast_candidate_array[i].palette_info->pmi.palette_size[1] == 0);
+#else
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[0] < 9);
         assert(context_ptr->fast_candidate_array[i].palette_info.pmi.palette_size[1] == 0);
+#endif
     }
-
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+    }
+#endif
     if (slice_type != I_SLICE && context_ptr->inject_inter_candidates) {
             inject_inter_candidates(
                 pcs_ptr,
@@ -6116,7 +6204,15 @@ EbErrorType generate_md_stage_0_cand(
                 coeff_based_nsq_cand_reduction,
                 &cand_total_cnt);
     }
-
+#if INJECT_BACKUP_CANDIDATE
+    // For I_SLICE, DC is always injected, and therefore there is no a risk of no candidates @ md_syage_0()
+    // For non I_SLICE, there is a risk of no candidates @ md_stage_0() because of the INTER candidates pruning techniques
+    if (slice_type != I_SLICE && cand_total_cnt == 0) {
+        inject_zz_backup_candidate(
+            context_ptr,
+            &cand_total_cnt);
+    }
+#endif
     *candidate_total_count_ptr = cand_total_cnt;
     CandClass  cand_class_it;
     memset(context_ptr->md_stage_0_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
@@ -6128,22 +6224,52 @@ EbErrorType generate_md_stage_0_cand(
 
         if (cand_ptr->type == INTRA_MODE) {
             // Intra prediction
+#if !CLASS_MERGING
                 if (cand_ptr->filter_intra_mode == FILTER_INTRA_MODES) {
+#endif
+#if MEM_OPT_PALETTE
+                  if (cand_ptr->palette_info == NULL ||
+                          cand_ptr->palette_info->pmi.palette_size[0] == 0) {
+#else
                   if (cand_ptr->palette_info.pmi.palette_size[0] == 0) {
+#endif
                     cand_ptr->cand_class = CAND_CLASS_0;
                     context_ptr->md_stage_0_count[CAND_CLASS_0]++;
                   }
                   else {
+#if CLASS_MERGING
+                      // Palette Prediction
+                     cand_ptr->cand_class = CAND_CLASS_3;
+                     context_ptr->md_stage_0_count[CAND_CLASS_3]++;
+#else
                      cand_ptr->cand_class = CAND_CLASS_7;
                      context_ptr->md_stage_0_count[CAND_CLASS_7]++;
+#endif
                   }
+#if !CLASS_MERGING
                 }
                 else {
                     cand_ptr->cand_class = CAND_CLASS_6;
                     context_ptr->md_stage_0_count[CAND_CLASS_6]++;
                 }
+#endif
+        }
+#if CLASS_MERGING
 
-        } else if (cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
+        else  if (cand_ptr->is_new_mv) {
+            // MV Prediction
+            cand_ptr->cand_class = CAND_CLASS_1;
+            context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+        }
+        else {
+            //MVP Prediction
+            cand_ptr->cand_class = CAND_CLASS_2;
+            context_ptr->md_stage_0_count[CAND_CLASS_2]++;
+        }
+    }
+
+#else
+        else if (cand_ptr->inter_mode == GLOBALMV || cand_ptr->inter_mode == GLOBAL_GLOBALMV) {
             cand_ptr->cand_class = CAND_CLASS_8;
             context_ptr->md_stage_0_count[CAND_CLASS_8]++;
         }
@@ -6189,6 +6315,7 @@ EbErrorType generate_md_stage_0_cand(
             }
         }
     }
+#endif
     uint32_t fast_accum = 0;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         fast_accum += context_ptr->md_stage_0_count[cand_class_it];
@@ -6350,9 +6477,29 @@ uint32_t product_full_mode_decision(
         }
         if (blk_ptr->prediction_mode_flag == INTRA_MODE)
         {
+#if MEM_OPT_PALETTE
+            if (candidate_ptr->palette_info)
+                memcpy(&blk_ptr->palette_info.pmi, &candidate_ptr->palette_info->pmi, sizeof(PaletteModeInfo));
+            else
+                memset(&blk_ptr->palette_info.pmi, 0, sizeof(PaletteModeInfo));
+#else
             eb_memcpy(&blk_ptr->palette_info.pmi, &candidate_ptr->palette_info.pmi, sizeof(PaletteModeInfo));
+#endif
+#if SHUT_PALETTE_BC_PD_PASS_0_1
+            if (svt_av1_allow_palette(context_ptr->md_palette_mode, context_ptr->blk_geom->bsize))
+#else
             if(svt_av1_allow_palette(context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr->palette_mode, context_ptr->blk_geom->bsize))
+#endif
+#if MEM_OPT_PALETTE
+            {
+               if (candidate_ptr->palette_info)
+                   memcpy(blk_ptr->palette_info.color_idx_map, candidate_ptr->palette_info->color_idx_map, MAX_PALETTE_SQUARE);
+               else
+                   memset(blk_ptr->palette_info.color_idx_map, 0, MAX_PALETTE_SQUARE);
+            }
+#else
                eb_memcpy(blk_ptr->palette_info.color_idx_map, candidate_ptr->palette_info.color_idx_map, MAX_PALETTE_SQUARE);
+#endif
         }
         else {
             blk_ptr->palette_info.pmi.palette_size[0] = blk_ptr->palette_info.pmi.palette_size[1] = 0;

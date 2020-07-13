@@ -7667,6 +7667,18 @@ void hme_level_0(
     // Adjust SR size based on the searchAreaShift
     (void)pcs_ptr;
     // Round up x_HME_L0 to be a multiple of 16
+#if ADD_MAX_HME_SIGNAL
+    int16_t search_area_width = MIN((int16_t)(
+        (((((context_ptr->hme_level0_search_area_in_width_array[search_region_number_in_width] *
+            searchAreaMultiplierX) /
+            100))) +
+            15) &
+        ~0x0F), (int16_t)((context_ptr->hme_level0_max_search_area_in_width_array[search_region_number_in_width] + 15) & ~0x0F));
+    int16_t search_area_height = MIN((int16_t)(
+        ((context_ptr->hme_level0_search_area_in_height_array[search_region_number_in_height] *
+            searchAreaMultiplierY) /
+            100)), (int16_t)context_ptr->hme_level0_max_search_area_in_height_array[search_region_number_in_height]);
+#else
     int16_t search_area_width = (int16_t)(
         (((((context_ptr->hme_level0_search_area_in_width_array[search_region_number_in_width] *
              searchAreaMultiplierX) /
@@ -7677,12 +7689,39 @@ void hme_level_0(
         ((context_ptr->hme_level0_search_area_in_height_array[search_region_number_in_height] *
           searchAreaMultiplierY) /
          100));
-
+#endif
     x_search_region_distance = x_hme_search_center;
     y_search_region_distance = y_hme_search_center;
     pad_width                = (int16_t)(sixteenth_ref_pic_ptr->origin_x) - 1;
     pad_height               = (int16_t)(sixteenth_ref_pic_ptr->origin_y) - 1;
 
+#if ADD_MAX_HME_SIGNAL
+    while (search_region_number_in_width) {
+        search_region_number_in_width--;
+        x_search_region_distance += MIN((int16_t)(
+            ((context_ptr->hme_level0_search_area_in_width_array[search_region_number_in_width] *
+                searchAreaMultiplierX) /
+                100)), (int16_t)(context_ptr->hme_level0_max_search_area_in_width_array[search_region_number_in_width]));
+    }
+
+    while (search_region_number_in_height) {
+        search_region_number_in_height--;
+        y_search_region_distance += MIN((int16_t)(
+            ((context_ptr->hme_level0_search_area_in_height_array[search_region_number_in_height] *
+                searchAreaMultiplierY) /
+                100)), (int16_t)(context_ptr->hme_level0_max_search_area_in_height_array[search_region_number_in_height]));
+    }
+    x_search_area_origin =
+        -(int16_t)(
+        (MIN(((context_ptr->hme_level0_total_search_area_width * searchAreaMultiplierX) / 100), context_ptr->hme_level0_max_total_search_area_width)) >>
+            1) +
+        x_search_region_distance;
+    y_search_area_origin =
+        -(int16_t)(
+        (MIN(((context_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100), context_ptr->hme_level0_max_total_search_area_height)) >>
+            1) +
+        y_search_region_distance;
+#else
     while (search_region_number_in_width) {
         search_region_number_in_width--;
         x_search_region_distance += (int16_t)(
@@ -7708,7 +7747,7 @@ void hme_level_0(
             (((context_ptr->hme_level0_total_search_area_height * searchAreaMultiplierY) / 100)) >>
             1) +
         y_search_region_distance;
-
+#endif
     // Correct the left edge of the Search Area if it is not on the reference
     // Picture
     x_search_area_origin = ((origin_x + x_search_area_origin) < -pad_width) ? -pad_width - origin_x

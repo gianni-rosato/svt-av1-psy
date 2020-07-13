@@ -1214,6 +1214,9 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
                               SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
+#if REFACTOR_ME_HME && MAR12_ADOPTIONS
+    UNUSED(pcs_ptr);
+#endif
 #if !REFACTOR_ME_HME || !MAR12_ADOPTIONS
     uint8_t hme_me_level =
         scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
