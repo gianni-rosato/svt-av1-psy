@@ -881,8 +881,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                 ->tile_group_row_count_array[entry_pcs_ptr->temporal_layer_index]);
 
                         if (tile_group_cols * tile_group_rows > 1) {
-                            enc_dec_seg_col_cnt = pic_width_in_sb / tile_group_cols;
-                            enc_dec_seg_row_cnt = picture_height_in_sb / tile_group_rows;
+                            enc_dec_seg_col_cnt = MIN(enc_dec_seg_col_cnt,
+                                                      (uint8_t)(pic_width_in_sb / tile_group_cols));
+                            enc_dec_seg_row_cnt = MIN(
+                                enc_dec_seg_row_cnt,
+                                (uint8_t)(picture_height_in_sb / tile_group_rows));
                         }
 
                         ppcs_ptr->tile_group_cols = tile_group_cols;
