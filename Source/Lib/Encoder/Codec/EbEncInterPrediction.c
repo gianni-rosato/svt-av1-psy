@@ -2544,12 +2544,16 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
     const uint32_t     interp_filters = 0;
     InterpFilterParams filter_params_x, filter_params_y;
 
-    MV mv_l0;
-    mv_l0.col = mv_unit->mv[mv_unit->pred_direction % BI_PRED].x;
-    mv_l0.row = mv_unit->mv[mv_unit->pred_direction % BI_PRED].y;
-
     MV mv_q4 = clamp_mv_to_umv_border_sb(
-            blk_ptr->av1xd, &mv_l0, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
+        blk_ptr->av1xd,
+        &(const MV) {
+            .col = mv_unit->mv[mv_unit->pred_direction % BI_PRED].x,
+            .row = mv_unit->mv[mv_unit->pred_direction % BI_PRED].y
+        },
+        blk_geom->bwidth_uv,
+        blk_geom->bheight_uv,
+        1,
+        1);
     int32_t subpel_x = mv_q4.col & SUBPEL_MASK;
     int32_t subpel_y = mv_q4.row & SUBPEL_MASK;
     src_ptr_l0       = src_ptr_l0 + (is16bit ? 2 : 1) * ((mv_q4.row >> SUBPEL_BITS) * src_stride +
@@ -2591,12 +2595,13 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
 
     //List1-Cb
     if (is_compound) {
-        MV mv_l1;
-        mv_l1.col = mv_unit->mv[REF_LIST_1].x;
-        mv_l1.row = mv_unit->mv[REF_LIST_1].y;
-
         mv_q4 = clamp_mv_to_umv_border_sb(
-                blk_ptr->av1xd, &mv_l1, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
+            blk_ptr->av1xd,
+            &(const MV){.col = mv_unit->mv[REF_LIST_1].x, .row = mv_unit->mv[REF_LIST_1].y},
+            blk_geom->bwidth_uv,
+            blk_geom->bheight_uv,
+            1,
+            1);
         subpel_x   = mv_q4.col & SUBPEL_MASK;
         subpel_y   = mv_q4.row & SUBPEL_MASK;
         src_ptr_l1 = src_ptr_l1 + (is16bit ? 2 : 1) * ((mv_q4.row >> SUBPEL_BITS) * src_stride +

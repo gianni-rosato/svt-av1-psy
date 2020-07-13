@@ -447,7 +447,7 @@ void eb_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 int32_t coffset;
                 int32_t rend, cend;
                 int32_t pri_damping = frm_hdr->cdef_params.cdef_damping;
-                int32_t sec_damping = frm_hdr->cdef_params.cdef_damping;
+                int32_t sec_damping = pri_damping;
                 int32_t hsize       = nhb << mi_wide_l2[pli];
                 int32_t vsize       = nvb << mi_high_l2[pli];
 
@@ -817,7 +817,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 int32_t coffset;
                 int32_t rend, cend;
                 int32_t pri_damping = frm_hdr->cdef_params.cdef_damping;
-                int32_t sec_damping = frm_hdr->cdef_params.cdef_damping;
+                int32_t sec_damping = pri_damping;
                 int32_t hsize       = nhb << mi_wide_l2[pli];
                 int32_t vsize       = nvb << mi_high_l2[pli];
 

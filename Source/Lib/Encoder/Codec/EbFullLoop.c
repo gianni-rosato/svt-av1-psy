@@ -2228,7 +2228,6 @@ void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_pt
         candidate_buffer->candidate_ptr->type              = blk_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode         = blk_ptr->pred_mode;
         candidate_buffer->candidate_ptr->filter_intra_mode = blk_ptr->filter_intra_mode;
-        const uint32_t coeff1d_offset                      = context_ptr->coded_area_sb;
 
         av1_txb_estimate_coeff_bits(
             context_ptr->md_context,
@@ -2412,7 +2411,6 @@ void encode_pass_tx_search_hbd(
         candidate_buffer->candidate_ptr->type              = blk_ptr->prediction_mode_flag;
         candidate_buffer->candidate_ptr->pred_mode         = blk_ptr->pred_mode;
         candidate_buffer->candidate_ptr->filter_intra_mode = blk_ptr->filter_intra_mode;
-        const uint32_t coeff1d_offset                      = context_ptr->coded_area_sb;
 
         av1_txb_estimate_coeff_bits(
             context_ptr->md_context,

@@ -3303,8 +3303,6 @@ static EbErrorType copy_frame_buffer(
         uint16_t source_chroma_height =
             (luma_height >> (input_picture_ptr->color_format == EB_YUV420));
 
-        uint8_t *src, *dst;
-
         src = input_ptr->luma;
         dst = input_picture_ptr->buffer_y + luma_buffer_offset;
         for (unsigned i = 0; i < luma_height; i++) {
@@ -3330,7 +3328,7 @@ static EbErrorType copy_frame_buffer(
         }
     }
 
-    else if (is_16bit_input && config->compressed_ten_bit_format == 1)
+    else if (config->compressed_ten_bit_format == 1)
     {
         {
             uint32_t  luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding);
@@ -3372,7 +3370,7 @@ static EbErrorType copy_frame_buffer(
             //compressed 2Bit in 1D format
             {
                 uint16_t luma_2bit_width = scs_ptr->max_input_luma_width / 4;
-                uint16_t luma_height = scs_ptr->max_input_luma_height;
+                luma_height = scs_ptr->max_input_luma_height;
 
                 uint16_t source_luma_2bit_stride = source_luma_stride / 4;
                 uint16_t source_chroma_2bit_stride = source_luma_2bit_stride >> 1;

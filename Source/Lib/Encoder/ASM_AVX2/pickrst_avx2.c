@@ -3195,8 +3195,7 @@ void eb_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, c
 
         k = 0;
         do {
-            const __m256i src = _mm256_loadu_si256((__m256i *)(M + k));
-            const __m256i dst = div4_avx2(src);
+            const __m256i dst = div4_avx2(_mm256_loadu_si256((__m256i *)(M + k)));
             _mm256_storeu_si256((__m256i *)(M + k), dst);
             H[k * wiener_win2 + k] /= 4;
             k += 4;
@@ -3212,8 +3211,7 @@ void eb_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, c
 
         k = 0;
         do {
-            const __m256i src = _mm256_loadu_si256((__m256i *)(M + k));
-            const __m256i dst = div16_avx2(src);
+            const __m256i dst = div16_avx2(_mm256_loadu_si256((__m256i *)(M + k)));
             _mm256_storeu_si256((__m256i *)(M + k), dst);
             H[k * wiener_win2 + k] /= 16;
             k += 4;

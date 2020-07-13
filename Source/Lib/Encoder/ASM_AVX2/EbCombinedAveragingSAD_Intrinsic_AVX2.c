@@ -15,7 +15,6 @@ uint32_t combined_averaging_8xm_sad_avx2_intrin(uint8_t *src, uint32_t src_strid
                                                 uint32_t ref2_stride, uint32_t height,
                                                 uint32_t width) {
     __m256i  sum = _mm256_setzero_si256();
-    __m128i  sad;
     uint32_t y = height;
     (void)width;
 
@@ -24,15 +23,14 @@ uint32_t combined_averaging_8xm_sad_avx2_intrin(uint8_t *src, uint32_t src_strid
         const __m256i r1  = load_u8_8x4_avx2(ref1, ref1_stride);
         const __m256i r2  = load_u8_8x4_avx2(ref2, ref2_stride);
         const __m256i avg = _mm256_avg_epu8(r1, r2);
-        const __m256i sad = _mm256_sad_epu8(s, avg);
-        sum               = _mm256_add_epi32(sum, sad);
+        sum               = _mm256_add_epi32(sum, _mm256_sad_epu8(s, avg));
         src += src_stride << 2;
         ref1 += ref1_stride << 2;
         ref2 += ref2_stride << 2;
         y -= 4;
     } while (y);
 
-    sad = _mm_add_epi32(_mm256_castsi256_si128(sum), _mm256_extracti128_si256(sum, 1));
+    __m128i sad = _mm_add_epi32(_mm256_castsi256_si128(sum), _mm256_extracti128_si256(sum, 1));
     sad = _mm_add_epi32(sad, _mm_srli_si128(sad, 8));
 
     return _mm_cvtsi128_si32(sad);

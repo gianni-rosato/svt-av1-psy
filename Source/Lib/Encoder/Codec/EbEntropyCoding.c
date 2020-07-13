@@ -5348,20 +5348,20 @@ void write_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context, 
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     if (!segmentation_params->segmentation_enabled) return;
     int       cdf_num;
-    const int pred = get_spatial_seg_prediction(pcs_ptr, blk_origin_x, blk_origin_y, &cdf_num);
+    const int spatial_pred = get_spatial_seg_prediction(pcs_ptr, blk_origin_x, blk_origin_y, &cdf_num);
     if (skip_coeff) {
         //        SVT_LOG("BlockY = %d, BlockX = %d \n", blk_origin_y>>2, blk_origin_x>>2);
-        update_segmentation_map(pcs_ptr, bsize, blk_origin_x, blk_origin_y, pred);
-        blk_ptr->segment_id = pred;
+        update_segmentation_map(pcs_ptr, bsize, blk_origin_x, blk_origin_y, spatial_pred);
+        blk_ptr->segment_id = spatial_pred;
         return;
     }
     const int coded_id = eb_av1_neg_interleave(
-        blk_ptr->segment_id, pred, segmentation_params->last_active_seg_id + 1);
+        blk_ptr->segment_id, spatial_pred, segmentation_params->last_active_seg_id + 1);
     struct segmentation_probs *segp     = &frame_context->seg;
     AomCdfProb *               pred_cdf = segp->spatial_pred_seg_cdf[cdf_num];
     aom_write_symbol(ecWriter, coded_id, pred_cdf, MAX_SEGMENTS);
     update_segmentation_map(pcs_ptr, bsize, blk_origin_x, blk_origin_y, blk_ptr->segment_id);
-    //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blk_origin_y>>2, blk_origin_x>>2, pred, skip_coeff, coded_id, *pred_cdf);
+    //    SVT_LOG("BlockY = %d, BlockX = %d, Segmentation  spatial_pred = %d, skip_coeff = %d, coded_id = %d, pred_cdf = %d \n", blk_origin_y>>2, blk_origin_x>>2, spatial_pred, skip_coeff, coded_id, *pred_cdf);
 }
 
 void write_inter_segment_id(PictureControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,

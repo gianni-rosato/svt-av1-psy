@@ -869,9 +869,9 @@ uint64_t estimate_ref_frames_num_bits(PictureControlSet *    pcs_ptr,
                 const CompReferenceType comp_ref_type =
                     has_uni_comp_refs(mbmi) ? UNIDIR_COMP_REFERENCE : BIDIR_COMP_REFERENCE;
 
-                const int pred_context = av1_get_comp_reference_type_context_new(blk_ptr->av1xd);
-                ref_rate_b             = candidate_ptr->md_rate_estimation_ptr
-                                 ->comp_ref_type_fac_bits[pred_context][comp_ref_type];
+                ref_rate_b       = candidate_ptr->md_rate_estimation_ptr
+                                 ->comp_ref_type_fac_bits[av1_get_comp_reference_type_context_new(
+                                     blk_ptr->av1xd)][comp_ref_type];
                 /*aom_write_symbol(w, comp_ref_type, av1_get_comp_reference_type_cdf(blk_ptr->av1xd),
                     2);*/
 
@@ -879,9 +879,9 @@ uint64_t estimate_ref_frames_num_bits(PictureControlSet *    pcs_ptr,
                     //SVT_LOG("ERROR[AN]: UNIDIR_COMP_REFERENCE not supported\n");
                     const int bit = mbmi->block_mi.ref_frame[0] == BWDREF_FRAME;
 
-                    const int pred_context = eb_av1_get_pred_context_uni_comp_ref_p(blk_ptr->av1xd);
-                    ref_rate_c             = candidate_ptr->md_rate_estimation_ptr
-                                     ->uni_comp_ref_fac_bits[pred_context][0][bit];
+                    ref_rate_c = candidate_ptr->md_rate_estimation_ptr
+                                     ->uni_comp_ref_fac_bits[eb_av1_get_pred_context_uni_comp_ref_p(
+                                         blk_ptr->av1xd)][0][bit];
                     //blk_ptr->av1xd->tile_ctx->uni_comp_ref_cdf[pred_context][0];
                     //WRITE_REF_BIT(bit, uni_comp_ref_p);
 
@@ -889,18 +889,18 @@ uint64_t estimate_ref_frames_num_bits(PictureControlSet *    pcs_ptr,
                         assert(mbmi->block_mi.ref_frame[0] == LAST_FRAME);
                         const int bit1 = mbmi->block_mi.ref_frame[1] == LAST3_FRAME ||
                                          mbmi->block_mi.ref_frame[1] == GOLDEN_FRAME;
-                        const int pred_context =
-                            eb_av1_get_pred_context_uni_comp_ref_p1(blk_ptr->av1xd);
-                        ref_rate_d = candidate_ptr->md_rate_estimation_ptr
-                                         ->uni_comp_ref_fac_bits[pred_context][1][bit1];
+                        ref_rate_d =
+                            candidate_ptr->md_rate_estimation_ptr
+                                ->uni_comp_ref_fac_bits[eb_av1_get_pred_context_uni_comp_ref_p1(
+                                    blk_ptr->av1xd)][1][bit1];
                         //ref_rate_d = blk_ptr->av1xd->tile_ctx->uni_comp_ref_cdf[pred_context][1];
                         //WRITE_REF_BIT(bit1, uni_comp_ref_p1);
                         if (bit1) {
                             const int bit2 = mbmi->block_mi.ref_frame[1] == GOLDEN_FRAME;
-                            const int pred_context =
-                                eb_av1_get_pred_context_uni_comp_ref_p2(blk_ptr->av1xd);
-                            ref_rate_e = candidate_ptr->md_rate_estimation_ptr
-                                             ->uni_comp_ref_fac_bits[pred_context][2][bit2];
+                            ref_rate_e =
+                                candidate_ptr->md_rate_estimation_ptr
+                                    ->uni_comp_ref_fac_bits[eb_av1_get_pred_context_uni_comp_ref_p2(
+                                        blk_ptr->av1xd)][2][bit2];
 
                             // ref_rate_e = blk_ptr->av1xd->tile_ctx->uni_comp_ref_cdf[pred_context][2];
                             //WRITE_REF_BIT(bit2, uni_comp_ref_p2);
@@ -928,16 +928,16 @@ uint64_t estimate_ref_frames_num_bits(PictureControlSet *    pcs_ptr,
 
                 if (!bit) {
                     const int bit1         = mbmi->block_mi.ref_frame[0] == LAST2_FRAME;
-                    const int pred_context = eb_av1_get_pred_context_comp_ref_p1(blk_ptr->av1xd);
                     ref_rate_g             = candidate_ptr->md_rate_estimation_ptr
-                                     ->comp_ref_fac_bits[pred_context][1][bit1];
+                                     ->comp_ref_fac_bits[eb_av1_get_pred_context_comp_ref_p1(
+                                         blk_ptr->av1xd)][1][bit1];
                     //ref_rate_g = blk_ptr->av1xd->tile_ctx->comp_ref_cdf[pred_context][1];
                     //WRITE_REF_BIT(bit1, comp_ref_p1);
                 } else {
                     const int bit2         = mbmi->block_mi.ref_frame[0] == GOLDEN_FRAME;
-                    const int pred_context = eb_av1_get_pred_context_comp_ref_p2(blk_ptr->av1xd);
                     ref_rate_h             = candidate_ptr->md_rate_estimation_ptr
-                                     ->comp_ref_fac_bits[pred_context][2][bit2];
+                                     ->comp_ref_fac_bits[eb_av1_get_pred_context_comp_ref_p2(
+                                         blk_ptr->av1xd)][2][bit2];
                     //ref_rate_h = blk_ptr->av1xd->tile_ctx->comp_ref_cdf[pred_context][2];
                     //WRITE_REF_BIT(bit2, comp_ref_p2);
                 }
@@ -950,10 +950,9 @@ uint64_t estimate_ref_frames_num_bits(PictureControlSet *    pcs_ptr,
                 //WRITE_REF_BIT(bit_bwd, comp_bwdref_p);
 
                 if (!bit_bwd) {
-                    const int pred_context = eb_av1_get_pred_context_comp_bwdref_p1(blk_ptr->av1xd);
-                    ref_rate_j =
-                        candidate_ptr->md_rate_estimation_ptr
-                            ->comp_bwd_ref_fac_bits[pred_context][1][ref_type[1] == ALTREF2_FRAME];
+                    ref_rate_j             = candidate_ptr->md_rate_estimation_ptr
+                                     ->comp_bwd_ref_fac_bits[eb_av1_get_pred_context_comp_bwdref_p1(
+                                         blk_ptr->av1xd)][1][ref_type[1] == ALTREF2_FRAME];
                     //ref_rate_j = blk_ptr->av1xd->tile_ctx->comp_bwdref_cdf[pred_context][1];
                     //WRITE_REF_BIT(mbmi->block_mi.ref_frame[1] == ALTREF2_FRAME, comp_bwdref_p1);
                 }
@@ -1313,7 +1312,7 @@ uint32_t get_compound_mode_rate(uint8_t md_pass, ModeDecisionCandidate *candidat
 }
 int is_interintra_wedge_used(BlockSize sb_type);
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
-                              MvReferenceFrame ref_frame[2]);
+                              const MvReferenceFrame ref_frame[2]);
 
 /* two_pass_cost_update
  * This function adds some biases for distortion and rate.
