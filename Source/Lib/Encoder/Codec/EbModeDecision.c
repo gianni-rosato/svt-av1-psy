@@ -6029,7 +6029,20 @@ void  inject_palette_candidates(
         cand_array[can_total_cnt].is_directional_mode_flag = 0;
 
         cand_array[can_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
+#if FIX_CHROMA_PALETTE_INTERACTION
+        const int32_t disable_ang_uv = (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) && context_ptr->blk_geom->has_uv ? 1 : 0;
+        cand_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ?
+            intra_luma_to_chroma[DC_PRED] :
+            (context_ptr->chroma_level <= CHROMA_MODE_1) ?
+            UV_CFL_PRED :
+            UV_DC_PRED;
 
+        cand_array[can_total_cnt].intra_chroma_mode = disable_ang_uv && av1_is_directional_mode(cand_array[can_total_cnt].intra_chroma_mode) ?
+            UV_DC_PRED : cand_array[can_total_cnt].intra_chroma_mode;
+
+        cand_array[can_total_cnt].is_directional_chroma_mode_flag = (uint8_t)av1_is_directional_mode((PredictionMode)cand_array[can_total_cnt].intra_chroma_mode);
+        cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
+#else
         // Search the best independent intra chroma mode
         if (context_ptr->chroma_level == CHROMA_MODE_0) {
             cand_array[can_total_cnt].intra_chroma_mode = disable_cfl_flag ?
@@ -6058,7 +6071,7 @@ void  inject_palette_candidates(
             cand_array[can_total_cnt].angle_delta[PLANE_TYPE_UV] = 0;
 
         }
-
+#endif
         cand_array[can_total_cnt].cfl_alpha_signs = 0;
         cand_array[can_total_cnt].cfl_alpha_idx = 0;
         cand_array[can_total_cnt].transform_type[0] = DCT_DCT;

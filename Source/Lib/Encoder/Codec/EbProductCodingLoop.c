@@ -1094,9 +1094,16 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     context_ptr->pu_itr                   = 0;
     // Prediction
     // Set default interp_filters
+#if USE_REGULAR_MD_STAGE_0
+    candidate_buffer->candidate_ptr->interp_filters = 0;
+#else
     candidate_buffer->candidate_ptr->interp_filters = (context_ptr->md_staging_use_bilinear)
         ? av1_make_interp_filters(BILINEAR, BILINEAR)
         : 0;
+#endif
+#if REFACTOR_SIGNALS
+    context_ptr->uv_intra_comp_only = EB_FALSE;
+#endif
     product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc
                                      ? INTER_MODE
                                      : candidate_ptr->type](
@@ -1216,14 +1223,22 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     *(candidate_buffer->fast_cost_ptr) = av1_product_fast_cost_func_table[candidate_ptr->type](
         blk_ptr,
         candidate_buffer->candidate_ptr,
+#if QP2QINDEX
+        NOT_USED_VALUE,
+#else
         blk_ptr->qp,
+#endif
         luma_fast_distortion,
         chroma_fast_distortion,
         use_ssd ? full_lambda : fast_lambda,
         use_ssd,
         pcs_ptr,
+#if MEM_OPT_MV_STACK
+        &(context_ptr->ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#else
         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
               .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#endif
         context_ptr->blk_geom,
         context_ptr->blk_origin_y >> MI_SIZE_LOG2,
         context_ptr->blk_origin_x >> MI_SIZE_LOG2,
@@ -4241,8 +4256,12 @@ void construct_best_sorted_arrays_md_stage_3(struct ModeDecisionContext *  conte
     uint32_t i, id;
     uint32_t id_inter = 0;
     uint32_t id_intra = fullReconCandidateCount - 1;
+#if FIXED_LAST_STAGE_SC
+    context_ptr->md_stage_3_total_intra_count = 0;
+#else
     if (context_ptr->chroma_at_last_md_stage)
         context_ptr->md_stage_3_total_intra_count = 0;
+#endif
     for (i = 0; i < fullReconCandidateCount; ++i) {
         id = sorted_candidate_index_array[i];
         if (buffer_ptr_array[id]->candidate_ptr->type == INTER_MODE) {
@@ -4277,10 +4296,15 @@ void construct_best_sorted_arrays_md_stage_3(struct ModeDecisionContext *  conte
 
     // prune intra count based on inter/intra cost deviation;
     // check that th != INF to avoid overflow errors
+#if FIXED_LAST_STAGE_SC
+    if ((context_ptr->best_inter_cost * context_ptr->chroma_at_last_md_stage_intra_th) < (context_ptr->best_intra_cost * 100))
+        context_ptr->md_stage_3_total_intra_count = 0;
+#else
     if ((context_ptr->mds3_intra_prune_th != (uint16_t)~0) &&
         (context_ptr->best_inter_cost * (100 + context_ptr->mds3_intra_prune_th)) <
             (context_ptr->best_intra_cost * 100))
         context_ptr->md_stage_3_total_intra_count = 0;
+#endif
     sort_array_index_fast_cost_ptr(
         buffer_ptr_array, sorted_candidate_index_array, fullReconCandidateCount);
 }
@@ -4366,14 +4390,22 @@ void md_stage_0(
                     av1_product_fast_cost_func_table[candidate_ptr->type](
                         blk_ptr,
                         candidate_buffer->candidate_ptr,
+#if QP2QINDEX
+                        NOT_USED_VALUE,
+#else
                         blk_ptr->qp,
+#endif
                         luma_fast_distortion,
                         0,
                         fast_lambda,
                         0,
                         pcs_ptr,
+#if MEM_OPT_MV_STACK
+                        &(context_ptr->ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#else
                         &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                               .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#endif
                         context_ptr->blk_geom,
                         context_ptr->blk_origin_y >> MI_SIZE_LOG2,
                         context_ptr->blk_origin_x >> MI_SIZE_LOG2,
@@ -5989,8 +6021,13 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
     uint32_t               chroma_height = context_ptr->blk_geom->bheight_uv;
     // FullLoop and TU search
     int32_t  alpha_q3;
+#if QP2QINDEX
+    uint16_t cb_qindex = context_ptr->qp_index;
+    uint16_t cr_qindex = context_ptr->qp_index;
+#else
     uint16_t cb_qp = context_ptr->qp;
     uint16_t cr_qp = context_ptr->qp;
+#endif
 
     full_distortion[DIST_CALC_RESIDUAL]   = 0;
     full_distortion[DIST_CALC_PREDICTION] = 0;
@@ -6056,8 +6093,13 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                     input_picture_ptr,
                     pcs_ptr,
                     PICTURE_BUFFER_DESC_Cb_FLAG,
+#if QP2QINDEX
+                    cb_qindex,
+                    cr_qindex,
+#else
                     cb_qp,
                     cr_qp,
+#endif
                     &(*count_non_zero_coeffs[1]),
                     &(*count_non_zero_coeffs[2]));
 
@@ -6140,8 +6182,13 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                     input_picture_ptr,
                     pcs_ptr,
                     PICTURE_BUFFER_DESC_Cr_FLAG,
+#if QP2QINDEX
+                    cb_qindex,
+                    cr_qindex,
+#else
                     cb_qp,
                     cr_qp,
+#endif
                     &(*count_non_zero_coeffs[1]),
                     &(*count_non_zero_coeffs[2]));
         candidate_ptr->v_has_coeff = *count_non_zero_coeffs[2] ? EB_TRUE : EB_FALSE;
@@ -6875,8 +6922,13 @@ static INLINE TxType av1_get_tx_type(BlockSize sb_type, int32_t is_inter, Predic
 void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input_picture_ptr,
                                ModeDecisionContext *context_ptr, uint32_t input_cb_origin_in_index,
                                uint32_t                     blk_chroma_origin_index,
-                               ModeDecisionCandidateBuffer *candidate_buffer, uint8_t cb_qp,
-                               uint8_t cr_qp, uint64_t *cb_full_distortion,
+                               ModeDecisionCandidateBuffer *candidate_buffer,
+#if QP2QINDEX
+                               uint8_t cb_qindex, uint8_t cr_qindex,
+#else
+                               uint8_t cb_qp, uint8_t cr_qp,
+#endif
+                               uint64_t *cb_full_distortion,
                                uint64_t *cr_full_distortion, uint64_t *cb_coeff_bits,
                                uint64_t *cr_coeff_bits) {
     uint32_t full_lambda = context_ptr->hbd_mode_decision
@@ -6952,9 +7004,12 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
             0,
             context_ptr->blk_geom->txsize_uv[0][0],
             frm_hdr->reduced_tx_set);
-
+#if REFACTOR_SIGNALS
+        context_ptr->uv_intra_comp_only = EB_TRUE;
+#else
         // Start uv search path
         context_ptr->uv_search_path = EB_TRUE;
+#endif
 
         memset(candidate_buffer->candidate_ptr->eob[1], 0, sizeof(uint16_t));
         memset(candidate_buffer->candidate_ptr->eob[2], 0, sizeof(uint16_t));
@@ -7011,8 +7066,13 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
                     input_picture_ptr,
                     pcs_ptr,
                     PICTURE_BUFFER_DESC_CHROMA_MASK,
+#if QP2QINDEX
+                    cb_qindex,
+                    cr_qindex,
+#else
                     cb_qp,
                     cr_qp,
+#endif
                     &(*count_non_zero_coeffs[1]),
                     &(*count_non_zero_coeffs[2]));
 
@@ -7029,9 +7089,10 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
                                            cb_coeff_bits,
                                            cr_coeff_bits,
                                            1);
-
+#if !REFACTOR_SIGNALS
         // End uv search path
         context_ptr->uv_search_path = EB_FALSE;
+#endif
     }
 }
 
@@ -8536,7 +8597,11 @@ void update_tx_candidate_buffer(ModeDecisionCandidateBuffer *candidate_buffer,
 void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                              uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
+#if QP2QINDEX
+                             uint32_t qindex, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#else
                              uint32_t qp, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
+#endif
                              uint64_t *y_full_distortion) {
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
@@ -8644,23 +8709,41 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                     context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr],
                     context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]);
             }
+#if UNIFY_TXT
 
+            tx_type_search(pcs_ptr, context_ptr,
+                tx_candidate_buffer,
+                qindex,
+                tx_search_skip_flag,
+                &(tx_y_count_non_zero_coeffs[0]),
+                &tx_y_coeff_bits,
+                &tx_y_full_distortion[0]);
+
+#else
             if (context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] <=
                     32 &&
                 context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] <= 32)
                 if (!tx_search_skip_flag) {
+#if QP2QINDEX
+                    tx_type_search(pcs_ptr, context_ptr, tx_candidate_buffer, qindex);
+#else
                     tx_type_search(pcs_ptr, context_ptr, tx_candidate_buffer, qp);
+#endif
                 }
 
             product_full_loop(tx_candidate_buffer,
                               context_ptr,
                               pcs_ptr,
                               input_picture_ptr,
+#if QP2QINDEX
+                              context_ptr->blk_ptr->qindex,
+#else
                               context_ptr->blk_ptr->qp,
+#endif
                               &(tx_y_count_non_zero_coeffs[0]),
                               &tx_y_coeff_bits,
                               &tx_y_full_distortion[0]);
-
+#endif
             uint32_t y_has_coeff = tx_y_count_non_zero_coeffs[context_ptr->txb_itr] > 0;
 
             tx_update_neighbor_arrays(pcs_ptr, context_ptr, tx_candidate_buffer, is_inter);
@@ -8735,7 +8818,12 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     uint32_t full_lambda   = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
         : context_ptr->full_lambda_md[EB_8_BIT_MD];
-
+#if FIX_CFL_OFF
+    int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
+        candidate_buffer->candidate_ptr->use_intrabc)
+        ? EB_TRUE
+        : EB_FALSE;
+#endif
     // initialize TU Split
     y_full_distortion[DIST_CALC_RESIDUAL]   = 0;
     y_full_distortion[DIST_CALC_PREDICTION] = 0;
@@ -8753,12 +8841,31 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     candidate_ptr->skip_flag = EB_FALSE;
 
     if (candidate_ptr->type != INTRA_MODE) {
+#if REFACTOR_SIGNALS
+        if (context_ptr->md_staging_perform_inter_pred) {
+#else
         if (context_ptr->md_staging_skip_full_pred == EB_FALSE) {
+#endif
             product_prediction_fun_table[candidate_ptr->type](
                 context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
         }
     }
-
+#if FIX_CFL_OFF
+    else if (context_ptr->md_staging_skip_full_chroma == EB_FALSE) {
+        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
+            // Cb/Cr Prediction
+            if (context_ptr->md_staging_perform_intra_chroma_pred) {
+                context_ptr->uv_intra_comp_only = EB_TRUE;
+#if REMOVE_CHROMA_INTRA_S0
+                product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
+#else
+                product_prediction_fun_table[candidate_ptr->type](
+#endif
+                    context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+            }
+        }
+    }
+#endif
     // Initialize luma CBF
     candidate_ptr->y_has_coeff = 0;
     candidate_ptr->u_has_coeff = 0;
@@ -8775,22 +8882,75 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
         start_tx_depth = end_tx_depth = candidate_buffer->candidate_ptr->tx_depth;
     } else {
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
+#if FIX_INCOMPLETE_SB
+        if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
+            context_ptr->blk_geom->bwidth <=
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
+            context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
+            context_ptr->blk_geom->bheight <=
+            pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+#else
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
                      context_ptr->blk_geom->bwidth <
                  pcs_ptr->parent_pcs_ptr->aligned_width &&
              context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
                      context_ptr->blk_geom->bheight <
                  pcs_ptr->parent_pcs_ptr->aligned_height))
+#endif
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
         else
             end_tx_depth = 0;
+#if COEFF_BASED_TXS_BYPASS
+        // Bypass TXS based on statistics
+        if (context_ptr->txs_cycles_red_ctrls.enabled && end_tx_depth != 0) {
+            int8_t pred_depth_refinement = context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].pred_depth_refinement;
+            // adjust the recorded pred depth refinement to avoid array access issues
+            pred_depth_refinement = MIN(pred_depth_refinement, 1);
+            pred_depth_refinement = MAX(pred_depth_refinement, -1);
+            pred_depth_refinement++;
+            uint8_t is_nsq = context_ptr->blk_geom->shape == PART_N ? 0 : 1;
+            uint8_t freq_band = context_ptr->sb_class <= SB_CLASS_15 ? 1 : 0;
+            uint8_t sq_size_idx = 7 - (uint8_t)Log2f((uint8_t)context_ptr->blk_geom->sq_size);
+
+            // Bypass TXS for INTRA classes
+            if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
+                // Check TXS depth 1 first; if depth 1 becomes disallowed, do not allow depth 2
+                end_tx_depth = m0_intra_txs_depth_1_cycles_reduction_stats[sq_size_idx][pred_depth_refinement][is_nsq][freq_band]
+                    < context_ptr->txs_cycles_red_ctrls.intra_th
+                    ? 0 : end_tx_depth;
+
+                if (end_tx_depth == 2) {
+                    end_tx_depth = m0_intra_txs_depth_2_cycles_reduction_stats[sq_size_idx][pred_depth_refinement][is_nsq][freq_band]
+                        < context_ptr->txs_cycles_red_ctrls.intra_th
+                        ? 1 : end_tx_depth;
+                }
+            }
+            else {// Bypass TXS for INTER classes
+                // Check TXS depth 1 first; if depth 1 becomes disallowed, do not allow depth 2
+                end_tx_depth = m0_inter_txs_depth_1_cycles_reduction_stats[sq_size_idx][pred_depth_refinement][is_nsq][freq_band]
+                    < context_ptr->txs_cycles_red_ctrls.inter_th
+                    ? 0 : end_tx_depth;
+
+                if (end_tx_depth == 2) {
+                    end_tx_depth = m0_inter_txs_depth_2_cycles_reduction_stats[sq_size_idx][pred_depth_refinement][is_nsq][freq_band]
+                        < context_ptr->txs_cycles_red_ctrls.inter_th
+                        ? 1 : end_tx_depth;
+                }
+            }
+        }
+#endif
     }
+#if RESTRICT_INTER_TXS_DEPTH
+    if (is_inter && (pcs_ptr->parent_pcs_ptr->txs_in_inter_classes == 2))
+        end_tx_depth = MIN(1, end_tx_depth);
+#endif
+#if !FIX_CFL_OFF
     // Transform partitioning path (INTRA Luma)
     int32_t is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE ||
                         candidate_buffer->candidate_ptr->use_intrabc)
         ? EB_TRUE
         : EB_FALSE;
-
+#endif
     //Y Residual: residual for INTRA is computed inside the TU loop
     if (is_inter)
         //Y Residual
@@ -8813,7 +8973,11 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                             ref_fast_cost,
                             start_tx_depth,
                             end_tx_depth,
+#if QP2QINDEX
+                            context_ptr->blk_ptr->qindex,
+#else
                             context_ptr->blk_ptr->qp,
+#endif
                             &(*count_non_zero_coeffs[0]),
                             &y_coeff_bits,
                             &y_full_distortion[0]);
@@ -8832,8 +8996,13 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
     cr_coeff_bits = 0;
 
     // FullLoop and TU search
+#if QP2QINDEX
+    uint16_t cb_qindex = context_ptr->qp_index;
+    uint16_t cr_qindex = context_ptr->qp_index;
+#else
     uint16_t cb_qp = context_ptr->qp;
     uint16_t cr_qp = context_ptr->qp;
+#endif
     if (context_ptr->md_staging_skip_full_chroma == EB_FALSE) {
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
             //Cb Residual
@@ -8864,7 +9033,25 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                             context_ptr->blk_geom->bwidth_uv,
                             context_ptr->blk_geom->bheight_uv);
         }
-
+#if FIX_CFL_OFF
+        EbBool cfl_performed = EB_FALSE;
+        if (!is_inter)
+            if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
+                cfl_performed = EB_TRUE;
+                // If mode is CFL:
+                // 1: recon the Luma
+                // 2: Form the pred_buf_q3
+                // 3: Loop over alphas and find the best or choose DC
+                // 4: Recalculate the residual for chroma
+                cfl_prediction(pcs_ptr,
+                    candidate_buffer,
+                    sb_ptr,
+                    context_ptr,
+                    input_picture_ptr,
+                    input_cb_origin_in_index,
+                    blk_chroma_origin_index);
+            }
+#else
         if (!is_inter)
             if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED)
                 // If mode is CFL:
@@ -8879,6 +9066,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                                input_picture_ptr,
                                input_cb_origin_in_index,
                                blk_chroma_origin_index);
+#endif
 
         if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
             full_loop_r(sb_ptr,
@@ -8887,8 +9075,13 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
                         input_picture_ptr,
                         pcs_ptr,
                         PICTURE_BUFFER_DESC_CHROMA_MASK,
+#if QP2QINDEX
+                        cb_qindex,
+                        cr_qindex,
+#else
                         cb_qp,
                         cr_qp,
+#endif
                         &(*count_non_zero_coeffs[1]),
                         &(*count_non_zero_coeffs[2]));
 
@@ -8909,17 +9102,34 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
 
         // Check independant chroma vs. cfl
         if (!is_inter)
+#if FIX_CHROMA_PALETTE_INTERACTION
+#if MEM_OPT_PALETTE
+            if (candidate_ptr->palette_info == NULL ||
+                    candidate_ptr->palette_info->pmi.palette_size[0] == 0)
+#else
+            if (candidate_ptr->palette_info.pmi.palette_size[0] == 0)
+#endif
+#endif
             if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level == CHROMA_MODE_0)
+#if FIX_CFL_OFF
+                if (cfl_performed)
+#else
                 if (candidate_buffer->candidate_ptr->intra_chroma_mode == UV_CFL_PRED ||
                     candidate_buffer->candidate_ptr->intra_chroma_mode == UV_DC_PRED)
+#endif
                     check_best_indepedant_cfl(pcs_ptr,
                                               input_picture_ptr,
                                               context_ptr,
                                               input_cb_origin_in_index,
                                               blk_chroma_origin_index,
                                               candidate_buffer,
+#if QP2QINDEX
+                                              (uint8_t)cb_qindex,
+                                              (uint8_t)cr_qindex,
+#else
                                               (uint8_t)cb_qp,
                                               (uint8_t)cr_qp,
+#endif
                                               cb_full_distortion,
                                               cr_full_distortion,
                                               &cb_coeff_bits,
@@ -8979,8 +9189,11 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
             context_ptr->cand_buff_indices[context_ptr->target_class][full_loop_candidate_index];
         candidate_buffer = candidate_buffer_ptr_array[cand_index];
         candidate_ptr    = candidate_buffer->candidate_ptr;
-
+#if REFACTOR_SIGNALS
+        context_ptr->md_staging_perform_inter_pred = EB_TRUE;
+#else
         context_ptr->md_staging_skip_full_pred            = EB_FALSE;
+#endif
         context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         context_ptr->md_staging_skip_chroma_pred = EB_TRUE;
@@ -9417,7 +9630,11 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
     dst_cu->prediction_mode_flag = src_cu->prediction_mode_flag;
     dst_cu->block_has_coeff      = src_cu->block_has_coeff;
     dst_cu->split_flag_context   = src_cu->split_flag_context;
+#if QP2QINDEX
+    dst_cu->qindex               = src_cu->qindex;
+#else
     dst_cu->qp                   = src_cu->qp;
+#endif
     dst_cu->tx_depth             = src_cu->tx_depth;
     dst_cu->split_flag           = src_cu->split_flag;
     dst_cu->skip_flag            = src_cu->skip_flag;
@@ -9497,7 +9714,11 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     dst_cu->prediction_mode_flag = src_cu->prediction_mode_flag;
     dst_cu->block_has_coeff      = src_cu->block_has_coeff;
     dst_cu->split_flag_context   = src_cu->split_flag_context;
+#if QP2QINDEX
+    dst_cu->qindex               = src_cu->qindex;
+#else
     dst_cu->qp                   = src_cu->qp;
+#endif
     dst_cu->skip_flag            = src_cu->skip_flag;
     dst_cu->tx_depth             = src_cu->tx_depth;
     //CHKN    MacroBlockD*  av1xd;
@@ -9927,7 +10148,9 @@ Part get_partition_shape(PartitionContextType above, PartitionContextType left, 
     return part;
 };
 void init_chroma_mode(ModeDecisionContext *context_ptr) {
+#if !REFACTOR_SIGNALS
     context_ptr->uv_search_path = EB_TRUE;
+#endif
     EbBool use_angle_delta      = av1_use_angle_delta(context_ptr->blk_geom->bsize,
                                                  context_ptr->md_intra_angle_delta);
     for (uint8_t intra_mode = DC_PRED; intra_mode <= PAETH_PRED; ++intra_mode) {
@@ -9949,8 +10172,10 @@ void init_chroma_mode(ModeDecisionContext *context_ptr) {
             context_ptr->best_uv_cost[intra_mode][MAX_ANGLE_DELTA + angle_delta]  = (uint64_t)~0;
         }
     }
+#if !REFACTOR_SIGNALS
     // End uv search path
     context_ptr->uv_search_path = EB_FALSE;
+#endif
 }
 void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                      EbPictureBufferDesc *input_picture_ptr,
@@ -9962,8 +10187,12 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
     uint32_t     full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
         : context_ptr->full_lambda_md[EB_8_BIT_MD];
+#if REFACTOR_SIGNALS
+    context_ptr->uv_intra_comp_only = EB_TRUE;
+#else
     // Start uv search path
     context_ptr->uv_search_path = EB_TRUE;
+#endif
 
     EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize,
                                                  context_ptr->md_intra_angle_delta);
@@ -10234,8 +10463,13 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
         candidate_buffer->candidate_ptr =
             &context_ptr->fast_candidate_array[uv_cand_buff_indices[uv_mode_count] -
                                                start_full_buffer_index + start_fast_buffer_index];
+#if QP2QINDEX
+        uint16_t cb_qindex                           = context_ptr->qp_index;
+        uint16_t cr_qindex                           = context_ptr->qp_index;
+#else
         uint16_t cb_qp                               = context_ptr->qp;
         uint16_t cr_qp                               = context_ptr->qp;
+#endif
         uint64_t cb_coeff_bits                       = 0;
         uint64_t cr_coeff_bits                       = 0;
         uint64_t cb_full_distortion[DIST_CALC_TOTAL] = {0, 0};
@@ -10277,8 +10511,13 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                     input_picture_ptr,
                     pcs_ptr,
                     PICTURE_BUFFER_DESC_CHROMA_MASK,
+#if QP2QINDEX
+                    cb_qindex,
+                    cr_qindex,
+#else
                     cb_qp,
                     cr_qp,
+#endif
                     &(*count_non_zero_coeffs[1]),
                     &(*count_non_zero_coeffs[2]));
 
@@ -10348,7 +10587,11 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                 av1_product_fast_cost_func_table[candidate_ptr->type](
                     context_ptr->blk_ptr,
                     candidate_ptr,
+#if QP2QINDEX
+                    NOT_USED_VALUE,
+#else
                     context_ptr->qp,
+#endif
                     0,
                     0,
                     0,
@@ -10395,8 +10638,10 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
     if (context_ptr->chroma_at_last_md_stage) {
         context_ptr->md_staging_skip_rdoq = tem_md_staging_skip_rdoq;
     }
+#if !REFACTOR_SIGNALS
     // End uv search path
     context_ptr->uv_search_path = EB_FALSE;
+#endif
 }
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 unsigned int eb_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, const uint8_t *src,
@@ -10826,7 +11071,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                                        context_ptr->leaf_partition_neighbor_array);
 
     // Initialize uv_search_path
+#if !REFACTOR_SIGNALS
     context_ptr->uv_search_path = EB_FALSE;
+#endif
     if (context_ptr->chroma_at_last_md_stage) {
         if (context_ptr->blk_geom->sq_size < 128) {
             if (context_ptr->blk_geom->has_uv) {
@@ -11082,7 +11329,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Search the best independent intra chroma mode
     if (context_ptr->chroma_at_last_md_stage) {
         // Initialize uv_search_path
+#if !REFACTOR_SIGNALS
         context_ptr->uv_search_path = EB_FALSE;
+#endif
         if (context_ptr->blk_geom->sq_size < 128) {
             if (context_ptr->blk_geom->has_uv) {
                 if (context_ptr->md_stage_3_total_intra_count)
@@ -11115,9 +11364,13 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                                                  blk_ptr,
                                                  candidate_buffer_ptr_array,
                                                  context_ptr->md_stage_3_total_count,
+#if M8_CLEAN_UP
+                                                 context_ptr->best_candidate_index_array,
+#else
                                                  (context_ptr->full_loop_escape == 2)
                                                      ? context_ptr->sorted_candidate_index_array
                                                      : context_ptr->best_candidate_index_array,
+#endif
                                                  context_ptr->prune_ref_frame_for_rec_partitions,
                                                  &best_intra_mode);
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];
@@ -12333,12 +12586,22 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         blk_ptr->mds_idx                                            = blk_idx_mds;
         context_ptr->md_blk_arr_nsq[blk_idx_mds].mdc_split_flag     = (uint16_t)
                                                                       leaf_data_ptr->split_flag;
+#if TRACK_PER_DEPTH_DELTA
+        context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth_refinement = leaf_data_ptr->final_pred_depth_refinement;
+#endif
+#if ADAPTIVE_DEPTH_CR
+        context_ptr->md_local_blk_unit[blk_idx_mds].pred_depth = leaf_data_ptr->final_pred_depth;
+#endif
         context_ptr->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag = (uint16_t)
                                                                         leaf_data_ptr->split_flag;
         blk_ptr->split_flag =
             (uint16_t)leaf_data_ptr
                 ->split_flag; //mdc indicates smallest or non valid CUs with split flag=
+#if QP2QINDEX
+        blk_ptr->qindex      = context_ptr->qp_index;
+#else
         blk_ptr->qp                                             = context_ptr->qp;
+#endif
         context_ptr->md_local_blk_unit[blk_idx_mds].best_d1_blk = blk_idx_mds;
         if (leaf_data_ptr->tot_d1_blocks != 1) {
             // We need to get the index of the sq_block for each NSQ branch

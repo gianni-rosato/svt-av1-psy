@@ -17,8 +17,13 @@ extern "C" {
 
 void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                  ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
-                 PictureControlSet *pcs_ptr, uint32_t component_mask, uint32_t cb_qp,
-                 uint32_t cr_qp, uint32_t *cb_count_non_zero_coeffs,
+                 PictureControlSet *pcs_ptr, uint32_t component_mask,
+#if QP2QINDEX
+                 uint32_t cb_qindex, uint32_t cr_qindex,
+#else
+                 uint32_t cb_qp, uint32_t cr_qp,
+#endif
+                 uint32_t *cb_count_non_zero_coeffs,
                  uint32_t *cr_count_non_zero_coeffs);
 
 void cu_full_distortion_fast_txb_mode_r(
@@ -31,7 +36,11 @@ void cu_full_distortion_fast_txb_mode_r(
 
 void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                        ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+#if QP2QINDEX
+                       EbPictureBufferDesc *input_picture_ptr, uint32_t qindex,
+#else
                        EbPictureBufferDesc *input_picture_ptr, uint32_t qp,
+#endif
                        uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
                        uint64_t *y_full_distortion);
 

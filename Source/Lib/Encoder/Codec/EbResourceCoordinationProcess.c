@@ -941,6 +941,66 @@ void *resource_coordination_kernel(void *input_ptr) {
             } else
                 scs_ptr->seq_header.enable_interintra_compound =
                     scs_ptr->static_config.inter_intra_compound;
+#if FILTER_INTRA_CLI
+            // Enable/Disable Filter Intra
+            // seq_header.filter_intra_level | Settings
+            // 0                             | Disable
+            // 1                             | Enable
+            if (scs_ptr->static_config.filter_intra_level == DEFAULT)
+#if MAY19_ADOPTIONS
+                scs_ptr->seq_header.filter_intra_level =
+#if JUNE17_ADOPTIONS
+                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#else
+#if PRESET_SHIFITNG
+                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#else
+                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
+#endif
+#else
+#if APR23_ADOPTIONS_2
+                scs_ptr->seq_header.enable_filter_intra =
+                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#else
+#if PRESETS_SHIFT
+                scs_ptr->seq_header.enable_filter_intra =
+                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#else
+#if MAR10_ADOPTIONS
+                if (scs_ptr->static_config.screen_content_mode == 1)
+#if MAR17_ADOPTIONS
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
+#else
+#if MAR12_ADOPTIONS
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
+#else
+#if MAR11_ADOPTIONS 
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
+#else
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
+#endif
+#endif
+#endif
+                else
+#endif
+#if MAR17_ADOPTIONS
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
+#else
+                    scs_ptr->seq_header.enable_filter_intra =
+                    (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
+#endif
+#endif
+#endif
+#endif
+            else
+                scs_ptr->seq_header.filter_intra_level = (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;
+#else
             // Set filter intra mode      Settings
             // 0                 OFF
             // 1                 ON
@@ -998,7 +1058,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 #endif
             else
                 scs_ptr->seq_header.enable_filter_intra = 0;
-
+#endif
             // Set compound mode      Settings
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full

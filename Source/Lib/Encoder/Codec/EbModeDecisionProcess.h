@@ -392,11 +392,17 @@ typedef struct ModeDecisionContext {
     uint64_t *full_cost_skip_ptr;
     uint64_t *full_cost_merge_ptr;
     // Lambda
+#if !QP2QINDEX
     uint16_t qp;
     uint8_t  chroma_qp;
+#endif
     uint32_t fast_lambda_md[2];
     uint32_t full_lambda_md[2];
-
+#if TPL_LAMBDA_IMP
+    uint32_t full_sb_lambda_md[2]; // for the case of lambda modulation (blk_lambda_tuning), full_lambda_md/fast_lambda_md corresponds
+                                   // to block lambda and full_sb_lambda_md is the full lambda per sb
+    EbBool       blk_lambda_tuning;
+#endif
     //  Context Variables---------------------------------
     SuperBlock *     sb_ptr;
     BlkStruct *     blk_ptr;
@@ -428,7 +434,11 @@ typedef struct ModeDecisionContext {
     uint16_t         qp_index;
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
+#if REFACTOR_SIGNALS
+    EbBool           uv_intra_comp_only;
+#else
     EbBool           uv_search_path;
+#endif
     UvPredictionMode best_uv_mode[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     int32_t          best_uv_angle[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     uint64_t         best_uv_cost[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
@@ -496,7 +506,9 @@ typedef struct ModeDecisionContext {
 #if M5_CHROMA_NICS
     uint8_t              independent_chroma_nics;
 #endif
+#if !M8_CLEAN_UP
     uint8_t              full_loop_escape;
+#endif
     uint8_t              global_mv_injection;
 #if !PERFORM_SUB_PEL_MD
     uint8_t              perform_me_mv_1_8_pel_ref;

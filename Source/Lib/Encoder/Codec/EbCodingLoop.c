@@ -49,14 +49,25 @@ void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 typedef void (*EbAv1EncodeLoopFuncPtr)(PictureControlSet *pcs_ptr, EncDecContext *context_ptr,
                                        SuperBlock *sb_ptr, uint32_t origin_x, uint32_t origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                       uint32_t             cb_qindex,
+#else
                                        uint32_t             cb_qp,
+#endif
+#endif
                                        EbPictureBufferDesc *pred_samples, // no basis/offset
                                        EbPictureBufferDesc *coeff_samples_sb, // sb based
                                        EbPictureBufferDesc *residual16bit, // no basis/offset
                                        EbPictureBufferDesc *transform16bit, // no basis/offset
                                        EbPictureBufferDesc *inverse_quant_buffer,
                                        uint32_t *count_non_zero_coeffs, uint32_t component_mask,
+#if REMOVE_UNUSED_CODE_PH2
+                                       uint16_t *eob);
+#else
                                        uint16_t *eob, MacroblockPlane *candidate_plane);
+#endif
+
 
 typedef void (*EbAv1GenerateReconFuncPtr)(EncDecContext *context_ptr, uint32_t origin_x,
                                           uint32_t             origin_y,
@@ -271,14 +282,20 @@ static void encode_pass_update_recon_sample_neighbour_arrays(
     return;
 }
 
+#if !REMOVE_UNUSED_CODE_PH2
 void encode_pass_tx_search(PictureControlSet *pcs_ptr, EncDecContext *context_ptr,
+#if QP2QINDEX
+                           SuperBlock *sb_ptr, uint32_t cb_qindex,
+#else
                            SuperBlock *sb_ptr, uint32_t cb_qp,
+#endif
                            EbPictureBufferDesc *coeff_samples_sb,
                            EbPictureBufferDesc *residual16bit, EbPictureBufferDesc *transform16bit,
                            EbPictureBufferDesc *inverse_quant_buffer,
                            uint32_t *count_non_zero_coeffs, uint32_t component_mask,
                            uint16_t *eob, MacroblockPlane *candidate_plane);
 
+#endif
 /**********************************************************
 * Encode Loop
 *
@@ -301,23 +318,39 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                             SuperBlock *         sb_ptr,
                             uint32_t             origin_x, //pic based tx org x
                             uint32_t             origin_y, //pic based tx org y
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                            uint32_t             cb_qindex,
+#else
                             uint32_t             cb_qp,
+#endif
+#endif
                             EbPictureBufferDesc *pred_samples, // no basis/offset
                             EbPictureBufferDesc *coeff_samples_sb, // sb based
                             EbPictureBufferDesc *residual16bit, // no basis/offset
                             EbPictureBufferDesc *transform16bit, // no basis/offset
                             EbPictureBufferDesc *inverse_quant_buffer,
                             uint32_t *count_non_zero_coeffs,
+#if REMOVE_UNUSED_CODE_PH2
+                            uint32_t component_mask, uint16_t *eob) {
+#else
                             uint32_t component_mask, uint16_t *eob,
                             MacroblockPlane *candidate_plane) {
+#endif
+#if !QP2QINDEX
     (void)cb_qp;
+#endif
 
     //    uint32_t                 chroma_qp = cb_qp;
     BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
     //    EB_SLICE               slice_type = sb_ptr->pcs_ptr->slice_type;
     //    uint32_t                 temporal_layer_index = sb_ptr->pcs_ptr->temporal_layer_index;
+#if QP2QINDEX
+    uint32_t             qindex        = blk_ptr->qindex;
+#else
     uint32_t             qp            = blk_ptr->qp;
+#endif
     EbPictureBufferDesc *input_samples = context_ptr->input_samples;
 
     uint32_t round_origin_x = (origin_x >> 3) << 3; // for Chroma blocks with size of 4
@@ -391,7 +424,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             encode_pass_tx_search(pcs_ptr,
                                   context_ptr,
                                   sb_ptr,
+#if QP2QINDEX
+                                  cb_qindex,
+#else
                                   cb_qp,
+#endif
                                   coeff_samples_sb,
                                   residual16bit,
                                   transform16bit,
@@ -426,7 +463,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
             ((int32_t *)inverse_quant_buffer->buffer_y) + coeff1d_offset,
+#if QP2QINDEX
+            qindex,
+#else
             qp,
+#endif
             seg_qp,
             context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -636,7 +677,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_cb) + context_ptr->coded_area_sb_uv,
             ((int32_t *)inverse_quant_buffer->buffer_cb) + context_ptr->coded_area_sb_uv,
+#if QP2QINDEX
+            qindex,
+#else
             qp,
+#endif
             seg_qp,
             context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -682,7 +727,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             NOT_USED_VALUE,
             ((int32_t *)coeff_samples_sb->buffer_cr) + context_ptr->coded_area_sb_uv,
             ((TranLow *)inverse_quant_buffer->buffer_cr) + context_ptr->coded_area_sb_uv,
+#if QP2QINDEX
+            qindex,
+#else
             qp,
+#endif
             seg_qp,
             context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -738,23 +787,39 @@ void encode_pass_tx_search_hbd(
 **********************************************************/
 static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *context_ptr,
                                   SuperBlock *sb_ptr, uint32_t origin_x, uint32_t origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                  uint32_t             cb_qindex,
+#else
                                   uint32_t             cb_qp,
+#endif
+#endif
                                   EbPictureBufferDesc *pred_samples, // no basis/offset
                                   EbPictureBufferDesc *coeff_samples_sb, // sb based
                                   EbPictureBufferDesc *residual16bit, // no basis/offset
                                   EbPictureBufferDesc *transform16bit, // no basis/offset
                                   EbPictureBufferDesc *inverse_quant_buffer,
                                   uint32_t *count_non_zero_coeffs, uint32_t component_mask,
+#if REMOVE_UNUSED_CODE_PH2
+                                  uint16_t *eob)
+#else
                                   uint16_t *eob, MacroblockPlane *candidate_plane)
+#endif
 
 {
+#if !QP2QINDEX
     (void)cb_qp;
+#endif
 
     BlkStruct *   blk_ptr = context_ptr->blk_ptr;
     TransformUnit *txb_ptr = &blk_ptr->txb_array[context_ptr->txb_itr];
     //    EB_SLICE               slice_type = sb_ptr->pcs_ptr->slice_type;
     //    uint32_t                 temporal_layer_index = sb_ptr->pcs_ptr->temporal_layer_index;
+#if QP2QINDEX
+    uint32_t             qindex    = blk_ptr->qindex;
+#else
     uint32_t qp = blk_ptr->qp;
+#endif
     uint32_t             bit_depth = context_ptr->bit_depth;
     EbPictureBufferDesc *input_samples16bit = context_ptr->input_sample16bit_buffer;
     EbPictureBufferDesc *pred_samples16bit  = pred_samples;
@@ -851,7 +916,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     encode_pass_tx_search_hbd(pcs_ptr,
                         context_ptr,
                         sb_ptr,
+#if QP2QINDEX
+                        cb_qindex,
+#else
                         cb_qp,
+#endif
                         coeff_samples_sb,
                         residual16bit,
                         transform16bit,
@@ -865,7 +934,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     encode_pass_tx_search(pcs_ptr,
                         context_ptr,
                         sb_ptr,
+#if QP2QINDEX
+                        cb_qindex,
+#else
                         cb_qp,
+#endif
                         coeff_samples_sb,
                         residual16bit,
                         transform16bit,
@@ -901,7 +974,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 ((int32_t *)coeff_samples_sb->buffer_y) + coeff1d_offset,
                 ((int32_t *)inverse_quant_buffer->buffer_y) + coeff1d_offset,
+#if QP2QINDEX
+                qindex,
+#else
                 qp,
+#endif
                 seg_qp,
                 context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -1054,7 +1131,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 ((int32_t *)coeff_samples_sb->buffer_cb) + context_ptr->coded_area_sb_uv,
                 ((int32_t *)inverse_quant_buffer->buffer_cb) + context_ptr->coded_area_sb_uv,
+#if QP2QINDEX
+                qindex,
+#else
                 qp,
+#endif
                 seg_qp,
                 context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -1101,7 +1182,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 NOT_USED_VALUE,
                 ((int32_t *)coeff_samples_sb->buffer_cr) + context_ptr->coded_area_sb_uv,
                 ((int32_t *)inverse_quant_buffer->buffer_cr) + context_ptr->coded_area_sb_uv,
+#if QP2QINDEX
+                qindex,
+#else
                 qp,
+#endif
                 seg_qp,
                 context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
@@ -1609,14 +1694,25 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header );
         }
         // Encode Transform Unit -INTRA-
-
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+        uint16_t cb_qindex = blk_ptr->qindex;
+#else
         uint16_t cb_qp = blk_ptr->qp;
+#endif
+#endif
         av1_encode_loop_func_table[is_16bit](pcs_ptr,
                                              context_ptr,
                                              sb_ptr,
                                              txb_origin_x,
                                              txb_origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                             cb_qindex,
+#else
                                              cb_qp,
+#endif
+#endif
                                              recon_buffer,
                                              coeff_buffer_sb,
                                              residual_buffer,
@@ -1624,8 +1720,12 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              inverse_quant_buffer,
                                              count_non_zero_coeffs,
                                              PICTURE_BUFFER_DESC_LUMA_MASK,
+#if REMOVE_UNUSED_CODE_PH2
+                                            eobs[context_ptr->txb_itr]);
+#else
                                              eobs[context_ptr->txb_itr],
                                              blk_plane);
+#endif
 
         if (pcs_ptr->update_cdf) {
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
@@ -1928,14 +2028,26 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
         }
 
         // Encode Transform Unit -INTRA-
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+        uint16_t cb_qindex = blk_ptr->qindex;
+#else
         uint16_t cb_qp = blk_ptr->qp;
+#endif
+#endif
 
         av1_encode_loop_func_table[is_16bit](pcs_ptr,
                                              context_ptr,
                                              sb_ptr,
                                              txb_origin_x,
                                              txb_origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                             cb_qindex,
+#else
                                              cb_qp,
+#endif
+#endif
                                              recon_buffer,
                                              coeff_buffer_sb,
                                              residual_buffer,
@@ -1943,8 +2055,12 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              inverse_quant_buffer,
                                              count_non_zero_coeffs,
                                              PICTURE_BUFFER_DESC_CHROMA_MASK,
+#if REMOVE_UNUSED_CODE_PH2
+                                             eobs[context_ptr->txb_itr]);
+#else
                                              eobs[context_ptr->txb_itr],
                                              blk_plane);
+#endif
 
         if (pcs_ptr->update_cdf) {
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
@@ -2475,14 +2591,26 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 // for now, segmentation independent of sharpness/delta QP.
                 if (pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled) {
                     apply_segmentation_based_quantization(blk_geom, pcs_ptr, sb_ptr, blk_ptr);
+#if QP2QINDEX
+                    sb_ptr->qindex = blk_ptr->qindex;
+#else
 
                     sb_ptr->qp = blk_ptr->qp;
+#endif
                 } else {
+#if QP2QINDEX
+                    blk_ptr->qindex = sb_ptr->qindex;
+#else
                     blk_ptr->qp       = sb_ptr->qp;
+#endif
                 }
 
                 if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
+#if SB_MEM_OPT
+                    context_ptr->is_inter = blk_ptr->use_intrabc;
+#else
                     context_ptr->is_inter = blk_ptr->av1xd->use_intrabc;
+#endif
                     context_ptr->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
                     if (pcs_ptr->slice_type != I_SLICE)
                         context_ptr->intra_coded_area_sb[sb_addr] +=
@@ -2719,8 +2847,14 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                         &context_ptr->md_context->cr_dc_sign_context);
                                 }
                             // Encode Transform Unit -INTRA-
-                            {
+                                {
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                uint16_t cb_qindex = blk_ptr->qindex;
+#else
                                 uint16_t cb_qp = blk_ptr->qp;
+#endif
+#endif
 
                                 av1_encode_loop_func_table[is_16bit](
                                     pcs_ptr,
@@ -2728,7 +2862,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     sb_ptr,
                                     txb_origin_x,
                                     txb_origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                    cb_qindex,
+#else
                                     cb_qp,
+#endif
+#endif
                                     recon_buffer,
                                     coeff_buffer_sb,
                                     residual_buffer,
@@ -2737,8 +2877,12 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     count_non_zero_coeffs,
                                     (context_ptr->blk_geom->has_uv && uv_pass) ? PICTURE_BUFFER_DESC_FULL_MASK :
                                                                                  PICTURE_BUFFER_DESC_LUMA_MASK,
+#if REMOVE_UNUSED_CODE_PH2
+                                    eobs[context_ptr->txb_itr]);
+#else
                                     eobs[context_ptr->txb_itr],
                                     blk_plane);
+#endif
 
                                 if (allow_update_cdf) {
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
@@ -3117,7 +3261,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
 
                     uint16_t tot_tu         = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                    uint16_t cb_qindex = blk_ptr->qindex;
+#else
                     uint16_t cb_qp          = blk_ptr->qp;
+#endif
+#endif
                     uint32_t component_mask = context_ptr->blk_geom->has_uv
                                                   ? PICTURE_BUFFER_DESC_FULL_MASK
                                                   : PICTURE_BUFFER_DESC_LUMA_MASK;
@@ -3185,7 +3335,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 sb_ptr,
                                 txb_origin_x, //pic org
                                 txb_origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                cb_qindex,
+#else
                                 cb_qp,
+#endif
+#endif
                                 recon_buffer,
                                 coeff_buffer_sb,
                                 residual_buffer,
@@ -3195,8 +3351,12 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 context_ptr->blk_geom->has_uv && uv_pass
                                     ? PICTURE_BUFFER_DESC_FULL_MASK
                                     : PICTURE_BUFFER_DESC_LUMA_MASK,
+#if REMOVE_UNUSED_CODE_PH2
+                                eobs[context_ptr->txb_itr]);
+#else
                                 eobs[context_ptr->txb_itr],
                                 blk_plane);
+#endif
 
                             // SKIP the CBF zero mode for DC path. There are problems with cost calculations
                             {
@@ -3515,7 +3675,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 sb_ptr,
                                 txb_origin_x, //pic offset
                                 txb_origin_y,
+#if !REMOVE_UNUSED_CODE_PH2
+#if QP2QINDEX
+                                cb_qindex,
+#else
                                 cb_qp,
+#endif
+#endif
                                 recon_buffer,
                                 coeff_buffer_sb,
                                 residual_buffer,
@@ -3525,8 +3691,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 context_ptr->blk_geom->has_uv && uv_pass
                                     ? PICTURE_BUFFER_DESC_FULL_MASK
                                     : PICTURE_BUFFER_DESC_LUMA_MASK,
+#if REMOVE_UNUSED_CODE_PH2
+                                eobs[context_ptr->txb_itr]);
+#else
                                 eobs[context_ptr->txb_itr],
                                 blk_plane);
+#endif
+
 
                             if (allow_update_cdf) {
                                 ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =

@@ -2598,7 +2598,12 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
     BlkStruct *             blk_ptr                  = context_ptr->blk_ptr;
     uint32_t                 txb_index                = context_ptr->txb_itr;
     MdRateEstimationContext *md_rate_estimation_ptr   = context_ptr->md_rate_estimation_ptr;
+#if QP2QINDEX
+    uint64_t lambda = context_ptr->md_context->
+                        full_lambda_md[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD];
+#else
     uint64_t                 lambda                   = context_ptr->full_lambda;
+#endif
     uint32_t                 y_count_non_zero_coeffs  = count_non_zero_coeffs[0];
     uint32_t                 cb_count_non_zero_coeffs = count_non_zero_coeffs[1];
     uint32_t                 cr_count_non_zero_coeffs = count_non_zero_coeffs[2];

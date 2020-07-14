@@ -1614,7 +1614,11 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hme_level2_search_area_in_width_array[1]  = 1;
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
+#if 1 //ENABLE_SC_DETECTOR
+    config_ptr->screen_content_mode                       = 2;
+#else
     config_ptr->screen_content_mode                       = 0;
+#endif
     config_ptr->enable_hbd_mode_decision                  = 2;
     config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->enable_palette                            = -1;

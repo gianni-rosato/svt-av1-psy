@@ -431,11 +431,13 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     context_ptr->hbd_mode_decision = pcs_ptr->hbd_mode_decision;
     // QP
+#if !QP2QINDEX
     uint16_t picture_qp   = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     context_ptr->qp       = picture_qp;
     context_ptr->qp_index = context_ptr->qp;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
     context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
+#endif
     context_ptr->qp_index  = (uint8_t)frm_hdr->quantization_params.base_q_idx;
     av1_lambda_assign_md(context_ptr);
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
@@ -476,19 +478,25 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
  ******************************************************/
 void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                 uint8_t sb_qp) {
+#if !QP2QINDEX
     (void)pcs_ptr;
     //Disable Lambda update per SB
     context_ptr->qp = sb_qp;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
+#endif
 
     /* Note(CHKN) : when Qp modulation varies QP on a sub-SB(CU) basis,  Lamda has to change based on Cu->QP , and then this code has to move inside the CU loop in MD */
 
     // Lambda Assignement
     context_ptr->qp_index =
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
+#if QP2QINDEX
+            ? sb_qp
+#else
             ? (uint8_t)quantizer_to_qindex[sb_qp]
+#endif
             : (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
 
     av1_lambda_assign_md(context_ptr);

@@ -225,6 +225,7 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
     context_ptr->bit_depth = scs_ptr->static_config.encoder_bit_depth;
     uint16_t picture_qp   = pcs_ptr->picture_qp;
     uint16_t tile_group_idx = context_ptr->tile_group_index;
+#if !QP2QINDEX
     context_ptr->qp = picture_qp;
     context_ptr->qp_index =
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
@@ -236,12 +237,56 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
     // Lambda Assignement
     context_ptr->qp_index =
         (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#endif
+#if TPL_LA_LAMBDA_SCALING
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if QP2QINDEX
+        &context_ptr->pic_fast_lambda[EB_8_BIT_MD],
+        &context_ptr->pic_full_lambda[EB_8_BIT_MD],
+#else
         &context_ptr->fast_lambda,
         &context_ptr->full_lambda,
-        (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
+#endif
+        8,
+#if QP2QINDEX
+        pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx,
+#else
         context_ptr->qp_index,
+#endif
         EB_TRUE);
+
+    (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if QP2QINDEX
+        &context_ptr->pic_fast_lambda[EB_10_BIT_MD],
+        &context_ptr->pic_full_lambda[EB_10_BIT_MD],
+#else
+        &context_ptr->fast_lambda,
+        &context_ptr->full_lambda,
+#endif
+        10,
+#if QP2QINDEX
+        pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx,
+#else
+        context_ptr->qp_index,
+#endif
+        EB_TRUE);
+#else
+    (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if QP2QINDEX
+        &context_ptr->pic_fast_lambda,
+        &context_ptr->pic_full_lambda,
+#else
+        &context_ptr->fast_lambda,
+        &context_ptr->full_lambda,
+#endif
+        (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
+#if QP2QINDEX
+        pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx,
+#else
+        context_ptr->qp_index,
+#endif
+        EB_TRUE);
+#endif
     // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
     if (context_ptr->is_md_rate_estimation_ptr_owner) {
         EB_FREE(context_ptr->md_rate_estimation_ptr);
@@ -270,6 +315,7 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
     return;
 }
 
+#if !QP2QINDEX
 /******************************************************
  * EncDec Configure SB
  ******************************************************/
@@ -292,6 +338,7 @@ static void enc_dec_configure_sb(EncDecContext *context_ptr, SuperBlock *sb_ptr,
 
     return;
 }
+#endif
 
 /******************************************************
  * Update MD Segments
@@ -10671,9 +10718,19 @@ void *enc_dec_kernel(void *input_ptr) {
                                      sb_origin_y,
                                      sb_index,
                                      context_ptr->md_context);
-
+#if ADAPTIVE_NSQ_CR
+                    generate_statistics_nsq(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
+#if ADAPTIVE_DEPTH_CR
+                    generate_statistics_depth(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
+#if ADAPTIVE_TXT_CR
+                    generate_statistics_txt(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
+#if !QP2QINDEX
                     // Configure the SB
                     enc_dec_configure_sb(context_ptr, sb_ptr, pcs_ptr, (uint8_t)sb_ptr->qp);
+#endif
 
 #if NO_ENCDEC
                     no_enc_dec_pass(scs_ptr,
@@ -10733,7 +10790,24 @@ void *enc_dec_kernel(void *input_ptr) {
             eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->wiener_restore_cost,
                       context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits,
                       2 * sizeof(int32_t));
+#if QP2QINDEX
+#if TPL_LA_LAMBDA_SCALING
+            pcs_ptr->parent_pcs_ptr->av1x->rdmult =
+                context_ptr->pic_full_lambda[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD
+                                                                                  : EB_8_BIT_MD];
+#else
+            pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->pic_full_lambda;
+#endif
+#else
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
+#endif
+#if DECOUPLE_ME_RES
+            eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)EB_NULL;
+#endif
+        }
+
+        if (last_sb_flag) {
             // Get Empty EncDec Results
             eb_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;

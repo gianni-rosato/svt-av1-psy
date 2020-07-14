@@ -2725,6 +2725,9 @@ static void open_loop_me_get_eight_search_point_results_block(
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 0 : perform_nsq_flag;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 0: perform_nsq_flag;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3 ) ? 0 : perform_nsq_flag;
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    perform_nsq_flag = context_ptr->me_alt_ref ? 0 : perform_nsq_flag;
+#endif
     if(perform_nsq_flag)
         ext_eigth_sad_calculation_nsq(context_ptr->p_eight_sad8x8,
                                   context_ptr->p_eight_sad16x16,
@@ -3075,7 +3078,10 @@ static void open_loop_me_get_search_point_results_block(
                                     p_best_mv64x64,
                                     curr_mv,
                                     &p_sad32x32[0]);
-
+#if !NSQ_ME_CONTEXT_CLEAN_UP
+ #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if(!context_ptr->me_alt_ref)
+#endif
     ext_sad_calculation(p_sad8x8,
                         p_sad16x16,
                         p_sad32x32,
@@ -3100,6 +3106,7 @@ static void open_loop_me_get_search_point_results_block(
                         p_best_sad_16x64,
                         p_best_mv16x64,
                         curr_mv);
+#endif
 }
 
 /*******************************************
@@ -4012,7 +4019,9 @@ static void half_pel_refinement_block(
  *   performs Half Pel refinement for the 85 PUs
  *******************************************/
 void half_pel_refinement_sb(
+#if !SHUT_ME_NSQ_SEARCH
     PictureParentControlSet *pcs_ptr,
+#endif
     MeContext *              context_ptr, // input/output parameter, ME context Ptr, used to
     // get/update ME results
     uint8_t *refBuffer, uint32_t ref_stride,
@@ -4030,8 +4039,10 @@ void half_pel_refinement_sb(
     // reference samples
     uint32_t search_area_height, // input parameter, search area height
     uint32_t search_area_width, // input parameter, search area width
+#if !SHUT_ME_NSQ_SEARCH
     uint8_t list_index, // reference picture list
     uint8_t ref_pic_index, // reference picture index
+#endif
     uint32_t inetger_mv) {
     uint32_t idx;
     uint32_t pu_index;
@@ -4042,6 +4053,9 @@ void half_pel_refinement_sb(
     uint32_t posh_buffer_index;
     uint32_t posj_buffer_index;
     // 64x64 [1 partition]
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if (!context_ptr->me_alt_ref) {
+#endif
     half_pel_refinement_block(context_ptr,
                                 &(refBuffer[0]),
                                 ref_stride,
@@ -4061,6 +4075,9 @@ void half_pel_refinement_sb(
                                 &context_ptr->psub_pel_direction64x64,
                                 context_ptr->p_best_full_pel_mv64x64,
                                 inetger_mv);
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    }
+#endif
     // 32x32 [4 partitions]
     for (pu_index = 0; pu_index < 4; ++pu_index) {
         block_index_shift_x = (pu_index & 0x01) << 5;
@@ -4126,6 +4143,9 @@ void half_pel_refinement_sb(
             &context_ptr->p_best_full_pel_mv16x16[idx],
             inetger_mv);
     }
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if (!context_ptr->me_alt_ref) {
+#endif
     // 8x8   [64 partitions]
     for (pu_index = 0; pu_index < 64; ++pu_index) {
         idx                 = tab8x8[pu_index]; // TODO bitwise this
@@ -4159,9 +4179,15 @@ void half_pel_refinement_sb(
             &context_ptr->p_best_full_pel_mv8x8[idx],
             inetger_mv);
     }
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    }
+#endif
     uint8_t perform_nsq_flag = 1;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 1 && (list_index != context_ptr->best_list_idx || ref_pic_index != context_ptr->best_ref_idx)) ? 0 : perform_nsq_flag;
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 2 && ref_pic_index) ? 0: perform_nsq_flag;
+ #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    perform_nsq_flag = (context_ptr->me_alt_ref) ? 0 : perform_nsq_flag;
+#endif
     perform_nsq_flag = (context_ptr->inherit_rec_mv_from_sq_block == 3 ) ? 0 : perform_nsq_flag;
     if(perform_nsq_flag){
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
@@ -5356,7 +5382,9 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
     uint32_t pos_b_buffer_index;
     uint32_t pos_h_buffer_index;
     uint32_t pos_j_buffer_index;
-
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if (!context_ptr->me_alt_ref) {
+#endif
     // 64x64 [1 partition]
     pu_half_pel_refinement(scs_ptr,
                             context_ptr,
@@ -5374,6 +5402,9 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                             context_ptr->p_best_sad_64x64,
                             context_ptr->p_best_mv64x64,
                             &context_ptr->psub_pel_direction64x64);
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    }
+#endif
 
     if (enable_half_pel_32x32) {
         // 32x32 [4 partitions]
@@ -5441,6 +5472,9 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                                    &context_ptr->psub_pel_direction16x16[idx]);
         }
     }
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if (!context_ptr->me_alt_ref) {
+#endif
     if (enable_half_pel_8x8) {
         // 8x8   [64 partitions]
         for (pu_index = 0; pu_index < 64; ++pu_index) {
@@ -5478,6 +5512,9 @@ void half_pel_search_sb(SequenceControlSet *scs_ptr, // input parameter, Sequenc
                 &context_ptr->psub_pel_direction8x8[idx]);
         }
     }
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    }
+#endif
 #if !SHUT_ME_NSQ_SEARCH
 #if DEPTH_PART_CLEAN_UP // disallow_nsq
 #if DISABLE_NOT_NEEDED_BLOCK_TF_ME
@@ -6629,7 +6666,9 @@ static void quarter_pel_search_sb(
 
     int16_t  x_mv, y_mv;
     uint32_t nidx;
-
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if (!context_ptr->me_alt_ref) {
+#endif
     // 64x64 [1 partition]
     x_mv = _MVXT(*context_ptr->p_best_mv64x64);
     y_mv = _MVYT(*context_ptr->p_best_mv64x64);
@@ -6678,7 +6717,9 @@ static void quarter_pel_search_sb(
                                             context_ptr->p_best_sad_64x64,
                                             context_ptr->p_best_mv64x64,
                                             context_ptr->psub_pel_direction64x64);
-
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    }
+#endif
     if (enable_quarter_pel && enable_half_pel32x32) {
         // 32x32 [4 partitions]
         for (pu_index = 0; pu_index < 4; ++pu_index) {
@@ -6796,7 +6837,9 @@ static void quarter_pel_search_sb(
                                                  context_ptr->psub_pel_direction16x16[nidx]);
         }
     }
-
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    if (!context_ptr->me_alt_ref) {
+#endif
     if (enable_quarter_pel && enable_half_pel8x8) {
         // 8x8   [64 partitions]
         for (pu_index = 0; pu_index < 64; ++pu_index) {
@@ -6856,8 +6899,17 @@ static void quarter_pel_search_sb(
                                                     context_ptr->psub_pel_direction8x8[nidx]);
         }
     }
-
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    }
+#endif
+#if !SHUT_ME_NSQ_SEARCH
+#if DISABLE_NOT_NEEDED_BLOCK_TF_ME
+    uint8_t perform_nsq_flag = ext_block_flag;
+    perform_nsq_flag = (context_ptr->me_alt_ref) ? 0 : perform_nsq_flag;
+    if (perform_nsq_flag){
+#else
     if (ext_block_flag) {
+#endif
         // 64x32
         for (pu_index = 0; pu_index < 2; ++pu_index) {
             pu_shift_x_index = 0;
@@ -7434,7 +7486,7 @@ static void quarter_pel_search_sb(
                                                  context_ptr->psub_pel_direction16x64[nidx]);
         }
     }
-
+#endif
     return;
 }
 void hme_one_quadrant_level_0(
@@ -9701,6 +9753,10 @@ void integer_search_sb(
 
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data
+#if ME_HME_PRUNING_CLEANUP
+            search_area_width = ((search_area_width / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
+            search_area_height = MAX(1, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
+#else
             if (context_ptr->reduce_me_sr_flag[list_index][ref_pic_index] == SC_HME_TH_STILL) {
                 search_area_width = ((search_area_width / SC_SR_DENOM_STILL) + 7) & ~0x07;
                 search_area_height = (search_area_height / SC_SR_DENOM_STILL);
@@ -9716,7 +9772,7 @@ void integer_search_sb(
             else {
                 search_area_width = (search_area_width + 7) & ~0x07;
             }
-
+#endif
             if ((x_search_center != 0 || y_search_center != 0) &&
                 (pcs_ptr->is_used_as_reference_flag == EB_TRUE)) {
                 check_00_center(ref_pic_ptr,
@@ -10090,7 +10146,15 @@ void integer_search_sb(
   using previous stage ME results (Integer Search) for each reference
   frame. keep only the references that are close to the best reference.
 */
+#if ME_HME_PRUNING_CLEANUP
+#if REMOVE_ME_SUBPEL_CODE
+void me_prune_ref(
+#else
+void me_prune_ref_and_adjust_subpel_refinement(
+#endif
+#else
 void prune_references_fp(
+#endif
     PictureParentControlSet   *pcs_ptr,
 #if INTER_COMP_REDESIGN
     uint32_t                   sb_index,
@@ -11759,6 +11823,7 @@ void hme_sb(
     }
 #endif
 }
+#if !ME_HME_PRUNING_CLEANUP
 void prune_references_sc(
     MeContext *context_ptr)
 {
@@ -11775,6 +11840,7 @@ void prune_references_sc(
         }
     }
 }
+#endif
 #if ME_HME_PRUNING_CLEANUP
 void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
 #else
@@ -12078,7 +12144,11 @@ EbErrorType motion_estimate_sb(
             context_ptr->hme_results[li][ri].ref_i = ri;
             context_ptr->hme_results[li][ri].do_ref = 1;
             context_ptr->hme_results[li][ri].hme_sad = 0xFFFFFFFF;
+#if ME_HME_PRUNING_CLEANUP
+            context_ptr->reduce_me_sr_divisor[li][ri] = 1;
+#else
             context_ptr->reduce_me_sr_flag[li][ri] = 0;
+#endif
             context_ptr->local_hp_mode[li][ri] =
                 context_ptr->half_pel_mode == SWITCHABLE_HP_MODE ? EX_HP_MODE :
                 context_ptr->half_pel_mode;
@@ -12095,6 +12165,15 @@ EbErrorType motion_estimate_sb(
         sb_origin_y,
         context_ptr,
         input_ptr);
+#if ME_HME_PRUNING_CLEANUP
+    // prune the refrence frames based on the HME outputs.
+    if (prune_ref &&
+        (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment ||
+            context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning))
+    {
+        hme_prune_ref_and_adjust_sr(context_ptr);
+    }
+#else
     // prune the refrence frames based on the HME outputs.
     if (pcs_ptr->prune_ref_based_me && prune_ref)
         prune_references(
@@ -12102,6 +12181,7 @@ EbErrorType motion_estimate_sb(
     else if (pcs_ptr->sc_content_detected && prune_ref)
         prune_references_sc(
             context_ptr);
+#endif
     // Full pel: Perform the Integer Motion Estimation on the allowed refrence frames.
     integer_search_sb(
         pcs_ptr,
@@ -12110,6 +12190,33 @@ EbErrorType motion_estimate_sb(
         sb_origin_y,
         context_ptr,
         input_ptr);
+#if ME_HME_PRUNING_CLEANUP
+#if REMOVE_ME_SUBPEL_CODE
+    // prune the refrence frames
+    if (prune_ref && context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning)
+    {
+        me_prune_ref(
+            pcs_ptr,
+#if INTER_COMP_REDESIGN
+            sb_index,
+#endif
+            context_ptr);
+    }
+#else
+    // prune the refrence frames and adjust half-pel refinement based on the Full pel outputs.
+    if (prune_ref &&
+        (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning ||
+            context_ptr->half_pel_mode == SWITCHABLE_HP_MODE))
+    {
+        me_prune_ref_and_adjust_subpel_refinement(
+            pcs_ptr,
+#if INTER_COMP_REDESIGN
+            sb_index,
+#endif
+            context_ptr);
+    }
+#endif
+#else
     // prune the refrence frames based on the Full pel outputs.
     if (pcs_ptr->prune_ref_based_me && prune_ref)
         prune_references_fp(
@@ -12118,6 +12225,7 @@ EbErrorType motion_estimate_sb(
             sb_index,
 #endif
             context_ptr );
+#endif
 
     if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
 

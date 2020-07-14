@@ -213,6 +213,67 @@ extern "C" {
 #define M8_HME_ME      1 // Done
 #define M8_MPPD        1 // Done
 #endif
+#define M8_CLEAN_UP             1 // remove useless code: energy, full loop escape
+#define ME_HME_PRUNING_CLEANUP  1 // cleanup HME/ME ref pruning and HME-based ME SR reduction
+#define ADOPT_SC_HME_PRUNING    1 // Adopt HME-based ref pruning in SC
+#define ENABLE_SC_DETECTOR      1 // turn on the SC detector by default; move SC settings to be set after detection
+
+#define APR22_ADOPTIONS         1 // New M0
+#define APR23_ADOPTIONS         1
+#define UPGRADE_M8 1 // Upgrade M8
+#define UPDATE_TXT_LEVEL  1
+#define M5_I  1  //change M5 presets to M8 for I slice--
+#if M5_I
+#define M5_I_NSQ   1 // If turned off, may affect other adoptions
+#define M5_I_PD    1
+#endif
+#define DISABLE_NOT_NEEDED_BLOCK_TF_ME 1
+#define PD0_PD1_NSQ_BLIND              1 // Make PD0/PD1 NSQ blind
+#define FIX_CHROMA_LAST_STAGE          1 // Fix Tx Type, Predicted Samples, and Fast_Rate if chroma_mode change between first stage and last stage
+
+#if FIX_CHROMA_LAST_STAGE
+#define REFACTOR_SIGNALS 1
+#define FIX_CFL_OFF 1
+#endif
+#define FIX_CHROMA_PALETTE_INTERACTION 1 // Fix Chroma/Palette interaction and enable independent in M0 for SC
+#define UPGRADE_M6_M7_M8               1
+#define NEW_M1_CAND               1 // applying the new M1 settings based on overnight tests
+#define APR23_ADOPTIONS_2         1 // Adoptions based on daytime tests
+#define ALLOW_NSQ_M6              1
+#define ALLOW_CFL_M8              1
+#define ALLOW_HME_L1L2_REFINEMENT 1
+#define M5_I_IBC   1
+#define M5_I_RDOQ  1
+#define M5_I_CDF   1
+#define M5_I_CDEF  1
+#define M5_I_SG    1
+#define M5_I_4x4   1
+#define FIXED_LAST_STAGE_SC   1 // Refactor last stage TH
+#define ADD_TXT_LEVEL5        1
+#define SHIFT_M3_SC_TO_M1     1
+#define M1_SC_ADOPTION        1 // Adopt Palette in REF frames only for M1 & Beyond SC
+#define SHIFT_M5_SC_TO_M3     1
+#define APR24_M3_ADOPTIONS    1 // Adoptions for M3
+#define APR24_ADOPTIONS_M6_M7 1
+#define MRP_ADOPTIONS         1
+#define APR25_12AM_ADOPTIONS  1
+#define OPT_BLOCK_INDICES_GEN_4  1 // Fix block indices generation for PD_PASS OFF (lossless)
+//
+#define REVERT_WHITE 1
+#define REVERT_BLUE 1
+#define APR25_3AM_ADOPTIONS    1
+#define SHIFT_M6_SC_TO_M5      1
+#define APR23_4AM_M6_ADOPTIONS 1
+#define APR25_10AM_ADOPTIONS   1
+#define APR25_11AM_ADOPTIONS   1
+#define APR25_1PM_ADOPTIONS    1
+#define NO_NSQ_B32             1  //disallow nsq in 32x32 and below; in 64x64 and  below
+#define NEW_M5_HME_ME          1
+#define NO_NSQ_ABOVE           1  //disallow nsq in 32x32 and above; in 64x64 and  above
+#define NSQ_OFF_IN_M6_M7_ME    1
+#define NO_AB_HV4              1 //disallow HA/HB/VA/VB H4/V4
+#define APR25_7PM_ADOPTIONS 1
+#define QP2QINDEX           1 // switch QP to qindex for MD
 #endif
 
 ///////// END MASTER_SYNCH

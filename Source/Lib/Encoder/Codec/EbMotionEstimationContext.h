@@ -261,10 +261,11 @@ typedef enum EbMeTierZeroPu {
     ME_TIER_ZERO_PU_16x64_3 = 208
 } EbMeTierZeroPu;
 
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 typedef struct MeTierZero {
     MePredictionUnit pu[MAX_ME_PU_COUNT];
 } MeTierZero;
-
+#endif
 typedef struct IntraReferenceSamplesOpenLoop {
     EbDctor  dctor;
     uint8_t *y_intra_reference_array_reverse;
@@ -287,6 +288,22 @@ typedef struct MePredUnit {
 typedef struct MotionEstimationTierZero {
     MePredUnit pu[MAX_ME_PU_COUNT];
 } MotionEstimationTierZero;
+#if ME_HME_PRUNING_CLEANUP
+typedef struct MeHmeRefPruneCtrls {
+    EbBool   enable_me_hme_ref_pruning;
+    uint16_t prune_ref_if_hme_sad_dev_bigger_than_th;   // TH used to prune references based on hme sad deviation
+    uint16_t prune_ref_if_me_sad_dev_bigger_than_th;    // TH used to prune references based on me sad deviation
+} MeHmeRefPruneCtrls;
+
+typedef struct MeSrCtrls {
+    EbBool   enable_me_sr_adjustment;
+    uint16_t reduce_me_sr_based_on_mv_length_th;    // reduce the ME search region if HME MVs and HME sad are small
+    uint16_t stationary_hme_sad_abs_th;             // reduce the ME search region if HME MVs and HME sad are small
+    uint16_t stationary_me_sr_divisor;              // Reduction factor for the ME search region if HME MVs and HME sad are small
+    uint16_t reduce_me_sr_based_on_hme_sad_abs_th;  // reduce the ME search region if HME sad is small
+    uint16_t me_sr_divisor_for_low_hme_sad;         // Reduction factor for the ME search region if HME sad is small
+} MeSrCtrls;
+#endif
 typedef struct HmeResults {
     uint8_t  list_i;   // list index of this ref
     uint8_t  ref_i;    // ref list index of this ref
@@ -298,7 +315,9 @@ typedef struct HmeResults {
 typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
+#if !REMOVE_ME_SUBPEL_CODE
     uint32_t                  interpolated_stride;
+#endif
     uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     MotionEstimationTierZero *me_candidate;
     // Intermediate SB-sized buffer to retain the input samples

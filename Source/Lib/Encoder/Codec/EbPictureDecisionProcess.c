@@ -2213,7 +2213,52 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         else
             pcs_ptr->tx_size_search_mode = 0;
-
+    
+#if APR22_ADOPTIONS
+    // Assign whether to use TXS in inter classes (if TXS is ON)
+    // 0 OFF - TXS in intra classes only
+    // 1 ON - TXS in all classes
+    // 2 ON - INTER TXS restricted to max 1 depth
+#if RESTRICT_INTER_TXS_DEPTH
+#if UNIFY_SC_NSC
+#if REMOVE_MR_MACRO
+    if (pcs_ptr->enc_mode <= ENC_MRS)
+#else
+    if (MRS_MODE)
+#endif
+#else
+#if JUNE15_ADOPTIONS
+    if (MRS_MODE || (pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M0))
+#else
+    if (MR_MODE)
+#endif
+#endif
+        pcs_ptr->txs_in_inter_classes = 1;
+#if UNIFY_SC_NSC
+    else if (pcs_ptr->enc_mode <= ENC_M0)
+#else
+#if JUNE17_ADOPTIONS
+    else if (pcs_ptr->enc_mode <= ENC_M0 || (pcs_ptr->sc_content_detected && pcs_ptr->enc_mode <= ENC_M3))
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M0)
+#endif
+#endif
+        pcs_ptr->txs_in_inter_classes = 2;
+    else
+        pcs_ptr->txs_in_inter_classes = 0;
+#else
+#if MAY16_7PM_ADOPTIONS
+    pcs_ptr->txs_in_inter_classes = 0;
+#else
+    if (pcs_ptr->sc_content_detected)
+        pcs_ptr->txs_in_inter_classes = 0;
+    else if (pcs_ptr->enc_mode <= ENC_M0)
+        pcs_ptr->txs_in_inter_classes = (pcs_ptr->is_used_as_reference_flag && pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 1 : 0;
+    else
+        pcs_ptr->txs_in_inter_classes = 0;
+#endif
+#endif
+#endif
 #if !INTER_COMP_REDESIGN
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
@@ -2417,6 +2462,13 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->prune_unipred_at_me = scs_ptr->static_config.prune_unipred_me;
 #endif
         //CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check RPS construction for more info.
+#if !UNIFY_SC_NSC
+#if ENABLE_SC_DETECTOR
+        if (pcs_ptr->sc_content_detected)
+            pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+        else
+#endif
+#endif
         if (pcs_ptr->slice_type == I_SLICE)
             pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
         else
@@ -6493,6 +6545,153 @@ void* picture_decision_kernel(void *input_ptr)
                                                                             (pcs_ptr->is_overlay) ? 1 : (uint8_t)pred_position_ptr->ref_list0.reference_list_count;
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
+#if ON_OFF_FEATURE_MRP // one function or under signal derivation ?
+                                // set number of references to try based on mrp level
+                                set_mrp_controls(pcs_ptr);
+#else
+
+#if MRP_CTRL
+                                //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
+#if UPGRADE_M6_M7_M8
+                                if (pcs_ptr->sc_content_detected) {
+#if NEW_MRP_SETTINGS
+                                    if (MRS_MODE) {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 3);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                    }
+                                    else if (MR_MODE) {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 3);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+                                    }
+#if JUNE17_ADOPTIONS
+                                    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+                                    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+                                    }
+#if JUNE17_ADOPTIONS
+                                    else if (pcs_ptr->enc_mode <= ENC_M5) {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+                                    }
+#endif
+                                    else {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+                                    }
+#else
+#if MAY12_ADOPTIONS
+#if PRESET_SHIFITNG
+                                    if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
+                                    if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
+#else
+#if SHIFT_M6_SC_TO_M5
+                                    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+#if APR25_3AM_ADOPTIONS
+                                    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if MRP_ADOPTIONS
+                                    if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+                                    if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+#endif
+#endif
+#endif
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                    }
+#if APR25_12AM_ADOPTIONS
+#if MAY19_ADOPTIONS
+#if PRESET_SHIFITNG
+                                    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
+                                    else if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
+#else
+#if APR25_3AM_ADOPTIONS
+#if APR23_4AM_M6_ADOPTIONS
+                                    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+                                    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
+#else
+                                    else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+#endif
+#if APR25_10AM_ADOPTIONS
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+#else
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#endif
+                                    }
+#endif
+                                    else {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+                                    }
+#endif
+                                }
+                                else {
+#if MRP_ADOPTIONS
+#if JUNE17_ADOPTIONS
+                                    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+#if PRESET_SHIFITNG
+                                    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+                                    if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
+#endif
+#else
+                                    if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                    }
+#if APR25_12AM_ADOPTIONS
+#if NEW_MRP_SETTINGS
+#if JUNE17_ADOPTIONS
+                                    else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
+                                    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+#else
+#if PRESET_SHIFITNG
+                                    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+                                    else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+#if MAY19_ADOPTIONS
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#else
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 4) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
+#endif
+#endif
+                                    }
+#endif
+                                    else {
+#if APR25_7PM_ADOPTIONS
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+#else
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+#endif
+                                    }
+                                }
+#else
                                 // Set the number of references to try in ME/MD. Note: PicMgr/RPS will still use the original values to sync the references.
                                 if (pcs_ptr->sc_content_detected) {
                                     pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
@@ -6502,9 +6701,11 @@ void* picture_decision_kernel(void *input_ptr)
                                     pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                     pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                 }
+#endif
                                 assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
                                 assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);
-
+#endif
+#endif
                                 if (!pcs_ptr->is_overlay) {
                                     input_entry_ptr->list0_ptr = &pred_position_ptr->ref_list0;
                                     input_entry_ptr->list1_ptr = &pred_position_ptr->ref_list1;

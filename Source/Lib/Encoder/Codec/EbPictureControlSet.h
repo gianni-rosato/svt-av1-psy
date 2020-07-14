@@ -805,7 +805,13 @@ typedef struct PictureParentControlSet {
 
     EbBool frame_superres_enabled;
     uint8_t superres_denom;
+#if !ME_HME_PRUNING_CLEANUP
     uint8_t prune_ref_based_me;
+#endif
+#if DECOUPLE_ME_RES
+    EbObjectWrapper *me_data_wrapper_ptr;
+    MotionEstimationData *pa_me_data;
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {
