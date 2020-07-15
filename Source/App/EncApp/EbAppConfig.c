@@ -17,6 +17,7 @@
 #include <io.h>
 #else
 #include <unistd.h>
+#include <sys/file.h>
 #endif
 
 /**********************************
@@ -251,6 +252,50 @@
 #if 1//ON_OFF_FEATURE_MRP
 #define MRP_LEVEL_TOKEN "--mrp-level"
 #endif
+
+#ifdef _WIN32
+static HANDLE get_file_handle(FILE* fp)
+{
+    return (HANDLE)_get_osfhandle(_fileno(fp));
+}
+#endif
+
+static EbBool fopen_and_lock(FILE** file, const char* name, EbBool write)
+{
+    if (!file || !name)
+        return EB_FALSE;
+
+    const char* mode = write ? "wb" : "rb";
+    FOPEN(*file, name, mode);
+    if (!*file)
+        return EB_FALSE;
+
+#ifdef _WIN32
+    HANDLE handle = get_file_handle(*file);
+    if (handle == INVALID_HANDLE_VALUE) return EB_FALSE;
+    if (LockFile(handle, 0, 0, MAXDWORD, MAXDWORD))
+        return EB_TRUE;
+#else
+    int fd = fileno(*file);
+    if (flock(fd, LOCK_EX | LOCK_NB) == 0)
+        return EB_TRUE;
+#endif
+    fprintf(stderr, "ERROR: locking %s failed, is it used by other encoder?\n", name);
+    return EB_FALSE;
+}
+
+static void unlock_and_fclose(FILE* file)
+{
+    if (!file)
+        return;
+
+#ifdef _WIN32
+    HANDLE handle = get_file_handle(file);
+    UnlockFile(handle, 0, 0, MAXDWORD, MAXDWORD);
+#endif
+    fclose(file);
+}
+
 /**********************************
  * Set Cfg Functions
  **********************************/
@@ -334,12 +379,12 @@ static void set_passes(const char* value, EbConfig *cfg) {
 }
 
 static void set_input_stat_file(const char *value, EbConfig *cfg) {
-    if (cfg->input_stat_file) { fclose(cfg->input_stat_file); }
-    FOPEN(cfg->input_stat_file, value, "rb");
+    if (cfg->input_stat_file) { unlock_and_fclose(cfg->input_stat_file); }
+    fopen_and_lock(&cfg->input_stat_file, value, EB_FALSE);
 };
 static void set_output_stat_file(const char *value, EbConfig *cfg) {
-    if (cfg->output_stat_file) { fclose(cfg->output_stat_file); }
-    FOPEN(cfg->output_stat_file, value, "wb");
+    if (cfg->output_stat_file) { unlock_and_fclose(cfg->output_stat_file); }
+    fopen_and_lock(&cfg->output_stat_file, value, EB_TRUE);
 };
 static void set_snd_pass_enc_mode(const char *value, EbConfig *cfg) {
     cfg->snd_pass_enc_mode = (uint8_t)strtoul(value, NULL, 0);
@@ -1875,11 +1920,11 @@ void eb_config_dtor(EbConfig *config_ptr) {
         config_ptr->stat_file = (FILE *)NULL;
     }
     if (config_ptr->input_stat_file) {
-        fclose(config_ptr->input_stat_file);
+        unlock_and_fclose(config_ptr->input_stat_file);
         config_ptr->input_stat_file = (FILE *)NULL;
     }
     if (config_ptr->output_stat_file) {
-        fclose(config_ptr->output_stat_file);
+        unlock_and_fclose(config_ptr->output_stat_file);
         config_ptr->output_stat_file = (FILE *)NULL;
     }
     free((void*)config_ptr->stats);
@@ -2186,16 +2231,14 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
 
     const char* stats = config->stats ? config->stats : "svtav1_2pass.log";
     if (pass == 1) {
-        FOPEN(config->output_stat_file, stats, "wb");
-        if (!config->output_stat_file) {
+        if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
             fprintf(config->error_log_file,
                 "Error instance %u: can't open stats file %s for write \n",
                 channel_number + 1, stats);
             return EB_ErrorBadParameter;
         }
     } else if (pass == 2) {
-        FOPEN(config->input_stat_file, stats, "rb");
-        if (!config->input_stat_file) {
+        if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
             fprintf(config->error_log_file,
                 "Error instance %u: can't read stats file %s for read\n",
                 channel_number + 1, stats);
