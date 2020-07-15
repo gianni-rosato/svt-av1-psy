@@ -7094,13 +7094,44 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                    context_ptr->input_sample16bit_buffer->stride_cr,
                    sb_width >> 1,
                    sb_height >> 1);
+#if FIX_HBD_R2R
+        // PAD the packed source in incomplete sb up to max SB size
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_y,
+                context_ptr->input_sample16bit_buffer->stride_y,
+                sb_width,
+                sb_height,
+                scs_ptr->sb_size_pix - sb_width,
+                scs_ptr->sb_size_pix - sb_height);
 
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cb,
+                context_ptr->input_sample16bit_buffer->stride_cb,
+                sb_width >> 1,
+                sb_height >> 1,
+                (scs_ptr->sb_size_pix- sb_width  )>>1,
+                (scs_ptr->sb_size_pix - sb_height)>>1);
+
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cr,
+                context_ptr->input_sample16bit_buffer->stride_cr,
+                sb_width >> 1,
+                sb_height >> 1,
+                (scs_ptr->sb_size_pix - sb_width  )>>1,
+                (scs_ptr->sb_size_pix  - sb_height)>>1);
+
+#endif
         store16bit_input_src(context_ptr->input_sample16bit_buffer,
                              pcs_ptr,
                              sb_origin_x,
                              sb_origin_y,
+#if FIX_HBD_R2R
+                             scs_ptr->sb_size_pix,
+                             scs_ptr->sb_size_pix);
+#else
                              sb_width,
                              sb_height);
+#endif
         //input_picture_ptr = context_ptr->input_sample16bit_buffer;
         input_picture_ptr = pcs_ptr->input_frame16bit;
     }

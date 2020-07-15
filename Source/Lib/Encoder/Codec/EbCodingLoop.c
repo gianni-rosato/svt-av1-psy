@@ -2280,6 +2280,32 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                        context_ptr->input_sample16bit_buffer->stride_cr,
                        sb_width >> 1,
                        sb_height >> 1);
+#if FIX_HBD_R2R
+        // PAD the packed source in incomplete sb up to max SB size
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_y,
+                context_ptr->input_sample16bit_buffer->stride_y,
+                sb_width,
+                sb_height,
+                scs_ptr->sb_size_pix - sb_width,
+                scs_ptr->sb_size_pix - sb_height);
+
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cb,
+                context_ptr->input_sample16bit_buffer->stride_cb,
+                sb_width >> 1,
+                sb_height >> 1,
+                (scs_ptr->sb_size_pix- sb_width  )>>1,
+                (scs_ptr->sb_size_pix - sb_height)>>1);
+
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cr,
+                context_ptr->input_sample16bit_buffer->stride_cr,
+                sb_width >> 1,
+                sb_height >> 1,
+                (scs_ptr->sb_size_pix - sb_width  )>>1,
+                (scs_ptr->sb_size_pix  - sb_height)>>1);
+#endif
         }
 
         if (context_ptr->md_context->hbd_mode_decision == 0)
@@ -2287,8 +2313,13 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                  pcs_ptr,
                                  sb_origin_x,
                                  sb_origin_y,
+#if FIX_HBD_R2R
+                                 scs_ptr->sb_size_pix,
+                                 scs_ptr->sb_size_pix);
+#else
                                  sb_width,
                                  sb_height);
+#endif
     }
 
     if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {

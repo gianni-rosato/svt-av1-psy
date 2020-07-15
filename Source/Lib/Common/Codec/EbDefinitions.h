@@ -77,6 +77,8 @@ extern "C" {
 #define RESTRUCTURE_SAD 1
 #endif
 
+#define FIX_HBD_R2R 1 // Fix 10bit error in over-boundaries CUs (incomplete SB)
+
 typedef enum MeHpMode {
     EX_HP_MODE         = 0, // Exhaustive  1/2-pel serach mode.
     REFINEMENT_HP_MODE = 1,// Refinement 1/2-pel serach mode.
