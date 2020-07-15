@@ -12784,6 +12784,36 @@ EbErrorType motion_estimate_sb(
             // Assining the ME candidates to the me Results buffer
             for (cand_index = 0; cand_index < total_me_candidate_index; ++cand_index) {
                 me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
+#if  ME_MEM_OPT
+#if REMOVE_MRP_MODE
+                uint32_t me_cand_off = pu_index * MAX_PA_ME_CAND + cand_index;
+#else
+                uint32_t me_cand_off = pu_index * pcs_ptr->max_number_of_candidates_per_block + cand_index;
+#endif
+#if DECOUPLE_ME_RES
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].direction =
+                    me_candidate->prediction_direction;
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l0 =
+                    me_candidate->ref_index[0];
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l1 =
+                    me_candidate->ref_index[1];
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref0_list =
+                    me_candidate->ref0_list;
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[me_cand_off].ref1_list =
+                    me_candidate->ref1_list;
+#else
+                pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].direction =
+                    me_candidate->prediction_direction;
+                pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l0 =
+                    me_candidate->ref_index[0];
+                pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref_idx_l1 =
+                    me_candidate->ref_index[1];
+                pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref0_list =
+                    me_candidate->ref0_list;
+                pcs_ptr->me_results[sb_index]->me_candidate_array[me_cand_off].ref1_list =
+                    me_candidate->ref1_list;
+#endif
+#else
                 pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].direction =
                     me_candidate->prediction_direction;
                 pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].ref_idx_l0 =
@@ -12794,17 +12824,50 @@ EbErrorType motion_estimate_sb(
                     me_candidate->ref0_list;
                 pcs_ptr->me_results[sb_index]->me_candidate[pu_index][cand_index].ref1_list =
                     me_candidate->ref1_list;
+#endif
             }
 
             for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#if ON_OFF_FEATURE_MRP
+                num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                    ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                    : (list_index == REF_LIST_0)
+                    ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                    : pcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
                 num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                     ? pcs_ptr->ref_list0_count_try
                     : (list_index == REF_LIST_0)
                     ? pcs_ptr->ref_list0_count_try
                     : pcs_ptr->ref_list1_count_try;
+#endif
 
                 // Ref Picture Loop
                 for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+#if  ME_MEM_OPT
+#if REMOVE_MRP_MODE
+#if DECOUPLE_ME_RES
+                    pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].x_mv =
+                        _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+
+                    pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].y_mv =
+                        _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#else
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].x_mv =
+                        _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+
+                    pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*MAX_PA_ME_MV + (list_index  ? 4 : 0) + ref_pic_index].y_mv =
+                        _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#endif
+#else
+                     uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
+                     pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0)? 4: list_index ? 2 : 0) + ref_pic_index].x_mv =
+                         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+
+                      pcs_ptr->me_results[sb_index]->me_mv_array[pu_index*pu_stride + ((list_index && scs_ptr->mrp_mode == 0) ? 4 : list_index ? 2 : 0) + ref_pic_index].y_mv =
+                          _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#endif
+#else
                     pcs_ptr->me_results[sb_index]
                         ->me_mv_array[pu_index][((list_index && scs_ptr->mrp_mode == 0)
                                                      ? 4
@@ -12817,6 +12880,7 @@ EbErrorType motion_estimate_sb(
                                                      : list_index ? 2 : 0) +
                                                 ref_pic_index]
                         .y_mv = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+#endif
 #if LOG_MV_VALIDITY
                     //check if final MV is within AV1 limits
                     check_mv_validity(_MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]),
@@ -12861,6 +12925,7 @@ EbErrorType motion_estimate_sb(
     return return_error;
 }
 
+#if !REMOVE_UNUSED_CODE_PH2
 EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index,
                                       MotionEstimationContext_t *context_ptr,
                                       EbPictureBufferDesc *      input_ptr) {
@@ -13028,3 +13093,133 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
     }
     return return_error;
 }
+#endif
+#if TPL_LA
+void wht_fwd_txfm(int16_t *src_diff, int bw,
+                  int32_t *coeff, TxSize tx_size,
+                  int bit_depth, int is_hbd);
+
+EbErrorType open_loop_intra_search_mb(
+    PictureParentControlSet *pcs_ptr, uint32_t sb_index,
+    EbPictureBufferDesc *input_ptr)
+{
+    EbErrorType return_error = EB_ErrorNone;
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+
+    uint32_t cu_origin_x;
+    uint32_t cu_origin_y;
+    uint32_t pa_blk_index = 0;
+    SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
+    OisMbResults *ois_mb_results_ptr;
+    uint8_t *above_row;
+    uint8_t *left_col;
+    uint8_t *above0_row;
+    uint8_t *left0_col;
+    uint32_t mb_stride = (scs_ptr->seq_header.max_frame_width + 15) / 16;
+
+    DECLARE_ALIGNED(16, uint8_t, left0_data[MAX_TX_SIZE * 2 + 32]);
+    DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
+    DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+    DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
+
+    DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
+    DECLARE_ALIGNED(32, int16_t, src_diff[256]);
+    DECLARE_ALIGNED(32, int32_t, coeff[256]);
+    uint8_t *predictor = predictor8;
+
+    while (pa_blk_index < CU_MAX_COUNT) {
+        const CodedBlockStats *blk_stats_ptr;
+        blk_stats_ptr = get_coded_blk_stats(pa_blk_index);
+        uint8_t bsize = blk_stats_ptr->size;
+        EbBool small_boundary_blk = EB_FALSE;
+
+        //if(sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]])
+        {
+            cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
+            cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+            if ((blk_stats_ptr->origin_x % 16) == 0 && (blk_stats_ptr->origin_y % 16) == 0 &&
+                ((pcs_ptr->enhanced_picture_ptr->width - cu_origin_x) < 16 || (pcs_ptr->enhanced_picture_ptr->height - cu_origin_y) < 16))
+                small_boundary_blk = EB_TRUE;
+        }
+
+        if(bsize != 16 && !small_boundary_blk) {
+            pa_blk_index++;
+            continue;
+        }
+        TxSize tx_size = bsize == 8 ? TX_8X8 : bsize == 16 ? TX_16X16 : bsize == 32 ? TX_32X32 : TX_64X64;
+        if (sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
+            cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
+            cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+            above0_row = above0_data + 16;
+            left0_col = left0_data + 16;
+            above_row = above_data + 16;
+            left_col = left_data + 16;
+            ois_mb_results_ptr = pcs_ptr->ois_mb_results[(cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4)];
+            memset(ois_mb_results_ptr, 0, sizeof(*ois_mb_results_ptr));
+            uint8_t *src = input_ptr->buffer_y + pcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
+                           (pcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_ptr->stride_y;
+#if 0
+            if(pcs_ptr->temporal_layer_index == 0) {
+                src = pcs_ptr->save_enhanced_picture_ptr[0] + pcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
+                      (pcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_ptr->stride_y;
+                if(cu_origin_x == 0 && cu_origin_y ==0)
+                    printf("open_loop_intra_search_mb using original src yuv, src[0~3]=%d %d %d %d, poc=%d\n", src[0], src[1], src[2], src[3], pcs_ptr->picture_number);
+            }
+#endif
+            // Fill Neighbor Arrays
+            update_neighbor_samples_array_open_loop_mb(above0_row - 1, left0_col - 1,
+                                                       input_ptr, input_ptr->stride_y, cu_origin_x, cu_origin_y, bsize, bsize);
+            uint8_t ois_intra_mode;
+            uint8_t intra_mode_start = DC_PRED;
+            EbBool   enable_paeth                = pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_paeth;
+            EbBool   enable_smooth               = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_smooth;
+#if TPL_OPT
+            uint8_t intra_mode_end =
+                pcs_ptr->tpl_opt_flag
+                    ? DC_PRED
+                    : enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
+#else
+            uint8_t  intra_mode_end = enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
+#endif
+                int64_t intra_cost;
+            PredictionMode best_mode       = DC_PRED;
+            int64_t        best_intra_cost = INT64_MAX;
+
+            for (ois_intra_mode = intra_mode_start; ois_intra_mode <= intra_mode_end; ++ois_intra_mode) {
+                int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode) ? mode_to_angle_map[(PredictionMode)ois_intra_mode] : 0;
+                // Edge filter
+                if(av1_is_directional_mode((PredictionMode)ois_intra_mode) && 1/*scs_ptr->seq_header.enable_intra_edge_filter*/) {
+                    EB_MEMCPY(left_data,  left0_data,  sizeof(uint8_t)*(MAX_TX_SIZE * 2 + 32));
+                    EB_MEMCPY(above_data, above0_data, sizeof(uint8_t)*(MAX_TX_SIZE * 2 + 32));
+                    above_row = above_data + 16;
+                    left_col  = left_data + 16;
+                    filter_intra_edge(ois_mb_results_ptr, ois_intra_mode, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, p_angle, (int32_t)cu_origin_x, (int32_t)cu_origin_y, above_row, left_col);
+                } else {
+                    above_row = above0_row;
+                    left_col  = left0_col;
+                }
+                // PRED
+                intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, 16);
+
+                // Distortion
+                eb_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+                wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
+                intra_cost = aom_satd(coeff, 16 * 16);
+
+                // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
+                if (intra_cost < best_intra_cost) {
+                    best_intra_cost = intra_cost;
+                    best_mode = ois_intra_mode;
+                }
+            }
+            // store intra_cost to pcs
+            ois_mb_results_ptr->intra_mode = best_mode;
+            ois_mb_results_ptr->intra_cost = best_intra_cost;
+            //if(pcs_ptr->picture_number == 16 && cu_origin_x <= 15 && cu_origin_y == 0)
+            //    printf("open_loop_intra_search_mb cost0 poc%d sb_index=%d, mb_origin_xy=%d %d, best_mode=%d, best_intra_cost=%d, offset=%d, src[0~3]= %d %d %d %d\n", pcs_ptr->picture_number, sb_index, cu_origin_x, cu_origin_y, best_mode, best_intra_cost, (cu_origin_y >> 4) * mb_stride + (cu_origin_x >> 4), src[0], src[1], src[2], src[3]);
+        }
+        pa_blk_index++;
+    }
+    return return_error;
+}
+#endif

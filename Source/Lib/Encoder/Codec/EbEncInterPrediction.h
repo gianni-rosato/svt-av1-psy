@@ -19,6 +19,18 @@ extern "C" {
 
 extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
 
+#if TPL_LA
+void av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
+                       int block_height, int pix_row, int pix_col,
+                       int subsampling_x, int subsampling_y, int bit_depth,
+                       int use_hbd_buf, int is_intrabc,
+                       const struct ScaleFactors *sf,
+                       const struct Buf2D *ref_buf,
+                       uint32_t interp_filters);
+void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
+                               int dst_stride, const MV *src_mv, int pix_col, int pix_row,
+                               InterPredParams *inter_pred_params);
+#endif
 EbErrorType av1_inter_prediction(
         PictureControlSet              *pcs_ptr,
         uint32_t                        interp_filters,

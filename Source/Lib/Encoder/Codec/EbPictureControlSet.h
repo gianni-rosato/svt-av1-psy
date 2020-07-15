@@ -35,21 +35,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if !OUTPUT_MEM_OPT
 #define SEGMENT_ENTROPY_BUFFER_SIZE 40000000 // Entropy Bitstream Buffer Size
 #define PACKETIZATION_PROCESS_BUFFER_SIZE SEGMENT_ENTROPY_BUFFER_SIZE
 #define PACKETIZATION_PROCESS_SPS_BUFFER_SIZE 2000
+#endif
 #define HISTOGRAM_NUMBER_OF_BINS 256
 #define MAX_NUMBER_OF_REGIONS_IN_WIDTH 4
 #define MAX_NUMBER_OF_REGIONS_IN_HEIGHT 4
 #define MAX_REF_QP_NUM 81
-
+#if TPL_LA
+#define QPS_SW_THRESH 8 // 100 to shut QPS/QPM (i.e. CORE only)
+#endif
 // BDP OFF
 #define MD_NEIGHBOR_ARRAY_INDEX 0
 #define MULTI_STAGE_PD_NEIGHBOR_ARRAY_INDEX 4
 #define NEIGHBOR_ARRAY_TOTAL_COUNT 5
 #define AOM_QM_BITS 5
-
+    
+#if DECOUPLE_ME_RES
+typedef struct DepCntPicInfo {
+    uint64_t      pic_num;
+    int32_t      dep_cnt_diff; //increase(e.g 4L->5L) or decrease of dep cnt . not including the run-time decrease
+} DepCntPicInfo;
+#endif
 typedef struct MacroblockPlane {
     // Quantizer setings
     // These are used/accessed only in the quantization process
@@ -224,7 +233,9 @@ typedef struct PictureControlSet {
     EbPictureBufferDesc *film_grain_picture_ptr;
     EbPictureBufferDesc *recon_picture16bit_ptr;
     EbPictureBufferDesc *film_grain_picture16bit_ptr;
+#if !PCS_MEM_OPT
     EbPictureBufferDesc *recon_picture32bit_ptr;
+#endif
     EbPictureBufferDesc *input_frame16bit;
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
@@ -286,8 +297,10 @@ typedef struct PictureControlSet {
     // SB Array
     uint16_t     sb_total_count;
     SuperBlock **sb_ptr_array;
+#if !MD_FRAME_CONTEXT_MEM_OPT
     // EncDec Entropy Coder (for rate estimation)
     EntropyCoder *coeff_est_entropy_coder_ptr;
+#endif
 
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -378,14 +391,23 @@ typedef struct PictureControlSet {
     CRC_CALCULATOR   crc_calculator2;
 
     FRAME_CONTEXT *                 ec_ctx_array;
+#if MD_FRAME_CONTEXT_MEM_OPT
+    FRAME_CONTEXT                   md_frame_context;
+#endif
+#if !REU_MEM_OPT
     struct MdRateEstimationContext *rate_est_array;
+#endif
     uint8_t                         update_cdf;
     FRAME_CONTEXT                   ref_frame_context[REF_FRAMES];
     EbWarpedMotionParams            ref_global_motion[TOTAL_REFS_PER_FRAME];
     struct MdRateEstimationContext *md_rate_estimation_array;
     int8_t                          ref_frame_side[REF_FRAMES];
     TPL_MV_REF *                    tpl_mvs;
+#if FILTER_INTRA_CLI
+    uint8_t                         pic_filter_intra_level;
+#else
     uint8_t                         pic_filter_intra_mode;
+#endif
     TOKENEXTRA *                    tile_tok[64][64];
     //Put it here for deinit, don't need to go pcs->ppcs->av1_cm which may already be released
     uint16_t tile_row_count;
@@ -394,6 +416,19 @@ typedef struct PictureControlSet {
     uint16_t sb_total_count_unscaled;
     // pointer to a scratch buffer used by self-guided restoration
     int32_t* rst_tmpbuf;
+#if ADAPTIVE_NSQ_CR
+    uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
+#endif
+#if ADAPTIVE_DEPTH_CR
+#if SOFT_CYCLES_REDUCTION
+    uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
+#else
+    uint32_t pred_depth_count[DEPTH_DELTA_NUM];
+#endif
+#endif
+#if ADAPTIVE_TXT_CR
+    uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -587,10 +622,27 @@ typedef struct PictureParentControlSet {
     uint32_t *intra_sad_interval_index;
     uint32_t *inter_sad_interval_index;
     EbHandle  rc_distortion_histogram_mutex;
-
+#if !REMOVE_UNUSED_CODE_PH2
     // Open loop Intra candidate Search Results
     OisSbResults **ois_sb_results;
     OisCandidate **ois_candicate;
+#endif
+#if TPL_LA
+    OisMbResults **ois_mb_results;
+    TplStats     **tpl_stats;
+    int32_t      is_720p_or_larger;
+    int32_t      base_rdmult;
+    double       r0;
+    double       *tpl_beta;
+#if TPL_LA_LAMBDA_SCALING
+    double       *tpl_rdmult_scaling_factors;
+    double       *tpl_sb_rdmult_scaling_factors;
+    EbBool       blk_lambda_tuning;
+#endif
+#if TPL_OPT
+    uint8_t       tpl_opt_flag;
+#endif
+#endif
     // Dynamic GOP
     EbPred   pred_structure;
     uint8_t  hierarchical_levels;
@@ -853,11 +905,16 @@ typedef struct PictureControlSetInitData {
     uint8_t log2_tile_rows; //from command line
     uint8_t log2_tile_cols;
     uint8_t log2_sb_sz; //in mi unit
+#if !REMOVE_UNUSED_CODE_PH2
     uint8_t allocate_ois_struct; //allocate ois results
+#endif
     EbBool is_16bit_pipeline;
 
     uint16_t  non_m8_pad_w;
     uint16_t  non_m8_pad_h;
+#if TPL_LA
+    uint8_t enable_tpl_la;
+#endif
 
 } PictureControlSetInitData;
 

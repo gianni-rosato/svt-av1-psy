@@ -73,7 +73,11 @@ uint8_t is_me_data_present(
     uint8_t                      list_idx,
     uint8_t                      ref_idx){
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+#if ME_MEM_OPT
+    const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
+#else
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#endif
     for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i){
         const MeCandidate *me_cand = &me_block_results[me_cand_i];
         assert(me_cand->direction >= 0 && me_cand->direction <= 2);
@@ -606,20 +610,32 @@ void choose_best_av1_mv_pred(ModeDecisionContext *           context_ptr,
 static void mode_decision_candidate_buffer_dctor(EbPtr p) {
     ModeDecisionCandidateBuffer *obj = (ModeDecisionCandidateBuffer *)p;
     EB_DELETE(obj->prediction_ptr);
+#if !CAND_MEM_OPT
     EB_DELETE(obj->prediction_ptr_temp);
     EB_DELETE(obj->cfl_temp_prediction_ptr);
+#endif
+#if !MEM_OPT_MD_BUF_DESC
     EB_DELETE(obj->residual_ptr);
+#endif
+#if !CAND_MEM_OPT
     EB_DELETE(obj->residual_quant_coeff_ptr);
+#endif
     EB_DELETE(obj->recon_coeff_ptr);
+#if !MEM_OPT_MD_BUF_DESC
     EB_DELETE(obj->recon_ptr);
+#endif
 }
 static void mode_decision_scratch_candidate_buffer_dctor(EbPtr p) {
     ModeDecisionCandidateBuffer *obj = (ModeDecisionCandidateBuffer *)p;
     EB_DELETE(obj->prediction_ptr);
+#if !CAND_MEM_OPT
     EB_DELETE(obj->prediction_ptr_temp);
     EB_DELETE(obj->cfl_temp_prediction_ptr);
+#endif
     EB_DELETE(obj->residual_ptr);
+#if ! CAND_MEM_OPT
     EB_DELETE(obj->residual_quant_coeff_ptr);
+#endif
     EB_DELETE(obj->recon_coeff_ptr);
     EB_DELETE(obj->recon_ptr);
 }
@@ -628,29 +644,56 @@ static void mode_decision_scratch_candidate_buffer_dctor(EbPtr p) {
 ***************************************/
 EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
                                                 EbBitDepthEnum               max_bitdepth,
+#if SB64_MEM_OPT
+                                                uint8_t sb_size,
+#endif
+#if MEM_OPT_UV_MODE
+                                                uint32_t buffer_desc_mask,
+#endif
+#if MEM_OPT_MD_BUF_DESC
+                                                EbPictureBufferDesc *temp_residual_ptr,
+                                                EbPictureBufferDesc *temp_recon_ptr,
+#endif
                                                 uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr,
                                                 uint64_t *full_cost_skip_ptr,
                                                 uint64_t *full_cost_merge_ptr) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
+#if !MEM_OPT_MD_BUF_DESC
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
+#endif
 
     EbPictureBufferDescInitData thirty_two_width_picture_buffer_desc_init_data;
 
     buffer_ptr->dctor = mode_decision_candidate_buffer_dctor;
 
     // Init Picture Data
+#if SB64_MEM_OPT
+    picture_buffer_desc_init_data.max_width                       = sb_size;
+    picture_buffer_desc_init_data.max_height                      = sb_size;
+#else
     picture_buffer_desc_init_data.max_width                       = MAX_SB_SIZE;
     picture_buffer_desc_init_data.max_height                      = MAX_SB_SIZE;
+#endif
     picture_buffer_desc_init_data.bit_depth                       = max_bitdepth;
     picture_buffer_desc_init_data.color_format                    = EB_YUV420;
+#if MEM_OPT_UV_MODE
+    picture_buffer_desc_init_data.buffer_enable_mask              = buffer_desc_mask;
+#else
     picture_buffer_desc_init_data.buffer_enable_mask              = PICTURE_BUFFER_DESC_FULL_MASK;
+#endif
     picture_buffer_desc_init_data.left_padding                    = 0;
     picture_buffer_desc_init_data.right_padding                   = 0;
     picture_buffer_desc_init_data.top_padding                     = 0;
     picture_buffer_desc_init_data.bot_padding                     = 0;
     picture_buffer_desc_init_data.split_mode                      = EB_FALSE;
+#if !MEM_OPT_MD_BUF_DESC
+#if SB64_MEM_OPT
+    double_width_picture_buffer_desc_init_data.max_width          = sb_size;
+    double_width_picture_buffer_desc_init_data.max_height         = sb_size;
+#else
     double_width_picture_buffer_desc_init_data.max_width          = MAX_SB_SIZE;
     double_width_picture_buffer_desc_init_data.max_height         = MAX_SB_SIZE;
+#endif
     double_width_picture_buffer_desc_init_data.bit_depth          = EB_16BIT;
     double_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
     double_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -659,13 +702,23 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     double_width_picture_buffer_desc_init_data.top_padding        = 0;
     double_width_picture_buffer_desc_init_data.bot_padding        = 0;
     double_width_picture_buffer_desc_init_data.split_mode         = EB_FALSE;
+#endif
 
+#if SB64_MEM_OPT
+    thirty_two_width_picture_buffer_desc_init_data.max_width    = sb_size;
+    thirty_two_width_picture_buffer_desc_init_data.max_height   = sb_size;
+#else
     thirty_two_width_picture_buffer_desc_init_data.max_width    = MAX_SB_SIZE;
     thirty_two_width_picture_buffer_desc_init_data.max_height   = MAX_SB_SIZE;
+#endif
     thirty_two_width_picture_buffer_desc_init_data.bit_depth    = EB_32BIT;
     thirty_two_width_picture_buffer_desc_init_data.color_format = EB_YUV420;
     thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask =
+#if MEM_OPT_UV_MODE
+        buffer_desc_mask;
+#else
         PICTURE_BUFFER_DESC_FULL_MASK;
+#endif
     thirty_two_width_picture_buffer_desc_init_data.left_padding  = 0;
     thirty_two_width_picture_buffer_desc_init_data.right_padding = 0;
     thirty_two_width_picture_buffer_desc_init_data.top_padding   = 0;
@@ -679,7 +732,7 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     EB_NEW(buffer_ptr->prediction_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
-
+#if !CAND_MEM_OPT
     EB_NEW(buffer_ptr->prediction_ptr_temp,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
@@ -687,21 +740,30 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     EB_NEW(buffer_ptr->cfl_temp_prediction_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
-
+#endif
+#if !MEM_OPT_MD_BUF_DESC
     EB_NEW(buffer_ptr->residual_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&double_width_picture_buffer_desc_init_data);
-
+#else
+    // Reuse the residual_ptr memory in MD context
+    buffer_ptr->residual_ptr = temp_residual_ptr;
+#endif
+#if !CAND_MEM_OPT
     EB_NEW(buffer_ptr->residual_quant_coeff_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
-
+#endif
     EB_NEW(buffer_ptr->recon_coeff_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
-
+#if !MEM_OPT_MD_BUF_DESC
     EB_NEW(
         buffer_ptr->recon_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&picture_buffer_desc_init_data);
+#else
+    // Reuse the recon_ptr memory in MD context
+    buffer_ptr->recon_ptr = temp_recon_ptr;
+#endif
 
     // Costs
     buffer_ptr->fast_cost_ptr       = fast_cost_ptr;
@@ -711,6 +773,9 @@ EbErrorType mode_decision_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buf
     return EB_ErrorNone;
 }
 EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuffer *buffer_ptr,
+#if SB64_MEM_OPT
+                                                        uint8_t                      sb_size,
+#endif
                                                         EbBitDepthEnum               max_bitdepth) {
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
@@ -719,8 +784,13 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     buffer_ptr->dctor = mode_decision_scratch_candidate_buffer_dctor;
 
     // Init Picture Data
+#if SB64_MEM_OPT
+    picture_buffer_desc_init_data.max_width                       = sb_size;
+    picture_buffer_desc_init_data.max_height                      = sb_size;
+#else
     picture_buffer_desc_init_data.max_width                       = MAX_SB_SIZE;
     picture_buffer_desc_init_data.max_height                      = MAX_SB_SIZE;
+#endif
     picture_buffer_desc_init_data.bit_depth                       = max_bitdepth;
     picture_buffer_desc_init_data.color_format                    = EB_YUV420;
     picture_buffer_desc_init_data.buffer_enable_mask              = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -729,8 +799,13 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     picture_buffer_desc_init_data.top_padding                     = 0;
     picture_buffer_desc_init_data.bot_padding                     = 0;
     picture_buffer_desc_init_data.split_mode                      = EB_FALSE;
+#if SB64_MEM_OPT
+    double_width_picture_buffer_desc_init_data.max_width          = sb_size;
+    double_width_picture_buffer_desc_init_data.max_height         = sb_size;
+#else
     double_width_picture_buffer_desc_init_data.max_width          = MAX_SB_SIZE;
     double_width_picture_buffer_desc_init_data.max_height         = MAX_SB_SIZE;
+#endif
     double_width_picture_buffer_desc_init_data.bit_depth          = EB_16BIT;
     double_width_picture_buffer_desc_init_data.color_format       = EB_YUV420;
     double_width_picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -739,9 +814,13 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     double_width_picture_buffer_desc_init_data.top_padding        = 0;
     double_width_picture_buffer_desc_init_data.bot_padding        = 0;
     double_width_picture_buffer_desc_init_data.split_mode         = EB_FALSE;
-
+#if SB64_MEM_OPT
+    thirty_two_width_picture_buffer_desc_init_data.max_width    = sb_size;
+    thirty_two_width_picture_buffer_desc_init_data.max_height   = sb_size;
+#else
     thirty_two_width_picture_buffer_desc_init_data.max_width    = MAX_SB_SIZE;
     thirty_two_width_picture_buffer_desc_init_data.max_height   = MAX_SB_SIZE;
+#endif
     thirty_two_width_picture_buffer_desc_init_data.bit_depth    = EB_32BIT;
     thirty_two_width_picture_buffer_desc_init_data.color_format = EB_YUV420;
     thirty_two_width_picture_buffer_desc_init_data.buffer_enable_mask =
@@ -759,7 +838,7 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     EB_NEW(buffer_ptr->prediction_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
-
+#if ! CAND_MEM_OPT
     EB_NEW(buffer_ptr->prediction_ptr_temp,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
@@ -767,15 +846,15 @@ EbErrorType mode_decision_scratch_candidate_buffer_ctor(ModeDecisionCandidateBuf
     EB_NEW(buffer_ptr->cfl_temp_prediction_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
-
+#endif
     EB_NEW(buffer_ptr->residual_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&double_width_picture_buffer_desc_init_data);
-
+#if ! CAND_MEM_OPT
     EB_NEW(buffer_ptr->residual_quant_coeff_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
-
+#endif
     EB_NEW(buffer_ptr->recon_coeff_ptr,
            eb_picture_buffer_desc_ctor,
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
@@ -1248,7 +1327,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     const MeSbResults *me_results     = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+#if ME_MEM_OPT
+    const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
+#else
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#endif
     ModeDecisionCandidate *cand_array   = context_ptr->fast_candidate_array;
     EbBool       is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv        best_pred_mv[2]        = {{0}, {0}};
@@ -1287,7 +1370,13 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
         /**************
        NEW_NEWMV
        ************* */
+#if !PRUNING_PER_INTER_TYPE
+#if ADD_BEST_CAND_COUNT_SIGNAL
+        total_me_cnt = MIN(total_me_cnt, context_ptr->bipred3x3_number_input_mv);
+#else
         total_me_cnt = MIN(total_me_cnt, BEST_CANDIDATE_COUNT);
+#endif
+#endif
         for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt;
              ++me_candidate_index) {
             const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -3070,7 +3159,11 @@ void inject_warped_motion_candidates(
     IntMv  best_pred_mv[2] = { {0}, {0} };
 
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
+#if ME_MEM_OPT
+    const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
+#else
     const MeCandidate *me_block_results = me_results->me_candidate[context_ptr->me_block_offset];
+#endif
 
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index)
     {
@@ -3527,7 +3620,11 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
 
     const MeSbResults *me_results       = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
+#if ME_MEM_OPT
+    const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
+#else
     const MeCandidate *me_block_results = me_results->me_candidate[me_block_offset];
+#endif
     MacroBlockD *      xd               = context_ptr->blk_ptr->av1xd;
     int                inside_tile      = 1;
     int                umv0tile         = (scs_ptr->static_config.unrestricted_motion_vector == 0);
@@ -6451,8 +6548,11 @@ uint32_t product_full_mode_decision(
     blk_ptr->quantized_dc[1][0] = buffer_ptr_array[lowest_cost_index]->candidate_ptr->quantized_dc[1][0];
     blk_ptr->quantized_dc[2][0] = buffer_ptr_array[lowest_cost_index]->candidate_ptr->quantized_dc[2][0];
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].count_non_zero_coeffs = candidate_ptr->count_non_zero_coeffs;
-
+#if SB_MEM_OPT
+    blk_ptr->use_intrabc = candidate_ptr->use_intrabc;
+#else
     blk_ptr->av1xd->use_intrabc = candidate_ptr->use_intrabc;
+#endif
     if (blk_ptr->prediction_mode_flag == INTER_MODE && candidate_ptr->is_compound)
     {
         blk_ptr->interinter_comp.type = candidate_ptr->interinter_comp.type;
@@ -6520,7 +6620,11 @@ uint32_t product_full_mode_decision(
         // Inter Prediction
         pu_ptr->inter_pred_direction_index = candidate_ptr->prediction_direction[0];
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag = candidate_ptr->merge_flag;
+#if SB_MEM_OPT
+        if (blk_ptr->prediction_mode_flag != INTER_MODE && blk_ptr->use_intrabc == 0)
+#else
         if (blk_ptr->prediction_mode_flag != INTER_MODE && blk_ptr->av1xd->use_intrabc == 0)
+#endif
         {
             pu_ptr->inter_pred_direction_index = 0x03;
             context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag = EB_FALSE;
@@ -6689,3 +6793,60 @@ uint32_t product_full_mode_decision(
     UNUSED(cu_size_log2);
     return lowest_cost_index;
 }
+#if TPL_LA_LAMBDA_SCALING
+uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+        uint32_t pic_full_lambda) {
+    PictureParentControlSet *ppcs_ptr = pcs_ptr->parent_pcs_ptr;
+    Av1Common *cm = ppcs_ptr->av1_cm;
+
+    BlockSize bsize = context_ptr->blk_geom->bsize;
+    const int bsize_base = BLOCK_16X16;
+    const int num_mi_w = mi_size_wide[bsize_base];
+    const int num_mi_h = mi_size_high[bsize_base];
+    const int num_cols = (cm->mi_cols + num_mi_w - 1) / num_mi_w;
+    const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+    const int num_bcols = (mi_size_wide[bsize] + num_mi_w - 1) / num_mi_w;
+    const int num_brows = (mi_size_high[bsize] + num_mi_h - 1) / num_mi_h;
+    int mi_row = context_ptr->blk_origin_y / 4;
+    int mi_col = context_ptr->blk_origin_x / 4;
+    int row, col;
+    double base_block_count = 0.0;
+    double geom_mean_of_scale = 0.0;
+    for (row = mi_row / num_mi_w;
+            row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
+        for (col = mi_col / num_mi_h;
+                col < num_cols && col < mi_col / num_mi_h + num_bcols; ++col) {
+            const int index = row * num_cols + col;
+            geom_mean_of_scale += log(ppcs_ptr->tpl_sb_rdmult_scaling_factors[index]);
+            base_block_count += 1.0;
+        }
+    }
+    geom_mean_of_scale = exp(geom_mean_of_scale / base_block_count);
+    uint32_t new_full_lambda = (uint32_t)((double)pic_full_lambda * geom_mean_of_scale + 0.5);
+    new_full_lambda = AOMMAX(new_full_lambda, 0);
+    return new_full_lambda;
+}
+
+#if TPL_LAMBDA_IMP
+void set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr) {
+    context_ptr->full_lambda_md[EB_8_BIT_MD] =
+        get_blk_tuned_full_lambda(context_ptr,
+            pcs_ptr,
+            context_ptr->enc_dec_context_ptr->pic_full_lambda[EB_8_BIT_MD]);
+
+    context_ptr->full_lambda_md[EB_10_BIT_MD] =
+        get_blk_tuned_full_lambda(context_ptr,
+            pcs_ptr,
+            context_ptr->enc_dec_context_ptr->pic_full_lambda[EB_10_BIT_MD]);
+    context_ptr->fast_lambda_md[EB_8_BIT_MD] =
+        get_blk_tuned_full_lambda(context_ptr,
+            pcs_ptr,
+            context_ptr->enc_dec_context_ptr->pic_fast_lambda[EB_8_BIT_MD]);
+
+    context_ptr->fast_lambda_md[EB_10_BIT_MD] =
+        get_blk_tuned_full_lambda(context_ptr,
+            pcs_ptr,
+            context_ptr->enc_dec_context_ptr->pic_fast_lambda[EB_10_BIT_MD]);
+}
+#endif
+#endif

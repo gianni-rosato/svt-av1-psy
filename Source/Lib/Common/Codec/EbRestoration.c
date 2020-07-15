@@ -1353,6 +1353,12 @@ void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm
 
         copy_funs[plane](dst, frame);
     }
+#if REST_MEM_OPT2
+    if (dst->buffer_alloc_sz) {
+        dst->buffer_alloc_sz = 0;
+        EB_FREE_ARRAY(dst->buffer_alloc);
+    }
+#endif
 }
 
 static void foreach_rest_unit_in_tile(const Av1PixelRect *tile_rect, int32_t tile_row,

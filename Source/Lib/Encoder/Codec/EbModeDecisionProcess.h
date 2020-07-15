@@ -412,7 +412,9 @@ typedef struct ModeDecisionContext {
     PALETTE_BUFFER   palette_buffer;
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
     // Entropy Coder
+#if !MD_FRAME_CONTEXT_MEM_OPT
     EntropyCoder *   coeff_est_entropy_coder_ptr;
+#endif
     MdEncPassCuData *md_ep_pipe_sb;
     uint8_t          pu_itr;
     uint8_t          cu_size_log2;
@@ -482,6 +484,15 @@ typedef struct ModeDecisionContext {
     uint8_t  injected_mv_count_bipred;
     uint32_t fast_candidate_inter_count;
     uint32_t me_block_offset;
+#if ME_MEM_OPT
+    uint32_t me_cand_offset;
+#endif
+#if CAND_MEM_OPT
+    EbPictureBufferDesc *cfl_temp_prediction_ptr;
+    EbPictureBufferDesc *prediction_ptr_temp;
+    EbPictureBufferDesc
+        *residual_quant_coeff_ptr; // One buffer for residual and quantized coefficient
+#endif
     uint8_t  tx_depth;
     uint8_t  txb_itr;
     uint32_t me_sb_addr;
@@ -812,11 +823,12 @@ typedef struct ModeDecisionContext {
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                       uint8_t bit_depth, uint16_t qp_index,
                                       EbBool multiply_lambda);
-
+#if !TPL_LA_LAMBDA_SCALING
 typedef void (*EbLambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                    uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
                                    uint32_t *full_chroma_lambda_sao,
                                    uint8_t qp_hierarchical_position, uint8_t qp, uint8_t chroma_qp);
+#endif
 
 /**************************************
      * Extern Function Declarations
@@ -828,6 +840,7 @@ extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
                                               uint8_t enable_hbd_mode_decision,
                                               uint8_t cfg_palette);
 
+#if !TPL_LA_LAMBDA_SCALING
 extern void lambda_assign_low_delay(uint32_t *fast_lambda, uint32_t *full_lambda,
                                     uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,
                                     uint32_t *full_chroma_lambda_sao,
@@ -843,6 +856,7 @@ void        av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint
                               uint16_t qp_index, EbBool multiply_lambda);
 
 extern const EbLambdaAssignFunc    lambda_assignment_function_table[4];
+#endif
 extern const EbAv1LambdaAssignFunc av1_lambda_assignment_function_table[4];
 
 // Table that converts 0-63 Q-range values passed in outside to the Qindex

@@ -541,8 +541,16 @@ EbErrorType load_default_buffer_configuration_settings(
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
 
+#if DECOUPLE_ME_RES
+        min_me = scs_ptr->static_config.look_ahead_distance==0 ? 1 : min_parent;
+#endif
+
         //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
+#if TPL_LA
+        min_paref = 25 + scs_ptr->scd_delay + eos_delay + (scs_ptr->static_config.enable_tpl_la ? needed_lad_pictures : 0);
+#else
         min_paref = 25 +  scs_ptr->scd_delay + eos_delay;
+#endif
 
         if (scs_ptr->static_config.hierarchical_levels == 5 &&
             core_count == SINGLE_CORE_COUNT) {
@@ -993,7 +1001,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     * Picture Control Set: Parent
     ************************************/
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-
+#if DECOUPLE_ME_RES
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of SBs, not samples
         PictureControlSetInitData input_data;
@@ -1016,16 +1026,25 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
+#if !REMOVE_MRP_MODE
         input_data.mrp_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mrp_mode;
+#endif
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
         input_data.nsq_present = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->nsq_present;
+#endif
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
         input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
+#if !REMOVE_UNUSED_CODE_PH2
         input_data.allocate_ois_struct = 0;
+#endif
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
 
+#if TPL_LA
+        input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_tpl_la;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1035,6 +1054,17 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             picture_parent_control_set_creator,
             &input_data,
             NULL);
+#if DECOUPLE_ME_RES
+        EB_NEW(
+            enc_handle_ptr->me_pool_ptr_array[instance_index],
+            eb_system_resource_ctor,
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->me_pool_init_count,
+            1,
+            0,
+            me_creator,
+            &input_data,
+            NULL);
+#endif
     }
 
     /************************************
@@ -1136,6 +1166,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             ref_pic_buf_desc_init_data.bit_depth = EB_10BIT;
 
         eb_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
+#if MEM_OPT_10bit
+        eb_ref_obj_ect_desc_init_data_structure.hbd_mode_decision =
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
+#endif
 
         // Reference Picture Buffers
         EB_NEW(
@@ -1152,7 +1186,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         // Currently, only Luma samples are needed in the PA
         ref_pic_buf_desc_init_data.max_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width;
         ref_pic_buf_desc_init_data.max_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height;
+#if MEM_OPT_10bit
+        ref_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+#else
         ref_pic_buf_desc_init_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
+#endif
         ref_pic_buf_desc_init_data.color_format = EB_YUV420; //use 420 for picture analysis
         ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         ref_pic_buf_desc_init_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz + ME_FILTER_TAP;
@@ -1162,7 +1200,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
         quart_pic_buf_desc_init_data.max_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width >> 1;
         quart_pic_buf_desc_init_data.max_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height >> 1;
+#if MEM_OPT_10bit
+        quart_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+#else
         quart_pic_buf_desc_init_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
+#endif
         quart_pic_buf_desc_init_data.color_format = EB_YUV420;
         quart_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         quart_pic_buf_desc_init_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz >> 1;
@@ -1174,7 +1216,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
         sixteenth_pic_buf_desc_init_data.max_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width >> 2;
         sixteenth_pic_buf_desc_init_data.max_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height >> 2;
+#if MEM_OPT_10bit
+        sixteenth_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+#else
         sixteenth_pic_buf_desc_init_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
+#endif
         sixteenth_pic_buf_desc_init_data.color_format = EB_YUV420;
         sixteenth_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         sixteenth_pic_buf_desc_init_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz >> 2;
@@ -2390,6 +2436,19 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
+#if TPL_LA
+    scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
+    scs_ptr->static_config.frames_to_be_encoded = ((EbSvtAv1EncConfiguration*)config_struct)->frames_to_be_encoded;
+    if (scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.look_ahead_distance > (uint32_t)0) {
+#if LAD_MEM_RED
+        SVT_LOG("SVT [Warning]: force look_ahead_distance to be 16 from %d for perf/quality tradeoff when enable_tpl_la=1\n", scs_ptr->static_config.look_ahead_distance);
+        scs_ptr->static_config.look_ahead_distance = 16;
+#else
+        SVT_LOG("SVT [Warning]: force look_ahead_distance to be 32 from %d for perf/quality tradeoff when enable_tpl_la=1\n", scs_ptr->static_config.look_ahead_distance);
+        scs_ptr->static_config.look_ahead_distance = 32;
+#endif
+    }
+#endif
 
     scs_ptr->static_config.enable_altrefs = config_struct->enable_altrefs;
     scs_ptr->static_config.altref_strength = config_struct->altref_strength;
@@ -3064,6 +3123,10 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
     config_ptr->look_ahead_distance = (uint32_t)~0;
+#if TPL_LA
+    config_ptr->enable_tpl_la = 0;
+    config_ptr->frames_to_be_encoded = 0;
+#endif
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 10;

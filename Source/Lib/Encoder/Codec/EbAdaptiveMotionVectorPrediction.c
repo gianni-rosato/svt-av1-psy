@@ -1397,7 +1397,11 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
                     mi_ptr[mi_x + mi_y * mi_stride].mbmi.tx_depth         = blk_ptr->tx_depth;
                 }
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.use_intrabc =
+#if SB_MEM_OPT
+                    blk_ptr->use_intrabc;
+#else
                     blk_ptr->av1xd->use_intrabc;
+#endif
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[1] =
                     blk_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
@@ -1496,7 +1500,11 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                     mi_ptr[mi_x + mi_y * mi_stride].mbmi.tx_depth         = blk_ptr->tx_depth;
                 }
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.use_intrabc =
+#if SB_MEM_OPT
+                    blk_ptr->use_intrabc;
+#else
                     blk_ptr->av1xd->use_intrabc;
+#endif
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[1] =
                     avail_blk_flag && blk_ptr->is_interintra_used ?

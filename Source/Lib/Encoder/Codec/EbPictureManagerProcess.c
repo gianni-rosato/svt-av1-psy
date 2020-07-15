@@ -44,6 +44,9 @@ static INLINE unsigned int get_token_alloc(int mb_rows, int mb_cols, int sb_size
 
     return sb_rows * sb_cols * sb_palette_toks;
 }
+#if PAL_MEM_OPT
+void alloc_palette_tokens(SequenceControlSet * scs_ptr, PictureControlSet * child_pcs_ptr);
+#endif
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 /************************************************
  * Defines
@@ -1016,6 +1019,9 @@ void *picture_manager_kernel(void *input_ptr) {
 
 //                        child_pcs_ptr->parent_pcs_ptr->av1_cm->pcs_ptr = child_pcs_ptr;
                         // Palette
+#if PAL_MEM_OPT
+                        alloc_palette_tokens(scs_ptr, child_pcs_ptr);
+#endif
                         TOKENEXTRA * pre_tok  = child_pcs_ptr->tile_tok[0][0];
                         unsigned int tile_tok = 0;
                         //Tile Loop

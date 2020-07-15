@@ -448,6 +448,12 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
             if (flags & HAS_AVX2) eb_aom_sad128x64 = eb_aom_sad128x64_avx2;
             if (flags & HAS_AVX2) eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx2;
             if (flags & HAS_AVX2) eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx2;
+#if TPL_LA
+    aom_satd = aom_satd_c;
+    if (flags & HAS_AVX2) aom_satd = aom_satd_avx2;
+    av1_block_error = av1_block_error_c;
+    if (flags & HAS_AVX2) av1_block_error = av1_block_error_avx2;
+#endif
 #ifndef NON_AVX512_SUPPORT
             if (flags & HAS_AVX512F) {
                 eb_aom_sad64x128 = eb_aom_sad64x128_avx512;
@@ -587,6 +593,10 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x16 = eb_av1_fwd_txfm2d_64x16_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x16 = eb_av1_fwd_txfm2d_32x16_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x32 = eb_av1_fwd_txfm2d_16x32_avx2;
+#if TPL_LA
+    eb_av1_lowbd_fwd_txfm   = av1_lowbd_fwd_txfm_c;
+    //if (flags & HAS_AVX2) eb_av1_lowbd_fwd_txfm = av1_lowbd_fwd_txfm_avx2;
+#endif
 #ifndef NON_AVX512_SUPPORT
                 if (flags & HAS_AVX512F) {
                     eb_av1_fwd_txfm2d_64x64 = av1_fwd_txfm2d_64x64_avx512;

@@ -1706,7 +1706,16 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         return (RDCOST(lambda, rate, total_distortion));
     }
 }
-
+#if MD_FRAME_CONTEXT_MEM_OPT
+EbErrorType av1_txb_estimate_coeff_bits(
+    struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
+    PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+    uint32_t txb_origin_index, uint32_t txb_chroma_origin_index,
+    EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint32_t cb_eob, uint32_t cr_eob,
+    uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
+    TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
+    COMPONENT_TYPE component_type) {
+#else
 EbErrorType av1_txb_estimate_coeff_bits(
     struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
     PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
@@ -1716,6 +1725,7 @@ EbErrorType av1_txb_estimate_coeff_bits(
     TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
     COMPONENT_TYPE component_type) {
     (void)entropy_coder_ptr;
+#endif
     EbErrorType return_error = EB_ErrorNone;
 
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;

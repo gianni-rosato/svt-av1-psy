@@ -52,7 +52,18 @@ extern "C" {
         uint32_t                       sb_index,
         MotionEstimationContext_t   *context_ptr,
         EbPictureBufferDesc       *input_ptr);
+    
 
+#if TPL_LA
+    extern EbErrorType av1_open_loop_intra_search(
+        PictureParentControlSet   *picture_control_set_ptr,
+        MotionEstimationContext_t *context_ptr,
+        EbPictureBufferDesc       *input_ptr);
+    extern EbErrorType open_loop_intra_search_mb(
+        PictureParentControlSet   *picture_control_set_ptr,
+        uint32_t                   sb_index,
+        EbPictureBufferDesc       *input_ptr);
+#endif
 #define a_b_c  0
 #define a_c_b  1
 #define b_a_c  2

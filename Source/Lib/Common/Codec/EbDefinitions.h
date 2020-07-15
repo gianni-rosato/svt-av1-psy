@@ -274,6 +274,40 @@ extern "C" {
 #define NO_AB_HV4              1 //disallow HA/HB/VA/VB H4/V4
 #define APR25_7PM_ADOPTIONS 1
 #define QP2QINDEX           1 // switch QP to qindex for MD
+
+
+
+#define REU_MEM_OPT                 0 // Memory reduction for rate estimation tables ///////////////////////
+#define SB_MEM_OPT                  1 // memory reduction for SB array. Removing memory allocation for av1xd per blk
+
+#define MD_FRAME_CONTEXT_MEM_OPT    1 // Memory reduction for frame context used in MD
+
+#define ME_MEM_OPT                  1 // Memory reduction for ME results
+#define CAND_MEM_OPT                1 // Memory reduction for candidate buffers
+#define PAL_MEM_OPT                 1 // Memory allocation on the fly for palette
+#define REST_MEM_OPT2               1 // Memory reduction for restoration
+#define MAY03_4K_10BIT_ADOPTS       1 // disable chroma blind at MD for 10bit NSC; 4K setting change
+
+#define EC_MEM_OPT                  1 // Memory Opt for ec_ptr in pcs
+#define PCS_MEM_OPT                 1 // Memory reduction for child PCS
+
+#define TPL_LA                      1 // Add TPL into look ahead
+#if TPL_LA
+#define MAX_TPL_LA_SW            60 // Max TPL look ahead sliding window size
+#define TPL_LA_QPS                1
+#define TPL_LA_QPM                1
+#define TPL_LA_LAMBDA_SCALING     1
+#endif
+#define ME_MEM_OPT2                 1 // Memory reduction for ME Context
+#define NEW_CYCLE_ALLOCATION        1 // New cycle allocation where the action of the TXS and NICs was replaced by NSQ
+#define ADD_BEST_CAND_COUNT_SIGNAL  1 // replace BEST_CANDIDATE_COUNT macro with a signal
+#define RE_ENABLE_HME_L0_240p       1 // Re-enable HME L0 for 240p, as it helps high motion clips, and is noise for others
+#define START_ME_AT_HME_MV          1 // Start the ME search at the HME MV for all resolutions - needed for high motion clips
+#define MAY12_ADOPTIONS             1 // Adoptions in M0, M1, M2
+#define REMOVE_CHROMA_INTRA_S0      1 // INTRA S0 Chroma OFF
+#define NICS_CLEANUP                1 // cleanup nics generation (lossy)
+#define CLASS_PRUNE                 1 // new class pruning for stage3: adaptive nics sclings
+#define DISALLOW_ALL_ACTIONS        1
 #endif
 
 ///////// END MASTER_SYNCH
@@ -734,7 +768,9 @@ typedef enum MdStagingMode {
 // NICS
 #define MAX_FRAME_TYPE 3 // Max number of frame type allowed for nics
 #define ALL_S0 -1 // Allow all candidates from stage0
+#if !ADD_BEST_CAND_COUNT_SIGNAL
 #define BEST_CANDIDATE_COUNT 4
+#endif
 #define MAX_REF_TYPE_CAND 30
 #define PRUNE_REC_TH 5
 #define PRUNE_REF_ME_TH 2

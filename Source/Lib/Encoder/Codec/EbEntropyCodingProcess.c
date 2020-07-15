@@ -172,11 +172,12 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
     uint16_t tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows *
                         pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
     uint16_t tile_idx = 0;
+#if !EC_MEM_OPT
     for (tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
         output_bitstream_reset(entropy_coder_get_bitstream_ptr(
             pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr));
     }
-
+#endif
     uint32_t entropy_coding_qp;
 
     context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
@@ -543,6 +544,12 @@ void *entropy_coding_kernel(void *input_ptr) {
                                 if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL)
                                     eb_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
                             }
+
+#if PAL_MEM_OPT
+                            //free palette data
+                            if (pcs_ptr->tile_tok[0][0])
+                                EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
+#endif
 
                             frame_entropy_done = EB_TRUE;
                         }

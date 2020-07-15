@@ -1217,6 +1217,7 @@ EbErrorType  intra_luma_prediction_for_interintra(
 }
 
 
+#if !REMOVE_UNUSED_CODE_PH2
 EbErrorType update_neighbor_samples_array_open_loop(
         uint8_t                           *above_ref,
         uint8_t                            *left_ref,
@@ -1278,8 +1279,204 @@ EbErrorType update_neighbor_samples_array_open_loop(
 
     return return_error;
 }
+#endif
+#if TPL_LA
+#define USE_PADDING_FIX 1
+EbErrorType update_neighbor_samples_array_open_loop_mb(
+        uint8_t                            *above_ref,
+        uint8_t                            *left_ref,
+        EbPictureBufferDesc                *input_ptr,
+        uint32_t                            stride,
+        uint32_t                            src_origin_x,
+        uint32_t                            src_origin_y,
+        uint8_t                             bwidth,
+        uint8_t                             bheight)
+{
+    EbErrorType    return_error = EB_ErrorNone;
 
+    uint32_t idx;
+    uint8_t  *src_ptr;
+    uint8_t  *read_ptr;
+    uint32_t count;
 
+    uint32_t width = input_ptr->width;
+    uint32_t height = input_ptr->height;
+    uint32_t block_size_half = bwidth << 1;
+
+    // Adjust the Source ptr to start at the origin of the block being updated
+    src_ptr = input_ptr->buffer_y + (((src_origin_y + input_ptr->origin_y) * stride) + (src_origin_x + input_ptr->origin_x));
+
+    //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
+    EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
+    EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
+
+    // Get the upper left sample
+    if (src_origin_x != 0 && src_origin_y != 0) {
+        read_ptr = src_ptr - stride - 1;
+        *above_ref = *read_ptr;
+        *left_ref = *read_ptr;
+        left_ref++;
+        above_ref++;
+    }else {
+        *above_ref = *left_ref = 128;
+        left_ref++;
+        above_ref++;
+    }
+    // Get the left-column
+    count = block_size_half;
+    if (src_origin_x != 0) {
+        read_ptr = src_ptr - 1;
+#if USE_PADDING_FIX
+        if(src_origin_y == 0)
+            *(left_ref - 1) = *read_ptr;
+#endif
+        count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
+        for (idx = 0; idx < count; ++idx) {
+            *left_ref = *read_ptr;
+            read_ptr += stride;
+            left_ref++;
+        }
+        left_ref += (block_size_half - count);
+#if USE_PADDING_FIX
+        // pading unknown left bottom pixels with value at(-1, -15)
+        for(idx = 0; idx < bheight; idx++)
+            *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
+#endif
+#if USE_PADDING_FIX
+    } else
+    if (src_origin_x == 0 && src_origin_y != 0 ) {
+        count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
+        EB_MEMSET(left_ref - 1, *(src_ptr - stride), count + 1);
+        *(above_ref - 1) = *(src_ptr - stride);
+#endif
+    }else
+        left_ref += count;
+
+    // Get the top-row
+    count = block_size_half;
+    if (src_origin_y != 0) {
+        read_ptr = src_ptr - stride;
+        count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
+        EB_MEMCPY(above_ref, read_ptr, count);
+#if USE_PADDING_FIX
+        // pading unknown top right pixels with value at(15, -1)
+        if(src_origin_x != 0)
+            for(idx = 0; idx < bwidth; idx++)
+                *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);
+#else
+        above_ref += (block_size_half - count);
+#endif
+#if USE_PADDING_FIX
+    } else
+    if (src_origin_y == 0 && src_origin_x != 0 ) {
+        count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
+        EB_MEMSET(above_ref - 1, *(left_ref - count), count + 1);
+#endif
+    }else
+        above_ref += count;
+
+    return return_error;
+}
+
+#if TPL_IMP
+EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
+    uint8_t *above_ref, uint8_t *left_ref, uint8_t *recon_ptr, uint32_t stride,
+    uint32_t src_origin_x, uint32_t src_origin_y, uint8_t bwidth, uint8_t bheight, uint32_t width,
+    uint32_t height)
+{
+    EbErrorType    return_error = EB_ErrorNone;
+
+    uint32_t idx;
+    uint8_t  *src_ptr;
+    uint8_t  *read_ptr;
+    uint32_t count;
+
+    uint32_t block_size_half = bwidth << 1;
+
+    // Adjust the Source ptr to start at the origin of the block being updated
+    src_ptr = recon_ptr + (src_origin_y  * stride + src_origin_x );
+
+    //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
+    EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
+    EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
+
+    // Get the upper left sample
+    if (src_origin_x != 0 && src_origin_y != 0) {
+        read_ptr = src_ptr - stride - 1;
+        *above_ref = *read_ptr;
+        *left_ref = *read_ptr;
+        left_ref++;
+        above_ref++;
+    }
+    else {
+        *above_ref = *left_ref = 128;
+        left_ref++;
+        above_ref++;
+    }
+    // Get the left-column
+    count = block_size_half;
+    if (src_origin_x != 0) {
+        read_ptr = src_ptr - 1;
+#if USE_PADDING_FIX
+        if (src_origin_y == 0)
+            *(left_ref - 1) = *read_ptr;
+#endif
+        count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
+        for (idx = 0; idx < count; ++idx) {
+            *left_ref = *read_ptr;
+            read_ptr += stride;
+            left_ref++;
+        }
+        left_ref += (block_size_half - count);
+#if USE_PADDING_FIX
+        // pading unknown left bottom pixels with value at(-1, -15)
+        for (idx = 0; idx < bheight; idx++)
+            *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
+#endif
+#if USE_PADDING_FIX
+    }
+    else
+        if (src_origin_x == 0 && src_origin_y != 0) {
+            count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
+            EB_MEMSET(left_ref - 1, *(src_ptr - stride), count + 1);
+            *(above_ref - 1) = *(src_ptr - stride);
+#endif
+        }
+        else
+            left_ref += count;
+
+    // Get the top-row
+    count = block_size_half;
+    if (src_origin_y != 0) {
+        read_ptr = src_ptr - stride;
+        count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
+        EB_MEMCPY(above_ref, read_ptr, count);
+#if USE_PADDING_FIX
+        // pading unknown top right pixels with value at(15, -1)
+        if (src_origin_x != 0)
+            for (idx = 0; idx < bwidth; idx++)
+                *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);
+#else
+        above_ref += (block_size_half - count);
+#endif
+#if USE_PADDING_FIX
+    }
+    else
+        if (src_origin_y == 0 && src_origin_x != 0) {
+            count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
+            EB_MEMSET(above_ref - 1, *(left_ref - count), count + 1);
+#endif
+        }
+        else
+            above_ref += count;
+
+    return return_error;
+}
+#endif
+
+#endif
+
+#if !REMOVE_UNUSED_CODE_PH2
 /** intra_prediction_open_loop()
         performs Open-loop Intra candidate Search for a CU
  */
@@ -1311,3 +1508,4 @@ EbErrorType intra_prediction_open_loop(
     }
     return return_error;
 }
+#endif

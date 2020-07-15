@@ -778,7 +778,11 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     } else {
         update_cdf(fc->y_mode_cdf[size_group_lookup[bsize]], y_mode, INTRA_MODES);
     }
+#if SB_MEM_OPT
+    if (blk_ptr->use_intrabc == 0 &&
+#else
     if (xd->use_intrabc == 0 &&
+#endif
         av1_filter_intra_allowed(pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_filter_intra,
                                  bsize,
                                  blk_ptr->palette_info.pmi.palette_size[0],

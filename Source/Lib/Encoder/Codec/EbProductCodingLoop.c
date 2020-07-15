@@ -138,7 +138,11 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
         (uint8_t)context_ptr->blk_ptr->prediction_unit_array->inter_pred_direction_index;
     uint8_t ref_frame_type = (uint8_t)context_ptr->blk_ptr->prediction_unit_array[0].ref_frame_type;
     int32_t is_inter       = (context_ptr->blk_ptr->prediction_mode_flag == INTER_MODE ||
+#if SB_MEM_OPT
+        context_ptr->blk_ptr->use_intrabc)
+#else
                         context_ptr->blk_ptr->av1xd->use_intrabc)
+#endif
         ? EB_TRUE
         : EB_FALSE;
 
@@ -4839,6 +4843,63 @@ uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode);
 uint8_t is_me_data_present(struct ModeDecisionContext *context_ptr, const MeSbResults *me_results,
                            uint8_t list_idx, uint8_t ref_idx);
 // Derive me_sb_addr and me_block_offset used to access ME_MV
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+    ModeDecisionContext *context_ptr) {
+
+    // @ this stage NSQ block(s) are inheriting SQ block(s) ME results; MV(s), pruning PA_ME results
+
+    // Get parent_depth_idx_mds
+    uint16_t parent_depth_idx_mds = 0;
+    if (context_ptr->blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64))
+        //Set parent to be considered
+        parent_depth_idx_mds =
+        (context_ptr->blk_geom->sqi_mds -
+        (context_ptr->blk_geom->quadi - 3) * ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth]) -
+        parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
+
+    const BlockGeom *sq_blk_geom =
+        (context_ptr->blk_geom->bwidth != context_ptr->blk_geom->bheight)
+        ? get_blk_geom_mds(context_ptr->blk_geom->sqi_mds) // Use parent block SQ info as ME not performed for NSQ
+        : (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) // Use parent_depth SQ block info as ME not performed for 4x4
+        ? get_blk_geom_mds(parent_depth_idx_mds)
+        : context_ptr->blk_geom;
+
+    context_ptr->geom_offset_x = 0;
+    context_ptr->geom_offset_y = 0;
+
+    if (scs_ptr->seq_header.sb_size == BLOCK_128X128) {
+        uint32_t me_sb_size = scs_ptr->sb_sz;
+        uint32_t me_pic_width_in_sb =
+            (pcs_ptr->parent_pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / me_sb_size;
+        uint32_t me_sb_x = (context_ptr->blk_origin_x / me_sb_size);
+        uint32_t me_sb_y = (context_ptr->blk_origin_y / me_sb_size);
+        context_ptr->me_sb_addr = me_sb_x + me_sb_y * me_pic_width_in_sb;
+        context_ptr->geom_offset_x = (me_sb_x & 0x1) * me_sb_size;
+        context_ptr->geom_offset_y = (me_sb_y & 0x1) * me_sb_size;
+    }
+    else
+        context_ptr->me_sb_addr = context_ptr->sb_ptr->index;
+
+    if (sq_blk_geom->bwidth == 128 || sq_blk_geom->bheight == 128) {
+        context_ptr->me_block_offset = 0;
+    }
+    else {
+        context_ptr->me_block_offset =
+            get_me_info_index(pcs_ptr->parent_pcs_ptr->max_number_of_pus_per_sb,
+                sq_blk_geom,
+                context_ptr->geom_offset_x,
+                context_ptr->geom_offset_y);
+    }
+#if ME_MEM_OPT
+#if REMOVE_MRP_MODE
+    context_ptr->me_cand_offset = context_ptr->me_block_offset * MAX_PA_ME_CAND;
+#else
+    context_ptr->me_cand_offset = context_ptr->me_block_offset *pcs_ptr->parent_pcs_ptr->max_number_of_candidates_per_block;
+#endif
+#endif
+}
+#else
 void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                        ModeDecisionContext *context_ptr) {
     context_ptr->geom_offset_x = 0;
@@ -4895,7 +4956,11 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
             context_ptr->geom_offset_x,
             context_ptr->geom_offset_y);
     }
+#if ME_MEM_OPT
+    context_ptr->me_cand_offset = context_ptr->me_block_offset *pcs_ptr->parent_pcs_ptr->max_number_of_candidates_per_block;
+#endif
 }
+#endif
 // Copy ME_MVs (generated @ PA) from input buffer (pcs_ptr-> .. ->me_results) to local
 // MD buffers (context_ptr->sb_me_mv)
 void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -4904,8 +4969,9 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     const SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
     derive_me_offsets(scs_ptr, pcs_ptr, context_ptr);
-
+#if !ADD_MD_NSQ_SEARCH
     EbBool  use_ssd           = EB_TRUE;
+#endif
     uint8_t hbd_mode_decision = context_ptr->hbd_mode_decision == EB_DUAL_BIT_MD
         ? EB_8_BIT_MD
         : context_ptr->hbd_mode_decision;
@@ -4928,11 +4994,44 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             uint8_t ref_idx  = get_ref_frame_idx(rf[0]);
 
             // Get the ME MV
+#if DECOUPLE_ME_RES
+            const MeSbResults *me_results =
+                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
+
+#if SEARCH_TOP_N
+                // Set md_motion_search_best_mv array dist(s) to max
+                for (uint8_t best_mv_idx = 0; best_mv_idx < MD_MOTION_SEARCH_MAX_BEST_MV; best_mv_idx++)
+                    context_ptr->md_motion_search_best_mv[best_mv_idx].dist = (uint32_t) ~0;
+#endif
                 int16_t me_mv_x;
                 int16_t me_mv_y;
+#if ME_MEM_OPT
+#if REMOVE_MRP_MODE
+                if (list_idx == 0) {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + ref_idx].x_mv) << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + ref_idx].y_mv) << 1;
+                }
+                else {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + 4 + ref_idx].x_mv) << 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*MAX_PA_ME_MV + 4 + ref_idx].y_mv) << 1;
+                }
+#else
+                uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
+                if (list_idx == 0) {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + ref_idx].x_mv)<< 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + ref_idx].y_mv)<< 1;
+                }
+                else {
+                    me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].x_mv)<< 1;
+                    me_mv_y = (me_results->me_mv_array[context_ptr->me_block_offset*pu_stride + (scs_ptr->mrp_mode == 0 ? 4 : 2) + ref_idx].y_mv)<< 1;
+                }
+#endif
+#else
                 if (list_idx == 0) {
                     me_mv_x = (me_results->me_mv_array[context_ptr->me_block_offset][ref_idx].x_mv)
                         << 1;
@@ -4950,7 +5049,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                    .y_mv)
                         << 1;
                 }
-
+#endif
                 if (context_ptr->perform_me_mv_1_8_pel_ref) {
                     int16_t  best_search_mvx        = (int16_t)~0;
                     int16_t  best_search_mvy        = (int16_t)~0;
@@ -6053,8 +6152,13 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                 context_ptr->pred_buf_q3,
                 &(candidate_buffer->prediction_ptr->buffer_cb[blk_chroma_origin_index]),
                 candidate_buffer->prediction_ptr->stride_cb,
+#if  CAND_MEM_OPT
+                &(context_ptr->cfl_temp_prediction_ptr->buffer_cb[blk_chroma_origin_index]),
+                context_ptr->cfl_temp_prediction_ptr->stride_cb,
+#else
                 &(candidate_buffer->cfl_temp_prediction_ptr->buffer_cb[blk_chroma_origin_index]),
                 candidate_buffer->cfl_temp_prediction_ptr->stride_cb,
+#endif
                 alpha_q3,
                 8,
                 chroma_width,
@@ -6064,9 +6168,15 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                 context_ptr->pred_buf_q3,
                 ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cb) + blk_chroma_origin_index,
                 candidate_buffer->prediction_ptr->stride_cb,
+#if  CAND_MEM_OPT
+                ((uint16_t *)context_ptr->cfl_temp_prediction_ptr->buffer_cb) +
+                blk_chroma_origin_index,
+                context_ptr->cfl_temp_prediction_ptr->stride_cb,
+#else
                 ((uint16_t *)candidate_buffer->cfl_temp_prediction_ptr->buffer_cb) +
                     blk_chroma_origin_index,
                 candidate_buffer->cfl_temp_prediction_ptr->stride_cb,
+#endif
                 alpha_q3,
                 10,
                 chroma_width,
@@ -6077,9 +6187,15 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
         residual_kernel(input_picture_ptr->buffer_cb,
                         input_cb_origin_in_index,
                         input_picture_ptr->stride_cb,
+#if  CAND_MEM_OPT
+                        context_ptr->cfl_temp_prediction_ptr->buffer_cb,
+                        blk_chroma_origin_index,
+                        context_ptr->cfl_temp_prediction_ptr->stride_cb,
+#else
                         candidate_buffer->cfl_temp_prediction_ptr->buffer_cb,
                         blk_chroma_origin_index,
                         candidate_buffer->cfl_temp_prediction_ptr->stride_cb,
+#endif
                         (int16_t *)candidate_buffer->residual_ptr->buffer_cb,
                         blk_chroma_origin_index,
                         candidate_buffer->residual_ptr->stride_cb,
@@ -6142,8 +6258,13 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                 context_ptr->pred_buf_q3,
                 &(candidate_buffer->prediction_ptr->buffer_cr[blk_chroma_origin_index]),
                 candidate_buffer->prediction_ptr->stride_cr,
+#if  CAND_MEM_OPT
+                &(context_ptr->cfl_temp_prediction_ptr->buffer_cr[blk_chroma_origin_index]),
+                context_ptr->cfl_temp_prediction_ptr->stride_cr,
+#else
                 &(candidate_buffer->cfl_temp_prediction_ptr->buffer_cr[blk_chroma_origin_index]),
                 candidate_buffer->cfl_temp_prediction_ptr->stride_cr,
+#endif
                 alpha_q3,
                 8,
                 chroma_width,
@@ -6153,9 +6274,15 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
                 context_ptr->pred_buf_q3,
                 ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cr) + blk_chroma_origin_index,
                 candidate_buffer->prediction_ptr->stride_cr,
+#if  CAND_MEM_OPT
+                ((uint16_t *)context_ptr->cfl_temp_prediction_ptr->buffer_cr) +
+                blk_chroma_origin_index,
+                context_ptr->cfl_temp_prediction_ptr->stride_cr,
+#else
                 ((uint16_t *)candidate_buffer->cfl_temp_prediction_ptr->buffer_cr) +
                     blk_chroma_origin_index,
                 candidate_buffer->cfl_temp_prediction_ptr->stride_cr,
+#endif
                 alpha_q3,
                 10,
                 chroma_width,
@@ -6166,9 +6293,15 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
         residual_kernel(input_picture_ptr->buffer_cr,
                         input_cb_origin_in_index,
                         input_picture_ptr->stride_cr,
+#if  CAND_MEM_OPT
+                        context_ptr->cfl_temp_prediction_ptr->buffer_cr,
+                        blk_chroma_origin_index,
+                        context_ptr->cfl_temp_prediction_ptr->stride_cr,
+#else
                         candidate_buffer->cfl_temp_prediction_ptr->buffer_cr,
                         blk_chroma_origin_index,
                         candidate_buffer->cfl_temp_prediction_ptr->stride_cr,
+#endif
                         (int16_t *)candidate_buffer->residual_ptr->buffer_cr,
                         blk_chroma_origin_index,
                         candidate_buffer->residual_ptr->stride_cr,
@@ -9201,6 +9334,9 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
         context_ptr->md_staging_skip_inter_chroma_pred    = EB_TRUE;
 #endif
         candidate_buffer->candidate_ptr->interp_filters   = 0;
+#if REMOVE_CHROMA_INTRA_S0
+        context_ptr->md_staging_perform_intra_chroma_pred = EB_FALSE;
+#endif
         full_loop_core(pcs_ptr,
                        sb_ptr,
                        blk_ptr,
@@ -9681,6 +9817,14 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
     dst_cu->part              = src_cu->part;
     dst_cu->mds_idx           = src_cu->mds_idx;
     dst_cu->filter_intra_mode = src_cu->filter_intra_mode;
+#if SB_MEM_OPT
+    dst_cu->use_intrabc = src_cu->use_intrabc;
+    dst_cu->drl_ctx[0] = src_cu->drl_ctx[0];
+    dst_cu->drl_ctx[1] = src_cu->drl_ctx[1];
+    dst_cu->drl_ctx_near[0] = src_cu->drl_ctx_near[0];
+    dst_cu->drl_ctx_near[1] = src_cu->drl_ctx_near[1];
+
+#endif
 }
 void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
                           BlkStruct *src_cu, BlkStruct *dst_cu) {
@@ -9760,6 +9904,13 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     dst_cu->interp_filters = src_cu->interp_filters;
 
     dst_cu->part = src_cu->part;
+#if SB_MEM_OPT
+    dst_cu->use_intrabc = src_cu->use_intrabc;
+    dst_cu->drl_ctx[0] = src_cu->drl_ctx[0];
+    dst_cu->drl_ctx[1] = src_cu->drl_ctx[1];
+    dst_cu->drl_ctx_near[0] = src_cu->drl_ctx_near[0];
+    dst_cu->drl_ctx_near[1] = src_cu->drl_ctx_near[1];
+#endif
 }
 
 void check_redundant_block(const BlockGeom *blk_geom, ModeDecisionContext *context_ptr,
@@ -10684,6 +10835,181 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
 }
 
 #if CLASS_PRUNE
+#if UNIFY_SC_NSC
+#if REMOVE_MR_MACRO
+uint32_t class_prune_scale_factor[3/*levels*/][4/*band*/][2/*num/denum*/] =
+{
+    // level0 -- class prune OFF
+    {
+        {1, 1},     // b0
+        {1, 1},     // b1
+        {1, 1},     // b2
+        {1, 1}      // b3
+    },
+    // level1
+    {
+        {4, 8},     // b0
+        {3, 8},     // b1
+        {2, 8},     // b2
+        {0, 8}      // b3
+    },
+    // level2
+    {
+        {2, 8},     // b0
+        {1, 8},     // b1
+        {1, 8},     // b2
+        {0, 8}      // b3
+    }
+};
+#else
+uint32_t class_prune_scale_factor[2/*levels*/][4/*band*/][2/*num/denum*/] =
+{
+    // level0
+    {
+        {4, 8},     // b0
+        {3, 8},     // b1
+        {2, 8},     // b2
+        {0, 8}      // b3
+    },
+    // level1
+    {
+        {2, 8},     // b0
+        {1, 8},     // b1
+        {1, 8},     // b2
+        {0, 8}      // b3
+    }
+};
+#endif
+#else
+uint32_t class_prune_scale_factor[2/*sc-nsc*/][2/*levels*/][4/*band*/][2/*num/denum*/] = {
+    { //NSC
+        // level0
+        {
+            {4, 8},     // b0
+            {3, 8},     // b1
+            {2, 8},     // b2
+            {0, 8}      // b3
+        },
+        // level1
+        {
+            {2, 8},     // b0
+            {1, 8},     // b1
+            {1, 8},     // b2
+            {0, 8}      // b3
+        },
+    },//NSC END
+    {//SC
+        // level0
+        {
+            {6, 8},     // b0
+            {5, 8},     // b1
+            {4, 8},     // b2
+            {2, 8}      // b3
+        },
+        // level1
+        {
+            {4, 8},     // b0
+            {3, 8},     // b1
+            {2, 8},     // b2
+            {1, 8}      // b3
+        },
+    },//SC END
+};
+#endif
+
+void class_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+    uint64_t best_md_stage_cost, uint64_t  class_best_cost, CandClass cand_class_it) {
+
+#if !UNIFY_SC_NSC
+    uint8_t sc_content_detected =  pcs_ptr->parent_pcs_ptr->sc_content_detected;
+#endif
+
+    uint32_t scale_num     ;
+    uint32_t scale_denum   ;
+
+    // band THs
+    uint64_t distance_cost = (class_best_cost - best_md_stage_cost) * 100;
+    uint64_t band1_cost_th = (class_best_cost * 5);
+    uint64_t band2_cost_th = (class_best_cost * 10);
+    uint64_t band3_cost_th = (class_best_cost * 20);
+
+    uint8_t class_pruning_scaling_level ;
+#if JUNE25_ADOPTIONS
+#if REMOVE_MR_MACRO
+    if (pcs_ptr->enc_mode <= ENC_MRS)
+        // class prune OFF
+        class_pruning_scaling_level = 0;
+    else
+#endif
+    if (pcs_ptr->enc_mode <= ENC_M8)
+#else
+#if JUNE23_ADOPTIONS
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+#if JUNE9_ADOPTIONS
+    if (pcs_ptr->enc_mode <= ENC_M1)
+#else
+    if (pcs_ptr->enc_mode  <= ENC_M0)
+#endif
+#endif
+#endif
+#if UNIFY_SC_NSC
+#if REMOVE_MR_MACRO
+        class_pruning_scaling_level = 1;
+#else
+        class_pruning_scaling_level = 0;
+#endif
+#else
+#if MAY17_ADOPTIONS
+        class_pruning_scaling_level = sc_content_detected ? 1 : 0;
+#else
+        class_pruning_scaling_level = 0;
+#endif
+#endif
+    else
+#if REMOVE_MR_MACRO
+        class_pruning_scaling_level = 2;
+#else
+        class_pruning_scaling_level = 1;
+#endif
+    // minimum nics
+    uint32_t min_nics =   pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ?
+        MIN(2,context_ptr->md_stage_2_count[cand_class_it]) : 1 ;
+
+    // get the band
+    uint8_t band =
+        (distance_cost < band1_cost_th) ? 0 :
+        (distance_cost < band2_cost_th) ? 1 :
+        (distance_cost < band3_cost_th) ? 2 : 3;
+#if REMOVE_MR_MACRO
+    if (class_pruning_scaling_level)
+#endif
+    if (best_md_stage_cost && class_best_cost){
+        if (class_best_cost > best_md_stage_cost) {
+            // scale NICS of the worst classes
+#if UNIFY_SC_NSC
+            scale_num = class_prune_scale_factor[class_pruning_scaling_level][band][0];
+            scale_denum = class_prune_scale_factor[class_pruning_scaling_level][band][1];
+#else
+            scale_num  =  class_prune_scale_factor[sc_content_detected][class_pruning_scaling_level][band][0] ;
+            scale_denum = class_prune_scale_factor[sc_content_detected][class_pruning_scaling_level][band][1] ;
+#endif
+            if (scale_num == 0) {
+                context_ptr->md_stage_2_count[cand_class_it] = 0;
+            }else{
+                context_ptr->md_stage_2_count[cand_class_it] =
+                    MAX(
+                        min_nics,
+                        DIVIDE_AND_ROUND(
+                            context_ptr->md_stage_2_count[cand_class_it] * scale_num,
+                            scale_denum));
+            }
+        }
+    }
+}
+
+#endif
+#if CLASS_PRUNE
 void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint64_t best_md_stage_cost) {
 #else
@@ -11040,6 +11366,27 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
         ROUND_UV(blk_geom->origin_y) / 2 * SB_STRIDE_UV;
     BlkStruct *blk_ptr         = context_ptr->blk_ptr;
     candidate_buffer_ptr_array = &(candidate_buffer_ptr_array_base[0]);
+#if TPL_LA_LAMBDA_SCALING
+#if TPL_LAMBDA_IMP
+    context_ptr->blk_lambda_tuning = pcs_ptr->parent_pcs_ptr->blk_lambda_tuning;
+#endif
+    //Get the new lambda for current block
+    if (pcs_ptr->parent_pcs_ptr->blk_lambda_tuning) {
+#if TPL_LAMBDA_IMP
+        set_tuned_blk_lambda(context_ptr, pcs_ptr);
+#else
+        context_ptr->full_lambda_md[EB_8_BIT_MD] =
+            get_blk_tuned_full_lambda(context_ptr,
+                pcs_ptr,
+                context_ptr->enc_dec_context_ptr->pic_full_lambda[EB_8_BIT_MD]);
+
+        context_ptr->full_lambda_md[EB_10_BIT_MD] =
+            get_blk_tuned_full_lambda(context_ptr,
+                pcs_ptr,
+                context_ptr->enc_dec_context_ptr->pic_full_lambda[EB_10_BIT_MD]);
+#endif
+    }
+#endif
 
     signal_derivation_block(pcs_ptr, context_ptr);
 
@@ -11276,8 +11623,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                 best_md_stage_cost);
         }
     }
+#if CLASS_PRUNE
+    interintra_class_pruning_2(pcs_ptr ,context_ptr, best_md_stage_cost);
+#else
     interintra_class_pruning_2(context_ptr, best_md_stage_cost);
-
+#endif
     // 2nd Full-Loop
     best_md_stage_cost    = (uint64_t)~0;
     context_ptr->md_stage = MD_STAGE_2;

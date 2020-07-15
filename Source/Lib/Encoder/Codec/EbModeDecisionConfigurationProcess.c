@@ -2003,7 +2003,9 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         // Hsan: collapse spare code
         MdRateEstimationContext *md_rate_estimation_array;
+#if !MD_FRAME_CONTEXT_MEM_OPT
         uint32_t                 entropy_coding_qp;
+#endif
 
         // QP
         context_ptr->qp = pcs_ptr->picture_qp;
@@ -2018,8 +2020,29 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
         }
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
-
+#if !MD_FRAME_CONTEXT_MEM_OPT
         entropy_coding_qp = frm_hdr->quantization_params.base_q_idx;
+#endif
+#if MD_FRAME_CONTEXT_MEM_OPT
+        if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+            memcpy(&pcs_ptr->md_frame_context,
+                &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
+                sizeof(FRAME_CONTEXT));
+        else {
+            eb_av1_default_coef_probs(&pcs_ptr->md_frame_context, frm_hdr->quantization_params.base_q_idx);
+            init_mode_probs(&pcs_ptr->md_frame_context);
+        }
+        // Initial Rate Estimation of the syntax elements
+        av1_estimate_syntax_rate(md_rate_estimation_array,
+            pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+            &pcs_ptr->md_frame_context);
+        // Initial Rate Estimation of the Motion vectors
+        av1_estimate_mv_rate(
+            pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
+        // Initial Rate Estimation of the quantized coefficients
+        av1_estimate_coefficients_rate(md_rate_estimation_array,
+            &pcs_ptr->md_frame_context);
+#else
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             eb_memcpy(pcs_ptr->coeff_est_entropy_coder_ptr->fc,
                    &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
@@ -2040,6 +2063,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // Initial Rate Estimation of the quantized coefficients
         av1_estimate_coefficients_rate(md_rate_estimation_array,
                                        pcs_ptr->coeff_est_entropy_coder_ptr->fc);
+#endif
 #if !DEPTH_PART_CLEAN_UP
         if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE) {
             derive_sb_md_mode(scs_ptr, pcs_ptr, context_ptr);

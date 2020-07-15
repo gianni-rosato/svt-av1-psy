@@ -10418,7 +10418,11 @@ void *enc_dec_kernel(void *input_ptr) {
                             scs_ptr->enc_dec_segment_row_count_array[pcs_ptr->temporal_layer_index] == 1 &&
                             scs_ptr->enc_dec_segment_col_count_array[pcs_ptr->temporal_layer_index] == 1) {
                             if (sb_index == 0)
+#if MD_FRAME_CONTEXT_MEM_OPT
+                                pcs_ptr->ec_ctx_array[sb_index] =  pcs_ptr->md_frame_context;
+#else
                                 pcs_ptr->ec_ctx_array[sb_index] = *pcs_ptr->coeff_est_entropy_coder_ptr->fc;
+#endif
                             else
                                 pcs_ptr->ec_ctx_array[sb_index] = pcs_ptr->ec_ctx_array[sb_index - 1];
                         }

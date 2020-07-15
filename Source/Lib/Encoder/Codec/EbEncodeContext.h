@@ -170,6 +170,17 @@ typedef struct EncodeContext {
     EbBool  is_mini_gop_changed;
     EbBool  is_i_slice_in_last_mini_gop;
     uint64_t i_slice_picture_number_in_last_mini_gop;
+#if TPL_LA
+#if FIX_WARNINGS_WIN
+    uint64_t poc_map_idx[MAX_TPL_LA_SW];
+#else
+    int32_t poc_map_idx[MAX_TPL_LA_SW];
+#endif
+    EbByte  mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];
+#if LAD_MEM_RED
+    EbByte  mc_flow_rec_picture_buffer_saved;
+#endif
+#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

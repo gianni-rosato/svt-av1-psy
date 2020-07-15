@@ -31,6 +31,9 @@
 #include "aom_dsp_rtcd.h"
 #include "EbMdRateEstimation.h"
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
+#if SB_MEM_OPT
+uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
+#endif
 
 /*******************************************
 * set Penalize Skip Flag
@@ -374,7 +377,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
     const uint32_t pred_cr_offset =
         (((pred_samples->origin_y + round_origin_y) >> 1) * pred_samples->stride_cr) +
         ((pred_samples->origin_x + round_origin_x) >> 1);
+#if SB_MEM_OPT
+    int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
+#else
     int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->av1xd->use_intrabc)
+#endif
                            ? EB_TRUE
                            : EB_FALSE;
     const uint32_t scratch_luma_offset =
@@ -401,6 +408,27 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
     UNUSED(coeff1d_offset_chroma);
 
     context_ptr->three_quad_energy = 0;
+#if TPL_LA_LAMBDA_SCALING
+    if (pcs_ptr->parent_pcs_ptr->blk_lambda_tuning) {
+        context_ptr->md_context->blk_geom = context_ptr->blk_geom;
+        context_ptr->md_context->blk_origin_x = context_ptr->blk_origin_x;
+        context_ptr->md_context->blk_origin_y = context_ptr->blk_origin_y;
+        //Get the new lambda for current block
+#if TPL_LAMBDA_IMP
+        set_tuned_blk_lambda(context_ptr->md_context, pcs_ptr);
+#else
+        context_ptr->md_context->full_lambda_md[EB_8_BIT_MD] =
+            get_blk_tuned_full_lambda(context_ptr->md_context,
+                pcs_ptr,
+                context_ptr->pic_full_lambda[EB_8_BIT_MD]);
+
+        context_ptr->md_context->full_lambda_md[EB_10_BIT_MD] =
+            get_blk_tuned_full_lambda(context_ptr->md_context,
+                pcs_ptr,
+                context_ptr->pic_full_lambda[EB_10_BIT_MD]);
+#endif
+    }
+#endif
     //**********************************
     // Luma
     //**********************************
@@ -481,7 +509,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->luma_txb_skip_context,
             context_ptr->md_context->luma_dc_sign_context,
             blk_ptr->pred_mode,
+#if SB_MEM_OPT
+            blk_ptr->use_intrabc,
+#else
             blk_ptr->av1xd->use_intrabc,
+#endif
             context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
             EB_TRUE);
 
@@ -695,7 +727,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->cb_txb_skip_context,
             context_ptr->md_context->cb_dc_sign_context,
             blk_ptr->pred_mode,
+#if SB_MEM_OPT
+            blk_ptr->use_intrabc,
+#else
             blk_ptr->av1xd->use_intrabc,
+#endif
             context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
             EB_TRUE);
 
@@ -745,7 +781,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             context_ptr->md_context->cr_txb_skip_context,
             context_ptr->md_context->cr_dc_sign_context,
             blk_ptr->pred_mode,
+#if SB_MEM_OPT
+            blk_ptr->use_intrabc,
+#else
             blk_ptr->av1xd->use_intrabc,
+#endif
             context_ptr->md_context->full_lambda_md[EB_8_BIT_MD],
             EB_TRUE);
         if (context_ptr->md_skip_blk) {
@@ -825,7 +865,12 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
     EbPictureBufferDesc *pred_samples16bit  = pred_samples;
     uint32_t             round_origin_x = (origin_x >> 3) << 3; // for Chroma blocks with size of 4
     uint32_t             round_origin_y = (origin_y >> 3) << 3; // for Chroma blocks with size of 4
+
+#if SB_MEM_OPT
+    int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc)
+#else
     int32_t is_inter = (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->av1xd->use_intrabc)
+#endif
                            ? EB_TRUE
                            : EB_FALSE;
     const uint32_t input_luma_offset =
@@ -891,6 +936,27 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
     const uint32_t coeff1d_offset_chroma = context_ptr->coded_area_sb_uv;
     UNUSED(coeff1d_offset_chroma);
 
+#if TPL_LA_LAMBDA_SCALING
+    if (pcs_ptr->parent_pcs_ptr->blk_lambda_tuning) {
+        context_ptr->md_context->blk_geom = context_ptr->blk_geom;
+        context_ptr->md_context->blk_origin_x = context_ptr->blk_origin_x;
+        context_ptr->md_context->blk_origin_y = context_ptr->blk_origin_y;
+        //Get the new lambda for current block
+#if TPL_LAMBDA_IMP
+        set_tuned_blk_lambda(context_ptr->md_context, pcs_ptr);
+#else
+        context_ptr->md_context->full_lambda_md[EB_8_BIT_MD] =
+            get_blk_tuned_full_lambda(context_ptr->md_context,
+                pcs_ptr,
+                context_ptr->pic_full_lambda[EB_8_BIT_MD]);
+
+        context_ptr->md_context->full_lambda_md[EB_10_BIT_MD] =
+            get_blk_tuned_full_lambda(context_ptr->md_context,
+                pcs_ptr,
+                context_ptr->pic_full_lambda[EB_10_BIT_MD]);
+#endif
+    }
+#endif
     {
         //**********************************
         // Luma
@@ -992,7 +1058,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->md_context->luma_txb_skip_context,
                 context_ptr->md_context->luma_dc_sign_context,
                 blk_ptr->pred_mode,
+#if SB_MEM_OPT
+                blk_ptr->use_intrabc,
+#else
                 blk_ptr->av1xd->use_intrabc,
+#endif
                 context_ptr->md_context->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
                 EB_TRUE);
             if (context_ptr->md_skip_blk) {
@@ -1149,7 +1219,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->md_context->cb_txb_skip_context,
                 context_ptr->md_context->cb_dc_sign_context,
                 blk_ptr->pred_mode,
+#if SB_MEM_OPT
+                blk_ptr->use_intrabc,
+#else
                 blk_ptr->av1xd->use_intrabc,
+#endif
                 context_ptr->md_context->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
                 EB_TRUE);
 
@@ -1200,7 +1274,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 context_ptr->md_context->cr_txb_skip_context,
                 context_ptr->md_context->cr_dc_sign_context,
                 blk_ptr->pred_mode,
+#if SB_MEM_OPT
+                blk_ptr->use_intrabc,
+#else
                 blk_ptr->av1xd->use_intrabc,
+#endif
                 context_ptr->md_context->full_lambda_md[(bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD],
                 EB_TRUE);
             if (context_ptr->md_skip_blk) {
@@ -1532,12 +1610,16 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     EbPictureBufferDesc *inverse_quant_buffer      = context_ptr->inverse_quant_buffer;
 
     uint32_t        count_non_zero_coeffs[3];
+#if !REMOVE_UNUSED_CODE_PH2
     MacroblockPlane blk_plane[3];
+#endif
     uint16_t        eobs[MAX_TXB_COUNT][3];
     uint64_t        y_txb_coeff_bits;
     uint64_t        cb_txb_coeff_bits;
     uint64_t        cr_txb_coeff_bits;
+#if !MD_FRAME_CONTEXT_MEM_OPT
     EntropyCoder *  coeff_est_entropy_coder_ptr = pcs_ptr->coeff_est_entropy_coder_ptr;
+#endif
 
     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
         //get the 16bit form of the input SB
@@ -1754,7 +1836,9 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 candidate_buffer,
                 coeff1d_offset,
                 context_ptr->coded_area_sb_uv,
+#if !MD_FRAME_CONTEXT_MEM_OPT
                 coeff_est_entropy_coder_ptr,
+#endif
                 coeff_buffer_sb,
                 eobs[context_ptr->txb_itr][0],
                 eobs[context_ptr->txb_itr][1],
@@ -2089,7 +2173,9 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 candidate_buffer,
                 coeff1d_offset,
                 context_ptr->coded_area_sb_uv,
+#if !MD_FRAME_CONTEXT_MEM_OPT
                 coeff_est_entropy_coder_ptr,
+#endif
                 coeff_buffer_sb,
                 eobs[context_ptr->txb_itr][0],
                 eobs[context_ptr->txb_itr][1],
@@ -2282,9 +2368,10 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     NeighborArrayUnit *ep_skip_flag_neighbor_array = pcs_ptr->ep_skip_flag_neighbor_array[tile_idx];
 
     EbBool       dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
+#if !MD_FRAME_CONTEXT_MEM_OPT
 
     EntropyCoder *coeff_est_entropy_coder_ptr = pcs_ptr->coeff_est_entropy_coder_ptr;
-
+#endif
     encode_context_ptr =
         ((SequenceControlSet *)(pcs_ptr->scs_wrapper_ptr->object_ptr))->encode_context_ptr;
 
@@ -2628,7 +2715,11 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                     // Partition Loop
                     context_ptr->txb_itr = 0;
                     // Transform partitioning path (INTRA Luma/Chroma)
+#if SB_MEM_OPT
+                    if (blk_ptr->use_intrabc == 0) {
+#else
                     if (blk_ptr->av1xd->use_intrabc == 0) {
+#endif
                         // Set the PU Loop Variables
                         pu_ptr = blk_ptr->prediction_unit_array;
 
@@ -2704,6 +2795,34 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                            .ed_ref_mv_stack[blk_ptr->prediction_unit_array[0]
                                                                 .ref_frame_type],
                                        sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
+#if SB_MEM_OPT
+                                {
+                                    uint8_t      ref_frame_type = blk_ptr->prediction_unit_array[0].ref_frame_type;
+                                    MacroBlockD *xd = blk_ptr->av1xd;
+                                    if (blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV) {
+                                        int32_t idx;
+                                        for (idx = 0; idx < 2; ++idx) {
+                                            if (xd->ref_mv_count[ref_frame_type] > idx + 1)
+                                                blk_ptr->drl_ctx[idx] = av1_drl_ctx(xd->final_ref_mv_stack, idx);
+                                            else
+                                                blk_ptr->drl_ctx[idx] = -1;
+                                        }
+                                    }
+
+                                    if (have_nearmv_in_inter_mode(blk_ptr->pred_mode)) {
+                                        int32_t idx;
+                                        // TODO(jingning): Temporary solution to compensate the NEARESTMV offset.
+                                        for (idx = 1; idx < 3; ++idx) {
+                                            if (xd->ref_mv_count[ref_frame_type] > idx + 1)
+                                                blk_ptr->drl_ctx_near[idx - 1] = av1_drl_ctx(xd->final_ref_mv_stack, idx);
+                                            else
+                                                blk_ptr->drl_ctx_near[idx - 1] = -1;
+                                        }
+                                    }
+                                }
+#endif
+
+                                pu_ptr = blk_ptr->prediction_unit_array;
                                 // Set MvUnit
                                 context_ptr->mv_unit.pred_direction =
                                     (uint8_t)pu_ptr->inter_pred_direction_index;
@@ -2909,7 +3028,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                         candidate_buffer,
                                         coeff1d_offset,
                                         context_ptr->coded_area_sb_uv,
+#if !MD_FRAME_CONTEXT_MEM_OPT
                                         coeff_est_entropy_coder_ptr,
+#endif
                                         coeff_buffer_sb,
                                         eobs[context_ptr->txb_itr][0],
                                         eobs[context_ptr->txb_itr][1],
@@ -3097,6 +3218,31 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                                .ed_ref_mv_stack[blk_ptr->prediction_unit_array[0].ref_frame_type],
                            sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
+
+#if SB_MEM_OPT
+                        // Store drl_ctx in blk to avoid storing final_ref_mv_stack for EC
+                        uint8_t      ref_frame_type_tmp = blk_ptr->prediction_unit_array[0].ref_frame_type;
+                        if (blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV) {
+                            int32_t idx;
+                            for (idx = 0; idx < 2; ++idx) {
+                                if (blk_ptr->av1xd->ref_mv_count[ref_frame_type_tmp] > idx + 1)
+                                    blk_ptr->drl_ctx[idx] = av1_drl_ctx(blk_ptr->av1xd->final_ref_mv_stack, idx);
+                                else
+                                    blk_ptr->drl_ctx[idx] = -1;
+                            }
+                        }
+
+                        if (have_nearmv_in_inter_mode(blk_ptr->pred_mode)) {
+                            int32_t idx;
+                            // TODO(jingning): Temporary solution to compensate the NEARESTMV offset.
+                            for (idx = 1; idx < 3; ++idx) {
+                                if (blk_ptr->av1xd->ref_mv_count[ref_frame_type_tmp] > idx + 1)
+                                    blk_ptr->drl_ctx_near[idx - 1] = av1_drl_ctx(blk_ptr->av1xd->final_ref_mv_stack, idx);
+                                else
+                                    blk_ptr->drl_ctx_near[idx - 1] = -1;
+                            }
+                        }
+#endif
 
                     {
                         // 1st Partition Loop
@@ -3415,7 +3561,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                         candidate_buffer,
                                         coeff1d_offset,
                                         context_ptr->coded_area_sb_uv,
+#if !MD_FRAME_CONTEXT_MEM_OPT
                                         coeff_est_entropy_coder_ptr,
+#endif
                                         coeff_buffer_sb,
                                         eobs[context_ptr->txb_itr][0],
                                         eobs[context_ptr->txb_itr][1],
@@ -3509,7 +3657,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                         candidate_buffer,
                                         coeff1d_offset,
                                         context_ptr->coded_area_sb_uv,
+#if !MD_FRAME_CONTEXT_MEM_OPT
                                         coeff_est_entropy_coder_ptr,
+#endif
                                         coeff_buffer_sb,
                                         eobs[context_ptr->txb_itr][0],
                                         eobs[context_ptr->txb_itr][1],
@@ -3724,7 +3874,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                     candidate_buffer,
                                     coeff1d_offset,
                                     context_ptr->coded_area_sb_uv,
+#if !MD_FRAME_CONTEXT_MEM_OPT
                                     coeff_est_entropy_coder_ptr,
+#endif
                                     coeff_buffer_sb,
                                     eobs[context_ptr->txb_itr][0],
                                     eobs[context_ptr->txb_itr][1],

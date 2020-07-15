@@ -194,10 +194,12 @@ typedef struct ModeDecisionCandidateBuffer {
 
     // Video Buffers
     EbPictureBufferDesc *prediction_ptr;
+#if !CAND_MEM_OPT
     EbPictureBufferDesc *prediction_ptr_temp;
     EbPictureBufferDesc *cfl_temp_prediction_ptr;
     EbPictureBufferDesc
         *residual_quant_coeff_ptr; // One buffer for residual and quantized coefficient
+#endif
     EbPictureBufferDesc *recon_coeff_ptr;
     EbPictureBufferDesc *residual_ptr;
 
@@ -216,11 +218,28 @@ typedef struct ModeDecisionCandidateBuffer {
     * Extern Function Declarations
     **************************************/
 extern EbErrorType mode_decision_candidate_buffer_ctor(
+#if SB64_MEM_OPT
+#if MEM_OPT_MD_BUF_DESC
+    ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
+#if MEM_OPT_UV_MODE
+    uint32_t buffer_mask,
+#endif
+    EbPictureBufferDesc *temp_residual_ptr, EbPictureBufferDesc *temp_recon_ptr,
+    uint64_t *fast_cost_ptr,
+#else
+    ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size, uint64_t *fast_cost_ptr,
+#endif
+#else
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint64_t *fast_cost_ptr,
+#endif
     uint64_t *full_cost_ptr, uint64_t *full_cost_skip_ptr, uint64_t *full_cost_merge_ptr);
 
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
+#if SB64_MEM_OPT
+    ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepthEnum max_bitdepth);
+#else
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth);
+#endif
 
 uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
@@ -228,6 +247,13 @@ uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, Blk
                                     uint32_t *                    best_candidate_index_array,
                                     uint8_t   prune_ref_frame_for_rec_partitions,
                                     uint32_t *best_intra_mode);
+#if TPL_LA_LAMBDA_SCALING
+uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+                                   uint32_t pic_full_lambda);
+#if TPL_LAMBDA_IMP
+void set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);
+#endif
+#endif
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(
     struct ModeDecisionContext *context_ptr, uint32_t pu_index,

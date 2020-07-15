@@ -79,6 +79,14 @@ typedef enum WedgeDirectionType
     WEDGE_DIRECTIONS
 } WedgeDirectionType;
 
+#if TPL_LA
+static const InterpFilterParams av1_interp_filter_params_list[SWITCHABLE_FILTERS + 1] = {
+    {(const int16_t *)sub_pel_filters_8, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
+    {(const int16_t *)sub_pel_filters_8smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},
+    {(const int16_t *)sub_pel_filters_8sharp, SUBPEL_TAPS, SUBPEL_SHIFTS, MULTITAP_SHARP},
+    {(const int16_t *)bilinear_filters, SUBPEL_TAPS, SUBPEL_SHIFTS, BILINEAR}};
+
+#endif
 static INLINE void clamp_mv(MV *mv, int32_t min_col, int32_t max_col, int32_t min_row,
                             int32_t max_row) {
     mv->col = (int16_t)clamp(mv->col, min_col, max_col);

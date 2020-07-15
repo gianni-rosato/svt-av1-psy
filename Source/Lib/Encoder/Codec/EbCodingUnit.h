@@ -229,6 +229,32 @@ typedef struct macroblockd_plane {
     int          subsampling_y;
 } MACROBLOCKD_PLANE;
 
+#if TPL_LA
+typedef enum InterPredMode {
+    UNIFORM_PRED,
+    WARP_PRED,
+    MASK_PRED,
+} InterPredMode;
+
+typedef struct InterPredParams {
+    InterPredMode mode;
+    EbWarpedMotionParams warp_params;
+    ConvolveParams conv_params;
+    //const InterpFilterParams *interp_filter_params[2];
+    InterpFilterParams interp_filter_params[2];
+    int block_width;
+    int block_height;
+    int pix_row;
+    int pix_col;
+    struct Buf2D ref_frame_buf;
+    int subsampling_x;
+    int subsampling_y;
+    const struct ScaleFactors *scale_factors;
+    int bit_depth;
+    int use_hbd_buf;
+    int is_intrabc;
+} InterPredParams;
+#endif
 typedef struct MacroBlockD {
     // block dimension in the unit of mode_info.
     uint8_t     n8_w, n8_h;
@@ -248,8 +274,9 @@ typedef struct MacroBlockD {
     int32_t mb_to_top_edge;
     int32_t mb_to_bottom_edge;
     uint8_t neighbors_ref_counts[TOTAL_REFS_PER_FRAME];
-
+#if !SB_MEM_OPT
     uint8_t                  use_intrabc;
+#endif
     MbModeInfo *             above_mbmi;
     MbModeInfo *             left_mbmi;
     MbModeInfo *             chroma_above_mbmi;
@@ -424,6 +451,12 @@ typedef struct BlkStruct {
     // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
     int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
     uint8_t drl_index;
+#if SB_MEM_OPT
+    int8_t drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
+                       // final_ref_mv_stack and ref_mv_count for EC
+    int8_t drl_ctx_near[2];// Store the drl ctx in coding loop to avoid storing
+                       // final_ref_mv_stack and ref_mv_count for EC
+#endif
     PredictionMode pred_mode;
     IntMv          predmv[2];
     uint8_t        skip_coeff_context;
@@ -445,9 +478,13 @@ typedef struct BlkStruct {
     uint8_t        filter_intra_mode;
     PaletteInfo    palette_info;
     uint8_t        do_not_process_block;
+#if SB_MEM_OPT
+    uint8_t                  use_intrabc;
+#endif
 } BlkStruct;
 #endif
 
+#if !REMOVE_UNUSED_CODE_PH2
 typedef struct OisCandidate {
     union {
         struct {
@@ -466,7 +503,20 @@ typedef struct OisSbResults {
     OisCandidate *ois_candidate_array[CU_MAX_COUNT];
     int8_t        best_distortion_index[CU_MAX_COUNT];
 } OisSbResults;
+#endif
 
+#if TPL_LA
+typedef struct TplStats {
+    int64_t srcrf_dist;
+    int64_t recrf_dist;
+    int64_t srcrf_rate;
+    int64_t recrf_rate;
+    int64_t mc_dep_rate;
+    int64_t mc_dep_dist;
+    MV mv;
+    uint64_t ref_frame_poc;
+} TplStats;
+#endif
 typedef struct SuperBlock {
     EbDctor                   dctor;
     struct PictureControlSet *pcs_ptr;

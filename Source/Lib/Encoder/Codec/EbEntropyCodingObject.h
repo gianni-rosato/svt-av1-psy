@@ -20,7 +20,9 @@ typedef struct Bitstream {
 
 typedef struct EntropyCoder {
     EbDctor        dctor;
+#if !EC_MEM_OPT
     EbPtr          cabac_encode_context_ptr;
+#endif
     FRAME_CONTEXT *fc; /* this frame entropy */
     AomWriter      ec_writer;
     EbPtr          ec_output_bitstream_ptr;
@@ -55,7 +57,9 @@ void bitstream_copy(const Bitstream* bitstream_ptr, void* dest, int size);
 
 extern EbErrorType entropy_coder_ctor(EntropyCoder *entropy_coder_ptr, uint32_t buffer_size);
 
+#if !EC_MEM_OPT
 extern OutputBitstreamUnit* entropy_coder_get_bitstream_ptr(EntropyCoder *entropy_coder_ptr);
+#endif
 
 #ifdef __cplusplus
 }

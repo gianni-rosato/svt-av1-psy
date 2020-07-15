@@ -62,9 +62,15 @@ EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width
                             (BLOCK_SIZE_64 >> 2) * object_ptr->sixteenth_sb_buffer_stride);
     object_ptr->interpolated_stride =
         MIN((uint16_t)MAX_SEARCH_AREA_WIDTH, (uint16_t)(max_input_luma_width + (PAD_VALUE << 1)));
-
+#if !REMOVE_ME_SUBPEL_CODE
+#if ME_MEM_OPT2
+    uint16_t max_search_area_height = MIN((uint16_t)MAX_SEARCH_AREA_HEIGHT,
+        (uint16_t)(max_input_luma_height + (PAD_VALUE << 1)));
+#else
     uint16_t max_search_area_height = MIN((uint16_t)MAX_PICTURE_HEIGHT_SIZE,
                                           (uint16_t)(max_input_luma_height + (PAD_VALUE << 1)));
+#endif
+#endif
     EB_MEMSET(
         object_ptr->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
     EB_MALLOC_ARRAY(object_ptr->mvd_bits_array, NUMBER_OF_MVD_CASES);
