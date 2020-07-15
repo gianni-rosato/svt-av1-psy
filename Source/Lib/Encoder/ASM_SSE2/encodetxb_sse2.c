@@ -500,13 +500,9 @@ void eb_av1_get_nz_map_contexts_sse2(const uint8_t *const levels, const int16_t 
             get_4_nz_map_contexts_2d(levels, height, offsets, coeff_contexts);
         else if (width == 8)
             get_8_coeff_contexts_2d(levels, height, offsets, coeff_contexts);
-        else if (width == 16) {
+        else
             get_16n_coeff_contexts_2d(
                 levels, real_width, real_height, width, height, offsets, coeff_contexts);
-        } else {
-            get_16n_coeff_contexts_2d(
-                levels, real_width, real_height, width, height, offsets, coeff_contexts);
-        }
     } else if (tx_class == TX_CLASS_HORIZ) {
         offsets[0] = 2;
         offsets[1] = 3;

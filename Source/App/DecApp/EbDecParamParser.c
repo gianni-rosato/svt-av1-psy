@@ -126,7 +126,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
     while (token_index < cmd_token_cnt) {
         if (cmd_copy[token_index] != NULL) {
             if (EB_STRCMP(cmd_copy[token_index], INPUT_FILE_TOKEN) == 0) {
-                FILE *fin = NULL;
+                FILE *fin;
                 FOPEN(fin, config_strings[token_index], "rb");
                 if (!fin) {
                     fprintf(stderr, "Invalid input file \n");
@@ -136,7 +136,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
                     cli->in_filename = config_strings[token_index];
                 }
             } else if (EB_STRCMP(cmd_copy[token_index], OUTPUT_FILE_TOKEN) == 0) {
-                FILE *fout = NULL;
+                FILE *fout;
                 FOPEN(fout, config_strings[token_index], "wb");
                 if (!fout) {
                     fprintf(stderr, "Invalid output file \n");

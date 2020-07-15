@@ -1217,7 +1217,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     uint64_t      lambda;
     const int32_t num_planes = 3; // av1_num_planes(cm);
     uint16_t qp_index = (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-    uint32_t fast_lambda, full_lambda;
+    uint32_t fast_lambda, full_lambda = 0;
 #if SYNCH_LAMBDA
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
         &fast_lambda,

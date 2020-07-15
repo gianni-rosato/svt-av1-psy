@@ -1355,8 +1355,7 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
 #endif
 #if USE_PADDING_FIX
-    } else
-    if (src_origin_x == 0 && src_origin_y != 0 ) {
+    } else if (src_origin_y != 0 ) {
         count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
         EB_MEMSET(left_ref - 1, *(src_ptr - stride), count + 1);
         *(above_ref - 1) = *(src_ptr - stride);
@@ -1379,13 +1378,11 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
         above_ref += (block_size_half - count);
 #endif
 #if USE_PADDING_FIX
-    } else
-    if (src_origin_y == 0 && src_origin_x != 0 ) {
+    } else if (src_origin_x != 0 ) {
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMSET(above_ref - 1, *(left_ref - count), count + 1);
 #endif
-    }else
-        above_ref += count;
+    }
 
     return return_error;
 }
@@ -1448,7 +1445,7 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
 #if USE_PADDING_FIX
     }
     else
-        if (src_origin_x == 0 && src_origin_y != 0) {
+        if (src_origin_y != 0) {
             count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
             EB_MEMSET(left_ref - 1, *(src_ptr - stride), count + 1);
             *(above_ref - 1) = *(src_ptr - stride);
@@ -1474,13 +1471,11 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
 #if USE_PADDING_FIX
     }
     else
-        if (src_origin_y == 0 && src_origin_x != 0) {
+        if (src_origin_x != 0) {
             count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
             EB_MEMSET(above_ref - 1, *(left_ref - count), count + 1);
 #endif
         }
-        else
-            above_ref += count;
 
     return return_error;
 }

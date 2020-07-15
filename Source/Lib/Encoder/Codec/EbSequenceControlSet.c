@@ -48,7 +48,6 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
 
     scs_ptr->static_config.sb_sz           = 64;
     scs_ptr->static_config.partition_depth = 4;
-    scs_ptr->static_config.qp              = 32;
 
     // Segments
     for (segment_index = 0; segment_index < MAX_TEMPORAL_LAYERS; ++segment_index) {
@@ -127,8 +126,7 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     // if 0, enable_jnt_comp must be set zs 0.
     scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
 
-    scs_ptr->seq_header.order_hint_info.order_hint_bits =
-        scs_ptr->seq_header.order_hint_info.enable_order_hint ? (6 + 1) : (-1 + 1);
+    scs_ptr->seq_header.order_hint_info.order_hint_bits = 7;
 
     scs_ptr->seq_header.seq_force_screen_content_tools = 2;
     // 0 - force off
@@ -203,151 +201,80 @@ EbErrorType eb_sequence_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_
  * Sequence Control Set Copy
  ************************************************/
 EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSet *src) {
-    uint32_t write_count = 0;
-
     dst->static_config = src->static_config;
-    write_count += sizeof(EbSvtAv1EncConfiguration);
     dst->encode_context_ptr = src->encode_context_ptr;
-    write_count += sizeof(EncodeContext *);
     dst->chroma_format_idc = src->chroma_format_idc;
-    write_count += sizeof(uint32_t);
     dst->max_temporal_layers = src->max_temporal_layers;
-    write_count += sizeof(uint32_t);
     dst->bits_for_picture_order_count = src->bits_for_picture_order_count;
-    write_count += sizeof(uint32_t);
     dst->max_input_luma_width = src->max_input_luma_width;
-    write_count += sizeof(uint32_t);
     dst->max_input_luma_height = src->max_input_luma_height;
-    write_count += sizeof(uint32_t);
     dst->max_input_chroma_height = src->max_input_chroma_height;
-    write_count += sizeof(uint32_t);
     dst->max_input_chroma_width = src->max_input_chroma_width;
-    write_count += sizeof(uint32_t);
     dst->max_input_pad_right = src->max_input_pad_right;
-    write_count += sizeof(uint32_t);
     dst->max_input_pad_bottom = src->max_input_pad_bottom;
-    write_count += sizeof(uint32_t);
     dst->seq_header.max_frame_width = src->seq_header.max_frame_width;
-    write_count += sizeof(uint32_t);
     dst->seq_header.max_frame_height = src->seq_header.max_frame_height;
-    write_count += sizeof(uint32_t);
     dst->chroma_width = src->chroma_width;
-    write_count += sizeof(uint32_t);
     dst->chroma_height = src->chroma_height;
-    write_count += sizeof(uint32_t);
     dst->pad_right = src->pad_right;
-    write_count += sizeof(uint32_t);
     dst->pad_bottom = src->pad_bottom;
-    write_count += sizeof(uint32_t);
     dst->frame_rate = src->frame_rate;
-    write_count += sizeof(uint32_t);
-    //dst->input_bitdepth = src->input_bitdepth;                           write_count += sizeof(EB_BITDEPTH);
-    //dst->output_bitdepth = src->output_bitdepth;                          write_count += sizeof(EB_BITDEPTH);
+    //dst->input_bitdepth = src->input_bitdepth;
+    //dst->output_bitdepth = src->output_bitdepth;
     dst->encoder_bit_depth = src->encoder_bit_depth;
-    write_count += sizeof(uint32_t);
     dst->subsampling_x = src->subsampling_x;
-    write_count += sizeof(uint16_t);
     dst->subsampling_y = src->subsampling_y;
-    write_count += sizeof(uint16_t);
     dst->pred_struct_ptr = src->pred_struct_ptr;
-    write_count += sizeof(PredictionStructure *);
     dst->intra_period_length = src->intra_period_length;
-    write_count += sizeof(int32_t);
     dst->intra_refresh_type = src->intra_refresh_type;
-    write_count += sizeof(uint32_t);
     dst->max_ref_count = src->max_ref_count;
-    write_count += sizeof(uint32_t);
     dst->sb_sz = src->sb_sz;
-    write_count += sizeof(uint32_t);
     dst->max_sb_depth = src->max_sb_depth;
-    write_count += sizeof(uint32_t);
     dst->max_blk_size = src->max_blk_size;
-    write_count += sizeof(uint32_t);
     dst->min_blk_size = src->min_blk_size;
-    write_count += sizeof(uint32_t);
     dst->max_intra_size = src->max_intra_size;
-    write_count += sizeof(uint32_t);
     dst->min_intra_size = src->min_intra_size;
-    write_count += sizeof(uint32_t);
     dst->target_bitrate = src->target_bitrate;
-    write_count += sizeof(uint32_t);
     dst->static_config.qp = src->static_config.qp;
-    write_count += sizeof(uint32_t);
     dst->film_grain_denoise_strength = src->film_grain_denoise_strength;
-    write_count += sizeof(int32_t);
     dst->seq_header.film_grain_params_present = src->seq_header.film_grain_params_present;
-    write_count += sizeof(int32_t);
-    dst->seq_header.film_grain_params_present = src->seq_header.film_grain_params_present;
-    write_count += sizeof(int32_t);
     dst->picture_control_set_pool_init_count = src->picture_control_set_pool_init_count;
-    write_count += sizeof(int32_t);
 #if DECOUPLE_ME_RES
     dst->me_pool_init_count = src->me_pool_init_count;
-    write_count += sizeof(int32_t);
 #endif
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child;
-    write_count += sizeof(int32_t);
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count;
-    write_count += sizeof(int32_t);
     dst->reference_picture_buffer_init_count = src->reference_picture_buffer_init_count;
-    write_count += sizeof(int32_t);
     dst->input_buffer_fifo_init_count = src->input_buffer_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->overlay_input_picture_buffer_init_count = src->overlay_input_picture_buffer_init_count;
-    write_count += sizeof(int32_t);
     dst->output_stream_buffer_fifo_init_count = src->output_stream_buffer_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->output_recon_buffer_fifo_init_count = src->output_recon_buffer_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->resource_coordination_fifo_init_count = src->resource_coordination_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->picture_analysis_fifo_init_count = src->picture_analysis_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->picture_decision_fifo_init_count = src->picture_decision_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->motion_estimation_fifo_init_count = src->motion_estimation_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->initial_rate_control_fifo_init_count = src->initial_rate_control_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->picture_demux_fifo_init_count = src->picture_demux_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->rate_control_tasks_fifo_init_count = src->rate_control_tasks_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->rate_control_fifo_init_count = src->rate_control_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->mode_decision_configuration_fifo_init_count =
         src->mode_decision_configuration_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->enc_dec_fifo_init_count = src->enc_dec_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->entropy_coding_fifo_init_count = src->entropy_coding_fifo_init_count;
-    write_count += sizeof(int32_t);
     dst->picture_analysis_process_init_count = src->picture_analysis_process_init_count;
-    write_count += sizeof(int32_t);
     dst->motion_estimation_process_init_count = src->motion_estimation_process_init_count;
-    write_count += sizeof(int32_t);
     dst->source_based_operations_process_init_count =
         src->source_based_operations_process_init_count;
-    write_count += sizeof(int32_t);
     dst->mode_decision_configuration_process_init_count =
         src->mode_decision_configuration_process_init_count;
-    write_count += sizeof(int32_t);
     dst->enc_dec_process_init_count = src->enc_dec_process_init_count;
-    write_count += sizeof(int32_t);
     dst->entropy_coding_process_init_count = src->entropy_coding_process_init_count;
-    write_count += sizeof(int32_t);
     dst->total_process_init_count = src->total_process_init_count;
-    write_count += sizeof(int32_t);
     dst->left_padding = src->left_padding;
-    write_count += sizeof(int16_t);
     dst->right_padding = src->right_padding;
-    write_count += sizeof(int16_t);
     dst->top_padding = src->top_padding;
-    write_count += sizeof(int16_t);
     dst->bot_padding = src->bot_padding;
-    write_count += sizeof(int16_t);
     dst->reference_count = src->reference_count;
-    write_count += sizeof(uint32_t);
     for (uint8_t i = 0; i < MAX_HIERARCHICAL_LEVEL; i++) {
         dst->me_segment_column_count_array[i]   = src->me_segment_column_count_array[i];
         dst->me_segment_row_count_array[i]      = src->me_segment_row_count_array[i];

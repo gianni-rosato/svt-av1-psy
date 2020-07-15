@@ -471,8 +471,6 @@ void eb_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *
                 __m128i s_128[4];
                 __m256i ss_256[4], r[2];
 
-                assert(w == 16);
-
                 s_128[0] = _mm_loadu_si128((__m128i *)(src_ptr + 0 * src_stride));
                 s_128[1] = _mm_loadu_si128((__m128i *)(src_ptr + 1 * src_stride));
                 s_128[2] = _mm_loadu_si128((__m128i *)(src_ptr + 2 * src_stride));

@@ -485,7 +485,6 @@ void *rest_kernel(void *input_ptr) {
     RestContext *       context_ptr        = (RestContext *)thread_context_ptr->priv;
     PictureControlSet * pcs_ptr;
     SequenceControlSet *scs_ptr;
-    FrameHeader *       frm_hdr;
 
     //// Input
     EbObjectWrapper *cdef_results_wrapper_ptr;
@@ -505,7 +504,7 @@ void *rest_kernel(void *input_ptr) {
         cdef_results_ptr = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
         pcs_ptr          = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr          = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        frm_hdr          = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+        FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         EbBool     is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 

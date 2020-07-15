@@ -745,9 +745,8 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
         }
     }
     uint32_t  intra_chroma_mode = mbmi->block_mi.uv_mode;
-    const int num_planes        = 3;
-    const int uv_dc_pred        = num_planes > 1 && intra_chroma_mode == UV_DC_PRED &&
-                           is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
+    const int uv_dc_pred        = intra_chroma_mode == UV_DC_PRED &&
+        is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
 
     if (uv_dc_pred) {
         const int n                   = pmi->palette_size[1];

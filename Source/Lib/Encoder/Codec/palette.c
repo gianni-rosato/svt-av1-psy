@@ -306,7 +306,7 @@ int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, in
  ****************************************/
 void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                          PaletteInfo *palette_cand, uint32_t *tot_palette_cands) {
-    int colors, n;
+    int colors;
     EbBool is16bit = context_ptr->hbd_mode_decision > 0;
 
     EbPictureBufferDesc *src_pic = is16bit ?
@@ -432,7 +432,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         int step = (pcs_ptr->parent_pcs_ptr->palette_mode == 6)
                        ? 2
                        : 1;
-        for (n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {
+        for (int n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {
             for (i = 0; i < n; ++i) centroids[i] = top_colors[i];
 
             palette_rd_y(&palette_cand[*tot_palette_cands], context_ptr, bsize, data,
@@ -444,11 +444,10 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         }
 
         // K-means clustering.
-        for (n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; --n) {
+        for (int n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; --n) {
             if (colors == PALETTE_MIN_SIZE) {
                 // Special case: These colors automatically become the centroids.
                 assert(colors == n);
-                assert(colors == 2);
                 centroids[0] = lb;
                 centroids[1] = ub;
             } else {

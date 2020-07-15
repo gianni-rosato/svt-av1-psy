@@ -48,7 +48,7 @@ static INLINE int allow_palette(int allow_screen_content_tools, BlockSize sb_typ
 static INLINE int max_block_wide(PartitionInfo *part_info, int plane_bsize, int subx) {
     int max_blocks_wide = block_size_wide[plane_bsize];
     if (part_info->mb_to_right_edge < 0)
-        max_blocks_wide += part_info->mb_to_right_edge >> (3 + subx);
+        max_blocks_wide += gcc_right_shift(part_info->mb_to_right_edge, 3 + subx);
     //Scale width in the transform block unit.
     return max_blocks_wide >> tx_size_wide_log2[0];
 }
@@ -56,7 +56,7 @@ static INLINE int max_block_wide(PartitionInfo *part_info, int plane_bsize, int 
 static INLINE int max_block_high(PartitionInfo *part_info, int plane_bsize, int suby) {
     int max_blocks_high = block_size_high[plane_bsize];
     if (part_info->mb_to_bottom_edge < 0)
-        max_blocks_high += part_info->mb_to_bottom_edge >> (3 + suby);
+        max_blocks_high += gcc_right_shift(part_info->mb_to_bottom_edge, 3 + suby);
     // Scale the height in the transform block unit.
     return max_blocks_high >> tx_size_high_log2[0];
 }

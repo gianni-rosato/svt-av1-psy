@@ -1150,10 +1150,8 @@ static int32_t search_filter_level(
             }
             // If value is significantly better than previous best, bias added against
             // raising filter value
-            if (ss_err[filt_high] < (best_err - bias)) {
-                best_err  = ss_err[filt_high];
+            if (ss_err[filt_high] < (best_err - bias))
                 filt_best = filt_high;
-            }
         }
     } else {
         while (filter_step > 0) {
@@ -1225,7 +1223,6 @@ void eb_av1_pick_filter_level(DlfContext *         context_ptr,
         (SequenceControlSet *)pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
-    const int32_t num_planes = 3;
     (void)srcBuffer;
     struct LoopFilter *const lf = &frm_hdr->loop_filter_params;
     lf->sharpness_level         = 0;
@@ -1293,23 +1290,21 @@ void eb_av1_pick_filter_level(DlfContext *         context_ptr,
                                 0,
                                 2);
 
-        if (num_planes > 1) {
-            lf->filter_level_u = search_filter_level(srcBuffer,
-                                                     temp_lf_recon_buffer,
-                                                     pcs_ptr,
-                                                     method == LPF_PICK_FROM_SUBIMAGE,
-                                                     last_frame_filter_level,
-                                                     NULL,
-                                                     1,
-                                                     0);
-            lf->filter_level_v = search_filter_level(srcBuffer,
-                                                     temp_lf_recon_buffer,
-                                                     pcs_ptr,
-                                                     method == LPF_PICK_FROM_SUBIMAGE,
-                                                     last_frame_filter_level,
-                                                     NULL,
-                                                     2,
-                                                     0);
-        }
+        lf->filter_level_u = search_filter_level(srcBuffer,
+                                                 temp_lf_recon_buffer,
+                                                 pcs_ptr,
+                                                 method == LPF_PICK_FROM_SUBIMAGE,
+                                                 last_frame_filter_level,
+                                                 NULL,
+                                                 1,
+                                                 0);
+        lf->filter_level_v = search_filter_level(srcBuffer,
+                                                 temp_lf_recon_buffer,
+                                                 pcs_ptr,
+                                                 method == LPF_PICK_FROM_SUBIMAGE,
+                                                 last_frame_filter_level,
+                                                 NULL,
+                                                 2,
+                                                 0);
     }
 }

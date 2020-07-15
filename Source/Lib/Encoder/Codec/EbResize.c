@@ -430,7 +430,7 @@ static void resize_multistep(const uint8_t *const input, int length, uint8_t *ou
             if (s == steps - 1 && proj_filteredlength == olength)
                 out = output;
             else
-                out = (s & 1 ? otmp2 : otmp);
+                out = (s & 1) ? otmp2 : otmp;
             if (filteredlength & 1)
                 down2_symodd(in, filteredlength, out);
             else
@@ -702,7 +702,7 @@ static void highbd_resize_multistep(const uint16_t *const input, int length, uin
             if (s == steps - 1 && proj_filteredlength == olength)
                 out = output;
             else
-                out = (s & 1 ? otmp2 : otmp);
+                out = (s & 1) ? otmp2 : otmp;
             if (filteredlength & 1)
                 highbd_down2_symodd(in, filteredlength, out, bd);
             else

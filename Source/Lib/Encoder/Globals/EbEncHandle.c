@@ -214,11 +214,11 @@ uint64_t get_affinity_mask(uint32_t lpnum) {
 void eb_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
 {
 #ifdef _WIN32
-    uint32_t num_logical_processors = get_num_processors();
+    const uint32_t num_logical_processors = get_num_processors();
     // For system with a single processor group(no more than 64 logic processors all together)
     // Affinity of the thread can be set to one or more logical processors
     if (num_groups == 1) {
-            uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+            const uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
                 config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
             group_affinity.Mask = get_affinity_mask(lps);
     }
@@ -228,7 +228,7 @@ void eb_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
                 group_affinity.Group = config_ptr->target_socket;
         }
         else {
-            uint32_t num_lp_per_group = num_logical_processors / num_groups;
+            const uint32_t num_lp_per_group = num_logical_processors / num_groups;
             if (config_ptr->target_socket == -1) {
                 if (config_ptr->logical_processors > num_lp_per_group) {
                     alternate_groups = EB_TRUE;
@@ -238,7 +238,7 @@ void eb_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
                     group_affinity.Mask = get_affinity_mask(config_ptr->logical_processors);
             }
             else {
-                uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
+                const uint32_t lps =
                     config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
                 group_affinity.Mask = get_affinity_mask(lps);
                 group_affinity.Group = config_ptr->target_socket;
@@ -250,36 +250,30 @@ void eb_set_thread_management_parameters(EbSvtAv1EncConfiguration *config_ptr)
     CPU_ZERO(&group_affinity);
 
     if (num_groups == 1) {
-        uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+        const uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
             config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
         for (uint32_t i = 0; i < lps; i++)
             CPU_SET(lp_group[0].group[i], &group_affinity);
-    }
-    else if (num_groups > 1) {
-        uint32_t num_lp_per_group = num_logical_processors / num_groups;
+    } else if (num_groups > 1) {
+        const uint32_t num_lp_per_group = num_logical_processors / num_groups;
         if (config_ptr->logical_processors == 0) {
-            if (config_ptr->target_socket != -1) {
+            if (config_ptr->target_socket != -1)
                 for (uint32_t i = 0; i < lp_group[config_ptr->target_socket].num; i++)
                     CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
-            }
-        }
-        else {
+        } else {
             if (config_ptr->target_socket == -1) {
-                uint32_t lps = config_ptr->logical_processors == 0 ? num_logical_processors :
+                const uint32_t lps =
                     config_ptr->logical_processors < num_logical_processors ? config_ptr->logical_processors : num_logical_processors;
                 if (lps > num_lp_per_group) {
                     for (uint32_t i = 0; i < lp_group[0].num; i++)
                         CPU_SET(lp_group[0].group[i], &group_affinity);
                     for (uint32_t i = 0; i < (lps - lp_group[0].num); i++)
                         CPU_SET(lp_group[1].group[i], &group_affinity);
-                }
-                else {
+                } else
                     for (uint32_t i = 0; i < lps; i++)
                         CPU_SET(lp_group[0].group[i], &group_affinity);
-                }
-            }
-            else {
-                uint32_t lps = config_ptr->logical_processors == 0 ? num_lp_per_group :
+            } else {
+                const uint32_t lps =
                     config_ptr->logical_processors < num_lp_per_group ? config_ptr->logical_processors : num_lp_per_group;
                 for (uint32_t i = 0; i < lps; i++)
                     CPU_SET(lp_group[config_ptr->target_socket].group[i], &group_affinity);
@@ -320,12 +314,11 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
         uint32_t fps            = (uint32_t)((config->frame_rate > 1000) ?
                         config->frame_rate >> 16 :
                         config->frame_rate);
-        uint32_t ppcs_count     = fps;
         uint32_t min_ppcs_count = (2 << config->hierarchical_levels) + 1; // min picture count to start encoding
         fps        = fps > 120 ? 120   : fps;
         fps        = fps < 24  ? 24    : fps;
 
-        ppcs_count = MAX(min_ppcs_count, fps);
+        uint32_t ppcs_count = MAX(min_ppcs_count, fps);
         if (core_count <= SINGLE_CORE_COUNT)
             ppcs_count = min_ppcs_count;
         else{
@@ -403,8 +396,6 @@ EbErrorType load_default_buffer_configuration_settings(
 
     uint32_t input_pic = (uint32_t)return_ppcs;
     scs_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD + scs_ptr->static_config.look_ahead_distance;
-    scs_ptr->output_stream_buffer_fifo_init_count =
-        scs_ptr->input_buffer_fifo_init_count + 4;
     uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (scs_ptr->static_config.super_block_size == 128) ?
         ((scs_ptr->max_input_luma_height + 64) / 128) :
@@ -856,14 +847,10 @@ static EbErrorType eb_enc_handle_ctor(
     EbEncHandle *enc_handle_ptr,
     EbComponentType * ebHandlePtr)
 {
-    EbErrorType return_error = EB_ErrorNone;
-
     enc_handle_ptr->dctor = eb_enc_handle_dctor;
 
-    return_error = init_thread_management_params();
+    init_thread_management_params();
 
-    if (return_error == EB_ErrorInsufficientResources)
-        return EB_ErrorInsufficientResources;
     enc_handle_ptr->encode_instance_total_count                           = EB_EncodeInstancesTotalCount;
     enc_handle_ptr->compute_segments_total_count_array                    = EB_ComputeSegmentInitCount;
     // Config Set Count
@@ -1032,7 +1019,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.right_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->right_padding;
         input_data.top_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->top_padding;
         input_data.bot_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->bot_padding;
-        input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
         input_data.color_format = color_format;
         input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
         input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
@@ -1181,6 +1167,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         ref_pic_buf_desc_init_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
         ref_pic_buf_desc_init_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
         // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
+
+        ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
+        ref_pic_buf_desc_init_data.down_sampled_filtered = EB_FALSE;
 
         if (is_16bit)
             ref_pic_buf_desc_init_data.bit_depth = EB_10BIT;
@@ -1843,7 +1832,6 @@ EB_API EbErrorType svt_av1_enc_init_handle(
     EbSvtAv1EncConfiguration  *config_ptr)              // pointer passed back to the client during callbacks
 
 {
-    EbErrorType           return_error = EB_ErrorNone;
     if(p_handle == NULL)
          return EB_ErrorBadParameter;
     svt_log_init();
@@ -1857,12 +1845,11 @@ EB_API EbErrorType svt_av1_enc_init_handle(
     *p_handle = (EbComponentType*)malloc(sizeof(EbComponentType));
     if (*p_handle == (EbComponentType*)NULL) {
         SVT_LOG("Error: Component Struct Malloc Failed\n");
-        return_error = EB_ErrorInsufficientResources;
-        return return_error;
+        return EB_ErrorInsufficientResources;
     }
     // Init Component OS objects (threads, semaphores, etc.)
     // also links the various Component control functions
-    return_error = init_svt_av1_encoder_handle(*p_handle);
+    EbErrorType return_error = init_svt_av1_encoder_handle(*p_handle);
 
     if (return_error == EB_ErrorNone) {
         ((EbComponentType*)(*p_handle))->p_application_private = p_app_data;
@@ -1901,20 +1888,17 @@ EbErrorType eb_av1_enc_component_de_init(EbComponentType  *svt_enc_component)
 EB_API EbErrorType svt_av1_enc_deinit_handle(
     EbComponentType  *svt_enc_component)
 {
-    EbErrorType return_error = EB_ErrorNone;
-
     if (svt_enc_component) {
-        return_error = eb_av1_enc_component_de_init(svt_enc_component);
+        EbErrorType return_error = eb_av1_enc_component_de_init(svt_enc_component);
 
         free(svt_enc_component);
 #if  defined(__linux__)
         EB_FREE(lp_group);
 #endif
         eb_decrease_component_count();
+        return return_error;
     }
-    else
-        return_error = EB_ErrorInvalidComponent;
-    return return_error;
+    return EB_ErrorInvalidComponent;
 }
 
 // Sets the default intra period the closest possible to 1 second without breaking the minigop
@@ -2022,7 +2006,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (scs_ptr->use_output_stat_file ||
-        (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE))
+        (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
 #else
     // In two pass encoding, the first pass uses sb size=64
     if (scs_ptr->use_output_stat_file)
@@ -2733,7 +2717,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
     // Check that the frame_rate is non-zero
-    if (config->frame_rate <= 0) {
+    if (!config->frame_rate) {
         SVT_LOG("Error Instance %u: The frame rate should be greater than 0 fps \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -2755,11 +2739,11 @@ static EbErrorType verify_settings(
 
         return_error = EB_ErrorBadParameter;
     }
-    if (config->tile_rows < 0 || config->tile_columns < 0 || config->tile_rows > 6 || config->tile_columns > 6) {
+    if ((unsigned)config->tile_rows > 6 || (unsigned)config->tile_columns > 6) {
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if ((1 << config->tile_rows) * (1 << config->tile_columns) > 128 || config->tile_columns > 4) {
+    if ((1u << config->tile_rows) * (1u << config->tile_columns) > 128 || config->tile_columns > 4) {
         SVT_LOG("Error Instance %u: MaxTiles is 128 and MaxTileCols is 16 (Annex A.3) \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -3439,7 +3423,6 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     if(svt_enc_component == NULL)
         return EB_ErrorBadParameter;
 
-    EbErrorType           return_error  = EB_ErrorNone;
     EbEncHandle        *enc_handle  = (EbEncHandle*)svt_enc_component->p_component_private;
     uint32_t              instance_index = 0;
 
@@ -3453,7 +3436,7 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr,
         (EbSvtAv1EncConfiguration*)config_struct);
 
-    return_error = (EbErrorType)verify_settings(
+    EbErrorType return_error = (EbErrorType)verify_settings(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
     if (return_error == EB_ErrorBadParameter)
@@ -3969,23 +3952,17 @@ static EbErrorType allocate_frame_buffer(
     uint8_t is_16bit = config->encoder_bit_depth > 8 ? 1 : 0;
 
     input_pic_buf_desc_init_data.max_width =
-        !scs_ptr->max_input_luma_width % 8 ?
+        !(scs_ptr->max_input_luma_width % 8) ?
         scs_ptr->max_input_luma_width :
         scs_ptr->max_input_luma_width + (scs_ptr->max_input_luma_width % 8);
 
     input_pic_buf_desc_init_data.max_height =
-        !scs_ptr->max_input_luma_height % 8 ?
+        !(scs_ptr->max_input_luma_height % 8) ?
         scs_ptr->max_input_luma_height :
         scs_ptr->max_input_luma_height + (scs_ptr->max_input_luma_height % 8);
 
     input_pic_buf_desc_init_data.bit_depth = (EbBitDepthEnum)config->encoder_bit_depth;
     input_pic_buf_desc_init_data.color_format = (EbColorFormat)config->encoder_color_format;
-
-    if (config->compressed_ten_bit_format == 1)
-        input_pic_buf_desc_init_data.buffer_enable_mask = 0;
-    else
-        input_pic_buf_desc_init_data.buffer_enable_mask = is_16bit ?
-             PICTURE_BUFFER_DESC_FULL_MASK : 0;
 
     input_pic_buf_desc_init_data.left_padding = scs_ptr->left_padding;
     input_pic_buf_desc_init_data.right_padding = scs_ptr->right_padding;

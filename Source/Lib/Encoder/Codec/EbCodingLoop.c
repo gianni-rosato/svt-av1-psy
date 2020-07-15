@@ -2008,18 +2008,18 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                           : (context_ptr->blk_geom
                                  ->tx_org_x[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr] -
                              context_ptr->blk_geom->origin_x) >>
-                                2,
+                            2,
                     plane ? 0
                           : (context_ptr->blk_geom
                                  ->tx_org_y[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr] -
                              context_ptr->blk_geom->origin_y) >>
-                                2,
+                            2,
                     plane,
                     context_ptr->blk_geom->bsize,
                     txb_origin_x,
                     txb_origin_y,
-                    plane ? context_ptr->blk_origin_x : context_ptr->blk_origin_x,
-                    plane ? context_ptr->blk_origin_y : context_ptr->blk_origin_y,
+                    context_ptr->blk_origin_x,
+                    context_ptr->blk_origin_y,
                     0,
                     0,
                     pcs_ptr->mi_grid_base,
@@ -2099,18 +2099,18 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                           : (context_ptr->blk_geom
                                  ->tx_org_x[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr] -
                              context_ptr->blk_geom->origin_x) >>
-                                2,
+                            2,
                     plane ? 0
                           : (context_ptr->blk_geom
                                  ->tx_org_y[is_inter][blk_ptr->tx_depth][context_ptr->txb_itr] -
                              context_ptr->blk_geom->origin_y) >>
-                                2,
+                            2,
                     plane,
                     context_ptr->blk_geom->bsize,
                     txb_origin_x,
                     txb_origin_y,
-                    plane ? context_ptr->blk_origin_x : context_ptr->blk_origin_x,
-                    plane ? context_ptr->blk_origin_y : context_ptr->blk_origin_y,
+                    context_ptr->blk_origin_x,
+                    context_ptr->blk_origin_y,
                     0,
                     0,
                     pcs_ptr->mi_grid_base,

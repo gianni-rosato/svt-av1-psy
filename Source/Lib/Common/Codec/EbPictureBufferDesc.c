@@ -41,8 +41,8 @@ static void eb_picture_buffer_desc_dctor(EbPtr p) {
  *  the descriptor.
  *****************************************/
 EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr,
-                                        EbPtr                object_init_data_ptr) {
-    EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
+                                        const EbPtr          object_init_data_ptr) {
+    const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         (EbPictureBufferDescInitData *)object_init_data_ptr;
 
     uint32_t bytes_per_pixel =

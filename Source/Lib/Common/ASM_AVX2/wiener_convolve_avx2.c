@@ -250,8 +250,6 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdiff
             x -= 32;
         }
 
-        if (!width) return;
-
         if (width >= 16) {
             const uint8_t* src_p = src_ptr;
             uint8_t*       dst_p = dst_ptr;
@@ -455,8 +453,6 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdiff
             x -= 32;
         }
 
-        if (!width) return;
-
         if (width >= 16) {
             const uint8_t* src_p = src_ptr;
             uint8_t*       dst_p = dst_ptr;
@@ -618,8 +614,6 @@ void eb_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdiff
             dst_ptr += 32;
             x -= 32;
         }
-
-        if (!width) return;
 
         if (width >= 16) {
             const uint8_t* src_p = src_ptr;

@@ -76,7 +76,7 @@ void eb_aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
 }
 
 int32_t eb_aom_daala_stop_encode(DaalaWriter *br) {
-    int32_t  nb_bits = -1;
+    int32_t  nb_bits;
     uint32_t daala_bytes = 0;
     uint8_t *daala_data;
     daala_data = eb_od_ec_enc_done(&br->ec, &daala_bytes);

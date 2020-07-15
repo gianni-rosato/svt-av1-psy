@@ -79,8 +79,7 @@ Iterator eb_aom_vector_begin(Vector *vector) { return eb_aom_vector_iterator(vec
 Iterator eb_aom_vector_iterator(Vector *vector, size_t index) {
     Iterator iterator = {NULL, 0};
 
-    assert(vector != NULL);
-    assert(index <= vector->size);
+    assert(vector != NULL && index <= vector->size);
 
     if (vector == NULL) return iterator;
     if (index > vector->size) return iterator;

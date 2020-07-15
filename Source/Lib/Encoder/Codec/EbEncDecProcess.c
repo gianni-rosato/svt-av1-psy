@@ -95,10 +95,10 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->color_format = color_format;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->mode_decision_input_fifo_ptr =
-        eb_system_resource_get_consumer_fifo(enc_handle_ptr->enc_dec_tasks_resource_ptr, index);
-    context_ptr->enc_dec_output_fifo_ptr =
-        eb_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_results_resource_ptr, index);
+    context_ptr->mode_decision_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+        enc_handle_ptr->enc_dec_tasks_resource_ptr, index);
+    context_ptr->enc_dec_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+        enc_handle_ptr->enc_dec_results_resource_ptr, index);
     context_ptr->enc_dec_feedback_fifo_ptr = eb_system_resource_get_producer_fifo(
         enc_handle_ptr->enc_dec_tasks_resource_ptr, tasks_index);
     context_ptr->picture_demux_output_fifo_ptr = eb_system_resource_get_producer_fifo(
@@ -109,64 +109,53 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
 
     // Prediction Buffer
-    {
-        EbPictureBufferDescInitData init_data;
-
-        init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-        init_data.max_width          = SB_STRIDE_Y;
-        init_data.max_height         = SB_STRIDE_Y;
-        init_data.bit_depth          = EB_8BIT;
-        init_data.left_padding       = 0;
-        init_data.right_padding      = 0;
-        init_data.top_padding        = 0;
-        init_data.bot_padding        = 0;
-        init_data.split_mode         = EB_FALSE;
-        init_data.color_format       = color_format;
-
-        context_ptr->input_sample16bit_buffer = (EbPictureBufferDesc *)NULL;
-        if (is_16bit || static_config->is_16bit_pipeline) {
-            init_data.bit_depth = EB_16BIT;
-
-            EB_NEW(context_ptr->input_sample16bit_buffer,
-                   eb_picture_buffer_desc_ctor,
-                   (EbPtr)&init_data);
-            init_data.bit_depth = static_config->is_16bit_pipeline ? static_config->encoder_bit_depth : init_data.bit_depth;
-        }
-    }
+    context_ptr->input_sample16bit_buffer = NULL;
+    if (is_16bit || static_config->is_16bit_pipeline)
+        EB_NEW(context_ptr->input_sample16bit_buffer,
+               eb_picture_buffer_desc_ctor,
+               &(EbPictureBufferDescInitData){
+                   .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
+                   .max_width          = SB_STRIDE_Y,
+                   .max_height         = SB_STRIDE_Y,
+                   .bit_depth          = EB_16BIT,
+                   .left_padding       = 0,
+                   .right_padding      = 0,
+                   .top_padding        = 0,
+                   .bot_padding        = 0,
+                   .split_mode         = EB_FALSE,
+                   .color_format       = color_format,
+               });
 
     // Scratch Coeff Buffer
-    {
-        EbPictureBufferDescInitData init_data;
+    EbPictureBufferDescInitData init_32bit_data = {
+        .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
+        .max_width          = SB_STRIDE_Y,
+        .max_height         = SB_STRIDE_Y,
+        .bit_depth          = EB_32BIT,
+        .color_format       = color_format,
+        .left_padding       = 0,
+        .right_padding      = 0,
+        .top_padding        = 0,
+        .bot_padding        = 0,
+        .split_mode         = EB_FALSE,
+    };
 
-        init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-        init_data.max_width          = SB_STRIDE_Y;
-        init_data.max_height         = SB_STRIDE_Y;
-        init_data.bit_depth          = EB_16BIT;
-        init_data.color_format       = color_format;
-        init_data.left_padding       = 0;
-        init_data.right_padding      = 0;
-        init_data.top_padding        = 0;
-        init_data.bot_padding        = 0;
-        init_data.split_mode         = EB_FALSE;
-
-        EbPictureBufferDescInitData init_32bit_data;
-
-        init_32bit_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-        init_32bit_data.max_width          = SB_STRIDE_Y;
-        init_32bit_data.max_height         = SB_STRIDE_Y;
-        init_32bit_data.bit_depth          = EB_32BIT;
-        init_32bit_data.color_format       = color_format;
-        init_32bit_data.left_padding       = 0;
-        init_32bit_data.right_padding      = 0;
-        init_32bit_data.top_padding        = 0;
-        init_32bit_data.bot_padding        = 0;
-        init_32bit_data.split_mode         = EB_FALSE;
-        EB_NEW(context_ptr->inverse_quant_buffer,
-               eb_picture_buffer_desc_ctor,
-               (EbPtr)&init_32bit_data);
-        EB_NEW(context_ptr->transform_buffer, eb_picture_buffer_desc_ctor, (EbPtr)&init_32bit_data);
-        EB_NEW(context_ptr->residual_buffer, eb_picture_buffer_desc_ctor, (EbPtr)&init_data);
-    }
+    EB_NEW(context_ptr->inverse_quant_buffer, eb_picture_buffer_desc_ctor, &init_32bit_data);
+    EB_NEW(context_ptr->transform_buffer, eb_picture_buffer_desc_ctor, &init_32bit_data);
+    EB_NEW(context_ptr->residual_buffer,
+           eb_picture_buffer_desc_ctor,
+           &(EbPictureBufferDescInitData){
+               .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
+               .max_width          = SB_STRIDE_Y,
+               .max_height         = SB_STRIDE_Y,
+               .bit_depth          = EB_16BIT,
+               .color_format       = color_format,
+               .left_padding       = 0,
+               .right_padding      = 0,
+               .top_padding        = 0,
+               .bot_padding        = 0,
+               .split_mode         = EB_FALSE,
+           });
 
     // Mode Decision Context
 #if SB64_MEM_OPT
@@ -255,10 +244,6 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
     uint16_t tile_group_idx = context_ptr->tile_group_index;
 #if !QP2QINDEX
     context_ptr->qp = picture_qp;
-    context_ptr->qp_index =
-        pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present
-            ? (uint8_t)quantizer_to_qindex[context_ptr->qp]
-            : (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     // Asuming cb and cr offset to be the same for chroma QP in both slice and pps for lambda computation
 
     context_ptr->chroma_qp = (uint8_t)context_ptr->qp;
@@ -8323,10 +8308,9 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
-    uint32_t d1_blocks_accumlated, tot_d1_blocks = 0, d1_block_idx;
+    uint32_t d1_blocks_accumlated, d1_block_idx;
 
     while (blk_index < scs_ptr->max_block_cnt) {
-        tot_d1_blocks = 0;
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
         // SQ/NSQ block(s) filter based on the SQ size
@@ -8346,7 +8330,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
 #if OPT_BLOCK_INDICES_GEN_2
 #if OPT_BLOCK_INDICES_GEN_3
-            tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
+            uint32_t tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
 #if NO_NSQ_ABOVE
                 (blk_geom->sq_size >= 64 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_64x64) ||
                 (blk_geom->sq_size >= 32 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_32x32) ||
@@ -8749,12 +8733,11 @@ void generate_statistics_txt(
     uint32_t             sb_index) {
     uint32_t blk_index = 0;
     uint32_t part_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES] = { {0},{0} };
-    EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
             (blk_geom->sq_size < 128) ? 1 : 0;
-        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
@@ -8864,12 +8847,11 @@ void generate_statistics_depth(
     uint32_t             sb_index) {
     uint32_t blk_index = 0;
     // init stat
-    EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
             (blk_geom->sq_size < 128) ? 1 : 0;
-        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
@@ -8953,15 +8935,15 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
         }
         // Generate the selection %
 #if SOFT_CYCLES_REDUCTION
-        uint32_t sum = 0;
 #if !REMOVE_PRINT_STATEMENTS
+        uint32_t sum = 0;
         printf("\nstart \n");
 #endif
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++) {
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES - 1); part_idx++) {
                 context_ptr->ad_md_prob[pred_depth][part_idx] = (uint32_t)((pred_depth_count[pred_depth][part_idx] * (uint32_t)DEPTH_PROB_PRECISION) / (uint32_t)samples_num);
-                sum += context_ptr->ad_md_prob[pred_depth][part_idx];
 #if !REMOVE_PRINT_STATEMENTS
+                sum += context_ptr->ad_md_prob[pred_depth][part_idx];
                 printf("%d\t", context_ptr->ad_md_prob[pred_depth][part_idx]);
 #endif
             }
@@ -8972,8 +8954,8 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
 #if !REMOVE_PRINT_STATEMENTS
         printf("\n");
         printf("\nsum = %d\n",sum/100);
-#endif
         sum = 0;
+#endif
         //Generate depth prob
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++) {
             for (uint8_t part_idx = 1; part_idx < (NUMBER_OF_SHAPES - 1); part_idx++) {
@@ -8982,7 +8964,9 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
         }
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++) {
             context_ptr->depth_prob[pred_depth] = (uint32_t)((pred_depth_count[pred_depth][0] * (uint32_t)100) / (uint32_t)samples_num);
+#if !REMOVE_PRINT_STATEMENTS
             sum += context_ptr->depth_prob[pred_depth];
+#endif
         }
 #if !REMOVE_PRINT_STATEMENTS
         printf("\n");
@@ -9065,21 +9049,17 @@ void generate_statistics_nsq(
     ModeDecisionContext *context_ptr,
     uint32_t             sb_index) {
     uint32_t blk_index = 0;
-    uint32_t total_samples = 0;
-    uint32_t count_non_zero_coeffs = 0;
     uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
-    uint8_t band,partidx,sse_idx;
-    for (partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++) {
-        for (band = 0; band < FB_NUM; band++) {
+    for (uint8_t partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++) {
+        for (uint8_t band = 0; band < FB_NUM; band++) {
             memset(part_cnt[partidx][band], 0, sizeof(uint32_t) * SSEG_NUM);
         }
     }
-    EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
             (blk_geom->sq_size < 128) ? 1 : 0;
-        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
             is_blk_allowed) {
             if (blk_geom->shape == PART_N) {
@@ -9091,8 +9071,8 @@ void generate_statistics_nsq(
                         uint8_t part_idx = part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part];
                         uint8_t sse_g_band = context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag ?
                             context_ptr->md_local_blk_unit[blk_geom->sqi_mds].sse_gradian_band[part_idx] : 1;
-                        count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
-                        total_samples = (blk_geom->bwidth*blk_geom->bheight);
+                        const uint32_t count_non_zero_coeffs = context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs;
+                        const uint32_t total_samples = (blk_geom->bwidth*blk_geom->bheight);
                         if (count_non_zero_coeffs >= ((total_samples * 18) / band_width)) {
                             band_idx = 9;
                         }
@@ -9140,9 +9120,9 @@ void generate_statistics_nsq(
             d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] :
             ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     }
-    for (partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++) {
-        for (band = 0; band < FB_NUM; band++) {
-            for (sse_idx = 0; sse_idx < SSEG_NUM; sse_idx++) {
+    for (uint8_t partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++) {
+        for (uint8_t band = 0; band < FB_NUM; band++) {
+            for (uint8_t sse_idx = 0; sse_idx < SSEG_NUM; sse_idx++) {
                 context_ptr->part_cnt[partidx][band][sse_idx] += part_cnt[partidx][band][sse_idx];
             }
         }
@@ -9214,12 +9194,11 @@ static uint8_t determine_sb_class(
 #if !CLEANUP_CYCLE_ALLOCATION
     SbClassControls *sb_class_ctrls = &context_ptr->sb_class_ctrls;
 #endif
-    EbBool split_flag;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom * blk_geom = get_blk_geom_mds(blk_index);
         uint8_t is_blk_allowed = pcs_ptr->slice_type != I_SLICE ? 1 :
             (blk_geom->sq_size < 128) ? 1 : 0;
-        split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
+        EbBool split_flag = context_ptr->md_blk_arr_nsq[blk_index].split_flag;
         if (scs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] &&
 #if SB_CLASSIFIER_R2R_FIX
             context_ptr->md_local_blk_unit[blk_index].avail_blk_flag &&
@@ -9565,7 +9544,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if MR_DEPTH_REFINEMENT
 #if JUNE8_ADOPTIONS
 #if UNIFY_SC_NSC
-                            if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE) {
+                            if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
 #else
                             if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
                                 s_depth = -2;
@@ -9768,7 +9747,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         }
 #endif
 #endif
-                        else if (best_part_cost < early_exit_th && pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_LEVEL_0) {
+                        else if (best_part_cost < early_exit_th) {
 #else
                         if (best_part_cost < early_exit_th && pcs_ptr->parent_pcs_ptr->multi_pass_pd_level != MULTI_PASS_PD_LEVEL_0 && !MR_MODE_MULTI_PASS_PD) {
 #endif
@@ -9792,22 +9771,19 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if DEPTH_CYCLES_REDUCTION
  #if ADAPTIVE_DEPTH_CR
                         DepthCycleRControls*depth_cycle_red_ctrls = &context_ptr->depth_cycles_red_ctrls;
-                        if (depth_cycle_red_ctrls->enabled) {
+                        if (depth_cycle_red_ctrls->enabled && context_ptr->sb_class) {
                             int8_t addj_s_depth = 0;
                             int8_t addj_e_depth = 0;
-                            if (context_ptr->sb_class) {
-
-                                if (depth_cycle_red_ctrls->th) {
-                                    addj_s_depth = context_ptr->depth_prob[0] < depth_cycle_red_ctrls->th ? 0 : -2;
-                                    if (addj_s_depth == 0)
-                                        addj_s_depth = context_ptr->depth_prob[1] < depth_cycle_red_ctrls->th ? 0 : -1;
-                                    addj_e_depth = context_ptr->depth_prob[4] < depth_cycle_red_ctrls->th ? 0 : 2;
-                                    if (addj_e_depth == 0)
-                                        addj_e_depth = context_ptr->depth_prob[3] < depth_cycle_red_ctrls->th ? 0 : 1;
-                                }
-                                s_depth = MAX(s_depth, addj_s_depth);
-                                e_depth = MIN(e_depth, addj_e_depth);
+                            if (depth_cycle_red_ctrls->th) {
+                                addj_s_depth = context_ptr->depth_prob[0] < depth_cycle_red_ctrls->th ? 0 : -2;
+                                if (addj_s_depth == 0)
+                                    addj_s_depth = context_ptr->depth_prob[1] < depth_cycle_red_ctrls->th ? 0 : -1;
+                                addj_e_depth = context_ptr->depth_prob[4] < depth_cycle_red_ctrls->th ? 0 : 2;
+                                if (addj_e_depth == 0)
+                                    addj_e_depth = context_ptr->depth_prob[3] < depth_cycle_red_ctrls->th ? 0 : 1;
                             }
+                            s_depth = MAX(s_depth, addj_s_depth);
+                            e_depth = MIN(e_depth, addj_e_depth);
                         }
 #else
                         DepthCycleRControls*depth_cycle_red_ctrls = &context_ptr->depth_cycles_red_ctrls;
@@ -10177,9 +10153,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
-    uint32_t tot_d1_blocks;
     while (blk_index < scs_ptr->max_block_cnt) {
-        tot_d1_blocks = 0;
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
         // SQ/NSQ block(s) filter based on the SQ size
@@ -10200,7 +10174,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
 #if OPT_BLOCK_INDICES_GEN_2
 #if OPT_BLOCK_INDICES_GEN_3
-            tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
+            uint32_t tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
 #if NO_NSQ_ABOVE
                 (blk_geom->sq_size >= 64 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_64x64) ||
                 (blk_geom->sq_size >= 32 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_32x32) ||
@@ -10346,12 +10320,9 @@ void *enc_dec_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)input_ptr;
     EncDecContext *     context_ptr        = (EncDecContext *)thread_context_ptr->priv;
-    PictureControlSet * pcs_ptr;
-    SequenceControlSet *scs_ptr;
 
     // Input
     EbObjectWrapper *enc_dec_tasks_wrapper_ptr;
-    EncDecTasks *    enc_dec_tasks_ptr;
 
     // Output
     EbObjectWrapper *enc_dec_results_wrapper_ptr;
@@ -10383,9 +10354,9 @@ void *enc_dec_kernel(void *input_ptr) {
         // Get Mode Decision Results
         EB_GET_FULL_OBJECT(context_ptr->mode_decision_input_fifo_ptr, &enc_dec_tasks_wrapper_ptr);
 
-        enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
-        pcs_ptr           = (PictureControlSet *)enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        EncDecTasks *    enc_dec_tasks_ptr    = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
+        PictureControlSet * pcs_ptr           = (PictureControlSet *)enc_dec_tasks_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet *scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
         context_ptr->coded_sb_count   = 0;
         segments_ptr = pcs_ptr->enc_dec_segment_ctrl[context_ptr->tile_group_index];
@@ -10969,9 +10940,6 @@ void *enc_dec_kernel(void *input_ptr) {
             eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
             pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
 #endif
-        }
-
-        if (last_sb_flag) {
             // Get Empty EncDec Results
             eb_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;

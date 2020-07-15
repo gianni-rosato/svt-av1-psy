@@ -507,31 +507,20 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
 }
 
 #if !DEPTH_PART_CLEAN_UP
-void forward_all_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    uint32_t sb_index;
-    EbBool   split_flag;
-
-    UNUSED(split_flag);
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
+static void forward_all_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
+    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
         MdcSbData *results_ptr = &pcs_ptr->mdc_sb_array[sb_index];
 
         results_ptr->leaf_count = 0;
 
-        uint32_t blk_index = 0;
-
-        while (blk_index < scs_ptr->max_block_cnt) {
-            split_flag = EB_TRUE;
-
-            const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+        for (uint32_t blk_index = 0; blk_index < scs_ptr->max_block_cnt; ++blk_index) {
+            const BlockGeom *const blk_geom = get_blk_geom_mds(blk_index);
 
             //if the parentSq is inside inject this block
-            uint8_t is_blk_allowed =
-                pcs_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
+            const uint8_t is_blk_allowed =
+                pcs_ptr->slice_type != I_SLICE || blk_geom->sq_size < 128;
 
-            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed)
-
-            {
+            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
                 results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
 
                     blk_geom->sq_size == 128
@@ -541,20 +530,13 @@ void forward_all_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pc
                 results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
                     0; //valid only for square 85 world. will be removed.
                 results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-                if (blk_geom->sq_size > 4) {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_TRUE;
-                    split_flag                                                         = EB_TRUE;
-                } else {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
-                    split_flag                                                         = EB_FALSE;
-                }
+                results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
+                    blk_geom->sq_size > 4;
             }
-
-            blk_index++;
         }
     }
 
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
+    pcs_ptr->parent_pcs_ptr->average_qp = pcs_ptr->parent_pcs_ptr->picture_qp;
 }
 
 void forward_sq_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
@@ -610,14 +592,13 @@ void forward_sq_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs
 
 void sb_forward_sq_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                 uint32_t sb_index) {
-    EbBool     split_flag;
     MdcSbData *results_ptr  = &pcs_ptr->mdc_sb_array[sb_index];
     results_ptr->leaf_count = 0;
     uint32_t blk_index =
         pcs_ptr->slice_type == I_SLICE && scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
 
     while (blk_index < scs_ptr->max_block_cnt) {
-        split_flag = EB_TRUE;
+        EbBool split_flag = EB_TRUE;
 
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
@@ -692,15 +673,14 @@ void derive_search_method(PictureControlSet *               pcs_ptr,
 void set_sb_budget(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, SuperBlock *sb_ptr,
                    ModeDecisionConfigurationContext *context_ptr) {
     const uint32_t sb_index = sb_ptr->index;
-    uint32_t       max_to_min_score, score_to_min;
     UNUSED(scs_ptr);
     UNUSED(pcs_ptr);
     {
         context_ptr->sb_score_array[sb_index] = CLIP3(context_ptr->sb_min_score,
                                                       context_ptr->sb_max_score,
                                                       context_ptr->sb_score_array[sb_index]);
-        score_to_min     = context_ptr->sb_score_array[sb_index] - context_ptr->sb_min_score;
-        max_to_min_score = context_ptr->sb_max_score - context_ptr->sb_min_score;
+        const uint32_t score_to_min = context_ptr->sb_score_array[sb_index] - context_ptr->sb_min_score;
+        const uint32_t max_to_min_score = context_ptr->sb_max_score - context_ptr->sb_min_score;
 
         if ((score_to_min <= (max_to_min_score * context_ptr->score_th[0]) / 100 &&
              context_ptr->score_th[0] != 0) ||
@@ -1630,14 +1610,13 @@ void forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet
 
 void sb_forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      uint32_t sb_index) {
-    EbBool     split_flag;
     MdcSbData *results_ptr  = &pcs_ptr->mdc_sb_array[sb_index];
     results_ptr->leaf_count = 0;
     uint32_t blk_index =
         pcs_ptr->slice_type == I_SLICE && scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
 
     while (blk_index < scs_ptr->max_block_cnt) {
-        split_flag                = EB_TRUE;
+        EbBool           split_flag = EB_TRUE;
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
             results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = 1;
@@ -1663,15 +1642,13 @@ void sb_forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControl
 }
 
 void forward_all_c_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    uint32_t sb_index;
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
+    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
         MdcSbData *results_ptr  = &pcs_ptr->mdc_sb_array[sb_index];
         results_ptr->leaf_count = 0;
         uint32_t blk_index      = 0;
-        uint32_t tot_d1_blocks;
 
         while (blk_index < scs_ptr->max_block_cnt) {
-            tot_d1_blocks             = 0;
+            uint32_t         tot_d1_blocks = 0;
             const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
             //if the parentSq is inside inject this block
@@ -1686,7 +1663,7 @@ void forward_all_c_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *
                             ? 17
                             : blk_geom->sq_size > 16
                                   ? 25
-                                  : blk_geom->sq_size == 16 ? 17 : blk_geom->sq_size == 8 ? 1 : 1;
+                                  : blk_geom->sq_size == 16 ? 17 : 1;
 
                 for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
                     blk_geom = get_blk_geom_mds(blk_index);
@@ -1944,26 +1921,22 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
     EbThreadContext *                 thread_context_ptr = (EbThreadContext *)input_ptr;
     ModeDecisionConfigurationContext *context_ptr =
         (ModeDecisionConfigurationContext *)thread_context_ptr->priv;
-    PictureControlSet * pcs_ptr;
-    SequenceControlSet *scs_ptr;
-    FrameHeader *       frm_hdr;
     // Input
     EbObjectWrapper *   rate_control_results_wrapper_ptr;
-    RateControlResults *rate_control_results_ptr;
 
     // Output
     EbObjectWrapper *enc_dec_tasks_wrapper_ptr;
-    EncDecTasks *    enc_dec_tasks_ptr;
 
     for (;;) {
         // Get RateControl Results
         EB_GET_FULL_OBJECT(context_ptr->rate_control_input_fifo_ptr,
                            &rate_control_results_wrapper_ptr);
 
-        rate_control_results_ptr =
+        RateControlResults *rate_control_results_ptr =
             (RateControlResults *)rate_control_results_wrapper_ptr->object_ptr;
-        pcs_ptr = (PictureControlSet *)rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        PictureControlSet *pcs_ptr = (PictureControlSet *)
+                                         rate_control_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
         // -------
         // Scale references if resolution of the reference is different than the input
@@ -1985,12 +1958,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
             av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
 
-        frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+        FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
         signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-
-        context_ptr->qp = pcs_ptr->picture_qp;
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
@@ -2293,7 +2264,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             eb_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
                                 &enc_dec_tasks_wrapper_ptr);
 
-            enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
+            EncDecTasks *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
             enc_dec_tasks_ptr->pcs_wrapper_ptr  = rate_control_results_ptr->pcs_wrapper_ptr;
             enc_dec_tasks_ptr->input_type       = ENCDEC_TASKS_MDC_INPUT;
             enc_dec_tasks_ptr->tile_group_index = tile_group_idx;

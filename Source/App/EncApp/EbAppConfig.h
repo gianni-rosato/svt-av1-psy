@@ -107,7 +107,7 @@ extern uint32_t          app_malloc_count;
     fprintf(stderr, "Total Number of Mallocs in App: %u\n", app_malloc_count); \
     fprintf(stderr, "Total App Memory: %.2lf KB\n\n", *total_app_memory / (double)1024);
 
-#define MAX_CHANNEL_NUMBER 6
+#define MAX_CHANNEL_NUMBER 6U
 #define MAX_NUM_TOKENS 210
 
 #ifdef _WIN32

@@ -682,7 +682,7 @@ static uint8_t has_bl_32x8[8] = {
 static uint8_t has_bl_16x64[2] = { 0, 0 };
 static uint8_t has_bl_64x16[2] = { 42, 42 };
 
-const uint8_t *const has_bl_tables[BlockSizeS_ALL] = {
+static const uint8_t *const has_bl_tables[BlockSizeS_ALL] = {
     // 4X4
     has_bl_4x4,
     // 4X8,         8X4,         8X8
@@ -2499,7 +2499,6 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
     TxSize tx_size, const uint16_t *above, const uint16_t *left,
     int mode, int bd)
 {
-    int r, c;
     uint16_t buffer[33][33];
     const int bw = tx_size_wide[tx_size];
     const int bh = tx_size_high[tx_size];
@@ -2507,14 +2506,14 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
     assert(bw <= 32 && bh <= 32);
 
     // The initialization is just for silencing Jenkins static analysis warnings
-    for (r = 0; r < bh + 1; ++r)
+    for (int r = 0; r < bh + 1; ++r)
         memset(buffer[r], 0, (bw + 1) * sizeof(buffer[0][0]));
 
-    for (r = 0; r < bh; ++r) buffer[r + 1][0] = left[r];
+    for (int r = 0; r < bh; ++r) buffer[r + 1][0] = left[r];
     eb_memcpy(buffer[0], &above[-1], (bw + 1) * sizeof(buffer[0][0]));
 
-    for (r = 1; r < bh + 1; r += 2)
-        for (c = 1; c < bw + 1; c += 4) {
+    for (int r = 1; r < bh + 1; r += 2)
+        for (int c = 1; c < bw + 1; c += 4) {
             const uint16_t p0 = buffer[r - 1][c - 1];
             const uint16_t p1 = buffer[r - 1][c];
             const uint16_t p2 = buffer[r - 1][c + 1];
@@ -2522,7 +2521,7 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
             const uint16_t p4 = buffer[r - 1][c + 3];
             const uint16_t p5 = buffer[r][c - 1];
             const uint16_t p6 = buffer[r + 1][c - 1];
-            for (int k = 0; k < 8; ++k) {
+            for (unsigned k = 0; k < 8; ++k) {
                 int r_offset = k >> 2;
                 int c_offset = k & 0x03;
                 buffer[r + r_offset][c + c_offset] =
@@ -2539,19 +2538,20 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
             }
         }
 
-    for (r = 0; r < bh; ++r) {
+    for (int r = 0; r < bh; ++r) {
         eb_memcpy(dst, &buffer[r + 1][1], bw * sizeof(dst[0]));
         dst += stride;
     }
 }
 
 #if TPL_LA
-static int is_smooth_luma(uint8_t mode) {
-    return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED || mode == SMOOTH_H_PRED);
-}
+//static int is_smooth_luma(uint8_t mode) {
+//    return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED || mode == SMOOTH_H_PRED);
+//}
 
 void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
-                              int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col) {
+                       int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col) {
+    (void)ois_mb_results_ptr;
     const int mb_stride = (max_frame_width + 15) / 16;
     const int mb_height = (max_frame_height + 15) / 16;
     const int txwpx = tx_size_wide[TX_16X16];
@@ -2561,11 +2561,10 @@ void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t 
     int need_left = extend_modes[mode] & NEED_LEFT;
     int need_above = extend_modes[mode] & NEED_ABOVE;
     int need_above_left = extend_modes[mode] & NEED_ABOVELEFT;
-    int ab_sm = (cu_origin_y > 0 && (ois_mb_results_ptr - mb_stride)) ? is_smooth_luma((ois_mb_results_ptr - mb_stride)->intra_mode) : 0;
-    int le_sm = (cu_origin_x > 0 && (ois_mb_results_ptr - 1)) ? is_smooth_luma((ois_mb_results_ptr - 1)->intra_mode) : 0;
-    ab_sm = 0; //force to 0 for neighbor may not be ready at segment boundary
-    le_sm = 0; //force to 0 for neighbor may not be ready at segment boundary
-    const int filt_type = (ab_sm || le_sm) ? 1 : 0;
+    //force to 0 for neighbor may not be ready at segment boundary
+    // int ab_sm = 0; // (cu_origin_y > 0 && (ois_mb_results_ptr - mb_stride)) ? is_smooth_luma((ois_mb_results_ptr - mb_stride)->intra_mode) : 0;
+    // int le_sm = 0; // (cu_origin_x > 0 && (ois_mb_results_ptr - 1)) ? is_smooth_luma((ois_mb_results_ptr - 1)->intra_mode) : 0;
+    const int filt_type = 0; // (ab_sm || le_sm) ? 1 : 0
     int n_top_px  = cu_origin_y > 0 ? AOMMIN(txwpx, (mb_stride * 16 - cu_origin_x + txwpx)) : 0;
     int n_left_px = cu_origin_x > 0 ? AOMMIN(txhpx, (mb_height * 16 - cu_origin_y + txhpx)) : 0;
 

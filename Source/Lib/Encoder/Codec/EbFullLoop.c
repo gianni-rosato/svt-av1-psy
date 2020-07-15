@@ -1072,9 +1072,8 @@ static INLINE int get_coeff_cost_general(int is_last, int ci, TranLow abs_qc, in
     return cost;
 }
 static INLINE int64_t get_coeff_dist(TranLow tcoeff, TranLow dqcoeff, int shift) {
-    const int64_t diff  = (tcoeff - dqcoeff) * (1 << shift);
-    const int64_t error = diff * diff;
-    return error;
+    const int64_t diff = ((int64_t)tcoeff - dqcoeff) * (int64_t)(1lu << shift);
+    return diff * diff;
 }
 static INLINE void get_qc_dqc_low(TranLow abs_qc, int sign, int dqv, int shift, TranLow *qc_low,
                                   TranLow *dqc_low) {
@@ -1420,15 +1419,14 @@ static INLINE void update_coeff_eob_fast(uint16_t *eob, int shift, const int16_t
         const int rc         = scan[i];
         const int qcoeff     = qcoeff_ptr[rc];
         const int coeff      = coeff_ptr[rc];
-        const int coeff_sign = (coeff >> 31);
+        const int coeff_sign = -(coeff < 0);
         int64_t   abs_coeff  = (coeff ^ coeff_sign) - coeff_sign;
         if (((abs_coeff << (1 + shift)) < zbin[rc != 0]) || (qcoeff == 0)) {
             eob_out--;
             qcoeff_ptr[rc]  = 0;
             dqcoeff_ptr[rc] = 0;
-        } else {
+        } else
             break;
-        }
     }
     *eob = eob_out;
 }
@@ -1796,25 +1794,23 @@ int32_t av1_quantize_inv_quantize(
 
     if (perform_rdoq && *eob != 0) {
         // Perform rdoq
-        if (*eob != 0) {
-            eb_av1_optimize_b(md_context,
-                              txb_skip_context,
-                              dc_sign_context,
-                              (TranLow *)coeff,
-                              coeff_stride,
-                              n_coeffs,
-                              &candidate_plane,
-                              quant_coeff,
-                              (TranLow *)recon_coeff,
-                              eob,
-                              scan_order,
-                              &qparam,
-                              txsize,
-                              tx_type,
-                              is_inter,
-                              lambda,
-                              (component_type == COMPONENT_LUMA) ? 0 : 1);
-        }
+        eb_av1_optimize_b(md_context,
+                          txb_skip_context,
+                          dc_sign_context,
+                          (TranLow *)coeff,
+                          coeff_stride,
+                          n_coeffs,
+                          &candidate_plane,
+                          quant_coeff,
+                          (TranLow *)recon_coeff,
+                          eob,
+                          scan_order,
+                          &qparam,
+                          txsize,
+                          tx_type,
+                          is_inter,
+                          lambda,
+                          (component_type == COMPONENT_LUMA) ? 0 : 1);
     }
 
     *count_non_zero_coeffs = *eob;
@@ -3350,10 +3346,8 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
     UNUSED(full_lambda);
     UNUSED(md_rate_estimation_ptr);
 
-    uint32_t last_blk_index, d0_idx_mds, d1_idx_mds, d2_idx_mds, top_left_idx_mds;
+    uint32_t last_blk_index, d0_idx_mds, top_left_idx_mds;
     UNUSED(top_left_idx_mds);
-    UNUSED(d2_idx_mds);
-    UNUSED(d1_idx_mds);
     UNUSED(d0_idx_mds);
     uint64_t            parent_depth_cost = 0, current_depth_cost = 0;
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
@@ -3362,18 +3356,14 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
 
     last_depth_flag =
         context_ptr->md_blk_arr_nsq[blk_mds].split_flag == EB_FALSE ? EB_TRUE : EB_FALSE;
-    d1_idx_mds                     = blk_mds;
-    d2_idx_mds                     = blk_mds;
     last_blk_index                 = blk_mds;
     blk_geom                       = get_blk_geom_mds(blk_mds);
-    uint32_t parent_depth_idx_mds  = blk_mds;
     uint32_t current_depth_idx_mds = blk_mds;
 
     if (last_depth_flag) {
         while (blk_geom->is_last_quadrant) {
             //get parent idx
-            parent_depth_idx_mds =
-                current_depth_idx_mds -
+            uint32_t parent_depth_idx_mds = current_depth_idx_mds -
                 parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
             if (pcs_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 &&
                 scs_ptr->seq_header.sb_size == BLOCK_128X128)

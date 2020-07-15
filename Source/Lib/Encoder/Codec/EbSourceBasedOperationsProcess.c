@@ -65,10 +65,8 @@ void derive_picture_activity_statistics(PictureParentControlSet *pcs_ptr)
     uint32_t complete_sb_count    = 0;
     uint32_t non_moving_sb_count  = 0;
     uint32_t sb_total_count       = pcs_ptr->sb_total_count;
-    uint32_t tot_nmv_idx          = 0;
 
-    uint32_t sb_index;
-    for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
+    for (uint32_t sb_index = 0; sb_index < sb_total_count; ++sb_index) {
         SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
         if (sb_params->is_complete_sb) {
             non_moving_index_min = pcs_ptr->non_moving_index_array[sb_index] < non_moving_index_min
@@ -83,8 +81,6 @@ void derive_picture_activity_statistics(PictureParentControlSet *pcs_ptr)
             complete_sb_count++;
 
             non_moving_index_sum += pcs_ptr->non_moving_index_array[sb_index];
-
-            if (pcs_ptr->non_moving_index_array[sb_index] < NON_MOVING_SCORE_1) tot_nmv_idx++;
         }
     }
 
@@ -112,7 +108,6 @@ void *source_based_operations_kernel(void *input_ptr) {
     EbObjectWrapper *          in_results_wrapper_ptr;
     InitialRateControlResults *in_results_ptr;
     EbObjectWrapper *          out_results_wrapper_ptr;
-    PictureDemuxResults *      out_results_ptr;
 
     for (;;) {
         // Get Input Full Object
@@ -154,7 +149,8 @@ void *source_based_operations_kernel(void *input_ptr) {
         eb_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
                             &out_results_wrapper_ptr);
 
-        out_results_ptr = (PictureDemuxResults *)out_results_wrapper_ptr->object_ptr;
+        PictureDemuxResults *out_results_ptr = (PictureDemuxResults *)
+                                                   out_results_wrapper_ptr->object_ptr;
         out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
         out_results_ptr->picture_type    = EB_PIC_INPUT;
 

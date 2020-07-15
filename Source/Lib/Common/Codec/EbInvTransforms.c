@@ -2624,7 +2624,6 @@ void av1_inverse_transform_2d_64x64_c(int32_t *input, uint32_t input_stride, int
 
 #endif
 static const int32_t *cast_to_int32(const TranLow *input) {
-    assert(sizeof(int32_t) == sizeof(TranLow));
     return (const int32_t *)input;
 }
 void eb_av1_get_inv_txfm_cfg(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {

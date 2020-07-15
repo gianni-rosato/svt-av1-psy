@@ -292,7 +292,7 @@ typedef struct EbPictureBufferDescInitData {
      * Extern Function Declarations
      **************************************/
 extern EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
-                                               EbPtr                object_init_data_ptr);
+                                               const EbPtr          object_init_data_ptr);
 
 extern EbErrorType eb_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
                                                      EbPtr                object_init_data_ptr);

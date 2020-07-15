@@ -398,29 +398,25 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
 
 EbErrorType preload_frames_info_ram(EbConfig *config) {
     EbErrorType         return_error = EB_ErrorNone;
-    int32_t             processed_frame_count;
-    int32_t             filled_len;
     int32_t             input_padded_width  = config->input_padded_width;
     int32_t             input_padded_height = config->input_padded_height;
-    int32_t             read_size;
-    const EbColorFormat color_format =
-        (EbColorFormat)config->encoder_color_format; // Chroma subsampling
-
-    FILE *input_file = config->input_file;
+    size_t              read_size;
+    const EbColorFormat color_format = (EbColorFormat)
+                                           config->encoder_color_format; // Chroma subsampling
 
     read_size = input_padded_width * input_padded_height; //Luma
     read_size += 2 * (read_size >> (3 - color_format)); // Add Chroma
-    if (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1) {
+    if (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1)
         read_size += read_size / 4;
-    } else
-        read_size *= (config->encoder_bit_depth > 8 ? 2 : 1); //10 bit
+    else if (config->encoder_bit_depth > 8)
+        read_size *= 2; //10 bit
     EB_APP_MALLOC(uint8_t **,
                   config->sequence_buffer,
                   sizeof(uint8_t *) * config->buffered_input,
                   EB_N_PTR,
                   EB_ErrorInsufficientResources);
 
-    for (processed_frame_count = 0; processed_frame_count < config->buffered_input;
+    for (int32_t processed_frame_count = 0; processed_frame_count < config->buffered_input;
          ++processed_frame_count) {
         EB_APP_MALLOC(uint8_t *,
                       config->sequence_buffer[processed_frame_count],
@@ -428,17 +424,15 @@ EbErrorType preload_frames_info_ram(EbConfig *config) {
                       EB_N_PTR,
                       EB_ErrorInsufficientResources);
         // Fill the buffer with a complete frame
-        filled_len = 0;
-        filled_len += (uint32_t)fread(
-            config->sequence_buffer[processed_frame_count], 1, read_size, input_file);
+        size_t filled_len = fread(
+            config->sequence_buffer[processed_frame_count], 1, read_size, config->input_file);
 
         if (read_size != filled_len) {
             fseek(config->input_file, 0, SEEK_SET);
 
             // Fill the buffer with a complete frame
-            filled_len = 0;
-            filled_len += (uint32_t)fread(
-                config->sequence_buffer[processed_frame_count], 1, read_size, input_file);
+            if (read_size != fread(config->sequence_buffer[processed_frame_count], 1, read_size, config->input_file))
+                return_error = EB_Corrupt_Frame;
         }
     }
 
@@ -453,14 +447,12 @@ EbErrorType preload_frames_info_ram(EbConfig *config) {
  * Initialize Core & Component
  ***********************************/
 EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t instance_idx) {
-    EbErrorType return_error = EB_ErrorNone;
-
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
     ///************************* LIBRARY INIT [START] *********************///
     // STEP 1: Call the library to construct a Component Handle
-    return_error = svt_av1_enc_init_handle(
+    EbErrorType return_error = svt_av1_enc_init_handle(
         &callback_data->svt_encoder_handle, callback_data, &callback_data->eb_enc_parameters);
 
     if (return_error != EB_ErrorNone) return return_error;
@@ -496,7 +488,6 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
         preload_frames_info_ram(config);
     } else
         config->sequence_buffer = 0;
-    if (return_error != EB_ErrorNone) return return_error;
     ///********************** APPLICATION INIT [END] ******************////////
 
     return return_error;

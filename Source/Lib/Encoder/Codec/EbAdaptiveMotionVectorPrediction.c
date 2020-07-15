@@ -87,17 +87,11 @@ static INLINE IntMv get_sub_block_mv(const ModeInfo *candidate, int32_t which_mv
     return candidate->mbmi.block_mi.mv[which_mv];
 }
 static INLINE int32_t is_inside(const TileInfo *const tile, int32_t mi_col, int32_t mi_row,
-                                int32_t mi_rows, const Position *mi_pos) {
-    const int32_t dependent_horz_tile_flag = 0;
-    if (dependent_horz_tile_flag && !tile->tg_horz_boundary) {
-        return !(mi_row + mi_pos->row < 0 || mi_col + mi_pos->col < tile->mi_col_start ||
-                 mi_row + mi_pos->row >= mi_rows || mi_col + mi_pos->col >= tile->mi_col_end);
-    } else {
-        return !(mi_row + mi_pos->row < tile->mi_row_start ||
-                 mi_col + mi_pos->col < tile->mi_col_start ||
-                 mi_row + mi_pos->row >= tile->mi_row_end ||
-                 mi_col + mi_pos->col >= tile->mi_col_end);
-    }
+                                const Position *mi_pos) {
+    return !(mi_row + mi_pos->row < tile->mi_row_start ||
+                mi_col + mi_pos->col < tile->mi_col_start ||
+                mi_row + mi_pos->row >= tile->mi_row_end ||
+                mi_col + mi_pos->col >= tile->mi_col_end);
 }
 
 static INLINE void clamp_mv_ref(MV *mv, int32_t bw, int32_t bh, const MacroBlockD *xd) {
@@ -316,7 +310,7 @@ static void scan_col_mbmi(const Av1Common *cm, const MacroBlockD *xd, int32_t mi
     }
 }
 
-static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd, const int32_t mi_row,
+static void scan_blk_mbmi(const MacroBlockD *xd, const int32_t mi_row,
                           const int32_t mi_col, const MvReferenceFrame rf[2], int32_t row_offset,
                           int32_t col_offset, CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
                           uint8_t ref_match_count[MODE_CTX_REF_FRAMES],
@@ -329,7 +323,7 @@ static void scan_blk_mbmi(const Av1Common *cm, const MacroBlockD *xd, const int3
     mi_pos.row = row_offset;
     mi_pos.col = col_offset;
 
-    if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &mi_pos)) {
+    if (is_inside(tile, mi_col, mi_row, &mi_pos)) {
         const ModeInfo *const   candidate_mi = xd->mi[mi_pos.row * xd->mi_stride + mi_pos.col];
         const MbModeInfo *const candidate    = &candidate_mi->mbmi;
         const int32_t           len          = mi_size_wide[BLOCK_8X8];
@@ -400,12 +394,8 @@ static int32_t has_top_right(const Av1Common *cm,  const BlockSize sb_size, cons
     return has_tr;
 }
 static INLINE int32_t find_valid_row_offset(const TileInfo *const tile, int32_t mi_row,
-                                            int32_t mi_rows, int32_t row_offset) {
-    const int32_t dependent_horz_tile_flag = 0;
-    if (dependent_horz_tile_flag && !tile->tg_horz_boundary)
-        return clamp(row_offset, -mi_row, mi_rows - mi_row - 1);
-    else
-        return clamp(row_offset, tile->mi_row_start - mi_row, tile->mi_row_end - mi_row - 1);
+                                            int32_t row_offset) {
+    return clamp(row_offset, tile->mi_row_start - mi_row, tile->mi_row_end - mi_row - 1);
 }
 
 static INLINE int32_t find_valid_col_offset(const TileInfo *const tile, int32_t mi_col,
@@ -434,7 +424,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *pcs_ptr, const
     mi_pos.row = (mi_row & 0x01) ? blk_row : blk_row + 1;
     mi_pos.col = (mi_col & 0x01) ? blk_col : blk_col + 1;
 
-    if (!is_inside(&xd->tile, mi_col, mi_row, xd->tile.mi_row_end, &mi_pos)) return 0;
+    if (!is_inside(&xd->tile, mi_col, mi_row, &mi_pos)) return 0;
 
     const TPL_MV_REF *prev_frame_mvs = pcs_ptr->tpl_mvs +
                                        ((mi_row + mi_pos.row) >> 1) * (cm->mi_stride >> 1) +
@@ -563,7 +553,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
 
         if (xd->n8_h < mi_size_high[BLOCK_8X8]) max_row_offset = -(2 << 1) + row_adj;
 
-        max_row_offset = find_valid_row_offset(tile, mi_row, cm->mi_rows, max_row_offset);
+        max_row_offset = find_valid_row_offset(tile, mi_row, max_row_offset);
     }
 
     if (xd->left_available) {
@@ -620,8 +610,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
 
     // Check top-right boundary
     if (has_tr)
-        scan_blk_mbmi(cm,
-                      xd,
+        scan_blk_mbmi(xd,
                       mi_row,
                       mi_col,
                       rf,
@@ -709,8 +698,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
     uint8_t dummy_newmv_count[MODE_CTX_REF_FRAMES] = {0};
 
     // Scan the second outer area.
-    scan_blk_mbmi(cm,
-                  xd,
+    scan_blk_mbmi(xd,
                   mi_row,
                   mi_col,
                   rf,
@@ -895,7 +883,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
             }
 
             // Build up the compound mv predictor
-            IntMv comp_list[MAX_MV_REF_CANDIDATES][2];
+            IntMv comp_list[MAX_MV_REF_CANDIDATES + 1][2];
 
             for (int32_t idx = 0; idx < 2; ++idx) {
                 int32_t comp_idx = 0;
@@ -1758,7 +1746,7 @@ int av1_find_samples(const Av1Common *cm, const BlockSize sb_size, MacroBlockD *
     if (do_tr && has_top_right(cm, sb_size, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h))) {
         Position trb_pos = {-1, xd->n4_w};
 
-        if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
+        if (is_inside(tile, mi_col, mi_row, &trb_pos)) {
             int mi_row_offset = -1;
             int mi_col_offset = xd->n4_w;
 
@@ -1882,7 +1870,7 @@ void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGe
 
     if (do_tr && has_top_right(cm, sb_size, xd, mi_row, mi_col, AOMMAX(xd->n4_w, xd->n4_h))) {
         Position trb_pos = {-1, xd->n4_w};
-        if (is_inside(tile, mi_col, mi_row, cm->mi_rows, &trb_pos)) {
+        if (is_inside(tile, mi_col, mi_row, &trb_pos)) {
             int         mi_row_offset = -1;
             int         mi_col_offset = xd->n4_w;
             MbModeInfo *mbmi = &xd->mi[mi_col_offset + mi_row_offset * xd->mi_stride]->mbmi;

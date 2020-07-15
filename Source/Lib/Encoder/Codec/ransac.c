@@ -185,8 +185,6 @@ static void denormalize_translation_reorder(double *params, double *t1, double *
 }
 
 static int find_translation(int np, double *pts1, double *pts2, double *mat) {
-    int    i;
-    double sx, sy, dx, dy;
     double sumx, sumy;
 
     double t1[9], t2[9];
@@ -195,11 +193,11 @@ static int find_translation(int np, double *pts1, double *pts2, double *mat) {
 
     sumx = 0;
     sumy = 0;
-    for (i = 0; i < np; ++i) {
-        dx = *(pts2++);
-        dy = *(pts2++);
-        sx = *(pts1++);
-        sy = *(pts1++);
+    for (int i = 0; i < np; ++i) {
+        double dx = *(pts2++);
+        double dy = *(pts2++);
+        double sx = *(pts1++);
+        double sy = *(pts1++);
 
         sumx += dx - sx;
         sumy += dy - sy;
@@ -215,18 +213,17 @@ static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
     double *  a    = (double *)malloc(sizeof(*a) * (np2 * 5 + 20));
     double *  b    = a + np2 * 4;
     double *  temp = b + np2;
-    int       i;
-    double    sx, sy, dx, dy;
+
 
     double t1[9], t2[9];
     normalize_homography(pts1, np, t1);
     normalize_homography(pts2, np, t2);
 
-    for (i = 0; i < np; ++i) {
-        dx = *(pts2++);
-        dy = *(pts2++);
-        sx = *(pts1++);
-        sy = *(pts1++);
+    for (int i = 0; i < np; ++i) {
+        double dx = *(pts2++);
+        double dy = *(pts2++);
+        double sx = *(pts1++);
+        double sy = *(pts1++);
 
         a[i * 2 * 4 + 0]       = sx;
         a[i * 2 * 4 + 1]       = sy;
@@ -256,18 +253,16 @@ static int find_affine(int np, double *pts1, double *pts2, double *mat) {
     if (a == NULL) return 1;
     double *b    = a + np2 * 6;
     double *temp = b + np2;
-    int     i;
-    double  sx, sy, dx, dy;
 
     double t1[9], t2[9];
     normalize_homography(pts1, np, t1);
     normalize_homography(pts2, np, t2);
 
-    for (i = 0; i < np; ++i) {
-        dx = *(pts2++);
-        dy = *(pts2++);
-        sx = *(pts1++);
-        sy = *(pts1++);
+    for (int i = 0; i < np; ++i) {
+        double dx = *(pts2++);
+        double dy = *(pts2++);
+        double sx = *(pts1++);
+        double sy = *(pts1++);
 
         a[i * 2 * 6 + 0]       = sx;
         a[i * 2 * 6 + 1]       = sy;
@@ -351,7 +346,7 @@ static const double k_infinite_variance = 1e12;
 static void clear_motion(RANSAC_MOTION *motion, int num_points) {
     motion->num_inliers = 0;
     motion->variance    = k_infinite_variance;
-    memset(motion->inlier_indices, 0, sizeof(*motion->inlier_indices * num_points));
+    memset(motion->inlier_indices, 0, sizeof(*motion->inlier_indices) * num_points);
 }
 
 static int ransac(const int *matched_points, int npoints, int *num_inliers_by_motion,

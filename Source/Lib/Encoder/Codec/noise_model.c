@@ -437,16 +437,13 @@ int32_t eb_aom_flat_block_finder_init(AomFlatBlockFinder *block_finder, int32_t 
                                       int32_t bit_depth, int32_t use_highbd) {
     const int32_t     n = block_size * block_size;
     AomEquationSystem eqns;
-    double *          at_a_inv = 0;
-    double *          A        = 0;
-    int32_t           x = 0, y = 0, i = 0, j = 0;
     if (!equation_system_init(&eqns, kLowPolyNumParams)) {
         SVT_ERROR("Failed to init equation system for block_size=%d\n", block_size);
         return 0;
     }
 
-    at_a_inv = (double *)malloc(kLowPolyNumParams * kLowPolyNumParams * sizeof(*at_a_inv));
-    A        = (double *)malloc(kLowPolyNumParams * n * sizeof(*A));
+    double *at_a_inv = (double *)malloc(kLowPolyNumParams * kLowPolyNumParams * sizeof(*at_a_inv));
+    double *A        = (double *)malloc(kLowPolyNumParams * n * sizeof(*A));
     if (at_a_inv == NULL || A == NULL) {
         SVT_ERROR("Failed to alloc A or at_a_inv for block_size=%d\n", block_size);
         free(at_a_inv);
@@ -461,9 +458,9 @@ int32_t eb_aom_flat_block_finder_init(AomFlatBlockFinder *block_finder, int32_t 
     block_finder->normalization = (1 << bit_depth) - 1;
     block_finder->use_highbd    = use_highbd;
 
-    for (y = 0; y < block_size; ++y) {
+    for (int32_t y = 0; y < block_size; ++y) {
         const double yd = ((double)y - block_size / 2.) / (block_size / 2.);
-        for (x = 0; x < block_size; ++x) {
+        for (int32_t x = 0; x < block_size; ++x) {
             const double  xd               = ((double)x - block_size / 2.) / (block_size / 2.);
             const double  coords[3]        = {yd, xd, 1};
             const int32_t row              = y * block_size + x;
@@ -471,20 +468,19 @@ int32_t eb_aom_flat_block_finder_init(AomFlatBlockFinder *block_finder, int32_t 
             A[kLowPolyNumParams * row + 1] = xd;
             A[kLowPolyNumParams * row + 2] = 1;
 
-            for (i = 0; i < kLowPolyNumParams; ++i) {
-                for (j = 0; j < kLowPolyNumParams; ++j)
+            for (int i = 0; i < kLowPolyNumParams; ++i)
+                for (int j = 0; j < kLowPolyNumParams; ++j)
                     eqns.A[kLowPolyNumParams * i + j] += coords[i] * coords[j];
-            }
         }
     }
 
     // Lazy inverse using existing equation solver.
-    for (i = 0; i < kLowPolyNumParams; ++i) {
+    for (int i = 0; i < kLowPolyNumParams; ++i) {
         memset(eqns.b, 0, sizeof(*eqns.b) * kLowPolyNumParams);
         eqns.b[i] = 1;
         equation_system_solve(&eqns);
 
-        for (j = 0; j < kLowPolyNumParams; ++j) at_a_inv[j * kLowPolyNumParams + i] = eqns.x[j];
+        for (int j = 0; j < kLowPolyNumParams; ++j) at_a_inv[j * kLowPolyNumParams + i] = eqns.x[j];
     }
     equation_system_free(&eqns);
     return 1;
@@ -541,13 +537,9 @@ typedef struct {
     float   score;
 } IndexAndscore;
 
-static int32_t compare_scores(const void *a, const void *b) {
+static int compare_scores(const void *a, const void *b) {
     const float diff = ((IndexAndscore *)a)->score - ((IndexAndscore *)b)->score;
-    if (diff < 0)
-        return -1;
-    else if (diff > 0)
-        return 1;
-    return 0;
+    return diff < 0 ? -1 : diff > 0;
 }
 
 int32_t eb_aom_flat_block_finder_run(const AomFlatBlockFinder *block_finder,
@@ -567,7 +559,6 @@ int32_t eb_aom_flat_block_finder_run(const AomFlatBlockFinder *block_finder,
     const int32_t  num_blocks_w      = (w + block_size - 1) / block_size;
     const int32_t  num_blocks_h      = (h + block_size - 1) / block_size;
     int32_t        num_flat          = 0;
-    int32_t        bx = 0, by = 0;
     double *       plane  = (double *)malloc(n * sizeof(*plane));
     double *       block  = (double *)malloc(n * sizeof(*block));
     IndexAndscore *scores = (IndexAndscore *)malloc(num_blocks_w * num_blocks_h * sizeof(*scores));
@@ -582,18 +573,17 @@ int32_t eb_aom_flat_block_finder_run(const AomFlatBlockFinder *block_finder,
 #ifdef NOISE_MODEL_LOG_SCORE
     SVT_ERROR("score = [");
 #endif
-    for (by = 0; by < num_blocks_h; ++by) {
-        for (bx = 0; bx < num_blocks_w; ++bx) {
+    for (int32_t by = 0; by < num_blocks_h; ++by) {
+        for (int32_t bx = 0; bx < num_blocks_w; ++bx) {
             // Compute gradient covariance matrix.
             double  g_xx = 0, g_xy = 0, g_yy = 0;
             double  var  = 0;
             double  mean = 0;
-            int32_t xi, yi;
             eb_aom_flat_block_finder_extract_block(
                 block_finder, data, w, h, stride, bx * block_size, by * block_size, plane, block);
 
-            for (yi = 1; yi < block_size - 1; ++yi) {
-                for (xi = 1; xi < block_size - 1; ++xi) {
+            for (int32_t yi = 1; yi < block_size - 1; ++yi) {
+                for (int32_t xi = 1; xi < block_size - 1; ++xi) {
                     const double gx =
                         (block[yi * block_size + xi + 1] - block[yi * block_size + xi - 1]) / 2;
                     const double gy = (block[yi * block_size + xi + block_size] -
@@ -675,7 +665,7 @@ int32_t eb_aom_noise_model_init(AomNoiseModel *model, const AomNoiseModelParams 
     const int32_t n         = num_coeffs(params);
     const int32_t lag       = params.lag;
     const int32_t bit_depth = params.bit_depth;
-    int32_t       x = 0, y = 0, i = 0, c = 0;
+    int32_t       i         = 0;
 
     memset(model, 0, sizeof(*model));
     if (params.lag < 1) {
@@ -691,7 +681,7 @@ int32_t eb_aom_noise_model_init(AomNoiseModel *model, const AomNoiseModelParams 
     else
         eb_memcpy_c(&model->params, &params, sizeof(params));
 
-    for (c = 0; c < 3; ++c) {
+    for (int c = 0; c < 3; ++c) {
         if (!noise_state_init(&model->combined_state[c], n + (c > 0), bit_depth)) {
             SVT_ERROR("Failed to allocate noise state for channel %d\n", c);
             eb_aom_noise_model_free(model);
@@ -705,10 +695,14 @@ int32_t eb_aom_noise_model_init(AomNoiseModel *model, const AomNoiseModelParams 
     }
     model->n      = n;
     model->coords = (int32_t(*)[2])malloc(sizeof(*model->coords) * n);
-    ASSERT(model->coords != NULL);
-    for (y = -lag; y <= 0; ++y) {
+    if (!model->coords) {
+        SVT_ERROR("Failed to allocate memory for coords\n");
+        eb_aom_noise_model_free(model);
+        return 0;
+    }
+    for (int32_t y = -lag; y <= 0; ++y) {
         const int32_t max_x = y == 0 ? -1 : lag;
-        for (x = -lag; x <= max_x; ++x) {
+        for (int32_t x = -lag; x <= max_x; ++x) {
             switch (params.shape) {
             case AOM_NOISE_SHAPE_DIAMOND:
                 if (abs(x) <= y + lag) {

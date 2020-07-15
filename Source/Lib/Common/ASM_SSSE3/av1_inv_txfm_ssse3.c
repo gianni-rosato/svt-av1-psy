@@ -2194,8 +2194,8 @@ static void iadst16_w4_new_sse2(const __m128i *input, __m128i *output, int8_t co
 
 static void iidentity4_new_ssse3(const __m128i *input, __m128i *output, int8_t cos_bit) {
     (void)cos_bit;
-    const int16_t scale_fractional = (new_sqrt2 - (1 << new_sqrt2_bits));
-    const __m128i scale            = _mm_set1_epi16(scale_fractional << (15 - new_sqrt2_bits));
+    const int16_t scale_fractional = (new_sqrt2 - (1 << new_sqrt2_bits)) << (15 - new_sqrt2_bits);
+    const __m128i scale            = _mm_set1_epi16(scale_fractional);
     for (int32_t i = 0; i < 4; ++i) {
         __m128i x = _mm_mulhrs_epi16(input[i], scale);
         output[i] = _mm_adds_epi16(x, input[i]);
@@ -2209,8 +2209,9 @@ static void iidentity8_new_sse2(const __m128i *input, __m128i *output, int8_t co
 
 static void iidentity16_new_ssse3(const __m128i *input, __m128i *output, int8_t cos_bit) {
     (void)cos_bit;
-    const int16_t scale_fractional = 2 * (new_sqrt2 - (1 << new_sqrt2_bits));
-    const __m128i scale            = _mm_set1_epi16(scale_fractional << (15 - new_sqrt2_bits));
+    const int16_t scale_fractional = (2 * (new_sqrt2 - (1 << new_sqrt2_bits)))
+        << (15 - new_sqrt2_bits);
+    const __m128i scale = _mm_set1_epi16(scale_fractional);
     for (int32_t i = 0; i < 16; ++i) {
         __m128i x     = _mm_mulhrs_epi16(input[i], scale);
         __m128i srcx2 = _mm_adds_epi16(input[i], input[i]);

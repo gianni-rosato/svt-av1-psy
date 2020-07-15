@@ -2051,7 +2051,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
         }
     }
 
-    if (ref_count_used > 0 && ref_count_used < MAX_REF_IDX) {
+    if (ref_count_used < MAX_REF_IDX) {
         for (int gop_i = 1; gop_i < 4; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
                 prediction_structure_config_array[2].entry_array[gop_i].ref_list0[i] = 0;

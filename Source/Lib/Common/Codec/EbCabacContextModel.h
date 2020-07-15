@@ -517,14 +517,11 @@ typedef struct {
 
 #endif
 
-static INLINE uint8_t get_prob(uint32_t num, uint32_t den) {
-    assert(den != 0);
-    {
-        const int32_t p = (int32_t)(((uint64_t)num * 256 + (den >> 1)) / den);
-        // (p > 255) ? 255 : (p < 1) ? 1 : p;
-        const int32_t clipped_prob = p | ((255 - p) >> 23) | (p == 0);
-        return (uint8_t)clipped_prob;
-    }
+static inline uint8_t get_prob(uint32_t num, uint32_t den) {
+    assert(den);
+    const uint32_t p = (uint32_t)(((uint64_t)num * 256 + (den >> 1)) / den) + 1;
+    // (p > 255) ? 255 : (p < 1) ? 1 : p;
+    return p > 255 ? 255 : (uint8_t)p - 1;
 }
 
 static INLINE void update_cdf(AomCdfProb *cdf, int32_t val, int32_t nsymbs) {

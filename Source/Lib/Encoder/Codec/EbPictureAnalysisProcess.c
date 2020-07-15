@@ -85,7 +85,7 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
         desc.max_width          = scs_ptr->max_input_luma_width;
         desc.max_height         = scs_ptr->max_input_luma_height;
         desc.bit_depth          = EB_8BIT;
-        desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+
         //denoised
         // If 420/422, re-use luma for chroma
         // If 444, re-use luma for Cr
@@ -402,45 +402,50 @@ uint8_t get_filtered_types(uint8_t *ptr, uint32_t stride, uint8_t filter_type) {
 
     uint32_t a = 0;
 
-    if (filter_type == 0) {
+    switch (filter_type) {
+    case 0:
         //Luma
         a = (p[1] + p[0 + stride] + 4 * p[1 + stride] + p[2 + stride] + p[1 + 2 * stride]) / 8;
-    } else if (filter_type == 1) {
+        break;
+    case 1:
         a = (2 * p[1] + 2 * p[0 + stride] + 4 * p[1 + stride] + 2 * p[2 + stride] +
              2 * p[1 + 2 * stride]);
-
         a = (((uint32_t)((a * 2730) >> 14) + 1) >> 1) & 0xFFFF;
-
         //fixed point version of a=a/12 to mimic x86 instruction _mm256_mulhrs_epi16;
         //a= (a*2730)>>15;
-    } else if (filter_type == 2) {
+        break;
+    case 2:
         a = (4 * p[1] + 4 * p[0 + stride] + 4 * p[1 + stride] + 4 * p[2 + stride] +
              4 * p[1 + 2 * stride]) /
             20;
-    } else if (filter_type == 3) {
+        break;
+    case 3:
         a = (1 * p[0] + 1 * p[1] + 1 * p[2] + 1 * p[0 + stride] + 4 * p[1 + stride] +
              1 * p[2 + stride] + 1 * p[0 + 2 * stride] + 1 * p[1 + 2 * stride] +
              1 * p[2 + 2 * stride]) /
             12;
-    } else if (filter_type == 4) {
+        break;
+    case 4:
         //gaussian matrix(Chroma)
         a = (1 * p[0] + 2 * p[1] + 1 * p[2] + 2 * p[0 + stride] + 4 * p[1 + stride] +
              2 * p[2 + stride] + 1 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] +
              1 * p[2 + 2 * stride]) /
             16;
-    } else if (filter_type == 5) {
+        break;
+    case 5:
         a = (2 * p[0] + 2 * p[1] + 2 * p[2] + 2 * p[0 + stride] + 4 * p[1 + stride] +
              2 * p[2 + stride] + 2 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] +
              2 * p[2 + 2 * stride]) /
             20;
-    } else if (filter_type == 6) {
+        break;
+    case 6:
         a = (4 * p[0] + 4 * p[1] + 4 * p[2] + 4 * p[0 + stride] + 4 * p[1 + stride] +
              4 * p[2 + stride] + 4 * p[0 + 2 * stride] + 4 * p[1 + 2 * stride] +
              4 * p[2 + 2 * stride]) /
             36;
     }
 
-    return (uint8_t)CLIP3EQ(0, 255, a);
+    return (uint8_t)(a >= 255 ? 255 : a); // CLIP3EQ(0, 255, a)
 }
 
 EbErrorType zero_out_chroma_block_mean(
@@ -3562,46 +3567,39 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
 void *picture_analysis_kernel(void *input_ptr) {
     EbThreadContext *        thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureAnalysisContext * context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
-    PictureParentControlSet *pcs_ptr;
-    SequenceControlSet *     scs_ptr;
 
     EbObjectWrapper *            in_results_wrapper_ptr;
-    ResourceCoordinationResults *in_results_ptr;
     EbObjectWrapper *            out_results_wrapper_ptr;
-    PictureAnalysisResults *     out_results_ptr;
-    EbPaReferenceObject *        pa_ref_obj_;
-
-    EbPictureBufferDesc *input_padded_picture_ptr;
-    EbPictureBufferDesc *input_picture_ptr;
-
-    // Variance
-    uint32_t pic_width_in_sb;
-    uint32_t pic_height_in_sb;
-    uint32_t sb_total_count;
 
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(context_ptr->resource_coordination_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
-        in_results_ptr = (ResourceCoordinationResults *)in_results_wrapper_ptr->object_ptr;
-        pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+        ResourceCoordinationResults *in_results_ptr = (ResourceCoordinationResults *)
+                                                          in_results_wrapper_ptr->object_ptr;
+        PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
+                                               in_results_ptr->pcs_wrapper_ptr->object_ptr;
 
         // Mariana : save enhanced picture ptr, move this from here
         pcs_ptr->enhanced_unscaled_picture_ptr = pcs_ptr->enhanced_picture_ptr;
 
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!pcs_ptr->is_overlay) {
-            scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-            input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+            SequenceControlSet *scs_ptr = (SequenceControlSet *)
+                                              pcs_ptr->scs_wrapper_ptr->object_ptr;
+            EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
 
-            pa_ref_obj_ =
+            EbPaReferenceObject *pa_ref_obj_ =
                 (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-            input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
+            EbPictureBufferDesc *input_padded_picture_ptr =
+                (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
             // Variance
-            pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-            pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-            sb_total_count = pic_width_in_sb * pic_height_in_sb;
+            uint32_t pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) /
+                scs_ptr->sb_sz;
+            int32_t pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) /
+                scs_ptr->sb_sz;
+            uint32_t sb_total_count = pic_width_in_sb * pic_height_in_sb;
 
             // Put it at the begining, for non-8 aligned case, like 426x240, padding to 432x240 first
             // Pad pictures to multiple min cu size
@@ -3728,7 +3726,8 @@ void *picture_analysis_kernel(void *input_ptr) {
         eb_get_empty_object(context_ptr->picture_analysis_results_output_fifo_ptr,
                             &out_results_wrapper_ptr);
 
-        out_results_ptr = (PictureAnalysisResults *)out_results_wrapper_ptr->object_ptr;
+        PictureAnalysisResults *out_results_ptr = (PictureAnalysisResults *)
+                                                      out_results_wrapper_ptr->object_ptr;
         out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
 
         // Release the Input Results

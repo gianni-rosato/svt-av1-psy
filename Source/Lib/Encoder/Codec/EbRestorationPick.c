@@ -1020,7 +1020,7 @@ static void finalize_sym_filter(int32_t wiener_win, int32_t *f, InterpKernel fi)
     const int32_t wiener_halfwin = (wiener_win >> 1);
 
     for (i = 0; i < wiener_halfwin; ++i) {
-        const int64_t dividend = f[i] * WIENER_FILT_STEP;
+        const int64_t dividend = (int64_t)f[i] * WIENER_FILT_STEP;
         const int64_t divisor  = WIENER_TAP_SCALE_FACTOR;
         // Perform this division with proper rounding rather than truncation
         if (dividend < 0)
@@ -1341,35 +1341,20 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
     EB_ALIGN(32) int64_t H[WIENER_WIN2 * WIENER_WIN2];
     int32_t              vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
 
-    if (cm->use_highbitdepth) {
-        if (rsc->plane == AOM_PLANE_Y) {
-            eb_av1_compute_stats_highbd(wiener_win,
-                                        rsc->dgd_buffer,
-                                        rsc->src_buffer,
-                                        limits->h_start,
-                                        limits->h_end,
-                                        limits->v_start,
-                                        limits->v_end,
-                                        rsc->dgd_stride,
-                                        rsc->src_stride,
-                                        M,
-                                        H,
-                                        (AomBitDepth)cm->bit_depth);
-        } else {
-            eb_av1_compute_stats_highbd(wiener_win,
-                                        rsc->dgd_buffer,
-                                        rsc->src_buffer,
-                                        limits->h_start,
-                                        limits->h_end,
-                                        limits->v_start,
-                                        limits->v_end,
-                                        rsc->dgd_stride,
-                                        rsc->src_stride,
-                                        M,
-                                        H,
-                                        (AomBitDepth)cm->bit_depth);
-        }
-    } else {
+    if (cm->use_highbitdepth)
+        eb_av1_compute_stats_highbd(wiener_win,
+                                    rsc->dgd_buffer,
+                                    rsc->src_buffer,
+                                    limits->h_start,
+                                    limits->h_end,
+                                    limits->v_start,
+                                    limits->v_end,
+                                    rsc->dgd_stride,
+                                    rsc->src_stride,
+                                    M,
+                                    H,
+                                    (AomBitDepth)cm->bit_depth);
+    else
         eb_av1_compute_stats(wiener_win,
                              rsc->dgd_buffer,
                              rsc->src_buffer,
@@ -1381,7 +1366,6 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
                              rsc->src_stride,
                              M,
                              H);
-    }
 
     if (!wiener_decompose_sep_sym(wiener_win, M, H, vfilterd, hfilterd)) {
         SVT_LOG("CHKN never get here\n");
@@ -1511,7 +1495,6 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                             PictureControlSet *pcs_ptr, uint32_t segment_index) {
     Av1Common *const cm         = pcs_ptr->parent_pcs_ptr->av1_cm;
     Macroblock *     x          = pcs_ptr->parent_pcs_ptr->av1x;
-    const int32_t    num_planes = 3;
 
     // If the restoration unit dimensions are not multiples of
     // rsi->restoration_unit_size then some elements of the rusi array may be
@@ -1523,7 +1506,7 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
     RestSearchCtxt *rsc_p = &rsc;
 
     const int32_t plane_start = AOM_PLANE_Y;
-    const int32_t plane_end   = num_planes > 1 ? AOM_PLANE_V : AOM_PLANE_Y;
+    const int32_t plane_end   = AOM_PLANE_V;
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
         RestUnitSearchInfo *rusi = pcs_ptr->parent_pcs_ptr->rusi_picture[plane];
 
@@ -1568,7 +1551,6 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
     }
 }
 void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Common *const cm) {
-    const int32_t   num_planes           = 3;
     RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
     int32_t         ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv) ntiles[is_uv] = rest_tiles_in_plane(cm, is_uv);
@@ -1585,7 +1567,7 @@ void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Co
 
     RestSearchCtxt rsc;
     const int32_t  plane_start = AOM_PLANE_Y;
-    const int32_t  plane_end   = num_planes > 1 ? AOM_PLANE_V : AOM_PLANE_Y;
+    const int32_t  plane_end   = AOM_PLANE_V ;
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
         //init rsc context for this plane
         rsc.cm       = cm;

@@ -86,8 +86,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 
     get_proj_subspace = get_proj_subspace_c;
 
-    search_one_dual = search_one_dual_c;
-
     eb_aom_mse16x16 = eb_aom_mse16x16_c;
 
     eb_aom_quantize_b = eb_aom_quantize_b_c_ii;

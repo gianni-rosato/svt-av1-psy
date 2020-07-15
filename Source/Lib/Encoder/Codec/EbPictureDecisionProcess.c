@@ -124,12 +124,6 @@ uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_num
     return ref_poc;
 }
 
-typedef struct {
-    MvReferenceFrame ref_type;
-    int used;
-    uint64_t poc;
-} RefFrameInfo;
-
 MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -151,7 +145,10 @@ void eb_av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 
     FrameHeader *frm_hdr = &parent_pcs_ptr->frm_hdr;
 
-    RefFrameInfo ref_frame_arr_single[7];
+    struct RefFrameInfo {
+        int used;
+        uint64_t poc;
+    } ref_frame_arr_single[7];
 
     for (uint8_t i = 0; i < 7; ++i)
         ref_frame_arr_single[i].used = 1;
@@ -340,11 +337,10 @@ EbErrorType picture_decision_context_ctor(
     return EB_ErrorNone;
 }
 
-EbBool scene_transition_detector(
+static EbBool scene_transition_detector(
     PictureDecisionContext *context_ptr,
     SequenceControlSet                 *scs_ptr,
-    PictureParentControlSet           **parent_pcs_window,
-    uint32_t                                windowWidthFuture)
+    PictureParentControlSet           **parent_pcs_window)
 {
     PictureParentControlSet       *prev_pcs_ptr = parent_pcs_window[0];
     PictureParentControlSet       *current_pcs_ptr = parent_pcs_window[1];
@@ -358,29 +354,10 @@ EbBool scene_transition_detector(
 
     EbBool is_abrupt_change; // this variable signals an abrubt change (scene change or flash)
     EbBool is_scene_change; // this variable signals a frame representing a scene change
-    EbBool is_flash; // this variable signals a frame that contains a flash
-    EbBool is_fade; // this variable signals a frame that contains a fade
-    EbBool gradual_change; // this signals the detection of a light scene change a small/localized flash or the start of a fade
-
-    uint32_t  ahd; // accumulative histogram (absolute) differences between the past and current frame
-
-    uint32_t  ahd_cb;
-    uint32_t  ahd_cr;
-
-    uint32_t  ahd_error_cb = 0;
-    uint32_t  ahd_error_cr = 0;
 
     uint32_t **ahd_running_avg_cb = context_ptr->ahd_running_avg_cb;
     uint32_t **ahd_running_avg_cr = context_ptr->ahd_running_avg_cr;
     uint32_t **ahd_running_avg = context_ptr->ahd_running_avg;
-
-    uint32_t  ahd_error = 0; // the difference between the ahd and the running average at the current frame.
-
-    uint8_t   aid_future_past = 0; // this variable denotes the average intensity difference between the next and the past frames
-    uint8_t   aid_future_present = 0;
-    uint8_t   aid_present_past = 0;
-
-    uint32_t  bin = 0; // variable used to iterate through the bins of the histograms
 
     uint32_t  region_in_picture_width_index;
     uint32_t  region_in_picture_height_index;
@@ -406,13 +383,11 @@ EbBool scene_transition_detector(
 
             is_abrupt_change = EB_FALSE;
             is_scene_change = EB_FALSE;
-            is_flash = EB_FALSE;
-            gradual_change = EB_FALSE;
 
-            // Reset accumulative histogram (absolute) differences between the past and current frame
-            ahd = 0;
-            ahd_cb = 0;
-            ahd_cr = 0;
+            // accumulative histogram (absolute) differences between the past and current frame
+            uint32_t ahd    = 0;
+            uint32_t ahd_cb = 0;
+            uint32_t ahd_cr = 0;
 
             region_width_offset = (region_in_picture_width_index == scs_ptr->picture_analysis_number_of_regions_per_width - 1) ?
                 parent_pcs_window[1]->enhanced_picture_ptr->width - (scs_ptr->picture_analysis_number_of_regions_per_width * region_width) :
@@ -434,7 +409,7 @@ EbBool scene_transition_detector(
 
             region_threshhold_chroma = region_threshhold / 4;
 
-            for (bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+            for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
                 ahd += ABS((int32_t)current_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][0][bin] - (int32_t)prev_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][0][bin]);
                 ahd_cb += ABS((int32_t)current_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][1][bin] - (int32_t)prev_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][1][bin]);
                 ahd_cr += ABS((int32_t)current_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][2][bin] - (int32_t)prev_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][2][bin]);
@@ -446,68 +421,56 @@ EbBool scene_transition_detector(
                 ahd_running_avg_cr[region_in_picture_width_index][region_in_picture_height_index] = ahd_cr;
             }
 
-            ahd_error = ABS((int32_t)ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] - (int32_t)ahd);
-            ahd_error_cb = ABS((int32_t)ahd_running_avg_cb[region_in_picture_width_index][region_in_picture_height_index] - (int32_t)ahd_cb);
-            ahd_error_cr = ABS((int32_t)ahd_running_avg_cr[region_in_picture_width_index][region_in_picture_height_index] - (int32_t)ahd_cr);
+            uint32_t ahd_error = ABS(
+                (int32_t)
+                    ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] -
+                (int32_t)ahd);
+            uint32_t ahd_error_cb = ABS(
+                (int32_t)ahd_running_avg_cb[region_in_picture_width_index]
+                                           [region_in_picture_height_index] -
+                (int32_t)ahd_cb);
+            uint32_t ahd_error_cr = ABS(
+                (int32_t)ahd_running_avg_cr[region_in_picture_width_index]
+                                           [region_in_picture_height_index] -
+                (int32_t)ahd_cr);
 
             if ((ahd_error > region_threshhold       && ahd >= ahd_error) ||
                 (ahd_error_cb > region_threshhold_chroma && ahd_cb >= ahd_error_cb) ||
                 (ahd_error_cr > region_threshhold_chroma && ahd_cr >= ahd_error_cr)) {
                 is_abrupt_change = EB_TRUE;
             }
-            else if ((ahd_error > (region_threshhold >> 1)) && ahd >= ahd_error)
-                gradual_change = EB_TRUE;
             if (is_abrupt_change)
             {
-                aid_future_past = (uint8_t)ABS((int16_t)future_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0] - (int16_t)prev_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0]);
-                aid_future_present = (uint8_t)ABS((int16_t)future_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0] - (int16_t)current_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0]);
-                aid_present_past = (uint8_t)ABS((int16_t)current_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0] - (int16_t)prev_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0]);
+                // this variable denotes the average intensity difference between the next and the past frames
+                uint8_t aid_future_past = (uint8_t)ABS(
+                    (int16_t)future_pcs_ptr
+                        ->average_intensity_per_region[region_in_picture_width_index]
+                                                      [region_in_picture_height_index][0] -
+                    (int16_t)prev_pcs_ptr
+                        ->average_intensity_per_region[region_in_picture_width_index]
+                                                      [region_in_picture_height_index][0]);
+                uint8_t   aid_future_present = (uint8_t)ABS((int16_t)future_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0] - (int16_t)current_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0]);
+                uint8_t   aid_present_past = (uint8_t)ABS((int16_t)current_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0] - (int16_t)prev_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0]);
 
                 if (aid_future_past < FLASH_TH && aid_future_present >= FLASH_TH && aid_present_past >= FLASH_TH) {
-                    is_flash = EB_TRUE;
                     //SVT_LOG ("\nFlash in frame# %i , %i\n", current_pcs_ptr->picture_number,aid_future_past);
                 }
                 else if (aid_future_present < FADE_TH && aid_present_past < FADE_TH) {
-                    is_fade = EB_TRUE;
                     //SVT_LOG ("\nFlash in frame# %i , %i\n", current_pcs_ptr->picture_number,aid_future_past);
                 }
                 else {
                     is_scene_change = EB_TRUE;
                     //SVT_LOG ("\nScene Change in frame# %i , %i\n", current_pcs_ptr->picture_number,aid_future_past);
                 }
-            }
-            else if (gradual_change) {
-                aid_future_past = (uint8_t)ABS((int16_t)future_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0] - (int16_t)prev_pcs_ptr->average_intensity_per_region[region_in_picture_width_index][region_in_picture_height_index][0]);
-                if (aid_future_past < FLASH_TH) {
-                    // proper action to be signalled
-                    //SVT_LOG ("\nLight Flash in frame# %i , %i\n", current_pcs_ptr->picture_number,aid_future_past);
-                    ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] = (3 * ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] + ahd) / 4;
-                }
-                else {
-                    // proper action to be signalled
-                    //SVT_LOG ("\nLight Scene Change / fade detected in frame# %i , %i\n", current_pcs_ptr->picture_number,aid_future_past);
-                    ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] = (3 * ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] + ahd) / 4;
-                }
-            }
-            else
+            } else
                 ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] = (3 * ahd_running_avg[region_in_picture_width_index][region_in_picture_height_index] + ahd) / 4;
             is_abrupt_change_count += is_abrupt_change;
             is_scene_change_count += is_scene_change;
         }
     }
 
-    (void)windowWidthFuture;
-    (void)is_flash;
-    (void)is_fade;
-
-    if (is_abrupt_change_count >= region_count_threshold)
-        context_ptr->reset_running_avg = EB_TRUE;
-    else
-        context_ptr->reset_running_avg = EB_FALSE;
-    if ((is_scene_change_count >= region_count_threshold) && ((!parent_pcs_window[1]->fade_in_to_black) && (!parent_pcs_window[1]->fade_out_from_black)))
-        return(EB_TRUE);
-    else
-        return(EB_FALSE);
+    context_ptr->reset_running_avg = is_abrupt_change_count >= region_count_threshold;
+    return is_scene_change_count >= region_count_threshold && !parent_pcs_window[1]->fade_in_to_black && !parent_pcs_window[1]->fade_out_from_black;
 }
 
 /***************************************************************************************************
@@ -685,19 +648,6 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
     EbErrorType return_error = EB_ErrorNone;
 
-    PaReferenceQueueEntry         *input_entry_ptr;
-    uint32_t                         input_queue_index;
-
-    PredictionStructure           *next_pred_struct_ptr;
-    PredictionStructureEntry      *next_base_layer_pred_position_ptr;
-
-    uint32_t                         dependant_list_positive_entries;
-    uint32_t                         dependant_list_removed_entries;
-    uint32_t                         dep_list_count;
-
-    uint32_t                         dep_idx;
-    uint64_t                         dep_poc;
-
     PictureParentControlSet       *pcs_ptr;
 
     // Get the 1st PCS mini GOP
@@ -724,10 +674,10 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
     // If the current mini GOP is different than the previous mini GOP update then update the positive dependant counts of the reference entry separating the 2 mini GOPs
     if (pcs_ptr->hierarchical_layers_diff != 0) {
-        input_queue_index = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
+        uint32_t input_queue_index = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
 
         while (input_queue_index != encode_context_ptr->picture_decision_pa_reference_queue_tail_index) {
-            input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[input_queue_index];
+            PaReferenceQueueEntry *input_entry_ptr = encode_context_ptr->picture_decision_pa_reference_queue[input_queue_index];
 
 #if DECOUPLE_ME_RES
             int32_t diff_n = 0;
@@ -737,14 +687,14 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 // Update the positive dependant counts
 
                 // 1st step: remove all positive entries from the dependant list0 and dependant list1
-                dependant_list_positive_entries = 0;
-                for (dep_idx = 0; dep_idx < input_entry_ptr->list0.list_count; ++dep_idx) {
+                uint32_t dependant_list_positive_entries = 0;
+                for (uint32_t dep_idx = 0; dep_idx < input_entry_ptr->list0.list_count; ++dep_idx) {
                     if (input_entry_ptr->list0.list[dep_idx] >= 0)
                         dependant_list_positive_entries++;
                 }
                 input_entry_ptr->list0.list_count = input_entry_ptr->list0.list_count - dependant_list_positive_entries;
                 dependant_list_positive_entries = 0;
-                for (dep_idx = 0; dep_idx < input_entry_ptr->list1.list_count; ++dep_idx) {
+                for (uint32_t dep_idx = 0; dep_idx < input_entry_ptr->list1.list_count; ++dep_idx) {
                     if (input_entry_ptr->list1.list[dep_idx] >= 0)
                         dependant_list_positive_entries++;
                 }
@@ -752,21 +702,21 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
                 // 2nd step: inherit the positive dependant counts of the current mini GOP
                 // Get the RPS set of the current mini GOP
-                next_pred_struct_ptr = get_prediction_structure(
+                PredictionStructure *next_pred_struct_ptr = get_prediction_structure(
                     encode_context_ptr->prediction_structure_group_ptr,
                     pcs_ptr->pred_structure,
                     scs_ptr->reference_count,
                     pcs_ptr->hierarchical_levels);            // Number of temporal layer in the current mini GOP
 
                 // Get the RPS of a base layer input
-                next_base_layer_pred_position_ptr = next_pred_struct_ptr->pred_struct_entry_ptr_array[next_pred_struct_ptr->pred_struct_entry_count - 1];
+                PredictionStructureEntry *next_base_layer_pred_position_ptr = next_pred_struct_ptr->pred_struct_entry_ptr_array[next_pred_struct_ptr->pred_struct_entry_count - 1];
 
-                for (dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list0.list_count; ++dep_idx) {
+                for (uint32_t dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list0.list_count; ++dep_idx) {
                     if (next_base_layer_pred_position_ptr->dep_list0.list[dep_idx] >= 0)
                         input_entry_ptr->list0.list[input_entry_ptr->list0.list_count++] = next_base_layer_pred_position_ptr->dep_list0.list[dep_idx];
                 }
 
-                for (dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list1.list_count; ++dep_idx) {
+                for (uint32_t dep_idx = 0; dep_idx < next_base_layer_pred_position_ptr->dep_list1.list_count; ++dep_idx) {
                     if (next_base_layer_pred_position_ptr->dep_list1.list[dep_idx] >= 0)
                         input_entry_ptr->list1.list[input_entry_ptr->list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[dep_idx];
                 }
@@ -785,18 +735,17 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 }
 #endif
                 // 3rd step: update the dependant count
-                dependant_list_removed_entries = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - input_entry_ptr->dependent_count;
+                uint32_t dependant_list_removed_entries = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - input_entry_ptr->dependent_count;
                 input_entry_ptr->dep_list0_count = (input_entry_ptr->is_alt_ref) ? input_entry_ptr->list0.list_count + 1 : input_entry_ptr->list0.list_count;
                 input_entry_ptr->dep_list1_count = input_entry_ptr->list1.list_count;
                 input_entry_ptr->dependent_count = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count - dependant_list_removed_entries;
-            }
-            else {
+            } else {
                 // Modify Dependent List0
-                dep_list_count = input_entry_ptr->list0.list_count;
-                for (dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
+                uint32_t dep_list_count = input_entry_ptr->list0.list_count;
+                for (uint32_t dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
                     // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                     // currentInputPoc += (currentInputPoc < input_entry_ptr->pocNumber) ? (1 << scs_ptr->bitsForPictureOrderCount) : 0;
-                    dep_poc = POC_CIRCULAR_ADD(
+                    uint64_t dep_poc = POC_CIRCULAR_ADD(
                         input_entry_ptr->picture_number, // can't use a value that gets reset
                         input_entry_ptr->list0.list[dep_idx]/*,
                                                          scs_ptr->bitsForPictureOrderCount*/);
@@ -818,10 +767,10 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 }
                 // Modify Dependent List1
                 dep_list_count = input_entry_ptr->list1.list_count;
-                for (dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
+                for (uint32_t dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
                     // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                     // currentInputPoc += (currentInputPoc < input_entry_ptr->pocNumber) ? (1 << scs_ptr->bitsForPictureOrderCount) : 0;
-                    dep_poc = POC_CIRCULAR_ADD(
+                    uint64_t dep_poc = POC_CIRCULAR_ADD(
                         input_entry_ptr->picture_number,
                         input_entry_ptr->list1.list[dep_idx]/*,
                                                          scs_ptr->bitsForPictureOrderCount*/);
@@ -4959,179 +4908,175 @@ static void  av1_generate_rps_info(
 }
 
 static EbErrorType av1_generate_rps_info_from_user_config(
-    PictureParentControlSet       *picture_control_set_ptr,
-    EncodeContext                 *encode_context_ptr
-)
-{
-    Av1RpsNode *av1_rps = &picture_control_set_ptr->av1_ref_signal;
-    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
-    PredictionStructureEntry *pred_position_ptr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
+    PictureParentControlSet *picture_control_set_ptr, EncodeContext *encode_context_ptr) {
+    Av1RpsNode *              av1_rps = &picture_control_set_ptr->av1_ref_signal;
+    FrameHeader *             frm_hdr = &picture_control_set_ptr->frm_hdr;
+    PredictionStructureEntry *pred_position_ptr =
+        picture_control_set_ptr->pred_struct_ptr
+            ->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
     DPBInfo *dpb_list_ptr = &encode_context_ptr->dpb_list[0];
-    int32_t dpb_list_idx = 0;
-    uint64_t ref_poc = 0;
-    uint32_t dep_idx = 0;
-    uint8_t  ref_idx = 0;
+    int32_t  dpb_list_idx = 0;
 
     if (frm_hdr->frame_type == KEY_FRAME) {
-        frm_hdr->show_frame = EB_TRUE;
+        frm_hdr->show_frame                        = EB_TRUE;
         picture_control_set_ptr->has_show_existing = EB_FALSE;
-        EB_MEMSET(dpb_list_ptr, 0, sizeof(DPBInfo)*REF_FRAMES);
+        EB_MEMSET(dpb_list_ptr, 0, sizeof(DPBInfo) * REF_FRAMES);
         encode_context_ptr->display_picture_number = picture_control_set_ptr->picture_number;
-        dpb_list_ptr[dpb_list_idx].is_used = EB_TRUE;
-        dpb_list_ptr[dpb_list_idx].picture_number = picture_control_set_ptr->picture_number;
-        dpb_list_ptr[dpb_list_idx].is_displayed = EB_TRUE;
-        dpb_list_ptr[dpb_list_idx].temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
+        dpb_list_ptr[dpb_list_idx].is_used         = EB_TRUE;
+        dpb_list_ptr[dpb_list_idx].picture_number  = picture_control_set_ptr->picture_number;
+        dpb_list_ptr[dpb_list_idx].is_displayed    = EB_TRUE;
+        dpb_list_ptr[dpb_list_idx].temporal_layer_index =
+            picture_control_set_ptr->temporal_layer_index;
 
         // Construct dependent lists
         dpb_list_ptr[dpb_list_idx].dep_list0.list_count = 0;
-        for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list0.list_count; ++dep_idx) {
-            if (pred_position_ptr->dep_list0.list[dep_idx] >= 0){
-                dpb_list_ptr[dpb_list_idx].dep_list0.list[dpb_list_ptr[dpb_list_idx].dep_list0.list_count++] = pred_position_ptr->dep_list0.list[dep_idx];
-            }
-        }
+        for (uint32_t dep_idx = 0; dep_idx < pred_position_ptr->dep_list0.list_count; ++dep_idx)
+            if (pred_position_ptr->dep_list0.list[dep_idx] >= 0)
+                dpb_list_ptr[dpb_list_idx]
+                    .dep_list0.list[dpb_list_ptr[dpb_list_idx].dep_list0.list_count++] =
+                    pred_position_ptr->dep_list0.list[dep_idx];
         dpb_list_ptr[dpb_list_idx].dep_list1.list_count = pred_position_ptr->dep_list1.list_count;
-        for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list1.list_count; ++dep_idx) {
-            dpb_list_ptr[dpb_list_idx].dep_list1.list[dep_idx] = pred_position_ptr->dep_list1.list[dep_idx];
-        }
-        dpb_list_ptr[dpb_list_idx].dep_list0_count = dpb_list_ptr[dpb_list_idx].dep_list0.list_count;
-        dpb_list_ptr[dpb_list_idx].dep_list1_count = dpb_list_ptr[dpb_list_idx].dep_list1.list_count;
-        dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count + dpb_list_ptr[dpb_list_idx].dep_list1_count;
+        for (uint32_t dep_idx = 0; dep_idx < pred_position_ptr->dep_list1.list_count; ++dep_idx)
+            dpb_list_ptr[dpb_list_idx].dep_list1.list[dep_idx] =
+                pred_position_ptr->dep_list1.list[dep_idx];
+        dpb_list_ptr[dpb_list_idx].dep_list0_count =
+            dpb_list_ptr[dpb_list_idx].dep_list0.list_count;
+        dpb_list_ptr[dpb_list_idx].dep_list1_count =
+            dpb_list_ptr[dpb_list_idx].dep_list1.list_count;
+        dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count +
+            dpb_list_ptr[dpb_list_idx].dep_list1_count;
         return EB_ErrorNone;
     }
 
     // If there was an I-frame or Scene Change, then cleanup the Reference Queue's Dependent Counts
-    if (picture_control_set_ptr->slice_type == I_SLICE)
-    {
+    if (picture_control_set_ptr->slice_type == I_SLICE) {
         encode_context_ptr->is_i_slice_in_last_mini_gop = EB_TRUE;
-        encode_context_ptr->i_slice_picture_number_in_last_mini_gop = picture_control_set_ptr->picture_number;
+        encode_context_ptr->i_slice_picture_number_in_last_mini_gop =
+            picture_control_set_ptr->picture_number;
     }
 
     // Construct dpb index mapping for ref list0
-    if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
+    if ((picture_control_set_ptr->slice_type == P_SLICE) ||
+        (picture_control_set_ptr->slice_type == B_SLICE)) {
+        uint8_t ref_idx = 0;
         for (ref_idx = LAST; ref_idx < LAST + picture_control_set_ptr->ref_list0_count; ++ref_idx) {
-            if (picture_control_set_ptr->is_overlay) {
-                ref_poc = picture_control_set_ptr->picture_number;
-            }
-            else {
-                ref_poc = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list0.reference_list[ref_idx-LAST];
-            }
+            uint64_t ref_poc = picture_control_set_ptr->picture_number;
+            if (picture_control_set_ptr->is_overlay)
+                ref_poc -= pred_position_ptr->ref_list0.reference_list[ref_idx - LAST];
             dpb_list_idx = 0;
             do {
-                if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE && dpb_list_ptr[dpb_list_idx].picture_number == ref_poc) {
-                    if (dpb_list_ptr[dpb_list_idx].temporal_layer_index > picture_control_set_ptr->temporal_layer_index) {
+                if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE &&
+                    dpb_list_ptr[dpb_list_idx].picture_number == ref_poc) {
+                    if (dpb_list_ptr[dpb_list_idx].temporal_layer_index >
+                        picture_control_set_ptr->temporal_layer_index)
                         return EB_Corrupt_Frame;
-                    }
-                    else {
-                        break;
-                    }
+                    break;
                 }
             } while (++dpb_list_idx < REF_FRAMES);
             if (dpb_list_idx < REF_FRAMES) {
                 av1_rps->ref_dpb_index[ref_idx] = dpb_list_idx;
                 --dpb_list_ptr[dpb_list_idx].dep_count;
-                if(dpb_list_ptr[dpb_list_idx].dep_count < 0){
+                if (dpb_list_ptr[dpb_list_idx].dep_count < 0) {
                     SVT_LOG("Error: dep_count error in dpb list0\n");
                     return EB_Corrupt_Frame;
                 }
-            }
-            else {
+            } else {
                 SVT_LOG("Error: can't find ref frame in dpb list0\n");
                 return EB_Corrupt_Frame;
             }
         }
-        for (; ref_idx <= GOLD; ++ref_idx) {
+        for (; ref_idx <= GOLD; ++ref_idx)
             av1_rps->ref_dpb_index[ref_idx] = av1_rps->ref_dpb_index[LAST];
-        }
 
         // Construct dpb index mapping for ref list1
         if (picture_control_set_ptr->slice_type == B_SLICE) {
-            for (ref_idx = BWD; ref_idx < BWD + picture_control_set_ptr->ref_list1_count; ++ref_idx) {
-                ref_poc = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list1.reference_list[ref_idx-BWD];
+            for (ref_idx = BWD; ref_idx < BWD + picture_control_set_ptr->ref_list1_count;
+                 ++ref_idx) {
+                uint64_t ref_poc = picture_control_set_ptr->picture_number -
+                    pred_position_ptr->ref_list1.reference_list[ref_idx - BWD];
                 dpb_list_idx = 0;
                 do {
-                    if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE && dpb_list_ptr[dpb_list_idx].picture_number == ref_poc) {
-                        if (dpb_list_ptr[dpb_list_idx].temporal_layer_index > picture_control_set_ptr->temporal_layer_index) {
+                    if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE &&
+                        dpb_list_ptr[dpb_list_idx].picture_number == ref_poc) {
+                        if (dpb_list_ptr[dpb_list_idx].temporal_layer_index >
+                            picture_control_set_ptr->temporal_layer_index)
                             return EB_Corrupt_Frame;
-                        }
-                        else {
-                            break;
-                        }
+                        break;
                     }
                 } while (++dpb_list_idx < REF_FRAMES);
 
                 if (dpb_list_idx < REF_FRAMES) {
                     av1_rps->ref_dpb_index[ref_idx] = dpb_list_idx;
                     --dpb_list_ptr[dpb_list_idx].dep_count;
-                    if(dpb_list_ptr[dpb_list_idx].dep_count < 0){
+                    if (dpb_list_ptr[dpb_list_idx].dep_count < 0) {
                         SVT_LOG("Error: dep_count error in dpb list1\n");
                         return EB_Corrupt_Frame;
                     }
-                }
-                else {
+                } else {
                     SVT_LOG("Error: can't find ref frame in dpb list1\n");
                     return EB_Corrupt_Frame;
                 }
             }
-            for (; ref_idx <= ALT; ++ref_idx) {
+            for (; ref_idx <= ALT; ++ref_idx)
                 av1_rps->ref_dpb_index[ref_idx] = av1_rps->ref_dpb_index[BWD];
-            }
-        }
-        else{
-            av1_rps->ref_dpb_index[BWD] = av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[LAST];
-        }
+        } else
+            av1_rps->ref_dpb_index[BWD]     = av1_rps->ref_dpb_index[ALT2] =
+                av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[LAST];
     }
 
     // Release unused positions in dpb list
     dpb_list_idx = 0;
     do {
-        if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE
-        && dpb_list_ptr[dpb_list_idx].is_displayed == EB_TRUE
-        && dpb_list_ptr[dpb_list_idx].dep_count == 0) {
-            dpb_list_ptr[dpb_list_idx].is_used = EB_FALSE;
+        if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE &&
+            dpb_list_ptr[dpb_list_idx].is_displayed == EB_TRUE &&
+            dpb_list_ptr[dpb_list_idx].dep_count == 0) {
+            dpb_list_ptr[dpb_list_idx].is_used      = EB_FALSE;
             dpb_list_ptr[dpb_list_idx].is_displayed = EB_FALSE;
         }
     } while (++dpb_list_idx < REF_FRAMES);
 
     // Insert current frame into dpb list
-    if (picture_control_set_ptr->picture_number == encode_context_ptr->display_picture_number + 1
-    && picture_control_set_ptr->is_used_as_reference_flag == 0 ) {
+    if (picture_control_set_ptr->picture_number == encode_context_ptr->display_picture_number + 1 &&
+        picture_control_set_ptr->is_used_as_reference_flag == 0) {
         frm_hdr->show_frame = EB_TRUE;
         ++encode_context_ptr->display_picture_number;
         av1_rps->refresh_frame_mask = 0;
-    }
-    else {
+    } else {
         frm_hdr->show_frame = EB_FALSE;
-        dpb_list_idx = 0;
+        dpb_list_idx        = 0;
         do {
-            if (dpb_list_ptr[dpb_list_idx].is_used == EB_FALSE) {
+            if (dpb_list_ptr[dpb_list_idx].is_used == EB_FALSE)
                 break;
-            }
         } while (++dpb_list_idx < REF_FRAMES);
         if (dpb_list_idx < REF_FRAMES) {
-            av1_rps->refresh_frame_mask = 1 << dpb_list_idx;
-            dpb_list_ptr[dpb_list_idx].is_used = EB_TRUE;
+            av1_rps->refresh_frame_mask               = 1 << dpb_list_idx;
+            dpb_list_ptr[dpb_list_idx].is_used        = EB_TRUE;
             dpb_list_ptr[dpb_list_idx].picture_number = picture_control_set_ptr->picture_number;
-            dpb_list_ptr[dpb_list_idx].is_alt_ref = picture_control_set_ptr->is_alt_ref;
-            dpb_list_ptr[dpb_list_idx].temporal_layer_index = picture_control_set_ptr->temporal_layer_index;
-            if (picture_control_set_ptr->is_alt_ref) {
+            dpb_list_ptr[dpb_list_idx].is_alt_ref     = picture_control_set_ptr->is_alt_ref;
+            dpb_list_ptr[dpb_list_idx].temporal_layer_index =
+                picture_control_set_ptr->temporal_layer_index;
+            if (picture_control_set_ptr->is_alt_ref)
                 dpb_list_ptr[dpb_list_idx].is_displayed = EB_TRUE;
-            }
             // Construct dependent lists
             dpb_list_ptr[dpb_list_idx].dep_list0.list_count = 0;
-            for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list0.list_count; ++dep_idx) {
-                if (pred_position_ptr->dep_list0.list[dep_idx] >= 0){
-                    dpb_list_ptr[dpb_list_idx].dep_list0.list[dpb_list_ptr[dpb_list_idx].dep_list0.list_count++] = pred_position_ptr->dep_list0.list[dep_idx];
-                }
-            }
-            dpb_list_ptr[dpb_list_idx].dep_list1.list_count = pred_position_ptr->dep_list1.list_count;
-            for (dep_idx = 0; dep_idx < pred_position_ptr->dep_list1.list_count; ++dep_idx) {
-                dpb_list_ptr[dpb_list_idx].dep_list1.list[dep_idx] = pred_position_ptr->dep_list1.list[dep_idx];
-            }
-            dpb_list_ptr[dpb_list_idx].dep_list0_count = (picture_control_set_ptr->is_alt_ref) ? dpb_list_ptr[dpb_list_idx].dep_list0.list_count + 1 : dpb_list_ptr[dpb_list_idx].dep_list0.list_count;
-            dpb_list_ptr[dpb_list_idx].dep_list1_count = dpb_list_ptr[dpb_list_idx].dep_list1.list_count;
-            dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count + dpb_list_ptr[dpb_list_idx].dep_list1_count;
-        }
-        else {
+            for (uint32_t dep_idx = 0; dep_idx < pred_position_ptr->dep_list0.list_count; ++dep_idx)
+                if (pred_position_ptr->dep_list0.list[dep_idx] >= 0)
+                    dpb_list_ptr[dpb_list_idx]
+                        .dep_list0.list[dpb_list_ptr[dpb_list_idx].dep_list0.list_count++] =
+                        pred_position_ptr->dep_list0.list[dep_idx];
+            dpb_list_ptr[dpb_list_idx].dep_list1.list_count =
+                pred_position_ptr->dep_list1.list_count;
+            for (uint32_t dep_idx = 0; dep_idx < pred_position_ptr->dep_list1.list_count; ++dep_idx)
+                dpb_list_ptr[dpb_list_idx].dep_list1.list[dep_idx] =
+                    pred_position_ptr->dep_list1.list[dep_idx];
+            dpb_list_ptr[dpb_list_idx].dep_list0_count = (picture_control_set_ptr->is_alt_ref)
+                ? dpb_list_ptr[dpb_list_idx].dep_list0.list_count + 1
+                : dpb_list_ptr[dpb_list_idx].dep_list0.list_count;
+            dpb_list_ptr[dpb_list_idx].dep_list1_count =
+                dpb_list_ptr[dpb_list_idx].dep_list1.list_count;
+            dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count +
+                dpb_list_ptr[dpb_list_idx].dep_list1_count;
+        } else {
             SVT_LOG("Error: can't find unused dpb to hold current frame\n");
             return EB_Corrupt_Frame;
         }
@@ -5142,27 +5087,25 @@ static EbErrorType av1_generate_rps_info_from_user_config(
     do {
         dpb_list_idx = 0;
         do {
-            if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE
-            && dpb_list_ptr[dpb_list_idx].is_displayed == EB_FALSE
-            && dpb_list_ptr[dpb_list_idx].picture_number == encode_context_ptr->display_picture_number + 1) {
+            if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE &&
+                dpb_list_ptr[dpb_list_idx].is_displayed == EB_FALSE &&
+                dpb_list_ptr[dpb_list_idx].picture_number ==
+                    encode_context_ptr->display_picture_number + 1)
                 break;
-            }
         } while (++dpb_list_idx < REF_FRAMES);
         if (dpb_list_idx < REF_FRAMES) {
             dpb_list_ptr[dpb_list_idx].is_displayed = EB_TRUE;
             ++encode_context_ptr->display_picture_number;
-            if (encode_context_ptr->display_picture_number == picture_control_set_ptr->picture_number) {
+            if (encode_context_ptr->display_picture_number ==
+                picture_control_set_ptr->picture_number)
                 frm_hdr->show_frame = EB_TRUE;
-            }
             else {
                 picture_control_set_ptr->has_show_existing = EB_TRUE;
-                frm_hdr->show_existing_frame = dpb_list_idx;
+                frm_hdr->show_existing_frame               = dpb_list_idx;
                 break;
             }
-        }
-        else {
+        } else
             break;
-        }
     } while (1);
 
     return EB_ErrorNone;
@@ -5347,47 +5290,43 @@ static EbErrorType av1_generate_minigop_rps_info_from_user_config(
     return EB_ErrorNone;
 }
 
-static void av1_generate_rps_ref_poc_from_user_config(PictureParentControlSet *picture_control_set_ptr)
-{
-    Av1RpsNode *av1_rps = &picture_control_set_ptr->av1_ref_signal;
-    FrameHeader *frm_hdr = &picture_control_set_ptr->frm_hdr;
-    PredictionStructureEntry *pred_position_ptr = picture_control_set_ptr->pred_struct_ptr->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
-    uint32_t ref_idx = 0;
+static void av1_generate_rps_ref_poc_from_user_config(
+    PictureParentControlSet *picture_control_set_ptr) {
+    Av1RpsNode *              av1_rps = &picture_control_set_ptr->av1_ref_signal;
+    FrameHeader *             frm_hdr = &picture_control_set_ptr->frm_hdr;
+    PredictionStructureEntry *pred_position_ptr =
+        picture_control_set_ptr->pred_struct_ptr
+            ->pred_struct_entry_ptr_array[picture_control_set_ptr->pred_struct_index];
 
-    if (picture_control_set_ptr->slice_type == I_SLICE)
-        frm_hdr->frame_type = picture_control_set_ptr->idr_flag ? KEY_FRAME : INTRA_ONLY_FRAME;
-    else
-        frm_hdr->frame_type = INTER_FRAME;
+    frm_hdr->frame_type = picture_control_set_ptr->slice_type == I_SLICE
+        ? picture_control_set_ptr->idr_flag ? KEY_FRAME : INTRA_ONLY_FRAME
+        : INTER_FRAME;
 
-    picture_control_set_ptr->intra_only = picture_control_set_ptr->slice_type == I_SLICE ? 1 : 0;
+    picture_control_set_ptr->intra_only = picture_control_set_ptr->slice_type == I_SLICE;
 
-    if (picture_control_set_ptr->is_overlay) {
-        for (ref_idx = LAST; ref_idx <= ALT; ++ref_idx) {
+    if (picture_control_set_ptr->is_overlay)
+        for (int ref_idx = LAST; ref_idx <= ALT; ++ref_idx)
             av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number;
-        }
+    else if (picture_control_set_ptr->slice_type == P_SLICE ||
+             picture_control_set_ptr->slice_type == B_SLICE) {
+        uint32_t ref_idx;
+        for (ref_idx = LAST; ref_idx < LAST + pred_position_ptr->ref_list0.reference_list_count;
+             ++ref_idx)
+            av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number -
+                pred_position_ptr->ref_list0.reference_list[ref_idx - LAST];
+        for (; ref_idx <= GOLD; ++ref_idx)
+            av1_rps->ref_poc_array[ref_idx] = av1_rps->ref_poc_array[LAST];
+        if (picture_control_set_ptr->slice_type == B_SLICE) {
+            for (ref_idx = BWD; ref_idx < BWD + pred_position_ptr->ref_list1.reference_list_count;
+                 ++ref_idx)
+                av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number -
+                    pred_position_ptr->ref_list1.reference_list[ref_idx - BWD];
+            for (; ref_idx <= ALT; ++ref_idx)
+                av1_rps->ref_poc_array[ref_idx] = av1_rps->ref_poc_array[BWD];
+        } else
+            av1_rps->ref_poc_array[BWD]     = av1_rps->ref_poc_array[ALT2] =
+                av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[LAST];
     }
-    else {
-        if ((picture_control_set_ptr->slice_type == P_SLICE) || (picture_control_set_ptr->slice_type == B_SLICE)) {
-            for (ref_idx = LAST; ref_idx < LAST + pred_position_ptr->ref_list0.reference_list_count; ++ref_idx) {
-                av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list0.reference_list[ref_idx-LAST];
-            }
-            for (; ref_idx <= GOLD; ++ref_idx) {
-                av1_rps->ref_poc_array[ref_idx] = av1_rps->ref_poc_array[LAST];
-            }
-            if (picture_control_set_ptr->slice_type == B_SLICE) {
-                for (ref_idx = BWD; ref_idx < BWD + pred_position_ptr->ref_list1.reference_list_count; ++ref_idx) {
-                  av1_rps->ref_poc_array[ref_idx] = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list1.reference_list[ref_idx-BWD];
-                }
-                for (; ref_idx <= ALT; ++ref_idx) {
-                  av1_rps->ref_poc_array[ref_idx] = av1_rps->ref_poc_array[BWD];
-                }
-            }
-            else {
-                av1_rps->ref_poc_array[BWD] = av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[LAST];
-            }
-        }
-    }
-    return;
 }
 
 /***************************************************************************************************
@@ -5496,17 +5435,16 @@ void initialize_overlay_frame(PictureParentControlSet     *pcs_ptr) {
  * absolute difference between the two frames from a histogram of luma values
 ***************************************************************************************************/
 
-static __inline uint32_t compute_luma_sad_between_center_and_target_frame(
+static inline uint32_t compute_luma_sad_between_center_and_target_frame(
     int center_index,
     int target_frame_index,
     PictureParentControlSet *pcs_ptr,
     SequenceControlSet *scs_ptr) {
 
-    int32_t center_sum = 0, altref_sum = 0;
     uint32_t ahd = 0;
 
     for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
-        center_sum = 0, altref_sum = 0;
+        int32_t center_sum = 0, altref_sum = 0;
         for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width; region_in_picture_width_index++) {
             for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index < scs_ptr->picture_analysis_number_of_regions_per_height; region_in_picture_height_index++) {
                 center_sum += pcs_ptr->temp_filt_pcs_list[center_index]->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][0][bin];
@@ -5566,10 +5504,7 @@ void derive_tf_window_params(
             ss_x,
             ss_y,
             EB_TRUE);
-    }
-
-    // Estimate source noise level
-    if (is_highbd) {
+        // Estimate source noise level
         uint16_t *altref_buffer_highbd_start[COLOR_CHANNELS];
         altref_buffer_highbd_start[C_Y] =
             picture_control_set_ptr_central->altref_buffer_highbd[C_Y] +
@@ -5705,13 +5640,13 @@ void derive_tf_window_params(
         pcs_ptr->future_altref_nframes = pic_i;
         int index_center = 0;
         uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
-        int pic_itr, ahd;
+        int pic_itr;
 
         int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
 
         // Accumulative histogram absolute differences between the central and future frame
         for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
-            ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+            int ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
             if (ahd < ahd_th)
                 break;
         }
@@ -6058,7 +5993,6 @@ void* picture_decision_kernel(void *input_ptr)
         in_results_ptr = (PictureAnalysisResults*)in_results_wrapper_ptr->object_ptr;
         pcs_ptr = (PictureParentControlSet*)in_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        frm_hdr = &pcs_ptr->frm_hdr;
         encode_context_ptr = (EncodeContext*)scs_ptr->encode_context_ptr;
         loop_count++;
 
@@ -6126,7 +6060,6 @@ void* picture_decision_kernel(void *input_ptr)
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
-            frm_hdr = &pcs_ptr->frm_hdr;
             pcs_ptr->fade_out_from_black = 0;
 
             pcs_ptr->fade_in_to_black = 0;
@@ -6137,8 +6070,7 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->scene_change_flag = scene_transition_detector(
                         context_ptr,
                         scs_ptr,
-                        parent_pcs_window,
-                        FUTURE_WINDOW_WIDTH);
+                        parent_pcs_window);
                 }
                 else
                     pcs_ptr->scene_change_flag = EB_FALSE;
@@ -6158,7 +6090,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                 // Setup the PCS & SCS
                 pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[encode_context_ptr->pre_assignment_buffer_count]->object_ptr;
-                frm_hdr = &pcs_ptr->frm_hdr;
                 // Set the POC Number
                 pcs_ptr->picture_number = (encode_context_ptr->current_input_poc + 1) /*& ((1 << scs_ptr->bits_for_picture_order_count)-1)*/;
                 encode_context_ptr->current_input_poc = pcs_ptr->picture_number;
@@ -6903,9 +6834,6 @@ void* picture_decision_kernel(void *input_ptr)
                                 if (!pcs_ptr->is_overlay) {
                                     input_entry_ptr->list0_ptr = &pred_position_ptr->ref_list0;
                                     input_entry_ptr->list1_ptr = &pred_position_ptr->ref_list1;
-                                }
-                                if (!pcs_ptr->is_overlay)
-                                {
                                     // Copy the Dependent Lists
                                     // *Note - we are removing any leading picture dependencies for now
                                     input_entry_ptr->list0.list_count = 0;

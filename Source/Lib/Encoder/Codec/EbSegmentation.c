@@ -155,13 +155,12 @@ void calculate_segmentation_data(SegmentationParams *segmentation_params) {
 void find_segment_qps(SegmentationParams *segmentation_params,
                       PictureControlSet * pcs_ptr) { //QP needs to be specified as qpindex, not qp.
 
-    uint16_t *variance_ptr;
     uint16_t  min_var = UINT16_MAX, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
-    float     strength = 2; //to tune
+    const float strength = 2; //to tune
 
     // get range of variance
     for (uint32_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
-        variance_ptr = pcs_ptr->parent_pcs_ptr->variance[sb_idx];
+        uint16_t *variance_ptr = pcs_ptr->parent_pcs_ptr->variance[sb_idx];
         uint32_t var_index, local_avg = 0;
         // Loop over all 8x8s in a 64x64
         for (var_index = ME_TIER_ZERO_PU_8x8_0; var_index <= ME_TIER_ZERO_PU_8x8_63; var_index++) {

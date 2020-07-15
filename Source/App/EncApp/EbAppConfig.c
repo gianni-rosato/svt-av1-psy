@@ -413,10 +413,8 @@ static void set_no_progress(const char*value, EbConfig *cfg) {
 }
 static void set_frame_rate(const char *value, EbConfig *cfg) {
     cfg->frame_rate = strtoul(value, NULL, 0);
-    if (cfg->frame_rate > 1000)
-        cfg->frame_rate = cfg->frame_rate;
-    else
-        cfg->frame_rate = cfg->frame_rate << 16;
+    if (cfg->frame_rate <= 1000)
+        cfg->frame_rate <<= 16;
 }
 
 static void set_frame_rate_numerator(const char *value, EbConfig *cfg) {
@@ -741,10 +739,8 @@ static void speed_control_flag(const char *value, EbConfig *cfg) {
 };
 static void set_injector_frame_rate(const char *value, EbConfig *cfg) {
     cfg->injector_frame_rate = strtoul(value, NULL, 0);
-    if (cfg->injector_frame_rate > 1000)
-        cfg->injector_frame_rate = cfg->injector_frame_rate;
-    else
-        cfg->injector_frame_rate = cfg->injector_frame_rate << 16;
+    if (cfg->injector_frame_rate <= 1000)
+        cfg->injector_frame_rate <<= 16;
 }
 static void set_latency_mode(const char *value, EbConfig *cfg) {
     cfg->latency_mode = (uint8_t)strtol(value, NULL, 0);
@@ -2184,7 +2180,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
     // Check that the injector frame_rate is non-zero
-    if (config->injector_frame_rate <= 0 && config->injector) {
+    if (!config->injector_frame_rate && config->injector) {
         fprintf(config->error_log_file,
                 "Error Instance %u: The injector frame rate should be greater than 0 fps \n",
                 channel_number + 1);
@@ -2259,8 +2255,7 @@ int32_t find_token_multiple_inputs(int32_t argc, char *const argv[], const char 
     while ((argc > 0) && (return_error != 0)) {
         return_error = EB_STRCMP(argv[--argc], token);
         if (return_error == 0) {
-            int32_t count;
-            for (count = 0; count < MAX_CHANNEL_NUMBER; ++count) {
+            for (unsigned count = 0; count < MAX_CHANNEL_NUMBER; ++count) {
                 if (done == 0) {
                     if (argv[argc + count + 1]) {
                         if (strtoul(argv[argc + count + 1], NULL, 0) != 0 ||
@@ -2306,7 +2301,6 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         int32_t sp_token_index             = -1;
         //fprintf(stderr, "\n%-25s\t%-25s\n", "TOKEN", "DESCRIPTION");
         //fprintf(stderr, "%-25s\t%-25s\n", "-nch", "NumberOfChannels");
-        const char *token_options_format = "\t%-5s\t%-25s\t%-25s\n";
         const char *empty_string         = "";
         fprintf(stderr,
                 "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n");
@@ -2324,24 +2318,20 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                     [options_token_index +
                      1]); // this only works if short and long token are one after another
             if (check == 1) {
-                token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        "\t%-5s\t%-25s\t%-25s\n",
                         config_entry_options[options_token_index].token,
                         config_entry_options[options_token_index + 1].token,
                         config_entry_options[options_token_index].name);
                 options_token_index++;
-            } else {
-                if (*(config_entry_options[options_token_index].token + 1) == '-')
-                    token_options_format = "\t%-5s\t%-25s\t%-25s\n";
-                else
-                    token_options_format = "\t%-5s\t-%-25s\t%-25s\n";
+            } else
                 fprintf(stderr,
-                        token_options_format,
+                        *(config_entry_options[options_token_index].token + 1) == '-'
+                            ? "\t%-5s\t%-25s\t%-25s\n"
+                            : "\t%-5s\t-%-25s\t%-25s\n",
                         empty_string,
                         config_entry_options[options_token_index].token,
                         config_entry_options[options_token_index].name);
-            }
         }
         fprintf(stderr, "\n%-25s\n", "Encoder Global Options:");
         while (config_entry_global_options[++global_options_token_index].token != NULL) {
@@ -2349,20 +2339,17 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                 check_long(config_entry_global_options[global_options_token_index],
                            config_entry_global_options[global_options_token_index + 1]);
             if (check == 1) {
-                token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        "\t%-5s\t%-25s\t%-25s\n",
                         config_entry_global_options[global_options_token_index].token,
                         config_entry_global_options[global_options_token_index + 1].token,
                         config_entry_global_options[global_options_token_index].name);
                 global_options_token_index++;
             } else {
-                if (*(config_entry_global_options[global_options_token_index].token + 1) == '-')
-                    token_options_format = "\t%-5s\t%-25s\t%-25s\n";
-                else
-                    token_options_format = "\t%-5s\t-%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        *(config_entry_global_options[global_options_token_index].token + 1) == '-'
+                            ? "\t%-5s\t%-25s\t%-25s\n"
+                            : "\t%-5s\t-%-25s\t%-25s\n",
                         empty_string,
                         config_entry_global_options[global_options_token_index].token,
                         config_entry_global_options[global_options_token_index].name);
@@ -2373,20 +2360,17 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
             uint32_t check =
                 check_long(config_entry_rc[rc_token_index], config_entry_rc[rc_token_index + 1]);
             if (check == 1) {
-                token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        "\t%-5s\t%-25s\t%-25s\n",
                         config_entry_rc[rc_token_index].token,
                         config_entry_rc[rc_token_index + 1].token,
                         config_entry_rc[rc_token_index].name);
                 rc_token_index++;
             } else {
-                if (*(config_entry_rc[rc_token_index].token + 1) == '-')
-                    token_options_format = "\t%-5s\t%-25s\t%-25s\n";
-                else
-                    token_options_format = "\t%-5s\t-%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        *(config_entry_rc[rc_token_index].token + 1) == '-'
+                            ? "\t%-5s\t%-25s\t%-25s\n"
+                            : "\t%-5s\t-%-25s\t%-25s\n",
                         empty_string,
                         config_entry_rc[rc_token_index].token,
                         config_entry_rc[rc_token_index].name);
@@ -2397,72 +2381,60 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
             uint32_t check = check_long(config_entry_2p[two_p_token_index],
                                         config_entry_2p[two_p_token_index + 1]);
             if (check == 1) {
-                token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        "\t%-5s\t%-25s\t%-25s\n",
                         config_entry_2p[two_p_token_index].token,
                         config_entry_2p[two_p_token_index + 1].token,
                         config_entry_2p[two_p_token_index].name);
                 two_p_token_index++;
-            } else {
-                if (*(config_entry_2p[two_p_token_index].token + 1) == '-')
-                    token_options_format = "\t%-5s\t%-25s\t%-25s\n";
-                else
-                    token_options_format = "\t%-5s\t-%-25s\t%-25s\n";
+            } else
                 fprintf(stderr,
-                        token_options_format,
+                        *(config_entry_2p[two_p_token_index].token + 1) == '-'
+                            ? "\t%-5s\t%-25s\t%-25s\n"
+                            : "\t%-5s\t-%-25s\t%-25s\n",
                         empty_string,
                         config_entry_2p[two_p_token_index].token,
                         config_entry_2p[two_p_token_index].name);
-            }
         }
         fprintf(stderr, "\n%-25s\n", "Keyframe Placement Options:");
         while (config_entry_intra_refresh[++kf_token_index].token != NULL) {
             uint32_t check = check_long(config_entry_intra_refresh[kf_token_index],
                                         config_entry_intra_refresh[kf_token_index + 1]);
             if (check == 1) {
-                token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        "\t%-5s\t%-25s\t%-25s\n",
                         config_entry_intra_refresh[kf_token_index].token,
                         config_entry_intra_refresh[kf_token_index + 1].token,
                         config_entry_intra_refresh[kf_token_index].name);
                 kf_token_index++;
-            } else {
-                if (*(config_entry_intra_refresh[kf_token_index].token + 1) == '-')
-                    token_options_format = "\t%-5s\t%-25s\t%-25s\n";
-                else
-                    token_options_format = "\t%-5s\t-%-25s\t%-25s\n";
+            } else
                 fprintf(stderr,
-                        token_options_format,
+                        *(config_entry_intra_refresh[kf_token_index].token + 1) == '-'
+                            ? "\t%-5s\t%-25s\t%-25s\n"
+                            : "\t%-5s\t-%-25s\t%-25s\n",
                         empty_string,
                         config_entry_intra_refresh[kf_token_index].token,
                         config_entry_intra_refresh[kf_token_index].name);
-            }
         }
         fprintf(stderr, "\n%-25s\n", "AV1 Specific Options:");
         while (config_entry_specific[++sp_token_index].token != NULL) {
             uint32_t check = check_long(config_entry_specific[sp_token_index],
                                         config_entry_specific[sp_token_index + 1]);
             if (check == 1) {
-                token_options_format = "\t%-5s\t%-25s\t%-25s\n";
                 fprintf(stderr,
-                        token_options_format,
+                        "\t%-5s\t%-25s\t%-25s\n",
                         config_entry_specific[sp_token_index].token,
                         config_entry_specific[sp_token_index + 1].token,
                         config_entry_specific[sp_token_index].name);
                 sp_token_index++;
-            } else {
-                if (*(config_entry_specific[sp_token_index].token + 1) == '-')
-                    token_options_format = "\t%-5s\t%-25s\t%-25s\n";
-                else
-                    token_options_format = "\t%-5s\t-%-25s\t%-25s\n";
+            } else
                 fprintf(stderr,
-                        token_options_format,
+                        *(config_entry_specific[sp_token_index].token + 1) == '-'
+                            ? "\t%-5s\t%-25s\t%-25s\n"
+                            : "\t%-5s\t-%-25s\t%-25s\n",
                         empty_string,
                         config_entry_specific[sp_token_index].token,
                         config_entry_specific[sp_token_index].name);
-            };
         }
         return 1;
     } else
@@ -2490,19 +2462,17 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
 * Get the number of channels and validate it with input
 ******************************************************/
 uint32_t get_number_of_channels(int32_t argc, char *const argv[]) {
-    char     config_string[COMMAND_LINE_MAX_SIZE];
-    uint32_t channel_number;
+    char config_string[COMMAND_LINE_MAX_SIZE];
     if (find_token(argc, argv, CHANNEL_NUMBER_TOKEN, config_string) == 0) {
         // Set the input file
-        channel_number = strtol(config_string, NULL, 0);
-        if ((channel_number > (uint32_t)MAX_CHANNEL_NUMBER) || channel_number == 0) {
+        uint32_t channel_number = strtol(config_string, NULL, 0);
+        if ((channel_number > MAX_CHANNEL_NUMBER) || channel_number == 0) {
             fprintf(stderr,
                     "Error: The number of channels has to be within the range [1,%u]\n",
-                    (uint32_t)MAX_CHANNEL_NUMBER);
+                    MAX_CHANNEL_NUMBER);
             return 0;
-        } else {
-            return channel_number;
         }
+        return channel_number;
     }
     return 1;
 }
@@ -2590,14 +2560,13 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     uint64_t file_size   = 0;
     int32_t  frame_count = 0;
     uint32_t frame_size;
-    uint64_t curr_loc;
 
     // Pipes contain data streams whose end we cannot know before we reach it.
     // For pipes, we leave it up to the eof logic to detect how many frames to eventually encode.
     if (config->input_file == stdin || config->input_file_is_fifo) return -1;
 
     if (config->input_file) {
-        curr_loc = ftello(config->input_file); // get current fp location
+        uint64_t curr_loc = ftello(config->input_file); // get current fp location
         fseeko(config->input_file, 0L, SEEK_END);
         file_size = ftello(config->input_file);
         fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
@@ -3006,7 +2975,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     // Parse command line for search region at level 0 width token
     if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_WIDTH, config_strings) ||
         !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_WIDTH, config_strings)) {
-        uint32_t input_index = 0, last_index = 0;
+        uint32_t last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
@@ -3014,7 +2983,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level0_column_index = 0;
-            for (input_index = last_index;
+            for (uint32_t input_index = last_index;
                  input_index < configs[index]->number_hme_search_region_in_width + last_index;
                  ++input_index) {
                 if (EB_STRCMP(config_strings[input_index], " "))
@@ -3032,7 +3001,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     //// Parse command line for search region at level 0 height token
     if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) ||
         !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_HEIGHT, config_strings)) {
-        uint32_t input_index = 0, last_index = 0;
+        uint32_t last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
@@ -3040,7 +3009,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level0_row_index = 0;
-            for (input_index = last_index;
+            for (uint32_t input_index = last_index;
                  input_index < configs[index]->number_hme_search_region_in_height + last_index;
                  ++input_index) {
                 if (EB_STRCMP(config_strings[input_index], " "))
@@ -3058,7 +3027,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     // Parse command line for search region at level 1 Height token
     if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) ||
         !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_HEIGHT, config_strings)) {
-        uint32_t input_index = 0, last_index = 0;
+        uint32_t last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
@@ -3066,7 +3035,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level1_row_index = 0;
-            for (input_index = last_index;
+            for (uint32_t input_index = last_index;
                  input_index < configs[index]->number_hme_search_region_in_height + last_index;
                  ++input_index) {
                 if (EB_STRCMP(config_strings[input_index], " "))
@@ -3084,7 +3053,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     // Parse command line for search region at level 1 width token
     if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) ||
         !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_WIDTH, config_strings)) {
-        uint32_t input_index = 0, last_index = 0;
+        uint32_t last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
@@ -3092,7 +3061,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level1_column_index = 0;
-            for (input_index = last_index;
+            for (uint32_t input_index = last_index;
                  input_index < configs[index]->number_hme_search_region_in_width + last_index;
                  ++input_index) {
                 if (EB_STRCMP(config_strings[input_index], " "))
@@ -3110,7 +3079,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     // Parse command line for search region at level 2 width token
     if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) ||
         !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_WIDTH, config_strings)) {
-        uint32_t input_index = 0, last_index = 0;
+        uint32_t last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
@@ -3118,7 +3087,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level2_column_index = 0;
-            for (input_index = last_index;
+            for (uint32_t input_index = last_index;
                  input_index < configs[index]->number_hme_search_region_in_width + last_index;
                  ++input_index) {
                 if (EB_STRCMP(config_strings[input_index], " "))
@@ -3136,7 +3105,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     // Parse command line for search region at level 2 height token
     if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) ||
         !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_HEIGHT, config_strings)) {
-        uint32_t input_index = 0, last_index = 0;
+        uint32_t last_index = 0;
         uint32_t done = 1;
 
         mark_token_as_read(HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
@@ -3144,7 +3113,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
         for (index = 0; done && (index < num_channels); ++index) {
             configs[index]->hme_level2_row_index = 0;
-            for (input_index = last_index;
+            for (uint32_t input_index = last_index;
                  input_index < configs[index]->number_hme_search_region_in_height + last_index;
                  ++input_index) {
                 if (EB_STRCMP(config_strings[input_index], " "))

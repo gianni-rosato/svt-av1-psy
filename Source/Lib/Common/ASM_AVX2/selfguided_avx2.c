@@ -751,8 +751,8 @@ void eb_av1_selfguided_restoration_avx2(const uint8_t *dgd8, int32_t width, int3
     // the radii to be 0, as having both equal to 0 would be equivalent to
     // skipping SGR entirely.
     assert(!(params->r[0] == 0 && params->r[1] == 0));
-    assert(params->r[0] < AOMMIN(SGRPROJ_BORDER_VERT, SGRPROJ_BORDER_HORZ));
-    assert(params->r[1] < AOMMIN(SGRPROJ_BORDER_VERT, SGRPROJ_BORDER_HORZ));
+    assert(params->r[0] < 3); // AOMMIN(SGRPROJ_BORDER_VERT, SGRPROJ_BORDER_HORZ) == 3
+    assert(params->r[1] < 3); // AOMMIN(SGRPROJ_BORDER_VERT, SGRPROJ_BORDER_HORZ) == 3
 
     if (params->r[0] > 0) {
         calc_ab_fast(A, b, C, D, width, height, buf_stride, bit_depth, sgr_params_idx, 0);

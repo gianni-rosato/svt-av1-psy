@@ -257,9 +257,6 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
         int64_t  y_pan_mv_sum   = 0;
         uint32_t total_tilt_sbs = 0;
 
-        uint32_t total_tilt_high_amp_sbs = 0;
-        uint32_t total_pan_high_amp_sbs  = 0;
-
         for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
             uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
             uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
@@ -370,7 +367,6 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
                                                        pcs_ptr->temporal_layer_index,
                                                        &x_current_mv,
                                                        &x_bottom_mv))) {
-                    total_pan_high_amp_sbs++;
                 }
 
                 if ((EbBool)(check_mv_for_tilt_high_amp(pcs_ptr->hierarchical_levels,
@@ -389,7 +385,6 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
                                                         pcs_ptr->temporal_layer_index,
                                                         &y_current_mv,
                                                         &y_bottom_mv))) {
-                    total_tilt_high_amp_sbs++;
                 }
             }
         }
@@ -871,7 +866,7 @@ static int rate_estimator(TranLow *qcoeff, int eob, TxSize tx_size) {
 
   for (int idx = 0; idx < eob; ++idx) {
     int abs_level = abs(qcoeff[scan_order->scan[idx]]);
-    rate_cost += (int)(log(abs_level + 1.0) / log(2.0)) + 1;
+    rate_cost += (int)(log1p(abs_level) / log(2.0)) + 1;
   }
 
   return (rate_cost << AV1_PROB_COST_SHIFT);
@@ -1034,8 +1029,6 @@ void tpl_mc_flow_dispenser(
     uint32_t    picture_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
     uint32_t    picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t    picture_height_in_sb = (pcs_ptr->enhanced_picture_ptr->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-    uint32_t    sb_origin_x;
-    uint32_t    sb_origin_y;
     int16_t     x_curr_mv = 0;
     int16_t     y_curr_mv = 0;
     uint32_t    me_mb_offset = 0;
@@ -1125,8 +1118,8 @@ void tpl_mc_flow_dispenser(
 
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-        sb_origin_x = (sb_index % picture_width_in_sb) * BLOCK_SIZE_64;
-        sb_origin_y = (sb_index / picture_width_in_sb) * BLOCK_SIZE_64;
+        uint32_t    sb_origin_x = (sb_index % picture_width_in_sb) * BLOCK_SIZE_64;
+        uint32_t    sb_origin_y = (sb_index / picture_width_in_sb) * BLOCK_SIZE_64;
         if (((sb_origin_x + 16) <= input_picture_ptr->width) &&
             ((sb_origin_y + 16) <= input_picture_ptr->height)) {
             SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
@@ -1320,7 +1313,6 @@ void tpl_mc_flow_dispenser(
 
                         above_row = above_data + 16;
                         left_col = left_data + 16;
-                        TxSize tx_size = TX_16X16;
 #if TPL_IMP
                         uint8_t *recon_buffer =
                             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] +
@@ -1347,7 +1339,15 @@ void tpl_mc_flow_dispenser(
                             filter_intra_edge(ois_mb_results_ptr, ois_intra_mode, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, p_angle, mb_origin_x, mb_origin_y, above_row, left_col);
                         }
                         // PRED
-                        intra_prediction_open_loop_mb(p_angle, ois_intra_mode, mb_origin_x, mb_origin_y, tx_size, above_row, left_col, dst_buffer, dst_buffer_stride);
+                        intra_prediction_open_loop_mb(p_angle,
+                                                      ois_intra_mode,
+                                                      mb_origin_x,
+                                                      mb_origin_y,
+                                                      TX_16X16,
+                                                      above_row,
+                                                      left_col,
+                                                      dst_buffer,
+                                                      dst_buffer_stride);
                     }
 
                     eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
@@ -1628,13 +1628,12 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
                 }
             }
             double beta = 1.0;
-            double rk = -1.0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
             //if (mc_dep_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
             //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS)
             //    && intra_cost > ((scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4)*
             //    (scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 8 : 4) << RDDIV_BITS) ){
-                rk = (double)intra_cost / mc_dep_cost;
+                double rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
                 //if (pcs_ptr->picture_number == 16)
                 //SVT_LOG(
@@ -1667,13 +1666,10 @@ EbErrorType tpl_mc_flow(
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_ptr)
 {
-    InitialRateControlReorderEntry   *temporaryQueueEntryPtr;
-    PictureParentControlSet          *temp_pcs_ptr;
     PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = {NULL, };
 
     uint32_t                         inputQueueIndex;
     int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
-    int32_t                          frame_idx, i;
     uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width  + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
@@ -1687,15 +1683,16 @@ EbErrorType tpl_mc_flow(
 #endif
     // Walk the first N entries in the sliding window
     inputQueueIndex = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    for (frame_idx = 0; frame_idx < pcs_ptr->frames_in_sw; frame_idx++) {
-        temporaryQueueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[inputQueueIndex];
-        temp_pcs_ptr = ((PictureParentControlSet*)(temporaryQueueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
+    for (int32_t frame_idx = 0; frame_idx < pcs_ptr->frames_in_sw; frame_idx++) {
+        InitialRateControlReorderEntry   *temporaryQueueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[inputQueueIndex];
+        PictureParentControlSet          *temp_pcs_ptr = ((PictureParentControlSet*)(temporaryQueueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
 
         // sort to be decode order
         if(frame_idx == 0) {
             pcs_array[0] = temp_pcs_ptr;
         } else {
-            for (i = 0; i < frame_idx; i++) {
+            int32_t i = 0;
+            for (; i < frame_idx; i++) {
                 if (temp_pcs_ptr->decode_order < pcs_array[i]->decode_order) {
                     for (int32_t j = frame_idx; j > i; j--)
                         pcs_array[j] = pcs_array[j-1];
@@ -1711,7 +1708,7 @@ EbErrorType tpl_mc_flow(
         inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
     }
 
-    for (frame_idx = 1; frame_idx < MIN(16, frames_in_sw); frame_idx++) {
+    for (int32_t frame_idx = 1; frame_idx < MIN(16, frames_in_sw); frame_idx++) {
         if(frame_is_intra_only(pcs_array[frame_idx])) {
             got_intra_in_sw = EB_TRUE;
             break;
@@ -1722,12 +1719,12 @@ EbErrorType tpl_mc_flow(
     }
     start_is_intra = frame_is_intra_only(pcs_array[0]);
 
-    for(frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
+    for(int32_t frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
         encode_context_ptr->poc_map_idx[frame_idx] = -1;
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
     }
     EB_MALLOC_ARRAY(mc_flow_rec_picture_buffer_noref, pcs_ptr->enhanced_picture_ptr->luma_size);
-    for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+    for(int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (pcs_array[frame_idx]->is_used_as_reference_flag) {
             EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
         } else {
@@ -1742,7 +1739,7 @@ EbErrorType tpl_mc_flow(
         int32_t sw_length = MIN(17, (frames_in_sw));
         EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
-        for(frame_idx = 0; frame_idx < sw_length; frame_idx++) {
+        for(int32_t frame_idx = 0; frame_idx < sw_length; frame_idx++) {
             if (!start_is_intra && frame_idx == 0) {
                 uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[0];
                 memcpy(dst_buffer, encode_context_ptr->mc_flow_rec_picture_buffer_saved, input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
@@ -1758,7 +1755,7 @@ EbErrorType tpl_mc_flow(
         }
 
         // synthesizer
-        for(frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--)
+        for(int32_t frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--)
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
         generate_r0beta(pcs_array[0]);
 
@@ -1794,13 +1791,15 @@ EbErrorType tpl_mc_flow(
         // i.e. POC 16 have access to picture 1,2,...15. So dispenser and synthesizer are called.
         // In the next call, the stats for POC 16 is updated using pictures 17,... 32
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
-        for (frame_idx = 1; frame_idx < sw_length; frame_idx++) {
+        for (int32_t frame_idx = 1; frame_idx < sw_length; frame_idx++) {
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
             if (frame_idx == 1 && pcs_array[frame_idx]->temporal_layer_index == 0) {
-                EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
-                uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[0];
                 // copy frame_idx0 input to rec before run frame_idx1 picture
-                memcpy(dst_buffer, input_picture_ptr->buffer_y, input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
+                memcpy(encode_context_ptr->mc_flow_rec_picture_buffer[0],
+                       pcs_array[0]->enhanced_picture_ptr->buffer_y,
+                       pcs_array[0]->enhanced_picture_ptr->stride_y *
+                           (pcs_array[0]->enhanced_picture_ptr->origin_y * 2 +
+                            pcs_array[0]->enhanced_picture_ptr->height));
             }
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
@@ -1813,7 +1812,7 @@ EbErrorType tpl_mc_flow(
             }
         }
         // synthesizer
-        for (frame_idx = sw_length - 1; frame_idx >= 1; frame_idx--)
+        for (int32_t frame_idx = sw_length - 1; frame_idx >= 1; frame_idx--)
 #if TPL_SW_UPDATE
             // to make sure synthesizer is not called more than one time
             if(pcs_array[frame_idx]->picture_number <= pcs_array[1]->picture_number)
@@ -1821,7 +1820,7 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
     }
 
-    for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+    for(int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if ( encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] &&
              encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] != mc_flow_rec_picture_buffer_noref ) {
             EB_FREE_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
@@ -2087,10 +2086,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     encode_context_ptr, pcs_ptr, in_results_ptr);
 
             if (scs_ptr->static_config.rate_control_mode) {
-                if (scs_ptr->static_config.look_ahead_distance != 0) {
-                    // Getting the Histogram Queue Data
-                    get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
-                }
+                // Getting the Histogram Queue Data
+                get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
             }
 
             for (uint8_t temporal_layer_index = 0; temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;

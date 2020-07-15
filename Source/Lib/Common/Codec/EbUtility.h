@@ -11,6 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <limits.h>
 /****************************
      * UTILITY FUNCTIONS
      ****************************/
@@ -150,18 +151,8 @@ extern uint64_t log2f_64(uint64_t x);
      * MACROS
      ****************************/
 
-#ifdef _MSC_VER
 #define MULTI_LINE_MACRO_BEGIN do {
-#define MULTI_LINE_MACRO_END                                  \
-    __pragma(warning(push)) __pragma(warning(disable : 4127)) \
-    }                                                         \
-    while (0) __pragma(warning(pop))
-#else
-#define MULTI_LINE_MACRO_BEGIN do {
-#define MULTI_LINE_MACRO_END \
-    }                        \
-    while (0)
-#endif
+#define MULTI_LINE_MACRO_END } while (0)
 
 //**************************************************
 // MACROS
@@ -290,6 +281,17 @@ typedef enum MinigopIndex {
     L3_6_INDEX = 13,
     L3_7_INDEX = 14
 } MinigopIndex;
+
+// Right shift that replicates gcc's implementation
+
+static inline int gcc_right_shift(int a, unsigned shift) {
+    if (a > 0)
+        return a >> shift;
+    static const unsigned sbit = 1u << (sizeof(sbit) * CHAR_BIT - 1);
+    a                          = (unsigned)a >> shift;
+    while (shift) a |= sbit >> shift--;
+    return a ^ sbit;
+}
 
 #ifdef __cplusplus
 }

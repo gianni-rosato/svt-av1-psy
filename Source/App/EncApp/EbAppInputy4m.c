@@ -65,12 +65,12 @@ int32_t read_y4m_header(EbConfig *cfg) {
         switch (*tokstart++) {
         case 'W': /* width, required. */
             width = (uint32_t)strtol(tokstart, &tokend, 10);
-            if (PRINT_HEADER) fprintf(stderr, "width = %d\n", width);
+            if (PRINT_HEADER) fprintf(stderr, "width = %u\n", width);
             tokstart = tokend;
             break;
         case 'H': /* height, required. */
             height = (uint32_t)strtol(tokstart, &tokend, 10);
-            if (PRINT_HEADER) fprintf(stderr, "height = %d\n", height);
+            if (PRINT_HEADER) fprintf(stderr, "height = %u\n", height);
             tokstart = tokend;
             break;
         case 'I': /* scan type, not required, default: 'p' */
@@ -175,7 +175,7 @@ int32_t read_y4m_header(EbConfig *cfg) {
                 fprintf(cfg->error_log_file, "chroma format not supported\n");
                 return EB_ErrorBadParameter;
             }
-            if (PRINT_HEADER) fprintf(stderr, "chroma = %s, bitdepth = %d\n", chroma, bitdepth);
+            if (PRINT_HEADER) fprintf(stderr, "chroma = %s, bitdepth = %u\n", chroma, bitdepth);
             break;
         case 'F': /* frame rate, required */
             tokstart = copy_until_char_or_newline(tokstart, format_str, ':');
@@ -183,10 +183,8 @@ int32_t read_y4m_header(EbConfig *cfg) {
             tokstart++;
             tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
             fr_d     = (uint32_t)strtol(format_str, (char **)NULL, 10);
-            if (PRINT_HEADER) {
-                fprintf(stderr, "framerate_n = %d\n", fr_n);
-                fprintf(stderr, "framerate_d = %d\n", fr_d);
-            }
+            if (PRINT_HEADER)
+                fprintf(stderr, "framerate_n = %u\nframerate_d = %u\n", fr_n, fr_d);
             break;
         case 'A': /* aspect ratio, not required */
             tokstart = copy_until_char_or_newline(tokstart, format_str, ':');
@@ -194,10 +192,8 @@ int32_t read_y4m_header(EbConfig *cfg) {
             tokstart++;
             tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
             aspect_d = (uint32_t)strtol(format_str, (char **)NULL, 10);
-            if (PRINT_HEADER) {
-                fprintf(stderr, "aspect_n = %d\n", aspect_n);
-                fprintf(stderr, "aspect_d = %d\n", aspect_d);
-            }
+            if (PRINT_HEADER)
+                fprintf(stderr, "aspect_n = %u\naspect_d = %u\n", aspect_n, aspect_d);
             break;
         default:
             /* Unknown section: skip it */

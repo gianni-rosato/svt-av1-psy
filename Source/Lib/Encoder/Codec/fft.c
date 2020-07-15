@@ -44,7 +44,7 @@ static INLINE void unpack_2d_output(const float *col_fft, float *output, int32_t
                 output[2 * ((n - y) * n + x)] =
                     col_fft[y * n + x] + (x_extra && y_extra ? col_fft[y2 * n + x2] : 0);
                 output[2 * ((n - y) * n + x) + 1] =
-                    -(y_extra ? col_fft[y2 * n + x] : 0) + (x_extra ? col_fft[y * n + x2] : 0);
+                    -col_fft[y2 * n + x] + (x_extra ? col_fft[y * n + x2] : 0);
             }
         }
     }
