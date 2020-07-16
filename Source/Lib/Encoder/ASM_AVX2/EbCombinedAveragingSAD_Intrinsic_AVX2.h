@@ -9,7 +9,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if REMOVE_ME_SUBPEL_CODE
+// To remove this file
+#else
 uint32_t combined_averaging_8xm_sad_avx2_intrin(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
                                                 uint32_t ref1_stride, uint8_t *ref2,
                                                 uint32_t ref2_stride, uint32_t height,
@@ -39,6 +41,7 @@ uint32_t combined_averaging_64xm_sad_avx2_intrin(uint8_t *src, uint32_t src_stri
                                                  uint32_t ref1_stride, uint8_t *ref2,
                                                  uint32_t ref2_stride, uint32_t height,
                                                  uint32_t width);
+#endif
 
 #ifdef __cplusplus
 }

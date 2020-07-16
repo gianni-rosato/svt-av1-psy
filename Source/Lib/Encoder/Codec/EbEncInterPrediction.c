@@ -6718,9 +6718,13 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 
         return return_error;
     }
+#if FIX_IFS_OFF_CASE
+    if (md_context_ptr->interpolation_search_level != IT_SEARCH_OFF) {
+#else
     if (md_context_ptr->interpolation_search_level == IT_SEARCH_OFF)
         candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
     else {
+#endif
         if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
             uint16_t capped_size =
                     md_context_ptr->interpolation_filter_search_blk_size == 0

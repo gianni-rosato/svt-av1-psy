@@ -85,7 +85,21 @@ int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cos
 
 int32_t eb_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost, int32_t *mvcost[2],
                            int32_t weight) {
+#if CAP_MV_DIFF
+    // Restrict the size of the MV diff to be within the max AV1 range.  If the MV diff
+    // is outside this range, the diff will index beyond the cost array, causing a seg fault.
+    // Both the MVs and the MV diffs should be within the allowable range for accessing the MV cost
+    // infrastructure.
+    MV temp_diff = { mv->row - ref->row, mv->col - ref->col };
+    temp_diff.row = MAX(temp_diff.row, MV_LOW);
+    temp_diff.row = MIN(temp_diff.row, MV_UPP);
+    temp_diff.col = MAX(temp_diff.col, MV_LOW);
+    temp_diff.col = MIN(temp_diff.col, MV_UPP);
+
+    const MV diff = temp_diff;
+#else
     const MV diff = {mv->row - ref->row, mv->col - ref->col};
+#endif
     return ROUND_POWER_OF_TWO(mv_cost(&diff, mvjcost, mvcost) * weight, 7);
 }
 

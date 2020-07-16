@@ -608,8 +608,12 @@ typedef struct PictureParentControlSet {
 
     // Motion Estimation Results
     uint8_t       max_number_of_pus_per_sb;
+#if !REMOVE_MRP_MODE
     uint8_t       max_number_of_candidates_per_block;
+#endif
+#if !DECOUPLE_ME_RES
     MeSbResults **me_results;
+#endif
     uint32_t *    rc_me_distortion;
 
     // Global motion estimation results
@@ -827,10 +831,16 @@ typedef struct PictureParentControlSet {
     uint64_t          filtered_sse_uv;
     FrameHeader       frm_hdr;
     uint8_t           compound_mode;
+#if !SHUT_ME_CAND_SORTING
     uint8_t           prune_unipred_at_me;
+#endif
     uint16_t *        altref_buffer_highbd[3];
     uint8_t           enable_inter_intra;
+#if OBMC_CLI
+    uint8_t           pic_obmc_level;
+#else
     uint8_t           pic_obmc_mode;
+#endif
     StatStruct *      stat_struct_first_pass_ptr; // pointer to stat_struct in the first pass
     struct StatStruct stat_struct; // stat_struct used in the second pass
     uint64_t          referenced_area_avg; // average referenced area per frame
@@ -892,9 +902,13 @@ typedef struct PictureControlSetInitData {
     uint8_t   hbd_mode_decision;
     uint16_t  film_grain_noise_level;
     EbBool    ext_block_flag;
+#if !REMOVE_MRP_MODE
     uint8_t   mrp_mode;
+#endif
     uint8_t   cdf_mode;
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     uint8_t   nsq_present;
+#endif
     uint8_t   over_boundary_block_mode;
     uint8_t   mfmv;
     //init value for child pcs
@@ -929,9 +943,20 @@ extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
-
+#if DECOUPLE_ME_RES
+extern EbErrorType me_creator(EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr);
+#endif
+#if NSQ_REMOVAL_CODE_CLEAN_UP
+#if REMOVE_MRP_MODE
+extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr);
+#else
+extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
+#endif
+#else
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, uint32_t max_number_of_blks_per_sb,
                                       uint8_t mrp_mode, uint32_t maxNumberOfMeCandidatesPerPU);
+#endif
 #ifdef __cplusplus
 }
 #endif

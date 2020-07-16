@@ -14,6 +14,10 @@ extern "C" {
 
 #define MAX_ME_PU_COUNT \
     209 // Sum of all the possible partitions which have both deminsions greater than 4.
+#if REMOVE_MRP_MODE
+#define MAX_PA_ME_MV 7 // 1 per ref = up 7 = up 4+ up to 3
+#define MAX_PA_ME_CAND 23 // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [4 = 3+1]
+#else
 
 #define ME_RES_CAND_MRP_MODE_0 23 // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [UniDir = 4 = 3+1]
 #define ME_MV_MRP_MODE_0 7 // [7 = 4+3]
@@ -26,6 +30,7 @@ extern "C" {
      5) // Sum of all the possible partitions which have both deminsions greater or equal to 4.
 
 // i.e. no 4x4, 8x4, or 4x8 partitions
+#endif
 #define SQUARE_PU_COUNT 85
 typedef struct MeCandidate {
     uint8_t direction : 2;

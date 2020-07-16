@@ -59,7 +59,13 @@ extern "C" {
     //to not include convolve.h, just forward declare what's needed.
     struct ConvolveParams;
     struct InterpFilterParams;
+#if !REMOVE_ME_SUBPEL_CODE
     uint32_t combined_averaging_ssd_c(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
+#endif
+    int64_t aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
+    RTCD_EXTERN int64_t(*aom_sse)(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
+    int64_t aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
+    RTCD_EXTERN int64_t(*aom_highbd_sse)(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
     int64_t eb_aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     RTCD_EXTERN int64_t(*eb_aom_sse)(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t eb_aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
@@ -542,19 +548,43 @@ extern "C" {
     RTCD_EXTERN void(*eb_av1_calc_indices_dim2)(const int* data, const int* centroids, uint8_t* indices, int n, int k);
     RTCD_EXTERN void(*svt_av1_apply_filtering)(const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height, int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
     RTCD_EXTERN void(*svt_av1_apply_filtering_highbd)(const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height, int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+
+#if TF_IMP
+    struct MeContext;
+#endif
     RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise)(
+#if TF_IMP
+        struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
+        const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
+        const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
+        int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
+        uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#else
         const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
         const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#endif
+
     RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise_hbd)(
+#if TF_IMP
+        struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+        int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+        const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+        const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#else
         const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
         const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
         const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#endif
+#if !REMOVE_ME_SUBPEL_CODE
     RTCD_EXTERN uint32_t(*combined_averaging_ssd)(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
+#endif
     RTCD_EXTERN void(*ext_sad_calculation_8x8_16x16)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv, uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad);
     void ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
         uint32_t ref_stride, uint32_t *p_best_sad_8x8,
@@ -568,7 +598,9 @@ extern "C" {
     RTCD_EXTERN void(*sad_calculation_8x8_16x16)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv, uint32_t *p_sad16x16, EbBool sub_sad);
     RTCD_EXTERN void(*sad_calculation_32x32_64x64)(uint32_t *p_sad16x16, uint32_t *p_best_sad_32x32, uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32, uint32_t *p_best_mv64x64, uint32_t mv);
     RTCD_EXTERN void(*ext_all_sad_calculation_8x8_16x16)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t mv, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8]);
+#if !SHUT_ME_NSQ_SEARCH
     RTCD_EXTERN void(*ext_eigth_sad_calculation_nsq)(uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8], uint32_t p_sad32x32[4][8], uint32_t *p_best_sad_64x32, uint32_t *p_best_mv64x32, uint32_t *p_best_sad_32x16, uint32_t *p_best_mv32x16, uint32_t *p_best_sad_16x8, uint32_t *p_best_mv16x8, uint32_t *p_best_sad_32x64, uint32_t *p_best_mv32x64, uint32_t *p_best_sad_16x32, uint32_t *p_best_mv16x32, uint32_t *p_best_sad_8x16, uint32_t *p_best_mv8x16, uint32_t *p_best_sad_32x8, uint32_t *p_best_mv32x8, uint32_t *p_best_sad_8x32, uint32_t *p_best_mv8x32, uint32_t *p_best_sad_64x16, uint32_t *p_best_mv64x16, uint32_t *p_best_sad_16x64, uint32_t *p_best_mv16x64, uint32_t mv);
+#endif
     RTCD_EXTERN void(*ext_eight_sad_calculation_32x32_64x64)(uint32_t p_sad16x16[16][8], uint32_t *p_best_sad_32x32, uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32, uint32_t *p_best_mv64x64, uint32_t mv, uint32_t p_sad32x32[4][8]);
     RTCD_EXTERN uint32_t(*eb_sad_kernel4x4)(const uint8_t *src, uint32_t src_stride, const uint8_t *ref, uint32_t ref_stride, uint32_t height, uint32_t width);
     RTCD_EXTERN void(*get_eight_horizontal_search_point_results_8x8_16x16_pu)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8, uint32_t *p_best_mv8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv16x16, uint32_t mv, uint16_t *p_sad16x16, EbBool sub_sad);
@@ -1142,6 +1174,7 @@ extern "C" {
         uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
         uint32_t p_eight_sad16x16[16][8],
         uint32_t p_eight_sad8x8[64][8]);
+#if !SHUT_ME_NSQ_SEARCH
     void ext_eigth_sad_calculation_nsq_avx2(
         uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8], uint32_t p_sad32x32[4][8],
         uint32_t *p_best_sad_64x32, uint32_t *p_best_mv64x32, uint32_t *p_best_sad_32x16,
@@ -1151,6 +1184,7 @@ extern "C" {
         uint32_t *p_best_sad_32x8, uint32_t *p_best_mv32x8, uint32_t *p_best_sad_8x32,
         uint32_t *p_best_mv8x32, uint32_t *p_best_sad_64x16, uint32_t *p_best_mv64x16,
         uint32_t *p_best_sad_16x64, uint32_t *p_best_mv16x64, uint32_t mv);
+#endif
     void ext_eight_sad_calculation_32x32_64x64_avx2(uint32_t  p_sad16x16[16][8],
         uint32_t *p_best_sad_32x32,
         uint32_t *p_best_sad_64x64,
@@ -1220,17 +1254,35 @@ extern "C" {
     uint32_t sad_16bit_kernel_avx2(uint16_t *src, uint32_t src_stride, uint16_t *ref,
         uint32_t ref_stride, uint32_t height, uint32_t width);
     void svt_av1_apply_temporal_filter_planewise_avx2(
+#if TF_IMP
+        struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+        int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
+        const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+        const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#else
         const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
         const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#endif
     void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
+#if TF_IMP
+        struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+        int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+        const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+        const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#else
         const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
         const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
         const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
         int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+#endif
     uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse);
 

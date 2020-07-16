@@ -1013,8 +1013,8 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
 #endif
-    extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
-                              int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
+extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
+                            int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size

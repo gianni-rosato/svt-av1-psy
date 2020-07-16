@@ -308,6 +308,65 @@ extern "C" {
 #define NICS_CLEANUP                1 // cleanup nics generation (lossy)
 #define CLASS_PRUNE                 1 // new class pruning for stage3: adaptive nics sclings
 #define DISALLOW_ALL_ACTIONS        1
+#define MULTI_BAND_ACTIONS          1
+#if MULTI_BAND_ACTIONS
+#define COEFF_BASED_BYPASS_NSQ    1  //coefficient-based nsq bypassing
+#else
+#define COEFF_BASED_BYPASS_NSQ    0  //coefficient-based nsq bypassing
+#endif
+#if COEFF_BASED_BYPASS_NSQ
+#define REMOVE_SQ_WEIGHT_TOGGLING 1
+#define M1_TH4                    1
+#define MERGED_COEFF_BAND         1
+#define SSE_BASED_SPLITTING       1
+#endif
+#define CAP_MV_DIFF                 1 // Restrict the max. MV diff size to be within the allowable range: fp -2048 < x < 2048
+
+#define COEFF_BASED_BYPASS_NSQ_FIX  1 // apply algorithm to non-I_SLICE
+#define NEW_M0_M1_ME_NICS           1 // New ME and NICS scaling adoptions for M0/M1
+#define M1_C2_ADOPTIONS             1 // Adoptions for M1
+#define TF_IMP                      1 // Improve the temporal filtering by considering MV and distortion
+#define NOISE_BASED_TF_FRAMES       1 // Use adative number of frames in temporal filtering
+#define M1_C3_ADOPTIONS             1 // Adoptions for M1
+#define HME_4K_ADOPTIONS            1 // Adoptions for SC HME and 4K HME
+#define MAY15_M0_ADOPTIONS          1 // M0 adoptions
+
+#define MAY16_M0_ADOPTIONS          1
+#define MAY16_7PM_ADOPTIONS         1 // M0 and M1 adoptions
+#define MAY17_ADOPTIONS             1 // Adoptions for M0/M1
+#define MAY19_ADOPTIONS             1 // Adoptions in MR, M5-M8 from svt-01_presets branch
+#define MAY21_NSQ_OFF_FIX          1 // Fix issue when turning NSQ off
+#define MAY23_M0_ADOPTIONS         1 // M0 adoptions towards a better slope M0
+#define NON_UNIFORM_NSQ_BANDING    1 // Change the NSQ cycles reduction frequency bands and TH for better behaviour
+
+#define MD_CTX_CLEAN_UP             1 // Memory reduction for MdEncPassCuData
+#define BLK_MEM_CLEAN_UP            1 // Memory reduction for BlkStruct
+#define SB64_MEM_OPT                1 // Memory reduction for SB size 64
+
+#define MOVE_NSQ_MON_UNIPRED_ME_TO_MD 1 // Move non-sq/non-unipred ME to MD
+#if MOVE_NSQ_MON_UNIPRED_ME_TO_MD
+#define SHUT_ME_CAND_SORTING       1 // Bypass ME bipred search and shut ME cands sorting
+#define PRUNING_PER_INTER_TYPE     1 // Added the ability to signal best_refs per INTER type
+#define PD0_INTER_CAND             1 // Enable all PA_ME cands @ PD0
+#define SHUT_ME_NSQ_SEARCH         1 // Disable NSQ search @ ME, and use sub-block MV(s)/distortion(s) to derive MVs for NSQ blocks
+#define FIX_SHUT_ME_NSQ_SEARCH     1 // Use the parent SQ MV as NSQ MV
+#define ADD_MD_NSQ_SEARCH          1 // Perform NSQ motion search @ MD
+#define NSQ_REMOVAL_CODE_CLEAN_UP  1 // Remove NSQ circuitry from ME
+#define NSQ_ME_CONTEXT_CLEAN_UP    1 // Remove NSQ variable(s) from ME context
+#define REMOVE_ME_BIPRED_SEARCH    1 // Remove ME bipred search circuitry
+#define REMOVE_MRP_MODE            1 // Remove mrp_mode
+#define USE_SUB_BLOCK_MVC          1 // Use up to 4 additional MVC (sub-block MV(s)) @ MD NSQ motion search
+#endif
+#define MOVE_SUB_PEL_ME_TO_MD         1 // Move subpel ME to MD/TF
+#if MOVE_SUB_PEL_ME_TO_MD
+#define REMOVE_ME_SUBPEL_CODE      1 // Shut subpel ME
+#define PERFORM_SUB_PEL_TF         1 // Perform subpel @ TF
+#define PERFORM_SUB_PEL_MD         1 // Perform subpel @ MD
+#define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0)
+#define SEARCH_TOP_N               1 // Perform 1/2 Pel search @ MD for the top N Full-Pel position(s). Used N=5 for M0 and N=3 for M1
+
+
+#endif
 #endif
 
 ///////// END MASTER_SYNCH
@@ -327,18 +386,24 @@ extern "C" {
     ((AOM_BORDER_IN_PIXELS >> subsampling) - AOM_INTERP_EXTEND)
 #define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
     (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
-
+#if !REMOVE_ME_SUBPEL_CODE
 #define H_PEL_SEARCH_WIND_3 3 // 1/2-pel serach window 3
 #define H_PEL_SEARCH_WIND_2 2 // 1/2-pel serach window 2
 #define Q_PEL_SEARCH_WIND 2 // 1/4-pel search window
 #define HP_REF_OPT 1 // Remove redundant positions.
-
+#endif
+#if REMOVE_UNUSED_CODE_PH2
+#define ENABLE_PME_SAD              0
+#define SWITCH_XY_LOOPS_PME_SAD_SSD 0
+#define RESTRUCTURE_SAD             0
+#else
 #define ENABLE_PME_SAD 0
 #define SWITCH_XY_LOOPS_PME_SAD_SSD 0
 #if SWITCH_XY_LOOPS_PME_SAD_SSD
 #define RESTRUCTURE_SAD 1
 #endif
-
+#endif
+#if !REMOVE_ME_SUBPEL_CODE
 #define FIX_HBD_R2R 1 // Fix 10bit error in over-boundaries CUs (incomplete SB)
 
 typedef enum MeHpMode {
@@ -346,6 +411,7 @@ typedef enum MeHpMode {
     REFINEMENT_HP_MODE = 1,// Refinement 1/2-pel serach mode.
     SWITCHABLE_HP_MODE = 2 // Switch between EX_HP_MODE and REFINEMENT_HP_MODE mode.
 } MeHpMode;
+#endif
 typedef enum GM_LEVEL {
     GM_FULL      = 0, // Exhaustive search mode.
     GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
@@ -403,7 +469,11 @@ enum {
  * this number can be increased by increasing the constant
  * FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
  */
+#if NOISE_BASED_TF_FRAMES
+#define ALTREF_MAX_NFRAMES 13
+#else
 #define ALTREF_MAX_NFRAMES 10
+#endif
 #define ALTREF_MAX_STRENGTH 6
 #define PAD_VALUE (128 + 32)
 #define PAD_VALUE_SCALED (128 + 128 + 32)

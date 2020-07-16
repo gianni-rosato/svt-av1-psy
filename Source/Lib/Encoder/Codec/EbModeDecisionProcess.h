@@ -40,9 +40,12 @@ extern "C" {
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
-
+#if !PERFORM_SUB_PEL_MD
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
-
+#endif
+#if SEARCH_TOP_N
+#define MD_MOTION_SEARCH_MAX_BEST_MV 8
+#endif
 /**************************************
       * Macros
       **************************************/
@@ -61,12 +64,14 @@ typedef struct MdEncPassCuData {
     uint64_t skip_cost;
     uint64_t merge_cost;
     uint64_t chroma_distortion;
+#if !MD_CTX_CLEAN_UP
     uint64_t y_full_distortion[DIST_CALC_TOTAL];
     uint64_t y_coeff_bits;
     uint32_t y_has_coeff;
     uint64_t fast_luma_rate;
     uint16_t y_count_non_zero_coeffs
         [4]; // Store nonzero CoeffNum, per TU. If one TU, stored in 0, otherwise 4 tus stored in 0 to 3
+#endif
 } MdEncPassCuData;
 
 typedef struct {
@@ -835,6 +840,9 @@ typedef void (*EbLambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
      **************************************/
 extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
                                               EbColorFormat        color_format,
+#if SB64_MEM_OPT
+                                              uint8_t sb_size,
+#endif
                                               EbFifo *mode_decision_configuration_input_fifo_ptr,
                                               EbFifo *mode_decision_output_fifo_ptr,
                                               uint8_t enable_hbd_mode_decision,

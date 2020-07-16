@@ -930,6 +930,40 @@ EbBool mrp_is_already_injected_mv_bipred(ModeDecisionContext *context_ptr, int16
     return (EB_FALSE);
 }
 
+#if PRUNING_PER_INTER_TYPE
+EbBool is_valid_unipred_ref(
+    struct ModeDecisionContext *context_ptr,
+    uint8_t inter_cand_group,
+    uint8_t list_idx, uint8_t ref_idx) {
+    if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[inter_cand_group])) {
+        return EB_FALSE;
+    }
+    else {
+        return EB_TRUE;
+    }
+}
+
+EbBool is_valid_bipred_ref(
+    struct ModeDecisionContext *context_ptr,
+    uint8_t inter_cand_group,
+    uint8_t list_idx_0, uint8_t ref_idx_0,
+    uint8_t list_idx_1, uint8_t ref_idx_1) {
+
+    // Both ref should be 1 for bipred refs to be valid: if 1 is not best_refs then there is a chance to exit the injection
+    if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx_0][ref_idx_0].do_ref ||
+        !context_ptr->ref_filtering_res[inter_cand_group][list_idx_1][ref_idx_1].do_ref )
+    {
+        // Check whether we should check the closest, if no then there no need to move forward and return false
+        if (!context_ptr->ref_pruning_ctrls.closest_refs[inter_cand_group])
+            return EB_FALSE;
+
+        // Else check if ref are LAST and BWD, if not then return false
+        if (ref_idx_0 || ref_idx_1)
+            return EB_FALSE;
+    }
+    return EB_TRUE;
+}
+#endif
 #define BIPRED_3x3_REFINMENT_POSITIONS 8
 
 int8_t allow_refinement_flag[BIPRED_3x3_REFINMENT_POSITIONS] = {1, 0, 1, 0, 1, 0, 1, 0};
@@ -3810,7 +3844,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                 context_ptr->injected_ref_type_l0_array[context_ptr->injected_mv_count_l0] =
                     to_inject_ref_type;
                 ++context_ptr->injected_mv_count_l0;
+#if !PD0_INTER_CAND
                 if (context_ptr->best_me_cand_only_flag) break;
+#endif
             }
         }
 
@@ -3961,7 +3997,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr->injected_ref_type_l1_array[context_ptr->injected_mv_count_l1] =
                         to_inject_ref_type;
                     ++context_ptr->injected_mv_count_l1;
+#if !PD0_INTER_CAND
                     if (context_ptr->best_me_cand_only_flag) break;
+#endif
                 }
             }
             /**************
@@ -4140,7 +4178,9 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                             context_ptr->injected_ref_type_bipred_array
                                 [context_ptr->injected_mv_count_bipred] = to_inject_ref_type;
                             ++context_ptr->injected_mv_count_bipred;
+#if !PD0_INTER_CAND
                             if (context_ptr->best_me_cand_only_flag) break;
+#endif
                         }
                     }
                 }

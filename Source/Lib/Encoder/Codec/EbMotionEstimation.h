@@ -171,8 +171,11 @@ extern "C" {
         16, 17, 18, 19, 24, 25, 26, 27,
         20, 21, 22, 23, 28, 29, 30, 31,
     };
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    static const uint32_t partition_width[SQUARE_PU_COUNT] = {
+#else
     static const uint32_t partition_width[MAX_ME_PU_COUNT] = {
+#endif
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,              // (16)
@@ -180,6 +183,7 @@ extern "C" {
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,                              // (16)
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,                              // (16)
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,                              // (16)
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 
         //H  Partitions
         64, 64,                                                                      // (2)
@@ -201,9 +205,13 @@ extern "C" {
 
         ,64,64,64,64,
          16,16,16,16
+#endif
     };
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    static const uint32_t partition_height[SQUARE_PU_COUNT] = {
+#else
     static const uint32_t partition_height[MAX_ME_PU_COUNT] = {
+#endif
         64,                                                                          // (1)
         32, 32, 32, 32,                                                              // (4)
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,              // (16)
@@ -211,6 +219,7 @@ extern "C" {
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,                              // (16)
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,                              // (16)
         8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,                              // (16)
+#if !NSQ_ME_CONTEXT_CLEAN_UP
 
         // H Partitions
         32, 32,                                                                      // (2)
@@ -232,9 +241,13 @@ extern "C" {
 
         ,16,16,16,16,
          64,64,64,64
+#endif
     };
-
+#if NSQ_ME_CONTEXT_CLEAN_UP
+    static const uint32_t pu_search_index_map[SQUARE_PU_COUNT][2] = {
+#else
     static const uint32_t pu_search_index_map[MAX_ME_PU_COUNT][2] = {
+#endif
         { 0, 0 },
         { 0, 0 }, { 32, 0 }, { 0, 32 }, { 32, 32 },
         { 0, 0 }, { 16, 0 }, { 32, 0 }, { 48, 0 },
@@ -249,6 +262,7 @@ extern "C" {
         { 0, 40 }, { 8, 40 }, { 16, 40 }, { 24, 40 }, { 32, 40 }, { 40, 40 }, { 48, 40 }, { 56, 40 },
         { 0, 48 }, { 8, 48 }, { 16, 48 }, { 24, 48 }, { 32, 48 }, { 40, 48 }, { 48, 48 }, { 56, 48 },
         { 0, 56 }, { 8, 56 }, { 16, 56 }, { 24, 56 }, { 32, 56 }, { 40, 56 }, { 48, 56 }, { 56, 56 },
+#if !NSQ_ME_CONTEXT_CLEAN_UP
         //H  Partitions
         { 0, 0 },
         { 0, 32 },
@@ -289,6 +303,7 @@ extern "C" {
         { 0, 32},
         { 0, 48},
         { 0, 0}, { 16, 0},{ 32, 0}, { 48, 0}
+#endif
     };
 
     static const uint8_t sub_position_type[16] = { 0, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2 };
@@ -298,6 +313,7 @@ extern "C" {
         uint32_t  src_stride,                      // input parameter, source stride
         uint8_t  *ref,                            // input parameter, reference samples Ptr
         uint32_t  ref_stride);
+#if !REMOVE_UNUSED_CODE
     /*******************************************
     * GetEightHorizontalSearchPointResults_8x8_16x16_PU
     *******************************************/
@@ -358,6 +374,7 @@ extern "C" {
         uint32_t  *p_best_mv64x64,
         uint32_t   mv);
 
+#endif
     extern void ext_all_sad_calculation_8x8_16x16_c(
         uint8_t *src,
         uint32_t src_stride,
@@ -371,6 +388,7 @@ extern "C" {
         uint32_t p_eight_sad16x16[16][8],
         uint32_t p_eight_sad8x8[64][8]);
 
+#if !SHUT_ME_NSQ_SEARCH
     /****************************************************
     Calculate SAD for Rect H, V and H4, V4 partitions
     and update its Motion info if the result SAD is better
@@ -400,6 +418,7 @@ extern "C" {
         uint32_t *p_best_sad_16x64,
         uint32_t *p_best_mv16x64,
         uint32_t mv);
+#endif
 
     /*******************************************
     Calculate SAD for 32x32,64x64 from 16x16
@@ -427,8 +446,11 @@ extern "C" {
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
+#if !REMOVE_ME_SUBPEL_CODE
     void half_pel_refinement_sb(
+#if !SHUT_ME_NSQ_SEARCH
         PictureParentControlSet *pcs_ptr,
+#endif
         MeContext *context_ptr,  // input/output parameter, ME context Ptr, used
                                  // to get/update ME results
         uint8_t *refBuffer, uint32_t ref_stride,
@@ -446,9 +468,12 @@ extern "C" {
                                        // to reference samples
         uint32_t search_area_height,  // input parameter, search area height
         uint32_t search_area_width,  // input parameter, search area width
+#if !SHUT_ME_NSQ_SEARCH
         uint8_t list_index, // reference picture list
         uint8_t ref_pic_index, // reference picture index
+#endif
         uint32_t integer_mv);         // input parameter, integer MV
+#endif
 
 #ifdef __cplusplus
 }

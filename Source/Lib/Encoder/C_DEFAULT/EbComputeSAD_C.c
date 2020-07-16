@@ -5,7 +5,7 @@
 
 #include "EbComputeSAD_C.h"
 #include "EbUtility.h"
-
+#if !REMOVE_ME_SUBPEL_CODE
 /*******************************************
 * combined_averaging_sad
 *
@@ -29,7 +29,7 @@ uint32_t combined_averaging_sad(uint8_t *src, uint32_t src_stride, uint8_t *ref1
 
     return sad;
 }
-
+#endif
 /*******************************************
 *   returns NxM Sum of Absolute Differences
 Note: moved from picture operators.
@@ -333,7 +333,7 @@ uint32_t nxm_sad_kernel_helper_c(const uint8_t *src, uint32_t src_stride, const 
 
     return nxm_sad;
 };
-
+#if !REMOVE_ME_SUBPEL_CODE
 uint32_t nxm_sad_avg_kernel_helper_c(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
                                      uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
                                      uint32_t height, uint32_t width) {
@@ -357,3 +357,4 @@ uint32_t nxm_sad_avg_kernel_helper_c(uint8_t *src, uint32_t src_stride, uint8_t 
 
     return nxm_sad_avg;
 }
+#endif

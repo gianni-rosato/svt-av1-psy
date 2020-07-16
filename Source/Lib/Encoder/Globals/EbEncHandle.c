@@ -90,8 +90,12 @@
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
+#if NOISE_BASED_TF_FRAMES
+#define SCD_LAD                                             12
+#else
 
 #define SCD_LAD                                              6
+#endif
 
 /**************************************
  * Globals
@@ -2113,6 +2117,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #else
     scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M6) ? 0 : 1;
 #endif
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     //0: NSQ absent
     //1: NSQ present
 #if MAR10_ADOPTIONS
@@ -2120,6 +2125,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->nsq_present = 1;
 #else
     scs_ptr->nsq_present = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#endif
 #endif
     // Set down-sampling method     Settings
     // 0                            0: filtering
@@ -2986,12 +2992,12 @@ static EbErrorType verify_settings(
       SVT_LOG("Error instance %u: Invalid spatial_sse_fl flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->spatial_sse_fl);
       return_error = EB_ErrorBadParameter;
     }
-
+#if !REMOVE_ME_SUBPEL_CODE
     if (config->enable_subpel != 0 && config->enable_subpel != 1 && config->enable_subpel != -1) {
       SVT_LOG("Error instance %u: Invalid enable_subpel flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_subpel);
       return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->over_bndry_blk != 0 && config->over_bndry_blk != 1 && config->over_bndry_blk != -1) {
       SVT_LOG("Error instance %u: Invalid over_bndry_blk flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->over_bndry_blk);
       return_error = EB_ErrorBadParameter;
@@ -3240,7 +3246,11 @@ EbErrorType eb_svt_enc_init_parameter(
 
     // Alt-Ref default values
     config_ptr->enable_altrefs = EB_TRUE;
+#if NOISE_BASED_TF_FRAMES
+    config_ptr->altref_nframes = ALTREF_MAX_NFRAMES;
+#else
     config_ptr->altref_nframes = 7;
+#endif
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_FALSE;
 

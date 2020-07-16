@@ -1676,24 +1676,42 @@ static void motion_estimation_context_dctor(EbPtr p) {
 EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr,
                                            const EbEncHandle *enc_handle_ptr, int index) {
     MotionEstimationContext_t *context_ptr;
+#if !REMOVE_ME_SUBPEL_CODE
     const SequenceControlSet * scs_ptr;
+#endif
 
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = motion_estimation_context_dctor;
-
+#if !REMOVE_ME_SUBPEL_CODE
     scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
-
+#endif
     context_ptr->picture_decision_results_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
         enc_handle_ptr->picture_decision_results_resource_ptr, index);
     context_ptr->motion_estimation_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, index);
+#if REMOVE_ME_SUBPEL_CODE
+    EB_NEW(context_ptr->me_context_ptr,
+        me_context_ctor);
+#elif REMOVE_MRP_MODE
+    EB_NEW(context_ptr->me_context_ptr,
+        me_context_ctor,
+        scs_ptr->max_input_luma_width,
+        scs_ptr->max_input_luma_height);
+#elif NSQ_REMOVAL_CODE_CLEAN_UP
+    EB_NEW(context_ptr->me_context_ptr,
+        me_context_ctor,
+        scs_ptr->max_input_luma_width,
+        scs_ptr->max_input_luma_height,
+        scs_ptr->mrp_mode);
+#else
     EB_NEW(context_ptr->me_context_ptr,
            me_context_ctor,
            scs_ptr->max_input_luma_width,
            scs_ptr->max_input_luma_height,
            scs_ptr->nsq_present,
            scs_ptr->mrp_mode);
+#endif
     return EB_ErrorNone;
 }
 

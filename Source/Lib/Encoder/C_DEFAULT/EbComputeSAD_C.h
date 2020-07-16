@@ -16,11 +16,12 @@ uint32_t fast_loop_nxm_sad_kernel(const uint8_t *src, // input parameter, source
                                   uint32_t       ref_stride, // input parameter, reference stride
                                   uint32_t       height, // input parameter, block height (M)
                                   uint32_t       width); // input parameter, block width (N)
+#if !REMOVE_ME_SUBPEL_CODE
 
 uint32_t combined_averaging_sad(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
                                 uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
                                 uint32_t height, uint32_t width);
-
+#endif
 void sad_loop_kernel_sparse_c(
     uint8_t * src, // input parameter, source samples Ptr
     uint32_t  srcStride, // input parameter, source stride
@@ -58,10 +59,11 @@ void pme_sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
 uint32_t nxm_sad_kernel_helper_c(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
                                  uint32_t ref_stride, uint32_t height, uint32_t width);
 
+#if !REMOVE_ME_SUBPEL_CODE
 uint32_t nxm_sad_avg_kernel_helper_c(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
                                      uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
                                      uint32_t height, uint32_t width);
-
+#endif
 #ifdef __cplusplus
 }
 #endif

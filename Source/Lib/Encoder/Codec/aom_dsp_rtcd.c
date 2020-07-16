@@ -331,13 +331,17 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     svt_av1_apply_temporal_filter_planewise = svt_av1_apply_temporal_filter_planewise_c;
     svt_av1_apply_temporal_filter_planewise_hbd = svt_av1_apply_temporal_filter_planewise_hbd_c;
     svt_av1_apply_filtering_highbd = svt_av1_apply_filtering_highbd_c;
+#if !REMOVE_ME_SUBPEL_CODE
     combined_averaging_ssd = combined_averaging_ssd_c;
+#endif
     ext_sad_calculation_8x8_16x16 = ext_sad_calculation_8x8_16x16_c;
     ext_sad_calculation_32x32_64x64 = ext_sad_calculation_32x32_64x64_c;
     sad_calculation_8x8_16x16 = sad_calculation_8x8_16x16_c;
     sad_calculation_32x32_64x64 = sad_calculation_32x32_64x64_c;
     ext_all_sad_calculation_8x8_16x16 = ext_all_sad_calculation_8x8_16x16_c;
+#if !SHUT_ME_NSQ_SEARCH
     ext_eigth_sad_calculation_nsq = ext_eigth_sad_calculation_nsq_c;
+#endif
     ext_eight_sad_calculation_32x32_64x64 = ext_eight_sad_calculation_32x32_64x64_c;
     eb_sad_kernel4x4 = fast_loop_nxm_sad_kernel;
     get_eight_horizontal_search_point_results_8x8_16x16_pu = get_eight_horizontal_search_point_results_8x8_16x16_pu_c;
@@ -346,8 +350,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     initialize_buffer_32bits = initialize_buffer_32bits_c;
     nxm_sad_kernel_sub_sampled = nxm_sad_kernel_helper_c;
     nxm_sad_kernel = nxm_sad_kernel_helper_c;
+#if !REMOVE_ME_SUBPEL_CODE
     nxm_sad_avg_kernel = nxm_sad_avg_kernel_helper_c;
-
+#endif
     compute_mean_8x8 = compute_mean_c;
     compute_mean_square_values_8x8 = compute_mean_squared_values_c;
     compute_sub_mean_8x8 = compute_sub_mean_8x8_c;
@@ -653,28 +658,34 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     SET_SSE41(svt_av1_apply_filtering_highbd,
                         svt_av1_apply_filtering_highbd_c,
                         svt_av1_highbd_apply_temporal_filter_sse4_1);
+#if !REMOVE_ME_SUBPEL_CODE
                     SET_AVX2_AVX512(combined_averaging_ssd,
                         combined_averaging_ssd_c,
                         combined_averaging_ssd_avx2,
                         combined_averaging_ssd_avx512);
+#endif
                     SET_AVX2(ext_sad_calculation_8x8_16x16,
                         ext_sad_calculation_8x8_16x16_c,
                         ext_sad_calculation_8x8_16x16_avx2_intrin);
                     SET_SSE41(ext_sad_calculation_32x32_64x64,
                         ext_sad_calculation_32x32_64x64_c,
                         ext_sad_calculation_32x32_64x64_sse4_intrin);
+#if !REMOVE_UNUSED_CODE
                     SET_SSE2(sad_calculation_8x8_16x16,
                         sad_calculation_8x8_16x16_c,
                         sad_calculation_8x8_16x16_sse2_intrin);
                     SET_SSE2(sad_calculation_32x32_64x64,
                         sad_calculation_32x32_64x64_c,
                         sad_calculation_32x32_64x64_sse2_intrin);
+#endif
                     SET_AVX2(ext_all_sad_calculation_8x8_16x16,
                         ext_all_sad_calculation_8x8_16x16_c,
                         ext_all_sad_calculation_8x8_16x16_avx2);
+#if !SHUT_ME_NSQ_SEARCH
                     SET_AVX2(ext_eigth_sad_calculation_nsq,
                         ext_eigth_sad_calculation_nsq_c,
                         ext_eigth_sad_calculation_nsq_avx2);
+#endif
                     SET_AVX2(ext_eight_sad_calculation_32x32_64x64,
                         ext_eight_sad_calculation_32x32_64x64_c,
                         ext_eight_sad_calculation_32x32_64x64_avx2);
@@ -695,9 +706,11 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                         nxm_sad_kernel_sub_sampled_helper_avx2);
 
                     SET_AVX2(nxm_sad_kernel, nxm_sad_kernel_helper_c, nxm_sad_kernel_helper_avx2);
+#if !REMOVE_ME_SUBPEL_CODE
                     SET_AVX2(nxm_sad_avg_kernel, nxm_sad_avg_kernel_helper_c, nxm_sad_avg_kernel_helper_avx2);
                     SET_SSE2_AVX2(
                         compute_mean_8x8, compute_mean_c, compute_mean8x8_sse2_intrin, compute_mean8x8_avx2_intrin);
+#endif
                     SET_SSE2(compute_mean_square_values_8x8,
                         compute_mean_squared_values_c,
                         compute_mean_of_squared_values8x8_sse2_intrin);

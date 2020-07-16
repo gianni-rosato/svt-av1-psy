@@ -356,8 +356,12 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 
     dst->rest_segment_column_count      = src->rest_segment_column_count;
     dst->rest_segment_row_count         = src->rest_segment_row_count;
+#if !REMOVE_MRP_MODE
     dst->mrp_mode                       = src->mrp_mode;
+#endif
+#if !NSQ_REMOVAL_CODE_CLEAN_UP
     dst->nsq_present                    = src->nsq_present;
+#endif
     dst->cdf_mode                       = src->cdf_mode;
     dst->down_sampling_method_me_search = src->down_sampling_method_me_search;
     dst->tf_segment_column_count        = src->tf_segment_column_count;

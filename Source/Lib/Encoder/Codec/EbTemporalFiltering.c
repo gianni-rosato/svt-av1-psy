@@ -1096,11 +1096,20 @@ static void apply_filtering_central_highbd(uint16_t **pred_16bit, uint32_t **acc
 *   point will be modified.
 ***************************************************************************************************/
 void svt_av1_apply_temporal_filter_planewise_c(
+#if TF_IMP
+    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
+    const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#else
     const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
     const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
     int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#endif
     unsigned int       i, j, k, m;
     int                idx, idy;
     uint64_t           sum_square_diff;
@@ -1142,13 +1151,63 @@ void svt_av1_apply_temporal_filter_planewise_c(
                     ++num_ref_pixels;
                 }
             }
+#if TF_IMP
+            // Combine window error and block error, and normalize it.
+            double window_error = (double)sum_square_diff / num_ref_pixels;
+
+            const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
+            double block_error;
+            int idx_32x32 = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32])
+                // 16x16
+                block_error = (double)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + subblock_idx]/256;
+            else
+                //32x32
+                block_error = (double)context_ptr->tf_32x32_block_error[idx_32x32] / 1024;
+
+            double combined_error =
+                (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
+                (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+            // Decay factors for non-local mean approach.
+            // Larger noise -> larger filtering weight.
+            double n_decay = (double)decay_control * (0.7 + log(noise_levels[0] + 1.0));
+            // Smaller q -> smaller filtering weight. WIP
+            const double q_decay = 1;
+              //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
+            // Smaller strength -> smaller filtering weight. WIP
+            const double s_decay = 1;
+            // CLIP(
+            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
+            // Larger motion vector -> smaller filtering weight.
+            MV mv;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+                // 16x16
+                mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];
+                mv.row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + subblock_idx];
+            }
+            else{
+                //32x32
+                mv.col = context_ptr->tf_32x32_mv_x[idx_32x32];
+                mv.row = context_ptr->tf_32x32_mv_y[idx_32x32];
+            }
+            const double distance = sqrt(pow(mv.row, 2) + pow(mv.col, 2));
+            const double distance_threshold =
+                (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+            const double d_factor = AOMMAX(distance / distance_threshold, 1);
+
+            // Compute filter weight.
+            double scaled_diff =
+                AOMMIN(combined_error * d_factor / (2*n_decay*n_decay) / q_decay / s_decay, 7);
+            int adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
             // Control factor for non-local mean approach.
             double r = (double)decay_control * (0.7 + log(noise_levels[0] + 1.0));
 
             double scaled_diff =
                 AOMMAX(-(double)(sum_square_diff / num_ref_pixels) / (2 * r * r), -15.0);
             int adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
-
+#endif
             k = i * y_pre_stride + j;
             y_count[k] += adjusted_weight;
             y_accum[k] += adjusted_weight * pixel_value;
@@ -1186,17 +1245,51 @@ void svt_av1_apply_temporal_filter_planewise_c(
                 }
 
                 m = (i >> ss_y) * uv_pre_stride + (j >> ss_x);
+#if TF_IMP
+            // Combine window error and block error, and normalize it.
+                double window_error = (double)u_sum_square_diff / num_ref_pixels;
+                combined_error =
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+                // Decay factors for non-local mean approach.
+                // Larger noise -> larger filtering weight.
+                n_decay = (double)decay_control * (0.7 + log(noise_levels[1] + 1.0));
+                // Compute filter weight.
+                scaled_diff =
+                    AOMMIN(combined_error * d_factor / (2*n_decay*n_decay) / q_decay / s_decay, 7);
+                adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
                 r = (double)decay_control * (0.7 + log(noise_levels[1] + 1.0));
                 scaled_diff =
                     AOMMAX(-(double)(u_sum_square_diff / num_ref_pixels) / (2 * r * r), -15.0);
                 adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+#endif
                 u_count[m] += adjusted_weight;
                 u_accum[m] += adjusted_weight * u_pixel_value;
+
+#if TF_IMP
+                // Combine window error and block error, and normalize it.
+                window_error = (double)v_sum_square_diff / num_ref_pixels;
+                combined_error =
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+                // Decay factors for non-local mean approach.
+                // Larger noise -> larger filtering weight.
+                n_decay = (double)decay_control * (0.7 + log(noise_levels[2] + 1.0));
+
+                // Compute filter weight.
+                scaled_diff =
+                AOMMIN(combined_error * d_factor / (2 * n_decay*n_decay) / q_decay / s_decay, 7);
+                adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
                 r = (double)decay_control * (0.7 + log(noise_levels[2] + 1.0));
 
                 scaled_diff =
                     AOMMAX(-(double)(v_sum_square_diff / num_ref_pixels) / (2 * r * r), -15.0);
                 adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+#endif
                 v_count[m] += adjusted_weight;
                 v_accum[m] += adjusted_weight * v_pixel_value;
             }
@@ -1220,11 +1313,20 @@ void svt_av1_apply_temporal_filter_planewise_c(
 *   point will be modified.
 ***************************************************************************************************/
 void svt_av1_apply_temporal_filter_planewise_hbd_c(
+#if TF_IMP
+    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+    const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#else
     const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
     const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
     int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#endif
     unsigned int       i, j, k, m;
     int                idx, idy;
     uint64_t           sum_square_diff;
@@ -1266,6 +1368,60 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                     ++num_ref_pixels;
                 }
             }
+#if TF_IMP
+            // Combine window error and block error, and normalize it.
+            // Scale down the difference for high bit depth input.
+            sum_square_diff >>= 4;
+            double window_error = (double)sum_square_diff / num_ref_pixels;
+
+            const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
+            double block_error;
+            int idx_32x32 = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32])
+                // 16x16
+                // Scale down the difference for high bit depth input.
+                block_error = (double)(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + subblock_idx]>>4) / 256;
+            else
+                //32x32
+                // Scale down the difference for high bit depth input.
+                block_error = (double)(context_ptr->tf_32x32_block_error[idx_32x32]>>4) / 1024;
+
+            double combined_error =
+                (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
+                (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+            // Decay factors for non-local mean approach.
+            // Larger noise -> larger filtering weight.
+            double n_decay = (double)decay_control * (0.7 + log(noise_levels[0] + 1.0));
+            // Smaller q -> smaller filtering weight. WIP
+            const double q_decay = 1;
+            //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
+          // Smaller strength -> smaller filtering weight. WIP
+            const double s_decay = 1;
+            // CLIP(
+            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
+            // Larger motion vector -> smaller filtering weight.
+            MV mv;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+                // 16x16
+                mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];
+                mv.row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + subblock_idx];
+            }
+            else {
+                //32x32
+                mv.col = context_ptr->tf_32x32_mv_x[idx_32x32];
+                mv.row = context_ptr->tf_32x32_mv_y[idx_32x32];
+            }
+            const double distance = sqrt(pow(mv.row, 2) + pow(mv.col, 2));
+            const double distance_threshold =
+                (double)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+            const double d_factor = AOMMAX(distance / distance_threshold, 1);
+
+            // Compute filter weight.
+            double scaled_diff =
+                AOMMIN(combined_error * d_factor / (2 * n_decay*n_decay) / q_decay / s_decay, 7);
+            int adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
             // Control factor for non-local mean approach.
             double r = (double)decay_control * (0.7 + log(noise_levels[0] + 1.0));
 
@@ -1274,7 +1430,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
             double scaled_diff =
                 AOMMAX(-(double)(sum_square_diff / num_ref_pixels) / (2 * r * r), -15.0);
             int adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
-
+#endif
             k = i * y_pre_stride + j;
             y_count[k] += adjusted_weight;
             y_accum[k] += adjusted_weight * pixel_value;
@@ -1312,6 +1468,24 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                 }
 
                 m = (i >> ss_y) * uv_pre_stride + (j >> ss_x);
+#if TF_IMP
+                // Scale down the difference for high bit depth input.
+                u_sum_square_diff >>= 4;
+                v_sum_square_diff >>= 4;
+                // Combine window error and block error, and normalize it.
+                double window_error = (double)u_sum_square_diff / num_ref_pixels;
+                combined_error =
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+                // Decay factors for non-local mean approach.
+                // Larger noise -> larger filtering weight.
+                n_decay = (double)decay_control * (0.7 + log(noise_levels[1] + 1.0));
+                // Compute filter weight.
+                scaled_diff =
+                    AOMMIN(combined_error * d_factor / (2 * n_decay*n_decay) / q_decay / s_decay, 7);
+                adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
                 r = (double)decay_control * (0.7 + log(noise_levels[1] + 1.0));
                 // Scale down the difference for high bit depth input.
                 u_sum_square_diff >>= 4;
@@ -1319,13 +1493,32 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                 scaled_diff =
                     AOMMAX(-(double)(u_sum_square_diff / num_ref_pixels) / (2 * r * r), -15.0);
                 adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+#endif
                 u_count[m] += adjusted_weight;
                 u_accum[m] += adjusted_weight * u_pixel_value;
+
+#if TF_IMP
+                // Combine window error and block error, and normalize it.
+                window_error = (double)v_sum_square_diff / num_ref_pixels;
+                combined_error =
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
+                    (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+
+                // Decay factors for non-local mean approach.
+                // Larger noise -> larger filtering weight.
+                n_decay = (double)decay_control * (0.7 + log(noise_levels[2] + 1.0));
+
+                // Compute filter weight.
+                scaled_diff =
+                    AOMMIN(combined_error * d_factor / (2 * n_decay*n_decay) / q_decay / s_decay, 7);
+                adjusted_weight = (int)(exp(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
                 r = (double)decay_control * (0.7 + log(noise_levels[2] + 1.0));
 
                 scaled_diff =
                     AOMMAX(-(double)(v_sum_square_diff / num_ref_pixels) / (2 * r * r), -15.0);
                 adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+#endif
                 v_count[m] += adjusted_weight;
                 v_accum[m] += adjusted_weight * v_pixel_value;
             }
@@ -1353,7 +1546,12 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
 *   point will be modified.
 ***************************************************************************************************/
 static void apply_filtering_block_plane_wise(
+#if TF_IMP
+    MeContext *context_ptr, int block_row, int block_col, EbByte *src, uint16_t **src_16bit,
+    EbByte *pred,
+#else
     int block_row, int block_col, EbByte *src, uint16_t **src_16bit, EbByte *pred,
+#endif
     uint16_t **pred_16bit, uint32_t **accum, uint16_t **count, uint32_t *stride,
     uint32_t *stride_pred, int block_width, int block_height, uint32_t ss_x, uint32_t ss_y,
     const double *noise_levels, const int decay_control, EbBool is_highbd) {
@@ -1396,7 +1594,11 @@ static void apply_filtering_block_plane_wise(
         pred_ptr[C_U] = pred[C_U] + offset_block_buffer_U;
         pred_ptr[C_V] = pred[C_V] + offset_block_buffer_V;
 
-        svt_av1_apply_temporal_filter_planewise(src_ptr[C_Y],
+        svt_av1_apply_temporal_filter_planewise(
+#if TF_IMP
+            context_ptr,
+#endif
+            src_ptr[C_Y],
             stride[C_Y],
             pred_ptr[C_Y],
             stride_pred[C_Y],
@@ -1430,7 +1632,11 @@ static void apply_filtering_block_plane_wise(
 
         // Apply the temporal filtering strategy
         // TODO(any): avx2 version should also support high bit-depth.
-        svt_av1_apply_temporal_filter_planewise_hbd(src_ptr_16bit[C_Y],
+        svt_av1_apply_temporal_filter_planewise_hbd(
+#if TF_IMP
+            context_ptr,
+#endif
+            src_ptr_16bit[C_Y],
             stride[C_Y],
             pred_ptr_16bit[C_Y],
             stride_pred[C_Y],
@@ -1545,11 +1751,171 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
             mv_unit.mv->y = mv_unit.mv->y << 1;
 
             context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16] = INT_MAX;
-
+#if !PERFORM_SUB_PEL_TF
             signed short best_mv_x = 0;
             signed short best_mv_y = 0;
+#endif
             signed short mv_x = (_MVXT(context_ptr->p_best_mv16x16[mv_index])) << 1;
             signed short mv_y = (_MVYT(context_ptr->p_best_mv16x16[mv_index])) << 1;
+#if PERFORM_SUB_PEL_TF
+            signed short best_mv_x = mv_x;
+            signed short best_mv_y = mv_y;
+#endif
+#if PERFORM_SUB_PEL_TF
+            // Perform 1/2 Pel MV Refinement
+            for (signed short i = -4; i <= 4; i = i + 4) {
+                for (signed short j = -4; j <= 4; j = j + 4) {
+
+                    mv_unit.mv->x = mv_x + i;
+                    mv_unit.mv->y = mv_y + j;
+
+                    av1_inter_prediction(NULL, //pcs_ptr,
+                        (uint32_t)interp_filters,
+                        &blk_ptr,
+                        0, //ref_frame_type,
+                        &mv_unit,
+                        0, //use_intrabc,
+                        SIMPLE_TRANSLATION,
+                        0,
+                        0,
+                        1, //compound_idx not used
+                        NULL, // interinter_comp not used
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        0,
+                        0,
+                        0,
+                        0,
+                        pu_origin_x,
+                        pu_origin_y,
+                        bsize,
+                        bsize,
+                        !is_highbd ? pic_ptr_ref : &reference_ptr,
+                        NULL, //ref_pic_list1,
+                        &prediction_ptr,
+                        local_origin_x,
+                        local_origin_y,
+                        0, //perform_chroma,
+                        (uint8_t)encoder_bit_depth);
+
+                    uint64_t distortion;
+                    if (!is_highbd) {
+                        uint8_t *pred_y_ptr =
+                            pred[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                        uint8_t *src_y_ptr =
+                            src[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+
+                        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+
+                        unsigned int sse;
+                        distortion = fn_ptr->vf(
+                            pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], &sse);
+                    }
+                    else {
+                        uint16_t *pred_y_ptr =
+                            pred_16bit[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                        uint16_t *src_y_ptr =
+                            src_16bit[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+
+                        unsigned int sse;
+#if PR_1311
+                        distortion = variance_highbd(
+#else
+                        distortion = variance_highbd_c(
+#endif
+                            pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 16, 16, &sse);
+                    }
+                    if (distortion < context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16]) {
+                        context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16] = distortion;
+                        best_mv_x = mv_unit.mv->x;
+                        best_mv_y = mv_unit.mv->y;
+                    }
+                }
+            }
+
+            mv_x = best_mv_x;
+            mv_y = best_mv_y;
+
+            // Perform 1/4 Pel MV Refinement
+            for (signed short i = -2; i <= 2; i = i + 2) {
+                for (signed short j = -2; j <= 2; j = j + 2) {
+
+                    mv_unit.mv->x = mv_x + i;
+                    mv_unit.mv->y = mv_y + j;
+
+                    av1_inter_prediction(NULL, //pcs_ptr,
+                        (uint32_t)interp_filters,
+                        &blk_ptr,
+                        0, //ref_frame_type,
+                        &mv_unit,
+                        0, //use_intrabc,
+                        SIMPLE_TRANSLATION,
+                        0,
+                        0,
+                        1, //compound_idx not used
+                        NULL, // interinter_comp not used
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        0,
+                        0,
+                        0,
+                        0,
+                        pu_origin_x,
+                        pu_origin_y,
+                        bsize,
+                        bsize,
+                        !is_highbd ? pic_ptr_ref : &reference_ptr,
+                        NULL, //ref_pic_list1,
+                        &prediction_ptr,
+                        local_origin_x,
+                        local_origin_y,
+                        0, //perform_chroma,
+                        (uint8_t)encoder_bit_depth);
+
+                    uint64_t distortion;
+                    if (!is_highbd) {
+                        uint8_t *pred_y_ptr =
+                            pred[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                        uint8_t *src_y_ptr =
+                            src[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+
+                        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
+
+                        unsigned int sse;
+                        distortion = fn_ptr->vf(
+                            pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], &sse);
+                    }
+                    else {
+                        uint16_t *pred_y_ptr =
+                            pred_16bit[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                        uint16_t *src_y_ptr =
+                            src_16bit[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+                        ;
+
+                        unsigned int sse;
+#if PR_1311
+                        distortion = variance_highbd(
+#else
+                        distortion = variance_highbd_c(
+#endif
+                            pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 16, 16, &sse);
+                    }
+                    if (distortion < context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16]) {
+                        context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16] = distortion;
+                        best_mv_x = mv_unit.mv->x;
+                        best_mv_y = mv_unit.mv->y;
+                    }
+                }
+            }
+
+            mv_x = best_mv_x;
+            mv_y = best_mv_y;
+            // Perform 1/8 Pel MV Refinement
+#endif
 
             for (signed short i = -1; i <= 1; i++) {
                 for (signed short j = -1; j <= 1; j++) {
@@ -1708,11 +2074,170 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         mv_unit.mv->y = mv_unit.mv->y << 1;
 
         context_ptr->tf_32x32_block_error[idx_32x32] = INT_MAX;
+#if !PERFORM_SUB_PEL_TF
 
         signed short best_mv_x = 0;
         signed short best_mv_y = 0;
+#endif
         signed short mv_x = (_MVXT(context_ptr->p_best_mv32x32[mv_index])) << 1;
         signed short mv_y = (_MVYT(context_ptr->p_best_mv32x32[mv_index])) << 1;
+#if PERFORM_SUB_PEL_TF
+        signed short best_mv_x = mv_x;
+        signed short best_mv_y = mv_y;
+#endif
+#if PERFORM_SUB_PEL_TF
+        // Perform 1/2 Pel MV Refinement
+        for (signed short i = -4; i <= 4; i = i + 4) {
+            for (signed short j = -4; j <= 4; j = j + 4) {
+
+                mv_unit.mv->x = mv_x + i;
+                mv_unit.mv->y = mv_y + j;
+
+                av1_inter_prediction(NULL, //pcs_ptr,
+                    (uint32_t)interp_filters,
+                    &blk_ptr,
+                    0, //ref_frame_type,
+                    &mv_unit,
+                    0, //use_intrabc,
+                    SIMPLE_TRANSLATION,
+                    0,
+                    0,
+                    1, //compound_idx not used
+                    NULL, // interinter_comp not used
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0,
+                    0,
+                    0,
+                    0,
+                    pu_origin_x,
+                    pu_origin_y,
+                    bsize,
+                    bsize,
+                    !is_highbd ? pic_ptr_ref : &reference_ptr,
+                    NULL, //ref_pic_list1,
+                    &prediction_ptr,
+                    local_origin_x,
+                    local_origin_y,
+                    0, //perform_chroma,
+                    (uint8_t)encoder_bit_depth);
+
+                uint64_t distortion;
+                if (!is_highbd) {
+                    uint8_t *pred_y_ptr =
+                        pred[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                    uint8_t *src_y_ptr = src[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+
+                    const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_32X32];
+
+                    unsigned int sse;
+                    distortion =
+                        fn_ptr->vf(pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], &sse);
+                }
+                else {
+                    uint16_t *pred_y_ptr =
+                        pred_16bit[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                    uint16_t *src_y_ptr =
+                        src_16bit[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+                    ;
+
+                    unsigned int sse;
+#if PR_1311
+                    distortion = variance_highbd(
+#else
+                    distortion = variance_highbd_c(
+#endif
+                        pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 32, 32, &sse);
+                }
+                if (distortion < context_ptr->tf_32x32_block_error[idx_32x32]) {
+                    context_ptr->tf_32x32_block_error[idx_32x32] = distortion;
+                    best_mv_x = mv_unit.mv->x;
+                    best_mv_y = mv_unit.mv->y;
+                }
+            }
+        }
+
+        mv_x = best_mv_x;
+        mv_y = best_mv_y;
+
+        // Perform 1/4 Pel MV Refinement
+        for (signed short i = -2; i <= 2; i = i + 2) {
+            for (signed short j = -2; j <= 2; j = j + 2) {
+
+                mv_unit.mv->x = mv_x + i;
+                mv_unit.mv->y = mv_y + j;
+
+                av1_inter_prediction(NULL, //pcs_ptr,
+                    (uint32_t)interp_filters,
+                    &blk_ptr,
+                    0, //ref_frame_type,
+                    &mv_unit,
+                    0, //use_intrabc,
+                    SIMPLE_TRANSLATION,
+                    0,
+                    0,
+                    1, //compound_idx not used
+                    NULL, // interinter_comp not used
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    0,
+                    0,
+                    0,
+                    0,
+                    pu_origin_x,
+                    pu_origin_y,
+                    bsize,
+                    bsize,
+                    !is_highbd ? pic_ptr_ref : &reference_ptr,
+                    NULL, //ref_pic_list1,
+                    &prediction_ptr,
+                    local_origin_x,
+                    local_origin_y,
+                    0, //perform_chroma,
+                    (uint8_t)encoder_bit_depth);
+
+                uint64_t distortion;
+                if (!is_highbd) {
+                    uint8_t *pred_y_ptr =
+                        pred[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                    uint8_t *src_y_ptr = src[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+
+                    const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_32X32];
+
+                    unsigned int sse;
+                    distortion =
+                        fn_ptr->vf(pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], &sse);
+                }
+                else {
+                    uint16_t *pred_y_ptr =
+                        pred_16bit[C_Y] + bsize * idx_y * stride_pred[C_Y] + bsize * idx_x;
+                    uint16_t *src_y_ptr =
+                        src_16bit[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
+
+                    unsigned int sse;
+#if PR_1311
+                    distortion = variance_highbd(
+#else
+                    distortion = variance_highbd_c(
+#endif
+                        pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 32, 32, &sse);
+                }
+                if (distortion < context_ptr->tf_32x32_block_error[idx_32x32]) {
+                    context_ptr->tf_32x32_block_error[idx_32x32] = distortion;
+                    best_mv_x = mv_unit.mv->x;
+                    best_mv_y = mv_unit.mv->y;
+                }
+            }
+        }
+
+        mv_x = best_mv_x;
+        mv_y = best_mv_y;
+        // Perform 1/8 Pel MV Refinement
+#endif
 
         for (signed short i = -1; i <= 1; i++) {
             for (signed short j = -1; j <= 1; j++) {
@@ -2435,8 +2960,13 @@ static EbErrorType produce_temporally_filtered_pic(
 // function from libaom
 // Standard bit depht input (=8 bits) to estimate the noise, I don't think there needs to be two methods for this
 // Operates on the Y component only
+#if NOISE_BASED_TF_FRAMES
+double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height,
+    uint16_t stride_y) {
+#else
 static double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height,
                              uint16_t stride_y) {
+#endif
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2472,8 +3002,13 @@ static double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height
 }
 
 // Noise estimation for highbd
+#if NOISE_BASED_TF_FRAMES
+double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride,
+    int bd) {
+#else
 static double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride,
                                     int bd) {
+#endif
     int64_t sum = 0;
     int64_t num = 0;
 
@@ -2739,7 +3274,7 @@ EbErrorType svt_av1_init_temporal_filtering(
     eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     if (picture_control_set_ptr_central->temp_filt_prep_done == 0) {
         picture_control_set_ptr_central->temp_filt_prep_done = 1;
-
+#if !NOISE_BASED_TF_FRAMES
         // allocate 16 bit buffer
         if (is_highbd) {
             EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y],
@@ -2822,6 +3357,7 @@ EbErrorType svt_av1_init_temporal_filtering(
                 (central_picture_ptr->height >> ss_y),
                 central_picture_ptr->stride_cr);
         }
+#endif
         // adjust filter parameter based on the estimated noise of the picture
         adjust_filter_strength(picture_control_set_ptr_central,
                                noise_levels[0],
@@ -2856,7 +3392,11 @@ EbErrorType svt_av1_init_temporal_filtering(
         }
     }
     eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
-
+#if TF_IMP
+    me_context_ptr->me_context_ptr->min_frame_size = MIN(picture_control_set_ptr_central->aligned_height, picture_control_set_ptr_central->aligned_width);
+    // index of the central source frame
+   // index_center = picture_control_set_ptr_central->past_altref_nframes;
+#endif
     // populate source frames picture buffer list
     EbPictureBufferDesc *list_input_picture_ptr[ALTREF_MAX_NFRAMES] = {NULL};
     for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes +

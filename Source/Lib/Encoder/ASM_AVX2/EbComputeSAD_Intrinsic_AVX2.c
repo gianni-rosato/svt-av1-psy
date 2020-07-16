@@ -8289,6 +8289,7 @@ void ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_stride, u
         best_id = _mm256_extract_epi16(m, 0) & 0x07;                                \
     }
 
+#if !SHUT_ME_NSQ_SEARCH
 void ext_eigth_sad_calculation_nsq_avx2(
     uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8], uint32_t p_sad32x32[4][8],
     uint32_t *p_best_sad_64x32, uint32_t *p_best_mv64x32, uint32_t *p_best_sad_32x16,
@@ -8549,7 +8550,7 @@ void ext_eigth_sad_calculation_nsq_avx2(
 #undef SEARCH_BEST
 #undef ADD_VECS
 }
-
+#endif
 void ext_eight_sad_calculation_32x32_64x64_avx2(uint32_t  p_sad16x16[16][8],
                                                 uint32_t *p_best_sad_32x32,
                                                 uint32_t *p_best_sad_64x64,

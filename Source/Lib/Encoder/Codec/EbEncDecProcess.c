@@ -165,6 +165,27 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     }
 
     // Mode Decision Context
+#if SB64_MEM_OPT
+#if CHANGE_HBD_MODE
+    EB_NEW(context_ptr->md_context,
+           mode_decision_context_ctor,
+           color_format,
+           static_config->super_block_size,
+           0,
+           0,
+           enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision ,
+           static_config->screen_content_mode);
+#else
+    EB_NEW(context_ptr->md_context,
+           mode_decision_context_ctor,
+           color_format,
+           static_config->super_block_size,
+           0,
+           0,
+           enable_hbd_mode_decision,
+           static_config->screen_content_mode);
+#endif
+#else
     EB_NEW(context_ptr->md_context,
            mode_decision_context_ctor,
            color_format,
@@ -172,6 +193,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
            0,
            enable_hbd_mode_decision,
            static_config->screen_content_mode);
+#endif
     if (enable_hbd_mode_decision)
         context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
 

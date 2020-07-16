@@ -28,6 +28,9 @@
 #include "EbLog.h"
 #include "common_dsp_rtcd.h"
 #include "EbResize.h"
+#if NOISE_BASED_TF_FRAMES
+#include "EbMalloc.h"
+#endif
 
 /************************************************
  * Defines
@@ -268,8 +271,11 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define POC_CIRCULAR_ADD(base, offset/*, bits*/)             (/*(((int32_t) (base)) + ((int32_t) (offset)) > ((int32_t) (1 << (bits))))   ? ((base) + (offset) - (1 << (bits))) : \
                                                              (((int32_t) (base)) + ((int32_t) (offset)) < 0)                           ? ((base) + (offset) + (1 << (bits))) : \
                                                                                                                                        */((base) + (offset)))
-
+#if NOISE_BASED_TF_FRAMES
+#define FUTURE_WINDOW_WIDTH                 12
+#else
 #define FUTURE_WINDOW_WIDTH                 6
+#endif
 #define FLASH_TH                            5
 #define FADE_TH                             3
 #define SCENE_TH                            3000
@@ -2730,7 +2736,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 //set the ref frame types used for this picture,
+#if  !REMOVE_MRP_MODE || !MRP_CTRL
 static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
+#else
+static void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
+#endif
 {
     MvReferenceFrame rf[2];
     *tot_ref_frames = 0;
@@ -2738,44 +2748,76 @@ static void set_all_ref_frame_type(SequenceControlSet *scs_ptr, PictureParentCon
     //SVT_LOG("POC %i  totRef L0:%i   totRef L1: %i\n", parent_pcs_ptr->picture_number, parent_pcs_ptr->ref_list0_count, parent_pcs_ptr->ref_list1_count);
 
      //single ref - List0
+#if ON_OFF_FEATURE_MRP
+    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->mrp_ctrls.ref_list0_count_try; ++ref_idx0) {
+#else
     for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count_try; ++ref_idx0) {
+#endif
         rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
         ref_frame_arr[(*tot_ref_frames)++] = rf[0];
     }
 
     //single ref - List1
+#if ON_OFF_FEATURE_MRP
+    for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->mrp_ctrls.ref_list1_count_try; ++ref_idx1) {
+#else
     for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count_try; ++ref_idx1) {
+#endif
         rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
         ref_frame_arr[(*tot_ref_frames)++] = rf[1];
     }
 
     //compound Bi-Dir
+#if ON_OFF_FEATURE_MRP
+    for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->mrp_ctrls.ref_list0_count_try; ++ref_idx0) {
+        for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->mrp_ctrls.ref_list1_count_try; ++ref_idx1) {
+#else
     for (uint8_t ref_idx0 = 0; ref_idx0 < parent_pcs_ptr->ref_list0_count_try; ++ref_idx0) {
         for (uint8_t ref_idx1 = 0; ref_idx1 < parent_pcs_ptr->ref_list1_count_try; ++ref_idx1) {
+#endif
             rf[0] = svt_get_ref_frame_type(REF_LIST_0, ref_idx0);
             rf[1] = svt_get_ref_frame_type(REF_LIST_1, ref_idx1);
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
         }
     }
-
+#if  REMOVE_MRP_MODE
+    if (parent_pcs_ptr->slice_type == B_SLICE)
+#else
     if (scs_ptr->mrp_mode == 0 && parent_pcs_ptr->slice_type == B_SLICE)
+#endif
     {
 
         //compound Uni-Dir
+#if ON_OFF_FEATURE_MRP
+        if (parent_pcs_ptr->mrp_ctrls.ref_list0_count_try > 1) {
+#else
         if (parent_pcs_ptr->ref_list0_count_try > 1) {
+#endif
             rf[0] = LAST_FRAME;
             rf[1] = LAST2_FRAME;
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+#if ON_OFF_FEATURE_MRP
+            if (parent_pcs_ptr->mrp_ctrls.ref_list0_count_try > 2) {
+#else
             if (parent_pcs_ptr->ref_list0_count_try > 2) {
+#endif
                 rf[1] = LAST3_FRAME;
                 ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
+#if ON_OFF_FEATURE_MRP
+                if (parent_pcs_ptr->mrp_ctrls.ref_list0_count_try > 3) {
+#else
                 if (parent_pcs_ptr->ref_list0_count_try > 3) {
+#endif
                     rf[1] = GOLDEN_FRAME;
                     ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
                 }
             }
         }
+#if ON_OFF_FEATURE_MRP
+        if (parent_pcs_ptr->mrp_ctrls.ref_list0_count_try > 2) {
+#else
         if (parent_pcs_ptr->ref_list1_count_try > 2) {
+#endif
             rf[0] = BWDREF_FRAME;
             rf[1] = ALTREF_FRAME;
             ref_frame_arr[(*tot_ref_frames)++] = av1_ref_frame_type(rf);
@@ -5967,8 +6009,13 @@ void* picture_decision_kernel(void *input_ptr)
                 frame_passthrough = EB_FALSE;
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
-
+#if NOISE_BASED_TF_FRAMES
+            parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] =
+            parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] =
+            parent_pcs_window[12] = parent_pcs_window[13] = NULL;
+#else
             parent_pcs_window[0] = parent_pcs_window[1] = parent_pcs_window[2] = parent_pcs_window[3] = parent_pcs_window[4] = parent_pcs_window[5] = NULL;
+#endif
             //for poc 0, ignore previous frame check
             if (queue_entry_ptr->picture_number > 0 && encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr == NULL)
                 window_avail = EB_FALSE;
@@ -6949,7 +6996,11 @@ void* picture_decision_kernel(void *input_ptr)
                             }
 
                             //set the ref frame types used for this picture,
+#if  !REMOVE_MRP_MODE || !MRP_CTRL
                             set_all_ref_frame_type(scs_ptr, pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
+#else
+                            set_all_ref_frame_type(pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
+#endif
                             // Initialize Segments
                             pcs_ptr->me_segments_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);

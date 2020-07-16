@@ -130,18 +130,36 @@ static AOM_FORCE_INLINE int32_t xx_mask_and_hadd(__m256i vsum, int i) {
 }
 
 static void apply_temporal_filter_planewise(
+#if TF_IMP
+    struct MeContext *context_ptr, const uint8_t *frame1, const unsigned int stride,
+    const uint8_t *frame2, const unsigned int stride2, const int block_width,
+    const int block_height, const double sigma, const int decay_control, unsigned int *accumulator,
+    uint16_t *count, uint16_t *luma_sq_error, uint16_t *chroma_sq_error, int plane, int ss_x_shift,
+    int ss_y_shift) {
+#else
     const uint8_t *frame1, const unsigned int stride, const uint8_t *frame2,
     const unsigned int stride2, const int block_width, const int block_height,
     const double sigma, const int decay_control, unsigned int *accumulator,
     uint16_t *count, uint16_t *luma_sq_error, uint16_t *chroma_sq_error,
     int plane, int ss_x_shift, int ss_y_shift) {
+#endif
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH == 5);
     assert(((block_width == 32) && (block_height == 32)) ||
         ((block_width == 16) && (block_height == 16)));
     if (plane > PLANE_TYPE_Y) assert(chroma_sq_error != NULL);
 
     uint32_t acc_5x5_sse[BH][BW];
+#if TF_IMP
+    // Larger noise -> larger filtering weight.
+    const float n_decay           = (float)decay_control * (0.7f + logf((float)sigma + 1.0f));
+    const float n_decay_qr_inv    = 1.0f / (2 * n_decay * n_decay);
+    const float block_balacne_inv = 1.0f / (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+    const float distance_threshold_inv =
+        1.0f / (float)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+
+#else
     const double h = decay_control * (0.7 + log(sigma + 1.0));
+#endif
     uint16_t *frame_sse =
         (plane == PLANE_TYPE_Y) ? luma_sq_error : chroma_sq_error;
 
@@ -221,10 +239,52 @@ static void apply_temporal_filter_planewise(
                     }
                 }
             }
+#if TF_IMP
+            // Combine window error and block error, and normalize it.
+            float     window_error = (float)diff_sse / num_ref_pixels;
+            const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
+            float     block_error;
+            int       idx_32x32 = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32])
+                // 16x16
+                block_error =
+                    (float)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + subblock_idx] / 256.0f;
+            else
+                //32x32
+                block_error = (float)context_ptr->tf_32x32_block_error[idx_32x32] / 1024.0f;
+
+            float combined_error =
+                (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) * block_balacne_inv;
+
+            // Decay factors for non-local mean approach.
+            // Smaller q -> smaller filtering weight. WIP
+            //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
+            // Smaller strength -> smaller filtering weight.  WIP
+            // CLIP(
+            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
+            // Larger motion vector -> smaller filtering weight.
+            MV mv;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+                // 16x16
+                mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];
+                mv.row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + subblock_idx];
+            } else {
+                //32x32
+                mv.col = context_ptr->tf_32x32_mv_x[idx_32x32];
+                mv.row = context_ptr->tf_32x32_mv_y[idx_32x32];
+            }
+            const float distance = sqrtf(powf(mv.row, 2) + powf(mv.col, 2));
+            const float d_factor = AOMMAX(distance * distance_threshold_inv, 1);
+
+            // Compute filter weight.
+            float scaled_diff     = AOMMIN(combined_error * d_factor * n_decay_qr_inv, 7);
+            int   adjusted_weight = (int)(expf(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
             const double scaled_diff =
                 AOMMAX(-(double)(diff_sse / num_ref_pixels) / (2 * h * h), -15.0);
             const int adjusted_weight =
                 (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+#endif
             // updated the index
             count[i * stride2 + j] += adjusted_weight;
             accumulator[i * stride2 + j] += adjusted_weight * pixel_value;
@@ -232,11 +292,20 @@ static void apply_temporal_filter_planewise(
     }
 }
 void svt_av1_apply_temporal_filter_planewise_avx2(
+#if TF_IMP
+    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
+    const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#else
     const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
     const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
     int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#endif
     // Loop variables
     assert(block_width <= BW && "block width too large");
     assert(block_height <= BH && "block height too large");
@@ -263,10 +332,16 @@ void svt_av1_apply_temporal_filter_planewise_avx2(
         uint16_t *count = plane == 0 ? y_count : plane == 1 ? u_count : v_count;
 
         apply_temporal_filter_planewise(
+#if TF_IMP
+            context_ptr, ref, src_stride, pred, pre_stride, plane_w, plane_h,
+            noise_levels[plane], decay_control, accum, count, luma_sq_error,
+            chroma_sq_error, plane, ss_x_shift, ss_y_shift);
+#else
             ref, src_stride, pred, pre_stride, plane_w, plane_h,
             noise_levels[plane], decay_control, accum,
             count, luma_sq_error, chroma_sq_error, plane,
             ss_x_shift, ss_y_shift);
+#endif
     }
 }
 
@@ -372,13 +447,22 @@ static AOM_FORCE_INLINE __m256i xx_load_and_pad_hbd(uint32_t *src, int col, int 
     return v256tmp;
 }
 
-static void apply_temporal_filter_planewise_hbd(const uint16_t *frame1, const unsigned int stride,
+static void apply_temporal_filter_planewise_hbd(
+#if TF_IMP
+    struct MeContext *context_ptr, const uint16_t *frame1, const unsigned int stride,
+    const uint16_t *frame2, const unsigned int stride2, const int block_width,
+    const int block_height, const double sigma, const int decay_control, unsigned int *accumulator,
+    uint16_t *count, uint32_t *luma_sq_error, uint32_t *chroma_sq_error, int plane, int ss_x_shift,
+    int ss_y_shift) {
+#else
+                                                const uint16_t *frame1, const unsigned int stride,
                                                 const uint16_t *frame2, const unsigned int stride2,
                                                 const int block_width, const int block_height,
                                                 const double sigma, const int decay_control,
                                                 unsigned int *accumulator, uint16_t *count,
                                                 uint32_t *luma_sq_error, uint32_t *chroma_sq_error,
                                                 int plane, int ss_x_shift, int ss_y_shift) {
+#endif
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH == 5);
     assert(((block_width == 32) && (block_height == 32)) ||
            ((block_width == 16) && (block_height == 16)));
@@ -386,7 +470,16 @@ static void apply_temporal_filter_planewise_hbd(const uint16_t *frame1, const un
         assert(chroma_sq_error != NULL);
 
     uint32_t     acc_5x5_sse[BH][BW];
+#if TF_IMP
+    // Larger noise -> larger filtering weight.
+    const float n_decay           = (float)decay_control * (0.7f + logf((float)sigma + 1.0f));
+    const float n_decay_qr_inv    = 1.0f / (2 * n_decay * n_decay);
+    const float block_balacne_inv = 1.0f / (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
+    const float distance_threshold_inv =
+        1.0f / (float)AOMMAX(context_ptr->min_frame_size * TF_SEARCH_DISTANCE_THRESHOLD, 1);
+#else
     const double h         = decay_control * (0.7 + log(sigma + 1.0));
+#endif
     uint32_t *   frame_sse = (plane == PLANE_TYPE_Y) ? luma_sq_error : chroma_sq_error;
 
     if (block_width == 32) {
@@ -458,9 +551,52 @@ static void apply_temporal_filter_planewise_hbd(const uint16_t *frame1, const un
                 }
             }
             diff_sse >>= 4;
+#if TF_IMP
+            // Combine window error and block error, and normalize it.
+            float     window_error = (float)diff_sse / num_ref_pixels;
+            const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
+            float     block_error;
+            int       idx_32x32 = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32])
+                // 16x16
+                block_error =
+                    (float)(context_ptr->tf_16x16_block_error[idx_32x32 * 4 + subblock_idx] >> 4) /
+                    256.0f;
+            else
+                //32x32
+                block_error = (float)(context_ptr->tf_32x32_block_error[idx_32x32] >> 4) / 1024.0f;
+
+            float combined_error =
+                (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) * block_balacne_inv;
+
+            // Decay factors for non-local mean approach.
+            // Smaller q -> smaller filtering weight. WIP
+            //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
+            // Smaller strength -> smaller filtering weight.  WIP
+            // CLIP(
+            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
+            // Larger motion vector -> smaller filtering weight.
+            MV mv;
+            if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+                // 16x16
+                mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];
+                mv.row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + subblock_idx];
+            } else {
+                //32x32
+                mv.col = context_ptr->tf_32x32_mv_x[idx_32x32];
+                mv.row = context_ptr->tf_32x32_mv_y[idx_32x32];
+            }
+            const float distance = sqrtf(powf(mv.row, 2) + powf(mv.col, 2));
+            const float d_factor = AOMMAX(distance * distance_threshold_inv, 1);
+
+            // Compute filter weight.
+            float scaled_diff     = AOMMIN(combined_error * d_factor * n_decay_qr_inv, 7.0f);
+            int   adjusted_weight = (int)(expf(-scaled_diff) * TF_WEIGHT_SCALE);
+#else
             const double scaled_diff  = AOMMAX(-(double)(diff_sse / num_ref_pixels) / (2 * h * h),
                                               -15.0);
             const int adjusted_weight = (int)(exp(scaled_diff) * TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+#endif
             // updated the index
             count[i * stride2 + j] += adjusted_weight;
             accumulator[i * stride2 + j] += adjusted_weight * pixel_value;
@@ -469,11 +605,20 @@ static void apply_temporal_filter_planewise_hbd(const uint16_t *frame1, const un
 }
 
 void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
+#if TF_IMP
+    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+    const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
+    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#else
     const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
     const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
     int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+#endif
     // Loop variables
     assert(block_width <= BW && "block width too large");
     assert(block_height <= BH && "block height too large");
@@ -498,6 +643,24 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
 
         uint32_t *accum = plane == 0 ? y_accum : plane == 1 ? u_accum : v_accum;
         uint16_t *count = plane == 0 ? y_count : plane == 1 ? u_count : v_count;
+#if TF_IMP
+        apply_temporal_filter_planewise_hbd(context_ptr,
+                                            ref,
+                                            src_stride,
+                                            pred,
+                                            pre_stride,
+                                            plane_w,
+                                            plane_h,
+                                            noise_levels[plane],
+                                            decay_control,
+                                            accum,
+                                            count,
+                                            luma_sq_error,
+                                            chroma_sq_error,
+                                            plane,
+                                            ss_x_shift,
+                                            ss_y_shift);
+#else
 
         apply_temporal_filter_planewise_hbd(ref,
                                             src_stride,
@@ -514,5 +677,6 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
                                             plane,
                                             ss_x_shift,
                                             ss_y_shift);
+#endif
     }
 }
