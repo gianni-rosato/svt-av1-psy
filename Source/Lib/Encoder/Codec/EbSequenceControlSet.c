@@ -279,6 +279,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     write_count += sizeof(int32_t);
     dst->picture_control_set_pool_init_count = src->picture_control_set_pool_init_count;
     write_count += sizeof(int32_t);
+#if DECOUPLE_ME_RES
+    dst->me_pool_init_count = src->me_pool_init_count;
+    write_count += sizeof(int32_t);
+#endif
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child;
     write_count += sizeof(int32_t);
     dst->pa_reference_picture_buffer_init_count = src->pa_reference_picture_buffer_init_count;

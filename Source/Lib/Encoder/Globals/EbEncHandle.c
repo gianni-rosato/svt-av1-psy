@@ -514,6 +514,9 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
     uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
+#if DECOUPLE_ME_RES
+    uint32_t min_me;
+#endif
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
           the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
@@ -578,6 +581,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
 
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
+#if DECOUPLE_ME_RES
+        scs_ptr->me_pool_init_count = min_me;
+#endif
     }
     else {
         if (core_count == (SINGLE_CORE_COUNT << 1))
@@ -589,6 +595,9 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->picture_control_set_pool_init_count_child = min_child;
             scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
             scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
+#if DECOUPLE_ME_RES
+            scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
+#endif
         }
         else
         {
@@ -599,6 +608,9 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
 
+#if DECOUPLE_ME_RES
+            scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
+#endif
         }
     }
 
@@ -793,7 +805,9 @@ static void eb_enc_handle_dctor(EbPtr p)
     EB_FREE_PTR_ARRAY(enc_handle_ptr->app_callback_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE(enc_handle_ptr->scs_pool_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-
+#if DECOUPLE_ME_RES
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -3436,24 +3450,34 @@ EB_API EbErrorType svt_av1_enc_stream_header(
     Bitstream                bitstream;
     OutputBitstreamUnit      output_bitstream;
     EbBufferHeaderType      *output_stream_buffer;
+#if OUTPUT_MEM_OPT
+    uint32_t output_buffer_size =
+        (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height));
+#endif
 
     memset(&bitstream, 0, sizeof(Bitstream));
     memset(&output_bitstream, 0, sizeof(OutputBitstreamUnit));
     bitstream.output_bitstream_ptr = &output_bitstream;
-
     output_stream_buffer = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
     if (!output_stream_buffer) {
         return EB_ErrorInsufficientResources;
     }
-
+#if OUTPUT_MEM_OPT
+    output_stream_buffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * output_buffer_size);
+#else
     output_stream_buffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * PACKETIZATION_PROCESS_BUFFER_SIZE);
+#endif
     if (!output_stream_buffer->p_buffer) {
         free(output_stream_buffer);
         return EB_ErrorInsufficientResources;
     }
 
     output_stream_buffer->size = sizeof(EbBufferHeaderType);
+#if OUTPUT_MEM_OPT
+    output_stream_buffer->n_alloc_len = output_buffer_size;
+#else
     output_stream_buffer->n_alloc_len = PACKETIZATION_PROCESS_BUFFER_SIZE;
+#endif
     output_stream_buffer->p_app_private = NULL;
     output_stream_buffer->pic_type = EB_AV1_INVALID_PICTURE;
     output_stream_buffer->n_filled_len = 0;

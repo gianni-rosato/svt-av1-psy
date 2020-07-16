@@ -41,6 +41,22 @@ typedef struct EbReferenceObject {
     StatStruct           stat_struct;
     EbHandle             referenced_area_mutex;
     uint64_t             referenced_area_avg;
+#if TPL_1PASS_IMP
+    double               r0;
+#endif
+#if ADAPTIVE_NSQ_CR
+    uint32_t ref_part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
+#endif
+#if ADAPTIVE_DEPTH_CR
+#if SOFT_CYCLES_REDUCTION
+    uint32_t ref_pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
+#else
+    uint32_t ref_pred_depth_count[DEPTH_DELTA_NUM];
+#endif
+#endif
+#if ADAPTIVE_TXT_CR
+    uint32_t ref_txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
     int32_t              mi_cols;
     int32_t              mi_rows;
 } EbReferenceObject;

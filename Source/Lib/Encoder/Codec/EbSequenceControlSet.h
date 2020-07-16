@@ -169,6 +169,9 @@ typedef struct SequenceControlSet {
 
     /*!< Picture, reference, recon and input output buffer count */
     uint32_t picture_control_set_pool_init_count;
+#if DECOUPLE_ME_RES
+    uint32_t me_pool_init_count;
+#endif
     uint32_t picture_control_set_pool_init_count_child;
     uint32_t pa_reference_picture_buffer_init_count;
     uint32_t reference_picture_buffer_init_count;

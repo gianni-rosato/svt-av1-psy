@@ -376,6 +376,10 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     uint32_t total_tile_cnt = init_data_ptr->tile_row_count * init_data_ptr->tile_column_count;
     uint32_t tile_idx = 0;
+#if OUTPUT_MEM_OPT
+    uint32_t output_buffer_size =
+        (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(init_data_ptr->picture_width * init_data_ptr->picture_height));
+#endif
     object_ptr->tile_row_count = init_data_ptr->tile_row_count;
     object_ptr->tile_column_count = init_data_ptr->tile_column_count;
 
@@ -468,9 +472,15 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     // Entropy Coder
     EB_ALLOC_PTR_ARRAY(object_ptr->entropy_coding_info, total_tile_cnt);
     for (tile_idx = 0; tile_idx < total_tile_cnt; tile_idx++) {
+#if OUTPUT_MEM_OPT
+        EB_NEW(object_ptr->entropy_coding_info[tile_idx],
+               entropy_tile_info_ctor,
+               output_buffer_size / total_tile_cnt);
+#else
         EB_NEW(object_ptr->entropy_coding_info[tile_idx],
                entropy_tile_info_ctor,
                SEGMENT_ENTROPY_BUFFER_SIZE / total_tile_cnt);
+#endif
     }
 
     // Packetization process Bitstream
@@ -1250,8 +1260,9 @@ static void picture_parent_control_set_dctor(EbPtr p) {
     uint32_t                 region_in_picture_height_index;
 
     EB_DELETE(obj->denoise_and_model);
-
+#if !DECOUPLE_ME_RES
     EB_DELETE_PTR_ARRAY(obj->me_results, obj->sb_total_count_unscaled);
+#endif
     if (obj->is_chroma_downsampled_picture_ptr_owner)
         EB_DELETE(obj->chroma_downsampled_picture_ptr);
 
@@ -1351,7 +1362,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         (init_data_ptr->picture_height + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
     const uint16_t subsampling_x = (init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
     const uint16_t subsampling_y = (init_data_ptr->color_format >= EB_YUV422 ? 1 : 2) - 1;
+#if !REMOVE_UNUSED_CODE_PH2 || !DECOUPLE_ME_RES
     uint16_t       sb_index;
+#endif
     uint32_t       region_in_picture_width_index;
     uint32_t       region_in_picture_height_index;
 
@@ -1584,7 +1597,37 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     return return_error;
 }
+#if DECOUPLE_ME_RES
+static void me_dctor(EbPtr p) {
+    MotionEstimationData *obj = (MotionEstimationData *)p;
 
+    EB_DELETE_PTR_ARRAY(obj->me_results, obj->sb_total_count_unscaled);
+}
+EbErrorType me_ctor(MotionEstimationData *object_ptr,
+    EbPtr                    object_init_data_ptr) {
+
+    PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
+    EbErrorType                return_error = EB_ErrorNone;
+    const uint16_t             picture_sb_width = (uint16_t)(
+        (init_data_ptr->picture_width + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
+    const uint16_t picture_sb_height = (uint16_t)(
+        (init_data_ptr->picture_height + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
+
+    uint16_t       sb_index;
+    object_ptr->dctor = me_dctor;
+    uint32_t sb_total_count = picture_sb_width * picture_sb_height;
+    object_ptr->sb_total_count_unscaled = sb_total_count;
+
+    EB_ALLOC_PTR_ARRAY(object_ptr->me_results,  sb_total_count);
+
+    for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
+        EB_NEW(object_ptr->me_results[sb_index],
+            me_sb_results_ctor);
+    }
+
+    return return_error;
+}
+#endif
 EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr,
                                PictureParentControlSet *pcs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
@@ -1763,3 +1806,14 @@ EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr, EbPtr obje
 
     return EB_ErrorNone;
 }
+#if DECOUPLE_ME_RES
+EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+    MotionEstimationData *obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, me_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+#endif

@@ -82,11 +82,11 @@ typedef struct EncodeContext {
     //hold undisplayed frame for show existing frame. It's ordered with pts Descend.
     EbObjectWrapper              *picture_decision_undisplayed_queue[REF_FRAMES];
     uint32_t                      picture_decision_undisplayed_queue_count;
-
+#if !DECOUPLE_ME_RES
     // Picture Manager Reorder Queue
     PictureManagerReorderEntry **picture_manager_reorder_queue;
     uint32_t                     picture_manager_reorder_queue_head_index;
-
+#endif
     // Picture Manager Pre-Assignment Buffer
     uint32_t          pre_assignment_buffer_intra_count;
     uint32_t          pre_assignment_buffer_idr_count;
@@ -113,6 +113,11 @@ typedef struct EncodeContext {
     // Initial Rate Control Reorder Queue
     InitialRateControlReorderEntry **initial_rate_control_reorder_queue;
     uint32_t                         initial_rate_control_reorder_queue_head_index;
+#if DECOUPLE_ME_RES
+    uint32_t        dep_q_head;
+    uint32_t        dep_q_tail;
+    PicQueueEntry **dep_cnt_picture_queue; //buffer to sotre all pictures needing dependent-count clean-up in PicMgr
+#endif
 
     // High Level Rate Control Histogram Queue
     HlRateControlHistogramEntry **hl_rate_control_historgram_queue;

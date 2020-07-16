@@ -1965,6 +1965,22 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
+#if  ADAPTIVE_NSQ_CR
+        // Init block selection
+        memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);
+#endif
+#if ADAPTIVE_DEPTH_CR
+        // Init pred_depth selection
+#if SOFT_CYCLES_REDUCTION
+        memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+#else
+        memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM);
+#endif
+#endif
+#if ADAPTIVE_TXT_CR
+        // Init tx_type selection
+        memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
+#endif
         // Compute Tc, and Beta offsets for a given picture
         // Set reference cdef strength
         set_reference_cdef_strength(pcs_ptr);

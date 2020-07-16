@@ -4417,6 +4417,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
         }
 
         {
+#if SB_BLK_MEM_OPT
+            sb_ptr->final_blk_arr[final_blk_itr].av1xd = sb_ptr->av1xd;
+#endif
             BlkStruct *src_cu = &context_ptr->md_context->md_blk_arr_nsq[d1_itr];
             BlkStruct *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr++];
             move_blk_data(pcs_ptr, context_ptr, src_cu, dst_cu);

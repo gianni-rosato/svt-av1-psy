@@ -24,7 +24,9 @@ typedef struct InputQueueEntry {
     EbDctor          dctor;
     EbObjectWrapper *input_object_ptr;
     uint32_t         dependent_count;
+#if !DECOUPLE_ME_RES
     uint32_t         reference_entry_index;
+#endif
     ReferenceList *  list0_ptr;
     ReferenceList *  list1_ptr;
     uint32_t         use_count;
@@ -58,6 +60,15 @@ typedef struct ReferenceQueueEntry {
     EbBool           frame_context_updated;
 } ReferenceQueueEntry;
 
+#if DECOUPLE_ME_RES
+typedef struct PicQueueEntry {
+    EbDctor dctor;
+
+    uint64_t     pic_num;
+    int32_t      dep_cnt_diff; //increase(e.g 4L->5L) or decrease of dep cnt . not including the run-time decrease
+    uint8_t      is_done;
+} PicQueueEntry;
+#endif
 /************************************************
      * Rate Control Input Queue Entry
      ************************************************/
@@ -90,6 +101,9 @@ typedef struct RcFeedbackQueueEntry {
 extern EbErrorType input_queue_entry_ctor(InputQueueEntry *entry_ptr);
 
 extern EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr);
+#if DECOUPLE_ME_RES
+extern EbErrorType dep_cnt_queue_entry_ctor(PicQueueEntry *entry_ptr);
+#endif
 
 #ifdef __cplusplus
 }

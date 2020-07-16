@@ -1359,7 +1359,11 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
     uint32_t           bipred_index;
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if DECOUPLE_ME_RES
+    const MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+#else
     const MeSbResults *me_results     = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+#endif
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
 #if ME_MEM_OPT
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
@@ -2496,17 +2500,30 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
         if (rf[1] != NONE_FRAME) {
             {
                 //NEAREST_NEWMV
+#if DECOUPLE_ME_RES
+                const MeSbResults *me_results =
+                    pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                 const MeSbResults *me_results =
                     pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
 
                 int16_t to_inject_mv_x_l0 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.col;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .this_mv.as_mv.col;
+#endif
                 int16_t to_inject_mv_y_l0 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].this_mv.as_mv.row;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .this_mv.as_mv.row;
+#endif
                 int16_t to_inject_mv_x_l1 =
                     context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][get_list_idx(rf[1])]
                     [ref_idx_1][0];
@@ -2634,8 +2651,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 
             {
                 //NEW_NEARESTMV
+#if DECOUPLE_ME_RES
+                const MeSbResults *me_results =
+                    pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                 const MeSbResults *me_results =
                     pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
                 int16_t to_inject_mv_x_l0 =
                     context_ptr
                     ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
@@ -2784,9 +2806,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                         ref_mv);
 
                     //NEW_NEARMV
+#if DECOUPLE_ME_RES
+                    const MeSbResults *me_results =
+                        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                     const MeSbResults *me_results =
                         pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
-
+#endif
                     int16_t to_inject_mv_x_l0 =
                         context_ptr
                         ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][0];
@@ -2907,8 +2933,13 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                         ref_mv);
 
                     //NEAR_NEWMV
+#if DECOUPLE_ME_RES
+                    const MeSbResults *me_results =
+                        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
                     const MeSbResults *me_results =
                         pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
 
                     int16_t to_inject_mv_x_l0 = nearmv[0].as_mv.col;
                     int16_t to_inject_mv_y_l0 = nearmv[0].as_mv.row;
@@ -3651,8 +3682,12 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
     ModeDecisionCandidate *cand_array      = context_ptr->fast_candidate_array;
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
-
+#if DECOUPLE_ME_RES
+    const MeSbResults *me_results =
+        pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+#else
     const MeSbResults *me_results       = pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr];
+#endif
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
 #if ME_MEM_OPT
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
@@ -4623,7 +4658,11 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
     int          inside_tile = 1;
     MacroBlockD *xd          = context_ptr->blk_ptr->av1xd;
     int          umv0tile    = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+#if DECOUPLE_ME_RES
+    MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
     MeSbResults *me_results  = pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
     EbBool       allow_bipred =
         (context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4) ? EB_FALSE
                                                                                     : EB_TRUE;

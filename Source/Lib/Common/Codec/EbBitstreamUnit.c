@@ -36,7 +36,11 @@ static void output_bitstream_unit_dctor(EbPtr p) {
 EbErrorType output_bitstream_unit_ctor(OutputBitstreamUnit *bitstream_ptr, uint32_t buffer_size) {
     bitstream_ptr->dctor = output_bitstream_unit_dctor;
     if (buffer_size) {
+#if OUTPUT_MEM_OPT
+        bitstream_ptr->size = buffer_size;
+#else
         bitstream_ptr->size = buffer_size / sizeof(uint32_t);
+#endif
         EB_MALLOC_ARRAY(bitstream_ptr->buffer_begin_av1, bitstream_ptr->size);
         bitstream_ptr->buffer_av1 = bitstream_ptr->buffer_begin_av1;
     } else {

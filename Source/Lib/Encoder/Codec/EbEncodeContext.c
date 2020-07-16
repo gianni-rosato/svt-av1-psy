@@ -20,11 +20,16 @@ static void encode_context_dctor(EbPtr p) {
     EB_DELETE(obj->prediction_structure_group_ptr);
     EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue,
                         PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
+#if !DECOUPLE_ME_RES
     EB_DELETE_PTR_ARRAY(obj->picture_manager_reorder_queue,
                         PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
+#endif
     EB_FREE(obj->pre_assignment_buffer);
     EB_DELETE_PTR_ARRAY(obj->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
+#if DECOUPLE_ME_RES
+    EB_DELETE_PTR_ARRAY(obj->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
+#endif
     EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_queue,
                         PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue,
@@ -55,7 +60,7 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
                picture_decision_reorder_entry_ctor,
                picture_index);
     }
-
+#if !DECOUPLE_ME_RES
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_manager_reorder_queue,
                        PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
 
@@ -65,7 +70,7 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
                picture_manager_reorder_entry_ctor,
                picture_index);
     }
-
+#endif
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pre_assignment_buffer, PRE_ASSIGNMENT_MAX_DEPTH);
 
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
@@ -84,6 +89,14 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_queue,
                        PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
 
+#if DECOUPLE_ME_RES
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
+    for (picture_index = 0; picture_index < REFERENCE_QUEUE_MAX_DEPTH; ++picture_index) {
+        EB_NEW(encode_context_ptr->dep_cnt_picture_queue[picture_index],
+            dep_cnt_queue_entry_ctor);
+    }
+    encode_context_ptr->dep_q_head = encode_context_ptr->dep_q_tail = 0;
+#endif
     for (picture_index = 0; picture_index < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
          ++picture_index) {
         EB_NEW(encode_context_ptr->picture_decision_pa_reference_queue[picture_index],

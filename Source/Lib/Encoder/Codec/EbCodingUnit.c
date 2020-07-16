@@ -54,7 +54,10 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
 #else
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->av1xd, tot_blk_num);
 #endif
-
+    // Do NOT initialize the final_blk_arr here
+    // Malloc maximum but only initialize it only when actually used.
+    // This will help to same actually memory usage
+#if !SB_BLK_MEM_OPT
     for (cu_i = 0; cu_i < tot_blk_num; ++cu_i)
 #if SB_MEM_OPT
         larget_coding_unit_ptr->final_blk_arr[cu_i].av1xd = larget_coding_unit_ptr->av1xd ;
@@ -62,7 +65,7 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
 #else
         larget_coding_unit_ptr->final_blk_arr[cu_i].av1xd = larget_coding_unit_ptr->av1xd + cu_i;
 #endif
-
+#endif
     uint32_t max_block_count = sb_size_pix == 128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
 
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->cu_partition_array, max_block_count);

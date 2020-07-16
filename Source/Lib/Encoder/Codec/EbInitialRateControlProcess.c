@@ -38,8 +38,11 @@ typedef struct InitialRateControlContext {
 static void eb_get_mv(PictureParentControlSet *pcs_ptr, uint32_t sb_index, int32_t *x_current_mv,
             int32_t *y_current_mv) {
     uint32_t me_candidate_index;
-
+#if DECOUPLE_ME_RES
+    MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
+#else
     const MeSbResults *me_results       = pcs_ptr->me_results[sb_index];
+#endif
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[0];
 
 #if ME_MEM_OPT
@@ -2025,7 +2028,52 @@ void *initial_rate_control_kernel(void *input_ptr) {
             // Release Pa Ref pictures when not needed
             release_pa_reference_objects(scs_ptr, pcs_ptr);
 #endif
+#if DECOUPLE_ME_RES
+            /*In case Look-Ahead is zero there is no need to place pictures in the
+              re-order queue. this will cause an artificial delay since pictures come in dec-order*/
+            if (scs_ptr->static_config.look_ahead_distance == 0) {
 
+
+                for (uint8_t temporal_layer_index = 0; temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
+                    temporal_layer_index++)
+                    pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
+
+                pcs_ptr->frames_in_sw = 0;
+                pcs_ptr->historgram_life_count = 0;
+                pcs_ptr->scene_change_in_gop = EB_FALSE;
+                pcs_ptr->end_of_sequence_region = EB_FALSE;
+
+                init_zz_cost_info(pcs_ptr);
+
+#if !DECOUPLE_ME_RES
+                // Get Empty Reference Picture Object
+                eb_get_empty_object(
+                    scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
+                    &reference_picture_wrapper_ptr);
+                pcs_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
+                // Give the new Reference a nominal live_count of 1
+                eb_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
+#endif
+                pcs_ptr->stat_struct_first_pass_ptr =
+                    pcs_ptr->is_used_as_reference_flag ? &((EbReferenceObject *)pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->stat_struct
+                    : &pcs_ptr->stat_struct;
+                if (scs_ptr->use_output_stat_file)
+                    memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
+
+                // Get Empty Results Object
+                eb_get_empty_object(
+                    context_ptr->initialrate_control_results_output_fifo_ptr,
+                    &out_results_wrapper_ptr);
+
+                InitialRateControlResults * out_results_ptr =
+                    (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
+
+                out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
+                eb_post_full_object(out_results_wrapper_ptr);
+
+            }
+            else {
+#endif
             //****************************************************
             // Input Motion Analysis Results into Reordering Queue
             //****************************************************
@@ -2269,6 +2317,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             [encode_context_ptr->initial_rate_control_reorder_queue_head_index];
                 }
             }
+#if DECOUPLE_ME_RES
+            }
+#endif
         }
 
         // Release the Input Results

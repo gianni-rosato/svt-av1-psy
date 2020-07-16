@@ -922,11 +922,61 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     } else
         context_ptr->me_context_ptr->fractional_search_model = 2;
 #endif
+#if SYNCH_HME_ME
+    // HME Search Method
+#if ADD_MRS_MODE
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MRS)
+#else
+    if (MRS_MODE)
+#endif
+        context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
+    else
+#endif
+#if !UNIFY_SC_NSC
+    if (pcs_ptr->sc_content_detected)
+#if JUNE15_ADOPTIONS
+        if (enc_mode <= ENC_M0)
+            context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
+        else
+            context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#else
+        context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#endif
+    else
+#endif
+        context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#else
     // HME Search Method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+#endif
+#if SYNCH_HME_ME
+#if ADD_MRS_MODE
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MRS)
+#else
+    if (MRS_MODE)
+#endif
+        context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+    else
+#endif
+#if !UNIFY_SC_NSC
+    if (pcs_ptr->sc_content_detected)
+#if JUNE15_ADOPTIONS
+        if (enc_mode <= ENC_M0)
+            context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+        else
+            context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+#else
+        context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+#endif
+    else
+#endif
+        context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+#else
     // ME Search Method
     context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-
+#endif
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
 #if UNIFY_SC_NSC

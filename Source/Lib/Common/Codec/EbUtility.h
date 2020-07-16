@@ -118,8 +118,13 @@ typedef struct CodedBlockStats {
     uint8_t  depth;
     uint8_t  size;
     uint8_t  size_log2;
+#if FIX_WARNINGS_WIN
+    uint8_t origin_x;
+    uint8_t origin_y;
+#else
     uint16_t origin_x;
     uint16_t origin_y;
+#endif
     uint8_t  cu_num_in_depth;
     uint8_t  parent32x32_index;
 } CodedBlockStats;

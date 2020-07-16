@@ -45,6 +45,9 @@ struct _EbEncHandle {
 
     //ParentControlSet
     EbSystemResource **picture_parent_control_set_pool_ptr_array;
+#if DECOUPLE_ME_RES
+    EbSystemResource **me_pool_ptr_array;
+#endif
     // Picture Buffers
     EbSystemResource **reference_picture_pool_ptr_array;
     EbSystemResource **pa_reference_picture_pool_ptr_array;

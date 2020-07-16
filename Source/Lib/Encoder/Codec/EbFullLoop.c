@@ -3243,7 +3243,7 @@ void cu_full_distortion_fast_txb_mode_r(
         ++txb_itr;
     } while (txb_itr < tu_total_count);
 }
-
+#if !SHUT_MERGE_1D_INTER_BLOCK
 /***************************************
  * Check merge_block algorithm
  ***************************************/
@@ -3278,6 +3278,7 @@ EbBool merge_1d_inter_block(ModeDecisionContext *context_ptr, uint32_t sq_idx, u
     }
     return merge_blocks;
 }
+#endif
 uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t d1_block_itr) {
     //compute total cost for the whole block partition
     uint64_t tot_cost = 0;
@@ -3285,17 +3286,26 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
         context_ptr->blk_ptr->mds_idx -
         (context_ptr->blk_geom->totns - 1); //index of first block in this partition
     uint32_t blk_it;
+#if !SHUT_MERGE_1D_INTER_BLOCK
     uint32_t merge_block_cnt  = 0;
     EbBool   merge_block_flag = EB_FALSE;
+#endif
     uint32_t full_lambda =  context_ptr->hbd_mode_decision ?
+#if TPL_LAMBDA_IMP
+        context_ptr->full_sb_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_sb_lambda_md[EB_8_BIT_MD];
+#else
         context_ptr->full_lambda_md[EB_10_BIT_MD] :
         context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     for (blk_it = 0; blk_it < context_ptr->blk_geom->totns; blk_it++) {
         tot_cost += context_ptr->md_local_blk_unit[first_blk_idx + blk_it].cost;
+#if !SHUT_MERGE_1D_INTER_BLOCK
         if (context_ptr->blk_geom->sqi_mds != first_blk_idx + blk_it)
             if (context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].avail_blk_flag)
                 merge_block_cnt += merge_1d_inter_block(
                     context_ptr, context_ptr->blk_geom->sqi_mds, first_blk_idx + blk_it);
+#endif
     }
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
         uint64_t split_cost           = 0;
@@ -3312,10 +3322,14 @@ uint64_t d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t
 
         tot_cost += split_cost;
     }
+#if SHUT_MERGE_1D_INTER_BLOCK
+    if ((d1_block_itr == 0) || (tot_cost < context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost)) {
+#else
     if (merge_block_cnt == context_ptr->blk_geom->totns) merge_block_flag = EB_TRUE;
     if (d1_block_itr == 0 ||
         (tot_cost < context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost &&
          merge_block_flag == EB_FALSE)) {
+#endif
         //store best partition cost in parent square
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost = tot_cost;
         context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].part =

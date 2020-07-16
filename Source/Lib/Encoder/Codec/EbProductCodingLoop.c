@@ -6373,8 +6373,13 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             if (ref_idx > context_ptr->md_max_ref_count - 1)
                 continue;
             // Get the ME MV
+#if DECOUPLE_ME_RES
+            const MeSbResults *me_results =
+                pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#else
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->me_results[context_ptr->me_sb_addr];
+#endif
             uint32_t pa_me_distortion = ~0; //any non zero value
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
                 int16_t me_mv_x;
@@ -8338,7 +8343,226 @@ void tx_reset_neighbor_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *c
             NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
 }
+#if UNIFY_TXT
+void copy_txt_data(ModeDecisionCandidateBuffer* candidate_buffer,
+    ModeDecisionContext* context_ptr,
+    uint32_t txb_origin_index,
+    TxType best_tx_type) {
 
+    uint8_t  tx_depth = context_ptr->tx_depth;
+    uint8_t  txb_itr  = context_ptr->txb_itr ;
+    uint32_t txb_1d_offset = context_ptr->txb_1d_offset;
+    uint8_t  tx_width  = context_ptr->blk_geom->tx_width[tx_depth][txb_itr];
+    uint8_t  tx_height = context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
+    // copy recon_coeff_ptr
+    memcpy(
+        ((int32_t*)candidate_buffer->recon_coeff_ptr->buffer_y) + txb_1d_offset,
+        ((int32_t*)context_ptr->recon_coeff_ptr[best_tx_type]->buffer_y) + txb_1d_offset,
+        (tx_width * tx_height * sizeof(uint32_t)));
+
+    // copy recon_ptr
+    EbPictureBufferDesc* recon_ptr = candidate_buffer->recon_ptr;
+    if (context_ptr->hbd_mode_decision) {
+        for (uint32_t j = 0; j < tx_height; ++j)
+            memcpy(
+                ((uint16_t *)recon_ptr->buffer_y) + txb_origin_index + j * recon_ptr->stride_y,
+                ((uint16_t *)context_ptr->recon_ptr[best_tx_type]->buffer_y) + txb_origin_index + j * recon_ptr->stride_y,
+                tx_width * sizeof(uint16_t));
+    }
+    else {
+        for (uint32_t j = 0; j < tx_height; ++j)
+            memcpy(
+                recon_ptr->buffer_y + txb_origin_index + j * recon_ptr->stride_y,
+                context_ptr->recon_ptr[best_tx_type]->buffer_y + txb_origin_index + j * recon_ptr->stride_y,
+                context_ptr->blk_geom->tx_width[tx_depth][txb_itr]);
+    }
+}
+
+#endif
+#if COEFF_BASED_TXT_BYPASS && ! ADAPTIVE_TXT_CR
+uint8_t inter_txt_cycles_reduction_th[2/*depth*/][3/*depth refinement*/][3/*tx_size*/][2/*freq band*/][15/*tx_type*/] =
+{
+    { // Depth 3
+        { // negative refinement
+            { // tx_size <8x8
+                {0,0,0,0,0,0,0,0,0,0,0,1,1,1,1}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,1,0,1,1,1,1} // [10,100]
+            },
+            { // tx_size <16x16
+                {7,9,8,6,7,5,6,7,10,11,7,8,6,7,5}, // [0,10]
+                {4,5,5,4,4,4,4,4,8,7,5,6,4,4,3} // [10,100]
+            },
+            { // tx_size 16x16
+                {4,5,4,3,4,3,3,3,6,7,5,1,1,1,1}, // [0,10]
+                {1,1,1,1,1,1,1,1,2,2,1,1,1,1,0} // [10,100]
+            }
+        },
+        { // pred depth (no refinement)
+            { // tx_size <8x8
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {5,6,5,4,5,4,4,5,5,6,5,5,4,4,3}, // [0,10]
+                {4,4,4,4,4,3,3,4,4,4,5,3,4,3,3} // [10,100]
+            },
+            { // tx_size 16x16
+                {5,6,5,4,5,4,4,4,5,10,7,0,0,0,0}, // [0,10]
+                {1,1,1,1,1,1,1,1,2,2,2,0,0,0,0} // [10,100]
+            }
+        },
+        { // positive refinement
+            { // tx_size <8x8
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {1,1,1,1,1,1,1,1,1,1,2,1,1,1,1}, // [0,10]
+                {1,1,2,2,1,1,1,1,1,1,4,1,3,1,3} // [10,100]
+            },
+            { // tx_size 16x16
+                {1,1,1,1,1,1,1,1,1,3,3,0,0,0,0}, // [0,10]
+                {1,1,1,1,1,1,1,1,1,1,2,0,0,0,0} // [10,100]
+            }
+        }
+    },
+    { // Non-depth 3
+        { // negative refinement
+            { // tx_size <8x8
+                {0,0,1,0,0,0,0,1,1,1,1,1,1,1,1}, // [0,10]
+                {1,1,1,0,1,1,1,1,1,1,1,2,2,2,1} // [10,100]
+            },
+            { // tx_size <16x16
+                {1,1,1,1,1,0,1,1,1,1,1,1,1,1,1}, // [0,10]
+                {1,1,1,0,0,0,0,0,1,1,1,1,1,1,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {2,2,2,1,1,1,1,1,16,3,2,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,3,0,1,0,0,0,0} // [10,100]
+            }
+        },
+        { // pred depth (no refinement)
+            { // tx_size <8x8
+                {4,5,21,3,7,7,13,15,4,6,5,11,10,7,7}, // [0,10]
+                {4,5,12,3,6,5,9,11,6,11,8,20,18,15,14} // [10,100]
+            },
+            { // tx_size <16x16
+                {1,2,1,1,1,1,1,1,2,2,2,2,1,1,1}, // [0,10]
+                {2,2,1,1,2,1,1,1,2,3,2,2,2,2,1} // [10,100]
+            },
+            { // tx_size 16x16
+                {1,1,1,0,0,0,0,0,5,1,1,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,1,0,0,0,0,0,0} // [10,100]
+            }
+        },
+        { // positive refinement
+            { // tx_size <8x8
+                {0,0,1,0,0,0,0,1,0,1,0,1,1,1,1}, // [0,10]
+                {1,1,1,0,1,1,1,1,1,2,1,3,2,2,2} // [10,100]
+            },
+            { // tx_size <16x16
+                {0,0,0,0,0,0,0,0,1,1,1,0,0,0,0}, // [0,10]
+                {1,1,1,1,1,0,0,1,1,1,1,1,1,1,1} // [10,100]
+            },
+            { // tx_size 16x16
+                {0,0,0,0,0,0,0,0,2,0,0,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            }
+        }
+    }
+};
+uint8_t intra_txt_cycles_reduction_th[2/*depth*/][3/*depth refinement*/][3/*tx_size*/][2/*freq band*/][15/*tx_type*/] =
+{
+    { // Depth 3
+        { // negative refinement
+            { // tx_size <8x8
+                {3,3,5,0,0,0,0,0,0,2,2,0,0,0,0}, // [0,10]
+                {2,2,4,0,0,0,0,0,0,1,1,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {16,18,20,0,1,0,0,0,2,6,6,0,0,0,0}, // [0,10]
+                {7,8,8,0,0,0,0,0,1,2,2,0,0,0,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {11,13,15,0,0,0,0,0,1,3,3,0,0,0,0}, // [0,10]
+                {5,6,8,0,0,0,0,0,0,2,2,0,0,0,0} // [10,100]
+            }
+        },
+        { // pred depth (no refinement)
+            { // tx_size <8x8
+                {1,2,3,0,0,0,0,0,0,1,1,0,0,0,0}, // [0,10]
+                {1,1,1,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {15,17,16,0,0,0,0,0,0,4,5,0,0,0,0}, // [0,10]
+                {5,6,6,0,0,0,0,0,0,1,2,0,0,0,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {17,18,19,0,0,0,0,0,0,2,3,0,0,0,0}, // [0,10]
+                {5,6,7,0,0,0,0,0,0,1,3,0,0,0,0} // [10,100]
+            }
+        },
+        { // positive refinement
+            { // tx_size <8x8
+                {0,0,1,0,0,0,0,0,0,0,0,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {4,5,5,0,0,0,0,0,0,1,2,0,0,0,0}, // [0,10]
+                {1,2,2,0,0,0,0,0,0,0,1,0,0,0,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {4,5,5,0,0,0,0,0,0,0,1,0,0,0,0}, // [0,10]
+                {2,2,2,0,0,0,0,0,0,0,2,0,0,0,0} // [10,100]
+            }
+        }
+    },
+    { // Non-depth 3
+        { // negative refinement
+            { // tx_size <8x8
+                {3,4,5,0,0,0,0,0,0,2,2,0,0,0,0}, // [0,10]
+                {3,4,6,0,0,0,0,0,0,2,2,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {3,3,3,0,0,0,0,0,0,1,1,0,0,0,0}, // [0,10]
+                {1,1,1,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {8,9,11,0,0,0,0,0,1,0,0,0,0,0,0}, // [0,10]
+                {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            }
+        },
+        { // pred depth (no refinement)
+            { // tx_size <8x8
+                {37,42,78,0,0,0,0,0,2,18,20,0,0,0,0}, // [0,10]
+                {30,33,60,0,0,0,0,0,1,17,18,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {5,6,6,0,0,0,0,0,0,2,3,0,0,0,0}, // [0,10]
+                {4,4,5,0,0,0,0,0,0,2,2,0,0,0,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {4,4,4,0,0,0,0,0,0,0,0,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            }
+        },
+        { // positive refinement
+            { // tx_size <8x8
+                {7,8,13,0,0,0,0,0,0,4,5,0,0,0,0}, // [0,10]
+                {7,7,13,0,0,0,0,0,0,4,5,0,0,0,0} // [10,100]
+            },
+            { // tx_size <16x16
+                {3,3,3,0,0,0,0,0,0,1,1,0,0,0,0}, // [0,10]
+                {2,2,2,0,0,0,0,0,0,0,1,0,0,0,0} // [10,100]
+            },
+            { // tx_size 16x16
+                {1,1,1,0,0,0,0,0,0,0,0,0,0,0,0}, // [0,10]
+                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0} // [10,100]
+            }
+        }
+    }
+};
+#endif
 void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                     ModeDecisionCandidateBuffer *candidate_buffer,
 #if QP2QINDEX
@@ -9649,7 +9873,355 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
 
     update_tx_candidate_buffer(candidate_buffer, context_ptr, best_tx_depth);
 }
+#if COEFF_BASED_TXS_BYPASS
+// Stats table for TXS
+uint8_t m0_intra_txs_depth_1_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {15, 1}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {5, 0}, // SQ:  [0%,10%], [10%,100%]
+            {4, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {22, 2}, // SQ:  [0%,10%], [10%,100%]
+            {53, 21}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {14, 2}, // SQ:  [0%,10%], [10%,100%]
+            {21, 8}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {3, 2}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {15, 18}, // SQ:  [0%,10%], [10%,100%]
+            {38, 195}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {20, 13}, // SQ:  [0%,10%], [10%,100%]
+            {23, 91}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {4, 3}, // SQ:  [0%,10%], [10%,100%]
+            {5, 22}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {2, 52}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {4, 62}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {1, 25}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    }
+};
+uint8_t m0_intra_txs_depth_2_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {5, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {2, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {10, 1}, // SQ:  [0%,10%], [10%,100%]
+            {25, 9}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {3, 0}, // SQ:  [0%,10%], [10%,100%]
+            {7, 2}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {1, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {9, 15}, // SQ:  [0%,10%], [10%,100%]
+            {14, 77}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {6, 4}, // SQ:  [0%,10%], [10%,100%]
+            {7, 23}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {1, 1}, // SQ:  [0%,10%], [10%,100%]
+            {1, 6}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    }
+};
 
+// INTER TXS tables
+uint8_t m0_inter_txs_depth_1_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {24, 1}, // SQ:  [0%,10%], [10%,100%]
+            {21, 4}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {30, 0}, // SQ:  [0%,10%], [10%,100%]
+            {15, 2}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {3, 0}, // SQ:  [0%,10%], [10%,100%]
+            {3, 1}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {25, 11}, // SQ:  [0%,10%], [10%,100%]
+            {44, 17}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {24, 5}, // SQ:  [0%,10%], [10%,100%]
+            {26, 8}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {6, 2}, // SQ:  [0%,10%], [10%,100%]
+            {7, 4}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {28, 21}, // SQ:  [0%,10%], [10%,100%]
+            {52, 119}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {50, 15}, // SQ:  [0%,10%], [10%,100%]
+            {46, 54}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {12, 3}, // SQ:  [0%,10%], [10%,100%]
+            {9, 10}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {5, 36}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {10, 31}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {3, 6}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    }
+};
+uint8_t m0_inter_txs_depth_2_cycles_reduction_stats[6/*depth*/][3/*pred-depth delta*/][2/*sq/nsq*/][2/*freq band*/] = {
+    {// DEPTH 0
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 1
+        {// pred - 1
+            {4, 0}, // SQ:  [0%,10%], [10%,100%]
+            {4, 1}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {5, 0}, // SQ:  [0%,10%], [10%,100%]
+            {3, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 2
+        {// pred - 1
+            {6, 0}, // SQ:  [0%,10%], [10%,100%]
+            {10, 3}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {4, 0}, // SQ:  [0%,10%], [10%,100%]
+            {4, 1}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {1, 1}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 3
+        {// pred - 1
+            {11, 5}, // SQ:  [0%,10%], [10%,100%]
+            {19, 70}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {7, 1}, // SQ:  [0%,10%], [10%,100%]
+            {9, 26}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {1, 0}, // SQ:  [0%,10%], [10%,100%]
+            {1, 5}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 4
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    },
+    {// DEPTH 5
+        {// pred - 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred depth
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        },
+        {// pred + 1
+            {0, 0}, // SQ:  [0%,10%], [10%,100%]
+            {0, 0}  // NSQ: [0%,10%], [10%,100%]
+        }
+    }
+};
+#endif
 void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_ptr,
                     ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                     ModeDecisionCandidate *candidate_ptr, EbPictureBufferDesc *input_picture_ptr,
@@ -9760,7 +10332,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
             pred_depth_refinement++;
             uint8_t is_nsq = context_ptr->blk_geom->shape == PART_N ? 0 : 1;
             uint8_t freq_band = context_ptr->sb_class <= SB_CLASS_15 ? 1 : 0;
-            uint8_t sq_size_idx = 7 - (uint8_t)Log2f((uint8_t)context_ptr->blk_geom->sq_size);
+            uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)context_ptr->blk_geom->sq_size);
 
             // Bypass TXS for INTRA classes
             if (candidate_ptr->cand_class == CAND_CLASS_0 || candidate_ptr->cand_class == CAND_CLASS_3) {
@@ -10044,7 +10616,11 @@ void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #else
         context_ptr->md_staging_skip_full_pred            = EB_FALSE;
 #endif
+#if IFS_MD_STAGE_3 && !IFS_MD_STAGE_1
         context_ptr->md_staging_skip_interpolation_search = EB_TRUE;
+#else
+        context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
+#endif
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         context_ptr->md_staging_skip_chroma_pred = EB_TRUE;
 #else
@@ -10294,7 +10870,9 @@ void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *blk_p
 #if IFS_MD_STAGE_3 && !IFS_MD_STAGE_1
         context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
 #else
-        context_ptr->md_staging_skip_interpolation_search = EB_FALSE;
+        context_ptr->md_staging_skip_interpolation_search =
+            (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
+             context_ptr->md_staging_mode == MD_STAGING_MODE_2);
 #endif
 #if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
@@ -13215,7 +13793,7 @@ uint8_t get_allowed_block(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 uint8_t get_allowed_block(ModeDecisionContext *context_ptr) {
 #endif
     uint8_t skip_nsq = 0;
-    uint8_t sq_size_idx = 7 - (uint8_t)Log2f((uint8_t)context_ptr->blk_geom->sq_size);
+    uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)context_ptr->blk_geom->sq_size);
 #if DECOUPLE_FROM_ALLOCATION
     if (context_ptr->coeff_area_based_bypass_nsq_th || context_ptr->nsq_cycles_reduction_th) {
 #else

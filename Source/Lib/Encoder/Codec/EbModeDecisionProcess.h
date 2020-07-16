@@ -438,7 +438,11 @@ typedef struct ModeDecisionContext {
     uint16_t         pu_height;
     EbPfMode         pf_md_mode;
     uint8_t          hbd_mode_decision;
+#if FIX_WARNINGS_WIN
+    uint8_t         qp_index;
+#else
     uint16_t         qp_index;
+#endif
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
 #if REFACTOR_SIGNALS
@@ -548,7 +552,9 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t              inject_inter_candidates;
     uint8_t              intra_similar_mode;
+#if !CLEANUP_CYCLE_ALLOCATION
     uint8_t              skip_depth;
+#endif
     uint8_t *            cfl_temp_luma_recon;
     uint16_t *           cfl_temp_luma_recon16bit;
     EbBool               spatial_sse_full_loop;

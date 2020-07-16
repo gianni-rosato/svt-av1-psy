@@ -474,6 +474,13 @@ typedef struct TileGroupInfo {
     uint16_t tile_group_tile_end_x;
     uint16_t tile_group_tile_end_y;
 } TileGroupInfo;
+#if DECOUPLE_ME_RES
+typedef struct MotionEstimationData {
+    EbDctor              dctor;
+    MeSbResults **me_results;
+    uint16_t sb_total_count_unscaled;
+} MotionEstimationData;
+#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -653,7 +660,16 @@ typedef struct PictureParentControlSet {
     uint16_t full_sb_count;
     EbBool   init_pred_struct_position_flag;
     int8_t   hierarchical_layers_diff;
-
+#if DECOUPLE_ME_RES
+    //Dep-Cnt Clean up is done using 2 mechanism
+    //1: a triggering picture that will clean up all previous pictures;
+    //2: a picture does a self clean up
+    int32_t self_updated_links; // if negative: number of pic not dependent on curr; usefull for pictures in current MG which have a dec order > Base-Intra
+                                    //due to I frame Insertion
+    DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
+                                                      //this array will store all others pictures needing a dep-cnt clean up.
+    uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
+#endif
     // HME Flags
     EbBool enable_hme_flag;
     EbBool enable_hme_level0_flag;

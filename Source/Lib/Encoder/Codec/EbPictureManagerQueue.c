@@ -26,3 +26,11 @@ EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr) {
 
     return EB_ErrorNone;
 }
+#if DECOUPLE_ME_RES
+EbErrorType dep_cnt_queue_entry_ctor(PicQueueEntry *entry_ptr) {
+
+    entry_ptr->pic_num = ~0u;
+    entry_ptr->is_done = 1;
+    return EB_ErrorNone;
+}
+#endif
