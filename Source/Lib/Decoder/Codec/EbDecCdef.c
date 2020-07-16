@@ -179,7 +179,7 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         uint32_t coffset;
         int32_t  rend, cend;
         int32_t  pri_damping = frame_info->cdef_params.cdef_damping;
-        int32_t  sec_damping = frame_info->cdef_params.cdef_damping;
+        int32_t  sec_damping = pri_damping;
         int32_t  hsize       = nhb << mi_wide_l2[pli];
         int32_t  vsize       = nvb << mi_high_l2[pli];
         int32_t  sub_x       = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_x;

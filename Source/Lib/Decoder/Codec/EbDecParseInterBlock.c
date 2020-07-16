@@ -21,13 +21,6 @@
 typedef const int (*ColorCost)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS][PALETTE_COLORS];
 typedef AomCdfProb (*MapCdf)[PALETTE_SIZES][PALETTE_COLOR_INDEX_CONTEXTS];
 
-typedef struct {
-    int       rows;
-    int       n_colors;
-    int       plane_width;
-    int       plane_height;
-} Av1ColorMapParam;
-
 #define MAX_COLOR_CONTEXT_HASH 8
 #define NUM_PALETTE_NEIGHBORS 3 // left, top-left and top.
 #define COLOR_MAP_STRIDE 128 // worst case
@@ -326,14 +319,14 @@ static void read_ref_frames(ParseCtxt *parse_ctxt, PartitionInfo *const pi) {
                     parse_ctxt->cur_tile_ctx.comp_ref_cdf[get_pred_context_single_ref_p4(pi)][1],
                     2,
                     ACCT_STR);
-                ref_frame[!idx] = bit1 ? LAST2_FRAME : LAST_FRAME;
+                ref_frame[0] = bit1 ? LAST2_FRAME : LAST_FRAME;
             } else {
                 uint16_t bit2 = (uint16_t)svt_read_symbol(
                     r,
                     parse_ctxt->cur_tile_ctx.comp_ref_cdf[get_pred_context_last3_or_gld(pi)][2],
                     2,
                     ACCT_STR);
-                ref_frame[!idx] = bit2 ? GOLDEN_FRAME : LAST3_FRAME;
+                ref_frame[0] = bit2 ? GOLDEN_FRAME : LAST3_FRAME;
             }
 
             // Decode backward references.
@@ -396,21 +389,19 @@ static void add_ref_mv_candidate(EbDecHandle *dec_handle, const BlockModeInfo *c
                                  uint8_t *found_match, uint8_t *newmv_count,
                                  CandidateMv *ref_mv_stack, IntMv *gm_mv_candidates, int weight) {
     if (!is_inter_block(candidate)) return; // for intrabc
-    int index = 0, ref;
     assert(weight % 2 == 0);
 
     EbDecPicBuf *buf = dec_handle->cur_pic_buf[0];
     if (rf[1] == NONE_FRAME) {
         // single reference frame
-        for (ref = 0; ref < 2; ++ref) {
+        for (int ref = 0; ref < 2; ++ref) {
             if (candidate->ref_frame[ref] == rf[0]) {
-                IntMv this_refmv;
-                if (is_global_mv_block(
-                        candidate->mode, candidate->sb_type, buf->global_motion[rf[0]].gm_type)) {
-                    this_refmv = gm_mv_candidates[0];
-                } else
-                    this_refmv = candidate->mv[ref];
-
+                IntMv this_refmv = is_global_mv_block(candidate->mode,
+                                                      candidate->sb_type,
+                                                      buf->global_motion[rf[0]].gm_type)
+                    ? gm_mv_candidates[0]
+                    : candidate->mv[ref];
+                int index;
                 for (index = 0; index < *num_mv_found; ++index)
                     if (ref_mv_stack[index].this_mv.as_int == this_refmv.as_int) break;
 
@@ -430,16 +421,15 @@ static void add_ref_mv_candidate(EbDecHandle *dec_handle, const BlockModeInfo *c
         // compound reference frame
         if (candidate->ref_frame[0] == rf[0] && candidate->ref_frame[1] == rf[1]) {
             IntMv this_refmv[2];
-            for (ref = 0; ref < 2; ++ref) {
-                if (is_global_mv_block(
-                        candidate->mode, candidate->sb_type, buf->global_motion[rf[ref]].gm_type)) {
-                    this_refmv[ref] = gm_mv_candidates[ref];
-                } else
-                    this_refmv[ref] = candidate->mv[ref];
-            }
+            for (int ref = 0; ref < 2; ++ref)
+                this_refmv[ref] = is_global_mv_block(candidate->mode,
+                                                     candidate->sb_type,
+                                                     buf->global_motion[rf[ref]].gm_type)
+                    ? gm_mv_candidates[ref]
+                    : candidate->mv[ref];
 
             //*found_match = 1;
-
+            int index;
             for (index = 0; index < *num_mv_found; ++index)
                 if ((ref_mv_stack[index].this_mv.as_int == this_refmv[0].as_int) &&
                     (ref_mv_stack[index].comp_mv.as_int == this_refmv[1].as_int))
@@ -567,12 +557,12 @@ static void scan_blk_mbmi(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, Partiti
                           int delta_row, int delta_col, const MvReferenceFrame rf[2],
                           CandidateMv *ref_mv_stack, uint8_t *found_match, uint8_t *newmv_count,
                           IntMv *gm_mv_candidates, uint8_t num_mv_found[MODE_CTX_REF_FRAMES]) {
-    int mv_row = pi->mi_row + delta_row;
-    int mv_col = pi->mi_col + delta_col;
-    int weight = 4;
+    const int mv_row = pi->mi_row + delta_row;
+    const int mv_col = pi->mi_col + delta_col;
 
     if (is_inside(&parse_ctx->cur_tile_info, mv_col, mv_row)) {
-        BlockModeInfo *candidate = get_cur_mode_info(dec_handle, mv_row, mv_col, pi->sb_info);
+        const BlockModeInfo *const candidate = get_cur_mode_info(
+            dec_handle, mv_row, mv_col, pi->sb_info);
 
         add_ref_mv_candidate(dec_handle,
                              candidate,
@@ -582,7 +572,7 @@ static void scan_blk_mbmi(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, Partiti
                              newmv_count,
                              ref_mv_stack,
                              gm_mv_candidates,
-                             weight);
+                             4);
     } // Analyze a single 8x8 block motion information.
 }
 
@@ -1539,10 +1529,9 @@ void assign_intrabc_mv(ParseCtxt *parse_ctxt, IntMv ref_mvs[INTRA_FRAME + 1][MAX
                         pi->mi_col);
     }
     // Ref DV should not have sub-pel.
-    int valid_dv     = (dv_ref.as_mv.col & 7) == 0 && (dv_ref.as_mv.row & 7) == 0;
     dv_ref.as_mv.col = (dv_ref.as_mv.col >> 3) * 8;
     dv_ref.as_mv.row = (dv_ref.as_mv.row >> 3) * 8;
-    valid_dv         = valid_dv && dec_assign_dv(parse_ctxt, pi, &mbmi->mv[0], &dv_ref);
+    dec_assign_dv(parse_ctxt, pi, &mbmi->mv[0], &dv_ref);
 }
 
 void read_interintra_mode(ParseCtxt *parse_ctxt, BlockModeInfo *mbmi) {
@@ -2187,21 +2176,18 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Parti
 int get_palette_color_context(uint8_t (*color_map)[COLOR_MAP_STRIDE][COLOR_MAP_STRIDE], int r,
                               int c, int palette_size, uint8_t *color_order) {
     // Get color indices of neighbors.
-    int color_neighbors[NUM_PALETTE_NEIGHBORS];
-    color_neighbors[0] = (c - 1 >= 0) ? (*color_map)[r][c - 1] : -1;
-    color_neighbors[1] = (c - 1 >= 0 && r - 1 >= 0) ? (*color_map)[(r - 1)][c - 1] : -1;
-    color_neighbors[2] = (r - 1 >= 0) ? (*color_map)[(r - 1)][c] : -1;
-
+    int color_neighbors[NUM_PALETTE_NEIGHBORS] = {
+        c - 1 >= 0 ? (*color_map)[r][c - 1] : -1,
+        c - 1 >= 0 && r - 1 >= 0 ? (*color_map)[r - 1][c - 1] : -1,
+        r - 1 >= 0 ? (*color_map)[r - 1][c] : -1};
     int              scores[PALETTE_MAX_SIZE + 10] = {0};
-    int              i;
     static const int weights[NUM_PALETTE_NEIGHBORS] = {2, 1, 2};
-    for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
-        if (color_neighbors[i] >= 0) { scores[color_neighbors[i]] += weights[i]; }
-    }
+    for (int i = 0; i < NUM_PALETTE_NEIGHBORS; ++i)
+        if (color_neighbors[i] >= 0) scores[color_neighbors[i]] += weights[i];
 
-    for (i = 0; i < PALETTE_MAX_SIZE; ++i) { color_order[i] = i; }
+    for (int i = 0; i < PALETTE_MAX_SIZE; ++i) color_order[i] = i;
 
-    for (i = 0; i < NUM_PALETTE_NEIGHBORS; i++) {
+    for (int i = 0; i < NUM_PALETTE_NEIGHBORS; i++) {
         int max_score = scores[i];
         int max_id    = i;
         for (int j = i + 1; j < palette_size; j++) {
@@ -2223,9 +2209,8 @@ int get_palette_color_context(uint8_t (*color_map)[COLOR_MAP_STRIDE][COLOR_MAP_S
     }
     int              color_index_ctx_hash                    = 0;
     static const int hash_multipliers[NUM_PALETTE_NEIGHBORS] = {1, 2, 2};
-    for (int i = 0; i < NUM_PALETTE_NEIGHBORS; i++) {
+    for (int i = 0; i < NUM_PALETTE_NEIGHBORS; i++)
         color_index_ctx_hash += scores[i] * hash_multipliers[i];
-    }
     assert(color_index_ctx_hash > 0);
     assert(color_index_ctx_hash <= MAX_COLOR_CONTEXT_HASH);
 
@@ -2252,11 +2237,10 @@ void palette_tokens(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, PartitionInfo
     int32_t is_chroma_ref = pi->is_chroma_ref;
     uint8_t color_order[PALETTE_MAX_SIZE];
     uint8_t color_map[COLOR_MAP_STRIDE][COLOR_MAP_STRIDE];
-    int     sub_x, sub_y;
     for (int plane_itr = 0; plane_itr < MAX_MB_PLANE; plane_itr++) {
-        uint8_t palette_size = mbmi->palette_size[plane_itr != 0];
-        sub_x                = plane_itr ? dec_handle->seq_header.color_config.subsampling_x : 0;
-        sub_y                = plane_itr ? dec_handle->seq_header.color_config.subsampling_y : 0;
+        uint8_t   palette_size = mbmi->palette_size[plane_itr != 0];
+        const int sub_x        = plane_itr ? dec_handle->seq_header.color_config.subsampling_x : 0;
+        const int sub_y        = plane_itr ? dec_handle->seq_header.color_config.subsampling_y : 0;
         if (plane_itr < PLANE_TYPES && palette_size) {
             block_height     = block_height >> sub_y;
             block_width      = block_width >> sub_x;

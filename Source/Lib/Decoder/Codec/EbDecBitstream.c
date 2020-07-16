@@ -45,11 +45,9 @@ void dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value, size_t *l
     (void)available;
     *value  = 0;
     *length = 0;
-    int      i;
-    uint32_t leb128_byte = 0;
 
-    for (i = 0; i < 8; i++) {
-        leb128_byte = dec_get_bits(bs, 8);
+    for (int i = 0; i < 8; i++) {
+        uint32_t leb128_byte = dec_get_bits(bs, 8);
         *value |= (((uint64_t)leb128_byte & 0x7f) << (i * 7));
         *length += 1;
         if (!(leb128_byte & 0x80)) break;
@@ -87,11 +85,9 @@ int32_t dec_get_bits_su(Bitstrm *bs, uint32_t n) {
 
 /* Unsigned little-endian n-byte number appearing directly in the Bitstream */
 uint32_t dec_get_bits_le(Bitstrm *bs, uint32_t n) {
-    uint32_t t = 0, byte;
-    for (uint32_t i = 0; i < n; i++) {
-        byte = dec_get_bits(bs, 8);
-        t += (byte << (i * 8));
-    }
+    uint32_t t = 0;
+    for (uint32_t i = 0; i < n; i++)
+        t += dec_get_bits(bs, 8) << (i * 8);
     return t;
 }
 

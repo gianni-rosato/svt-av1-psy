@@ -185,7 +185,7 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
 static INLINE void dec_ref_count_and_rel(EbDecPicBuf *ps_pic_buf) {
     if (ps_pic_buf != NULL) {
         ps_pic_buf->ref_count--;
-        assert(ps_pic_buf->ref_count >= 0);
+        assert(ps_pic_buf->ref_count == 0);
 
         if (ps_pic_buf->ref_count == 0) ps_pic_buf->is_free = 1;
     }
@@ -212,11 +212,11 @@ static INLINE void dec_ref_count_and_rel(EbDecPicBuf *ps_pic_buf) {
 */
 void dec_pic_mgr_update_ref_pic(EbDecHandle *dec_handle_ptr, int32_t frame_decoded,
                                 int32_t refresh_frame_flags) {
-    int32_t ref_index = 0, mask;
+    int32_t ref_index = 0;
 
     /* TODO: Add lock and unlock for MT */
     if (frame_decoded) {
-        for (mask = refresh_frame_flags; mask; mask >>= 1) {
+        for (int32_t mask = refresh_frame_flags; mask; mask >>= 1) {
             dec_ref_count_and_rel(dec_handle_ptr->ref_frame_map[ref_index]);
             dec_handle_ptr->ref_frame_map[ref_index] =
                 dec_handle_ptr->next_ref_frame_map[ref_index];
@@ -332,7 +332,7 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
     int32_t gld_frame_sort_idx = -1;
 
     assert(dec_handle_ptr->seq_header.order_hint_info.enable_order_hint);
-    assert(dec_handle_ptr->seq_header.order_hint_info.order_hint_bits >= 0);
+    assert(dec_handle_ptr->seq_header.order_hint_info.order_hint_bits == 0);
 
     const int32_t cur_order_hint = (int32_t)dec_handle_ptr->frame_header.order_hint;
     const int32_t cur_frame_sort_idx =
@@ -353,7 +353,7 @@ void svt_set_frame_refs(EbDecHandle *dec_handle_ptr, int32_t lst_map_idx, int32_
         if (buf == NULL) continue;
         // If this assertion fails, there is a reference leak.
         assert(buf->ref_count > 0);
-        if (buf->ref_count <= 0) continue;
+        if (buf->ref_count == 0) continue;
 
         const int32_t offset = (int32_t)buf->order_hint;
         ref_frame_info[i].sort_idx =

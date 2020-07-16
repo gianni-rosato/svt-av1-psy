@@ -198,8 +198,7 @@ static INLINE void dec_build_prediction_by_above_pred(
     int                  mi_x, mi_y;
     uint8_t *            tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    BlockModeInfo        bakup_abv_mbmi = *above_mbmi;
-    backup_pi->mi                       = &bakup_abv_mbmi;
+    backup_pi->mi                       = above_mbmi;
     av1_modify_neighbor_predictor_for_obmc(backup_pi->mi);
 
     const int num_refs = 1 + has_second_ref(backup_pi->mi);
@@ -285,11 +284,10 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
     //Calculating buffers for current block i.e getting recon_buffer for blending
     void *               curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t              curr_recon_stride[MAX_MB_PLANE];
-    int32_t              sub_x, sub_y;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     for (int plane = 0; plane < num_planes; ++plane) {
-        sub_x = (plane > 0) ? pi->subsampling_x : 0;
-        sub_y = (plane > 0) ? pi->subsampling_y : 0;
+        uint8_t sub_x = (plane > 0) ? pi->subsampling_x : 0;
+        uint8_t sub_y = (plane > 0) ? pi->subsampling_y : 0;
 
         derive_blk_pointers(recon_picture_buf,
                             plane,
@@ -357,8 +355,7 @@ static INLINE void dec_build_prediction_by_left_pred(
     int                  mi_x, mi_y;
     uint8_t *            tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    BlockModeInfo        bakup_left_mbmi = *left_mbmi;
-    backup_pi->mi                        = &bakup_left_mbmi;
+    backup_pi->mi                        = left_mbmi;
     av1_modify_neighbor_predictor_for_obmc(backup_pi->mi);
 
     const int num_refs = 1 + has_second_ref(backup_pi->mi);
@@ -446,11 +443,10 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
     //Calculating buffers for current block i.e getting recon_buffer
     void *               curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t              curr_recon_stride[MAX_MB_PLANE];
-    int32_t              sub_x, sub_y;
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     for (int plane = 0; plane < num_planes; ++plane) {
-        sub_x = (plane > 0) ? pi->subsampling_x : 0;
-        sub_y = (plane > 0) ? pi->subsampling_y : 0;
+        int8_t sub_x = (plane > 0) ? pi->subsampling_x : 0;
+        int8_t sub_y = (plane > 0) ? pi->subsampling_y : 0;
 
         derive_blk_pointers(recon_picture_buf,
                             plane,

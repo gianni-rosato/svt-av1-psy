@@ -505,10 +505,10 @@ int obudec_read_temporal_unit(DecInputContext *input, uint8_t **buffer, size_t *
     size_t  obu_size                            = 0;
     size_t  length_of_temporal_unit_size        = 0;
     size_t  length_of_frame_unit_size           = 0;
-    uint8_t frheader[OBU_MAX_LENGTH_FIELD_SIZE] = {0};
 
     if (obu_ctx->is_annexb) {
         uint64_t size = 0;
+        uint8_t  frheader[OBU_MAX_LENGTH_FIELD_SIZE] = {0};
 
         assert(obu_ctx->bytes_buffered == 0);
 

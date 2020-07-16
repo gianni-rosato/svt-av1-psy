@@ -20,6 +20,7 @@
 #include "EbDecMemInit.h"
 #include "EbDecPicMgr.h"
 #include "grainSynthesis.h"
+#include "EbUtility.h"
 
 #ifndef _WIN32
 #include <pthread.h>
@@ -149,7 +150,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
 
     uint32_t wd = dec_handle_ptr->frame_header.frame_size.superres_upscaled_width;
     uint32_t ht = dec_handle_ptr->frame_header.frame_size.frame_height;
-    uint32_t i, sx = 0, sy = 0;
+    int      sx = 0, sy = 0;
     /* FilmGrain module req. even dim. for internal operation */
     int even_w = (wd & 1) ? (wd + 1) : wd;
     int even_h = (ht & 1) ? (ht + 1) : ht;
@@ -237,11 +238,13 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
            ((out_img->origin_y * out_img->y_stride + out_img->origin_x) << use_high_bit_depth);
     if (recon_picture_buf->color_format != EB_YUV400) {
         cb = out_img->cb +
-             ((out_img->cb_stride * (out_img->origin_y >> sy) + (out_img->origin_x >> sx))
-              << use_high_bit_depth);
+            ((out_img->cb_stride * gcc_right_shift(out_img->origin_y, sy) +
+              gcc_right_shift(out_img->origin_x, sx))
+             << use_high_bit_depth);
         cr = out_img->cr +
-             ((out_img->cr_stride * (out_img->origin_y >> sy) + (out_img->origin_x >> sx))
-              << use_high_bit_depth);
+            ((out_img->cr_stride * gcc_right_shift(out_img->origin_y, sy) +
+              gcc_right_shift(out_img->origin_x, sx))
+             << use_high_bit_depth);
     }
 
     /* Memcpy to dst buffer */
@@ -259,7 +262,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                 pu2_src = (uint16_t *)recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
                     (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
-                for (i = 0; i < ht; i++) {
+                for (uint32_t i = 0; i < ht; i++) {
                     for (j = 0; j < wd; j++)
                         dst[j] = (uint8_t)pu2_src[j];
                     dst += out_img->y_stride;
@@ -273,7 +276,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                         (recon_picture_buf->origin_x >> sx) +
                         ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                    for (i = 0; i < ((ht + sy) >> sy); i++) {
+                    for (uint32_t i = 0; i < ((ht + sy) >> sy); i++) {
                         for (j = 0; j < ((wd + sx) >> sx); j++)
                             dst[j] = (uint8_t)pu2_src[j];
                         dst += out_img->cb_stride;
@@ -286,7 +289,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                         (recon_picture_buf->origin_x >> sx) +
                         ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
 
-                    for (i = 0; i < ((ht + sy) >> sy); i++) {
+                    for (uint32_t i = 0; i < ((ht + sy) >> sy); i++) {
                         for (j = 0; j < ((wd + sx) >> sx); j++)
                             dst[j] = (uint8_t)pu2_src[j];
                         dst += out_img->cr_stride;
@@ -300,7 +303,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
             src = recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
                 (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
-            for (i = 0; i < ht; i++) {
+            for (uint32_t i = 0; i < ht; i++) {
                 eb_memcpy(dst, src, wd);
                 dst += out_img->y_stride;
                 src += recon_picture_buf->stride_y;
@@ -312,7 +315,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                 src = recon_picture_buf->buffer_cb + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
+                for (uint32_t i = 0; i < ((ht + sy) >> sy); i++) {
                     eb_memcpy(dst, src, ((wd + sx) >> sx));
                     dst += out_img->cb_stride;
                     src += recon_picture_buf->stride_cb;
@@ -323,7 +326,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                 src = recon_picture_buf->buffer_cr + (recon_picture_buf->origin_x >> sx) +
                     ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
+                for (uint32_t i = 0; i < ((ht + sy) >> sy); i++) {
                     eb_memcpy(dst, src, ((wd + sx) >> sx));
                     dst += out_img->cr_stride;
                     src += recon_picture_buf->stride_cr;
@@ -339,7 +342,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
             pu2_src = (uint16_t *)recon_picture_buf->buffer_y + recon_picture_buf->origin_x +
                       (recon_picture_buf->origin_y * recon_picture_buf->stride_y);
 
-            for (i = 0; i < ht; i++) {
+            for (uint32_t i = 0; i < ht; i++) {
                 eb_memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * wd);
                 pu2_dst += out_img->y_stride;
                 pu2_src += recon_picture_buf->stride_y;
@@ -352,7 +355,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                           (recon_picture_buf->origin_x >> sx) +
                           ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cb);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
+                for (uint32_t i = 0; i < ((ht + sy) >> sy); i++) {
                     eb_memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
                     pu2_dst += out_img->cb_stride;
                     pu2_src += recon_picture_buf->stride_cb;
@@ -364,7 +367,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
                           (recon_picture_buf->origin_x >> sx) +
                           ((recon_picture_buf->origin_y >> sy) * recon_picture_buf->stride_cr);
 
-                for (i = 0; i < ((ht + sy) >> sy); i++) {
+                for (uint32_t i = 0; i < ((ht + sy) >> sy); i++) {
                     eb_memcpy(pu2_dst, pu2_src, sizeof(uint16_t) * ((wd + sx) >> sx));
                     pu2_dst += out_img->cr_stride;
                     pu2_src += recon_picture_buf->stride_cr;
@@ -422,7 +425,6 @@ EbErrorType eb_svt_dec_set_default_parameter(EbSvtAv1DecConfiguration *config_pt
     config_ptr->max_bit_depth      = EB_EIGHT_BIT;
     config_ptr->is_16bit_pipeline = 0;
     config_ptr->max_color_format   = EB_YUV420;
-    config_ptr->threads            = 1;
 
     // Application Specific parameters
     config_ptr->channel_id           = 0;
@@ -440,7 +442,6 @@ EbErrorType eb_svt_dec_set_default_parameter(EbSvtAv1DecConfiguration *config_pt
 * Decoder Handle Initialization
 **********************************/
 static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
-    EbErrorType      return_error      = EB_ErrorNone;
     EbComponentType *svt_dec_component = (EbComponentType *)hComponent;
     SVT_LOG("-------------------------------------------\n");
     SVT_LOG("SVT [version]:\tSVT-AV1 Decoder Lib %s\n", SVT_AV1_CVS_VERSION);
@@ -467,10 +468,8 @@ static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
     svt_dec_component->size = sizeof(EbComponentType);
 
     // Decoder Private Handle Ctor
-    return_error = (EbErrorType)eb_dec_handle_ctor(
-        (EbDecHandle **)&(svt_dec_component->p_component_private), svt_dec_component);
-
-    return return_error;
+    return eb_dec_handle_ctor((EbDecHandle **)&(svt_dec_component->p_component_private),
+                              svt_dec_component);
 }
 
 EB_API EbErrorType
@@ -628,36 +627,35 @@ svt_av1_dec_deinit(EbComponentType *svt_dec_component) {
     EbDecHandle *dec_handle_ptr = (EbDecHandle *)svt_dec_component->p_component_private;
     EbErrorType  return_error   = EB_ErrorNone;
 
-    if (dec_handle_ptr) {
-        if (dec_handle_ptr->dec_config.threads > 1) dec_sync_all_threads(dec_handle_ptr);
-        if (svt_dec_memory_map) {
-            // Loop through the ptr table and free all malloc'd pointers per channel
-            EbMemoryMapEntry *memory_entry = svt_dec_memory_map;
-            if (memory_entry) {
-                do {
-                    switch (memory_entry->ptr_type) {
-                    case EB_N_PTR: free(memory_entry->ptr); break;
-                    case EB_A_PTR:
+    if (!dec_handle_ptr)
+        return EB_ErrorNone;
+    if (dec_handle_ptr->dec_config.threads > 1)
+        dec_sync_all_threads(dec_handle_ptr);
+    if (!svt_dec_memory_map)
+        return EB_ErrorNone;
+
+    // Loop through the ptr table and free all malloc'd pointers per channel
+    EbMemoryMapEntry *memory_entry = svt_dec_memory_map;
+    do {
+        switch (memory_entry->ptr_type) {
+        case EB_N_PTR: free(memory_entry->ptr); break;
+        case EB_A_PTR:
 #ifdef _WIN32
-                        _aligned_free(memory_entry->ptr);
+            _aligned_free(memory_entry->ptr);
 #else
-                        free(memory_entry->ptr);
+            free(memory_entry->ptr);
 #endif
-                        break;
-                    case EB_SEMAPHORE: eb_destroy_semaphore(memory_entry->ptr); break;
-                    case EB_THREAD: eb_destroy_thread(memory_entry->ptr); break;
-                    case EB_MUTEX: eb_destroy_mutex(memory_entry->ptr); break;
-                    default: return_error = EB_ErrorMax; break;
-                    }
-                    EbMemoryMapEntry *tmp_memory_entry = memory_entry;
-                    memory_entry = (EbMemoryMapEntry *)tmp_memory_entry->prev_entry;
-                    if (tmp_memory_entry) free(tmp_memory_entry);
-                } while (memory_entry != dec_handle_ptr->memory_map_init_address && memory_entry);
-                if (dec_handle_ptr->memory_map_init_address)
-                    free(dec_handle_ptr->memory_map_init_address);
-            }
+            break;
+        case EB_SEMAPHORE: eb_destroy_semaphore(memory_entry->ptr); break;
+        case EB_THREAD: eb_destroy_thread(memory_entry->ptr); break;
+        case EB_MUTEX: eb_destroy_mutex(memory_entry->ptr); break;
+        default: return_error = EB_ErrorMax; break;
         }
-    }
+        EbMemoryMapEntry *tmp_memory_entry = memory_entry;
+        memory_entry                       = tmp_memory_entry->prev_entry;
+        free(tmp_memory_entry);
+    } while (memory_entry != dec_handle_ptr->memory_map_init_address && memory_entry);
+    free(dec_handle_ptr->memory_map_init_address);
     return return_error;
 }
 

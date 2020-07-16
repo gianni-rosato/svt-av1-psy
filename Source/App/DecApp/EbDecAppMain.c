@@ -23,7 +23,7 @@
 
 int init_pic_buffer(EbSvtIOFormat *pic_buffer, CliInput *cli, EbSvtAv1DecConfiguration *config) {
     /* FilmGrain module req. even dim. for internal operation */
-    pic_buffer->y_stride = cli->width & 1 ? cli->width + 1 : cli->width;
+    pic_buffer->y_stride = (cli->width & 1) ? cli->width + 1 : cli->width;
     switch (cli->fmt) {
     case EB_YUV400:
         pic_buffer->cb_stride = INT32_MAX;
@@ -184,9 +184,8 @@ int32_t main(int32_t argc, char *argv[]) {
         fps_frm     = cli.fps_frm;
         fps_summary = cli.fps_summary;
 
-        EbBufferHeaderType *recon_buffer = NULL;
-        recon_buffer                     = (EbBufferHeaderType *)malloc(sizeof(EbBufferHeaderType));
-        recon_buffer->p_buffer           = (uint8_t *)malloc(sizeof(EbSvtIOFormat));
+        EbBufferHeaderType *recon_buffer = malloc(sizeof(*recon_buffer));
+        recon_buffer->p_buffer           = malloc(sizeof(EbSvtIOFormat));
 
         /* FilmGrain module req. even dim. for internal operation */
         int w = (cli.width & 1) ? (cli.width + 1) : cli.width;

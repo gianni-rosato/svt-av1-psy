@@ -52,16 +52,11 @@ static int read_is_valid(const uint8_t *start, size_t len, const uint8_t *end) {
 
 EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data, const uint8_t *data_end,
                             const size_t read_size, uint8_t allow_update_cdf) {
-    EbErrorType status = EB_ErrorNone;
-
-    if (read_is_valid(data, read_size, data_end)) {
-        if (0 == svt_reader_init(r, data, read_size))
-            r->allow_update_cdf = allow_update_cdf;
-        else
-            status = EB_Corrupt_Frame;
-    } else
-        status = EB_Corrupt_Frame;
-    return status;
+    if (read_is_valid(data, read_size, data_end) && !svt_reader_init(r, data, read_size))
+        r->allow_update_cdf = allow_update_cdf;
+    else
+        return EB_Corrupt_Frame;
+    return EB_ErrorNone;
 }
 
 void clear_above_context(ParseCtxt *parse_ctxt, int mi_col_start, int mi_col_end, int num_threads) {
@@ -137,18 +132,17 @@ EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
     MasterParseCtxt *master_parse_ctxt = (MasterParseCtxt *)dec_handle_ptr->pv_master_parse_ctxt;
     FrameHeader *    frame_header      = &dec_handle_ptr->frame_header;
     ParseTileData *  parse_tile_data   = &master_parse_ctxt->parse_tile_data[tile_num];
-    EbErrorType      status            = EB_ErrorNone;
     int              tile_row          = tile_num / tiles_info->tile_cols;
     int              tile_col          = tile_num % tiles_info->tile_cols;
     svt_tile_init(&parse_ctxt->cur_tile_info, frame_header, tile_row, tile_col);
 
     parse_ctxt->cur_q_ind = frame_header->quantization_params.base_q_idx;
 
-    status = init_svt_reader(&parse_ctxt->r,
-                             (const uint8_t *)parse_tile_data->data,
-                             parse_tile_data->data_end,
-                             parse_tile_data->tile_size,
-                             !(parse_ctxt->frame_header->disable_cdf_update));
+    EbErrorType status = init_svt_reader(&parse_ctxt->r,
+                                         (const uint8_t *)parse_tile_data->data,
+                                         parse_tile_data->data_end,
+                                         parse_tile_data->tile_size,
+                                         !(parse_ctxt->frame_header->disable_cdf_update));
     if (status != EB_ErrorNone) return status;
 
     parse_ctxt->cur_tile_ctx = master_parse_ctxt->init_frm_ctx;

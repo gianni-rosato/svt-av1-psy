@@ -517,13 +517,12 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
     assert(IMPLIES(is_intrabc, !do_warp));
 
     if (do_warp) {
-        const EbWarpedMotionParams *wm_params = &default_warp_params;
-
         const EbWarpedMotionParams *const wm_global =
             &part_info->ps_global_motion[mi->ref_frame[ref]];
         const EbWarpedMotionParams *const wm_local = &part_info->local_warp_params;
 
-        wm_params = (mi->motion_mode == WARPED_CAUSAL) ? wm_local : wm_global;
+        const EbWarpedMotionParams *wm_params = mi->motion_mode == WARPED_CAUSAL ? wm_local
+                                                                                 : wm_global;
 
         eb_av1_warp_plane((EbWarpedMotionParams *)wm_params,
                           highbd,
@@ -784,7 +783,6 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     const FrameHeader *  cur_frm_hdr = dec_mod_ctx->frame_header;
     SeqHeader *          seq_header  = dec_mod_ctx->seq_header;
     int32_t              is_compound = has_second_ref(mi);
-    int32_t              ref;
     const int32_t        is_intrabc = is_intrabc_block(mi);
 
     //temporary buffer for joint compound, move this to context if stack does not hold.
@@ -827,98 +825,98 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     const int32_t pre_x = (mi_x + MI_SIZE * col_start) >> ss_x;
     const int32_t pre_y = (mi_y + MI_SIZE * row_start) >> ss_y;
 
-    int32_t dst_offset =
-        ((MI_SIZE * col_start) >> ss_x) + ((MI_SIZE * row_start * dst_stride) >> ss_y);
+    const int32_t dst_offset = gcc_right_shift(MI_SIZE * col_start, ss_x) +
+        gcc_right_shift(MI_SIZE * row_start * dst_stride, ss_y);
     void *dst_mod = (void *)((uint8_t *)dst + (dst_offset << is16b));
 
     assert(IMPLIES(is_intrabc, !is_compound));
-    {
-        ConvolveParams conv_params =
-            get_conv_params_no_round(0, 0, plane, tmp_dst, MAX_SB_SIZE, is_compound, bit_depth);
+    ConvolveParams conv_params = get_conv_params_no_round(
+        0, 0, plane, tmp_dst, MAX_SB_SIZE, is_compound, bit_depth);
 
-        int bck_frame_index = 0, fwd_frame_index = 0;
-        int cur_frame_index = cur_frm_hdr->order_hint;
+    int bck_frame_index = 0, fwd_frame_index = 0;
+    int cur_frame_index = cur_frm_hdr->order_hint;
 
-        EbDecPicBuf *bck_buf = get_ref_frame_buf(dec_hdl, mi->ref_frame[0]);
-        EbDecPicBuf *fwd_buf = get_ref_frame_buf(dec_hdl, mi->ref_frame[1]);
+    EbDecPicBuf *bck_buf = get_ref_frame_buf(dec_hdl, mi->ref_frame[0]);
+    EbDecPicBuf *fwd_buf = get_ref_frame_buf(dec_hdl, mi->ref_frame[1]);
 
-        if (bck_buf != NULL) bck_frame_index = bck_buf->order_hint;
-        if (fwd_buf != NULL) fwd_frame_index = fwd_buf->order_hint;
+    if (bck_buf != NULL)
+        bck_frame_index = bck_buf->order_hint;
+    if (fwd_buf != NULL)
+        fwd_frame_index = fwd_buf->order_hint;
 
-        /*Distantance WTD compound inter prediction */
-        eb_av1_dist_wtd_comp_weight_assign(seq_header,
-                                           cur_frame_index,
-                                           bck_frame_index,
-                                           fwd_frame_index,
-                                           (int)mi->compound_idx,
-                                           0,
-                                           &conv_params.fwd_offset,
-                                           &conv_params.bck_offset,
-                                           &conv_params.use_dist_wtd_comp_avg,
-                                           is_compound);
-        conv_params.use_jnt_comp_avg = conv_params.use_dist_wtd_comp_avg;
+    /*Distantance WTD compound inter prediction */
+    eb_av1_dist_wtd_comp_weight_assign(seq_header,
+                                       cur_frame_index,
+                                       bck_frame_index,
+                                       fwd_frame_index,
+                                       (int)mi->compound_idx,
+                                       0,
+                                       &conv_params.fwd_offset,
+                                       &conv_params.bck_offset,
+                                       &conv_params.use_dist_wtd_comp_avg,
+                                       is_compound);
+    conv_params.use_jnt_comp_avg = conv_params.use_dist_wtd_comp_avg;
 
-        for (ref = 0; ref < 1 + is_compound; ++ref) {
-            const int32_t                     mode = mi->mode;
-            const EbWarpedMotionParams *const wm_global =
-                &part_info->ps_global_motion[mi->ref_frame[ref]];
+    for (int32_t ref = 0; ref < 1 + is_compound; ++ref) {
+        const int32_t                     mode = mi->mode;
+        const EbWarpedMotionParams *const wm_global =
+            &part_info->ps_global_motion[mi->ref_frame[ref]];
 
-            EbDecPicBuf *ref_buf = is_intrabc ? dec_hdl->cur_pic_buf[0]
-                                              : get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
-            EbPictureBufferDesc *ps_ref_pic_buf = ref_buf->ps_pic_buf;
+        EbDecPicBuf *ref_buf = is_intrabc ? dec_hdl->cur_pic_buf[0]
+                                          : get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
+        EbPictureBufferDesc *ps_ref_pic_buf = ref_buf->ps_pic_buf;
 
-            int32_t do_warp =
-                (bw >= 8 && bh >= 8 && !build_for_obmc && (cur_frm_hdr->force_integer_mv == 0) &&
-                 (((mode == GLOBALMV || mode == GLOBAL_GLOBALMV) &&
-                   (wm_global->wmtype > TRANSLATION)) ||
-                  (mi->motion_mode == WARPED_CAUSAL)));
+        int32_t do_warp = (bw >= 8 && bh >= 8 && !build_for_obmc &&
+                           (cur_frm_hdr->force_integer_mv == 0) &&
+                           (((mode == GLOBALMV || mode == GLOBAL_GLOBALMV) &&
+                             (wm_global->wmtype > TRANSLATION)) ||
+                            (mi->motion_mode == WARPED_CAUSAL)));
 
-            void *  src;
-            int32_t src_stride;
+        void *  src;
+        int32_t src_stride;
 
-            derive_blk_pointers(ps_ref_pic_buf, plane, 0, 0, &src, &src_stride, ss_x, ss_y);
+        derive_blk_pointers(ps_ref_pic_buf, plane, 0, 0, &src, &src_stride, ss_x, ss_y);
 
-            conv_params.do_average = ref;
-            /*support masked inter prediction based on WEDGE / DIFFWTD compound type */
-            if (is_masked_compound_type(mi->inter_inter_compound.type)) {
-                // masked compound type has its own average mechanism
-                conv_params.do_average = 0;
-            }
+        conv_params.do_average = ref;
+        /*support masked inter prediction based on WEDGE / DIFFWTD compound type */
+        if (is_masked_compound_type(mi->inter_inter_compound.type)) {
+            // masked compound type has its own average mechanism
+            conv_params.do_average = 0;
+        }
 
-            if (ref && is_masked_compound_type(mi->inter_inter_compound.type)) {
-                svt_make_masked_inter_predictor(part_info,
-                                                ref,
-                                                src,
-                                                src_stride,
-                                                dst_mod,
-                                                dst_stride,
-                                                ref_buf,
-                                                pre_x,
-                                                pre_y,
-                                                bw,
-                                                bh,
-                                                &conv_params,
-                                                plane,
-                                                dec_mod_ctx->seg_mask,
-                                                do_warp,
-                                                is16b);
-            } else {
-                svt_make_inter_predictor(part_info,
-                                         ref,
-                                         src,
-                                         src_stride,
-                                         dst_mod,
-                                         dst_stride,
-                                         ref_buf,
-                                         pre_x,
-                                         pre_y,
-                                         bw,
-                                         bh,
-                                         &conv_params,
-                                         plane,
-                                         do_warp,
-                                         is16b);
-            }
+        if (ref && is_masked_compound_type(mi->inter_inter_compound.type)) {
+            svt_make_masked_inter_predictor(part_info,
+                                            ref,
+                                            src,
+                                            src_stride,
+                                            dst_mod,
+                                            dst_stride,
+                                            ref_buf,
+                                            pre_x,
+                                            pre_y,
+                                            bw,
+                                            bh,
+                                            &conv_params,
+                                            plane,
+                                            dec_mod_ctx->seg_mask,
+                                            do_warp,
+                                            is16b);
+        } else {
+            svt_make_inter_predictor(part_info,
+                                     ref,
+                                     src,
+                                     src_stride,
+                                     dst_mod,
+                                     dst_stride,
+                                     ref_buf,
+                                     pre_x,
+                                     pre_y,
+                                     bw,
+                                     bh,
+                                     &conv_params,
+                                     plane,
+                                     do_warp,
+                                     is16b);
         }
     }
 }

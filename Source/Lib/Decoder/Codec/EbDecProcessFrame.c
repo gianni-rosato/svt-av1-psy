@@ -25,25 +25,18 @@
 static void decode_partition(DecModCtxt *dec_mod_ctxt,
                              uint32_t mi_row, uint32_t mi_col,
                              SBInfo *sb_info) {
-    BlockSize     subsize;
-
-    EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-
     if (mi_row >= dec_mod_ctxt->frame_header->mi_rows ||
         mi_col >= dec_mod_ctxt->frame_header->mi_cols)
         return;
 
+    EbDecHandle *  dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
     BlockModeInfo *mode_info = get_cur_mode_info(dec_handle,
                                                  mi_row, mi_col, sb_info);
 
-    int n_blocks = sb_info->num_block;
-    int sub_mi_row = 0;
-    int sub_mi_col = 0;
-
-    for (int i = 0; i < n_blocks; i++) {
-        sub_mi_row = mode_info->mi_row_in_sb;
-        sub_mi_col = mode_info->mi_col_in_sb;
-        subsize = mode_info->sb_type;
+    for (int i = 0; i < sb_info->num_block; i++) {
+        int sub_mi_row = mode_info->mi_row_in_sb;
+        int sub_mi_col = mode_info->mi_col_in_sb;
+        BlockSize subsize    = mode_info->sb_type;
         decode_block(dec_mod_ctxt,
                      mode_info,
                      mi_row + sub_mi_row,
@@ -133,8 +126,6 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
     EbErrorType status = EB_ErrorNone;
 
     while (1) {
-        EbColorConfig *color_config;
-        int32_t        sb_row, mi_row;
         int32_t        sb_row_in_tile = -1;
 
         int32_t sb_row_tile_start =
@@ -161,11 +152,11 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
             while (0 == *sb_row_parsed)
                 ;
 
-            sb_row = sb_row_in_tile + sb_row_tile_start;
+            int32_t sb_row = sb_row_in_tile + sb_row_tile_start;
 
-            mi_row = (sb_row << dec_mod_ctxt->seq_header->sb_size_log2) >> MI_SIZE_LOG2;
+            int32_t mi_row = (sb_row << dec_mod_ctxt->seq_header->sb_size_log2) >> MI_SIZE_LOG2;
 
-            color_config = &dec_mod_ctxt->seq_header->color_config;
+            EbColorConfig *color_config = &dec_mod_ctxt->seq_header->color_config;
             cfl_init(&dec_mod_ctxt->cfl_ctx, color_config);
 
             //update the row started status
@@ -186,7 +177,6 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
 
 EbErrorType start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_ctxt,
                               TilesInfo *tiles_info, int32_t tile_num) {
-    EbErrorType     status = EB_ErrorNone;
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
@@ -200,7 +190,5 @@ EbErrorType start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_c
     svt_tile_init(&dec_mod_ctxt->cur_tile_info, frame_header, tile_row, tile_col);
 
     parse_recon_tile_info_array = &dec_mt_frame_data->parse_recon_tile_info_array[tile_num];
-    status = decode_tile(dec_mod_ctxt, tiles_info, parse_recon_tile_info_array, tile_col);
-
-    return status;
+    return decode_tile(dec_mod_ctxt, tiles_info, parse_recon_tile_info_array, tile_col);
 }

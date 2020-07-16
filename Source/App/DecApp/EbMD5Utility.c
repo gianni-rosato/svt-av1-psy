@@ -43,14 +43,11 @@
 #define MD5STEP(f, w, x, y, z, in, s) (w += f(x, y, z) + in, w = (w << s | w >> (32 - s)) + x)
 
 static void byte_swap(unsigned int *buf, unsigned words) {
-    unsigned char *p;
-
     /* Only swap bytes for big endian machines */
-    int i = 1;
+    if ((!*(unsigned char *)&(unsigned short){1}))
+        return;
 
-    if (*(char *)&i == 1) return;
-
-    p = (unsigned char *)buf;
+    unsigned char *p = (unsigned char *)buf;
 
     do {
         *buf++ = (unsigned int)((unsigned)p[3] << 8 | p[2]) << 16 | ((unsigned)p[1] << 8 | p[0]);
