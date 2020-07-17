@@ -644,6 +644,10 @@ void av1_lambda_assign_md(
 
         context_ptr->full_lambda_md[1] *= 16;
         context_ptr->fast_lambda_md[1] *= 4;
+#if TPL_LAMBDA_IMP
+        context_ptr->full_sb_lambda_md[0] = context_ptr->full_lambda_md[0];
+        context_ptr->full_sb_lambda_md[1] = context_ptr->full_lambda_md[1];
+#endif
 }
 void av1_lambda_assign(uint32_t *fast_lambda, uint32_t *full_lambda, uint8_t bit_depth, uint16_t qp_index,
                        EbBool multiply_lambda) {

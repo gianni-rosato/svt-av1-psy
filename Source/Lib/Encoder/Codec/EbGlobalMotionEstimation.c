@@ -31,6 +31,10 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     EbPaReferenceObject *pa_reference_object;
     EbPictureBufferDesc *quarter_ref_pic_ptr;
     EbPictureBufferDesc *quarter_picture_ptr;
+#if GM_DOWN_16
+    EbPictureBufferDesc *sixteenth_ref_pic_ptr;
+    EbPictureBufferDesc *sixteenth_picture_ptr;
+#endif
     EbPictureBufferDesc *ref_picture_ptr;
     SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     pa_reference_object =
@@ -39,6 +43,12 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
             (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
             ? (EbPictureBufferDesc *)pa_reference_object->quarter_filtered_picture_ptr
             : (EbPictureBufferDesc *)pa_reference_object->quarter_decimated_picture_ptr;
+#if GM_DOWN_16
+    sixteenth_picture_ptr =
+        (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+            ? (EbPictureBufferDesc *)pa_reference_object->sixteenth_filtered_picture_ptr
+            : (EbPictureBufferDesc *)pa_reference_object->sixteenth_decimated_picture_ptr;
+#endif
     uint32_t num_of_list_to_search =
             (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
@@ -76,7 +86,20 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
 
             // Set the source and the reference picture to be used by the global motion search
             // based on the input search mode
+#if GM_DOWN_16
+            if (pcs_ptr->gm_level == GM_DOWN16) {
+                sixteenth_ref_pic_ptr =
+                    (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
+                    ? (EbPictureBufferDesc *)reference_object->sixteenth_filtered_picture_ptr
+                    : (EbPictureBufferDesc *)reference_object->sixteenth_decimated_picture_ptr;
+                ref_picture_ptr = sixteenth_ref_pic_ptr;
+                input_picture_ptr = sixteenth_picture_ptr;
+
+            }
+            else if (pcs_ptr->gm_level == GM_DOWN) {
+#else
             if (pcs_ptr->gm_level == GM_DOWN) {
+#endif
                 quarter_ref_pic_ptr =
                         (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                         ? (EbPictureBufferDesc *)reference_object->quarter_filtered_picture_ptr
@@ -92,6 +115,17 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
                                   &pcs_ptr->global_motion_estimation[list_index][ref_pic_index],
                                   pcs_ptr->frm_hdr.allow_high_precision_mv);
         }
+
+#if GM_LIST1
+        if (context_ptr->gm_identiy_exit) {
+            if (list_index == 0) {
+                if (pcs_ptr->global_motion_estimation[0][0].wmtype == IDENTITY) {
+                    pcs_ptr->global_motion_estimation[1][0].wmtype = IDENTITY;
+                    break;
+                }
+            }
+        }
+#endif
     }
 }
 
@@ -149,6 +183,9 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                 eb_memcpy(params_by_motion[i].params,
                        k_indentity_params,
                        (MAX_PARAMDIM - 1) * sizeof(*(params_by_motion[i].params)));
+#if GLOBAL_ME_BUG_FIX_1
+                params_by_motion[i].num_inliers = 0;
+#endif
             }
 
             av1_compute_global_motion(model,

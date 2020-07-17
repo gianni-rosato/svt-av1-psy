@@ -764,6 +764,23 @@ static unsigned int setup_obmc_center_error(const int32_t *mask, const MV *bestm
 
 /* returns subpixel variance error function */
 #define DIST(r, c) vfp->osvf(pre(y, y_stride, r, c), y_stride, sp(c), sp(r), z, mask, &sse)
+#if OBMC_BUG_FIX
+#define CHECK_BETTER(v, r, c)                                                       \
+    if (c >= minc && c <= maxc && r >= minr && r <= maxr) {                         \
+        MV this_mv = { r, c };                                                       \
+        thismse = (DIST(r, c));                                                     \
+        v = mv_err_cost(&this_mv, ref_mv, mvjcost, mvcost, error_per_bit);          \
+        if ((v + thismse) < besterr) {                                              \
+            besterr = v + thismse;                                                  \
+            br          = r;                                                        \
+            bc          = c;                                                        \
+            *distortion = thismse;                                                  \
+            *sse1       = sse;                                                      \
+        }                                                                           \
+    } else {                                                                        \
+        v = INT_MAX;                                                                \
+    }
+#else
 #define CHECK_BETTER(v, r, c)                               \
     if (c >= minc && c <= maxc && r >= minr && r <= maxr) { \
         thismse = (DIST(r, c));                             \
@@ -777,6 +794,7 @@ static unsigned int setup_obmc_center_error(const int32_t *mask, const MV *bestm
     } else {                                                \
         v = INT_MAX;                                        \
     }
+#endif
 #define CHECK_BETTER0(v, r, c) CHECK_BETTER(v, r, c)
 
 #define CHECK_BETTER1(v, r, c)                                                      \
@@ -938,9 +956,10 @@ int eb_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, In
     unsigned int                   besterr     = INT_MAX;
     unsigned int                   sse;
     unsigned int                   thismse;
-
+#if !OBMC_BUG_FIX
     int            rr    = ref_mv->row;
     int            rc    = ref_mv->col;
+#endif
     int            br    = bestmv->row * 8;
     int            bc    = bestmv->col * 8;
     int            hstep = 4;

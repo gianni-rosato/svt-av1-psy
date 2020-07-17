@@ -693,18 +693,31 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         if (av1_allow_palette(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                               blk_geom->bsize) &&
             intra_mode == DC_PRED) {
+#if MEM_OPT_PALETTE
+            const int use_palette = candidate_ptr->palette_info ?
+                (candidate_ptr->palette_info->pmi.palette_size[0] > 0) : 0;
+#else
             const int use_palette = candidate_ptr->palette_info.pmi.palette_size[0] > 0;
+#endif
             const int bsize_ctx   = av1_get_palette_bsize_ctx(blk_geom->bsize);
             const int mode_ctx    = av1_get_palette_mode_ctx(blk_ptr->av1xd);
             intra_luma_mode_bits_num +=
                 candidate_ptr->md_rate_estimation_ptr
                     ->palette_ymode_fac_bits[bsize_ctx][mode_ctx][use_palette];
             if (use_palette) {
+#if MEM_OPT_PALETTE
+                const uint8_t *const color_map = candidate_ptr->palette_info->color_idx_map;
+#else
                 const uint8_t *const color_map = candidate_ptr->palette_info.color_idx_map;
+#endif
                 int                  block_width, block_height, rows, cols;
                 av1_get_block_dimensions(
                     blk_geom->bsize, 0, blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
+#if MEM_OPT_PALETTE
+                const int plt_size = candidate_ptr->palette_info->pmi.palette_size[0];
+#else
                 const int plt_size = candidate_ptr->palette_info.pmi.palette_size[0];
+#endif
                 int       palette_mode_cost =
                     candidate_ptr->md_rate_estimation_ptr
                         ->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
@@ -712,22 +725,38 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                 uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
                 const int n_cache = eb_get_palette_cache(blk_ptr->av1xd, 0, color_cache);
                 palette_mode_cost += eb_av1_palette_color_cost_y(
+#if MEM_OPT_PALETTE
+                    &candidate_ptr->palette_info->pmi, color_cache, n_cache,
+#else
                     &candidate_ptr->palette_info.pmi, color_cache, n_cache,
+#endif
                     pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth);
+#if MEM_OPT_PALETTE
+                palette_mode_cost += eb_av1_cost_color_map(candidate_ptr->palette_info,
+#else
                 palette_mode_cost += eb_av1_cost_color_map(&candidate_ptr->palette_info,
-                                                           candidate_ptr->md_rate_estimation_ptr,
-                                                           blk_ptr,
-                                                           0,
-                                                           blk_geom->bsize,
-                                                           PALETTE_MAP);
+#endif
+                                                        candidate_ptr->md_rate_estimation_ptr,
+                                                        blk_ptr,
+                                                        0,
+                                                        blk_geom->bsize,
+                                                        PALETTE_MAP);
                 intra_luma_mode_bits_num += palette_mode_cost;
             }
         }
 
         if (av1_filter_intra_allowed(
+#if FILTER_INTRA_CLI
+                pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.filter_intra_level,
+#else
                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_filter_intra,
+#endif
                 blk_geom->bsize,
+#if MEM_OPT_PALETTE
+                candidate_ptr->palette_info ? candidate_ptr->palette_info->pmi.palette_size[0] : 0,
+#else
                 candidate_ptr->palette_info.pmi.palette_size[0],
+#endif
                 intra_mode)) {
             intra_filter_mode_bits_num =
                 candidate_ptr->md_rate_estimation_ptr
@@ -759,11 +788,19 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                 if (av1_allow_palette(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                                       blk_geom->bsize) &&
                     chroma_mode == UV_DC_PRED) {
+#if MEM_OPT_PALETTE
+                    const int              use_palette_y = candidate_ptr->palette_info && (candidate_ptr->palette_info->pmi.palette_size[0] > 0);
+                    const int              use_palette_uv = candidate_ptr->palette_info && (candidate_ptr->palette_info->pmi.palette_size[1] > 0);
+                    intra_chroma_ang_mode_bits_num +=
+                        candidate_ptr->md_rate_estimation_ptr
+                            ->palette_uv_mode_fac_bits[use_palette_y][use_palette_uv];
+#else
                     const PaletteModeInfo *pmi         = &candidate_ptr->palette_info.pmi;
                     const int              use_palette = pmi->palette_size[1] > 0;
                     intra_chroma_ang_mode_bits_num +=
                         candidate_ptr->md_rate_estimation_ptr
                             ->palette_uv_mode_fac_bits[pmi->palette_size[0] > 0][use_palette];
+#endif
                 }
             }
         }
@@ -1973,6 +2010,10 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     }
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, total_distortion);
+#if TPL_LAMBDA_IMP
+    candidate_buffer_ptr->candidate_ptr->total_rate = rate;
+    candidate_buffer_ptr->candidate_ptr->full_distortion = total_distortion;
+#endif
     return return_error;
 }
 
@@ -2141,6 +2182,10 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     candidate_buffer_ptr->candidate_ptr->skip_flag = (skip_cost <= merge_cost) ? EB_TRUE : EB_FALSE;
 
     //CHKN:  skip_flag context is not accurate as MD does not keep skip info in sync with EncDec.
+#if TPL_LAMBDA_IMP
+    candidate_buffer_ptr->candidate_ptr->total_rate = (skip_cost <= merge_cost) ? skip_rate : merge_rate;
+    candidate_buffer_ptr->candidate_ptr->full_distortion = (skip_cost <= merge_cost) ? skip_distortion : merge_distortion;
+#endif
 
     return return_error;
 }

@@ -292,6 +292,31 @@ static INLINE int32_t round_shift(int64_t value, int32_t bit) {
     assert(bit >= 1);
     return (int32_t)((value + (1ll << (bit - 1))) >> bit);
 }
+#if TRANSFORM_FIX_0
+static INLINE int32_t half_btf(int32_t w0, int32_t in0, int32_t w1, int32_t in1,
+    int bit) {
+    int64_t result_64 = (int64_t)(w0 * in0) + (int64_t)(w1 * in1);
+    int64_t intermediate = result_64 + (1LL << (bit - 1));
+    // NOTE(david.barker): The value 'result_64' may not necessarily fit
+    // into 32 bits. However, the result of this function is nominally
+    // ROUND_POWER_OF_TWO_64(result_64, bit)
+    // and that is required to fit into stage_range[stage] many bits
+    // (checked by range_check_buf()).
+    //
+    // Here we've unpacked that rounding operation, and it can be shown
+    // that the value of 'intermediate' here *does* fit into 32 bits
+    // for any conformant bitstream.
+    // The upshot is that, if you do all this calculation using
+    // wrapping 32-bit arithmetic instead of (non-wrapping) 64-bit arithmetic,
+    // then you'll still get the correct result.
+    // To provide a check on this logic, we assert that 'intermediate'
+    // would fit into an int32 if range checking is enabled.
+#if CONFIG_COEFFICIENT_RANGE_CHECKING
+    assert(intermediate >= INT32_MIN && intermediate <= INT32_MAX);
+#endif
+    return (int32_t)(intermediate >> bit);
+}
+#else
 static INLINE int32_t half_btf(int32_t w0, int32_t in0, int32_t w1, int32_t in1, int32_t bit) {
     int64_t result_64 = (int64_t)(w0 * in0) + (int64_t)(w1 * in1);
 #if CONFIG_COEFFICIENT_RANGE_CHECKING
@@ -299,7 +324,7 @@ static INLINE int32_t half_btf(int32_t w0, int32_t in0, int32_t w1, int32_t in1,
 #endif
     return round_shift(result_64, bit);
 }
-
+#endif
 static INLINE int32_t get_rect_tx_log_ratio(int32_t col, int32_t row) {
     if (col == row) return 0;
     if (col > row) {

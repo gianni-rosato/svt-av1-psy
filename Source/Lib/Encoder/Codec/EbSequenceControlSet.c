@@ -183,7 +183,9 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
         scs_ptr->seq_header.enable_warped_motion = (uint8_t)scs_ptr->static_config.enable_warped_motion;
 
     scs_ptr->film_grain_random_seed = 7391;
+#if !ON_OFF_FEATURE_MRP
     scs_ptr->reference_count        = 4;
+#endif
 
     return EB_ErrorNone;
 }
@@ -411,6 +413,10 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, 
 
 static void eb_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
+#if LAD_MEM_RED
+    if (obj->encode_context_ptr && obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved)
+        EB_FREE_ARRAY(obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved);
+#endif
     EB_DELETE(obj->encode_context_ptr);
     EB_DELETE(obj->scs_ptr);
     EB_DESTROY_MUTEX(obj->config_mutex);
@@ -423,6 +429,10 @@ EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *
 
     EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, NULL);
     scs_init_data.encode_context_ptr = object_ptr->encode_context_ptr;
+#if LAD_MEM_RED
+    if (scs_init_data.encode_context_ptr)
+        scs_init_data.encode_context_ptr->mc_flow_rec_picture_buffer_saved = NULL;
+#endif
 
     scs_init_data.sb_size = 64;
 

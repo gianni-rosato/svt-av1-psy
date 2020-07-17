@@ -988,8 +988,14 @@ EbErrorType eb_av1_intra_prediction_cl(
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
                     mode,                                                                           //PredictionMode mode,
                     plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#if MEM_OPT_PALETTE
+                    plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
+                                    candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0]>0 : 0) : 0,
+                    plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
+#else
                     plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0]>0) : 0,
                     plane==0 ? &candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
+#endif
                     plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
@@ -1072,8 +1078,14 @@ EbErrorType eb_av1_intra_prediction_cl(
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
                     mode,                                                                           //PredictionMode mode,
                     plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#if MEM_OPT_PALETTE
+                    plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
+                                    candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0]>0 : 0) : 0,
+                    plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
+#else
                     plane == 0 ? (candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0) : 0,
                     plane == 0 ? &candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
+#endif
                     plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,

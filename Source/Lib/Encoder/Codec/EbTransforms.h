@@ -71,7 +71,9 @@ static const int8_t fadst4_range_mult2[7]      = {0, 2, 4, 3, 3, 3, 3};
 static const int8_t fadst8_range_mult2[8]      = {0, 0, 1, 3, 3, 5, 5, 5};
 static const int8_t fadst16_range_mult2[10]    = {0, 0, 1, 3, 3, 5, 5, 7, 7, 7};
 static const int8_t fadst32_range_mult2[12]    = {0, 0, 1, 3, 3, 5, 5, 7, 7, 9, 9, 9};
+#if !TRANSFORM_FIX_1
 static const int8_t max_fwd_range_mult2_col[5] = {3, 5, 7, 9, 11};
+#endif
 static const int8_t fidtx4_range_mult2[1]      = {1};
 static const int8_t fidtx8_range_mult2[1]      = {2};
 static const int8_t fidtx16_range_mult2[1]     = {3};

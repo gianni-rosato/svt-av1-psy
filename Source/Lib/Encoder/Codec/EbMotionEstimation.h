@@ -52,7 +52,7 @@ extern "C" {
         uint32_t                       sb_index,
         MotionEstimationContext_t   *context_ptr,
         EbPictureBufferDesc       *input_ptr);
-    
+
 
 #if TPL_LA
     extern EbErrorType av1_open_loop_intra_search(

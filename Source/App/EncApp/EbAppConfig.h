@@ -247,7 +247,7 @@ typedef struct EbConfig {
     int sg_filter_mode;
     int wn_filter_mode;
 
-#if !REMOVE_COMBINE_CLASS12
+#if 0//!REMOVE_COMBINE_CLASS12
 
     /****************************************
      * class12
@@ -286,7 +286,7 @@ typedef struct EbConfig {
       * spatial sse in full loop
      ****************************************/
     int spatial_sse_fl;
-#if !REMOVE_ME_SUBPEL_CODE
+#if 1//!REMOVE_ME_SUBPEL_CODE
     /****************************************
       * subpel
      ****************************************/
@@ -421,7 +421,7 @@ typedef struct EbConfig {
     uint32_t scene_change_detection;
     uint32_t rate_control_mode;
     uint32_t look_ahead_distance;
-#if TPL_LA
+#if 1//TPL_LA
     uint32_t enable_tpl_la;
 #endif
     uint32_t target_bit_rate;
@@ -509,6 +509,9 @@ typedef struct EbConfig {
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
     EbBool                         enable_manual_pred_struct;
     int32_t                        manual_pred_struct_entry_num;
+#if 1//ON_OFF_FEATURE_MRP
+    int                 mrp_level;
+#endif
 } EbConfig;
 
 extern void eb_config_ctor(EbConfig *config_ptr);

@@ -148,8 +148,15 @@ static void eb_reference_object_dctor(EbPtr p) {
  *****************************************/
 EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
                                      EbPtr              object_init_data_ptr) {
+#if MEM_OPT_10bit
+    EbReferenceObjectDescInitData* ref_init_ptr = (EbReferenceObjectDescInitData*)object_init_data_ptr;
+#endif
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
+#if !MEM_OPT_10bit
         (EbPictureBufferDescInitData *)object_init_data_ptr;
+#else
+        &ref_init_ptr->reference_picture_desc_init_data;
+#endif
     EbPictureBufferDescInitData picture_buffer_desc_init_data_16bit_ptr =
         *picture_buffer_desc_init_data_ptr;
 
@@ -166,9 +173,19 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
             reference_object,
             &picture_buffer_desc_init_data_16bit_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
+#if MEM_OPT_10bit
+        // Use 8bit here to use in MD
+        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
+        picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_8BIT;
 
+        // if hbd_md = 1, and we only use 8bit luma for obmc_motion_refine
+        if (ref_init_ptr->hbd_mode_decision == EB_10_BIT_MD) {
+            picture_buffer_desc_init_data_16bit_ptr.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+        }
+#else
         // Hsan: set split_mode to 1 to construct the unpacked reference buffer (used @ MD)
         picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
+#endif
         EB_NEW(reference_object->reference_picture,
                eb_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);

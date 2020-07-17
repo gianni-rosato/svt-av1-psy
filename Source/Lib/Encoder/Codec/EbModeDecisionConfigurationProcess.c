@@ -132,7 +132,11 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
 
     //Update MV
     PictureParentControlSet *parent_pcs_ptr = pcs_ptr->parent_pcs_ptr;
+#if GM_DOWN_16
+    if (parent_pcs_ptr->gm_level <= GM_DOWN16) {
+#else
     if (parent_pcs_ptr->gm_level <= GM_DOWN) {
+#endif
         if (parent_pcs_ptr
                 ->is_global_motion[get_list_idx(LAST_FRAME)][get_ref_frame_idx(LAST_FRAME)])
             parent_pcs_ptr->global_motion[LAST_FRAME] =
@@ -145,7 +149,32 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
                                                         [get_ref_frame_idx(BWDREF_FRAME)];
         // Upscale the translation parameters by 2, because the search is done on a down-sampled
         // version of the source picture (with a down-sampling factor of 2 in each dimension).
+#if GM_DOWN_16
+        if (parent_pcs_ptr->gm_level == GM_DOWN16) {
+            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] *= 4;
+            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] *= 4;
+            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] *= 4;
+            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] *= 4;
+            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] =
+                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1],
+                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+        }else if (parent_pcs_ptr->gm_level == GM_DOWN) {
+#else
         if (parent_pcs_ptr->gm_level == GM_DOWN) {
+#endif
             parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] *= 2;
             parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] *= 2;
             parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] *= 2;

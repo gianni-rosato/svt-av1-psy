@@ -206,8 +206,11 @@ void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr)
 void detect_global_motion(PictureParentControlSet *pcs_ptr) {
     //initilize global motion to be OFF for all references frames.
     memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-
+#if GM_DOWN_16
+    if (pcs_ptr->gm_level <= GM_DOWN16) {
+#else
     if (pcs_ptr->gm_level <= GM_DOWN) {
+#endif
         uint32_t num_of_list_to_search =
             (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
@@ -571,12 +574,12 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
     // SB Loop
     for (uint16_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
         uint16_t non_moving_index_over_sliding_window = pcs_ptr->non_moving_index_array[sb_idx];
+        uint16_t frames_to_check_index;
 #if QPS_UPDATE
         SbParams *sb_params = &pcs_ptr->sb_params_array[sb_idx];
         complete_sb_count++;
 #endif
 
-        uint16_t frames_to_check_index;
         // Walk the first N entries in the sliding window starting picture + 1
         uint32_t input_queue_index =
             encode_context_ptr->initial_rate_control_reorder_queue_head_index ==

@@ -569,6 +569,10 @@ typedef struct MeContext {
     int16_t adjust_hme_l2_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t hme_factor;
 #endif
+#if GM_LIST1
+    //exit gm search if first reference detection is identity
+    uint8_t gm_identiy_exit;
+#endif
     // ------- Context for Alt-Ref ME ------
     uint16_t adj_search_area_width;
     uint16_t adj_search_area_height;

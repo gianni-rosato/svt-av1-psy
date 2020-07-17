@@ -3063,8 +3063,12 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
         else
             noiselevel_adj = 1;
         if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
+#if UNIFY_SC_NSC
+            picture_control_set_ptr_central->temporal_layer_index == 0) {
+#else
             picture_control_set_ptr_central->temporal_layer_index == 0 &&
             picture_control_set_ptr_central->sc_content_detected == 0) {
+#endif
             if (noiselevel_adj < 0) {
                 if ((picture_control_set_ptr_central->referenced_area_avg < 20 &&
                      picture_control_set_ptr_central->slice_type == 2) ||

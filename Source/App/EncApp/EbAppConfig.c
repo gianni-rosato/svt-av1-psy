@@ -69,7 +69,9 @@
 #define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
 #define SG_FILTER_MODE_TOKEN "-sg-filter-mode"
 #define WN_FILTER_MODE_TOKEN "-wn-filter-mode"
+#if 0//!REMOVE_COMBINE_CLASS12
 #define CLASS_12_TOKEN "-class-12"
+#endif
 #define EDGE_SKIP_ANGLE_INTRA_TOKEN "-intra-edge-skp"
 #define INTRA_ANGLE_DELTA_TOKEN "-intra-angle-delta"
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
@@ -139,7 +141,7 @@
 #define MIN_QP_TOKEN "-min-qp"
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
-#if TPL_LA
+#if 1//TPL_LA
 #define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
 #endif
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
@@ -222,6 +224,9 @@
 #define INTRA_ANGLE_DELTA_NEW_TOKEN "--enable-intra-angle-delta"
 #define PAETH_NEW_TOKEN "--enable-paeth"
 #define SMOOTH_NEW_TOKEN "--enable-smooth"
+#if 1//ON_OFF_FEATURE_MRP
+#define MRP_LEVEL_TOKEN "--mrp-level"
+#endif
 /**********************************
  * Set Cfg Functions
  **********************************/
@@ -386,7 +391,7 @@ static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
 static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
     cfg->wn_filter_mode = strtol(value, NULL, 0);
 };
-#if !REMOVE_COMBINE_CLASS12
+#if 0//!REMOVE_COMBINE_CLASS12
 static void set_class_12_flag(const char *value, EbConfig *cfg) {
     cfg->combine_class_12 = strtol(value, NULL, 0);
 };
@@ -406,6 +411,11 @@ static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
 static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
     cfg->enable_smooth = strtol(value, NULL, 0);
 };
+#if 1//ON_OFF_FEATURE_MRP
+static void set_mrp_level(const char *value, EbConfig *cfg) {
+    cfg->mrp_level = strtol(value, NULL, 0);
+};
+#endif
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->enable_mfmv = strtol(value, NULL, 0);
 };
@@ -484,7 +494,7 @@ static void set_scene_change_detection(const char *value, EbConfig *cfg) {
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
     cfg->look_ahead_distance = strtoul(value, NULL, 0);
 };
-#if TPL_LA
+#if 1//TPL_LA
 static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
     cfg->enable_tpl_la = strtoul(value, NULL, 0);
 };
@@ -596,7 +606,11 @@ static void set_superres_qthres(const char *value, EbConfig *cfg) {
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
+#if 0 //CHANGE_HBD_MODE
     cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
+#else
+    cfg->enable_hbd_mode_decision = (int8_t)strtoul(value, NULL, 0);
+#endif
 };
 static void set_enable_palette(const char *value, EbConfig *cfg) {
     cfg->enable_palette = (int32_t)strtol(value, NULL, 0);
@@ -920,7 +934,12 @@ ConfigEntry config_entry_specific[] = {
      "Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: "
      "7-Tap luma/ 7-Tap chroma, -1: DEFAULT)",
      set_wn_filter_mode},
-
+#if 1//ON_OFF_FEATURE_MRP
+    {SINGLE_INPUT,
+     MRP_LEVEL_TOKEN,
+     "Multi reference frame levels( 0: OFF, 1: FULL, 2: Level1 .. 9: Level8,  -1: DEFAULT)",
+     set_mrp_level},
+#endif
     {SINGLE_INPUT,
      MFMV_ENABLE_NEW_TOKEN,
      "Enable motion field motion vector( 0: OFF, 1: ON, -1: DEFAULT)",
@@ -980,12 +999,13 @@ ConfigEntry config_entry_specific[] = {
      GLOBAL_MOTION_ENABLE_NEW_TOKEN,
      "Enable global motion (0: OFF, 1: ON [default])",
      set_enable_global_motion_flag},
-
+ #if 0//!REMOVE_COMBINE_CLASS12
     // CLASS 12
     {SINGLE_INPUT,
      CLASS_12_NEW_TOKEN,
      "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
      set_class_12_flag},
+#endif
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
@@ -1276,7 +1296,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
     {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
     {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "LookAheadDistance", set_look_ahead_distance},
-#if TPL_LA
+#if 1//TPL_LA
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTplLA", set_enable_tpl_la},
 #endif
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
@@ -1298,7 +1318,9 @@ ConfigEntry config_entry[] = {
      set_enable_restoration_filter_flag},
     {SINGLE_INPUT, SG_FILTER_MODE_TOKEN, "SelfGuidedFilterMode", set_sg_filter_mode},
     {SINGLE_INPUT, WN_FILTER_MODE_TOKEN, "WienerFilterMode", set_wn_filter_mode},
-
+#if 1//ON_OFF_FEATURE_MRP
+    {SINGLE_INPUT, MRP_LEVEL_TOKEN, "MrpLevel", set_mrp_level},
+#endif
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
     {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_fl_flag},
@@ -1324,9 +1346,10 @@ ConfigEntry config_entry[] = {
      set_enable_local_warped_motion_flag},
     // GLOBAL MOTION
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
-
+#if 0//!REMOVE_COMBINE_CLASS12
     // CLASS 12
     {SINGLE_INPUT, CLASS_12_TOKEN, "CombineClass12", set_class_12_flag},
+#endif
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_TOKEN,
@@ -1558,7 +1581,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->qp                  = 50;
     config_ptr->use_qp_file         = EB_FALSE;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if TPL_LA
+#if 1//TPL_LA
     config_ptr->enable_tpl_la       = 0;
 #endif
     config_ptr->target_bit_rate     = 7000000;
@@ -1579,7 +1602,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_restoration_filtering              = DEFAULT;
     config_ptr->sg_filter_mode                            = DEFAULT;
     config_ptr->wn_filter_mode                            = DEFAULT;
-#if !REMOVE_COMBINE_CLASS12
+#if 0//!REMOVE_COMBINE_CLASS12
     config_ptr->combine_class_12                          = DEFAULT;
 #endif
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
@@ -1587,6 +1610,9 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->inter_intra_compound                      = DEFAULT;
     config_ptr->enable_paeth                              = DEFAULT;
     config_ptr->enable_smooth                             = DEFAULT;
+#if 1//ON_OFF_FEATURE_MRP
+    config_ptr->mrp_level                                 = DEFAULT;
+#endif
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->spatial_sse_fl                            = DEFAULT;
@@ -1599,12 +1625,20 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
     config_ptr->disable_cfl_flag                          = DEFAULT;
+#if  0//OBMC_CLI
+    config_ptr->obmc_level                                = DEFAULT;
+#else
     config_ptr->enable_obmc                               = EB_TRUE;
+#endif
     config_ptr->enable_rdoq                               = DEFAULT;
     config_ptr->pred_me                                   = DEFAULT;
     config_ptr->bipred_3x3_inject                         = DEFAULT;
     config_ptr->compound_level                            = DEFAULT;
+#if 0//FILTER_INTRA_CLI
+    config_ptr->filter_intra_level                        = DEFAULT;
+#else
     config_ptr->enable_filter_intra                       = EB_TRUE;
+#endif
     config_ptr->enable_intra_edge_filter                  = DEFAULT;
     config_ptr->pic_based_rate_est                        = DEFAULT;
     config_ptr->use_default_me_hme                        = EB_TRUE;
@@ -1633,7 +1667,11 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #else
     config_ptr->screen_content_mode                       = 0;
 #endif
+#if 1 //CHANGE_HBD_MODE
+    config_ptr->enable_hbd_mode_decision                  = DEFAULT;
+#else
     config_ptr->enable_hbd_mode_decision                  = 2;
+#endif
     config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->enable_palette                            = -1;
     config_ptr->injector_frame_rate                       = 60 << 16;

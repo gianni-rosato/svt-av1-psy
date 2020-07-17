@@ -106,8 +106,14 @@ void eb_enc_msb_un_pack2_d(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_
         for (k = 0; k < width; k++) {
             in_pixel                             = in16_bit_buffer[k + j * in_stride];
             out8_bit_buffer[k + j * out8_stride] = (uint8_t)(in_pixel >> 2);
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+#endif
             tmp_pixel                            = (uint8_t)(in_pixel << 6);
             outn_bit_buffer[k + j * outn_stride] = tmp_pixel;
+#if MEM_OPT_10bit
+            }
+#endif
         }
     }
 }

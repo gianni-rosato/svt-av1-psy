@@ -3454,6 +3454,10 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
         } else {
             candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
         }
+#if FIX_IFS_RATE
+        // Update fast_luma_rate to take into account switchable_rate
+        candidate_buffer_ptr->candidate_ptr->fast_luma_rate += switchable_rate;
+#endif
     }
 }
 

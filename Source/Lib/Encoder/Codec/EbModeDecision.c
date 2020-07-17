@@ -1016,7 +1016,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         if (!context_ptr->ref_filtering_res[REF_LIST_0][list0_ref_index].do_ref) continue;
 #endif
 #endif
-        if (list0_ref_index > context_ptr->md_max_ref_count - 1) continue;
+
         if (inter_direction == 0) {
             if (list0_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -1192,7 +1192,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
         if (!context_ptr->ref_filtering_res[REF_LIST_1][list1_ref_index].do_ref) continue;
 #endif
 #endif
-        if (list1_ref_index > context_ptr->md_max_ref_count - 1) continue;
+
         if (inter_direction == 1) {
             if (list1_ref_index > context_ptr->md_max_ref_count - 1)
                 continue;
@@ -2665,13 +2665,21 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                     context_ptr
                     ->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][ref_idx_0][1];
                 int16_t to_inject_mv_x_l1 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.col;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .comp_mv.as_mv.col;
+#endif
                 int16_t to_inject_mv_y_l1 =
+#if MEM_OPT_MV_STACK
+                    context_ptr->ed_ref_mv_stack[ref_pair][0].comp_mv.as_mv.row;
+#else
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                         .ed_ref_mv_stack[ref_pair][0]
                         .comp_mv.as_mv.row;
+#endif
 
                 inj_mv = context_ptr->injected_mv_count_bipred == 0 ||
                          mrp_is_already_injected_mv_bipred(context_ptr,
@@ -4741,7 +4749,11 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                           context_ptr->me_block_offset,
                           &cand_total_cnt);
     if (context_ptr->global_mv_injection) {
+#if GM_DOWN_16
+        if (pcs_ptr->parent_pcs_ptr->gm_level <= GM_DOWN16) {
+#else
         if (pcs_ptr->parent_pcs_ptr->gm_level <= GM_DOWN) {
+#endif
             for (unsigned list_ref_index_l0 = 0; list_ref_index_l0 < 1; ++list_ref_index_l0)
                 for (unsigned list_ref_index_l1 = 0; list_ref_index_l1 < 1; ++list_ref_index_l1) {
                     /**************
@@ -5313,8 +5325,12 @@ void inject_intra_candidates_ois(PictureControlSet *pcs_ptr, ModeDecisionContext
             int32_t angle_delta                 = ois_blk_ptr[can_total_cnt].angle_delta;
             candidate_array[can_total_cnt].type = INTRA_MODE;
             candidate_array[can_total_cnt].merge_flag = EB_FALSE;
+#if MEM_OPT_PALETTE
+            candidate_array[can_total_cnt].palette_info = NULL;
+#else
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[0] = 0;
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             candidate_array[can_total_cnt].intra_luma_mode                  = intra_mode;
             candidate_array[can_total_cnt].distortion_ready                 = 1;
             candidate_array[can_total_cnt].me_distortion = ois_blk_ptr[can_total_cnt].distortion;
@@ -5356,8 +5372,12 @@ void inject_intra_candidates_ois(PictureControlSet *pcs_ptr, ModeDecisionContext
         } else {
             candidate_array[can_total_cnt].type                             = INTRA_MODE;
             candidate_array[can_total_cnt].merge_flag                       = EB_FALSE;
+#if MEM_OPT_PALETTE
+            candidate_array[can_total_cnt].palette_info = NULL;
+#else
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[0] = 0;
             candidate_array[can_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             candidate_array[can_total_cnt].intra_luma_mode                  = intra_mode;
             candidate_array[can_total_cnt].distortion_ready                 = 1;
             candidate_array[can_total_cnt].me_distortion = ois_blk_ptr[can_total_cnt].distortion;
@@ -5489,8 +5509,12 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     IntMv nearestmv, nearmv;
     eb_av1_find_best_ref_mvs_from_stack(
         0,
+#if MEM_OPT_MV_STACK
+        context_ptr->ed_ref_mv_stack /*mbmi_ext*/,
+#else
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
             .ed_ref_mv_stack /*mbmi_ext*/,
+#endif
         xd,
         ref_frame,
         &nearestmv,
@@ -5504,9 +5528,13 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     // Ref DV should not have sub-pel.
     assert((dv_ref.as_mv.col & 7) == 0);
     assert((dv_ref.as_mv.row & 7) == 0);
+#if MEM_OPT_MV_STACK
+    context_ptr->ed_ref_mv_stack[INTRA_FRAME][0].this_mv = dv_ref;
+#else
     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
         .ed_ref_mv_stack[INTRA_FRAME][0]
         .this_mv = dv_ref;
+#endif
 
     /* pointer to current frame */
     Yv12BufferConfig cur_buf;
@@ -5618,8 +5646,12 @@ void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext 
     uint32_t               dv_i;
 
     for (dv_i = 0; dv_i < num_dv_cand; dv_i++) {
+#if MEM_OPT_PALETTE
+        cand_array[*cand_cnt].palette_info = NULL;
+#else
         cand_array[*cand_cnt].palette_info.pmi.palette_size[0] = 0;
         cand_array[*cand_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
         cand_array[*cand_cnt].type                             = INTRA_MODE;
         cand_array[*cand_cnt].intra_luma_mode                  = DC_PRED;
         cand_array[*cand_cnt].distortion_ready                 = 0;
@@ -5645,13 +5677,21 @@ void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext 
         cand_array[*cand_cnt].motion_vector_xl0       = dv_cand[dv_i].col;
         cand_array[*cand_cnt].motion_vector_yl0       = dv_cand[dv_i].row;
         cand_array[*cand_cnt].motion_vector_pred_x[REF_LIST_0] =
+#if MEM_OPT_MV_STACK
+            context_ptr->ed_ref_mv_stack[INTRA_FRAME][0].this_mv.as_mv.col;
+#else
             context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                 .ed_ref_mv_stack[INTRA_FRAME][0]
                 .this_mv.as_mv.col;
+#endif
         cand_array[*cand_cnt].motion_vector_pred_y[REF_LIST_0] =
+#if MEM_OPT_MV_STACK
+            context_ptr->ed_ref_mv_stack[INTRA_FRAME][0].this_mv.as_mv.row;
+#else
             context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                 .ed_ref_mv_stack[INTRA_FRAME][0]
                 .this_mv.as_mv.row;
+#endif
         cand_array[*cand_cnt].drl_index         = 0;
         cand_array[*cand_cnt].ref_mv_index      = 0;
         cand_array[*cand_cnt].interp_filters    = av1_broadcast_interp_filter(BILINEAR);
@@ -5866,8 +5906,12 @@ void  inject_intra_candidates(
                     if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
                         cand_array[cand_total_cnt].type = INTRA_MODE;
                         cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+#if MEM_OPT_PALETTE
+                        cand_array[cand_total_cnt].palette_info = NULL;
+#else
                         cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
                         cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
                         cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
                         cand_array[cand_total_cnt].distortion_ready = 0;
                         cand_array[cand_total_cnt].use_intrabc = 0;
@@ -5928,8 +5972,12 @@ void  inject_intra_candidates(
         else {
             cand_array[cand_total_cnt].type = INTRA_MODE;
             cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+#if MEM_OPT_PALETTE
+            cand_array[cand_total_cnt].palette_info = NULL;
+#else
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
             cand_array[cand_total_cnt].distortion_ready = 0;
             cand_array[cand_total_cnt].use_intrabc = 0;
@@ -5999,7 +6047,10 @@ void  inject_filter_intra_candidates(
     PictureControlSet            *pcs_ptr,
     ModeDecisionContext          *context_ptr,
     uint32_t                     *candidate_total_cnt){
-
+#if ADD_SKIP_INTRA_SIGNAL
+    if (context_ptr->skip_intra)
+        return;
+#endif
     FilterIntraMode             intra_mode_start = FILTER_DC_PRED;
     FilterIntraMode             intra_mode_end   = FILTER_INTRA_MODES;
 
@@ -6030,8 +6081,12 @@ void  inject_filter_intra_candidates(
             cand_array[cand_total_cnt].use_intrabc = 0;
             cand_array[cand_total_cnt].filter_intra_mode = filter_intra_mode;
             cand_array[cand_total_cnt].is_directional_mode_flag = 0;
+#if MEM_OPT_PALETTE
+            cand_array[cand_total_cnt].palette_info = NULL;
+#else
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[0] = 0;
             cand_array[cand_total_cnt].palette_info.pmi.palette_size[1] = 0;
+#endif
             cand_array[cand_total_cnt].angle_delta[PLANE_TYPE_Y] = 0;
 
             // Search the best independent intra chroma mode
@@ -6190,8 +6245,12 @@ void  inject_palette_candidates(
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
         cand_array[can_total_cnt].is_interintra_used = 0;
         palette_cand_array[cand_i].pmi.palette_size[1] = 0;
+#if MEM_OPT_PALETTE
+        cand_array[can_total_cnt].palette_info = &palette_cand_array[cand_i];
+#else
         eb_memcpy(cand_array[can_total_cnt].palette_info.color_idx_map, palette_cand_array[cand_i].color_idx_map, 64 * 64);
         eb_memcpy(&cand_array[can_total_cnt].palette_info.pmi, &palette_cand_array[cand_i].pmi, sizeof(PaletteModeInfo));
+#endif
         assert(palette_cand_array[cand_i].pmi.palette_size[0] < 9);
         //to re check these fields
         cand_array[can_total_cnt].type = INTRA_MODE;
@@ -6607,16 +6666,38 @@ uint32_t product_full_mode_decision(
     }
 
     candidate_ptr = buffer_ptr_array[lowest_cost_index]->candidate_ptr;
-
+#if TPL_LAMBDA_IMP
+    if (context_ptr->blk_lambda_tuning){
+        // When lambda tuning is on, lambda of each block is set separately, however at interdepth decision the sb lambda is used
+        uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+            context_ptr->full_sb_lambda_md[EB_10_BIT_MD] :
+            context_ptr->full_sb_lambda_md[EB_8_BIT_MD];
+        context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost =
+            RDCOST(full_lambda,
+                buffer_ptr_array[lowest_cost_index]->candidate_ptr->total_rate,
+                ((uint64_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->full_distortion));
+        context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost;
+    }
+    else {
+        context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
+        context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
+        context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost - buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion) + buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
+    }
+#else
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost = (context_ptr->md_local_blk_unit[blk_ptr->mds_idx].cost - buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion) + buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
+#endif
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_merge_ptr;
     context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost = *buffer_ptr_array[lowest_cost_index]->full_cost_skip_ptr;
 
     if (candidate_ptr->type == INTER_MODE && candidate_ptr->merge_flag == EB_TRUE)
         context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].chroma_distortion = buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion;
+#if TPL_LAMBDA_IMP
+    context_ptr->md_local_blk_unit[blk_ptr->mds_idx].full_distortion = (uint32_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->full_distortion;
+#else
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].full_distortion = buffer_ptr_array[lowest_cost_index]->candidate_ptr->full_distortion;
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].chroma_distortion = (uint32_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion;
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].chroma_distortion_inter_depth = (uint32_t)buffer_ptr_array[lowest_cost_index]->candidate_ptr->chroma_distortion_inter_depth;
 

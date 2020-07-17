@@ -80,7 +80,11 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
         &enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config;
     EbBool        is_16bit                 = (EbBool)(static_config->encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format             = static_config->encoder_color_format;
+#if CHANGE_HBD_MODE
+    int8_t       enable_hbd_mode_decision = static_config->enable_hbd_mode_decision;
+#else
     uint8_t       enable_hbd_mode_decision = static_config->enable_hbd_mode_decision;
+#endif
 
     EncDecContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
@@ -1636,6 +1640,9 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                   ref_pic_ptr->stride_bit_inc_y,
                   ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
                   ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
+#if MEM_OPT_10bit
+        if (pcs_ptr->hbd_mode_decision != EB_10_BIT_MD) {
+#endif
 
         un_pack2d((uint16_t *)ref_pic_16bit_ptr->buffer_cb,
                   ref_pic_16bit_ptr->stride_cb,
@@ -1654,6 +1661,9 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                   ref_pic_ptr->stride_bit_inc_cr,
                   (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
                   (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
+#if MEM_OPT_10bit
+        }
+#endif
     }
     if ((scs_ptr->static_config.is_16bit_pipeline) && (!is_16bit)) {
         // Y samples
@@ -1721,6 +1731,9 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
     // set up the Slice Type
     reference_object->slice_type          = pcs_ptr->parent_pcs_ptr->slice_type;
     reference_object->referenced_area_avg = pcs_ptr->parent_pcs_ptr->referenced_area_avg;
+#if TPL_1PASS_IMP
+    reference_object->r0 = pcs_ptr->parent_pcs_ptr->r0;
+#endif
 }
 
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
@@ -8554,6 +8567,7 @@ void derive_start_end_depth(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint
     uint64_t max_distance = 0xFFFFFFFFFFFFFFFF;
 
 #if UNIFY_SC_NSC
+    uint64_t mth01, mth02, mth03, pth01, pth02, pth03;
     mth01 = pd_level_tab[pcs_ptr->slice_type != I_SLICE][encode_mode][0][0];
     mth02 = pd_level_tab[pcs_ptr->slice_type != I_SLICE][encode_mode][0][1];
     mth03 = pd_level_tab[pcs_ptr->slice_type != I_SLICE][encode_mode][0][2];
@@ -10543,7 +10557,7 @@ void *enc_dec_kernel(void *input_ptr) {
 #endif
                             }
                         }
-
+#if RATE_MEM_OPT
                         //in case of using 1 enc-dec segment, point to first SB data
                         uint32_t real_sb_idx = scs_ptr->seq_header.pic_based_rate_est &&
                             scs_ptr->enc_dec_segment_row_count_array[pcs_ptr->temporal_layer_index] == 1 &&
@@ -10571,6 +10585,51 @@ void *enc_dec_kernel(void *input_ptr) {
                             ->md_rate_estimation_ptr = &pcs_ptr->rate_est_array[real_sb_idx];
                         context_ptr->md_context->md_rate_estimation_ptr =
                             &pcs_ptr->rate_est_array[real_sb_idx];
+#else
+#if REU_MEM_OPT
+                        // Initial Rate Estimation of the syntax elements
+                        av1_estimate_syntax_rate(&context_ptr->md_context->rate_est_table,
+                            pcs_ptr->slice_type == I_SLICE,
+                            &pcs_ptr->ec_ctx_array[sb_index]);
+                        // Initial Rate Estimation of the Motion vectors
+                        av1_estimate_mv_rate(pcs_ptr,
+                            &context_ptr->md_context->rate_est_table,
+                            &pcs_ptr->ec_ctx_array[sb_index]);
+
+                        av1_estimate_coefficients_rate(&context_ptr->md_context->rate_est_table,
+                            &pcs_ptr->ec_ctx_array[sb_index]);
+
+                        //let the candidate point to the new rate table.
+                        uint32_t cand_index;
+                        for (cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT;
+                            ++cand_index)
+                            context_ptr->md_context->fast_candidate_ptr_array[cand_index]
+                            ->md_rate_estimation_ptr = &context_ptr->md_context->rate_est_table;
+                        context_ptr->md_context->md_rate_estimation_ptr =
+                            &context_ptr->md_context->rate_est_table;
+#else
+                        // Initial Rate Estimation of the syntax elements
+                        av1_estimate_syntax_rate(&pcs_ptr->rate_est_array[sb_index],
+                                                 pcs_ptr->slice_type == I_SLICE,
+                                                 &pcs_ptr->ec_ctx_array[sb_index]);
+                        // Initial Rate Estimation of the Motion vectors
+                        av1_estimate_mv_rate(pcs_ptr,
+                                             &pcs_ptr->rate_est_array[sb_index],
+                                             &pcs_ptr->ec_ctx_array[sb_index]);
+
+                        av1_estimate_coefficients_rate(&pcs_ptr->rate_est_array[sb_index],
+                                                       &pcs_ptr->ec_ctx_array[sb_index]);
+
+                        //let the candidate point to the new rate table.
+                        uint32_t cand_index;
+                        for (cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT;
+                             ++cand_index)
+                            context_ptr->md_context->fast_candidate_ptr_array[cand_index]
+                                ->md_rate_estimation_ptr = &pcs_ptr->rate_est_array[sb_index];
+                        context_ptr->md_context->md_rate_estimation_ptr =
+                            &pcs_ptr->rate_est_array[sb_index];
+#endif
+#endif
                     }
                     // Configure the SB
                     mode_decision_configure_sb(

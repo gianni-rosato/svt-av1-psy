@@ -79,6 +79,7 @@ extern "C" {
 #define DISABLE_HME_L0_FOR_240P           1
 #endif
 #define HME_PRUNE_BUG_FIX                 1
+#define RATE_MEM_OPT                      0 //lossless memory optimization of rate estimation
 #define MAR10_ADOPTIONS                   1 // Adoptions for all presets
 #define NICS_SYNCH                        1
 #define MAR11_ADOPTIONS                   1 // Adoptions for M2, M3, M4, M5
@@ -99,7 +100,7 @@ extern "C" {
 #define MAR16_M8_ADOPTIONS                1 // M8 adoption for TH value
 #define ADDED_CFL_OFF                     1
 #define ADOPT_CHROMA_MODE1_CFL_OFF        1
-#define PIC_BASED_RE_OFF                  0 //-------------------------------------------------------
+#define PIC_BASED_RE_OFF                  1 //-------------------------------------------------------
 #define MR_MODE_FOR_PIC_MULTI_PASS_PD_MODE_1 1 // shut SQ vs. NSQ if MR (for multi_pass_pd_level = PIC_MULTI_PASS_PD_MODE_1 or PIC_MULTI_PASS_PD_MODE_2 or PIC_MULTI_PASS_PD_MODE_3)
 #define ADD_SAD_AT_PME_SIGNAL      1 // Add signal for using SAD at PME
 #define MAR17_ADOPTIONS            1 // Push features with bad slope to M8 & beyond.
@@ -277,7 +278,7 @@ extern "C" {
 
 
 
-#define REU_MEM_OPT                 0 // Memory reduction for rate estimation tables ///////////////////////
+#define REU_MEM_OPT                 1 // Memory reduction for rate estimation tables ///////////////////////
 #define SB_MEM_OPT                  1 // memory reduction for SB array. Removing memory allocation for av1xd per blk
 
 #define MD_FRAME_CONTEXT_MEM_OPT    1 // Memory reduction for frame context used in MD
@@ -411,9 +412,93 @@ extern "C" {
 #define ADAPTIVE_TXT_CR 1 // Add code for generating TXS statistics
 #define STATS_TX_TYPES_FIX 1 // Fix the statistic txt crash
 #define ABILITY_TO_USE_CLOSEST_ONLY       1 // Add the ability to use closest_refs without using best_refs
+#define OPTIMIZE_NEAREST_NEW_NEAR         1 // Use the closest ref only @ NEAREST_NEW_NEAR for M0 & higher
+#define M0_HME_ME_PRUNE                   1 // Use HME/ME ref prune level 0 for M0
+#define FIX_INCOMPLETE_SB                 1 // Perform Txs search for blocks @ right and bottom picture boundaries
+#define FIX_IFS_RATE                      1 // Update fast_luma_rate to take into account switchable_rate
+#define M0_NIC                            1 // Use nic level 0 for M0
+#define MEM_OPT_10bit       1 // Memory optimization for 10bit
+#define LAD_MEM_RED         1 // tpl works with lad 16. limit the look ahead to be 16
+#define TPL_IMP             1 // tpl improvement changes
+#define JUNE11_ADOPTIONS    1 // Adoptions (all modes)
+#define TPL_240P_IMP        1 // TPL improvement for 240P
+#define TPL_LAMBDA_IMP      1 // Do lambda modulation for fast lambda
+                              // Interdepth decision uses SB lambda
+#define SEPARATE_ADAPTIVE_TXT_INTER_INTRA 1 // Separate the inter/intra actions for adaptive TXT
+#define USE_REGULAR_MD_STAGE_0 1 // Use Regular (instead of Bilinear) @ md_stage_0()
+#define FIX_TX_BLOCK_GEOMETRY 1 // Fix tx construction for tx_depth=1 of 4NxN and Nx4N
+#define DISALLOW_CYCLES_REDUCTION_REF 1 // Disallow Depth and NSQ cycles reduction in REF frames
+#define FIX_NSQ_CYCLE_RED_LEVEL 1 // Remove invalid setting for nsq cycles reduction
+#define JUNE15_ADOPTIONS 1 // M0, MR, and MRS adoptions
+#define TPL_SW_UPDATE           1 // enable tpl for end of clip
+#define TPL_SC_ON               1 // enable tpl for SC
+#define UPDATE_SC_DETECTION 1 // update sc detection
+
+#define IMPROVE_SUB_PEL       1 // Add the ability to perform 1/4-Pel and 1/8-Pel refinement around multiple points (~top N best positions=8), and perform 1/2-Pel ~8 best full positions
+#if IMPROVE_SUB_PEL
+#define IMPROVE_HALF_PEL    1
+#define IMPROVE_QUARTER_PEL 1
+#define IMPROVE_EIGHT_PEL   1
 #endif
-#if 0
+#define LIBAOM_BUG_FIXES            1 // libaom bug fixes
+#if LIBAOM_BUG_FIXES
+#define GLOBAL_ME_BUG_FIX_0       1 // Fix ransac()
+#define GLOBAL_ME_BUG_FIX_1       1 // Sometimes num_inliers is not initialized due to early exit present in ransac() function.Which leads to aomedia : 2449 "SEGV on unknown address". // ------------------------------
+#define LOOP_FILTER_COVERSION_FIX 1 // aom_dsp / loopfilter: fix int sanitizer
+#define TRANSFORM_FIX_0           1 // Fix condition on 'result_64' in half_btf()
+#define TRANSFORM_FIX_1           1 // Fix range computation for idtx
+#define CRC_CALC_FIX              1 // Fix integer sanitizer warning in hash.c
+#define OBMC_BUG_FIX              1 // Fix mv err cost for obmc subpel motion search (by default not used)
 #endif
+#define BWD_ALTREF_PA_ME_CAND_FIX 1 // (BWD, ALT) prep bug fix
+#define JUNE17_ADOPTIONS        1 // New presets (M1-M7)
+#define NEW_NSQ_RED_LEVEL       1 // Add new threshold level for NSQ cycle reduction
+#define ADD_SKIP_INTRA_SIGNAL   1 // Add ability to skip intra candidate injection
+
+#define SOFT_CYCLES_REDUCTION 1 // Use pred_depth/part probabilities to reduce the complexity of a given block.
+#if SOFT_CYCLES_REDUCTION
+#define DEPTH_PROB_PRECISION 10000
+#endif
+#define IMPROVED_M6_M7        1 // Improve M6 & M7
+#if IMPROVED_M6_M7
+#define IMPROVED_TF_LEVELS  1 // Improve tf levels; f(window_size, noise-based adjust)
+#define M7_PRED_ME          1 // Use M6_Pred_ME in M7
+#define M6_M7_NIC           1 // NIC=1 @ md_stage_3() in M6 & M7
+#define M6_LOOP_FILTER_MODE 1 // Use M5_LOOP_FILTER in M6
+#endif
+#define  ON_OFF_FEATURE_MRP     0 // ON/OFF Feature MRP //---------------------------------
+#define UNIFY_SC_NSC        1 // Unify the SC/NSC settings, except for Palette, IBC, and ME
+#define REMOVE_PRINT_STATEMENTS 1 // remove print statements
+#define SOFT_CYCLES_M6M7        1
+#define JUNE23_ADOPTIONS        1
+#define NEW_M7_MRP              1
+#define PRUNE_ADJUST_ME_BUG_FIX 1 // Enable for BASE and incomplete 64x64
+#define NEW_M8                  1 // Set M8=M7
+#define TPL_OPT                 1 // Optimize the tpl algorithm for faster presets
+#define TPL_1PASS_IMP           1 // Get actions from 2 pass to 1 pass LAD
+#define TUNE_ADAPTIVE_MD_CR_TH   1
+#if TUNE_ADAPTIVE_MD_CR_TH
+#define ADMDTM2_TUNE 1
+#define ADMDTM3_TUNE 1
+#define ADMDTM4_TUNE 1
+#define ADMDTM5_TUNE 1
+#endif
+#define MEM_OPT_PALETTE     1 // Memory optimization for palette
+#define MEM_OPT_MV_STACK    1 // Memory optimization for ed_ref_mv_stack
+#define MEM_OPT_MD_BUF_DESC 1 // Memory optimization for buf_desc used in MDContext
+#define FIX_HBD_MD5         1 // Fix 10bit error in non multiple of 8 resolution //----------------
+#define CHANGE_HBD_MODE     1 // Change 10bit MD for MR and M0
+#define JUNE25_ADOPTIONS    1 // Adoptions in M3-M8
+#define GM_DOWN_16          1 // Downsampled search mode, with a downsampling factor of 4 in each dimension
+
+#define GM_LIST1            1 // Exit gm search if first reference detection is identity
+#define JUNE26_ADOPTIONS    1
+#define ENABLE_ADAPTIVE_NSQ_ALL_FRAMES 1    // Enable the adaptive NSQ algorithm for all frames (no longer REF only)
+
+#define MEM_OPT_UV_MODE     1 // Memory optimization for independant uv mode
+
+#endif
+
 ///////// END MASTER_SYNCH
 
 #if DECOUPLE_ME_RES
@@ -474,7 +559,12 @@ typedef enum MeHpMode {
 typedef enum GM_LEVEL {
     GM_FULL      = 0, // Exhaustive search mode.
     GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
+#if GM_DOWN_16
+    GM_DOWN16    = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+    GM_TRAN_ONLY = 3 // Translation only using ME MV.
+#else
     GM_TRAN_ONLY = 2 // Translation only using ME MV.
+#endif
 } GM_LEVEL;
 typedef enum SqWeightOffsets {
     CONSERVATIVE_OFFSET_0 = 5,
@@ -837,6 +927,22 @@ typedef enum ATTRIBUTE_PACKED {
     COMPONENT_NONE      = 15
 } COMPONENT_TYPE;
 
+#if ON_OFF_FEATURE_MRP
+static INLINE uint8_t override_feature_level(uint8_t master_level, uint8_t input_val, uint8_t val_full, uint8_t val_off) {
+
+    uint8_t output_feature_level;
+    // Override the level when the master level is OFF or FULL
+    if (master_level == 0 /*master_level off*/)
+        output_feature_level = val_off;
+    else if (master_level == 1 /*master_level full*/)
+        output_feature_level = val_full;
+    else
+        // Do not override the level
+        output_feature_level = input_val;
+
+    return  output_feature_level;
+}
+#endif
 static INLINE int32_t clamp(int32_t value, int32_t low, int32_t high) {
     return value < low ? low : (value > high ? high : value);
 }
@@ -1096,16 +1202,24 @@ static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
+#if FIX_TX_BLOCK_GEOMETRY
+     TX_4X8, TX_8X4, TX_8X16, TX_16X8, TX_16X32, TX_32X16},
+#else
      TX_4X4,   TX_4X4,   TX_8X8,   TX_8X8,   TX_16X16, TX_16X16},
+#endif
     // tx_depth 2
     {TX_4X4,   TX_4X8, TX_8X4, TX_8X8,   TX_4X4,   TX_4X4,   TX_4X4,
      TX_8X8,   TX_8X8, TX_8X8, TX_16X16, TX_16X16, TX_16X16,
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
+#if FIX_TX_BLOCK_GEOMETRY
+     TX_4X4, TX_4X4, TX_8X8, TX_8X8, TX_16X16, TX_16X16}};
+#else
      TX_4X16, // No depth 2
      TX_16X4, // No depth 2
      TX_4X4,   TX_4X4, TX_8X8, TX_8X8}};
+#endif
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };

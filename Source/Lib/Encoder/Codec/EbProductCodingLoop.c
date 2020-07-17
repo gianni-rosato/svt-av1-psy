@@ -4762,7 +4762,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #endif
                        int16_t mvx, int16_t mvy, int16_t search_position_start_x,
                        int16_t search_position_end_x, int16_t search_position_start_y,
-                       int16_t search_position_end_y, int16_t search_step, 
+                       int16_t search_position_end_y, int16_t search_step,
 #if IMPROVE_QUARTER_PEL
                        uint8_t track_best_pos,
 #endif
@@ -5245,7 +5245,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     // Round-up the search center to the closest integer
     search_center_mvx = (search_center_mvx + 4) & ~0x07;
     search_center_mvy = (search_center_mvy + 4) & ~0x07;
-#endif 
+#endif
 
     md_full_pel_search(context_ptr,
         input_picture_ptr,
@@ -8016,8 +8016,14 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext *        md_context_pt
             tx_size,
             mode, //PredictionMode mode,
             candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#if MEM_OPT_PALETTE
+            candidate_buffer_ptr->candidate_ptr->palette_info ?
+                (candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0] > 0) : 0,
+            candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#else
             candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0,
             &candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#endif
             candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
             top_neigh_array + 1,
             left_neigh_array + 1,
@@ -8078,8 +8084,14 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext *        md_context_pt
             tx_size,
             mode,
             candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
+#if MEM_OPT_PALETTE
+            candidate_buffer_ptr->candidate_ptr->palette_info ?
+                (candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0] > 0) : 0,
+            candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#else
             candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0,
             &candidate_buffer_ptr->candidate_ptr->palette_info, //ATB MD
+#endif
             candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
             top_neigh_array + 1,
             left_neigh_array + 1,
@@ -8143,6 +8155,18 @@ static void tx_search_update_recon_sample_neighbor_array(
 }
 uint8_t get_end_tx_depth(BlockSize bsize) {
     uint8_t tx_depth = 0;
+#if FIX_TX_BLOCK_GEOMETRY
+    if (bsize == BLOCK_64X64 || bsize == BLOCK_32X32 || bsize == BLOCK_16X16 ||
+        bsize == BLOCK_64X32 || bsize == BLOCK_32X64 || bsize == BLOCK_16X32 ||
+        bsize == BLOCK_32X16 || bsize == BLOCK_16X8 || bsize == BLOCK_8X16 ||
+        bsize == BLOCK_64X16 || bsize == BLOCK_16X64 ||
+        bsize == BLOCK_32X8 || bsize == BLOCK_8X32 || bsize == BLOCK_16X4 ||
+        bsize == BLOCK_4X16)
+        tx_depth = 2;
+    else if (bsize == BLOCK_8X8)
+        tx_depth = 1;
+    // tx_depth=0 if BLOCK_8X4, BLOCK_4X8, BLOCK_4X4, BLOCK_128X128, BLOCK_128X64, BLOCK_64X128
+#else
     if (bsize == BLOCK_64X64 || bsize == BLOCK_32X32 || bsize == BLOCK_16X16 ||
         bsize == BLOCK_64X32 || bsize == BLOCK_32X64 || bsize == BLOCK_16X32 ||
         bsize == BLOCK_32X16 || bsize == BLOCK_16X8 || bsize == BLOCK_8X16)
@@ -8151,6 +8175,7 @@ uint8_t get_end_tx_depth(BlockSize bsize) {
              bsize == BLOCK_32X8 || bsize == BLOCK_8X32 || bsize == BLOCK_16X4 ||
              bsize == BLOCK_4X16)
         tx_depth = 1;
+#endif
     return tx_depth;
 }
 
@@ -8828,7 +8853,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             tx_type,
             PLANE_TYPE_Y,
             DEFAULT_SHAPE);
-        
+
 #if UNIFY_TXT
         quantized_dc_txt[tx_type] = av1_quantize_inv_quantize(
 #else
@@ -9699,10 +9724,12 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
     if (context_ptr->md_staging_tx_search == 0)
         tx_search_skip_flag = EB_TRUE;
     else if (context_ptr->md_staging_tx_search == 1) {
+#if !UNIFY_SC_NSC
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected && context_ptr->blk_geom->shape == PART_N)
             tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP ? EB_FALSE
                                                                                       : EB_TRUE;
         else
+#endif
             tx_search_skip_flag = context_ptr->tx_search_level == TX_SEARCH_FULL_LOOP
 #if TXT_CONTROL
                 ? get_tx_search_config(context_ptr,
@@ -11782,8 +11809,12 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                 av1_is_directional_mode((PredictionMode)uv_mode);
             candidate_array[uv_mode_total_count].angle_delta[PLANE_TYPE_UV]       = uv_angle_delta;
             candidate_array[uv_mode_total_count].tx_depth                         = 0;
+#if MEM_OPT_PALETTE
+            candidate_array[uv_mode_total_count].palette_info = NULL;
+#else
             candidate_array[uv_mode_total_count].palette_info.pmi.palette_size[0] = 0;
             candidate_array[uv_mode_total_count].palette_info.pmi.palette_size[1] = 0;
+#endif
             candidate_array[uv_mode_total_count].filter_intra_mode = FILTER_INTRA_MODES;
             candidate_array[uv_mode_total_count].cfl_alpha_signs   = 0;
             candidate_array[uv_mode_total_count].cfl_alpha_idx     = 0;
@@ -12043,8 +12074,12 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                     0,
                     0,
                     pcs_ptr,
+#if MEM_OPT_MV_STACK
+                    &(context_ptr->ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#else
                     &(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                           .ed_ref_mv_stack[candidate_ptr->ref_frame_type][0]),
+#endif
                     context_ptr->blk_geom,
                     context_ptr->blk_origin_y >> MI_SIZE_LOG2,
                     context_ptr->blk_origin_x >> MI_SIZE_LOG2,
@@ -13288,6 +13323,9 @@ uint8_t update_skip_nsq_shapes(
         sq_weight += AGGRESSIVE_OFFSET_1;
 #endif
 #endif
+#if SOFT_CYCLES_REDUCTION
+   soft_cycles_reduction_sq_weight(context_ptr, &sq_weight);
+#endif
     // use a conservative threshold for H4, V4 blocks
     if (context_ptr->blk_geom->shape == PART_H4 || context_ptr->blk_geom->shape == PART_V4)
         sq_weight += CONSERVATIVE_OFFSET_0;
@@ -14035,8 +14073,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     init_sq_nsq_block(scs_ptr, context_ptr);
 
     uint32_t full_lambda = context_ptr->hbd_mode_decision
+#if TPL_LAMBDA_IMP
+        ? context_ptr->full_sb_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_sb_lambda_md[EB_8_BIT_MD];
+#else
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
         : context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     // Mode Decision Neighbor Arrays
     context_ptr->intra_luma_mode_neighbor_array =
         pcs_ptr->md_intra_luma_mode_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
@@ -14140,44 +14183,13 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                    context_ptr->input_sample16bit_buffer->stride_cr,
                    sb_width >> 1,
                    sb_height >> 1);
-#if FIX_HBD_R2R
-        // PAD the packed source in incomplete sb up to max SB size
-        pad_input_picture_16bit(
-                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_y,
-                context_ptr->input_sample16bit_buffer->stride_y,
-                sb_width,
-                sb_height,
-                scs_ptr->sb_size_pix - sb_width,
-                scs_ptr->sb_size_pix - sb_height);
-
-        pad_input_picture_16bit(
-                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cb,
-                context_ptr->input_sample16bit_buffer->stride_cb,
-                sb_width >> 1,
-                sb_height >> 1,
-                (scs_ptr->sb_size_pix- sb_width  )>>1,
-                (scs_ptr->sb_size_pix - sb_height)>>1);
-
-        pad_input_picture_16bit(
-                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cr,
-                context_ptr->input_sample16bit_buffer->stride_cr,
-                sb_width >> 1,
-                sb_height >> 1,
-                (scs_ptr->sb_size_pix - sb_width  )>>1,
-                (scs_ptr->sb_size_pix  - sb_height)>>1);
-
-#endif
         store16bit_input_src(context_ptr->input_sample16bit_buffer,
                              pcs_ptr,
                              sb_origin_x,
                              sb_origin_y,
-#if FIX_HBD_R2R
-                             scs_ptr->sb_size_pix,
-                             scs_ptr->sb_size_pix);
-#else
                              sb_width,
                              sb_height);
-#endif
+
         //input_picture_ptr = context_ptr->input_sample16bit_buffer;
         input_picture_ptr = pcs_ptr->input_frame16bit;
     }

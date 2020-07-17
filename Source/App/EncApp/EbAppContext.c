@@ -94,7 +94,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.tile_columns           = config->tile_columns;
     callback_data->eb_enc_parameters.scene_change_detection = config->scene_change_detection;
     callback_data->eb_enc_parameters.look_ahead_distance    = config->look_ahead_distance;
-#if TPL_LA
+#if 1//TPL_LA
     callback_data->eb_enc_parameters.enable_tpl_la          = config->enable_tpl_la;
     callback_data->eb_enc_parameters.frames_to_be_encoded   = config->frames_to_be_encoded;
 #endif
@@ -117,7 +117,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.enable_restoration_filtering = config->enable_restoration_filtering;
     callback_data->eb_enc_parameters.sg_filter_mode           = config->sg_filter_mode;
     callback_data->eb_enc_parameters.wn_filter_mode           = config->wn_filter_mode;
-#if !REMOVE_COMBINE_CLASS12
+#if 0//!REMOVE_COMBINE_CLASS12
     callback_data->eb_enc_parameters.combine_class_12         = config->combine_class_12;
 #endif
     callback_data->eb_enc_parameters.edge_skp_angle_intra     = config->edge_skp_angle_intra;
@@ -125,6 +125,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.inter_intra_compound     = config->inter_intra_compound;
     callback_data->eb_enc_parameters.enable_paeth             = config->enable_paeth;
     callback_data->eb_enc_parameters.enable_smooth            = config->enable_smooth;
+#if 1//ON_OFF_FEATURE_MRP
+    callback_data->eb_enc_parameters.mrp_level                = config->mrp_level;
+#endif
     callback_data->eb_enc_parameters.enable_mfmv              = config->enable_mfmv;
     callback_data->eb_enc_parameters.enable_redundant_blk     = config->enable_redundant_blk;
     callback_data->eb_enc_parameters.spatial_sse_fl           = config->spatial_sse_fl;
@@ -135,7 +138,11 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;
+#if  0//OBMC_CLI
+    callback_data->eb_enc_parameters.obmc_level               = (int8_t)config->obmc_level;
+#else
     callback_data->eb_enc_parameters.enable_obmc              = (EbBool)config->enable_obmc;
+#endif
     callback_data->eb_enc_parameters.enable_rdoq              = config->enable_rdoq;
     callback_data->eb_enc_parameters.pred_me                  = config->pred_me;
     callback_data->eb_enc_parameters.bipred_3x3_inject        = config->bipred_3x3_inject;
@@ -166,7 +173,11 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.screen_content_mode = (EbBool)config->screen_content_mode;
     callback_data->eb_enc_parameters.intrabc_mode = config->intrabc_mode;
     callback_data->eb_enc_parameters.enable_hbd_mode_decision =
+#if 1 //CHANGE_HBD_MODE
+        config->enable_hbd_mode_decision;
+#else
         (EbBool)config->enable_hbd_mode_decision;
+#endif
     callback_data->eb_enc_parameters.enable_palette           = config->enable_palette;
     callback_data->eb_enc_parameters.channel_id               = config->channel_id;
     callback_data->eb_enc_parameters.active_channel_count     = config->active_channel_count;

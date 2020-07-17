@@ -274,6 +274,12 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_paeth;
+#if 1//ON_OFF_FEATURE_MRP
+    /* mrp level
+    *
+    * Default is -1. */
+    int mrp_level;
+#endif
 
     /* enable smooth
     *

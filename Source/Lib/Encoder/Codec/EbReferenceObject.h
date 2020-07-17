@@ -63,6 +63,13 @@ typedef struct EbReferenceObject {
 
 typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
+#if MEM_OPT_10bit
+#if CHANGE_HBD_MODE
+    int8_t hbd_mode_decision;
+#else
+    uint8_t hbd_mode_decision;
+#endif
+#endif
 } EbReferenceObjectDescInitData;
 
 typedef struct EbPaReferenceObject {

@@ -28,11 +28,21 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel0 = _mm_loadl_epi64((__m128i *)in16_bit_buffer);
             in_pixel1 = _mm_loadl_epi64((__m128i *)(in16_bit_buffer + in_stride));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
+                temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
+
+                temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
+                temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+            }
+#else
             temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
             temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
 
             temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
             temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+#endif
 
             in_pixel0_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff);
             in_pixel1_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff);
@@ -40,12 +50,24 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel0_shft_r_2_u8 = _mm_packus_epi16(in_pixel0_shft_r_2, in_pixel0_shft_r_2);
             in_pixel1_shft_r_2_u8 = _mm_packus_epi16(in_pixel1_shft_r_2, in_pixel1_shft_r_2);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                *(uint32_t *)outn_bit_buffer                 = _mm_cvtsi128_si32(temp_pixel0_u8);
+                *(uint32_t *)(outn_bit_buffer + outn_stride) = _mm_cvtsi128_si32(temp_pixel1_u8);
+            }
+#else
             *(uint32_t *)outn_bit_buffer                 = _mm_cvtsi128_si32(temp_pixel0_u8);
             *(uint32_t *)(outn_bit_buffer + outn_stride) = _mm_cvtsi128_si32(temp_pixel1_u8);
+#endif
             *(uint32_t *)out8_bit_buffer                 = _mm_cvtsi128_si32(in_pixel0_shft_r_2_u8);
             *(uint32_t *)(out8_bit_buffer + out8_stride) = _mm_cvtsi128_si32(in_pixel1_shft_r_2_u8);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer)
+                outn_bit_buffer += 2 * outn_stride;
+#else
             outn_bit_buffer += 2 * outn_stride;
+#endif
             out8_bit_buffer += 2 * out8_stride;
             in16_bit_buffer += 2 * in_stride;
         }
@@ -54,11 +76,21 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel0 = _mm_loadu_si128((__m128i *)in16_bit_buffer);
             in_pixel1 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
+                temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
+
+                temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
+                temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+            }
+#else
             temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
             temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
 
             temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
             temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+#endif
 
             in_pixel0_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff);
             in_pixel1_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff);
@@ -66,12 +98,24 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel0_shft_r_2_u8 = _mm_packus_epi16(in_pixel0_shft_r_2, in_pixel0_shft_r_2);
             in_pixel1_shft_r_2_u8 = _mm_packus_epi16(in_pixel1_shft_r_2, in_pixel1_shft_r_2);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                _mm_storel_epi64((__m128i *)outn_bit_buffer, temp_pixel0_u8);
+                _mm_storel_epi64((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+            }
+#else
             _mm_storel_epi64((__m128i *)outn_bit_buffer, temp_pixel0_u8);
             _mm_storel_epi64((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+#endif
             _mm_storel_epi64((__m128i *)out8_bit_buffer, in_pixel0_shft_r_2_u8);
             _mm_storel_epi64((__m128i *)(out8_bit_buffer + out8_stride), in_pixel1_shft_r_2_u8);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer)
+                outn_bit_buffer += 2 * outn_stride;
+#else
             outn_bit_buffer += 2 * outn_stride;
+#endif
             out8_bit_buffer += 2 * out8_stride;
             in16_bit_buffer += 2 * in_stride;
         }
@@ -84,10 +128,19 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel2 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride));
             in_pixel3 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 8));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                temp_pixel0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                temp_pixel1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+            }
+#else
             temp_pixel0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
                                              _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
             temp_pixel1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
                                              _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+#endif
 
             in_pixel0_shft_r_2_u8 =
                 _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
@@ -96,12 +149,24 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                 _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
                                  _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                _mm_storeu_si128((__m128i *)outn_bit_buffer, temp_pixel0_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+            }
+#else
             _mm_storeu_si128((__m128i *)outn_bit_buffer, temp_pixel0_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+#endif
             _mm_storeu_si128((__m128i *)out8_bit_buffer, in_pixel0_shft_r_2_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride), in_pixel1_shft_r_2_u8);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer)
+                outn_bit_buffer += 2 * outn_stride;
+#else
             outn_bit_buffer += 2 * outn_stride;
+#endif
             out8_bit_buffer += 2 * out8_stride;
             in16_bit_buffer += 2 * in_stride;
         }
@@ -119,6 +184,18 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel6 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 16));
             in_pixel7 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 24));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+            }
+#else
             outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
                                         _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
             outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
@@ -127,6 +204,7 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                                         _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
             outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
                                         _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+#endif
 
             out8_0_u8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
@@ -137,17 +215,31 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             out8_3_u8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), outn2_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride + 16), outn3_u8);
+            }
+#else
             _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), outn2_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride + 16), outn3_u8);
+#endif
 
             _mm_storeu_si128((__m128i *)out8_bit_buffer, out8_0_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + 16), out8_1_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride), out8_2_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride + 16), out8_3_u8);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer)
+                outn_bit_buffer += 2 * outn_stride;
+#else
             outn_bit_buffer += 2 * outn_stride;
+#endif
             out8_bit_buffer += 2 * out8_stride;
             in16_bit_buffer += 2 * in_stride;
         }
@@ -165,6 +257,18 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             in_pixel6 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + 48));
             in_pixel7 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + 56));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
+                        _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+            }
+#else
             outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
                                         _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
             outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
@@ -173,6 +277,7 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                                         _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
             outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
                                         _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+#endif
 
             out8_0_u8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
@@ -183,17 +288,31 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
             out8_3_u8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer) {
+                _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + 32), outn2_u8);
+                _mm_storeu_si128((__m128i *)(outn_bit_buffer + 48), outn3_u8);
+            }
+#else
             _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + 32), outn2_u8);
             _mm_storeu_si128((__m128i *)(outn_bit_buffer + 48), outn3_u8);
+#endif
 
             _mm_storeu_si128((__m128i *)out8_bit_buffer, out8_0_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + 16), out8_1_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + 32), out8_2_u8);
             _mm_storeu_si128((__m128i *)(out8_bit_buffer + 48), out8_3_u8);
 
+#if MEM_OPT_10bit
+            if (outn_bit_buffer)
+                outn_bit_buffer += outn_stride;
+#else
             outn_bit_buffer += outn_stride;
+#endif
             out8_bit_buffer += out8_stride;
             in16_bit_buffer += in_stride;
         }
@@ -222,6 +341,18 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel6 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + 48));
                     in_pixel7 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + 56));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                        outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                        outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                        outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+                    }
+#else
                     outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
                                                 _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
                     outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
@@ -230,6 +361,7 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                                                 _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
                     outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
                                                 _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+#endif
 
                     out8_0_u8 =
                         _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
@@ -244,22 +376,41 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                         _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + 32), outn2_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + 48), outn3_u8);
+                    }
+#else
                     _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + 32), outn2_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + 48), outn3_u8);
+#endif
 
                     _mm_storeu_si128((__m128i *)out8_bit_buffer, out8_0_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + 16), out8_1_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + 32), out8_2_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + 48), out8_3_u8);
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer)
+                        outn_bit_buffer += 64;
+#else
                     outn_bit_buffer += 64;
+#endif
                     out8_bit_buffer += 64;
                     in16_bit_buffer += 64;
                 }
                 in16_bit_buffer += in_stride_diff64;
+#if MEM_OPT_10bit
+                if (outn_bit_buffer)
+                    outn_bit_buffer += out_n_stride_diff64;
+#else
                 outn_bit_buffer += out_n_stride_diff64;
+#endif
                 out8_bit_buffer += out8_stride_diff64;
             }
         } else if (!(width & 31)) {
@@ -278,6 +429,18 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel6 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 16));
                     in_pixel7 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 24));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                        outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                        outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                        outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
+                                _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+                    }
+#else
                     outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
                                                 _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
                     outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
@@ -286,6 +449,7 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                                                 _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
                     outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
                                                 _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+#endif
 
                     out8_0_u8 =
                         _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
@@ -300,22 +464,41 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                         _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), outn2_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride + 16), outn3_u8);
+                    }
+#else
                     _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + 16), outn1_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), outn2_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride + 16), outn3_u8);
+#endif
 
                     _mm_storeu_si128((__m128i *)out8_bit_buffer, out8_0_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + 16), out8_1_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride), out8_2_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride + 16), out8_3_u8);
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer)
+                        outn_bit_buffer += 32;
+#else
                     outn_bit_buffer += 32;
+#endif
                     out8_bit_buffer += 32;
                     in16_bit_buffer += 32;
                 }
                 in16_bit_buffer += in_stride_diff;
+#if MEM_OPT_10bit
+                if (outn_bit_buffer)
+                    outn_bit_buffer += out_n_stride_diff;
+#else
                 outn_bit_buffer += out_n_stride_diff;
+#endif
                 out8_bit_buffer += out8_stride_diff;
             }
         } else if (!(width & 15)) {
@@ -328,12 +511,23 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel2 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride));
                     in_pixel3 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 8));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        temp_pixel0_u8 =
+                            _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                                    _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                        temp_pixel1_u8 =
+                            _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                                    _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                    }
+#else
                     temp_pixel0_u8 =
                         _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
                                          _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
                     temp_pixel1_u8 =
                         _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
                                          _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+#endif
 
                     in_pixel0_shft_r_2_u8 =
                         _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
@@ -342,18 +536,35 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                         _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
                                          _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        _mm_storeu_si128((__m128i *)outn_bit_buffer, temp_pixel0_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+                    }
+#else
                     _mm_storeu_si128((__m128i *)outn_bit_buffer, temp_pixel0_u8);
                     _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+#endif
                     _mm_storeu_si128((__m128i *)out8_bit_buffer, in_pixel0_shft_r_2_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride),
                                      in_pixel1_shft_r_2_u8);
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer)
+                        outn_bit_buffer += 16;
+#else
                     outn_bit_buffer += 16;
+#endif
                     out8_bit_buffer += 16;
                     in16_bit_buffer += 16;
                 }
                 in16_bit_buffer += in_stride_diff;
+#if MEM_OPT_10bit
+                if (outn_bit_buffer)
+                    outn_bit_buffer += out_n_stride_diff;
+#else
                 outn_bit_buffer += out_n_stride_diff;
+#endif
                 out8_bit_buffer += out8_stride_diff;
             }
         } else if (!(width & 7)) {
@@ -362,11 +573,21 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel0 = _mm_loadu_si128((__m128i *)in16_bit_buffer);
                     in_pixel1 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
+                        temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
+
+                        temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
+                        temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+                    }
+#else
                     temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
                     temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
 
                     temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
                     temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+#endif
 
                     in_pixel0_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff);
                     in_pixel1_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff);
@@ -376,18 +597,35 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel1_shft_r_2_u8 =
                         _mm_packus_epi16(in_pixel1_shft_r_2, in_pixel1_shft_r_2);
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        _mm_storel_epi64((__m128i *)outn_bit_buffer, temp_pixel0_u8);
+                        _mm_storel_epi64((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+                    }
+#else
                     _mm_storel_epi64((__m128i *)outn_bit_buffer, temp_pixel0_u8);
                     _mm_storel_epi64((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+#endif
                     _mm_storel_epi64((__m128i *)out8_bit_buffer, in_pixel0_shft_r_2_u8);
                     _mm_storel_epi64((__m128i *)(out8_bit_buffer + out8_stride),
                                      in_pixel1_shft_r_2_u8);
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer)
+                        outn_bit_buffer += 8;
+#else
                     outn_bit_buffer += 8;
+#endif
                     out8_bit_buffer += 8;
                     in16_bit_buffer += 8;
                 }
                 in16_bit_buffer += in_stride_diff;
+#if MEM_OPT_10bit
+                if (outn_bit_buffer)
+                    outn_bit_buffer += out_n_stride_diff;
+#else
                 outn_bit_buffer += out_n_stride_diff;
+#endif
                 out8_bit_buffer += out8_stride_diff;
             }
         } else {
@@ -396,11 +634,21 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel0 = _mm_loadl_epi64((__m128i *)in16_bit_buffer);
                     in_pixel1 = _mm_loadl_epi64((__m128i *)(in16_bit_buffer + in_stride));
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
+                        temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
+
+                        temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
+                        temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+                    }
+#else
                     temp_pixel0 = _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6);
                     temp_pixel1 = _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6);
 
                     temp_pixel0_u8 = _mm_packus_epi16(temp_pixel0, temp_pixel0);
                     temp_pixel1_u8 = _mm_packus_epi16(temp_pixel1, temp_pixel1);
+#endif
 
                     in_pixel0_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff);
                     in_pixel1_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff);
@@ -410,18 +658,34 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
                     in_pixel1_shft_r_2_u8 =
                         _mm_packus_epi16(in_pixel1_shft_r_2, in_pixel1_shft_r_2);
 
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer) {
+                        *(uint32_t *)outn_bit_buffer                 = _mm_cvtsi128_si32(temp_pixel0_u8);
+                        *(uint32_t *)(outn_bit_buffer + outn_stride) = _mm_cvtsi128_si32(temp_pixel1_u8);
+                    }
+#else
                     *(uint32_t *)outn_bit_buffer                 = _mm_cvtsi128_si32(temp_pixel0_u8);
                     *(uint32_t *)(outn_bit_buffer + outn_stride) = _mm_cvtsi128_si32(temp_pixel1_u8);
+#endif
                     *(uint32_t *)out8_bit_buffer = _mm_cvtsi128_si32(in_pixel0_shft_r_2_u8);
                     *(uint32_t *)(out8_bit_buffer + out8_stride) =
                         _mm_cvtsi128_si32(in_pixel1_shft_r_2_u8);
-
+#if MEM_OPT_10bit
+                    if (outn_bit_buffer)
+                        outn_bit_buffer += 4;
+#else
                     outn_bit_buffer += 4;
+#endif
                     out8_bit_buffer += 4;
                     in16_bit_buffer += 4;
                 }
                 in16_bit_buffer += in_stride_diff;
+#if MEM_OPT_10bit
+                if (outn_bit_buffer)
+                    outn_bit_buffer += out_n_stride_diff;
+#else
                 outn_bit_buffer += out_n_stride_diff;
+#endif
                 out8_bit_buffer += out8_stride_diff;
             }
         }

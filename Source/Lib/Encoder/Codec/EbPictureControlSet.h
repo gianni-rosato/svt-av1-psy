@@ -52,7 +52,7 @@ extern "C" {
 #define MULTI_STAGE_PD_NEIGHBOR_ARRAY_INDEX 4
 #define NEIGHBOR_ARRAY_TOTAL_COUNT 5
 #define AOM_QM_BITS 5
-    
+
 #if DECOUPLE_ME_RES
 typedef struct DepCntPicInfo {
     uint64_t      pic_num;
@@ -72,7 +72,12 @@ typedef struct MacroblockPlane {
     const int16_t *round_qtx;
     const int16_t *dequant_qtx;
 } MacroblockPlane;
-
+#if ON_OFF_FEATURE_MRP
+typedef struct  MrpControls {
+    uint8_t          ref_list0_count_try;  //the number of references to try (in ME/MD) in list0. should be <= ref_list0_count
+    uint8_t          ref_list1_count_try;  //the number of references to try (in ME/MD) in list1. should be <= ref_list1_count
+}MrpControls;
+#endif
 // The Quants structure is used only for internal quantizer setup in
 // av1_quantize.c.
 // All of its fields use the same coefficient shift/scaling at TX.
@@ -251,6 +256,9 @@ typedef struct PictureControlSet {
     uint8_t  ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EB_SLICE ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint64_t ref_pic_referenced_area_avg_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if TPL_1PASS_IMP
+    double ref_pic_r0[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     // GOP
     uint64_t      picture_number;
     uint8_t       temporal_layer_index;
@@ -538,8 +546,14 @@ typedef struct PictureParentControlSet {
     EbBool           is_used_as_reference_flag;
     uint8_t          ref_list0_count;
     uint8_t          ref_list1_count;
+#if  !ON_OFF_FEATURE_MRP
     uint8_t          ref_list0_count_try;  //The number of references to try (in ME / MD) in list0.Should be <= ref_list0_count.
     uint8_t          ref_list1_count_try;  // The number of references to try (in ME/MD) in list1. Should be <= ref_list1_count.
+#endif
+#if ON_OFF_FEATURE_MRP
+    uint8_t          mrp_level;
+    MrpControls      mrp_ctrls;
+#endif
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t          tot_ref_frame_types;
     // Rate Control
@@ -903,7 +917,9 @@ typedef struct PictureControlSetInitData {
     EbColorFormat  color_format;
     uint32_t       sb_sz;
     uint8_t        cfg_palette;
+#if RATE_MEM_OPT
     uint8_t        serial_rate_est;
+#endif
     uint32_t
         sb_size_pix; //since we still have lot of code assuming 64x64 SB, we add a new paramter supporting both128x128 and 64x64,
     //ultimately the fixed code supporting 64x64 should be upgraded to use 128x128 and the above could be removed.
@@ -915,7 +931,11 @@ typedef struct PictureControlSetInitData {
     uint16_t  enc_dec_segment_row;
     EbEncMode enc_mode;
     uint8_t   speed_control;
+#if CHANGE_HBD_MODE
+    int8_t   hbd_mode_decision;
+#else
     uint8_t   hbd_mode_decision;
+#endif
     uint16_t  film_grain_noise_level;
     EbBool    ext_block_flag;
 #if !REMOVE_MRP_MODE

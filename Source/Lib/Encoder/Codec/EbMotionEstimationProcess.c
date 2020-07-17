@@ -1518,8 +1518,10 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
                                               PictureParentControlSet *  pcs_ptr,
                                               MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
+#if !UNIFY_SC_NSC
     uint8_t     enc_mode =
         scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#endif
     EbInputResolution input_resolution = scs_ptr->input_resolution;
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
 #if !REFACTOR_ME_HME ||  !MAR12_ADOPTIONS
@@ -1961,7 +1963,11 @@ void *motion_estimation_kernel(void *input_ptr) {
             // Global motion estimation
             // Compute only for the first fragment.
             // TODO: create an other kernel ?
+#if GM_DOWN_16
+            if (pcs_ptr->gm_level == GM_FULL || pcs_ptr->gm_level == GM_DOWN || pcs_ptr->gm_level == GM_DOWN16) {
+#else
             if (pcs_ptr->gm_level == GM_FULL || pcs_ptr->gm_level == GM_DOWN) {
+#endif
                 if (context_ptr->me_context_ptr->compute_global_motion &&
                     in_results_ptr->segment_index == 0)
                     global_motion_estimation(

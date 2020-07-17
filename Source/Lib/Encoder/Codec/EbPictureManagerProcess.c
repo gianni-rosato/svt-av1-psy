@@ -1269,6 +1269,14 @@ void *picture_manager_kernel(void *input_ptr) {
                         EB_MEMSET(child_pcs_ptr->ref_pic_referenced_area_avg_array[REF_LIST_1],
                                   0,
                                   REF_LIST_MAX_DEPTH * sizeof(uint64_t));
+#if TPL_1PASS_IMP
+                        EB_MEMSET(child_pcs_ptr->ref_pic_r0[REF_LIST_0],
+                            0,
+                            REF_LIST_MAX_DEPTH * sizeof(double));
+                        EB_MEMSET(child_pcs_ptr->ref_pic_r0[REF_LIST_1],
+                            0,
+                            REF_LIST_MAX_DEPTH * sizeof(double));
+#endif
                         int8_t max_temporal_index = -1, ref_index = 0;
                         // Configure List0
                         if ((entry_pcs_ptr->slice_type == P_SLICE) ||
@@ -1352,6 +1360,13 @@ void *picture_manager_kernel(void *input_ptr) {
                                         ((EbReferenceObject *)
                                              reference_entry_ptr->reference_object_ptr->object_ptr)
                                             ->referenced_area_avg;
+#if TPL_1PASS_IMP
+                                    child_pcs_ptr
+                                        ->ref_pic_r0[REF_LIST_0][ref_idx] =
+                                        ((EbReferenceObject *)
+                                            reference_entry_ptr->reference_object_ptr->object_ptr)
+                                        ->r0;
+#endif
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(
                                         reference_entry_ptr->reference_object_ptr, 1);
@@ -1453,6 +1468,13 @@ void *picture_manager_kernel(void *input_ptr) {
                                         ((EbReferenceObject *)
                                              reference_entry_ptr->reference_object_ptr->object_ptr)
                                             ->referenced_area_avg;
+#if TPL_1PASS_IMP
+                                    child_pcs_ptr
+                                        ->ref_pic_r0[REF_LIST_1][ref_idx] =
+                                        ((EbReferenceObject *)
+                                            reference_entry_ptr->reference_object_ptr->object_ptr)
+                                        ->r0;
+#endif
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
                                     eb_object_inc_live_count(
                                         reference_entry_ptr->reference_object_ptr, 1);

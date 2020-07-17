@@ -2763,8 +2763,12 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 IntMv nearestmv, nearmv;
                                 eb_av1_find_best_ref_mvs_from_stack(
                                     0,
+#if MEM_OPT_MV_STACK
+                                    context_ptr->md_context->ed_ref_mv_stack,
+#else
                                     context_ptr->md_context->md_local_blk_unit[blk_geom->blkidx_mds]
                                         .ed_ref_mv_stack,
+#endif
                                     blk_ptr->av1xd,
                                     ref_frame,
                                     &nearestmv,
@@ -2783,17 +2787,27 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 // Ref DV should not have sub-pel.
                                 assert((dv_ref.as_mv.col & 7) == 0);
                                 assert((dv_ref.as_mv.row & 7) == 0);
+#if MEM_OPT_MV_STACK
+                                context_ptr->md_context->ed_ref_mv_stack[INTRA_FRAME][0].this_mv = dv_ref;
+#else
                                 context_ptr->md_context->md_local_blk_unit[blk_geom->blkidx_mds]
                                     .ed_ref_mv_stack[INTRA_FRAME][0]
                                     .this_mv       = dv_ref;
+#endif
                                 blk_ptr->predmv[0] = dv_ref;
 
                                 //keep final usefull mvp for entropy
                                 eb_memcpy(blk_ptr->av1xd->final_ref_mv_stack,
+#if MEM_OPT_MV_STACK
+                                    context_ptr->md_context
+                                    ->ed_ref_mv_stack[blk_ptr->prediction_unit_array[0]
+                                    .ref_frame_type],
+#else
                                        context_ptr->md_context
                                            ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                                            .ed_ref_mv_stack[blk_ptr->prediction_unit_array[0]
                                                                 .ref_frame_type],
+#endif
                                        sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
 #if SB_MEM_OPT
                                 {
@@ -2822,7 +2836,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                                 }
 #endif
 
-                                pu_ptr = blk_ptr->prediction_unit_array;
+
                                 // Set MvUnit
                                 context_ptr->mv_unit.pred_direction =
                                     (uint8_t)pu_ptr->inter_pred_direction_index;
@@ -3214,9 +3228,14 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
 
                     //keep final usefull mvp for entropy
                     eb_memcpy(blk_ptr->av1xd->final_ref_mv_stack,
+#if MEM_OPT_MV_STACK
+                            context_ptr->md_context
+                            ->ed_ref_mv_stack[blk_ptr->prediction_unit_array[0].ref_frame_type],
+#else
                            context_ptr->md_context
                                ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                                .ed_ref_mv_stack[blk_ptr->prediction_unit_array[0].ref_frame_type],
+#endif
                            sizeof(CandidateMv) * MAX_REF_MV_STACK_SIZE);
 
 #if SB_MEM_OPT
