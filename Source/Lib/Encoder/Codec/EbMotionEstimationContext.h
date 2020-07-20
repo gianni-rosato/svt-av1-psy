@@ -30,8 +30,10 @@ extern "C" {
 #define NUMBER_OF_SB_QUAD 4
 #define VARIANCE_PRECISION 16
 #define MEAN_PRECISION (VARIANCE_PRECISION >> 1)
+#if !REMOVE_UNUSED_CODE
 #define HME_RECTANGULAR 0
 #define HME_SPARSE 1
+#endif
 #define HME_DECIM_FILTER_TAP 9
 
 // Quater pel refinement methods

@@ -101,7 +101,7 @@ extern "C" {
         8, 9, 12, 13,
         10, 11, 14, 15
     };
-
+#if !REMOVE_UNUSED_CODE_PH2
     static const uint32_t tab32x32[16] = {
         0, 1,
         2, 3
@@ -114,7 +114,7 @@ extern "C" {
     static const uint32_t tab32x64[16] = {
         0, 1,
     };
-
+#endif
     static const uint32_t tab8x8[64] = {
         0, 1, 4, 5, 16, 17, 20, 21,
         2, 3, 6, 7, 18, 19, 22, 23,
@@ -125,7 +125,7 @@ extern "C" {
         40, 41, 44, 45, 56, 57, 60, 61,
         42, 43, 46, 47, 58, 59, 62, 63
     };
-
+#if !REMOVE_UNUSED_CODE_PH2
     static const uint32_t tab32x16[8] = {
         0, 2,
         1, 3,
@@ -171,6 +171,7 @@ extern "C" {
         16, 17, 18, 19, 24, 25, 26, 27,
         20, 21, 22, 23, 28, 29, 30, 31,
     };
+#endif
 #if NSQ_ME_CONTEXT_CLEAN_UP
     static const uint32_t partition_width[SQUARE_PU_COUNT] = {
 #else

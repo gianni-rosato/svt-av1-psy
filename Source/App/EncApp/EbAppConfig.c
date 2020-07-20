@@ -80,10 +80,14 @@
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
 #define SPATIAL_SSE_FL_TOKEN "-spatial-sse-fl"
+#if 0//!REMOVE_ME_SUBPEL_CODE
 #define SUBPEL_TOKEN "-subpel"
+#endif
 #define OVR_BNDRY_BLK_TOKEN "-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_TOKEN "-new-nrst-near-comb"
+#if 0//!SHUT_ME_CAND_SORTING
 #define PRUNE_UNIPRED_ME_TOKEN "-prune-unipred-me"
+#endif
 #define PRUNE_REF_REC_PART_TOKEN "-prune-ref-rec-part"
 #define NSQ_TABLE_TOKEN "-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
@@ -198,7 +202,9 @@
 #define OVR_BNDRY_BLK_NEW_TOKEN "--enable-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_NEW_TOKEN "--enable-new-nrst-near-comb"
 #define NX4_4XN_MV_INJECT_NEW_TOKEN "--enable-nx4-4xn-mv-inject"
+#if 0//!SHUT_ME_CAND_SORTING
 #define PRUNE_UNIPRED_ME_NEW_TOKEN "--enable-prune-unipred-me"
+#endif
 #define PRUNE_REF_REC_PART_NEW_TOKEN "--enable-prune-ref-rec-part"
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
@@ -425,18 +431,22 @@ static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
 static void set_spatial_sse_fl_flag(const char *value, EbConfig *cfg) {
     cfg->spatial_sse_fl = strtol(value, NULL, 0);
 };
+#if 0//!REMOVE_ME_SUBPEL_CODE
 static void set_enable_sub_pel_flag(const char *value, EbConfig *cfg) {
     cfg->enable_subpel = strtol(value, NULL, 0);
 };
+#endif
 static void set_over_bndry_blk_flag(const char *value, EbConfig *cfg) {
     cfg->over_bndry_blk = strtol(value, NULL, 0);
 };
 static void set_new_nearest_comb_inject_flag(const char *value, EbConfig *cfg) {
     cfg->new_nearest_comb_inject = strtol(value, NULL, 0);
 };
+#if 0//!SHUT_ME_CAND_SORTING
 static void set_prune_unipred_me_flag(const char *value, EbConfig *cfg) {
     cfg->prune_unipred_me = strtol(value, NULL, 0);
 };
+#endif
 static void set_prune_ref_rec_part_flag(const char *value, EbConfig *cfg) {
     cfg->prune_ref_rec_part = strtol(value, NULL, 0);
 };
@@ -606,7 +616,7 @@ static void set_superres_qthres(const char *value, EbConfig *cfg) {
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
-#if 0 //CHANGE_HBD_MODE
+#if 1 //CHANGE_HBD_MODE
     cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
 #else
     cfg->enable_hbd_mode_decision = (int8_t)strtoul(value, NULL, 0);
@@ -953,10 +963,12 @@ ConfigEntry config_entry_specific[] = {
      SPATIAL_SSE_FL_NEW_TOKEN,
      "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
      set_spatial_sse_fl_flag},
+#if 0//!REMOVE_ME_SUBPEL_CODE
     {SINGLE_INPUT,
      SUBPEL_TOKEN,
      "Enable subpel(0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_sub_pel_flag},
+#endif
     {SINGLE_INPUT,
      OVR_BNDRY_BLK_NEW_TOKEN,
      "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
@@ -965,10 +977,12 @@ ConfigEntry config_entry_specific[] = {
      NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
      "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
      set_new_nearest_comb_inject_flag},
+#if 0//!SHUT_ME_CAND_SORTING
     {SINGLE_INPUT,
      PRUNE_UNIPRED_ME_NEW_TOKEN,
      "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
      set_prune_unipred_me_flag},
+#endif
     {SINGLE_INPUT,
      PRUNE_REF_REC_PART_NEW_TOKEN,
      "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
@@ -1324,13 +1338,17 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
     {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_fl_flag},
+#if 0//!REMOVE_ME_SUBPEL_CODE
     {SINGLE_INPUT, SUBPEL_TOKEN, "Subpel", set_enable_sub_pel_flag},
+#endif
     {SINGLE_INPUT, OVR_BNDRY_BLK_TOKEN, "OverBoundryBlock", set_over_bndry_blk_flag},
     {SINGLE_INPUT,
      NEW_NEAREST_COMB_INJECT_TOKEN,
      "NewNearestCombInjection",
      set_new_nearest_comb_inject_flag},
+#if 0//!SHUT_ME_CAND_SORTING
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_TOKEN, "PruneUnipredMe", set_prune_unipred_me_flag},
+#endif
     {SINGLE_INPUT, PRUNE_REF_REC_PART_TOKEN, "PruneRefRecPart", set_prune_ref_rec_part_flag},
     {SINGLE_INPUT, NSQ_TABLE_TOKEN, "NsqTable", set_nsq_table_flag},
     {SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN, "FrameEndCdfUpdate", set_frame_end_cdf_update_flag},
@@ -1521,7 +1539,9 @@ ConfigEntry config_entry[] = {
      NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
      "New Nearest Comb Injection",
      set_new_nearest_comb_inject_flag},
+#if 0//!SHUT_ME_CAND_SORTING
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_NEW_TOKEN, "Prune Uni pred Me", set_prune_unipred_me_flag},
+#endif
     {SINGLE_INPUT, PRUNE_REF_REC_PART_NEW_TOKEN, "Prune Ref Rec Part", set_prune_ref_rec_part_flag},
     {SINGLE_INPUT, NSQ_TABLE_NEW_TOKEN, "Nsq Table", set_nsq_table_flag},
     {SINGLE_INPUT,
@@ -1616,10 +1636,14 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->spatial_sse_fl                            = DEFAULT;
+#if 0//!REMOVE_ME_SUBPEL_CODE
     config_ptr->enable_subpel                             = DEFAULT;
+#endif
     config_ptr->over_bndry_blk                            = DEFAULT;
     config_ptr->new_nearest_comb_inject                   = DEFAULT;
+#if 0//!SHUT_ME_CAND_SORTING
     config_ptr->prune_unipred_me                          = DEFAULT;
+#endif
     config_ptr->prune_ref_rec_part                        = DEFAULT;
     config_ptr->nsq_table                                 = DEFAULT;
     config_ptr->frame_end_cdf_update                      = DEFAULT;
@@ -2541,7 +2565,9 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, OVR_BNDRY_BLK_TOKEN) == 0) linked_token = OVR_BNDRY_BLK_NEW_TOKEN;
     if (EB_STRCMP(token, NEW_NEAREST_COMB_INJECT_TOKEN) == 0)
         linked_token = NEW_NEAREST_COMB_INJECT_NEW_TOKEN;
+#if 0//!SHUT_ME_CAND_SORTING
     if (EB_STRCMP(token, PRUNE_UNIPRED_ME_TOKEN) == 0) linked_token = PRUNE_UNIPRED_ME_NEW_TOKEN;
+#endif
     if (EB_STRCMP(token, PRUNE_REF_REC_PART_TOKEN) == 0)
         linked_token = PRUNE_REF_REC_PART_NEW_TOKEN;
     if (EB_STRCMP(token, NSQ_TABLE_TOKEN) == 0) linked_token = NSQ_TABLE_NEW_TOKEN;

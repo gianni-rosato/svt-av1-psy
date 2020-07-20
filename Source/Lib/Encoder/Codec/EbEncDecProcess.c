@@ -249,7 +249,9 @@ static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr
                           SequenceControlSet *scs_ptr, uint32_t segment_index) {
     context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) || (EbBool)(scs_ptr->static_config.is_16bit_pipeline);
     context_ptr->bit_depth = scs_ptr->static_config.encoder_bit_depth;
+#if !QP2QINDEX
     uint16_t picture_qp   = pcs_ptr->picture_qp;
+#endif
     uint16_t tile_group_idx = context_ptr->tile_group_index;
 #if !QP2QINDEX
     context_ptr->qp = picture_qp;
@@ -1606,7 +1608,9 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 
     //We need this for MCP
     if (is_16bit) {
+        // Non visible Reference samples should be overwritten by the last visible line of pixels
         pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(scs_ptr, ref_pic_16bit_ptr);
+
         // Y samples
         generate_padding16_bit(ref_pic_16bit_ptr->buffer_y,
                                ref_pic_16bit_ptr->stride_y << 1,

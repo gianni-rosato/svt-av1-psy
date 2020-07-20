@@ -280,10 +280,11 @@ TEST_P(SumSquareTest, ConstTest) {
 TEST_P(SumSquareTest, MatchTest) {
     run_match_test();
 };
-
+#if !REMOVE_UNUSED_CODE
 extern "C" uint32_t eb_aom_get_mb_ss_sse2(const int16_t *src);
 INSTANTIATE_TEST_CASE_P(Variance, SumSquareTest,
                         ::testing::Values(eb_aom_get_mb_ss_sse2));
+#endif
 
 // Variance test
 using VARIANCE_NXM_FUNC = uint32_t (*)(const uint8_t *src_ptr,

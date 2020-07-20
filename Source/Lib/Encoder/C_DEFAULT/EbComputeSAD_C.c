@@ -74,6 +74,7 @@ uint32_t sad_16b_kernel_c(uint16_t *src, // input parameter, source samples Ptr
     return sad;
 }
 
+#if !REMOVE_UNUSED_CODE
 void sad_loop_kernel_sparse_c(
     uint8_t * src, // input parameter, source samples Ptr
     uint32_t  srcStride, // input parameter, source stride
@@ -119,7 +120,7 @@ void sad_loop_kernel_sparse_c(
 
     return;
 }
-
+#endif
 void sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
                        uint32_t  src_stride, // input parameter, source stride
                        uint8_t * ref, // input parameter, reference samples Ptr

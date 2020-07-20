@@ -2519,7 +2519,7 @@ static INLINE void av1_tranform_two_d_core_c(int16_t *input, uint32_t input_stri
         }
     }
 }
-
+#if !REMOVE_UNUSED_CODE
 void av1_round_shift_array_pf_c(int32_t *arr_in, int32_t *arr_out, int32_t size, int32_t bit) {
     int32_t i;
     if (bit == 0) {
@@ -2532,6 +2532,7 @@ void av1_round_shift_array_pf_c(int32_t *arr_in, int32_t *arr_out, int32_t size,
         }
     }
 }
+#endif
 void av1_fdct32_pf_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range) {
     const int32_t  size = 32;

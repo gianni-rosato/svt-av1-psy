@@ -21,14 +21,14 @@
 #include "CompareTools.h"
 #include "EbDefinitions.h"
 #include "RefDecoder.h"
-
+#if !NEW_RESOLUTION_RANGES
 #define INPUT_SIZE_576p_TH 0x90000    // 0.58 Million
 #define INPUT_SIZE_1080i_TH 0xB71B0   // 0.75 Million
 #define INPUT_SIZE_1080p_TH 0x1AB3F0  // 1.75 Million
 #define INPUT_SIZE_4K_TH 0x29F630     // 2.75 Million
 #define EB_OUTPUTSTREAMBUFFERSIZE_MACRO(resolution_size) \
     ((resolution_size) < (INPUT_SIZE_1080i_TH) ? 0x1E8480 : 0x2DC6C0)
-
+#endif
 // Copied from EbAppProcessCmd.c
 #define LONG_ENCODE_FRAME_ENCODE 4000
 #define SPEED_MEASUREMENT_INTERVAL 2000

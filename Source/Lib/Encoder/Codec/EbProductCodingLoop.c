@@ -109,15 +109,20 @@ const EbAv1FullCostFunc av1_product_full_cost_func_table[3] = {
 * Update Recon Samples Neighbor Arrays
 ***************************************************/
 void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
+#if REMOVE_UNUSED_CODE_PH2
+                                          ModeDecisionContext *context_ptr, uint32_t index_mds) {
+#else
                                           ModeDecisionContext *context_ptr, uint32_t index_mds,
                                           EbBool intra4x4Selected) {
+#endif
     uint32_t bwdith  = context_ptr->blk_geom->bwidth;
     uint32_t bheight = context_ptr->blk_geom->bheight;
 
     uint32_t origin_x = context_ptr->blk_origin_x;
     uint32_t origin_y = context_ptr->blk_origin_y;
+#if !REMOVE_UNUSED_CODE_PH2
     (void)intra4x4Selected;
-
+#endif
     uint32_t blk_origin_x_uv = context_ptr->round_origin_x >> 1;
     uint32_t blk_origin_y_uv = context_ptr->round_origin_y >> 1;
     uint32_t bwdith_uv       = context_ptr->blk_geom->bwidth_uv;
@@ -665,7 +670,12 @@ void md_update_all_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionCont
     uint8_t avail_blk_flag = context_ptr->md_local_blk_unit[last_blk_index_mds].avail_blk_flag;
 
     if (avail_blk_flag) {
+#if REMOVE_UNUSED_CODE_PH2
+        mode_decision_update_neighbor_arrays(
+            pcs_ptr, context_ptr, last_blk_index_mds);
+#else
         mode_decision_update_neighbor_arrays(pcs_ptr, context_ptr, last_blk_index_mds, EB_FALSE);
+#endif
 
         update_mi_map(context_ptr,
                       context_ptr->blk_ptr,
@@ -733,6 +743,7 @@ void init_sq_nsq_block(SequenceControlSet *scs_ptr, ModeDecisionContext *context
         ++blk_idx;
     } while (blk_idx < scs_ptr->max_block_cnt);
 }
+#if !REMOVE_UNUSED_CODE
 static INLINE TranHigh check_range(TranHigh input, int32_t bd) {
     // AV1 TX case
     // - 8 bit: signed 16 bit integer
@@ -825,7 +836,7 @@ void picture_addition_kernel16_bit(uint16_t *pred_ptr, uint32_t pred_stride, int
     //    SVT_LOG("\n");
     return;
 }
-
+#endif
 void av1_perform_inverse_transform_recon_luma(ModeDecisionContext *        context_ptr,
                                               ModeDecisionCandidateBuffer *candidate_buffer) {
     uint32_t txb_width;
@@ -6359,7 +6370,7 @@ void predictive_me_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             uint8_t          ref_idx    = get_ref_frame_idx(rf[0]);
 #if PRED_ME_REF_MASKING
 #if PRUNING_PER_INTER_TYPE
-            if (!is_valid_unipred_ref(context_ptr, PRED_ME_GROUP, list_idx, ref_idx)) continue;
+            if (!is_valid_unipred_ref(context_ptr, MIN(TOT_INTER_GROUP-1,PRED_ME_GROUP), list_idx, ref_idx)) continue;
 #else
             if (!context_ptr->ref_filtering_res[list_idx][ref_idx].do_ref) continue;
 #endif
@@ -7234,6 +7245,7 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
     }
 }
 #endif
+#if !REMOVE_UNUSED_CODE_PH2
 void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                        SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                        EbPictureBufferDesc *input_picture_ptr, uint32_t input_cb_origin_in_index,
@@ -7399,7 +7411,7 @@ void cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
         candidate_buffer->candidate_ptr->cfl_alpha_signs = best_joint_sign;
     }
 }
-
+#endif
 // If mode is CFL:
 // 1: recon the Luma
 // 2: Form the pred_buf_q3
@@ -8180,7 +8192,139 @@ uint8_t get_end_tx_depth(BlockSize bsize) {
 }
 
 #if TXT_CONTROL
-uint8_t allowed_txt[6][TX_SIZES_ALL][TX_TYPES];
+uint8_t allowed_txt[6][TX_SIZES_ALL][TX_TYPES] = {
+{
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+},
+//txt_th2
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+// th4
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,0,1,0,0,0,1,1,1,0,1,0,1},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+//th_35d
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,1,0,0,0,1,1,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,1},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1},
+{1,1,1,1,1,0,0,0,0,1,0,1,0,1,0,1},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,1,0,0,1,0,1,1,1,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+// th5d
+{
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,1,0,0,0,0,1,1,0,1,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0},
+{1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+},
+// dct_dct and IDXT for SC
+{
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0},
+{1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0}
+}
+};
 #else
 extern uint8_t allowed_tx_set_a[TX_SIZES_ALL][TX_TYPES];
 #endif
@@ -8694,7 +8838,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     int32_t  quantized_dc_txt[TX_TYPES]= { 0 };
     uint32_t y_count_non_zero_coeffs_txt[TX_TYPES]= { 0 };
     uint64_t y_txb_coeff_bits_txt[TX_TYPES]= { 0 };
-    uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL]= { 0 };
+    uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
 #endif
     for (tx_type = txk_start; tx_type < txk_end; ++tx_type) {
 #if COEFF_BASED_TXT_BYPASS
@@ -11543,6 +11687,8 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs, ModeDecisionContext 
 
     return return_error;
 }
+
+#if !REMOVE_UNUSED_CODE_PH2
 /****************************************************
 * generate the the size in pixel for partition code
 ****************************************************/
@@ -11620,6 +11766,7 @@ Part get_partition_shape(PartitionContextType above, PartitionContextType left, 
         SVT_LOG("error: unsupported above_size && left_size\n");
     return part;
 };
+#endif
 void init_chroma_mode(ModeDecisionContext *context_ptr) {
 #if !REFACTOR_SIGNALS
     context_ptr->uv_search_path = EB_TRUE;
@@ -11720,8 +11867,8 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
         else
             if (pcs_ptr->parent_pcs_ptr->intra_pred_mode == 4) {
                 if (pcs_ptr->slice_type == I_SLICE) {
-                    uv_mode_end = context_ptr->md_enable_paeth ? PAETH_PRED :
-                        context_ptr->md_enable_smooth ? SMOOTH_H_PRED : D67_PRED;
+                    uv_mode_end = context_ptr->md_enable_paeth ? UV_PAETH_PRED :
+                        context_ptr->md_enable_smooth ? UV_SMOOTH_H_PRED : UV_D67_PRED;
                     angle_delta_candidate_count = use_angle_delta ? 5 : 1;
                     disable_angle_prediction = 0;
 #if !FIX_WARNINGS
@@ -11730,7 +11877,7 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                     disable_z2_prediction = 0;
                 }
                 else {
-                    uv_mode_end = DC_PRED;
+                    uv_mode_end = UV_DC_PRED;
                     disable_angle_prediction = 1;
                     angle_delta_candidate_count = 1;
 #if !FIX_WARNINGS
@@ -14183,12 +14330,44 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                    context_ptr->input_sample16bit_buffer->stride_cr,
                    sb_width >> 1,
                    sb_height >> 1);
+#if FIX_HBD_R2R
+        // PAD the packed source in incomplete sb up to max SB size
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_y,
+                context_ptr->input_sample16bit_buffer->stride_y,
+                sb_width,
+                sb_height,
+                scs_ptr->sb_size_pix - sb_width,
+                scs_ptr->sb_size_pix - sb_height);
+
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cb,
+                context_ptr->input_sample16bit_buffer->stride_cb,
+                sb_width >> 1,
+                sb_height >> 1,
+                (scs_ptr->sb_size_pix- sb_width  )>>1,
+                (scs_ptr->sb_size_pix - sb_height)>>1);
+
+        pad_input_picture_16bit(
+                (uint16_t *)context_ptr->input_sample16bit_buffer->buffer_cr,
+                context_ptr->input_sample16bit_buffer->stride_cr,
+                sb_width >> 1,
+                sb_height >> 1,
+                (scs_ptr->sb_size_pix - sb_width  )>>1,
+                (scs_ptr->sb_size_pix  - sb_height)>>1);
+
+#endif
         store16bit_input_src(context_ptr->input_sample16bit_buffer,
                              pcs_ptr,
                              sb_origin_x,
                              sb_origin_y,
+#if FIX_HBD_R2R
+                             scs_ptr->sb_size_pix,
+                             scs_ptr->sb_size_pix);
+#else
                              sb_width,
                              sb_height);
+#endif
 
         //input_picture_ptr = context_ptr->input_sample16bit_buffer;
         input_picture_ptr = pcs_ptr->input_frame16bit;

@@ -6733,6 +6733,7 @@ void* picture_decision_kernel(void *input_ptr)
 #if MRP_CTRL
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
 #if UPGRADE_M6_M7_M8
+#if !SYNCH_MRP
                                 if (pcs_ptr->sc_content_detected) {
 #if NEW_MRP_SETTINGS
                                     if (MRS_MODE) {
@@ -6820,9 +6821,14 @@ void* picture_decision_kernel(void *input_ptr)
 #endif
                                 }
                                 else {
+#endif
 #if MRP_ADOPTIONS
 #if JUNE17_ADOPTIONS
+#if SYNCH_MRP
+                                    if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
                                     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
 #if PRESET_SHIFITNG
                                     if (pcs_ptr->enc_mode <= ENC_M4) {
@@ -6839,12 +6845,16 @@ void* picture_decision_kernel(void *input_ptr)
 #if APR25_12AM_ADOPTIONS
 #if NEW_MRP_SETTINGS
 #if JUNE17_ADOPTIONS
+#if !SYNCH_MRP
                                     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
 #else
                                     else if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif
+#if !SYNCH_MRP
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+#endif
 #else
 #if PRESET_SHIFITNG
                                     else if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -6859,7 +6869,9 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 3) : MIN(pcs_ptr->ref_list1_count, 1);
 #endif
 #endif
+#if !SYNCH_MRP
                                     }
+#endif
 #endif
                                     else {
 #if APR25_7PM_ADOPTIONS
@@ -6870,7 +6882,9 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
 #endif
                                     }
+#if !SYNCH_MRP
                                 }
+#endif
 #else
                                 // Set the number of references to try in ME/MD. Note: PicMgr/RPS will still use the original values to sync the references.
                                 if (pcs_ptr->sc_content_detected) {

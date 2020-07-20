@@ -11,7 +11,7 @@
 #include "common_dsp_rtcd.h"
 #include <emmintrin.h>
 #include <tmmintrin.h>
-
+#if !REMOVE_UNUSED_CODE
 EB_EXTERN EB_ALIGN(16) const int8_t avc_style_luma_if_coeff8_ssse3[] = {
     -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, -1, 25, 9,  -1, 9,  -1, 9,  -1, 9,  -1,
     9,  -1, 9,  -1, 9,  -1, 9,  -1, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18, -2, 18,
@@ -480,3 +480,4 @@ void avc_style_luma_interpolation_filter_helper_ssse3(EbByte ref_pic, uint32_t s
     default: assert(0);
     }
 }
+#endif

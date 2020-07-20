@@ -74,7 +74,7 @@ static const uint8_t* prepare_data_8x8(uint8_t* data, SVTRandom* rnd) {
     }
     return data;
 }
-
+#if !REMOVE_ME_SUBPEL_CODE
 TEST(ComputeMeanTest, run_compute_mean_test) {
     SVTRandom rnd[2] = {
         SVTRandom(8, false),  /**< random generator of normal test vector */
@@ -106,7 +106,7 @@ TEST(ComputeMeanTest, run_compute_mean_test) {
         }
     }
 }
-
+#endif
 TEST(ComputeMeanTest, run_compute_mean_squared_values_test) {
     SVTRandom rnd[2] = {
         SVTRandom(8, false),  /**< random generator of normal test vector */

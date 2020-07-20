@@ -4271,13 +4271,19 @@ EbErrorType av1_inter_prediction(
         EbReferenceObject *reference_object;
         for (uint8_t list_idx = REF_LIST_0; list_idx <= num_of_list_to_search; ++list_idx) {
             uint8_t ref_idx;
-
+#if ON_OFF_FEATURE_MRP
+            uint8_t num_of_ref_pic_to_search = (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE)
+                                               ? picture_control_set_ptr->parent_pcs_ptr->mrp_ctrls.ref_list0_count_try
+                                               : (list_idx == REF_LIST_0)
+                                                 ? picture_control_set_ptr->parent_pcs_ptr->mrp_ctrls.ref_list0_count_try
+                                                 : picture_control_set_ptr->parent_pcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
             uint8_t num_of_ref_pic_to_search = (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE)
                                                ? picture_control_set_ptr->parent_pcs_ptr->ref_list0_count
                                                : (list_idx == REF_LIST_0)
                                                  ? picture_control_set_ptr->parent_pcs_ptr->ref_list0_count
                                                  : picture_control_set_ptr->parent_pcs_ptr->ref_list1_count;
-
+#endif
             for (ref_idx = 0; ref_idx < num_of_ref_pic_to_search; ++ref_idx) {
 
                 reference_object = (EbReferenceObject *) picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]

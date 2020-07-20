@@ -7,6 +7,7 @@
 #include <emmintrin.h>
 #include <stdint.h>
 
+#if !REMOVE_UNUSED_CODE
 static INLINE void sad8x4x2_sse2_intrin(const uint8_t *src, const uint32_t src_stride,
                                         const uint8_t *ref, const uint32_t ref_stride,
                                         __m128i *sad8x8) {
@@ -150,7 +151,7 @@ void sad_calculation_32x32_64x64_sse2_intrin(uint32_t *p_sad16x16, uint32_t *p_b
         p_best_mv64x64[0]   = _mm_cvtsi128_si32(xmm_mv);
     }
 }
-
+#endif
 void initialize_buffer_32bits_sse2_intrin(uint32_t *pointer, uint32_t count128, uint32_t count32,
                                           uint32_t value) {
     __m128i  xmm1, xmm2;

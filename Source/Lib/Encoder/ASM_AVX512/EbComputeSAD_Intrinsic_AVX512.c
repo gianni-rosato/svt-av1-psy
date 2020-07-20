@@ -3627,6 +3627,7 @@ void sad_loop_kernel_avx512_intrin(
     *x_search_center = (int16_t)best_x;
     *y_search_center = (int16_t)best_y;
 }
+#if !REMOVE_UNUSED_CODE
 void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8,
     uint32_t *p_best_mv8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv16x16, uint32_t mv,
@@ -3997,4 +3998,5 @@ void get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin(
     sad_2 = _mm_or_si128(sad_2, sad_3);
     _mm_storeu_si128((__m128i *)p_best_mv8x8, sad_2);
 }
+#endif
 #endif // !NON_AVX512_SUPPORT

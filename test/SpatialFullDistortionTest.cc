@@ -29,7 +29,11 @@ namespace {
 
 typedef uint64_t (*SpatialFullDistortionKernelFunc)(
     uint8_t *input, uint32_t input_offset, uint32_t input_stride,
+#if INT_RECON_OFFSET_FIX
     uint8_t *recon, int32_t recon_offset, uint32_t recon_stride,
+#else
+    uint8_t *recon, int32_t recon_offset, uint32_t recon_stride,
+#endif
     uint32_t area_width, uint32_t area_height);
 
 class SpatialFullDistortionTest
@@ -284,6 +288,7 @@ AreaSize TEST_AREA_SIZES[] = {
     AreaSize(8, 32),   AreaSize(32, 16),  AreaSize(16, 64), AreaSize(64, 16),
     AreaSize(64, 64),  AreaSize(64, 32),  AreaSize(32, 64), AreaSize(128, 128),
     AreaSize(96, 128), AreaSize(64, 128), AreaSize(128, 64)};
+
 typedef std::tuple<AreaSize, TestPattern, SpatialFullDistortionKernelFunc>
     SpatialKernelTestParam;
 

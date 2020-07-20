@@ -443,6 +443,8 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             residual16bit->stride_y,
             context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
             context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr]);
+#if !REMOVE_UNUSED_CODE_PH2
+
         uint8_t tx_search_skip_flag =
             context_ptr->md_context->tx_search_level == TX_SEARCH_ENC_DEC
                 ? get_skip_tx_search_flag(context_ptr->blk_geom->sq_size, MAX_MODE_COST, 0, 1)
@@ -466,7 +468,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                                   eob,
                                   candidate_plane);
         }
-
+#endif
         av1_estimate_transform(
             ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
             residual16bit->stride_y,
@@ -537,9 +539,13 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
 
     if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK ||
         component_mask == PICTURE_BUFFER_DESC_CHROMA_MASK) {
+#if REMOVE_UNUSED_CODE_PH2
+        if (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
+#else
         if (blk_ptr->prediction_mode_flag == INTRA_MODE &&
             (context_ptr->evaluate_cfl_ep ||
              blk_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED)) {
+#endif
             EbPictureBufferDesc *recon_samples = pred_samples;
             uint32_t             recon_luma_offset =
                 (recon_samples->origin_y + round_origin_y) * recon_samples->stride_y +
@@ -569,7 +575,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                 eb_log2f(context_ptr->blk_geom->tx_width_uv[blk_ptr->tx_depth][context_ptr->txb_itr]) +
                 eb_log2f(context_ptr->blk_geom
                               ->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr]));
-
+#if !REMOVE_UNUSED_CODE_PH2
             if (context_ptr->evaluate_cfl_ep) {
                 // 3: Loop over alphas and find the best or choose DC
                 // Use the 1st spot of the candidate buffer to hold cfl settings: (1) to use same kernel as MD for CFL evaluation: cfl_rd_pick_alpha() (toward unification), (2) to avoid dedicated buffers for CFL evaluation @ EP (toward less memory)
@@ -622,7 +628,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                     blk_ptr->prediction_unit_array->is_directional_chroma_mode_flag = EB_FALSE;
                 }
             }
-
+#endif
             if (blk_ptr->prediction_unit_array->intra_chroma_mode == UV_CFL_PRED) {
                 int32_t alpha_q3 = cfl_idx_to_alpha(blk_ptr->prediction_unit_array->cfl_alpha_idx,
                                                     blk_ptr->prediction_unit_array->cfl_alpha_signs,
@@ -799,14 +805,14 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
     }
     return;
 }
-
+#if !REMOVE_UNUSED_CODE_PH2
 void encode_pass_tx_search_hbd(
     PictureControlSet *pcs_ptr, EncDecContext *context_ptr, SuperBlock *sb_ptr, uint32_t cb_qp,
     EbPictureBufferDesc *coeff_samples_sb, EbPictureBufferDesc *residual16bit,
     EbPictureBufferDesc *transform16bit, EbPictureBufferDesc *inverse_quant_buffer,
     uint32_t *count_non_zero_coeffs, uint32_t component_mask,
     uint16_t *eob, MacroblockPlane *candidate_plane);
-
+#endif
 /**********************************************************
 * Encode Loop
 *
@@ -972,6 +978,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 residual16bit->stride_y,
                 context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr],
                 context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr]);
+#if !REMOVE_UNUSED_CODE_PH2
             uint8_t tx_search_skip_flag =
                 context_ptr->md_context->tx_search_level == TX_SEARCH_ENC_DEC
                     ? get_skip_tx_search_flag(context_ptr->blk_geom->sq_size, MAX_MODE_COST, 0, 1)
@@ -1015,7 +1022,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                         candidate_plane);
                 }
             }
-
+#endif
             av1_estimate_transform(
                 ((int16_t *)residual16bit->buffer_y) + scratch_luma_offset,
                 residual16bit->stride_y,
@@ -2340,7 +2347,9 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
     uint64_t              y_full_distortion[DIST_CALC_TOTAL];
     EB_ALIGN(16) uint64_t y_tu_full_distortion[DIST_CALC_TOTAL];
     uint32_t              count_non_zero_coeffs[3];
+#if !REMOVE_UNUSED_CODE_PH2
     MacroblockPlane       blk_plane[3];
+#endif
     uint16_t              eobs[MAX_TXB_COUNT][3];
     uint64_t              y_txb_coeff_bits;
     uint64_t              cb_txb_coeff_bits;
@@ -2658,7 +2667,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 //     SVT_LOG("CHEDD");
                 uint32_t coded_area_org    = context_ptr->coded_area_sb;
                 uint32_t coded_area_org_uv = context_ptr->coded_area_sb_uv;
-
+#if !REMOVE_UNUSED_CODE_PH2
                 // Derive disable_cfl_flag as evaluate_cfl_ep = f(disable_cfl_flag)
                 EbBool disable_cfl_flag =
                     (context_ptr->blk_geom->sq_size > 32 || context_ptr->blk_geom->bwidth == 4 ||
@@ -2674,7 +2683,7 @@ EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *p
                 context_ptr->evaluate_cfl_ep =
                     (disable_cfl_flag == EB_FALSE &&
                      context_ptr->md_context->chroma_level == CHROMA_MODE_2);
-
+#endif
                 // for now, segmentation independent of sharpness/delta QP.
                 if (pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled) {
                     apply_segmentation_based_quantization(blk_geom, pcs_ptr, sb_ptr, blk_ptr);

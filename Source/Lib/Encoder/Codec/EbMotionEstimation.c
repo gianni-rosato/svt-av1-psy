@@ -26,7 +26,9 @@
 #include "EbLog.h"
 #include "EbResize.h"
 
+#if !REMOVE_UNUSED_CODE_PH2
 #define AVCCODEL
+#endif
 /********************************************
  * Constants
  ********************************************/
@@ -7668,7 +7670,7 @@ void hme_one_quadrant_level_0(
         ((int16_t)sixteenth_ref_pic_ptr->origin_y + origin_y) + y_search_area_origin;
     search_region_index =
         x_top_left_search_region + y_top_left_search_region * sixteenth_ref_pic_ptr->stride_y;
-
+#if !REMOVE_UNUSED_CODE
     if (context_ptr->hme_search_type == HME_SPARSE) {
         sad_loop_kernel_sparse(
             &context_ptr->sixteenth_sb_buffer[0],
@@ -7688,6 +7690,7 @@ void hme_one_quadrant_level_0(
             search_area_width,
             search_area_height);
     } else {
+#endif
         if ((search_area_width & 15) == 0) {
             // Only width equals 16 (SB equals 64) is updated
             // other width sizes work with the old code as the one
@@ -7730,7 +7733,9 @@ void hme_one_quadrant_level_0(
                 search_area_height);
         }
     }
-
+#if !REMOVE_UNUSED_CODE
+    }
+#endif
     *level0Bestsad_ =
         (context_ptr->hme_search_method == FULL_SAD_SEARCH)
             ? *level0Bestsad_
@@ -7930,6 +7935,7 @@ void hme_level_0(
         x_top_left_search_region + y_top_left_search_region * sixteenth_ref_pic_ptr->stride_y;
 
     if (((sb_width & 7) == 0) || (sb_width == 4)) {
+#if !REMOVE_UNUSED_CODE_PH2
         if ((search_area_width & 15) == 0) {
             // Only width equals 16 (SB equals 64) is updated
             // other width sizes work with the old code as the one
@@ -7952,6 +7958,7 @@ void hme_level_0(
                 search_area_width,
                 search_area_height);
         } else {
+#endif
             // Put the first search location into level0 results
             sad_loop_kernel(
                 &context_ptr->sixteenth_sb_buffer[0],
@@ -7970,7 +7977,9 @@ void hme_level_0(
                 sixteenth_ref_pic_ptr->stride_y,
                 search_area_width,
                 search_area_height);
+#if !REMOVE_UNUSED_CODE_PH2
         }
+#endif
     } else {
         sad_loop_kernel_c(
             &context_ptr->sixteenth_sb_buffer[0],

@@ -388,10 +388,10 @@ static void create_me_context_and_picture_control(
     int buffer_index =
         (input_picture_ptr_central->origin_y + sb_origin_y) * input_picture_ptr_central->stride_y +
         input_picture_ptr_central->origin_x + sb_origin_x;
-
+#if !REMOVE_UNUSED_CODE
     // set search type
     context_ptr->me_context_ptr->hme_search_type = HME_RECTANGULAR;
-
+#endif
     // set search method
     context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
 

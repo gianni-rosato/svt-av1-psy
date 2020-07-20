@@ -32,6 +32,7 @@
 #include "random.h"
 #include "util.h"
 
+#if !REMOVE_UNUSED_CODE
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {
@@ -333,3 +334,4 @@ TEST_P(PictureAdditionTest, PictureAddition16bitTest) {
 };
 
 }  // namespace
+#endif

@@ -24,7 +24,7 @@ const int8_t *eb_inv_txfm_shift_ls[TX_SIZES_ALL] = {
         inv_shift_32x16, inv_shift_32x64, inv_shift_64x32, inv_shift_4x16,  inv_shift_16x4,
         inv_shift_8x32,  inv_shift_32x8,  inv_shift_16x64, inv_shift_64x16,
 };
-
+#if !REMOVE_UNUSED_CODE
 void av1_inverse_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
@@ -48,7 +48,7 @@ void av1_inverse_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg 
     cfg->stage_num_col = av1_txfm_stage_num_list[cfg->txfm_type_col];
     cfg->stage_num_row = av1_txfm_stage_num_list[cfg->txfm_type_row];
 }
-
+#endif
 void eb_av1_gen_inv_stage_range(int8_t *stage_range_col, int8_t *stage_range_row,
                                 const Txfm2dFlipCfg *cfg, TxSize tx_size, int32_t bd) {
     const int32_t fwd_shift = inv_start_range[tx_size];
@@ -2456,6 +2456,7 @@ void eb_av1_round_shift_array_c(int32_t *arr, int32_t size, int32_t bit) {
     }
 }
 
+#if !REMOVE_UNUSED_CODE
 static INLINE void av1_inverse_transform_2d_core_c(const int32_t *input, int32_t inpuStride,
                                                    TranLow *output, int32_t ouputStride,
                                                    Txfm2dFlipCfg *cfg, int32_t *txfm_buf,
@@ -2621,6 +2622,7 @@ void av1_inverse_transform_2d_64x64_c(int32_t *input, uint32_t input_stride, int
                                     bit_depth);
 }
 
+#endif
 static const int32_t *cast_to_int32(const TranLow *input) {
     assert(sizeof(int32_t) == sizeof(TranLow));
     return (const int32_t *)input;

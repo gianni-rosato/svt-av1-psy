@@ -23,6 +23,7 @@ extern "C" {
 }
 #endif
 
+#if !REMOVE_UNUSED_CODE
 uint32_t eb_aom_get_mb_ss_sse2(const int16_t *src) {
     __m128i vsum = _mm_setzero_si128();
     int32_t i;
@@ -37,7 +38,7 @@ uint32_t eb_aom_get_mb_ss_sse2(const int16_t *src) {
     vsum = _mm_add_epi32(vsum, _mm_srli_si128(vsum, 4));
     return _mm_cvtsi128_si32(vsum);
 }
-
+#endif
 // Can handle 128 pixels' diff sum (such as 8x16 or 16x8)
 // Slightly faster than variance_final_256_pel_sse2()
 // diff sum of 128 pixels can still fit in 16bit integer

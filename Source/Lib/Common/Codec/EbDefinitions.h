@@ -384,7 +384,7 @@ extern "C" {
 #define TRACK_PER_DEPTH_DELTA  1 // Keep track of the distance of a given depth to the PD0 predicted depth
 #define COEFF_BASED_TXT_BYPASS 1 // Use TXT statistics to bypass certain tx types
 #define COEFF_BASED_TXS_BYPASS 1 // Use TXS statistics to bypass certain tx search sizes
-#define REMOVE_UNUSED_CODE              0 // Remove unused code //---------------------------------------------
+#define REMOVE_UNUSED_CODE              1 // Remove unused code //---------------------------------------------
 #define PRESET_SHIFITNG                 1 // Shift presets (new encoderMode  <- old encoderMode)
                                           // M: (0 <- 0);(1 <- 1);(2 <- 3);(3 <- 5);(4 <- 6);(5 <- 7);(6 <- 8);(7 <- 8);(8 <- 8);
 #define REDUCE_MR_COMP_CANDS    1 // Bug fix: Adopt the M0 level of inter_inter_distortion_based_reference_pruning to reduce compound candidates in MR
@@ -393,7 +393,7 @@ extern "C" {
 #define IFS_MD_STAGE_3 1
 #define SHUT_MERGE_1D_INTER_BLOCK 1 // Remove merge 1D feature
 #define QP63_MISMATCH_FIX      1 // Fix the enc/dec mismatch for QP63 //-----------------------------------------
-#define REMOVE_UNUSED_CODE_PH2          0 // Remove unused code //-----------------------------------------
+#define REMOVE_UNUSED_CODE_PH2          1 // Remove unused code
 #define JUNE8_ADOPTIONS         1 // Adoptions in MR-M2
 #define ADD_MRS_MODE        1 // A slow MR mode, intended to have no TH values (should have all speed features OFF)
 
@@ -443,7 +443,7 @@ extern "C" {
 #define LIBAOM_BUG_FIXES            1 // libaom bug fixes
 #if LIBAOM_BUG_FIXES
 #define GLOBAL_ME_BUG_FIX_0       1 // Fix ransac()
-#define GLOBAL_ME_BUG_FIX_1       1 // Sometimes num_inliers is not initialized due to early exit present in ransac() function.Which leads to aomedia : 2449 "SEGV on unknown address". // ------------------------------
+#define GLOBAL_ME_BUG_FIX_1       1 // Sometimes num_inliers is not initialized due to early exit present in ransac() function.Which leads to aomedia : 2449 "SEGV on unknown address".
 #define LOOP_FILTER_COVERSION_FIX 1 // aom_dsp / loopfilter: fix int sanitizer
 #define TRANSFORM_FIX_0           1 // Fix condition on 'result_64' in half_btf()
 #define TRANSFORM_FIX_1           1 // Fix range computation for idtx
@@ -467,6 +467,7 @@ extern "C" {
 #define M6_LOOP_FILTER_MODE 1 // Use M5_LOOP_FILTER in M6
 #endif
 #define  ON_OFF_FEATURE_MRP     0 // ON/OFF Feature MRP //---------------------------------
+#define  SYNCH_MRP              1 // ON/OFF Feature MRP //---------------------------------
 #define UNIFY_SC_NSC        1 // Unify the SC/NSC settings, except for Palette, IBC, and ME
 #define REMOVE_PRINT_STATEMENTS 1 // remove print statements
 #define SOFT_CYCLES_M6M7        1
@@ -486,7 +487,6 @@ extern "C" {
 #define MEM_OPT_PALETTE     1 // Memory optimization for palette
 #define MEM_OPT_MV_STACK    1 // Memory optimization for ed_ref_mv_stack
 #define MEM_OPT_MD_BUF_DESC 1 // Memory optimization for buf_desc used in MDContext
-#define FIX_HBD_MD5         1 // Fix 10bit error in non multiple of 8 resolution //----------------
 #define CHANGE_HBD_MODE     1 // Change 10bit MD for MR and M0
 #define JUNE25_ADOPTIONS    1 // Adoptions in M3-M8
 #define GM_DOWN_16          1 // Downsampled search mode, with a downsampling factor of 4 in each dimension
@@ -496,7 +496,7 @@ extern "C" {
 #define ENABLE_ADAPTIVE_NSQ_ALL_FRAMES 1    // Enable the adaptive NSQ algorithm for all frames (no longer REF only)
 
 #define MEM_OPT_UV_MODE     1 // Memory optimization for independant uv mode
-
+#define SYNCH_LAMBDA        1
 #endif
 
 ///////// END MASTER_SYNCH
@@ -547,8 +547,8 @@ extern "C" {
 #define RESTRUCTURE_SAD 1
 #endif
 #endif
-#if !REMOVE_ME_SUBPEL_CODE
 #define FIX_HBD_R2R 1 // Fix 10bit error in over-boundaries CUs (incomplete SB)
+#if !REMOVE_ME_SUBPEL_CODE
 
 typedef enum MeHpMode {
     EX_HP_MODE         = 0, // Exhaustive  1/2-pel serach mode.
@@ -1047,7 +1047,9 @@ typedef struct InterpFilterParams {
 
 typedef enum TxSearchLevel {
     TX_SEARCH_OFF,
+#if !REMOVE_UNUSED_CODE_PH2
     TX_SEARCH_ENC_DEC,
+#endif
     TX_SEARCH_INTER_DEPTH,
     TX_SEARCH_FULL_LOOP
 } TxSearchLevel;
@@ -3121,8 +3123,12 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define EB_CHROMA_LEVEL uint8_t
 #define CHROMA_MODE_0  0 // Full chroma search @ MD
 #define CHROMA_MODE_1  1 // Fast chroma search @ MD
+#if REMOVE_UNUSED_CODE_PH2
+#define CHROMA_MODE_2  2 // Chroma blind @ MD
+#else
 #define CHROMA_MODE_2  2 // Chroma blind @ MD + CFL @ EP
 #define CHROMA_MODE_3  3 // Chroma blind @ MD + no CFL @ EP
+#endif
 
 // Multi-Pass Partitioning Depth(Multi - Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure
 // As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases

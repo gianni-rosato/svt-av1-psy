@@ -131,10 +131,14 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.enable_mfmv              = config->enable_mfmv;
     callback_data->eb_enc_parameters.enable_redundant_blk     = config->enable_redundant_blk;
     callback_data->eb_enc_parameters.spatial_sse_fl           = config->spatial_sse_fl;
+#if 0//!REMOVE_ME_SUBPEL_CODE
     callback_data->eb_enc_parameters.enable_subpel            = config->enable_subpel;
+#endif
     callback_data->eb_enc_parameters.over_bndry_blk           = config->over_bndry_blk;
     callback_data->eb_enc_parameters.new_nearest_comb_inject  = config->new_nearest_comb_inject;
+#if 0//!SHUT_ME_CAND_SORTING
     callback_data->eb_enc_parameters.prune_unipred_me         = config->prune_unipred_me;
+#endif
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;

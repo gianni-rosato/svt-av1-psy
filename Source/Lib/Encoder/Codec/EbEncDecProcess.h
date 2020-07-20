@@ -95,8 +95,10 @@ typedef struct EncDecContext {
 
     uint8_t is_inter;
     uint8_t reduced_tx_set_used;
+#if !REMOVE_UNUSED_CODE_PH2
     EbBool
             evaluate_cfl_ep; // 0: CFL is evaluated @ mode decision, 1: CFL is evaluated @ encode pass
+#endif
     uint8_t md_skip_blk;
 
     uint16_t tile_group_index;

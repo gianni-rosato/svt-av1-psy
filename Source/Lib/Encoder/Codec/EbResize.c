@@ -1268,12 +1268,17 @@ void scale_source_references(SequenceControlSet *scs_ptr,
 
     for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         uint8_t ref_pic_index;
-
+#if ON_OFF_FEATURE_MRP
+        uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
+                                           ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                                           : (list_index == REF_LIST_0) ? pcs_ptr->mrp_ctrls.ref_list0_count_try
+                                                                        : pcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
         uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                                            ? pcs_ptr->ref_list0_count
                                            : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count
                                                                         : pcs_ptr->ref_list1_count;
-
+#endif
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 
             reference_object = (EbPaReferenceObject *) pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
@@ -1421,12 +1426,17 @@ void scale_rec_references(PictureControlSet *pcs_ptr,
 
     for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         uint8_t ref_pic_index;
-
+#if ON_OFF_FEATURE_MRP
+        uint8_t num_of_ref_pic_to_search = (ppcs_ptr->slice_type == P_SLICE)
+                                           ? ppcs_ptr->mrp_ctrls.ref_list0_count_try
+                                           : (list_index == REF_LIST_0) ? ppcs_ptr->mrp_ctrls.ref_list0_count_try
+                                                                        : ppcs_ptr->mrp_ctrls.ref_list1_count_try;
+#else
         uint8_t num_of_ref_pic_to_search = (ppcs_ptr->slice_type == P_SLICE)
                                            ? ppcs_ptr->ref_list0_count
                                            : (list_index == REF_LIST_0) ? ppcs_ptr->ref_list0_count
                                                                         : ppcs_ptr->ref_list1_count;
-
+#endif
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 
             reference_object = (EbReferenceObject *) pcs_ptr->ref_pic_ptr_array[list_index][ref_pic_index]

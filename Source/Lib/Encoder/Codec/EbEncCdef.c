@@ -1218,11 +1218,20 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     const int32_t num_planes = 3; // av1_num_planes(cm);
     uint16_t qp_index = (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     uint32_t fast_lambda, full_lambda;
+#if SYNCH_LAMBDA
+    (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+        &fast_lambda,
+        &full_lambda,
+        (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
+        qp_index,
+        EB_FALSE);
+#else
     av1_lambda_assign(&fast_lambda,
                       &full_lambda,
                       (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,
                       qp_index,
                       EB_FALSE);
+#endif
     lambda = full_lambda;
 
     mse[0] = (uint64_t(*)[64])malloc(sizeof(**mse) * nvfb * nhfb);

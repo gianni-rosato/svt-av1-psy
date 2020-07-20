@@ -822,7 +822,9 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     context_ptr->me_context_ptr->mrp_level = pcs_ptr->mrp_level;
 #endif
     EbInputResolution input_resolution = scs_ptr->input_resolution;
+#if !UNIFY_SC_NSC
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
+#endif
 #if !REFACTOR_ME_HME
     uint8_t  hme_me_level = scs_ptr->use_output_stat_file ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
@@ -1523,7 +1525,9 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
         scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     EbInputResolution input_resolution = scs_ptr->input_resolution;
+#if !UNIFY_SC_NSC
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
+#endif
 #if !REFACTOR_ME_HME ||  !MAR12_ADOPTIONS
     uint8_t  hme_me_level = scs_ptr->use_output_stat_file ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
@@ -2021,9 +2025,9 @@ void *motion_estimation_kernel(void *input_ptr) {
                         uint32_t buffer_index = (input_picture_ptr->origin_y + sb_origin_y) *
                                 input_picture_ptr->stride_y +
                             input_picture_ptr->origin_x + sb_origin_x;
-
+#if !REMOVE_UNUSED_CODE
                         context_ptr->me_context_ptr->hme_search_type = HME_RECTANGULAR;
-
+#endif
                         for (sb_row = 0; sb_row < BLOCK_SIZE_64; sb_row++) {
                             eb_memcpy(
                                 (&(context_ptr->me_context_ptr->sb_buffer[sb_row * BLOCK_SIZE_64])),

@@ -274,6 +274,7 @@ void calculate_histogram(uint8_t * input_samples, // input parameter, input samp
 
     return;
 }
+#if !REMOVE_UNUSED_CODE
 /*******************************************
  * compute_mean
  *   returns the mean of a block
@@ -297,7 +298,7 @@ uint64_t compute_mean_c(uint8_t *input_samples, /**< input parameter, input samp
 
     return block_mean;
 }
-
+#endif
 /*******************************************
  * compute_mean_squared_values_c
  *   returns the Mean of Squared Values

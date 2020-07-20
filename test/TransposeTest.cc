@@ -21,6 +21,7 @@
 #include "transpose_avx2.h"
 #include "transpose_sse2.h"
 
+#if !REMOVE_UNUSED_CODE
 namespace {
 
 static INLINE void transpose_8bit_16x16_c(const uint8_t *const in,
@@ -403,3 +404,4 @@ TEST_P(Transpose64BitTest, RunCheckOutput) {
 INSTANTIATE_TEST_CASE_P(TRANSPOSE, Transpose64BitTest,
                         Transpose64BitTest::BuildParams());
 };  // namespace
+#endif

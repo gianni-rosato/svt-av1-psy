@@ -7,6 +7,7 @@
 #include "EbPictureOperators.h"
 #include "EbUtility.h"
 
+#if !REMOVE_UNUSED_CODE
 static const int8_t avc_style_luma_if_coeff[4][4] = {
     {0, 0, 0, 0},
     {-1, 25, 9, -1},
@@ -356,3 +357,4 @@ void avc_style_luma_interpolation_filter_helper_c(EbByte ref_pic, uint32_t src_s
     default: assert(0);
     }
 }
+#endif

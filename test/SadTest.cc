@@ -76,8 +76,13 @@ namespace {
  *  Width {4, 8, 16, 24, 32, 48, 64} x height{ 4, 8, 16, 24, 32, 48, 64).
  */
 #define MAX_BLOCK_SIZE (MAX_SB_SIZE * MAX_SB_SIZE)
+#if !SHUT_ME_NSQ_SEARCH
 #define MAX_REF_BLOCK_SIZE \
     ((MAX_SEARCH_AREA_WIDTH_CH) * (MAX_SEARCH_AREA_HEIGHT_CH))
+#else
+#define MAX_REF_BLOCK_SIZE \
+    ((MAX_SB_SIZE + PAD_VALUE) * (MAX_SB_SIZE + PAD_VALUE))
+#endif
 typedef std::tuple<int, int> BlkSize;
 typedef enum { REF_MAX, SRC_MAX, RANDOM, UNALIGN } TestPattern;
 typedef enum { BUF_MAX, BUF_MIN, BUF_SMALL, BUF_RANDOM } SADPattern;
@@ -105,7 +110,11 @@ class SADTestBase : public ::testing::Test {
         width_ = width;
         height_ = height;
         src_stride_ = MAX_SB_SIZE;
+#if !REMOVE_ME_SUBPEL_CODE
         ref1_stride_ = ref2_stride_ = MAX_SEARCH_AREA_WIDTH_CH;
+#else
+        ref1_stride_ = ref2_stride_ = MAX_SB_SIZE;
+#endif
         test_pattern_ = test_pattern;
         src_aligned_ = nullptr;
         ref1_aligned_ = nullptr;
@@ -117,7 +126,11 @@ class SADTestBase : public ::testing::Test {
         width_ = width;
         height_ = height;
         src_stride_ = MAX_SB_SIZE;
+#if !REMOVE_ME_SUBPEL_CODE
         ref1_stride_ = ref2_stride_ = MAX_SEARCH_AREA_WIDTH_CH;
+#else
+        ref1_stride_ = ref2_stride_ = MAX_SB_SIZE;
+#endif
         test_pattern_ = test_pattern;
         test_sad_pattern_ = test_sad_pattern;
     }
@@ -127,7 +140,11 @@ class SADTestBase : public ::testing::Test {
         width_ = width;
         height_ = height;
         src_stride_ = MAX_SB_SIZE;
+#if !REMOVE_ME_SUBPEL_CODE
         ref1_stride_ = ref2_stride_ = MAX_SEARCH_AREA_WIDTH_CH;
+#else
+        ref1_stride_ = ref2_stride_ = MAX_SB_SIZE;
+#endif
         test_pattern_ = test_pattern;
         search_area_width_ = search_area_width;
         search_area_height_ = search_area_height;
@@ -500,6 +517,7 @@ INSTANTIATE_TEST_CASE_P(
     SAD, SADTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
+#if !REMOVE_ME_SUBPEL_CODE
 /**
  * @brief Unit test for SAD Avg functions include:
  *  - nxm_sad_avg_kernel_helper_c
@@ -570,6 +588,7 @@ INSTANTIATE_TEST_CASE_P(
     SAD, SADAvgTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
+#endif
 
 typedef std::tuple<int16_t, int16_t> SearchArea;
 
@@ -614,16 +633,20 @@ typedef std::tuple<Ebsad_LoopKernelNxMType, Ebsad_LoopKernelNxMType> FuncPair;
 FuncPair TEST_FUNC_PAIRS[] = {
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1_intrin),
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx2_intrin),
+#if !REMOVE_ME_SUBPEL_CODE
     FuncPair(sad_loop_kernel_sparse_c, sad_loop_kernel_sparse_sse4_1_intrin),
     FuncPair(sad_loop_kernel_sparse_c, sad_loop_kernel_sparse_avx2_intrin),
+#endif
 #ifndef NON_AVX512_SUPPORT
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx512_intrin),
 #endif
 };
 
+#if !REMOVE_ME_SUBPEL_CODE
 FuncPair TEST_HME_FUNC_PAIRS[] = {
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1_hme_l0_intrin),
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx2_hme_l0_intrin)};
+#endif
 
 typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair>
     sad_LoopTestParam;
@@ -841,12 +864,14 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS)));
 
+#if !REMOVE_ME_SUBPEL_CODE
 INSTANTIATE_TEST_CASE_P(
     HMESAD, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES),
                        ::testing::ValuesIn(TEST_AREAS),
                        ::testing::ValuesIn(TEST_HME_FUNC_PAIRS)));
+#endif
 
 #if RESTRUCTURE_SAD
 class PmeSadLoopTest
@@ -1083,7 +1108,7 @@ typedef void (*get_eight_sad_32_64_func)(uint16_t *p_sad16x16,
                                          uint32_t *p_best_sad_64x64,
                                          uint32_t *p_best_mv32x32,
                                          uint32_t *p_best_mv64x64, uint32_t mv);
-
+#if !REMOVE_ME_SUBPEL_CODE
 static const get_eight_sad_8_16_func get_eight_sad_8_16_func_table[] = {
     get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin,
     get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin
@@ -1095,9 +1120,10 @@ static const get_eight_sad_8_16_func get_eight_sad_8_16_func_table[] = {
 static const get_eight_sad_32_64_func get_eight_sad_32_64_func_table[] = {
     get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,
     get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin};
-
+#endif
 typedef std::tuple<TestPattern, SADPattern> sad_CalTestParam;
 
+#if !REMOVE_ME_SUBPEL_CODE
 /**
  * @brief Unit test for GetEightsad_Test functions include:
  *
@@ -1454,7 +1480,7 @@ INSTANTIATE_TEST_CASE_P(
     EIGHTSAD, GetEightsad_Test,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_SAD_PATTERNS)));
-
+#endif
 /**
  * @brief Unit test for Allsad_Calculation Test functions include:
  *  -
@@ -1598,7 +1624,7 @@ class Allsad_CalculationTest
         EXPECT_EQ(0, memcmp(sad32x32[0], sad32x32[1], sizeof(sad32x32[0])))
             << "compare sad32x32 error";
     }
-
+#if !SHUT_ME_NSQ_SEARCH
     void check_get_nsq_sad() {
         uint32_t best_sad64x32[2][2];
         uint32_t best_sad32x64[2][2];
@@ -1768,8 +1794,8 @@ class Allsad_CalculationTest
             memcmp(best_mv16x64[0], best_mv16x64[1], sizeof(best_mv16x64[0])))
             << "compare best_mv16x64 error";
     }
+#endif
 };
-
 TEST_P(Allsad_CalculationTest, 8x8_16x16_Test) {
     check_get_8x8_sad();
 }
@@ -1777,11 +1803,11 @@ TEST_P(Allsad_CalculationTest, 8x8_16x16_Test) {
 TEST_P(Allsad_CalculationTest, 32x32_64x64_Test) {
     check_get_32x32_sad();
 }
-
+#if !SHUT_ME_NSQ_SEARCH
 TEST_P(Allsad_CalculationTest, nsq_sad_Test) {
     check_get_nsq_sad();
 }
-
+#endif
 INSTANTIATE_TEST_CASE_P(
     ALLSAD, Allsad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
@@ -1929,7 +1955,7 @@ INSTANTIATE_TEST_CASE_P(
     EXTSAD, Extsad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_SAD_PATTERNS)));
-
+#if !REMOVE_UNUSED_CODE
 /**
  * @brief Unit test for sad_Calculation Test functions include:
  *  -
@@ -2067,7 +2093,8 @@ INSTANTIATE_TEST_CASE_P(
     CALSAD, sad_CalculationTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_SAD_PATTERNS)));
-
+#endif
+#if !REMOVE_ME_SUBPEL_CODE
 /**
  * @brief Unit test for combined averaging ssd functions include:
  *  - combined_averaging_ssd_{c,avx2}
@@ -2220,7 +2247,7 @@ INSTANTIATE_TEST_CASE_P(
     SSDAvg, SSDAvgTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
-
+#endif
 using InitializeBuffer_param_t = ::testing::tuple<uint32_t, uint32_t>;
 #define MAX_BUFFER_SIZE 100  // const value to simplify
 class InitializeBuffer32
