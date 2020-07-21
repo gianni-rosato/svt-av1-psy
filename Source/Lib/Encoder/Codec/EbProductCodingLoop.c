@@ -6214,7 +6214,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
                     if (context_ptr->ref_filtering_res[gi][li][ri].valid_ref) {
                         context_ptr->ref_filtering_res[gi][li][ri].do_ref = 0;
-                        if (context_ptr->ref_filtering_res[gi][li][ri].dist <= early_inter_distortion_array[best_refs - 1] && total_tagged_ref < best_refs) {
+                        if (context_ptr->ref_filtering_res[gi][li][ri].dist <= early_inter_distortion_array[(uint8_t)(best_refs - 1)] && total_tagged_ref < best_refs) {
                             context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
                             total_tagged_ref++;
                         }

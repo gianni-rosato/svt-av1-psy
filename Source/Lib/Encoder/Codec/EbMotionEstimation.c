@@ -10483,6 +10483,7 @@ void hme_level0_sb(
                 referenceObject =(EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
             }
             else {
+#if !REMOVE_UNUSED_CODE
                 if (num_of_list_to_search) {
 #if !LOW_DELAY_TUNE
                     referenceObject =
@@ -10494,7 +10495,7 @@ void hme_level0_sb(
                     ref1Poc = pcs_ptr->ref_pic_poc_array[1][0];
 #endif
                 }
-
+#endif
                 referenceObject =
                     (EbPaReferenceObject *)pcs_ptr
                     ->ref_pa_pic_ptr_array[list_index][ref_pic_index]
@@ -10707,6 +10708,7 @@ void hme_level1_sb(
                 referenceObject = (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
             }
             else {
+#if !REMOVE_UNUSED_CODE
                 if (num_of_list_to_search) {
 #if !LOW_DELAY_TUNE
                     referenceObject =
@@ -10718,7 +10720,7 @@ void hme_level1_sb(
                     ref1Poc = pcs_ptr->ref_pic_poc_array[1][0];
 #endif
                 }
-
+#endif
                 referenceObject = (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
             }
 #if !FIX_WARNINGS
@@ -10904,6 +10906,7 @@ void hme_level2_sb(
                 referenceObject = (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
             }
             else {
+#if !REMOVE_UNUSED_CODE
                 if (num_of_list_to_search) {
 #if !LOW_DELAY_TUNE
                     referenceObject =
@@ -10915,7 +10918,7 @@ void hme_level2_sb(
                     ref1Poc = pcs_ptr->ref_pic_poc_array[1][0];
 #endif
                 }
-
+#endif
                 referenceObject = (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
             }
             refPicPtr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;

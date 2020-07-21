@@ -198,8 +198,13 @@ typedef struct EbConfig {
     /*****************************************
      * Coding Structure
      *****************************************/
+#if 1//REMOVE_MR_MACRO
+    int8_t  enc_mode;
+    int8_t  snd_pass_enc_mode;
+#else
     uint8_t  enc_mode;
     uint8_t  snd_pass_enc_mode;
+#endif
     int32_t  intra_period;
     uint32_t intra_refresh_type;
     uint32_t hierarchical_levels;
@@ -351,7 +356,11 @@ typedef struct EbConfig {
     /****************************************
      * OBMC
      ****************************************/
+#if 1 // OBMC_CLI
+    int8_t obmc_level;
+#else
     EbBool enable_obmc;
+#endif
 
     /****************************************
      * RDOQ
@@ -361,7 +370,11 @@ typedef struct EbConfig {
     /****************************************
      * Filter intra prediction
      ****************************************/
+#if 1 // FILTER_INTRA_CLI
+    int8_t filter_intra_level;
+#else
     EbBool enable_filter_intra;
+#endif
 
     /****************************************
      * Intra Edge Filter

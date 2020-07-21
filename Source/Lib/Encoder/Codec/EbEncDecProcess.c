@@ -6814,14 +6814,22 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     // skip cfl based on inter/intra cost deviation (skip if intra_cost is
     // skip_cfl_cost_dev_th % greater than inter_cost)
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MR)
+#else
     if (MR_MODE)
+#endif
         context_ptr->skip_cfl_cost_dev_th = (uint16_t)~0;
     else
         context_ptr->skip_cfl_cost_dev_th = 30;
 
     // set intra count to zero for md stage 3 if intra_cost is
     // mds3_intra_prune_th % greater than inter_cost
+#if REMOVE_MR_MACRO
+    if (enc_mode <= ENC_MR)
+#else
     if (MR_MODE)
+#endif
         context_ptr->mds3_intra_prune_th = (uint16_t)~0;
     else
         context_ptr->mds3_intra_prune_th = 30;
@@ -8554,7 +8562,11 @@ uint64_t  mr_pd_level_tab[2][9][2][3] =
 #endif
 void derive_start_end_depth(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, uint32_t sb_size,
                             int8_t *s_depth, int8_t *e_depth, const BlockGeom *blk_geom) {
+#if REMOVE_MR_MACRO
+    EbEncMode encode_mode = pcs_ptr->parent_pcs_ptr->enc_mode;
+#else
     uint8_t encode_mode = pcs_ptr->parent_pcs_ptr->enc_mode;
+#endif
 
     int8_t start_depth = sb_size == BLOCK_128X128 ? 0 : 1;
     int8_t end_depth   = 5;

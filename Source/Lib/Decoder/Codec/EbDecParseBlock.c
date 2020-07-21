@@ -273,7 +273,11 @@ void palette_mode_info(ParseCtxt *parse_ctxt, PartitionInfo *pi) {
 }
 
 static INLINE int filter_intra_allowed_bsize(ParseCtxt *parse_ctxt, BlockSize bs) {
+#if FILTER_INTRA_CLI
+    if (!parse_ctxt->seq_header->filter_intra_level || bs == BLOCK_INVALID) return 0;
+#else
     if (!parse_ctxt->seq_header->enable_filter_intra || bs == BLOCK_INVALID) return 0;
+#endif
 
     return block_size_wide[bs] <= 32 && block_size_high[bs] <= 32;
 }

@@ -49,7 +49,11 @@ void SequenceHeaderParser::input_obu_data(const uint8_t* obu_data,
         stream_info->still_pic = seg_header.still_picture == 1;
         stream_info->sb_size = sb_size_;
         stream_info->force_integer_mv = seg_header.seq_force_integer_mv;
+#if FILTER_INTRA_CLI
+        stream_info->enable_filter_intra = seg_header.filter_intra_level;
+#else
         stream_info->enable_filter_intra = seg_header.enable_filter_intra;
+#endif
         stream_info->enable_intra_edge_filter =
             seg_header.enable_intra_edge_filter;
         stream_info->enable_masked_compound = seg_header.enable_masked_compound;

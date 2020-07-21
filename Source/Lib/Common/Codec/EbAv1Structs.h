@@ -166,7 +166,11 @@ typedef struct SeqHeader {
     /*!< 1: Specifies that the use_filter_intra syntax element may be present.
      *   0: Specifies that the use_filter_intra syntax element will not be
      *       present*/
+#if FILTER_INTRA_CLI
+    uint8_t filter_intra_level;
+#else
     uint8_t enable_filter_intra;
+#endif
 
     /*!< Specifies whether the intra edge filtering process should be enabled */
     uint8_t enable_intra_edge_filter;

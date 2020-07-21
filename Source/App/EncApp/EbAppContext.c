@@ -142,7 +142,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;
-#if  0//OBMC_CLI
+#if  1//OBMC_CLI
     callback_data->eb_enc_parameters.obmc_level               = (int8_t)config->obmc_level;
 #else
     callback_data->eb_enc_parameters.enable_obmc              = (EbBool)config->enable_obmc;
@@ -153,7 +153,11 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.compound_level           = config->compound_level;
     callback_data->eb_enc_parameters.set_chroma_mode          = config->set_chroma_mode;
     callback_data->eb_enc_parameters.disable_cfl_flag         = config->disable_cfl_flag;
+#if 1 // FILTER_INTRA_CLI
+    callback_data->eb_enc_parameters.filter_intra_level       = (int8_t)config->filter_intra_level;
+#else
     callback_data->eb_enc_parameters.enable_filter_intra      = (EbBool)config->enable_filter_intra;
+#endif
     callback_data->eb_enc_parameters.pic_based_rate_est       = config->pic_based_rate_est;
     callback_data->eb_enc_parameters.enable_intra_edge_filter = config->enable_intra_edge_filter;
     callback_data->eb_enc_parameters.use_default_me_hme       = (EbBool)config->use_default_me_hme;

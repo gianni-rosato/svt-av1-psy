@@ -2211,10 +2211,10 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->intra_pred_mode = 4;
 #endif
     }
-
+#if !REMOVE_MR_MACRO
         if (MR_MODE)
             pcs_ptr->intra_pred_mode = 0;
-
+#endif
         // Set tx size search mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks

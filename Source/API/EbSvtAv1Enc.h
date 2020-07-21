@@ -376,7 +376,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is -1 (auto) */
     int disable_cfl_flag;
 
-#if 0 // OBMC_CLI
+#if 1 // OBMC_CLI
     /* obmc_level specifies the level of the OBMC feature that would be
      * considered when the level is specified in the command line instruction (CLI).
      * The meaning of the feature level in the CLI is different from that for
@@ -403,7 +403,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int enable_rdoq;
 
-#if 0 // FILTER_INTRA_CLI
+#if 1 // FILTER_INTRA_CLI
     /* Filter intra prediction
     *
     * The table below specifies the meaning of filter_intra_level when specified in the CLI.

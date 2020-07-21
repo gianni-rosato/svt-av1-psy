@@ -61,7 +61,11 @@ typedef struct ModeDecisionConfigurationContext {
     uint8_t                qp_index;
 
     // Multi - Mode signal(s)
+#if REMOVE_MR_MACRO
+    EbEncMode adp_level;
+#else
     uint8_t adp_level;
+#endif
 } ModeDecisionConfigurationContext;
 
 /**************************************

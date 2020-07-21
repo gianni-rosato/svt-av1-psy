@@ -783,7 +783,11 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
 #else
     if (xd->use_intrabc == 0 &&
 #endif
+#if FILTER_INTRA_CLI
+        av1_filter_intra_allowed(pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.filter_intra_level,
+#else
         av1_filter_intra_allowed(pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_filter_intra,
+#endif
                                  bsize,
                                  blk_ptr->palette_info.pmi.palette_size[0],
                                  y_mode)) {

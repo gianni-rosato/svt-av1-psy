@@ -357,8 +357,13 @@ EbErrorType read_sequence_header_obu(Bitstrm *bs, SeqHeader *seq_header) {
     seq_header->sb_mi_size   = seq_header->use_128x128_superblock ? 32 : 16;
     seq_header->sb_size_log2 = seq_header->use_128x128_superblock ? 7 : 6;
     PRINT("use_128x128_superblock", seq_header->use_128x128_superblock);
+#if FILTER_INTRA_CLI
+    seq_header->filter_intra_level = dec_get_bits(bs, 1);
+    PRINT("filter_intra_level", seq_header->filter_intra_level);
+#else
     seq_header->enable_filter_intra = dec_get_bits(bs, 1);
     PRINT("enable_filter_intra", seq_header->enable_filter_intra);
+#endif
     seq_header->enable_intra_edge_filter = dec_get_bits(bs, 1);
     PRINT("enable_intra_edge_filter", seq_header->enable_intra_edge_filter);
 
