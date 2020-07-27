@@ -457,8 +457,8 @@ static void fill_col_to_arr(uint8_t *img, int stride, int len, uint8_t *arr) {
     for (i = 0; i < len; ++i, iptr += stride) { *aptr++ = *iptr; }
 }
 
-EbErrorType av1_resize_plane(const uint8_t *const input, int height, int width, int in_stride,
-                             uint8_t *output, int height2, int width2, int out_stride) {
+static EbErrorType av1_resize_plane(const uint8_t *const input, int height, int width, int in_stride,
+                                    uint8_t *output, int height2, int width2, int out_stride) {
     int      i;
     uint8_t *intbuf, *tmpbuf, *arrbuf, *arrbuf2;
 

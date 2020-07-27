@@ -120,7 +120,7 @@ typedef struct WedgeParamsType
         InterpFilters interp_filters, int32_t is_intrabc, int32_t bd);
 
 
-    void av1_dist_wtd_comp_weight_assign(
+    void eb_av1_dist_wtd_comp_weight_assign(
         SeqHeader *seq_header,
         int cur_frame_index,
         int bck_frame_index,
@@ -162,7 +162,7 @@ typedef struct WedgeParamsType
         int interstride, const uint8_t *intrapred8, int intrastride, int bd);
 
 
-    void av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w,
+    void eb_av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w,
         int other_h, int this_w, int this_h);
 
     static INLINE int av1_is_valid_scale(const struct ScaleFactors *sf) {
@@ -179,7 +179,7 @@ typedef struct WedgeParamsType
         return 2 * this_width >= ref_width && 2 * this_height >= ref_height &&
             this_width <= 16 * ref_width && this_height <= 16 * ref_height;
     }
-    MV32 av1_scale_mv(const MV *mvq4, int x, int y,
+    MV32 eb_av1_scale_mv(const MV *mvq4, int x, int y,
         const ScaleFactors *sf);
 
 
@@ -427,7 +427,7 @@ static INLINE int is_inter_block(const BlockModeInfo *bloc_mi) {
 
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
-int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
+int eb_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
 
 #ifdef __cplusplus
 }

@@ -235,9 +235,9 @@ TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_vmask_ref,
            aom_blend_a64_vmask_c, Vert_Blend_C)
 // Intrinsic
 TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_hmask_ref,
-           aom_blend_a64_hmask_sse4_1, Horz_Blend_SSE4_1)
+           eb_aom_blend_a64_hmask_sse4_1, Horz_Blend_SSE4_1)
 TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_vmask_ref,
-           aom_blend_a64_vmask_sse4_1, Vert_Blend_SSE4_1)
+           eb_aom_blend_a64_vmask_sse4_1, Vert_Blend_SSE4_1)
 
 //////////////////////////////////////////////////////////////////////////////
 // HBD version
@@ -339,8 +339,8 @@ TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_vmask_ref,
            aom_highbd_blend_a64_vmask_c, Vert_Blend_Hbd_C)
 // Intrinsic
 TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_hmask_ref,
-           aom_highbd_blend_a64_hmask_sse4_1, Horz_Blend_Hbd_SSE4_1)
+           eb_aom_highbd_blend_a64_hmask_sse4_1_8bit, Horz_Blend_Hbd_SSE4_1)
 TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_vmask_ref,
-           aom_highbd_blend_a64_vmask_sse4_1, Vert_Blend_Hbd_SSE4_1)
+           eb_aom_highbd_blend_a64_vmask_sse4_1_8bit, Vert_Blend_Hbd_SSE4_1)
 
 }; // namespace

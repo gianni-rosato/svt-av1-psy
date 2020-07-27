@@ -17,8 +17,8 @@
 #include "EbUtility.h"
 #include "EbLog.h"
 
-void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
-                                uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline);
+void eb_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
+                                   uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline);
 
 void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
                                     RestUnitVisitor on_rest_unit, void *priv);
@@ -1664,15 +1664,15 @@ void save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t s
         upscaled_width = (cm->frm_size.superres_upscaled_width + sx) >> sx;
         line_bytes     = upscaled_width << use_highbd;
 
-        av1_upscale_normative_rows(cm,
-                                   (src_rows),
-                                   src_stride >> use_highbd,
-                                   (bdry_rows),
-                                   boundaries->stripe_boundary_stride,
-                                   lines_to_save,
-                                   sx,
-                                   cm->bit_depth,
-                                   use_highbd);
+        eb_av1_upscale_normative_rows(cm,
+                                      (src_rows),
+                                      src_stride >> use_highbd,
+                                      (bdry_rows),
+                                      boundaries->stripe_boundary_stride,
+                                      lines_to_save,
+                                      sx,
+                                      cm->bit_depth,
+                                      use_highbd);
     } else {
         upscaled_width = src_width;
         line_bytes     = upscaled_width << use_highbd;

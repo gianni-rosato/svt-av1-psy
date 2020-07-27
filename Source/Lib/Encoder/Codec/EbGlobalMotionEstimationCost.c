@@ -18,7 +18,7 @@
 #include "EbEntropyCoding.h"
 #include "global_motion.h"
 
-int aom_count_signed_primitive_refsubexpfin(uint16_t n, uint16_t k, int16_t ref, int16_t v) {
+static int aom_count_signed_primitive_refsubexpfin(uint16_t n, uint16_t k, int16_t ref, int16_t v) {
     ref += n - 1;
     v += n - 1;
     const uint16_t scaled_n = (n << 1) - 1;

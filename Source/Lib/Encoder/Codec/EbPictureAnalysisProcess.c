@@ -3219,8 +3219,8 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
                      sixteenth_decimated_picture_ptr->origin_y);
 }
 
-int av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
-                            int *val_count) {
+int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
+                               int *val_count) {
     assert(bit_depth <= 12);
     const int max_pix_val = 1 << bit_depth;
     // const uint16_t *src = CONVERT_TO_SHORTPTR(src8);

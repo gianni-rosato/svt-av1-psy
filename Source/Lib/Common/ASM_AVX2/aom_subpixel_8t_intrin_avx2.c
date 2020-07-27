@@ -163,7 +163,7 @@ Filter81dFunction aom_filter_block1d4_h2_ssse3;
             }                                                                                      \
         }                                                                                          \
         if (w) {                                                                                   \
-            aom_convolve8_##name##_c(                                                              \
+            eb_aom_convolve8_##name##_c(                                                           \
                 src, src_stride, dst, dst_stride, filter_x, x_step_q4, filter_y, y_step_q4, w, h); \
         }                                                                                          \
     }

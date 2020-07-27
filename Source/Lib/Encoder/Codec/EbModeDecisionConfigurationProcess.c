@@ -1256,7 +1256,7 @@ static int motion_field_projection(Av1Common *cm, PictureControlSet *pcs_ptr,
 
     return 1;
 }
-void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
+static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
     const OrderHintInfo *const order_hint_info =
         &pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.order_hint_info;
     memset(pcs_ptr->ref_frame_side, 0, sizeof(pcs_ptr->ref_frame_side));

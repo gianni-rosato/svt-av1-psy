@@ -36,10 +36,10 @@ int  av1_get_palette_bsize_ctx(BlockSize bsize);
 int  av1_get_palette_mode_ctx(const MacroBlockD *xd);
 int  write_uniform_cost(int n, int v);
 int  eb_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cache);
-int  av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache, int n_cache,
-                              int bit_depth);
-int  av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
-                        BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
+int  eb_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache, int n_cache,
+                                 int bit_depth);
+int  eb_av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
+                           BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
@@ -697,15 +697,15 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                     write_uniform_cost(plt_size, color_map[0]);
                 uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
                 const int n_cache = eb_get_palette_cache(blk_ptr->av1xd, 0, color_cache);
-                palette_mode_cost += av1_palette_color_cost_y(
+                palette_mode_cost += eb_av1_palette_color_cost_y(
                     &candidate_ptr->palette_info.pmi, color_cache, n_cache,
                     pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth);
-                palette_mode_cost += av1_cost_color_map(&candidate_ptr->palette_info,
-                                                        candidate_ptr->md_rate_estimation_ptr,
-                                                        blk_ptr,
-                                                        0,
-                                                        blk_geom->bsize,
-                                                        PALETTE_MAP);
+                palette_mode_cost += eb_av1_cost_color_map(&candidate_ptr->palette_info,
+                                                           candidate_ptr->md_rate_estimation_ptr,
+                                                           blk_ptr,
+                                                           0,
+                                                           blk_geom->bsize,
+                                                           PALETTE_MAP);
                 intra_luma_mode_bits_num += palette_mode_cost;
             }
         }

@@ -127,21 +127,21 @@ static int64_t highbd_warp_error(EbWarpedMotionParams *wm, const uint8_t *const 
             // when p_width and p_height are not multiples of WARP_ERROR_BLOCK
             const int warp_w = AOMMIN(error_bsize_w, p_col + p_width - j);
             const int warp_h = AOMMIN(error_bsize_h, p_row + p_height - i);
-            highbd_warp_plane(wm,
-                              ref8,
-                              width,
-                              height,
-                              stride,
-                              CONVERT_TO_BYTEPTR(tmp),
-                              j,
-                              i,
-                              warp_w,
-                              warp_h,
-                              WARP_ERROR_BLOCK,
-                              subsampling_x,
-                              subsampling_y,
-                              bd,
-                              &conv_params);
+            eb_highbd_warp_plane(wm,
+                                 ref8,
+                                 width,
+                                 height,
+                                 stride,
+                                 CONVERT_TO_BYTEPTR(tmp),
+                                 j,
+                                 i,
+                                 warp_w,
+                                 warp_h,
+                                 WARP_ERROR_BLOCK,
+                                 subsampling_x,
+                                 subsampling_y,
+                                 bd,
+                                 &conv_params);
 
             gm_sumerr += highbd_frame_error(tmp,
                                             WARP_ERROR_BLOCK,
@@ -185,20 +185,20 @@ static int64_t warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref, in
             // when p_width and p_height are not multiples of WARP_ERROR_BLOCK
             warp_w = AOMMIN(error_bsize_w, p_col + p_width - j);
             warp_h = AOMMIN(error_bsize_h, p_row + p_height - i);
-            warp_plane(wm,
-                       ref,
-                       width,
-                       height,
-                       stride,
-                       tmp,
-                       j,
-                       i,
-                       warp_w,
-                       warp_h,
-                       WARP_ERROR_BLOCK,
-                       subsampling_x,
-                       subsampling_y,
-                       &conv_params);
+            eb_warp_plane(wm,
+                          ref,
+                          width,
+                          height,
+                          stride,
+                          tmp,
+                          j,
+                          i,
+                          warp_w,
+                          warp_h,
+                          WARP_ERROR_BLOCK,
+                          subsampling_x,
+                          subsampling_y,
+                          &conv_params);
 
             gm_sumerr += eb_av1_calc_frame_error(
                 tmp, WARP_ERROR_BLOCK, dst + j + i * p_stride, warp_w, warp_h, p_stride);

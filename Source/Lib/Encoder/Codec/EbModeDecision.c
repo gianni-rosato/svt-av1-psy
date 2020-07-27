@@ -222,8 +222,8 @@ static int64_t pick_interintra_wedge(ModeDecisionCandidate *candidate_ptr,
         aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw, EB_10BIT);
 
     } else {
-        aom_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw);
-        aom_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw);
+        eb_aom_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw);
+        eb_aom_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw);
     }
 
     int8_t  wedge_index = -1;
@@ -2885,17 +2885,17 @@ static int sad_per_bit4lut_8[QINDEX_RANGE];
 
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 
-int av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
-                                         const AV1_COMMON *const cm, int mi_row, int mi_col,
-                                         MV *bestmv, const MV *ref_mv, int allow_hp,
-                                         int error_per_bit, const AomVarianceFnPtr *vfp,
-                                         int forced_stop, int iters_per_step, int *mvjcost,
-                                         int *mvcost[2], int *distortion, unsigned int *sse1,
-                                         int is_second, int use_accurate_subpel_search);
+int eb_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
+                                            const AV1_COMMON *const cm, int mi_row, int mi_col,
+                                            MV *bestmv, const MV *ref_mv, int allow_hp,
+                                            int error_per_bit, const AomVarianceFnPtr *vfp,
+                                            int forced_stop, int iters_per_step, int *mvjcost,
+                                            int *mvcost[2], int *distortion, unsigned int *sse1,
+                                            int is_second, int use_accurate_subpel_search);
 
-int av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcContext *x, MV *mvp_full,
-                               int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
-                               MV *dst_mv, int is_second);
+int eb_av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcContext *x, MV *mvp_full,
+                                  int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
+                                  MV *dst_mv, int is_second);
 
 static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
                                  ModeDecisionCandidate *candidate_ptr, const MvReferenceFrame *rf,
@@ -2946,7 +2946,7 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
 
     switch (candidate_ptr->motion_mode) {
     case OBMC_CAUSAL:
-        bestsme = av1_obmc_full_pixel_search(
+        bestsme = eb_av1_obmc_full_pixel_search(
             context_ptr, x, &mvp_full, sadpb, &mefn_ptr[bsize], ref_mv, &(x->best_mv.as_mv), 0);
         break;
     default: assert(0 && "Invalid motion mode!\n");
@@ -2959,24 +2959,24 @@ static void single_motion_search(PictureControlSet *pcs, ModeDecisionContext *co
         int dis; /* TODO: use dis in distortion calculation later. */
         switch (candidate_ptr->motion_mode) {
         case OBMC_CAUSAL:
-            av1_find_best_obmc_sub_pixel_tree_up(context_ptr,
-                                                 x,
-                                                 cm,
-                                                 mi_row,
-                                                 mi_col,
-                                                 &x->best_mv.as_mv,
-                                                 ref_mv,
-                                                 frm_hdr->allow_high_precision_mv,
-                                                 x->errorperbit,
-                                                 &mefn_ptr[bsize],
-                                                 0, // mv.subpel_force_stop
-                                                 2, //  mv.subpel_iters_per_step
-                                                 x->nmv_vec_cost,
-                                                 x->mv_cost_stack,
-                                                 &dis,
-                                                 &context_ptr->pred_sse[rf[0]],
-                                                 0,
-                                                 USE_8_TAPS);
+            eb_av1_find_best_obmc_sub_pixel_tree_up(context_ptr,
+                                                    x,
+                                                    cm,
+                                                    mi_row,
+                                                    mi_col,
+                                                    &x->best_mv.as_mv,
+                                                    ref_mv,
+                                                    frm_hdr->allow_high_precision_mv,
+                                                    x->errorperbit,
+                                                    &mefn_ptr[bsize],
+                                                    0, // mv.subpel_force_stop
+                                                    2, //  mv.subpel_iters_per_step
+                                                    x->nmv_vec_cost,
+                                                    x->mv_cost_stack,
+                                                    &dis,
+                                                    &context_ptr->pred_sse[rf[0]],
+                                                    0,
+                                                    USE_8_TAPS);
             break;
         default: assert(0 && "Invalid motion mode!\n");
         }

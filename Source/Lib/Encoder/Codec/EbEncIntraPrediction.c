@@ -234,7 +234,7 @@ static void build_intra_predictors(
                                                       left_col);
     }
     else
-        pred[mode][tx_size](dst, dst_stride, above_row, left_col);
+        eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
 }
 static void build_intra_predictors_high(
         const MacroBlockD *xd,
@@ -1292,7 +1292,7 @@ EbErrorType intra_prediction_open_loop(
         if (mode == DC_PRED) {
             dc_pred[src_origin_x > 0][src_origin_y > 0][tx_size](dst, dst_stride, above_row, left_col);
         } else
-            pred[mode][tx_size](dst, dst_stride, above_row, left_col);
+            eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
     }
     return return_error;
 }

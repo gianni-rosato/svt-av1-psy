@@ -8,7 +8,7 @@
  *
  * @brief Unit test for util functions in palette mode:
  * - eb_av1_count_colors
- * - av1_count_colors_highbd
+ * - eb_av1_count_colors_highbd
  * - av1_k_means_dim1
  * - av1_k_means_dim2
  *
@@ -40,13 +40,13 @@ namespace {
 
 extern "C" int eb_av1_count_colors(const uint8_t *src, int stride, int rows,
                                    int cols, int *val_count);
-extern "C" int av1_count_colors_highbd(uint16_t *src, int stride, int rows,
-                                       int cols, int bit_depth, int *val_count);
+extern "C" int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows,
+                                          int cols, int bit_depth, int *val_count);
 
 /**
  * @brief Unit test for counting colors:
  * - eb_av1_count_colors
- * - av1_count_colors_highbd
+ * - eb_av1_count_colors_highbd
  *
  * Test strategy:
  * Feeds the random value both into test function and the vector without
@@ -137,7 +137,7 @@ class ColorCountHbdTest : public ColorCountTest<uint16_t> {
     unsigned int count_color() override {
         const int max_colors = (1 << bd_);
         memset(val_count_, 0, max_colors * sizeof(int));
-        unsigned int colors = (unsigned int)av1_count_colors_highbd(
+        unsigned int colors = (unsigned int)eb_av1_count_colors_highbd(
             input_, 64, 64, 64, bd_, val_count_);
         return colors;
     }

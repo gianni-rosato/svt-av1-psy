@@ -232,9 +232,9 @@ class BlendA64MaskTest8B : public BlendA64MaskTest<F8B, uint8_t, uint8_t> {
         delete test;                                \
     }
 
-TEST_CLASS(BlendA64MaskTest8B, aom_blend_a64_mask_c, aom_blend_a64_mask_sse4_1,
+TEST_CLASS(BlendA64MaskTest8B, aom_blend_a64_mask_c, eb_aom_blend_a64_mask_sse4_1,
            Mask_Blend_SSE4_1)
-TEST_CLASS(BlendA64MaskTest8B, aom_blend_a64_mask_sse4_1,
+TEST_CLASS(BlendA64MaskTest8B, eb_aom_blend_a64_mask_sse4_1,
            aom_blend_a64_mask_avx2, Mask_Blend_AVX2)
 
 //////////////////////////////////////////////////////////////////////////////
@@ -379,7 +379,7 @@ class BlendA64MaskTestHBD : public BlendA64MaskTest<FHBD, uint16_t, uint16_t> {
 };
 
 TEST_CLASS(BlendA64MaskTestHBD, aom_highbd_blend_a64_mask_c,
-           aom_highbd_blend_a64_mask_sse4_1, Mask_Blend_Hbd_SSE4_1)
+           eb_aom_highbd_blend_a64_mask_sse4_1_8bit, Mask_Blend_Hbd_SSE4_1)
 
 //////////////////////////////////////////////////////////////////////////////
 // HBD _d16 version

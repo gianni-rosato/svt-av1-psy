@@ -96,7 +96,7 @@ TEST_P(OBMCVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_VAR_FUNC_C(W, H) aom_obmc_variance##W##x##H##_c
+#define OBMC_VAR_FUNC_C(W, H) eb_aom_obmc_variance##W##x##H##_c
 #define OBMC_VAR_FUNC_AVX2(W, H) aom_obmc_variance##W##x##H##_avx2
 #define GEN_OBMC_VAR_TEST_PARAM(W, H) \
     ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_AVX2(W, H))
@@ -198,7 +198,7 @@ TEST_P(OBMCSubPixelVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) aom_obmc_sub_pixel_variance##W##x##H##_c
+#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) eb_aom_obmc_sub_pixel_variance##W##x##H##_c
 #define OBMC_SUB_PIX_VAR_FUNC_SSE41(W, H) \
     aom_obmc_sub_pixel_variance##W##x##H##_sse4_1
 #define GEN_OBMC_SUB_PIX_VAR_TEST_PARAM(W, H)         \

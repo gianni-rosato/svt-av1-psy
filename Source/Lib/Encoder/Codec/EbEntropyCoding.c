@@ -501,9 +501,9 @@ void get_txb_ctx(PictureControlSet *pcs_ptr, const int32_t plane,
 #undef MAX_TX_SIZE_UNIT
 }
 
-void av1_write_tx_type(PictureParentControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,
-                       AomWriter *ec_writer, BlkStruct *blk_ptr, uint32_t intraDir, TxType tx_type,
-                       TxSize tx_size) {
+static void av1_write_tx_type(PictureParentControlSet *pcs_ptr, FRAME_CONTEXT *frame_context,
+                              AomWriter *ec_writer, BlkStruct *blk_ptr, uint32_t intraDir, TxType tx_type,
+                              TxSize tx_size) {
     FrameHeader * frm_hdr = &pcs_ptr->frm_hdr;
     const int32_t is_inter =
         blk_ptr->av1xd->use_intrabc || (blk_ptr->prediction_mode_flag == INTER_MODE);
@@ -2111,7 +2111,7 @@ int32_t eb_av1_get_reference_mode_context(uint32_t blk_origin_x, uint32_t blk_or
     assert(ctx >= 0 && ctx < COMP_INTER_CONTEXTS);
     return ctx;
 }
-int         av1_get_intra_inter_context(const MacroBlockD *xd);
+int         eb_av1_get_intra_inter_context(const MacroBlockD *xd);
 int         av1_get_reference_mode_context_new(const MacroBlockD *xd);
 AomCdfProb *av1_get_reference_mode_cdf(const MacroBlockD *xd) {
     return xd->tile_ctx->comp_inter_cdf[av1_get_reference_mode_context_new(xd)];
@@ -4760,14 +4760,14 @@ int av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
 int av1_get_palette_bsize_ctx(BlockSize bsize) {
     return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
 }
-void av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
-                            TOKENEXTRA **t, BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
-                            int allow_update_cdf);
+void eb_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
+                               TOKENEXTRA **t, BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
+                               int allow_update_cdf);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  eb_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cache);
-int  av1_index_color_cache(const uint16_t *color_cache, int n_cache, const uint16_t *colors,
-                           int n_colors, uint8_t *cache_color_found, int *out_cache_colors);
+int  eb_av1_index_color_cache(const uint16_t *color_cache, int n_cache, const uint16_t *colors,
+                              int n_colors, uint8_t *cache_color_found, int *out_cache_colors);
 
 int av1_get_palette_mode_ctx(const MacroBlockD *xd) {
     const MbModeInfo *const above_mi = xd->above_mbmi;
@@ -4842,7 +4842,7 @@ static AOM_INLINE void write_palette_colors_y(const MacroBlockD *const     xd,
     const int n_cache = eb_get_palette_cache(xd, 0, color_cache);
     int       out_cache_colors[PALETTE_MAX_SIZE];
     uint8_t   cache_color_found[2 * PALETTE_MAX_SIZE];
-    const int n_out_cache = av1_index_color_cache(
+    const int n_out_cache = eb_av1_index_color_cache(
         color_cache, n_cache, pmi->palette_colors, n, cache_color_found, out_cache_colors);
     int n_in_cache = 0;
     for (int i = 0; i < n_cache && n_in_cache < n; ++i) {
@@ -5624,7 +5624,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                         blk_ptr->palette_info.pmi.palette_size[plane];
                     if (palette_size_plane > 0) {
                         const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
-                        av1_tokenize_color_map(
+                        eb_av1_tokenize_color_map(
                             frame_context,
                             blk_ptr,
                             plane,
@@ -6014,7 +6014,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                         blk_ptr->palette_info.pmi.palette_size[plane];
                     if (palette_size_plane > 0) {
                         const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
-                        av1_tokenize_color_map(
+                        eb_av1_tokenize_color_map(
                             frame_context,
                             blk_ptr,
                             plane,

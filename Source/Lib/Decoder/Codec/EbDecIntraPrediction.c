@@ -480,7 +480,7 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
     if (mode == DC_PRED) {
         dc_pred[n_left_px > 0][n_top_px > 0][tx_size](dst, dst_stride, above_row, left_col);
     } else
-        pred[mode][tx_size](dst, dst_stride, above_row, left_col);
+        eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
 }
 
 /* TODO : Harmonize with Encoder! */

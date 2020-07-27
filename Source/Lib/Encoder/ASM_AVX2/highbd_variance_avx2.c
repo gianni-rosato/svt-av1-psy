@@ -18,9 +18,9 @@ typedef void (*HighVarianceFn)(const uint16_t *src, int src_stride,
                                const uint16_t *ref, int ref_stride,
                                uint32_t *sse, int *sum);
 
-void aom_highbd_calc8x8var_avx2(const uint16_t *src, int src_stride,
-                                const uint16_t *ref, int ref_stride,
-                                uint32_t *sse, int *sum) {
+static void aom_highbd_calc8x8var_avx2(const uint16_t *src, int src_stride,
+                                       const uint16_t *ref, int ref_stride,
+                                       uint32_t *sse, int *sum) {
   __m256i v_sum_d = _mm256_setzero_si256();
   __m256i v_sse_d = _mm256_setzero_si256();
   for (int i = 0; i < 8; i += 2) {
@@ -53,9 +53,9 @@ void aom_highbd_calc8x8var_avx2(const uint16_t *src, int src_stride,
   *sse = _mm_extract_epi32(v_d, 1);
 }
 
-void aom_highbd_calc16x16var_avx2(const uint16_t *src, int src_stride,
-                                  const uint16_t *ref, int ref_stride,
-                                  uint32_t *sse, int *sum) {
+static void aom_highbd_calc16x16var_avx2(const uint16_t *src, int src_stride,
+                                         const uint16_t *ref, int ref_stride,
+                                         uint32_t *sse, int *sum) {
   __m256i v_sum_d = _mm256_setzero_si256();
   __m256i v_sse_d = _mm256_setzero_si256();
   const __m256i one = _mm256_set1_epi16(1);

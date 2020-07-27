@@ -39,7 +39,7 @@ void calculate_scaled_size_helper(uint16_t *dim, uint8_t denom) {
     }
 }
 
-int32_t av1_get_upscale_convolve_step(int in_length, int out_length) {
+static int32_t av1_get_upscale_convolve_step(int in_length, int out_length) {
     return ((in_length << RS_SCALE_SUBPEL_BITS) + out_length / 2) / out_length;
 }
 
@@ -51,8 +51,8 @@ int32_t get_upscale_convolve_x0(int in_length, int out_length, int32_t x_step_qn
     return (int32_t)((uint32_t)x0 & RS_SCALE_SUBPEL_MASK);
 }
 
-void av1_convolve_horiz_rs_c(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
-                             int w, int h, const int16_t *x_filters, int x0_qn, int x_step_qn) {
+static void av1_convolve_horiz_rs_c(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
+                                    int w, int h, const int16_t *x_filters, int x0_qn, int x_step_qn) {
     src -= UPSCALE_NORMATIVE_TAPS / 2 - 1;
     for (int y = 0; y < h; ++y) {
         int x_qn = x0_qn;
@@ -71,9 +71,9 @@ void av1_convolve_horiz_rs_c(const uint8_t *src, int src_stride, uint8_t *dst, i
     }
 }
 
-void av1_highbd_convolve_horiz_rs_c(const uint16_t *src, int src_stride, uint16_t *dst,
-                                    int dst_stride, int w, int h, const int16_t *x_filters,
-                                    int x0_qn, int x_step_qn, int bd) {
+static void av1_highbd_convolve_horiz_rs_c(const uint16_t *src, int src_stride, uint16_t *dst,
+                                           int dst_stride, int w, int h, const int16_t *x_filters,
+                                           int x0_qn, int x_step_qn, int bd) {
     src -= UPSCALE_NORMATIVE_TAPS / 2 - 1;
     for (int y = 0; y < h; ++y) {
         int x_qn = x0_qn;
@@ -216,8 +216,8 @@ void highbd_upscale_normative_rect(const uint8_t *const input, int height, int w
     }
 }
 
-void av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
-                                uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline) {
+void eb_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
+                                   uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline) {
     int       high_bd                = bd > EB_8BIT || is_16bit_pipeline;
     const int downscaled_plane_width = ROUND_POWER_OF_TWO(cm->frm_size.frame_width, sub_x);
     const int upscaled_plane_width =

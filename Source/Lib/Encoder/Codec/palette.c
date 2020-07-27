@@ -39,9 +39,9 @@ void AV1_K_MEANS_RENAME(av1_k_means, 2)(const int *data, int *centroids, uint8_t
 static inline void av1_calc_indices(const int *data, const int *centroids, uint8_t *indices, int n,
                                     int k, int dim) {
     if (dim == 1) {
-        av1_calc_indices_dim1(data, centroids, indices, n, k);
+        eb_av1_calc_indices_dim1(data, centroids, indices, n, k);
     } else if (dim == 2) {
-        av1_calc_indices_dim2(data, centroids, indices, n, k);
+        eb_av1_calc_indices_dim2(data, centroids, indices, n, k);
     } else {
         assert(0 && "Untemplated k means dimension");
     }
@@ -54,9 +54,9 @@ static inline void av1_calc_indices(const int *data, const int *centroids, uint8
 static inline void av1_k_means(const int *data, int *centroids, uint8_t *indices, int n, int k,
                                int dim, int max_itr) {
     if (dim == 1) {
-        av1_k_means_dim1(data, centroids, indices, n, k, max_itr);
+        eb_av1_k_means_dim1(data, centroids, indices, n, k, max_itr);
     } else if (dim == 2) {
-        av1_k_means_dim2(data, centroids, indices, n, k, max_itr);
+        eb_av1_k_means_dim2(data, centroids, indices, n, k, max_itr);
     } else {
         assert(0 && "Untemplated k means dimension");
     }
@@ -71,7 +71,7 @@ static inline void av1_k_means(const int *data, int *centroids, uint8_t *indices
 
 static int int_comparer(const void *a, const void *b) { return (*(int *)a - *(int *)b); }
 
-int av1_remove_duplicates(int *centroids, int num_centroids) {
+static int av1_remove_duplicates(int *centroids, int num_centroids) {
     int num_unique; // number of unique centroids
     int i;
     qsort(centroids, num_centroids, sizeof(*centroids), int_comparer);
@@ -110,8 +110,8 @@ static int delta_encode_cost(const int *colors, int num, int bit_depth, int min_
     return bits_cost;
 }
 
-int av1_index_color_cache(const uint16_t *color_cache, int n_cache, const uint16_t *colors,
-                          int n_colors, uint8_t *cache_color_found, int *out_cache_colors) {
+int eb_av1_index_color_cache(const uint16_t *color_cache, int n_cache, const uint16_t *colors,
+                             int n_colors, uint8_t *cache_color_found, int *out_cache_colors) {
     if (n_cache <= 0) {
         for (int i = 0; i < n_colors; ++i) out_cache_colors[i] = colors[i];
         return n_colors;
@@ -137,12 +137,12 @@ int av1_index_color_cache(const uint16_t *color_cache, int n_cache, const uint16
     return j;
 }
 
-int av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache, int n_cache,
-                             int bit_depth) {
+int eb_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache, int n_cache,
+                                int bit_depth) {
     const int n = pmi->palette_size[0];
     int       out_cache_colors[PALETTE_MAX_SIZE];
     uint8_t   cache_color_found[2 * PALETTE_MAX_SIZE];
-    const int n_out_cache = av1_index_color_cache(
+    const int n_out_cache = eb_av1_index_color_cache(
         color_cache, n_cache, pmi->palette_colors, n, cache_color_found, out_cache_colors);
     const int total_bits = n_cache + delta_encode_cost(out_cache_colors, n_out_cache, bit_depth, 1);
     return av1_cost_literal(total_bits);
@@ -228,7 +228,6 @@ void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd,
     }
 }
 
-int av1_remove_duplicates(int *centroids, int num_centroids);
 // Bias toward using colors in the cache.
 // TODO: Try other schemes to improve compression.
 static AOM_INLINE void optimize_palette_colors(uint16_t *color_cache, int n_cache, int n_colors,
@@ -300,8 +299,8 @@ void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, B
 }
 
 int eb_av1_count_colors(const uint8_t *src, int stride, int rows, int cols, int *val_count);
-int av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
-                            int *val_count);
+int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
+                               int *val_count);
 /****************************************
    determine all palette luma candidates
  ****************************************/
@@ -377,7 +376,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     unsigned bit_depth = pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth;
     if (is16bit)
-        colors = av1_count_colors_highbd((uint16_t *)src, src_stride, rows, cols,
+        colors = eb_av1_count_colors_highbd((uint16_t *)src, src_stride, rows, cols,
             bit_depth, count_buf);
     else
         colors = eb_av1_count_colors(src, src_stride, rows, cols, count_buf);
@@ -581,9 +580,9 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
     return this_rate;
 }
 
-void av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
-                            TOKENEXTRA **t, BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
-                            int allow_update_cdf) {
+void eb_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
+                               TOKENEXTRA **t, BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
+                               int allow_update_cdf) {
     assert(plane == 0 || plane == 1);
     Av1ColorMapParam color_map_params;
     get_color_map_params(frame_context, blk_ptr, plane, bsize, tx_size, type, &color_map_params);
@@ -595,8 +594,8 @@ void av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, in
                               : frame_context->palette_y_color_index_cdf;
     cost_and_tokenize_map(&color_map_params, t, plane, 0, allow_update_cdf, map_pb_cdf);
 }
-int av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
-                       BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type) {
+int eb_av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
+                          BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type) {
     assert(plane == 0 || plane == 1);
     Av1ColorMapParam color_map_params;
     get_color_map_params_rate(

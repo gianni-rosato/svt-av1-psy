@@ -9,12 +9,12 @@
  * @brief Unit test for util functions in wedge prediction:
  * - av1_build_compound_diffwtd_mask_{, d16}avx2
  * - aom_blend_a64_mask_avx2/aom_lowbd_blend_a64_d16_mask_avx2
- * - aom_blend_a64_mask_sse4_1
- * - aom_highbd_blend_a64_mask_sse4_1/aom_highbd_blend_a64_d16_mask_avx2
- * - aom_blend_a64_hmask_sse4_1/aom_blend_a64_vmask_sse4_1
- * - aom_highbd_blend_a64_hmask_sse4_1/aom_highbd_blend_a64_vmask_sse4_1
- * - eb_aom_highbd_blend_a64_hmask_sse4_1/eb_aom_highbd_blend_a64_vmask_sse4_1
- * - aom_sse_avx2/aom_highbd_sse_avx2
+ * - eb_aom_blend_a64_mask_sse4_1
+ * - eb_aom_highbd_blend_a64_mask_sse4_1_8bit/aom_highbd_blend_a64_d16_mask_avx2
+ * - eb_aom_blend_a64_hmask_sse4_1/eb_aom_blend_a64_vmask_sse4_1
+ * - eb_aom_highbd_blend_a64_hmask_sse4_1_8bit/eb_aom_highbd_blend_a64_vmask_sse4_1_8bit
+ * - eb_aom_highbd_blend_a64_hmask_sse4_1_16bit/eb_aom_highbd_blend_a64_vmask_sse4_1_16bit
+ * - eb_aom_sse_avx2/aom_highbd_sse_avx2
  *
  * @author Cidana-Wenyao
  *
@@ -199,8 +199,8 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::ValuesIn({
         make_tuple(aom_blend_a64_mask_c, aom_blend_a64_mask_avx2,
                    "aom_blend_a64_mask_avx2"),
-        make_tuple(aom_blend_a64_mask_c, aom_blend_a64_mask_sse4_1,
-                   "aom_blend_a64_mask_sse4_1"),
+        make_tuple(aom_blend_a64_mask_c, eb_aom_blend_a64_mask_sse4_1,
+                   "eb_aom_blend_a64_mask_sse4_1"),
     }));
 
 using LbdBlendA64D16MaskFunc = void (*)(uint8_t *, uint32_t,
@@ -309,8 +309,8 @@ TEST_P(LbdCompBlendHMaskTest, BlendA64Mask) {
 
 INSTANTIATE_TEST_CASE_P(BLEND, LbdCompBlendHMaskTest,
                         ::testing::ValuesIn({make_tuple(
-                            aom_blend_a64_hmask_c, aom_blend_a64_hmask_sse4_1,
-                            "aom_blend_a64_hmask_sse4_1")}));
+                            aom_blend_a64_hmask_c, eb_aom_blend_a64_hmask_sse4_1,
+                            "eb_aom_blend_a64_hmask_sse4_1")}));
 
 using LbdBlendA64VMaskFunc = void (*)(uint8_t *, uint32_t, const uint8_t *,
                                       uint32_t, const uint8_t *, uint32_t,
@@ -358,8 +358,8 @@ TEST_P(LbdCompBlendVMaskTest, BlendA64Mask) {
 
 INSTANTIATE_TEST_CASE_P(BLEND, LbdCompBlendVMaskTest,
                         ::testing::ValuesIn({make_tuple(
-                            aom_blend_a64_vmask_c, aom_blend_a64_vmask_sse4_1,
-                            "aom_blend_a64_vmask_sse4_1")}));
+                            aom_blend_a64_vmask_c, eb_aom_blend_a64_vmask_sse4_1,
+                            "eb_aom_blend_a64_vmask_sse4_1")}));
 
 using HbdBlendA64MaskFunc = void (*)(uint8_t *, uint32_t, const uint8_t *,
                                      uint32_t, const uint8_t *, uint32_t,
@@ -421,8 +421,8 @@ TEST_P(HbdCompBlendTest, BlendA64Mask) {
 INSTANTIATE_TEST_CASE_P(
     BLEND, HbdCompBlendTest,
     ::testing::ValuesIn({make_tuple(aom_highbd_blend_a64_mask_c,
-                                    aom_highbd_blend_a64_mask_sse4_1,
-                                    "aom_highbd_blend_a64_mask_sse4_1")}));
+                                    eb_aom_highbd_blend_a64_mask_sse4_1_8bit,
+                                    "eb_aom_highbd_blend_a64_mask_sse4_1_8bit")}));
 
 using HbdBlendA64D16MaskFunc = void (*)(uint8_t *, uint32_t,
                                         const CONV_BUF_TYPE *, uint32_t,
@@ -549,8 +549,8 @@ TEST_P(HbdCompBlendHMaskTest, BlendA64Mask) {
 INSTANTIATE_TEST_CASE_P(
     BLEND, HbdCompBlendHMaskTest,
     ::testing::ValuesIn({make_tuple(aom_highbd_blend_a64_hmask_c,
-                                    aom_highbd_blend_a64_hmask_sse4_1,
-                                    "aom_highbd_blend_a64_hmask_sse4_1")}));
+                                    eb_aom_highbd_blend_a64_hmask_sse4_1_8bit,
+                                    "eb_aom_highbd_blend_a64_hmask_sse4_1_8bit")}));
 
 using EbHbdBlendA64HMaskFunc = void (*)(uint16_t *, uint32_t, const uint16_t *,
                                         uint32_t, const uint16_t *, uint32_t,
@@ -608,8 +608,8 @@ TEST_P(EbHbdCompBlendHMaskTest, BlendA64Mask) {
 INSTANTIATE_TEST_CASE_P(
     BLEND, EbHbdCompBlendHMaskTest,
     ::testing::ValuesIn({make_tuple(eb_aom_highbd_blend_a64_hmask_c,
-                                    eb_aom_highbd_blend_a64_hmask_sse4_1,
-                                    "eb_aom_highbd_blend_a64_hmask_sse4_1")}));
+                                    eb_aom_highbd_blend_a64_hmask_sse4_1_16bit,
+                                    "eb_aom_highbd_blend_a64_hmask_sse4_1_16bit")}));
 
 using HbdBlendA64VMaskFunc = void (*)(uint8_t *, uint32_t, const uint8_t *,
                                       uint32_t, const uint8_t *, uint32_t,
@@ -667,8 +667,8 @@ TEST_P(HbdCompBlendVMaskTest, BlendA64Mask) {
 INSTANTIATE_TEST_CASE_P(
     BLEND, HbdCompBlendVMaskTest,
     ::testing::ValuesIn({make_tuple(aom_highbd_blend_a64_vmask_c,
-                                    aom_highbd_blend_a64_vmask_sse4_1,
-                                    "aom_highbd_blend_a64_vmask_sse4_1")}));
+                                    eb_aom_highbd_blend_a64_vmask_sse4_1_8bit,
+                                    "eb_aom_highbd_blend_a64_vmask_sse4_1_8bit")}));
 
 using EbHbdBlendA64VMaskFunc = void (*)(uint16_t *, uint32_t, const uint16_t *,
                                         uint32_t, const uint16_t *, uint32_t,
@@ -726,8 +726,8 @@ TEST_P(EbHbdCompBlendVMaskTest, BlendA64Mask) {
 INSTANTIATE_TEST_CASE_P(
     BLEND, EbHbdCompBlendVMaskTest,
     ::testing::ValuesIn({make_tuple(eb_aom_highbd_blend_a64_vmask_c,
-                                    eb_aom_highbd_blend_a64_vmask_sse4_1,
-                                    "eb_aom_highbd_blend_a64_vmask_sse4_1")}));
+                                    eb_aom_highbd_blend_a64_vmask_sse4_1_16bit,
+                                    "eb_aom_highbd_blend_a64_vmask_sse4_1_16bit")}));
 
 typedef void (*BuildCompDiffwtdMaskedFunc)(uint8_t *mask,
                                            DIFFWTD_MASK_TYPE mask_type,
@@ -764,7 +764,7 @@ class BuildCompDiffwtdMaskTest
                 src1[j] = rnd_.random();
             }
 
-            av1_build_compound_diffwtd_mask_c(
+            eb_av1_build_compound_diffwtd_mask_c(
                 mask_ref, type, src0, width, src1, width, height, width);
 
             test_impl(mask_test, type, src0, width, src1, width, height, width);
@@ -791,7 +791,7 @@ INSTANTIATE_TEST_CASE_P(
     CompUtilTest, BuildCompDiffwtdMaskTest,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-        ::testing::Values(av1_build_compound_diffwtd_mask_avx2)));
+        ::testing::Values(eb_av1_build_compound_diffwtd_mask_avx2)));
 
 typedef void (*BuildCompDiffwtdMaskedHighbdFunc)(uint8_t *mask,
                                            DIFFWTD_MASK_TYPE mask_type,
@@ -828,15 +828,15 @@ class BuildCompDiffwtdMaskHighbdTest
                 src1[j] = rnd_.random();
             }
 
-            av1_build_compound_diffwtd_mask_highbd_c(mask_ref,
-                                                     type,
-                                                     (uint8_t *)src0,
-                                                     width,
-                                                     (uint8_t *)src1,
-                                                     width,
-                                                     height,
-                                                     width,
-                                                     bd);
+            eb_av1_build_compound_diffwtd_mask_highbd_c(mask_ref,
+                                                        type,
+                                                        (uint8_t *)src0,
+                                                        width,
+                                                        (uint8_t *)src1,
+                                                        width,
+                                                        height,
+                                                        width,
+                                                        bd);
 
             test_impl(mask_test,
                       type,
@@ -875,7 +875,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(av1_build_compound_diffwtd_mask_highbd_ssse3,
-                          av1_build_compound_diffwtd_mask_highbd_avx2)));
+                          eb_av1_build_compound_diffwtd_mask_highbd_avx2)));
 
 // test av1_build_compound_diffwtd_mask_d16_avx2
 typedef void (*BuildCompDiffwtdMaskD16Func)(
@@ -1002,7 +1002,7 @@ class AomSseTest : public ::testing::TestWithParam<AomSseParam> {
                 b_[j] = rnd_.random();
             }
 
-            int64_t res_ref = aom_sse_c(a_, width, b_, width, height, width);
+            int64_t res_ref = eb_aom_sse_c(a_, width, b_, width, height, width);
             int64_t res_tst = test_impl(a_, width, b_, width, height, width);
 
             ASSERT_EQ(res_ref, res_tst);
@@ -1021,7 +1021,7 @@ TEST_P(AomSseTest, MatchTest) {
 INSTANTIATE_TEST_CASE_P(SSETEST, AomSseTest,
                         ::testing::Combine(::testing::Range(BLOCK_4X4,
                                                             BlockSizeS_ALL),
-                                           ::testing::Values(aom_sse_avx2)));
+                                           ::testing::Values(eb_aom_sse_avx2)));
 
 class AomSseHighbdTest : public ::testing::TestWithParam<AomSseParam> {
   public:
@@ -1049,7 +1049,7 @@ class AomSseHighbdTest : public ::testing::TestWithParam<AomSseParam> {
                 b_[j] = rnd_.random();
             }
 
-            int64_t res_ref = aom_highbd_sse_c(
+            int64_t res_ref = eb_aom_highbd_sse_c(
                 (uint8_t *)a_, width, (uint8_t *)b_, width, height, width);
             int64_t res_tst = test_impl(
                 (uint8_t *)a_, width, (uint8_t *)b_, width, height, width);
@@ -1129,7 +1129,7 @@ INSTANTIATE_TEST_CASE_P(SUBSTRACT_BLOCK_TEST, AomSubstractBlockTest,
                         ::testing::Combine(::testing::Range(BLOCK_4X4,
                                                             BlockSizeS_ALL),
                        ::testing::Values(eb_aom_subtract_block_sse2,
-                                         aom_subtract_block_avx2)));
+                                         eb_aom_subtract_block_avx2)));
 
 typedef void (*AomHighbdSubstractBlockFunc)(int, int, int16_t *, ptrdiff_t,
                                             const uint8_t *, ptrdiff_t,

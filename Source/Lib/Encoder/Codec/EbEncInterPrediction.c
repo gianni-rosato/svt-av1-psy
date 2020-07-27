@@ -48,13 +48,13 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_
     return clamped_mv;
 }
 
-void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint8_t *dst_ptr,
-                                     uint32_t dst_stride, const BlockGeom *blk_geom, uint8_t bwidth,
-                                     uint8_t bheight, InterpFilterParams *filter_params_x,
-                                     InterpFilterParams *filter_params_y, int32_t subpel_x,
-                                     int32_t subpel_y, ConvolveParams *conv_params,
-                                     InterInterCompoundData *comp_data, uint8_t bitdepth,
-                                     uint8_t plane, EbBool is_16bit, uint8_t *seg_mask) {
+static void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint8_t *dst_ptr,
+                                            uint32_t dst_stride, const BlockGeom *blk_geom, uint8_t bwidth,
+                                            uint8_t bheight, InterpFilterParams *filter_params_x,
+                                            InterpFilterParams *filter_params_y, int32_t subpel_x,
+                                            int32_t subpel_y, ConvolveParams *conv_params,
+                                            InterInterCompoundData *comp_data, uint8_t bitdepth,
+                                            uint8_t plane, EbBool is_16bit, uint8_t *seg_mask) {
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
     //use regular path to generate a prediction for ref1 into  a temporary buffer,
     //then  blend that temporary buffer with that from  the first reference.
@@ -101,16 +101,16 @@ void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint
     if (!plane && comp_data->type == COMPOUND_DIFFWTD) {
         //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is the output computed from the two preds org_dst and tmp_buf16
         //for WEDGE the mask is fixed from the table based on wedge_sign/index
-        av1_build_compound_diffwtd_mask_d16(seg_mask,
-                                            comp_data->mask_type,
-                                            org_dst,
-                                            org_dst_stride,
-                                            tmp_buf16,
-                                            tmp_buf_stride,
-                                            bheight,
-                                            bwidth,
-                                            conv_params,
-                                            bitdepth);
+        eb_av1_build_compound_diffwtd_mask_d16(seg_mask,
+                                               comp_data->mask_type,
+                                               org_dst,
+                                               org_dst_stride,
+                                               tmp_buf16,
+                                               tmp_buf_stride,
+                                               bheight,
+                                               bwidth,
+                                               conv_params,
+                                               bitdepth);
     }
 
     build_masked_compound_no_round(dst_ptr,
@@ -186,16 +186,16 @@ void av1_make_masked_scaled_inter_predictor(uint8_t *src_ptr, uint32_t src_strid
     if (!plane && comp_data->type == COMPOUND_DIFFWTD) {
         //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is the output computed from the two preds org_dst and tmp_buf16
         //for WEDGE the mask is fixed from the table based on wedge_sign/index
-        av1_build_compound_diffwtd_mask_d16(seg_mask,
-                                            comp_data->mask_type,
-                                            org_dst,
-                                            org_dst_stride,
-                                            tmp_buf16,
-                                            tmp_buf_stride,
-                                            bheight,
-                                            bwidth,
-                                            conv_params,
-                                            bitdepth);
+        eb_av1_build_compound_diffwtd_mask_d16(seg_mask,
+                                               comp_data->mask_type,
+                                               org_dst,
+                                               org_dst_stride,
+                                               tmp_buf16,
+                                               tmp_buf_stride,
+                                               bheight,
+                                               bwidth,
+                                               conv_params,
+                                               bitdepth);
     }
 
     build_masked_compound_no_round(dst_ptr,
@@ -315,8 +315,8 @@ static const double interp_dgrid_curv[2][65] = {
     PRECALC[A][B][3] = ARRAY[A][B+1]
 */
 
-void av1_model_rd_curvfit(BlockSize bsize, double sse_norm, double xqr, double *rate_f,
-                          double *distbysse_f) {
+static void av1_model_rd_curvfit(BlockSize bsize, double sse_norm, double xqr, double *rate_f,
+                                 double *distbysse_f) {
     const double x_start = -15.5;
     const double x_end   = 16.5;
     const double x_step  = 0.5;
@@ -484,7 +484,7 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
     } else {
         uint8_t *src_buf = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
                            (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
-        aom_subtract_block(
+        eb_aom_subtract_block(
                 bh, bw, residual0, bw, src_buf /*src->buf*/, src_pic->stride_y /*src->stride*/, p0, bw);
     }
     int64_t sign_limit =
@@ -492,15 +492,15 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
             (1 << WEDGE_WEIGHT_BITS) / 2;
     int16_t *ds = residual0;
 
-    av1_wedge_compute_delta_squares(ds, residual0, residual1, N);
+    eb_av1_wedge_compute_delta_squares(ds, residual0, residual1, N);
 
     for (int8_t wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
         const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, 0, bsize);
 
-        int8_t wedge_sign = av1_wedge_sign_from_residuals(ds, mask, N, sign_limit);
+        int8_t wedge_sign = eb_av1_wedge_sign_from_residuals(ds, mask, N, sign_limit);
 
         mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
-        uint64_t sse = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
+        uint64_t sse = eb_av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse  = ROUND_POWER_OF_TWO(sse, bd_round);
 
         model_rd_with_curvfit(
@@ -628,7 +628,7 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
     const int bd_round = 0;
     for (int8_t wedge_index = 0; wedge_index < wedge_types; ++wedge_index) {
         const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
-        uint64_t       sse  = av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
+        uint64_t       sse  = eb_av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse                 = ROUND_POWER_OF_TWO(sse, bd_round);
         model_rd_with_curvfit(
             picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
@@ -709,13 +709,13 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
     for (cur_mask_type = 0; cur_mask_type < DIFFWTD_MASK_TYPES; cur_mask_type++) {
         // build mask and inverse
         if (hbd_mode_decision)
-            av1_build_compound_diffwtd_mask_highbd(
+            eb_av1_build_compound_diffwtd_mask_highbd(
                     tmp_mask[cur_mask_type], cur_mask_type, p0, bw, p1, bw, bh, bw, EB_10BIT);
         else
-            av1_build_compound_diffwtd_mask(
+            eb_av1_build_compound_diffwtd_mask(
                     tmp_mask[cur_mask_type], cur_mask_type, p0, bw, p1, bw, bh, bw);
         // compute rd for mask
-        uint64_t sse = av1_wedge_sse_from_residuals(residual1, diff10, tmp_mask[cur_mask_type], N);
+        uint64_t sse = eb_av1_wedge_sse_from_residuals(residual1, diff10, tmp_mask[cur_mask_type], N);
 
         sse = ROUND_POWER_OF_TWO(sse, bd_round);
 
@@ -763,8 +763,8 @@ void pick_interinter_mask(ModeDecisionCandidate *candidate_ptr,
 
 
 //
-int64_t aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride,
-                         int width, int height) {
+int64_t eb_aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride,
+                            int width, int height) {
     int       y, x;
     int64_t   sse = 0;
     uint16_t *a   = (uint16_t *)a8; //CONVERT_TO_SHORTPTR(a8);
@@ -781,8 +781,8 @@ int64_t aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int
     return sse;
 }
 
-int64_t aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width,
-                  int height) {
+int64_t eb_aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width,
+                     int height) {
     int     y, x;
     int64_t sse = 0;
 
@@ -823,9 +823,9 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
         int64_t         dist, sse;
         int             rate;
         if (context_ptr->hbd_mode_decision) // CCODE
-            sse = aom_highbd_sse(src_buf, src_stride, pred_buf, pred_stride, bw, bh);
+            sse = eb_aom_highbd_sse(src_buf, src_stride, pred_buf, pred_stride, bw, bh);
         else
-            sse = aom_sse(src_buf, src_stride, pred_buf, pred_stride, bw, bh);
+            sse = eb_aom_sse(src_buf, src_stride, pred_buf, pred_stride, bw, bh);
 
         sse = ROUND_POWER_OF_TWO(sse, bd_round);
         model_rd_with_curvfit(picture_control_set_ptr,
@@ -976,10 +976,10 @@ static INLINE void foreach_overlappable_nb_left(uint8_t is16bit, const AV1_COMMO
     }
 }
 
-void av1_setup_build_prediction_by_above_pred(MacroBlockD *xd, int rel_mi_col,
-                                              uint8_t above_mi_width, MbModeInfo *above_mbmi,
-                                              struct build_prediction_ctxt *ctxt,
-                                              const int num_planes, uint8_t is16bit) {
+static void av1_setup_build_prediction_by_above_pred(MacroBlockD *xd, int rel_mi_col,
+                                                     uint8_t above_mi_width, MbModeInfo *above_mbmi,
+                                                     struct build_prediction_ctxt *ctxt,
+                                                     const int num_planes, uint8_t is16bit) {
     (void)num_planes;
     const int above_mi_col = ctxt->mi_col + rel_mi_col;
 
@@ -1032,10 +1032,10 @@ void av1_setup_build_prediction_by_above_pred_hbd(MacroBlockD *xd, int rel_mi_co
     xd->mb_to_right_edge =
         ctxt->mb_to_far_edge + (xd->n4_w - rel_mi_col - above_mi_width) * MI_SIZE * 8;
 }
-void av1_setup_build_prediction_by_left_pred(MacroBlockD *xd, int rel_mi_row,
-                                             uint8_t left_mi_height, MbModeInfo *left_mbmi,
-                                             struct build_prediction_ctxt *ctxt,
-                                             const int num_planes, uint8_t is16bit) {
+static void av1_setup_build_prediction_by_left_pred(MacroBlockD *xd, int rel_mi_row,
+                                                    uint8_t left_mi_height, MbModeInfo *left_mbmi,
+                                                    struct build_prediction_ctxt *ctxt,
+                                                    const int num_planes, uint8_t is16bit) {
     (void)num_planes;
     const int left_mi_row = ctxt->mi_row + rel_mi_row;
 
@@ -1427,7 +1427,7 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
                        4,
                        block_size_high[BLOCK_64X64] >> (subsampling_y + 1));
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
 
         if (j == 0)
             if (is16bit)
@@ -1519,7 +1519,7 @@ static INLINE void build_prediction_by_above_pred_hbd(uint8_t bit_depth, MacroBl
             4,
             block_size_high[BLOCK_64X64] >> (subsampling_y + 1));
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
 
         if (j == 0)
             get_single_prediction_for_obmc_luma_hbd(above_mbmi->block_mi.interp_filters,
@@ -1585,7 +1585,7 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
                        block_size_wide[BLOCK_64X64] >> (subsampling_x + 1));
         int bh = (left_mi_height << MI_SIZE_LOG2) >> subsampling_y;
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
 
         if (j == 0)
             if (is16bit)
@@ -1676,7 +1676,7 @@ static INLINE void build_prediction_by_left_pred_hbd(uint8_t bit_depth, MacroBlo
             block_size_wide[BLOCK_64X64] >> (subsampling_x + 1));
         int bh = (left_mi_height << MI_SIZE_LOG2) >> subsampling_y;
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
 
         if (j == 0)
             get_single_prediction_for_obmc_luma_hbd(left_mbmi->block_mi.interp_filters,
@@ -1909,7 +1909,7 @@ static INLINE void build_obmc_inter_pred_above(uint8_t is16bit, MacroBlockD *xd,
         const int plane_col     = (rel_mi_col * MI_SIZE) >> subsampling_x;
         const int plane_col_pos = plane_col << is16bit;
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
 
         const int dst_stride =
                 plane == 0 ? ctxt->final_dst_stride_y
@@ -1920,21 +1920,21 @@ static INLINE void build_obmc_inter_pred_above(uint8_t is16bit, MacroBlockD *xd,
 
         const int            tmp_stride = ctxt->adjacent_stride[plane];
         const uint8_t *const tmp        = &ctxt->adjacent[plane][plane_col_pos];
-        const uint8_t *const mask       = av1_get_obmc_mask(bh);
+        const uint8_t *const mask       = eb_av1_get_obmc_mask(bh);
 
         if (is16bit)
-            eb_aom_highbd_blend_a64_vmask((uint16_t *)dst,
-                                          dst_stride,
-                                          (uint16_t *)dst,
-                                          dst_stride,
-                                          (uint16_t *)tmp,
-                                          tmp_stride,
-                                          mask,
-                                          bw,
-                                          bh,
-                                          10);
+            eb_aom_highbd_blend_a64_vmask_16bit((uint16_t *)dst,
+                                                dst_stride,
+                                                (uint16_t *)dst,
+                                                dst_stride,
+                                                (uint16_t *)tmp,
+                                                tmp_stride,
+                                                mask,
+                                                bw,
+                                                bh,
+                                                10);
         else
-            aom_blend_a64_vmask(dst, dst_stride, dst, dst_stride, tmp, tmp_stride, mask, bw, bh);
+            eb_aom_blend_a64_vmask(dst, dst_stride, dst, dst_stride, tmp, tmp_stride, mask, bw, bh);
     }
 }
 static INLINE void build_obmc_inter_pred_above_hbd(uint8_t bit_depth, MacroBlockD *xd,
@@ -1958,7 +1958,7 @@ static INLINE void build_obmc_inter_pred_above_hbd(uint8_t bit_depth, MacroBlock
         const int plane_col = (rel_mi_col * MI_SIZE) >> subsampling_x;
         const int plane_col_pos = plane_col << 1; /*is16bit*/
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
 
         const int dst_stride =
             plane == 0 ? ctxt->final_dst_stride_y
@@ -1969,9 +1969,9 @@ static INLINE void build_obmc_inter_pred_above_hbd(uint8_t bit_depth, MacroBlock
 
         const int            tmp_stride = ctxt->adjacent_stride[plane];
         const uint8_t *const tmp = &ctxt->adjacent[plane][plane_col_pos];
-        const uint8_t *const mask = av1_get_obmc_mask(bh);
+        const uint8_t *const mask = eb_av1_get_obmc_mask(bh);
 
-        eb_aom_highbd_blend_a64_vmask((uint16_t *)dst,
+        eb_aom_highbd_blend_a64_vmask_16bit((uint16_t *)dst,
             dst_stride,
             (uint16_t *)dst,
             dst_stride,
@@ -2003,7 +2003,7 @@ static INLINE void build_obmc_inter_pred_left(uint8_t is16bit, MacroBlockD *xd, 
         const int plane_row     = (rel_mi_row * MI_SIZE) >> subsampling_y;
         const int plane_row_pos = plane_row << is16bit;
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
 
         const int dst_stride =
                 plane == 0 ? ctxt->final_dst_stride_y
@@ -2015,21 +2015,21 @@ static INLINE void build_obmc_inter_pred_left(uint8_t is16bit, MacroBlockD *xd, 
 
         const int            tmp_stride = ctxt->adjacent_stride[plane];
         const uint8_t *const tmp        = &ctxt->adjacent[plane][plane_row_pos * tmp_stride];
-        const uint8_t *const mask       = av1_get_obmc_mask(bw);
+        const uint8_t *const mask       = eb_av1_get_obmc_mask(bw);
 
         if (is16bit)
-            eb_aom_highbd_blend_a64_hmask((uint16_t *)dst,
-                                          dst_stride,
-                                          (uint16_t *)dst,
-                                          dst_stride,
-                                          (uint16_t *)tmp,
-                                          tmp_stride,
-                                          mask,
-                                          bw,
-                                          bh,
-                                          10);
+            eb_aom_highbd_blend_a64_hmask_16bit((uint16_t *)dst,
+                                                dst_stride,
+                                                (uint16_t *)dst,
+                                                dst_stride,
+                                                (uint16_t *)tmp,
+                                                tmp_stride,
+                                                mask,
+                                                bw,
+                                                bh,
+                                                10);
         else
-            aom_blend_a64_hmask(dst, dst_stride, dst, dst_stride, tmp, tmp_stride, mask, bw, bh);
+            eb_aom_blend_a64_hmask(dst, dst_stride, dst, dst_stride, tmp, tmp_stride, mask, bw, bh);
     }
 }
 static INLINE void build_obmc_inter_pred_left_hbd(uint8_t bit_depth, MacroBlockD *xd,
@@ -2052,7 +2052,7 @@ static INLINE void build_obmc_inter_pred_left_hbd(uint8_t bit_depth, MacroBlockD
         const int plane_row = (rel_mi_row * MI_SIZE) >> subsampling_y;
         const int plane_row_pos = plane_row << 1; /*is16bit*/
 
-        if (av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
+        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
 
         const int dst_stride =
             plane == 0 ? ctxt->final_dst_stride_y
@@ -2064,9 +2064,9 @@ static INLINE void build_obmc_inter_pred_left_hbd(uint8_t bit_depth, MacroBlockD
 
         const int            tmp_stride = ctxt->adjacent_stride[plane];
         const uint8_t *const tmp = &ctxt->adjacent[plane][plane_row_pos * tmp_stride];
-        const uint8_t *const mask = av1_get_obmc_mask(bw);
+        const uint8_t *const mask = eb_av1_get_obmc_mask(bw);
 
-        eb_aom_highbd_blend_a64_hmask((uint16_t *)dst,
+        eb_aom_highbd_blend_a64_hmask_16bit((uint16_t *)dst,
             dst_stride,
             (uint16_t *)dst,
             dst_stride,
@@ -2082,14 +2082,14 @@ static INLINE void build_obmc_inter_pred_left_hbd(uint8_t bit_depth, MacroBlockD
 // top/left neighboring blocks' inter predictors with the regular inter
 // prediction. We assume the original prediction (bmc) is stored in
 // xd->plane[].dst.buf
-void av1_build_obmc_inter_prediction(uint8_t *final_dst_ptr_y, uint16_t final_dst_stride_y,
-                                     uint8_t *final_dst_ptr_u, uint16_t final_dst_stride_u,
-                                     uint8_t *final_dst_ptr_v, uint16_t final_dst_stride_v,
-                                     EbBool perform_chroma, BlockSize bsize,
-                                     PictureControlSet *picture_control_set_ptr, MacroBlockD *xd,
-                                     int mi_row, int mi_col, uint8_t *above[MAX_MB_PLANE],
-                                     int above_stride[MAX_MB_PLANE], uint8_t *left[MAX_MB_PLANE],
-                                     int left_stride[MAX_MB_PLANE], uint8_t is16bit) {
+static void av1_build_obmc_inter_prediction(uint8_t *final_dst_ptr_y, uint16_t final_dst_stride_y,
+                                            uint8_t *final_dst_ptr_u, uint16_t final_dst_stride_u,
+                                            uint8_t *final_dst_ptr_v, uint16_t final_dst_stride_v,
+                                            EbBool perform_chroma, BlockSize bsize,
+                                            PictureControlSet *picture_control_set_ptr, MacroBlockD *xd,
+                                            int mi_row, int mi_col, uint8_t *above[MAX_MB_PLANE],
+                                            int above_stride[MAX_MB_PLANE], uint8_t *left[MAX_MB_PLANE],
+                                            int left_stride[MAX_MB_PLANE], uint8_t is16bit) {
     // handle above row
     struct obmc_inter_pred_ctxt ctxt_above;
 
@@ -2202,7 +2202,7 @@ static INLINE void calc_target_weighted_pred_above(uint8_t is16bit, MacroBlockD 
     struct calc_target_weighted_pred_ctxt *ctxt = (struct calc_target_weighted_pred_ctxt *)fun_ctxt;
 
     const int            bw     = xd->n4_w << MI_SIZE_LOG2;
-    const uint8_t *const mask1d = av1_get_obmc_mask(ctxt->overlap);
+    const uint8_t *const mask1d = eb_av1_get_obmc_mask(ctxt->overlap);
 
     int32_t *      wsrc = ctxt->wsrc_buf + (rel_mi_col * MI_SIZE);
     int32_t *      mask = ctxt->mask_buf + (rel_mi_col * MI_SIZE);
@@ -2233,7 +2233,7 @@ static INLINE void calc_target_weighted_pred_left(uint8_t is16bit, MacroBlockD *
     struct calc_target_weighted_pred_ctxt *ctxt = (struct calc_target_weighted_pred_ctxt *)fun_ctxt;
 
     const int            bw     = xd->n4_w << MI_SIZE_LOG2;
-    const uint8_t *const mask1d = av1_get_obmc_mask(ctxt->overlap);
+    const uint8_t *const mask1d = eb_av1_get_obmc_mask(ctxt->overlap);
 
     int32_t *      wsrc = ctxt->wsrc_buf + (rel_mi_row * MI_SIZE * bw);
     int32_t *      mask = ctxt->mask_buf + (rel_mi_row * MI_SIZE * bw);
@@ -2307,16 +2307,16 @@ void av1_make_masked_warp_inter_predictor(uint8_t *src_ptr, uint32_t src_stride,
     if (!plane && comp_data->type == COMPOUND_DIFFWTD) {
         //CHKN  for DIFF: need to compute the mask  comp_data->seg_mask is the output computed from the two preds org_dst and tmp_buf16
         //for WEDGE the mask is fixed from the table based on wedge_sign/index
-        av1_build_compound_diffwtd_mask_d16(seg_mask,
-                                            comp_data->mask_type,
-                                            org_dst,
-                                            org_dst_stride,
-                                            tmp_buf16,
-                                            tmp_buf_stride,
-                                            bheight,
-                                            bwidth,
-                                            conv_params,
-                                            bitdepth);
+        eb_av1_build_compound_diffwtd_mask_d16(seg_mask,
+                                               comp_data->mask_type,
+                                               org_dst,
+                                               org_dst_stride,
+                                               tmp_buf16,
+                                               tmp_buf_stride,
+                                               bheight,
+                                               bwidth,
+                                               conv_params,
+                                               bitdepth);
     }
 
     build_masked_compound_no_round(dst_ptr,
@@ -2607,7 +2607,7 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
         src_ptr_l1 = src_ptr_l1 + (is16bit ? 2 : 1) * ((mv_q4.row >> SUBPEL_BITS) * src_stride +
                                                        (mv_q4.col >> SUBPEL_BITS));
 
-        av1_dist_wtd_comp_weight_assign(
+        eb_av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1], // bck_frame_index,
@@ -2691,7 +2691,7 @@ static void plane_warped_motion_prediction(
 
         ConvolveParams conv_params =
                 get_conv_params_no_round(0, 0, 0, tmp_dstY, 128, is_compound, bit_depth);
-        av1_dist_wtd_comp_weight_assign(
+        eb_av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1], // bck_frame_index,
@@ -4109,28 +4109,28 @@ EbErrorType av1_inter_prediction(
 
         //=============================================
     ScaleFactors sf_identity;
-    av1_setup_scale_factors_for_frame(&sf_identity,
-                                      200,
-                                      200,
-                                      200,
-                                      200);
+    eb_av1_setup_scale_factors_for_frame(&sf_identity,
+                                         200,
+                                         200,
+                                         200,
+                                         200);
 
     ScaleFactors ref0_scale_factors;
     if(ref_pic_list0 != NULL && picture_control_set_ptr!=NULL){
-        av1_setup_scale_factors_for_frame(&ref0_scale_factors,
-                                          ref_pic_list0->width,
-                                          ref_pic_list0->height,
-                                          picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
-                                          picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+        eb_av1_setup_scale_factors_for_frame(&ref0_scale_factors,
+                                             ref_pic_list0->width,
+                                             ref_pic_list0->height,
+                                             picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+                                             picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
     }
 
     ScaleFactors ref1_scale_factors;
     if(ref_pic_list1 != NULL && picture_control_set_ptr != NULL){
-        av1_setup_scale_factors_for_frame(&ref1_scale_factors,
-                                          ref_pic_list1->width,
-                                          ref_pic_list1->height,
-                                          picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
-                                          picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+        eb_av1_setup_scale_factors_for_frame(&ref1_scale_factors,
+                                             ref_pic_list1->width,
+                                             ref_pic_list1->height,
+                                             picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+                                             picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
     }
 
     ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -4157,11 +4157,11 @@ EbErrorType av1_inter_prediction(
                 EbPictureBufferDesc *ref_pic_ptr = is16bit ? reference_object->reference_picture16bit
                                                            : reference_object->reference_picture;
 
-                av1_setup_scale_factors_for_frame(&(scale_factors[list_idx][ref_idx]),
-                                                  ref_pic_ptr->width,
-                                                  ref_pic_ptr->height,
-                                                  picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
-                                                  picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+                eb_av1_setup_scale_factors_for_frame(&(scale_factors[list_idx][ref_idx]),
+                                                     ref_pic_ptr->width,
+                                                     ref_pic_ptr->height,
+                                                     picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+                                                     picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
 
             }
         }
@@ -4562,7 +4562,7 @@ EbErrorType av1_inter_prediction(
         DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
 
         //the luma data is applied to chroma below
-        av1_dist_wtd_comp_weight_assign(
+        eb_av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1], // bck_frame_index,
@@ -4664,7 +4664,7 @@ EbErrorType av1_inter_prediction(
             conv_params = get_conv_params_no_round(0, (mv_unit->pred_direction == BI_PRED) ? 1 : 0, 0,
                                                    tmp_dstCb, 64, is_compound, bit_depth);
 
-            av1_dist_wtd_comp_weight_assign(
+            eb_av1_dist_wtd_comp_weight_assign(
                     &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                     picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                     picture_control_set_ptr->parent_pcs_ptr
@@ -4763,7 +4763,7 @@ EbErrorType av1_inter_prediction(
 
             conv_params = get_conv_params_no_round(0, (mv_unit->pred_direction == BI_PRED) ? 1 : 0, 0,
                                                    tmp_dstCr, 64, is_compound, bit_depth);
-            av1_dist_wtd_comp_weight_assign(
+            eb_av1_dist_wtd_comp_weight_assign(
                     &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                     picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                     picture_control_set_ptr->parent_pcs_ptr
@@ -5566,7 +5566,7 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
         DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
 
         //the luma data is applied to chroma below
-        av1_dist_wtd_comp_weight_assign(
+        eb_av1_dist_wtd_comp_weight_assign(
             &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
             picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
             picture_control_set_ptr->parent_pcs_ptr->ref_order_hint[rf[0] - 1], // bck_frame_index,
@@ -5643,7 +5643,7 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
                 is_compound,
                 bit_depth);
 
-            av1_dist_wtd_comp_weight_assign(
+            eb_av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr
@@ -5726,7 +5726,7 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
                 64,
                 is_compound,
                 bit_depth);
-            av1_dist_wtd_comp_weight_assign(
+            eb_av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
                 picture_control_set_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
                 picture_control_set_ptr->parent_pcs_ptr
@@ -6201,22 +6201,22 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
         } else {
             uint8_t *src_buf = src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
                                (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
-            aom_subtract_block(bheight,
-                               bwidth,
-                               context_ptr->residual1,
-                               bwidth,
-                               src_buf,
-                               src_pic->stride_y,
-                               context_ptr->pred1,
-                               bwidth);
-            aom_subtract_block(bheight,
-                               bwidth,
-                               context_ptr->diff10,
-                               bwidth,
-                               context_ptr->pred1,
-                               bwidth,
-                               context_ptr->pred0,
-                               bwidth);
+            eb_aom_subtract_block(bheight,
+                                  bwidth,
+                                  context_ptr->residual1,
+                                  bwidth,
+                                  src_buf,
+                                  src_pic->stride_y,
+                                  context_ptr->pred1,
+                                  bwidth);
+            eb_aom_subtract_block(bheight,
+                                  bwidth,
+                                  context_ptr->diff10,
+                                  bwidth,
+                                  context_ptr->pred1,
+                                  bwidth,
+                                  context_ptr->pred0,
+                                  bwidth);
         }
 
         //*calc_pred_masked_compound = 0;

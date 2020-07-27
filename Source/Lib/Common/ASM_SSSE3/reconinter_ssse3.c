@@ -19,7 +19,7 @@ void av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MASK_TY
                                                   const uint8_t *src1, int src1_stride, int h,
                                                   int w, int bd) {
     if (w < 8) {
-        av1_build_compound_diffwtd_mask_highbd_c(
+        eb_av1_build_compound_diffwtd_mask_highbd_c(
             mask, mask_type, src0, src0_stride, src1, src1_stride, h, w, bd);
     } else {
         assert(bd >= 8);

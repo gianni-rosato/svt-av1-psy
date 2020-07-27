@@ -206,7 +206,7 @@ class AomUpsampledPredTest
         memset(comp_pred_ref_, 1, sizeof(comp_pred_ref_));
         memset(comp_pred_tst_, 1, sizeof(comp_pred_tst_));
 
-        //Function aom_upsampled_pred_sse2 call inside function pointer which have to be set properly
+        //Function eb_aom_upsampled_pred_sse2 call inside function pointer which have to be set properly
         // by setup_common_rtcd_internal(), we want to test intrinsic version of it, so AVX2 flag is necessary
         setup_common_rtcd_internal(CPU_FLAGS_AVX2);
 
@@ -217,19 +217,19 @@ class AomUpsampledPredTest
                 ref_[j] = rnd_.random();
             }
 
-            aom_upsampled_pred_c(NULL,
-                                 NULL,
-                                 0,
-                                 0,
-                                 NULL,
-                                 comp_pred_ref_,
-                                 width,
-                                 height,
-                                 subpel_x_q3,
-                                 subpel_y_q3,
-                                 ref_ + 3 * width,
-                                 width,
-                                 subpel_search);
+            eb_aom_upsampled_pred_c(NULL,
+                                    NULL,
+                                    0,
+                                    0,
+                                    NULL,
+                                    comp_pred_ref_,
+                                    width,
+                                    height,
+                                    subpel_x_q3,
+                                    subpel_y_q3,
+                                    ref_ + 3 * width,
+                                    width,
+                                    subpel_search);
             test_impl(NULL,
                       NULL,
                       0,
@@ -261,7 +261,7 @@ TEST_P(AomUpsampledPredTest, MatchTest) {
 INSTANTIATE_TEST_CASE_P(
     UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(aom_upsampled_pred_sse2),
+                       ::testing::Values(eb_aom_upsampled_pred_sse2),
                        ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
                        ::testing::Values(0, 1, 2),
                        ::testing::Values(0, 1, 2)));

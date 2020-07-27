@@ -149,10 +149,10 @@ static AOM_FORCE_INLINE void diffwtd_mask_highbd(uint8_t *mask, int which_invers
         }
     }
 }
-void av1_build_compound_diffwtd_mask_highbd_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                              const uint8_t *src0, int src0_stride,
-                                              const uint8_t *src1, int src1_stride, int h, int w,
-                                              int bd) {
+void eb_av1_build_compound_diffwtd_mask_highbd_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
+                                                 const uint8_t *src0, int src0_stride,
+                                                 const uint8_t *src1, int src1_stride, int h, int w,
+                                                 int bd) {
     switch (mask_type) {
         case DIFFWTD_38:
             diffwtd_mask_highbd(
@@ -166,9 +166,9 @@ void av1_build_compound_diffwtd_mask_highbd_c(uint8_t *mask, DIFFWTD_MASK_TYPE m
     }
 }
 
-void av1_build_compound_diffwtd_mask_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                       const uint8_t *src0, int src0_stride, const uint8_t *src1,
-                                       int src1_stride, int h, int w) {
+void eb_av1_build_compound_diffwtd_mask_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
+                                          const uint8_t *src0, int src0_stride, const uint8_t *src1,
+                                          int src1_stride, int h, int w) {
     switch (mask_type) {
         case DIFFWTD_38: diffwtd_mask(mask, 0, 38, src0, src0_stride, src1, src1_stride, h, w); break;
         case DIFFWTD_38_INV:
@@ -213,7 +213,7 @@ static int32_t fixed_point_scale_to_coarse_point_scale(int32_t scale_fp) {
 }
 
 // Note: x and y are integer precision, mvq4 is q4 precision.
-MV32 av1_scale_mv(const MV *mvq4, int x, int y, const ScaleFactors *sf) {
+MV32 eb_av1_scale_mv(const MV *mvq4, int x, int y, const ScaleFactors *sf) {
     const int  x_off_q4 = scaled_x(x << SUBPEL_BITS, sf);
     const int  y_off_q4 = scaled_y(y << SUBPEL_BITS, sf);
     const MV32 res      = {scaled_y((y << SUBPEL_BITS) + mvq4->row, sf) - y_off_q4,
@@ -221,8 +221,8 @@ MV32 av1_scale_mv(const MV *mvq4, int x, int y, const ScaleFactors *sf) {
     return res;
 }
 
-void av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w, int other_h, int this_w,
-                                       int this_h) {
+void eb_av1_setup_scale_factors_for_frame(ScaleFactors *sf, int other_w, int other_h, int this_w,
+                                          int this_h) {
     if (!valid_ref_frame_size(other_w, other_h, this_w, this_h)) {
         sf->x_scale_fp = REF_INVALID_SCALE;
         sf->y_scale_fp = REF_INVALID_SCALE;
@@ -310,10 +310,10 @@ static const int quant_dist_lookup_table[2][4][2] = {
     {{7, 9}, {5, 11}, {4, 12}, {3, 13}},
 };
 
-void av1_dist_wtd_comp_weight_assign(SeqHeader *seq_header, int cur_frame_index,
-                                     int bck_frame_index, int fwd_frame_index, int compound_idx,
-                                     int order_idx, int *fwd_offset, int *bck_offset,
-                                     int *use_dist_wtd_comp_avg, int is_compound) {
+void eb_av1_dist_wtd_comp_weight_assign(SeqHeader *seq_header, int cur_frame_index,
+                                        int bck_frame_index, int fwd_frame_index, int compound_idx,
+                                        int order_idx, int *fwd_offset, int *bck_offset,
+                                        int *use_dist_wtd_comp_avg, int is_compound) {
     assert(fwd_offset != NULL && bck_offset != NULL);
     if (!is_compound || compound_idx) {
         *use_dist_wtd_comp_avg = 0;
@@ -1636,9 +1636,9 @@ const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign,
     return wedge_params_lookup[sb_type].masks[wedge_sign][wedge_index];
 }
 
-void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
-                         ptrdiff_t dst_stride, const int16_t *filter_x, int filter_x_stride,
-                         const int16_t *filter_y, int filter_y_stride, int w, int h) {
+static void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
+                                ptrdiff_t dst_stride, const int16_t *filter_x, int filter_x_stride,
+                                const int16_t *filter_y, int filter_y_stride, int w, int h) {
 
     (void)filter_x;
     (void)filter_x_stride;
@@ -1820,7 +1820,7 @@ static void init_wedge_masks() {
 }
 
 // Equation of line: f(x, y) = a[0]*(x - a[2]*w/8) + a[1]*(y - a[3]*h/8) = 0
-void av1_init_wedge_masks(void) {
+void eb_av1_init_wedge_masks(void) {
     init_wedge_master_masks();
 #if !USE_PRECOMPUTED_WEDGE_SIGN
     init_wedge_signs();
@@ -1898,42 +1898,42 @@ void combine_interintra_highbd(InterIntraMode mode, uint8_t use_wedge_interintra
             const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
             const int      subh = 2 * mi_size_high[bsize] == bh;
             const int      subw = 2 * mi_size_wide[bsize] == bw;
-            aom_highbd_blend_a64_mask(comppred8,
-                                      compstride,
-                                      intrapred8,
-                                      intrastride,
-                                      interpred8,
-                                      interstride,
-                                      mask,
-                                      block_size_wide[bsize],
-                                      bw,
-                                      bh,
-                                      subw,
-                                      subh,
-                                      bd);
+            eb_aom_highbd_blend_a64_mask(comppred8,
+                                         compstride,
+                                         intrapred8,
+                                         intrastride,
+                                         interpred8,
+                                         interstride,
+                                         mask,
+                                         block_size_wide[bsize],
+                                         bw,
+                                         bh,
+                                         subw,
+                                         subh,
+                                         bd);
         }
         return;
     }
 
     uint8_t mask[MAX_SB_SQUARE];
     build_smooth_interintra_mask(mask, bw, plane_bsize, mode);
-    aom_highbd_blend_a64_mask(comppred8,
-                              compstride,
-                              intrapred8,
-                              intrastride,
-                              interpred8,
-                              interstride,
-                              mask,
-                              bw,
-                              bw,
-                              bh,
-                              0,
-                              0,
-                              bd);
+    eb_aom_highbd_blend_a64_mask(comppred8,
+                                 compstride,
+                                 intrapred8,
+                                 intrastride,
+                                 interpred8,
+                                 interstride,
+                                 mask,
+                                 bw,
+                                 bw,
+                                 bh,
+                                 0,
+                                 0,
+                                 bd);
 }
 
-const uint8_t *av1_get_compound_type_mask(const InterInterCompoundData *const comp_data,
-                                          uint8_t *seg_mask, BlockSize sb_type) {
+static const uint8_t *av1_get_compound_type_mask(const InterInterCompoundData *const comp_data,
+                                                 uint8_t *seg_mask, BlockSize sb_type) {
     assert(is_masked_compound_type(comp_data->type));
     (void)sb_type;
     switch (comp_data->type) {
@@ -1956,34 +1956,34 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
     const uint8_t *mask = av1_get_compound_type_mask(comp_data, seg_mask, sb_type);
 
     if (is_16bit) {
-        aom_highbd_blend_a64_d16_mask(dst,
-                                      dst_stride,
-                                      src0,
-                                      src0_stride,
-                                      src1,
-                                      src1_stride,
-                                      mask,
-                                      block_size_wide[sb_type],
-                                      w,
-                                      h,
-                                      subw,
-                                      subh,
-                                      conv_params,
-                                      bit_depth);
+        eb_aom_highbd_blend_a64_d16_mask(dst,
+                                         dst_stride,
+                                         src0,
+                                         src0_stride,
+                                         src1,
+                                         src1_stride,
+                                         mask,
+                                         block_size_wide[sb_type],
+                                         w,
+                                         h,
+                                         subw,
+                                         subh,
+                                         conv_params,
+                                         bit_depth);
     } else {
-        aom_lowbd_blend_a64_d16_mask(dst,
-                                     dst_stride,
-                                     src0,
-                                     src0_stride,
-                                     src1,
-                                     src1_stride,
-                                     mask,
-                                     block_size_wide[sb_type],
-                                     w,
-                                     h,
-                                     subw,
-                                     subh,
-                                     conv_params);
+        eb_aom_lowbd_blend_a64_d16_mask(dst,
+                                        dst_stride,
+                                        src0,
+                                        src0_stride,
+                                        src1,
+                                        src1_stride,
+                                        mask,
+                                        block_size_wide[sb_type],
+                                        w,
+                                        h,
+                                        subw,
+                                        subh,
+                                        conv_params);
     }
 }
 
@@ -2101,7 +2101,7 @@ void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type) {
     }
 }
 
-int av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y) {
+int eb_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y) {
     assert(is_motion_variation_allowed_bsize(bsize));
 
     const BlockSize bsize_plane = get_plane_block_size(bsize, subsampling_x, subsampling_y);
@@ -2174,35 +2174,35 @@ void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int we
             const uint8_t *mask = av1_get_contiguous_soft_mask(wedge_index, wedge_sign, bsize);
             const int      subw = 2 * mi_size_wide[bsize] == bw;
             const int      subh = 2 * mi_size_high[bsize] == bh;
-            aom_blend_a64_mask(comppred,
-                               compstride,
-                               intrapred,
-                               intrastride,
-                               interpred,
-                               interstride,
-                               mask,
-                               block_size_wide[bsize],
-                               bw,
-                               bh,
-                               subw,
-                               subh);
+            eb_aom_blend_a64_mask(comppred,
+                                  compstride,
+                                  intrapred,
+                                  intrastride,
+                                  interpred,
+                                  interstride,
+                                  mask,
+                                  block_size_wide[bsize],
+                                  bw,
+                                  bh,
+                                  subw,
+                                  subh);
         }
         return;
     } else {
         uint8_t mask[MAX_SB_SQUARE];
         build_smooth_interintra_mask(mask, bw, plane_bsize, mode);
-        aom_blend_a64_mask(comppred,
-                           compstride,
-                           intrapred,
-                           intrastride,
-                           interpred,
-                           interstride,
-                           mask,
-                           bw,
-                           bw,
-                           bh,
-                           0,
-                           0);
+        eb_aom_blend_a64_mask(comppred,
+                              compstride,
+                              intrapred,
+                              intrastride,
+                              interpred,
+                              interstride,
+                              mask,
+                              bw,
+                              bw,
+                              bh,
+                              0,
+                              0);
     }
 }
 
@@ -2230,7 +2230,7 @@ void eb_aom_highbd_blend_a64_hmask_c(uint16_t *dst, uint32_t dst_stride, const u
     }
 }
 
-uint64_t aom_sum_squares_i16_c(const int16_t *src, uint32_t n) {
+uint64_t eb_aom_sum_squares_i16_c(const int16_t *src, uint32_t n) {
     uint64_t ss = 0;
     do {
         const int16_t v = *src++;
@@ -2261,7 +2261,7 @@ static const uint8_t obmc_mask_64[64] = {
         61, 62, 62, 62, 62, 62, 63, 63, 63, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
 };
 
-const uint8_t *av1_get_obmc_mask(int length) {
+const uint8_t *eb_av1_get_obmc_mask(int length) {
     switch (length) {
         case 1: return obmc_mask_1;
         case 2: return obmc_mask_2;
