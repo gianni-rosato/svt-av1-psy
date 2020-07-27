@@ -2915,7 +2915,7 @@ void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceContr
         while (ref_qp_table_index >= qp_search_min && ref_qp_table_index <= qp_search_max &&
                !best_qp_found) {
             ref_qp_index =
-                CLIP3(scs_ptr->static_config.min_qp_allowed, MAX_REF_QP_NUM, ref_qp_table_index);
+                CLIP3(scs_ptr->static_config.min_qp_allowed, MAX_REF_QP_NUM - 1, ref_qp_table_index);
             high_level_rate_control_ptr->pred_bits_ref_qp_per_sw[ref_qp_index] = 0;
 
             queue_entry_index_temp = (uint32_t)queue_entry_index_head_temp;
