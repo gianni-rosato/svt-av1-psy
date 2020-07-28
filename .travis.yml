@@ -44,6 +44,8 @@ before_cache:
 
 # Build matrix
 jobs:
+  allow_failures:
+    - arch: s390x
   fast_finish: true
   include:
     # Multiple CPU Architectures
