@@ -95,6 +95,7 @@
 #define FILTER_INTRA_TOKEN "-filter-intra"
 #define INTRA_EDGE_FILTER_TOKEN "-intra-edge-filter"
 #define PIC_BASED_RATE_EST_TOKEN "-pic-based-rate-est"
+#define PIC_BASED_RATE_EST_NEW_TOKEN "--enable-pic-based-rate-est"
 #define USE_DEFAULT_ME_HME_TOKEN "-use-default-me-hme"
 #define HME_ENABLE_TOKEN "-hme"
 #define HME_L0_ENABLE_TOKEN "-hme-l0"
@@ -1022,7 +1023,7 @@ ConfigEntry config_entry_specific[] = {
 
     // Picture based rate estimation
     {SINGLE_INPUT,
-     PIC_BASED_RATE_EST_TOKEN,
+     PIC_BASED_RATE_EST_NEW_TOKEN,
      "Enable picture based rate estimation (0: OFF, 1: ON, -1: DEFAULT)",
      set_pic_based_rate_est},
 
@@ -1339,6 +1340,7 @@ ConfigEntry config_entry[] = {
 
     // Picture based rate estimation
     {SINGLE_INPUT, PIC_BASED_RATE_EST_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
+    {SINGLE_INPUT, PIC_BASED_RATE_EST_NEW_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
 
     // PREDICTIVE ME
     {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
@@ -1467,7 +1469,7 @@ ConfigEntry config_entry[] = {
      "Restoration Filter",
      set_enable_restoration_filter_flag},
     {SINGLE_INPUT,
-     EDGE_SKIP_ANGLE_INTRA_TOKEN,
+     EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
      "Edge Skip Angle Intra",
      set_edge_skip_angle_intra_flag},
     {SINGLE_INPUT,
@@ -2496,6 +2498,7 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, INTRA_ANGLE_DELTA_TOKEN) == 0) linked_token = INTRA_ANGLE_DELTA_NEW_TOKEN;
     if (EB_STRCMP(token, PAETH_TOKEN) == 0) linked_token = PAETH_NEW_TOKEN;
     if (EB_STRCMP(token, SMOOTH_TOKEN) == 0) linked_token = SMOOTH_NEW_TOKEN;
+    if (EB_STRCMP(token, PIC_BASED_RATE_EST_TOKEN) == 0) linked_token = PIC_BASED_RATE_EST_NEW_TOKEN;
 
     if (EB_STRLEN(linked_token, WARNING_LENGTH) > 1) {
         const char *message_str = " will be deprecated soon, please use ";
