@@ -24,6 +24,13 @@ char *copy_until_char_or_newline(char *src, char *dst, char chr) {
 
     return src;
 }
+/* only reads the y4m header, needed when we reach end of the file and loop to the beginning */
+int32_t read_and_skip_y4m_header(EbConfig *cfg) {
+    char  buffer[YFM_HEADER_MAX];
+    char *fresult = fgets(buffer, sizeof(buffer), cfg->input_file);
+    if (fresult == NULL) return EB_ErrorBadParameter;
+    return EB_ErrorNone;
+}
 
 /* reads the y4m header and parses the input parameters */
 int32_t read_y4m_header(EbConfig *cfg) {

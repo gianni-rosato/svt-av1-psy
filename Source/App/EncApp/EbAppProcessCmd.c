@@ -730,6 +730,10 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
 
             if (read_size != header_ptr->n_filled_len) {
                 fseek(input_file, 0, SEEK_SET);
+                if (config->y4m_input == EB_TRUE) {
+                    read_and_skip_y4m_header(config);
+                    read_y4m_frame_delimiter(config);
+                }
                 header_ptr->n_filled_len =
                     (uint32_t)fread(input_ptr->luma, 1, luma_read_size, input_file);
                 header_ptr->n_filled_len += (uint32_t)fread(
