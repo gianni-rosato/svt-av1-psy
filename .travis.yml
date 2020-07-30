@@ -67,4 +67,4 @@ jobs:
             - valgrind
       script:
         - *base_script
-        - travis_wait 60 valgrind -- SvtAv1EncApp --preset 4 -i akiyo_cif.y4m -n 20 -b test1.ivf
+        - travis_wait 60 valgrind --error-exitcode=1 -- SvtAv1EncApp --preset 4 -i akiyo_cif.y4m -n 20 -b test1.ivf
