@@ -554,7 +554,7 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Unpin the execution .This option does not
     * set the execution to be pinned to a specific number of cores when set to 1. this allows the execution
-    * of multiple encodes on the CPU wihtout having to pin them to a specific mask
+    * of multiple encodes on the CPU without having to pin them to a specific mask
     * 1: unpinned
     * 0: pinned
     * default 1 */
