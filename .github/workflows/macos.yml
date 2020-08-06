@@ -37,9 +37,8 @@ jobs:
           set -x
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
           brew update
-          brew uninstall bazel
-          brew upgrade
-          brew install yasm ccache cmake
+          brew upgrade -f
+          brew install -f yasm ccache cmake
           printf '%s\n' "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
             "::set-env name=CCACHE_DIR::$HOME/.ccache"
           clang -v
