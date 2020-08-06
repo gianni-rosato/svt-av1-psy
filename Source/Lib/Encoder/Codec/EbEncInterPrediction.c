@@ -666,6 +666,7 @@ static void pick_interinter_wedge(ModeDecisionCandidate * candidate_ptr,
         picture_control_set_ptr->parent_pcs_ptr->wedge_mode == 3) {
         wedge_sign =
                 estimate_wedge_sign(picture_control_set_ptr, context_ptr, bsize, p0, bw, p1, bw);
+        pick_wedge_fixed_sign(candidate_ptr, picture_control_set_ptr, context_ptr, bsize, residual1, diff10, wedge_sign, &wedge_index);
     } else {
         pick_wedge(picture_control_set_ptr,
                    context_ptr,
