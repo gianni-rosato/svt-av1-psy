@@ -1842,7 +1842,7 @@ int64_t eb_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_
 }
 
 #if TPL_LA
-int aom_satd_avx2(const TranLow *coeff, int length) {
+int svt_aom_satd_avx2(const TranLow *coeff, int length) {
   __m256i accum = _mm256_setzero_si256();
   int i;
 
@@ -1877,7 +1877,7 @@ static INLINE void read_coeff(const TranLow *coeff, intptr_t offset,
   }
 }
 
-int64_t av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
+int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
                              intptr_t block_size, int64_t *ssz) {
   __m256i sse_reg, ssz_reg, coeff_reg, dqcoeff_reg;
   __m256i exp_dqcoeff_lo, exp_dqcoeff_hi, exp_coeff_lo, exp_coeff_hi;

@@ -4935,7 +4935,7 @@ int combine_prior_with_tpl_boost(int prior_boost, int tpl_boost,
     return boost;
 }
 
-int av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
+int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
     assert(beta > 0.0);
     int q = eb_av1_dc_quant_qtx(qindex, 0, bit_depth);
     int newq = (int)rint(q / sqrt(beta));
@@ -4955,30 +4955,11 @@ int av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
     return qindex - orig_qindex;
 }
 
-int av1_get_adaptive_rdmult(AomBitDepth bit_depth, int base_qindex, double beta) {
-  assert(beta > 0.0);
-  int64_t q = eb_av1_dc_quant_qtx(base_qindex, 0, bit_depth);
-  int64_t rdmult = 0;
-
-  switch (bit_depth) {
-    case AOM_BITS_8: rdmult = (int)((88 * q * q / beta) / 24); break;
-    case AOM_BITS_10:
-      rdmult = ROUND_POWER_OF_TWO((int)((88 * q * q / beta) / 24), 4);
-      break;
-    default:
-      assert(bit_depth == AOM_BITS_12);
-      rdmult = ROUND_POWER_OF_TWO((int)((88 * q * q / beta) / 24), 8);
-      break;
-  }
-
-  return (int)rdmult;
-}
-
 #if TPL_LA_QPS
 
 #define MIN_BPB_FACTOR 0.005
 #define MAX_BPB_FACTOR 50
-int av1_rc_bits_per_mb(FrameType frame_type, int qindex,
+int svt_av1_rc_bits_per_mb(FrameType frame_type, int qindex,
                        double correction_factor, const int bit_depth) {
   const double q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
   int enumerator = frame_type == KEY_FRAME ? 2000000 : 1500000;
@@ -4999,7 +4980,7 @@ static int find_qindex_by_rate(int desired_bits_per_mb,
   while (low < high) {
     const int mid = (low + high) >> 1;
     const int mid_bits_per_mb =
-        av1_rc_bits_per_mb(frame_type, mid, 1.0, bit_depth);
+        svt_av1_rc_bits_per_mb(frame_type, mid, 1.0, bit_depth);
     if (mid_bits_per_mb > desired_bits_per_mb) {
       low = mid + 1;
     } else {
@@ -5007,18 +4988,18 @@ static int find_qindex_by_rate(int desired_bits_per_mb,
     }
   }
   assert(low == high);
-  assert(av1_rc_bits_per_mb(frame_type, low, 1.0, bit_depth) <=
+  assert(svt_av1_rc_bits_per_mb(frame_type, low, 1.0, bit_depth) <=
              desired_bits_per_mb ||
          low == worst_qindex);
   return low;
 }
 
-int av1_compute_qdelta_by_rate(const RATE_CONTROL *rc, FrameType frame_type,
+int svt_av1_compute_qdelta_by_rate(const RATE_CONTROL *rc, FrameType frame_type,
                                int qindex, double rate_target_ratio,
                                const int bit_depth) {
   // Look up the current projected bits per block for the base index
   const int base_bits_per_mb =
-      av1_rc_bits_per_mb(frame_type, qindex, 1.0, bit_depth);
+      svt_av1_rc_bits_per_mb(frame_type, qindex, 1.0, bit_depth);
 
   // Find the target bits per mb based on the base value and given ratio.
   const int target_bits_per_mb = (int)(rate_target_ratio * base_bits_per_mb);
@@ -5038,7 +5019,7 @@ static const double rate_factor_deltas[RATE_FACTOR_LEVELS] = {
   2.00,  // KF_STD
 };
 
-int av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int bit_depth) {
+int svt_av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int bit_depth) {
   const int/*rate_factor_level*/ rf_lvl = rf_level;//get_rate_factor_level(&cpi->gf_group);
   const FrameType frame_type = (rf_lvl == KF_STD) ? KEY_FRAME : INTER_FRAME;
   double rate_factor;
@@ -5048,7 +5029,7 @@ int av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int bit_d
     rate_factor -= (0/*cpi->gf_group.layer_depth[cpi->gf_group.index]*/ - 2) * 0.1;
     rate_factor = AOMMAX(rate_factor, 1.0);
   }
-  return av1_compute_qdelta_by_rate(rc, frame_type, q, rate_factor, bit_depth);
+  return svt_av1_compute_qdelta_by_rate(rc, frame_type, q, rate_factor, bit_depth);
 }
 
 static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RATE_CONTROL *rc,
@@ -5064,20 +5045,10 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
     // Static forced key frames Q restrictions dealt with elsewhere.
     if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr) || !this_key_frame_forced
         /*|| (cpi->twopass.last_kfgroup_zeromotion_pct < STATIC_MOTION_THRESH)*/) {
-        const int qdelta = av1_frame_type_qdelta(rc, rf_level, active_worst_quality, bit_depth);
+        const int qdelta = svt_av1_frame_type_qdelta(rc, rf_level, active_worst_quality, bit_depth);
         active_worst_quality =
             AOMMAX(active_worst_quality + qdelta, active_best_quality);
     }
-
-#if 0
-    // Modify active_best_quality for downscaled normal frames.
-    if (av1_frame_scaled(cm) && !frame_is_kf_gf_arf(cpi)) {
-        int qdelta = av1_compute_qdelta_by_rate(
-                rc, cm->current_frame.frame_type, active_best_quality, 2.0, bit_depth);
-        active_best_quality =
-            AOMMAX(active_best_quality + qdelta, rc->best_quality);
-    }
-#endif
 
     active_best_quality =
         clamp(active_best_quality, rc->best_quality, rc->worst_quality);
@@ -5907,7 +5878,7 @@ static void sb_qp_derivation_tpl_la(
             int delta_qp = 0;
 #endif
             double beta = ppcs_ptr->tpl_beta[sb_addr];
-            int offset = av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, beta);
+            int offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, beta);
             offset = AOMMIN(offset,  pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 - 1);
             offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 + 1);
 

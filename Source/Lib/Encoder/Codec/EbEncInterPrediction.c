@@ -49,7 +49,7 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_
 }
 
 #if TPL_LA
-void av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
+void svt_av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
                            int block_height, int pix_row, int pix_col,
                            int subsampling_x, int subsampling_y, int bit_depth,
                            int use_hbd_buf, int is_intrabc,
@@ -84,7 +84,7 @@ void av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
   }
 }
 
-void av1_make_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst,
+void svt_av1_make_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst,
                               int dst_stride,
                               InterPredParams *inter_pred_params,
                               const SubpelParams *subpel_params) {
@@ -164,7 +164,7 @@ void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride
   subpel_params.xs = sf->x_step_q4;
   subpel_params.ys = sf->y_step_q4;
 
-  av1_make_inter_predictor(src, src_stride, dst, dst_stride, inter_pred_params,
+  svt_av1_make_inter_predictor(src, src_stride, dst, dst_stride, inter_pred_params,
                            &subpel_params);
 }
 #endif

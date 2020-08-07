@@ -43,7 +43,7 @@
 #if TPL_LA
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
-int aom_satd_c(const TranLow *coeff, int length) {
+int svt_aom_satd_c(const TranLow *coeff, int length) {
   int i;
   int satd = 0;
   for (i = 0; i < length; ++i) satd += abs(coeff[i]);
@@ -52,7 +52,7 @@ int aom_satd_c(const TranLow *coeff, int length) {
   return satd;
 }
 
-int64_t av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
+int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
                           intptr_t block_size, int64_t *ssz) {
   int i;
   int64_t error = 0, sqcoeff = 0;

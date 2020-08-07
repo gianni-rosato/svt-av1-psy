@@ -62,10 +62,7 @@ extern "C" {
 #if !REMOVE_ME_SUBPEL_CODE
     uint32_t combined_averaging_ssd_c(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
 #endif
-    int64_t aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
-    RTCD_EXTERN int64_t(*aom_sse)(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
-    int64_t aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
-    RTCD_EXTERN int64_t(*aom_highbd_sse)(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
+
     int64_t eb_aom_sse_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     RTCD_EXTERN int64_t(*eb_aom_sse)(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t eb_aom_highbd_sse_c(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
@@ -146,17 +143,17 @@ extern "C" {
     void av1_transform_two_d_4x4_c(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*eb_av1_fwd_txfm2d_4x4)(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
 #if TPL_LA
-    void av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
+    void svt_av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_sse2(const int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_sse4_1(const int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_avx2(const int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
-    RTCD_EXTERN void(*eb_av1_lowbd_fwd_txfm)(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
-    int aom_satd_c(const TranLow *coeff, int length);
-    int aom_satd_avx2(const TranLow *coeff, int length);
-    RTCD_EXTERN int (*aom_satd)(const TranLow *coeff, int length);
-    int64_t av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
-    int64_t av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
-    RTCD_EXTERN int64_t (*av1_block_error)(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+    RTCD_EXTERN void(*svt_av1_lowbd_fwd_txfm)(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
+    int svt_aom_satd_c(const TranLow *coeff, int length);
+    int svt_aom_satd_avx2(const TranLow *coeff, int length);
+    RTCD_EXTERN int (*svt_aom_satd)(const TranLow *coeff, int length);
+    int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+    int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+    RTCD_EXTERN int64_t (*svt_av1_block_error)(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
 #endif
     RTCD_EXTERN void(*eb_smooth_v_predictor)(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above, const uint8_t *left);
     void get_proj_subspace_c(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int use_highbitdepth, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq, const SgrParamsType *params);

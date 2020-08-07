@@ -855,7 +855,7 @@ static AOM_INLINE void get_quantize_error(MacroblockPlane *p,
                   p->quant_shift_qtx, qcoeff, dqcoeff, p->dequant_qtx, eob,
                   scan_order->scan, scan_order->iscan);
 
-  *recon_error = av1_block_error(coeff, dqcoeff, pix_num, sse) >> shift;
+  *recon_error = svt_av1_block_error(coeff, dqcoeff, pix_num, sse) >> shift;
   *recon_error = AOMMAX(*recon_error, 1);
 
   *sse = (*sse) >> shift;
@@ -993,7 +993,7 @@ int16_t av1_dc_quant_qtx(int qindex, int delta, AomBitDepth bit_depth) {
   }
 }
 
-int av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
+int svt_av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
   const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
   //const int q = eb_av1_dc_quant_Q3(qindex, 0, bit_depth);
   int rdmult = q * q;
@@ -1121,7 +1121,7 @@ void tpl_mc_flow_dispenser(
     mb_plane.zbin_qtx        = pcs_ptr->quants_bd.y_zbin[qIndex];
     mb_plane.round_qtx       = pcs_ptr->quants_bd.y_round[qIndex];
     mb_plane.dequant_qtx     = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
-    pcs_ptr->base_rdmult = av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
+    pcs_ptr->base_rdmult = svt_av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
 
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
@@ -1229,7 +1229,7 @@ void tpl_mc_flow_dispenser(
                         y_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].y_mv << 1;
 #endif
                         InterPredParams inter_pred_params;
-                        av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
+                        svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
                                 mb_origin_x, 0, 0, 8, 0, 0,
                                 &sf, &ref_buf, kernel);
 
@@ -1249,7 +1249,7 @@ void tpl_mc_flow_dispenser(
 
                         wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
-                        inter_cost = aom_satd(coeff, 256);
+                        inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
                             best_rf_idx = rf_idx;
@@ -1297,7 +1297,7 @@ void tpl_mc_flow_dispenser(
                                                   input_picture_ptr->width, input_picture_ptr->height,
                                                   input_picture_ptr->stride_y};
                         InterPredParams inter_pred_params;
-                        av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
+                        svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
                             mb_origin_x, 0, 0, 8, 0, 0,
                             &sf, &ref_buf, kernel);
 

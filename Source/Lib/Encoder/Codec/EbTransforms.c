@@ -3558,7 +3558,7 @@ static void highbd_fwd_txfm_32x8(int16_t *src_diff, TranLow *coeff,
                       txfm_param->bd);
 }
 
-void av1_highbd_fwd_txfm(int16_t *src_diff, TranLow *coeff,
+void svt_av1_highbd_fwd_txfm(int16_t *src_diff, TranLow *coeff,
                          int diff_stride, TxfmParam *txfm_param) {
   assert(av1_ext_tx_used[txfm_param->tx_set_type][txfm_param->tx_type]);
   const TxSize tx_size = txfm_param->tx_size;
@@ -3624,17 +3624,17 @@ void av1_highbd_fwd_txfm(int16_t *src_diff, TranLow *coeff,
   }
 }
 
-void av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff,
+void svt_av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff,
                           int diff_stride, TxfmParam *txfm_param) {
-  av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
+  svt_av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
 }
 
-void av1_fwd_txfm(int16_t *src_diff, TranLow *coeff, int diff_stride,
+void svt_av1_fwd_txfm(int16_t *src_diff, TranLow *coeff, int diff_stride,
                   TxfmParam *txfm_param) {
   if (txfm_param->bd == 8)
-    eb_av1_lowbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
+    svt_av1_lowbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
   else
-    av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
+    svt_av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
 }
 
 void wht_fwd_txfm(int16_t *src_diff, int bw,
@@ -3648,7 +3648,7 @@ void wht_fwd_txfm(int16_t *src_diff, int bw,
 
   txfm_param.bd = bit_depth;
   txfm_param.is_hbd = is_hbd;
-  av1_fwd_txfm(src_diff, coeff, bw, &txfm_param);
+  svt_av1_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
 #endif
 
