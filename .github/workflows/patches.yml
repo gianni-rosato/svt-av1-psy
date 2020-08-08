@@ -82,10 +82,18 @@ jobs:
           sudo -E cmake -S aom -B aom-build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0 -DENABLE_TESTDATA=0 -DENABLE_TOOLS=0
           sudo -E cmake --build aom-build --target install
 
+      - name: Clone libvpx
+        run: git clone https://chromium.googlesource.com/webm/libvpx
+      - name: Configure libvpx
+        run: |
+          mkdir -p vpx-build && cd vpx-build || exit 1
+          ../libvpx/configure --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
+          sudo -E make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+
       - name: Configure FFmpeg
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
-          ./configure --arch=x86_64 --pkg-config-flags="--static" --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" --enable-{gpl,static} --enable-lib{aom,svtav1} --disable-shared || {
+          ./configure --arch=x86_64 --pkg-config-flags="--static" --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" --enable-{gpl,static} --enable-lib{vpx,aom,svtav1} --disable-shared || {
             less ffbuild/config.log
             exit 1
           }

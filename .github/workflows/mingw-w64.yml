@@ -41,7 +41,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: mingw-w64-x86_64-ccache mingw-w64-x86_64-yasm mingw-w64-x86_64-nasm mingw-w64-x86_64-cmake mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-ninja mingw-w64-x86_64-dav1d make
+          install: mingw-w64-x86_64-ccache mingw-w64-x86_64-yasm mingw-w64-x86_64-nasm mingw-w64-x86_64-cmake mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-ninja mingw-w64-x86_64-dav1d make diffutils
           update: true
 
       - name: Set ccache dir
@@ -67,10 +67,19 @@ jobs:
           cmake --build aom-build --target install
           pkg-config --debug --libs aom
 
+      - name: Clone libvpx
+        run: git clone https://chromium.googlesource.com/webm/libvpx
+      - name: Configure libvpx
+        shell: msys2 {0}
+        run: |
+          mkdir -p vpx-build && cd vpx-build || exit 1
+          ../libvpx/configure  --prefix=/mingw64 --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
+          make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+
       - name: Configure FFmpeg
         shell: msys2 {0}
         run: |
-          ./configure --arch=x86_64 --pkg-config-flags="--static" --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" --enable-{gpl,static} --enable-lib{aom,svtav1,dav1d}  --disable-shared || {
+          ./configure --arch=x86_64 --pkg-config-flags="--static" --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" --enable-{gpl,static} --enable-lib{vpx,aom,svtav1,dav1d}  --disable-shared || {
             cat ffbuild/config.log
             exit 1
           }
