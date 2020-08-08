@@ -149,7 +149,7 @@ extern int32_t av1_quantize_inv_quantize(
         int16_t dc_sign_context, PredictionMode pred_mode, EbBool is_intra_bc, uint32_t lambda,EbBool is_encode_pass);
 
 #if TPL_LA
-void wht_fwd_txfm(int16_t *src_diff, int bw,
+void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw,
                   int32_t *coeff, TxSize tx_size,
                   int bit_depth, int is_hbd);
 #endif

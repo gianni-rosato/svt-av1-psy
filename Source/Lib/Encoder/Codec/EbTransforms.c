@@ -3637,18 +3637,17 @@ void svt_av1_fwd_txfm(int16_t *src_diff, TranLow *coeff, int diff_stride,
     svt_av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
 }
 
-void wht_fwd_txfm(int16_t *src_diff, int bw,
-                  int32_t *coeff, TxSize tx_size,
-                  int bit_depth, int is_hbd) {
-  TxfmParam txfm_param;
-  txfm_param.tx_type = DCT_DCT;
-  txfm_param.tx_size = tx_size;
-  txfm_param.lossless = 0;
-  txfm_param.tx_set_type = EXT_TX_SET_ALL16;
+void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_size, int bit_depth,
+                          int is_hbd) {
+    TxfmParam txfm_param;
+    txfm_param.tx_type     = DCT_DCT;
+    txfm_param.tx_size     = tx_size;
+    txfm_param.lossless    = 0;
+    txfm_param.tx_set_type = EXT_TX_SET_ALL16;
 
-  txfm_param.bd = bit_depth;
-  txfm_param.is_hbd = is_hbd;
-  svt_av1_fwd_txfm(src_diff, coeff, bw, &txfm_param);
+    txfm_param.bd     = bit_depth;
+    txfm_param.is_hbd = is_hbd;
+    svt_av1_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
 #endif
 
@@ -3656,4 +3655,3 @@ void wht_fwd_txfm(int16_t *src_diff, int bw,
  * Map Chroma QP
  *********************************************************************/
 uint8_t map_chroma_qp(uint8_t qp) { return qp; }
-

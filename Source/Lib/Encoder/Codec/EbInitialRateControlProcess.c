@@ -1247,7 +1247,7 @@ void tpl_mc_flow_dispenser(
                                                   &inter_pred_params);
                         eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
 
-                        wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+                        svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
@@ -1351,7 +1351,7 @@ void tpl_mc_flow_dispenser(
                     }
 
                     eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
-                    wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                     uint16_t eob;
 

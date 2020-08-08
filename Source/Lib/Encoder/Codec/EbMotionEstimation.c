@@ -22,6 +22,7 @@
 
 #include "EbEncIntraPrediction.h"
 #include "EbLambdaRateTables.h"
+#include "EbTransforms.h"
 
 #include "EbLog.h"
 #include "EbResize.h"
@@ -13298,9 +13299,6 @@ EbErrorType open_loop_intra_search_sb(PictureParentControlSet *pcs_ptr, uint32_t
 }
 #endif
 #if TPL_LA
-void wht_fwd_txfm(int16_t *src_diff, int bw,
-                  int32_t *coeff, TxSize tx_size,
-                  int bit_depth, int is_hbd);
 
 EbErrorType open_loop_intra_search_mb(
     PictureParentControlSet *pcs_ptr, uint32_t sb_index,
@@ -13406,7 +13404,7 @@ EbErrorType open_loop_intra_search_mb(
 
                 // Distortion
                 eb_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
-                wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
+                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
                 intra_cost = svt_aom_satd(coeff, 16 * 16);
 
                 // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
