@@ -100,40 +100,33 @@ jobs:
   prep-tests:
     runs-on: [self-hosted, macos]
     name: Build unit tests
+    env:
+      SVT_AV1_TEST_VECTOR_PATH: ${{ github.workspace }}/test/vectors
     steps:
       - name: Chown whole dir
         run: sudo chown -R "$USER" "${{ github.workspace }}"
       - uses: actions/checkout@v2
-      - name: Cache ccache files
-        uses: actions/cache@v2
         with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-tests-${{ hashFiles('**/*.c') }}
-          restore-keys: ${{ runner.os }}-tests-
+          clean: false
       - name: Install dependencies
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
           brew update
           brew upgrade
-          brew install yasm ccache cmake
-          printf '%s\n' "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
+          brew install yasm ccache cmake ninja
+          printf '%s\n' \
+            "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
             "::set-env name=CCACHE_DIR::$HOME/.ccache"
           clang -v
       - name: Run CMake
-        run: cmake -S "$GITHUB_WORKSPACE" -B Build -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_TESTING=ON
-      - name: Run Install
-        run: sudo -E cmake --build Build --parallel "$(sysctl -n hw.ncpu)" --config Release --target install
-      - name: Cache vectors
-        id: cache-vectors
-        uses: actions/cache@v2
+        run: |
+          cmake -S "$GITHUB_WORKSPACE" -B Build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -BBUILD_DEC=OFF -DBUILD_APPS=OFF
+          cmake --build Build --config Release --target all --target TestVectors
+      - name: Upload unit-tests (macOS)
+        uses: actions/upload-artifact@v2
         with:
-          path: test/vectors
-          key: svtav1-vectors-${{ hashFiles('test/e2e_test/test_vector_list.txt') }}
-      - name: Get test vectors
-        if: steps.cache-vectors.outputs.cache-hit != 'true'
-        run: cmake --build Build --parallel 4 --target TestVectors
-      - name: Chown whole dir
-        run: sudo chown -R "$USER" "${{ github.workspace }}"
+          name: svtav1-macOS-unittest
+          path: Bin/Release
 
   unit-tests:
     runs-on: [self-hosted, macos]
@@ -145,10 +138,13 @@ jobs:
       - uses: actions/checkout@v2
         with:
           clean: false
+      - name: Download unit-tests (macOS)
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-macOS-unittest
       - name: Run unit tests
         run: |
-          seq 0 $((GTEST_TOTAL_SHARDS - 1)) | xargs -n 1 -P 10 -I{} env GTEST_SHARD_INDEX={} ./Bin/Release/SvtAv1UnitTests
-          unset GTEST_TOTAL_SHARDS
+          parallel -u -j 4 GTEST_SHARD_INDEX={} ./Bin/Release/SvtAv1UnitTests ::: $(seq 0 $((GTEST_TOTAL_SHARDS - 1)))
 
   e2e-tests:
     runs-on: [self-hosted, macos]
@@ -160,5 +156,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           clean: false
+      - name: Download unit-tests (macOS)
+        uses: actions/download-artifact@v2
+        with:
+          name: svtav1-macOS-unittest
       - name: Run e2e tests
         run: ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
