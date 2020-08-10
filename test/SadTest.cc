@@ -276,8 +276,7 @@ class SADTestBase : public ::testing::Test {
             break;
         }
         case BUF_SMALL: {
-            const int32_t mask = 256;
-            SVTRandom rnd_small(0, mask);
+            SVTRandom rnd_small(0, 256);
             for (int i = 0; i < 16; i++)
                 for (int j = 0; j < 8; j++)
                     sad16x16_32b[i][j] = rnd_small.random();
@@ -310,8 +309,7 @@ class SADTestBase : public ::testing::Test {
             break;
         }
         case BUF_SMALL: {
-            const int32_t mask = 256;
-            SVTRandom rnd_small(0, mask);
+            SVTRandom rnd_small(0, 256);
             for (int i = 0; i < 64; i++)
                 for (int j = 0; j < 8; j++)
                     sad8x8[i][j] = rnd_small.random();

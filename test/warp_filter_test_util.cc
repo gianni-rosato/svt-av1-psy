@@ -168,7 +168,6 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
     uint8_t *output = new uint8_t[output_n];
     int32_t mat[8];
     int16_t alpha, beta, gamma, delta;
-    ConvolveParams conv_params = get_conv_params(ref, 0, 0, bd);
     ConvBufType *dsta = new ConvBufType[output_n];
     generate_warped_model(rnd_,
                           mat,
@@ -193,7 +192,7 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
     sub_y = 0;
     int do_average = 0;
 
-    conv_params =
+    ConvolveParams conv_params =
         get_conv_params_no_round(ref, do_average, 0, dsta, out_w, 1, bd);
     conv_params.use_jnt_comp_avg = 0;
 

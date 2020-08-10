@@ -171,13 +171,11 @@ class RansacTest : public ::testing::TestWithParam<TransformationType> {
             delete[] points;
         if (num_inliers_by_motion)
             delete[] num_inliers_by_motion;
-        if (motions) {
-            for (int i = 0; i < num_motions; i++) {
-                if (motions[i].inliers)
-                    delete[] motions[i].inliers;
-            }
-            delete[] motions;
+        for (int i = 0; i < num_motions; i++) {
+            if (motions[i].inliers)
+                delete[] motions[i].inliers;
         }
+        delete[] motions;
     }
 
     /* clang-format off */

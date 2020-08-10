@@ -413,7 +413,7 @@ void RefDecoder::trans_video_frame(const void* image_handle,
     memcpy(frame.planes, image->planes, sizeof(frame.planes));
     frame.bits_per_sample = image->bit_depth;
     // there is mismatch between "bit_depth" and "fmt", following is a patch
-    if (image->fmt | AOM_IMG_FMT_HIGHBITDEPTH)
+    if (image->fmt && AOM_IMG_FMT_HIGHBITDEPTH)
         frame.bits_per_sample = 10;
     frame.timestamp =
         init_timestamp_ + ((uint64_t)dec_frame_cnt_ * frame_interval_);

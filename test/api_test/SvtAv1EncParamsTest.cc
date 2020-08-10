@@ -46,7 +46,7 @@ class EncParamTestBase : public ::testing::Test {
         memset(&ctxt_, 0, sizeof(ctxt_));
         param_name_str_ = "";
     }
-    EncParamTestBase(std::string param_name) {
+    EncParamTestBase(const std::string &param_name) {
         memset(&ctxt_, 0, sizeof(ctxt_));
         param_name_str_ = param_name;
     }

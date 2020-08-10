@@ -407,15 +407,15 @@ class Av1KMeansDim : public ::testing::WithParamInterface<Av1KMeansDimParam>,
         if (rnd8_)
             delete rnd8_;
         if (data_)
-            delete data_;
+            delete[] data_;
         if (centroids_ref_)
-            delete centroids_ref_;
+            delete[] centroids_ref_;
         if (centroids_tst_)
-            delete centroids_tst_;
+            delete[] centroids_tst_;
         if (indices_ref_)
-            delete indices_ref_;
+            delete[] indices_ref_;
         if (indices_tst_)
-            delete indices_tst_;
+            delete[] indices_tst_;
     }
 
   protected:

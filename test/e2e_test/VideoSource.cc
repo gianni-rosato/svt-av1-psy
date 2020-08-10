@@ -251,7 +251,7 @@ uint32_t VideoFileSource::read_input_frame() {
     // Read raw data from file
     size_t read_len = 0;
     uint32_t i;
-    if (bit_depth_ <= 8 || (bit_depth_ > 8 && !svt_compressed_2bit_plane_)) {
+    if (bit_depth_ <= 8 || !svt_compressed_2bit_plane_) {
         uint8_t *eb_input_ptr = nullptr;
         // Y
         eb_input_ptr = frame_buffer_->luma;

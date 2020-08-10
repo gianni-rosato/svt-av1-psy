@@ -432,8 +432,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
         // get reconstructed frame
         if (recon_queue_ && !rec_file_eos) {
             TimeAutoCount counter(RECON, collect_);
-            if (!rec_file_eos)
-                get_recon_frame(av1enc_ctx_, recon_queue_, rec_file_eos);
+            get_recon_frame(av1enc_ctx_, recon_queue_, rec_file_eos);
         }
 
         if (!enc_file_eos) {

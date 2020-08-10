@@ -2541,23 +2541,15 @@ bool Test::HasNonfatalFailure() {
 
 // Constructs a TestInfo object. It assumes ownership of the test factory
 // object.
-TestInfo::TestInfo(const std::string& a_test_case_name,
-                   const std::string& a_name,
-                   const char* a_type_param,
-                   const char* a_value_param,
-                   internal::CodeLocation a_code_location,
-                   internal::TypeId fixture_class_id,
+TestInfo::TestInfo(const std::string& a_test_case_name, const std::string& a_name,
+                   const char* a_type_param, const char* a_value_param,
+                   internal::CodeLocation a_code_location, internal::TypeId fixture_class_id,
                    internal::TestFactoryBase* factory)
-    : test_case_name_(a_test_case_name),
-      name_(a_name),
+    : test_case_name_(a_test_case_name), name_(a_name),
       type_param_(a_type_param ? new std::string(a_type_param) : NULL),
       value_param_(a_value_param ? new std::string(a_value_param) : NULL),
-      location_(a_code_location),
-      fixture_class_id_(fixture_class_id),
-      should_run_(false),
-      is_disabled_(false),
-      matches_filter_(false),
-      factory_(factory),
+      location_(a_code_location), fixture_class_id_(fixture_class_id), should_run_(false),
+      is_disabled_(false), matches_filter_(false), is_in_another_shard_(false), factory_(factory),
       result_() {}
 
 // Destructs a TestInfo object.
@@ -3732,7 +3724,7 @@ void XmlUnitTestResultPrinter::OutputXmlTestInfo(::std::ostream* stream,
                                                           part.line_number());
       const std::string summary = location + "\n" + part.summary();
       *stream << "      <failure message=\""
-              << EscapeXmlAttribute(summary.c_str())
+              << EscapeXmlAttribute(summary)
               << "\" type=\"\">";
       const std::string detail = location + "\n" + part.message();
       OutputXmlCDataSection(stream, RemoveInvalidXmlCharacters(detail).c_str());
