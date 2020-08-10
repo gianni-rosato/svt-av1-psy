@@ -87,7 +87,7 @@ jobs:
       - name: Configure libvpx
         run: |
           mkdir -p vpx-build && cd vpx-build || exit 1
-          ../libvpx/configure --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
+          sudo -E ../libvpx/configure --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
           sudo -E make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
 
       - name: Configure FFmpeg
