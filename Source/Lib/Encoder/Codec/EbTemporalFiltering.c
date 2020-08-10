@@ -1686,11 +1686,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                             src_16bit[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
 
                         unsigned int sse;
-#if PR_1311
                         distortion = variance_highbd(
-#else
-                        distortion = variance_highbd_c(
-#endif
                             pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 16, 16, &sse);
                     }
                     if (distortion < context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16]) {
@@ -1763,11 +1759,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                         ;
 
                         unsigned int sse;
-#if PR_1311
                         distortion = variance_highbd(
-#else
-                        distortion = variance_highbd_c(
-#endif
                             pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 16, 16, &sse);
                     }
                     if (distortion < context_ptr->tf_16x16_block_error[idx_32x32 * 4 + idx_16x16]) {
@@ -2010,11 +2002,7 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                     ;
 
                     unsigned int sse;
-#if PR_1311
                     distortion = variance_highbd(
-#else
-                    distortion = variance_highbd_c(
-#endif
                         pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 32, 32, &sse);
                 }
                 if (distortion < context_ptr->tf_32x32_block_error[idx_32x32]) {
@@ -2085,11 +2073,7 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                         src_16bit[C_Y] + bsize * idx_y * stride_src[C_Y] + bsize * idx_x;
 
                     unsigned int sse;
-#if PR_1311
                     distortion = variance_highbd(
-#else
-                    distortion = variance_highbd_c(
-#endif
                         pred_y_ptr, stride_pred[C_Y], src_y_ptr, stride_src[C_Y], 32, 32, &sse);
                 }
                 if (distortion < context_ptr->tf_32x32_block_error[idx_32x32]) {
