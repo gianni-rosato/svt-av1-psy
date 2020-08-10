@@ -2775,7 +2775,7 @@ typedef int32_t errno_t;
 #endif  /* _ERRNO_T_DEFINED */
 
 extern void
-    eb_memcpy_app(void  *dst_ptr, void  *src_ptr, size_t size);
+    eb_memcpy_app(void  *dst_ptr, const void  *src_ptr, size_t size);
 #ifdef ARCH_X86
 #define EB_MEMCPY(dst, src, size) \
     eb_memcpy_app(dst, src, size)

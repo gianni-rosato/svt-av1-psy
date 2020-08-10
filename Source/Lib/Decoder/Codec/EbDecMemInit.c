@@ -443,9 +443,9 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
     if (num_instances == dec_handle_ptr->dec_config.threads)
         lr_ctxt->is_thread_min = EB_TRUE;
     EB_MALLOC_DEC(RestorationLineBuffers ***, lr_ctxt->rlbs,
-        num_instances * sizeof(RestorationLineBuffers**), EB_N_PTR)
+        num_instances * sizeof(RestorationLineBuffers**), EB_N_PTR);
     EB_MALLOC_DEC(int32_t **, lr_ctxt->rst_tmpbuf,
-         num_instances * RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+         num_instances * RESTORATION_TMPBUF_SIZE, EB_N_PTR);
     for (uint32_t i = 0; i < num_instances; i++) {
         RestorationLineBuffers **p_rlbs;
         EB_MALLOC_DEC(RestorationLineBuffers**, lr_ctxt->rlbs[i],
@@ -453,12 +453,12 @@ static EbErrorType init_lr_ctxt(EbDecHandle  *dec_handle_ptr)
         p_rlbs = lr_ctxt->rlbs[i];
         for (int32_t pli = 0; pli < num_planes; pli++) {
             EB_MALLOC_DEC(RestorationLineBuffers *, p_rlbs[pli],
-                sizeof(RestorationLineBuffers), EB_N_PTR)
+                sizeof(RestorationLineBuffers), EB_N_PTR);
         }
     }
     for (uint32_t i = 0; i < num_instances; i++) {
         EB_MALLOC_DEC(int32_t *, lr_ctxt->rst_tmpbuf[i],
-            RESTORATION_TMPBUF_SIZE, EB_N_PTR)
+            RESTORATION_TMPBUF_SIZE, EB_N_PTR);
     }
 
     int frame_width = dec_handle_ptr->seq_header.max_frame_width;

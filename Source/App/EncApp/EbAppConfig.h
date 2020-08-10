@@ -97,7 +97,7 @@ extern uint32_t          app_malloc_count;
     app_malloc_count++;
 
 #define EB_APP_MEMORY()                                                        \
-    fprintf(stderr, "Total Number of Mallocs in App: %d\n", app_malloc_count); \
+    fprintf(stderr, "Total Number of Mallocs in App: %u\n", app_malloc_count); \
     fprintf(stderr, "Total App Memory: %.2lf KB\n\n", *total_app_memory / (double)1024);
 
 #define MAX_CHANNEL_NUMBER 6

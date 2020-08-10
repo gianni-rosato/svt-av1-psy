@@ -5895,7 +5895,13 @@ xy* aom_fast9_detect(const byte* im, int xsize, int ysize, int stride, int b, in
       if(num_corners == rsize)
       {
         rsize*=2;
-        ret_corners = (xy*)realloc(ret_corners, sizeof(xy)*rsize);
+        xy* temp = (xy*)realloc(ret_corners, sizeof(*temp)*rsize);
+        if (temp)
+          ret_corners = temp;
+        else {
+          free(ret_corners);
+          return NULL;
+        }
       }
       ret_corners[num_corners].x = x;
       ret_corners[num_corners].y = y;

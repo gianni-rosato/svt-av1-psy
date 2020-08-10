@@ -43,9 +43,11 @@ static INLINE __m256i load_u8_8x2_avx2(const uint8_t *const src, const ptrdiff_t
 static INLINE __m256i load_u8_8x4_avx2(const uint8_t *const src, const ptrdiff_t stride) {
     __m128i src01, src23;
     src01 = _mm_loadl_epi64((__m128i *)(src + 0 * stride));
-    src01 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(src + 1 * stride)));
+    src01 = _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(src01), (double *)(void *)(src + 1 * stride)));
     src23 = _mm_loadl_epi64((__m128i *)(src + 2 * stride));
-    src23 = _mm_castpd_si128(_mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(src + 3 * stride)));
+    src23 = _mm_castpd_si128(
+        _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(void *)(src + 3 * stride)));
     return _mm256_setr_m128i(src01, src23);
 }
 

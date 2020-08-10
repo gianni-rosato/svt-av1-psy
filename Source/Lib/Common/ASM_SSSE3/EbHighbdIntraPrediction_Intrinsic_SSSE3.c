@@ -78,7 +78,7 @@ static INLINE void smooth_pred_4x2(const __m128i weights_w, const __m128i weight
     const __m128i sum  = _mm_packs_epi32(sum0, sum1);
     _mm_storel_epi64((__m128i *)*dst, sum);
     *dst += stride;
-    _mm_storeh_pd((double *)*dst, _mm_castsi128_pd(sum));
+    _mm_storeh_pd((double *)(void *)*dst, _mm_castsi128_pd(sum));
     *dst += stride;
 }
 
@@ -166,7 +166,7 @@ static INLINE void smooth_h_pred_4x2(const __m128i weights, __m128i *const lr, u
     const __m128i sum  = _mm_packs_epi32(sum0, sum1);
     _mm_storel_epi64((__m128i *)*dst, sum);
     *dst += stride;
-    _mm_storeh_pd((double *)*dst, _mm_castsi128_pd(sum));
+    _mm_storeh_pd((double *)(void *)*dst, _mm_castsi128_pd(sum));
     *dst += stride;
 }
 
@@ -258,7 +258,7 @@ static INLINE void smooth_v_pred_4x2(const __m128i weights, const __m128i *const
     const __m128i sum  = _mm_packs_epi32(sum0, sum1);
     _mm_storel_epi64((__m128i *)*dst, sum);
     *dst += stride;
-    _mm_storeh_pd((double *)*dst, _mm_castsi128_pd(sum));
+    _mm_storeh_pd((double *)(void *)*dst, _mm_castsi128_pd(sum));
     *dst += stride;
 }
 

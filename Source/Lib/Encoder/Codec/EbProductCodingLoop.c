@@ -12044,7 +12044,7 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
 
     // Sort uv_mode (in terms of distortion only)
     uint32_t uv_cand_buff_indices[MAX_NFL_BUFF_Y];
-    memset(uv_cand_buff_indices, 0xFFFFFFFF, MAX_NFL_BUFF_Y * sizeof(uint32_t));
+    memset(uv_cand_buff_indices, 0xFF, MAX_NFL_BUFF_Y * sizeof(uint32_t));
     sort_fast_cost_based_candidates(
         context_ptr,
         start_full_buffer_index,
@@ -12089,10 +12089,10 @@ void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                                start_full_buffer_index + start_fast_buffer_index];
 #if QP2QINDEX
         uint16_t cb_qindex                           = context_ptr->qp_index;
-        uint16_t cr_qindex                           = context_ptr->qp_index;
+        uint16_t cr_qindex                           = cb_qindex;
 #else
         uint16_t cb_qp                               = context_ptr->qp;
-        uint16_t cr_qp                               = context_ptr->qp;
+        uint16_t cr_qp                               = cb_qp;
 #endif
         uint64_t cb_coeff_bits                       = 0;
         uint64_t cr_coeff_bits                       = 0;
@@ -13044,7 +13044,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 
             //Sort:  md_stage_1_count[cand_class_it]
             memset(context_ptr->cand_buff_indices[cand_class_it],
-                   0xFFFFFFFF,
+                   0xFF,
                    MAX_NFL_BUFF * sizeof(uint32_t));
             sort_fast_cost_based_candidates(
                 context_ptr,
@@ -13060,8 +13060,8 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
         }
     }
     interintra_class_pruning_1(context_ptr, best_md_stage_cost);
-    memset(context_ptr->best_candidate_index_array, 0xFFFFFFFF, MAX_NFL_BUFF * sizeof(uint32_t));
-    memset(context_ptr->sorted_candidate_index_array, 0xFFFFFFFF, MAX_NFL * sizeof(uint32_t));
+    memset(context_ptr->best_candidate_index_array, 0xFF, MAX_NFL_BUFF * sizeof(uint32_t));
+    memset(context_ptr->sorted_candidate_index_array, 0xFF, MAX_NFL * sizeof(uint32_t));
 
     uint64_t ref_fast_cost = MAX_MODE_COST;
     construct_best_sorted_arrays_md_stage_1(context_ptr,

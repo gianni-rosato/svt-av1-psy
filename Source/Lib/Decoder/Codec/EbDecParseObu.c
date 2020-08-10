@@ -1578,11 +1578,11 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *    dec_h
     EB_MALLOC_DEC(ParseAboveNbr4x4Ctxt *,
                   master_parse_ctx->parse_above_nbr4x4_ctxt,
                   sizeof(ParseAboveNbr4x4Ctxt) * num_ctx,
-                  EB_N_PTR)
+                  EB_N_PTR);
     EB_MALLOC_DEC(ParseLeftNbr4x4Ctxt *,
                   master_parse_ctx->parse_left_nbr4x4_ctxt,
                   sizeof(ParseLeftNbr4x4Ctxt) * num_ctx,
-                  EB_N_PTR)
+                  EB_N_PTR);
     int total_rows = num_instances == 1 ? 1 : tiles_info.tile_rows;
     int total_cols = num_instances == 1 ? 1 : tiles_info.tile_cols;
     for (int row = 0; row < total_rows; row++) {

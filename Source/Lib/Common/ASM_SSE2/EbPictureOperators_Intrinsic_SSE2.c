@@ -218,22 +218,21 @@ void residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, ui
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC__)
 __attribute__((optimize("unroll-loops")))
 #endif
-static void
-eb_memcpy_small(void* dst_ptr, void const* src_ptr, size_t size) {
-    const char* src = (const char*)src_ptr;
-    char*       dst = (char*)dst_ptr;
-    size_t      i = 0;
+static void eb_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
+    const unsigned char *src = src_ptr;
+    unsigned char *      dst = dst_ptr;
+    size_t               i   = 0;
 
 #ifdef _INTEL_COMPILER
 #pragma unroll
 #endif
     while ((i + 16) <= size) {
-        _mm_storeu_ps((float*)(dst + i), _mm_loadu_ps((const float*)(src + i)));
+        _mm_storeu_ps((float *)(void *)(dst + i), _mm_loadu_ps((const float *)(const void *)(src + i)));
         i += 16;
     }
 
     if ((i + 8) <= size) {
-        _mm_store_sd((double*)(dst + i), _mm_load_sd((const double*)(src + i)));
+        _mm_store_sd((double *)(void *)(dst + i), _mm_load_sd((const double *)(const void *)(src + i)));
         i += 8;
     }
 
@@ -241,10 +240,10 @@ eb_memcpy_small(void* dst_ptr, void const* src_ptr, size_t size) {
 }
 #define EB_MIN(a, b) (((a) < (b)) ? (a) : (b))
 static void eb_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
-    const char* src = (const char*)src_ptr;
-    char*       dst = (char*)dst_ptr;
-    size_t      i = 0;
-    size_t      align_cnt = EB_MIN((64 - ((size_t)dst & 63)), size);
+    const unsigned char *src       = src_ptr;
+    unsigned char *      dst       = dst_ptr;
+    size_t               i         = 0;
+    size_t               align_cnt = EB_MIN((64 - ((size_t)dst & 63)), size);
 
     // align dest to a $line
     if (align_cnt != 64) {
@@ -258,15 +257,15 @@ static void eb_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     // dst aligned to a $line
     size_t cline_cnt = (size & ~(size_t)63);
     for (i = 0; i < cline_cnt; i += 64) {
-        __m128 c0 = _mm_loadu_ps((const float*)(src + i));
-        __m128 c1 = _mm_loadu_ps((const float*)(src + i + sizeof(c0)));
-        __m128 c2 = _mm_loadu_ps((const float*)(src + i + sizeof(c0) * 2));
-        __m128 c3 = _mm_loadu_ps((const float*)(src + i + sizeof(c0) * 3));
+        __m128 c0 = _mm_loadu_ps((const float *)(const void *)(src + i));
+        __m128 c1 = _mm_loadu_ps((const float *)(const void *)(src + i + sizeof(c0)));
+        __m128 c2 = _mm_loadu_ps((const float *)(const void *)(src + i + sizeof(c0) * 2));
+        __m128 c3 = _mm_loadu_ps((const float *)(const void *)(src + i + sizeof(c0) * 3));
 
-        _mm_storeu_ps((float*)(dst + i), c0);
-        _mm_storeu_ps((float*)(dst + i + sizeof(c0)), c1);
-        _mm_storeu_ps((float*)(dst + i + sizeof(c0) * 2), c2);
-        _mm_storeu_ps((float*)(dst + i + sizeof(c0) * 3), c3);
+        _mm_storeu_ps((float *)(void *)(dst + i), c0);
+        _mm_storeu_ps((float *)(void *)(dst + i + sizeof(c0)), c1);
+        _mm_storeu_ps((float *)(void *)(dst + i + sizeof(c0) * 2), c2);
+        _mm_storeu_ps((float *)(void *)(dst + i + sizeof(c0) * 3), c3);
     }
 
     // copy the remainder
@@ -279,6 +278,3 @@ extern void eb_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size
         eb_memcpy_small(dst_ptr, src_ptr, size);
 }
 #endif
-
-
-
