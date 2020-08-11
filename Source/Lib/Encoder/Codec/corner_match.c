@@ -68,18 +68,19 @@ static INLINE int is_eligible_point(int pointx, int pointy, int width, int heigh
             pointy + MATCH_SZ_BY2 < height);
 }
 
-static INLINE int is_eligible_distance(int point1x, int point1y, int point2x, int point2y, int thresh) {
+static INLINE int is_eligible_distance(int point1x, int point1y, int point2x, int point2y,
+                                       int threshSqr) {
     const int xdist = point1x - point2x;
     const int ydist = point1y - point2y;
-    return (xdist * xdist + ydist * ydist) <= thresh;
+    return (xdist * xdist + ydist * ydist) <= threshSqr;
 }
 
 static void improve_correspondence(unsigned char *frm, unsigned char *ref, int width, int height,
                                    int frm_stride, int ref_stride, Correspondence *correspondences,
                                    int num_correspondences) {
     int i;
-    int thresh = (width < height ? height : width) >> 4;
-    thresh *= thresh;
+    const int thresh   = (width < height ? height : width) >> 4;
+    const int threshSqr = thresh * thresh;
     for (i = 0; i < num_correspondences; ++i) {
         int    x, y, best_x = 0, best_y = 0;
         double best_match_ncc = 0.0;
@@ -93,7 +94,7 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref, int w
                                           correspondences[i].y,
                                           correspondences[i].rx + x,
                                           correspondences[i].ry + y,
-                                          thresh))
+                                          threshSqr))
                     continue;
                 match_ncc = eb_av1_compute_cross_correlation(frm,
                                                              frm_stride,
@@ -126,7 +127,7 @@ static void improve_correspondence(unsigned char *frm, unsigned char *ref, int w
                                           correspondences[i].y + y,
                                           correspondences[i].rx,
                                           correspondences[i].ry,
-                                          thresh))
+                                          threshSqr))
                     continue;
                 match_ncc = eb_av1_compute_cross_correlation(ref,
                                                              ref_stride,
@@ -154,8 +155,8 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners, int num_f
     int             i, j;
     Correspondence *correspondences     = (Correspondence *)correspondence_pts;
     int             num_correspondences = 0;
-    int             thresh              = (width < height ? height : width) >> 4;
-    thresh *= thresh;
+    const int       thresh              = (width < height ? height : width) >> 4;
+    const int       threshSqr           = thresh * thresh;
     for (i = 0; i < num_frm_corners; ++i) {
         double best_match_ncc = 0.0;
         double template_norm;
@@ -169,7 +170,7 @@ int av1_determine_correspondence(unsigned char *frm, int *frm_corners, int num_f
                                       frm_corners[2 * i + 1],
                                       ref_corners[2 * j],
                                       ref_corners[2 * j + 1],
-                                      thresh))
+                                      threshSqr))
                 continue;
             match_ncc = eb_av1_compute_cross_correlation(frm,
                                                          frm_stride,
