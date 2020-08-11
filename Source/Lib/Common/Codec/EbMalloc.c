@@ -7,7 +7,6 @@
 
 #include "EbMalloc.h"
 #include "EbThreads.h"
-#define LOG_TAG "SvtMalloc"
 #include "EbLog.h"
 
 #ifdef DEBUG_MEMORY_USAGE
