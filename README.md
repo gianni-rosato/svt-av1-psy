@@ -105,6 +105,39 @@ The SVT-AV1 Encoder library supports the x86 architecture
   - Run the sample application to encode: `./SvtAv1EncApp -i [in.yuv] -w [width] -h [height] -b [out.ivf]`
   - Sample application supports reading from pipe. E.g. `ffmpeg -i [input.mp4] -nostdin -f rawvideo -pix_fmt yuv420p - | ./SvtAv1EncApp -i stdin -n [number_of_frames_to_encode] -w [width] -h [height]`
 
+## SVT-AV1 ffmpeg plugin installation
+
+### 1. Build and install SVT-AV1
+
+``` bash
+   git clone --depth=1 https://github.com/OpenVisualCloud/SVT-AV1
+   cd SVT-AV1
+   cd Build
+   cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+   make -j $(nproc)
+   sudo make install
+```
+
+###  2. Enable libsvtav1 in FFmpeg
+
+If you wish to use an FFmpeg tag or release, you will need to use the patch file located in the 0.8.4 release under the ffmpeg_plugin folder.
+To learn more on how to actually use it, please consult the readme.md from that folder.
+
+``` bash
+   git clone --depth=1 https://github.com/FFmpeg/FFmpeg ffmpeg
+   cd ffmpeg
+   export LD_LIBRARY_PATH+=":/usr/local/lib"
+   export PKG_CONFIG_PATH+=":/usr/local/lib/pkgconfig"
+   ./configure --enable-libsvtav1
+   make -j $(nproc)
+```
+
+###  3. Verify that ffmpeg is working
+
+``` bash
+./ffmpeg -i input.mp4 -c:v libsvtav1 -y test.mp4
+```
+
 ## How to evaluate by ready-to-run executables with docker
 
 Refer to the guide [here](https://github.com/OpenVisualCloud/Dockerfiles/blob/master/doc/svt.md#Evaluate-SVT).
