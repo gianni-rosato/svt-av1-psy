@@ -9,7 +9,6 @@
 
 #include "EbSvtAv1Enc.h"
 #include "EbDefinitions.h"
-#define LOG_TAG "SvtMalloc"
 #include "EbLog.h"
 
 #ifndef NDEBUG

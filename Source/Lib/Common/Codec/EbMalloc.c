@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <limits.h>
 
+#define LOG_TAG "SvtMalloc"
 #include "EbMalloc.h"
 #include "EbThreads.h"
 #include "EbLog.h"
