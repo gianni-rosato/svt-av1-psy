@@ -12,8 +12,7 @@
 
 void eb_print_alloc_fail(const char* file, int line)
 {
-    if (file)
-        SVT_FATAL("allocate memory failed, at %s, L%d\n", file, line);
+    SVT_FATAL("allocate memory failed, at %s, L%d\n", file, line);
 }
 
 #ifdef DEBUG_MEMORY_USAGE
