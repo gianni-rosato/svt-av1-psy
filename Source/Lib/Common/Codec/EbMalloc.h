@@ -9,11 +9,12 @@
 
 #include "EbSvtAv1Enc.h"
 #include "EbDefinitions.h"
-#include "EbLog.h"
 
 #ifndef NDEBUG
 #define DEBUG_MEMORY_USAGE
 #endif
+
+void eb_print_alloc_fail(const char* file, int line);
 
 #ifdef DEBUG_MEMORY_USAGE
 void eb_print_memory_usage(void);
@@ -48,7 +49,7 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
 #define EB_NO_THROW_ADD_MEM(p, size, type)                                               \
     do {                                                                                 \
         if (!p)                                                                          \
-            SVT_FATAL("allocate memory failed, at %s, L%d\n", __FILE__, __LINE__);       \
+            eb_print_alloc_fail(__FILE__, __LINE__);                                     \
         else                                                                             \
             EB_ADD_MEM_ENTRY(p, type, size);                                             \
     } while (0)

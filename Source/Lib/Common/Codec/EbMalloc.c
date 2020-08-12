@@ -5,10 +5,16 @@
 #include <stdint.h>
 #include <limits.h>
 
-#define LOG_TAG "SvtMalloc"
 #include "EbMalloc.h"
 #include "EbThreads.h"
+#define LOG_TAG "SvtMalloc"
 #include "EbLog.h"
+
+void eb_print_alloc_fail(const char* file, int line)
+{
+    if (file)
+        SVT_FATAL("allocate memory failed, at %s, L%d\n", file, line);
+}
 
 #ifdef DEBUG_MEMORY_USAGE
 
