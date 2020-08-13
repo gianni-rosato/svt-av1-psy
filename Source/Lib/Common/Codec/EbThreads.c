@@ -244,8 +244,11 @@ EbErrorType eb_block_on_semaphore(EbHandle semaphore_handle)
             ? EB_ErrorSemaphoreUnresponsive
             : EB_ErrorNone;
 #else
-    return_error =
-        sem_wait((sem_t *)semaphore_handle) ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
+    int ret;
+    do {
+        ret = sem_wait((sem_t *)semaphore_handle);
+    } while(ret == -1 && errno == EINTR);
+    return_error = ret ? EB_ErrorSemaphoreUnresponsive : EB_ErrorNone;
 #endif
 
     return return_error;
