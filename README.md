@@ -9,8 +9,7 @@ The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-co
 
 ## License
 
-SVT-AV1 is licensed under the OSI-approved BSD+Patent license. See [LICENSE](LICENSE.md) for details.
-SVT-AV1 uses code from the [libaom](https://aomedia.googlesource.com/aom/) project. The files used are marked with the following [license](LICENSE_AOM.md) in their headers.
+SVT-AV1 is licensed under the Alliance for Open Media license. See [LICENSE](LICENSE.md) for details. Please refer to the [license Q&A](https://01.org/svt/downloads/svt-av1-license-change-qa) if you have any questions about the licensing history of SVT-AV1.
 
 ## Documentation
 
