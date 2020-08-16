@@ -808,174 +808,129 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
+    uint8_t *input_buffer;
+    uint8_t *recon_coeff_buffer;
+
     if (!is_16bit) {
         EbPictureBufferDesc *input_picture_ptr =
             (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
-        uint32_t column_index;
-        uint32_t row_index           = 0;
-        uint64_t residual_distortion = 0;
-        EbByte   input_buffer;
-        EbByte   recon_coeff_buffer;
         if (plane == 0) {
-            recon_coeff_buffer = &(
+            recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr
                      ->buffer_y)[recon_ptr->origin_x + recon_ptr->origin_y * recon_ptr->stride_y]);
-            input_buffer = &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x +
-                                                           input_picture_ptr->origin_y *
-                                                               input_picture_ptr->stride_y]);
+            input_buffer = (uint8_t *)&(
+                (input_picture_ptr
+                     ->buffer_y)[input_picture_ptr->origin_x +
+                                 input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
 
-            while (row_index < input_picture_ptr->height) {
-                column_index = 0;
-                while (column_index < input_picture_ptr->width) {
-                    residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
-                                                        (recon_coeff_buffer[column_index]));
-                    ++column_index;
-                }
-                input_buffer += input_picture_ptr->stride_y;
-                recon_coeff_buffer += recon_ptr->stride_y;
-                ++row_index;
-            }
-
-            return residual_distortion;
+            return spatial_full_distortion_kernel(input_buffer,
+                                                  0,
+                                                  input_picture_ptr->stride_y,
+                                                  recon_coeff_buffer,
+                                                  0,
+                                                  recon_ptr->stride_y,
+                                                  input_picture_ptr->width,
+                                                  input_picture_ptr->height);
         }
-
         else if (plane == 1) {
-            recon_coeff_buffer =
-                &((recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 +
-                                         recon_ptr->origin_y / 2 * recon_ptr->stride_cb]);
-            input_buffer = &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 +
-                                                            input_picture_ptr->origin_y / 2 *
-                                                                input_picture_ptr->stride_cb]);
+            recon_coeff_buffer = (uint8_t *)&(
+                (recon_ptr->buffer_cb)[recon_ptr->origin_x / 2 +
+                                       recon_ptr->origin_y / 2 * recon_ptr->stride_cb]);
+            input_buffer = (uint8_t *)&(
+                (input_picture_ptr
+                     ->buffer_cb)[input_picture_ptr->origin_x / 2 +
+                                  input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb]);
 
-            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
-                column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
-                    residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
-                                                        (recon_coeff_buffer[column_index]));
-                    ++column_index;
-                }
-
-                input_buffer += input_picture_ptr->stride_cb;
-                recon_coeff_buffer += recon_ptr->stride_cb;
-                ++row_index;
-            }
-
-            return residual_distortion;
+            return spatial_full_distortion_kernel(input_buffer,
+                                                  0,
+                                                  input_picture_ptr->stride_cb,
+                                                  recon_coeff_buffer,
+                                                  0,
+                                                  recon_ptr->stride_cb,
+                                                  input_picture_ptr->width >> ss_x,
+                                                  input_picture_ptr->height >> ss_y);
         } else if (plane == 2) {
-            recon_coeff_buffer =
-                &((recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 +
-                                         recon_ptr->origin_y / 2 * recon_ptr->stride_cr]);
-            input_buffer        = &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 +
-                                                            input_picture_ptr->origin_y / 2 *
-                                                                input_picture_ptr->stride_cr]);
+            recon_coeff_buffer = (uint8_t *)&(
+                (recon_ptr->buffer_cr)[recon_ptr->origin_x / 2 +
+                                       recon_ptr->origin_y / 2 * recon_ptr->stride_cr]);
+            input_buffer = (uint8_t *)&(
+                (input_picture_ptr
+                     ->buffer_cr)[input_picture_ptr->origin_x / 2 +
+                                  input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr]);
 
-            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
-                column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
-                    residual_distortion += (int64_t)SQR((int64_t)(input_buffer[column_index]) -
-                                                        (recon_coeff_buffer[column_index]));
-                    ++column_index;
-                }
-
-                input_buffer += input_picture_ptr->stride_cr;
-                recon_coeff_buffer += recon_ptr->stride_cr;
-                ++row_index;
-            }
-
-            return residual_distortion;
+            return spatial_full_distortion_kernel(input_buffer,
+                                                  0,
+                                                  input_picture_ptr->stride_cr,
+                                                  recon_coeff_buffer,
+                                                  0,
+                                                  recon_ptr->stride_cr,
+                                                  input_picture_ptr->width >> ss_x,
+                                                  input_picture_ptr->height >> ss_y);
         }
         return 0;
     } else {
         EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc *)pcs_ptr->input_frame16bit;
 
-        uint32_t  column_index;
-        uint32_t  row_index           = 0;
-        uint64_t  residual_distortion = 0;
-        uint16_t *input_buffer;
-        uint16_t *recon_coeff_buffer;
         if (plane == 0) {
-            recon_coeff_buffer = (uint16_t *)&(
+            recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr
                      ->buffer_y)[(recon_ptr->origin_x + recon_ptr->origin_y * recon_ptr->stride_y)
                                  << is_16bit]);
-            input_buffer = (uint16_t *)&(
+            input_buffer = (uint8_t *)&(
                 (input_picture_ptr
                      ->buffer_y)[(input_picture_ptr->origin_x +
                                   input_picture_ptr->origin_y * input_picture_ptr->stride_y)
                                  << is_16bit]);
 
-            while (row_index < input_picture_ptr->height) {
-                column_index = 0;
-                while (column_index < input_picture_ptr->width) {
-                    residual_distortion +=
-                        (int64_t)SQR(((int64_t)input_buffer[column_index]) -
-                                     (int64_t)(recon_coeff_buffer[column_index]));
-                    ++column_index;
-                }
-
-                input_buffer += input_picture_ptr->stride_y;
-                recon_coeff_buffer += recon_ptr->stride_y;
-                ++row_index;
-            }
-
-            return residual_distortion;
+            return full_distortion_kernel16_bits(input_buffer,
+                                                 0,
+                                                 input_picture_ptr->stride_y,
+                                                 recon_coeff_buffer,
+                                                 0,
+                                                 recon_ptr->stride_y,
+                                                 input_picture_ptr->width,
+                                                 input_picture_ptr->height);
         }
-
         else if (plane == 1) {
-            recon_coeff_buffer = (uint16_t *)&(
+            recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr->buffer_cb)[(recon_ptr->origin_x / 2 +
                                         recon_ptr->origin_y / 2 * recon_ptr->stride_cb)
                                        << is_16bit]);
-            input_buffer = (uint16_t *)&(
+            input_buffer = (uint8_t *)&(
                 (input_picture_ptr
                      ->buffer_cb)[(input_picture_ptr->origin_x / 2 +
                                    input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb)
                                   << is_16bit]);
 
-            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
-                column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
-                    residual_distortion +=
-                        (int64_t)SQR(((int64_t)input_buffer[column_index]) -
-                                     (int64_t)(recon_coeff_buffer[column_index]));
-                    ++column_index;
-                }
-
-                input_buffer += input_picture_ptr->stride_cb;
-                recon_coeff_buffer += recon_ptr->stride_cb;
-                ++row_index;
-            }
-
-            return residual_distortion;
+            return full_distortion_kernel16_bits(input_buffer,
+                                                 0,
+                                                 input_picture_ptr->stride_cb,
+                                                 recon_coeff_buffer,
+                                                 0,
+                                                 recon_ptr->stride_cb,
+                                                 input_picture_ptr->width >> ss_x,
+                                                 input_picture_ptr->height >> ss_y);
         } else if (plane == 2) {
-            recon_coeff_buffer = (uint16_t *)&(
+            recon_coeff_buffer = (uint8_t *)&(
                 (recon_ptr->buffer_cr)[(recon_ptr->origin_x / 2 +
                                         recon_ptr->origin_y / 2 * recon_ptr->stride_cr)
                                        << is_16bit]);
-            input_buffer = (uint16_t *)&(
+            input_buffer = (uint8_t *)&(
                 (input_picture_ptr
                      ->buffer_cr)[(input_picture_ptr->origin_x / 2 +
                                    input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr)
                                   << is_16bit]);
 
-            while (row_index < (uint32_t)(input_picture_ptr->height >> ss_y)) {
-                column_index = 0;
-                while (column_index < (uint32_t)(input_picture_ptr->width >> ss_x)) {
-                    residual_distortion +=
-                        (int64_t)SQR(((int64_t)input_buffer[column_index]) -
-                                     (int64_t)(recon_coeff_buffer[column_index]));
-                    ++column_index;
-                }
-
-                input_buffer += input_picture_ptr->stride_cr;
-                recon_coeff_buffer += recon_ptr->stride_cr;
-                ++row_index;
-            }
-
-            return residual_distortion;
+            return full_distortion_kernel16_bits(input_buffer,
+                                                 0,
+                                                 input_picture_ptr->stride_cr,
+                                                 recon_coeff_buffer,
+                                                 0,
+                                                 recon_ptr->stride_cr,
+                                                 input_picture_ptr->width >> ss_x,
+                                                 input_picture_ptr->height >> ss_y);
         }
-
         return 0;
     }
 }

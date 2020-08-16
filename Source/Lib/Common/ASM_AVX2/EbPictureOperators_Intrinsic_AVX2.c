@@ -1541,7 +1541,7 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
                 inp += input_stride;
                 rec += recon_stride;
             } while (--h);
-        } else { // 128
+        } else if (area_width == 128) {
             do {
                 spatial_full_distortion_kernel32_avx2_intrin(inp + 0 * 32, rec + 0 * 32, &sum);
                 spatial_full_distortion_kernel32_avx2_intrin(inp + 1 * 32, rec + 1 * 32, &sum);
@@ -1550,6 +1550,20 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
                 inp += input_stride;
                 rec += recon_stride;
             } while (--h);
+        } else {
+            __m256i sum64 = _mm256_setzero_si256();
+            do {
+                for (uint32_t w = 0; w < area_width; w += 32) {
+                    spatial_full_distortion_kernel32_avx2_intrin(inp + w, rec + w, &sum);
+                }
+                inp += input_stride;
+                rec += recon_stride;
+
+                sum32_to64(&sum, &sum64);
+            } while (--h);
+            __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum64),
+                                      _mm256_extracti128_si256(sum64, 1));
+            return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
         }
     }
 

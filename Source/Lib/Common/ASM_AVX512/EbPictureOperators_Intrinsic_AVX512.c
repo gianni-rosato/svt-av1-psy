@@ -17,6 +17,17 @@
 #include "EbPictureOperators_SSE2.h"
 #include "EbMemory_AVX2.h"
 
+/*******************************************************************************
+ * Helper function that add 32bit values from sum32 to 64bit values in sum64
+ * sum32 is also zeroed
+*******************************************************************************/
+static INLINE void sum32_to64_avx512(__m512i *const sum32, __m512i *const sum64) {
+    //Save partial sum into large 64bit register instead of 32 bit (which could overflow)
+    *sum64 = _mm512_add_epi64(*sum64, _mm512_unpacklo_epi32(*sum32, _mm512_setzero_si512()));
+    *sum64 = _mm512_add_epi64(*sum64, _mm512_unpackhi_epi32(*sum32, _mm512_setzero_si512()));
+    *sum32 = _mm512_setzero_si512();
+}
+
 static INLINE void residual32x2_avx512(const uint8_t *input, const uint32_t input_stride,
                                        const uint8_t *pred, const uint32_t pred_stride,
                                        int16_t *residual, const uint32_t residual_stride) {
@@ -333,13 +344,30 @@ uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_of
                     inp += input_stride;
                     rec += recon_stride;
                 } while (--h);
-            } else { // 128
+            } else if (area_width == 128) {
                 do {
                     SpatialFullDistortionKernel64_AVX512_INTRIN(inp, rec, &sum512);
                     SpatialFullDistortionKernel64_AVX512_INTRIN(inp + 64, rec + 64, &sum512);
                     inp += input_stride;
                     rec += recon_stride;
                 } while (--h);
+            } else {
+                __m512i sum64 = _mm512_setzero_si512();
+                do {
+                    for (uint32_t w = 0; w < area_width; w += 64) {
+                        SpatialFullDistortionKernel64_AVX512_INTRIN(inp + w, rec + w, &sum512);
+                    }
+                    sum32_to64_avx512(&sum512, &sum64);
+                    inp += input_stride;
+                    rec += recon_stride;
+                } while (--h);
+
+                const __m256i sum_L = _mm512_castsi512_si256(sum64);
+                const __m256i sum_H = _mm512_extracti64x4_epi64(sum64, 1);
+                sum       = _mm256_add_epi64(sum_L, sum_H);
+                __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum),
+                                          _mm256_extracti128_si256(sum, 1));
+                return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
             }
 
             const __m256i sum512_L = _mm512_castsi512_si256(sum512);
