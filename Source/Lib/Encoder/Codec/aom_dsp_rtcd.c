@@ -86,10 +86,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 
     eb_aom_quantize_b = eb_aom_quantize_b_c_ii;
 
-    eb_aom_quantize_b_32x32 = eb_aom_quantize_b_32x32_c_ii;
-
-    eb_aom_highbd_quantize_b_32x32 = eb_aom_highbd_quantize_b_32x32_c;
-
     eb_aom_highbd_quantize_b = eb_aom_highbd_quantize_b_c;
 
     eb_av1_quantize_fp = eb_av1_quantize_fp_c;
@@ -269,9 +265,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_highbd_10_variance128x128 = eb_aom_highbd_10_variance128x128_c;
 
     //QIQ
-    eb_aom_quantize_b_64x64 = eb_aom_quantize_b_64x64_c_ii;
-
-    eb_aom_highbd_quantize_b_64x64 = eb_aom_highbd_quantize_b_64x64_c;
     // transform
     eb_av1_fwd_txfm2d_16x8 = eb_av1_fwd_txfm2d_16x8_c;
     eb_av1_fwd_txfm2d_8x16 = eb_av1_fwd_txfm2d_8x16_c;
@@ -396,8 +389,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
         if (flags & HAS_AVX2) search_one_dual = search_one_dual_avx2;
         if (flags & HAS_AVX2) eb_aom_mse16x16 = eb_aom_mse16x16_avx2;
         if (flags & HAS_AVX2) eb_aom_quantize_b = eb_aom_quantize_b_avx2;
-        if (flags & HAS_AVX2) eb_aom_quantize_b_32x32 = eb_aom_quantize_b_32x32_avx2;
-        if (flags & HAS_AVX2) eb_aom_highbd_quantize_b_32x32 = eb_aom_highbd_quantize_b_32x32_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_quantize_b = eb_aom_highbd_quantize_b_avx2;
         if (flags & HAS_AVX2) eb_av1_lowbd_pixel_proj_error = eb_av1_lowbd_pixel_proj_error_avx2;
 #ifndef NON_AVX512_SUPPORT
@@ -581,8 +572,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                 if (flags & HAS_AVX2) eb_aom_highbd_10_variance64x128 = eb_aom_highbd_10_variance64x128_avx2;
                 if (flags & HAS_AVX2) eb_aom_highbd_10_variance128x64 = eb_aom_highbd_10_variance128x64_avx2;
                 if (flags & HAS_AVX2) eb_aom_highbd_10_variance128x128 = eb_aom_highbd_10_variance128x128_avx2;
-                if (flags & HAS_AVX2) eb_aom_quantize_b_64x64 = eb_aom_quantize_b_64x64_avx2;
-                if (flags & HAS_AVX2) eb_aom_highbd_quantize_b_64x64 = eb_aom_highbd_quantize_b_64x64_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x8 = eb_av1_fwd_txfm2d_16x8_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_8x16 = eb_av1_fwd_txfm2d_8x16_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x4 = eb_av1_fwd_txfm2d_16x4_avx2;

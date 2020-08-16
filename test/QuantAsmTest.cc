@@ -14,8 +14,7 @@
  *
  * @brief Unit test for quantize avx2 functions:
  * - eb_aom_highbd_quantize_b_avx2
- * - eb_aom_highbd_quantize_b_32x32_avx2
- * - eb_aom_highbd_quantize_b_64x64_avx2
+ * - eb_aom_quantize_b_avx2
  *
  * @author Cidana-Zhengwen
  *
@@ -51,13 +50,15 @@ extern "C" void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta
                                     Quants *const quants, Dequants *const deq);
 
 using QuantizeFunc = void (*)(const TranLow *coeff_ptr, intptr_t n_coeffs,
-                              int32_t skip_block, const int16_t *zbin_ptr,
+                              const int16_t *zbin_ptr,
                               const int16_t *round_ptr,
                               const int16_t *quant_ptr,
                               const int16_t *quant_shift_ptr,
                               TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
                               const int16_t *dequant_ptr, uint16_t *eob_ptr,
-                              const int16_t *scan, const int16_t *iscan);
+                              const int16_t *scan, const int16_t *iscan,
+                              const QmVal *qm_ptr, const QmVal *iqm_ptr,
+                              const int32_t log_scale);
 
 using QuantizeParam = std::tuple<int, int>;
 
@@ -65,9 +66,8 @@ using svt_av1_test_tool::SVTRandom;  // to generate the random
 /**
  * @brief Unit test for quantize avx2 functions:
  * - eb_aom_highbd_quantize_b_avx2
- * - eb_aom_highbd_quantize_b_32x32_avx2
- * - eb_aom_highbd_quantize_b_64x64_avx2
- *
+ * - eb_aom_quantize_b_avx2
+  *
  * Test strategy:
  * These tests use quantize C function as reference, input the same data and
  * compare C function output with avx2 function output, so as to check
@@ -89,7 +89,9 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
   protected:
     QuantizeBTest()
         : tx_size_(static_cast<TxSize>(TEST_GET_PARAM(0))),
-          bd_(static_cast<AomBitDepth>(TEST_GET_PARAM(1))) {
+          bd_(static_cast<AomBitDepth>(TEST_GET_PARAM(1))),
+        log_scale(0)
+    {
         n_coeffs_ = av1_get_max_eob(tx_size_);
         coeff_min_ = -(1 << (7 + bd_));
         coeff_max_ = (1 << (7 + bd_)) - 1;
@@ -132,27 +134,20 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
      */
     void setup_func_ptrs() {
         if (bd_ == AOM_BITS_8) {
-            if (tx_size_ == TX_32X32) {
-                quant_ref_ = eb_aom_quantize_b_32x32_c_ii;
-                quant_test_ = eb_aom_quantize_b_32x32_avx2;
-            } else if (tx_size_ == TX_64X64) {
-                quant_ref_ = eb_aom_quantize_b_64x64_c_ii;
-                quant_test_ = eb_aom_quantize_b_64x64_avx2;
-            } else {
                 quant_ref_ = eb_aom_quantize_b_c_ii;
                 quant_test_ = eb_aom_quantize_b_avx2;
-            }
         } else {
-            if (tx_size_ == TX_32X32) {
-                quant_ref_ = eb_aom_highbd_quantize_b_32x32_c;
-                quant_test_ = eb_aom_highbd_quantize_b_32x32_avx2;
-            } else if (tx_size_ == TX_64X64) {
-                quant_ref_ = eb_aom_highbd_quantize_b_64x64_c;
-                quant_test_ = eb_aom_highbd_quantize_b_64x64_avx2;
-            } else {
                 quant_ref_ = eb_aom_highbd_quantize_b_c;
                 quant_test_ = eb_aom_highbd_quantize_b_avx2;
-            }
+        }
+        if (tx_size_ == TX_32X32) {
+            log_scale = 1;
+        }
+        else if (tx_size_ == TX_64X64) {
+            log_scale = 2;
+        }
+        else {
+            log_scale = 0;
         }
     }
 
@@ -161,7 +156,6 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
      * quant/dequant/eob are exactly same between C output and avx2 outptu
      */
     void run_quantize(int q) {
-        const int32_t skip_block = 0;
         const ScanOrder *const sc = &av1_scan_orders[tx_size_][DCT_DCT];
         const int16_t *zbin = qtab_quants_.y_zbin[q];
         const int16_t *round = qtab_quants_.y_round[q];
@@ -176,7 +170,6 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
 
         quant_ref_(coeff_in_,
                    n_coeffs_,
-                   skip_block,
                    zbin,
                    round,
                    quant,
@@ -186,11 +179,13 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
                    dequant,
                    &eob_ref_,
                    sc->scan,
-                   sc->iscan);
+                   sc->iscan,
+                   NULL,
+                   NULL,
+                   log_scale);
 
         quant_test_(coeff_in_,
                     n_coeffs_,
-                    skip_block,
                     zbin,
                     round,
                     quant,
@@ -200,7 +195,10 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
                     dequant,
                     &eob_test_,
                     sc->scan,
-                    sc->iscan);
+                    sc->iscan,
+                    NULL,
+                    NULL,
+                   log_scale);
 
         for (int j = 0; j < n_coeffs_; ++j) {
             ASSERT_EQ(qcoeff_ref_[j], qcoeff_test_[j])
@@ -239,6 +237,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     const TxSize tx_size_;    /**< input param tx_size */
     const AomBitDepth bd_;    /**< input param 8bit or 10bit */
     int n_coeffs_;            /**< coeff number */
+    int32_t log_scale;
     uint16_t eob_ref_;        /**< output ref eob */
     uint16_t eob_test_;       /**< output test eob */
 
