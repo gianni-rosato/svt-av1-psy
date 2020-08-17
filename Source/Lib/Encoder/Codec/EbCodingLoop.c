@@ -2320,7 +2320,7 @@ static void av1_copy_frame_mvs(PictureControlSet *pcs_ptr, const Av1Common *cons
 *   Coefficient Samples
 *
 *******************************************/
-EB_EXTERN void av1_encode_pass(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
                                uint32_t sb_origin_y, EncDecContext *context_ptr) {
     EbBool               is_16bit = context_ptr->is_16bit;

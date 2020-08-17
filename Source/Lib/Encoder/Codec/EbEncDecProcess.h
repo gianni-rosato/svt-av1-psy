@@ -119,7 +119,7 @@ extern EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
                                         const EbEncHandle *enc_handle_ptr, int index,
                                         int tasks_index, int demux_index);
 
-extern void *enc_dec_kernel(void *input_ptr);
+extern void *mode_decision_kernel(void *input_ptr);
 
 #ifdef __cplusplus
 }

@@ -1761,7 +1761,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
     // EncDec Process
     EB_CREATE_THREAD_ARRAY(enc_handle_ptr->enc_dec_thread_handle_array, control_set_ptr->enc_dec_process_init_count,
-        enc_dec_kernel,
+        mode_decision_kernel,
         enc_handle_ptr->enc_dec_context_ptr_array);
 
     // Dlf Process

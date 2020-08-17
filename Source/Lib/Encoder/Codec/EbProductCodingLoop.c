@@ -62,6 +62,9 @@ static int32_t nsq_weight_per_qp[64] = { -5,  -5,  -5,  -5,  -5,  -5,  -5,  -5, 
 #endif
 #endif
 #endif
+#if TX_EARLY_EXIT
+#define TXS_EXIT_VAR_TH 256
+#endif
 EbErrorType generate_md_stage_0_cand(SuperBlock *sb_ptr, ModeDecisionContext *context_ptr,
                                      uint32_t *         fast_candidate_total_count,
                                      PictureControlSet *pcs_ptr);
@@ -9647,6 +9650,11 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
             if (!is_best_has_coeff)
                 continue;
         }
+#if TX_EARLY_EXIT
+        // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
+        if (context_ptr->source_variance < TXS_EXIT_VAR_TH && context_ptr->tx_depth == 2 && best_tx_depth == 0)
+            continue;
+#endif
         tx_reset_neighbor_arrays(pcs_ptr, context_ptr, is_inter, context_ptr->tx_depth);
         ModeDecisionCandidateBuffer *tx_candidate_buffer = (context_ptr->tx_depth == 0)
             ? candidate_buffer
