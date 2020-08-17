@@ -50,7 +50,8 @@ extern AppExitConditionType process_output_recon_buffer(EbConfig *    config,
 
 extern AppExitConditionType process_output_stream_buffer(EbConfig *    config,
                                                          EbAppContext *app_call_back,
-                                                         uint8_t       pic_send_done);
+                                                         uint8_t       pic_send_done,
+                                                         int32_t      *frame_count);
 
 volatile int32_t keep_running = 1;
 
@@ -214,6 +215,8 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
             fprintf(stderr, "%sEncoding          ", get_pass_name(pass));
             fflush(stdout);
 
+            int32_t total_frames = 0;
+
             while (exit_condition == APP_ExitConditionNone) {
                 exit_condition = APP_ExitConditionFinished;
                 for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
@@ -231,7 +234,7 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
                                 (exit_cond_input[inst_cnt] == APP_ExitConditionNone) ||
                                         (exit_cond_recon[inst_cnt] == APP_ExitConditionNone)
                                     ? 0
-                                    : 1);
+                                    : 1, &total_frames);
                         if (((exit_cond_recon[inst_cnt] == APP_ExitConditionFinished ||
                               !configs[inst_cnt]->recon_file) &&
                              exit_cond_output[inst_cnt] == APP_ExitConditionFinished &&

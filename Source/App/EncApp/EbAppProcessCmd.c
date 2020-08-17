@@ -1089,7 +1089,7 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
 }
 
 AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext *app_call_back,
-                                                  uint8_t pic_send_done) {
+                                                  uint8_t pic_send_done, int32_t *frame_count) {
     AppPortActiveType *  port_state = &app_call_back->output_stream_port_active;
     EbBufferHeaderType * header_ptr;
     EbComponentType *    component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
@@ -1099,9 +1099,6 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
 
     uint64_t *total_latency = &config->performance_context.total_latency;
     uint32_t *max_latency   = &config->performance_context.max_latency;
-
-    // System performance variables
-    static int32_t frame_count = 0;
 
     // Local variables
     uint64_t finish_s_time = 0;
@@ -1164,9 +1161,9 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
             // Release the output buffer
             svt_av1_enc_release_out_buffer(&header_ptr);
 
-            ++frame_count;
+            ++*frame_count;
             if (!config->no_progress && !(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
-                fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", frame_count);
+                fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", *frame_count);
 
             //++frame_count;
             fflush(stdout);
@@ -1180,12 +1177,12 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
                     (double)(config->performance_context.frame_count);
             }
 
-            if (!(frame_count % SPEED_MEASUREMENT_INTERVAL)) {
+            if (!(*frame_count % SPEED_MEASUREMENT_INTERVAL)) {
                 {
                     fprintf(stderr, "\n");
                     fprintf(stderr,
                             "Average System Encoding Speed:        %.2f\n",
-                            (double)(frame_count) / config->performance_context.total_encode_time);
+                            (double)(*frame_count) / config->performance_context.total_encode_time);
                 }
             }
         }
