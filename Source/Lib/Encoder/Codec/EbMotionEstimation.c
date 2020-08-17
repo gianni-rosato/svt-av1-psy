@@ -7913,7 +7913,7 @@ void hme_level_0(
     search_region_index =
         x_top_left_search_region + y_top_left_search_region * sixteenth_ref_pic_ptr->stride_y;
 
-    if (((sb_width & 7) == 0) || (sb_width == 4)) {
+    if (((sb_width & 7) == 0) || (sb_width == 4) || (sb_width == 6) || (sb_width == 12)) {
 #if !REMOVE_UNUSED_CODE_PH2
         if ((search_area_width & 15) == 0) {
             // Only width equals 16 (SB equals 64) is updated
@@ -8119,7 +8119,7 @@ void hme_level_1(
     search_region_index =
         x_top_left_search_region + y_top_left_search_region * quarter_ref_pic_ptr->stride_y;
 
-    if (((sb_width & 7) == 0) || (sb_width == 4)) {
+    if (((sb_width & 7) == 0) || (sb_width == 4) || (sb_width == 6) || (sb_width == 12)) {
         // Put the first search location into level0 results
         sad_loop_kernel(
             &context_ptr->quarter_sb_buffer[0],

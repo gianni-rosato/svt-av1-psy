@@ -104,6 +104,10 @@ BlkSize TEST_BLOCK_SIZES[] = {
     BlkSize(64, 24), BlkSize(48, 24), BlkSize(32, 24), BlkSize(24, 32),
     BlkSize(48, 48), BlkSize(48, 16), BlkSize(48, 32), BlkSize(16, 48),
     BlkSize(32, 48), BlkSize(48, 64), BlkSize(64, 48)};
+BlkSize TEST_BLOCK_SIZES_SMALL[] = {
+    BlkSize(6, 2),   BlkSize(6, 4),   BlkSize(6, 8),   BlkSize(6, 16),
+    BlkSize(6, 32),  BlkSize(12, 2),  BlkSize(12, 4),  BlkSize(12, 8),
+    BlkSize(12, 16), BlkSize(12, 32)};
 TestPattern TEST_PATTERNS[] = {REF_MAX, SRC_MAX, RANDOM, UNALIGN};
 SADPattern TEST_SAD_PATTERNS[] = {BUF_MAX, BUF_MIN, BUF_SMALL, BUF_RANDOM};
 typedef std::tuple<TestPattern, BlkSize> Testsad_Param;
@@ -648,6 +652,14 @@ FuncPair TEST_FUNC_PAIRS[] = {
 #endif
 };
 
+FuncPair TEST_FUNC_PAIRS_SMALL[] = {
+    FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1_intrin),
+    FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx2_intrin),
+#ifndef NON_AVX512_SUPPORT
+    FuncPair(sad_loop_kernel_c, sad_loop_kernel_avx512_intrin),
+#endif
+};
+
 #if !REMOVE_ME_SUBPEL_CODE
 FuncPair TEST_HME_FUNC_PAIRS[] = {
     FuncPair(sad_loop_kernel_c, sad_loop_kernel_sse4_1_hme_l0_intrin),
@@ -871,6 +883,13 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_FUNC_PAIRS)));
 
 #if !REMOVE_ME_SUBPEL_CODE
+INSTANTIATE_TEST_CASE_P(
+    LOOPSAD_SMALL, sad_LoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES_SMALL),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::ValuesIn(TEST_FUNC_PAIRS_SMALL)));
+
 INSTANTIATE_TEST_CASE_P(
     HMESAD, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),

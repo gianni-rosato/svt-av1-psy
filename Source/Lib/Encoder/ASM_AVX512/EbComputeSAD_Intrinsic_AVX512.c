@@ -17,6 +17,8 @@
 #include <immintrin.h>
 #include "EbMemory_AVX2.h"
 #include "transpose_avx2.h"
+#include "EbUtility.h"
+#include "EbComputeSAD_C.h"
 
 static INLINE void sad64_kernel_avx512(const __m512i s, const uint8_t *const ref,
                                        __m512i *const sum) {
@@ -651,6 +653,36 @@ static INLINE void sad_loop_kernel_8_avx2(const uint8_t *const src, const uint32
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (5 << 3) | 5)); // 101 101
 }
 
+/*******************************************************************************
+* Function helper adds to "sums" vectors SAD's for block width of 12, uses AVX512 instructions
+* Requirement: width = 12
+* Requirement: height = 2
+*******************************************************************************/
+SIMD_INLINE void sad_loop_kernel_12_avx512(const uint8_t *const src, const uint32_t src_stride,
+                                           const uint8_t *const ref, const uint32_t ref_stride,
+                                           __m512i *const sum) {
+    const __m128i s0  = _mm_loadu_si128((__m128i *)src);
+    const __m128i s1  = _mm_loadu_si128((__m128i *)(src + src_stride));
+    const __m256i s01 = _mm256_insertf128_si256(_mm256_castsi128_si256(s0), s1, 1);
+    const __m512i s   = _mm512_castsi256_si512(s01);
+    const __m512i ss0 = _mm512_permutexvar_epi32(
+        _mm512_setr_epi32(0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4), s);
+    const __m512i ss1 = _mm512_permutexvar_epi32(
+        _mm512_setr_epi32(1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5), s);
+    const __m512i ss2 = _mm512_permutexvar_epi32(
+        _mm512_setr_epi32(2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 6, 6, 6), s);
+
+    const __m256i r0  = _mm256_loadu_si256((__m256i *)ref);
+    const __m256i r1  = _mm256_loadu_si256((__m256i *)(ref + ref_stride));
+    const __m512i r   = _mm512_inserti64x4(_mm512_castsi256_si512(r0), r1, 1);
+    const __m512i rr0 = _mm512_permutexvar_epi64(_mm512_setr_epi64(0, 1, 1, 2, 4, 5, 5, 6), r);
+    const __m512i rr1 = _mm512_permutexvar_epi64(_mm512_setr_epi64(1, 2, 2, 3, 5, 6, 6, 7), r);
+
+    *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss0, rr0, 0x94));
+    *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss1, rr0, 0xE9));
+    *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss2, rr1, 0x94));
+}
+
 SIMD_INLINE void sad_loop_kernel_16_avx512(const uint8_t *const src, const uint32_t src_stride,
                                            const uint8_t *const ref, const uint32_t ref_stride,
                                            __m512i *const sum) {
@@ -677,6 +709,36 @@ SIMD_INLINE void sad_loop_kernel_16_avx512(const uint8_t *const src, const uint3
     *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss1, rr0, 0xE9));
     *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss2, rr1, 0x94));
     *sum = _mm512_adds_epu16(*sum, _mm512_dbsad_epu8(ss3, rr1, 0xE9));
+}
+
+/*******************************************************************************
+* Function helper adds to two elements "sums" vectors SAD's for block width of 12, uses AVX512 instructions
+* Requirement: width = 12
+* Requirement: height = 2
+*******************************************************************************/
+SIMD_INLINE void sad_loop_kernel_12_2sum_avx512(const uint8_t *const src, const uint32_t src_stride,
+                                                const uint8_t *const ref, const uint32_t ref_stride,
+                                                __m512i sum[2]) {
+    const __m128i s0  = _mm_loadu_si128((__m128i *)src);
+    const __m128i s1  = _mm_loadu_si128((__m128i *)(src + src_stride));
+    const __m256i s01 = _mm256_insertf128_si256(_mm256_castsi128_si256(s0), s1, 1);
+    const __m512i s   = _mm512_castsi256_si512(s01);
+    const __m512i ss0 = _mm512_permutexvar_epi32(
+        _mm512_setr_epi32(0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4), s);
+    const __m512i ss1 = _mm512_permutexvar_epi32(
+        _mm512_setr_epi32(1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5), s);
+    const __m512i ss2 = _mm512_permutexvar_epi32(
+        _mm512_setr_epi32(2, 2, 2, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 6, 6, 6), s);
+
+    const __m256i r0  = _mm256_loadu_si256((__m256i *)ref);
+    const __m256i r1  = _mm256_loadu_si256((__m256i *)(ref + ref_stride));
+    const __m512i r   = _mm512_inserti64x4(_mm512_castsi256_si512(r0), r1, 1);
+    const __m512i rr0 = _mm512_permutexvar_epi64(_mm512_setr_epi64(0, 1, 1, 2, 4, 5, 5, 6), r);
+    const __m512i rr1 = _mm512_permutexvar_epi64(_mm512_setr_epi64(1, 2, 2, 3, 5, 6, 6, 7), r);
+
+    sum[0] = _mm512_adds_epu16(sum[0], _mm512_dbsad_epu8(ss0, rr0, 0x94));
+    sum[1] = _mm512_adds_epu16(sum[1], _mm512_dbsad_epu8(ss1, rr0, 0xE9));
+    sum[0] = _mm512_adds_epu16(sum[0], _mm512_dbsad_epu8(ss2, rr1, 0x94));
 }
 
 SIMD_INLINE void sad_loop_kernel_16_2sum_avx512(const uint8_t *const src, const uint32_t src_stride,
@@ -707,6 +769,31 @@ SIMD_INLINE void sad_loop_kernel_16_2sum_avx512(const uint8_t *const src, const 
     sum[1] = _mm512_adds_epu16(sum[1], _mm512_dbsad_epu8(ss3, rr1, 0xE9));
 }
 
+/*******************************************************************************
+* Function helper adds to "sums" vectors SAD's for block width of 12, uses AVX2 instructions
+* Requirement: width = 12
+* Requirement: height = 2
+*******************************************************************************/
+static INLINE void sad_loop_kernel_12_avx2(const uint8_t *const src, const uint32_t src_stride,
+                                           const uint8_t *const ref, const uint32_t ref_stride,
+                                           __m256i *const sum) {
+    const __m256i ss0 = _mm256_insertf128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)src)),
+        _mm_loadu_si128((__m128i *)(src + src_stride)),
+        1);
+    const __m256i rr0 = _mm256_insertf128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)ref)),
+        _mm_loadu_si128((__m128i *)(ref + ref_stride)),
+        1);
+    const __m256i rr1 = _mm256_insertf128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + 8))),
+        _mm_loadu_si128((__m128i *)(ref + ref_stride + 8)),
+        1);
+    *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (0 << 3) | 0)); // 000 000
+    *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (5 << 3) | 5)); // 101 101
+    *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr1, ss0, (2 << 3) | 2)); // 010 010
+}
+
 static INLINE void sad_loop_kernel_16_avx2(const uint8_t *const src, const uint32_t src_stride,
                                            const uint8_t *const ref, const uint32_t ref_stride,
                                            __m256i *const sum) {
@@ -726,6 +813,31 @@ static INLINE void sad_loop_kernel_16_avx2(const uint8_t *const src, const uint3
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (5 << 3) | 5)); // 101 101
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr1, ss0, (2 << 3) | 2)); // 010 010
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr1, ss0, (7 << 3) | 7)); // 111 111
+}
+
+/*******************************************************************************
+* Function helper adds to two elements "sums" vectors SAD's for block width of 12, uses AVX2 instructions
+* Requirement: width = 12
+* Requirement: height = 2
+*******************************************************************************/
+static INLINE void sad_loop_kernel_12_2sum_avx2(const uint8_t *const src, const uint32_t src_stride,
+                                                const uint8_t *const ref, const uint32_t ref_stride,
+                                                __m256i sums[2]) {
+    const __m256i ss0 = _mm256_insertf128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)src)),
+        _mm_loadu_si128((__m128i *)(src + src_stride)),
+        1);
+    const __m256i rr0 = _mm256_insertf128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)ref)),
+        _mm_loadu_si128((__m128i *)(ref + ref_stride)),
+        1);
+    const __m256i rr1 = _mm256_insertf128_si256(
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(ref + 8))),
+        _mm_loadu_si128((__m128i *)(ref + ref_stride + 8)),
+        1);
+    sums[0] = _mm256_adds_epu16(sums[0], _mm256_mpsadbw_epu8(rr0, ss0, (0 << 3) | 0)); // 000 000
+    sums[1] = _mm256_adds_epu16(sums[1], _mm256_mpsadbw_epu8(rr0, ss0, (5 << 3) | 5)); // 101 101
+    sums[0] = _mm256_adds_epu16(sums[0], _mm256_mpsadbw_epu8(rr1, ss0, (2 << 3) | 2)); // 010 010
 }
 
 static INLINE void sad_loop_kernel_16_2sum_avx2(const uint8_t *const src, const uint32_t src_stride,
@@ -1453,7 +1565,28 @@ SIMD_INLINE void update_leftover_2048_pel(const __m256i sums256[4], const int16_
 }
 
 /*******************************************************************************
-* Requirement: width   = 4, 8, 16, 24, 32, 48 or 64
+* Requirement: search_size <= 8,
+* Returns "search_size" of SAD's for all height in 5th and 6th col
+*******************************************************************************/
+static INLINE __m128i complement_4_to_6(uint8_t *ref, uint32_t ref_stride, uint8_t *src,
+                                        uint32_t src_stride, uint32_t height,uint32_t search_size) {
+    __m128i sum;
+    DECLARE_ALIGNED(16, uint16_t, tsum[8]);
+    memset(tsum, 0, 8 * sizeof(uint16_t));
+    for (uint32_t search_area = 0; search_area < search_size; search_area++) {
+        for (uint32_t y = 0; y < height; y++) {
+            tsum[search_area] += EB_ABS_DIFF(src[y * src_stride + 4], ref[y * ref_stride + 4]) +
+                EB_ABS_DIFF(src[y * src_stride + 5], ref[y * ref_stride + 5]);
+        }
+        ref += 1;
+    }
+    sum = _mm_loadu_si128((__m128i *)tsum);
+    return sum;
+}
+
+/*******************************************************************************
+* Requirement: width   = 4, 6, 8, 12, 16, 24, 32, 48 or 64 to use SIMD
+* otherwise C version is used
 * Requirement: height <= 64
 * Requirement: height % 2 = 0
 *******************************************************************************/
@@ -1516,6 +1649,53 @@ void sad_loop_kernel_avx512_intrin(
             }
             break;
 
+        case 6:
+            if (height <= 4) {
+                y = 0;
+                do {
+                    __m128i sum = _mm_setzero_si128();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    __m128i sum2 = complement_4_to_6(ref, ref_stride, src, src_stride, height, 8);
+                    sum          = _mm_adds_epu16(sum, sum2);
+
+                    update_best(sum, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else {
+                y = 0;
+                do {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    __m128i sum = complement_4_to_6(ref, ref_stride, src, src_stride, height, 8);
+                    sum256      = _mm256_adds_epu16(
+                        sum256, _mm256_insertf128_si256(_mm256_setzero_si256(), sum, 0));
+
+                    update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
         case 8:
             // Note: Tried _mm512_dbsad_epu8 but is even slower.
             y = 0;
@@ -1535,6 +1715,64 @@ void sad_loop_kernel_avx512_intrin(
                 update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
                 ref += src_stride_raw;
             } while (++y < search_area_height);
+            break;
+
+        case 12:
+            if (height <= 16) {
+                y = 0;
+                do {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_12_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else if (height <= 32) {
+                y = 0;
+                do {
+                    __m256i sum256 = _mm256_setzero_si256();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_12_avx2(s, src_stride, r, ref_stride, &sum256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_some_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else {
+                y = 0;
+                do {
+                    __m256i sums256[2] = {_mm256_setzero_si256(), _mm256_setzero_si256()};
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_12_2sum_avx2(s, src_stride, r, ref_stride, sums256);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_leftover8_1024_pel(sums256, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
             break;
 
         case 16:
@@ -1791,9 +2029,7 @@ void sad_loop_kernel_avx512_intrin(
             }
             break;
 
-        default:
-            assert(width == 64);
-
+        case 64:
             if (height <= 16) {
                 y = 0;
                 do {
@@ -1885,6 +2121,21 @@ void sad_loop_kernel_avx512_intrin(
                 } while (++y < search_area_height);
             }
             break;
+
+        default:
+            sad_loop_kernel_c(src,
+                              src_stride,
+                              ref,
+                              ref_stride,
+                              height,
+                              width,
+                              best_sad,
+                              x_search_center,
+                              y_search_center,
+                              src_stride_raw,
+                              search_area_width,
+                              search_area_height);
+            return;
         }
     } else if (search_area_width == 16) {
         switch (width) {
@@ -1966,6 +2217,102 @@ void sad_loop_kernel_avx512_intrin(
             }
             break;
 
+        case 6:
+            if (height <= 4) {
+                y = 0;
+                do {
+                    {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum2 = complement_4_to_6(
+                            ref, ref_stride, src, src_stride, height, 8);
+                        sum = _mm_adds_epu16(sum, sum2);
+
+                        update_best(sum, 0, y, &best_s, &best_x, &best_y);
+                    }
+
+                    {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref + 8;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum2 = complement_4_to_6(
+                            ref + 8, ref_stride, src, src_stride, height, 8);
+                        sum = _mm_adds_epu16(sum, sum2);
+
+                        update_best(sum, 8, y, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else {
+                y = 0;
+                do {
+                    {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum = complement_4_to_6(
+                            ref, ref_stride, src, src_stride, height, 8);
+                        sum256 = _mm256_adds_epu16(
+                            sum256, _mm256_insertf128_si256(_mm256_setzero_si256(), sum, 0));
+
+                        update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
+                    }
+
+                    {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + 8;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum = complement_4_to_6(
+                            ref + 8, ref_stride, src, src_stride, height, 8);
+                        sum256 = _mm256_adds_epu16(
+                            sum256, _mm256_insertf128_si256(_mm256_setzero_si256(), sum, 0));
+
+                        update_small_pel(sum256, 8, y, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
         case 8:
             // Note: Tried _mm512_dbsad_epu8 but is even slower.
             y = 0;
@@ -2004,6 +2351,64 @@ void sad_loop_kernel_avx512_intrin(
 
                 ref += src_stride_raw;
             } while (++y < search_area_height);
+            break;
+
+        case 12:
+            if (height <= 16) {
+                y = 0;
+                do {
+                    __m512i sum512 = _mm512_setzero_si512();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_12_avx512(s, src_stride, r, ref_stride, &sum512);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_256_pel(sum512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else if (height <= 32) {
+                y = 0;
+                do {
+                    __m512i sum512 = _mm512_setzero_si512();
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_12_avx512(s, src_stride, r, ref_stride, &sum512);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_512_pel(sum512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else {
+                y = 0;
+                do {
+                    __m512i sums512[2] = {_mm512_setzero_si512(), _mm512_setzero_si512()};
+
+                    s = src;
+                    r = ref;
+
+                    h = height2;
+                    do {
+                        sad_loop_kernel_12_2sum_avx512(s, src_stride, r, ref_stride, sums512);
+                        s += 2 * src_stride;
+                        r += 2 * ref_stride;
+                    } while (--h);
+
+                    update_1024_pel(sums512, 0, y, &best_s, &best_x, &best_y);
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
             break;
 
         case 16:
@@ -2290,9 +2695,7 @@ void sad_loop_kernel_avx512_intrin(
             }
             break;
 
-        default:
-            assert(width == 64);
-
+        case 64:
             if (height <= 16) {
                 y = 0;
                 do {
@@ -2411,6 +2814,21 @@ void sad_loop_kernel_avx512_intrin(
                 } while (++y < search_area_height);
             }
             break;
+
+        default:
+            sad_loop_kernel_c(src,
+                              src_stride,
+                              ref,
+                              ref_stride,
+                              height,
+                              width,
+                              best_sad,
+                              x_search_center,
+                              y_search_center,
+                              src_stride_raw,
+                              search_area_width,
+                              search_area_height);
+            return;
         }
     } else {
         const uint32_t leftover = search_area_width & 7;
@@ -2501,6 +2919,104 @@ void sad_loop_kernel_avx512_intrin(
             }
             break;
 
+        case 6:
+            if (height <= 4) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 8; x += 8) {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum2 = complement_4_to_6(
+                            ref + x, ref_stride, src, src_stride, height, 8);
+                        sum  = _mm_adds_epu16(sum, sum2);
+
+                        update_best(sum, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover) {
+                        __m128i sum = _mm_setzero_si128();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_sse4_1(s, src_stride, r, ref_stride, &sum);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        sum = _mm_or_si128(sum, mask128);
+
+                        __m128i sum2 = complement_4_to_6(
+                            ref + x, ref_stride, src, src_stride, height, leftover);
+                        sum = _mm_adds_epu16(sum, sum2);
+
+                        update_best(sum, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 8; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum = complement_4_to_6(
+                            ref + x, ref_stride, src, src_stride, height, 8);
+                        sum256 = _mm256_adds_epu16(
+                            sum256, _mm256_insertf128_si256(_mm256_setzero_si256(), sum, 0));
+
+                        update_small_pel(sum256, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_4_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        __m128i sum = complement_4_to_6(
+                            ref + x, ref_stride, src, src_stride, height, leftover);
+                        sum256 = _mm256_adds_epu16(
+                            sum256, _mm256_insertf128_si256(_mm256_setzero_si256(), sum, 0));
+
+                        update_leftover_small_pel(sum256, x, y, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
+            break;
+
         case 8:
             // Note: Tried _mm512_dbsad_epu8 but is even slower.
             y = 0;
@@ -2539,6 +3055,152 @@ void sad_loop_kernel_avx512_intrin(
 
                 ref += src_stride_raw;
             } while (++y < search_area_height);
+            break;
+
+        case 12:
+            if (height <= 16) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_avx512(s, src_stride, r, ref_stride, &sum512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_256_pel(sum512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_256_pel(
+                            sum256, search_area_width, x, y, mask128, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else if (height <= 32) {
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sum512 = _mm512_setzero_si512();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_avx512(s, src_stride, r, ref_stride, &sum512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_512_pel(sum512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    // leftover
+                    for (; x < search_area_width; x += 8) {
+                        __m256i sum256 = _mm256_setzero_si256();
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_avx2(s, src_stride, r, ref_stride, &sum256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_512_pel(
+                            sum256, search_area_width, x, y, mask256, &best_s, &best_x, &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            } else {
+                const uint32_t leftover16 = search_area_width & 15;
+
+                y = 0;
+                do {
+                    for (x = 0; x <= search_area_width - 16; x += 16) {
+                        __m512i sums512[2] = {_mm512_setzero_si512(), _mm512_setzero_si512()};
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_2sum_avx512(s, src_stride, r, ref_stride, sums512);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_1024_pel(sums512, x, y, &best_s, &best_x, &best_y);
+                    }
+
+                    if (leftover16 >= 8) {
+                        __m256i sums256[2] = {_mm256_setzero_si256(), _mm256_setzero_si256()};
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_2sum_avx2(s, src_stride, r, ref_stride, sums256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover8_1024_pel(sums256, x, y, &best_s, &best_x, &best_y);
+                        x += 8;
+                    }
+
+                    if (leftover) {
+                        __m256i sums256[2] = {_mm256_setzero_si256(), _mm256_setzero_si256()};
+
+                        s = src;
+                        r = ref + x;
+
+                        h = height2;
+                        do {
+                            sad_loop_kernel_12_2sum_avx2(s, src_stride, r, ref_stride, sums256);
+                            s += 2 * src_stride;
+                            r += 2 * ref_stride;
+                        } while (--h);
+
+                        update_leftover_1024_pel(sums256,
+                                                 search_area_width,
+                                                 x,
+                                                 y,
+                                                 leftover,
+                                                 mask128,
+                                                 &best_s,
+                                                 &best_x,
+                                                 &best_y);
+                    }
+
+                    ref += src_stride_raw;
+                } while (++y < search_area_height);
+            }
             break;
 
         case 16:
@@ -3353,9 +4015,7 @@ void sad_loop_kernel_avx512_intrin(
             }
             break;
 
-        default:
-            assert(width == 64);
-
+        case 64:
             if (height <= 16) {
                 const uint32_t leftover16 = search_area_width & 15;
 
@@ -3684,6 +4344,21 @@ void sad_loop_kernel_avx512_intrin(
                 } while (++y < search_area_height);
             }
             break;
+
+        default:
+            sad_loop_kernel_c(src,
+                              src_stride,
+                              ref,
+                              ref_stride,
+                              height,
+                              width,
+                              best_sad,
+                              x_search_center,
+                              y_search_center,
+                              src_stride_raw,
+                              search_area_width,
+                              search_area_height);
+            return;
         }
     }
 

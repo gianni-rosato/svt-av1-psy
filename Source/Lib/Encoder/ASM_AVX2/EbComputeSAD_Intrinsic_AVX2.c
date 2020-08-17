@@ -16,6 +16,7 @@
 #include <immintrin.h>
 #include "EbMemory_AVX2.h"
 #include "EbComputeSAD.h"
+#include "EbComputeSAD_C.h"
 
 #define UPDATE_BEST(s, k, offset)        \
     tem_sum_1 = _mm_extract_epi32(s, k); \
@@ -1908,9 +1909,10 @@ void sad_loop_kernel_sparse_avx2_intrin(
 }
 #endif
 /*******************************************************************************
- * Requirement: width   = 4, 8, 16, 24, 32, 48 or 64
+ * Requirement: width   = 4, 6, 8, 12, 16, 24, 32, 48 or 64 to use SIMD
+ * otherwise C version is used
  * Requirement: block_height <= 64
- * Requirement: block_height % 2 = 0 when width = 4 or 8
+ * Requirement: block_height % 2 = 0 when width = 4, 6 or 8
 *******************************************************************************/
 void sad_loop_kernel_avx2_intrin(
     uint8_t * src, // input parameter, source samples Ptr
@@ -2076,7 +2078,214 @@ void sad_loop_kernel_avx2_intrin(
         }
 
         break;
+    case 6:
+        if (!(block_height % 4)) {
+            uint32_t src_stride_t = 3 * src_stride;
+            uint32_t ref_stride_t = 3 * ref_stride;
+            for (i = 0; i < search_area_height; i++) {
+                for (j = 0; j <= search_area_width - 8; j += 8) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 4) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + 2 * ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(
+                                _mm_loadu_si128((__m128i *)(p_ref + ref_stride))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride_t)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_unpacklo_epi64(
+                                _mm_cvtsi32_si128(*(uint32_t *)p_src),
+                                _mm_cvtsi32_si128(*(uint32_t *)(p_src + src_stride)))),
+                            _mm_unpacklo_epi64(
+                                _mm_cvtsi32_si128(*(uint32_t *)(p_src + 2 * src_stride)),
+                                _mm_cvtsi32_si128(*(uint32_t *)(p_src + src_stride_t))),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += src_stride << 2;
+                        p_ref += ref_stride << 2;
+                    }
+                    ss3       = _mm256_adds_epu16(ss3, ss5);
+                    s3        = _mm_adds_epu16(_mm256_castsi256_si128(ss3),
+                                        _mm256_extracti128_si256(ss3, 1));
 
+                    DECLARE_ALIGNED(16, uint16_t, tsum[8]);
+                    memset(tsum, 0, 8 * sizeof(uint16_t));
+                    p_ref = ref + j;
+                    for (uint32_t search_area = 0; search_area < 8; search_area++) {
+                        for (uint32_t y = 0; y < block_height; y++) {
+                            tsum[search_area] +=
+                                EB_ABS_DIFF(src[y * src_stride + 4],
+                                            p_ref[y * ref_stride + 4]) +
+                                EB_ABS_DIFF(src[y * src_stride + 5],
+                                            p_ref[y * ref_stride + 5]);
+                        }
+                        p_ref += 1;
+                    }
+                    s4 = _mm_loadu_si128((__m128i *)tsum);
+                    s3 = _mm_adds_epu16(s3, s4);
+
+                    s3        = _mm_minpos_epu16(s3);
+                    tem_sum_1 = _mm_extract_epi16(s3, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s3, 1));
+                        y_best  = i;
+                    }
+                }
+
+                if (leftover) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 4) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + 2 * ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(
+                                _mm_loadu_si128((__m128i *)(p_ref + ref_stride))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride_t)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_unpacklo_epi64(
+                                _mm_cvtsi32_si128(*(uint32_t *)p_src),
+                                _mm_cvtsi32_si128(*(uint32_t *)(p_src + src_stride)))),
+                            _mm_unpacklo_epi64(
+                                _mm_cvtsi32_si128(*(uint32_t *)(p_src + 2 * src_stride)),
+                                _mm_cvtsi32_si128(*(uint32_t *)(p_src + src_stride_t))),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += src_stride << 2;
+                        p_ref += ref_stride << 2;
+                    }
+                    ss3       = _mm256_adds_epu16(ss3, ss5);
+                    s3        = _mm_adds_epu16(_mm256_castsi256_si128(ss3),
+                                        _mm256_extracti128_si256(ss3, 1));
+                    s3        = _mm_or_si128(s3, s8);
+
+                    DECLARE_ALIGNED(16, uint16_t, tsum[8]);
+                    memset(tsum, 0, 8 * sizeof(uint16_t));
+                    p_ref = ref + j;
+                    for (uint32_t search_area = 0; search_area < leftover; search_area++) {
+                        for (uint32_t y = 0; y < block_height; y++) {
+                            tsum[search_area] +=
+                                EB_ABS_DIFF(src[y * src_stride + 4],
+                                            p_ref[y * ref_stride + 4]) +
+                                EB_ABS_DIFF(src[y * src_stride + 5],
+                                            p_ref[y * ref_stride + 5]);
+                        }
+                        p_ref += 1;
+                    }
+                    s4 = _mm_loadu_si128((__m128i *)tsum);
+                    s3 = _mm_adds_epu16(s3, s4);
+
+                    s3        = _mm_minpos_epu16(s3);
+                    tem_sum_1 = _mm_extract_epi16(s3, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s3, 1));
+                        y_best  = i;
+                    }
+                }
+                ref += src_stride_raw;
+            }
+        } else {
+            for (i = 0; i < search_area_height; i++) {
+                for (j = 0; j <= search_area_width - 8; j += 8) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    s3    = _mm_setzero_si128();
+                    for (k = 0; k < block_height; k += 2) {
+                        //Note: _mm_lddqu_si128 is used instead of _mm_loadu_si128 because clang Release configuration is emitting wrong assembly instructions
+                        s0 = _mm_lddqu_si128((__m128i *)p_ref);
+                        s1 = _mm_lddqu_si128((__m128i *)(p_ref + ref_stride));
+                        s2 = _mm_cvtsi32_si128(*(uint32_t *)p_src);
+                        s5 = _mm_cvtsi32_si128(*(uint32_t *)(p_src + src_stride));
+                        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
+                        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
+                        p_src += src_stride << 1;
+                        p_ref += ref_stride << 1;
+                    }
+
+                    DECLARE_ALIGNED(16, uint16_t, tsum[8]);
+                    memset(tsum, 0, 8 * sizeof(uint16_t));
+                    p_ref   = ref + j;
+                    for (uint32_t search_area = 0; search_area < 8; search_area++) {
+                        for (uint32_t y = 0; y < block_height; y++) {
+                            tsum[search_area] +=
+                                EB_ABS_DIFF(src[y * src_stride + 4],
+                                            p_ref[y * ref_stride + 4]) +
+                                EB_ABS_DIFF(src[y * src_stride + 5],
+                                            p_ref[y * ref_stride + 5]);
+                        }
+                        p_ref += 1;
+                    }
+                    s4 = _mm_loadu_si128((__m128i *)tsum);
+                    s3 = _mm_adds_epu16(s3, s4);
+
+                    s3        = _mm_minpos_epu16(s3);
+                    tem_sum_1 = _mm_extract_epi16(s3, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s3, 1));
+                        y_best  = i;
+                    }
+                }
+
+                if (leftover) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    s3    = _mm_setzero_si128();
+                    for (k = 0; k < block_height; k += 2) {
+                        //Note: _mm_lddqu_si128 is used instead of _mm_loadu_si128 because clang Release configuration is emitting wrong assembly instructions
+                        s0 = _mm_lddqu_si128((__m128i *)p_ref);
+                        s1 = _mm_lddqu_si128((__m128i *)(p_ref + ref_stride));
+                        s2 = _mm_cvtsi32_si128(*(uint32_t *)p_src);
+                        s5 = _mm_cvtsi32_si128(*(uint32_t *)(p_src + src_stride));
+                        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s0, s2, 0));
+                        s3 = _mm_adds_epu16(s3, _mm_mpsadbw_epu8(s1, s5, 0));
+                        p_src += src_stride << 1;
+                        p_ref += ref_stride << 1;
+                    }
+                    s3        = _mm_or_si128(s3, s8);
+
+                    DECLARE_ALIGNED(16, uint16_t, tsum[8]);
+                    memset(tsum, 0, 8 * sizeof(uint16_t));
+                    p_ref = ref + j;
+                    for (uint32_t search_area = 0; search_area < leftover; search_area++) {
+                        for (uint32_t y = 0; y < block_height; y++) {
+                            tsum[search_area] +=
+                                EB_ABS_DIFF(src[y * src_stride + 4],
+                                            p_ref[y * ref_stride + 4]) +
+                                EB_ABS_DIFF(src[y * src_stride + 5],
+                                            p_ref[y * ref_stride + 5]);
+                        }
+                        p_ref += 1;
+                    }
+                    s4 = _mm_loadu_si128((__m128i *)tsum);
+                    s3 = _mm_adds_epu16(s3, s4);
+
+                    s3        = _mm_minpos_epu16(s3);
+                    tem_sum_1 = _mm_extract_epi16(s3, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s3, 1));
+                        y_best  = i;
+                    }
+                }
+                ref += src_stride_raw;
+            }
+        }
+
+        break;
     case 8:
         if (!(block_height % 4)) {
             uint32_t src_stride_t = 3 * src_stride;
@@ -2224,7 +2433,307 @@ void sad_loop_kernel_avx2_intrin(
             }
         }
         break;
+    case 12:
+        if (block_height <= 16) {
+            for (i = 0; i < search_area_height; i++) {
+                for (j = 0; j <= search_area_width - 8; j += 8) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss4 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 2) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(p_ref + 8))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride + 8)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_src)),
+                            _mm_loadu_si128((__m128i *)(p_src + src_stride)),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += 2 * src_stride;
+                        p_ref += 2 * ref_stride;
+                    }
+                    ss3       = _mm256_adds_epu16(_mm256_adds_epu16(ss3, ss4),ss5);
+                    s3        = _mm_adds_epu16(_mm256_castsi256_si128(ss3),
+                                        _mm256_extracti128_si256(ss3, 1));
+                    s3        = _mm_minpos_epu16(s3);
+                    tem_sum_1 = _mm_extract_epi16(s3, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s3, 1));
+                        y_best  = i;
+                    }
+                }
 
+                if (leftover) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss4 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 2) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(p_ref + 8))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride + 8)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_src)),
+                            _mm_loadu_si128((__m128i *)(p_src + src_stride)),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += 2 * src_stride;
+                        p_ref += 2 * ref_stride;
+                    }
+                    ss3       = _mm256_adds_epu16(_mm256_adds_epu16(ss3, ss4),ss5);
+                    s3        = _mm_adds_epu16(_mm256_castsi256_si128(ss3),
+                                        _mm256_extracti128_si256(ss3, 1));
+                    s3        = _mm_or_si128(s3, s8);
+                    s3        = _mm_minpos_epu16(s3);
+                    tem_sum_1 = _mm_extract_epi16(s3, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s3, 1));
+                        y_best  = i;
+                    }
+                }
+                ref += src_stride_raw;
+            }
+        } else if (block_height <= 32) {
+            for (i = 0; i < search_area_height; i++) {
+                for (j = 0; j <= search_area_width - 8; j += 8) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss4 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 2) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(p_ref + 8))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride + 8)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_src)),
+                            _mm_loadu_si128((__m128i *)(p_src + src_stride)),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += 2 * src_stride;
+                        p_ref += 2 * ref_stride;
+                    }
+                    ss3       = _mm256_adds_epu16(_mm256_adds_epu16(ss3, ss4),ss5);
+                    s3        = _mm256_castsi256_si128(ss3);
+                    s5        = _mm256_extracti128_si256(ss3, 1);
+                    s4        = _mm_minpos_epu16(s3);
+                    s6        = _mm_minpos_epu16(s5);
+                    s4        = _mm_unpacklo_epi16(s4, s4);
+                    s4        = _mm_unpacklo_epi32(s4, s4);
+                    s4        = _mm_unpacklo_epi64(s4, s4);
+                    s6        = _mm_unpacklo_epi16(s6, s6);
+                    s6        = _mm_unpacklo_epi32(s6, s6);
+                    s6        = _mm_unpacklo_epi64(s6, s6);
+                    s3        = _mm_sub_epi16(s3, s4);
+                    s5        = _mm_adds_epu16(s5, s3);
+                    s5        = _mm_sub_epi16(s5, s6);
+                    s5        = _mm_minpos_epu16(s5);
+                    tem_sum_1 = _mm_extract_epi16(s5, 0);
+                    tem_sum_1 += _mm_extract_epi16(s4, 0);
+                    tem_sum_1 += _mm_extract_epi16(s6, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s5, 1));
+                        y_best  = i;
+                    }
+                }
+
+                if (leftover) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss4 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 2) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(p_ref + 8))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride + 8)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_src)),
+                            _mm_loadu_si128((__m128i *)(p_src + src_stride)),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += 2 * src_stride;
+                        p_ref += 2 * ref_stride;
+                    }
+                    ss3       = _mm256_adds_epu16(_mm256_adds_epu16(ss3, ss4),ss5);
+                    s3        = _mm256_castsi256_si128(ss3);
+                    s5        = _mm256_extracti128_si256(ss3, 1);
+                    s3        = _mm_or_si128(s3, s8);
+                    s5        = _mm_or_si128(s5, s8);
+                    s4        = _mm_minpos_epu16(s3);
+                    s6        = _mm_minpos_epu16(s5);
+                    s4        = _mm_unpacklo_epi16(s4, s4);
+                    s4        = _mm_unpacklo_epi32(s4, s4);
+                    s4        = _mm_unpacklo_epi64(s4, s4);
+                    s6        = _mm_unpacklo_epi16(s6, s6);
+                    s6        = _mm_unpacklo_epi32(s6, s6);
+                    s6        = _mm_unpacklo_epi64(s6, s6);
+                    s3        = _mm_sub_epi16(s3, s4);
+                    s5        = _mm_adds_epu16(s5, s3);
+                    s5        = _mm_sub_epi16(s5, s6);
+                    s5        = _mm_minpos_epu16(s5);
+                    tem_sum_1 = _mm_extract_epi16(s5, 0);
+                    tem_sum_1 += _mm_extract_epi16(s4, 0);
+                    tem_sum_1 += _mm_extract_epi16(s6, 0);
+                    if (tem_sum_1 < low_sum) {
+                        low_sum = tem_sum_1;
+                        x_best  = (int16_t)(j + _mm_extract_epi16(s5, 1));
+                        y_best  = i;
+                    }
+                }
+                ref += src_stride_raw;
+            }
+        } else {
+            for (i = 0; i < search_area_height; i++) {
+                for (j = 0; j <= search_area_width - 8; j += 8) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss4 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 2) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(p_ref + 8))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride + 8)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_src)),
+                            _mm_loadu_si128((__m128i *)(p_src + src_stride)),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += 2 * src_stride;
+                        p_ref += 2 * ref_stride;
+                    }
+                    ss3       = _mm256_adds_epu16(ss3, ss4);
+                    ss0       = _mm256_adds_epu16(ss3, ss5);
+                    s0        = _mm_adds_epu16(_mm256_castsi256_si128(ss0),
+                                        _mm256_extracti128_si256(ss0, 1));
+                    s0        = _mm_minpos_epu16(s0);
+                    tem_sum_1 = _mm_extract_epi16(s0, 0);
+                    if (tem_sum_1 < low_sum) {
+                        if (tem_sum_1 != 0xFFFF) { // no overflow
+                            low_sum = tem_sum_1;
+                            x_best  = (int16_t)(j + _mm_extract_epi16(s0, 1));
+                            y_best  = i;
+                        } else {
+                            ss4 = _mm256_unpacklo_epi16(ss3, _mm256_setzero_si256());
+                            ss3 = _mm256_unpackhi_epi16(ss3, _mm256_setzero_si256());
+                            ss6 = _mm256_unpacklo_epi16(ss5, _mm256_setzero_si256());
+                            ss5 = _mm256_unpackhi_epi16(ss5, _mm256_setzero_si256());
+                            ss4 = _mm256_add_epi32(ss4, ss6);
+                            ss3 = _mm256_add_epi32(ss3, ss5);
+                            s0  = _mm_add_epi32(_mm256_castsi256_si128(ss4),
+                                               _mm256_extracti128_si256(ss4, 1));
+                            s3  = _mm_add_epi32(_mm256_castsi256_si128(ss3),
+                                               _mm256_extracti128_si256(ss3, 1));
+                            UPDATE_BEST(s0, 0, 0);
+                            UPDATE_BEST(s0, 1, 0);
+                            UPDATE_BEST(s0, 2, 0);
+                            UPDATE_BEST(s0, 3, 0);
+                            UPDATE_BEST(s3, 0, 4);
+                            UPDATE_BEST(s3, 1, 4);
+                            UPDATE_BEST(s3, 2, 4);
+                            UPDATE_BEST(s3, 3, 4);
+                        }
+                    }
+                }
+
+                if (leftover) {
+                    p_src = src;
+                    p_ref = ref + j;
+                    ss3 = ss4 = ss5 = _mm256_setzero_si256();
+                    for (k = 0; k < block_height; k += 2) {
+                        ss0 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_ref)),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride)),
+                            0x1);
+                        ss1 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)(p_ref + 8))),
+                            _mm_loadu_si128((__m128i *)(p_ref + ref_stride + 8)),
+                            0x1);
+                        ss2 = _mm256_insertf128_si256(
+                            _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)p_src)),
+                            _mm_loadu_si128((__m128i *)(p_src + src_stride)),
+                            0x1);
+                        ss3 = _mm256_adds_epu16(ss3, _mm256_mpsadbw_epu8(ss0, ss2, 0));
+                        ss4 = _mm256_adds_epu16(ss4, _mm256_mpsadbw_epu8(ss0, ss2, 45)); // 101 101
+                        ss5 = _mm256_adds_epu16(ss5, _mm256_mpsadbw_epu8(ss1, ss2, 18)); // 010 010
+                        p_src += 2 * src_stride;
+                        p_ref += 2 * ref_stride;
+                    }
+                    ss3       = _mm256_adds_epu16(ss3, ss4);
+                    ss0       = _mm256_adds_epu16(ss3, ss5);
+                    s0        = _mm_adds_epu16(_mm256_castsi256_si128(ss0),
+                                        _mm256_extracti128_si256(ss0, 1));
+                    s0        = _mm_or_si128(s0, s8);
+                    s0        = _mm_minpos_epu16(s0);
+                    tem_sum_1 = _mm_extract_epi16(s0, 0);
+                    if (tem_sum_1 < low_sum) {
+                        if (tem_sum_1 != 0xFFFF) { // no overflow
+                            low_sum = tem_sum_1;
+                            x_best  = (int16_t)(j + _mm_extract_epi16(s0, 1));
+                            y_best  = i;
+                        } else {
+                            ss4 = _mm256_unpacklo_epi16(ss3, _mm256_setzero_si256());
+                            ss3 = _mm256_unpackhi_epi16(ss3, _mm256_setzero_si256());
+                            ss6 = _mm256_unpacklo_epi16(ss5, _mm256_setzero_si256());
+                            ss5 = _mm256_unpackhi_epi16(ss5, _mm256_setzero_si256());
+                            ss4 = _mm256_add_epi32(ss4, ss6);
+                            ss3 = _mm256_add_epi32(ss3, ss5);
+                            s0  = _mm_add_epi32(_mm256_castsi256_si128(ss4),
+                                               _mm256_extracti128_si256(ss4, 1));
+                            s3  = _mm_add_epi32(_mm256_castsi256_si128(ss3),
+                                               _mm256_extracti128_si256(ss3, 1));
+                            k   = leftover;
+                            while (k > 0) {
+                                for (l = 0; l < 4 && k; l++, k--) {
+                                    tem_sum_1 = _mm_extract_epi32(s0, 0);
+                                    s0        = _mm_srli_si128(s0, 4);
+                                    if (tem_sum_1 < low_sum) {
+                                        low_sum = tem_sum_1;
+                                        x_best  = (int16_t)(j + leftover - k);
+                                        y_best  = i;
+                                    }
+                                }
+                                s0 = s3;
+                            }
+                        }
+                    }
+                }
+                ref += src_stride_raw;
+            }
+        }
+        break;
     case 16:
         if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
@@ -3721,7 +4230,20 @@ void sad_loop_kernel_avx2_intrin(
         }
         break;
 
-    default: assert(0); break;
+    default:
+        sad_loop_kernel_c(src,
+                          src_stride,
+                          ref,
+                          ref_stride,
+                          block_height,
+                          block_width,
+                          best_sad,
+                          x_search_center,
+                          y_search_center,
+                          src_stride_raw,
+                          search_area_width,
+                          search_area_height);
+        return;
     }
 
     *best_sad        = low_sum;
