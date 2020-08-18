@@ -119,8 +119,7 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 ###  2. Enable libsvtav1 in FFmpeg
 
-If you wish to use an FFmpeg tag or release, you will need to use the patch file located in the 0.8.4 release under the ffmpeg_plugin folder.
-To learn more on how to actually use it, please consult the readme.md from that folder.
+NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](https://github.com/OpenVisualCloud/SVT-AV1/tree/v0.8.4/ffmpeg_plugin) and consult that page to properly patch ffmpeg for use with SVT-AV1.
 
 ``` bash
    git clone --depth=1 https://github.com/FFmpeg/FFmpeg ffmpeg
