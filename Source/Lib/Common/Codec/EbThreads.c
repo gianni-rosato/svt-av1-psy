@@ -201,9 +201,10 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
     UNUSED(max_count);
 
     semaphore_handle = (sem_t *)malloc(sizeof(sem_t));
-    sem_init((sem_t *)semaphore_handle, // semaphore handle
-             0, // shared semaphore (not local)
-             initial_count); // initial count
+    if (semaphore_handle != NULL)
+        sem_init((sem_t *)semaphore_handle, // semaphore handle
+                0, // shared semaphore (not local)
+                initial_count); // initial count
 #endif
 
     return semaphore_handle;
