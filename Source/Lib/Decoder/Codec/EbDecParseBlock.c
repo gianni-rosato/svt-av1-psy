@@ -320,7 +320,7 @@ void read_cdef(ParseCtxt *parse_ctxt, PartitionInfo *xd) {
     SvtReader *          r    = &parse_ctxt->r;
     BlockModeInfo *const mbmi = xd->mi;
     if (mbmi->skip || parse_ctxt->frame_header->coded_lossless ||
-        !parse_ctxt->seq_header->enable_cdef || parse_ctxt->frame_header->allow_intrabc) {
+        !parse_ctxt->seq_header->cdef_level || parse_ctxt->frame_header->allow_intrabc) {
         return;
     }
     int       cdf_size = mi_size_wide[BLOCK_64X64];

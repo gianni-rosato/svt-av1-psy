@@ -563,9 +563,9 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t *            cfl_temp_luma_recon;
     uint16_t *           cfl_temp_luma_recon16bit;
-    EbBool               spatial_sse_full_loop;
+    EbBool               spatial_sse_full_loop_level;
     EbBool               blk_skip_decision;
-    EbBool               enable_rdoq;
+    int8_t               rdoq_level;
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][2][4][2];
     int16_t              best_spatial_pred_mv[2][4][2];
     int8_t               valid_refined_mv[2][4];
@@ -623,7 +623,7 @@ typedef struct ModeDecisionContext {
     EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
     EbBool md_staging_skip_full_chroma;
     EbBool md_staging_skip_rdoq;
-    EbBool md_staging_spatial_sse_full_loop;
+    EbBool md_staging_spatial_sse_full_loop_level;
 #if FIX_CFL_OFF
     EbBool md_staging_perform_intra_chroma_pred;
 #endif
@@ -689,7 +689,7 @@ typedef struct ModeDecisionContext {
     uint8_t      md_intra_angle_delta;
 #if SHUT_PALETTE_BC_PD_PASS_0_1
     uint8_t      md_allow_intrabc;
-    uint8_t      md_palette_mode;
+    uint8_t      md_palette_level;
 #endif
 #if MD_REFERENCE_MASKING
     uint8_t      inter_inter_distortion_based_reference_pruning;

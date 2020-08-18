@@ -63,7 +63,7 @@ indices as context, as shown in the table below.
 |**Flag**|**Level (Sequence/Picture)**|**Description**|
 |--- |--- |--- |
 |--palette|Configuration|To enable palette from the command-line interface. 0: OFF; 1: Slow; … ; 6: Fastest. Auto mode=-1 if not set from the encoder configuration|
-|palette_mode|Picture based|Set based on the configuration palette mode. For auto mode it is set to 6 for M0.|
+|palette_level|Picture based|Set based on the configuration palette mode. For auto mode it is set to 6 for M0.|
 
 The feature is currently active only:
   - For encoder mode 0.
@@ -86,7 +86,7 @@ The following steps are then considered in the generation of palette prediction 
 
 1.  In the function ```generate_md_stage_0_cand```, a candidate for palette prediction is
     first evaluated to determine if the palette mode is allowed (svt_av1_allow_palette).
-    The use of palette prediction mode is allowed if (palette_mode different from 0 AND block
+    The use of palette prediction mode is allowed if (palette_level different from 0 AND block
     width <= 64 AND block height <= 64 AND block size at least 8x8.)
 
 2.  For blocks where palette prediction mode is allowed, the function ``` inject_palette_candidates``` is invoked to create and
@@ -130,9 +130,9 @@ at the last MD stage is y). The input candidates could be a mix of
 candidates generated based on the two candidate search methods
 outlined above.
 
-##### Table 3. palette\_mode settings.
+##### Table 3. palette\_level settings.
 
-| **palette\_mode** | **Description**                                                                         |
+| **palette\_level** | **Description**                                                                         |
 | ----------------- | --------------------------------------------------------------------------------------- |
 | 1 (Slow)          | NIC=7/4/4                                                                           |
 | 2                 | NIC=7/2/2                                                                           |
@@ -141,16 +141,16 @@ outlined above.
 | 5                 | NIC=4/2/1 + No K-means for Inter frames                                          |
 | 6 (Fastest)       | NIC=4/2/1 + No K-means for non-base + step\_2 for non-base for most dominant colors |
 
-For ```palette_mode``` 6, step\_2 refers to a method of selecting the subset
+For ```palette_level``` 6, step\_2 refers to a method of selecting the subset
 of the most dominant colors to include in the palette. For example, if
 the block involves 7 colors, then only three candidates with palettes
 based on the most dominant 7, 5 and 3 colors are injected, and the
 candidates based on the most dominant 6 and 4 colors are discarded.
 
-The settings for palette_mode as a function of the encoder preset and other encoder settings are
+The settings for palette_level as a function of the encoder preset and other encoder settings are
 indicated in Table 4 below.
 
-##### Table 4. palette\_mode as a function of encoder presets.
+##### Table 4. palette\_level as a function of encoder presets.
 
 ![image_table4](./img/palette_prediction_table4.png)
 

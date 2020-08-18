@@ -429,7 +429,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         // TODO: Try to avoid duplicate computation in cases
         // where the dominant colors and the k-means results are similar.
 
-        int step = (pcs_ptr->parent_pcs_ptr->palette_mode == 6)
+        int step = (pcs_ptr->parent_pcs_ptr->palette_level == 6)
                        ? 2
                        : 1;
         for (int n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {

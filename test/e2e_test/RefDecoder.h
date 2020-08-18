@@ -112,7 +112,7 @@ class RefDecoder {
         int enable_jnt_comp;
         int enable_ref_frame_mvs;
         int enable_warped_motion;
-        int enable_cdef;
+        int cdef_level;
         int enable_restoration;
         int film_grain_params_present;
         int enable_superres;

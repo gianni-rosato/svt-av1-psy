@@ -2950,7 +2950,7 @@ static void encode_loopfilter(PictureParentControlSet *pcs_ptr, struct AomWriteB
 static void encode_cdef(const PictureParentControlSet *pcs_ptr, struct AomWriteBitBuffer *wb) {
     //assert(!cm->coded_lossless);
     // moved out side
-    //if (!cm->seq_params.enable_cdef) return;
+    //if (!cm->seq_params.cdef_level) return;
 
     const FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
 
@@ -3444,7 +3444,7 @@ void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer
     }
 
     eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_superres);
-    eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_cdef);
+    eb_aom_wb_write_bit(wb, scs_ptr->seq_header.cdef_level);
     eb_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_restoration);
 }
 
@@ -4087,7 +4087,7 @@ static void write_uncompressed_header_obu(SequenceControlSet *     scs_ptr /*Av1
     } else {
         if (!frm_hdr->coded_lossless) {
             encode_loopfilter(pcs_ptr, wb);
-            if (scs_ptr->seq_header.enable_cdef) encode_cdef(pcs_ptr, wb);
+            if (scs_ptr->seq_header.cdef_level) encode_cdef(pcs_ptr, wb);
         }
 
         if (scs_ptr->seq_header.enable_restoration) encode_restoration_mode(pcs_ptr, wb);
@@ -6112,7 +6112,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     ec_update_neighbors(
         pcs_ptr, context_ptr, blk_origin_x, blk_origin_y, blk_ptr, tile_idx, bsize, coeff_ptr);
 
-    if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_mode, blk_geom->bsize)) {
+    if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_level, blk_geom->bsize)) {
         assert(blk_ptr->palette_info.color_idx_map != NULL && "free palette:Null");
         free(blk_ptr->palette_info.color_idx_map);
         blk_ptr->palette_info.color_idx_map = NULL;

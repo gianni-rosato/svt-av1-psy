@@ -78,7 +78,7 @@
 #define FILM_GRAIN_TOKEN "-film-grain"
 #define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN "-dlf"
-#define CDEF_MODE_TOKEN "-cdef-mode"
+#define CDEF_LEVEL_TOKEN "-cdef-level"
 #define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
 #define SG_FILTER_MODE_TOKEN "-sg-filter-mode"
 #define WN_FILTER_MODE_TOKEN "-wn-filter-mode"
@@ -92,7 +92,7 @@
 #define SMOOTH_TOKEN "-smooth"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
-#define SPATIAL_SSE_FL_TOKEN "-spatial-sse-fl"
+#define SPATIAL_SSE_FL_TOKEN "-spatial-sse-full-loop-level"
 #if 0//!REMOVE_ME_SUBPEL_CODE
 #define SUBPEL_TOKEN "-subpel"
 #endif
@@ -111,7 +111,7 @@
 #else
 #define OBMC_TOKEN "-obmc"
 #endif
-#define RDOQ_TOKEN "-rdoq"
+#define RDOQ_TOKEN "-rdoq-level"
 #define PRED_ME_TOKEN "-pred-me"
 #define BIPRED_3x3_TOKEN "-bipred-3x3"
 #define COMPOUND_LEVEL_TOKEN "-compound"
@@ -144,7 +144,7 @@
 #define SCREEN_CONTENT_TOKEN "-scm"
 #define INTRABC_MODE_TOKEN "-intrabc-mode"
 // --- start: ALTREF_FILTERING_SUPPORT
-#define ENABLE_ALTREFS "-enable-altrefs"
+#define TF_LEVEL "-tf-level"
 #define ALTREF_STRENGTH "-altref-strength"
 #define ALTREF_NFRAMES "-altref-nframes"
 #define ENABLE_OVERLAYS "-enable-overlays"
@@ -156,7 +156,7 @@
 #define SUPERRES_QTHRES "-superres-qthres"
 // --- end: SUPER-RESOLUTION SUPPORT
 #define HBD_MD_ENABLE_TOKEN "-hbd-md"
-#define PALETTE_TOKEN "-palette"
+#define PALETTE_TOKEN "-palette-level"
 #define OLPD_REFINEMENT_TOKEN "-olpd-refinement"
 #define HDR_INPUT_TOKEN "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN "-rc"
@@ -219,7 +219,7 @@
 #define FRAC_SEARCH_64_NEW_TOKEN "--enable-frac-search-64"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
 #define REDUNDANT_BLK_NEW_TOKEN "--enable-redundant-blk"
-#define SPATIAL_SSE_FL_NEW_TOKEN "--enable-spatial-sse-fl"
+#define SPATIAL_SSE_FL_NEW_TOKEN "--enable-spatial-sse-full-loop-level"
 #define OVR_BNDRY_BLK_NEW_TOKEN "--enable-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_NEW_TOKEN "--enable-new-nrst-near-comb"
 #define NX4_4XN_MV_INJECT_NEW_TOKEN "--enable-nx4-4xn-mv-inject"
@@ -231,7 +231,7 @@
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
 #define GLOBAL_MOTION_ENABLE_NEW_TOKEN "--enable-global-motion"
-#define RDOQ_NEW_TOKEN "--enable-rdoq"
+#define RDOQ_NEW_TOKEN "--rdoq-level"
 #if 1 // FILTER_INTRA_CLI
 #define FILTER_INTRA_NEW_TOKEN "--filter-intra-level"
 #else
@@ -472,8 +472,8 @@ static void set_enable_local_warped_motion_flag(const char *value, EbConfig *cfg
 static void set_enable_global_motion_flag(const char *value, EbConfig *cfg) {
     cfg->enable_global_motion = (EbBool)strtoul(value, NULL, 0);
 };
-static void set_cdef_mode(const char *value, EbConfig *cfg) {
-    cfg->cdef_mode = strtol(value, NULL, 0);
+static void set_cdef_level(const char *value, EbConfig *cfg) {
+    cfg->cdef_level = strtol(value, NULL, 0);
 };
 static void set_enable_restoration_filter_flag(const char *value, EbConfig *cfg) {
     cfg->enable_restoration_filtering = strtol(value, NULL, 0);
@@ -515,8 +515,8 @@ static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
 static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
     cfg->enable_redundant_blk = strtol(value, NULL, 0);
 };
-static void set_spatial_sse_fl_flag(const char *value, EbConfig *cfg) {
-    cfg->spatial_sse_fl = strtol(value, NULL, 0);
+static void set_spatial_sse_full_loop_level_flag(const char *value, EbConfig *cfg) {
+    cfg->spatial_sse_full_loop_level = strtol(value, NULL, 0);
 };
 #if 0//!REMOVE_ME_SUBPEL_CODE
 static void set_enable_sub_pel_flag(const char *value, EbConfig *cfg) {
@@ -558,8 +558,8 @@ static void set_enable_obmc_flag(const char *value, EbConfig *cfg) {
     cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);
 };
 #endif
-static void set_enable_rdoq_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_rdoq = strtol(value, NULL, 0);
+static void set_rdoq_level_flag(const char *value, EbConfig *cfg) {
+    cfg->rdoq_level = strtol(value, NULL, 0);
 };
 static void set_predictive_me_flag(const char *value, EbConfig *cfg) {
     cfg->pred_me = strtol(value, NULL, 0);
@@ -687,8 +687,8 @@ static void set_intrabc_mode(const char *value, EbConfig *cfg) {
     cfg->intrabc_mode = strtol(value, NULL, 0);
 };
 // --- start: ALTREF_FILTERING_SUPPORT
-static void set_enable_altrefs(const char *value, EbConfig *cfg) {
-    cfg->enable_altrefs = (EbBool)strtoul(value, NULL, 0);
+static void set_tf_level(const char *value, EbConfig *cfg) {
+    cfg->tf_level = (int8_t)strtoul(value, NULL, 0);
 };
 static void set_altref_strength(const char *value, EbConfig *cfg) {
     cfg->altref_strength = (uint8_t)strtoul(value, NULL, 0);
@@ -721,8 +721,8 @@ static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
     cfg->enable_hbd_mode_decision = (int8_t)strtoul(value, NULL, 0);
 #endif
 };
-static void set_enable_palette(const char *value, EbConfig *cfg) {
-    cfg->enable_palette = (int32_t)strtol(value, NULL, 0);
+static void set_palette_level(const char *value, EbConfig *cfg) {
+    cfg->palette_level = (int32_t)strtoul(value, NULL, 0);
 };
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
     cfg->high_dynamic_range_input = strtol(value, NULL, 0);
@@ -1030,10 +1030,10 @@ ConfigEntry config_entry_specific[] = {
      "Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled)",
      set_disable_dlf_flag},
     // CDEF
-    {SINGLE_INPUT,
-     CDEF_MODE_TOKEN,
-     "CDEF Mode, 0: OFF, 1-5: ON with 2,4,8,16,64 step refinement, -1: DEFAULT",
-     set_cdef_mode},
+     {SINGLE_INPUT,
+     CDEF_LEVEL_TOKEN,
+     "CDEF Level, 0: OFF, 1-5: ON with 64,16,8,4,1 step refinement, -1: DEFAULT",
+     set_cdef_level},
     // RESTORATION
     {SINGLE_INPUT,
      RESTORATION_ENABLE_NEW_TOKEN,
@@ -1063,10 +1063,10 @@ ConfigEntry config_entry_specific[] = {
      "Use the same md results(mode, residual , cost,etc..)as the previously processed identical "
      "block(0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_redundant_blk_flag},
-    {SINGLE_INPUT,
-     SPATIAL_SSE_FL_NEW_TOKEN,
-     "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
-     set_spatial_sse_fl_flag},
+     {SINGLE_INPUT,
+      SPATIAL_SSE_FL_NEW_TOKEN,
+      "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
+      set_spatial_sse_full_loop_level_flag},
 #if 0//!REMOVE_ME_SUBPEL_CODE
     {SINGLE_INPUT,
      SUBPEL_TOKEN,
@@ -1159,7 +1159,7 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT,
      RDOQ_NEW_TOKEN,
      "Enable RDOQ (0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_rdoq_flag},
+     set_rdoq_level_flag},
 
     // Filter Intra
 #if 1 // FILTER_INTRA_CLI
@@ -1268,7 +1268,7 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT,
      PALETTE_TOKEN,
      "Set palette prediction mode(-1: default or [0-6])",
-     set_enable_palette},
+     set_palette_level},
     // Optional Features
     {SINGLE_INPUT,
      UNRESTRICTED_MOTION_VECTOR,
@@ -1323,10 +1323,10 @@ ConfigEntry config_entry_specific[] = {
      "equal the total search height and amount equals the search regions)",
      set_hme_level_2_search_area_in_height_array},
     // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT,
-     ENABLE_ALTREFS,
-     "Enable automatic alt reference frames(0: OFF, 1: ON[default])",
-     set_enable_altrefs},
+     {SINGLE_INPUT,
+      TF_LEVEL,
+      "Set altref level(0: OFF, 1: ON[default])",
+      set_tf_level},
     {SINGLE_INPUT,
      ALTREF_STRENGTH,
      "AltRef filter strength([0-6], default: 5)",
@@ -1442,7 +1442,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", set_disable_dlf_flag},
 
     // CDEF
-    {SINGLE_INPUT, CDEF_MODE_TOKEN, "CDEFMode", set_cdef_mode},
+    {SINGLE_INPUT, CDEF_LEVEL_TOKEN, "CDEFLevel", set_cdef_level},
 
     // RESTORATION
     {SINGLE_INPUT,
@@ -1456,7 +1456,7 @@ ConfigEntry config_entry[] = {
 #endif
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
-    {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_fl_flag},
+    {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_full_loop_level_flag},
 #if 0//!REMOVE_ME_SUBPEL_CODE
     {SINGLE_INPUT, SUBPEL_TOKEN, "Subpel", set_enable_sub_pel_flag},
 #endif
@@ -1508,7 +1508,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
 #endif
     // RDOQ
-    {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_enable_rdoq_flag},
+    {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_rdoq_level_flag},
     // Filter Intra
 #if 1 // FILTER_INTRA_CLI
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_filter_intra_level_flag},
@@ -1561,7 +1561,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
     {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
     {SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", set_enable_hbd_mode_decision},
-    {SINGLE_INPUT, PALETTE_TOKEN, "PaletteMode", set_enable_palette},
+    {SINGLE_INPUT, PALETTE_TOKEN, "PaletteLevel", set_palette_level},
     // Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
     {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
@@ -1612,7 +1612,7 @@ ConfigEntry config_entry[] = {
      "HmeLevel2SearchAreaInHeight",
      set_hme_level_2_search_area_in_height_array},
     // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT, ENABLE_ALTREFS, "EnableAltRefs", set_enable_altrefs},
+    {SINGLE_INPUT, TF_LEVEL, "TfLevel", set_tf_level},
     {SINGLE_INPUT, ALTREF_STRENGTH, "AltRefStrength", set_altref_strength},
     {SINGLE_INPUT, ALTREF_NFRAMES, "AltRefNframes", set_altref_n_frames},
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
@@ -1664,7 +1664,7 @@ ConfigEntry config_entry[] = {
     //{SINGLE_INPUT, FRAC_SEARCH_64_NEW_TOKEN, "FracSearch64", ??}, // todo
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv token with double dash", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_NEW_TOKEN, "Redundant Block", set_enable_redundant_blk_flag},
-    {SINGLE_INPUT, SPATIAL_SSE_FL_NEW_TOKEN, "Spatial SSE fl", set_spatial_sse_fl_flag},
+    {SINGLE_INPUT, SPATIAL_SSE_FL_NEW_TOKEN, "Spatial SSE fl", set_spatial_sse_full_loop_level_flag},
     {SINGLE_INPUT, OVR_BNDRY_BLK_NEW_TOKEN, "Over Boundry Block", set_over_bndry_blk_flag},
     {SINGLE_INPUT,
      NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
@@ -1684,7 +1684,7 @@ ConfigEntry config_entry[] = {
      "Local Warped Motion",
      set_enable_local_warped_motion_flag},
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_NEW_TOKEN, "Global Motion", set_enable_global_motion_flag},
-    {SINGLE_INPUT, RDOQ_NEW_TOKEN, "RDOQ double dash token", set_enable_rdoq_flag},
+    {SINGLE_INPUT, RDOQ_NEW_TOKEN, "RDOQ double dash token", set_rdoq_level_flag},
 #if 1 // FILTER_INTRA_CLI
     {SINGLE_INPUT, FILTER_INTRA_NEW_TOKEN, "Filter Intra", set_filter_intra_level_flag},
 #else
@@ -1753,7 +1753,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_global_motion                      = EB_TRUE;
     config_ptr->no_progress                               = EB_FALSE;
     config_ptr->enable_warped_motion                      = DEFAULT;
-    config_ptr->cdef_mode                                 = DEFAULT;
+    config_ptr->cdef_level                                = DEFAULT;
     config_ptr->enable_restoration_filtering              = DEFAULT;
     config_ptr->sg_filter_mode                            = DEFAULT;
     config_ptr->wn_filter_mode                            = DEFAULT;
@@ -1770,7 +1770,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #endif
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
-    config_ptr->spatial_sse_fl                            = DEFAULT;
+    config_ptr->spatial_sse_full_loop_level               = DEFAULT;
 #if 0//!REMOVE_ME_SUBPEL_CODE
     config_ptr->enable_subpel                             = DEFAULT;
 #endif
@@ -1789,7 +1789,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #else
     config_ptr->enable_obmc                               = EB_TRUE;
 #endif
-    config_ptr->enable_rdoq                               = DEFAULT;
+    config_ptr->rdoq_level                                = DEFAULT;
     config_ptr->pred_me                                   = DEFAULT;
     config_ptr->bipred_3x3_inject                         = DEFAULT;
     config_ptr->compound_level                            = DEFAULT;
@@ -1832,7 +1832,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_hbd_mode_decision                  = 2;
 #endif
     config_ptr->intrabc_mode                              = DEFAULT;
-    config_ptr->enable_palette                            = -1;
+    config_ptr->palette_level                             = DEFAULT;
     config_ptr->injector_frame_rate                       = 60 << 16;
 
     // ASM Type
@@ -1844,7 +1844,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->unrestricted_motion_vector = EB_TRUE;
 
     // --- start: ALTREF_FILTERING_SUPPORT
-    config_ptr->enable_altrefs  = EB_TRUE;
+    config_ptr->tf_level = DEFAULT;
     config_ptr->altref_strength = 5;
 #if 1//NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = 13;

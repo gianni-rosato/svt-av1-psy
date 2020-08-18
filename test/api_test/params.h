@@ -613,9 +613,9 @@ static const vector<uint32_t> invalid_search_area_height = {
  * 6:Fastest NIC=4/2/1 + No K means for non base + step for non base for
  * most dominant
  * Default is -1. */
-static const vector<int32_t> default_enable_palette = {-1};
-static const vector<int32_t> valid_enable_palette = {-1, 0, 1, 2, 3, 4, 5, 6};
-static const vector<int32_t> invalid_enable_palette = {-2, 7};
+static const vector<int32_t> default_palette_level = { -1 };
+static const vector<int32_t> valid_palette_level = { -1, 0, 1, 2, 3, 4, 5, 6 };
+static const vector<int32_t> invalid_palette_level = { -2, 7 };
 
 /* Enable the use of Constrained Intra, which yields sending two picture
  * parameter sets in the elementary streams .
@@ -1043,9 +1043,9 @@ static const vector<uint32_t> invalid_screen_content_mode = {3};
 
 /* Variables to control the use of ALT-REF (temporally filtered frames)
  */
-static const vector<EbBool> default_enable_altrefs = {EB_TRUE};
-static const vector<EbBool> valid_enable_altrefs = {EB_FALSE, EB_TRUE};
-static const vector<EbBool> invalid_enable_altrefs = {/*none*/};
+static const vector<int8_t> default_tf_level = { DEFAULT };
+static const vector<int8_t> valid_tf_level = { DEFAULT, 0, 1, 2, 3 };
+static const vector<int8_t> invalid_tf_level = { -2, 4 };
 
 static const vector<uint8_t> default_altref_strength = {5};
 static const vector<uint8_t> valid_altref_strength = {0, 1, 2, 3, 4, 5, 6};

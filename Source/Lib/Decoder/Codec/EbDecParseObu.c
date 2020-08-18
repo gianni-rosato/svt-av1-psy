@@ -416,8 +416,8 @@ EbErrorType read_sequence_header_obu(Bitstrm *bs, SeqHeader *seq_header) {
     }
     seq_header->enable_superres = dec_get_bits(bs, 1);
     PRINT("enable_superres", seq_header->enable_superres);
-    seq_header->enable_cdef = dec_get_bits(bs, 1);
-    PRINT("enable_cdef", seq_header->enable_cdef);
+    seq_header->cdef_level = dec_get_bits(bs, 1);
+    PRINT("cdef_level", seq_header->cdef_level);
     seq_header->enable_restoration = dec_get_bits(bs, 1);
     PRINT("enable_restoration", seq_header->enable_restoration);
 
@@ -1074,7 +1074,7 @@ void read_lr_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header,
 void read_frame_cdef_params(Bitstrm *bs, FrameHeader *frame_info, SeqHeader *seq_header,
                             int num_planes) {
     int i;
-    if (frame_info->coded_lossless || frame_info->allow_intrabc || !seq_header->enable_cdef) {
+    if (frame_info->coded_lossless || frame_info->allow_intrabc || !seq_header->cdef_level) {
         frame_info->cdef_params.cdef_bits           = 0;
         frame_info->cdef_params.cdef_y_strength[0]  = 0;
         frame_info->cdef_params.cdef_y_strength[4]  = 0;

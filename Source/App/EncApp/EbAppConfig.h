@@ -252,15 +252,15 @@ typedef struct EbConfig {
     EbBool enable_global_motion;
 
     /****************************************
-     * CDEF Mode
+     * CDEF Level
      * 0         OFF
-     * 1         1 step refinement
-     * 2         4 step refinement
+     * 1         64 step refinement
+     * 2         16 step refinement
      * 3         8 step refinement
-     * 4         16 step refinement
-     * 5         64 step refinement
+     * 4         4 step refinement
+     * 5         1 step refinement
     ****************************************/
-    int cdef_mode;
+    int cdef_level;
 
     /****************************************
      * Restoration filtering
@@ -307,7 +307,7 @@ typedef struct EbConfig {
     /****************************************
       * spatial sse in full loop
      ****************************************/
-    int spatial_sse_fl;
+    int spatial_sse_full_loop_level;
 #if 0//!REMOVE_ME_SUBPEL_CODE
     /****************************************
       * subpel
@@ -382,7 +382,7 @@ typedef struct EbConfig {
     /****************************************
      * RDOQ
      * ****************************************/
-    int enable_rdoq;
+    int rdoq_level;
 
     /****************************************
      * Filter intra prediction
@@ -443,7 +443,7 @@ typedef struct EbConfig {
      * MD Parameters
      ****************************************/
     int8_t  enable_hbd_mode_decision;
-    int32_t enable_palette;
+    int32_t palette_level;
     int32_t tile_columns;
     int32_t tile_rows;
 
@@ -514,7 +514,7 @@ typedef struct EbConfig {
     /****************************************
      * ALT-REF related Parameters
      ****************************************/
-    EbBool  enable_altrefs;
+    int8_t tf_level;
     uint8_t altref_strength;
     uint8_t altref_nframes;
     EbBool  enable_overlays;

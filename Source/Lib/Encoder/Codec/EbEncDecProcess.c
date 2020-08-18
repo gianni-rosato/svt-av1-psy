@@ -4945,12 +4945,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->interpolation_filter_search_blk_size = 1;
 #endif
 
-    // Derive Spatial SSE Flag
+    // spatial_sse_full_loop_level | Default Encoder Settings            | Command Line Settings
+    //             0               | OFF subject to possible constraints | OFF in PD_PASS_2
+    //             1               | ON subject to possible constraints  | ON in PD_PASS_2
     if (pd_pass == PD_PASS_0)
-        context_ptr->spatial_sse_full_loop = EB_FALSE;
+        context_ptr->spatial_sse_full_loop_level = EB_FALSE;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->spatial_sse_full_loop = EB_FALSE;
-    else if (sequence_control_set_ptr->static_config.spatial_sse_fl == DEFAULT)
+        context_ptr->spatial_sse_full_loop_level = EB_FALSE;
+    else if (sequence_control_set_ptr->static_config.spatial_sse_full_loop_level == DEFAULT)
 #if !UNIFY_SC_NSC
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR10_ADOPTIONS
@@ -4973,25 +4975,24 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
         if (enc_mode <= ENC_M8)
 #endif
-            context_ptr->spatial_sse_full_loop = EB_TRUE;
+            context_ptr->spatial_sse_full_loop_level = EB_TRUE;
         else
-            context_ptr->spatial_sse_full_loop = EB_FALSE;
+            context_ptr->spatial_sse_full_loop_level = EB_FALSE;
     else
-        context_ptr->spatial_sse_full_loop =
-        sequence_control_set_ptr->static_config.spatial_sse_fl;
+        context_ptr->spatial_sse_full_loop_level =
+        sequence_control_set_ptr->static_config.spatial_sse_full_loop_level;
 
     if (context_ptr->chroma_level <= CHROMA_MODE_1)
         context_ptr->blk_skip_decision = EB_TRUE;
     else
         context_ptr->blk_skip_decision = EB_FALSE;
 
-    // Derive Trellis Quant Coeff Optimization Flag
     if (pd_pass == PD_PASS_0)
-        context_ptr->enable_rdoq = EB_FALSE;
+        context_ptr->rdoq_level = EB_FALSE;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->enable_rdoq = EB_FALSE;
+        context_ptr->rdoq_level = EB_FALSE;
     else
-        if (sequence_control_set_ptr->static_config.enable_rdoq == DEFAULT)
+        if (sequence_control_set_ptr->static_config.rdoq_level == DEFAULT)
 #if !UNIFY_SC_NSC
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
 #if MAR17_ADOPTIONS
@@ -5038,12 +5039,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
             if (enc_mode <= ENC_M8)
 #endif
-                context_ptr->enable_rdoq = EB_TRUE;
+                context_ptr->rdoq_level = EB_TRUE;
             else
-                context_ptr->enable_rdoq = EB_FALSE;
+                context_ptr->rdoq_level = EB_FALSE;
         else
-            context_ptr->enable_rdoq =
-            sequence_control_set_ptr->static_config.enable_rdoq;
+            context_ptr->rdoq_level =
+            sequence_control_set_ptr->static_config.rdoq_level;
 
     // Derive redundant block
     if (pd_pass == PD_PASS_0)
@@ -6369,13 +6370,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_allow_intrabc = pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc;
 
-    // Set md_palette_mode @ MD
+    // Set md_palette_level @ MD
     if (pd_pass == PD_PASS_0)
-        context_ptr->md_palette_mode = 0;
+        context_ptr->md_palette_level = 0;
     else if (pd_pass == PD_PASS_1)
-        context_ptr->md_palette_mode = 0;
+        context_ptr->md_palette_level = 0;
     else
-        context_ptr->md_palette_mode = pcs_ptr->parent_pcs_ptr->palette_mode;
+        context_ptr->md_palette_level = pcs_ptr->parent_pcs_ptr->palette_level;
 #endif
     // intra_similar_mode
     // 0: OFF

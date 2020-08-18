@@ -126,9 +126,9 @@ Control flags associated with CDEF are listed in Table 1 below.
 
 | **Flag**                        | **Level**      | **Description**                                                                                                            |
 | ------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| -cdef-mode                      | Configuration  | Command line option: 0: OFF, 1-5: ON with steps 2,4,8,16,64, -1: Auto mode (determined in code)                            |
-| enable\_cdef                    | Sequence       | Indicates whether to use CDEF for the whole sequence.                                                                      |
-| cdef\_filter\_mode              | Picture        | Indicates the level of complexity of the CDEF strength search as a function of the encoder mode (enc\_mode).               |
+| -cdef-level                     | Configuration  | Command line option: 0: OFF, 1-5: ON with steps 64,16,8,4,1, -1: Auto mode (determined in code)                            |
+| cdef\_level                     | Sequence       | Indicates whether to use CDEF for the whole sequence.                                                                      |
+| cdef\_level                     | Picture        | Indicates the level of complexity of the CDEF strength search as a function of the encoder mode (enc\_mode).               |
 | use\_ref\_frame\_cdef\_strength | Picture        | If set, use the CDEF strength for the reference frame in optimizing the search for the CDEF strength in the current frame. |
 
 **Implementation details**
@@ -538,48 +538,48 @@ The algorithmic optimization of the CDEF is performed by adjusting the
 range of filter strength index used in the search for the best filter
 strength pair for the 64x64 block. First, the encoder preset
 (`picture_control_set_ptr`->`enc_mode`) is used to specify the CDEF
-filter mode (`picture_control_set_ptr`->`cdef_filter_mode`) according
+filter mode (`picture_control_set_ptr`->`cdef_level`) according
 to Table 3 below.
 
-##### Table 3. cdef_filter_mode as a function of encoder preset.
+##### Table 3. cdef_level as a function of encoder preset.
 
 
 
-|**Encoder Preset (enc\_mode)** | **cdef\_filter\_mode (Case of sc\_content\_detected = 0)** | **cdef\_filter\_mode (Case of sc\_content\_detected = 1)** |
+|**Encoder Preset (enc\_mode)** | **cdef\_level (Case of (slice\_type == I_SLICE) = 0)** | **cdef\_level (Case of (slice\_type == I_SLICE) = 1)** |
 |--- |--- |--- |
-|0|4|4|
-|1|4|4|
-|2|4|4|
-|3|4|4|
-|4|4|4|
-|5|4|4|
-|6|4|0|
-|7|4|0|
-|8|0|0|
+|0|1|1|
+|1|1|1|
+|2|1|1|
+|3|1|1|
+|4|1|1|
+|5|1|1|
+|6|1|4|
+|7|1|4|
+|8|1|4|
 
 
-The `cdef_filter_mode` specifies the parameter `gi_step` through the
+The `cdef_level` specifies the parameter `gi_step` through the
 function `get_cdef_gi_step`
 
 
-`gi_step` = `get_cdef_gi_step`(`pPcs`->`cdef_filter_mode`);
+`gi_step` = `get_cdef_gi_step`(`pPcs`->`cdef_level`);
 
 
 `gi_step` represents half the width of the filter strength search
 interval and is given in Table 4 below as a function of
-`cdef_filter_mode`.
+`cdef_level`.
 
-##### Table 4. gi_step as a function of cdef_filter_mode.
+##### Table 4. gi_step as a function of cdef_levels.
 
 
-| **cdef\_filter\_mode** | **gi\_step** |
+| **cdef\_level** | **gi\_step** |
 | ---------------------- | ------------ |
 | **0**                  | OFF          |
-| **1**                  | 1            |
-| **2**                  | 4            |
+| **1**                  | 64           |
+| **2**                  | 16           |
 | **3**                  | 8            |
-| **4**                  | 16           |
-| **5**                  | 64           |
+| **4**                  | 4            |
+| **5**                  | 1            |
 
 The search `in cdef_seg_search` and in `finish_cdef_search` for the
 filter strength is performed by considering a sub-interval of the filter
@@ -590,13 +590,13 @@ the reference picture. The actual implementation is given below:
 
 ```c
 
-gi_step = get_cdef_gi_step(pPcs->cdef_filter_mode);
+gi_step = get_cdef_gi_step(pPcs->cdef_level);
 
 mid_gi = pPcs->cdf_ref_frame_strength;
 
-start_gi = pPcs->use_ref_frame_cdef_strength && pPcs->cdef_filter_mode == 1 ? (AOMMAX(0, mid_gi - gi_step)) : 0;
+start_gi = pPcs->use_ref_frame_cdef_strength && pPcs->cdef_level == 5 ? (AOMMAX(0, mid_gi - gi_step)) : 0;
 
-end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_filter_mode == 1 ? 8 : total_strengths;
+end_gi = pPcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step) : pPcs->cdef_level == 5 ? 8 : total_strengths;
 
 ```
 

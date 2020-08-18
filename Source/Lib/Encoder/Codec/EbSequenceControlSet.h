@@ -69,7 +69,7 @@ typedef struct SequenceControlSet {
          for algorithms such as SceneChange or TemporalFiltering */
     uint32_t scd_delay;
     /*!< Enable the use of altrefs in the stream */
-    EbBool    enable_altrefs;
+    int8_t   tf_level;
     /*!<  */
     EbBlockMeanPrec          block_mean_calc_prec;
 #if !REMOVE_MRP_MODE
