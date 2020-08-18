@@ -308,7 +308,7 @@ EbHandle eb_create_mutex(void)
 }
 
 /***************************************
- * EbPostMutex
+ * eb_release_mutex
  ***************************************/
 EbErrorType eb_release_mutex(EbHandle mutex_handle)
 {
