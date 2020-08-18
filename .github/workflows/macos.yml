@@ -118,10 +118,11 @@ jobs:
             "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
             "::set-env name=CCACHE_DIR::$HOME/.ccache"
           clang -v
+          rm -rf macos-build
       - name: Run CMake
         run: |
-          cmake -S "$GITHUB_WORKSPACE" -B Build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -BBUILD_DEC=OFF -DBUILD_APPS=OFF
-          cmake --build Build --config Release --target all --target TestVectors
+          cmake -S "$GITHUB_WORKSPACE" -B macos-build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DBUILD_APPS=OFF
+          cmake --build macos-build --config Release --target all --target TestVectors
       - name: Upload unit-tests (macOS)
         uses: actions/upload-artifact@v2
         with:
@@ -142,6 +143,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: svtav1-macOS-unittest
+          path: Bin/Release
       - name: Run unit tests
         run: |
           parallel -u -j 4 GTEST_SHARD_INDEX={} ./Bin/Release/SvtAv1UnitTests ::: $(seq 0 $((GTEST_TOTAL_SHARDS - 1)))
@@ -160,5 +162,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: svtav1-macOS-unittest
+          path: Bin/Release
       - name: Run e2e tests
         run: ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
