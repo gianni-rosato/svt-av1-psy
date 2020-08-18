@@ -315,9 +315,9 @@ EbErrorType eb_release_mutex(EbHandle mutex_handle)
     EbErrorType return_error;
 
 #ifdef _WIN32
-    return_error = !ReleaseMutex((HANDLE)mutex_handle) ? EB_ErrorCreateMutexFailed : EB_ErrorNone;
+    return_error = !ReleaseMutex((HANDLE)mutex_handle) ? EB_ErrorMutexUnresponsive : EB_ErrorNone;
 #else
-    return_error = pthread_mutex_unlock((pthread_mutex_t *)mutex_handle) ? EB_ErrorCreateMutexFailed
+    return_error = pthread_mutex_unlock((pthread_mutex_t *)mutex_handle) ? EB_ErrorMutexUnresponsive
                                                                          : EB_ErrorNone;
 #endif
 
