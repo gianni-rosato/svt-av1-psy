@@ -503,6 +503,9 @@ extern "C" {
 
 ///////// END MASTER_SYNCH
 
+#define REF_PRUNE_CAT_TUNE 1 // Tune the allowable references per category to improve trade-offs
+#define INCREASE_WM_CANDS  1 // Use WM for PME candidates; increase number of NEW_MV cands used for WM
+
 #if DECOUPLE_ME_RES
 #define UPDATED_LINKS 100 //max number of pictures a dep-Cnt-cleanUp triggering picture can process
 #endif
