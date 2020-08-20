@@ -291,6 +291,8 @@ typedef enum MinigopIndex {
 // Right shift that replicates gcc's implementation
 
 static inline int gcc_right_shift(int a, unsigned shift) {
+    if (!a)
+        return 0;
     if (a > 0)
         return a >> shift;
     static const unsigned sbit = 1u << (sizeof(sbit) * CHAR_BIT - 1);

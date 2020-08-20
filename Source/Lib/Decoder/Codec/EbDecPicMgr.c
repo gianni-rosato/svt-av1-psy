@@ -181,8 +181,6 @@ EbDecPicBuf *dec_pic_mgr_get_cur_pic(EbDecHandle *dec_handle_ptr) {
 static INLINE void dec_ref_count_and_rel(EbDecPicBuf *ps_pic_buf) {
     if (ps_pic_buf != NULL) {
         ps_pic_buf->ref_count--;
-        assert(ps_pic_buf->ref_count == 0);
-
         if (ps_pic_buf->ref_count == 0) ps_pic_buf->is_free = 1;
     }
 }

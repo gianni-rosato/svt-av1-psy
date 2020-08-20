@@ -194,13 +194,13 @@ static INLINE void dec_build_prediction_by_above_pred(
     int                  mi_x, mi_y;
     uint8_t *            tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    backup_pi->mi                       = above_mbmi;
-    av1_modify_neighbor_predictor_for_obmc(backup_pi->mi);
+    BlockModeInfo        bakup_abv_mbmi = *above_mbmi;
+    av1_modify_neighbor_predictor_for_obmc(&bakup_abv_mbmi);
 
-    const int num_refs = 1 + has_second_ref(backup_pi->mi);
+    const int num_refs = 1 + has_second_ref(&bakup_abv_mbmi);
 
     for (int ref = 0; ref < num_refs; ++ref) {
-        const MvReferenceFrame frame = backup_pi->mi->ref_frame[ref];
+        const MvReferenceFrame frame = bakup_abv_mbmi.ref_frame[ref];
         backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
@@ -351,13 +351,13 @@ static INLINE void dec_build_prediction_by_left_pred(
     int                  mi_x, mi_y;
     uint8_t *            tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    backup_pi->mi                        = left_mbmi;
-    av1_modify_neighbor_predictor_for_obmc(backup_pi->mi);
+    BlockModeInfo        bakup_left_mbmi = *left_mbmi;
+    av1_modify_neighbor_predictor_for_obmc(&bakup_left_mbmi);
 
-    const int num_refs = 1 + has_second_ref(backup_pi->mi);
+    const int num_refs = 1 + has_second_ref(&bakup_left_mbmi);
 
     for (int ref = 0; ref < num_refs; ++ref) {
-        const MvReferenceFrame frame = backup_pi->mi->ref_frame[ref];
+        const MvReferenceFrame frame = bakup_left_mbmi.ref_frame[ref];
         backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {

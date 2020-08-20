@@ -1275,12 +1275,13 @@ void update_chroma_trans_info(ParseCtxt *parse_ctx, PartitionInfo *part_info, Bl
 
     /* TODO: Make plane loop and avoid the unroll */
     for (int idy = 0, force_split_cnt = 0; idy < max_blocks_high; idy += height) {
-        for (int idx = 0, num_chroma_tus = 0; idx < max_blocks_wide;
-             idx += width, force_split_cnt++) {
+        for (int idx = 0; idx < max_blocks_wide; idx += width, force_split_cnt++) {
             if (color_config.mono_chrome) continue;
 
             /* Update Chroma Transform Info */
             if (!part_info->is_chroma_ref) continue;
+
+            int num_chroma_tus = 0;
 
             step_r = tx_size_high_unit[tx_size_uv];
             step_c = tx_size_wide_unit[tx_size_uv];
@@ -1520,7 +1521,8 @@ void read_block_tx_size(ParseCtxt *parse_ctx, PartitionInfo *part_info, BlockSiz
 
         // Luma trans_info update
         for (int idy = 0; idy < height; idy += bh)
-            for (int idx = 0, num_luma_tus = 0; idx < width; idx += bw) {
+            for (int idx = 0; idx < width; idx += bw) {
+                int num_luma_tus = 0;
                 read_var_tx_size(parse_ctx, part_info, max_tx_size, idy, idx, 0, &num_luma_tus);
                 parse_ctx->num_tus[AOM_PLANE_Y][force_split_cnt] = num_luma_tus;
                 force_split_cnt++;
