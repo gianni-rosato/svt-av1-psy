@@ -615,6 +615,7 @@ SearchArea TEST_AREAS[] = {
     SearchArea(32, 12)};
 
 SearchArea TEST_LOOP_AREAS[] = {
+    SearchArea(8, 15),   SearchArea(16, 31),
     SearchArea(64, 125),  SearchArea(192, 75),  SearchArea(128, 50),
     SearchArea(64, 25),   SearchArea(240, 200), SearchArea(144, 120),
     SearchArea(96, 80),   SearchArea(48, 40),   SearchArea(240, 120),
