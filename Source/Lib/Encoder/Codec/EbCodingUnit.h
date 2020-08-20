@@ -279,6 +279,10 @@ typedef struct MacroBlockD {
     int32_t mb_to_right_edge;
     int32_t mb_to_top_edge;
     int32_t mb_to_bottom_edge;
+#if UPGRADE_SUBPEL
+    int mi_row; // Row position in mi units
+    int mi_col; // Column position in mi units
+#endif
     uint8_t neighbors_ref_counts[TOTAL_REFS_PER_FRAME];
 #if !SB_MEM_OPT
     uint8_t                  use_intrabc;

@@ -615,8 +615,10 @@ typedef struct PictureParentControlSet {
     int      kf_zeromotion_pct; // percent of zero motion blocks
     uint8_t  fade_out_from_black;
     uint8_t  fade_in_to_black;
+#if !IMPROVE_GMV
     EbBool   is_pan;
     EbBool   is_tilt;
+#endif
     uint8_t *sb_flat_noise_array;
     uint16_t non_moving_index_average; // used by ModeDecisionConfigurationProcess()
     int16_t  non_moving_index_min_distance;
@@ -652,6 +654,10 @@ typedef struct PictureParentControlSet {
     uint16_t *ois_distortion_histogram;
     uint32_t *intra_sad_interval_index;
     uint32_t *inter_sad_interval_index;
+#if IMPROVE_GMV //--
+    uint16_t me_processed_sb_count;
+    EbHandle me_processed_sb_mutex;
+#endif
     EbHandle  rc_distortion_histogram_mutex;
 #if !REMOVE_UNUSED_CODE_PH2
     // Open loop Intra candidate Search Results

@@ -39,6 +39,7 @@ typedef struct InitialRateControlContext {
 /**************************************
 * Macros
 **************************************/
+#if !IMPROVE_GMV
 #define PAN_SB_PERCENTAGE 75
 #define LOW_AMPLITUDE_TH 16
 
@@ -423,7 +424,7 @@ void detect_global_motion(PictureParentControlSet *pcs_ptr) {
         }
     }
 }
-
+#endif
 static void initial_rate_control_context_dctor(EbPtr p) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)p;
     InitialRateControlContext *obj = (InitialRateControlContext *)thread_context_ptr->priv;
@@ -483,6 +484,7 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
 
     return;
 }
+#if !IMPROVE_GMV
 
 /************************************************
 * Global Motion Detection Based on ME information
@@ -550,6 +552,7 @@ void update_global_motion_detection_over_time(EncodeContext *          encode_co
     }
     return;
 }
+#endif
 
 /************************************************
 * Update BEA Information Based on Lookahead
@@ -2025,9 +2028,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+#if !IMPROVE_GMV
             // Mark picture when global motion is detected using ME results
             //reset intra_coded_estimation_sb
             me_based_global_motion_detection(pcs_ptr);
+#endif
 #if TPL_LA
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
@@ -2217,7 +2222,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
                             }
                         }
-
+#if !IMPROVE_GMV
                         // Mark each input picture as PAN or not
                         // If a lookahead is present then check PAN for a period of time
                         if (!pcs_ptr->end_of_sequence_flag &&
@@ -2228,7 +2233,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         } else {
                             if (pcs_ptr->slice_type != I_SLICE) detect_global_motion(pcs_ptr);
                         }
-
+#endif
                         // BACKGROUND ENHANCEMENT Part II
                         if (!pcs_ptr->end_of_sequence_flag &&
                             scs_ptr->static_config.look_ahead_distance != 0) {

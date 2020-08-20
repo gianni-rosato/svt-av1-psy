@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#ifndef AOM_AV1_ENCODER_MCOMP_H_
-#define AOM_AV1_ENCODER_MCOMP_H_
+#ifndef AOM_AV1_ENCODER_ME_H_
+#define AOM_AV1_ENCODER_ME_H_
 
 #include "EbDefinitions.h"
 #include "EbCodingUnit.h"
@@ -91,4 +91,4 @@ int eb_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MAC
 } // extern "C"
 #endif
 
-#endif // AOM_AV1_ENCODER_MCOMP_H_
+#endif // AOM_AV1_ENCODER_ME_H_

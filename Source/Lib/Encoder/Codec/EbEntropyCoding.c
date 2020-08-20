@@ -1848,7 +1848,7 @@ void write_drl_idx(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlkStruct
 }
 
 #endif
-extern MvJointType av1_get_mv_joint(int32_t diff[2]);
+extern MvJointType svt_av1_get_mv_joint(int32_t diff[2]);
 static void        encode_mv_component(AomWriter *w, int32_t comp, NmvComponent *mvcomp,
                                        MvSubpelPrecision precision) {
     int32_t       offset;
@@ -4884,7 +4884,7 @@ void eb_av1_encode_dv(AomWriter *w, const MV *mv, const MV *ref, NmvContext *mvc
     assert((ref->col & 7) == 0);
     assert((ref->row & 7) == 0);
     const MV          diff = {mv->row - ref->row, mv->col - ref->col};
-    const MvJointType j    = av1_get_mv_joint((int32_t *)&diff);
+    const MvJointType j    = svt_av1_get_mv_joint((int32_t *)&diff);
 
     aom_write_symbol(w, j, mvctx->joints_cdf, MV_JOINTS);
     if (mv_joint_vertical(j)) encode_mv_component(w, diff.row, &mvctx->comps[0], MV_SUBPEL_NONE);

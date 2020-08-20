@@ -680,14 +680,14 @@ static void update_mv_component_stats(int comp, NmvComponent *mvcomp, MvSubpelPr
     }
 }
 
-MvJointType av1_get_mv_joint(const MV *mv);
+MvJointType svt_av1_get_mv_joint(const MV *mv);
 /*******************************************************************************
  * Updates all the mv stats/CDF for the current block
  ******************************************************************************/
 static void av1_update_mv_stats(const MV *mv, const MV *ref, NmvContext *mvctx,
                                 MvSubpelPrecision precision) {
     const MV          diff = {mv->row - ref->row, mv->col - ref->col};
-    const MvJointType j    = av1_get_mv_joint(&diff);
+    const MvJointType j    = svt_av1_get_mv_joint(&diff);
 
     update_cdf(mvctx->joints_cdf, j, MV_JOINTS);
 

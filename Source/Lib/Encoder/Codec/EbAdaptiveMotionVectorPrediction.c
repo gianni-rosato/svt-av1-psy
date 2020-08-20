@@ -1109,7 +1109,10 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
     xd->mb_to_left_edge   = -((mi_col * MI_SIZE) * 8);
     xd->mb_to_right_edge  = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
-
+#if UPGRADE_SUBPEL
+    xd->mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
+    xd->mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
+#endif
     xd->up_available   = (mi_row > tile->mi_row_start);
     xd->left_available = (mi_col > tile->mi_col_start);
 
@@ -1175,7 +1178,10 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
     xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
     xd->mb_to_left_edge   = -((mi_col * MI_SIZE) * 8);
     xd->mb_to_right_edge  = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
-
+#if UPGRADE_SUBPEL
+    xd->mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
+    xd->mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
+#endif
     memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
 #if MEM_OPT_MV_STACK
     memset(context_ptr->ed_ref_mv_stack,

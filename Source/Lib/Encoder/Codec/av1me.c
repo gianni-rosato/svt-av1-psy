@@ -119,10 +119,10 @@ void eb_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv) {
     if (mv_limits->row_max > row_max) mv_limits->row_max = row_max;
 }
 
-MvJointType av1_get_mv_joint(const MV *mv);
+MvJointType svt_av1_get_mv_joint(const MV *mv);
 
 static INLINE int mv_cost(const MV *mv, const int *joint_cost, int *const comp_cost[2]) {
-    return joint_cost[av1_get_mv_joint(mv)] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
+    return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
 }
 
 #define PIXEL_TRANSFORM_ERROR_SCALE 4

@@ -66,14 +66,14 @@ uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
 //    MV_JOINT_HNZVNZ = 3, /* Both components nonzero */
 //} MvJointType;
 
-MvJointType av1_get_mv_joint(const MV *mv) {
+MvJointType svt_av1_get_mv_joint(const MV *mv) {
     if (mv->row == 0)
         return mv->col == 0 ? MV_JOINT_ZERO : MV_JOINT_HNZVZ;
     else
         return mv->col == 0 ? MV_JOINT_HZVNZ : MV_JOINT_HNZVNZ;
 }
 int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cost[2]) {
-    int32_t jn_c = av1_get_mv_joint(mv);
+    int32_t jn_c = svt_av1_get_mv_joint(mv);
     int32_t res  = joint_cost[jn_c] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
 
     return res;

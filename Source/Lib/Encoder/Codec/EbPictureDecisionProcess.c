@@ -7141,7 +7141,9 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count  * pcs_ptr->me_segments_row_count);
                             pcs_ptr->me_segments_completion_mask = 0;
-
+#if IMPROVE_GMV
+                            pcs_ptr->me_processed_sb_count = 0;
+#endif
                             //****************************************************
                             // Picture resizing for super-res tool
                             //****************************************************

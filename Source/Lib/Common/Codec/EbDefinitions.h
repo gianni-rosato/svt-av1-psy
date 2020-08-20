@@ -359,7 +359,7 @@ extern "C" {
 #define PERFORM_SUB_PEL_TF         1 // Perform subpel @ TF
 #define PERFORM_SUB_PEL_MD         1 // Perform subpel @ MD
 #define FIX_IFS_OFF_CASE           1 // Bug fix: interpolation filter is hard-coded to regular when IFS is OFF (prevented testing bilinear @ PD0)
-#define SEARCH_TOP_N               1 // Perform 1/2 Pel search @ MD for the top N Full-Pel position(s). Used N=5 for M0 and N=3 for M1
+#define SEARCH_TOP_N               0 // Useless when UPGRADE_SUBPEL is ON Perform 1/2 Pel search @ MD for the top N Full-Pel position(s). Used N=5 for M0 and N=3 for M1
 
 
 #endif
@@ -499,12 +499,19 @@ extern "C" {
 #define FILTER_INTRA_CLI    1 // Improve CLI support for Filter Intra (OFF / Fully ON / Other Levels)
 #define TX_EARLY_EXIT       1 // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
 
+#define REF_PRUNE_CAT_TUNE 1 // Tune the allowable references per category to improve trade-offs
+#define INCREASE_WM_CANDS  1 // Use WM for PME candidates; increase number of NEW_MV cands used for WM
+
+#define ADAPTIVE_ME_SEARCH  1 // Add Adaptive ME: detect and improve the pred of high active block(s)
+#define FIX_MV_BOUND        1 // Clip inherited ME MVs to stay within pic boundaries
+#define IMPROVE_GMV         1 // Make GMV params/candidates derivation multi-ref aware, and set multi-ref to be considered = f(input_complexity)
+#define ENABLE_GM_ID_EXIT   1 // Enable gm_identiy_exit
+#define UPGRADE_SUBPEL      1 // Upgrade subpel of me and of pme to use libaom subpel search
+#define REMOVE_USELESS_CODE 1 // Remove useless code
+
 #endif
 
 ///////// END MASTER_SYNCH
-
-#define REF_PRUNE_CAT_TUNE 1 // Tune the allowable references per category to improve trade-offs
-#define INCREASE_WM_CANDS  1 // Use WM for PME candidates; increase number of NEW_MV cands used for WM
 
 #if DECOUPLE_ME_RES
 #define UPDATED_LINKS 100 //max number of pictures a dep-Cnt-cleanUp triggering picture can process
@@ -525,8 +532,12 @@ extern "C" {
 #endif
 
 #define ALT_REF_QP_THRESH 20
+#if UPGRADE_SUBPEL
+// Q threshold for high precision mv.
+#define HIGH_PRECISION_MV_QTHRESH 128
+#else
 #define HIGH_PRECISION_MV_QTHRESH 150
-
+#endif
 // Actions in the second pass: Frame and SB QP assignment and temporal filtering strenght change
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -566,7 +577,9 @@ typedef enum GM_LEVEL {
     GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
 #if GM_DOWN_16
     GM_DOWN16    = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+#if !IMPROVE_GMV
     GM_TRAN_ONLY = 3 // Translation only using ME MV.
+#endif
 #else
     GM_TRAN_ONLY = 2 // Translation only using ME MV.
 #endif

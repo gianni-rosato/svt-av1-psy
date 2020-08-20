@@ -93,7 +93,15 @@ extern "C" {
 #define F2 2
 #define MAX_SSE_VALUE 128 * 128 * 255 * 255
 #define  MAX_SAD_VALUE 128*128*255
+#if ADAPTIVE_ME_SEARCH
+// Thresholds used for determining level of motion (used in sparse search)
+#define MEDIUM_TEMPORAL_MV_TH   2048
+#define LOW_TEMPORAL_MV_TH      1024
 
+#define HIGH_SPATIAL_MV_TH      2048
+#define MEDIUM_SPATIAL_MV_TH    512
+#define LOW_SPATIAL_MV_TH       256
+#endif
 // Interpolation Filters
     static const int32_t me_if_coeff[3][4] = {
         { -4, 54, 16, -2 }, // F0
