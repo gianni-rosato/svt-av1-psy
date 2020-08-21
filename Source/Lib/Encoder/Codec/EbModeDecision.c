@@ -1046,12 +1046,12 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                     uint8_t inter_type;
                     uint8_t is_ii_allowed =
 #if INTRA_COMPOUND_OPT
-                        svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1 , context_ptr->blk_geom->bsize, NEWMV, rf);
+                        svt_is_interintra_allowed(context_ptr->md_inter_intra_level == 1 , context_ptr->blk_geom->bsize, NEWMV, rf);
 #else
                         0; //svt_is_interintra_allowed(pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
 #endif
 #if INTRA_COMPOUND_OPT
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
 #if DECOUPLE_ME_RES
                         if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0)
 #else
@@ -1225,13 +1225,13 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                              EB_FALSE)) {
                         uint8_t inter_type;
 #if INTRA_COMPOUND_OPT
-                        uint8_t is_ii_allowed   = svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1,
+                        uint8_t is_ii_allowed   = svt_is_interintra_allowed(context_ptr->md_inter_intra_level == 1,
                             context_ptr->blk_geom->bsize, NEWMV, rf);
 #else
                         uint8_t is_ii_allowed   = 0;
 #endif
 #if INTRA_COMPOUND_OPT
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
 #if DECOUPLE_ME_RES
                         if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
 #else
@@ -1887,11 +1887,11 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         if (inj_mv) {
             uint8_t inter_type;
             uint8_t is_ii_allowed =
-                svt_is_interintra_allowed(context_ptr->md_enable_inter_intra, bsize, NEARESTMV, rf);
+                svt_is_interintra_allowed(context_ptr->md_inter_intra_level, bsize, NEARESTMV, rf);
 #if INTRA_COMPOUND_OPT
             uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
 
-            if (context_ptr->md_enable_inter_intra > 2)
+            if (context_ptr->md_inter_intra_level > 2)
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                     is_ii_allowed = 0;
 #endif
@@ -2004,11 +2004,11 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
             if (inj_mv) {
                 uint8_t inter_type;
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                    context_ptr->md_enable_inter_intra, bsize, NEARMV, rf);
+                    context_ptr->md_inter_intra_level, bsize, NEARMV, rf);
 #if INTRA_COMPOUND_OPT
             uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
 
-            if (context_ptr->md_enable_inter_intra > 2)
+            if (context_ptr->md_inter_intra_level > 2)
                 if (ref_idx_0 > context_ptr->inter_comp_ctrls.mrp_pruning_w_distance - 1)
                     is_ii_allowed = 0;
 #endif
@@ -3726,17 +3726,17 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                      EB_FALSE)) {
                 uint8_t inter_type;
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                    context_ptr->md_enable_inter_intra,
+                    context_ptr->md_inter_intra_level,
                     bsize,
                     NEWMV,
                     (const MvReferenceFrame[]){to_inject_ref_type, -1});
 #if INTRA_COMPOUND_OPT
 #if DECOUPLE_ME_RES
-                if (context_ptr->md_enable_inter_intra > 2)
+                if (context_ptr->md_inter_intra_level > 2)
                     if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0)
                         is_ii_allowed = 0;
 #else
-                if (context_ptr->md_enable_inter_intra > 2)
+                if (context_ptr->md_inter_intra_level > 2)
                     if  (pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[0][list0_ref_index] == 0 )
                         is_ii_allowed = 0;
 #endif
@@ -3884,17 +3884,17 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
 
                     uint8_t inter_type;
                     uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                        context_ptr->md_enable_inter_intra,
+                        context_ptr->md_inter_intra_level,
                         bsize,
                         NEWMV,
                         (const MvReferenceFrame[]){to_inject_ref_type, -1});
 #if INTRA_COMPOUND_OPT
 #if DECOUPLE_ME_RES
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
                         if (pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                             is_ii_allowed = 0;
 #else
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
                         if  ( pcs_ptr->parent_pcs_ptr->me_results[me_sb_addr]->do_comp[1][list1_ref_index] == 0)
                                 is_ii_allowed = 0;
 #endif
@@ -4249,7 +4249,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
 
                 uint8_t inter_type;
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                    context_ptr->md_enable_inter_intra, bsize, GLOBALMV, rf);
+                    context_ptr->md_inter_intra_level, bsize, GLOBALMV, rf);
 
                 uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
 
@@ -4567,9 +4567,9 @@ void inject_predictive_me_candidates(
                 if (inj_mv) {
                     uint8_t inter_type;
                     uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                        context_ptr->md_enable_inter_intra == 1, bsize, NEWMV, rf);
+                        context_ptr->md_inter_intra_level == 1, bsize, NEWMV, rf);
 
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
                         if (is_reference_best_pme(context_ptr, list_idx, ref_idx, 1) == 0)
                             is_ii_allowed = 0;
                     uint8_t tot_inter_types = is_ii_allowed ? II_COUNT : 1;
@@ -4859,12 +4859,12 @@ void inject_predictive_me_candidates(
 #endif
                     uint8_t is_ii_allowed =
 #if INTRA_COMPOUND_OPT
-                        svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1, bsize, NEWMV, rf);
+                        svt_is_interintra_allowed(context_ptr->md_inter_intra_level == 1, bsize, NEWMV, rf);
 #else
                         0; // svt_is_interintra_allowed(pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
 #endif
 #if INTRA_COMPOUND_OPT
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
                         if (is_reference_best_pme(context_ptr , 0 ,ref_pic_index ,1)  == 0)
                             is_ii_allowed = 0;
 #endif
@@ -5024,12 +5024,12 @@ void inject_predictive_me_candidates(
 #endif
                         uint8_t is_ii_allowed =
 #if INTRA_COMPOUND_OPT
-                        svt_is_interintra_allowed(context_ptr->md_enable_inter_intra == 1, bsize, NEWMV, rf);
+                        svt_is_interintra_allowed(context_ptr->md_inter_intra_level == 1, bsize, NEWMV, rf);
 #else
                             0; // svt_is_interintra_allowed(pcs_ptr->parent_pcs_ptr->enable_inter_intra, bsize, NEWMV, rf);
 #endif
 #if INTRA_COMPOUND_OPT
-                    if (context_ptr->md_enable_inter_intra > 2)
+                    if (context_ptr->md_inter_intra_level > 2)
                         if (is_reference_best_pme(context_ptr , 0 ,ref_pic_index ,1)  == 0)
                             is_ii_allowed = 0;
 #endif
@@ -5308,8 +5308,11 @@ void inject_predictive_me_candidates(
 }
 
 void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
-                             const SequenceControlSet *scs_ptr, SuperBlock *sb_ptr,
-                             EbBool coeff_based_nsq_cand_reduction, uint32_t *candidate_total_cnt) {
+#if SWITCH_MODE_BASED_ON_SQ_COEFF
+                             const SequenceControlSet *scs_ptr, SuperBlock *sb_ptr, uint32_t *candidate_total_cnt) {
+#else
+                             const SequenceControlSet *scs_ptr, SuperBlock *sb_ptr, EbBool coeff_based_nsq_cand_reduction, uint32_t *candidate_total_cnt) {
+#endif
     (void)scs_ptr;
 
     FrameHeader *          frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -5426,7 +5429,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                            context_ptr->blk_geom->bheight >= 8) ||
                           params_l0->wmtype <= TRANSLATION))) {
                         int is_ii_allowed = svt_is_interintra_allowed(
-                            context_ptr->md_enable_inter_intra,
+                            context_ptr->md_inter_intra_level,
                             bsize,
                             GLOBALMV,
                             (const MvReferenceFrame[]){to_inject_ref_type, -1});
@@ -5629,7 +5632,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
                                              : 1;
             if (inj_mv && inside_tile) {
                 uint8_t is_ii_allowed = svt_is_interintra_allowed(
-                    context_ptr->md_enable_inter_intra,
+                    context_ptr->md_inter_intra_level,
                     bsize,
                     GLOBALMV,
                     (const MvReferenceFrame[]){to_inject_ref_type, -1});
@@ -5808,7 +5811,11 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
         inject_warped_motion_candidates(
             pcs_ptr, context_ptr, context_ptr->blk_ptr, &cand_total_cnt, me_results);
     }
+#if SWITCH_MODE_BASED_ON_SQ_COEFF
+    if (is_compound_enabled) {
+#else
     if (!coeff_based_nsq_cand_reduction && is_compound_enabled) {
+#endif
         if (allow_bipred && context_ptr->bipred3x3_injection > 0 && pcs_ptr->slice_type == B_SLICE)
             //----------------------
             // Bipred2Nx2N
@@ -6944,6 +6951,7 @@ EbErrorType generate_md_stage_0_cand(
     context_ptr->injected_mv_count_l0 = 0;
     context_ptr->injected_mv_count_l1 = 0;
     context_ptr->injected_mv_count_bipred = 0;
+#if !SWITCH_MODE_BASED_ON_SQ_COEFF
     uint8_t sq_index = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
     EbBool coeff_based_nsq_cand_reduction = EB_FALSE;
     if (slice_type != I_SLICE) {
@@ -6952,6 +6960,7 @@ EbErrorType generate_md_stage_0_cand(
                 coeff_based_nsq_cand_reduction = context_ptr->blk_geom->shape == PART_N || context_ptr->parent_sq_has_coeff[sq_index] != 0 ? EB_FALSE : EB_TRUE;
         }
 }
+#endif
     //----------------------
     // Intra
     if (context_ptr->blk_geom->sq_size < 128) {
@@ -6969,10 +6978,16 @@ EbErrorType generate_md_stage_0_cand(
                     context_ptr,
                     scs_ptr,
                     sb_ptr,
+#if SWITCH_MODE_BASED_ON_SQ_COEFF
+                    context_ptr->dc_cand_only_flag,
+#else
                     context_ptr->dc_cand_only_flag || coeff_based_nsq_cand_reduction,
+#endif
                 &cand_total_cnt);
     }
+#if !SWITCH_MODE_BASED_ON_SQ_COEFF
     if (!coeff_based_nsq_cand_reduction)
+#endif
 #if FILTER_INTRA_CLI
        if (context_ptr->md_filter_intra_level > 0 && av1_filter_intra_allowed_bsize(scs_ptr->seq_header.filter_intra_level, context_ptr->blk_geom->bsize))
 #else
@@ -7037,7 +7052,9 @@ EbErrorType generate_md_stage_0_cand(
                 context_ptr,
                 scs_ptr,
                 sb_ptr,
+#if !SWITCH_MODE_BASED_ON_SQ_COEFF
                 coeff_based_nsq_cand_reduction,
+#endif
                 &cand_total_cnt);
     }
 #if INJECT_BACKUP_CANDIDATE

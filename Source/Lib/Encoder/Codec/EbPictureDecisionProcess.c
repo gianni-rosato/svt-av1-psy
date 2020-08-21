@@ -984,7 +984,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
 #if UPGRADE_M6_M7_M8
 #if JUNE26_ADOPTIONS
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
 #if JUNE25_ADOPTIONS
     if (pcs_ptr->enc_mode <= ENC_M4) {
@@ -1143,6 +1147,20 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 
     // Set disallow_nsq
+#if FAST_M8_V1
+#if JULY31_PRESETS_ADOPTIONS
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+    if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
+#else
+    if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+        pcs_ptr->disallow_nsq = EB_FALSE;
+    else
+        pcs_ptr->disallow_nsq = EB_TRUE;
+#else
 #if APR25_12AM_ADOPTIONS
 #if JUNE11_ADOPTIONS
     if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -1252,6 +1270,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->disallow_nsq = EB_FALSE;
 #endif
 #endif
+#endif
 #if NSQ_REMOVAL_CODE_CLEAN_UP
     pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
 #else
@@ -1294,7 +1313,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
 #if UNIFY_SC_NSC
 #if NEW_M8
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M9)
+#else
     if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
 #if SOFT_CYCLES_M6M7
     if (pcs_ptr->enc_mode <= ENC_M7)
@@ -1389,7 +1412,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if JUNE17_ADOPTIONS
 #if SOFT_CYCLES_REDUCTION
 #if NEW_M8
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M9)
+#else
     if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
 #if SOFT_CYCLES_M6M7
     if (pcs_ptr->enc_mode <= ENC_M7)
@@ -1408,6 +1435,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_FALSE;
+#if !SHIFT_PRESETS
 #if JUNE17_ADOPTIONS
     else if (pcs_ptr->enc_mode <= ENC_M6)
 #else
@@ -1418,6 +1446,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = pcs_ptr->slice_type == I_SLICE ? EB_FALSE : EB_TRUE;
+#endif
     else
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
 #else
@@ -1593,7 +1622,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             // ENABLE/DISABLE IBC
 #if MAR3_M6_ADOPTIONS
 #if MAR4_M8_ADOPTIONS
+#if SHIFT_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M9)
+#else
             if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -1611,7 +1644,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if M8_IBC
 #if UPGRADE_M6_M7_M8
 #if M5_I_IBC
+#if SHIFT_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M9)
+#else
             if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M7)
 #endif
@@ -1677,7 +1714,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if REVERT_WHITE // palette_mode
 #if MAY19_ADOPTIONS
 #if JUNE23_ADOPTIONS
+#if SHIFT_PRESETS
+            ((pcs_ptr->enc_mode <= ENC_M3) || (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M9))
+#else
             ((pcs_ptr->enc_mode <= ENC_M3) || (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M8))
+#endif
 #else
 #if NEW_M8
             ((pcs_ptr->enc_mode <= ENC_M3) || (pcs_ptr->is_used_as_reference_flag && pcs_ptr->enc_mode <= ENC_M4) ||
@@ -1761,7 +1802,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if PRESET_SHIFITNG
 #if M6_LOOP_FILTER_MODE
 #if UNIFY_SC_NSC
+#if SHIFT_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
         if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M6 || pcs_ptr->sc_content_detected)
 #endif
@@ -1824,7 +1869,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if UPGRADE_M6_M7_M8
 #if PRESET_SHIFITNG
-                if (pcs_ptr->enc_mode <= ENC_M5)
+#if SHIFT_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
                 if (pcs_ptr->enc_mode <= ENC_M7)
 #endif
@@ -1995,7 +2044,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if MAY19_ADOPTIONS
 #if JUNE17_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M5)
+#if SHIFT_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
 #if PRESET_SHIFITNG
         if (pcs_ptr->enc_mode <= ENC_M4)
@@ -2233,7 +2286,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #else
 #if JUNE26_ADOPTIONS
-    if (pcs_ptr->enc_mode <= ENC_M4)
+#if SHIFT_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M3)
+#else
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
 #if JUNE25_ADOPTIONS
     if (pcs_ptr->enc_mode <= ENC_M5)
@@ -2245,7 +2302,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if NEW_TXS_SETTINGS
 #if NEW_M8
+#if SHIFT_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
 #if JUNE17_ADOPTIONS
     else if (pcs_ptr->enc_mode <= ENC_M7)
@@ -2258,6 +2319,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->tx_size_search_mode = 0;
 
+#if !MOVE_SIGNALS_TO_MD
 #if APR22_ADOPTIONS
     // Assign whether to use TXS in inter classes (if TXS is ON)
     // 0 OFF - TXS in intra classes only
@@ -2303,6 +2365,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 #endif
+#endif
 #if !INTER_COMP_REDESIGN
         // Set Wedge mode      Settings
         // 0                 FULL: Full search
@@ -2338,6 +2401,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->wedge_mode = 0;
 #endif
 #endif
+#if !MOVE_SIGNALS_TO_MD
         // inter intra pred                      Settings
         // 0                                     OFF
         // 1                                     ON
@@ -2477,6 +2541,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (pcs_ptr->wedge_mode > 0 && pcs_ptr->compound_mode != 2)
             SVT_LOG("wedge_mode set but will not be active\n");
 #endif
+#endif
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON
@@ -2562,7 +2627,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         pcs_ptr->gm_level = GM_FULL;
 #if JUNE26_ADOPTIONS
+#if SHIFT_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M3)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         pcs_ptr->gm_level = GM_DOWN;
     else
         pcs_ptr->gm_level = GM_DOWN16;
@@ -2655,7 +2724,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (perform_filtering) {
         if (scs_ptr->static_config.tf_level == DEFAULT) {
 #if JUNE26_ADOPTIONS
-            if (pcs_ptr->enc_mode <= ENC_M5) {
+#if SHIFT_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
 #if JUNE25_ADOPTIONS
             if (pcs_ptr->enc_mode <= ENC_M4) {
@@ -2663,23 +2736,45 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif
 #endif
-                if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
-                    context_ptr->tf_level = 1;
-                else
-                    context_ptr->tf_level = 0;
-            }
-            else if (pcs_ptr->enc_mode <= ENC_M6) {
-                if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
-                    context_ptr->tf_level = 2;
-                else
-                    context_ptr->tf_level = 0;
-            }
-            else {
-                if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
-                    context_ptr->tf_level = 3;
-                else
-                    context_ptr->tf_level = 0;
-            }
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 1;
+            else
+                context_ptr->tf_level = 0;
+        }
+#if SHIFT_PRESETS
+        else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+        else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 2;
+            else
+                context_ptr->tf_level = 0;
+        }
+#if FAST_M8_V1
+#if !SHIFT_PRESETS
+        else if (pcs_ptr->enc_mode <= ENC_M7) {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 3;
+            else
+                context_ptr->tf_level = 0;
+        }
+#endif
+        else {
+            if (pcs_ptr->temporal_layer_index == 0)
+                context_ptr->tf_level = 3;
+            else
+                context_ptr->tf_level = 0;
+        }
+#else
+        else {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = scs_ptr->static_config.tf_level;
+            else
+                context_ptr->tf_level = 0;
+        }
+
+#endif
         }
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
@@ -2687,7 +2782,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 context_ptr->tf_level = 0;
         }
-     }
+    }
     else
         context_ptr->tf_level = 0;
 #else
@@ -2789,7 +2884,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->mrp_level = scs_ptr->static_config.mrp_level;
 #endif
 #if TPL_OPT
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
         pcs_ptr->tpl_opt_flag = 0;
     else
         pcs_ptr->tpl_opt_flag = 1;

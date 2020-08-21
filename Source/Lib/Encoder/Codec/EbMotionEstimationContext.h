@@ -587,6 +587,9 @@ typedef struct MeContext {
     EbBool   me_alt_ref;
     void *   alt_ref_reference_ptr;
     // tf
+#if FAST_M8_V1 // tf_hp
+    uint8_t high_precision;
+#endif
     int tf_frame_index;
     int tf_index_center;
 #if !REMOVE_ME_SUBPEL_CODE

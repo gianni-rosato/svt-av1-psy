@@ -746,7 +746,7 @@ typedef struct PictureParentControlSet {
     uint8_t            loop_filter_mode;
     uint8_t            intra_pred_mode;
     uint8_t            tx_size_search_mode;
-#if APR22_ADOPTIONS
+#if APR22_ADOPTIONS && !MOVE_SIGNALS_TO_MD
     uint8_t            txs_in_inter_classes;
 #endif
     uint8_t            frame_end_cdf_update_mode; // mm-signal: 0: OFF, 1:ON
@@ -872,12 +872,16 @@ typedef struct PictureParentControlSet {
     // I Slice has the value of the next ALT_REF picture
     uint64_t          filtered_sse_uv;
     FrameHeader       frm_hdr;
+#if !MOVE_SIGNALS_TO_MD
     uint8_t           compound_mode;
+#endif
 #if !SHUT_ME_CAND_SORTING
     uint8_t           prune_unipred_at_me;
 #endif
     uint16_t *        altref_buffer_highbd[3];
+#if !MOVE_SIGNALS_TO_MD
     uint8_t           enable_inter_intra;
+#endif
 #if OBMC_CLI
     uint8_t           pic_obmc_level;
 #else

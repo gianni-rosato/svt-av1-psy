@@ -509,6 +509,21 @@ extern "C" {
 #define UPGRADE_SUBPEL      1 // Upgrade subpel of me and of pme to use libaom subpel search
 #define REMOVE_USELESS_CODE 1 // Remove useless code
 
+#define MOVE_SIGNALS_TO_MD               1 // move txs_in_inter_classes, compound_mode and inter_intra to MD
+#define SHUT_SIMILARITY_FEATURES         1 // turn off features related to similar blocks
+#define MERGE_SQW_FEATURES               1 // Merge nsq_hv_level and sq_weight; if sq_weight on, so is nsq_hv_level
+#define SHUT_EDGE_BASED_SKIP_ANGLE_INTRA 1 // Turn off edge_based_skip_angle_intra_feature
+#define MOVE_TXT_TXS_STATS_TO_FUNCS      1 // Cleanup TXT/TXS stats code by creating functions for stats-based decisions
+
+#define SWITCH_MODE_BASED_ON_SQ_COEFF   1 // Use aggressive settings for NSQ blocks if SQ block has zero coeffs
+#define SWITCH_MODE_BASED_ON_STATISTICS 1 // Use aggressive settings for unlikely partitions (determined using stats)
+#if SWITCH_MODE_BASED_ON_SQ_COEFF || SWITCH_MODE_BASED_ON_STATISTICS
+#define UNIFY_LEVELS                    1 // Have the mode-switching features use the regular MD feature levels when switching modes
+#endif
+#define FAST_M8_V1                      1 // > 2x faster than M7
+#define JULY31_PRESETS_ADOPTIONS        1
+#define SHIFT_PRESETS                   1 // M5->M4, M6->M5, M8->M6
+#define AUG5_ADOPTS                     1 // Adoptions for MR and M2
 #endif
 
 ///////// END MASTER_SYNCH

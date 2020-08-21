@@ -2001,8 +2001,12 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8)
+#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8) || FAST_M8_V1
+#if REMOVE_MR_MACRO
+                                            EbEncMode enc_mode,
+#else
                                             uint8_t enc_mode,
+#endif
 #endif
                                             EbSvtAv1EncConfiguration *config) {
     uint32_t pred_struct_index = 0;
@@ -2016,7 +2020,19 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 #if M8_MRP && !UPGRADE_M6_M7_M8
     uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : 1;
 #else
+#if FAST_M8_V1
+#if JULY31_PRESETS_ADOPTIONS
+#if SHIFT_PRESETS
+    uint8_t ref_count_used = enc_mode <= ENC_M4 ? MAX_REF_IDX : enc_mode <= ENC_M5 ? 2 : 1;
+#else
+    uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : enc_mode <= ENC_M6 ? 2 : 1;
+#endif
+#else
+    uint8_t ref_count_used = enc_mode <= ENC_M7 ? MAX_REF_IDX : 1;
+#endif
+#else
     uint8_t ref_count_used = MAX_REF_IDX;
+#endif
 #endif
 #else
     uint8_t ref_count_used;

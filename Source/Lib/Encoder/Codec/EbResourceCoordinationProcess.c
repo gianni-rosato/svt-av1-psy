@@ -221,7 +221,11 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
 #else
 #if REVERT_BLUE
 #if JUNE17_ADOPTIONS
+#if SHIFT_PRESETS
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#else
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #else
 #if PRESET_SHIFITNG
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
@@ -878,7 +882,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 scs_ptr->seq_header.enable_interintra_compound =
 #if MAY12_ADOPTIONS
 #if UNIFY_SC_NSC
+#if JULY31_PRESETS_ADOPTIONS
+                (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
+#endif
 #else
 #if PRESET_SHIFITNG
                 (scs_ptr->static_config.enc_mode <= ENC_M2 &&
@@ -944,7 +952,11 @@ void *resource_coordination_kernel(void *input_ptr) {
 #if MAY19_ADOPTIONS
                 scs_ptr->seq_header.filter_intra_level =
 #if JUNE17_ADOPTIONS
+#if SHIFT_PRESETS
+                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #else
 #if PRESET_SHIFITNG
                 (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
@@ -1058,7 +1070,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
 #if MAR11_ADOPTIONS
+#if SHIFT_PRESETS
+                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
+#else
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
+#endif
 #else
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
 #endif

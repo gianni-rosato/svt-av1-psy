@@ -993,7 +993,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
 #if MAY19_ADOPTIONS
 #if JUNE17_ADOPTIONS
+#if SHIFT_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
 #if PRESET_SHIFITNG
         if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1094,7 +1098,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             else if (pcs_ptr->enc_mode <= ENC_M5)
 #endif
 #else
+#if SHIFT_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#else
             if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
@@ -1235,7 +1243,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 #endif
         enable_wm = EB_TRUE;
 #if UPGRADE_M8
+#if SHIFT_PRESETS
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
+#else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -1414,6 +1426,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
 #endif
 #else
+#if JULY31_PRESETS_ADOPTIONS
+#if SHIFT_PRESETS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
+#else
 #if JUNE25_ADOPTIONS
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
 #else
@@ -1421,6 +1440,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
 #else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #endif
 #endif
 #endif

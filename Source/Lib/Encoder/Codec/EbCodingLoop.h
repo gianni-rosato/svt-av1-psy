@@ -707,7 +707,17 @@ static const uint32_t intra_adaptive_md_cycles_reduction_th[DEPTH_DELTA_NUM][NUM
 {3 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0},
 };
 #endif
-
+#if SWITCH_MODE_BASED_ON_STATISTICS || SWITCH_MODE_BASED_ON_SQ_COEFF
+EbErrorType signal_derivation_enc_dec_kernel_oq(
+    SequenceControlSet *sequence_control_set_ptr,
+    PictureControlSet *pcs_ptr,
+#if UNIFY_LEVELS
+    ModeDecisionContext *context_ptr,
+    EbEncMode mode_offset);
+#else
+    ModeDecisionContext *context_ptr);
+#endif
+#endif
 #ifdef __cplusplus
 }
 #endif

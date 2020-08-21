@@ -215,7 +215,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             else if (pcs_ptr->enc_mode <= ENC_M5) {
 #else
 #if UNIFY_SC_NSC
+#if SHIFT_PRESETS
+            else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
             else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
 #else
 #if JUNE17_ADOPTIONS
             else if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -365,6 +369,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
     }
 #endif
+#if !SHIFT_PRESETS
 #if APR25_1PM_ADOPTIONS
 #if JUNE25_ADOPTIONS
     else if (pcs_ptr->enc_mode <= ENC_M4) {
@@ -382,6 +387,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 32;
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
     }
+#endif
 #endif
 #if UPGRADE_M6_M7_M8
 #if !APR25_11AM_ADOPTIONS
@@ -475,7 +481,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if APR22_ADOPTIONS
 #if MAY19_ADOPTIONS
 #if JUNE23_ADOPTIONS
+#if SHIFT_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
 #else
 #if PRESET_SHIFITNG
         if (pcs_ptr->enc_mode <= ENC_M3) {
@@ -519,7 +529,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
         }
 #endif
+#if SHIFT_PRESETS
+        else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
         }
@@ -989,7 +1003,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
 #if UNIFY_SC_NSC
 #if JUNE26_ADOPTIONS
+#if SHIFT_PRESETS
+        if (enc_mode <= ENC_M5)
+#else
         if (enc_mode <= ENC_M6)
+#endif
 #else
         if (enc_mode <= ENC_M5)
 #endif
@@ -1292,8 +1310,23 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #if REFACTOR_ME_HME
     // Set the minimum ME search area
 #if APR22_ADOPTIONS
+#if FAST_M8_V1
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+    if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 60 : 16;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 120 : 32;
+}
+    else {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 16;
+    }
+#else
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 60 : 16;
     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 120 : 32;
+#endif
 #else
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
 
@@ -1303,7 +1336,11 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #if APR22_ADOPTIONS
 #if UPGRADE_M6_M7_M8
 #if JUNE26_ADOPTIONS
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
 #if JUNE25_ADOPTIONS
     if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1328,7 +1365,11 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #if APR22_ADOPTIONS
 #if UPGRADE_M6_M7_M8
 #if JUNE26_ADOPTIONS
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
 #if JUNE25_ADOPTIONS
     if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1451,6 +1492,18 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #endif
         me_context_ptr->update_hme_search_center_flag = 0;
 
+#if FAST_M8_V1 // tf_hp
+#if SHIFT_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+    if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
+        me_context_ptr->high_precision = 1;
+    }
+    else {
+        me_context_ptr->high_precision = 0;
+    }
+#endif
     return NULL;
 };
 
