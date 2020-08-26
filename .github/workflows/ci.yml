@@ -51,8 +51,8 @@ jobs:
     env:
       CC: ccache ${{ matrix.CC }}
       CXX: ccache ${{ matrix.CXX }}
-      CFLAGS: -Werror ${{ matrix.CFLAGS }}
-      CXXFLAGS: -Werror ${{ matrix.CXXFLAGS }}
+      CFLAGS: -Werror -Wshadow ${{ matrix.CFLAGS }}
+      CXXFLAGS: -Werror -Wshadow ${{ matrix.CXXFLAGS }}
     steps:
       - uses: actions/checkout@v2
       - name: Cache ccache files
