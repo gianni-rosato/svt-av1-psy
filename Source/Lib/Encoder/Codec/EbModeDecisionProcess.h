@@ -41,6 +41,7 @@ extern "C" {
 #else
 #define PRED_ME_MAX_MVP_CANIDATES 4
 #endif
+#if !UNIFY_PME_SIGNALS
 #define PRED_ME_DEVIATION_TH 50
 #define PRED_ME_FULL_PEL_REF_WINDOW_WIDTH_15 15
 #define PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_15 15
@@ -50,6 +51,7 @@ extern "C" {
 #define PRED_ME_HALF_PEL_REF_WINDOW 3
 #define PRED_ME_QUARTER_PEL_REF_WINDOW 3
 #define PRED_ME_EIGHT_PEL_REF_WINDOW 3
+#endif
 #if !PERFORM_SUB_PEL_MD
 #define REFINE_ME_MV_EIGHT_PEL_REF_WINDOW 3
 #endif
@@ -252,7 +254,9 @@ typedef struct  InterCompoundControls {
     uint8_t mrp_pruning_w_distortion;   // 0: OFF ; 1: Prune number of references based on ME/PME distortion
     uint8_t mrp_pruning_w_distance;     // 4: ALL ; 1: Prune number of references based on reference distance (Best 1)
     uint8_t wedge_search_mode;          // 0: Fast search: estimate Wedge sign 1: full search
+#if !OPT_4
     uint8_t wedge_variance_th;          // 0 : OFF ; 1: Disable inter-compound based on block variance
+#endif
     uint8_t similar_previous_blk;       // 0 : OFF ; 1: Disable inter-compound if previous similar block is not compound
                                         //           2: 1 + consider up to the compound mode of the similar blk
 }InterCompoundControls;
@@ -263,7 +267,7 @@ typedef struct RefPruningControls {
 #if !REMOVE_USELESS_CODE
     uint8_t intra_to_inter_pruning_enabled; // 0: OFF; 1: use intra to inter distortion deviation to derive best_refs
 #endif
-    uint8_t inter_to_inter_pruning_enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
+    uint8_t enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
 #if PRUNING_PER_INTER_TYPE
     uint8_t best_refs[TOT_INTER_GROUP];     // 0: OFF; 1: limit the injection to the best references based on distortion
     uint8_t closest_refs[TOT_INTER_GROUP];  // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD)
@@ -271,6 +275,15 @@ typedef struct RefPruningControls {
     uint8_t best_refs;
 #endif
 }RefPruningControls;
+#endif
+#if BLOCK_BASED_DEPTH_REFINMENT
+typedef struct DepthRefinementCtrls {
+    uint8_t enabled;
+
+    int64_t sub_to_current_th; // decrease towards a more agressive level
+    int64_t parent_to_current_th; // decrease towards a more agressive level
+
+}DepthRefinementCtrls;
 #endif
 #if !REMOVE_USELESS_CODE
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
@@ -338,7 +351,18 @@ typedef struct MdSqMotionSearchCtrls {
     uint16_t sprs_lev2_h;               // Sparse search area height
 }MdSqMotionSearchCtrls;
 #endif
-
+#if UNIFY_PME_SIGNALS
+typedef struct MdPmeCtrls {
+    uint8_t enabled;                    // 0: PME search @ MD OFF; 1: PME search @ MD ON
+    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
+    uint8_t full_pel_search_width;      // Full Pel search area width
+    uint8_t full_pel_search_height;     // Full Pel search area height
+    int pre_fp_pme_to_me_cost_th;   // If pre_fp_pme_to_me_cost higher than pre_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int pre_fp_pme_to_me_mv_th;     // If pre_fp_pme_to_me_mv smaller than pre_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+    int post_fp_pme_to_me_cost_th;  // If post_fp_pme_to_me_cost higher than post_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int post_fp_pme_to_me_mv_th;    // If post_fp_pme_to_me_mv smaller than post_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+}MdPmeCtrls;
+#endif
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
 typedef struct MdSubPelSearchCtrls {
@@ -612,9 +636,11 @@ typedef struct ModeDecisionContext {
     uint8_t              warped_motion_injection;
     uint8_t              unipred3x3_injection;
     uint8_t              bipred3x3_injection;
+#if !UNIFY_PME_SIGNALS
     uint8_t              predictive_me_level;
 #if ADD_SAD_AT_PME_SIGNAL
     uint8_t              use_sad_at_pme;
+#endif
 #endif
     uint8_t              interpolation_filter_search_blk_size;
     uint8_t              redundant_blk;
@@ -635,6 +661,11 @@ typedef struct ModeDecisionContext {
     EbBool               blk_skip_decision;
     int8_t               rdoq_level;
     int16_t              sb_me_mv[BLOCK_MAX_COUNT_SB_128][MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
+#if EXIT_PME
+    MV                   fp_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    MV                   sub_me_mv[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t             post_subpel_me_mv_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
 #if UPGRADE_SUBPEL
     int16_t              best_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][2];
     int8_t               valid_pme_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
@@ -707,7 +738,9 @@ typedef struct ModeDecisionContext {
     uint32_t *   ref_best_ref_sq_table;
     uint8_t      edge_based_skip_angle_intra;
     uint8_t      prune_ref_frame_for_rec_partitions;
+#if !OPT_4
     unsigned int source_variance; // input block variance
+#endif
 #if !INTER_COMP_REDESIGN
     unsigned int inter_inter_wedge_variance_th;
 #endif
@@ -739,7 +772,11 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t      dc_cand_only_flag;
     EbBool       disable_angle_z2_intra_flag;
+#if SHUT_FAST_RATE_PD0
+    uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
+#else
     uint8_t      full_cost_shut_fast_rate_flag;
+#endif
 #if !SWITCH_MODE_BASED_ON_SQ_COEFF
     EbBool       coeff_based_nsq_cand_reduction;
 #endif
@@ -769,10 +806,14 @@ typedef struct ModeDecisionContext {
     uint8_t      md_palette_level;
 #endif
 #if MD_REFERENCE_MASKING
-    uint8_t      inter_inter_distortion_based_reference_pruning;
+    uint8_t      dist_based_ref_pruning;
 #if !REMOVE_USELESS_CODE
     uint8_t      inter_intra_distortion_based_reference_pruning;
 #endif
+#endif
+#if BLOCK_BASED_DEPTH_REFINMENT
+    uint8_t block_based_depth_refinement_level;
+    DepthRefinementCtrls depth_refinement_ctrls;
 #endif
 #if !REMOVE_USELESS_CODE
 #if BLOCK_REDUCTION_ALGORITHM_1 || BLOCK_REDUCTION_ALGORITHM_2
@@ -788,6 +829,10 @@ typedef struct ModeDecisionContext {
 #if ADD_MD_NSQ_SEARCH
     uint8_t md_nsq_mv_search_level ;
     MdNsqMotionSearchCtrls md_nsq_motion_search_ctrls;
+#endif
+#if UNIFY_PME_SIGNALS
+    uint8_t md_pme_level;
+    MdPmeCtrls md_pme_ctrls;
 #endif
 #if PERFORM_SUB_PEL_MD
 #if UPGRADE_SUBPEL
@@ -809,10 +854,13 @@ typedef struct ModeDecisionContext {
 #endif
 #endif
     uint8_t      md_max_ref_count;
+#if !SHUT_FAST_RATE_PD0
     EbBool       md_skip_mvp_generation;
+#endif
+#if !UNIFY_PME_SIGNALS
     int16_t      pred_me_full_pel_search_width;
     int16_t      pred_me_full_pel_search_height;
-
+#endif
 #if PME_SORT_REF
     RefResults    pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
@@ -949,6 +997,9 @@ typedef struct ModeDecisionContext {
 #if SWITCH_MODE_BASED_ON_SQ_COEFF
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
+#endif
+#if FP_MV_COST
+    MV ref_mv;
 #endif
 } ModeDecisionContext;
 

@@ -382,7 +382,7 @@ extern "C" {
 #define REMOVE_UNUSED_CODE              1 // Remove unused code //---------------------------------------------
 #define PRESET_SHIFITNG                 1 // Shift presets (new encoderMode  <- old encoderMode)
                                           // M: (0 <- 0);(1 <- 1);(2 <- 3);(3 <- 5);(4 <- 6);(5 <- 7);(6 <- 8);(7 <- 8);(8 <- 8);
-#define REDUCE_MR_COMP_CANDS    1 // Bug fix: Adopt the M0 level of inter_inter_distortion_based_reference_pruning to reduce compound candidates in MR
+#define REDUCE_MR_COMP_CANDS    1 // Bug fix: Adopt the M0 level of dist_based_ref_pruning to reduce compound candidates in MR
 #define QPS_240P_UPDATE          1 // Modify the QPS of 240P to be similar to other resolution
 #define IFS_MD_STAGE_1            1 // Move ifs from md_stage_3() to md_stage_1()
 #define IFS_MD_STAGE_3 1
@@ -533,6 +533,42 @@ extern "C" {
 #define FASTER_FIRST_PASS    1
 #endif
 #endif
+
+// start
+#define LOSSLESS_OPT                    1 // Lossless opt
+#if LOSSLESS_OPT // 1st round
+#define OPT_0                         1 // bypass distortion_based_modulator() if no nsq
+#define OPT_1                         1 // no T-1 @ PD0 and no recon samples update if context_ptr->skip_intra == 1
+#define OPT_2                         1 // bypass sse_gradian_band init if no nsq
+#define OPT_4                         1 // bypass variance computation @ MD
+#define OPT_5                         1 // shut useless pred depth refinement operations
+#endif
+#define SHUT_FAST_RATE_PD0               1 // Improve PD0 rate estimation
+#define M7_OPT                           1 // Faster_M7
+#if M7_OPT
+#define BLOCK_BASED_DEPTH_REFINMENT     1
+#define FAST_TXT                        1
+#define OPT_ADAPT_ME                    1
+#define IFS_PUSH_BACK_STAGE_3           1
+#define FASTER_INTRA                    1
+#endif
+
+#define BALANCE_M6_M7                    1 // Balance M6/M7 settings
+
+#define FP_MV_COST                       1 // Add mvcost @ the ME of MD: pme, adapt_me, nsq_me
+
+#if LOSSLESS_OPT  // 2nd round
+#define OPT_3                            1 // Bypass ref pruning init if no mrp
+#define OPT_6                            1 // Bypass useless neighbor update if no fast rate.
+#define OPT_7                            1 // Ref_best_cost_sq_table init if  context_ptr->prune_ref_frame_for_rec_partitions only
+#define OPT_9                            1 // Bypass mvp init
+#define OPT_10                           1 // Bypass useless default cost derivation
+#endif
+#define UNIFY_PME_SIGNALS                1 // Refactor PME signal(s) (M3 and M4 are slightly improved in terms of BDRate)
+#define EXIT_PME                         1 // ME_MV-based PME optimizations for M7 only
+#define FASTEST_HME                      1 // (16,64) instead of (32,128) for M7 only
+#define FREQ_SSE_BUG_FIX                 1 // Always T-1 if TXS (lossless)
+// end
 
 ///////// END MASTER_SYNCH
 
@@ -1091,7 +1127,13 @@ typedef struct InterpFilterParams {
     uint16_t       subpel_shifts;
     InterpFilter   interp_filter;
 } InterpFilterParams;
-
+#if FAST_TXT
+typedef enum TxSearchLevel {
+    TX_SEARCH_DCT_DCT_ONLY, // DCT_DCT only
+    TX_SEARCH_DCT_TX_TYPES, // Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
+    TX_SEARCH_ALL_TX_TYPES, // Tx search all type(s)
+} TxSearchLevel;
+#else
 typedef enum TxSearchLevel {
     TX_SEARCH_OFF,
 #if !REMOVE_UNUSED_CODE_PH2
@@ -1100,13 +1142,22 @@ typedef enum TxSearchLevel {
     TX_SEARCH_INTER_DEPTH,
     TX_SEARCH_FULL_LOOP
 } TxSearchLevel;
-
+#endif
+#if IFS_PUSH_BACK_STAGE_3
+typedef enum IfsLevel {
+    IFS_OFF,  // IFS OFF
+    IFS_MDS0, // IFS @ md_stage_0()
+    IFS_MDS1, // IFS @ md_stage_1()
+    IFS_MDS2, // IFS @ md_stage_2()
+    IFS_MDS3, // IFS @ md_stage_3()
+} IfsLevel;
+#else
 typedef enum InterpolationSearchLevel {
     IT_SEARCH_OFF,
     IT_SEARCH_FAST_LOOP_UV_BLIND,
     IT_SEARCH_FAST_LOOP,
 } InterpolationSearchLevel;
-
+#endif
 typedef enum NsqSearchLevel {
     NSQ_SEARCH_OFF,
     NSQ_SEARCH_LEVEL1,

@@ -933,9 +933,9 @@ static int firstpass_inter_prediction(
 #if !SWITCH_MODE_BASED_ON_STATISTICS
 void soft_cycles_reduction_mrp(ModeDecisionContext *context_ptr, uint8_t *mrp_level);
 #endif
-void set_inter_inter_distortion_based_reference_pruning_controls(
-    ModeDecisionContext *mdctxt, uint8_t inter_inter_distortion_based_reference_pruning_mode) ;
 void set_inter_comp_controls(ModeDecisionContext *mdctxt, uint8_t inter_comp_mode);
+void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt, uint8_t dist_based_ref_pruning_level);
+
 /******************************************************
 * Derive md Settings(feature signals) that could be
   changed  at the block level
@@ -946,13 +946,13 @@ extern EbErrorType first_pass_signal_derivation_block(
     EbErrorType return_error = EB_ErrorNone;
 
 
-    // Set inter_inter_distortion_based_reference_pruning
-    context_ptr->inter_inter_distortion_based_reference_pruning = 0;
+    // Set dist_based_ref_pruning
+    context_ptr->dist_based_ref_pruning = 0;
 
 #if !SWITCH_MODE_BASED_ON_STATISTICS
     soft_cycles_reduction_mrp(context_ptr, &context_ptr->inter_inter_distortion_based_reference_pruning);
 #endif
-    set_inter_inter_distortion_based_reference_pruning_controls(context_ptr, context_ptr->inter_inter_distortion_based_reference_pruning);
+    set_dist_based_ref_pruning_controls(context_ptr, context_ptr->dist_based_ref_pruning);
 
     // set compound_types_to_try
     set_inter_comp_controls(context_ptr, 0);
@@ -1066,7 +1066,11 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
 
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     // Generate MVP(s)
+#if SHUT_FAST_RATE_PD0
+    if (!context_ptr->shut_fast_rate) {
+#else
     if (!context_ptr->md_skip_mvp_generation) {
+#endif
         if (frm_hdr->allow_intrabc)
             generate_av1_mvp_table(&context_ptr->sb_ptr->tile_info,
                                    context_ptr,
@@ -1088,7 +1092,11 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                    pcs_ptr->parent_pcs_ptr->tot_ref_frame_types,
                                    pcs_ptr);
     } else {
+#if OPT_9
+        init_xd(pcs_ptr, context_ptr);
+#else
         mvp_bypass_init(pcs_ptr, context_ptr);
+#endif
     }
     // Read and (if needed) perform 1/8 Pel ME MVs refinement
 #if ADD_MD_NSQ_SEARCH
@@ -1096,6 +1104,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
 #endif
         read_refine_me_mvs(
             pcs_ptr, context_ptr, input_picture_ptr, input_origin_index, blk_origin_index);
+#if OPT_3
+    if (context_ptr->ref_pruning_ctrls.enabled)
+#endif
 #if MD_REFERENCE_MASKING
     // Perform md reference pruning
     perform_md_reference_pruning(pcs_ptr, context_ptr, input_picture_ptr, blk_origin_index);
@@ -1257,6 +1268,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
         if (!context_ptr->hbd_mode_decision) {
 #if SSE_BASED_SPLITTING
 #if FIX_WARNINGS
+#if OPT_0
+            if (context_ptr->pd_pass == PD_PASS_0 && pcs_ptr->parent_pcs_ptr->disallow_nsq == EB_FALSE)
+#endif
             distortion_based_modulator(context_ptr,
                                        input_picture_ptr,
                                        input_origin_index,
@@ -1529,6 +1543,8 @@ void md_nsq_motion_search_controls(ModeDecisionContext *mdctxt, uint8_t md_nsq_m
 #if !UPGRADE_SUBPEL
 void md_subpel_search_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_search_level, EbEncMode enc_mode);
 #endif
+void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level);
+
 /******************************************************
 * Derive EncDec Settings for first pass
 Input   : encoder mode and pd pass
@@ -1549,12 +1565,20 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 4                    TH 50%
     // 5                    TH 40%
     context_ptr->enable_area_based_cycles_allocation = 0;
+#if FAST_TXT
+    // Tx_search Level for Luma                       Settings
+    // TX_SEARCH_DCT_DCT_ONLY                         DCT_DCT only
+    // TX_SEARCH_DCT_TX_TYPES                         Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
+    // TX_SEARCH_ALL_TX_TYPES                         Tx search all type(s)
+    context_ptr->tx_search_level = TX_SEARCH_DCT_DCT_ONLY;
+#else
     // Tx_search Level                                Settings
     // 0                                              OFF
     // 1                                              Tx search at encdec
     // 2                                              Tx search at inter-depth
     // 3                                              Tx search at full loop
     context_ptr->tx_search_level = TX_SEARCH_OFF;
+#endif
     // Set MD tx_level
     // md_txt_search_level                            Settings
     // 0                                              FULL
@@ -1566,6 +1590,9 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     uint8_t txt_cycles_reduction_level = 0;
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
+#if IFS_PUSH_BACK_STAGE_3
+    context_ptr->interpolation_search_level = IFS_OFF;
+#else
     // Interpolation search Level                     Settings
     // 0                                              OFF
     // 1                                              Interpolation search at
@@ -1573,7 +1600,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // search at full loop 3                                              Chroma
     // blind interpolation search at fast loop 4 Interpolation search at fast loop
     context_ptr->interpolation_search_level = IT_SEARCH_OFF;
-
+#endif
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -1651,7 +1678,11 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 1       ON: Full - AVG/DIST/DIFF/WEDGE
     // 2       ON: Fast - Use AVG only for non-closest ref frames or ref frames with high distortion
     context_ptr->inter_compound_mode = 0;
-
+#if UNIFY_PME_SIGNALS
+    // Set PME level
+    context_ptr->md_pme_level = 0;
+    md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
+#else
     // Level                Settings
     // 0                    Level 0: OFF
     // 1                    Level 1: sub-pel refinement off
@@ -1706,7 +1737,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // |CLASS_5 |                             |No Tx Size Search               |SSD @ Frequency Domain                   |Tx Size Search  (f(Tx Size Search Level))|
     // |CLASS_8 |                             |SSD @ Frequency Domain          |                                         |SSD @ Spatial Domain                     |
     // |________|_____________________________|________________________________|_________________________________________|_________________________________________|
-
+#endif
     if (pd_pass == PD_PASS_0) {
         context_ptr->md_staging_mode = MD_STAGING_MODE_0;
     }
@@ -1798,11 +1829,11 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // skip HA, HB, and H4 if h_cost > (weighted sq_cost)
     // skip VA, VB, and V4 if v_cost > (weighted sq_cost)
     context_ptr->sq_weight = (uint32_t)~0;
-
+#if !UNIFY_PME_SIGNALS
     // Set pred ME full search area
     context_ptr->pred_me_full_pel_search_width = PRED_ME_FULL_PEL_REF_WINDOW_WIDTH_15;
     context_ptr->pred_me_full_pel_search_height = PRED_ME_FULL_PEL_REF_WINDOW_HEIGHT_15;
-
+#endif
     // Set coeff_based_nsq_cand_reduction
     context_ptr->switch_md_mode_based_on_sq_coeff = 0;
     coeff_based_switch_md_controls(context_ptr, context_ptr->switch_md_mode_based_on_sq_coeff);
@@ -1895,10 +1926,10 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     // Set max_ref_count @ MD
     context_ptr->md_max_ref_count = 4;
-
+#if !SHUT_FAST_RATE_PD0
     // Set md_skip_mvp_generation (and use (0,0) as MVP instead)
     context_ptr->md_skip_mvp_generation = EB_FALSE;
-
+#endif
     // Set dc_cand_only_flag
     context_ptr->dc_cand_only_flag = EB_TRUE;
 
@@ -1907,10 +1938,13 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     // Set disable_angle_z2_prediction_flag
     context_ptr->disable_angle_z2_intra_flag = EB_TRUE;
-
+#if SHUT_FAST_RATE_PD0
+    // Use coeff rate and slit flag rate only (i.e. no fast rate)
+    context_ptr->shut_fast_rate = EB_FALSE;
+#else
     // Set full_cost_derivation_fast_rate_blind_flag
     context_ptr->full_cost_shut_fast_rate_flag = EB_FALSE;
-
+#endif
     context_ptr->skip_intra = 0;
 
     context_ptr->mds3_intra_prune_th = (uint16_t)~0;

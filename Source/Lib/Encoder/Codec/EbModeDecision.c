@@ -535,6 +535,11 @@ void choose_best_av1_mv_pred(ModeDecisionContext *           context_ptr,
                              uint8_t *bestDrlIndex, // output
                              IntMv    best_pred_mv[2] // output
 ) {
+#if SHUT_FAST_RATE_PD0
+    if (context_ptr->shut_fast_rate) {
+        return;
+    }
+#endif
     uint8_t  drli, max_drl_index;
     IntMv    nearestmv[2];
     IntMv    nearmv[2];
@@ -906,6 +911,10 @@ EbBool is_valid_unipred_ref(
     struct ModeDecisionContext *context_ptr,
     uint8_t inter_cand_group,
     uint8_t list_idx, uint8_t ref_idx) {
+#if OPT_3
+    if (!context_ptr->ref_pruning_ctrls.enabled)
+        return EB_TRUE;
+#endif
     if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx][ref_idx].do_ref && (ref_idx || !context_ptr->ref_pruning_ctrls.closest_refs[inter_cand_group])) {
         return EB_FALSE;
     }
@@ -919,7 +928,10 @@ EbBool is_valid_bipred_ref(
     uint8_t inter_cand_group,
     uint8_t list_idx_0, uint8_t ref_idx_0,
     uint8_t list_idx_1, uint8_t ref_idx_1) {
-
+#if OPT_3
+    if (!context_ptr->ref_pruning_ctrls.enabled)
+        return EB_TRUE;
+#endif
     // Both ref should be 1 for bipred refs to be valid: if 1 is not best_refs then there is a chance to exit the injection
     if (!context_ptr->ref_filtering_res[inter_cand_group][list_idx_0][ref_idx_0].do_ref ||
         !context_ptr->ref_filtering_res[inter_cand_group][list_idx_1][ref_idx_1].do_ref )
@@ -1372,8 +1384,10 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 
 #else
+#if !OPT_4
     if (context_ptr->source_variance < context_ptr->inter_comp_ctrls.wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
+#endif
 #endif
 
     if (is_compound_enabled) {
@@ -1843,8 +1857,10 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 
 #else
+#if !OPT_4
     if (context_ptr->source_variance < context_ptr->inter_comp_ctrls.wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
+#endif
 #endif
     //single ref/list
     if (rf[1] == NONE_FRAME) {
@@ -2424,8 +2440,10 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 
 #else
+#if !OPT_4
     if (context_ptr->source_variance < context_ptr->inter_comp_ctrls.wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
+#endif
 #endif
     {
         uint8_t ref_idx_0 = get_ref_frame_idx(rf[0]);
@@ -3438,8 +3456,11 @@ void eb_av1_setup_pred_block(BlockSize sb_type, struct Buf2D dst[MAX_MB_PLANE],
 
 // Values are now correlated to quantizer.
 static int sad_per_bit16lut_8[QINDEX_RANGE];
+#if FP_MV_COST
+static int sad_per_bit_lut_10[QINDEX_RANGE];
+#else
 static int sad_per_bit4lut_8[QINDEX_RANGE];
-
+#endif
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 
 int eb_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
@@ -3677,8 +3698,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 
 #else
+#if !OPT_4
     if (context_ptr->source_variance < context_ptr->inter_comp_ctrls.wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
+#endif
 #endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -4507,8 +4530,13 @@ uint8_t is_reference_best_pme(ModeDecisionContext *context_ptr, uint8_t list_ind
     return 0;
 }
 #endif
+#if UNIFY_PME_SIGNALS
+void inject_pme_candidates(
+    //const SequenceControlSet   *scs_ptr,
+#else
 void inject_predictive_me_candidates(
     //const SequenceControlSet   *scs_ptr,
+#endif
     struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr, EbBool is_compound_enabled,
     EbBool allow_bipred, uint32_t *candidate_total_cnt) {
     ModeDecisionCandidate *cand_array      = context_ptr->fast_candidate_array;
@@ -4530,8 +4558,10 @@ void inject_predictive_me_candidates(
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
 
 #else
+#if !OPT_4
     if (context_ptr->source_variance < context_ptr->inter_comp_ctrls.wedge_variance_th)
         tot_comp_types = MIN(tot_comp_types, MD_COMP_DIFF0);
+#endif
 #endif
 #if UPGRADE_SUBPEL
 #if INCREASE_WM_CANDS
@@ -5835,9 +5865,13 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
             unipred_3x3_candidates_injection(
                 scs_ptr, pcs_ptr, context_ptr, sb_ptr, context_ptr->me_sb_addr, &cand_total_cnt);
     }
-
+#if UNIFY_PME_SIGNALS
+    if (context_ptr->md_pme_ctrls.enabled)
+        inject_pme_candidates(
+#else
     if (context_ptr->predictive_me_level)
         inject_predictive_me_candidates(
+#endif
             context_ptr, pcs_ptr, is_compound_enabled, allow_bipred, &cand_total_cnt);
     // update the total number of candidates injected
     *candidate_total_cnt = cand_total_cnt;
@@ -6026,6 +6060,25 @@ void inject_intra_candidates_ois(PictureControlSet *pcs_ptr, ModeDecisionContext
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 
 // Values are now correlated to quantizer.
+#if FP_MV_COST
+static int sad_per_bit16lut_8[QINDEX_RANGE];
+static int sad_per_bit_lut_10[QINDEX_RANGE];
+static void init_me_luts_bd(int *bit16lut, int range,
+    AomBitDepth bit_depth) {
+    int i;
+    // Initialize the sad lut tables using a formulaic calculation for now.
+    // This is to make it easier to resolve the impact of experimental changes
+    // to the quantizer tables.
+    for (i = 0; i < range; i++) {
+        const double q = eb_av1_convert_qindex_to_q(i, bit_depth);
+        bit16lut[i] = (int)(0.0418 * q + 2.4107);
+    }
+}
+void eb_av1_init_me_luts(void) {
+    init_me_luts_bd(sad_per_bit16lut_8, QINDEX_RANGE, AOM_BITS_8);
+    init_me_luts_bd(sad_per_bit_lut_10, QINDEX_RANGE, AOM_BITS_10);
+}
+#else
 static int sad_per_bit16lut_8[QINDEX_RANGE];
 static int sad_per_bit4lut_8[QINDEX_RANGE];
 
@@ -6044,7 +6097,7 @@ static void init_me_luts_bd(int *bit16lut, int *bit4lut, int range, AomBitDepth 
 void eb_av1_init_me_luts(void) {
     init_me_luts_bd(sad_per_bit16lut_8, sad_per_bit4lut_8, QINDEX_RANGE, AOM_BITS_8);
 }
-
+#endif
 static INLINE int mv_check_bounds(const MvLimits *mv_limits, const MV *mv) {
     return (mv->row >> 3) < mv_limits->row_min || (mv->row >> 3) > mv_limits->row_max ||
            (mv->col >> 3) < mv_limits->col_min || (mv->col >> 3) > mv_limits->col_max;
@@ -6233,13 +6286,21 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
 #if UPGRADE_SUBPEL
 void svt_init_mv_cost_params(MV_COST_PARAMS *mv_cost_params,
     ModeDecisionContext *context_ptr,
+#if FP_MV_COST
+    const MV *ref_mv, uint8_t base_q_idx, uint32_t rdmult, uint8_t hbd_mode_decision) {
+#else
     const MV *ref_mv, uint8_t base_q_idx) {
-
+#endif
     mv_cost_params->ref_mv = ref_mv;
     mv_cost_params->full_ref_mv = get_fullmv_from_mv(ref_mv);
     mv_cost_params->mv_cost_type = MV_COST_ENTROPY;
+#if FP_MV_COST
+    mv_cost_params->error_per_bit = AOMMAX(rdmult >> RD_EPB_SHIFT, 1);
+    mv_cost_params->sad_per_bit = hbd_mode_decision ? sad_per_bit_lut_10[base_q_idx] : sad_per_bit16lut_8[base_q_idx];
+#else
     mv_cost_params->error_per_bit = AOMMAX(context_ptr->full_lambda_md[EB_8_BIT_MD] >> RD_EPB_SHIFT, 1);
     mv_cost_params->sad_per_bit = sad_per_bit16lut_8[base_q_idx];
+#endif
     mv_cost_params->mvjcost = context_ptr->md_rate_estimation_ptr->nmv_vec_cost;
     mv_cost_params->mvcost[0] = context_ptr->md_rate_estimation_ptr->nmvcoststack[0];
     mv_cost_params->mvcost[1] = context_ptr->md_rate_estimation_ptr->nmvcoststack[1];
@@ -7201,7 +7262,6 @@ EbErrorType generate_md_stage_0_cand(
         }
     }
 #endif
-
     return EB_ErrorNone;
 }
 
