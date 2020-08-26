@@ -5654,14 +5654,9 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
         if (RDCOST(fast_lambda, 16, pa_me_distortion) >
             RDCOST(fast_lambda, 16, md_sq_me_ctrls->pame_distortion_th * ctx->blk_geom->bwidth * ctx->blk_geom->bheight)) {
 
-            EbReferenceObject *ref_obj = (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+            ref_obj = (EbReferenceObject *)pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 
-            if (!(ref_obj == NULL || ref_obj->frame_type == KEY_FRAME || ref_obj->frame_type == INTRA_ONLY_FRAME)) {
-                search_area_multiplier = check_temporal_mv_size(pcs, ctx);
-            }
-            else {
-                search_area_multiplier = check_spatial_mv_size(ctx, list_idx, ref_idx, me_mv_x, me_mv_y);
-            }
+            search_area_multiplier =!(ref_obj == NULL || ref_obj->frame_type == KEY_FRAME || ref_obj->frame_type == INTRA_ONLY_FRAME)? check_temporal_mv_size(pcs, ctx): check_spatial_mv_size(ctx, list_idx, ref_idx, me_mv_x, me_mv_y);
         }
     }
 

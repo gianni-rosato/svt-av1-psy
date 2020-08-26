@@ -4718,10 +4718,10 @@ void inject_predictive_me_candidates(
                 int16_t to_inject_mv_y_l1 =
                     context_ptr->best_pme_mv[list_idx_1][ref_idx_1][1];
 
-                MvReferenceFrame rf[2];
-                rf[0] = svt_get_ref_frame_type(list_idx_0, ref_idx_0);
-                rf[1] = svt_get_ref_frame_type(list_idx_1, ref_idx_1);
-                uint8_t to_inject_ref_type = av1_ref_frame_type(rf);
+                uint8_t to_inject_ref_type = av1_ref_frame_type((const MvReferenceFrame[]){
+                    svt_get_ref_frame_type(list_idx_0, ref_idx_0),
+                    svt_get_ref_frame_type(list_idx_1, ref_idx_1),
+                });
                 if (context_ptr->injected_mv_count_bipred == 0 ||
                     mrp_is_already_injected_mv_bipred(context_ptr,
                         to_inject_mv_x_l0,
@@ -4762,11 +4762,10 @@ void inject_predictive_me_candidates(
                         cand_array[cand_total_cnt].is_compound = 1;
                         cand_array[cand_total_cnt].is_interintra_used = 0;
                         cand_array[cand_total_cnt].prediction_direction[0] = BI_PRED;
-
-                        MvReferenceFrame rf[2];
-                        rf[0] = svt_get_ref_frame_type(list_idx_0, ref_idx_0);
-                        rf[1] = svt_get_ref_frame_type(list_idx_1, ref_idx_1);
-                        cand_array[cand_total_cnt].ref_frame_type = av1_ref_frame_type(rf);
+                        cand_array[cand_total_cnt].ref_frame_type = av1_ref_frame_type((const MvReferenceFrame[]){
+                            svt_get_ref_frame_type(list_idx_0, ref_idx_0),
+                            svt_get_ref_frame_type(list_idx_1, ref_idx_1),
+                        });
                         cand_array[cand_total_cnt].ref_frame_index_l0 = ref_idx_0;
                         cand_array[cand_total_cnt].ref_frame_index_l1 = ref_idx_1;
 

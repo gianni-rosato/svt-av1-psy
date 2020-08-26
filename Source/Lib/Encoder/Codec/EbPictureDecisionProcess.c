@@ -510,18 +510,10 @@ EbErrorType release_prev_picture_from_reorder_queue(
 ***************************************************************************************************/
 EbErrorType initialize_mini_gop_activity_array(
     PictureDecisionContext        *context_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    uint32_t MinigopIndex;
-
     // Loop over all mini GOPs
-    for (MinigopIndex = 0; MinigopIndex < MINI_GOP_MAX_COUNT; ++MinigopIndex) {
-        context_ptr->mini_gop_activity_array[MinigopIndex] = (get_mini_gop_stats(MinigopIndex)->hierarchical_levels == 3 /*MIN_HIERARCHICAL_LEVEL*/) ?
-            EB_FALSE :
-            EB_TRUE;
-    }
-
-    return return_error;
+    for (uint32_t gopindex = 0; gopindex < MINI_GOP_MAX_COUNT; ++gopindex)
+        context_ptr->mini_gop_activity_array[gopindex] = get_mini_gop_stats(gopindex)->hierarchical_levels != 3; /*MIN_HIERARCHICAL_LEVEL*/
+    return EB_ErrorNone;
 }
 
 /***************************************************************************************************
@@ -529,42 +521,31 @@ EbErrorType initialize_mini_gop_activity_array(
 *
 *
 ***************************************************************************************************/
-EbErrorType generate_picture_window_split(
+static EbErrorType generate_picture_window_split(
     PictureDecisionContext        *context_ptr,
     EncodeContext                 *encode_context_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    uint32_t    MinigopIndex;
-
     context_ptr->total_number_of_mini_gops = 0;
-
     // Loop over all mini GOPs
-    MinigopIndex = 0;
-    while (MinigopIndex < MINI_GOP_MAX_COUNT) {
+    for (uint32_t gopindex = 0; gopindex < MINI_GOP_MAX_COUNT; gopindex += context_ptr->mini_gop_activity_array[gopindex]
+        ? 1
+        : mini_gop_offset[get_mini_gop_stats(gopindex)->hierarchical_levels - MIN_HIERARCHICAL_LEVEL]) {
         // Only for a valid mini GOP
-        if (get_mini_gop_stats(MinigopIndex)->end_index < encode_context_ptr->pre_assignment_buffer_count && context_ptr->mini_gop_activity_array[MinigopIndex] == EB_FALSE) {
-            context_ptr->mini_gop_start_index[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(MinigopIndex)->start_index;
-            context_ptr->mini_gop_end_index[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(MinigopIndex)->end_index;
-            context_ptr->mini_gop_length[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(MinigopIndex)->lenght;
-            context_ptr->mini_gop_hierarchical_levels[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(MinigopIndex)->hierarchical_levels;
+        if (get_mini_gop_stats(gopindex)->end_index < encode_context_ptr->pre_assignment_buffer_count && !context_ptr->mini_gop_activity_array[gopindex]) {
+            context_ptr->mini_gop_start_index[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->start_index;
+            context_ptr->mini_gop_end_index[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->end_index;
+            context_ptr->mini_gop_length[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->lenght;
+            context_ptr->mini_gop_hierarchical_levels[context_ptr->total_number_of_mini_gops] = get_mini_gop_stats(gopindex)->hierarchical_levels;
             context_ptr->mini_gop_intra_count[context_ptr->total_number_of_mini_gops] = 0;
             context_ptr->mini_gop_idr_count[context_ptr->total_number_of_mini_gops] = 0;
-
             context_ptr->total_number_of_mini_gops++;
         }
-
-        MinigopIndex += context_ptr->mini_gop_activity_array[MinigopIndex] ?
-            1 :
-            mini_gop_offset[get_mini_gop_stats(MinigopIndex)->hierarchical_levels - MIN_HIERARCHICAL_LEVEL];
     }
-
     // Only in presence of at least 1 valid mini GOP
     if (context_ptr->total_number_of_mini_gops != 0) {
         context_ptr->mini_gop_intra_count[context_ptr->total_number_of_mini_gops - 1] = encode_context_ptr->pre_assignment_buffer_intra_count;
         context_ptr->mini_gop_idr_count[context_ptr->total_number_of_mini_gops - 1] = encode_context_ptr->pre_assignment_buffer_idr_count;
     }
-
-    return return_error;
+    return EB_ErrorNone;
 }
 
 /***************************************************************************************************
@@ -647,7 +628,7 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
     PictureDecisionContext        *context_ptr,
     EncodeContext                 *encode_context_ptr,
     SequenceControlSet            *scs_ptr,
-    uint32_t                         MinigopIndex) {
+    uint32_t                         gopindex) {
     if (!context_ptr || !encode_context_ptr || !scs_ptr)
         return EB_ErrorBadParameter;
 
@@ -656,16 +637,16 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
     PictureParentControlSet       *pcs_ptr;
 
     // Get the 1st PCS mini GOP
-    pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_start_index[MinigopIndex]]->object_ptr;
+    pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_start_index[gopindex]]->object_ptr;
 
 #if DECOUPLE_ME_RES
     PictureParentControlSet  *trig_pcs; //triggering dep-cnt clean up picture, should be the first in dec order that goes to PicMgr
-    if ( is_pic_cutting_short_ra_mg(context_ptr, pcs_ptr, MinigopIndex)) {
+    if ( is_pic_cutting_short_ra_mg(context_ptr, pcs_ptr, gopindex)) {
         trig_pcs = pcs_ptr;//this an LDP minigop so the first picture in minigop is the first in dec order
     }
     else {
         //this an RA minigop so the last picture in minigop is the first in dec order
-        uint32_t  last_pic_in_mg = context_ptr->mini_gop_end_index[MinigopIndex];
+        uint32_t  last_pic_in_mg = context_ptr->mini_gop_end_index[gopindex];
         trig_pcs = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[last_pic_in_mg]->object_ptr;
     }
 #endif

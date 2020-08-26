@@ -72,11 +72,11 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
         EB_CHECK_MEM(p);                    \
     } while (0)
 
-#define EB_NO_THROW_MALLOC(pointer, size)       \
-    do {                                        \
-        void* p = malloc(size);                 \
-        EB_NO_THROW_ADD_MEM(p, size, EB_N_PTR); \
-        pointer = p;                            \
+#define EB_NO_THROW_MALLOC(pointer, size)                \
+    do {                                                 \
+        void* malloced_p = malloc(size);                 \
+        EB_NO_THROW_ADD_MEM(malloced_p, size, EB_N_PTR); \
+        pointer = malloced_p;                            \
     } while (0)
 
 #define EB_MALLOC(pointer, size)           \

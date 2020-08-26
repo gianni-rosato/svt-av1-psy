@@ -2381,8 +2381,8 @@ void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
         output[i] = round_shift((int64_t)new_sqrt2 * 4 * input[i], new_sqrt2_bits);
     assert(stage_range[0] + new_sqrt2_bits <= 32);
 }
-static INLINE TxfmFunc inv_txfm_type_to_func(TxfmType TxfmType) {
-    switch (TxfmType) {
+static INLINE TxfmFunc inv_txfm_type_to_func(TxfmType txfmtype) {
+    switch (txfmtype) {
         case TXFM_TYPE_DCT4: return eb_av1_idct4_new;
         case TXFM_TYPE_DCT8: return eb_av1_idct8_new;
         case TXFM_TYPE_DCT16: return eb_av1_idct16_new;

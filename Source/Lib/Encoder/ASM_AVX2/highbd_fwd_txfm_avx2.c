@@ -3990,8 +3990,8 @@ static void fidtx64x64_avx2(const __m256i *input, __m256i *output) {
     }
 }
 
-static INLINE TxfmFuncAVX2 fwd_txfm_type_to_func(TxfmType TxfmType) {
-    switch (TxfmType) {
+static INLINE TxfmFuncAVX2 fwd_txfm_type_to_func(TxfmType txfmtype) {
+    switch (txfmtype) {
     case TXFM_TYPE_DCT32: return fdct32x32_avx2; break;
     case TXFM_TYPE_IDENTITY32: return fidtx32x32_avx2; break;
     default: assert(0);

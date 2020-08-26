@@ -1561,8 +1561,7 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
 
                 sum32_to64(&sum, &sum64);
             } while (--h);
-            __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum64),
-                                      _mm256_extracti128_si256(sum64, 1));
+            s = _mm_add_epi64(_mm256_castsi256_si128(sum64), _mm256_extracti128_si256(sum64, 1));
             return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
         }
     }

@@ -2384,9 +2384,9 @@ int32_t find_token_multiple_inputs(int32_t argc, char *const argv[], const char 
     return return_error;
 }
 
-uint32_t check_long(ConfigEntry config_entry, ConfigEntry config_entry_next) {
-    if (config_entry_next.name == NULL) { return 0; }
-    if (EB_STRCMP(config_entry.name, config_entry_next.name) == 0) { return 1; }
+uint32_t check_long(ConfigEntry cfg_entry, ConfigEntry cfg_entry_next) {
+    if (cfg_entry_next.name == NULL) { return 0; }
+    if (EB_STRCMP(cfg_entry.name, cfg_entry_next.name) == 0) { return 1; }
     return 0;
 }
 
