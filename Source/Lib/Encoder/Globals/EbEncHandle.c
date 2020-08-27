@@ -2018,11 +2018,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if TPL_240P_IMP
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
-    if (scs_ptr->use_output_stat_file ||
+    if (use_output_stat(scs_ptr) ||
         (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
 #else
     // In two pass encoding, the first pass uses sb size=64
-    if (scs_ptr->use_output_stat_file)
+    if (use_output_stat(scs_ptr))
 #endif
         scs_ptr->static_config.super_block_size = 64;
     else
@@ -2105,7 +2105,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #endif
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
 #if FIRST_PASS_SETUP
-    if (scs_ptr->use_output_stat_file)
+    if (use_output_stat(scs_ptr))
         scs_ptr->static_config.hierarchical_levels = 0;
 #endif
     // Configure the padding
@@ -2208,7 +2208,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
 #if FIRST_PASS_SETUP
-    if (scs_ptr->use_output_stat_file)
+    if (use_output_stat(scs_ptr))
         scs_ptr->over_boundary_block_mode = 0;
 #endif
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
@@ -2503,7 +2503,7 @@ void copy_api_from_app(
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
 #if TWOPASS_RC
-    else if (scs_ptr->static_config.intra_period_length == -1 && (scs_ptr->use_input_stat_file || scs_ptr->use_output_stat_file))
+    else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr)))
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
 #endif
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)

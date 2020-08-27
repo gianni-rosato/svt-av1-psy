@@ -908,7 +908,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
 #endif
 #if !REFACTOR_ME_HME
-    uint8_t enc_mode_hme = scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+    uint8_t enc_mode_hme = use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
 #if REFACTOR_ME_HME
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
@@ -6692,7 +6692,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 // ME Kernel Multi-Processes Signal(s) derivation
 #if TF_LEVELS
 #if FIRST_PASS_SETUP
-                                if (scs_ptr->use_output_stat_file)
+                                if (use_output_stat(scs_ptr))
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);

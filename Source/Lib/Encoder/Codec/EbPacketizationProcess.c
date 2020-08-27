@@ -88,7 +88,7 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
 
 void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 #if TWOPASS_RC
-    if (scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1)
+    if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
         return; //skip update for 2pass VBR
 #endif
     // SB Loop
@@ -714,7 +714,7 @@ void *packetization_kernel(void *input_ptr) {
         rate_control_tasks_ptr->task_type       = RC_PACKETIZATION_FEEDBACK_RESULT;
 
 #if FORCE_DECODE_ORDER
-        if(scs_ptr->use_input_stat_file ||
+        if(use_input_stat(scs_ptr) ||
             (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)) {
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
@@ -824,7 +824,7 @@ void *packetization_kernel(void *input_ptr) {
         // Post Rate Control Taks
         eb_post_full_object(rate_control_tasks_wrapper_ptr);
 #if FORCE_DECODE_ORDER
-        if (scs_ptr->use_input_stat_file || (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+        if (use_input_stat(scs_ptr) || (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
 #else
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&

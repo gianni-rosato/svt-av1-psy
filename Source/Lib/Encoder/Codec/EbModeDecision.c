@@ -5432,7 +5432,7 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
         pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
 #if FIRST_PASS_SETUP
     EbBool       allow_bipred =
-        (scs_ptr->use_output_stat_file || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4)
+        (use_output_stat(scs_ptr) || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4)
         ? EB_FALSE : EB_TRUE;
 #else
     EbBool allow_bipred = context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4;

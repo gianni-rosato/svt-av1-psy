@@ -5420,7 +5420,7 @@ static int cqp_qindex_calc(
             [pcs_ptr->parent_pcs_ptr->temporal_layer_index],
             bit_depth);
 #if QPS_UPDATE
-        if (scs_ptr->use_input_stat_file && pcs_ptr->parent_pcs_ptr->frames_in_sw < QPS_SW_THRESH)
+        if (use_input_stat(scs_ptr) && pcs_ptr->parent_pcs_ptr->frames_in_sw < QPS_SW_THRESH)
             active_best_quality =
                 MAX((int32_t)(qindex + delta_qindex), (pcs_ptr->ref_pic_qp_array[0][0] << 2) + 2);
         else
@@ -5450,7 +5450,7 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
 #endif
 
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
-    if (scs_ptr->use_input_stat_file && pcs_ptr->temporal_layer_index == 0)
+    if (use_input_stat(scs_ptr) && pcs_ptr->temporal_layer_index == 0)
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
     else
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
@@ -6995,7 +6995,7 @@ void *rate_control_kernel(void *input_ptr) {
                         pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr];
                 }
 #if TWOPASS_RC
-            if (scs_ptr->use_input_stat_file) {
+            if (use_input_stat(scs_ptr)) {
                 if (pcs_ptr->picture_number == 0) {
                     set_rc_buffer_sizes(scs_ptr);
                     av1_rc_init(scs_ptr);
@@ -7073,7 +7073,7 @@ void *rate_control_kernel(void *input_ptr) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     int32_t new_qindex;
-                    if (!scs_ptr->use_output_stat_file
+                    if (!use_output_stat(scs_ptr)
 #if !TPL_SW_UPDATE
                         &&
                         pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH
@@ -7083,7 +7083,7 @@ void *rate_control_kernel(void *input_ptr) {
 #if !TWOPASS_RC
 #if TPL_LA && TPL_LA_QPS
                         // 2pass QPS with tpl_la
-                        if (scs_ptr->use_input_stat_file &&
+                        if (use_input_stat(scs_ptr) &&
 #if !TPL_SC_ON
                             !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
 #endif
@@ -7093,7 +7093,7 @@ void *rate_control_kernel(void *input_ptr) {
                         else
 #endif
 
-                        if (scs_ptr->use_input_stat_file &&
+                        if (use_input_stat(scs_ptr) &&
 #if !UNIFY_SC_NSC
                             !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
 #endif
@@ -7105,7 +7105,7 @@ void *rate_control_kernel(void *input_ptr) {
 #if !TWOPASS_RC
                         else
 #endif
-                            if (!scs_ptr->use_input_stat_file &&
+                            if (!use_input_stat(scs_ptr) &&
 #if !TPL_SC_ON
                                  !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
 #endif
@@ -7115,7 +7115,7 @@ void *rate_control_kernel(void *input_ptr) {
 #endif
                         else
 #if TWOPASS_RC
-                        if (scs_ptr->use_input_stat_file &&
+                        if (use_input_stat(scs_ptr) &&
                             scs_ptr->static_config.look_ahead_distance != 0) {
                             int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
                             frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
@@ -7166,7 +7166,7 @@ void *rate_control_kernel(void *input_ptr) {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
 #if TWOPASS_RC
-                    if (scs_ptr->use_input_stat_file &&
+                    if (use_input_stat(scs_ptr) &&
                         scs_ptr->static_config.look_ahead_distance != 0) {
                         int32_t new_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                         int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
@@ -7216,7 +7216,7 @@ void *rate_control_kernel(void *input_ptr) {
                                                      pcs_ptr->picture_qp);
 #if TWOPASS_RC
                 if (scs_ptr->static_config.rate_control_mode == 1 &&
-                    scs_ptr->use_input_stat_file &&
+                    use_input_stat(scs_ptr) &&
                     scs_ptr->static_config.look_ahead_distance != 0)
                     ;//hack skip base_q_idx writeback for accuracy loss like 89 to 88
                 else
@@ -7264,11 +7264,11 @@ void *rate_control_kernel(void *input_ptr) {
 #if !TPL_SW_UPDATE
                 pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
 #endif
-                !scs_ptr->use_output_stat_file &&
+                !use_output_stat(scs_ptr) &&
 #if !TPL_SC_ON
                 !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
 #endif
-                scs_ptr->use_input_stat_file &&
+                use_input_stat(scs_ptr) &&
                 scs_ptr->static_config.look_ahead_distance != 0 &&
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
@@ -7284,8 +7284,8 @@ void *rate_control_kernel(void *input_ptr) {
 #if !TPL_SC_ON
                 !pcs_ptr->parent_pcs_ptr->sc_content_detected &&
 #endif
-                !scs_ptr->use_output_stat_file &&
-                !scs_ptr->use_input_stat_file &&
+                !use_output_stat(scs_ptr) &&
+                !use_input_stat(scs_ptr) &&
                 scs_ptr->static_config.look_ahead_distance != 0 &&
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
@@ -7298,12 +7298,12 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
 #endif
 #if UNIFY_SC_NSC
-                !scs_ptr->use_output_stat_file &&
+                !use_output_stat(scs_ptr) &&
 #else
-                !pcs_ptr->parent_pcs_ptr->sc_content_detected && !scs_ptr->use_output_stat_file &&
+                !pcs_ptr->parent_pcs_ptr->sc_content_detected && !use_output_stat(scs_ptr) &&
 #endif
-                scs_ptr->use_input_stat_file)
-                if (scs_ptr->use_input_stat_file &&
+                use_input_stat(scs_ptr))
+                if (use_input_stat(scs_ptr) &&
                     pcs_ptr->parent_pcs_ptr->referenced_area_has_non_zero)
                     sb_qp_derivation_two_pass(pcs_ptr);
                 else
@@ -7326,7 +7326,7 @@ void *rate_control_kernel(void *input_ptr) {
                 }
             }
 #if TWOPASS_RC
-            if (scs_ptr->use_input_stat_file)
+            if (use_input_stat(scs_ptr))
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
 #endif
             // Get Empty Rate Control Results Buffer
@@ -7392,7 +7392,7 @@ void *rate_control_kernel(void *input_ptr) {
             }
 #if TWOPASS_RC
             if (scs_ptr->static_config.rate_control_mode == 0 &&
-                scs_ptr->use_input_stat_file &&
+                use_input_stat(scs_ptr) &&
                 1//scs_ptr->static_config.look_ahead_distance != 0
                 ) {
                 av1_rc_postencode_update(parentpicture_control_set_ptr, (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
@@ -7408,7 +7408,7 @@ void *rate_control_kernel(void *input_ptr) {
                     (int64_t)context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame;
 
 #if TWOPASS_RC
-                if (scs_ptr->use_input_stat_file &&
+                if (use_input_stat(scs_ptr) &&
                     scs_ptr->static_config.look_ahead_distance != 0) {
                     ;
                 } else
@@ -7416,7 +7416,7 @@ void *rate_control_kernel(void *input_ptr) {
                 high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
                 if (scs_ptr->static_config.rate_control_mode == 1)
 #if TWOPASS_RC
-                    if (scs_ptr->use_input_stat_file &&
+                    if (use_input_stat(scs_ptr) &&
                         scs_ptr->static_config.look_ahead_distance != 0) {
                         av1_rc_postencode_update(parentpicture_control_set_ptr, (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
                         svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);

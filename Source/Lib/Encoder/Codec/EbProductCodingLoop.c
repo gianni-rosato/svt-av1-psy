@@ -11585,7 +11585,7 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
         }
 #if TX_EARLY_EXIT
 #if TWOPASS_RC
-        if (!scs_ptr->use_output_stat_file)
+        if (!use_output_stat(scs_ptr))
 #endif
         // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
         if (context_ptr->source_variance < TXS_EXIT_VAR_TH && context_ptr->tx_depth == 2 && best_tx_depth == 0)
@@ -16221,7 +16221,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         uint16_t redundant_blk_mds;
 #if SWITCH_MODE_BASED_ON_SQ_COEFF || SWITCH_MODE_BASED_ON_STATISTICS
 #if TWOPASS_RC
-        if (!scs_ptr->use_output_stat_file) {
+        if (!use_output_stat(scs_ptr)) {
 #endif
         // Reset settings, in case they were over-written by previous block
         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr,0);
@@ -16432,7 +16432,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 }
 #endif
 #if FIRST_PASS_SETUP
-                if (scs_ptr->use_output_stat_file)
+                if (use_output_stat(scs_ptr))
                     first_pass_md_encode_block(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,

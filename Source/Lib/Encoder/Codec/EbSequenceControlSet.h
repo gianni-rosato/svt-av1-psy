@@ -245,6 +245,16 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
 
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
 
+inline static EbBool use_input_stat(const SequenceControlSet* scs_ptr)
+{
+    return scs_ptr->use_input_stat_file;
+}
+
+inline static EbBool use_output_stat(const SequenceControlSet* scs_ptr)
+{
+    return scs_ptr->use_output_stat_file;
+}
+
 #ifdef __cplusplus
 }
 #endif

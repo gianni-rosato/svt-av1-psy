@@ -3609,7 +3609,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
                                 // CBF Tu decision
 #if FIRST_PASS_SETUP
-                                if (scs_ptr->use_output_stat_file) {
+                                if (use_output_stat(scs_ptr)) {
                                     context_ptr->md_context
                                         ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
                                         .y_has_coeff[context_ptr->txb_itr] =
@@ -4105,7 +4105,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                         is_16bit);
 #if !TWOPASS_RC
                     // Collect the referenced area per 64x64
-                    if (scs_ptr->use_output_stat_file) {
+                    if (use_output_stat(scs_ptr)) {
                         if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0) {
                             eb_block_on_mutex(ref_obj_0->referenced_area_mutex);
                             if (context_ptr->mv_unit.pred_direction == UNI_PRED_LIST_0 ||

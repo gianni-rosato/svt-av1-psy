@@ -2674,7 +2674,7 @@ static EbErrorType produce_temporally_filtered_pic(
                     ? 3
                     : 4;
 #if !TWOPASS_RC
-                if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
+                if (picture_control_set_ptr_central->use_input_stat(scs_ptr) &&
                     picture_control_set_ptr_central->temporal_layer_index == 0 &&
                     noise_levels[0] > 0.5 &&
                     ((picture_control_set_ptr_central->referenced_area_avg < 20 &&
@@ -2861,7 +2861,7 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
         else
             noiselevel_adj = 1;
 #if !TWOPASS_RC
-        if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
+        if (picture_control_set_ptr_central->use_input_stat(scs_ptr) &&
 #if UNIFY_SC_NSC
             picture_control_set_ptr_central->temporal_layer_index == 0) {
 #else

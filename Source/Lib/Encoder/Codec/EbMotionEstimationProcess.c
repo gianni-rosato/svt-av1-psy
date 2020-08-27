@@ -112,7 +112,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     UNUSED(scs_ptr);
 #if !REFACTOR_ME_HME
     uint8_t hme_me_level =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width  = 2;
@@ -638,7 +638,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
 #if FASTER_FIRST_PASS
     if (!pcs_ptr->sc_content_detected)
-        if (scs_ptr->use_output_stat_file) {
+        if (use_output_stat(scs_ptr)) {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height  = me_context_ptr->hme_level0_total_search_area_width/2;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height =   me_context_ptr->hme_level0_max_total_search_area_width/2;
         }
@@ -668,7 +668,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
 #if FASTER_FIRST_PASS
     if (!pcs_ptr->sc_content_detected)
-        if (scs_ptr->use_output_stat_file) {
+        if (use_output_stat(scs_ptr)) {
             me_context_ptr->hme_level1_search_area_in_width_array[0] =
                 me_context_ptr->hme_level1_search_area_in_width_array[1] =
                 me_context_ptr->hme_level1_search_area_in_height_array[0] =
@@ -907,12 +907,12 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TWOPASS_RC
     EbEncMode enc_mode = pcs_ptr->enc_mode;
 #else
-    EbEncMode enc_mode = scs_ptr->use_output_stat_file ?
+    EbEncMode enc_mode = use_output_stat(scs_ptr) ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
 #else
     uint8_t enc_mode =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
 #if ON_OFF_FEATURE_MRP
     context_ptr->me_context_ptr->mrp_level = pcs_ptr->mrp_level;
@@ -922,7 +922,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
 #endif
 #if !REFACTOR_ME_HME
-    uint8_t  hme_me_level = scs_ptr->use_output_stat_file ?
+    uint8_t  hme_me_level = use_output_stat(scs_ptr) ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     // Set ME/HME search regions
@@ -1390,7 +1390,7 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #endif
 #if !REFACTOR_ME_HME || !MAR12_ADOPTIONS
     uint8_t hme_me_level =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width  = 2;
@@ -1681,14 +1681,14 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     EbErrorType return_error = EB_ErrorNone;
 #if !UNIFY_SC_NSC
     uint8_t     enc_mode =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     EbInputResolution input_resolution = scs_ptr->input_resolution;
 #if !UNIFY_SC_NSC
     uint8_t sc_content_detected = pcs_ptr->sc_content_detected;
 #endif
 #if !REFACTOR_ME_HME ||  !MAR12_ADOPTIONS
-    uint8_t  hme_me_level = scs_ptr->use_output_stat_file ?
+    uint8_t  hme_me_level = use_output_stat(scs_ptr) ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     // Set ME/HME search regions
@@ -2178,7 +2178,7 @@ void *motion_estimation_kernel(void *input_ptr) {
         if (in_results_ptr->task_type == 0) {
             // ME Kernel Signal(s) derivation
 #if FIRST_PASS_SETUP
-            if (scs_ptr->use_output_stat_file)
+            if (use_output_stat(scs_ptr))
                 first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
             else
                 signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
@@ -2359,7 +2359,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 #if FIRST_PASS_SETUP
             // ZZ SSDs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
-            if (scs_ptr->use_output_stat_file && scs_ptr->static_config.look_ahead_distance != 0) {
+            if (use_output_stat(scs_ptr) && scs_ptr->static_config.look_ahead_distance != 0) {
                 // ZZ SSDs Computation using full picture
                 if (pcs_ptr->picture_number > 0) {
                     compute_zz_ssd(
@@ -2378,7 +2378,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             if (scs_ptr->static_config.rate_control_mode
 #if TWOPASS_RC
-                && !(scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
+                && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
 #endif
                 ) {
                 if (pcs_ptr->slice_type != I_SLICE) {

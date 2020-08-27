@@ -820,7 +820,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     availability_flag = EB_TRUE;
 #if FORCE_DECODE_ORDER
-                    if (entry_pcs_ptr->decode_order != decode_order && scs_ptr->use_input_stat_file)
+                    if (entry_pcs_ptr->decode_order != decode_order && use_input_stat(scs_ptr))
                         availability_flag = EB_FALSE;
 #endif
 
@@ -1588,7 +1588,7 @@ void *picture_manager_kernel(void *input_ptr) {
                     (reference_entry_ptr->reference_object_ptr)) {
                     // Release the nominal live_count value
 #if !PASS1_FIX
-                    if (scs_ptr->use_output_stat_file &&
+                    if (use_output_stat(scs_ptr) &&
                         reference_entry_ptr->reference_object_ptr->live_count == 1)
                         write_stat_to_file(
                             scs_ptr,

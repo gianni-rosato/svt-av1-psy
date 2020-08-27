@@ -2029,7 +2029,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         // Mode Decision Configuration Kernel Signal(s) derivation
 #if FIRST_PASS_SETUP
-        if (scs_ptr->use_output_stat_file)
+        if (use_output_stat(scs_ptr))
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr, context_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);

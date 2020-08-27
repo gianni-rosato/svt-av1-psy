@@ -2170,7 +2170,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 pcs_ptr->stat_struct_first_pass_ptr =
                     pcs_ptr->is_used_as_reference_flag ? &((EbReferenceObject *)pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->stat_struct
                     : &pcs_ptr->stat_struct;
-                if (scs_ptr->use_output_stat_file)
+                if (use_output_stat(scs_ptr))
                     memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
 #endif
 
@@ -2198,7 +2198,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     encode_context_ptr, pcs_ptr, in_results_ptr);
 
 #if TWOPASS_RC
-            if (scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1)
+            if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                 ; //skip 2pass VBR
             else
 #endif
@@ -2320,7 +2320,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             pcs_ptr->end_of_sequence_region = EB_FALSE;
 
 #if TWOPASS_RC
-                        if (scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1)
+                        if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                             ; //skip 2pass VBR
                         else
 #endif
@@ -2387,7 +2387,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                         pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                                        ->stat_struct
                                 : &pcs_ptr->stat_struct;
-                        if (scs_ptr->use_output_stat_file)
+                        if (use_output_stat(scs_ptr))
                             memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
 #endif
 #if TPL_LA

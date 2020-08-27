@@ -1682,7 +1682,7 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         total_distortion += chromasad_;
 
         rate = luma_rate + chroma_rate;
-        if (pcs_ptr->parent_pcs_ptr->scs_ptr->use_output_stat_file) {
+        if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr)) {
             two_pass_cost_update(pcs_ptr, candidate_ptr, &rate, &total_distortion);
         }
         if (candidate_ptr->merge_flag) {
@@ -1697,7 +1697,7 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         total_distortion = luma_sad + chromasad_;
         if (blk_geom->has_uv == 0 && chromasad_ != 0) SVT_LOG("av1_inter_fast_cost: Chroma error");
         rate = luma_rate + chroma_rate;
-        if (pcs_ptr->parent_pcs_ptr->scs_ptr->use_output_stat_file) {
+        if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr)) {
             two_pass_cost_update(pcs_ptr, candidate_ptr, &rate, &total_distortion);
         }
         // Assign fast cost
@@ -1958,7 +1958,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 
     rate = luma_rate + chroma_rate + coeff_rate;
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) rate += tx_size_bits;
-    if (pcs_ptr->parent_pcs_ptr->scs_ptr->use_output_stat_file &&
+    if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr) &&
         candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
         two_pass_cost_update_64bit(
             pcs_ptr, candidate_buffer_ptr->candidate_ptr, &rate, &total_distortion);
@@ -2107,7 +2107,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     skip_distortion = skip_luma_sse + skip_chroma_sse;
     skip_rate       = skip_mode_rate;
     skip_cost       = RDCOST(lambda, skip_rate, skip_distortion);
-    if (pcs_ptr->parent_pcs_ptr->scs_ptr->use_output_stat_file) {
+    if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr)) {
         MvReferenceFrame ref_type[2];
         av1_set_ref_frame(ref_type, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
         if ((candidate_buffer_ptr->candidate_ptr->is_compound &&

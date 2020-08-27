@@ -407,7 +407,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                 }
 
 #if TURN_OFF_EC_FIRST_PASS
-                if (!scs_ptr->use_output_stat_file){
+                if (!use_output_stat(scs_ptr)){
 #endif
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                     uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
@@ -495,7 +495,7 @@ void *entropy_coding_kernel(void *input_ptr) {
 #if !TWOPASS_RC
                         //Jing, two pass doesn't work with multi-tile right now
                         // for Non Reference frames
-                        if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                        if (use_output_stat(scs_ptr) && tile_cnt == 1 &&
                             !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
                             write_stat_to_file(scs_ptr,
                                                *pcs_ptr->parent_pcs_ptr->stat_struct_first_pass_ptr,
@@ -507,7 +507,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                                  ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                                  ++ref_idx) {
 #if !TWOPASS_RC
-                                if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                                if (use_output_stat(scs_ptr) && tile_cnt == 1 &&
 #if PASS1_FIX
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL)
 #else
@@ -533,7 +533,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                                  ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                                  ++ref_idx) {
 #if !TWOPASS_RC
-                                if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
+                                if (use_output_stat(scs_ptr) && tile_cnt == 1 &&
 #if PASS1_FIX
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL)
 #else

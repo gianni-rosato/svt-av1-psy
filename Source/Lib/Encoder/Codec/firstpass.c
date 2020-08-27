@@ -306,7 +306,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end++;
-    if ((scs_ptr->use_output_stat_file) &&
+    if ((use_output_stat(scs_ptr)) &&
         (twopass->stats_buf_ctx->stats_in_end >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end = twopass->stats_buf_ctx->stats_in_start;
     }

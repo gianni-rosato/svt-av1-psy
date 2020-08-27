@@ -11282,7 +11282,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 #if FIRST_PASS_SETUP
-        if (scs_ptr->use_output_stat_file && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
+        if (use_output_stat(scs_ptr) && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
             force_blk_size = FORCED_BLK_SIZE;
             if (blk_geom->bheight == FORCED_BLK_SIZE && blk_geom->bwidth == FORCED_BLK_SIZE &&
                 !pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
@@ -11358,7 +11358,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
 
 #if FIRST_PASS_SETUP
-                    if (scs_ptr->use_output_stat_file) {
+                    if (use_output_stat(scs_ptr)) {
                         if (blk_geom->sq_size == force_blk_size)
                             results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
                     }
@@ -11594,7 +11594,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
 #if FIRST_PASS_SETUP
-                    if (scs_ptr->use_output_stat_file && sb_index == 0)
+                    if (use_output_stat(scs_ptr) && sb_index == 0)
                         setup_firstpass_data(pcs_ptr->parent_pcs_ptr);
 #endif
 #if M8_4x4
@@ -11970,7 +11970,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
 #if FIRST_PASS_SETUP
-                    if (scs_ptr->use_output_stat_file)
+                    if (use_output_stat(scs_ptr))
                         first_pass_signal_derivation_enc_dec_kernel(pcs_ptr, context_ptr->md_context);
                     else
 #if UNIFY_LEVELS
@@ -12119,7 +12119,7 @@ void *mode_decision_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
 #endif
 #if FIRST_PASS_SETUP
-            if (scs_ptr->use_output_stat_file) {
+            if (use_output_stat(scs_ptr)) {
                 first_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
                 if(pcs_ptr->parent_pcs_ptr->end_of_sequence_flag)
                     svt_av1_end_first_pass(pcs_ptr->parent_pcs_ptr);

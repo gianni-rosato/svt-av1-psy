@@ -149,7 +149,7 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
 
     // HME Flags updated @ signal_derivation_multi_processes_oq
     uint8_t hme_me_level =
-        scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+        use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
 #endif
     // Derive HME Flag
     if (scs_ptr->static_config.use_default_me_hme) {
@@ -747,7 +747,7 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
 
     scs_ptr->twopass.stats_buf_ctx = &encode_context_ptr->stats_buf_context;
     scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
-    if (scs_ptr->use_input_stat_file) {
+    if (use_input_stat(scs_ptr)) {
         const size_t packet_sz = sizeof(FIRSTPASS_STATS);
         const int packets = (int)(encode_context_ptr->rc_twopass_stats_in.sz / packet_sz);
 
@@ -1278,7 +1278,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
 #if !TWOPASS_RC
             pcs_ptr->snd_pass_enc_mode =
-                (scs_ptr->use_output_stat_file &&
+                (use_output_stat(scs_ptr) &&
                  scs_ptr->static_config.snd_pass_enc_mode != MAX_ENC_PRESET + 1)
                     ? (EbEncMode)scs_ptr->static_config.snd_pass_enc_mode
                     : pcs_ptr->enc_mode;
@@ -1293,7 +1293,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // Pre-Analysis Signal(s) derivation
 #if FIRST_PASS_SETUP
-            if(scs_ptr->use_output_stat_file)
+            if(use_output_stat(scs_ptr))
                 first_pass_signal_derivation_pre_analysis(scs_ptr, pcs_ptr);
             else
                 signal_derivation_pre_analysis_oq(scs_ptr, pcs_ptr);
@@ -1334,14 +1334,14 @@ void *resource_coordination_kernel(void *input_ptr) {
             reset_pcs_av1(pcs_ptr);
 #if TWOPASS_RC
             if (pcs_ptr->picture_number == 0) {
-                if (scs_ptr->use_input_stat_file)
+                if (use_input_stat(scs_ptr))
                     read_stat_from_file(scs_ptr);
-                if (scs_ptr->use_input_stat_file || scs_ptr->use_output_stat_file)
+                if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr))
                     setup_two_pass(scs_ptr);
             }
             pcs_ptr->ts_duration = (int64_t)10000000*(1<<16) / scs_ptr->frame_rate;
 #else
-            if (scs_ptr->use_input_stat_file && !end_of_sequence_flag)
+            if (use_input_stat(scs_ptr) && !end_of_sequence_flag)
                 read_stat_from_file(pcs_ptr, scs_ptr);
             else {
                 memset(&pcs_ptr->stat_struct, 0, sizeof(StatStruct));
