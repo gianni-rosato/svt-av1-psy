@@ -29,8 +29,19 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(WARNING "32-bit is not supported")
 endif()
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
-    set(X86 TRUE)
+file(WRITE ${CMAKE_BINARY_DIR}/conftest.c "
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
+#else
+#error \"Non-x86\"
+#endif
+int main() {}
+")
+
+try_compile(X86 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/conftest.c)
+
+message(STATUS "x86 detected: ${X86}")
+
+if(X86)
     find_program(YASM_EXE yasm)
     option(ENABLE_NASM "Use nasm if available (Uses yasm by default if found)" OFF)
     if(YASM_EXE AND NOT CMAKE_ASM_NASM_COMPILER MATCHES "yasm" AND NOT ENABLE_NASM)
@@ -51,8 +62,6 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
         endif()
     endif()
     enable_language(ASM_NASM)
-else()
-    set(X86 FALSE)
 endif()
 
 include(GNUInstallDirs)
