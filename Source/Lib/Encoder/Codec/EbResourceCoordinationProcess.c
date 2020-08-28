@@ -710,30 +710,10 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
 /******************************************************
  * Read Stat from File
  ******************************************************/
-static void read_stat_from_file(SequenceControlSet *scs_ptr) {
-    size_t nbytes;
-
+static void read_stat(SequenceControlSet *scs_ptr) {
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
-    if (fseek(scs_ptr->static_config.input_stat_file, 0, SEEK_END))
-        SVT_LOG("First-pass stats file must be seekable!");
 
-    encode_context_ptr->rc_twopass_stats_in.sz =
-        ftell(scs_ptr->static_config.input_stat_file);
-    rewind(scs_ptr->static_config.input_stat_file);
-
-    encode_context_ptr->rc_twopass_stats_in.buf =
-        malloc(encode_context_ptr->rc_twopass_stats_in.sz);
-
-    if (!encode_context_ptr->rc_twopass_stats_in.buf)
-        SVT_LOG("Failed to allocate first-pass stats buffer (%lu bytes)",
-                (unsigned int)encode_context_ptr->rc_twopass_stats_in.sz);
-
-    nbytes = fread(encode_context_ptr->rc_twopass_stats_in.buf,
-                   1,
-                   encode_context_ptr->rc_twopass_stats_in.sz,
-                   scs_ptr->static_config.input_stat_file);
-    if (nbytes != encode_context_ptr->rc_twopass_stats_in.sz)
-        SVT_LOG("Failed to read first-pass stats buffer");
+    encode_context_ptr->rc_twopass_stats_in = scs_ptr->static_config.rc_twopass_stats_in;
 }
 
 static void setup_two_pass(SequenceControlSet *scs_ptr) {
@@ -1335,7 +1315,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 #if TWOPASS_RC
             if (pcs_ptr->picture_number == 0) {
                 if (use_input_stat(scs_ptr))
-                    read_stat_from_file(scs_ptr);
+                    read_stat(scs_ptr);
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr))
                     setup_two_pass(scs_ptr);
             }

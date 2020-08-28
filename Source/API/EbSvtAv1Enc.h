@@ -221,8 +221,8 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0.*/
     EbBool use_qp_file;
-    /* Input stats file */
-    FILE *input_stat_file;
+    /* input buffer for the second pass */
+    SvtAv1FixedBuf rc_twopass_stats_in;
     /* output stats file */
     FILE *output_stat_file;
     /* Enable picture QP scaling between hierarchical levels

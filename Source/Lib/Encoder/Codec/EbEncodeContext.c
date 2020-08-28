@@ -81,7 +81,6 @@ static void encode_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->rate_control_tables_array);
 #if TWOPASS_RC
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
-    free(obj->rc_twopass_stats_in.buf);
 #endif
 }
 

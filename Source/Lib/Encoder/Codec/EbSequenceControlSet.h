@@ -105,7 +105,6 @@ typedef struct SequenceControlSet {
     uint8_t compound_mode;
 
     /*!< Temporary input / output statistics files for 2-pass encoding */
-    EbBool use_input_stat_file;
     EbBool use_output_stat_file;
 
     /*!< Sequence resolution parameters */
@@ -247,7 +246,7 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
 
 inline static EbBool use_input_stat(const SequenceControlSet* scs_ptr)
 {
-    return scs_ptr->use_input_stat_file;
+    return !!scs_ptr->static_config.rc_twopass_stats_in.sz;
 }
 
 inline static EbBool use_output_stat(const SequenceControlSet* scs_ptr)

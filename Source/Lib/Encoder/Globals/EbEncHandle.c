@@ -2273,9 +2273,8 @@ void copy_api_from_app(
     scs_ptr->intra_refresh_type = scs_ptr->static_config.intra_refresh_type;
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
-    scs_ptr->static_config.input_stat_file = ((EbSvtAv1EncConfiguration*)config_struct)->input_stat_file;
+    scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
     scs_ptr->static_config.output_stat_file = ((EbSvtAv1EncConfiguration*)config_struct)->output_stat_file;
-    scs_ptr->use_input_stat_file = scs_ptr->static_config.input_stat_file ? 1 : 0;
     scs_ptr->use_output_stat_file = scs_ptr->static_config.output_stat_file ? 1 : 0;
     // Deblock Filter
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
@@ -3172,7 +3171,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->superres_mode > 0 && ((config->input_stat_file || config->output_stat_file))){
+    if (config->superres_mode > 0 && ((config->rc_twopass_stats_in.sz || config->output_stat_file))){
         SVT_LOG("Error instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
