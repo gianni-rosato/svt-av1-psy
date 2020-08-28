@@ -194,13 +194,18 @@ static INLINE void dec_build_prediction_by_above_pred(
     int                  mi_x, mi_y;
     uint8_t *            tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    BlockModeInfo        bakup_abv_mbmi = *above_mbmi;
-    av1_modify_neighbor_predictor_for_obmc(&bakup_abv_mbmi);
+    BlockModeInfo *      bakup_abv_mbmi = malloc(sizeof(*bakup_abv_mbmi));
+    if (!bakup_abv_mbmi)
+        return;
+    BlockModeInfo *backup_pi_mi = backup_pi->mi;
+    backup_pi->mi               = bakup_abv_mbmi;
+    eb_memcpy(bakup_abv_mbmi, above_mbmi, sizeof(*bakup_abv_mbmi));
+    av1_modify_neighbor_predictor_for_obmc(bakup_abv_mbmi);
 
-    const int num_refs = 1 + has_second_ref(&bakup_abv_mbmi);
+    const int num_refs = 1 + has_second_ref(bakup_abv_mbmi);
 
     for (int ref = 0; ref < num_refs; ++ref) {
-        const MvReferenceFrame frame = bakup_abv_mbmi.ref_frame[ref];
+        const MvReferenceFrame frame = bakup_abv_mbmi->ref_frame[ref];
         backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
@@ -246,6 +251,8 @@ static INLINE void dec_build_prediction_by_above_pred(
                                          0 /*some_use_intra*/,
                                          recon_picture_buf->bit_depth);
     }
+    free(bakup_abv_mbmi);
+    backup_pi->mi = backup_pi_mi;
 }
 
 static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_handle,
@@ -351,13 +358,18 @@ static INLINE void dec_build_prediction_by_left_pred(
     int                  mi_x, mi_y;
     uint8_t *            tmp_recon_buf;
     int32_t              tmp_recon_stride;
-    BlockModeInfo        bakup_left_mbmi = *left_mbmi;
-    av1_modify_neighbor_predictor_for_obmc(&bakup_left_mbmi);
+    BlockModeInfo *      bakup_left_mbmi = malloc(sizeof(*bakup_left_mbmi));
+    if (!bakup_left_mbmi)
+        return;
+    BlockModeInfo *backup_pi_mi = backup_pi->mi;
+    backup_pi->mi               = bakup_left_mbmi;
+    eb_memcpy(bakup_left_mbmi, left_mbmi, sizeof(*bakup_left_mbmi));
+    av1_modify_neighbor_predictor_for_obmc(bakup_left_mbmi);
 
-    const int num_refs = 1 + has_second_ref(&bakup_left_mbmi);
+    const int num_refs = 1 + has_second_ref(bakup_left_mbmi);
 
     for (int ref = 0; ref < num_refs; ++ref) {
-        const MvReferenceFrame frame = bakup_left_mbmi.ref_frame[ref];
+        const MvReferenceFrame frame = bakup_left_mbmi->ref_frame[ref];
         backup_pi->block_ref_sf[ref] = get_ref_scale_factors(dec_handle, frame);
 
         if ((!av1_is_valid_scale(backup_pi->block_ref_sf[ref]))) {
@@ -405,6 +417,8 @@ static INLINE void dec_build_prediction_by_left_pred(
                                          0 /*some_use_intra*/,
                                          recon_picture_buf->bit_depth);
     }
+    free(bakup_left_mbmi);
+    backup_pi->mi = backup_pi_mi;
 }
 
 static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_handle,
