@@ -497,7 +497,7 @@ extern "C" {
 
 #define OBMC_CLI            1 // Improve CLI support for OBMC (OFF / Fully ON / Other Levels).
 #define FILTER_INTRA_CLI    1 // Improve CLI support for Filter Intra (OFF / Fully ON / Other Levels)
-#define TX_EARLY_EXIT       1 // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
+#define TX_EARLY_EXIT       0 // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
 
 #define REF_PRUNE_CAT_TUNE 1 // Tune the allowable references per category to improve trade-offs
 #define INCREASE_WM_CANDS  1 // Use WM for PME candidates; increase number of NEW_MV cands used for WM
