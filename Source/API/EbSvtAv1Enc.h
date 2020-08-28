@@ -63,6 +63,15 @@ typedef enum {
     SUPERRES_MODES
 } SUPERRES_MODE;
 
+/*!\brief Generic fixed size buffer structure
+ *
+ * This structure is able to hold a reference to any fixed size buffer.
+ */
+typedef struct SvtAv1FixedBuf {
+    void *buf;       /**< Pointer to the data. Does NOT own the data! */
+    uint64_t sz;       /**< Length of the buffer, in chars */
+} SvtAv1FixedBuf; /**< alias for struct aom_fixed_buf */
+
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
