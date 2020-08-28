@@ -10593,7 +10593,7 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              uint32_t qp, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
 #endif
                              uint64_t *y_full_distortion) {
-#if TWOPASS_RC
+#if TWOPASS_RC && TX_EARLY_EXIT
     SequenceControlSet *scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 #endif
     uint32_t full_lambda = context_ptr->hbd_mode_decision
