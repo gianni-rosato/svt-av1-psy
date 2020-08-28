@@ -23,6 +23,9 @@
 #include "EbTime.h"
 #include "EbObject.h"
 #include "EbLog.h"
+#if TWOPASS_RC
+#include "pass2_strategy.h"
+#endif
 #include "common_dsp_rtcd.h"
 typedef struct ResourceCoordinationContext {
     EbFifo *                       input_buffer_fifo_ptr;
@@ -698,6 +701,67 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
     // Copy the picture buffer
     if (src->p_buffer != NULL) copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
 }
+
+#if TWOPASS_RC
+/******************************************************
+ * Read Stat from File
+ ******************************************************/
+static void read_stat_from_file(SequenceControlSet *scs_ptr) {
+    size_t nbytes;
+
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    if (fseek(scs_ptr->static_config.input_stat_file, 0, SEEK_END))
+        SVT_LOG("First-pass stats file must be seekable!");
+
+    encode_context_ptr->rc_twopass_stats_in.sz =
+        ftell(scs_ptr->static_config.input_stat_file);
+    rewind(scs_ptr->static_config.input_stat_file);
+
+    encode_context_ptr->rc_twopass_stats_in.buf =
+        malloc(encode_context_ptr->rc_twopass_stats_in.sz);
+
+    if (!encode_context_ptr->rc_twopass_stats_in.buf)
+        SVT_LOG("Failed to allocate first-pass stats buffer (%lu bytes)",
+                (unsigned int)encode_context_ptr->rc_twopass_stats_in.sz);
+
+    nbytes = fread(encode_context_ptr->rc_twopass_stats_in.buf,
+                   1,
+                   encode_context_ptr->rc_twopass_stats_in.sz,
+                   scs_ptr->static_config.input_stat_file);
+    if (nbytes != encode_context_ptr->rc_twopass_stats_in.sz)
+        SVT_LOG("Failed to read first-pass stats buffer");
+}
+
+static void setup_two_pass(SequenceControlSet *scs_ptr) {
+
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+
+    int num_lap_buffers = 0;
+    int size = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
+    for (int i = 0; i < size; i++)
+        scs_ptr->twopass.frame_stats_arr[i] = &encode_context_ptr->frame_stats_buffer[i];
+
+    scs_ptr->twopass.stats_buf_ctx = &encode_context_ptr->stats_buf_context;
+    scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
+    if (scs_ptr->use_input_stat_file) {
+        const size_t packet_sz = sizeof(FIRSTPASS_STATS);
+        const int packets = (int)(encode_context_ptr->rc_twopass_stats_in.sz / packet_sz);
+
+        if (!scs_ptr->lap_enabled)
+        {
+            /*Re-initialize to stats buffer, populated by application in the case of
+                * two pass*/
+            scs_ptr->twopass.stats_buf_ctx->stats_in_start =
+                encode_context_ptr->rc_twopass_stats_in.buf;
+            scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
+            scs_ptr->twopass.stats_buf_ctx->stats_in_end =
+                &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
+            svt_av1_init_second_pass(scs_ptr);
+        }
+    }
+
+}
+#else
 /******************************************************
  * Read Stat from File
  * reads StatStruct per frame from the file and stores under pcs_ptr
@@ -737,7 +801,12 @@ static void read_stat_from_file(PictureParentControlSet *pcs_ptr, SequenceContro
     pcs_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
     eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
 }
+#endif
 
+#if FIRST_PASS_SETUP
+extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet *     scs_ptr,
+    PictureParentControlSet *pcs_ptr);
+#endif
 
 /* Resource Coordination Kernel */
 /*********************************************************************************
@@ -1199,11 +1268,13 @@ void *resource_coordination_kernel(void *input_ptr) {
             } else
                 pcs_ptr->enc_mode = (EbEncMode)scs_ptr->static_config.enc_mode;
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
+#if !TWOPASS_RC
             pcs_ptr->snd_pass_enc_mode =
                 (scs_ptr->use_output_stat_file &&
                  scs_ptr->static_config.snd_pass_enc_mode != MAX_ENC_PRESET + 1)
                     ? (EbEncMode)scs_ptr->static_config.snd_pass_enc_mode
                     : pcs_ptr->enc_mode;
+#endif
 
             // Set the SCD Mode
             scs_ptr->scd_mode =
@@ -1213,7 +1284,14 @@ void *resource_coordination_kernel(void *input_ptr) {
             scs_ptr->block_mean_calc_prec = BLOCK_MEAN_PREC_SUB;
 
             // Pre-Analysis Signal(s) derivation
+#if FIRST_PASS_SETUP
+            if(scs_ptr->use_output_stat_file)
+                first_pass_signal_derivation_pre_analysis(scs_ptr, pcs_ptr);
+            else
+                signal_derivation_pre_analysis_oq(scs_ptr, pcs_ptr);
+#else
             signal_derivation_pre_analysis_oq(scs_ptr, pcs_ptr);
+#endif
             pcs_ptr->filtered_sse    = 0;
             pcs_ptr->filtered_sse_uv = 0;
             // Rate Control
@@ -1246,11 +1324,21 @@ void *resource_coordination_kernel(void *input_ptr) {
             else
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             reset_pcs_av1(pcs_ptr);
+#if TWOPASS_RC
+            if (pcs_ptr->picture_number == 0) {
+                if (scs_ptr->use_input_stat_file)
+                    read_stat_from_file(scs_ptr);
+                if (scs_ptr->use_input_stat_file || scs_ptr->use_output_stat_file)
+                    setup_two_pass(scs_ptr);
+            }
+            pcs_ptr->ts_duration = (int64_t)10000000*(1<<16) / scs_ptr->frame_rate;
+#else
             if (scs_ptr->use_input_stat_file && !end_of_sequence_flag)
                 read_stat_from_file(pcs_ptr, scs_ptr);
             else {
                 memset(&pcs_ptr->stat_struct, 0, sizeof(StatStruct));
             }
+#endif
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
             // Get Empty Reference Picture Object

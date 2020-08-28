@@ -119,6 +119,9 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
             configs[inst_cnt]->pass = 1;
         else if (pass == ENCODE_LAST_PASS)
             configs[inst_cnt]->pass = 2;
+#if TWOPASS_RC
+        eb_2pass_config_update(configs[inst_cnt]);
+#endif
         return_errors[inst_cnt] = EB_ErrorNone;
     }
 
@@ -165,9 +168,14 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
                 start_time((uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
                            (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
 
-                //TODO: remove this if we can use a quick first pass in svt av1 library.
                 if (pass == ENCODE_FIRST_PASS) {
+                    //TODO: remove this if we can use a quick first pass in svt av1 library.
                     configs[inst_cnt]->enc_mode = MAX_ENC_PRESET;
+#if TWOPASS_RC
+                    configs[inst_cnt]->look_ahead_distance = 1;
+                    configs[inst_cnt]->enable_tpl_la = 0;
+                    configs[inst_cnt]->rate_control_mode = 0;
+#endif
                 }
 
                 return_errors[inst_cnt] = init_encoder(

@@ -291,6 +291,9 @@ void *picture_manager_kernel(void *input_ptr) {
     PictureManagerReorderEntry *queue_entry_ptr;
     int32_t                     queue_entry_index;
 #endif
+#if FORCE_DECODE_ORDER
+    uint64_t decode_order = 0;
+#endif
     // Debug
     uint32_t loop_count = 0;
 
@@ -775,6 +778,11 @@ void *picture_manager_kernel(void *input_ptr) {
             } while (
                 (reference_queue_index != encode_context_ptr->reference_picture_queue_tail_index) &&
                 (reference_entry_ptr->picture_number != input_picture_demux_ptr->picture_number));
+#if FORCE_DECODE_ORDER
+            // Update the last decode order
+            if(input_picture_demux_ptr->decode_order == decode_order)
+                decode_order++;
+#endif
 
             //keep the release of SCS here because we still need the encodeContext structure here
             // Release the Reference's SequenceControlSet
@@ -811,6 +819,10 @@ void *picture_manager_kernel(void *input_ptr) {
                         (SequenceControlSet *)entry_pcs_ptr->scs_wrapper_ptr->object_ptr;
 
                     availability_flag = EB_TRUE;
+#if FORCE_DECODE_ORDER
+                    if (entry_pcs_ptr->decode_order != decode_order && scs_ptr->use_input_stat_file)
+                        availability_flag = EB_FALSE;
+#endif
 
                     // Check RefList0 Availability
                     for (uint8_t ref_idx = 0; ref_idx < entry_pcs_ptr->ref_list0_count; ++ref_idx) {

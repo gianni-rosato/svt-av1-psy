@@ -94,7 +94,7 @@ int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 *
 *******************************************/
 
-const EbPredictionFunc product_prediction_fun_table[3] = {
+const EbPredictionFunc svt_product_prediction_fun_table[3] = {
     NULL, inter_pu_prediction_av1, eb_av1_intra_prediction_cl};
 
 const EbFastCostFunc av1_product_fast_cost_func_table[3] = {
@@ -103,7 +103,7 @@ const EbFastCostFunc av1_product_fast_cost_func_table[3] = {
     av1_intra_fast_cost /*INTRA */
 };
 
-const EbAv1FullCostFunc av1_product_full_cost_func_table[3] = {
+const EbAv1FullCostFunc svt_av1_product_full_cost_func_table[3] = {
     NULL,
     av1_inter_full_cost, /*INTER */
     av1_intra_full_cost /*INTRA */
@@ -1104,7 +1104,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
 #if REFACTOR_SIGNALS
     context_ptr->uv_intra_comp_only = EB_FALSE;
 #endif
-    product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc
+    svt_product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc
                                      ? INTER_MODE
                                      : candidate_ptr->type](
         context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
@@ -5082,7 +5082,7 @@ void md_sub_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_
 #else
             context_ptr->md_staging_skip_inter_chroma_pred    = EB_TRUE;
 #endif
-            product_prediction_fun_table[INTER_MODE](
+            svt_product_prediction_fun_table[INTER_MODE](
                 hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
 
             // Distortion
@@ -6462,7 +6462,7 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
 #if REFACTOR_SIGNALS
     context_ptr->uv_intra_comp_only = EB_FALSE;
 #endif
-    product_prediction_fun_table[INTRA_MODE](
+    svt_product_prediction_fun_table[INTRA_MODE](
         hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
 
     // Distortion
@@ -6510,7 +6510,11 @@ uint32_t early_intra_evaluation(PictureControlSet *pcs_ptr, ModeDecisionContext 
 #define MIN_REF_TO_TAG 2
 #endif
 #if REMOVE_USELESS_CODE
+#if TWOPASS_RC
+void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
+#else
 static void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
+#endif
                                          ModeDecisionContext *context_ptr,
                                          EbPictureBufferDesc *input_picture_ptr) {
 #else
@@ -8542,7 +8546,7 @@ void check_best_indepedant_cfl(PictureControlSet *pcs_ptr, EbPictureBufferDesc *
 #else
         context_ptr->md_staging_skip_inter_chroma_pred = EB_FALSE;
 #endif
-        product_prediction_fun_table[candidate_buffer->candidate_ptr->type](
+        svt_product_prediction_fun_table[candidate_buffer->candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
 
         // Cb Residual
@@ -10594,6 +10598,9 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              uint32_t qp, uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
 #endif
                              uint64_t *y_full_distortion) {
+#if TWOPASS_RC
+    SequenceControlSet *scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     uint32_t full_lambda = context_ptr->hbd_mode_decision
         ? context_ptr->full_lambda_md[EB_10_BIT_MD]
         : context_ptr->full_lambda_md[EB_8_BIT_MD];
@@ -10646,6 +10653,9 @@ void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                 continue;
         }
 #if TX_EARLY_EXIT
+#if TWOPASS_RC
+        if (!scs_ptr->use_output_stat_file)
+#endif
         // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
         if (context_ptr->source_variance < TXS_EXIT_VAR_TH && context_ptr->tx_depth == 2 && best_tx_depth == 0)
             continue;
@@ -11237,7 +11247,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
 #else
         if (context_ptr->md_staging_skip_full_pred == EB_FALSE) {
 #endif
-            product_prediction_fun_table[candidate_ptr->type](
+            svt_product_prediction_fun_table[candidate_ptr->type](
                 context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
         }
     }
@@ -11248,9 +11258,9 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
             if (context_ptr->md_staging_perform_intra_chroma_pred) {
                 context_ptr->uv_intra_comp_only = EB_TRUE;
 #if REMOVE_CHROMA_INTRA_S0
-                product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
+                svt_product_prediction_fun_table[candidate_buffer->candidate_ptr->use_intrabc ? INTER_MODE : candidate_ptr->type](
 #else
-                product_prediction_fun_table[candidate_ptr->type](
+                svt_product_prediction_fun_table[candidate_ptr->type](
 #endif
                     context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
             }
@@ -11542,7 +11552,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
         : EB_FALSE;
 
     //ALL PLANE
-    av1_product_full_cost_func_table[candidate_ptr->type](pcs_ptr,
+    svt_av1_product_full_cost_func_table[candidate_ptr->type](pcs_ptr,
                                                           context_ptr,
                                                           candidate_buffer,
                                                           blk_ptr,
@@ -12658,7 +12668,7 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
             &context_ptr->fast_candidate_array[uv_mode_count + start_fast_buffer_index];
 
         context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
-        product_prediction_fun_table[candidate_buffer->candidate_ptr->type](
+        svt_product_prediction_fun_table[candidate_buffer->candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
 
         uint32_t chroma_fast_distortion;
@@ -14001,6 +14011,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
 }
 
+#if FIRST_PASS_SETUP
+ void first_pass_md_encode_block(PictureControlSet *pcs_ptr,
+    ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
+    ModeDecisionCandidateBuffer *bestcandidate_buffers[5]);
+#endif
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
  * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
@@ -15109,9 +15124,15 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
         uint8_t  redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
 #if SWITCH_MODE_BASED_ON_SQ_COEFF || SWITCH_MODE_BASED_ON_STATISTICS
+#if TWOPASS_RC
+        if (!scs_ptr->use_output_stat_file) {
+#endif
         // Reset settings, in case they were over-written by previous block
         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr,0);
         signal_derivation_block(pcs_ptr, context_ptr,0);
+#if TWOPASS_RC
+        }
+#endif
 #endif
 #if SWITCH_MODE_BASED_ON_STATISTICS
         // Use more aggressive (faster, but less accurate) settigns for unlikely paritions (incl. SQ)
@@ -15309,6 +15330,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                     if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[context_ptr->blk_geom->sqi_mds])
                         context_ptr->prune_ref_frame_for_rec_partitions = 0;
                 }
+#if FIRST_PASS_SETUP
+                if (scs_ptr->use_output_stat_file)
+                    first_pass_md_encode_block(pcs_ptr,
+                        context_ptr,
+                        input_picture_ptr,
+                        bestcandidate_buffers);
+                else
+#endif
                 md_encode_block(pcs_ptr, context_ptr, input_picture_ptr, bestcandidate_buffers);
 #if SWITCH_MODE_BASED_ON_SQ_COEFF
             } else if (sq_weight_based_nsq_skip || skip_next_depth || zero_sq_coeff_skip_action) {

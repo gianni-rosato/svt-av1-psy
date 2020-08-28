@@ -79,7 +79,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
 
     // Assign Instance index to the library
     callback_data->instance_idx = (uint8_t)instance_idx;
-
+#if TWOPASS_RC
+     eb_2pass_config_update(config);
+     #endif
     // Initialize Port Activity Flags
     callback_data->output_stream_port_active                = APP_PortActive;
     callback_data->eb_enc_parameters.source_width           = config->source_width;
@@ -89,7 +91,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.intra_period_length    = config->intra_period;
     callback_data->eb_enc_parameters.intra_refresh_type     = config->intra_refresh_type;
     callback_data->eb_enc_parameters.enc_mode               = (EbBool)config->enc_mode;
+#if 0//!TWOPASS_RC
     callback_data->eb_enc_parameters.snd_pass_enc_mode      = (EbBool)config->snd_pass_enc_mode;
+#endif
     callback_data->eb_enc_parameters.frame_rate             = config->frame_rate;
     callback_data->eb_enc_parameters.frame_rate_denominator = config->frame_rate_denominator;
     callback_data->eb_enc_parameters.frame_rate_numerator   = config->frame_rate_numerator;
@@ -109,6 +113,13 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.max_qp_allowed         = config->max_qp_allowed;
     callback_data->eb_enc_parameters.min_qp_allowed         = config->min_qp_allowed;
     callback_data->eb_enc_parameters.vbv_bufsize            = config->vbv_bufsize;
+#if TWOPASS_RC
+    callback_data->eb_enc_parameters.vbr_bias_pct           = config->vbr_bias_pct;
+    callback_data->eb_enc_parameters.vbr_min_section_pct    = config->vbr_min_section_pct;
+    callback_data->eb_enc_parameters.vbr_max_section_pct    = config->vbr_max_section_pct;
+    callback_data->eb_enc_parameters.under_shoot_pct        = config->under_shoot_pct;
+    callback_data->eb_enc_parameters.over_shoot_pct         = config->over_shoot_pct;
+#endif
     callback_data->eb_enc_parameters.enable_adaptive_quantization =
         (EbBool)config->enable_adaptive_quantization;
     callback_data->eb_enc_parameters.qp                   = config->qp;

@@ -217,7 +217,9 @@ typedef struct EbConfig {
      *****************************************/
 #if 1//REMOVE_MR_MACRO
     int8_t  enc_mode;
+#if !TWOPASS_RC
     int8_t  snd_pass_enc_mode;
+#endif
 #else
     uint8_t  enc_mode;
     uint8_t  snd_pass_enc_mode;
@@ -460,6 +462,13 @@ typedef struct EbConfig {
     uint32_t max_qp_allowed;
     uint32_t min_qp_allowed;
     uint32_t vbv_bufsize;
+#if TWOPASS_RC
+    uint32_t vbr_bias_pct;
+    uint32_t vbr_min_section_pct;
+    uint32_t vbr_max_section_pct;
+    uint32_t under_shoot_pct;
+    uint32_t over_shoot_pct;
+#endif
 
     EbBool enable_adaptive_quantization;
 
@@ -546,6 +555,9 @@ typedef struct EbConfig {
 #endif
 } EbConfig;
 
+#if TWOPASS_RC
+extern void eb_2pass_config_update(EbConfig *config_ptr);
+#endif
 extern void eb_config_ctor(EbConfig *config_ptr);
 extern void eb_config_dtor(EbConfig *config_ptr);
 

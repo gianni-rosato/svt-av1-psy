@@ -2097,6 +2097,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
 #endif
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
+#if FIRST_PASS_SETUP
+    if (scs_ptr->use_output_stat_file)
+        scs_ptr->static_config.hierarchical_levels = 0;
+#endif
     // Configure the padding
     scs_ptr->left_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->top_padding = BLOCK_SIZE_64 + 4;
@@ -2196,6 +2200,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #endif
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
+#if FIRST_PASS_SETUP
+    if (scs_ptr->use_output_stat_file)
+        scs_ptr->over_boundary_block_mode = 0;
+#endif
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
 #if !UNIFY_SC_NSC
         if (scs_ptr->static_config.screen_content_mode == 1)
@@ -2251,7 +2259,9 @@ void copy_api_from_app(
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
+#if !TWOPASS_RC
     scs_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->snd_pass_enc_mode;
+#endif
     scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length;
     scs_ptr->intra_refresh_type = scs_ptr->static_config.intra_refresh_type;
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
@@ -2415,6 +2425,13 @@ void copy_api_from_app(
     scs_ptr->static_config.min_qp_allowed = (scs_ptr->static_config.rate_control_mode) ?
         ((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed :
         1; // lossless coding not supported
+#if TWOPASS_RC
+    scs_ptr->static_config.vbr_bias_pct        = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_bias_pct;
+    scs_ptr->static_config.vbr_min_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_min_section_pct;
+    scs_ptr->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
+    scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
+    scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
+#endif
 
     //Segmentation
     //TODO: check RC mode and set only when RC is enabled in the final version.
@@ -2472,6 +2489,10 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
+#if TWOPASS_RC
+    else if (scs_ptr->static_config.intra_period_length == -1 && (scs_ptr->use_input_stat_file || scs_ptr->use_output_stat_file))
+        scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
+#endif
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
@@ -2588,10 +2609,12 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-%d]\n", channel_number + 1, MAX_ENC_PRESET);
         return_error = EB_ErrorBadParameter;
     }
+#if !TWOPASS_RC
     if (config->snd_pass_enc_mode > MAX_ENC_PRESET + 1) {
         SVT_LOG("Error instance %u: Second pass encoder mode must be in the range of [0-%d]\n", channel_number + 1, MAX_ENC_PRESET + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -3193,7 +3216,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 10;
     config_ptr->enc_mode = MAX_ENC_PRESET;
+#if !TWOPASS_RC
     config_ptr->snd_pass_enc_mode = MAX_ENC_PRESET + 1;
+#endif
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
     config_ptr->hierarchical_levels = 4;

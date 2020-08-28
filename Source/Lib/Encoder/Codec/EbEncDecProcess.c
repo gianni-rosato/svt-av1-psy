@@ -23,6 +23,9 @@
 #include "common_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 #include "EbPictureDecisionProcess.h"
+#if FIRST_PASS_SETUP
+#include "firstpass.h"
+#endif
 
 #if !REMOVE_MR_MACRO
 #if MR_MODE
@@ -1715,7 +1718,9 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 
     // set up the Slice Type
     reference_object->slice_type          = pcs_ptr->parent_pcs_ptr->slice_type;
+#if !TWOPASS_RC
     reference_object->referenced_area_avg = pcs_ptr->parent_pcs_ptr->referenced_area_avg;
+#endif
 #if TPL_1PASS_IMP
     reference_object->r0 = pcs_ptr->parent_pcs_ptr->r0;
 #endif
@@ -8754,6 +8759,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * scs_ptr,
 }
 
 #endif
+#if FIRST_PASS_SETUP
+/******************************************************
+* Derive EncDec Settings for first pass
+Input   : encoder mode and pd pass
+Output  : EncDec Kernel signal(s)
+******************************************************/
+EbErrorType first_pass_signal_derivation_enc_dec_kernel(
+    PictureControlSet *pcs_ptr,
+    ModeDecisionContext *context_ptr);
+#endif
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                            uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds, uint32_t sb_org_x,
                            uint32_t sb_org_y);
@@ -10846,9 +10861,28 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
+#if FIRST_PASS_SETUP
+    int32_t force_blk_size = FORCED_BLK_SIZE;
+#endif
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-
+#if FIRST_PASS_SETUP
+        if (scs_ptr->use_output_stat_file && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
+            force_blk_size = FORCED_BLK_SIZE;
+            if (blk_geom->bheight == FORCED_BLK_SIZE && blk_geom->bwidth == FORCED_BLK_SIZE &&
+                !pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
+                int32_t cropped_width =
+                    MIN(blk_geom->bwidth,
+                        pcs_ptr->parent_pcs_ptr->aligned_width - (context_ptr->sb_origin_x + blk_geom->origin_x));
+                int32_t cropped_height =
+                    MIN(blk_geom->bheight,
+                        pcs_ptr->parent_pcs_ptr->aligned_height - (context_ptr->sb_origin_y + blk_geom->origin_y));
+                force_blk_size = (cropped_width != blk_geom->bwidth || cropped_height != blk_geom->bheight) ?
+                    MAX(4, MIN(FORCED_BLK_SIZE, MIN(cropped_width, cropped_height))) :
+                    FORCED_BLK_SIZE;
+            }
+        }
+#endif
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
 #if REMOVE_UNUSED_CODE_PH2
@@ -10908,12 +10942,22 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
 
+#if FIRST_PASS_SETUP
+                    if (scs_ptr->use_output_stat_file) {
+                        if (blk_geom->sq_size == force_blk_size)
+                            results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
+                    }
+                    else {
+#endif
                     if (blk_geom->sq_size > min_sq_size)
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_TRUE;
                     else
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_FALSE;
+#if FIRST_PASS_SETUP
+                    }
+#endif
                 }
                 blk_index++;
             }
@@ -11134,6 +11178,10 @@ void *mode_decision_kernel(void *input_ptr) {
                             .tile_group_sb_start_x;
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
+#if FIRST_PASS_SETUP
+                    if (scs_ptr->use_output_stat_file && sb_index == 0)
+                        setup_firstpass_data(pcs_ptr->parent_pcs_ptr);
+#endif
 #if M8_4x4
                     sb_ptr = context_ptr->md_context->sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
 #else
@@ -11148,6 +11196,10 @@ void *mode_decision_kernel(void *input_ptr) {
                     //        context_ptr->coded_sb_count);
                     context_ptr->tile_index             = sb_ptr->tile_info.tile_rs_index;
                     context_ptr->md_context->tile_index = sb_ptr->tile_info.tile_rs_index;
+#if FIRST_PASS_SETUP
+                    context_ptr->md_context->sb_origin_x = sb_origin_x;
+                    context_ptr->md_context->sb_origin_y = sb_origin_y;
+#endif
 
                     sb_row_index_start =
                         (x_sb_index + 1 == tile_group_width_in_sb && sb_row_index_count == 0)
@@ -11503,8 +11555,15 @@ void *mode_decision_kernel(void *input_ptr) {
 #endif
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
+#if FIRST_PASS_SETUP
+                    if (scs_ptr->use_output_stat_file)
+                        first_pass_signal_derivation_enc_dec_kernel(pcs_ptr, context_ptr->md_context);
+                    else
 #if UNIFY_LEVELS
-                    signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context, 0);
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context, 0);
+#else
+                        signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
+#endif
 #else
                     signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
 #endif
@@ -11642,6 +11701,13 @@ void *mode_decision_kernel(void *input_ptr) {
 #endif
 #else
             pcs_ptr->parent_pcs_ptr->av1x->rdmult = context_ptr->full_lambda;
+#endif
+#if FIRST_PASS_SETUP
+            if (scs_ptr->use_output_stat_file) {
+                first_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
+                if(pcs_ptr->parent_pcs_ptr->end_of_sequence_flag)
+                    svt_av1_end_first_pass(pcs_ptr->parent_pcs_ptr);
+            }
 #endif
 #if DECOUPLE_ME_RES
             eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);

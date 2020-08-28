@@ -126,7 +126,11 @@ static INLINE int mv_cost(const MV *mv, const int *joint_cost, int *const comp_c
 }
 
 #define PIXEL_TRANSFORM_ERROR_SCALE 4
+#if FIRST_PASS_SETUP
+int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
+#else
 static int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
+#endif
                        int error_per_bit) {
     if (mvcost) {
         const MV diff = {mv->row - ref->row, mv->col - ref->col};

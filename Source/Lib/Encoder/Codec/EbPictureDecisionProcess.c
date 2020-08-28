@@ -49,6 +49,7 @@ extern PredictionStructureConfigEntry three_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
+#if !FIRST_PASS_SETUP
 #if TF_LEVELS
 typedef struct  TfControls {
     uint8_t enabled;
@@ -112,6 +113,7 @@ typedef struct PictureDecisionContext
     uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
 #endif
 } PictureDecisionContext;
+#endif
 
 void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 
@@ -2895,6 +2897,18 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     return return_error;
 }
+
+#if FIRST_PASS_SETUP
+/******************************************************
+* Derive Multi-Processes Settings for first pass
+Input   : encoder mode and tune
+Output  : Multi-Processes signal(s)
+******************************************************/
+EbErrorType first_pass_signal_derivation_multi_processes(
+    SequenceControlSet *scs_ptr,
+    PictureParentControlSet *pcs_ptr,
+    PictureDecisionContext *context_ptr) ;
+#endif
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 //set the ref frame types used for this picture,
@@ -6311,6 +6325,19 @@ void* picture_decision_kernel(void *input_ptr)
                                 initialize_mini_gop_activity_array(
                                         context_ptr);
 
+#if TWOPASS_RC
+                                if (encode_context_ptr->pre_assignment_buffer_count >= 32 &&
+                                    !(encode_context_ptr->pre_assignment_buffer_count == 32 && pcs_ptr->idr_flag))
+                                    context_ptr->mini_gop_activity_array[L6_INDEX] = EB_FALSE;
+                                if (encode_context_ptr->pre_assignment_buffer_count >= 16 &&
+                                    !(encode_context_ptr->pre_assignment_buffer_count == 16 && pcs_ptr->idr_flag))
+                                    context_ptr->mini_gop_activity_array[L5_0_INDEX] = EB_FALSE;
+                                if (encode_context_ptr->pre_assignment_buffer_count >= 8 &&
+                                    !(encode_context_ptr->pre_assignment_buffer_count == 8 && pcs_ptr->idr_flag)) {
+                                    context_ptr->mini_gop_activity_array[L4_0_INDEX] = EB_FALSE;
+                                    context_ptr->mini_gop_activity_array[L4_1_INDEX] = EB_FALSE;
+                                }
+#else
                                 if (encode_context_ptr->pre_assignment_buffer_count >= 32)
                                     context_ptr->mini_gop_activity_array[L6_INDEX] = EB_FALSE;
                                 if (encode_context_ptr->pre_assignment_buffer_count >= 16)
@@ -6319,6 +6346,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     context_ptr->mini_gop_activity_array[L4_0_INDEX] = EB_FALSE;
                                     context_ptr->mini_gop_activity_array[L4_1_INDEX] = EB_FALSE;
                                 }
+#endif
 
                                 generate_picture_window_split(
                                         context_ptr,
@@ -6641,10 +6669,17 @@ void* picture_decision_kernel(void *input_ptr)
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
 #if TF_LEVELS
+#if FIRST_PASS_SETUP
+                                if (scs_ptr->use_output_stat_file)
+                                    first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
+                                else
+                                    signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);
+#else
                                 signal_derivation_multi_processes_oq(
                                     scs_ptr,
                                     pcs_ptr,
                                     context_ptr);
+#endif
 #else
                                 signal_derivation_multi_processes_oq(
                                 scs_ptr,

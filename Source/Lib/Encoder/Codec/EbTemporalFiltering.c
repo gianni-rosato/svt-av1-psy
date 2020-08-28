@@ -2673,6 +2673,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                      INPUT_SIZE_480p_RANGE)
                     ? 3
                     : 4;
+#if !TWOPASS_RC
                 if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
                     picture_control_set_ptr_central->temporal_layer_index == 0 &&
                     noise_levels[0] > 0.5 &&
@@ -2681,6 +2682,7 @@ static EbErrorType produce_temporally_filtered_pic(
                      (picture_control_set_ptr_central->referenced_area_avg < 30 &&
                       picture_control_set_ptr_central->slice_type != 2)))
                     decay_control--;
+#endif
                 // Decrease the filter strength for low QPs
                 if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
                     decay_control--;
@@ -2858,6 +2860,7 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
             noiselevel_adj = 0;
         else
             noiselevel_adj = 1;
+#if !TWOPASS_RC
         if (picture_control_set_ptr_central->scs_ptr->use_input_stat_file &&
 #if UNIFY_SC_NSC
             picture_control_set_ptr_central->temporal_layer_index == 0) {
@@ -2875,6 +2878,7 @@ static void adjust_filter_strength(PictureParentControlSet *picture_control_set_
                     noiselevel_adj = 0;
             }
         }
+#endif
         adj_strength += noiselevel_adj;
     }
     // Decrease the filter strength for low QPs

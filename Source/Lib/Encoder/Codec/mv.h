@@ -24,9 +24,10 @@ extern "C" {
   } while (0);
 #define CHECK_MV_EQUAL(x, y) (((x).row == (y).row) && ((x).col == (y).col))
 
+#if !TWOPASS_RC
 static const MV kZeroMv = { 0, 0 };
 static const FULLPEL_MV kZeroFullMv = { 0, 0 };
-
+#endif
 typedef union int_mv {
   uint32_t as_int;
   MV as_mv;

@@ -39,6 +39,9 @@ typedef struct PictureDemuxResults {
     EbObjectWrapper *reference_picture_wrapper_ptr;
     EbObjectWrapper *scs_wrapper_ptr;
     uint64_t         picture_number;
+#if FORCE_DECODE_ORDER
+    uint64_t         decode_order;
+#endif
 } PictureDemuxResults;
 
 typedef struct PictureResultInitData {

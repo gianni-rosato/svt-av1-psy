@@ -406,6 +406,9 @@ void *entropy_coding_kernel(void *input_ptr) {
                     pcs_ptr->entropy_coding_info[tile_idx]->entropy_coding_tile_done = EB_FALSE;
                 }
 
+#if TURN_OFF_EC_FIRST_PASS
+                if (!scs_ptr->use_output_stat_file){
+#endif
                 for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                     uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
                                                    (y_sb_index + tile_sb_start_y) *
@@ -440,6 +443,10 @@ void *entropy_coding_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->total_bits;
                     row_total_bits += sb_ptr->total_bits;
                 }
+
+#if TURN_OFF_EC_FIRST_PASS
+                }
+#endif
 
                 // At the end of each SB-row, send the updated bit-count to Entropy Coding
                 {
@@ -485,7 +492,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                             }
                         }
                         eb_release_mutex(pcs_ptr->entropy_coding_pic_mutex);
-
+#if !TWOPASS_RC
                         //Jing, two pass doesn't work with multi-tile right now
                         // for Non Reference frames
                         if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
@@ -493,11 +500,13 @@ void *entropy_coding_kernel(void *input_ptr) {
                             write_stat_to_file(scs_ptr,
                                                *pcs_ptr->parent_pcs_ptr->stat_struct_first_pass_ptr,
                                                pcs_ptr->parent_pcs_ptr->picture_number);
+#endif
                         if (pic_ready) {
                             // Release the List 0 Reference Pictures
                             for (uint32_t ref_idx = 0;
                                  ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
                                  ++ref_idx) {
+#if !TWOPASS_RC
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
 #if PASS1_FIX
                                     pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL)
@@ -513,6 +522,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[0][ref_idx]
                                              ->object_ptr)
                                             ->ref_poc);
+#endif
                                 if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
                                     eb_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
                                 }
@@ -522,6 +532,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                             for (uint32_t ref_idx = 0;
                                  ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
                                  ++ref_idx) {
+#if !TWOPASS_RC
                                 if (scs_ptr->use_output_stat_file && tile_cnt == 1 &&
 #if PASS1_FIX
                                     pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL)
@@ -537,6 +548,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                                         ((EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[1][ref_idx]
                                              ->object_ptr)
                                             ->ref_poc);
+#endif
                                 if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL)
                                     eb_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
                             }

@@ -3608,6 +3608,24 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                 }
 
                                 // CBF Tu decision
+#if FIRST_PASS_SETUP
+                                if (scs_ptr->use_output_stat_file) {
+                                    context_ptr->md_context
+                                        ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                        .y_has_coeff[context_ptr->txb_itr] =
+                                        count_non_zero_coeffs[0] != 0 ? EB_TRUE : EB_FALSE;
+                                    context_ptr->md_context
+                                        ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                        .u_has_coeff[context_ptr->txb_itr] =
+                                        count_non_zero_coeffs[1] != 0 ? EB_TRUE : EB_FALSE;
+                                    context_ptr->md_context
+                                        ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                        .v_has_coeff[context_ptr->txb_itr] =
+                                        count_non_zero_coeffs[2] != 0 ? EB_TRUE : EB_FALSE;
+                                }
+                                else
+#endif
+
                                 av1_encode_txb_calc_cost(context_ptr,
                                                          count_non_zero_coeffs,
                                                          y_tu_full_distortion,
@@ -4085,6 +4103,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                         context_ptr->blk_geom->has_uv ? PICTURE_BUFFER_DESC_FULL_MASK
                                                         : PICTURE_BUFFER_DESC_LUMA_MASK,
                         is_16bit);
+#if !TWOPASS_RC
                     // Collect the referenced area per 64x64
                     if (scs_ptr->use_output_stat_file) {
                         if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0) {
@@ -4313,6 +4332,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             eb_release_mutex(ref_obj_1->referenced_area_mutex);
                         }
                     }
+#endif
 
                 } else {
                     CHECK_REPORT_ERROR_NC(encode_context_ptr->app_callback_ptr, EB_ENC_CL_ERROR2);

@@ -191,6 +191,9 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     scs_ptr->reference_count        = 4;
 #endif
 
+#if TWOPASS_RC
+    scs_ptr->lap_enabled = 0;
+#endif
     return EB_ErrorNone;
 }
 

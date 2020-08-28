@@ -21,6 +21,8 @@ extern "C" {
 #include "EbSvtAv1.h"
 #include <stdlib.h>
 #include <stdio.h>
+
+#define TWOPASS_RC 1
 //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT 2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
@@ -83,7 +85,10 @@ typedef struct EbSvtAv1EncConfiguration {
 #if 0//REMOVE_MR_MACRO
     int8_t snd_pass_enc_mode;
 #else
+#if 1//!TWOPASS_RC
+    // hack for gstreamer building
     uint8_t snd_pass_enc_mode;
+#endif
 #endif
     // GOP Structure
 
@@ -544,6 +549,28 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t min_qp_allowed;
 
+#if 1 //TWOPASS_RC
+    /* TWO PASS DATARATE CONTROL OPTIONS.
+     * Indicates the bias (expressed on a scale of 0 to 100) for determining
+     * target size for the current frame. The value 0 indicates the optimal CBR
+     * mode value should be used, and 100 indicates the optimal VBR mode value
+     * should be used. */
+    uint32_t vbr_bias_pct;
+    /* Indicates the minimum bitrate to be used for a single GOP as a percentage
+     * of the target bitrate. */
+    uint32_t vbr_min_section_pct;
+    /* Indicates the maximum bitrate to be used for a single GOP as a percentage
+     * of the target bitrate. */
+    uint32_t vbr_max_section_pct;
+    /* under_shoot_pct indicates the tolerance of the VBR algorithm to undershoot
+     * and is used as a trigger threshold for more agressive adaptation of Q. Its
+     * value can range from 0-100. */
+    uint32_t under_shoot_pct;
+    /* over_shoot_pct indicates the tolerance of the VBR algorithm to overshoot
+     * and is used as a trigger threshold for more agressive adaptation of Q. Its
+     * value can range from 0-1000. */
+    uint32_t over_shoot_pct;
+#endif
     /* Flag to signal the content being a screen sharing content type
     *
     * Default is 0. */

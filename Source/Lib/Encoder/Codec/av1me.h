@@ -86,7 +86,9 @@ int eb_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MAC
                              int run_mesh_search, int error_per_bit, int *cost_list,
                              const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
                              int intra);
-
+#if FIRST_PASS_SETUP
+int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2], int error_per_bit);
+#endif
 #ifdef __cplusplus
 } // extern "C"
 #endif

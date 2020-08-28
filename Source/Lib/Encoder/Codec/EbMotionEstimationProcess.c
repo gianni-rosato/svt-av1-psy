@@ -587,7 +587,13 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level0_max_total_search_area_height =
         me_context_ptr->hme_level0_total_search_area_width * 3;
 #endif
-
+#if FASTER_FIRST_PASS
+    if (!pcs_ptr->sc_content_detected)
+        if (scs_ptr->use_output_stat_file) {
+            me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height  = me_context_ptr->hme_level0_total_search_area_width/2;
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height =   me_context_ptr->hme_level0_max_total_search_area_width/2;
+        }
+#endif
     me_context_ptr->hme_level0_max_search_area_in_width_array[0] =
         me_context_ptr->hme_level0_max_search_area_in_width_array[1] =
         me_context_ptr->hme_level0_max_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
@@ -611,7 +617,20 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level2_search_area_in_width_array[1] =
         me_context_ptr->hme_level2_search_area_in_height_array[0] =
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+#if FASTER_FIRST_PASS
+    if (!pcs_ptr->sc_content_detected)
+        if (scs_ptr->use_output_stat_file) {
+            me_context_ptr->hme_level1_search_area_in_width_array[0] =
+                me_context_ptr->hme_level1_search_area_in_width_array[1] =
+                me_context_ptr->hme_level1_search_area_in_height_array[0] =
+                me_context_ptr->hme_level1_search_area_in_height_array[1] = 16/2;
 
+            me_context_ptr->hme_level2_search_area_in_width_array[0] =
+                me_context_ptr->hme_level2_search_area_in_width_array[1] =
+                me_context_ptr->hme_level2_search_area_in_height_array[0] =
+                me_context_ptr->hme_level2_search_area_in_height_array[1] = 16/2;
+        }
+#endif
 #if ADD_HME_DECIMATION_SIGNAL
 #if MAR30_ADOPTIONS
 #if !UNIFY_SC_NSC
@@ -832,8 +851,12 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     EbErrorType return_error = EB_ErrorNone;
 
 #if REMOVE_MR_MACRO
+#if TWOPASS_RC
+    EbEncMode enc_mode = pcs_ptr->enc_mode;
+#else
     EbEncMode enc_mode = scs_ptr->use_output_stat_file ?
         pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
+#endif
 #else
     uint8_t enc_mode =
         scs_ptr->use_output_stat_file ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
@@ -1287,6 +1310,17 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
     return return_error;
 };
+#if FIRST_PASS_SETUP
+/******************************************************
+* Derive ME Settings for first pass
+  Input   : encoder mode and tune
+  Output  : ME Kernel signal(s)
+******************************************************/
+EbErrorType first_pass_signal_derivation_me_kernel(
+    SequenceControlSet        *scs_ptr,
+    PictureParentControlSet   *pcs_ptr,
+    MotionEstimationContext_t   *context_ptr) ;
+#endif
 
 /************************************************
  * Set ME/HME Params for Altref Temporal Filtering
@@ -1930,6 +1964,87 @@ EbErrorType compute_decimated_zz_sad(MotionEstimationContext_t *context_ptr, Pic
 
     return return_error;
 }
+#if FIRST_PASS_SETUP
+/***************************************************************************************************
+* ZZ Decimated SSD Computation
+***************************************************************************************************/
+EbErrorType compute_zz_ssd(/*MotionEstimationContext_t *context_ptr, */PictureParentControlSet *pcs_ptr,
+    uint32_t x_sb_start_index, uint32_t x_sb_end_index,
+    uint32_t y_sb_start_index, uint32_t y_sb_end_index) {
+    EbErrorType return_error = EB_ErrorNone;
+
+    PictureParentControlSet *previous_picture_control_set_wrapper_ptr =
+        ((PictureParentControlSet *)pcs_ptr->previous_picture_control_set_wrapper_ptr->object_ptr);
+    EbPictureBufferDesc *prev_input_picture_full =
+        previous_picture_control_set_wrapper_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
+    SequenceControlSet *     scs_ptr = pcs_ptr->scs_ptr;
+    const uint32_t mb_cols = (scs_ptr->seq_header.max_frame_width + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE;
+
+    uint32_t sb_width;
+    uint32_t sb_height;
+    uint32_t blk_width;
+    uint32_t blk_height;
+    uint32_t sb_origin_x;
+    uint32_t sb_origin_y;
+    uint32_t blk_origin_x;
+    uint32_t blk_origin_y;
+
+    uint32_t input_origin_index;
+
+    uint32_t x_sb_index;
+    uint32_t y_sb_index;
+    EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
+
+    for (y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index; ++y_sb_index) {
+        for (x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index; ++x_sb_index) {
+            sb_origin_x = x_sb_index * scs_ptr->sb_sz;
+            sb_origin_y = y_sb_index * scs_ptr->sb_sz;
+
+            sb_width =
+                (pcs_ptr->aligned_width - sb_origin_x) < BLOCK_SIZE_64
+                ? pcs_ptr->aligned_width - sb_origin_x
+                : BLOCK_SIZE_64;
+            sb_height =
+                (pcs_ptr->aligned_height - sb_origin_y) < BLOCK_SIZE_64
+                ? pcs_ptr->aligned_height - sb_origin_y
+                : BLOCK_SIZE_64;
+
+            for (uint32_t y_blk_index = 0; y_blk_index < (sb_height + FORCED_BLK_SIZE - 1) / FORCED_BLK_SIZE; ++y_blk_index) {
+                for (uint32_t x_blk_index = 0; x_blk_index < (sb_width + FORCED_BLK_SIZE-1) / FORCED_BLK_SIZE; ++x_blk_index) {
+                    blk_origin_x = sb_origin_x + x_blk_index * FORCED_BLK_SIZE;
+                    blk_origin_y = sb_origin_y + y_blk_index* FORCED_BLK_SIZE;
+
+                    blk_width =
+                        (pcs_ptr->aligned_width - blk_origin_x) < FORCED_BLK_SIZE
+                        ? pcs_ptr->aligned_width - blk_origin_x
+                        : FORCED_BLK_SIZE;
+                    blk_height =
+                        (pcs_ptr->aligned_height - blk_origin_y) < FORCED_BLK_SIZE
+                        ? pcs_ptr->aligned_height - blk_origin_y
+                        : FORCED_BLK_SIZE;
+
+                    input_origin_index = (input_picture_ptr->origin_y + blk_origin_y) *
+                        input_picture_ptr->stride_y +
+                        (input_picture_ptr->origin_x + blk_origin_x);
+
+                    pcs_ptr->firstpass_data.raw_motion_err_list[(blk_origin_y >> 4) * mb_cols + (blk_origin_x >> 4)]
+                        = (uint32_t)( spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                            input_origin_index,
+                            input_picture_ptr->stride_y,
+                            prev_input_picture_full->buffer_y,
+                            input_origin_index,
+                            input_picture_ptr->stride_y,
+                            blk_width,
+                            blk_height));
+                }
+            }
+        }
+    }
+
+    return return_error;
+}
+#endif
 
 /************************************************
  * Motion Analysis Kernel
@@ -1992,7 +2107,14 @@ void *motion_estimation_kernel(void *input_ptr) {
         }
         if (in_results_ptr->task_type == 0) {
             // ME Kernel Signal(s) derivation
+#if FIRST_PASS_SETUP
+            if (scs_ptr->use_output_stat_file)
+                first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+            else
+                signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#else
             signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#endif
 #if !IMPROVE_GMV
             // Global motion estimation
             // Compute only for the first fragment.
@@ -2164,11 +2286,31 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 
+#if FIRST_PASS_SETUP
+            // ZZ SSDs Computation
+            // 1 lookahead frame is needed to get valid (0,0) SAD
+            if (scs_ptr->use_output_stat_file && scs_ptr->static_config.look_ahead_distance != 0) {
+                // ZZ SSDs Computation using full picture
+                if (pcs_ptr->picture_number > 0) {
+                    compute_zz_ssd(
+                        //context_ptr,
+                        pcs_ptr,
+                        x_sb_start_index,
+                        x_sb_end_index,
+                        y_sb_start_index,
+                        y_sb_end_index);
+                }
+            }
+#endif
             // Calculate the ME Distortion and OIS Historgrams
 
             eb_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
-            if (scs_ptr->static_config.rate_control_mode) {
+            if (scs_ptr->static_config.rate_control_mode
+#if TWOPASS_RC
+                && !(scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
+#endif
+                ) {
                 if (pcs_ptr->slice_type != I_SLICE) {
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                          ++y_sb_index)

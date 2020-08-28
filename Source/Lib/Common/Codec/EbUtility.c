@@ -220,7 +220,7 @@ const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx) {
   *  Leading Zeros (NLZ) algorithm to get
   *  the log2f of a 64-bit number
   *****************************************/
-inline uint64_t log2f_64(uint64_t x) {
+static inline uint64_t log2f_64(uint64_t x) {
     int64_t  n = 64, c = 32;
 
     do {

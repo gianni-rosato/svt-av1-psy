@@ -5327,7 +5327,13 @@ void inject_inter_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext *co
 #endif
     MeSbResults *me_results =
         pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
+#if FIRST_PASS_SETUP
+    EbBool       allow_bipred =
+        (scs_ptr->use_output_stat_file || context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4)
+        ? EB_FALSE : EB_TRUE;
+#else
     EbBool allow_bipred = context_ptr->blk_geom->bwidth != 4 && context_ptr->blk_geom->bheight != 4;
+#endif
 #if !IMPROVE_GMV
     BlockSize bsize     = context_ptr->blk_geom->bsize; // bloc size
 

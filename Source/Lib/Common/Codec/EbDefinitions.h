@@ -524,6 +524,14 @@ extern "C" {
 #define JULY31_PRESETS_ADOPTIONS        1
 #define SHIFT_PRESETS                   1 // M5->M4, M6->M5, M8->M6
 #define AUG5_ADOPTS                     1 // Adoptions for MR and M2
+
+#define FIX_TPL_POC128       1 // Fixed TPL poc128 error
+#define TWOPASS_RC           1 // Refine 2pass RC VBR from libaom
+#if TWOPASS_RC
+#define FORCE_DECODE_ORDER   1
+#define FIRST_PASS_SETUP     1
+#define FASTER_FIRST_PASS    1
+#endif
 #endif
 
 ///////// END MASTER_SYNCH
@@ -984,6 +992,12 @@ static INLINE int64_t clamp64(int64_t value, int64_t low, int64_t high) {
     return value < low ? low : (value > high ? high : value);
 }
 
+#if TWOPASS_RC
+// from aom aom_dsp_common.h
+static INLINE double fclamp(double value, double low, double high) {
+  return value < low ? low : (value > high ? high : value);
+}
+#endif
 static INLINE uint8_t clip_pixel(int32_t val) {
     return (uint8_t)((val > 255) ? 255 : (val < 0) ? 0 : val);
 }

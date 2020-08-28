@@ -1608,6 +1608,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     return return_error;
 }
 
+#if FIRST_PASS_SETUP
+/******************************************************
+* Derive Mode Decision Config Settings for first pass
+Input   : encoder mode and tune
+Output  : EncDec Kernel signal(s)
+******************************************************/
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
+    PictureControlSet *pcs_ptr,
+    ModeDecisionConfigurationContext *context_ptr) ;
+#endif
 #if !DEPTH_PART_CLEAN_UP
 void forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
     uint32_t sb_index;
@@ -2014,7 +2024,14 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
+#if FIRST_PASS_SETUP
+        if (scs_ptr->use_output_stat_file)
+            first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr, context_ptr);
+        else
+            signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#else
         signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#endif
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;

@@ -15,6 +15,41 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbThreads.h"
 
+#if TWOPASS_RC
+static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
+    STATS_BUFFER_CTX *stats_buf_context,
+    int num_lap_buffers) {
+    EbErrorType res = EB_ErrorNone;
+
+    int size = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
+    // *frame_stats_buffer =
+    //     (FIRSTPASS_STATS *)aom_calloc(size, sizeof(FIRSTPASS_STATS));
+    EB_MALLOC_ARRAY((*frame_stats_buffer), size);
+    if (frame_stats_buffer == NULL) return EB_ErrorInsufficientResources;
+
+    stats_buf_context->stats_in_start = *frame_stats_buffer;
+    stats_buf_context->stats_in_end = stats_buf_context->stats_in_start;
+    stats_buf_context->stats_in_buf_end =
+        stats_buf_context->stats_in_start + size;
+
+    // stats_buf_context->total_left_stats = aom_calloc(1, sizeof(FIRSTPASS_STATS));
+    EB_MALLOC_ARRAY(stats_buf_context->total_left_stats, 1);
+    if (stats_buf_context->total_left_stats == NULL) return EB_ErrorInsufficientResources;
+    svt_av1_twopass_zero_stats(stats_buf_context->total_left_stats);
+    // stats_buf_context->total_stats = aom_calloc(1, sizeof(FIRSTPASS_STATS));
+    EB_MALLOC_ARRAY(stats_buf_context->total_stats, 1);
+    if (stats_buf_context->total_stats == NULL) return EB_ErrorInsufficientResources;
+    svt_av1_twopass_zero_stats(stats_buf_context->total_stats);
+    return res;
+}
+
+static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
+    FIRSTPASS_STATS *frame_stats_buffer) {
+    EB_FREE_ARRAY(stats_buf_context->total_left_stats);
+    EB_FREE_ARRAY(stats_buf_context->total_stats);
+    EB_FREE_ARRAY(frame_stats_buffer);
+}
+#endif
 static void encode_context_dctor(EbPtr p) {
     EncodeContext* obj = (EncodeContext*)p;
     EB_DESTROY_MUTEX(obj->total_number_of_recon_frame_mutex);
@@ -44,6 +79,10 @@ static void encode_context_dctor(EbPtr p) {
                         HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE_ARRAY(obj->rate_control_tables_array);
+#if TWOPASS_RC
+    destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
+    free(obj->rc_twopass_stats_in.buf);
+#endif
 }
 
 EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_init_data_ptr) {
@@ -165,5 +204,12 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
     EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
     EB_CREATE_MUTEX(encode_context_ptr->stat_file_mutex);
+#if TWOPASS_RC
+    encode_context_ptr->num_lap_buffers = 0; //lap not supported for now
+    int *num_lap_buffers = &encode_context_ptr->num_lap_buffers;
+    create_stats_buffer(&encode_context_ptr->frame_stats_buffer,
+                        &encode_context_ptr->stats_buf_context,
+                        *num_lap_buffers);
+#endif
     return EB_ErrorNone;
 }

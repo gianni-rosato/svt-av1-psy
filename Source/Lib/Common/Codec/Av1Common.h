@@ -77,6 +77,9 @@ typedef struct Av1Common {
 
     FrameSize frm_size;
     TilesInfo tiles_info;
+#if TWOPASS_RC
+    CurrentFrame current_frame;
+#endif
 
 } Av1Common;
 

@@ -64,9 +64,11 @@ static INLINE double get_block_mean(const uint8_t *data, int32_t w, int32_t h, i
     return get_block_mean_lowbd(data, w, h, stride, x_o, y_o, block_size);
 }
 
+#if !TWOPASS_RC
 static INLINE double fclamp(double value, double low, double high) {
     return value < low ? low : (value > high ? high : value);
 }
+#endif
 
 // Defines a function that can be used to obtain the variance of a block
 // for the provided data type (uint8_t, or uint16_t)

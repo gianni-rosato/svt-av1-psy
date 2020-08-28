@@ -1163,7 +1163,12 @@ void tpl_mc_flow_dispenser(
 #if TPL_IMP
                     int64_t recon_error = 1, sse = 1;
 #endif
+#if FIX_TPL_POC128
+                    uint64_t best_ref_poc = 0;
                     int32_t best_rf_idx = -1;
+#else
+                    int32_t best_rf_idx = -1;
+#endif
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = {0, 0};
 #if REMOVE_MRP_MODE
@@ -1192,7 +1197,11 @@ void tpl_mc_flow_dispenser(
 #endif
                         if(!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
                             continue;
+#if FIX_TPL_POC128
+                        uint64_t ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
+#else
                         uint32_t ref_poc = pcs_ptr->ref_order_hint[rf_idx];
+#endif
                         uint32_t ref_frame_idx = 0;
 #if FIX_WARNINGS_WIN
                         while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
@@ -1255,6 +1264,9 @@ void tpl_mc_flow_dispenser(
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
+#if FIX_TPL_POC128
+                            best_ref_poc = ref_poc;
+#endif
                             best_rf_idx = rf_idx;
                             best_inter_cost = inter_cost;
                             final_best_mv = best_mv;
@@ -1282,7 +1294,11 @@ void tpl_mc_flow_dispenser(
 
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
+#if FIX_TPL_POC128
+                        uint64_t ref_poc = best_ref_poc;
+#else
                         uint32_t ref_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+#endif
                         uint32_t ref_frame_idx = 0;
 #if FIX_WARNINGS_WIN
                         while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
@@ -1384,10 +1400,13 @@ void tpl_mc_flow_dispenser(
                     }
                     tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
                     tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
-
                     if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
                         tpl_stats.mv = final_best_mv;
+#if FIX_TPL_POC128
+                        tpl_stats.ref_frame_poc = best_ref_poc;
+#else
                         tpl_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
+#endif
                     }
                     // Motion flow dependency dispenser.
                     result_model_store(pcs_ptr, &tpl_stats, mb_origin_x, mb_origin_y);
@@ -2068,11 +2087,13 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // Give the new Reference a nominal live_count of 1
                 eb_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
 #endif
+#if !TWOPASS_RC
                 pcs_ptr->stat_struct_first_pass_ptr =
                     pcs_ptr->is_used_as_reference_flag ? &((EbReferenceObject *)pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->stat_struct
                     : &pcs_ptr->stat_struct;
                 if (scs_ptr->use_output_stat_file)
                     memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
+#endif
 
                 // Get Empty Results Object
                 eb_get_empty_object(
@@ -2097,6 +2118,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 determine_picture_offset_in_queue(
                     encode_context_ptr, pcs_ptr, in_results_ptr);
 
+#if TWOPASS_RC
+            if (scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1)
+                ; //skip 2pass VBR
+            else
+#endif
             if (scs_ptr->static_config.rate_control_mode) {
                 // Getting the Histogram Queue Data
                 get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
@@ -2214,6 +2240,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         else
                             pcs_ptr->end_of_sequence_region = EB_FALSE;
 
+#if TWOPASS_RC
+                        if (scs_ptr->use_input_stat_file && scs_ptr->static_config.rate_control_mode == 1)
+                            ; //skip 2pass VBR
+                        else
+#endif
                         if (scs_ptr->static_config.rate_control_mode) {
                             // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
                             if (scs_ptr->static_config.look_ahead_distance != 0) {
@@ -2270,6 +2301,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     ->reference_picture_wrapper_ptr,
                                 1);
                         }
+#if !TWOPASS_RC
                         pcs_ptr->stat_struct_first_pass_ptr =
                             pcs_ptr->is_used_as_reference_flag
                                 ? &((EbReferenceObject *)
@@ -2278,6 +2310,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 : &pcs_ptr->stat_struct;
                         if (scs_ptr->use_output_stat_file)
                             memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
+#endif
 #if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&

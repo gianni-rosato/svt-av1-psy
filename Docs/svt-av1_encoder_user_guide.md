@@ -170,6 +170,11 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **OutputStatFile** | --output-stat-file | any string | Null | Output stat file for first pass|
 | **InputStatFile** | --input-stat-file | any string | Null | Input stat file for second pass|
 | **EncoderMode2p** | --enc-mode-2p | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed. Passed to encoder's first pass to use the ME settings of the second pass to achieve better bdRate|
+| **VBRBiasPct** | --bias-pct | [0 - 100] | 50 | 2pass CBR/VBR bias percent (0=CBR, 100=VBR) |
+| **MinSectionPct** | --minsection-pct | [0 - ] | 0 | 2pass VBR GOP min bitrate (percent of target) |
+| **MaxSectionPct** | --maxsection-pct | [0 - ] | 2000 | 2pass VBR GOP max bitrate (percent of target) |
+| **UnderShortPct** | --undershoot-pct | [0 - 100] | 25 | Datarate undershoot (min) target (percent) |
+| **OverShortPct** | --overshoot-pct | [0 - 100] | 25 | Datarate overshoot (max) target (percent) |
 
 #### Keyframe Placement Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |

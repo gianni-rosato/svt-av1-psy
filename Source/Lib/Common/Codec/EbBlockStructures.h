@@ -47,6 +47,17 @@ typedef struct fullpel_mv {
   int16_t row;
   int16_t col;
 } FULLPEL_MV;
+#if FIRST_PASS_SETUP
+static const MV kZeroMv = { 0, 0 };
+static const FULLPEL_MV kZeroFullMv = { 0, 0 };
+static INLINE int is_zero_mv(const MV *mv) {
+    return *((const uint32_t *)mv) == 0;
+}
+
+static INLINE int is_equal_mv(const MV *a, const MV *b) {
+    return *((const uint32_t *)a) == *((const uint32_t *)b);
+}
+#endif
 
 static AOM_INLINE FULLPEL_MV get_fullmv_from_mv(const MV *subpel_mv) {
   const FULLPEL_MV full_mv = { (int16_t)GET_MV_RAWPEL(subpel_mv->row),

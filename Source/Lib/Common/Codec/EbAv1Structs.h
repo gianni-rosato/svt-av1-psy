@@ -392,6 +392,20 @@ typedef struct SkipModeInfo {
 
 } SkipModeInfo;
 
+#if TWOPASS_RC
+typedef struct {
+  /*FRAME_TYPE*/FrameType frame_type;
+  //REFERENCE_MODE reference_mode;
+
+  unsigned int order_hint;
+  unsigned int display_order_hint;
+  unsigned int frame_number;
+  SkipModeInfo skip_mode_info;
+  int refresh_frame_flags;  // Which ref frames are overwritten by this frame
+  int frame_refs_short_signaling;
+} CurrentFrame;
+#endif
+
 //typedef struct GlobalMotionParams {
 //
 //    /*!< Specifies the transform type */
