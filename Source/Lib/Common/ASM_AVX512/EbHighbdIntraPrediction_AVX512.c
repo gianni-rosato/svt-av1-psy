@@ -644,7 +644,6 @@ static INLINE void h_pred_32(uint16_t **const dst, const ptrdiff_t stride, const
 static INLINE void h_pred_32x8(uint16_t **dst, const ptrdiff_t stride, const uint16_t *const left) {
     // dst and it's stride must be 32-byte aligned.
     assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
 
     const __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 
@@ -745,8 +744,8 @@ static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride, const
     // Broadcast the 16-bit left pixel to 256-bit register.
     const __m512i row = _mm512_broadcastw_epi16(left);
 
-    zz_store_512(*dst + 0x00, row);
-    zz_store_512(*dst + 0x20, row);
+    zz_storeu_512(*dst + 0x00, row);
+    zz_storeu_512(*dst + 0x20, row);
 
     *dst += stride;
 }
@@ -755,7 +754,6 @@ static INLINE void h_pred_64(uint16_t **const dst, const ptrdiff_t stride, const
 static INLINE void h_pred_64x8(uint16_t **dst, const ptrdiff_t stride, const uint16_t *const left) {
     // dst and it's stride must be 32-byte aligned.
     assert(!((intptr_t)*dst % 32));
-    assert(!(stride % 32));
 
     __m128i left_u16 = _mm_loadu_si128((const __m128i *)left);
 

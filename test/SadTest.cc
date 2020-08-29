@@ -104,10 +104,37 @@ BlkSize TEST_BLOCK_SIZES[] = {
     BlkSize(64, 24), BlkSize(48, 24), BlkSize(32, 24), BlkSize(24, 32),
     BlkSize(48, 48), BlkSize(48, 16), BlkSize(48, 32), BlkSize(16, 48),
     BlkSize(32, 48), BlkSize(48, 64), BlkSize(64, 48)};
+
 BlkSize TEST_BLOCK_SIZES_SMALL[] = {
     BlkSize(6, 2),   BlkSize(6, 4),   BlkSize(6, 8),   BlkSize(6, 16),
     BlkSize(6, 32),  BlkSize(12, 2),  BlkSize(12, 4),  BlkSize(12, 8),
-    BlkSize(12, 16), BlkSize(12, 32)};
+    BlkSize(12, 16), BlkSize(12, 32), BlkSize(31, 1),  BlkSize(31, 2),
+    BlkSize(31, 3),  BlkSize(15, 10), BlkSize(6, 10),  BlkSize(7, 10),
+    BlkSize(5, 11),  BlkSize(6, 11),  BlkSize(4, 11),  BlkSize(8, 11),
+    BlkSize(7, 11),  BlkSize(5, 10),  BlkSize(16, 10), BlkSize(17, 10),
+    BlkSize(15, 11), BlkSize(16, 11), BlkSize(17, 11), BlkSize(18, 11),
+    BlkSize(19, 11), BlkSize(31, 8),  BlkSize(16, 5),  BlkSize(16, 17),
+    BlkSize(16, 31), BlkSize(16, 33), BlkSize(12, 5),  BlkSize(12, 17),
+    BlkSize(12, 31), BlkSize(12, 33), BlkSize(31, 7),  BlkSize(31, 6),
+    BlkSize(31, 5),  BlkSize(31, 4),  BlkSize(39, 1),  BlkSize(3, 40),
+    BlkSize(43, 4),  BlkSize(43, 5),  BlkSize(41, 5),  BlkSize(55, 3),
+    BlkSize(37, 37), BlkSize(41, 21), BlkSize(51, 21), BlkSize(63, 21),
+    BlkSize(63, 27), BlkSize(63, 33), BlkSize(63, 32), BlkSize(4, 2),
+    BlkSize(4, 3),   BlkSize(4, 4),   BlkSize(4, 8),   BlkSize(4, 9),
+    BlkSize(4, 16),  BlkSize(4, 17),  BlkSize(4, 32),  BlkSize(4, 33),
+    BlkSize(6, 3),   BlkSize(6, 9),   BlkSize(6, 17),  BlkSize(6, 33),
+    BlkSize(8, 2),   BlkSize(8, 3),   BlkSize(8, 4),   BlkSize(8, 8),
+    BlkSize(8, 9),   BlkSize(8, 15),  BlkSize(8, 16),  BlkSize(8, 31),
+    BlkSize(8, 32),  BlkSize(12, 3),  BlkSize(12, 9),  BlkSize(12, 15),
+    BlkSize(12, 31), BlkSize(16, 2),  BlkSize(16, 3),  BlkSize(16, 4),
+    BlkSize(16, 8),  BlkSize(16, 9),  BlkSize(16, 15), BlkSize(16, 16),
+    BlkSize(16, 31), BlkSize(16, 32), BlkSize(24, 2),  BlkSize(24, 3),
+    BlkSize(24, 4),  BlkSize(24, 8),  BlkSize(24, 9),  BlkSize(24, 15),
+    BlkSize(24, 16), BlkSize(24, 31), BlkSize(24, 32), BlkSize(32, 2),
+    BlkSize(32, 3),  BlkSize(32, 4),  BlkSize(32, 8),  BlkSize(32, 9),
+    BlkSize(32, 15), BlkSize(32, 16), BlkSize(32, 31), BlkSize(32, 32),
+    BlkSize(32, 33),
+};
 TestPattern TEST_PATTERNS[] = {REF_MAX, SRC_MAX, RANDOM, UNALIGN};
 SADPattern TEST_SAD_PATTERNS[] = {BUF_MAX, BUF_MIN, BUF_SMALL, BUF_RANDOM};
 typedef std::tuple<TestPattern, BlkSize> Testsad_Param;
@@ -615,7 +642,7 @@ SearchArea TEST_AREAS[] = {
     SearchArea(32, 12)};
 
 SearchArea TEST_LOOP_AREAS[] = {
-    SearchArea(8, 15),   SearchArea(16, 31),
+    SearchArea(8, 15),    SearchArea(16, 31),   SearchArea(12, 31),
     SearchArea(64, 125),  SearchArea(192, 75),  SearchArea(128, 50),
     SearchArea(64, 25),   SearchArea(240, 200), SearchArea(144, 120),
     SearchArea(96, 80),   SearchArea(48, 40),   SearchArea(240, 120),
@@ -883,7 +910,6 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS)));
 
-#if !REMOVE_ME_SUBPEL_CODE
 INSTANTIATE_TEST_CASE_P(
     LOOPSAD_SMALL, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
@@ -891,6 +917,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS_SMALL)));
 
+#if !REMOVE_ME_SUBPEL_CODE
 INSTANTIATE_TEST_CASE_P(
     HMESAD, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),

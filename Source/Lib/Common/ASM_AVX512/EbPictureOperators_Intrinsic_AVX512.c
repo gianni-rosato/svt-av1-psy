@@ -318,8 +318,8 @@ uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_of
     area_width -= leftover;
 
     if (area_width) {
-        const uint8_t *inp = input;
-        const uint8_t *rec = recon;
+        uint8_t *inp = input;
+        uint8_t *rec = recon;
         h                  = area_height;
 
         if (area_width == 32) {
@@ -353,6 +353,19 @@ uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_of
                 } while (--h);
             } else {
                 __m512i sum64 = _mm512_setzero_si512();
+
+                if (area_width & 32) {
+                    do {
+                        SpatialFullDistortionKernel32_AVX512_INTRIN(inp, rec, &sum512);
+                        inp += input_stride;
+                        rec += recon_stride;
+                    } while (--h);
+                    inp = input + 32;
+                    rec = recon + 32;
+                    h   = area_height;
+                    area_width -= 32;
+                }
+
                 do {
                     for (uint32_t w = 0; w < area_width; w += 64) {
                         SpatialFullDistortionKernel64_AVX512_INTRIN(inp + w, rec + w, &sum512);
@@ -362,9 +375,13 @@ uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_of
                     rec += recon_stride;
                 } while (--h);
 
-                const __m256i sum_L = _mm512_castsi512_si256(sum64);
-                const __m256i sum_H = _mm512_extracti64x4_epi64(sum64, 1);
+                const __m256i sum_L          = _mm512_castsi512_si256(sum64);
+                const __m256i sum_H          = _mm512_extracti64x4_epi64(sum64, 1);
+                __m256i       leftover_sum64 = _mm256_unpacklo_epi32(sum, _mm256_setzero_si256());
+                leftover_sum64               = _mm256_add_epi64(
+                    leftover_sum64, _mm256_unpackhi_epi32(sum, _mm256_setzero_si256()));
                 sum       = _mm256_add_epi64(sum_L, sum_H);
+                sum       = _mm256_add_epi64(sum, leftover_sum64);
                 __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum),
                                           _mm256_extracti128_si256(sum, 1));
                 return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
