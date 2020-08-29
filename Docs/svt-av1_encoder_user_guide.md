@@ -128,7 +128,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **ErrorFile** | --errlog | any string | stderr | error log displaying configuration or encode errors |
 | **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |
 | **StatFile** | --stat-file | any string | Null | Path to statistics file if specified and StatReport is set to 1, per picture statistics are outputted in the file|
-| **NoProgress** | --no-progress | [0,1] | 0 | Use `--no-progress 1` to disable printing of frame processed when encoding |
+| **Progress** | --progress | [0,1,2] | 1 | Use `--progress 0` to disable printing of frame processed when encoding, `--progress 1` for default printing, and `--progress 2` for aomenc style printing |
+| **NoProgress** | --no-progress | [0,1] | 0 | `--no-progress 1` is equivalent to `--progress 0` and `--no-progress 0` is equivalent to `--progress 1` |
 
 #### Encoder Global Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |

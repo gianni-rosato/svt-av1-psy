@@ -54,7 +54,8 @@
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
 #define BUFFERED_INPUT_TOKEN "-nb"
-#define NO_PROGRESS_TOKEN "--no-progress"
+#define NO_PROGRESS_TOKEN "--no-progress" // tbd if it should be removed
+#define PROGRESS_TOKEN "--progress"
 #define BASE_LAYER_SWITCH_MODE_TOKEN "-base-layer-switch-mode" // no Eval
 #define QP_TOKEN "-q"
 #define USE_QP_FILE_TOKEN "-use-q-file"
@@ -425,8 +426,18 @@ static void set_cfg_frames_to_be_encoded(const char *value, EbConfig *cfg) {
 static void set_buffered_input(const char *value, EbConfig *cfg) {
     cfg->buffered_input = strtol(value, NULL, 0);
 };
-static void set_no_progress(const char*value, EbConfig *cfg) {
-    cfg->no_progress = (EbBool)strtoul(value, NULL, 0);
+static void set_no_progress(const char *value, EbConfig *cfg) {
+    switch (value ? *value : '1') {
+    case '0': cfg->progress = 1; break; // equal to --progress 1
+    default: cfg->progress = 0; break; // equal to --progress 0
+    }
+}
+static void set_progress(const char *value, EbConfig *cfg) {
+    switch (value ? *value : '1') {
+    case '0': cfg->progress = 0; break; // no progress printed
+    case '2': cfg->progress = 2; break; // aomenc style progress
+    default: cfg->progress = 1; break; // default progress
+    }
 }
 static void set_frame_rate(const char *value, EbConfig *cfg) {
     cfg->frame_rate = strtoul(value, NULL, 0);
@@ -911,7 +922,16 @@ ConfigEntry config_entry_global_options[] = {
      set_cfg_frames_to_be_encoded},
 
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "Buffer n input frames", set_buffered_input},
-    {SINGLE_INPUT, NO_PROGRESS_TOKEN, "Do not print out progress", set_no_progress},
+    {SINGLE_INPUT,
+     PROGRESS_TOKEN,
+     "Change verbosity of the output (0: no progress is printed, 1: default, 2: aomenc style "
+     "machine parsable output)",
+     set_progress},
+    {SINGLE_INPUT,
+     NO_PROGRESS_TOKEN,
+     "Do not print out progress, if set to 1 it is equivalent to `" PROGRESS_TOKEN
+     " 0`, else  `" PROGRESS_TOKEN " 1`",
+     set_no_progress},
     {SINGLE_INPUT,
      ENCODER_COLOR_FORMAT,
      "Set encoder color format(EB_YUV400, EB_YUV420, EB_YUV422, EB_YUV444)",
@@ -932,7 +952,10 @@ ConfigEntry config_entry_global_options[] = {
      set_frame_rate_denominator},
     //{SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
-    {SINGLE_INPUT, ENCODER_16BIT_PIPELINE, "Bit depth for enc-dec(0: lbd[default], 1: hbd)", set_encoder_16bit_pipeline},
+    {SINGLE_INPUT,
+     ENCODER_16BIT_PIPELINE,
+     "Bit depth for enc-dec(0: lbd[default], 1: hbd)",
+     set_encoder_16bit_pipeline},
     //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
@@ -959,17 +982,20 @@ ConfigEntry config_entry_global_options[] = {
     {SINGLE_INPUT, THREAD_MGMNT, "number of logical processors to be used", set_logical_processors},
     {SINGLE_INPUT,
      UNPIN_TOKEN,
-    "Allows the execution to be pined/unpined to/from a specific number of cores \n"
-    "The combinational use of --unpin with --lp results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores \n"
-    "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF ,1: ON [default]) \n"
-    "Example: 72 core machine: \n"
-    "72 jobs x -- lp 1 -- unpin 1 \n"
-    "36 jobs x -- lp 2 -- unpin 1 \n"
-    "18 jobs x -- lp 4 -- unpin 1 ",
+     "Allows the execution to be pined/unpined to/from a specific number of cores \n"
+     "The combinational use of --unpin with --lp results in memory reduction while allowing the "
+     "execution to work on any of the cores and not restrict it to specific cores \n"
+     "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF ,1: ON [default]) \n"
+     "Example: 72 core machine: \n"
+     "72 jobs x -- lp 1 -- unpin 1 \n"
+     "36 jobs x -- lp 2 -- unpin 1 \n"
+     "18 jobs x -- lp 4 -- unpin 1 ",
      set_unpin_execution},
-    {SINGLE_INPUT, TARGET_SOCKET, "Specify  which socket the encoder runs on"
-    "--unpin is overwritten to 0 when --ss is set to 0 or 1",
-    set_target_socket},
+    {SINGLE_INPUT,
+     TARGET_SOCKET,
+     "Specify  which socket the encoder runs on"
+     "--unpin is overwritten to 0 when --ss is set to 0 or 1",
+     set_target_socket},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1436,6 +1462,7 @@ ConfigEntry config_entry[] = {
     // Prediction Structure
     {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", set_buffered_input},
+    {SINGLE_INPUT, PROGRESS_TOKEN, "Progress", set_progress},
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", set_enc_mode},
 #if !TWOPASS_RC
@@ -1824,7 +1851,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hierarchical_levels                       = 4;
     config_ptr->pred_structure                            = 2;
     config_ptr->enable_global_motion                      = EB_TRUE;
-    config_ptr->no_progress                               = EB_FALSE;
+    config_ptr->progress                                  = 1;
     config_ptr->enable_warped_motion                      = DEFAULT;
     config_ptr->cdef_level                                = DEFAULT;
     config_ptr->enable_restoration_filtering              = DEFAULT;

@@ -221,7 +221,6 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
                 free(warning[warning_id]);
 
             fprintf(stderr, "%sEncoding          ", get_pass_name(pass));
-            fflush(stdout);
 
             int32_t total_frames = 0;
 

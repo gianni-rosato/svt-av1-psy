@@ -1162,29 +1162,42 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
             svt_av1_enc_release_out_buffer(&header_ptr);
 
             ++*frame_count;
-            if (!config->no_progress && !(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
-                fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", *frame_count);
-
-            //++frame_count;
-            fflush(stdout);
-
-            {
-                config->performance_context.average_speed =
-                    (config->performance_context.frame_count) /
-                    config->performance_context.total_encode_time;
-                config->performance_context.average_latency =
-                    config->performance_context.total_latency /
-                    (double)(config->performance_context.frame_count);
+            const double fps = (double)*frame_count / config->performance_context.total_encode_time;
+            const double frame_rate = config->frame_rate_numerator && config->frame_rate_denominator
+                ? (double)config->frame_rate_numerator / (double)config->frame_rate_denominator
+                : config->frame_rate > 1000
+                    // Correct for 16-bit fixed-point fractional precision
+                    ? (double)config->frame_rate / (1 << 16)
+                    : (double)config->frame_rate;
+            switch (config->progress) {
+            case 0: break;
+            case 1:
+                if (!(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
+                    fprintf(stderr, "\b\b\b\b\b\b\b\b\b%9d", *frame_count);
+                break;
+            case 2:
+                fprintf(stderr,
+                        "\rEncoding frame %4d %.2f kbps %.2f fp%c  ",
+                        *frame_count,
+                        ((double)(config->performance_context.byte_count << 3) * frame_rate /
+                         (config->frames_encoded * 1000)),
+                        fps >= 1.0 ? fps : fps * 60,
+                        fps >= 1.0 ? 's' : 'm');
+            default: break;
             }
+            fflush(stderr);
 
-            if (!(*frame_count % SPEED_MEASUREMENT_INTERVAL)) {
-                {
-                    fprintf(stderr, "\n");
-                    fprintf(stderr,
-                            "Average System Encoding Speed:        %.2f\n",
-                            (double)(*frame_count) / config->performance_context.total_encode_time);
-                }
-            }
+            config->performance_context.average_speed =
+                (double)config->performance_context.frame_count /
+                config->performance_context.total_encode_time;
+            config->performance_context.average_latency =
+                (double)config->performance_context.total_latency /
+                config->performance_context.frame_count;
+
+            if (config->progress == 1 && !(*frame_count % SPEED_MEASUREMENT_INTERVAL))
+                fprintf(stderr,
+                        "\nAverage System Encoding Speed:        %.2f\n",
+                        (double)*frame_count / config->performance_context.total_encode_time);
         }
     }
     return return_value;
