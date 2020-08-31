@@ -80,6 +80,7 @@ static void encode_context_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE_ARRAY(obj->rate_control_tables_array);
 #if TWOPASS_RC
+    EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
 #endif
 }

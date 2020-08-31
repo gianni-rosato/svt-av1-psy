@@ -44,14 +44,41 @@
 
 #define NCOUNT_INTRA_THRESH 8192
 #define NCOUNT_INTRA_FACTOR 3
+
+#define STATS_CAPABILITY_INIT 100
+//1.5 times larger than request.
+#define STATS_CAPABILITY_GROW(s) (s * 3 /2)
+
+static EbErrorType realloc_stats_out(FirstPassStatsOut* out, uint64_t frame_number) {
+    if (frame_number < out->size)
+        return EB_ErrorNone;
+    if (frame_number >= out->capability) {
+        size_t capability = frame_number > STATS_CAPABILITY_INIT ?
+            STATS_CAPABILITY_GROW(frame_number) : STATS_CAPABILITY_INIT;
+        EB_REALLOC_ARRAY(out->stat, capability);
+        out->capability = capability;
+    }
+    out->size = frame_number + 1;
+    return EB_ErrorNone;
+}
+
+static void flush_stats(SequenceControlSet *scs_ptr) {
+    FirstPassStatsOut* out = &scs_ptr->encode_context_ptr->stats_out;
+    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+    fwrite(out->stat, sizeof(FIRSTPASS_STATS), out->size,
+        scs_ptr->static_config.output_stat_file);
+    fflush(scs_ptr->static_config.output_stat_file);
+    eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+}
 static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
+    FirstPassStatsOut* stats_out = &scs_ptr->encode_context_ptr->stats_out;
     eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-    int32_t fseek_return_value = fseek(scs_ptr->static_config.output_stat_file,
-                                       (long)frame_number * sizeof(FIRSTPASS_STATS),
-                                       SEEK_SET);
-    if (fseek_return_value != 0) SVT_LOG("Error in fseek  returnVal %i\n", fseek_return_value);
-    fwrite(stats, sizeof(FIRSTPASS_STATS), (size_t)1, scs_ptr->static_config.output_stat_file);
+    if (realloc_stats_out(stats_out, frame_number) != EB_ErrorNone) {
+        SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
+    } else {
+        stats_out->stat[frame_number] = *stats;
+    }
 // TEMP debug code
 #if OUTPUT_FPF
     {
@@ -147,9 +174,11 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     TWO_PASS *          twopass = &scs_ptr->twopass;
 
-    if (twopass->stats_buf_ctx->total_stats)
+    if (twopass->stats_buf_ctx->total_stats) {
         // add the total to the end of the file
         output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, pcs_ptr->picture_number + 1);
+        flush_stats(scs_ptr);
+    }
 }
 static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_err_counts) {
     int64_t sum_raw_err   = 0;

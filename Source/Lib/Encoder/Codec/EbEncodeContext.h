@@ -68,6 +68,13 @@ typedef struct DPBInfo {
     DpbDependentList dep_list0;
     DpbDependentList dep_list1;
 } DPBInfo;
+
+typedef struct FirstPassStatsOut {
+    FIRSTPASS_STATS* stat;
+    size_t size;
+    size_t capability;
+} FirstPassStatsOut;
+
 typedef struct EncodeContext {
     EbDctor dctor;
     // Callback Functions
@@ -178,7 +185,9 @@ typedef struct EncodeContext {
     EbObjectWrapper *previous_picture_control_set_wrapper_ptr;
     EbHandle         shared_reference_mutex;
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames
+
     EbHandle stat_file_mutex;
+
     //DPB list management
     DPBInfo dpb_list[REF_FRAMES];
     uint64_t display_picture_number;
@@ -209,6 +218,7 @@ typedef struct EncodeContext {
     int num_lap_buffers;
     STATS_BUFFER_CTX stats_buf_context;
     SvtAv1FixedBuf rc_twopass_stats_in; // replaced oxcf->two_pass_cfg.stats_in in aom
+    FirstPassStatsOut stats_out;
 #endif
 } EncodeContext;
 
