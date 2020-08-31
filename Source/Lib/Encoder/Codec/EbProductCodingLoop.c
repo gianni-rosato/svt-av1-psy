@@ -10567,7 +10567,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
         //LUMA-ONLY
 #if FPFOPT_ESTBITS
-        if (scs_ptr->use_output_stat_file)
+        if (use_output_stat(scs_ptr))
             y_txb_coeff_bits_txt[tx_type] = 0;
         else
 #endif
@@ -11302,7 +11302,7 @@ void first_pass_perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_b
         }
 #if TX_EARLY_EXIT
 #if TWOPASS_RC
-        if (!scs_ptr->use_output_stat_file)
+        if (!use_output_stat(scs_ptr->use_output_stat_file))
 #endif
             // Variance/cost_depth_1-to-cost_depth_0 based early txs exit
             if (context_ptr->source_variance < TXS_EXIT_VAR_TH && context_ptr->tx_depth == 2 && best_tx_depth == 0)

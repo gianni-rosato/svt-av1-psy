@@ -62,14 +62,6 @@ static EbErrorType realloc_stats_out(FirstPassStatsOut* out, uint64_t frame_numb
     return EB_ErrorNone;
 }
 
-static void flush_stats(SequenceControlSet *scs_ptr) {
-    FirstPassStatsOut* out = &scs_ptr->encode_context_ptr->stats_out;
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-    fwrite(out->stat, sizeof(FIRSTPASS_STATS), out->size,
-        scs_ptr->static_config.output_stat_file);
-    fflush(scs_ptr->static_config.output_stat_file);
-    eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-}
 static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
     FirstPassStatsOut* stats_out = &scs_ptr->encode_context_ptr->stats_out;
@@ -177,7 +169,6 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
     if (twopass->stats_buf_ctx->total_stats) {
         // add the total to the end of the file
         output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, pcs_ptr->picture_number + 1);
-        flush_stats(scs_ptr);
     }
 }
 static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_err_counts) {

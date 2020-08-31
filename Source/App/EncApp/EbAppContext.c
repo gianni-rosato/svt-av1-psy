@@ -119,7 +119,7 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
     callback_data->eb_enc_parameters.qp                   = config->qp;
     callback_data->eb_enc_parameters.use_qp_file          = (EbBool)config->use_qp_file;
     callback_data->eb_enc_parameters.rc_twopass_stats_in  = config->rc_twopass_stats_in;
-    callback_data->eb_enc_parameters.output_stat_file     = config->output_stat_file;
+    callback_data->eb_enc_parameters.rc_firstpass_stats_out     = !!config->output_stat_file;
     callback_data->eb_enc_parameters.stat_report          = (EbBool)config->stat_report;
     callback_data->eb_enc_parameters.disable_dlf_flag     = (EbBool)config->disable_dlf_flag;
     callback_data->eb_enc_parameters.enable_warped_motion = config->enable_warped_motion;

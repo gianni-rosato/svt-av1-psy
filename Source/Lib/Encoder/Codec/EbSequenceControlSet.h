@@ -104,9 +104,6 @@ typedef struct SequenceControlSet {
     (The signal changes per preset; 0: compound disabled, 1: compound enabled) Default is 1. */
     uint8_t compound_mode;
 
-    /*!< Temporary input / output statistics files for 2-pass encoding */
-    EbBool use_output_stat_file;
-
     /*!< Sequence resolution parameters */
     uint32_t          chroma_format_idc;
     uint16_t          subsampling_x; // add chroma subsampling parameters
@@ -251,7 +248,7 @@ inline static EbBool use_input_stat(const SequenceControlSet* scs_ptr)
 
 inline static EbBool use_output_stat(const SequenceControlSet* scs_ptr)
 {
-    return scs_ptr->use_output_stat_file;
+    return scs_ptr->static_config.rc_firstpass_stats_out;
 }
 
 #ifdef __cplusplus

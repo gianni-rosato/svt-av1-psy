@@ -2274,8 +2274,7 @@ void copy_api_from_app(
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
     scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
-    scs_ptr->static_config.output_stat_file = ((EbSvtAv1EncConfiguration*)config_struct)->output_stat_file;
-    scs_ptr->use_output_stat_file = scs_ptr->static_config.output_stat_file ? 1 : 0;
+    scs_ptr->static_config.rc_firstpass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_firstpass_stats_out;
     // Deblock Filter
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
 
@@ -3171,7 +3170,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->superres_mode > 0 && ((config->rc_twopass_stats_in.sz || config->output_stat_file))){
+    if (config->superres_mode > 0 && ((config->rc_twopass_stats_in.sz || config->rc_firstpass_stats_out))){
         SVT_LOG("Error instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -4172,5 +4171,25 @@ void eb_output_recon_buffer_header_destroyer(    EbPtr p)
     EbBufferHeaderType *obj = (EbBufferHeaderType*)p;
     EB_FREE(obj->p_buffer);
     EB_FREE(obj);
+}
+
+/**********************************
+* svt_av1_enc_get_stream_info get stream information from encoder
+**********************************/
+EB_API EbErrorType svt_av1_enc_get_stream_info(EbComponentType *    svt_enc_component,
+                                    uint32_t stream_info_id, void* info)
+{
+    if (stream_info_id >= SVT_AV1_STREAM_INFO_END || stream_info_id < SVT_AV1_STREAM_INFO_START) {
+        return EB_ErrorBadParameter;
+    }
+    EbEncHandle         *enc_handle = (EbEncHandle*)svt_enc_component->p_component_private;
+    if (stream_info_id == SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT) {
+        EncodeContext*      context = enc_handle->scs_instance_array[0]->encode_context_ptr;
+        SvtAv1FixedBuf*     first_pass_stats = (SvtAv1FixedBuf*)info;
+        first_pass_stats->buf = context->stats_out.stat;
+        first_pass_stats->sz = context->stats_out.size * sizeof(FIRSTPASS_STATS);
+        return EB_ErrorNone;
+    }
+    return EB_ErrorBadParameter;
 }
 // clang-format on

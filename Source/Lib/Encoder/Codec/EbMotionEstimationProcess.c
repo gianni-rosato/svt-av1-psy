@@ -248,7 +248,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             else if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
 #if FASTER_FIRST_PASS
-                if (scs_ptr->use_output_stat_file) {
+                if (use_output_stat(scs_ptr)) {
                     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 37;
                     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 175;
                 }
@@ -420,7 +420,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
     else {
 #if FASTER_FIRST_PASS
-        if (scs_ptr->use_output_stat_file) {
+        if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
         }

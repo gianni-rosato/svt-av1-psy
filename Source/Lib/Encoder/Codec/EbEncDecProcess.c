@@ -12032,7 +12032,7 @@ void *mode_decision_kernel(void *input_ptr) {
 #else
                     // Encode Pass
 #if FPFOPT_NO_EP
-                    if(scs_ptr->use_output_stat_file==EB_FALSE)
+                    if(!use_output_stat(scs_ptr))
 #endif
                     av1_encode_decode(
                         scs_ptr, pcs_ptr, sb_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr);

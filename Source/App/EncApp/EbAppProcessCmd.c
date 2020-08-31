@@ -1161,6 +1161,19 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
             // Release the output buffer
             svt_av1_enc_release_out_buffer(&header_ptr);
 
+            if (header_ptr->flags & EB_BUFFERFLAG_EOS) {
+                if (config->output_stat_file) {
+                    SvtAv1FixedBuf first_pass_stat;
+                    EbErrorType ret = svt_av1_enc_get_stream_info(component_handle,
+                        SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT, &first_pass_stat);
+                    if (ret == EB_ErrorNone) {
+                        fwrite(first_pass_stat.buf,
+                            1, first_pass_stat.sz, config->output_stat_file);
+                    }
+                }
+
+            }
+
             ++*frame_count;
             const double fps = (double)*frame_count / config->performance_context.total_encode_time;
             const double frame_rate = config->frame_rate_numerator && config->frame_rate_denominator

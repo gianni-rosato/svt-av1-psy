@@ -63,6 +63,18 @@ typedef enum {
     SUPERRES_MODES
 } SUPERRES_MODE;
 
+typedef enum {
+    SVT_AV1_STREAM_INFO_START = 1,
+
+    // The output is SvtAv1FixedBuf*
+    // Two use this, you need:
+    // 1. set the EbSvtAv1EncConfiguration.rc_firstpass_stats_out to EB_TRUE
+    // 2. call this when you got EB_BUFFERFLAG_EOS
+    SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT = SVT_AV1_STREAM_INFO_START,
+
+    SVT_AV1_STREAM_INFO_END,
+} SVT_AV1_STREAM_INFO_ID;
+
 /*!\brief Generic fixed size buffer structure
  *
  * This structure is able to hold a reference to any fixed size buffer.
@@ -223,8 +235,16 @@ typedef struct EbSvtAv1EncConfiguration {
     EbBool use_qp_file;
     /* input buffer for the second pass */
     SvtAv1FixedBuf rc_twopass_stats_in;
-    /* output stats file */
-    FILE *output_stat_file;
+    /* generate first pass stats output.
+    * when you set this to EB_TRUE, and you got the EB_BUFFERFLAG_EOS,
+    * you can get the encoder stats using:
+    *
+    * SvtAv1FixedBuf first_pass_stat;
+    * EbErrorType ret = svt_av1_enc_get_stream_info(component_handle,
+    *     SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT, &first_pass_stat);
+    *
+    * Default is 0.*/
+    EbBool rc_firstpass_stats_out;
     /* Enable picture QP scaling between hierarchical levels
     *
     * Default is null.*/
@@ -780,6 +800,16 @@ EB_API void svt_av1_enc_release_out_buffer(EbBufferHeaderType **p_buffer);
      * @ *p_buffer           Output buffer. */
 EB_API EbErrorType svt_av1_get_recon(EbComponentType *   svt_enc_component,
                                     EbBufferHeaderType *p_buffer);
+
+/* OPTIONAL: get stream information
+     *
+     * Parameter:
+     * @ *svt_enc_component  Encoder handler.
+     * @ *stream_info_id SVT_AV1_STREAM_INFO_ID.
+     * @ *info         output, the type depends on id */
+EB_API EbErrorType svt_av1_enc_get_stream_info(EbComponentType *    svt_enc_component,
+                                    uint32_t stream_info_id, void* info);
+
 
 /* STEP 6: Deinitialize encoder library.
      *

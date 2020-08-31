@@ -310,6 +310,8 @@ static EbBool update_entropy_coding_rows(PictureControlSet *pcs_ptr, uint32_t *r
 
     return process_next_row;
 }
+
+#if !TWOPASS_RC
 /******************************************************
  * Write Stat to File
  * write stat_struct per frame in the first pass
@@ -322,6 +324,7 @@ void write_stat_to_file(SequenceControlSet *scs_ptr, StatStruct stat_struct, uin
     fwrite(&stat_struct, sizeof(StatStruct), (size_t)1, scs_ptr->static_config.output_stat_file);
     eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
 }
+#endif
 
 /* Entropy Coding */
 
