@@ -4677,7 +4677,7 @@ void eb_av1_fwd_txfm2d_8x16_avx2(int16_t *input, int32_t *output, uint32_t strid
 /* call this function for all 16 transform types */
 void eb_av1_fwd_txfm2d_16x8_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
                                  uint8_t bd) {
-    __m256i                  in[16], out[16] = {0};
+    __m256i                  in[16], out[16];
     const int8_t *           shift    = fwd_txfm_shift_ls[TX_16X8];
     const int32_t            txw_idx  = get_txw_idx(TX_16X8);
     const int32_t            txh_idx  = get_txh_idx(TX_16X8);

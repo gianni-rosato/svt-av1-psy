@@ -27,6 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - packages: gcc-4.8 g++-4.8
+            CC: gcc-4.8
+            CXX: g++-4.8
           - packages: gcc-7 g++-7
             CC: gcc-7
             CXX: g++-7

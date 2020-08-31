@@ -516,7 +516,7 @@ static void get_palette_params_rate(PaletteInfo *palette_info, MdRateEstimationC
 
     params->color_map  = palette_info->color_idx_map;
     params->map_cdf    = NULL;
-    params->color_cost = plane ? NULL : &rate_table->palette_ycolor_fac_bitss;
+    params->color_cost = plane ? NULL : (ColorCost)&rate_table->palette_ycolor_fac_bitss;
     params->n_colors   = pmi->palette_size[plane];
 
     av1_get_block_dimensions(
