@@ -107,6 +107,17 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
 #define EB_MALLOC_ARRAY(pa, count) \
     do { EB_MALLOC(pa, sizeof(*(pa)) * (count)); } while (0)
 
+#define EB_REALLOC_ARRAY(pa, count)             \
+    do {                                        \
+        size_t size = sizeof(*(pa)) * (count);  \
+        void* p = realloc(pa, size);            \
+        if (p) {                                \
+            EB_REMOVE_MEM_ENTRY(pa, EB_N_PTR);  \
+        }                                       \
+        EB_ADD_MEM(p, size, EB_N_PTR);          \
+        pa = p;                                 \
+    } while (0)
+
 #define EB_CALLOC_ARRAY(pa, count) \
     do { EB_CALLOC(pa, count, sizeof(*(pa))); } while (0)
 
