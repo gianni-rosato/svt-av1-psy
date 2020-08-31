@@ -137,7 +137,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
 #if 0//!REMOVE_COMBINE_CLASS12
     callback_data->eb_enc_parameters.combine_class_12         = config->combine_class_12;
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     callback_data->eb_enc_parameters.edge_skp_angle_intra     = config->edge_skp_angle_intra;
+#endif
     callback_data->eb_enc_parameters.intra_angle_delta        = config->intra_angle_delta;
     callback_data->eb_enc_parameters.inter_intra_compound     = config->inter_intra_compound;
     callback_data->eb_enc_parameters.enable_paeth             = config->enable_paeth;
@@ -156,7 +158,9 @@ EbErrorType copy_configuration_parameters(EbConfig *config, EbAppContext *callba
 #if 0//!SHUT_ME_CAND_SORTING
     callback_data->eb_enc_parameters.prune_unipred_me         = config->prune_unipred_me;
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     callback_data->eb_enc_parameters.prune_ref_rec_part       = config->prune_ref_rec_part;
+#endif
     callback_data->eb_enc_parameters.nsq_table                = config->nsq_table;
     callback_data->eb_enc_parameters.frame_end_cdf_update     = config->frame_end_cdf_update;
 #if  1//OBMC_CLI

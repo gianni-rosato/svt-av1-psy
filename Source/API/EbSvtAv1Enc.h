@@ -274,11 +274,12 @@ typedef struct EbSvtAv1EncConfiguration {
     int sg_filter_mode;
     int wn_filter_mode;
 
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     /* edge based skip angle intra
     *
     * Default is -1. */
     int edge_skp_angle_intra;
-
+#endif
     /* enable angle intra
     *
     * Default is -1. */
@@ -345,10 +346,12 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is -1. */
     int prune_unipred_me;
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     /* prune ref frame for rec partitions
     *
     * Default is -1. */
     int prune_ref_rec_part;
+#endif
     /* nsq table
     *
     * Default is -1. */

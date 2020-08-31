@@ -88,7 +88,9 @@
 #if 0//!REMOVE_COMBINE_CLASS12
 #define CLASS_12_TOKEN "-class-12"
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
 #define EDGE_SKIP_ANGLE_INTRA_TOKEN "-intra-edge-skp"
+#endif
 #define INTRA_ANGLE_DELTA_TOKEN "-intra-angle-delta"
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
 #define PAETH_TOKEN "-paeth"
@@ -104,7 +106,9 @@
 #if 0//!SHUT_ME_CAND_SORTING
 #define PRUNE_UNIPRED_ME_TOKEN "-prune-unipred-me"
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
 #define PRUNE_REF_REC_PART_TOKEN "-prune-ref-rec-part"
+#endif
 #define NSQ_TABLE_TOKEN "-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_TOKEN "-local-warp"
@@ -224,7 +228,9 @@
 
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define RESTORATION_ENABLE_NEW_TOKEN "--enable-restoration-filtering"
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
 #define EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN "--enable-intra-edge-skp"
+#endif
 #define INTER_INTRA_COMPOUND_NEW_TOKEN "--enable-interintra-comp"
 #define FRAC_SEARCH_64_NEW_TOKEN "--enable-frac-search-64"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
@@ -236,7 +242,9 @@
 #if 0//!SHUT_ME_CAND_SORTING
 #define PRUNE_UNIPRED_ME_NEW_TOKEN "--enable-prune-unipred-me"
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
 #define PRUNE_REF_REC_PART_NEW_TOKEN "--enable-prune-ref-rec-part"
+#endif
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
@@ -511,9 +519,11 @@ static void set_class_12_flag(const char *value, EbConfig *cfg) {
     cfg->combine_class_12 = strtol(value, NULL, 0);
 };
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
 static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
     cfg->edge_skp_angle_intra = strtol(value, NULL, 0);
 };
+#endif
 static void set_intra_angle_delta_flag(const char *value, EbConfig *cfg) {
     cfg->intra_angle_delta = strtol(value, NULL, 0);
 };
@@ -556,9 +566,11 @@ static void set_prune_unipred_me_flag(const char *value, EbConfig *cfg) {
     cfg->prune_unipred_me = strtol(value, NULL, 0);
 };
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
 static void set_prune_ref_rec_part_flag(const char *value, EbConfig *cfg) {
     cfg->prune_ref_rec_part = strtol(value, NULL, 0);
 };
+#endif
 static void set_nsq_table_flag(const char *value, EbConfig *cfg) {
     cfg->nsq_table = strtol(value, NULL, 0);
 };
@@ -1152,10 +1164,12 @@ ConfigEntry config_entry_specific[] = {
      "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
      set_prune_unipred_me_flag},
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     {SINGLE_INPUT,
      PRUNE_REF_REC_PART_NEW_TOKEN,
      "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
      set_prune_ref_rec_part_flag},
+#endif
     {SINGLE_INPUT,
      NSQ_TABLE_NEW_TOKEN,
      "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
@@ -1189,11 +1203,13 @@ ConfigEntry config_entry_specific[] = {
      "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
      set_class_12_flag},
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
      "Enable intra edge filtering (0: OFF, 1: ON (default))",
      set_edge_skip_angle_intra_flag},
+#endif
     // INTRA ANGLE DELTA
     {SINGLE_INPUT,
      INTRA_ANGLE_DELTA_TOKEN,
@@ -1543,7 +1559,9 @@ ConfigEntry config_entry[] = {
 #if 0//!SHUT_ME_CAND_SORTING
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_TOKEN, "PruneUnipredMe", set_prune_unipred_me_flag},
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     {SINGLE_INPUT, PRUNE_REF_REC_PART_TOKEN, "PruneRefRecPart", set_prune_ref_rec_part_flag},
+#endif
     {SINGLE_INPUT, NSQ_TABLE_TOKEN, "NsqTable", set_nsq_table_flag},
     {SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN, "FrameEndCdfUpdate", set_frame_end_cdf_update_flag},
 
@@ -1562,11 +1580,13 @@ ConfigEntry config_entry[] = {
     // CLASS 12
     {SINGLE_INPUT, CLASS_12_TOKEN, "CombineClass12", set_class_12_flag},
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     // EDGE SKIP ANGLE INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_TOKEN,
      "EdgeSkipAngleIntra",
      set_edge_skip_angle_intra_flag},
+#endif
     // INTRA ANGLE DELTA
     {SINGLE_INPUT, INTRA_ANGLE_DELTA_TOKEN, "IntraAngleDelta", set_intra_angle_delta_flag},
 
@@ -1728,10 +1748,12 @@ ConfigEntry config_entry[] = {
      RESTORATION_ENABLE_NEW_TOKEN,
      "Restoration Filter",
      set_enable_restoration_filter_flag},
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     {SINGLE_INPUT,
      EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
      "Edge Skip Angle Intra",
      set_edge_skip_angle_intra_flag},
+#endif
     {SINGLE_INPUT,
      INTER_INTRA_COMPOUND_NEW_TOKEN,
      "Inter Intra Compound",
@@ -1748,7 +1770,9 @@ ConfigEntry config_entry[] = {
 #if 0//!SHUT_ME_CAND_SORTING
     {SINGLE_INPUT, PRUNE_UNIPRED_ME_NEW_TOKEN, "Prune Uni pred Me", set_prune_unipred_me_flag},
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     {SINGLE_INPUT, PRUNE_REF_REC_PART_NEW_TOKEN, "Prune Ref Rec Part", set_prune_ref_rec_part_flag},
+#endif
     {SINGLE_INPUT, NSQ_TABLE_NEW_TOKEN, "Nsq Table", set_nsq_table_flag},
     {SINGLE_INPUT,
      FRAME_END_CDF_UPDATE_NEW_TOKEN,
@@ -1860,7 +1884,9 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #if 0//!REMOVE_COMBINE_CLASS12
     config_ptr->combine_class_12                          = DEFAULT;
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     config_ptr->edge_skp_angle_intra                      = DEFAULT;
+#endif
     config_ptr->intra_angle_delta                         = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;
     config_ptr->enable_paeth                              = DEFAULT;
@@ -1879,7 +1905,9 @@ void eb_config_ctor(EbConfig *config_ptr) {
 #if 0//!SHUT_ME_CAND_SORTING
     config_ptr->prune_unipred_me                          = DEFAULT;
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     config_ptr->prune_ref_rec_part                        = DEFAULT;
+#endif
     config_ptr->nsq_table                                 = DEFAULT;
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
@@ -2904,8 +2932,10 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, STAT_REPORT_TOKEN) == 0) linked_token = STAT_REPORT_NEW_TOKEN;
     if (EB_STRCMP(token, RESTORATION_ENABLE_TOKEN) == 0)
         linked_token = RESTORATION_ENABLE_NEW_TOKEN;
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     if (EB_STRCMP(token, EDGE_SKIP_ANGLE_INTRA_TOKEN) == 0)
         linked_token = EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN;
+#endif
     if (EB_STRCMP(token, INTER_INTRA_COMPOUND_TOKEN) == 0)
         linked_token = INTER_INTRA_COMPOUND_NEW_TOKEN;
     if (EB_STRCMP(token, MFMV_ENABLE_TOKEN) == 0) linked_token = MFMV_ENABLE_NEW_TOKEN;
@@ -2917,8 +2947,10 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
 #if 0//!SHUT_ME_CAND_SORTING
     if (EB_STRCMP(token, PRUNE_UNIPRED_ME_TOKEN) == 0) linked_token = PRUNE_UNIPRED_ME_NEW_TOKEN;
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     if (EB_STRCMP(token, PRUNE_REF_REC_PART_TOKEN) == 0)
         linked_token = PRUNE_REF_REC_PART_NEW_TOKEN;
+#endif
     if (EB_STRCMP(token, NSQ_TABLE_TOKEN) == 0) linked_token = NSQ_TABLE_NEW_TOKEN;
     if (EB_STRCMP(token, FRAME_END_CDF_UPDATE_TOKEN) == 0)
         linked_token = FRAME_END_CDF_UPDATE_NEW_TOKEN;

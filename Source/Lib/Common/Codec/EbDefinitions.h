@@ -532,6 +532,26 @@ extern "C" {
 #define FIRST_PASS_SETUP     1
 #define FASTER_FIRST_PASS    1
 #endif
+
+#define USE_GF_UPDATE_FOR_LAMBDA         1 // Scale sse lambda based on where the frame is positioned in the miniGOP (based on TL)
+#define NEW_LAMBDA_SCALING_FACTOR        1 // Change the value of one of the parameters used during TPL scaling factor generation
+#define AUG25_ADOPTS                     1 // M1, M2, and M3 adoptions
+#define AUG27_ADOPTS                     1 // M4-M7 adoptions
+
+#define REMOVE_UNUSED_SIGNALS            1 // remove signals which are no longer used/have only one used level
+#if REMOVE_UNUSED_SIGNALS
+#define REMOVE_MD_TXT_SEARCH_LEVEL       1 // remove md_txt_search_level
+#define REMOVE_IND_CHROMA_NICS           1 // remove independent_chroma_nics
+#define REMOVE_LIBAOM_SHORTCUT_THS       1 // remove libaom_short_cuts_ths
+#define REMOVE_INTRA_CHROMA_FOLLOWS_LUMA 1 // remove intra_chroma_search_follows_intra_luma_injection
+#define REMOVE_IFS_BLK_SIZE              1 // remove interpolation_filter_search_blk_size
+#define REMOVE_EDGE_SKIP_ANGLE_INTRA     1 // remove edge_based_skip_angle_intra
+#define REMOVE_REF_FOR_RECT_PART         1 // remove prune_ref_frame_for_rec_partitions
+#define REMOVE_SIMILARITY_FEATS          1 // remove similarity features (intra_similar_mode and signals part of inter compound)
+#define REMOVE_OLD_NSQ_CR                1 // remove old NSQ cycles reduction feature (replaced by adaptive_md_cycles_level)
+#define REMOVE_OLD_DEPTH_CR              1 // remove old depth cycles reduction feature (replaced by adaptive_md_cycles_level)
+#endif
+#define REMOVE_TF_REF_PRUNING_FUNCS      1 // remove redundant functions for setting TF ref pruning settings (which are always off)
 #endif
 
 // start

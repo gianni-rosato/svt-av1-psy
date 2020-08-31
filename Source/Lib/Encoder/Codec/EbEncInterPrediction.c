@@ -6307,6 +6307,7 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
                 bwidth);
         }
 
+#if !REMOVE_SIMILARITY_FEATS
         if (context_ptr->inter_comp_ctrls.similar_predictions) {
             const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize];
             unsigned int sse;
@@ -6316,6 +6317,7 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
             context_ptr->prediction_mse =
                 ROUND_POWER_OF_TWO(sse, num_pels_log2_lookup[context_ptr->blk_geom->bsize]);
         }
+#endif
 }
 #endif
 void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
@@ -6704,10 +6706,15 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     else {
 #endif
         if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
+#if REMOVE_IFS_BLK_SIZE
+            // ON for 8x8 and above
+            uint16_t capped_size = 4;
+#else
             uint16_t capped_size =
                     md_context_ptr->interpolation_filter_search_blk_size == 0
                     ? 4
                     : md_context_ptr->interpolation_filter_search_blk_size == 1 ? 8 : 16;
+#endif
 
             if (md_context_ptr->blk_geom->bwidth > capped_size &&
                 md_context_ptr->blk_geom->bheight > capped_size) {

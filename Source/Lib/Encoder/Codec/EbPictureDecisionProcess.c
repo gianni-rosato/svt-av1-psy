@@ -1133,7 +1133,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if FAST_M8_V1
 #if JULY31_PRESETS_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+    if (pcs_ptr->enc_mode <= ENC_M3)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -2032,7 +2036,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if MAY19_ADOPTIONS
 #if JUNE17_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+            if (pcs_ptr->enc_mode <= ENC_M6)
+#else
             if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -2285,7 +2293,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #else
 #if JUNE26_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -2626,7 +2638,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->gm_level = GM_FULL;
 #if JUNE26_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -2741,7 +2757,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         }
 #if SHIFT_PRESETS
 #if BALANCE_M6_M7 // tf
+#if AUG27_ADOPTS
+        else {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -2762,12 +2782,14 @@ EbErrorType signal_derivation_multi_processes_oq(
                 context_ptr->tf_level = 0;
         }
 #endif
+#if !AUG27_ADOPTS
         else {
             if (pcs_ptr->temporal_layer_index == 0)
                 context_ptr->tf_level = 3;
             else
                 context_ptr->tf_level = 0;
         }
+#endif
 #else
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))

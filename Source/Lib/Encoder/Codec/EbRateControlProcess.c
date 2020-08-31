@@ -5597,6 +5597,36 @@ static void sb_qp_derivation_two_pass(PictureControlSet *pcs_ptr) {
 }
 #endif
 
+#if USE_GF_UPDATE_FOR_LAMBDA
+// The table we use is modified from libaom; here is the original, from libaom:
+// static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
+//                                                               128, 144, 144,
+//                                                               128 };
+static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 164, 128,
+                                                              128, 164, 164,
+                                                              128 };
+/*
+ * Set the sse lambda based on the bit_depth, then update based on frame position.
+ */
+int compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_depth) {
+
+    FrameType frame_type = pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type;
+    // To set gf_update_type based on current TL vs. the max TL (e.g. for 5L, max TL is 4)
+    uint8_t temporal_layer_index = pcs_ptr->temporal_layer_index;
+    uint8_t max_temporal_layer = pcs_ptr->parent_pcs_ptr->hierarchical_levels;
+
+    int64_t rdmult = bit_depth == 8 ?  av1_lambda_mode_decision8_bit_sse[q_index] :
+                     bit_depth == 10 ? av1lambda_mode_decision10_bit_sse[q_index] :
+                                       av1lambda_mode_decision12_bit_sse[q_index];
+
+    // Update rdmult based on the frame's position in the miniGOP
+    if (frame_type != KEY_FRAME) {
+        uint8_t gf_update_type = temporal_layer_index == 0 ? ARF_UPDATE : temporal_layer_index < max_temporal_layer ? INTNL_ARF_UPDATE : LF_UPDATE;
+        rdmult = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
+    }
+    return (int)rdmult;
+}
+#endif
 #if TPL_LA
 #if TPL_LA_LAMBDA_SCALING
 static void sb_setup_lambda(PictureControlSet *pcs_ptr,
@@ -5627,12 +5657,18 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
             base_block_count += 1.0;
         }
     }
+#if USE_GF_UPDATE_FOR_LAMBDA
+    uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+    const int orig_rdmult = compute_rdmult_sse(pcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);
+    const int new_rdmult = compute_rdmult_sse(pcs_ptr, sb_ptr->qindex, bit_depth);
+#else
     const int orig_rdmult = pcs_ptr->hbd_mode_decision ?
         av1lambda_mode_decision10_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx]:
         av1_lambda_mode_decision8_bit_sse[ppcs_ptr->frm_hdr.quantization_params.base_q_idx];
     const int new_rdmult = pcs_ptr->hbd_mode_decision ?
         av1lambda_mode_decision10_bit_sse[sb_ptr->qindex]:
         av1_lambda_mode_decision8_bit_sse[sb_ptr->qindex];
+#endif
     const double scaling_factor = (double)new_rdmult / (double)orig_rdmult;
     double scale_adj = log(scaling_factor) - log_sum / base_block_count;
     scale_adj = exp(scale_adj);

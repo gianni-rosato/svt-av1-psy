@@ -28,10 +28,10 @@ extern EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureControlS
                                     const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
                                     uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
                                     ModeDecisionContext *context_ptr);
-
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
 uint8_t get_skip_tx_search_flag(int32_t sq_size, uint64_t ref_fast_cost, uint64_t cu_cost,
                                 uint64_t weight);
-
+#endif
 extern void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                             SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
                             uint32_t sb_origin_y, EncDecContext *context_ptr);

@@ -284,10 +284,14 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             }
 #endif
 #if NEW_M0_M1_ME_NICS
+#if AUG25_ADOPTS
+    else if (pcs_ptr->enc_mode <= ENC_M0) {
+#else
 #if PRESET_SHIFITNG
     else if (pcs_ptr->enc_mode <= ENC_M1) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
 #endif
     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
 #if JUNE23_ADOPTIONS
@@ -328,7 +332,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
 #if M8_HME_ME
 #if JUNE23_ADOPTIONS
+#if AUG25_ADOPTS
+    else if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
     }
@@ -482,7 +490,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if MAY19_ADOPTIONS
 #if JUNE23_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG25_ADOPTS
+        if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -530,7 +542,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
 #endif
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+        else {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif
@@ -566,6 +582,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
 #endif
 #if FASTEST_HME
+#if !AUG27_ADOPTS
         else if (pcs_ptr->enc_mode <= ENC_M6) {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 128;
@@ -574,6 +591,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 16;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 64;
         }
+#endif
 #else
         else {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
@@ -657,7 +675,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
 #if PRESETS_SHIFT
 #if PRESET_SHIFITNG
+#if AUG25_ADOPTS
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M0 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M1 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
 #else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M2 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
 #endif
@@ -1361,7 +1383,11 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #if APR22_ADOPTIONS
 #if FAST_M8_V1
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
@@ -1555,7 +1581,7 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 #endif
     return NULL;
 };
-
+#if !REMOVE_TF_REF_PRUNING_FUNCS
 #if ME_HME_PRUNING_CLEANUP
 void tf_set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
     MeHmeRefPruneCtrls* me_hme_prune_ctrls = &context_ptr->me_hme_prune_ctrls;
@@ -1622,6 +1648,7 @@ void tf_set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment
         break;
     }
 }
+#endif
 #endif
 /******************************************************
 * Derive ME Settings for OQ for Altref Temporal Filtering
@@ -1783,11 +1810,19 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
 
     // Set hme/me based reference pruning level (0-4)
     // Ref pruning is disallowed for TF in motion_estimate_sb()
+#if REMOVE_TF_REF_PRUNING_FUNCS
+    set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#else
     tf_set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#endif
 
     // Set hme-based me sr adjustment level
     // ME SR adjustment is disallowed for TF in motion_estimate_sb()
+#if REMOVE_TF_REF_PRUNING_FUNCS
+    set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#else
     tf_set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#endif
 #else
 #if ADD_ME_SIGNAL_FOR_PRUNING_TH
 #if MAR20_ADOPTIONS

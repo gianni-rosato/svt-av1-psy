@@ -1219,6 +1219,9 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     uint32_t fast_lambda, full_lambda = 0;
 #if SYNCH_LAMBDA
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
+#if USE_GF_UPDATE_FOR_LAMBDA
+        pcs_ptr,
+#endif
         &fast_lambda,
         &full_lambda,
         (uint8_t)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth,

@@ -278,10 +278,12 @@ typedef struct EbConfig {
     ****************************************/
     int combine_class_12;
 #endif
+#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
     /****************************************
      * edge based skip angle intra
     ****************************************/
     int edge_skp_angle_intra;
+#endif
     /****************************************
      * intra angle delta
     ****************************************/
@@ -330,10 +332,12 @@ typedef struct EbConfig {
      ****************************************/
     int prune_unipred_me;
 #endif
+#if 0 //!REMOVE_REF_FOR_RECT_PART
     /****************************************
       * prune ref frame for rec partitions
      ****************************************/
     int prune_ref_rec_part;
+#endif
     /****************************************
       * nsq table
      ****************************************/

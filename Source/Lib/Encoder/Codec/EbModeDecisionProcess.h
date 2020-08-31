@@ -191,11 +191,13 @@ typedef struct  ObmcControls {
     uint8_t near_count;    //how many near to consider injecting obmc 0..3
 }ObmcControls;
 #endif
+#if !REMOVE_OLD_NSQ_CR
 #if NSQ_CYCLES_REDUCTION
 typedef struct  NsqCycleRControls {
     uint8_t enabled; // On/Off feature control
     uint16_t th;  // Threshold to bypass nsq <the higher th the higher speed>
 }NsqCycleRControls;
+#endif
 #endif
 #if SOFT_CYCLES_REDUCTION
 #if SWITCH_MODE_BASED_ON_STATISTICS
@@ -216,11 +218,13 @@ typedef struct  AMdCycleRControls {
 }AMdCycleRControls;
 #endif
 #endif
+#if !REMOVE_OLD_DEPTH_CR
 #if DEPTH_CYCLES_REDUCTION
 typedef struct  DepthCycleRControls {
     uint8_t enabled; // On/Off feature control
     uint16_t th;  // Threshold to bypass depth <the higher th the higher speed>
 }DepthCycleRControls;
+#endif
 #endif
 #if COEFF_BASED_TXT_BYPASS
 typedef struct  TxtCycleRControls {
@@ -249,16 +253,20 @@ typedef struct SbClassControls {
 
 typedef struct  InterCompoundControls {
     uint8_t enabled;
+#if !REMOVE_SIMILARITY_FEATS
     uint8_t similar_predictions;        // 0: OFF ; 1: Disable inter-compound based on prediction similarity
     uint8_t similar_predictions_th;     // TH Disable inter-compound when predictions are similar
+#endif
     uint8_t mrp_pruning_w_distortion;   // 0: OFF ; 1: Prune number of references based on ME/PME distortion
     uint8_t mrp_pruning_w_distance;     // 4: ALL ; 1: Prune number of references based on reference distance (Best 1)
     uint8_t wedge_search_mode;          // 0: Fast search: estimate Wedge sign 1: full search
 #if !OPT_4
     uint8_t wedge_variance_th;          // 0 : OFF ; 1: Disable inter-compound based on block variance
 #endif
+#if !REMOVE_SIMILARITY_FEATS
     uint8_t similar_previous_blk;       // 0 : OFF ; 1: Disable inter-compound if previous similar block is not compound
                                         //           2: 1 + consider up to the compound mode of the similar blk
+#endif
 }InterCompoundControls;
 
 #endif
@@ -419,6 +427,7 @@ typedef struct CoeffBSwMdCtrls {
     uint8_t skip_block;             // Allow skipping NSQ blocks
 }CoeffBSwMdCtrls;
 #endif
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
 #if TXT_CONTROL
 typedef struct TxTSearchCtrls {
     uint64_t txt_weight[3]; // Used to classify the md candidates
@@ -427,6 +436,7 @@ typedef struct TxTSearchCtrls {
     uint8_t txt_table_idx; // Table of pre_allowed tx_type to be searched
     uint8_t txt_allow_skip; // Allow the skipping of tx_type_search
 }TxTSearchCtrls;
+#endif
 #endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
@@ -621,8 +631,10 @@ typedef struct ModeDecisionContext {
     uint64_t             chroma_at_last_md_stage_intra_th;
     uint64_t             chroma_at_last_md_stage_cfl_th;
 #endif
+#if !REMOVE_IND_CHROMA_NICS
 #if M5_CHROMA_NICS
     uint8_t              independent_chroma_nics;
+#endif
 #endif
 #if !M8_CLEAN_UP
     uint8_t              full_loop_escape;
@@ -642,7 +654,9 @@ typedef struct ModeDecisionContext {
     uint8_t              use_sad_at_pme;
 #endif
 #endif
+#if !REMOVE_IFS_BLK_SIZE
     uint8_t              interpolation_filter_search_blk_size;
+#endif
     uint8_t              redundant_blk;
     uint8_t              nic_level;
     uint8_t              similar_blk_avail;
@@ -651,7 +665,9 @@ typedef struct ModeDecisionContext {
     uint8_t              comp_similar_mode;
 #endif
     uint8_t              inject_inter_candidates;
+#if !REMOVE_SIMILARITY_FEATS
     uint8_t              intra_similar_mode;
+#endif
 #if !CLEANUP_CYCLE_ALLOCATION
     uint8_t              skip_depth;
 #endif
@@ -736,8 +752,12 @@ typedef struct ModeDecisionContext {
         intrapred_buf[INTERINTRA_MODES][2 * 32 * 32]); //MAX block size for inter intra is 32x32
     uint64_t *   ref_best_cost_sq_table;
     uint32_t *   ref_best_ref_sq_table;
+#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
     uint8_t      edge_based_skip_angle_intra;
+#endif
+#if !REMOVE_REF_FOR_RECT_PART
     uint8_t      prune_ref_frame_for_rec_partitions;
+#endif
 #if !OPT_4
     unsigned int source_variance; // input block variance
 #endif
@@ -884,17 +904,25 @@ typedef struct ModeDecisionContext {
 #if ADDED_CFL_OFF
     EbBool        md_disable_cfl;
 #endif
+#if !REMOVE_LIBAOM_SHORTCUT_THS
 #if CFL_REDUCED_ALPHA
     uint8_t       libaom_short_cuts_ths;
 #endif
+#endif
+#if !REMOVE_INTRA_CHROMA_FOLLOWS_LUMA
 #if UV_SEARCH_MODE_INJCECTION
     uint8_t       intra_chroma_search_follows_intra_luma_injection;
 #endif
+#endif
+#if !REMOVE_OLD_NSQ_CR
 #if NSQ_CYCLES_REDUCTION
     NsqCycleRControls nsq_cycles_red_ctrls;
 #endif
+#endif
+#if !REMOVE_OLD_DEPTH_CR
 #if DEPTH_CYCLES_REDUCTION
     DepthCycleRControls depth_cycles_red_ctrls;
+#endif
 #endif
 #if COEFF_BASED_TXT_BYPASS
     TxtCycleRControls txt_cycles_red_ctrls;
@@ -915,11 +943,13 @@ typedef struct ModeDecisionContext {
     uint64_t best_nsq_default_cost;
     uint64_t default_cost_per_shape[NUMBER_OF_SHAPES];
 #endif
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
 #if TXT_CONTROL
     uint8_t md_txt_search_level;
     TxTSearchCtrls txt_search_ctrls;
     EbBool txt_rdoq;
     EbBool txt_ssse;
+#endif
 #endif
 #if SB_CLASSIFIER
     uint8_t enable_area_based_cycles_allocation;
@@ -934,8 +964,10 @@ typedef struct ModeDecisionContext {
 #if COEFF_BASED_BYPASS_NSQ
     uint16_t coeff_area_based_bypass_nsq_th;
 #endif
+#if !REMOVE_OLD_NSQ_CR
 #if DECOUPLE_FROM_ALLOCATION
     uint16_t nsq_cycles_reduction_th;
+#endif
 #endif
 #if SB64_MEM_OPT
     uint8_t sb_size;
@@ -1003,9 +1035,15 @@ typedef struct ModeDecisionContext {
 #endif
 } ModeDecisionContext;
 
+#if USE_GF_UPDATE_FOR_LAMBDA
+typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
+                                      uint8_t bit_depth, uint16_t qp_index,
+                                      EbBool multiply_lambda);
+#else
 typedef void (*EbAv1LambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                       uint8_t bit_depth, uint16_t qp_index,
                                       EbBool multiply_lambda);
+#endif
 #if !TPL_LA_LAMBDA_SCALING
 typedef void (*EbLambdaAssignFunc)(uint32_t *fast_lambda, uint32_t *full_lambda,
                                    uint32_t *fast_chroma_lambda, uint32_t *full_chroma_lambda,

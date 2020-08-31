@@ -2313,14 +2313,18 @@ void copy_api_from_app(
     // prune unipred at me
     scs_ptr->static_config.prune_unipred_me             = ((EbSvtAv1EncConfiguration*)config_struct)->prune_unipred_me;
 #endif
+#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
     // edge skip angle intra
     scs_ptr->static_config.edge_skp_angle_intra         = ((EbSvtAv1EncConfiguration*)config_struct)->edge_skp_angle_intra;
+#endif
     // intra angle delta
     scs_ptr->static_config.intra_angle_delta            = ((EbSvtAv1EncConfiguration*)config_struct)->intra_angle_delta;
     // inter intra compoound
     scs_ptr->static_config.inter_intra_compound         = ((EbSvtAv1EncConfiguration*)config_struct)->inter_intra_compound;
+#if !REMOVE_REF_FOR_RECT_PART
     //prune ref frame for rec partitions
     scs_ptr->static_config.prune_ref_rec_part           = ((EbSvtAv1EncConfiguration*)config_struct)->prune_ref_rec_part;
+#endif
     // NSQ table
     scs_ptr->static_config.nsq_table                    = ((EbSvtAv1EncConfiguration*)config_struct)->nsq_table;
     // frame end cdf update mode
@@ -3027,11 +3031,12 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 #endif
+#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
     if (config->edge_skp_angle_intra != 0 && config->edge_skp_angle_intra != 1 && config->edge_skp_angle_intra != -1) {
       SVT_LOG("Error instance %u: Invalid Enable skip angle intra based on edge flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->edge_skp_angle_intra);
       return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->intra_angle_delta != 0 && config->intra_angle_delta != 1 && config->intra_angle_delta != -1) {
         SVT_LOG("Error instance %u: Invalid Enable intra angle delta flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->intra_angle_delta);
         return_error = EB_ErrorBadParameter;
@@ -3092,11 +3097,12 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 #endif
+#if !REMOVE_REF_FOR_RECT_PART
     if (config->prune_ref_rec_part != 0 && config->prune_ref_rec_part != 1 && config->prune_ref_rec_part != -1) {
       SVT_LOG("Error instance %u: Invalid prune_ref_rec_part flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_ref_rec_part);
       return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->nsq_table != 0 && config->nsq_table != 1 && config->nsq_table != -1) {
       SVT_LOG("Error instance %u: Invalid nsq_table flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->nsq_table);
       return_error = EB_ErrorBadParameter;
@@ -3230,7 +3236,9 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->sg_filter_mode = DEFAULT;
     config_ptr->wn_filter_mode = DEFAULT;
+#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
     config_ptr->edge_skp_angle_intra = DEFAULT;
+#endif
     config_ptr->intra_angle_delta = DEFAULT;
 #if !REMOVE_COMBINE_CLASS12
     config_ptr->combine_class_12 = DEFAULT;
@@ -3252,7 +3260,9 @@ EbErrorType eb_svt_enc_init_parameter(
 #if !SHUT_ME_CAND_SORTING
     config_ptr->prune_unipred_me = DEFAULT;
 #endif
+#if !REMOVE_REF_FOR_RECT_PART
     config_ptr->prune_ref_rec_part = DEFAULT;
+#endif
     config_ptr->nsq_table = DEFAULT;
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->set_chroma_mode = DEFAULT;

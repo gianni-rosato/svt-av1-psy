@@ -816,7 +816,11 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
     const int stride   = mi_cols_sr >> (1 + pcs_ptr->is_720p_or_larger);
+#if NEW_LAMBDA_SCALING_FACTOR
+    const double c = 1.2;
+#else
     const double c = 2;
+#endif
 
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {

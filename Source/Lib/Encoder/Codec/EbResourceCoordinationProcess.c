@@ -225,7 +225,11 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
 #if REVERT_BLUE
 #if JUNE17_ADOPTIONS
 #if SHIFT_PRESETS
+#if AUG27_ADOPTS
+            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
+#else
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
+#endif
 #else
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
 #endif

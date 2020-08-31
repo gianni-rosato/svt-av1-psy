@@ -462,7 +462,11 @@ extern const EbAv1FullCostFunc svt_av1_product_full_cost_func_table[3];
 
 void perform_tx_partitioning(ModeDecisionCandidateBuffer *candidate_buffer,
                              ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                             uint8_t start_tx_depth, uint8_t end_tx_depth,
+#else
                              uint64_t ref_fast_cost, uint8_t start_tx_depth, uint8_t end_tx_depth,
+#endif
 #if QP2QINDEX
                              uint32_t qindex, uint32_t *y_count_non_zero_coeffs,
                              uint64_t *y_coeff_bits,
@@ -476,8 +480,12 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer,
                                  ModeDecisionCandidate *      candidate_ptr,
                                  EbPictureBufferDesc *        input_picture_ptr,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                                 uint32_t input_origin_index, uint32_t blk_origin_index) {
+#else
                                  uint32_t input_origin_index, uint32_t blk_origin_index,
                                  uint64_t ref_fast_cost) {
+#endif
     uint64_t y_full_distortion[DIST_CALC_TOTAL];
     uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU];
 
@@ -550,7 +558,9 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     perform_tx_partitioning(candidate_buffer,
                             context_ptr,
                             pcs_ptr,
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
                             ref_fast_cost,
+#endif
                             start_tx_depth,
                             end_tx_depth,
 #if QP2QINDEX
@@ -620,7 +630,11 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr, BlkStruct *blk
                                       ModeDecisionCandidate *      candidate_ptr,
                                       EbPictureBufferDesc *        input_picture_ptr,
                                       uint32_t input_origin_index, uint32_t blk_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                                      FRAME_STATS *const stats) {
+#else
                                       uint64_t ref_fast_cost, FRAME_STATS *const stats) {
+#endif
     int32_t         mb_row      = context_ptr->blk_origin_y >> 4;
     int32_t         mb_col      = context_ptr->blk_origin_x >> 4;
     const int       use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
@@ -645,8 +659,12 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr, BlkStruct *blk
                          candidate_ptr,
                          input_picture_ptr,
                          input_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                         blk_origin_index);
+#else
                          blk_origin_index,
                          ref_fast_cost);
+#endif
 
     EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
                                                            ? full_distortion_kernel16_bits
@@ -743,7 +761,11 @@ static int firstpass_inter_prediction(
     PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, ModeDecisionContext *context_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer, ModeDecisionCandidate *candidate_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint32_t input_origin_index, uint32_t blk_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+    uint32_t fast_candidate_total_count, const int this_intra_error,
+#else
     uint64_t ref_fast_cost, uint32_t fast_candidate_total_count, const int this_intra_error,
+#endif
     /*int *raw_motion_err_list, */ FRAME_STATS *stats) {
 
     int32_t        mb_row = context_ptr->blk_origin_y >> 4;
@@ -793,8 +815,12 @@ static int firstpass_inter_prediction(
                              candidate_ptr,
                              input_picture_ptr,
                              input_origin_index,
+#if REMOVE_MD_TXT_SEARCH_LEVEL
+                             blk_origin_index);
+#else
                              blk_origin_index,
                              ref_fast_cost);
+#endif
         // To convert full-pel MV
         mv.col = candidate_buffer->candidate_ptr->motion_vector_xl0 >> 3;
         mv.row = candidate_buffer->candidate_ptr->motion_vector_yl0 >> 3;
@@ -959,6 +985,7 @@ extern EbErrorType first_pass_signal_derivation_block(
 
     context_ptr->compound_types_to_try = MD_COMP_AVG;
 
+#if !REMOVE_SIMILARITY_FEATS
     BlkStruct *similar_cu = &context_ptr->md_blk_arr_nsq[context_ptr->similar_blk_mds];
     if (context_ptr->compound_types_to_try > MD_COMP_AVG && context_ptr->similar_blk_avail) {
         int32_t is_src_compound = similar_cu->pred_mode >= NEAREST_NEARESTMV;
@@ -977,17 +1004,20 @@ extern EbErrorType first_pass_signal_derivation_block(
             context_ptr->compound_types_to_try = !is_src_compound ? MD_COMP_AVG : similar_cu->interinter_comp.type;
         }
         }
+#endif
 #if INTER_COMP_REDESIGN
     // Do not add MD_COMP_WEDGE  beyond this point
     if (get_wedge_params_bits(context_ptr->blk_geom->bsize) == 0)
         context_ptr->compound_types_to_try = MIN(context_ptr->compound_types_to_try, MD_COMP_DIFF0);
 #endif
     context_ptr->inject_inter_candidates = 1;
+#if !REMOVE_SIMILARITY_FEATS
     if (context_ptr->pd_pass > PD_PASS_1 && context_ptr->similar_blk_avail) {
         int32_t is_src_intra = similar_cu->pred_mode <= PAETH_PRED;
         if (context_ptr->intra_similar_mode)
             context_ptr->inject_inter_candidates = is_src_intra ? 0 : context_ptr->inject_inter_candidates;
     }
+#endif
 
     return return_error;
 }
@@ -1114,8 +1144,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     context_ptr->inject_inter_candidates = 1;
     generate_md_stage_0_cand(
         context_ptr->sb_ptr, context_ptr, &fast_candidate_total_count, pcs_ptr);
-
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
     uint64_t ref_fast_cost = MAX_MODE_COST;
+#endif
 
     int32_t        mb_row = context_ptr->blk_origin_y >> 4;
     int32_t        mb_col = context_ptr->blk_origin_x >> 4;
@@ -1139,7 +1170,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                                       input_picture_ptr,
                                                       input_origin_index,
                                                       blk_origin_index,
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
                                                       ref_fast_cost,
+#endif
                                                       mb_stats);
 
     int this_inter_error = this_intra_error;
@@ -1152,7 +1185,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                                                       input_picture_ptr,
                                                       input_origin_index,
                                                       blk_origin_index,
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
                                                       ref_fast_cost,
+#endif
                                                       fast_candidate_total_count,
                                                       this_intra_error,
                                                       //raw_motion_err_list,
@@ -1201,7 +1236,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
         (context_ptr->full_loop_escape == 2) ? context_ptr->sorted_candidate_index_array
                                              : context_ptr->best_candidate_index_array,
 #endif
+#if !REMOVE_REF_FOR_RECT_PART
         context_ptr->prune_ref_frame_for_rec_partitions,
+#endif
         &best_intra_mode);
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 
@@ -1579,6 +1616,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 3                                              Tx search at full loop
     context_ptr->tx_search_level = TX_SEARCH_OFF;
 #endif
+#if !REMOVE_MD_TXT_SEARCH_LEVEL
     // Set MD tx_level
     // md_txt_search_level                            Settings
     // 0                                              FULL
@@ -1587,7 +1625,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // 3                                              Tx_weight 1 + disabling rdoq and sssse
     // 4                                              Tx_weight 1 + disabling rdoq and sssse + reduced set
     context_ptr->md_txt_search_level = 1;
-
+#endif
     uint8_t txt_cycles_reduction_level = 0;
     set_txt_cycle_reduction_controls(context_ptr, txt_cycles_reduction_level);
 #if IFS_PUSH_BACK_STAGE_3
@@ -1617,11 +1655,13 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
     context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
 
+#if !REMOVE_IND_CHROMA_NICS
     // Chroma independent modes nics
     // Level                Settings
     // 0                    All supported modes.
     // 1                    All supported modes in  Intra picture and 4 in inter picture
     context_ptr->independent_chroma_nics = 0;
+#endif
 
     // Cfl level
     // Level                Settings
@@ -1630,14 +1670,18 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     context_ptr->md_disable_cfl = EB_TRUE;
 
+#if !REMOVE_LIBAOM_SHORTCUT_THS
     // libaom_short_cuts_ths
     // 1                    faster than libaom
     // 2                    libaom - default
     context_ptr->libaom_short_cuts_ths = 2;
+#endif
 
+#if !REMOVE_INTRA_CHROMA_FOLLOWS_LUMA
     // 0                    inject all supprted chroma mode
     // 1                    follow the luma injection
     context_ptr->intra_chroma_search_follows_intra_luma_injection = 1;
+#endif
 
     // Set disallow_4x4
     context_ptr->disallow_4x4 = EB_FALSE;
@@ -1762,12 +1806,14 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
         context_ptr->md_staging_count_level = 2;
     }
 
+#if !REMOVE_IFS_BLK_SIZE
     // Set interpolation filter search blk size
     // Level                Settings
     // 0                    ON for 8x8 and above
     // 1                    ON for 16x16 and above
     // 2                    ON for 32x32 and above
     context_ptr->interpolation_filter_search_blk_size = 0;
+#endif
 
     // Derive Spatial SSE Flag
     context_ptr->spatial_sse_full_loop_level = EB_TRUE;
@@ -1780,13 +1826,14 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // Derive redundant block
     context_ptr->redundant_blk = EB_FALSE;
 
+#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
     // Set edge_skp_angle_intra
     context_ptr->edge_based_skip_angle_intra = 0;
-
+#endif
+#if !REMOVE_REF_FOR_RECT_PART
     // Set prune_ref_frame_for_rec_partitions
     context_ptr->prune_ref_frame_for_rec_partitions = 0;
-
-
+#endif
 
     // md_stage_1_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than md_stage_1_cand_prune_th
@@ -1809,6 +1856,7 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
 
     context_ptr->coeff_area_based_bypass_nsq_th = 0;
 
+#if !REMOVE_OLD_NSQ_CR
     // NSQ cycles reduction level: TBD
     uint8_t nsq_cycles_red_mode = 0;
     set_nsq_cycle_redcution_controls(context_ptr, nsq_cycles_red_mode);
@@ -1816,10 +1864,12 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // NsqCycleRControls*nsq_cycle_red_ctrls = &context_ptr->nsq_cycles_red_ctrls;
     // Overwrite allcation action when nsq_cycles_reduction th is higher.
     context_ptr->nsq_cycles_reduction_th = 0;
-
+#endif
+#if !REMOVE_OLD_DEPTH_CR
     // Depth cycles reduction level: TBD
     uint8_t depth_cycles_red_mode = 0;
     set_depth_cycle_redcution_controls(context_ptr, depth_cycles_red_mode);
+#endif
 
     uint8_t adaptive_md_cycles_level = 0;
     adaptive_md_cycles_redcution_controls(context_ptr, adaptive_md_cycles_level);
@@ -1894,10 +1944,12 @@ EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     // Set md_palette_level @ MD
     context_ptr->md_palette_level = 0;
 
+#if !REMOVE_SIMILARITY_FEATS
     // intra_similar_mode
     // 0: OFF
     // 1: If previous similar block is intra, do not inject any inter
     context_ptr->intra_similar_mode = 0;
+#endif
 #if !REMOVE_USELESS_CODE
     // Set inter_intra_distortion_based_reference_pruning
     context_ptr->inter_intra_distortion_based_reference_pruning = 0;

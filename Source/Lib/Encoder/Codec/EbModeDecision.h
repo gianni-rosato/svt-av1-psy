@@ -265,7 +265,9 @@ uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, Blk
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
                                     uint32_t                      candidate_total_count,
                                     uint32_t *                    best_candidate_index_array,
+#if !REMOVE_REF_FOR_RECT_PART
                                     uint8_t   prune_ref_frame_for_rec_partitions,
+#endif
                                     uint32_t *best_intra_mode);
 #if TPL_LA_LAMBDA_SCALING
 uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
