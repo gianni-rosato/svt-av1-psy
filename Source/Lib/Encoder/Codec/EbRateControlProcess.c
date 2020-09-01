@@ -4667,9 +4667,21 @@ static int get_kf_boost_from_r0(double r0, int frames_to_key, int is_smaller_360
 
 #if TPL_IMP
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolution input_resolution) {
+#if RC_BUG_FIXES
+    double factor;
+    // when frames_to_key not available, it is set to -1. In this case the factor is set to average of min and max
+    if (frames_to_key == -1)
+        factor = (10.0 + 4.0) / 2;
+    else {
+        factor = sqrt((double)frames_to_key);
+        factor = AOMMIN(factor, 10.0);
+        factor = AOMMAX(factor, 4.0);
+    }
+#else
     double factor = sqrt((double)frames_to_key);
     factor = AOMMIN(factor, 10.0);
     factor = AOMMAX(factor, 4.0);
+#endif
     const int is_720p_or_smaller = input_resolution <= INPUT_SIZE_720p_RANGE;
     const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 14.0 * factor) / 2 / r0)
                                          : (int)rint(2 * (75.0 + 14.0 * factor) / r0);
@@ -5096,7 +5108,10 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         double q_val;
         rc->worst_quality   = MAXQ;
         rc->best_quality    = MINQ;
-
+#if PASS1_BUG_FIXES
+        // when frames_to_key not available, i.e. in 1 pass encoding
+        rc->kf_boost = get_cqp_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
+#else
         int frames_to_key = (int)MIN((uint64_t)scs_ptr->intra_period_length + 1, scs_ptr->static_config.frames_to_be_encoded);
 #if TPL_IMP
         rc->kf_boost = get_cqp_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, scs_ptr->input_resolution);
@@ -5104,7 +5119,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         int is_smaller_360p = scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE;
         rc->kf_boost = get_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, frames_to_key, is_smaller_360p);
 #endif
-
+#endif
         // Baseline value derived from cpi->active_worst_quality and kf boost.
 #if TPL_IMP
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);

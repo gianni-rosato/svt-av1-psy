@@ -2082,7 +2082,11 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     else if ((twopass->stats_in == twopass->stats_buf_ctx->stats_in_end/* &&
              is_stat_consumption_stage_twopass(cpi)*/) ||
         rc->frames_to_key >= kf_cfg->key_freq_max) {
+#if PASS2_BUG_FIXES
+        rc->next_key_frame_forced = 0;
+#else
         rc->next_key_frame_forced = 1;
+#endif
     }
     else {
         rc->next_key_frame_forced = 0;

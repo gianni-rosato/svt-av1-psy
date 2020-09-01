@@ -588,6 +588,9 @@ extern "C" {
 #define EXIT_PME                         1 // ME_MV-based PME optimizations for M7 only
 #define FASTEST_HME                      1 // (16,64) instead of (32,128) for M7 only
 #define FREQ_SSE_BUG_FIX                 1 // Always T-1 if TXS (lossless)
+
+#define PASS1_BUG_FIXES                  1 // Fix the one pass QP assignment using frames_to_be_encoded
+#define PASS2_BUG_FIXES                  1 // Fix 2pass encoding related to next_key_frame_forced
 // end
 
 ///////// END MASTER_SYNCH
