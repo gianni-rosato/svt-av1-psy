@@ -525,6 +525,8 @@ extern "C" {
 #define SHIFT_PRESETS                   1 // M5->M4, M6->M5, M8->M6
 #define AUG5_ADOPTS                     1 // Adoptions for MR and M2
 
+#define FIX_TPL_ME_ACCESS    1 //fixes access of ME results in TPL
+#define FIX_TPL_REF_OBJ      1 //fixes access of pa ref obj-lossless
 #define FIX_TPL_POC128       1 // Fixed TPL poc128 error
 #define TWOPASS_RC           1 // Refine 2pass RC VBR from libaom
 #if TWOPASS_RC
@@ -552,6 +554,7 @@ extern "C" {
 #define REMOVE_OLD_DEPTH_CR              1 // remove old depth cycles reduction feature (replaced by adaptive_md_cycles_level)
 #endif
 #define REMOVE_TF_REF_PRUNING_FUNCS      1 // remove redundant functions for setting TF ref pruning settings (which are always off)
+
 
 
 
@@ -598,6 +601,8 @@ extern "C" {
 #define FPFOPT_MD           1 // update generate_av1_mvp_table, update predMV, no av1_product_full_cost_func_table
 #define FPFOPT_INTRA        1 // get neighbor pixel from source
 #define FPFOPT_RECON         1 // remove the use of recon in MD
+#define TPL_C_FIX                         1
+#define TPL_SANITIZER_FIX                 1
 // end
 #endif
 ///////// END MASTER_SYNCH

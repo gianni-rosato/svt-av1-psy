@@ -146,7 +146,11 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_sad128x64 = eb_aom_sad128x64_c;
     eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_c;
     eb_av1_txb_init_levels = eb_av1_txb_init_levels_c;
-
+#if TPL_C_FIX
+    svt_av1_lowbd_fwd_txfm = svt_av1_lowbd_fwd_txfm_c;
+    svt_aom_satd = svt_aom_satd_c;
+    svt_av1_block_error = svt_av1_block_error_c;
+#endif
     aom_upsampled_pred = eb_aom_upsampled_pred_c;
 
     eb_aom_obmc_sad128x128 = aom_obmc_sad128x128_c;
@@ -447,10 +451,15 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
             if (flags & HAS_AVX2) eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx2;
             if (flags & HAS_AVX2) eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx2;
 #if TPL_LA
-    svt_aom_satd = svt_aom_satd_c;
-    if (flags & HAS_AVX2) svt_aom_satd = svt_aom_satd_avx2;
-    svt_av1_block_error = svt_av1_block_error_c;
-    if (flags & HAS_AVX2) svt_av1_block_error = svt_av1_block_error_avx2;
+#if TPL_C_FIX
+            if (flags & HAS_AVX2) svt_aom_satd = svt_aom_satd_avx2;
+            if (flags & HAS_AVX2) svt_av1_block_error = svt_av1_block_error_avx2;
+#else
+            svt_aom_satd = svt_aom_satd_c;
+            if (flags & HAS_AVX2) svt_aom_satd = svt_aom_satd_avx2;
+            svt_av1_block_error = svt_av1_block_error_c;
+            if (flags & HAS_AVX2) svt_av1_block_error = svt_av1_block_error_avx2;
+#endif
 #endif
 #ifndef NON_AVX512_SUPPORT
             if (flags & HAS_AVX512F) {

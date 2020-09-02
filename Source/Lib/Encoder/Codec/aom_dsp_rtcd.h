@@ -139,6 +139,14 @@ extern "C" {
     void av1_transform_two_d_4x4_c(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
     RTCD_EXTERN void(*eb_av1_fwd_txfm2d_4x4)(int16_t *input, int32_t *output, uint32_t input_stride, TxType transform_type, uint8_t  bit_depth);
 #if TPL_LA
+#if TPL_C_FIX
+    void svt_av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
+    RTCD_EXTERN void(*svt_av1_lowbd_fwd_txfm)(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
+    int svt_aom_satd_c(const TranLow *coeff, int length);
+    RTCD_EXTERN int(*svt_aom_satd)(const TranLow *coeff, int length);
+    int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+    RTCD_EXTERN int64_t(*svt_av1_block_error)(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+#else
     void svt_av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_sse2(const int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
     //void av1_lowbd_fwd_txfm_sse4_1(const int16_t *src_diff, TranLow *coeff, int diff_stride, TxfmParam *txfm_param);
@@ -150,6 +158,7 @@ extern "C" {
     int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
     int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
     RTCD_EXTERN int64_t (*svt_av1_block_error)(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+#endif
 #endif
     RTCD_EXTERN void(*eb_smooth_v_predictor)(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32_t bh, const uint8_t *above, const uint8_t *left);
     void get_proj_subspace_c(const uint8_t *src8, int width, int height, int src_stride, const uint8_t *dat8, int dat_stride, int use_highbitdepth, int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq, const SgrParamsType *params);
@@ -1117,7 +1126,10 @@ extern "C" {
 #endif
     void eb_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
     void eb_av1_txb_init_levels_avx512(const TranLow *const coeff, const int32_t width, const int32_t height, uint8_t *const levels);
-
+#if TPL_C_FIX
+    int svt_aom_satd_avx2(const TranLow *coeff, int length);
+    int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size, int64_t *ssz);
+#endif
     void av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows, int cols, uint64_t *hist);
 
     double av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1, unsigned char *im2, int stride2, int x2, int y2);

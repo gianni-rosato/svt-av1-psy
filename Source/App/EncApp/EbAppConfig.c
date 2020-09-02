@@ -1853,7 +1853,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->use_qp_file         = EB_FALSE;
     config_ptr->look_ahead_distance = (uint32_t)~0;
 #if 1//TPL_LA
-    config_ptr->enable_tpl_la       = 0;
+    config_ptr->enable_tpl_la       = 1;
 #endif
     config_ptr->target_bit_rate     = 7000000;
     config_ptr->max_qp_allowed      = 63;

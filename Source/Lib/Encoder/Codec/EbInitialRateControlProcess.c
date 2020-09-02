@@ -1030,6 +1030,34 @@ int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_dep
 #endif
 extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
                             int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
+
+#if FIX_TPL_ME_ACCESS
+//Given one reference frame identified by the pair (list_index,ref_index)
+//indicate if ME data is valid
+static uint8_t is_me_data_valid(
+    const MeSbResults           *me_results,
+    uint32_t                     me_mb_offset,
+    uint8_t                      list_idx,
+    uint8_t                      ref_idx) {
+
+    uint8_t total_me_cnt = me_results->total_me_candidate_index[me_mb_offset];
+    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_mb_offset*MAX_PA_ME_CAND];
+
+    for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
+        const MeCandidate *me_cand = &me_block_results[me_cand_i];
+        assert(/*me_cand->direction >= 0 && */me_cand->direction <= 2);
+        if (me_cand->direction == 0 || me_cand->direction == 2) {
+            if (list_idx == me_cand->ref0_list && ref_idx == me_cand->ref_idx_l0)
+                return 1;
+        }
+        if (me_cand->direction == 1 || me_cand->direction == 2) {
+            if (list_idx == me_cand->ref1_list && ref_idx == me_cand->ref_idx_l1)
+                return 1;
+        }
+    }
+    return 0;
+}
+#endif
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size
@@ -1048,7 +1076,6 @@ void tpl_mc_flow_dispenser(
     uint32_t    me_mb_offset = 0;
     TxSize      tx_size = TX_16X16;
     EbPictureBufferDesc  *ref_pic_ptr;
-    EbReferenceObject    *referenceObject;
     struct      ScaleFactors sf;
     BlockGeom   blk_geom;
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
@@ -1199,6 +1226,19 @@ void tpl_mc_flow_dispenser(
                         uint32_t ref_pic_index = (scs_ptr->mrp_mode == 0) ? (rf_idx >= 4 ? (rf_idx - 4) : rf_idx)
                                                                           : (rf_idx >= 2 ? (rf_idx - 2) : rf_idx);
 #endif
+
+#if FIX_TPL_ME_ACCESS
+#if  !ON_OFF_FEATURE_MRP
+                        if( (list_index == 0 && (ref_pic_index+1) > pcs_ptr->ref_list0_count_try) ||
+                            (list_index == 1 && (ref_pic_index+1) > pcs_ptr->ref_list1_count_try) )
+#else
+                        if( (list_index == 0 && (ref_pic_index+1) > pcs_ptr->mrp_ctrls.ref_list0_count_try) ||
+                            (list_index == 1 && (ref_pic_index+1) > pcs_ptr->mrp_ctrls.ref_list1_count_try) )
+#endif
+                            continue;
+                        if( !is_me_data_valid( pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
+                            continue;
+#endif
                         if(!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
                             continue;
 #if FIX_TPL_POC128
@@ -1217,8 +1257,15 @@ void tpl_mc_flow_dispenser(
                             continue;
                         }
 
+#if FIX_TPL_REF_OBJ
+                        EbPaReferenceObject * referenceObject = (EbPaReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
+                        ref_pic_ptr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
+#else
                         referenceObject = (EbReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
                         ref_pic_ptr = /*is16bit ? (EbPictureBufferDesc*)referenceObject->reference_picture16bit : */(EbPictureBufferDesc*)referenceObject->reference_picture;
+
+#endif
+
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
                         uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
@@ -1279,7 +1326,7 @@ void tpl_mc_flow_dispenser(
                         }
                     } // rf_idx
                     if(best_inter_cost < INT64_MAX) {
-                        uint16_t eob;
+                        uint16_t eob = 0;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
 #if TPL_OPT
                         int rate_cost = pcs_ptr->tpl_opt_flag? 0 : rate_estimator(qcoeff, eob, tx_size);
@@ -1383,7 +1430,7 @@ void tpl_mc_flow_dispenser(
                     eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
-                    uint16_t eob;
+                    uint16_t eob = 0;
 
                     get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
 #if TPL_OPT
@@ -1419,7 +1466,33 @@ void tpl_mc_flow_dispenser(
             }
         }
     }
+#if TPL_SANITIZER_FIX
+    #define MIN_TPL_BLOCK_SIZE 16
+    uint32_t          pad_right;
+    uint32_t          pad_bottom;
 
+    // pad non-multiple of MIN_TPL_BLOCK_SIZE (16) as these blks it not processed by TPL
+    if (input_picture_ptr->width % MIN_TPL_BLOCK_SIZE) {
+        pad_right = MIN_TPL_BLOCK_SIZE - (scs_ptr->max_input_luma_width % MIN_TPL_BLOCK_SIZE);
+    } else {
+        pad_right = 0;
+    }
+    if (input_picture_ptr->height % MIN_TPL_BLOCK_SIZE) {
+        pad_bottom = MIN_TPL_BLOCK_SIZE - (input_picture_ptr->height% MIN_TPL_BLOCK_SIZE);
+    } else {
+        pad_bottom = 0;
+    }
+
+    // padding current recon picture non-mutiple of MIN_TPL_BLOCK_SIZE
+    pad_input_picture(
+        &encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]
+            [input_picture_ptr->origin_x +input_picture_ptr->origin_y * input_picture_ptr->stride_y],
+        input_picture_ptr->stride_y,
+        (input_picture_ptr->width - pad_right),
+        (input_picture_ptr->height - pad_bottom),
+        pad_right,
+        pad_bottom);
+#endif
     // padding current recon picture
     generate_padding(
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
