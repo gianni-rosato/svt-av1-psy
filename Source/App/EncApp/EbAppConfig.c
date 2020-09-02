@@ -354,6 +354,7 @@ static void set_input_stat_file(const char *value, EbConfig *cfg) {
 static void set_output_stat_file(const char *value, EbConfig *cfg) {
     if (cfg->output_stat_file) { unlock_and_fclose(cfg->output_stat_file); }
     fopen_and_lock(&cfg->output_stat_file, value, EB_TRUE);
+    cfg->rc_firstpass_stats_out = EB_TRUE;
 };
 #if !TWOPASS_RC
 static void set_snd_pass_enc_mode(const char *value, EbConfig *cfg) {
@@ -1686,8 +1687,6 @@ void eb_config_dtor(EbConfig *config_ptr) {
         config_ptr->stat_file = (FILE *)NULL;
     }
     if (config_ptr->input_stat_file) {
-        free(config_ptr->rc_twopass_stats_in.buf);
-        config_ptr->rc_twopass_stats_in.buf = NULL;
         unlock_and_fclose(config_ptr->input_stat_file);
         config_ptr->input_stat_file = (FILE *)NULL;
     }
@@ -1915,6 +1914,70 @@ EbBool load_twopass_stats_in(EbConfig *config)
     return config->rc_twopass_stats_in.buf != NULL;
 }
 
+/* set two passes stats information to EbConfig
+ */
+EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
+    const SvtAv1FixedBuf* rc_twopass_stats_in, uint32_t channel_number)
+{
+    switch (pass) {
+        case ENCODE_SINGLE_PASS: {
+            const char* stats = config->stats ? config->stats : "svtav1_2pass.log";
+            if (config->pass == 1) {
+                if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1, stats);
+                    return EB_ErrorBadParameter;
+                }
+                config->rc_firstpass_stats_out = EB_TRUE;
+            } else if (config->pass == 2) {
+                if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't read stats file %s for read\n",
+                        channel_number + 1, stats);
+                    return EB_ErrorBadParameter;
+                }
+                if (!load_twopass_stats_in(config)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't load file %s\n",
+                        channel_number + 1, stats);
+                    return EB_ErrorBadParameter;
+                }
+            }
+            break;
+        }
+        case ENCODE_FIRST_PASS: {
+            // for combined two passes,
+            // we only ouptut first pass stats when user explicitly set the --stats
+            if (config->stats) {
+                if (!fopen_and_lock(&config->output_stat_file, config->stats, EB_TRUE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1, config->stats);
+                    return EB_ErrorBadParameter;
+                }
+            }
+            config->rc_firstpass_stats_out = EB_TRUE;
+            break;
+        }
+        case ENCODE_LAST_PASS: {
+            if (!rc_twopass_stats_in->sz) {
+                fprintf(config->error_log_file,
+                        "Error instance %u: bug, combined 2passes need stats in for second pass \n",
+                        channel_number + 1);
+                return EB_ErrorBadParameter;
+            }
+            config->rc_twopass_stats_in = *rc_twopass_stats_in;
+            break;
+        }
+        default: {
+            assert(0);
+            break;
+        }
+    }
+    return EB_ErrorNone;
+}
+
 /******************************************
 * Verify Settings
 ******************************************/
@@ -2022,30 +2085,6 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
                 channel_number + 1);
         return EB_ErrorBadParameter;
     }
-
-    const char* stats = config->stats ? config->stats : "svtav1_2pass.log";
-    if (pass == 1) {
-        if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
-            fprintf(config->error_log_file,
-                "Error instance %u: can't open stats file %s for write \n",
-                channel_number + 1, stats);
-            return EB_ErrorBadParameter;
-        }
-    } else if (pass == 2) {
-        if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
-            fprintf(config->error_log_file,
-                "Error instance %u: can't read stats file %s for read\n",
-                channel_number + 1, stats);
-            return EB_ErrorBadParameter;
-        }
-        if (!load_twopass_stats_in(config)) {
-            fprintf(config->error_log_file,
-                "Error instance %u: can't load file %s\n",
-                channel_number + 1, stats);
-            return EB_ErrorBadParameter;
-        }
-    }
-
 #if TWOPASS_RC
     if (pass != DEFAULT || config->input_stat_file || config->output_stat_file) {
         if (config->hierarchical_levels != 4) {

@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <stdint.h>
+#include <string.h>
 #include "EbAppConfig.h"
 #include "EbAppContext.h"
 #include "EbTime.h"
@@ -48,7 +49,7 @@ extern AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext 
 extern AppExitConditionType process_output_recon_buffer(EbConfig *    config,
                                                         EbAppContext *app_call_back);
 
-extern AppExitConditionType process_output_stream_buffer(EbConfig *    config,
+extern AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *    config,
                                                          EbAppContext *app_call_back,
                                                          uint8_t       pic_send_done,
                                                          int32_t      *frame_count);
@@ -87,7 +88,7 @@ static const char *get_pass_name(EncodePass pass) {
     }
 }
 
-static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
+static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePass pass) {
     EbErrorType          return_error   = EB_ErrorNone;
     AppExitConditionType exit_condition = APP_ExitConditionNone; // Processing loop exit condition
 
@@ -177,9 +178,12 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
                     configs[inst_cnt]->rate_control_mode = 0;
 #endif
                 }
-
-                return_errors[inst_cnt] = init_encoder(
-                    configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
+                return_errors[inst_cnt] = set_two_passes_stats(configs[inst_cnt], pass,
+                    &enc_app->rc_twopasses_stats, num_channels);
+                if (return_errors[inst_cnt] == EB_ErrorNone) {
+                    return_errors[inst_cnt] = init_encoder(
+                        configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
+                }
                 return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
             } else
                 channel_active[inst_cnt] = EB_FALSE;
@@ -236,6 +240,7 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
                                 configs[inst_cnt], app_callbacks[inst_cnt]);
                         if (exit_cond_output[inst_cnt] == APP_ExitConditionNone)
                             exit_cond_output[inst_cnt] = process_output_stream_buffer(
+                                enc_app,
                                 configs[inst_cnt],
                                 app_callbacks[inst_cnt],
                                 (exit_cond_input[inst_cnt] == APP_ExitConditionNone) ||
@@ -456,6 +461,17 @@ static EbErrorType encode(int32_t argc, char *argv[], EncodePass pass) {
     return return_error;
 }
 
+EbErrorType enc_app_ctor(EncApp* enc_app)
+{
+    memset(enc_app, 0, sizeof(*enc_app));
+    return EB_ErrorNone;
+}
+
+void enc_app_dctor(EncApp* enc_app)
+{
+    free(enc_app->rc_twopasses_stats.buf);
+}
+
 /***************************************
  * Encoder App Main
  ***************************************/
@@ -468,11 +484,19 @@ int32_t main(int32_t argc, char *argv[]) {
     EbErrorType return_error = EB_ErrorNone; // Error Handling
     uint32_t    passes;
     EncodePass  pass[MAX_ENCODE_PASS];
+    EncApp      enc_app;
 
     signal(SIGINT, event_handler);
     if (get_help(argc, argv))
         return 0;
+
+    enc_app_ctor(&enc_app);
     passes = get_passes(argc, argv, pass);
-    for (uint32_t i = 0; i < passes; i++) return_error = encode(argc, argv, pass[i]);
+    for (uint32_t i = 0; i < passes; i++) {
+        return_error = encode(&enc_app, argc, argv, pass[i]);
+        if (return_error != EB_ErrorNone)
+            break;
+    }
+    enc_app_dctor(&enc_app);
     return return_error != EB_ErrorNone;
 }

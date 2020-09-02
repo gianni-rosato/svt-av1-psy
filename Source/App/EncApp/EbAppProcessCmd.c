@@ -1088,7 +1088,7 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
     return;
 }
 
-AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext *app_call_back,
+AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *config, EbAppContext *app_call_back,
                                                   uint8_t pic_send_done, int32_t *frame_count) {
     AppPortActiveType *  port_state = &app_call_back->output_stream_port_active;
     EbBufferHeaderType * header_ptr;
@@ -1162,13 +1162,20 @@ AppExitConditionType process_output_stream_buffer(EbConfig *config, EbAppContext
             svt_av1_enc_release_out_buffer(&header_ptr);
 
             if (header_ptr->flags & EB_BUFFERFLAG_EOS) {
-                if (config->output_stat_file) {
+                if (config->rc_firstpass_stats_out) {
                     SvtAv1FixedBuf first_pass_stat;
                     EbErrorType ret = svt_av1_enc_get_stream_info(component_handle,
                         SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT, &first_pass_stat);
                     if (ret == EB_ErrorNone) {
-                        fwrite(first_pass_stat.buf,
-                            1, first_pass_stat.sz, config->output_stat_file);
+                        if (config->output_stat_file) {
+                            fwrite(first_pass_stat.buf,
+                                1, first_pass_stat.sz, config->output_stat_file);
+                        }
+                        enc_app->rc_twopasses_stats.buf = realloc(enc_app->rc_twopasses_stats.buf, first_pass_stat.sz);
+                        if (enc_app->rc_twopasses_stats.buf) {
+                            memcpy(enc_app->rc_twopasses_stats.buf, first_pass_stat.buf, first_pass_stat.sz);
+                            enc_app->rc_twopasses_stats.sz = first_pass_stat.sz;
+                        }
                     }
                 }
 
