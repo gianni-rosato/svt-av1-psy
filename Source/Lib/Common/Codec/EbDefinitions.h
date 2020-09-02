@@ -552,9 +552,9 @@ extern "C" {
 #define REMOVE_OLD_DEPTH_CR              1 // remove old depth cycles reduction feature (replaced by adaptive_md_cycles_level)
 #endif
 #define REMOVE_TF_REF_PRUNING_FUNCS      1 // remove redundant functions for setting TF ref pruning settings (which are always off)
-#endif
 
-// start
+
+
 #define LOSSLESS_OPT                    1 // Lossless opt
 #if LOSSLESS_OPT // 1st round
 #define OPT_0                         1 // bypass distortion_based_modulator() if no nsq
@@ -591,8 +591,15 @@ extern "C" {
 
 #define PASS1_BUG_FIXES                  1 // Fix the one pass QP assignment using frames_to_be_encoded
 #define PASS2_BUG_FIXES                  1 // Fix 2pass encoding related to next_key_frame_forced
+#define FPFOPT_NO_EP                    1  //bypass EncDec for 1st pass
+#define FPFOPT_ESTBITS                  1  //no coeff estimation for 1st pass
+#define PASS1_CLEANUP        1  // distortion_based_modulator  / generate_md_stage_0_cand
+#define FPFOPT_SRC_PATH      1 // use the source path
+#define FPFOPT_MD           1 // update generate_av1_mvp_table, update predMV, no av1_product_full_cost_func_table
+#define FPFOPT_INTRA        1 // get neighbor pixel from source
+#define FPFOPT_RECON         1 // remove the use of recon in MD
 // end
-
+#endif
 ///////// END MASTER_SYNCH
 
 #if DECOUPLE_ME_RES
