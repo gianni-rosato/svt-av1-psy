@@ -521,6 +521,11 @@ EbErrorType load_default_buffer_configuration_settings(
         uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
         uint32_t needed_lad_pictures = ((scs_ptr->static_config.look_ahead_distance + mg_size - 1) / mg_size) * mg_size;
 
+
+        if (scs_ptr->static_config.look_ahead_distance > 0)
+            if (((scs_ptr->static_config.intra_period_length + 1) % mg_size) > 0)
+                 needed_lad_pictures += mg_size;
+
         /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
            note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
            to be released back to be able to start first base(16). Anyway poc16 needs to wait for poc0 to finish.*/
