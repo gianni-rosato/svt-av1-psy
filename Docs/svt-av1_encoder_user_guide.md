@@ -111,9 +111,9 @@ Here are some sample encode command lines
 #### 1 pass VBR 10000 Kbps at medium speed from 24fps yuv 1920x1080 input
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 10000 --preset 5 -b output.ivf`
 
-#### 2 pass fixed QP at maximum quality from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 8 -b output.ivf --output-stat-file stat_file.stat`
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 0 -b output.ivf --input-stat-file stat_file.stat`
+#### 2 pass CRF at maximum quality from 24fps yuv 1920x1080 input
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 8 --irefresh-type 2 --pass 1 --stats stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
 
 ### List of all configuration parameters
 
@@ -168,9 +168,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 #### Twopass Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
-| **OutputStatFile** | --output-stat-file | any string | Null | Output stat file for first pass|
-| **InputStatFile** | --input-stat-file | any string | Null | Input stat file for second pass|
-| **EncoderMode2p** | --enc-mode-2p | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed. Passed to encoder's first pass to use the ME settings of the second pass to achieve better bdRate|
+| **Pass** | --pass | [1-2] | Null | Specify which pass the run is on (1=First Pass, 2=Second Pass) |
+| **Stats** | --stats | any string | Null | Output stat file containing information from first pass |
 | **VBRBiasPct** | --bias-pct | [0 - 100] | 50 | 2pass CBR/VBR bias percent (0=CBR, 100=VBR) |
 | **MinSectionPct** | --minsection-pct | [0 - ] | 0 | 2pass VBR GOP min bitrate (percent of target) |
 | **MaxSectionPct** | --maxsection-pct | [0 - ] | 2000 | 2pass VBR GOP max bitrate (percent of target) |
@@ -200,10 +199,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Mfmv** | --enable-mfmv | [0/1, -1 for default] | -1 | Enable motion field motion vector, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **RedundantBlock** | --enable-redundant-blk | [0/1, -1 for default] | -1 | Enable redundant block skipping same neighbors non-square partitions, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **SpatialSSEfl** | --enable-spatial-sse-full-loop-level | [0/1, -1 for default] | -1 | Enable spatial sse full loop, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Subpel** | --subpel | [0/1, -1 for default] | -1 | Enable subpel, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **OverBoundryBlock** | --enable-over-bndry-blk | [0/1, -1 for default] | -1 | Enable over boundary block mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **NewNearestCombInjection** | --enable-new-nrst-near-comb | [0/1, -1 for default] | -1 | Enable new nearest near comb injection, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **PruneUnipredMe** | --enable-prune-unipred-me | [0/1, -1 for default] | -1 | Enable prune unipred at me, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **PruneRefRecPart** | --enable-prune-ref-rec-part | [0/1, -1 for default] | -1 | Enable prune prune ref frame for rec partitions, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **NsqTable** | --enable-nsq-table-use | [0/1, -1 for default] | -1 | Enable nsq table, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **FrameEndCdfUpdate** | --enable-framend-cdf-upd-mode | [0/1, -1 for default] | -1 | Enable frame end cdf update mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
@@ -211,16 +208,13 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **DisableCfl** | --disable-cfl | [0/1, -1 for default] | -1 | Disable chroma from luma (CFL), 0 = OFF (do not disable), 1 = ON (disable), -1 = DEFAULT|
 | **LocalWarpedMotion** | --enable-local-warp | [0 - 1] | 0 | Enable warped motion use , 0 = OFF, 1 = ON |
 | **GlobalMotion** | --enable-global-motion | [0-1, 1 for default] | 1 | Enable global motion (0: OFF, 1: ON [default]) |
-| **CombineClass12** | --enable-class-12 | [0/1, -1 for default] | -1 | Enable combine Mode decision Classes 1 and 2 (inter classes), 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **EdgeSkipAngleIntra** | --enable-intra-edge-skp | [0/1, -1 for default] | -1 | Enable skip angle intra based on edge, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **PicBasedRateEst** | --enable-pic-based-rate-est | [0/1, -1 for default] | -1 | Enable picture based rate estimation. Only active with lp 1 (0: OFF, 1: ON, -1: DEFAULT)|
 | **IntraAngleDelta** | --enable-intra-angle-delta | [0/1, -1 for default] | -1 | Enable intra angle delta filtering (0: OFF, 1: ON, -1 = DEFAULT |
 | **InterIntraCompound** | --enable-interintra-comp | [0/1, -1 for default] | -1 | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Paeth** | --enable-paeth | [0/1, -1 for default] | -1 | Enable Intra Paeth pred, 0 = OFF, 1 = ON, -1 = DEFAULT|
 | **Smooth** | --enable-smooth | [0/1, -1 for default] | -1 | Enable Intra Smooth pred, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Obmc** | --enable-obmc | [0-1, 1 for default] | 1 | Enable OBMC(0: OFF, 1: ON[default]) |
 | **RDOQ** | --rdoq-level | [0/1, -1 for default] | -1 | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
-| **FilterIntra** | --enable-filter-intra | [0-1, 1 for default] | 1 | Enable filter intra prediction mode (0: OFF, 1: ON [default]) |
 | **IntraEdgeFilter** | --enable-intra-edge-filter | [0/1, -1 for default] | -1 | Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)|
 | **PredMe** | --pred-me | [0-5, -1 for default] | -1 | Closed loop motion search. Set predictive me level: <BR>-1 = DEFAULT<BR>0 = OFF <BR>1 = 7x5 full-pel search + sub-pel refinement off <BR>2 = 7x5 full-pel search +  (H + V) sub-pel refinement only = 4 half-pel + 4 quarter-pel = 8 positions + pred_me_distortion to pa_me_distortion deviation on <BR>3 = 7x5 full-pel search +  (H + V + D only ~ the best) sub-pel refinement = up to 6 half-pel + up to 6  quarter-pel = up to 12 positions + pred_me_distortion to pa_me_distortion deviation on <BR>4 = 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation on <BR>5 = 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation off |
 | **Bipred3x3** | --bipred-3x3 | [0-2, -1 for default] | -1 | Set bipred3x3 injection, 0 = OFF, 1 = ON FULL, 2 = Reduced set, -1 = DEFAULT|
