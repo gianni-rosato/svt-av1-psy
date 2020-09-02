@@ -1159,10 +1159,13 @@ void tpl_mc_flow_dispenser(
 
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
+#if !TPL_NON16ALIGN_FIX
         uint32_t    sb_origin_x = (sb_index % picture_width_in_sb) * BLOCK_SIZE_64;
         uint32_t    sb_origin_y = (sb_index / picture_width_in_sb) * BLOCK_SIZE_64;
         if (((sb_origin_x + 16) <= input_picture_ptr->width) &&
-            ((sb_origin_y + 16) <= input_picture_ptr->height)) {
+            ((sb_origin_y + 16) <= input_picture_ptr->height))
+#endif
+        {
             SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
             uint32_t pa_blk_index = 0;
             while (pa_blk_index < CU_MAX_COUNT) {

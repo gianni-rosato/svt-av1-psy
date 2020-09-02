@@ -12266,8 +12266,15 @@ EbErrorType open_loop_intra_search_mb(
             pa_blk_index++;
             continue;
         }
+#if !TPL_NON16ALIGN_FIX
         TxSize tx_size = bsize == 8 ? TX_8X8 : bsize == 16 ? TX_16X16 : bsize == 32 ? TX_32X32 : TX_64X64;
+#endif
         if (sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
+#if TPL_NON16ALIGN_FIX
+            // always process as block16x16 even bsize or tx_size is 8x8
+            TxSize tx_size = TX_16X16;
+            bsize = 16;
+#endif
             cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
             cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
             above0_row = above0_data + 16;

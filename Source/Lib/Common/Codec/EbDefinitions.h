@@ -602,7 +602,8 @@ extern "C" {
 #define FPFOPT_INTRA        1 // get neighbor pixel from source
 #define FPFOPT_RECON         1 // remove the use of recon in MD
 #define TPL_C_FIX                         1
-#define TPL_SANITIZER_FIX                 1
+#define TPL_SANITIZER_FIX                 0
+#define TPL_NON16ALIGN_FIX                1 // Fix TPL non16align error for openloop intra pred and dispenser
 // end
 #endif
 ///////// END MASTER_SYNCH
