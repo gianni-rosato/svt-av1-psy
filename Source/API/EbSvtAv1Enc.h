@@ -73,23 +73,13 @@ typedef struct EbSvtAv1EncConfiguration {
      * density mode.
      *
      * Default is defined as MAX_ENC_PRESET. */
-#if 0//REMOVE_MR_MACRO
     int8_t enc_mode;
-#else
-    uint8_t enc_mode;
-#endif
     /* For two pass encoding, the enc_mod of the second pass is passed in the first pass.
     * First pass has the option to run with second pass ME settings.
     *
     * Default is defined as MAX_ENC_PRESET. */
-#if 0//REMOVE_MR_MACRO
-    int8_t snd_pass_enc_mode;
-#else
-#if 1//!TWOPASS_RC
     // hack for gstreamer building
     uint8_t snd_pass_enc_mode;
-#endif
-#endif
     // GOP Structure
 
     /* The intra period defines the interval of frames after which you insert an
@@ -274,12 +264,6 @@ typedef struct EbSvtAv1EncConfiguration {
     int sg_filter_mode;
     int wn_filter_mode;
 
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    /* edge based skip angle intra
-    *
-    * Default is -1. */
-    int edge_skp_angle_intra;
-#endif
     /* enable angle intra
     *
     * Default is -1. */
@@ -294,24 +278,16 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_paeth;
-#if 1//ON_OFF_FEATURE_MRP
+
     /* mrp level
     *
     * Default is -1. */
     int mrp_level;
-#endif
 
     /* enable smooth
     *
     * Default is -1. */
     int enable_smooth;
-
-#if 0//!REMOVE_COMBINE_CLASS12
-    /* combine class 12
-    *
-    * Default is -1. */
-    int combine_class_12;
-#endif
     /* motion field motion vector
     *
     *  Default is -1. */
@@ -326,12 +302,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * -1: Default, 0: OFF in PD_PASS_2, 1: Fully ON in PD_PASS_2. */
     int spatial_sse_full_loop_level;
 
-#if 0//!REMOVE_ME_SUBPEL_CODE
-    /* subpel
-    *
-    * Default is -1. */
-    int enable_subpel;
-#endif
     /* over boundry block
     *
     * Default is -1. */
@@ -340,18 +310,7 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int new_nearest_comb_inject;
-#if 0//!SHUT_ME_CAND_SORTING
-    /* prune unipred at me
-    *
-    * Default is -1. */
-    int prune_unipred_me;
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    /* prune ref frame for rec partitions
-    *
-    * Default is -1. */
-    int prune_ref_rec_part;
-#endif
+
     /* nsq table
     *
     * Default is -1. */
@@ -392,7 +351,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is -1 (auto) */
     int disable_cfl_flag;
 
-#if 1 // OBMC_CLI
     /* obmc_level specifies the level of the OBMC feature that would be
      * considered when the level is specified in the command line instruction (CLI).
      * The meaning of the feature level in the CLI is different from that for
@@ -408,19 +366,12 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is -1 (auto). */
     int8_t obmc_level;
-#else
-    /* OBMC
-    *
-    * Default is 1. */
-    EbBool enable_obmc;
-#endif
 
     /* RDOQ
     *
     * -1: Default, 0: OFF in PD_PASS_2, 1: Fully ON in PD_PASS_2. */
     int rdoq_level;
 
-#if 1 // FILTER_INTRA_CLI
     /* Filter intra prediction
     *
     * The table below specifies the meaning of filter_intra_level when specified in the CLI.
@@ -429,12 +380,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *         0          | OFF everywhere in encoder
     *         1          | Fully ON in PD_PASS_2, Default settings in PD_PASS_0 */
     int8_t filter_intra_level;
-#else
-    /* Filter intra prediction
-    *
-    * Default is 1. */
-    EbBool enable_filter_intra;
-#endif
 
     /* Intra Edge Filter
     *
@@ -484,12 +429,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * 2 = Auto: 8bit & 10bit mode decision
      *
     * Default is 1. */
-#if 1 //CHANGE_HBD_MODE
     int8_t enable_hbd_mode_decision;
-#else
-    uint8_t enable_hbd_mode_decision;
-
-#endif
 
     /* Palette Mode
     *
@@ -517,21 +457,12 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default depends on rate control mode.*/
     uint32_t look_ahead_distance;
 
-#if 1 //TPL_LA
     /* Enable TPL in look ahead, only works when look_ahead_distance>0
      * 0 = disable TPL in look ahead
      * 1 = enable TPL in look ahead
      * Default is 0  */
     uint8_t enable_tpl_la;
-    /* Number of frames of sequence to be encoded. If number of frames is greater
-     * than the number of frames in file, the encoder will loop to the beginning
-     * and continue the encode.
-     *
-     * 0 = encodes the full clip.
-     *
-     * Default is 0. */
-    uint64_t frames_to_be_encoded;
-#endif
+
     /* Target bitrate in bits/second, only apllicable when rate control mode is
      * set to 2 or 3.
      *
@@ -552,7 +483,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t min_qp_allowed;
 
-#if 1 //TWOPASS_RC
     /* TWO PASS DATARATE CONTROL OPTIONS.
      * Indicates the bias (expressed on a scale of 0 to 100) for determining
      * target size for the current frame. The value 0 indicates the optimal CBR
@@ -573,7 +503,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * and is used as a trigger threshold for more agressive adaptation of Q. Its
      * value can range from 0-1000. */
     uint32_t over_shoot_pct;
-#endif
+
     /* Flag to signal the content being a screen sharing content type
     *
     * Default is 0. */

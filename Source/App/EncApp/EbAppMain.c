@@ -473,7 +473,6 @@ int32_t main(int32_t argc, char *argv[]) {
     if (get_help(argc, argv))
         return 0;
     passes = get_passes(argc, argv, pass);
-
     for (uint32_t i = 0; i < passes; i++) return_error = encode(argc, argv, pass[i]);
     return return_error != EB_ErrorNone;
 }

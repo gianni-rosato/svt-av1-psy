@@ -21,7 +21,6 @@
 #define ftello _ftelli64
 #endif
 // Define Cross-Platform 64-bit fseek() and ftell()
-
 /** The AppExitConditionType type is used to define the App main loop exit
 conditions.
 */
@@ -210,19 +209,12 @@ typedef struct EbConfig {
     int32_t   buffered_input;
     uint8_t **sequence_buffer;
 
-    uint8_t latency_mode;
-
     /*****************************************
      * Coding Structure
      *****************************************/
-#if 1//REMOVE_MR_MACRO
-    int8_t  enc_mode;
+    int8_t enc_mode;
 #if !TWOPASS_RC
     int8_t  snd_pass_enc_mode;
-#endif
-#else
-    uint8_t  enc_mode;
-    uint8_t  snd_pass_enc_mode;
 #endif
     int32_t  intra_period;
     uint32_t intra_refresh_type;
@@ -270,20 +262,6 @@ typedef struct EbConfig {
     int enable_restoration_filtering;
     int sg_filter_mode;
     int wn_filter_mode;
-
-#if 0//!REMOVE_COMBINE_CLASS12
-
-    /****************************************
-     * class12
-    ****************************************/
-    int combine_class_12;
-#endif
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    /****************************************
-     * edge based skip angle intra
-    ****************************************/
-    int edge_skp_angle_intra;
-#endif
     /****************************************
      * intra angle delta
     ****************************************/
@@ -312,12 +290,6 @@ typedef struct EbConfig {
       * spatial sse in full loop
      ****************************************/
     int spatial_sse_full_loop_level;
-#if 0//!REMOVE_ME_SUBPEL_CODE
-    /****************************************
-      * subpel
-     ****************************************/
-    int enable_subpel;
-#endif
     /****************************************
       * over boundry block
      ****************************************/
@@ -326,18 +298,6 @@ typedef struct EbConfig {
       * new nearest comb injection
      ****************************************/
     int new_nearest_comb_inject;
-#if 0//!SHUT_ME_CAND_SORTING
-    /****************************************
-      * prune unipred at me
-     ****************************************/
-    int prune_unipred_me;
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    /****************************************
-      * prune ref frame for rec partitions
-     ****************************************/
-    int prune_ref_rec_part;
-#endif
     /****************************************
       * nsq table
      ****************************************/
@@ -379,36 +339,23 @@ typedef struct EbConfig {
     /****************************************
      * OBMC
      ****************************************/
-#if 1 // OBMC_CLI
     int8_t obmc_level;
-#else
-    EbBool enable_obmc;
-#endif
-
     /****************************************
      * RDOQ
      * ****************************************/
     int rdoq_level;
-
     /****************************************
      * Filter intra prediction
      ****************************************/
-#if 1 // FILTER_INTRA_CLI
     int8_t filter_intra_level;
-#else
-    EbBool enable_filter_intra;
-#endif
-
     /****************************************
      * Intra Edge Filter
      ****************************************/
     int enable_intra_edge_filter;
-
     /****************************************
      * Picture based rate estimation
      ****************************************/
     int pic_based_rate_est;
-
     /****************************************
      * ME Tools
      ****************************************/
@@ -459,9 +406,7 @@ typedef struct EbConfig {
     uint32_t scene_change_detection;
     uint32_t rate_control_mode;
     uint32_t look_ahead_distance;
-#if 1//TPL_LA
     uint32_t enable_tpl_la;
-#endif
     uint32_t target_bit_rate;
     uint32_t max_qp_allowed;
     uint32_t min_qp_allowed;
@@ -554,9 +499,7 @@ typedef struct EbConfig {
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
     EbBool                         enable_manual_pred_struct;
     int32_t                        manual_pred_struct_entry_num;
-#if 1//ON_OFF_FEATURE_MRP
     int                 mrp_level;
-#endif
 } EbConfig;
 
 #if TWOPASS_RC

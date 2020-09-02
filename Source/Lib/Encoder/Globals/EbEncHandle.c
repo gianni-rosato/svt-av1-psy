@@ -2510,7 +2510,6 @@ void copy_api_from_app(
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
 #if TPL_LA
-    scs_ptr->static_config.frames_to_be_encoded = ((EbSvtAv1EncConfiguration*)config_struct)->frames_to_be_encoded;
     if (scs_ptr->static_config.enable_tpl_la &&
         scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
@@ -3226,7 +3225,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->look_ahead_distance = (uint32_t)~0;
 #if TPL_LA
     config_ptr->enable_tpl_la = 1;
-    config_ptr->frames_to_be_encoded = 0;
 #endif
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
@@ -3347,7 +3345,7 @@ EbErrorType eb_svt_enc_init_parameter(
 
     config_ptr->sb_sz = 64;
     config_ptr->partition_depth = (uint8_t)EB_MAX_SB_DEPTH;
-    //config_ptr->latency_mode = 0;
+
     config_ptr->speed_control_flag = 0;
     config_ptr->film_grain_denoise_strength = 0;
 

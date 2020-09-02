@@ -17,7 +17,6 @@
 #include "EbAppString.h"
 #include "EbAppConfig.h"
 #include "EbAppInputy4m.h"
-
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -77,7 +76,6 @@
 #define PROFILE_TOKEN "-profile"
 #define TIER_TOKEN "-tier"
 #define LEVEL_TOKEN "-level"
-#define LATENCY_MODE "-latency-mode" // no Eval
 #define FILM_GRAIN_TOKEN "-film-grain"
 #define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN "-dlf"
@@ -85,12 +83,6 @@
 #define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
 #define SG_FILTER_MODE_TOKEN "-sg-filter-mode"
 #define WN_FILTER_MODE_TOKEN "-wn-filter-mode"
-#if 0//!REMOVE_COMBINE_CLASS12
-#define CLASS_12_TOKEN "-class-12"
-#endif
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-#define EDGE_SKIP_ANGLE_INTRA_TOKEN "-intra-edge-skp"
-#endif
 #define INTRA_ANGLE_DELTA_TOKEN "-intra-angle-delta"
 #define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
 #define PAETH_TOKEN "-paeth"
@@ -98,35 +90,18 @@
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define REDUNDANT_BLK_TOKEN "-redundant-blk"
 #define SPATIAL_SSE_FL_TOKEN "-spatial-sse-full-loop-level"
-#if 0//!REMOVE_ME_SUBPEL_CODE
-#define SUBPEL_TOKEN "-subpel"
-#endif
 #define OVR_BNDRY_BLK_TOKEN "-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_TOKEN "-new-nrst-near-comb"
-#if 0//!SHUT_ME_CAND_SORTING
-#define PRUNE_UNIPRED_ME_TOKEN "-prune-unipred-me"
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-#define PRUNE_REF_REC_PART_TOKEN "-prune-ref-rec-part"
-#endif
 #define NSQ_TABLE_TOKEN "-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_TOKEN "-local-warp"
 #define GLOBAL_MOTION_ENABLE_TOKEN "-global-motion"
-#if 1 // OBMC_CLI
 #define OBMC_TOKEN "-obmc-level"
-#else
-#define OBMC_TOKEN "-obmc"
-#endif
 #define RDOQ_TOKEN "-rdoq-level"
 #define PRED_ME_TOKEN "-pred-me"
 #define BIPRED_3x3_TOKEN "-bipred-3x3"
 #define COMPOUND_LEVEL_TOKEN "-compound"
-#if 1 // FILTER_INTRA_CLI
 #define FILTER_INTRA_TOKEN "-filter-intra-level"
-#else
-#define FILTER_INTRA_TOKEN "-filter-intra"
-#endif
 #define INTRA_EDGE_FILTER_TOKEN "-intra-edge-filter"
 #define PIC_BASED_RATE_EST_TOKEN "-pic-based-rate-est"
 #define PIC_BASED_RATE_EST_NEW_TOKEN "--enable-pic-based-rate-est"
@@ -138,16 +113,6 @@
 #define EXT_BLOCK "-ext-block"
 #define SEARCH_AREA_WIDTH_TOKEN "-search-w"
 #define SEARCH_AREA_HEIGHT_TOKEN "-search-h"
-#define NUM_HME_SEARCH_WIDTH_TOKEN "-num-hme-w"
-#define NUM_HME_SEARCH_HEIGHT_TOKEN "-num-hme-h"
-#define HME_SRCH_T_L0_WIDTH_TOKEN "-hme-tot-l0-w"
-#define HME_SRCH_T_L0_HEIGHT_TOKEN "-hme-tot-l0-h"
-#define HME_LEVEL0_WIDTH "-hme-l0-w"
-#define HME_LEVEL0_HEIGHT "-hme-l0-h"
-#define HME_LEVEL1_WIDTH "-hme-l1-w"
-#define HME_LEVEL1_HEIGHT "-hme-l1-h"
-#define HME_LEVEL2_WIDTH "-hme-l2-w"
-#define HME_LEVEL2_HEIGHT "-hme-l2-h"
 #define SCREEN_CONTENT_TOKEN "-scm"
 #define INTRABC_MODE_TOKEN "-intrabc-mode"
 // --- start: ALTREF_FILTERING_SUPPORT
@@ -164,7 +129,6 @@
 // --- end: SUPER-RESOLUTION SUPPORT
 #define HBD_MD_ENABLE_TOKEN "-hbd-md"
 #define PALETTE_TOKEN "-palette-level"
-#define OLPD_REFINEMENT_TOKEN "-olpd-refinement"
 #define HDR_INPUT_TOKEN "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN "-rc"
 #define TARGET_BIT_RATE_TOKEN "-tbr"
@@ -180,9 +144,7 @@
 #endif
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
-#if 1//TPL_LA
 #define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
-#endif
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
 #define TILE_ROW_TOKEN "-tile-rows"
 #define TILE_COL_TOKEN "-tile-columns"
@@ -228,9 +190,6 @@
 
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define RESTORATION_ENABLE_NEW_TOKEN "--enable-restoration-filtering"
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-#define EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN "--enable-intra-edge-skp"
-#endif
 #define INTER_INTRA_COMPOUND_NEW_TOKEN "--enable-interintra-comp"
 #define FRAC_SEARCH_64_NEW_TOKEN "--enable-frac-search-64"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
@@ -239,25 +198,14 @@
 #define OVR_BNDRY_BLK_NEW_TOKEN "--enable-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_NEW_TOKEN "--enable-new-nrst-near-comb"
 #define NX4_4XN_MV_INJECT_NEW_TOKEN "--enable-nx4-4xn-mv-inject"
-#if 0//!SHUT_ME_CAND_SORTING
-#define PRUNE_UNIPRED_ME_NEW_TOKEN "--enable-prune-unipred-me"
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-#define PRUNE_REF_REC_PART_NEW_TOKEN "--enable-prune-ref-rec-part"
-#endif
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
 #define GLOBAL_MOTION_ENABLE_NEW_TOKEN "--enable-global-motion"
 #define RDOQ_NEW_TOKEN "--rdoq-level"
-#if 1 // FILTER_INTRA_CLI
 #define FILTER_INTRA_NEW_TOKEN "--filter-intra-level"
-#else
-#define FILTER_INTRA_NEW_TOKEN "--enable-filter-intra"
-#endif
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
-
 #define INPUT_FILE_LONG_TOKEN "--input"
 #define OUTPUT_BITSTREAM_LONG_TOKEN "--output"
 #define OUTPUT_RECON_LONG_TOKEN "--recon"
@@ -267,15 +215,12 @@
 #define QP_LONG_TOKEN "--qp"
 #define CLASS_12_NEW_TOKEN "--enable-class-12"
 #define LOOP_FILTER_DISABLE_NEW_TOKEN "--disable-dlf"
-
 #define DISABLE_CFL_NEW_TOKEN "--disable-cfl"
 #define INTRA_EDGE_FILTER_NEW_TOKEN "--enable-intra-edge-filter"
 #define INTRA_ANGLE_DELTA_NEW_TOKEN "--enable-intra-angle-delta"
 #define PAETH_NEW_TOKEN "--enable-paeth"
 #define SMOOTH_NEW_TOKEN "--enable-smooth"
-#if 1//ON_OFF_FEATURE_MRP
 #define MRP_LEVEL_TOKEN "--mrp-level"
-#endif
 
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE* fp)
@@ -514,16 +459,6 @@ static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
 static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
     cfg->wn_filter_mode = strtol(value, NULL, 0);
 };
-#if 0//!REMOVE_COMBINE_CLASS12
-static void set_class_12_flag(const char *value, EbConfig *cfg) {
-    cfg->combine_class_12 = strtol(value, NULL, 0);
-};
-#endif
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-static void set_edge_skip_angle_intra_flag(const char *value, EbConfig *cfg) {
-    cfg->edge_skp_angle_intra = strtol(value, NULL, 0);
-};
-#endif
 static void set_intra_angle_delta_flag(const char *value, EbConfig *cfg) {
     cfg->intra_angle_delta = strtol(value, NULL, 0);
 };
@@ -536,11 +471,9 @@ static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
 static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
     cfg->enable_smooth = strtol(value, NULL, 0);
 };
-#if 1//ON_OFF_FEATURE_MRP
 static void set_mrp_level(const char *value, EbConfig *cfg) {
     cfg->mrp_level = strtol(value, NULL, 0);
 };
-#endif
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->enable_mfmv = strtol(value, NULL, 0);
 };
@@ -550,27 +483,12 @@ static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
 static void set_spatial_sse_full_loop_level_flag(const char *value, EbConfig *cfg) {
     cfg->spatial_sse_full_loop_level = strtol(value, NULL, 0);
 };
-#if 0//!REMOVE_ME_SUBPEL_CODE
-static void set_enable_sub_pel_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_subpel = strtol(value, NULL, 0);
-};
-#endif
 static void set_over_bndry_blk_flag(const char *value, EbConfig *cfg) {
     cfg->over_bndry_blk = strtol(value, NULL, 0);
 };
 static void set_new_nearest_comb_inject_flag(const char *value, EbConfig *cfg) {
     cfg->new_nearest_comb_inject = strtol(value, NULL, 0);
 };
-#if 0//!SHUT_ME_CAND_SORTING
-static void set_prune_unipred_me_flag(const char *value, EbConfig *cfg) {
-    cfg->prune_unipred_me = strtol(value, NULL, 0);
-};
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-static void set_prune_ref_rec_part_flag(const char *value, EbConfig *cfg) {
-    cfg->prune_ref_rec_part = strtol(value, NULL, 0);
-};
-#endif
 static void set_nsq_table_flag(const char *value, EbConfig *cfg) {
     cfg->nsq_table = strtol(value, NULL, 0);
 };
@@ -583,15 +501,9 @@ static void set_chroma_mode(const char *value, EbConfig *cfg) {
 static void set_disable_cfl_flag(const char *value, EbConfig *cfg) {
     cfg->disable_cfl_flag = strtol(value, NULL, 0);
 };
-#if 1 // OBMC_CLI
 static void set_obmc_level_flag(const char *value, EbConfig *cfg) {
     cfg->obmc_level = (EbBool)strtoul(value, NULL, 0);
 };
-#else
-static void set_enable_obmc_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_obmc = (EbBool)strtoul(value, NULL, 0);
-};
-#endif
 static void set_rdoq_level_flag(const char *value, EbConfig *cfg) {
     cfg->rdoq_level = strtol(value, NULL, 0);
 };
@@ -604,15 +516,9 @@ static void set_bipred3x3inject_flag(const char *value, EbConfig *cfg) {
 static void set_compound_level_flag(const char *value, EbConfig *cfg) {
     cfg->compound_level = strtol(value, NULL, 0);
 };
-#if 1 // FILTER_INTRA_CLI
 static void set_filter_intra_level_flag(const char *value, EbConfig *cfg) {
     cfg->filter_intra_level = (int8_t)strtoul(value, NULL, 0);
 };
-#else
-static void set_enable_filter_intra_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_filter_intra = (EbBool)strtoul(value, NULL, 0);
-};
-#endif
 static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) {
     cfg->enable_intra_edge_filter = strtol(value, NULL, 0);
 };
@@ -637,11 +543,9 @@ static void set_scene_change_detection(const char *value, EbConfig *cfg) {
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
     cfg->look_ahead_distance = strtoul(value, NULL, 0);
 };
-#if 1//TPL_LA
 static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
     cfg->enable_tpl_la = strtoul(value, NULL, 0);
 };
-#endif
 static void set_rate_control_mode(const char *value, EbConfig *cfg) {
     cfg->rate_control_mode = strtoul(value, NULL, 0);
 };
@@ -689,47 +593,11 @@ static void set_cfg_search_area_width(const char *value, EbConfig *cfg) {
 static void set_cfg_search_area_height(const char *value, EbConfig *cfg) {
     cfg->search_area_height = strtoul(value, NULL, 0);
 };
-static void set_cfg_number_hme_search_region_in_width(const char *value, EbConfig *cfg) {
-    cfg->number_hme_search_region_in_width = strtoul(value, NULL, 0);
-};
-static void set_cfg_number_hme_search_region_in_height(const char *value, EbConfig *cfg) {
-    cfg->number_hme_search_region_in_height = strtoul(value, NULL, 0);
-};
-static void set_cfg_hme_level_0_total_search_area_width(const char *value, EbConfig *cfg) {
-    cfg->hme_level0_total_search_area_width = strtoul(value, NULL, 0);
-};
-static void set_cfg_hme_level_0_total_search_area_height(const char *value, EbConfig *cfg) {
-    cfg->hme_level0_total_search_area_height = strtoul(value, NULL, 0);
-};
 static void set_cfg_use_default_me_hme(const char *value, EbConfig *cfg) {
     cfg->use_default_me_hme = (EbBool)strtol(value, NULL, 0);
 };
 static void set_enable_ext_block_flag(const char *value, EbConfig *cfg) {
     cfg->ext_block_flag = (EbBool)strtoul(value, NULL, 0);
-};
-static void set_hme_level_0_search_area_in_width_array(const char *value, EbConfig *cfg) {
-    cfg->hme_level0_search_area_in_width_array[cfg->hme_level0_column_index++] =
-        strtoul(value, NULL, 0);
-};
-static void set_hme_level_0_search_area_in_height_array(const char *value, EbConfig *cfg) {
-    cfg->hme_level0_search_area_in_height_array[cfg->hme_level0_row_index++] =
-        strtoul(value, NULL, 0);
-};
-static void set_hme_level_1_search_area_in_width_array(const char *value, EbConfig *cfg) {
-    cfg->hme_level1_search_area_in_width_array[cfg->hme_level1_column_index++] =
-        strtoul(value, NULL, 0);
-};
-static void set_hme_level_1_search_area_in_height_array(const char *value, EbConfig *cfg) {
-    cfg->hme_level1_search_area_in_height_array[cfg->hme_level1_row_index++] =
-        strtoul(value, NULL, 0);
-};
-static void set_hme_level_2_search_area_in_width_array(const char *value, EbConfig *cfg) {
-    cfg->hme_level2_search_area_in_width_array[cfg->hme_level2_column_index++] =
-        strtoul(value, NULL, 0);
-};
-static void set_hme_level_2_search_area_in_height_array(const char *value, EbConfig *cfg) {
-    cfg->hme_level2_search_area_in_height_array[cfg->hme_level2_row_index++] =
-        strtoul(value, NULL, 0);
 };
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->screen_content_mode = strtoul(value, NULL, 0);
@@ -766,11 +634,7 @@ static void set_superres_qthres(const char *value, EbConfig *cfg) {
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
-#if 1 //CHANGE_HBD_MODE
     cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
-#else
-    cfg->enable_hbd_mode_decision = (int8_t)strtoul(value, NULL, 0);
-#endif
 };
 static void set_palette_level(const char *value, EbConfig *cfg) {
     cfg->palette_level = (int32_t)strtoul(value, NULL, 0);
@@ -799,9 +663,6 @@ static void set_injector_frame_rate(const char *value, EbConfig *cfg) {
     if (cfg->injector_frame_rate <= 1000)
         cfg->injector_frame_rate <<= 16;
 }
-static void set_latency_mode(const char *value, EbConfig *cfg) {
-    cfg->latency_mode = (uint8_t)strtol(value, NULL, 0);
-};
 static void set_asm_type(const char *value, EbConfig *cfg) {
     const struct {
         const char *name;
@@ -1083,11 +944,7 @@ ConfigEntry config_entry_intra_refresh[] = {
 ConfigEntry config_entry_specific[] = {
     // Prediction Structure
     //{SINGLE_INPUT, ENCMODE_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
-#if 1//REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
-#else
-    {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
-#endif
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
      "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
@@ -1125,12 +982,17 @@ ConfigEntry config_entry_specific[] = {
      "Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: "
      "7-Tap luma/ 7-Tap chroma, -1: DEFAULT)",
      set_wn_filter_mode},
-#if 1//ON_OFF_FEATURE_MRP
     {SINGLE_INPUT,
      MRP_LEVEL_TOKEN,
      "Multi reference frame levels( 0: OFF, 1: FULL, 2: Level1 .. 9: Level8,  -1: DEFAULT)",
      set_mrp_level},
-#endif
+    {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN,
+    "Set look ahead distance",
+    set_look_ahead_distance},
+    {SINGLE_INPUT,
+    ENABLE_TPL_LA_TOKEN,
+    "RDO based on frame temporal dependency (0: off, 1: backward source based)",
+    set_enable_tpl_la},
     {SINGLE_INPUT,
      MFMV_ENABLE_NEW_TOKEN,
      "Enable motion field motion vector( 0: OFF, 1: ON, -1: DEFAULT)",
@@ -1144,12 +1006,6 @@ ConfigEntry config_entry_specific[] = {
       SPATIAL_SSE_FL_NEW_TOKEN,
       "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
       set_spatial_sse_full_loop_level_flag},
-#if 0//!REMOVE_ME_SUBPEL_CODE
-    {SINGLE_INPUT,
-     SUBPEL_TOKEN,
-     "Enable subpel(0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_sub_pel_flag},
-#endif
     {SINGLE_INPUT,
      OVR_BNDRY_BLK_NEW_TOKEN,
      "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
@@ -1158,18 +1014,6 @@ ConfigEntry config_entry_specific[] = {
      NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
      "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
      set_new_nearest_comb_inject_flag},
-#if 0//!SHUT_ME_CAND_SORTING
-    {SINGLE_INPUT,
-     PRUNE_UNIPRED_ME_NEW_TOKEN,
-     "Enable prune unipred at me (0: OFF, 1: ON, -1: DEFAULT)",
-     set_prune_unipred_me_flag},
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    {SINGLE_INPUT,
-     PRUNE_REF_REC_PART_NEW_TOKEN,
-     "Enable prune ref frame for rec partitions (0: OFF, 1: ON, -1: DEFAULT)",
-     set_prune_ref_rec_part_flag},
-#endif
     {SINGLE_INPUT,
      NSQ_TABLE_NEW_TOKEN,
      "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
@@ -1196,20 +1040,6 @@ ConfigEntry config_entry_specific[] = {
      GLOBAL_MOTION_ENABLE_NEW_TOKEN,
      "Enable global motion (0: OFF, 1: ON [default])",
      set_enable_global_motion_flag},
- #if 0//!REMOVE_COMBINE_CLASS12
-    // CLASS 12
-    {SINGLE_INPUT,
-     CLASS_12_NEW_TOKEN,
-     "Enable combine MD Class1&2 (0: OFF, 1: ON, -1: DEFAULT)",
-     set_class_12_flag},
-#endif
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    // EDGE SKIP ANGLE INTRA
-    {SINGLE_INPUT,
-     EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
-     "Enable intra edge filtering (0: OFF, 1: ON (default))",
-     set_edge_skip_angle_intra_flag},
-#endif
     // INTRA ANGLE DELTA
     {SINGLE_INPUT,
      INTRA_ANGLE_DELTA_TOKEN,
@@ -1231,11 +1061,7 @@ ConfigEntry config_entry_specific[] = {
      "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_smooth_flag},
     // OBMC
-#if 1 // OBMC_CLI
      {SINGLE_INPUT, OBMC_TOKEN, "OBMC Level(0: OFF, 1: Fully ON, 2 and 3 are faster levels, -1: DEFAULT)", set_obmc_level_flag},
-#else
-    {SINGLE_INPUT, OBMC_TOKEN, "Enable OBMC(0: OFF, 1: ON[default]) ", set_enable_obmc_flag},
-#endif
     // RDOQ
     {SINGLE_INPUT,
      RDOQ_NEW_TOKEN,
@@ -1243,17 +1069,10 @@ ConfigEntry config_entry_specific[] = {
      set_rdoq_level_flag},
 
     // Filter Intra
-#if 1 // FILTER_INTRA_CLI
     {SINGLE_INPUT,
      FILTER_INTRA_NEW_TOKEN,
      "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
      set_filter_intra_level_flag},
-#else
-    {SINGLE_INPUT,
-     FILTER_INTRA_NEW_TOKEN,
-     "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
-     set_enable_filter_intra_flag},
-#endif
 
     // Edge Intra Filter
     {SINGLE_INPUT,
@@ -1316,23 +1135,6 @@ ConfigEntry config_entry_specific[] = {
      SEARCH_AREA_HEIGHT_TOKEN,
      "Set search area in height[1-256]",
      set_cfg_search_area_height},
-    // HME Parameters
-    {SINGLE_INPUT,
-     NUM_HME_SEARCH_WIDTH_TOKEN,
-     "Set hierarchical motion estimation search region in Width",
-     set_cfg_number_hme_search_region_in_width},
-    {SINGLE_INPUT,
-     NUM_HME_SEARCH_HEIGHT_TOKEN,
-     "Set hierarchical motion estimation search region in height",
-     set_cfg_number_hme_search_region_in_height},
-    {SINGLE_INPUT,
-     HME_SRCH_T_L0_WIDTH_TOKEN,
-     "Set hierarchical motion estimation level0 total search area in Width",
-     set_cfg_hme_level_0_total_search_area_width},
-    {SINGLE_INPUT,
-     HME_SRCH_T_L0_HEIGHT_TOKEN,
-     "Set hierarchical motion estimation level0 total search area in height",
-     set_cfg_hme_level_0_total_search_area_height},
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
@@ -1372,37 +1174,6 @@ ConfigEntry config_entry_specific[] = {
      FILM_GRAIN_TOKEN,
      "Enable film grain(0: OFF[default], 1-50: ON, film-grain denoising strength)",
      set_cfg_film_grain},
-    // HME
-    {ARRAY_INPUT,
-     HME_LEVEL0_WIDTH,
-     "Set hierarchical motion estimation level0 search width (Requires numbers whose sum "
-     "equal the total search width and amount equals the search regions)",
-     set_hme_level_0_search_area_in_width_array},
-    {ARRAY_INPUT,
-     HME_LEVEL0_HEIGHT,
-     "Set hierarchical motion estimation level0 search height (Requires numbers whose sum "
-     "equal the total search height and amount equals the search regions)",
-     set_hme_level_0_search_area_in_height_array},
-    {ARRAY_INPUT,
-     HME_LEVEL1_WIDTH,
-     "Set hierarchical motion estimation level1 search width (Requires numbers whose sum "
-     "equal the total search width and amount equals the search regions)",
-     set_hme_level_1_search_area_in_width_array},
-    {ARRAY_INPUT,
-     HME_LEVEL1_HEIGHT,
-     "Set hierarchical motion estimation level1 search height (Requires numbers whose sum "
-     "equal the total search height and amount equals the search regions)",
-     set_hme_level_1_search_area_in_height_array},
-    {ARRAY_INPUT,
-     HME_LEVEL2_WIDTH,
-     "Set hierarchical motion estimation level2 search width (Requires numbers whose sum "
-     "equal the total search width and amount equals the search regions)",
-     set_hme_level_2_search_area_in_width_array},
-    {ARRAY_INPUT,
-     HME_LEVEL2_HEIGHT,
-     "Set hierarchical motion estimation level2 search height (Requires numbers whose sum "
-     "equal the total search height and amount equals the search regions)",
-     set_hme_level_2_search_area_in_height_array},
     // --- start: ALTREF_FILTERING_SUPPORT
      {SINGLE_INPUT,
       TF_LEVEL,
@@ -1513,9 +1284,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
     {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
     {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "LookAheadDistance", set_look_ahead_distance},
-#if 1//TPL_LA
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTplLA", set_enable_tpl_la},
-#endif
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
     {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
     {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
@@ -1542,26 +1311,15 @@ ConfigEntry config_entry[] = {
      set_enable_restoration_filter_flag},
     {SINGLE_INPUT, SG_FILTER_MODE_TOKEN, "SelfGuidedFilterMode", set_sg_filter_mode},
     {SINGLE_INPUT, WN_FILTER_MODE_TOKEN, "WienerFilterMode", set_wn_filter_mode},
-#if 1//ON_OFF_FEATURE_MRP
     {SINGLE_INPUT, MRP_LEVEL_TOKEN, "MrpLevel", set_mrp_level},
-#endif
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
     {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_full_loop_level_flag},
-#if 0//!REMOVE_ME_SUBPEL_CODE
-    {SINGLE_INPUT, SUBPEL_TOKEN, "Subpel", set_enable_sub_pel_flag},
-#endif
     {SINGLE_INPUT, OVR_BNDRY_BLK_TOKEN, "OverBoundryBlock", set_over_bndry_blk_flag},
     {SINGLE_INPUT,
      NEW_NEAREST_COMB_INJECT_TOKEN,
      "NewNearestCombInjection",
      set_new_nearest_comb_inject_flag},
-#if 0//!SHUT_ME_CAND_SORTING
-    {SINGLE_INPUT, PRUNE_UNIPRED_ME_TOKEN, "PruneUnipredMe", set_prune_unipred_me_flag},
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    {SINGLE_INPUT, PRUNE_REF_REC_PART_TOKEN, "PruneRefRecPart", set_prune_ref_rec_part_flag},
-#endif
     {SINGLE_INPUT, NSQ_TABLE_TOKEN, "NsqTable", set_nsq_table_flag},
     {SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN, "FrameEndCdfUpdate", set_frame_end_cdf_update_flag},
 
@@ -1576,17 +1334,6 @@ ConfigEntry config_entry[] = {
      set_enable_local_warped_motion_flag},
     // GLOBAL MOTION
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
-#if 0//!REMOVE_COMBINE_CLASS12
-    // CLASS 12
-    {SINGLE_INPUT, CLASS_12_TOKEN, "CombineClass12", set_class_12_flag},
-#endif
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    // EDGE SKIP ANGLE INTRA
-    {SINGLE_INPUT,
-     EDGE_SKIP_ANGLE_INTRA_TOKEN,
-     "EdgeSkipAngleIntra",
-     set_edge_skip_angle_intra_flag},
-#endif
     // INTRA ANGLE DELTA
     {SINGLE_INPUT, INTRA_ANGLE_DELTA_TOKEN, "IntraAngleDelta", set_intra_angle_delta_flag},
 
@@ -1597,20 +1344,11 @@ ConfigEntry config_entry[] = {
     // SMOOTH
     {SINGLE_INPUT, SMOOTH_TOKEN, "Smooth", set_enable_smooth_flag},
     // OBMC
-#if 1 // OBMC_CLI
     {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_obmc_level_flag},
-#else
-    {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_enable_obmc_flag},
-#endif
     // RDOQ
     {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_rdoq_level_flag},
     // Filter Intra
-#if 1 // FILTER_INTRA_CLI
     {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_filter_intra_level_flag},
-#else
-    {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_enable_filter_intra_flag},
-#endif
-
     // Edge Intra Filter
     {SINGLE_INPUT, INTRA_EDGE_FILTER_TOKEN, "IntraEdgeFilter", set_enable_intra_edge_filter_flag},
 
@@ -1635,23 +1373,7 @@ ConfigEntry config_entry[] = {
     // ME Parameters
     {SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", set_cfg_search_area_width},
     {SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", set_cfg_search_area_height},
-    // HME Parameters
-    {SINGLE_INPUT,
-     NUM_HME_SEARCH_WIDTH_TOKEN,
-     "NumberHmeSearchRegionInWidth",
-     set_cfg_number_hme_search_region_in_width},
-    {SINGLE_INPUT,
-     NUM_HME_SEARCH_HEIGHT_TOKEN,
-     "NumberHmeSearchRegionInHeight",
-     set_cfg_number_hme_search_region_in_height},
-    {SINGLE_INPUT,
-     HME_SRCH_T_L0_WIDTH_TOKEN,
-     "HmeLevel0TotalSearchAreaWidth",
-     set_cfg_hme_level_0_total_search_area_width},
-    {SINGLE_INPUT,
-     HME_SRCH_T_L0_HEIGHT_TOKEN,
-     "HmeLevel0TotalSearchAreaHeight",
-     set_cfg_hme_level_0_total_search_area_height},
+
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
     {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
@@ -1677,35 +1399,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PROFILE_TOKEN, "Profile", set_profile},
     {SINGLE_INPUT, TIER_TOKEN, "Tier", set_tier},
     {SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
-    {SINGLE_INPUT, LATENCY_MODE, "LatencyMode", set_latency_mode},
     {SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", set_cfg_film_grain},
     // Asm Type
     {SINGLE_INPUT, ASM_TYPE_TOKEN, "Asm", set_asm_type},
-    // HME
-    {ARRAY_INPUT,
-     HME_LEVEL0_WIDTH,
-     "HmeLevel0SearchAreaInWidth",
-     set_hme_level_0_search_area_in_width_array},
-    {ARRAY_INPUT,
-     HME_LEVEL0_HEIGHT,
-     "HmeLevel0SearchAreaInHeight",
-     set_hme_level_0_search_area_in_height_array},
-    {ARRAY_INPUT,
-     HME_LEVEL1_WIDTH,
-     "HmeLevel1SearchAreaInWidth",
-     set_hme_level_1_search_area_in_width_array},
-    {ARRAY_INPUT,
-     HME_LEVEL1_HEIGHT,
-     "HmeLevel1SearchAreaInHeight",
-     set_hme_level_1_search_area_in_height_array},
-    {ARRAY_INPUT,
-     HME_LEVEL2_WIDTH,
-     "HmeLevel2SearchAreaInWidth",
-     set_hme_level_2_search_area_in_width_array},
-    {ARRAY_INPUT,
-     HME_LEVEL2_HEIGHT,
-     "HmeLevel2SearchAreaInHeight",
-     set_hme_level_2_search_area_in_height_array},
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT, TF_LEVEL, "TfLevel", set_tf_level},
     {SINGLE_INPUT, ALTREF_STRENGTH, "AltRefStrength", set_altref_strength},
@@ -1727,11 +1423,7 @@ ConfigEntry config_entry[] = {
      set_md_stage_2_3_class_prune_th},
     {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th},
     // double dash
-#if 1//REMOVE_MR_MACRO
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
-#else
-    {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[0-8]", set_enc_mode},
-#endif
     {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "Path to Qp file", set_cfg_qp_file},
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
     {SINGLE_INPUT,
@@ -1748,12 +1440,6 @@ ConfigEntry config_entry[] = {
      RESTORATION_ENABLE_NEW_TOKEN,
      "Restoration Filter",
      set_enable_restoration_filter_flag},
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    {SINGLE_INPUT,
-     EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN,
-     "Edge Skip Angle Intra",
-     set_edge_skip_angle_intra_flag},
-#endif
     {SINGLE_INPUT,
      INTER_INTRA_COMPOUND_NEW_TOKEN,
      "Inter Intra Compound",
@@ -1767,12 +1453,6 @@ ConfigEntry config_entry[] = {
      NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
      "New Nearest Comb Injection",
      set_new_nearest_comb_inject_flag},
-#if 0//!SHUT_ME_CAND_SORTING
-    {SINGLE_INPUT, PRUNE_UNIPRED_ME_NEW_TOKEN, "Prune Uni pred Me", set_prune_unipred_me_flag},
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    {SINGLE_INPUT, PRUNE_REF_REC_PART_NEW_TOKEN, "Prune Ref Rec Part", set_prune_ref_rec_part_flag},
-#endif
     {SINGLE_INPUT, NSQ_TABLE_NEW_TOKEN, "Nsq Table", set_nsq_table_flag},
     {SINGLE_INPUT,
      FRAME_END_CDF_UPDATE_NEW_TOKEN,
@@ -1784,11 +1464,7 @@ ConfigEntry config_entry[] = {
      set_enable_local_warped_motion_flag},
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_NEW_TOKEN, "Global Motion", set_enable_global_motion_flag},
     {SINGLE_INPUT, RDOQ_NEW_TOKEN, "RDOQ double dash token", set_rdoq_level_flag},
-#if 1 // FILTER_INTRA_CLI
     {SINGLE_INPUT, FILTER_INTRA_NEW_TOKEN, "Filter Intra", set_filter_intra_level_flag},
-#else
-    {SINGLE_INPUT, FILTER_INTRA_NEW_TOKEN, "Filter Intra", set_enable_filter_intra_flag},
-#endif
     {SINGLE_INPUT, HDR_INPUT_NEW_TOKEN, "High Dynamic Range Input", set_high_dynamic_range_input},
     {SINGLE_INPUT,
      ADAPTIVE_QP_ENABLE_NEW_TOKEN,
@@ -1848,13 +1524,10 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->is_16bit_pipeline = 0;
     config_ptr->encoder_color_format   = 1; //EB_YUV420
     config_ptr->buffered_input         = -1;
-
     config_ptr->qp                  = 50;
     config_ptr->use_qp_file         = EB_FALSE;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if 1//TPL_LA
     config_ptr->enable_tpl_la       = 1;
-#endif
     config_ptr->target_bit_rate     = 7000000;
     config_ptr->max_qp_allowed      = 63;
     config_ptr->min_qp_allowed      = 10;
@@ -1881,51 +1554,26 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->enable_restoration_filtering              = DEFAULT;
     config_ptr->sg_filter_mode                            = DEFAULT;
     config_ptr->wn_filter_mode                            = DEFAULT;
-#if 0//!REMOVE_COMBINE_CLASS12
-    config_ptr->combine_class_12                          = DEFAULT;
-#endif
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    config_ptr->edge_skp_angle_intra                      = DEFAULT;
-#endif
     config_ptr->intra_angle_delta                         = DEFAULT;
     config_ptr->inter_intra_compound                      = DEFAULT;
     config_ptr->enable_paeth                              = DEFAULT;
     config_ptr->enable_smooth                             = DEFAULT;
-#if 1//ON_OFF_FEATURE_MRP
     config_ptr->mrp_level                                 = DEFAULT;
-#endif
     config_ptr->enable_mfmv                               = DEFAULT;
     config_ptr->enable_redundant_blk                      = DEFAULT;
     config_ptr->spatial_sse_full_loop_level               = DEFAULT;
-#if 0//!REMOVE_ME_SUBPEL_CODE
-    config_ptr->enable_subpel                             = DEFAULT;
-#endif
     config_ptr->over_bndry_blk                            = DEFAULT;
     config_ptr->new_nearest_comb_inject                   = DEFAULT;
-#if 0//!SHUT_ME_CAND_SORTING
-    config_ptr->prune_unipred_me                          = DEFAULT;
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    config_ptr->prune_ref_rec_part                        = DEFAULT;
-#endif
     config_ptr->nsq_table                                 = DEFAULT;
     config_ptr->frame_end_cdf_update                      = DEFAULT;
     config_ptr->set_chroma_mode                           = DEFAULT;
     config_ptr->disable_cfl_flag                          = DEFAULT;
-#if  1//OBMC_CLI
     config_ptr->obmc_level                                = DEFAULT;
-#else
-    config_ptr->enable_obmc                               = EB_TRUE;
-#endif
     config_ptr->rdoq_level                                = DEFAULT;
     config_ptr->pred_me                                   = DEFAULT;
     config_ptr->bipred_3x3_inject                         = DEFAULT;
     config_ptr->compound_level                            = DEFAULT;
-#if 1//FILTER_INTRA_CLI
     config_ptr->filter_intra_level                        = DEFAULT;
-#else
-    config_ptr->enable_filter_intra                       = EB_TRUE;
-#endif
     config_ptr->enable_intra_edge_filter                  = DEFAULT;
     config_ptr->pic_based_rate_est                        = DEFAULT;
     config_ptr->use_default_me_hme                        = EB_TRUE;
@@ -1949,16 +1597,8 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->hme_level2_search_area_in_width_array[1]  = 1;
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
-#if 1 //ENABLE_SC_DETECTOR
     config_ptr->screen_content_mode                       = 2;
-#else
-    config_ptr->screen_content_mode                       = 0;
-#endif
-#if 1 //CHANGE_HBD_MODE
     config_ptr->enable_hbd_mode_decision                  = DEFAULT;
-#else
-    config_ptr->enable_hbd_mode_decision                  = 2;
-#endif
     config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->palette_level                             = DEFAULT;
     config_ptr->injector_frame_rate                       = 60 << 16;
@@ -1974,11 +1614,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     // --- start: ALTREF_FILTERING_SUPPORT
     config_ptr->tf_level = DEFAULT;
     config_ptr->altref_strength = 5;
-#if 1//NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = 13;
-#else
-    config_ptr->altref_nframes  = 7;
-#endif
     // --- end: ALTREF_FILTERING_SUPPORT
 
     // start - super-resolution support
@@ -2669,6 +2305,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
             (uint32_t)MAX_ENCODE_PASS);
         return 0;
     }
+    if (passes == 2) {
+        printf("[WARNING]:The 2-pass encoding support is a WIP, it is only available for experimental and further development uses and should not be used for benchmarking until fully implemented.");
+    }
     if (passes == 1) {
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
@@ -2932,10 +2571,6 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, STAT_REPORT_TOKEN) == 0) linked_token = STAT_REPORT_NEW_TOKEN;
     if (EB_STRCMP(token, RESTORATION_ENABLE_TOKEN) == 0)
         linked_token = RESTORATION_ENABLE_NEW_TOKEN;
-#if 0 //!REMOVE_EDGE_SKIP_ANGLE_INTRA
-    if (EB_STRCMP(token, EDGE_SKIP_ANGLE_INTRA_TOKEN) == 0)
-        linked_token = EDGE_SKIP_ANGLE_INTRA_NEW_TOKEN;
-#endif
     if (EB_STRCMP(token, INTER_INTRA_COMPOUND_TOKEN) == 0)
         linked_token = INTER_INTRA_COMPOUND_NEW_TOKEN;
     if (EB_STRCMP(token, MFMV_ENABLE_TOKEN) == 0) linked_token = MFMV_ENABLE_NEW_TOKEN;
@@ -2944,13 +2579,6 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, OVR_BNDRY_BLK_TOKEN) == 0) linked_token = OVR_BNDRY_BLK_NEW_TOKEN;
     if (EB_STRCMP(token, NEW_NEAREST_COMB_INJECT_TOKEN) == 0)
         linked_token = NEW_NEAREST_COMB_INJECT_NEW_TOKEN;
-#if 0//!SHUT_ME_CAND_SORTING
-    if (EB_STRCMP(token, PRUNE_UNIPRED_ME_TOKEN) == 0) linked_token = PRUNE_UNIPRED_ME_NEW_TOKEN;
-#endif
-#if 0 //!REMOVE_REF_FOR_RECT_PART
-    if (EB_STRCMP(token, PRUNE_REF_REC_PART_TOKEN) == 0)
-        linked_token = PRUNE_REF_REC_PART_NEW_TOKEN;
-#endif
     if (EB_STRCMP(token, NSQ_TABLE_TOKEN) == 0) linked_token = NSQ_TABLE_NEW_TOKEN;
     if (EB_STRCMP(token, FRAME_END_CDF_UPDATE_TOKEN) == 0)
         linked_token = FRAME_END_CDF_UPDATE_NEW_TOKEN;
@@ -3122,176 +2750,16 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
             }
         }
     }
-
     /***************************************************************************************************/
     /*******************************   Parse manual prediction structure  ******************************/
     /***************************************************************************************************/
     for (index = 0; index < num_channels; ++index) {
         if ((configs[index])->enable_manual_pred_struct == EB_TRUE) {
-            return_errors[index] = (EbErrorType)read_pred_struct_file(configs[index], configs[index]->input_pred_struct_filename, index);
+            return_errors[index] = (EbErrorType)read_pred_struct_file(
+                configs[index], configs[index]->input_pred_struct_filename, index);
             return_error = (EbErrorType)(return_error & return_errors[index]);
         }
     }
-
-    /***************************************************************************************************/
-    /***********   Find SPECIAL configuration parameter tokens and call respective functions  **********/
-    /***************************************************************************************************/
-    // Parse command line for search region at level 0 width token
-    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_WIDTH, config_strings) ||
-        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_WIDTH, config_strings)) {
-        uint32_t last_index = 0;
-        uint32_t done = 1;
-
-        mark_token_as_read(HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
-        mark_token_as_read("-" HME_LEVEL0_WIDTH, cmd_copy, &cmd_token_cnt);
-
-        for (index = 0; done && (index < num_channels); ++index) {
-            configs[index]->hme_level0_column_index = 0;
-            for (uint32_t input_index = last_index;
-                 input_index < configs[index]->number_hme_search_region_in_width + last_index;
-                 ++input_index) {
-                if (EB_STRCMP(config_strings[input_index], " "))
-                    set_hme_level_0_search_area_in_width_array(config_strings[input_index],
-                                                               configs[index]);
-                else {
-                    done = 0;
-                    break;
-                }
-            }
-            last_index += configs[index]->number_hme_search_region_in_width;
-        }
-    }
-
-    //// Parse command line for search region at level 0 height token
-    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL0_HEIGHT, config_strings) ||
-        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL0_HEIGHT, config_strings)) {
-        uint32_t last_index = 0;
-        uint32_t done = 1;
-
-        mark_token_as_read(HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
-        mark_token_as_read("-" HME_LEVEL0_HEIGHT, cmd_copy, &cmd_token_cnt);
-
-        for (index = 0; done && (index < num_channels); ++index) {
-            configs[index]->hme_level0_row_index = 0;
-            for (uint32_t input_index = last_index;
-                 input_index < configs[index]->number_hme_search_region_in_height + last_index;
-                 ++input_index) {
-                if (EB_STRCMP(config_strings[input_index], " "))
-                    set_hme_level_0_search_area_in_height_array(config_strings[input_index],
-                                                                configs[index]);
-                else {
-                    done = 0;
-                    break;
-                }
-            }
-            last_index += configs[index]->number_hme_search_region_in_height;
-        }
-    }
-
-    // Parse command line for search region at level 1 Height token
-    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_HEIGHT, config_strings) ||
-        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_HEIGHT, config_strings)) {
-        uint32_t last_index = 0;
-        uint32_t done = 1;
-
-        mark_token_as_read(HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
-        mark_token_as_read("-" HME_LEVEL1_HEIGHT, cmd_copy, &cmd_token_cnt);
-
-        for (index = 0; done && (index < num_channels); ++index) {
-            configs[index]->hme_level1_row_index = 0;
-            for (uint32_t input_index = last_index;
-                 input_index < configs[index]->number_hme_search_region_in_height + last_index;
-                 ++input_index) {
-                if (EB_STRCMP(config_strings[input_index], " "))
-                    set_hme_level_1_search_area_in_height_array(config_strings[input_index],
-                                                                configs[index]);
-                else {
-                    done = 0;
-                    break;
-                }
-            }
-            last_index += configs[index]->number_hme_search_region_in_height;
-        }
-    }
-
-    // Parse command line for search region at level 1 width token
-    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL1_WIDTH, config_strings) ||
-        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL1_WIDTH, config_strings)) {
-        uint32_t last_index = 0;
-        uint32_t done = 1;
-
-        mark_token_as_read(HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
-        mark_token_as_read("-" HME_LEVEL1_WIDTH, cmd_copy, &cmd_token_cnt);
-
-        for (index = 0; done && (index < num_channels); ++index) {
-            configs[index]->hme_level1_column_index = 0;
-            for (uint32_t input_index = last_index;
-                 input_index < configs[index]->number_hme_search_region_in_width + last_index;
-                 ++input_index) {
-                if (EB_STRCMP(config_strings[input_index], " "))
-                    set_hme_level_1_search_area_in_width_array(config_strings[input_index],
-                                                               configs[index]);
-                else {
-                    done = 0;
-                    break;
-                }
-            }
-            last_index += configs[index]->number_hme_search_region_in_width;
-        }
-    }
-
-    // Parse command line for search region at level 2 width token
-    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_WIDTH, config_strings) ||
-        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_WIDTH, config_strings)) {
-        uint32_t last_index = 0;
-        uint32_t done = 1;
-
-        mark_token_as_read(HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
-        mark_token_as_read("-" HME_LEVEL2_WIDTH, cmd_copy, &cmd_token_cnt);
-
-        for (index = 0; done && (index < num_channels); ++index) {
-            configs[index]->hme_level2_column_index = 0;
-            for (uint32_t input_index = last_index;
-                 input_index < configs[index]->number_hme_search_region_in_width + last_index;
-                 ++input_index) {
-                if (EB_STRCMP(config_strings[input_index], " "))
-                    set_hme_level_2_search_area_in_width_array(config_strings[input_index],
-                                                               configs[index]);
-                else {
-                    done = 0;
-                    break;
-                }
-            }
-            last_index += configs[index]->number_hme_search_region_in_width;
-        }
-    }
-
-    // Parse command line for search region at level 2 height token
-    if (!find_token_multiple_inputs(argc, argv, HME_LEVEL2_HEIGHT, config_strings) ||
-        !find_token_multiple_inputs(argc, argv, "-" HME_LEVEL2_HEIGHT, config_strings)) {
-        uint32_t last_index = 0;
-        uint32_t done = 1;
-
-        mark_token_as_read(HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
-        mark_token_as_read("-" HME_LEVEL2_HEIGHT, cmd_copy, &cmd_token_cnt);
-
-        for (index = 0; done && (index < num_channels); ++index) {
-            configs[index]->hme_level2_row_index = 0;
-            for (uint32_t input_index = last_index;
-                 input_index < configs[index]->number_hme_search_region_in_height + last_index;
-                 ++input_index) {
-                if (EB_STRCMP(config_strings[input_index], " "))
-                    set_hme_level_2_search_area_in_height_array(config_strings[input_index],
-                                                                configs[index]);
-                else {
-                    done = 0;
-                    break;
-                }
-            }
-            last_index += configs[index]->number_hme_search_region_in_height;
-        }
-    }
-
     /***************************************************************************************************/
     /**************************************   Verify configuration parameters   ************************/
     /***************************************************************************************************/
