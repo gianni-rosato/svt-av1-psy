@@ -23,8 +23,7 @@
 typedef int64_t tran_high_t;
 typedef int32_t tran_low_t;
 void av1_fdwt8x8(tran_low_t *input, tran_low_t *output, int stride);
-void av1_fdwt8x8_uint8_input_c(uint8_t *input, tran_low_t *output, int stride,
+void eb_av1_fdwt8x8_uint8_input_c(uint8_t *input, tran_low_t *output, int stride,
                                int hbd);
-int av1_haar_ac_sad_8x8_uint8_input(uint8_t *input, int stride, int hbd);
 #endif
 #endif  // AOM_AV1_ENCODER_DWT_H_

@@ -3448,19 +3448,6 @@ void svt_av1_highbd_fwd_txfm(int16_t *src_diff, TranLow *coeff,
   }
 }
 
-void svt_av1_lowbd_fwd_txfm_c(int16_t *src_diff, TranLow *coeff,
-                          int diff_stride, TxfmParam *txfm_param) {
-  svt_av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
-}
-
-void svt_av1_fwd_txfm(int16_t *src_diff, TranLow *coeff, int diff_stride,
-                  TxfmParam *txfm_param) {
-  if (txfm_param->bd == 8)
-    svt_av1_lowbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
-  else
-    svt_av1_highbd_fwd_txfm(src_diff, coeff, diff_stride, txfm_param);
-}
-
 void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_size, int bit_depth,
                           int is_hbd) {
     TxfmParam txfm_param;
@@ -3471,7 +3458,7 @@ void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_s
 
     txfm_param.bd     = bit_depth;
     txfm_param.is_hbd = is_hbd;
-    svt_av1_fwd_txfm(src_diff, coeff, bw, &txfm_param);
+    svt_av1_highbd_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
 #endif
 

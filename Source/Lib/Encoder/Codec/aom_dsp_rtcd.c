@@ -147,7 +147,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_c;
     eb_av1_txb_init_levels = eb_av1_txb_init_levels_c;
 #if TPL_C_FIX
-    svt_av1_lowbd_fwd_txfm = svt_av1_lowbd_fwd_txfm_c;
     svt_aom_satd = svt_aom_satd_c;
     svt_av1_block_error = svt_av1_block_error_c;
 #endif
@@ -369,6 +368,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     pme_sad_loop_kernel = pme_sad_loop_kernel_c;
 #endif
     variance_highbd = variance_highbd_c;
+    eb_av1_haar_ac_sad_8x8_uint8_input = eb_av1_haar_ac_sad_8x8_uint8_input_c;
 
 #ifdef ARCH_X86
     flags &= get_cpu_flags_to_use();
@@ -598,10 +598,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_64x16 = eb_av1_fwd_txfm2d_64x16_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_32x16 = eb_av1_fwd_txfm2d_32x16_avx2;
                 if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x32 = eb_av1_fwd_txfm2d_16x32_avx2;
-#if TPL_LA
-    svt_av1_lowbd_fwd_txfm   = svt_av1_lowbd_fwd_txfm_c;
-    //if (flags & HAS_AVX2) eb_av1_lowbd_fwd_txfm = av1_lowbd_fwd_txfm_avx2;
-#endif
 #ifndef NON_AVX512_SUPPORT
                 if (flags & HAS_AVX512F) {
                     eb_av1_fwd_txfm2d_64x64 = av1_fwd_txfm2d_64x64_avx512;
@@ -737,6 +733,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     SET_AVX2(pme_sad_loop_kernel, pme_sad_loop_kernel_c, pme_sad_loop_kernel_avx2);
 #endif
                     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
+                    SET_AVX2(eb_av1_haar_ac_sad_8x8_uint8_input,
+                             eb_av1_haar_ac_sad_8x8_uint8_input_c,
+                             eb_av1_haar_ac_sad_8x8_uint8_input_avx2);
 #endif
 
 }

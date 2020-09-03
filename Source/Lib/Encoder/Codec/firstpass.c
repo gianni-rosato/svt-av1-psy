@@ -739,7 +739,7 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
         uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
         for (int r8 = 0; r8 < 2; ++r8) {
             for (int c8 = 0; c8 < 2; ++c8) {
-                stats->frame_avg_wavelet_energy += av1_haar_ac_sad_8x8_uint8_input(
+                stats->frame_avg_wavelet_energy += eb_av1_haar_ac_sad_8x8_uint8_input(
                     CONVERT_TO_BYTEPTR(buf) + c8 * 8 + r8 * 8 * stride, stride, hbd);
             }
         }
@@ -748,7 +748,7 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
         for (int r8 = 0; r8 < 2; ++r8) {
             for (int c8 = 0; c8 < 2; ++c8) {
                 stats->frame_avg_wavelet_energy +=
-                    av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
+                    eb_av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
             }
         }
     }
