@@ -7734,6 +7734,7 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
             base_block_count += 1.0;
         }
     }
+    assert(base_block_count > 0);
     geom_mean_of_scale = exp(geom_mean_of_scale / base_block_count);
     uint32_t new_full_lambda = (uint32_t)((double)pic_full_lambda * geom_mean_of_scale + 0.5);
     new_full_lambda = AOMMAX(new_full_lambda, 0);

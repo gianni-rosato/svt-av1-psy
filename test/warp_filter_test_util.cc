@@ -268,7 +268,10 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
     ConvBufType *dsta = new ConvBufType[output_n];
     ConvBufType *dstb = new ConvBufType[output_n];
     for (i = 0; i < output_n; ++i)
+    {
         output[i] = output2[i] = rnd_->Rand8();
+        dsta[i] = dstb[i] = 0;
+    }
 
     for (i = 0; i < num_iters; ++i) {
         // Generate an input block and extend its borders horizontally
@@ -597,7 +600,10 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
     ConvBufType *dsta = new ConvBufType[output_n];
     ConvBufType *dstb = new ConvBufType[output_n];
     for (i = 0; i < output_n; ++i)
+    {
         output[i] = output2[i] = rnd_->Rand16();
+        dsta[i] = dstb[i] = 0;
+    }
 
     for (i = 0; i < num_iters; ++i) {
         // Generate an input block and extend its borders horizontally

@@ -632,7 +632,7 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
 
         non_moving_index_sum += pcs_ptr->non_moving_index_array[sb_idx];
     }
-
+    assert(complete_sb_count > 0);
     pcs_ptr->non_moving_index_average = (uint16_t)non_moving_index_sum / pcs_ptr->sb_total_count;
     me_dist_pic_count                 = MAX(me_dist_pic_count, 1);
     pcs_ptr->qp_scaling_average_complexity =
@@ -804,7 +804,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
 
 #if TPL_LA
 #if TPL_LA_LAMBDA_SCALING
-static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr)
+static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr, int64_t mc_dep_cost_base)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
     const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
@@ -843,7 +843,8 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 rk = intra_cost / mc_dep_cost;
             }
-            pcs_ptr->tpl_rdmult_scaling_factors[index] = rk / pcs_ptr->r0 + c;
+
+            pcs_ptr->tpl_rdmult_scaling_factors[index] = (mc_dep_cost_base) ? rk / pcs_ptr->r0 + c : c;
         }
     }
 
@@ -1700,15 +1701,13 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
         }
     }
 
-    if (mc_dep_cost_base == 0) {
-      pcs_ptr->r0 = 0;
-    } else {
+    if (mc_dep_cost_base != 0) {
       pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
     }
 
     //SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
 #if TPL_LA_LAMBDA_SCALING
-    generate_lambda_scaling_factor(pcs_ptr);
+    generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 #endif
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;

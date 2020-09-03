@@ -696,6 +696,7 @@ void read_tile_info(Bitstrm *bs, TilesInfo *tile_info, SeqHeader *seq_header,
             max_tile_area_sb = (sb_rows * sb_cols) >> (tile_info->min_log2_tiles + 1);
         else
             max_tile_area_sb = sb_rows * sb_cols;
+        assert(widest_tile_sb > 0);
         tile_info->max_tile_height_sb = MAX(max_tile_area_sb / widest_tile_sb, 1);
 
         start_sb = 0;

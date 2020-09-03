@@ -23,6 +23,7 @@ void set_enc_config(void *config_ptr, const char *name, const char *value) {
 
 void *create_enc_config() {
     EbConfig *config = (EbConfig *)malloc(sizeof(EbConfig));
+    assert(config != NULL);
     eb_config_ctor(config);
     return config;
 }

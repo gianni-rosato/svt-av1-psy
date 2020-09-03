@@ -197,6 +197,7 @@ EbErrorType init_thread_management_params() {
                         lp_group = temp;
                     else {
                         free(lp_group);
+                        fclose(fin);
                         return EB_ErrorInsufficientResources;
                     }
                 }

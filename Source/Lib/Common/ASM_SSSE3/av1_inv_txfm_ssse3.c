@@ -2820,6 +2820,7 @@ static void lowbd_inv_txfm2d_add_16x4_ssse3(const int32_t *input, uint8_t *outpu
     int32_t ud_flip, lr_flip;
     get_flip_cfg(tx_type, &ud_flip, &lr_flip);
     const int32_t row_one_loop = 8;
+    assert(buf_size_w_div8 > 0);
     for (int32_t i = 0; i < buf_size_w_div8; ++i) {
         const int32_t *input_cur = input + i * row_one_loop;
         __m128i *      buf_cur   = buf + i * row_one_loop;

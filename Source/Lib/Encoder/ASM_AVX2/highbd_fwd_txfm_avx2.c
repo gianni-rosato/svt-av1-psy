@@ -4691,7 +4691,7 @@ void eb_av1_fwd_txfm2d_16x8_avx2(int16_t *input, int32_t *output, uint32_t strid
     const int32_t txfm_size_row = tx_size_high[TX_16X8];
     const int32_t num_row       = txfm_size_row >> 3;
     const int32_t num_col       = txfm_size_col >> 3;
-
+    assert(num_col > 0);
     // column transform
     for (int32_t i = 0; i < num_col; i++) {
         load_buffer_8x8(input + i * 8, in, stride, ud_flip, 0, shift[0]);

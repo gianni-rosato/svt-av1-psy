@@ -203,6 +203,7 @@ class KMeansTest : public ::testing::TestWithParam<int> {
     int prepare_data(const int max_colors) {
         memset(data_, 0, MAX_PALETTE_SQUARE * sizeof(int));
         uint8_t *palette = new uint8_t[max_colors];
+        assert(max_colors > 0);
         for (int i = 0; i < max_colors; i++)
             palette[i] = rnd_.random();
         uint8_t tmp[MAX_PALETTE_SQUARE] = {0};

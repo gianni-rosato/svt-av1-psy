@@ -476,7 +476,7 @@ uint64_t eb_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
                                transform_size,
                                tx_class,
                                coeff_contexts); // NM - Assembly version is available in AOM
-
+    assert(eob <= width* height);
     if (allow_update_cdf) {
         for (int c = eob - 1; c >= 0; --c) {
             const int     pos       = scan[c];

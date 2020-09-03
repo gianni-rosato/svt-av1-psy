@@ -778,6 +778,7 @@ void eb_aom_noise_model_free(AomNoiseModel *model) {
                     num_samples++;                                                       \
                 }                                                                        \
             }                                                                            \
+            assert(num_samples > 0);                                                     \
             buffer[num_coords] = (avg_data - avg_denoised) / num_samples;                \
         }                                                                                \
         return val;                                                                      \

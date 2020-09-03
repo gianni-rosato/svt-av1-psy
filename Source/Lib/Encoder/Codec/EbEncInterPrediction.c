@@ -2310,7 +2310,7 @@ static INLINE void calc_target_weighted_pred_above(uint8_t is16bit, MacroBlockD 
 
     const int            bw     = xd->n4_w << MI_SIZE_LOG2;
     const uint8_t *const mask1d = eb_av1_get_obmc_mask(ctxt->overlap);
-
+    assert(mask1d != NULL);
     int32_t *      wsrc = ctxt->wsrc_buf + (rel_mi_col * MI_SIZE);
     int32_t *      mask = ctxt->mask_buf + (rel_mi_col * MI_SIZE);
     const uint8_t *tmp  = ctxt->tmp + rel_mi_col * MI_SIZE;
@@ -2345,7 +2345,7 @@ static INLINE void calc_target_weighted_pred_left(uint8_t is16bit, MacroBlockD *
     int32_t *      wsrc = ctxt->wsrc_buf + (rel_mi_row * MI_SIZE * bw);
     int32_t *      mask = ctxt->mask_buf + (rel_mi_row * MI_SIZE * bw);
     const uint8_t *tmp  = ctxt->tmp + (rel_mi_row * MI_SIZE * ctxt->tmp_stride);
-
+    assert(mask1d != NULL);
     {
         for (int row = 0; row < nb_mi_height * MI_SIZE; ++row) {
             for (int col = 0; col < ctxt->overlap; ++col) {
@@ -3464,6 +3464,7 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
     uint8_t *src_ptr_l0, *src_ptr_l1;
     uint8_t *dst_ptr;
     if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+        assert(ref_pic_list0 != NULL);
         // Y
         src_ptr_l0 = ref_pic_list0->buffer_y + (is16bit ? 2 : 1)
                                                * (ref_pic_list0->origin_x + ref_pic_list0->origin_y * ref_pic_list0->stride_y);
@@ -3475,6 +3476,7 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
         buf_height = ref_pic_list0->height;
     }
     else{ //UNI_PRED_LIST_1
+        assert(ref_pic_list1 != NULL);
         src_ptr_l0 = ref_pic_list1->buffer_y + (is16bit ? 2 : 1)
                                                * (ref_pic_list1->origin_x + ref_pic_list1->origin_y * ref_pic_list1->stride_y);
         src_ptr_l1 = NULL;

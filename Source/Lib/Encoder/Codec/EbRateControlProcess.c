@@ -5672,6 +5672,7 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
             base_block_count += 1.0;
         }
     }
+    assert(base_block_count > 0);
 #if USE_GF_UPDATE_FOR_LAMBDA
     uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
     const int orig_rdmult = compute_rdmult_sse(pcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);

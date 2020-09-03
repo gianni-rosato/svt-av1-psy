@@ -1220,7 +1220,7 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         __m256i        se0, se1, xx, yy;
         __m256i        delta;
         se0 = _mm256_setzero_si256(); // Initialize to avoid warning.
-
+        ASSERT(h8 > 0);
         y = 0;
         while (y < h8) {
             // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e

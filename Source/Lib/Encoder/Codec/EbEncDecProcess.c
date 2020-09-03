@@ -795,6 +795,7 @@ static double aom_ssim2(const uint8_t *img1, int stride_img1,
             samples++;
         }
     }
+    assert(samples > 0);
     ssim_total /= samples;
     return ssim_total;
 }
@@ -819,6 +820,7 @@ static double aom_highbd_ssim2(const uint8_t *img1, int stride_img1,
       samples++;
     }
   }
+  assert(samples > 0);
   ssim_total /= samples;
   return ssim_total;
 }
@@ -9934,6 +9936,7 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
         uint32_t sum = 0;
         printf("\nstart \n");
 #endif
+        assert(samples_num > 0);
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++) {
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES - 1); part_idx++) {
                 context_ptr->ad_md_prob[pred_depth][part_idx] = (uint32_t)((pred_depth_count[pred_depth][part_idx] * (uint32_t)DEPTH_PROB_PRECISION) / (uint32_t)samples_num);
@@ -10168,6 +10171,7 @@ void generate_txt_prob(PictureControlSet * pcs_ptr,ModeDecisionContext *context_
                 }
             }
         }
+        assert(samples_num > 0);
         for (uint8_t depth_delta = 0; depth_delta < TXT_DEPTH_DELTA_NUM; depth_delta++) {
             for (uint8_t txs_idx = 1; txs_idx < TX_TYPES; txs_idx++) {
                 context_ptr->txt_prob[depth_delta][txs_idx] = (uint32_t)((txt_cnt[depth_delta][txs_idx] * (uint32_t)10000) / (uint32_t)samples_num);

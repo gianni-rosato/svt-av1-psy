@@ -218,7 +218,7 @@ static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
     double t1[9], t2[9];
     normalize_homography(pts1, np, t1);
     normalize_homography(pts2, np, t2);
-
+    assert(a != NULL);
     for (int i = 0; i < np; ++i) {
         double dx = *(pts2++);
         double dy = *(pts2++);
@@ -389,6 +389,7 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
     image1_coord = (double *)malloc(sizeof(*image1_coord) * npoints * 2);
 
     motions = (RANSAC_MOTION *)malloc(sizeof(RANSAC_MOTION) * num_desired_motions);
+    assert(motions != NULL);
     for (int i = 0; i < num_desired_motions; ++i) {
         motions[i].inlier_indices = (int *)malloc(sizeof(*motions->inlier_indices) * npoints);
         clear_motion(motions + i, npoints);
@@ -576,6 +577,7 @@ static int ransac_double_prec(const double *matched_points, int npoints, int *nu
     image1_coord = (double *)malloc(sizeof(*image1_coord) * npoints * 2);
 
     motions = (RANSAC_MOTION *)malloc(sizeof(RANSAC_MOTION) * num_desired_motions);
+    assert(motions != NULL);
     for (int i = 0; i < num_desired_motions; ++i) {
         motions[i].inlier_indices = (int *)malloc(sizeof(*motions->inlier_indices) * npoints);
         clear_motion(motions + i, npoints);
