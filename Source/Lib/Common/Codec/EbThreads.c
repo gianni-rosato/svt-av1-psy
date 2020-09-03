@@ -169,7 +169,7 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
  * eb_destroy_thread
  ****************************************/
 EbErrorType eb_destroy_thread(EbHandle thread_handle) {
-    EbErrorType error_return = EB_ErrorNone;
+    EbErrorType error_return;
 
 #ifdef _WIN32
     WaitForSingleObject(thread_handle, INFINITE);
