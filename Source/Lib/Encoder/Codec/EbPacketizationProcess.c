@@ -446,16 +446,7 @@ static void print_detailed_frame_info(PacketizationContext* context_ptr, const P
                 SVT_LOG("L0 MISMATCH POC:%i\n", (int32_t)queue_entry_ptr->poc);
                 exit(0);
             }
-//TODO: how to enable this?
-#if 0
-            if (scs_ptr->static_config.hierarchical_levels == 3 &&
-                queue_entry_ptr->slice_type == B_SLICE &&
-                queue_entry_ptr->ref_poc_list1 !=
-                    context_ptr->dpb_disp_order[BWDrefIdx]) {
-                SVT_LOG("L1 MISMATCH POC:%i\n", (int32_t)queue_entry_ptr->poc);
-                exit(0);
-            }
-#endif
+
             for (int rr = 0; rr < 7; rr++) {
                 uint8_t dpb_spot = queue_entry_ptr->av1_ref_signal.ref_dpb_index[rr];
 

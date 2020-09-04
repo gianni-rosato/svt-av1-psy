@@ -3209,14 +3209,7 @@ EbErrorType open_loop_intra_search_mb(
             memset(ois_mb_results_ptr, 0, sizeof(*ois_mb_results_ptr));
             uint8_t *src = input_ptr->buffer_y + pcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
                            (pcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_ptr->stride_y;
-#if 0
-            if(pcs_ptr->temporal_layer_index == 0) {
-                src = pcs_ptr->save_enhanced_picture_ptr[0] + pcs_ptr->enhanced_picture_ptr->origin_x + cu_origin_x +
-                      (pcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_ptr->stride_y;
-                if(cu_origin_x == 0 && cu_origin_y ==0)
-                    printf("open_loop_intra_search_mb using original src yuv, src[0~3]=%d %d %d %d, poc=%d\n", src[0], src[1], src[2], src[3], pcs_ptr->picture_number);
-            }
-#endif
+
             // Fill Neighbor Arrays
             update_neighbor_samples_array_open_loop_mb(above0_row - 1, left0_col - 1,
                                                        input_ptr, input_ptr->stride_y, cu_origin_x, cu_origin_y, bsize, bsize);

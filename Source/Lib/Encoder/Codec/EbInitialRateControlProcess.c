@@ -1263,34 +1263,6 @@ EbErrorType tpl_mc_flow(
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
         generate_r0beta(pcs_array[0]);
 
-#if 0 //AMIR_PRINTS
-        SVT_LOG("LOG displayorder:%ld\n",
-            pcs_array[0]->picture_number);
-        for (frame_idx = 0; frame_idx <= sw_length - 1; frame_idx++)
-        {
-            PictureParentControlSet         *pcs_ptr_tmp = pcs_array[frame_idx];
-            Av1Common *cm = pcs_ptr_tmp->av1_cm;
-            SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
-            //int tpl_stride = tpl_frame->stride;
-            int64_t intra_cost_base = 0;
-            int64_t mc_dep_cost_base = 0;
-            const int step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-            const int mi_cols_sr = cm->mi_cols;//av1_pixels_to_mi(cm->superres_upscaled_width);
-
-            for (int row = 0; row < cm->mi_rows; row += step) {
-                for (int col = 0; col < mi_cols_sr; col += step) {
-                    TplStats *tpl_stats_ptr = pcs_ptr_tmp->tpl_stats[((row * mi_cols_sr) >> 4) + (col >> 2)];
-                    int64_t mc_dep_delta =
-                        RDCOST(pcs_ptr_tmp->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
-                    intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
-                    mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
-                }
-            }
-
-            SVT_LOG("After mc_flow_synthesizer:\tframe_indx:%d\tdisplayorder:%ld\tIntra:%lld\tmc_dep:%lld\n",
-                frame_idx, pcs_ptr_tmp->picture_number, intra_cost_base, mc_dep_cost_base);
-        }
-#endif
         // The second part is for the next base layer frame to use the available pictures.
         // i.e. POC 16 have access to picture 1,2,...15. So dispenser and synthesizer are called.
         // In the next call, the stats for POC 16 is updated using pictures 17,... 32

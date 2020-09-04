@@ -11,10 +11,8 @@
 
 #include <immintrin.h>
 #include "EbCombinedAveragingSAD_Inline_AVX2.h"
-#include "EbCombinedAveragingSAD_Intrinsic_AVX2.h"
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
-#include "EbComputeSAD_SSE2.h"
 /********************************************************************************************************************************/
 void compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t input_stride,
                                             uint64_t *mean_of8x8_blocks, // mean of four  8x8

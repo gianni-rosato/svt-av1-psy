@@ -166,39 +166,6 @@ static INLINE void Distortion_AVX512_INTRIN(const __m256i input, const __m256i r
     *sum               = _mm512_add_epi32(*sum, dist);
 }
 
-#if 0
-// Slightly slower than AVX2 version for small area_height. Disabled.
-uint64_t SpatialFullDistortionKernel16xN_AVX512_INTRIN(
-    uint8_t   *input,
-    uint32_t   input_stride,
-    uint8_t   *recon,
-    uint32_t   recon_stride,
-    uint32_t   area_width,
-    uint32_t   area_height)
-{
-    int32_t row_count = area_height;
-    __m512i sum = _mm512_setzero_si512();
-
-    (void)area_width;
-
-    do
-    {
-        const __m128i in0 = _mm_loadu_si128((__m128i *)input);
-        const __m128i in1 = _mm_loadu_si128((__m128i *)(input +input_stride));
-        const __m128i re0 = _mm_loadu_si128((__m128i *)recon);
-        const __m128i re1 = _mm_loadu_si128((__m128i *)(recon + recon_stride));
-        const __m256i in = _mm256_setr_m128i(in0, in1);
-        const __m256i re = _mm256_setr_m128i(re0, re1);
-        Distortion_AVX512_INTRIN(in, re, &sum);
-        input += 2 * input_stride;
-        recon += 2 * recon_stride;
-        row_count -= 2;
-    } while (row_count);
-
-    return Hadd32_AVX512_INTRIN(sum);
-}
-#endif
-
 static INLINE void SpatialFullDistortionKernel32_AVX512_INTRIN(const uint8_t *const input,
                                                                const uint8_t *const recon,
                                                                __m512i *const       sum) {

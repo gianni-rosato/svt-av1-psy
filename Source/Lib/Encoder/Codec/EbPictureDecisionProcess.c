@@ -3857,15 +3857,6 @@ EbErrorType derive_tf_window_params(
     // to avoid visual quality drop.
     int adjust_num = 0;
     if (context_ptr->tf_ctrls.noise_based_window_adjust) {
-#if 0
-    if (num_frames == 1) {  // `arnr_max_frames = 1` is used to disable filtering.
-        adjust_num = 0;
-    }
-    else if (filter_frame_lookahead_idx < 0 && q <= 10) {
-        adjust_num = 0;
-    }
-    else
-#endif
     if (noise_levels[0] < 0.5) {
         adjust_num = 6;
     }

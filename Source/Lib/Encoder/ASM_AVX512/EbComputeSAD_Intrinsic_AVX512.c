@@ -159,61 +159,6 @@ static INLINE __m128i hadd_four_32_avx512(const __m512i src0, const __m512i src1
     return hadd_four_32_avx2(s[0], s[1], s[2], s[3]);
 }
 
-#if 0 // For sad64xMx4d, AVX512 is Slower than AVX2 because of worse AVX512 compiler.
-
-static AOM_FORCE_INLINE void compute64x_m_4d_sad_avx512_intrin(
-    const uint8_t *src, const uint32_t src_stride,
-    const uint8_t *const ref_array[4], const uint32_t ref_stride,
-    uint32_t sad_array[4], const uint32_t height)
-{
-    const uint8_t *ref[4];
-    uint32_t y = height;
-    __m512i zmm[4] = { 0 };
-
-    ref[0] = ref_array[0];
-    ref[1] = ref_array[1];
-    ref[2] = ref_array[2];
-    ref[3] = ref_array[3];
-
-    do {
-        sad64_4d_avx512(src, ref, 0, zmm);
-        src += src_stride;
-        ref[0] += ref_stride;
-        ref[1] += ref_stride;
-        ref[2] += ref_stride;
-        ref[3] += ref_stride;
-    } while (--y);
-
-    const __m128i sum = hadd_four_32_avx512(zmm[0], zmm[1], zmm[2], zmm[3]);
-    _mm_storeu_si128((__m128i *)sad_array, sum);
-}
-
-void eb_aom_sad64x16x4d_avx512(const uint8_t *src, int src_stride,
-    const uint8_t *const ref_array[4], int ref_stride,
-    uint32_t sad_array[4]) {
-    compute64x_m_4d_sad_avx512_intrin(src, src_stride, ref_array, ref_stride, sad_array, 16);
-}
-
-void eb_aom_sad64x32x4d_avx512(const uint8_t *src, int src_stride,
-    const uint8_t *const ref_array[4], int ref_stride,
-    uint32_t sad_array[4]) {
-    compute64x_m_4d_sad_avx512_intrin(src, src_stride, ref_array, ref_stride, sad_array, 32);
-}
-
-void eb_aom_sad64x64x4d_avx512(const uint8_t *src, int src_stride,
-    const uint8_t *const ref_array[4], int ref_stride,
-    uint32_t sad_array[4]) {
-    compute64x_m_4d_sad_avx512_intrin(src, src_stride, ref_array, ref_stride, sad_array, 64);
-}
-
-void eb_aom_sad64x128x4d_avx512(const uint8_t *src, int src_stride,
-    const uint8_t *const ref_array[4], int ref_stride,
-    uint32_t sad_array[4]) {
-    compute64x_m_4d_sad_avx512_intrin(src, src_stride, ref_array, ref_stride, sad_array, 128);
-}
-
-#endif
-
 SIMD_INLINE void compute128x_m_4d_sad_avx512_intrin(const uint8_t *src, const uint32_t src_stride,
                                                     const uint8_t *const ref_array[4],
                                                     const uint32_t       ref_stride,
@@ -1237,71 +1182,6 @@ static INLINE void sad_loop_kernel_64_8sum_avx2(const uint8_t *const src, const 
     sums[6] = _mm256_adds_epu16(sums[6], _mm256_mpsadbw_epu8(rr3, ss1, (2 << 3) | 2)); // 010 010
     sums[7] = _mm256_adds_epu16(sums[7], _mm256_mpsadbw_epu8(rr3, ss1, (7 << 3) | 7)); // 111 111
 }
-#if 0
-// This is even slower. Don't call.
-static INLINE void overflow16(const __m256i sads256[2], const int32_t x,
-    const int32_t y, uint32_t *const best_s, int32_t *const best_x,
-    int32_t *const best_y)
-{
-    // sads256[0]: 0 1 2 3  8 9 A b
-    // sads256[1]: 4 5 6 7  C D E F
-    const __m256i sad0_hi = _mm256_srli_epi32(sads256[0], 16);
-    const __m256i sad1_hi = _mm256_srli_epi32(sads256[1], 16);
-    const __m256i sad_hi = _mm256_packus_epi32(sad0_hi, sad1_hi);
-    const __m128i sad_hl = _mm256_castsi256_si128(sad_hi);
-    const __m128i sad_hh = _mm256_extracti128_si256(sad_hi, 1);
-    const __m128i minpos_hl = _mm_minpos_epu16(sad_hl);
-    const __m128i minpos_hh = _mm_minpos_epu16(sad_hh);
-    const uint32_t min_hl = _mm_extract_epi16(minpos_hl, 0);
-    const uint32_t min_hh = _mm_extract_epi16(minpos_hh, 0);
-    const uint32_t minmin_hi = (min_hl <= min_hh) ? min_hl : min_hh;
-    const __m256i min_hi = _mm256_set1_epi32(minmin_hi << 16);
-    const __m256i sad256_0 = _mm256_sub_epi32(sads256[0], min_hi);
-    const __m256i sad256_1 = _mm256_sub_epi32(sads256[1], min_hi);
-    const __m256i sad_lo = _mm256_packus_epi32(sad256_0, sad256_1);
-    const __m128i sad_ll = _mm256_castsi256_si128(sad_lo);
-    const __m128i sad_lh = _mm256_extracti128_si256(sad_lo, 1);
-    const __m128i minpos_ll = _mm_minpos_epu16(sad_ll);
-    const __m128i minpos_lh = _mm_minpos_epu16(sad_lh);
-    const uint32_t min_ll = _mm_extract_epi16(minpos_ll, 0);
-    const uint32_t min_lh = _mm_extract_epi16(minpos_lh, 0);
-    uint32_t minmin_lo, delta;
-    __m128i minpos;
-
-    if (min_ll <= min_lh) {
-        minmin_lo = min_ll;
-        delta = 0;
-        minpos = minpos_ll;
-    }
-    else {
-        minmin_lo = min_lh;
-        delta = 8;
-        minpos = minpos_lh;
-    }
-
-    const uint32_t min_final = minmin_lo + (minmin_hi << 16);
-    if (min_final < *best_s) {
-        __m128i minpos_final;
-
-        if (minmin_lo != 0xFFFF) { // no overflow
-            minpos_final = minpos;
-        }
-        else { // overflow
-            if (min_hl <= min_hh) {
-                delta = 0;
-                minpos_final = minpos_hl;
-            }
-            else {
-                delta = 8;
-                minpos_final = minpos_hh;
-            }
-        }
-        *best_s = min_final;
-        *best_x = x + delta + _mm_extract_epi16(minpos_final, 1);
-        *best_y = y;
-    }
-}
-#endif
 
 #define UPDATE_BEST(sum, idx, offset, best_s, best_x, best_y) \
     {                                                         \
