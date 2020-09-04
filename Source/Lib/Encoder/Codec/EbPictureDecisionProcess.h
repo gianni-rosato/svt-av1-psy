@@ -15,9 +15,7 @@
 #include "EbDefinitions.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
-#if FIRST_PASS_SETUP
 #include "EbUtility.h"
-#endif
 
 /***************************************
  * Extern Function Declaration
@@ -48,16 +46,11 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
-#if FIRST_PASS_SETUP
-#if TF_LEVELS
 typedef struct  TfControls {
     uint8_t enabled;
     uint8_t window_size;
-#if IMPROVED_TF_LEVELS
     uint8_t noise_based_window_adjust;
-#endif
 }TfControls;
-#endif
 
 /**************************************
  * Context
@@ -67,9 +60,7 @@ typedef struct PictureDecisionContext
     EbDctor      dctor;
     EbFifo       *picture_analysis_results_input_fifo_ptr;
     EbFifo       *picture_decision_results_output_fifo_ptr;
-#if DECOUPLE_ME_RES
     EbFifo       *me_fifo_ptr;
-#endif
     uint64_t      last_solid_color_frame_poc;
 
     EbBool        reset_running_avg;
@@ -101,17 +92,12 @@ typedef struct PictureDecisionContext
     EbBool        mini_gop_toggle;    //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
     uint8_t       last_i_picture_sc_detection;
     uint64_t      key_poc;
-#if TF_LEVELS
     uint8_t tf_level;
     TfControls tf_ctrls;
-#endif
-#if DECOUPLE_ME_RES
     PictureParentControlSet* mg_pictures_array[1<<MAX_TEMPORAL_LAYERS];
     DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
                                                       //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
-#endif
 } PictureDecisionContext;
 
-#endif
 #endif // EbPictureDecision_h

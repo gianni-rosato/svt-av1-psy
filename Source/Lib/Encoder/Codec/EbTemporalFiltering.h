@@ -38,7 +38,6 @@
 // A scale factor used in plane-wise temporal filtering to raise the filter
 // weight from `double` with range [0, 1] to `int` with range [0, 1000].
 #define TF_PLANEWISE_FILTER_WEIGHT_SCALE 1000
-#if TF_IMP
 // Hyper-parameters used to compute filtering weight. These hyper-parameters can
 // be tuned for a better performance.
 // 0. A scale factor used in temporal filtering to raise the filter weight from
@@ -73,7 +72,6 @@
 //    then the actual threshold will be 720 * 0.1 = 72. Similarly, the threshold
 //    for 360p videos will be 360 * 0.1 = 36.
 #define TF_SEARCH_DISTANCE_THRESHOLD 0.1
-#endif
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
 
@@ -116,42 +114,24 @@ void svt_av1_apply_filtering_highbd_c(
     int ss_x, int ss_y, int strength, const int *blk_fw, int use_whole_blk, uint32_t *y_accum,
     uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 void svt_av1_apply_temporal_filter_planewise_c(
-#if TF_IMP
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
     const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#else
-    const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
-    const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
-    const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-    int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
-    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#endif
 void svt_av1_apply_temporal_filter_planewise_hbd_c(
-#if TF_IMP
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#else
-    const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre, int y_pre_stride,
-    const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
-    const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-    int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
-    uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#endif
-#if NOISE_BASED_TF_FRAMES
 double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height,
     uint16_t stride_y);
 
 double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride,
     int bd);
-#endif
 #ifdef __cplusplus
 }
 #endif

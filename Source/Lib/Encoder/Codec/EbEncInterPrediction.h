@@ -25,7 +25,6 @@ extern "C" {
 
 extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
 
-#if TPL_LA
 void svt_av1_init_inter_params(InterPredParams *inter_pred_params, int block_width,
                        int block_height, int pix_row, int pix_col,
                        int subsampling_x, int subsampling_y, int bit_depth,
@@ -36,7 +35,6 @@ void svt_av1_init_inter_params(InterPredParams *inter_pred_params, int block_wid
 void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
                                int dst_stride, const MV *src_mv, int pix_col, int pix_row,
                                InterPredParams *inter_pred_params);
-#endif
 EbErrorType av1_inter_prediction(
         PictureControlSet              *pcs_ptr,
         uint32_t                        interp_filters,
@@ -105,12 +103,10 @@ void search_compound_diff_wedge(
         PictureControlSet                    *pcs_ptr,
         struct ModeDecisionContext                  *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
-#if INTER_COMP_REDESIGN
 void calc_pred_masked_compound(
         PictureControlSet                    *pcs_ptr,
         struct ModeDecisionContext           *context_ptr,
         ModeDecisionCandidate                *candidate_ptr);
-#endif
 
 
 EbErrorType inter_pu_prediction_av1(

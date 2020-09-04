@@ -128,7 +128,6 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
 
     //Update MV
     PictureParentControlSet *parent_pcs_ptr = pcs_ptr->parent_pcs_ptr;
-#if IMPROVE_GMV
     for (frame_index = INTRA_FRAME; frame_index <= ALTREF_FRAME; ++frame_index) {
         if (parent_pcs_ptr
             ->is_global_motion[get_list_idx(frame_index)][get_ref_frame_idx(frame_index)])
@@ -163,118 +162,6 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
                     GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
         }
     }
-#else
-#if GM_DOWN_16
-    if (parent_pcs_ptr->gm_level <= GM_DOWN16) {
-#else
-    if (parent_pcs_ptr->gm_level <= GM_DOWN) {
-#endif
-        if (parent_pcs_ptr
-                ->is_global_motion[get_list_idx(LAST_FRAME)][get_ref_frame_idx(LAST_FRAME)])
-            parent_pcs_ptr->global_motion[LAST_FRAME] =
-                parent_pcs_ptr->global_motion_estimation[get_list_idx(LAST_FRAME)]
-                                                        [get_ref_frame_idx(LAST_FRAME)];
-        if (parent_pcs_ptr
-                ->is_global_motion[get_list_idx(BWDREF_FRAME)][get_ref_frame_idx(BWDREF_FRAME)])
-            parent_pcs_ptr->global_motion[BWDREF_FRAME] =
-                parent_pcs_ptr->global_motion_estimation[get_list_idx(BWDREF_FRAME)]
-                                                        [get_ref_frame_idx(BWDREF_FRAME)];
-        // Upscale the translation parameters by 2, because the search is done on a down-sampled
-        // version of the source picture (with a down-sampling factor of 2 in each dimension).
-#if GM_DOWN_16
-        if (parent_pcs_ptr->gm_level == GM_DOWN16) {
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] *= 4;
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] *= 4;
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] *= 4;
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] *= 4;
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        }else if (parent_pcs_ptr->gm_level == GM_DOWN) {
-#else
-        if (parent_pcs_ptr->gm_level == GM_DOWN) {
-#endif
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] *= 2;
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] *= 2;
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] *= 2;
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] *= 2;
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1],
-                               GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                               GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        }
-    } else {
-        if (pcs_ptr->parent_pcs_ptr->is_pan && pcs_ptr->parent_pcs_ptr->is_tilt) {
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmtype = TRANSLATION;
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
-                ((pcs_ptr->parent_pcs_ptr->pan_mvx + pcs_ptr->parent_pcs_ptr->tilt_mvx) / 2)
-                << 1 << GM_TRANS_ONLY_PREC_DIFF;
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
-                ((pcs_ptr->parent_pcs_ptr->pan_mvy + pcs_ptr->parent_pcs_ptr->tilt_mvy) / 2)
-                << 1 << GM_TRANS_ONLY_PREC_DIFF;
-        } else if (pcs_ptr->parent_pcs_ptr->is_pan) {
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmtype = TRANSLATION;
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
-                pcs_ptr->parent_pcs_ptr->pan_mvx << 1 << GM_TRANS_ONLY_PREC_DIFF;
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
-                pcs_ptr->parent_pcs_ptr->pan_mvy << 1 << GM_TRANS_ONLY_PREC_DIFF;
-        } else if (pcs_ptr->parent_pcs_ptr->is_tilt) {
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmtype = TRANSLATION;
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
-                pcs_ptr->parent_pcs_ptr->tilt_mvx << 1 << GM_TRANS_ONLY_PREC_DIFF;
-            pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
-                pcs_ptr->parent_pcs_ptr->tilt_mvy << 1 << GM_TRANS_ONLY_PREC_DIFF;
-        }
-
-        pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1] =
-            (int32_t)clamp(pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1],
-                           GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                           GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0] =
-            (int32_t)clamp(pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0],
-                           GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                           GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-
-        pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmtype = TRANSLATION;
-        pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] =
-            0 - pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[1];
-        pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] =
-            0 - pcs_ptr->parent_pcs_ptr->global_motion[LAST_FRAME].wmmat[0];
-        pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1] =
-            (int32_t)clamp(pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[1],
-                           GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                           GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0] =
-            (int32_t)clamp(pcs_ptr->parent_pcs_ptr->global_motion[BWDREF_FRAME].wmmat[0],
-                           GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                           GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-    }
-#endif
 }
 
 void eb_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
@@ -539,124 +426,6 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     return EB_ErrorNone;
 }
 
-#if !DEPTH_PART_CLEAN_UP
-static void forward_all_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
-        MdcSbData *results_ptr = &pcs_ptr->mdc_sb_array[sb_index];
-
-        results_ptr->leaf_count = 0;
-
-        for (uint32_t blk_index = 0; blk_index < scs_ptr->max_block_cnt; ++blk_index) {
-            const BlockGeom *const blk_geom = get_blk_geom_mds(blk_index);
-
-            //if the parentSq is inside inject this block
-            const uint8_t is_blk_allowed =
-                pcs_ptr->slice_type != I_SLICE || blk_geom->sq_size < 128;
-
-            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
-                results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
-
-                    blk_geom->sq_size == 128
-                        ? 17
-                        : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
-
-                results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
-                    0; //valid only for square 85 world. will be removed.
-                results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-                results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
-                    blk_geom->sq_size > 4;
-            }
-        }
-    }
-
-    pcs_ptr->parent_pcs_ptr->average_qp = pcs_ptr->parent_pcs_ptr->picture_qp;
-}
-
-void forward_sq_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    uint32_t sb_index;
-    EbBool   split_flag;
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
-        MdcSbData *results_ptr = &pcs_ptr->mdc_sb_array[sb_index];
-
-        results_ptr->leaf_count = 0;
-
-        uint32_t blk_index =
-            pcs_ptr->slice_type == I_SLICE && scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
-
-        while (blk_index < scs_ptr->max_block_cnt) {
-            split_flag = EB_TRUE;
-
-            const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-
-            //if the parentSq is inside inject this block
-            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index])
-
-            {
-                //int32_t offset_d1 = ns_blk_offset[(int32_t)from_shape_to_part[blk_geom->shape]]; //blk_ptr->best_d1_blk; // TOCKECK
-                //int32_t num_d1_block = ns_blk_num[(int32_t)from_shape_to_part[blk_geom->shape]]; // context_ptr->blk_geom->totns; // TOCKECK
-                //
-                //                                                  // for (int32_t d1_itr = blk_it; d1_itr < blk_it + num_d1_block; d1_itr++) {
-                // for (int32_t d1_itr = (int32_t)blk_index ; d1_itr < (int32_t)blk_index +  num_d1_block ; d1_itr++) {
-                results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = 1;
-
-                results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
-                    0; //valid only for square 85 world. will be removed.
-                results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-
-                if (blk_geom->sq_size > 4) {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_TRUE;
-                    split_flag                                                         = EB_TRUE;
-                } else {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
-                    split_flag                                                         = EB_FALSE;
-                }
-            }
-            blk_index +=
-                split_flag
-                    ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
-                    : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                                     [blk_geom->depth];
-        }
-    }
-
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-}
-
-void sb_forward_sq_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                                uint32_t sb_index) {
-    MdcSbData *results_ptr  = &pcs_ptr->mdc_sb_array[sb_index];
-    results_ptr->leaf_count = 0;
-    uint32_t blk_index =
-        pcs_ptr->slice_type == I_SLICE && scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
-
-    while (blk_index < scs_ptr->max_block_cnt) {
-        EbBool split_flag = EB_TRUE;
-
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-
-        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
-            results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = 1;
-            results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
-                0; //valid only for square 85 world. will be removed.
-            results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-
-            if (blk_geom->sq_size > 4) {
-                results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_TRUE;
-                split_flag                                                         = EB_TRUE;
-            } else {
-                results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
-                split_flag                                                         = EB_FALSE;
-            }
-        }
-        blk_index +=
-            split_flag
-                ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
-                : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
-    }
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-}
-#endif
 /******************************************************
 * Load the cost of the different partitioning method into a local array and derive sensitive picture flag
     Input   : the offline derived cost per search method, detection signals
@@ -965,90 +734,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
 
-#if M8_CDF
-#if UPGRADE_M6_M7_M8
-#if !UNIFY_SC_NSC
-    if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-#if APR25_12AM_ADOPTIONS
-#if JUNE17_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-#if PRESET_SHIFITNG
         if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
             pcs_ptr->update_cdf = 1;
         else
-#if M5_I_CDF
             pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
-#else
-            pcs_ptr->update_cdf = 0;
-#endif
-    else
-#endif
-#if MAY19_ADOPTIONS
-#if JUNE17_ADOPTIONS
-#if SHIFT_PRESETS
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-#if PRESET_SHIFITNG
-        if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-            pcs_ptr->update_cdf = 1;
-        else
-#if M5_I_CDF
-            pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
-#else
-            pcs_ptr->update_cdf = 0;
-#endif
-#else
-    pcs_ptr->update_cdf = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-#if MAR2_M7_ADOPTIONS
-#if MAR10_ADOPTIONS
-        if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-        if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-            pcs_ptr->update_cdf = 1;
-        else
-            pcs_ptr->update_cdf = 0;
-    else
-        pcs_ptr->update_cdf =
-#if MAR3_M6_ADOPTIONS
-#if MAR10_ADOPTIONS
-        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) ? 1 : 0;
-#else
-        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
-#endif
-#else
-        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
-#endif
-#if !REMOVED_MEM_OPT_CDF
-    if (pcs_ptr->update_cdf) assert(scs_ptr->cdf_mode == 0 && "use cdf_mode 0");
-#endif
-#endif
     //Filter Intra Mode : 0: OFF  1: ON
-#if FILTER_INTRA_CLI
     // pic_filter_intra_level specifies whether filter intra would be active
     // for a given picture.
 
@@ -1056,58 +746,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // 0                      | OFF
     // 1                      | ON
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
-#if APR23_ADOPTIONS_2
         if (scs_ptr->seq_header.filter_intra_level) {
-#if !UNIFY_SC_NSC
-            if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-#if JUNE17_ADOPTIONS
-                if (pcs_ptr->enc_mode <= ENC_M3)
-#else
-#if JUNE8_ADOPTIONS
-                if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if MAY12_ADOPTIONS
-#if PRESET_SHIFITNG
-                if (pcs_ptr->enc_mode <= ENC_M1)
-#else
-                if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-#if SHIFT_M3_SC_TO_M1
-                if (pcs_ptr->enc_mode <= ENC_M0)
-#else
-                if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#endif
-#endif
-#endif
-                    pcs_ptr->pic_filter_intra_mode = 1;
-                else
-                    pcs_ptr->pic_filter_intra_mode = 0;
-#if MAY19_ADOPTIONS
-#if JUNE17_ADOPTIONS
-            else if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-#if PRESET_SHIFITNG
-            else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-            else if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-            else if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-#if SHIFT_PRESETS
-#if BALANCE_M6_M7 // filter_intra
             if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-            if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;
@@ -1117,222 +757,20 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     }
     else
         pcs_ptr->pic_filter_intra_level = scs_ptr->static_config.filter_intra_level;
-#else
-    if (scs_ptr->seq_header.enable_filter_intra)
-        pcs_ptr->pic_filter_intra_mode = 1;
-    else
-        pcs_ptr->pic_filter_intra_mode = 0;
-#endif
-#else
-#if APR23_ADOPTIONS_2
-    if (scs_ptr->seq_header.enable_filter_intra) {
-#if !UNIFY_SC_NSC
-        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-#if JUNE17_ADOPTIONS
-            if (pcs_ptr->enc_mode <= ENC_M3)
-#else
-#if JUNE8_ADOPTIONS
-            if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if MAY12_ADOPTIONS
-#if PRESET_SHIFITNG
-            if (pcs_ptr->enc_mode <= ENC_M1)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-#if SHIFT_M3_SC_TO_M1
-            if (pcs_ptr->enc_mode <= ENC_M0)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#endif
-#endif
-#endif
-                pcs_ptr->pic_filter_intra_mode = 1;
-            else
-                pcs_ptr->pic_filter_intra_mode = 0;
-#if MAY19_ADOPTIONS
-#if JUNE17_ADOPTIONS
-        else if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-#if PRESET_SHIFITNG
-        else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-        else if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-        if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-            pcs_ptr->pic_filter_intra_mode = 1;
-        else
-            pcs_ptr->pic_filter_intra_mode = 0;
-    }
-    else
-        pcs_ptr->pic_filter_intra_mode = 0;
-#else
-    if (scs_ptr->seq_header.enable_filter_intra)
-        pcs_ptr->pic_filter_intra_mode = 1 ;
-    else
-        pcs_ptr->pic_filter_intra_mode = 0;
-#endif
-#endif
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv =
-#if !MAR2_M8_ADOPTIONS
-        pcs_ptr->enc_mode <= ENC_M7 &&
-#endif
                 frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
-#if NEW_RESOLUTION_RANGES
                 (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
-#else
-                (scs_ptr->input_resolution == INPUT_SIZE_576p_RANGE_OR_LOWER)
-#endif
             ? 1
             : 0;
     EbBool enable_wm;
-#if PRESETS_SHIFT
-#if M8_WM
-#if !UNIFY_SC_NSC
-#if UPGRADE_M6_M7_M8
-    if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
-#if JUNE8_ADOPTIONS
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
-#else
-#if SHIFT_M5_SC_TO_M3
-#if PRESET_SHIFITNG
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1) {
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
-#endif
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
-#endif
-#endif
-            enable_wm = EB_TRUE;
-        }
-#if MAY12_ADOPTIONS
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
-#else
-#if SHIFT_M6_SC_TO_M5
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
-#endif
-#endif
-            enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
-        }
-        else {
-            enable_wm = EB_FALSE;
-        }
-    } else
-#endif
-#endif
-#if JUNE8_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
-#else
-#if MAY12_ADOPTIONS
-#if PRESET_SHIFITNG
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1) {
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
-#endif
-#endif
         enable_wm = EB_TRUE;
-#if UPGRADE_M8
-#if SHIFT_PRESETS
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
-#else
-    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
-#endif
-#else
-    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
-#endif
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
     } else {
         enable_wm = EB_FALSE;
     }
-#else
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4 ||
-        (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-        ? EB_TRUE
-        : EB_FALSE;
-#endif
-#else
-#if MAR30_ADOPTIONS
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 ||
-            (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-        ? EB_TRUE
-        : EB_FALSE;
-#else
-#if MAR20_M4_ADOPTIONS
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3 ||
-        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 &&
-            !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
-            (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-        ? EB_TRUE
-        : EB_FALSE;
-#else
-#if MAR17_ADOPTIONS
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4 ||
-                    (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 &&
-                    !(pcs_ptr->parent_pcs_ptr->sc_content_detected)) ||
-                        (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-        ? EB_TRUE
-        : EB_FALSE;
-#else
-#if MAR12_ADOPTIONS
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3 ||
-        (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-        ? EB_TRUE
-        : EB_FALSE;
-#else
-#if MAR12_M8_ADOPTIONS
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
-                    (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-                    ? EB_TRUE
-                    : EB_FALSE;
-#else
-#if MAR2_M7_ADOPTIONS
-#if MAR10_ADOPTIONS
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
-        (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
-            pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ||
-            (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 &&
-                !(pcs_ptr->parent_pcs_ptr->sc_content_detected) &&
-                pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-        ? EB_TRUE
-        : EB_FALSE;
-#else
-    enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3 ||
-                (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
-                    pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ||
-                    (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7 &&
-                        !(pcs_ptr->parent_pcs_ptr->sc_content_detected) &&
-                        pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-                ? EB_TRUE
-                : EB_FALSE;
-#endif
-#else
-        enable_wm = (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2 ||
-                     (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5 &&
-                      pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0))
-                        ? EB_TRUE
-                        : EB_FALSE;
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
@@ -1346,7 +784,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
 
-#if OBMC_CLI
     // pic_obmc_level - pic_obmc_level is used to define md_pic_obmc_level.
     // The latter determines the OBMC settings in the function set_obmc_controls.
     // Please check the definitions of the flags/variables in the function
@@ -1358,111 +795,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     //         2        | Faster level subject to possible constraints      | Level 2 everywhere in PD_PASS_2
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
-#if !UNIFY_SC_NSC
-#if MAR4_M6_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-#if JUNE8_ADOPTIONS
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if SHIFT_M5_SC_TO_M3
-#if PRESET_SHIFITNG
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#else
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-#if PRESETS_SHIFT
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-#if MAR17_ADOPTIONS
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#else
-#if MAR10_ADOPTIONS
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#endif
-#endif
-#endif
-#endif
-                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
-#if OBMC_FAST
-#if M8_OBMC
-#if UPGRADE_M6_M7_M8
-#if APR24_ADOPTIONS_M6_M7
-#if JUNE17_ADOPTIONS
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#else
-#if PRESET_SHIFITNG
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-#endif
-                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 3;
-#endif
-            else
-                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
-#if PRESETS_SHIFT
-#if PRESET_SHIFITNG
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-#if MAR17_ADOPTIONS
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#endif
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#else
-#if JULY31_PRESETS_ADOPTIONS
-#if SHIFT_PRESETS
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-#if JUNE25_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
-#else
-#if JUNE23_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#endif
-#endif
-#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
-#if !JUNE23_ADOPTIONS
-#if OBMC_FAST
-#if M8_OBMC
-#if PRESET_SHIFITNG
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-#endif
-            pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 3;
-#endif
-#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
     }
@@ -1472,147 +806,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
-#else
-
-    // OBMC Level                                   Settings
-    // 0                                            OFF
-    // 1                                            OBMC @(MVP, PME and ME) + 16 NICs
-    // 2                                            OBMC @(MVP, PME and ME) + Opt NICs
-    // 3                                            OBMC @(MVP, PME ) + Opt NICs
-    // 4                                            OBMC @(MVP, PME ) + Opt2 NICs
-    // Note: OBMC is currently disabled when super-res is ON
-    if (scs_ptr->static_config.enable_obmc && !pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
-#if !UNIFY_SC_NSC
-#if MAR4_M6_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-#if JUNE8_ADOPTIONS
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#else
-#if SHIFT_M5_SC_TO_M3
-#if PRESET_SHIFITNG
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#else
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-#if PRESETS_SHIFT
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-#if MAR17_ADOPTIONS
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#else
-#if MAR10_ADOPTIONS
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-            if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#endif
-#endif
-#endif
-#endif
-                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
-#if OBMC_FAST
-#if M8_OBMC
-#if UPGRADE_M6_M7_M8
-#if APR24_ADOPTIONS_M6_M7
-#if JUNE17_ADOPTIONS
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#else
-#if PRESET_SHIFITNG
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-            else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-#endif
-                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 3;
-#endif
-            else
-                pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
-#if PRESETS_SHIFT
-#if PRESET_SHIFITNG
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-#if MAR17_ADOPTIONS
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#endif
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#endif
-#else
-#if JUNE25_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
-#else
-#if JUNE23_ADOPTIONS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#endif
-#endif
-            pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 2;
-#if !JUNE23_ADOPTIONS
-#if OBMC_FAST
-#if M8_OBMC
-#if PRESET_SHIFITNG
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-#endif
-            pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 3;
-#endif
-#endif
-        else
-            pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
-#if MR_MODE
-        pcs_ptr->parent_pcs_ptr->pic_obmc_mode =
-            pcs_ptr->parent_pcs_ptr->sc_content_detected == 0 && pcs_ptr->slice_type != I_SLICE ? 1
-                                                                                                : 0;
-#endif
-    } else
-        pcs_ptr->parent_pcs_ptr->pic_obmc_mode = 0;
-
-    frm_hdr->is_motion_mode_switchable =
-        frm_hdr->is_motion_mode_switchable || pcs_ptr->parent_pcs_ptr->pic_obmc_mode;
-#endif
-#if CHANGE_HBD_MODE
     if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
-#if REMOVE_MR_MACRO
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
-#else
-        if (MR_MODE)
-            pcs_ptr->hbd_mode_decision = 1;
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
-#endif
             pcs_ptr->hbd_mode_decision = 1;
         else
             pcs_ptr->hbd_mode_decision = 2;
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
-#else
-    pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
-#endif
     return return_error;
 }
 
-#if FIRST_PASS_SETUP
 /******************************************************
 * Derive Mode Decision Config Settings for first pass
 Input   : encoder mode and tune
@@ -1621,144 +824,6 @@ Output  : EncDec Kernel signal(s)
 EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     PictureControlSet *pcs_ptr,
     ModeDecisionConfigurationContext *context_ptr) ;
-#endif
-#if !DEPTH_PART_CLEAN_UP
-void forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    uint32_t sb_index;
-    EbBool   split_flag;
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
-        MdcSbData *results_ptr = &pcs_ptr->mdc_sb_array[sb_index];
-
-        results_ptr->leaf_count = 0;
-
-        uint32_t blk_index =
-            pcs_ptr->slice_type == I_SLICE && scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
-
-        while (blk_index < scs_ptr->max_block_cnt) {
-            split_flag = EB_TRUE;
-
-            const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-
-            //if the parentSq is inside inject this block
-            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index])
-
-            {
-                //int32_t offset_d1 = ns_blk_offset[(int32_t)from_shape_to_part[blk_geom->shape]]; //blk_ptr->best_d1_blk; // TOCKECK
-                //int32_t num_d1_block = ns_blk_num[(int32_t)from_shape_to_part[blk_geom->shape]]; // context_ptr->blk_geom->totns; // TOCKECK
-                //
-                //                                                  // for (int32_t d1_itr = blk_it; d1_itr < blk_it + num_d1_block; d1_itr++) {
-                // for (int32_t d1_itr = (int32_t)blk_index ; d1_itr < (int32_t)blk_index +  num_d1_block ; d1_itr++) {
-                results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = 1;
-
-                results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
-                    0; //valid only for square 85 world. will be removed.
-                results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-
-                if (blk_geom->sq_size > 8) {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_TRUE;
-                    split_flag                                                         = EB_TRUE;
-                } else {
-                    results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
-                    split_flag                                                         = EB_FALSE;
-                }
-            }
-
-            blk_index +=
-                split_flag
-                    ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
-                    : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128]
-                                     [blk_geom->depth];
-        }
-    }
-
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-}
-
-void sb_forward_sq_non4_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                                     uint32_t sb_index) {
-    MdcSbData *results_ptr  = &pcs_ptr->mdc_sb_array[sb_index];
-    results_ptr->leaf_count = 0;
-    uint32_t blk_index =
-        pcs_ptr->slice_type == I_SLICE && scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 17 : 0;
-
-    while (blk_index < scs_ptr->max_block_cnt) {
-        EbBool           split_flag = EB_TRUE;
-        const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-        if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
-            results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = 1;
-
-            results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
-                0; //valid only for square 85 world. will be removed.
-            results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-
-            if (blk_geom->sq_size > 8) {
-                results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_TRUE;
-                split_flag                                                         = EB_TRUE;
-            } else {
-                results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
-                split_flag                                                         = EB_FALSE;
-            }
-        }
-        blk_index +=
-            split_flag
-                ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
-                : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
-    }
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-}
-
-void forward_all_c_blocks_to_md(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; ++sb_index) {
-        MdcSbData *results_ptr  = &pcs_ptr->mdc_sb_array[sb_index];
-        results_ptr->leaf_count = 0;
-        uint32_t blk_index      = 0;
-
-        while (blk_index < scs_ptr->max_block_cnt) {
-            uint32_t         tot_d1_blocks = 0;
-            const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
-
-            //if the parentSq is inside inject this block
-            uint8_t is_blk_allowed =
-                pcs_ptr->slice_type != I_SLICE ? 1 : (blk_geom->sq_size < 128) ? 1 : 0;
-
-            if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_blk_allowed) {
-                tot_d1_blocks =
-                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks =
-
-                        blk_geom->sq_size == 128
-                            ? 17
-                            : blk_geom->sq_size > 16
-                                  ? 25
-                                  : blk_geom->sq_size == 16 ? 17 : 1;
-
-                for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
-                    blk_geom = get_blk_geom_mds(blk_index);
-
-                    //if the parentSq is inside inject this block
-                    if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index]) {
-                        results_ptr->leaf_data_array[results_ptr->leaf_count].leaf_index =
-                            0; //valid only for square 85 world. will be removed.
-                        results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
-                        if (blk_geom->sq_size > 4)
-                            results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
-                                EB_TRUE;
-                        else
-                            results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
-                                EB_FALSE;
-                    }
-                    blk_index++;
-                }
-            }
-            blk_index +=
-                (d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth] -
-                 tot_d1_blocks);
-        }
-    }
-
-    pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-}
-#endif
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -2028,33 +1093,19 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
-#if FIRST_PASS_SETUP
         if (use_output_stat(scs_ptr))
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr, context_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-#else
-        signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-#endif
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
-#if  ADAPTIVE_NSQ_CR
         // Init block selection
         memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);
-#endif
-#if ADAPTIVE_DEPTH_CR
         // Init pred_depth selection
-#if SOFT_CYCLES_REDUCTION
         memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
-#else
-        memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM);
-#endif
-#endif
-#if ADAPTIVE_TXT_CR
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
-#endif
         // Compute Tc, and Beta offsets for a given picture
         // Set reference cdef strength
         set_reference_cdef_strength(pcs_ptr);
@@ -2093,9 +1144,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         // Hsan: collapse spare code
         MdRateEstimationContext *md_rate_estimation_array;
-#if !MD_FRAME_CONTEXT_MEM_OPT
-        uint32_t                 entropy_coding_qp;
-#endif
 
         // QP
         context_ptr->qp = pcs_ptr->picture_qp;
@@ -2110,10 +1158,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
         }
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
-#if !MD_FRAME_CONTEXT_MEM_OPT
-        entropy_coding_qp = frm_hdr->quantization_params.base_q_idx;
-#endif
-#if MD_FRAME_CONTEXT_MEM_OPT
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             memcpy(&pcs_ptr->md_frame_context,
                 &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
@@ -2132,57 +1176,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // Initial Rate Estimation of the quantized coefficients
         av1_estimate_coefficients_rate(md_rate_estimation_array,
             &pcs_ptr->md_frame_context);
-#else
-        if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
-            eb_memcpy(pcs_ptr->coeff_est_entropy_coder_ptr->fc,
-                   &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
-                   sizeof(FRAME_CONTEXT));
-        else
-            reset_entropy_coder(scs_ptr->encode_context_ptr,
-                                pcs_ptr->coeff_est_entropy_coder_ptr,
-                                entropy_coding_qp,
-                                pcs_ptr->slice_type);
-
-        // Initial Rate Estimation of the syntax elements
-        av1_estimate_syntax_rate(md_rate_estimation_array,
-                                 pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
-                                 pcs_ptr->coeff_est_entropy_coder_ptr->fc);
-        // Initial Rate Estimation of the Motion vectors
-        av1_estimate_mv_rate(
-            pcs_ptr, md_rate_estimation_array, pcs_ptr->coeff_est_entropy_coder_ptr->fc);
-        // Initial Rate Estimation of the quantized coefficients
-        av1_estimate_coefficients_rate(md_rate_estimation_array,
-                                       pcs_ptr->coeff_est_entropy_coder_ptr->fc);
-#endif
-#if !DEPTH_PART_CLEAN_UP
-        if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SB_SWITCH_DEPTH_MODE) {
-            derive_sb_md_mode(scs_ptr, pcs_ptr, context_ptr);
-
-            for (int sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                if (pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] ==
-                    SB_SQ_BLOCKS_DEPTH_MODE) {
-                    sb_forward_sq_blocks_to_md(scs_ptr, pcs_ptr, sb_index);
-                } else if (pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] ==
-                           SB_SQ_NON4_BLOCKS_DEPTH_MODE) {
-                    sb_forward_sq_non4_blocks_to_md(scs_ptr, pcs_ptr, sb_index);
-                }
-            }
-        } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_DEPTH_MODE ||
-                   pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_0 ||
-                   pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_1 ||
-                   pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_2 ||
-                   pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_MULTI_PASS_PD_MODE_3) {
-            forward_all_blocks_to_md(scs_ptr, pcs_ptr);
-        } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_ALL_C_DEPTH_MODE) {
-            forward_all_c_blocks_to_md(scs_ptr, pcs_ptr);
-        } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SQ_DEPTH_MODE) {
-            forward_sq_blocks_to_md(scs_ptr, pcs_ptr);
-        } else if (pcs_ptr->parent_pcs_ptr->pic_depth_mode == PIC_SQ_NON4_DEPTH_MODE) {
-            forward_sq_non4_blocks_to_md(scs_ptr, pcs_ptr);
-        } else { // (pcs_ptr->parent_pcs_ptr->mdMode == PICT_BDP_DEPTH_MODE || pcs_ptr->parent_pcs_ptr->mdMode == PICT_LIGHT_BDP_DEPTH_MODE )
-            pcs_ptr->parent_pcs_ptr->average_qp = (uint8_t)pcs_ptr->parent_pcs_ptr->picture_qp;
-        }
-#endif
         if (frm_hdr->allow_intrabc) {
             int            i;
             int            speed          = 1;

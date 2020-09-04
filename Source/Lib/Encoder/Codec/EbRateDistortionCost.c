@@ -81,7 +81,6 @@ int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cos
 
 int32_t eb_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost, int32_t *mvcost[2],
                            int32_t weight) {
-#if CAP_MV_DIFF
     // Restrict the size of the MV diff to be within the max AV1 range.  If the MV diff
     // is outside this range, the diff will index beyond the cost array, causing a seg fault.
     // Both the MVs and the MV diffs should be within the allowable range for accessing the MV cost
@@ -93,9 +92,6 @@ int32_t eb_av1_mv_bit_cost(const MV *mv, const MV *ref, const int32_t *mvjcost, 
     temp_diff.col = MIN(temp_diff.col, MV_UPP);
 
     const MV diff = temp_diff;
-#else
-    const MV diff = {mv->row - ref->row, mv->col - ref->col};
-#endif
     return ROUND_POWER_OF_TWO(mv_cost(&diff, mvjcost, mvcost) * weight, 7);
 }
 
@@ -561,9 +557,6 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                              EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
-#if !SHUT_FAST_RATE_PD0
-                             EbBool full_cost_shut_fast_rate_flag,
-#endif
                              uint8_t md_pass, uint32_t left_neighbor_mode,
                              uint32_t top_neighbor_mode)
 
@@ -676,31 +669,19 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         if (av1_allow_palette(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                               blk_geom->bsize) &&
             intra_mode == DC_PRED) {
-#if MEM_OPT_PALETTE
             const int use_palette = candidate_ptr->palette_info ?
                 (candidate_ptr->palette_info->pmi.palette_size[0] > 0) : 0;
-#else
-            const int use_palette = candidate_ptr->palette_info.pmi.palette_size[0] > 0;
-#endif
             const int bsize_ctx   = av1_get_palette_bsize_ctx(blk_geom->bsize);
             const int mode_ctx    = av1_get_palette_mode_ctx(blk_ptr->av1xd);
             intra_luma_mode_bits_num +=
                 candidate_ptr->md_rate_estimation_ptr
                     ->palette_ymode_fac_bits[bsize_ctx][mode_ctx][use_palette];
             if (use_palette) {
-#if MEM_OPT_PALETTE
                 const uint8_t *const color_map = candidate_ptr->palette_info->color_idx_map;
-#else
-                const uint8_t *const color_map = candidate_ptr->palette_info.color_idx_map;
-#endif
                 int                  block_width, block_height, rows, cols;
                 av1_get_block_dimensions(
                     blk_geom->bsize, 0, blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
-#if MEM_OPT_PALETTE
                 const int plt_size = candidate_ptr->palette_info->pmi.palette_size[0];
-#else
-                const int plt_size = candidate_ptr->palette_info.pmi.palette_size[0];
-#endif
                 int       palette_mode_cost =
                     candidate_ptr->md_rate_estimation_ptr
                         ->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
@@ -708,17 +689,9 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                 uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
                 const int n_cache = eb_get_palette_cache(blk_ptr->av1xd, 0, color_cache);
                 palette_mode_cost += eb_av1_palette_color_cost_y(
-#if MEM_OPT_PALETTE
                     &candidate_ptr->palette_info->pmi, color_cache, n_cache,
-#else
-                    &candidate_ptr->palette_info.pmi, color_cache, n_cache,
-#endif
                     pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth);
-#if MEM_OPT_PALETTE
                 palette_mode_cost += eb_av1_cost_color_map(candidate_ptr->palette_info,
-#else
-                palette_mode_cost += eb_av1_cost_color_map(&candidate_ptr->palette_info,
-#endif
                                                         candidate_ptr->md_rate_estimation_ptr,
                                                         blk_ptr,
                                                         0,
@@ -729,17 +702,9 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         }
 
         if (av1_filter_intra_allowed(
-#if FILTER_INTRA_CLI
                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.filter_intra_level,
-#else
-                pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_filter_intra,
-#endif
                 blk_geom->bsize,
-#if MEM_OPT_PALETTE
                 candidate_ptr->palette_info ? candidate_ptr->palette_info->pmi.palette_size[0] : 0,
-#else
-                candidate_ptr->palette_info.pmi.palette_size[0],
-#endif
                 intra_mode)) {
             intra_filter_mode_bits_num =
                 candidate_ptr->md_rate_estimation_ptr
@@ -774,19 +739,11 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                 if (av1_allow_palette(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools,
                                       blk_geom->bsize) &&
                     chroma_mode == UV_DC_PRED) {
-#if MEM_OPT_PALETTE
                     const int              use_palette_y = candidate_ptr->palette_info && (candidate_ptr->palette_info->pmi.palette_size[0] > 0);
                     const int              use_palette_uv = candidate_ptr->palette_info && (candidate_ptr->palette_info->pmi.palette_size[1] > 0);
                     intra_chroma_ang_mode_bits_num +=
                         candidate_ptr->md_rate_estimation_ptr
                             ->palette_uv_mode_fac_bits[use_palette_y][use_palette_uv];
-#else
-                    const PaletteModeInfo *pmi         = &candidate_ptr->palette_info.pmi;
-                    const int              use_palette = pmi->palette_size[1] > 0;
-                    intra_chroma_ang_mode_bits_num +=
-                        candidate_ptr->md_rate_estimation_ptr
-                            ->palette_uv_mode_fac_bits[pmi->palette_size[0] > 0][use_palette];
-#endif
                 }
             }
         }
@@ -805,13 +762,8 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         chroma_rate = (uint32_t)(intra_chroma_mode_bits_num + intra_chroma_ang_mode_bits_num);
 
         // Keep the Fast Luma and Chroma rate for future use
-#if SHUT_FAST_RATE_PD0
         candidate_ptr->fast_luma_rate = luma_rate;
         candidate_ptr->fast_chroma_rate = chroma_rate;
-#else
-        candidate_ptr->fast_luma_rate   = (full_cost_shut_fast_rate_flag) ? 0 : luma_rate;
-        candidate_ptr->fast_chroma_rate = (full_cost_shut_fast_rate_flag) ? 0 : chroma_rate;
-#endif
         if (use_ssd) {
             int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
             Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
@@ -1380,9 +1332,6 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
                              EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                              const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                              uint8_t enable_inter_intra,
-#if !SHUT_FAST_RATE_PD0
-                             EbBool full_cost_shut_fast_rate_flag,
-#endif
                              uint8_t md_pass, uint32_t left_neighbor_mode,
                              uint32_t top_neighbor_mode)
 
@@ -1658,13 +1607,8 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
     //chroma_rate = intra_chroma_mode_bits_num + intra_chroma_ang_mode_bits_num;
 
     // Keep the Fast Luma and Chroma rate for future use
-#if SHUT_FAST_RATE_PD0
     candidate_ptr->fast_luma_rate = luma_rate;
     candidate_ptr->fast_chroma_rate = chroma_rate;
-#else
-    candidate_ptr->fast_luma_rate   = (full_cost_shut_fast_rate_flag) ? 0 : luma_rate;
-    candidate_ptr->fast_chroma_rate = 0; // (full_cost_shut_fast_rate_flag) ? 0 : chroma_rate
-#endif
     if (use_ssd) {
         int32_t         current_q_index = frm_hdr->quantization_params.base_q_idx;
         Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
@@ -1709,7 +1653,6 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         return (RDCOST(lambda, rate, total_distortion));
     }
 }
-#if MD_FRAME_CONTEXT_MEM_OPT
 EbErrorType av1_txb_estimate_coeff_bits(
     struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
     PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
@@ -1718,17 +1661,6 @@ EbErrorType av1_txb_estimate_coeff_bits(
     uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
     TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
     COMPONENT_TYPE component_type) {
-#else
-EbErrorType av1_txb_estimate_coeff_bits(
-    struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
-    PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-    uint32_t txb_origin_index, uint32_t txb_chroma_origin_index, EntropyCoder *entropy_coder_ptr,
-    EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint32_t cb_eob, uint32_t cr_eob,
-    uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
-    TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
-    COMPONENT_TYPE component_type) {
-    (void)entropy_coder_ptr;
-#endif
     EbErrorType return_error = EB_ErrorNone;
 
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1873,9 +1805,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 
     // For CFL, costs of alphas are not computed in fast loop, since they are computed in the full loop. The rate costs are added to the full loop.
     // In fast loop CFL alphas are not know yet. The chroma mode bits are calculated based on DC Mode, and if CFL is the winner compared to CFL, ChromaBits are updated in Full loop
-#if SHUT_FAST_RATE_PD0
     if (!context_ptr->shut_fast_rate)
-#endif
     if (context_ptr->blk_geom->has_uv) {
         if (candidate_buffer_ptr->candidate_ptr->type == INTRA_MODE &&
             candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) {
@@ -1965,10 +1895,8 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     }
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, total_distortion);
-#if TPL_LAMBDA_IMP
     candidate_buffer_ptr->candidate_ptr->total_rate = rate;
     candidate_buffer_ptr->candidate_ptr->full_distortion = total_distortion;
-#endif
     return return_error;
 }
 
@@ -2137,10 +2065,8 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     candidate_buffer_ptr->candidate_ptr->skip_flag = (skip_cost <= merge_cost) ? EB_TRUE : EB_FALSE;
 
     //CHKN:  skip_flag context is not accurate as MD does not keep skip info in sync with EncDec.
-#if TPL_LAMBDA_IMP
     candidate_buffer_ptr->candidate_ptr->total_rate = (skip_cost <= merge_cost) ? skip_rate : merge_rate;
     candidate_buffer_ptr->candidate_ptr->full_distortion = (skip_cost <= merge_cost) ? skip_distortion : merge_distortion;
-#endif
 
     return return_error;
 }
@@ -2609,12 +2535,8 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
     BlkStruct *             blk_ptr                  = context_ptr->blk_ptr;
     uint32_t                 txb_index                = context_ptr->txb_itr;
     MdRateEstimationContext *md_rate_estimation_ptr   = context_ptr->md_rate_estimation_ptr;
-#if QP2QINDEX
     uint64_t lambda = context_ptr->md_context->
                         full_lambda_md[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD : EB_8_BIT_MD];
-#else
-    uint64_t                 lambda                   = context_ptr->full_lambda;
-#endif
     uint32_t                 y_count_non_zero_coeffs  = count_non_zero_coeffs[0];
     uint32_t                 cb_count_non_zero_coeffs = count_non_zero_coeffs[1];
     uint32_t                 cr_count_non_zero_coeffs = count_non_zero_coeffs[2];

@@ -22,7 +22,6 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 
-#define TWOPASS_RC 1
 //***HME***
 #define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT 2
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2

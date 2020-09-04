@@ -2540,7 +2540,6 @@ void highbd_filter_intra_predictor(uint16_t *dst, ptrdiff_t stride,
     }
 }
 
-#if TPL_LA
 //static int is_smooth_luma(uint8_t mode) {
 //    return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED || mode == SMOOTH_H_PRED);
 //}
@@ -2633,4 +2632,3 @@ EbErrorType intra_prediction_open_loop_mb(
     }
     return return_error;
 }
-#endif

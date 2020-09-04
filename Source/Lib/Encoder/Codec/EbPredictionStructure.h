@@ -185,13 +185,7 @@ typedef struct PredictionStructureGroup {
      * Declarations
      ************************************************/
 extern EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8) || FAST_M8_V1
-#if REMOVE_MR_MACRO
                                                    EbEncMode                 enc_mode,
-#else
-                                                   uint8_t                   enc_mode,
-#endif
-#endif
                                                    EbSvtAv1EncConfiguration *config);
 
 extern PredictionStructure *get_prediction_structure(

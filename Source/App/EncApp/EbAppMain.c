@@ -120,9 +120,7 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
             configs[inst_cnt]->pass = 1;
         else if (pass == ENCODE_LAST_PASS)
             configs[inst_cnt]->pass = 2;
-#if TWOPASS_RC
         eb_2pass_config_update(configs[inst_cnt]);
-#endif
         return_errors[inst_cnt] = EB_ErrorNone;
     }
 
@@ -172,11 +170,9 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
                 if (pass == ENCODE_FIRST_PASS) {
                     //TODO: remove this if we can use a quick first pass in svt av1 library.
                     configs[inst_cnt]->enc_mode = MAX_ENC_PRESET;
-#if TWOPASS_RC
                     configs[inst_cnt]->look_ahead_distance = 1;
                     configs[inst_cnt]->enable_tpl_la = 0;
                     configs[inst_cnt]->rate_control_mode = 0;
-#endif
                 }
                 return_errors[inst_cnt] = set_two_passes_stats(configs[inst_cnt], pass,
                     &enc_app->rc_twopasses_stats, num_channels);

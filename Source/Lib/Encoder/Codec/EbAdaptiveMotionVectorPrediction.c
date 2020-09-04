@@ -1091,11 +1091,7 @@ IntMv gm_get_motion_vector_enc(const EbWarpedMotionParams *gm, int32_t allow_hp,
     if (is_integer) { integer_mv_precision(&res.as_mv); }
     return res;
 }
-#if OPT_9
 void init_xd(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
-#else
-void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
-#endif
     TileInfo *tile = &context_ptr->sb_ptr->tile_info;
 
     int32_t       mi_row = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
@@ -1113,10 +1109,8 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
     xd->mb_to_left_edge   = -((mi_col * MI_SIZE) * 8);
     xd->mb_to_right_edge  = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
-#if UPGRADE_SUBPEL
     xd->mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
     xd->mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
-#endif
     xd->up_available   = (mi_row > tile->mi_row_start);
     xd->left_available = (mi_col > tile->mi_col_start);
 
@@ -1143,23 +1137,6 @@ void mvp_bypass_init(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     xd->mi               = pcs_ptr->mi_grid_base + offset;
 
     xd->mi[0]->mbmi.block_mi.partition = from_shape_to_part[context_ptr->blk_geom->shape];
-#if !OPT_9
-    // Set to 0 the fields which would have been set by setup_ref_mv_list()
-    memset(xd->ref_mv_count, 0, sizeof(uint8_t) * MODE_CTX_REF_FRAMES);
-#if MEM_OPT_MV_STACK
-    memset(context_ptr->ed_ref_mv_stack,
-#else
-    memset(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack,
-#endif
-           0,
-           sizeof(CandidateMv) * MODE_CTX_REF_FRAMES * MAX_REF_MV_STACK_SIZE);
-    memset(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs,
-           0,
-           sizeof(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs[0][0]) *
-               MODE_CTX_REF_FRAMES * MAX_MV_REF_CANDIDATES);
-    memset(context_ptr->blk_ptr->inter_mode_ctx, 0, sizeof(int16_t) * MODE_CTX_REF_FRAMES);
-    memset(xd->ref_mv_count, 0, sizeof(int8_t) * MODE_CTX_REF_FRAMES);
-#endif
 }
 
 void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
@@ -1183,20 +1160,12 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
     xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mi_row) * MI_SIZE) * 8;
     xd->mb_to_left_edge   = -((mi_col * MI_SIZE) * 8);
     xd->mb_to_right_edge  = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
-#if UPGRADE_SUBPEL
     xd->mi_row = -xd->mb_to_top_edge / (8 * MI_SIZE);
     xd->mi_col = -xd->mb_to_left_edge / (8 * MI_SIZE);
-#endif
     memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
-#if MEM_OPT_MV_STACK
-    memset(context_ptr->ed_ref_mv_stack,
-           0,
-           sizeof(context_ptr->ed_ref_mv_stack));
-#else
     memset(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
            0,
            sizeof(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack));
-#endif
 
     xd->up_available   = (mi_row > tile->mi_row_start);
     xd->left_available = (mi_col > tile->mi_col_start);
@@ -1267,11 +1236,7 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
                           xd,
                           ref_frame,
                           xd->ref_mv_count,
-#if MEM_OPT_MV_STACK
-                          context_ptr->ed_ref_mv_stack,
-#else
                           context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
-#endif
                           context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_mvs,
                           gm_mv,
                           pcs_ptr->parent_pcs_ptr->global_motion,
@@ -1297,37 +1262,20 @@ void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
     if (is_compound && mode != GLOBAL_GLOBALMV) {
         int32_t ref_mv_idx = drl_index + 1;
         nearestmv[0] =
-#if MEM_OPT_MV_STACK
-            context_ptr->ed_ref_mv_stack[ref_frame][0].this_mv;
-#else
             context_ptr->md_local_blk_unit[blk_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].this_mv;
-#endif
         nearestmv[1] =
-#if MEM_OPT_MV_STACK
-            context_ptr->ed_ref_mv_stack[ref_frame][0].comp_mv;
-#else
             context_ptr->md_local_blk_unit[blk_ptr->mds_idx].ed_ref_mv_stack[ref_frame][0].comp_mv;
-#endif
-#if MEM_OPT_MV_STACK
-        nearmv[0] = context_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-        nearmv[1] = context_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-#else
         nearmv[0] = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                         .ed_ref_mv_stack[ref_frame][ref_mv_idx]
                         .this_mv;
         nearmv[1] = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                         .ed_ref_mv_stack[ref_frame][ref_mv_idx]
                         .comp_mv;
-#endif
     } else if (drl_index > 0 && mode == NEARMV) {
         assert((1 + drl_index) < MAX_REF_MV_STACK_SIZE);
-#if MEM_OPT_MV_STACK
-        IntMv cur_mv = context_ptr->ed_ref_mv_stack[ref_frame][1 + drl_index].this_mv;
-#else
         IntMv cur_mv = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                            .ed_ref_mv_stack[ref_frame][1 + drl_index]
                            .this_mv;
-#endif
         nearmv[0] = cur_mv;
     }
 
@@ -1342,32 +1290,20 @@ void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
         if (mode == NEAR_NEWMV || mode == NEW_NEARMV) ref_mv_idx = 1 + drl_index;
 
         if (compound_ref0_mode(mode) == NEWMV)
-#if MEM_OPT_MV_STACK
-            ref_mv[0] = context_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].this_mv;
-#else
             ref_mv[0] = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                             .ed_ref_mv_stack[ref_frame][ref_mv_idx]
                             .this_mv;
-#endif
 
         if (compound_ref1_mode(mode) == NEWMV)
-#if MEM_OPT_MV_STACK
-            ref_mv[1] = context_ptr->ed_ref_mv_stack[ref_frame][ref_mv_idx].comp_mv;
-#else
             ref_mv[1] = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                             .ed_ref_mv_stack[ref_frame][ref_mv_idx]
                             .comp_mv;
-#endif
     } else {
         if (mode == NEWMV) {
             if (xd->ref_mv_count[ref_frame] > 1)
-#if MEM_OPT_MV_STACK
-                ref_mv[0] = context_ptr->ed_ref_mv_stack[ref_frame][drl_index].this_mv;
-#else
                 ref_mv[0] = context_ptr->md_local_blk_unit[blk_ptr->mds_idx]
                                 .ed_ref_mv_stack[ref_frame][drl_index]
                                 .this_mv;
-#endif
         }
     }
 }
@@ -1435,11 +1371,7 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
                     mi_ptr[mi_x + mi_y * mi_stride].mbmi.tx_depth         = blk_ptr->tx_depth;
                 }
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.use_intrabc =
-#if SB_MEM_OPT
                     blk_ptr->use_intrabc;
-#else
-                    blk_ptr->av1xd->use_intrabc;
-#endif
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[1] =
                     blk_ptr->is_interintra_used ? INTRA_FRAME : rf[1];
@@ -1538,11 +1470,7 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                     mi_ptr[mi_x + mi_y * mi_stride].mbmi.tx_depth         = blk_ptr->tx_depth;
                 }
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.use_intrabc =
-#if SB_MEM_OPT
                     blk_ptr->use_intrabc;
-#else
-                    blk_ptr->av1xd->use_intrabc;
-#endif
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[0] = rf[0];
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.ref_frame[1] =
                     avail_blk_flag && blk_ptr->is_interintra_used ?

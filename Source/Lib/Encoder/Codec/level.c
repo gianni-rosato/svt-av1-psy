@@ -11,7 +11,6 @@
 
 #include "level.h"
 
-#if TWOPASS_RC
 #define UNDEFINED_LEVEL                                                 \
   {                                                                     \
     .level = SEQ_LEVEL_MAX, .max_picture_size = 0, .max_h_size = 0,     \
@@ -256,4 +255,3 @@ double av1_get_max_bitrate_for_level(AV1_LEVEL level_index, int tier,
   assert(is_valid_seq_level_idx((uint8_t)level_index));
   return get_max_bitrate(&av1_level_defs[level_index], tier, profile);
 }
-#endif  // TWOPASS_RC

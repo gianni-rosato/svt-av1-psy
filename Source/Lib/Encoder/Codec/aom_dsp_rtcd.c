@@ -146,10 +146,8 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_sad128x64 = eb_aom_sad128x64_c;
     eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_c;
     eb_av1_txb_init_levels = eb_av1_txb_init_levels_c;
-#if TPL_C_FIX
     svt_aom_satd = svt_aom_satd_c;
     svt_av1_block_error = svt_av1_block_error_c;
-#endif
     aom_upsampled_pred = eb_aom_upsampled_pred_c;
 
     eb_aom_obmc_sad128x128 = aom_obmc_sad128x128_c;
@@ -313,45 +311,19 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     av1_get_gradient_hist = av1_get_gradient_hist_c;
 
     search_one_dual = search_one_dual_c;
-#if !REMOVE_UNUSED_CODE
-    sad_loop_kernel_sparse = sad_loop_kernel_sparse_c;
-#endif
     sad_loop_kernel = sad_loop_kernel_c;
-#if !REMOVE_UNUSED_CODE_PH2
-    sad_loop_kernel_hme_l0 = sad_loop_kernel_c;
-#endif
     svt_av1_apply_filtering = svt_av1_apply_filtering_c;
     svt_av1_apply_temporal_filter_planewise = svt_av1_apply_temporal_filter_planewise_c;
     svt_av1_apply_temporal_filter_planewise_hbd = svt_av1_apply_temporal_filter_planewise_hbd_c;
     svt_av1_apply_filtering_highbd = svt_av1_apply_filtering_highbd_c;
-#if !REMOVE_ME_SUBPEL_CODE
-    combined_averaging_ssd = combined_averaging_ssd_c;
-#endif
     ext_sad_calculation_8x8_16x16 = ext_sad_calculation_8x8_16x16_c;
     ext_sad_calculation_32x32_64x64 = ext_sad_calculation_32x32_64x64_c;
-#if !REMOVE_UNUSED_CODE
-    sad_calculation_8x8_16x16 = sad_calculation_8x8_16x16_c;
-    sad_calculation_32x32_64x64 = sad_calculation_32x32_64x64_c;
-#endif
     ext_all_sad_calculation_8x8_16x16 = ext_all_sad_calculation_8x8_16x16_c;
-#if !SHUT_ME_NSQ_SEARCH
-    ext_eigth_sad_calculation_nsq = ext_eigth_sad_calculation_nsq_c;
-#endif
     ext_eight_sad_calculation_32x32_64x64 = ext_eight_sad_calculation_32x32_64x64_c;
     eb_sad_kernel4x4 = fast_loop_nxm_sad_kernel;
-#if !REMOVE_UNUSED_CODE
-    get_eight_horizontal_search_point_results_8x8_16x16_pu = get_eight_horizontal_search_point_results_8x8_16x16_pu_c;
-    get_eight_horizontal_search_point_results_32x32_64x64_pu = get_eight_horizontal_search_point_results_32x32_64x64_pu_c;
-#endif
     initialize_buffer_32bits = initialize_buffer_32bits_c;
     nxm_sad_kernel_sub_sampled = nxm_sad_kernel_helper_c;
     nxm_sad_kernel = nxm_sad_kernel_helper_c;
-#if !REMOVE_ME_SUBPEL_CODE
-    nxm_sad_avg_kernel = nxm_sad_avg_kernel_helper_c;
-#endif
-#if !REMOVE_UNUSED_CODE
-    compute_mean_8x8 = compute_mean_c;
-#endif
     compute_mean_square_values_8x8 = compute_mean_squared_values_c;
     compute_sub_mean_8x8 = compute_sub_mean_8x8_c;
     compute_interm_var_four8x8 = compute_interm_var_four8x8_c;
@@ -364,9 +336,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
 
     eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_c;
 
-#if RESTRUCTURE_SAD
-    pme_sad_loop_kernel = pme_sad_loop_kernel_c;
-#endif
     variance_highbd = variance_highbd_c;
     eb_av1_haar_ac_sad_8x8_uint8_input = eb_av1_haar_ac_sad_8x8_uint8_input_c;
 
@@ -450,17 +419,8 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
             if (flags & HAS_AVX2) eb_aom_sad128x64 = eb_aom_sad128x64_avx2;
             if (flags & HAS_AVX2) eb_aom_sad128x64x4d = eb_aom_sad128x64x4d_avx2;
             if (flags & HAS_AVX2) eb_av1_txb_init_levels = eb_av1_txb_init_levels_avx2;
-#if TPL_LA
-#if TPL_C_FIX
             if (flags & HAS_AVX2) svt_aom_satd = svt_aom_satd_avx2;
             if (flags & HAS_AVX2) svt_av1_block_error = svt_av1_block_error_avx2;
-#else
-            svt_aom_satd = svt_aom_satd_c;
-            if (flags & HAS_AVX2) svt_aom_satd = svt_aom_satd_avx2;
-            svt_av1_block_error = svt_av1_block_error_c;
-            if (flags & HAS_AVX2) svt_av1_block_error = svt_av1_block_error_avx2;
-#endif
-#endif
 #ifndef NON_AVX512_SUPPORT
             if (flags & HAS_AVX512F) {
                 eb_aom_sad64x128 = eb_aom_sad64x128_avx512;
@@ -629,23 +589,11 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     if (flags & HAS_AVX2) av1_get_gradient_hist = av1_get_gradient_hist_avx2;
                     SET_AVX2_AVX512(
                         search_one_dual, search_one_dual_c, search_one_dual_avx2, search_one_dual_avx512);
-#if !REMOVE_UNUSED_CODE
-                    SET_SSE41_AVX2(sad_loop_kernel_sparse,
-                        sad_loop_kernel_sparse_c,
-                        sad_loop_kernel_sparse_sse4_1_intrin,
-                        sad_loop_kernel_sparse_avx2_intrin);
-#endif
                     SET_SSE41_AVX2_AVX512(sad_loop_kernel,
                         sad_loop_kernel_c,
                         sad_loop_kernel_sse4_1_intrin,
                         sad_loop_kernel_avx2_intrin,
                         sad_loop_kernel_avx512_intrin);
-#if !REMOVE_UNUSED_CODE_PH2
-                    SET_SSE41_AVX2(sad_loop_kernel_hme_l0,
-                        sad_loop_kernel_c,
-                        sad_loop_kernel_sse4_1_hme_l0_intrin,
-                        sad_loop_kernel_avx2_hme_l0_intrin);
-#endif
                     SET_SSE41(
                         svt_av1_apply_filtering, svt_av1_apply_filtering_c, svt_av1_apply_temporal_filter_sse4_1);
                     SET_AVX2(svt_av1_apply_temporal_filter_planewise,
@@ -657,49 +605,19 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     SET_SSE41(svt_av1_apply_filtering_highbd,
                         svt_av1_apply_filtering_highbd_c,
                         svt_av1_highbd_apply_temporal_filter_sse4_1);
-#if !REMOVE_ME_SUBPEL_CODE
-                    SET_AVX2_AVX512(combined_averaging_ssd,
-                        combined_averaging_ssd_c,
-                        combined_averaging_ssd_avx2,
-                        combined_averaging_ssd_avx512);
-#endif
                     SET_AVX2(ext_sad_calculation_8x8_16x16,
                         ext_sad_calculation_8x8_16x16_c,
                         ext_sad_calculation_8x8_16x16_avx2_intrin);
                     SET_SSE41(ext_sad_calculation_32x32_64x64,
                         ext_sad_calculation_32x32_64x64_c,
                         ext_sad_calculation_32x32_64x64_sse4_intrin);
-#if !REMOVE_UNUSED_CODE
-                    SET_SSE2(sad_calculation_8x8_16x16,
-                        sad_calculation_8x8_16x16_c,
-                        sad_calculation_8x8_16x16_sse2_intrin);
-                    SET_SSE2(sad_calculation_32x32_64x64,
-                        sad_calculation_32x32_64x64_c,
-                        sad_calculation_32x32_64x64_sse2_intrin);
-#endif
                     SET_AVX2(ext_all_sad_calculation_8x8_16x16,
                         ext_all_sad_calculation_8x8_16x16_c,
                         ext_all_sad_calculation_8x8_16x16_avx2);
-#if !SHUT_ME_NSQ_SEARCH
-                    SET_AVX2(ext_eigth_sad_calculation_nsq,
-                        ext_eigth_sad_calculation_nsq_c,
-                        ext_eigth_sad_calculation_nsq_avx2);
-#endif
                     SET_AVX2(ext_eight_sad_calculation_32x32_64x64,
                         ext_eight_sad_calculation_32x32_64x64_c,
                         ext_eight_sad_calculation_32x32_64x64_avx2);
                     SET_AVX2(eb_sad_kernel4x4, fast_loop_nxm_sad_kernel, eb_compute4x_m_sad_avx2_intrin);
-#if !REMOVE_UNUSED_CODE
-                    SET_SSE41_AVX2_AVX512(get_eight_horizontal_search_point_results_8x8_16x16_pu,
-                        get_eight_horizontal_search_point_results_8x8_16x16_pu_c,
-                        get_eight_horizontal_search_point_results_8x8_16x16_pu_sse41_intrin,
-                        get_eight_horizontal_search_point_results_8x8_16x16_pu_avx2_intrin,
-                        get_eight_horizontal_search_point_results_8x8_16x16_pu_avx512_intrin);
-                    SET_SSE41_AVX2(get_eight_horizontal_search_point_results_32x32_64x64_pu,
-                        get_eight_horizontal_search_point_results_32x32_64x64_pu_c,
-                        get_eight_horizontal_search_point_results_32x32_64x64_pu_sse41_intrin,
-                        get_eight_horizontal_search_point_results_32x32_64x64_pu_avx2_intrin);
-#endif
                     SET_SSE2(
                         initialize_buffer_32bits, initialize_buffer_32bits_c, initialize_buffer_32bits_sse2_intrin);
                     SET_AVX2(nxm_sad_kernel_sub_sampled,
@@ -707,11 +625,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                         nxm_sad_kernel_sub_sampled_helper_avx2);
 
                     SET_AVX2(nxm_sad_kernel, nxm_sad_kernel_helper_c, nxm_sad_kernel_helper_avx2);
-#if !REMOVE_ME_SUBPEL_CODE
-                    SET_AVX2(nxm_sad_avg_kernel, nxm_sad_avg_kernel_helper_c, nxm_sad_avg_kernel_helper_avx2);
-                    SET_SSE2_AVX2(
-                        compute_mean_8x8, compute_mean_c, compute_mean8x8_sse2_intrin, compute_mean8x8_avx2_intrin);
-#endif
                     SET_SSE2(compute_mean_square_values_8x8,
                         compute_mean_squared_values_c,
                         compute_mean_of_squared_values8x8_sse2_intrin);
@@ -729,9 +642,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
                     SET_AVX2(eb_av1_calc_indices_dim2, av1_calc_indices_dim2_c, av1_calc_indices_dim2_avx2);
                     if (flags & HAS_SSE2) eb_av1_get_nz_map_contexts = eb_av1_get_nz_map_contexts_sse2;
 
-#if RESTRUCTURE_SAD
-                    SET_AVX2(pme_sad_loop_kernel, pme_sad_loop_kernel_c, pme_sad_loop_kernel_avx2);
-#endif
                     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
                     SET_AVX2(eb_av1_haar_ac_sad_8x8_uint8_input,
                              eb_av1_haar_ac_sad_8x8_uint8_input_c,

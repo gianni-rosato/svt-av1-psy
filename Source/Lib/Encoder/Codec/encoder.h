@@ -23,7 +23,6 @@
 #include "EbRateControlProcess.h"
 #include "level.h"
 
-#if TWOPASS_RC
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -970,5 +969,4 @@ static INLINE int is_stat_consumption_stage(const AV1_COMP *const cpi) {
 }  // extern "C"
 #endif
 
-#endif  // TWOPASS_RC
 #endif  // AOM_AV1_ENCODER_ENCODER_H_

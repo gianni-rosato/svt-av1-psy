@@ -14,7 +14,6 @@
 
 #include "EbDefinitions.h"
 
-#if TWOPASS_RC
 enum {
     SEQ_LEVEL_2_0,
     SEQ_LEVEL_2_1,
@@ -78,5 +77,4 @@ typedef struct AV1LevelParams {
   int frame_header_count;
 } AV1LevelParams;
 
-#endif  // TWOPASS_RC
 #endif  // AOM_AV1_ENCODER_LEVEL_H_

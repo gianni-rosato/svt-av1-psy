@@ -15,7 +15,6 @@
 #include "EbDefinitions.h"
 //#include "config/av1_rtcd.h"
 #include "dwt.h"
-#if FIRST_PASS_SETUP
 
 // Note: block length must be even for this implementation
 static void analysis_53_row(int length, tran_low_t *x, tran_low_t *lowpass,
@@ -155,4 +154,3 @@ int eb_av1_haar_ac_sad_8x8_uint8_input_c(uint8_t *input, int stride, int hbd) {
   eb_av1_fdwt8x8_uint8_input_c(input, output, stride, hbd);
   return eb_av1_haar_ac_sad(output, 8, 8, 8);
 }
-#endif

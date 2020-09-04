@@ -122,35 +122,6 @@ uint64_t compute_mean_of_squared_values8x8_sse2_intrin(
 
     return (uint64_t)_mm_cvtsi128_si32(xmm_block_mean) << 10;
 }
-#if !REMOVE_UNUSED_CODE
-uint64_t compute_mean8x8_sse2_intrin(
-    uint8_t *input_samples, // input parameter, input samples Ptr
-    uint32_t input_stride, // input parameter, input stride
-    uint32_t input_area_width, // input parameter, input area width
-    uint32_t input_area_height) // input parameter, input area height
-{
-    __m128i xmm0 = _mm_setzero_si128(), xmm1, xmm2, xmm3, xmm4, xmm_sum1, xmm_sum2;
-
-    xmm1     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples)), xmm0);
-    xmm2     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)), xmm0);
-    xmm3     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride)), xmm0);
-    xmm4     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)), xmm0);
-    xmm_sum1 = _mm_add_epi16(_mm_add_epi16(xmm1, xmm2), _mm_add_epi16(xmm3, xmm4));
-
-    input_samples += 4 * input_stride;
-    xmm1     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples)), xmm0);
-    xmm2     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)), xmm0);
-    xmm3     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride)), xmm0);
-    xmm4     = _mm_sad_epu8(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)), xmm0);
-    xmm_sum2 = _mm_add_epi16(_mm_add_epi16(xmm1, xmm2), _mm_add_epi16(xmm3, xmm4));
-    xmm_sum2 = _mm_add_epi16(xmm_sum1, xmm_sum2);
-
-    (void)input_area_width;
-    (void)input_area_height;
-
-    return (uint64_t)_mm_cvtsi128_si32(xmm_sum2) << 2;
-}
-#endif
 void compute_interm_var_four8x8_helper_sse2(uint8_t *input_samples, uint16_t input_stride,
                                             uint64_t *mean_of8x8_blocks, // mean of four  8x8
                                             uint64_t *mean_of_squared8x8_blocks) // meanSquared

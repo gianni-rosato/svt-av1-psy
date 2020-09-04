@@ -928,16 +928,8 @@ EbErrorType eb_av1_intra_prediction_cl(
         uint8_t    left_neigh_array[64 * 2 + 1];
         PredictionMode mode;
         // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
-#if REFACTOR_SIGNALS
         int32_t start_plane = (md_context_ptr->uv_intra_comp_only) ? 1 : 0;
-#else
-        int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
-#endif
-#if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 && !md_context_ptr->md_staging_skip_chroma_pred) ? (int)MAX_MB_PLANE : 1;
-#else
-        int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
-#endif
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane == 0) {
                 if (md_context_ptr->blk_origin_y != 0)
@@ -984,14 +976,9 @@ EbErrorType eb_av1_intra_prediction_cl(
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
                     mode,                                                                           //PredictionMode mode,
                     plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#if MEM_OPT_PALETTE
                     plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
                                     candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0]>0 : 0) : 0,
                     plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-#else
-                    plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0]>0) : 0,
-                    plane==0 ? &candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-#endif
                     plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
@@ -1016,16 +1003,8 @@ EbErrorType eb_av1_intra_prediction_cl(
         uint16_t    left_neigh_array[64 * 2 + 1];
         PredictionMode mode;
         // Hsan: plane should be derived @ an earlier stage (e.g. @ the call of perform_fast_loop())
-#if REFACTOR_SIGNALS
         int32_t start_plane = (md_context_ptr->uv_intra_comp_only) ? 1 : 0;
-#else
-        int32_t start_plane = (md_context_ptr->uv_search_path) ? 1 : 0;
-#endif
-#if CLEAN_UP_SKIP_CHROMA_PRED_SIGNAL
         int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 && !md_context_ptr->md_staging_skip_chroma_pred) ? (int)MAX_MB_PLANE : 1;
-#else
-        int32_t end_plane = (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1) ? (int)MAX_MB_PLANE : 1;
-#endif
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             if (plane == 0) {
                 if (md_context_ptr->blk_origin_y != 0)
@@ -1074,14 +1053,9 @@ EbErrorType eb_av1_intra_prediction_cl(
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
                     mode,                                                                           //PredictionMode mode,
                     plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
-#if MEM_OPT_PALETTE
                     plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
                                     candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0]>0 : 0) : 0,
                     plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-#else
-                    plane == 0 ? (candidate_buffer_ptr->candidate_ptr->palette_info.pmi.palette_size[0] > 0) : 0,
-                    plane == 0 ? &candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
-#endif
                     plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
@@ -1225,70 +1199,6 @@ EbErrorType  intra_luma_prediction_for_interintra(
 }
 
 
-#if !REMOVE_UNUSED_CODE_PH2
-EbErrorType update_neighbor_samples_array_open_loop(
-        uint8_t                           *above_ref,
-        uint8_t                            *left_ref,
-        EbPictureBufferDesc              *input_ptr,
-        uint32_t                            stride,
-        uint32_t                            src_origin_x,
-        uint32_t                            src_origin_y,
-        uint8_t                             bwidth,
-        uint8_t                             bheight)
-{
-    EbErrorType    return_error = EB_ErrorNone;
-
-    uint8_t  *src_ptr;
-    uint8_t  *read_ptr;
-    uint32_t count;
-
-    uint32_t width = input_ptr->width;
-    uint32_t height = input_ptr->height;
-    uint32_t block_size_half = bwidth << 1;
-
-    // Adjust the Source ptr to start at the origin of the block being updated
-    src_ptr = input_ptr->buffer_y + (((src_origin_y + input_ptr->origin_y) * stride) + (src_origin_x + input_ptr->origin_x));
-
-    //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
-    EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
-    EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
-
-    // Get the upper left sample
-    if (src_origin_x != 0 && src_origin_y != 0) {
-        read_ptr = src_ptr - stride - 1;
-        *above_ref = *read_ptr;
-        *left_ref = *read_ptr;
-        left_ref++;
-        above_ref++;
-    }else {
-        *above_ref = *left_ref = 128;
-        left_ref++;
-        above_ref++;
-    }
-    // Get the left-column
-    count = block_size_half;
-    if (src_origin_x != 0) {
-        read_ptr = src_ptr - 1;
-        count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
-        for (uint32_t idx = 0; idx < count; ++idx) {
-            *left_ref = *read_ptr;
-            read_ptr += stride;
-            left_ref++;
-        }
-    }
-
-    // Get the top-row
-    count = block_size_half;
-    if (src_origin_y != 0) {
-        read_ptr = src_ptr - stride;
-        count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
-        eb_memcpy(above_ref, read_ptr, count);
-    }
-
-    return return_error;
-}
-#endif
-#if TPL_LA
 #define USE_PADDING_FIX 1
 EbErrorType update_neighbor_samples_array_open_loop_mb(
         uint8_t                            *above_ref,
@@ -1383,7 +1293,6 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
     return return_error;
 }
 
-#if TPL_IMP
 EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
     uint8_t *above_ref, uint8_t *left_ref, uint8_t *recon_ptr, uint32_t stride,
     uint32_t src_origin_x, uint32_t src_origin_y, uint8_t bwidth, uint8_t bheight, uint32_t width,
@@ -1475,40 +1384,4 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
 
     return return_error;
 }
-#endif
 
-#endif
-
-#if !REMOVE_UNUSED_CODE_PH2
-/** intra_prediction_open_loop()
-        performs Open-loop Intra candidate Search for a CU
- */
-EbErrorType intra_prediction_open_loop(
-        int32_t  p_angle ,
-        uint8_t                          ois_intra_mode,
-        uint32_t                         src_origin_x,
-        uint32_t                         src_origin_y,
-        TxSize                          tx_size,
-        uint8_t                         *above_row,
-        uint8_t                         *left_col,
-        MotionEstimationContext_t       *context_ptr)                  // input parameter, ME context
-
-{
-    EbErrorType                return_error = EB_ErrorNone;
-    PredictionMode mode = ois_intra_mode;
-    const int32_t is_dr_mode = av1_is_directional_mode(mode);
-    uint8_t *dst = (&(context_ptr->me_context_ptr->sb_buffer[0]));
-    uint32_t dst_stride = context_ptr->me_context_ptr->sb_buffer_stride;
-
-    if (is_dr_mode)
-        dr_predictor(dst, dst_stride, tx_size, above_row, left_col, 0, 0, p_angle);
-    else {
-        // predict
-        if (mode == DC_PRED) {
-            dc_pred[src_origin_x > 0][src_origin_y > 0][tx_size](dst, dst_stride, above_row, left_col);
-        } else
-            eb_pred[mode][tx_size](dst, dst_stride, above_row, left_col);
-    }
-    return return_error;
-}
-#endif

@@ -2369,20 +2369,6 @@ static INLINE void av1_tranform_two_d_core_c(int16_t *input, uint32_t input_stri
         }
     }
 }
-#if !REMOVE_UNUSED_CODE
-void av1_round_shift_array_pf_c(int32_t *arr_in, int32_t *arr_out, int32_t size, int32_t bit) {
-    int32_t i;
-    if (bit == 0) {
-        for (i = 0; i < size; i++) arr_out[i] = arr_in[i];
-    } else {
-        if (bit > 0) {
-            for (i = 0; i < size; i++) arr_out[i] = round_shift(arr_in[i], bit);
-        } else {
-            for (i = 0; i < size; i++) arr_out[i] = arr_in[i] * (1 << (-bit));
-        }
-    }
-}
-#endif
 void av1_fdct32_pf_new(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range) {
     (void)stage_range;
@@ -2724,7 +2710,6 @@ void av1_fdct32_pf_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     bf1[30] = bf0[17];
     bf1[31] = -bf0[1];
 }
-#if TRANSFORM_FIX_1
 static INLINE void set_fwd_txfm_non_scale_range(Txfm2dFlipCfg *cfg) {
     av1_zero(cfg->stage_range_col);
     av1_zero(cfg->stage_range_row);
@@ -2747,29 +2732,6 @@ static INLINE void set_fwd_txfm_non_scale_range(Txfm2dFlipCfg *cfg) {
         }
     }
 }
-#else
-static INLINE void set_fwd_txfm_non_scale_range(Txfm2dFlipCfg *cfg) {
-    const int32_t txh_idx = get_txh_idx(cfg->tx_size);
-    av1_zero(cfg->stage_range_col);
-    av1_zero(cfg->stage_range_row);
-    assert(cfg->txfm_type_col < TXFM_TYPES);
-    if (cfg->txfm_type_col != TXFM_TYPE_INVALID) {
-        int32_t       stage_num_col   = cfg->stage_num_col;
-        const int8_t *range_mult2_col = fwd_txfm_range_mult2_list[cfg->txfm_type_col];
-        for (int32_t i = 0; i < stage_num_col; ++i)
-            cfg->stage_range_col[i] = (range_mult2_col[i] + 1) >> 1;
-    }
-
-    if (cfg->txfm_type_row != TXFM_TYPE_INVALID) {
-        int32_t stage_num_row = cfg->stage_num_row;
-        assert(cfg->txfm_type_row < TXFM_TYPES);
-        const int8_t *range_mult2_row = fwd_txfm_range_mult2_list[cfg->txfm_type_row];
-        for (int32_t i = 0; i < stage_num_row; ++i)
-            cfg->stage_range_row[i] =
-                (max_fwd_range_mult2_col[txh_idx] + range_mult2_row[i] + 1) >> 1;
-    }
-}
-#endif
 void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg) {
     assert(cfg != NULL);
     cfg->tx_size = tx_size;
@@ -3243,7 +3205,6 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
     return return_error;
 }
-#if TPL_LA
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff,
                                   int diff_stride, TxfmParam *txfm_param) {
   assert(txfm_param->tx_type == DCT_DCT);
@@ -3460,7 +3421,6 @@ void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_s
     txfm_param.is_hbd = is_hbd;
     svt_av1_highbd_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
-#endif
 
 /*********************************************************************
  * Map Chroma QP

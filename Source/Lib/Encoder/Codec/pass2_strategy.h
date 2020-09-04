@@ -16,7 +16,6 @@
 #include "encoder.h"
 #include "Av1Common.h"
 
-#if TWOPASS_RC
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,5 +67,4 @@ int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 }  // extern "C"
 #endif
 
-#endif  // TWOPASS_RC
 #endif  // AOM_AV1_ENCODER_PASS2_STRATEGY_H_

@@ -18,6 +18,7 @@ extern "C" {
 
 #include <stdint.h>
 #include "EbSvtAv1Formats.h"
+#include "EbDebugMacros.h"
 
 // API Version
 #define SVT_VERSION_MAJOR 0

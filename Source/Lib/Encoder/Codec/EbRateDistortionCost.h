@@ -126,9 +126,6 @@ extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *c
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                                     const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                                     uint8_t enable_inter_intra,
-#if !SHUT_FAST_RATE_PD0
-                                    EbBool full_cost_shut_fast_rate_flag,
-#endif
                                     uint8_t md_pass,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
@@ -138,9 +135,6 @@ extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *c
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                                     const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
                                     uint8_t enable_inter_intra,
-#if !SHUT_FAST_RATE_PD0
-                                    EbBool full_cost_shut_fast_rate_flag,
-#endif
                                     uint8_t md_pass,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 

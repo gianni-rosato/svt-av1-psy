@@ -39,7 +39,6 @@
 
 #define RC_QPMOD_MAXQP 54
 
-#if TWOPASS_RC
 // Threshold used to define if a KF group is static (e.g. a slide show).
 // Essentially, this means that no frame in the group has more than 1% of MBs
 // that are not marked as coded with 0,0 motion in the first pass.
@@ -203,8 +202,6 @@ typedef struct {
     int next_is_fwd_key;
 } RATE_CONTROL;
 
-#endif //TWOPASS_RC
-
 /**************************************
  * Input Port Types
  **************************************/
@@ -284,12 +281,10 @@ typedef struct RateControlLayerContext {
 /**************************************
  * Extern Function Declarations
  **************************************/
-#if TWOPASS_RC
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 int svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
 int svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);
 double av1_get_gfu_boost_projection_factor(double min_factor, double max_factor, int frame_count);
-#endif
 
 EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr);

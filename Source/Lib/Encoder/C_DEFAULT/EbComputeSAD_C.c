@@ -11,31 +11,6 @@
 
 #include "EbComputeSAD_C.h"
 #include "EbUtility.h"
-#if !REMOVE_ME_SUBPEL_CODE
-/*******************************************
-* combined_averaging_sad
-*
-*******************************************/
-uint32_t combined_averaging_sad(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
-                                uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
-                                uint32_t height, uint32_t width) {
-    uint32_t x, y;
-    uint32_t sad = 0;
-    uint8_t  avgpel;
-
-    for (y = 0; y < height; y++) {
-        for (x = 0; x < width; x++) {
-            avgpel = (ref1[x] + ref2[x] + 1) >> 1;
-            sad += EB_ABS_DIFF(src[x], avgpel);
-        }
-        src += src_stride;
-        ref1 += ref1_stride;
-        ref2 += ref2_stride;
-    }
-
-    return sad;
-}
-#endif
 /*******************************************
 *   returns NxM Sum of Absolute Differences
 Note: moved from picture operators.
@@ -80,53 +55,6 @@ uint32_t sad_16b_kernel_c(uint16_t *src, // input parameter, source samples Ptr
     return sad;
 }
 
-#if !REMOVE_UNUSED_CODE
-void sad_loop_kernel_sparse_c(
-    uint8_t * src, // input parameter, source samples Ptr
-    uint32_t  srcStride, // input parameter, source stride
-    uint8_t * ref, // input parameter, reference samples Ptr
-    uint32_t  refStride, // input parameter, reference stride
-    uint32_t  block_height, // input parameter, block height (M)
-    uint32_t  block_width, // input parameter, block width (N)
-    uint64_t *bestsad_, int16_t *xSearchCenter, int16_t *ySearchCenter,
-    uint32_t srcStrideRaw, // input parameter, source stride (no line skipping)
-    int16_t searchAreaWidth, int16_t searchAreaHeight) {
-    int16_t x_search_index;
-    int16_t y_search_index;
-
-    *bestsad_ = 0xffffff;
-
-    for (y_search_index = 0; y_search_index < searchAreaHeight; y_search_index++) {
-        for (x_search_index = 0; x_search_index < searchAreaWidth; x_search_index++) {
-            uint8_t  do_this_point = 0;
-            uint32_t group         = (x_search_index / 8);
-            if ((group & 1) == (y_search_index & 1)) do_this_point = 1;
-
-            if (do_this_point) {
-                uint32_t x, y;
-                uint32_t sad = 0;
-
-                for (y = 0; y < block_height; y++) {
-                    for (x = 0; x < block_width; x++)
-                        sad += EB_ABS_DIFF(src[y * srcStride + x],
-                                           ref[x_search_index + y * refStride + x]);
-                }
-
-                // Update results
-                if (sad < *bestsad_) {
-                    *bestsad_      = sad;
-                    *xSearchCenter = x_search_index;
-                    *ySearchCenter = y_search_index;
-                }
-            }
-        }
-
-        ref += srcStrideRaw;
-    }
-
-    return;
-}
-#endif
 void sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
                        uint32_t  src_stride, // input parameter, source stride
                        uint8_t * ref, // input parameter, reference samples Ptr
@@ -165,50 +93,6 @@ void sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
 
     return;
 }
-
-#if RESTRUCTURE_SAD
-/*******************************************************************************
-* performs sad search for given block and search area
-* return best sad with its best mvx/mvy
-*******************************************************************************/
-void pme_sad_loop_kernel_c(uint8_t * src, // input parameter, source samples Ptr
-                           uint32_t  src_stride, // input parameter, source stride
-                           uint8_t * ref, // input parameter, reference samples Ptr
-                           uint32_t  ref_stride, // input parameter, reference stride
-                           uint32_t  block_height, // input parameter, block height (M)
-                           uint32_t  block_width, // input parameter, block width (N)
-                           uint32_t *best_sad, int16_t *best_mvx, int16_t *best_mvy,
-                           int16_t search_position_start_x, int16_t search_position_start_y,
-                           int16_t search_area_width, int16_t search_area_height,
-                           int16_t search_step, int16_t mvx, int16_t mvy) {
-    int16_t xSearchIndex;
-    int16_t ySearchIndex;
-
-    for (ySearchIndex = 0; ySearchIndex < search_area_height; ySearchIndex++) {
-        for (xSearchIndex = 0; xSearchIndex < search_area_width; xSearchIndex++) {
-            uint32_t x, y;
-            uint32_t sad = 0;
-
-            for (y = 0; y < block_height; y++) {
-                for (x = 0; x < block_width; x++)
-                    sad += EB_ABS_DIFF(src[y * src_stride + x],
-                                       ref[xSearchIndex + y * ref_stride + x]);
-            }
-
-            // Update results
-            if (sad < *best_sad) {
-                *best_mvx = mvx + ((search_position_start_x + xSearchIndex) * search_step);
-                *best_mvy = mvy + ((search_position_start_y + ySearchIndex) * search_step);
-                *best_sad = sad;
-            }
-        }
-
-        ref += ref_stride;
-    }
-
-    return;
-}
-#endif
 
 /* Sum the difference between every corresponding element of the buffers. */
 static INLINE uint32_t sad_inline_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride,
@@ -340,28 +224,3 @@ uint32_t nxm_sad_kernel_helper_c(const uint8_t *src, uint32_t src_stride, const 
 
     return nxm_sad;
 };
-#if !REMOVE_ME_SUBPEL_CODE
-uint32_t nxm_sad_avg_kernel_helper_c(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
-                                     uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
-                                     uint32_t height, uint32_t width) {
-    uint32_t nxm_sad_avg = 0;
-
-    switch (width) {
-    case 4:
-    case 8:
-    case 16:
-    case 24:
-    case 32:
-    case 48:
-    case 64:
-        nxm_sad_avg = combined_averaging_sad(
-            src, src_stride, ref1, ref1_stride, ref2, ref2_stride, height, width);
-        break;
-    case 40:
-    case 56: break; //void_func();
-    default: assert(0);
-    }
-
-    return nxm_sad_avg;
-}
-#endif

@@ -1839,7 +1839,6 @@ int64_t eb_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_
     return sse;
 }
 
-#if TPL_LA
 int svt_aom_satd_avx2(const TranLow *coeff, int length) {
   __m256i accum = _mm256_setzero_si256();
   int i;
@@ -1932,7 +1931,6 @@ int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
   _mm256_zeroupper();
   return sse;
 }
-#endif
 static INLINE uint64_t xx_cvtsi128_si64(__m128i a) {
 #if ARCH_X86_64
     return (uint64_t)_mm_cvtsi128_si64(a);

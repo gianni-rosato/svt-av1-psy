@@ -19,27 +19,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if !REMOVE_ME_SUBPEL_CODE
-// Max Search Area
-#if ME_MEM_OPT2
-#define MAX_SEARCH_AREA_WIDTH 800
-#define MAX_SEARCH_AREA_HEIGHT 800
-#else
-#define MAX_SEARCH_AREA_WIDTH 1280
-#define MAX_SEARCH_AREA_HEIGHT 1280
-#endif
-#define MAX_SEARCH_AREA_WIDTH_CH MAX_SEARCH_AREA_WIDTH + PAD_VALUE
-#define MAX_SEARCH_AREA_HEIGHT_CH MAX_SEARCH_AREA_HEIGHT + PAD_VALUE
-#endif
 // 1-D interpolation shift value
 #define if_shift 6
 #define NUMBER_OF_SB_QUAD 4
 #define VARIANCE_PRECISION 16
 #define MEAN_PRECISION (VARIANCE_PRECISION >> 1)
-#if !REMOVE_UNUSED_CODE
-#define HME_RECTANGULAR 0
-#define HME_SPARSE 1
-#endif
 #define HME_DECIM_FILTER_TAP 9
 
 // Quater pel refinement methods
@@ -274,11 +258,6 @@ typedef enum EbMeTierZeroPu {
     ME_TIER_ZERO_PU_16x64_3 = 208
 } EbMeTierZeroPu;
 
-#if !NSQ_ME_CONTEXT_CLEAN_UP
-typedef struct MeTierZero {
-    MePredictionUnit pu[MAX_ME_PU_COUNT];
-} MeTierZero;
-#endif
 typedef struct IntraReferenceSamplesOpenLoop {
     EbDctor  dctor;
     uint8_t *y_intra_reference_array_reverse;
@@ -299,13 +278,8 @@ typedef struct MePredUnit {
 } MePredUnit;
 
 typedef struct MotionEstimationTierZero {
-#if NSQ_ME_CONTEXT_CLEAN_UP
     MePredUnit pu[SQUARE_PU_COUNT];
-#else
-    MePredUnit pu[MAX_ME_PU_COUNT];
-#endif
 } MotionEstimationTierZero;
-#if ME_HME_PRUNING_CLEANUP
 typedef struct MeHmeRefPruneCtrls {
     EbBool   enable_me_hme_ref_pruning;
     uint16_t prune_ref_if_hme_sad_dev_bigger_than_th;   // TH used to prune references based on hme sad deviation
@@ -320,7 +294,6 @@ typedef struct MeSrCtrls {
     uint16_t reduce_me_sr_based_on_hme_sad_abs_th;  // reduce the ME search region if HME sad is small
     uint16_t me_sr_divisor_for_low_hme_sad;         // Reduction factor for the ME search region if HME sad is small
 } MeSrCtrls;
-#endif
 typedef struct HmeResults {
     uint8_t  list_i;   // list index of this ref
     uint8_t  ref_i;    // ref list index of this ref
@@ -332,9 +305,6 @@ typedef struct HmeResults {
 typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
-#if !REMOVE_ME_SUBPEL_CODE
-    uint32_t                  interpolated_stride;
-#endif
     uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     MotionEstimationTierZero *me_candidate;
     // Intermediate SB-sized buffer to retain the input samples
@@ -348,33 +318,6 @@ typedef struct MeContext {
     uint8_t * sixteenth_sb_buffer;
     uint32_t  sixteenth_sb_buffer_stride;
     uint8_t * integer_buffer_ptr[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#if REMOVE_ME_BIPRED_SEARCH
-#if !REMOVE_ME_SUBPEL_CODE
-    uint8_t *pos_b_buffer;
-    uint8_t *pos_h_buffer;
-    uint8_t *pos_j_buffer;
-#endif
-#else
-    uint8_t * pos_b_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    uint8_t * pos_h_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    uint8_t * pos_j_buffer[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    uint8_t * one_d_intermediate_results_buf0;
-    uint8_t * one_d_intermediate_results_buf1;
-#endif
-#if !REMOVE_ME_SUBPEL_CODE
-    int16_t   x_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    int16_t   y_search_area_origin[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    // ME Parameters
-    /* Number of search positions in the horizontal direction.
-    *
-    * Default depends on input resolution. */
-    uint32_t sa_width[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    /* Number of search positions in the vertical direction.
-    *
-    * Default depends on input resolution. */
-    uint32_t sa_height[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-    uint8_t * avctemp_buffer;
-#endif
     uint32_t *p_best_sad_8x8;
     uint32_t *p_best_sad_16x16;
     uint32_t *p_best_sad_32x32;
@@ -383,120 +326,27 @@ typedef struct MeContext {
     uint32_t *p_best_mv16x16;
     uint32_t *p_best_mv32x32;
     uint32_t *p_best_mv64x64;
-#if !NSQ_ME_CONTEXT_CLEAN_UP
-    uint32_t *p_best_sad_64x32;
-    uint32_t *p_best_sad_32x16;
-    uint32_t *p_best_sad_16x8;
-    uint32_t *p_best_sad_32x64;
-    uint32_t *p_best_sad_16x32;
-    uint32_t *p_best_sad_8x16;
-    uint32_t *p_best_sad_32x8;
-    uint32_t *p_best_sad_8x32;
-    uint32_t *p_best_sad_64x16;
-    uint32_t *p_best_sad_16x64;
-    uint32_t *p_best_mv64x32;
-    uint32_t *p_best_mv32x16;
-    uint32_t *p_best_mv16x8;
-    uint32_t *p_best_mv32x64;
-    uint32_t *p_best_mv16x32;
-    uint32_t *p_best_mv8x16;
-    uint32_t *p_best_mv32x8;
-    uint32_t *p_best_mv8x32;
-    uint32_t *p_best_mv64x16;
-    uint32_t *p_best_mv16x64;
-#endif
     EB_ALIGN(16) uint32_t p_sad32x32[4];
     EB_ALIGN(64) uint32_t p_sad16x16[16];
     EB_ALIGN(64) uint32_t p_sad8x8[64];
-#if !REMOVE_ME_SUBPEL_CODE
-    uint8_t psub_pel_direction64x64;
-    uint8_t psub_pel_direction32x32[4];
-    uint8_t psub_pel_direction16x16[16];
-    uint8_t psub_pel_direction8x8[64];
-#endif
-#if !NSQ_ME_CONTEXT_CLEAN_UP
-    uint8_t psub_pel_direction64x32[2];
-    uint8_t psub_pel_direction32x16[8];
-    uint8_t psub_pel_direction16x8[32];
-    uint8_t psub_pel_direction32x64[2];
-    uint8_t psub_pel_direction16x32[8];
-    uint8_t psub_pel_direction8x16[32];
-    uint8_t psub_pel_direction32x8[16];
-    uint8_t psub_pel_direction8x32[16];
-    uint8_t psub_pel_direction64x16[4];
-    uint8_t psub_pel_direction16x64[4];
-#endif
-#if NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
     uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
-#if !REMOVE_ME_SUBPEL_CODE
-    uint32_t  p_sb_bipred_sad[SQUARE_PU_COUNT]; //needs to be upgraded to 209 pus
-    uint32_t  p_sb_best_full_pel_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
-#endif
-#else
-    uint32_t  p_sb_best_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
-    uint32_t  p_sb_best_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
-    uint32_t  p_sb_bipred_sad[MAX_ME_PU_COUNT]; //needs to be upgraded to 209 pus
-    uint32_t  p_sb_best_full_pel_mv[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
-#endif
     uint32_t *p_best_full_pel_mv8x8;
     uint32_t *p_best_full_pel_mv16x16;
     uint32_t *p_best_full_pel_mv32x32;
     uint32_t *p_best_full_pel_mv64x64;
-#if !NSQ_ME_CONTEXT_CLEAN_UP
-    uint32_t *p_best_full_pel_mv64x32;
-    uint32_t *p_best_full_pel_mv32x16;
-    uint32_t *p_best_full_pel_mv16x8;
-    uint32_t *p_best_full_pel_mv32x64;
-    uint32_t *p_best_full_pel_mv16x32;
-    uint32_t *p_best_full_pel_mv8x16;
-    uint32_t *p_best_full_pel_mv32x8;
-    uint32_t *p_best_full_pel_mv8x32;
-    uint32_t *p_best_full_pel_mv64x16;
-    uint32_t *p_best_full_pel_mv16x64;
-#endif
     uint8_t   full_quarter_pel_refinement;
-#if NSQ_ME_CONTEXT_CLEAN_UP
     uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
-#else
-    uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
-#endif
     uint32_t *p_best_ssd8x8;
     uint32_t *p_best_ssd16x16;
     uint32_t *p_best_ssd32x32;
     uint32_t *p_best_ssd64x64;
-#if !NSQ_ME_CONTEXT_CLEAN_UP
-    uint32_t *p_best_ssd64x32;
-    uint32_t *p_best_ssd32x16;
-    uint32_t *p_best_ssd16x8;
-    uint32_t *p_best_ssd32x64;
-    uint32_t *p_best_ssd16x32;
-    uint32_t *p_best_ssd8x16;
-    uint32_t *p_best_ssd32x8;
-    uint32_t *p_best_ssd8x32;
-    uint32_t *p_best_ssd64x16;
-    uint32_t *p_best_ssd16x64;
-    uint8_t   p_sb_best_nsq[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][MAX_ME_PU_COUNT];
-    uint8_t * p_best_nsq8x8;
-    uint8_t * p_best_nsq16x16;
-    uint8_t * p_best_nsq32x32;
-    uint8_t * p_best_nsq64x64;
-#endif
     uint16_t *p_eight_pos_sad16x16;
     EB_ALIGN(64) uint32_t p_eight_sad32x32[4][8];
     EB_ALIGN(64) uint32_t p_eight_sad16x16[16][8];
     EB_ALIGN(64) uint32_t p_eight_sad8x8[64][8];
     EbBitFraction *mvd_bits_array;
     uint64_t       lambda;
-#if !REMOVE_UNUSED_CODE
-    uint8_t        hme_search_type;
-#endif
-#if !REMOVE_ME_SUBPEL_CODE
-
-    uint8_t fractional_search_method;
-
-    uint8_t fractional_search_model;
-#endif
     uint8_t hme_search_method;
     uint8_t me_search_method;
 
@@ -504,33 +354,16 @@ typedef struct MeContext {
     EbBool enable_hme_level0_flag;
     EbBool enable_hme_level1_flag;
     EbBool enable_hme_level2_flag;
-#if !REMOVE_ME_SUBPEL_CODE
-
-    EbBool use_subpel_flag;
-    EbBool half_pel_mode;
-#endif
     EbBool compute_global_motion;
-#if ME_HME_PRUNING_CLEANUP
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
     MeSrCtrls me_sr_adjustment_ctrls;
-#else
-#if ADD_ME_SIGNAL_FOR_PRUNING_TH
-    uint16_t prune_ref_if_hme_sad_dev_bigger_than_th;
-    uint16_t prune_ref_if_me_sad_dev_bigger_than_th;
-#endif
-#endif
-#if ADD_HME_MIN_MAX_MULTIPLIER_SIGNAL
     uint8_t max_hme_sr_area_multipler;
-#endif
 
     // ME
     uint16_t search_area_width;
     uint16_t search_area_height;
     uint16_t max_me_search_width;
     uint16_t max_me_search_height;
-#if !SHUT_ME_NSQ_SEARCH
-    uint8_t inherit_rec_mv_from_sq_block;
-#endif
     uint8_t best_list_idx;
     uint8_t best_ref_idx;
     // HME
@@ -540,30 +373,18 @@ typedef struct MeContext {
     uint16_t hme_level0_total_search_area_height;
     uint16_t hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-#if ADD_MAX_HME_SIGNAL
     uint16_t hme_level0_max_total_search_area_width;
     uint16_t hme_level0_max_total_search_area_height;
     uint16_t hme_level0_max_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level0_max_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-#endif
     uint16_t hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint16_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-#if ADD_HME_DECIMATION_SIGNAL
     uint8_t hme_decimation;
-#endif
     uint8_t  update_hme_search_center_flag;
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if ME_HME_PRUNING_CLEANUP
     uint32_t reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#else
-    uint32_t reduce_me_sr_flag[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
-#if !REMOVE_ME_SUBPEL_CODE
-    EbBool local_hp_mode[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
-#if MULTI_STAGE_HME
     int16_t x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint64_t hme_level0_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
@@ -576,25 +397,17 @@ typedef struct MeContext {
     int16_t adjust_hme_l1_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t adjust_hme_l2_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t hme_factor;
-#endif
-#if GM_LIST1
     //exit gm search if first reference detection is identity
     uint8_t gm_identiy_exit;
-#endif
     // ------- Context for Alt-Ref ME ------
     uint16_t adj_search_area_width;
     uint16_t adj_search_area_height;
     EbBool   me_alt_ref;
     void *   alt_ref_reference_ptr;
     // tf
-#if FAST_M8_V1 // tf_hp
     uint8_t high_precision;
-#endif
     int tf_frame_index;
     int tf_index_center;
-#if !REMOVE_ME_SUBPEL_CODE
-    uint8_t h_pel_search_wind;
-#endif
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t tf_16x16_block_error[16];
@@ -604,32 +417,15 @@ typedef struct MeContext {
     uint64_t tf_32x32_block_error[4];
 
     int tf_32x32_block_split_flag[4];
-#if TF_IMP
     int tf_block_row;
     int tf_block_col;
     uint16_t min_frame_size;
-#endif
-#if ON_OFF_FEATURE_MRP
-    uint8_t mrp_level;
-#endif
     // -------
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,
                                           uint32_t ref_stride, uint32_t width, uint32_t height);
-#if REMOVE_ME_SUBPEL_CODE
 extern EbErrorType me_context_ctor(MeContext *object_ptr);
-#elif REMOVE_MRP_MODE
-extern EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
-    uint16_t max_input_luma_height);
-#elif NSQ_REMOVAL_CODE_CLEAN_UP
-extern EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
-                                   uint16_t max_input_luma_height, uint8_t mrp_mode);
-#else
-extern EbErrorType me_context_ctor(MeContext *object_ptr, uint16_t max_input_luma_width,
-                                   uint16_t max_input_luma_height, uint8_t nsq_present,
-                                   uint8_t mrp_mode);
-#endif
 
 #ifdef __cplusplus
 }

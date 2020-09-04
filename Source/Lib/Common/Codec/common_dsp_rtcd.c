@@ -36,7 +36,6 @@
 #define HAS_AVX512BW CPU_FLAGS_AVX512BW
 #define HAS_AVX512VL CPU_FLAGS_AVX512VL
 
-#if TPL_LA
 // coeff: 16 bits, dynamic range [-32640, 32640].
 // length: value range {16, 64, 256, 1024}.
 int svt_aom_satd_c(const TranLow *coeff, int length) {
@@ -62,7 +61,6 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
   *ssz = sqcoeff;
   return error;
 }
-#endif
 /**************************************
  * Instruction Set Support
  **************************************/
@@ -320,9 +318,6 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     picture_average_kernel = picture_average_kernel_c;
     picture_average_kernel1_line = picture_average_kernel1_line_c;
-#if !REMOVE_ME_SUBPEL_CODE
-    avc_style_luma_interpolation_filter = avc_style_luma_interpolation_filter_helper_c;
-#endif
     eb_av1_wiener_convolve_add_src = eb_av1_wiener_convolve_add_src_c,
 
 
@@ -908,11 +903,6 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
         SET_SSE2(picture_average_kernel1_line,
             picture_average_kernel1_line_c,
             picture_average_kernel1_line_sse2_intrin);
-#if !REMOVE_ME_SUBPEL_CODE
-        SET_SSSE3(avc_style_luma_interpolation_filter,
-            avc_style_luma_interpolation_filter_helper_c,
-            avc_style_luma_interpolation_filter_helper_ssse3);
-#endif
         SET_AVX2_AVX512(eb_av1_wiener_convolve_add_src,
             eb_av1_wiener_convolve_add_src_c,
             eb_av1_wiener_convolve_add_src_avx2,

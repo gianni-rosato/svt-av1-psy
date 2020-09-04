@@ -126,11 +126,7 @@ static INLINE int mv_cost(const MV *mv, const int *joint_cost, int *const comp_c
 }
 
 #define PIXEL_TRANSFORM_ERROR_SCALE 4
-#if FIRST_PASS_SETUP
 int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
-#else
-static int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
-#endif
                        int error_per_bit) {
     if (mvcost) {
         const MV diff = {mv->row - ref->row, mv->col - ref->col};
@@ -758,7 +754,6 @@ static unsigned int setup_obmc_center_error(const int32_t *mask, const MV *bestm
 
 /* returns subpixel variance error function */
 #define DIST(r, c) vfp->osvf(pre(y, y_stride, r, c), y_stride, sp(c), sp(r), z, mask, &sse)
-#if OBMC_BUG_FIX
 #define CHECK_BETTER(v, r, c)                                                                 \
     do {                                                                                      \
         if (c >= minc && c <= maxc && r >= minr && r <= maxr) {                               \
@@ -774,21 +769,6 @@ static unsigned int setup_obmc_center_error(const int32_t *mask, const MV *bestm
         } else                                                                                \
             v = INT_MAX;                                                                      \
     } while (0)
-#else
-#define CHECK_BETTER(v, r, c)                               \
-    if (c >= minc && c <= maxc && r >= minr && r <= maxr) { \
-        thismse = (DIST(r, c));                             \
-        if ((v = MVC(r, c) + thismse) < besterr) {          \
-            besterr     = v;                                \
-            br          = r;                                \
-            bc          = c;                                \
-            *distortion = thismse;                          \
-            *sse1       = sse;                              \
-        }                                                   \
-    } else {                                                \
-        v = INT_MAX;                                        \
-    }
-#endif
 #define CHECK_BETTER0(v, r, c) CHECK_BETTER(v, r, c)
 
 #define CHECK_BETTER1(v, r, c)                                                          \

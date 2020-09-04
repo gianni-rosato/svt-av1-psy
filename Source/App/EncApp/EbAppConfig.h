@@ -213,9 +213,6 @@ typedef struct EbConfig {
      * Coding Structure
      *****************************************/
     int8_t enc_mode;
-#if !TWOPASS_RC
-    int8_t  snd_pass_enc_mode;
-#endif
     int32_t  intra_period;
     uint32_t intra_refresh_type;
     uint32_t hierarchical_levels;
@@ -411,13 +408,11 @@ typedef struct EbConfig {
     uint32_t max_qp_allowed;
     uint32_t min_qp_allowed;
     uint32_t vbv_bufsize;
-#if TWOPASS_RC
     uint32_t vbr_bias_pct;
     uint32_t vbr_min_section_pct;
     uint32_t vbr_max_section_pct;
     uint32_t under_shoot_pct;
     uint32_t over_shoot_pct;
-#endif
 
     EbBool enable_adaptive_quantization;
 
@@ -506,9 +501,7 @@ typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
 
-#if TWOPASS_RC
 extern void eb_2pass_config_update(EbConfig *config_ptr);
-#endif
 extern void eb_config_ctor(EbConfig *config_ptr);
 extern void eb_config_dtor(EbConfig *config_ptr);
 

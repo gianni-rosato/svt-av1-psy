@@ -96,12 +96,7 @@
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
-#if NOISE_BASED_TF_FRAMES
 #define SCD_LAD                                             12
-#else
-
-#define SCD_LAD                                              6
-#endif
 #define TPL_LAD                                              16
 
 /**************************************
@@ -330,11 +325,7 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
         if (core_count <= SINGLE_CORE_COUNT)
             ppcs_count = min_ppcs_count;
         else{
-#if NEW_RESOLUTION_RANGES
             if (res_class <= INPUT_SIZE_480p_RANGE) {
-#else
-            if (res_class < INPUT_SIZE_1080i_RANGE){
-#endif
                 if (core_count < CONS_CORE_COUNT)
                     ppcs_count = ppcs_count * 1;                // 1 sec
                 else if (core_count < LOW_SERVER_CORE_COUNT)
@@ -513,9 +504,7 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
     uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
-#if DECOUPLE_ME_RES
     uint32_t min_me;
-#endif
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
           the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
@@ -552,16 +541,10 @@ EbErrorType load_default_buffer_configuration_settings(
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
 
-#if DECOUPLE_ME_RES
         min_me = scs_ptr->static_config.look_ahead_distance==0 ? 1 : min_parent;
-#endif
 
         //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
-#if TPL_LA
         min_paref = 25 + scs_ptr->scd_delay + eos_delay + (scs_ptr->static_config.enable_tpl_la ? needed_lad_pictures : 0);
-#else
-        min_paref = 25 +  scs_ptr->scd_delay + eos_delay;
-#endif
 
         if (scs_ptr->static_config.hierarchical_levels == 5 &&
             core_count == SINGLE_CORE_COUNT) {
@@ -585,9 +568,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
 
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
-#if DECOUPLE_ME_RES
         scs_ptr->me_pool_init_count = min_me;
-#endif
     }
     else {
         if (core_count == (SINGLE_CORE_COUNT << 1))
@@ -599,9 +580,7 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->picture_control_set_pool_init_count_child = min_child;
             scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
             scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
-#if DECOUPLE_ME_RES
             scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
-#endif
         }
         else
         {
@@ -612,9 +591,7 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
 
-#if DECOUPLE_ME_RES
             scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
-#endif
         }
     }
 
@@ -809,9 +786,7 @@ static void eb_enc_handle_dctor(EbPtr p)
     EB_FREE_PTR_ARRAY(enc_handle_ptr->app_callback_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE(enc_handle_ptr->scs_pool_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#if DECOUPLE_ME_RES
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -1019,9 +994,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     * Picture Control Set: Parent
     ************************************/
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#if DECOUPLE_ME_RES
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-#endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         // The segment Width & Height Arrays are in units of SBs, not samples
         PictureControlSetInitData input_data;
@@ -1043,25 +1016,14 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
-#if !REMOVE_MRP_MODE
-        input_data.mrp_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mrp_mode;
-#endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-        input_data.nsq_present = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->nsq_present;
-#endif
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
         input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
-#if !REMOVE_UNUSED_CODE_PH2
-        input_data.allocate_ois_struct = 0;
-#endif
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
 
-#if TPL_LA
         input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_tpl_la;
-#endif
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1071,7 +1033,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             picture_parent_control_set_creator,
             &input_data,
             NULL);
-#if DECOUPLE_ME_RES
         EB_NEW(
             enc_handle_ptr->me_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1081,7 +1042,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             me_creator,
             &input_data,
             NULL);
-#endif
     }
 
     /************************************
@@ -1126,10 +1086,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
-#if RATE_MEM_OPT
-        input_data.serial_rate_est = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.pic_based_rate_est &&
-            input_data.enc_dec_segment_col == 1 && input_data.enc_dec_segment_row == 1 ? 1 : 0;
-#endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             eb_system_resource_ctor,
@@ -1188,10 +1144,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             ref_pic_buf_desc_init_data.bit_depth = EB_10BIT;
 
         eb_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
-#if MEM_OPT_10bit
         eb_ref_obj_ect_desc_init_data_structure.hbd_mode_decision =
             enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
-#endif
 
         // Reference Picture Buffers
         EB_NEW(
@@ -1208,11 +1162,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         // Currently, only Luma samples are needed in the PA
         ref_pic_buf_desc_init_data.max_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width;
         ref_pic_buf_desc_init_data.max_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height;
-#if MEM_OPT_10bit
         ref_pic_buf_desc_init_data.bit_depth = EB_8BIT;
-#else
-        ref_pic_buf_desc_init_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
-#endif
         ref_pic_buf_desc_init_data.color_format = EB_YUV420; //use 420 for picture analysis
         ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         ref_pic_buf_desc_init_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz + ME_FILTER_TAP;
@@ -1222,11 +1172,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
         quart_pic_buf_desc_init_data.max_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width >> 1;
         quart_pic_buf_desc_init_data.max_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height >> 1;
-#if MEM_OPT_10bit
         quart_pic_buf_desc_init_data.bit_depth = EB_8BIT;
-#else
-        quart_pic_buf_desc_init_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
-#endif
         quart_pic_buf_desc_init_data.color_format = EB_YUV420;
         quart_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         quart_pic_buf_desc_init_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz >> 1;
@@ -1238,11 +1184,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
         sixteenth_pic_buf_desc_init_data.max_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width >> 2;
         sixteenth_pic_buf_desc_init_data.max_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height >> 2;
-#if MEM_OPT_10bit
         sixteenth_pic_buf_desc_init_data.bit_depth = EB_8BIT;
-#else
-        sixteenth_pic_buf_desc_init_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
-#endif
         sixteenth_pic_buf_desc_init_data.color_format = EB_YUV420;
         sixteenth_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         sixteenth_pic_buf_desc_init_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz >> 2;
@@ -1984,9 +1926,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
-#if ON_OFF_FEATURE_MRP
-    scs_ptr->reference_count        = (uint8_t)scs_ptr->static_config.mrp_level == 0 ? 1: 4;
-#endif
     // Update picture width, and picture height
     if (scs_ptr->max_input_luma_width % MIN_BLOCK_SIZE) {
         scs_ptr->max_input_pad_right = MIN_BLOCK_SIZE - (scs_ptr->max_input_luma_width % MIN_BLOCK_SIZE);
@@ -2015,99 +1954,17 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
-#if TPL_240P_IMP
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (use_output_stat(scs_ptr) ||
         (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
-#else
-    // In two pass encoding, the first pass uses sb size=64
-    if (use_output_stat(scs_ptr))
-#endif
         scs_ptr->static_config.super_block_size = 64;
     else
-#if UNIFY_SC_NSC
-#if JUNE26_ADOPTIONS
-#if SHIFT_PRESETS
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
-#else
-        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#endif
-#else
-#if JUNE25_ADOPTIONS
-        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
-#else
-        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#endif
-#endif
-#else
-#if MAR10_ADOPTIONS
-        if (scs_ptr->static_config.screen_content_mode == 1)
-#if DEPTH_PART_CLEAN_UP
-#if APR08_ADOPTIONS
-#if M8_SB_SIZE
-#if UPGRADE_M6_M7_M8
-#if JUNE17_ADOPTIONS
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#else
-#if PRESET_SHIFITNG
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 128 : 64;
-#endif
-#endif
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = 128;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = 64;
-#endif
-#else
-#if MAR11_ADOPTIONS
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M1) ? 128 : 64;
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
-#endif
-#endif
-        else
-#if DEPTH_PART_CLEAN_UP
-#if M8_SB_SIZE
-#if UPGRADE_M6_M7_M8
-#if JUNE17_ADOPTIONS
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#else
-#if PRESET_SHIFITNG
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 128 : 64;
-#endif
-#endif
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 128 : 64;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = 128;
-#endif
-#else
-            scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
-#endif
-#else
-        scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M3) ? 128 : 64;
-#endif
-#endif
-#if FIX_RC_SB_SIZE
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
-#else
-    scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
-#endif
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
-#if FIRST_PASS_SETUP
     if (use_output_stat(scs_ptr))
         scs_ptr->static_config.hierarchical_levels = 0;
-#endif
     // Configure the padding
     scs_ptr->left_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->top_padding = BLOCK_SIZE_64 + 4;
@@ -2118,72 +1975,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         (scs_ptr->static_config.rate_control_mode > 0) ||
         scs_ptr->static_config.encoder_bit_depth != EB_8BIT ?
         0 : scs_ptr->static_config.enable_overlays;
-#if !REMOVE_MRP_MODE
-#if MAR2_M8_ADOPTIONS
-    // Memory Footprint reduction tool ONLY if no MRP (should be controlled using an API signal and not f(enc_mode))
-    scs_ptr->mrp_mode = 0;
-#else
-    //0: MRP Mode 0 (4,3)
-    //1: MRP Mode 1 (2,2)
-    scs_ptr->mrp_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
-#endif
-#endif
     //0: ON
     //1: OFF
-#if MAR2_M7_ADOPTIONS
-#if MAR10_ADOPTIONS
     // Memory Footprint reduction tool ONLY if no CDF (should be controlled using an API signal and not f(enc_mode))
     scs_ptr->cdf_mode = 0;
-#else
-    scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M7) ? 0 : 1;
-#endif
-#else
-    scs_ptr->cdf_mode = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M6) ? 0 : 1;
-#endif
-#if !NSQ_REMOVAL_CODE_CLEAN_UP
-    //0: NSQ absent
-    //1: NSQ present
-#if MAR10_ADOPTIONS
-        // Memory Footprint reduction tool ONLY if no NSQ (should be controlled using an API signal and not f(enc_mode))
-    scs_ptr->nsq_present = 1;
-#else
-    scs_ptr->nsq_present = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#endif
-#endif
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
-#if !UNIFY_SC_NSC
-    if (scs_ptr->static_config.screen_content_mode == 1)
-#if MAR3_M6_ADOPTIONS
-#if MAR10_ADOPTIONS
-        if (scs_ptr->static_config.enc_mode <= ENC_M8)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M6)
-#endif
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M4)
-#endif
-            scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
-        else
-            scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
-    else
-#if MAR17_ADOPTIONS
-        if (scs_ptr->static_config.enc_mode <= ENC_M8)
-#else
-#if MAR3_M6_ADOPTIONS
-        if (scs_ptr->static_config.enc_mode <= ENC_M6)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M4)
-#endif
-#endif
-#else
-#if SHIFT_PRESETS
         if (scs_ptr->static_config.enc_mode <= ENC_M9)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M8)
-#endif
-#endif
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
@@ -2193,47 +1992,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // 0                            0: not allowed
     // 1                            1: allowed
     if (scs_ptr->static_config.over_bndry_blk == DEFAULT)
-#if OVER_BOUNDARY_BLOCK_MODE_1_FOR_ALL
         scs_ptr->over_boundary_block_mode = 1;
-#else
-#if MAR17_ADOPTIONS
-        if (scs_ptr->static_config.enc_mode <= ENC_M7)
-#else
-        if (scs_ptr->static_config.enc_mode <= ENC_M5)
-#endif
-            scs_ptr->over_boundary_block_mode = 1;
-        else
-            scs_ptr->over_boundary_block_mode = 0;
-#endif
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
-#if FIRST_PASS_SETUP
     if (use_output_stat(scs_ptr))
         scs_ptr->over_boundary_block_mode = 0;
-#endif
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
-#if !UNIFY_SC_NSC
-        if (scs_ptr->static_config.screen_content_mode == 1)
-            scs_ptr->mfmv_enabled = 0;
-        else
-#endif
-#if MAR3_M2_ADOPTIONS
-#if MAR4_M3_ADOPTIONS
-#if MAR10_ADOPTIONS
-#if SHIFT_PRESETS
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
-#endif
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
-#endif
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#endif
-#else
-            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
-#endif
     else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
 
@@ -2266,9 +2031,6 @@ void copy_api_from_app(
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
-#if !TWOPASS_RC
-    scs_ptr->static_config.snd_pass_enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->snd_pass_enc_mode;
-#endif
     scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length;
     scs_ptr->intra_refresh_type = scs_ptr->static_config.intra_refresh_type;
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
@@ -2292,44 +2054,20 @@ void copy_api_from_app(
     scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
     scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
 
-#if !REMOVE_COMBINE_CLASS12
-    //combine class 12
-    scs_ptr->static_config.combine_class_12             = ((EbSvtAv1EncConfiguration*)config_struct)->combine_class_12;
-#endif
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
-#if ON_OFF_FEATURE_MRP
-    // multi reference frame
-    scs_ptr->static_config.mrp_level                    = ((EbSvtAv1EncConfiguration*)config_struct)->mrp_level;
-#endif
     // redundant block
     scs_ptr->static_config.enable_redundant_blk         = ((EbSvtAv1EncConfiguration*)config_struct)->enable_redundant_blk;
     // spatial sse in full loop
     scs_ptr->static_config.spatial_sse_full_loop_level  = ((EbSvtAv1EncConfiguration*)config_struct)->spatial_sse_full_loop_level;
-#if !REMOVE_ME_SUBPEL_CODE
-    // subpel
-    scs_ptr->static_config.enable_subpel                = ((EbSvtAv1EncConfiguration*)config_struct)->enable_subpel;
-#endif
     // over boundry block mode
     scs_ptr->static_config.over_bndry_blk               = ((EbSvtAv1EncConfiguration*)config_struct)->over_bndry_blk;
     // new nearest comb injection
     scs_ptr->static_config.new_nearest_comb_inject      = ((EbSvtAv1EncConfiguration*)config_struct)->new_nearest_comb_inject;
-#if !SHUT_ME_CAND_SORTING
-    // prune unipred at me
-    scs_ptr->static_config.prune_unipred_me             = ((EbSvtAv1EncConfiguration*)config_struct)->prune_unipred_me;
-#endif
-#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
-    // edge skip angle intra
-    scs_ptr->static_config.edge_skp_angle_intra         = ((EbSvtAv1EncConfiguration*)config_struct)->edge_skp_angle_intra;
-#endif
     // intra angle delta
     scs_ptr->static_config.intra_angle_delta            = ((EbSvtAv1EncConfiguration*)config_struct)->intra_angle_delta;
     // inter intra compoound
     scs_ptr->static_config.inter_intra_compound         = ((EbSvtAv1EncConfiguration*)config_struct)->inter_intra_compound;
-#if !REMOVE_REF_FOR_RECT_PART
-    //prune ref frame for rec partitions
-    scs_ptr->static_config.prune_ref_rec_part           = ((EbSvtAv1EncConfiguration*)config_struct)->prune_ref_rec_part;
-#endif
     // NSQ table
     scs_ptr->static_config.nsq_table                    = ((EbSvtAv1EncConfiguration*)config_struct)->nsq_table;
     // frame end cdf update mode
@@ -2342,11 +2080,7 @@ void copy_api_from_app(
     scs_ptr->static_config.disable_cfl_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_cfl_flag;
 
     // OBMC
-#if OBMC_CLI
     scs_ptr->static_config.obmc_level = ((EbSvtAv1EncConfiguration*)config_struct)->obmc_level;
-#else
-    scs_ptr->static_config.enable_obmc = ((EbSvtAv1EncConfiguration*)config_struct)->enable_obmc;
-#endif
     // RDOQ
     scs_ptr->static_config.rdoq_level = ((EbSvtAv1EncConfiguration*)config_struct)->rdoq_level;
 
@@ -2361,11 +2095,7 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_smooth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_smooth;
 
     // Filter intra prediction
-#if FILTER_INTRA_CLI
     scs_ptr->static_config.filter_intra_level = ((EbSvtAv1EncConfiguration*)config_struct)->filter_intra_level;
-#else
-    scs_ptr->static_config.enable_filter_intra = ((EbSvtAv1EncConfiguration*)config_struct)->enable_filter_intra;
-#endif
     // Intra Edge Filter
     scs_ptr->static_config.enable_intra_edge_filter = ((EbSvtAv1EncConfiguration*)config_struct)->enable_intra_edge_filter;
 
@@ -2434,13 +2164,11 @@ void copy_api_from_app(
     scs_ptr->static_config.min_qp_allowed = (scs_ptr->static_config.rate_control_mode) ?
         ((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed :
         1; // lossless coding not supported
-#if TWOPASS_RC
     scs_ptr->static_config.vbr_bias_pct        = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_bias_pct;
     scs_ptr->static_config.vbr_min_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_min_section_pct;
     scs_ptr->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
-#endif
 
     //Segmentation
     //TODO: check RC mode and set only when RC is enabled in the final version.
@@ -2491,37 +2219,26 @@ void copy_api_from_app(
     }
     scs_ptr->static_config.qp = ((EbSvtAv1EncConfiguration*)config_struct)->qp;
     scs_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)config_struct)->recon_enabled;
-#if TPL_LA
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
-#endif
     // Extract frame rate from Numerator and Denominator if not 0
     if (scs_ptr->static_config.frame_rate_numerator != 0 && scs_ptr->static_config.frame_rate_denominator != 0)
         scs_ptr->frame_rate = scs_ptr->static_config.frame_rate = (((scs_ptr->static_config.frame_rate_numerator << 8) / (scs_ptr->static_config.frame_rate_denominator)) << 8);
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
-#if TWOPASS_RC
     else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr)))
         scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
-#endif
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
-#if TPL_LA
     if (scs_ptr->static_config.enable_tpl_la &&
         scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
         scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
         scs_ptr->static_config.rate_control_mode == 0) {
-#if LAD_MEM_RED
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = TPL_LAD;
-#else
-        SVT_LOG("SVT [Warning]: force look_ahead_distance to be 32 from %d for perf/quality tradeoff when enable_tpl_la=1\n", scs_ptr->static_config.look_ahead_distance);
-        scs_ptr->static_config.look_ahead_distance = 32;
-#endif
     }
-#endif
 
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.altref_strength = config_struct->altref_strength;
@@ -2621,12 +2338,6 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-%d]\n", channel_number + 1, MAX_ENC_PRESET);
         return_error = EB_ErrorBadParameter;
     }
-#if !TWOPASS_RC
-    if (config->snd_pass_enc_mode > MAX_ENC_PRESET + 1) {
-        SVT_LOG("Error instance %u: Second pass encoder mode must be in the range of [0-%d]\n", channel_number + 1, MAX_ENC_PRESET + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -2926,29 +2637,15 @@ static EbErrorType verify_settings(
     }
 
     // OBMC
-#if OBMC_CLI
     if (config->obmc_level < (int32_t)(-1) || config->obmc_level > 3) {
       SVT_LOG("Error instance %u: Invalid OBMC flag [-1, 0, 1, 2, 3], your input: %d\n", channel_number + 1, config->obmc_level);
       return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->enable_obmc != 0 && config->enable_obmc != 1) {
-      SVT_LOG("Error instance %u: Invalid OBMC flag [0 - 1], your input: %d\n", channel_number + 1, config->enable_obmc);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
     // Filter Intra prediction
-#if FILTER_INTRA_CLI
     if (config->filter_intra_level < (int32_t)(-1) || config->filter_intra_level > 1) {
         SVT_LOG("Error instance %u: Invalid Filter Intra flag [0 - 1], your input: %d\n", channel_number + 1, config->filter_intra_level);
         return_error = EB_ErrorBadParameter;
     }
-#else
-    if (config->enable_filter_intra != 0 && config->enable_filter_intra != 1) {
-      SVT_LOG("Error instance %u: Invalid Filter Intra flag [0 - 1], your input: %d\n", channel_number + 1, config->enable_filter_intra);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
     // Intra Edge Filter
     if (config->enable_intra_edge_filter != 0 && config->enable_intra_edge_filter != 1 && config->enable_intra_edge_filter != -1) {
         SVT_LOG("Error instance %u: Invalid Filter Intra flag [0/1, -1], your input: %d\n", channel_number + 1, config->enable_intra_edge_filter);
@@ -2962,13 +2659,8 @@ static EbErrorType verify_settings(
     }
 
     // HBD mode decision
-#if CHANGE_HBD_MODE
     if (config->enable_hbd_mode_decision < (int8_t)(-1) || config->enable_hbd_mode_decision > 2) {
          SVT_LOG("Error instance %u: Invalid HBD mode decision flag [-1 - 2], your input: %d\n", channel_number + 1, config->enable_hbd_mode_decision);
-#else
-    if (config->enable_hbd_mode_decision != 0 && config->enable_hbd_mode_decision != 1 && config->enable_hbd_mode_decision != 2) {
-    SVT_LOG("Error instance %u: Invalid HBD mode decision flag [0 - 2], your input: %d\n", channel_number + 1, config->enable_hbd_mode_decision);
-#endif
     return_error = EB_ErrorBadParameter;
     }
 
@@ -3033,18 +2725,6 @@ static EbErrorType verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 
-#if !REMOVE_COMBINE_CLASS12
-    if (config->combine_class_12 != 0 && config->combine_class_12 != 1 && config->combine_class_12 != -1) {
-      SVT_LOG("Error instance %u: Invalid combine MD Class1&2 flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->combine_class_12);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
-#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
-    if (config->edge_skp_angle_intra != 0 && config->edge_skp_angle_intra != 1 && config->edge_skp_angle_intra != -1) {
-      SVT_LOG("Error instance %u: Invalid Enable skip angle intra based on edge flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->edge_skp_angle_intra);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->intra_angle_delta != 0 && config->intra_angle_delta != 1 && config->intra_angle_delta != -1) {
         SVT_LOG("Error instance %u: Invalid Enable intra angle delta flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->intra_angle_delta);
         return_error = EB_ErrorBadParameter;
@@ -3064,12 +2744,6 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Invalid Smooth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_smooth);
         return_error = EB_ErrorBadParameter;
     }
-#if ON_OFF_FEATURE_MRP
-    if (config->mrp_level < (int32_t)(-1) || config->mrp_level > 9) {
-      SVT_LOG("Error instance %u: Invalid mrp level [0..9 or -1 for auto], your input: %d\n", channel_number + 1, config->mrp_level);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->enable_mfmv != 0 && config->enable_mfmv != 1 && config->enable_mfmv != -1) {
       SVT_LOG("Error instance %u: Invalid motion field motion vector flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_mfmv);
       return_error = EB_ErrorBadParameter;
@@ -3084,12 +2758,6 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Invalid spatial_sse_fl flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->spatial_sse_full_loop_level);
         return_error = EB_ErrorBadParameter;
     }
-#if !REMOVE_ME_SUBPEL_CODE
-    if (config->enable_subpel != 0 && config->enable_subpel != 1 && config->enable_subpel != -1) {
-      SVT_LOG("Error instance %u: Invalid enable_subpel flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_subpel);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->over_bndry_blk != 0 && config->over_bndry_blk != 1 && config->over_bndry_blk != -1) {
       SVT_LOG("Error instance %u: Invalid over_bndry_blk flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->over_bndry_blk);
       return_error = EB_ErrorBadParameter;
@@ -3099,18 +2767,6 @@ static EbErrorType verify_settings(
       SVT_LOG("Error instance %u: Invalid new_nearest_comb_inject flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->new_nearest_comb_inject);
       return_error = EB_ErrorBadParameter;
     }
-#if !SHUT_ME_CAND_SORTING
-    if (config->prune_unipred_me != 0 && config->prune_unipred_me != 1 && config->prune_unipred_me != -1) {
-      SVT_LOG("Error instance %u: Invalid prune_unipred_me flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_unipred_me);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
-#if !REMOVE_REF_FOR_RECT_PART
-    if (config->prune_ref_rec_part != 0 && config->prune_ref_rec_part != 1 && config->prune_ref_rec_part != -1) {
-      SVT_LOG("Error instance %u: Invalid prune_ref_rec_part flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->prune_ref_rec_part);
-      return_error = EB_ErrorBadParameter;
-    }
-#endif
     if (config->nsq_table != 0 && config->nsq_table != 1 && config->nsq_table != -1) {
       SVT_LOG("Error instance %u: Invalid nsq_table flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->nsq_table);
       return_error = EB_ErrorBadParameter;
@@ -3222,16 +2878,11 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
     config_ptr->look_ahead_distance = (uint32_t)~0;
-#if TPL_LA
     config_ptr->enable_tpl_la = 1;
-#endif
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 10;
     config_ptr->enc_mode = MAX_ENC_PRESET;
-#if !TWOPASS_RC
-    config_ptr->snd_pass_enc_mode = MAX_ENC_PRESET + 1;
-#endif
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
     config_ptr->hierarchical_levels = 4;
@@ -3243,51 +2894,25 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->sg_filter_mode = DEFAULT;
     config_ptr->wn_filter_mode = DEFAULT;
-#if !REMOVE_EDGE_SKIP_ANGLE_INTRA
-    config_ptr->edge_skp_angle_intra = DEFAULT;
-#endif
     config_ptr->intra_angle_delta = DEFAULT;
-#if !REMOVE_COMBINE_CLASS12
-    config_ptr->combine_class_12 = DEFAULT;
-#endif
     config_ptr->inter_intra_compound = DEFAULT;
     config_ptr->enable_paeth = DEFAULT;
     config_ptr->enable_smooth = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
-#if ON_OFF_FEATURE_MRP
-    config_ptr->mrp_level = DEFAULT;
-#endif
     config_ptr->enable_redundant_blk = DEFAULT;
     config_ptr->spatial_sse_full_loop_level = DEFAULT;
-#if !REMOVE_ME_SUBPEL_CODE
-    config_ptr->enable_subpel = DEFAULT;
-#endif
     config_ptr->over_bndry_blk = DEFAULT;
     config_ptr->new_nearest_comb_inject = DEFAULT;
-#if !SHUT_ME_CAND_SORTING
-    config_ptr->prune_unipred_me = DEFAULT;
-#endif
-#if !REMOVE_REF_FOR_RECT_PART
-    config_ptr->prune_ref_rec_part = DEFAULT;
-#endif
     config_ptr->nsq_table = DEFAULT;
     config_ptr->frame_end_cdf_update = DEFAULT;
     config_ptr->set_chroma_mode = DEFAULT;
     config_ptr->disable_cfl_flag = DEFAULT;
-#if OBMC_CLI
     config_ptr->obmc_level = DEFAULT;
-#else
-    config_ptr->enable_obmc = EB_TRUE;
-#endif
     config_ptr->rdoq_level = DEFAULT;
     config_ptr->pred_me = DEFAULT;
     config_ptr->bipred_3x3_inject = DEFAULT;
     config_ptr->compound_level = DEFAULT;
-#if FILTER_INTRA_CLI
     config_ptr->filter_intra_level = DEFAULT;
-#else
-    config_ptr->enable_filter_intra = EB_TRUE;
-#endif
     config_ptr->enable_intra_edge_filter = DEFAULT;
     config_ptr->pic_based_rate_est = DEFAULT;
     config_ptr->ext_block_flag = EB_FALSE;
@@ -3314,11 +2939,7 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->hme_level2_search_area_in_width_array[1] = 1;
     config_ptr->hme_level2_search_area_in_height_array[0] = 1;
     config_ptr->hme_level2_search_area_in_height_array[1] = 1;
-#if CHANGE_HBD_MODE
     config_ptr->enable_hbd_mode_decision = DEFAULT;
-#else
-    config_ptr->enable_hbd_mode_decision = 1;
-#endif
     config_ptr->palette_level = DEFAULT;
     config_ptr->enable_manual_pred_struct = EB_FALSE;
     config_ptr->encoder_color_format = EB_YUV420;
@@ -3363,11 +2984,7 @@ EbErrorType eb_svt_enc_init_parameter(
 
     // Alt-Ref default values
     config_ptr->tf_level = DEFAULT;
-#if NOISE_BASED_TF_FRAMES
     config_ptr->altref_nframes = ALTREF_MAX_NFRAMES;
-#else
-    config_ptr->altref_nframes = 7;
-#endif
     config_ptr->altref_strength = 5;
     config_ptr->enable_overlays = EB_FALSE;
 
@@ -3505,18 +3122,11 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
     // Initialize the Prediction Structure Group
-#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8) || FAST_M8_V1
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
         &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
-#else
-    EB_NO_THROW_NEW(
-        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
-        prediction_structure_group_ctor,
-        &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
-#endif
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         eb_release_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
         return EB_ErrorInsufficientResources;
@@ -3553,10 +3163,8 @@ EB_API EbErrorType svt_av1_enc_stream_header(
     Bitstream                bitstream;
     OutputBitstreamUnit      output_bitstream;
     EbBufferHeaderType      *output_stream_buffer;
-#if OUTPUT_MEM_OPT
     uint32_t output_buffer_size =
         (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(scs_ptr->max_input_luma_width * scs_ptr->max_input_luma_height));
-#endif
 
     memset(&bitstream, 0, sizeof(Bitstream));
     memset(&output_bitstream, 0, sizeof(OutputBitstreamUnit));
@@ -3565,22 +3173,14 @@ EB_API EbErrorType svt_av1_enc_stream_header(
     if (!output_stream_buffer) {
         return EB_ErrorInsufficientResources;
     }
-#if OUTPUT_MEM_OPT
     output_stream_buffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * output_buffer_size);
-#else
-    output_stream_buffer->p_buffer = (uint8_t *)malloc(sizeof(uint8_t) * PACKETIZATION_PROCESS_BUFFER_SIZE);
-#endif
     if (!output_stream_buffer->p_buffer) {
         free(output_stream_buffer);
         return EB_ErrorInsufficientResources;
     }
 
     output_stream_buffer->size = sizeof(EbBufferHeaderType);
-#if OUTPUT_MEM_OPT
     output_stream_buffer->n_alloc_len = output_buffer_size;
-#else
-    output_stream_buffer->n_alloc_len = PACKETIZATION_PROCESS_BUFFER_SIZE;
-#endif
     output_stream_buffer->p_app_private = NULL;
     output_stream_buffer->pic_type = EB_AV1_INVALID_PICTURE;
     output_stream_buffer->n_filled_len = 0;

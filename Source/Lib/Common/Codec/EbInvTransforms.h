@@ -288,7 +288,6 @@ static INLINE int32_t round_shift(int64_t value, int32_t bit) {
     assert(bit >= 1);
     return (int32_t)((value + (1ll << (bit - 1))) >> bit);
 }
-#if TRANSFORM_FIX_0
 static INLINE int32_t half_btf(int32_t w0, int32_t in0, int32_t w1, int32_t in1,
     int bit) {
     int64_t result_64 = (int64_t)(w0 * in0) + (int64_t)(w1 * in1);
@@ -312,15 +311,6 @@ static INLINE int32_t half_btf(int32_t w0, int32_t in0, int32_t w1, int32_t in1,
 #endif
     return (int32_t)(intermediate >> bit);
 }
-#else
-static INLINE int32_t half_btf(int32_t w0, int32_t in0, int32_t w1, int32_t in1, int32_t bit) {
-    int64_t result_64 = (int64_t)(w0 * in0) + (int64_t)(w1 * in1);
-#if CONFIG_COEFFICIENT_RANGE_CHECKING
-    assert(result_64 >= INT32_MIN && result_64 <= INT32_MAX);
-#endif
-    return round_shift(result_64, bit);
-}
-#endif
 static INLINE int32_t get_rect_tx_log_ratio(int32_t col, int32_t row) {
     if (col == row) return 0;
     if (col > row) {

@@ -2001,13 +2001,7 @@ static void prediction_structure_group_dctor(EbPtr p) {
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-#if !MAR12_M8_ADOPTIONS || (M8_MRP && !UPGRADE_M6_M7_M8) || FAST_M8_V1
-#if REMOVE_MR_MACRO
                                             EbEncMode enc_mode,
-#else
-                                            uint8_t enc_mode,
-#endif
-#endif
                                             EbSvtAv1EncConfiguration *config) {
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;
@@ -2016,43 +2010,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
-#if MAR12_M8_ADOPTIONS
-#if M8_MRP && !UPGRADE_M6_M7_M8
-    uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : 1;
-#else
-#if FAST_M8_V1
-#if JULY31_PRESETS_ADOPTIONS
-#if SHIFT_PRESETS
     uint8_t ref_count_used = enc_mode <= ENC_M4 ? MAX_REF_IDX : enc_mode <= ENC_M5 ? 2 : 1;
-#else
-    uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : enc_mode <= ENC_M6 ? 2 : 1;
-#endif
-#else
-    uint8_t ref_count_used = enc_mode <= ENC_M7 ? MAX_REF_IDX : 1;
-#endif
-#else
-    uint8_t ref_count_used = MAX_REF_IDX;
-#endif
-#endif
-#else
-    uint8_t ref_count_used;
-    if (config->screen_content_mode == 1)
-#if MAR11_ADOPTIONS
-        ref_count_used = MR_MODE ? MAX_REF_IDX : enc_mode <= ENC_M4 ? 2 : 1;
-#else
-        ref_count_used = MR_MODE ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
-#endif
-    else
-#if MAR4_M3_ADOPTIONS
-#if MAR10_ADOPTIONS
-        ref_count_used = enc_mode <= ENC_M3 ? MAX_REF_IDX : enc_mode <= ENC_M4 ? 2 : 1;
-#else
-        ref_count_used = enc_mode <= ENC_M3 ? MAX_REF_IDX : 1;
-#endif
-#else
-        ref_count_used = enc_mode <= ENC_M1 ? MAX_REF_IDX : enc_mode <= ENC_M2 ? 2 : 1;
-#endif
-#endif
 
     PredictionStructureConfigArray* config_array;
     EB_NEW(config_array, prediction_structure_config_array_ctor);

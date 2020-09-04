@@ -20,7 +20,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if UPGRADE_SUBPEL
 // =============================================================================
 //  Cost functions
 // =============================================================================
@@ -159,6 +158,5 @@ static INLINE int svt_av1_is_subpelmv_in_range(const SubpelMvLimits *mv_limits,
 
 #ifdef __cplusplus
 }  // extern "C"
-#endif
 #endif
 #endif  // AOM_AV1_ENCODER_MCOMP_H_

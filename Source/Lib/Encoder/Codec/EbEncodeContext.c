@@ -15,7 +15,6 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbThreads.h"
 
-#if TWOPASS_RC
 static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
     STATS_BUFFER_CTX *stats_buf_context,
     int num_lap_buffers) {
@@ -49,7 +48,6 @@ static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
     EB_FREE_ARRAY(stats_buf_context->total_stats);
     EB_FREE_ARRAY(frame_stats_buffer);
 }
-#endif
 static void encode_context_dctor(EbPtr p) {
     EncodeContext* obj = (EncodeContext*)p;
     EB_DESTROY_MUTEX(obj->total_number_of_recon_frame_mutex);
@@ -61,16 +59,10 @@ static void encode_context_dctor(EbPtr p) {
     EB_DELETE(obj->prediction_structure_group_ptr);
     EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue,
                         PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
-#if !DECOUPLE_ME_RES
-    EB_DELETE_PTR_ARRAY(obj->picture_manager_reorder_queue,
-                        PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
-#endif
     EB_FREE(obj->pre_assignment_buffer);
     EB_DELETE_PTR_ARRAY(obj->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->reference_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
-#if DECOUPLE_ME_RES
     EB_DELETE_PTR_ARRAY(obj->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
-#endif
     EB_DELETE_PTR_ARRAY(obj->picture_decision_pa_reference_queue,
                         PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue,
@@ -79,10 +71,8 @@ static void encode_context_dctor(EbPtr p) {
                         HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE_ARRAY(obj->rate_control_tables_array);
-#if TWOPASS_RC
     EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
-#endif
 }
 
 EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_init_data_ptr) {
@@ -105,17 +95,6 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
                picture_decision_reorder_entry_ctor,
                picture_index);
     }
-#if !DECOUPLE_ME_RES
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_manager_reorder_queue,
-                       PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH);
-
-    for (picture_index = 0; picture_index < PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH;
-         ++picture_index) {
-        EB_NEW(encode_context_ptr->picture_manager_reorder_queue[picture_index],
-               picture_manager_reorder_entry_ctor,
-               picture_index);
-    }
-#endif
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->pre_assignment_buffer, PRE_ASSIGNMENT_MAX_DEPTH);
 
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->input_picture_queue, INPUT_QUEUE_MAX_DEPTH);
@@ -134,14 +113,12 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_pa_reference_queue,
                        PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
 
-#if DECOUPLE_ME_RES
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
     for (picture_index = 0; picture_index < REFERENCE_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(encode_context_ptr->dep_cnt_picture_queue[picture_index],
             dep_cnt_queue_entry_ctor);
     }
     encode_context_ptr->dep_q_head = encode_context_ptr->dep_q_tail = 0;
-#endif
     for (picture_index = 0; picture_index < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
          ++picture_index) {
         EB_NEW(encode_context_ptr->picture_decision_pa_reference_queue[picture_index],
@@ -204,12 +181,10 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
     encode_context_ptr->max_coded_poc_selected_ref_qp = 32;
     EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
     EB_CREATE_MUTEX(encode_context_ptr->stat_file_mutex);
-#if TWOPASS_RC
     encode_context_ptr->num_lap_buffers = 0; //lap not supported for now
     int *num_lap_buffers = &encode_context_ptr->num_lap_buffers;
     create_stats_buffer(&encode_context_ptr->frame_stats_buffer,
                         &encode_context_ptr->stats_buf_context,
                         *num_lap_buffers);
-#endif
     return EB_ErrorNone;
 }

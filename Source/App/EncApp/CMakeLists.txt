@@ -17,7 +17,7 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
 
 file(GLOB all_files
     "*.h"
-    "../API/*.h"
+    "../../API/*.h"
     "*.c")
 
 # App Source Files

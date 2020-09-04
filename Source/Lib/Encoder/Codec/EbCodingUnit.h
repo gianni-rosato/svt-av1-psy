@@ -235,7 +235,6 @@ typedef struct macroblockd_plane {
     int          subsampling_y;
 } MACROBLOCKD_PLANE;
 
-#if TPL_LA
 typedef enum InterPredMode {
     UNIFORM_PRED,
     WARP_PRED,
@@ -260,7 +259,6 @@ typedef struct InterPredParams {
     int use_hbd_buf;
     int is_intrabc;
 } InterPredParams;
-#endif
 typedef struct MacroBlockD {
     // block dimension in the unit of mode_info.
     uint8_t     n8_w, n8_h;
@@ -279,14 +277,9 @@ typedef struct MacroBlockD {
     int32_t mb_to_right_edge;
     int32_t mb_to_top_edge;
     int32_t mb_to_bottom_edge;
-#if UPGRADE_SUBPEL
     int mi_row; // Row position in mi units
     int mi_col; // Column position in mi units
-#endif
     uint8_t neighbors_ref_counts[TOTAL_REFS_PER_FRAME];
-#if !SB_MEM_OPT
-    uint8_t                  use_intrabc;
-#endif
     MbModeInfo *             above_mbmi;
     MbModeInfo *             left_mbmi;
     MbModeInfo *             chroma_above_mbmi;
@@ -333,7 +326,6 @@ typedef struct IntraBcContext {
     CRC_CALCULATOR crc_calculator2;
 } IntraBcContext;
 
-#if BLK_MEM_CLEAN_UP
 typedef struct BlkStruct {
     TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
     PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
@@ -359,11 +351,7 @@ typedef struct BlkStruct {
     unsigned               block_has_coeff : 1; // ec
     unsigned               split_flag_context : 2; // to do
 #endif
-#if QP2QINDEX
     uint8_t                qindex; // ec
-#else
-    uint16_t               qp; // ec
-#endif
 #if !CLEAN_UP_SB_DATA_2
     uint16_t               ref_qp;
     int16_t                delta_qp; // can be signed 8bits
@@ -391,12 +379,10 @@ typedef struct BlkStruct {
     IntMv   ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
 #endif
     uint8_t drl_index; // ec
-#if SB_MEM_OPT
     int8_t drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
                        // final_ref_mv_stack and ref_mv_count for EC
     int8_t drl_ctx_near[2];// Store the drl ctx in coding loop to avoid storing
                        // final_ref_mv_stack and ref_mv_count for EC
-#endif
     PredictionMode pred_mode; // ec
 #if !CLEAN_UP_SB_DATA_4
     uint8_t        skip_coeff_context;
@@ -428,94 +414,9 @@ typedef struct BlkStruct {
 #endif
     uint8_t        filter_intra_mode;// ec
     uint8_t        do_not_process_block;
-#if SB_MEM_OPT
     uint8_t                  use_intrabc;
-#endif
 } BlkStruct;
-#else
-typedef struct BlkStruct {
-    TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT];
-    PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU];
-    InterInterCompoundData interinter_comp;
-    uint8_t                compound_idx;
-    uint8_t                comp_group_idx;
-    unsigned               skip_flag_context : 2;
-    unsigned               prediction_mode_flag : 2;
-    unsigned               block_has_coeff : 1;
-    unsigned               split_flag_context : 2;
-#if QP2QINDEX
-    uint8_t                qindex; // ec
-#else
-    uint16_t               qp;
-#endif
-    uint8_t                split_flag;
-    uint8_t                skip_flag;
-    uint8_t                mdc_split_flag;
-#if NO_ENCDEC
-    EbPictureBufferDesc *quant_tmp;
-    EbPictureBufferDesc *coeff_tmp;
-    EbPictureBufferDesc *recon_tmp;
-    uint32_t             cand_buff_index;
-#endif
-    MacroBlockD *av1xd;
-    // uint8_t ref_mv_count[MODE_CTX_REF_FRAMES];
-    int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
-    uint8_t drl_index;
-#if SB_MEM_OPT
-    int8_t drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
-                       // final_ref_mv_stack and ref_mv_count for EC
-    int8_t drl_ctx_near[2];// Store the drl ctx in coding loop to avoid storing
-                       // final_ref_mv_stack and ref_mv_count for EC
-#endif
-    PredictionMode pred_mode;
-    IntMv          predmv[2];
-    uint8_t        skip_coeff_context;
-    uint8_t        reference_mode_context;
-    uint8_t        compoud_reference_type_context;
-    int32_t        quantized_dc[3][MAX_TXB_COUNT];
-    uint32_t       is_inter_ctx;
-    uint32_t       interp_filters;
-    uint8_t        segment_id;
-    uint8_t        seg_id_predicted; // valid only when temporal_update is enabled
-    PartitionType  part;
-    uint16_t
-                   mds_idx; //equivalent of leaf_index in the nscu context. we will keep both for now and use the right one on a case by case basis.
-    uint8_t        tx_depth;
-    InterIntraMode interintra_mode;
-    uint8_t        is_interintra_used;
-    uint8_t        use_wedge_interintra;
-    int32_t        interintra_wedge_index;
-    uint8_t        filter_intra_mode;
-    PaletteInfo    palette_info;
-    uint8_t        do_not_process_block;
-#if SB_MEM_OPT
-    uint8_t                  use_intrabc;
-#endif
-} BlkStruct;
-#endif
 
-#if !REMOVE_UNUSED_CODE_PH2
-typedef struct OisCandidate {
-    union {
-        struct {
-            unsigned distortion : 20;
-            unsigned valid_distortion : 1;
-            unsigned : 3;
-            unsigned intra_mode : 8;
-        };
-        uint32_t ois_results;
-    };
-    int32_t angle_delta;
-} OisCandidate;
-
-typedef struct OisSbResults {
-    uint8_t       total_ois_intra_candidate[CU_MAX_COUNT];
-    OisCandidate *ois_candidate_array[CU_MAX_COUNT];
-    int8_t        best_distortion_index[CU_MAX_COUNT];
-} OisSbResults;
-#endif
-
-#if TPL_LA
 typedef struct TplStats {
     int64_t srcrf_dist;
     int64_t recrf_dist;
@@ -526,7 +427,6 @@ typedef struct TplStats {
     MV mv;
     uint64_t ref_frame_poc;
 } TplStats;
-#endif
 typedef struct SuperBlock {
     EbDctor                   dctor;
     struct PictureControlSet *pcs_ptr;
@@ -541,12 +441,7 @@ typedef struct SuperBlock {
     unsigned       index : 12;
     unsigned       origin_x : 12;
     unsigned       origin_y : 12;
-#if QP2QINDEX
     uint8_t        qindex;
-#else
-    uint16_t       qp;
-    int16_t        delta_qp;
-#endif
     uint32_t       total_bits;
 
     // Quantized Coefficients

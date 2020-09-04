@@ -172,11 +172,7 @@ typedef struct SeqHeader {
     /*!< 1: Specifies that the use_filter_intra syntax element may be present.
      *   0: Specifies that the use_filter_intra syntax element will not be
      *       present*/
-#if FILTER_INTRA_CLI
     uint8_t filter_intra_level;
-#else
-    uint8_t enable_filter_intra;
-#endif
 
     /*!< Specifies whether the intra edge filtering process should be enabled */
     uint8_t enable_intra_edge_filter;
@@ -392,7 +388,6 @@ typedef struct SkipModeInfo {
 
 } SkipModeInfo;
 
-#if TWOPASS_RC
 typedef struct {
   /*FRAME_TYPE*/FrameType frame_type;
   //REFERENCE_MODE reference_mode;
@@ -404,7 +399,6 @@ typedef struct {
   int refresh_frame_flags;  // Which ref frames are overwritten by this frame
   int frame_refs_short_signaling;
 } CurrentFrame;
-#endif
 
 //typedef struct GlobalMotionParams {
 //

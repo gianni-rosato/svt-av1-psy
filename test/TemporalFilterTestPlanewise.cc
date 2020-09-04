@@ -22,7 +22,6 @@
 using svt_av1_test_tool::SVTRandom;
 
 typedef void (*TemporalFilterFunc)(
-#if TF_IMP
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
     const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
     const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
@@ -30,18 +29,8 @@ typedef void (*TemporalFilterFunc)(
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#else
-    const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
-    int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src,
-    int uv_src_stride, const uint8_t *u_pre, const uint8_t *v_pre,
-    int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-    int ss_x, int ss_y, const double *noise_levels, const int decay_control,
-    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
-    uint32_t *v_accum, uint16_t *v_count);
-#endif
 
 typedef void (*TemporalFilterFuncHbd)(
-#if TF_IMP
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride,
     const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
     const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
@@ -49,15 +38,6 @@ typedef void (*TemporalFilterFuncHbd)(
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
-#else
-    const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
-    int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src,
-    int uv_src_stride, const uint16_t *u_pre, const uint16_t *v_pre,
-    int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-    int ss_x, int ss_y, const double *noise_levels, const int decay_control,
-    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count,
-    uint32_t *v_accum, uint16_t *v_count);
-#endif
 
 #define MAX_STRIDE 256
 
@@ -68,7 +48,6 @@ typedef std::tuple<TemporalFilterFuncHbd, TemporalFilterFuncHbd>
     TemporalFilterWithParamHbd;
 
 
-#if TF_IMP
 static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     //Prepare two MeContext to cover all paths in code.
     cnt1->tf_32x32_block_error[0] = 0;
@@ -145,7 +124,6 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     *cnt2 = *cnt1;
     cnt2->tf_block_col = 1;
 }
-#endif
 
 class TemporalFilterTestPlanewise
     : public ::testing::TestWithParam<TemporalFilterWithParam> {
@@ -249,25 +227,19 @@ class TemporalFilterTestPlanewise
 void TemporalFilterTestPlanewise::RunTest(int width, int height,
                                           int run_times) {
 
-#if TF_IMP
     struct MeContext context1, context2, *context_ptr;
     TemporalFilterFillMeContexts(&context1, &context2);
-#endif
 
     if (run_times <= 100) {
         for (int j = 0; j < run_times; j++) {
             GenRandomData(width, height, MAX_STRIDE, MAX_STRIDE);
-#if TF_IMP
             if (j % 2 == 0) {
                 context_ptr = &context1;
             } else {
                 context_ptr = &context2;
             }
-#endif
             ref_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -292,9 +264,7 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      count_ref_ptr[C_V]);
 
             tst_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -340,17 +310,13 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
 
         eb_start_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
-#if TF_IMP
             if (j % 2 == 0) {
                 context_ptr = &context1;
             } else {
                 context_ptr = &context2;
             }
-#endif
             ref_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -377,17 +343,13 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
         eb_start_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
-#if TF_IMP
             if (j % 2 == 0) {
                 context_ptr = &context1;
             } else {
                 context_ptr = &context2;
             }
-#endif
             tst_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -554,25 +516,19 @@ class TemporalFilterTestPlanewiseHbd
 void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                                              int run_times) {
 
-#if TF_IMP
     struct MeContext context1, context2, *context_ptr;
     TemporalFilterFillMeContexts(&context1, &context2);
-#endif
 
     if (run_times <= 100) {
         for (int j = 0; j < run_times; j++) {
             GenRandomData(width, height, MAX_STRIDE, MAX_STRIDE);
-#if TF_IMP
             if(j%2 == 0) {
                 context_ptr = &context1;
             } else {
                 context_ptr = &context2;
             }
-#endif
             ref_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -597,9 +553,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      count_ref_ptr[C_V]);
 
             tst_func(
-#if TF_IMP
                      context_ptr,
-#endif
 
                      src_ptr[C_Y],
                      stride[C_Y],
@@ -645,17 +599,13 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
 
         eb_start_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
-#if TF_IMP
             if (j % 2 == 0) {
                 context_ptr = &context1;
             } else {
                 context_ptr = &context2;
             }
-#endif
             ref_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -683,9 +633,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
 
         for (int j = 0; j < run_times; j++) {
             tst_func(
-#if TF_IMP
                      context_ptr,
-#endif
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],

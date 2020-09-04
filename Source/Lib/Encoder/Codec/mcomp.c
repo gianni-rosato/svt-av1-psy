@@ -20,7 +20,6 @@
 #include "EbBlockStructures.h"
 #include "av1me.h"
 #include "aom_dsp_rtcd.h"
-#if UPGRADE_SUBPEL
 // ============================================================================
 //  Cost of motion vectors
 // ============================================================================
@@ -448,12 +447,9 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
 
   return besterr;
 }
-#endif
-#if FP_MV_COST
 // =============================================================================
 //  SVT Functions
 // =============================================================================
 int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params) {
     return svt_mv_err_cost_(mv, mv_cost_params);
 }
-#endif

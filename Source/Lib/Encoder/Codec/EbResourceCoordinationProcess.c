@@ -23,9 +23,7 @@
 #include "EbTime.h"
 #include "EbObject.h"
 #include "EbLog.h"
-#if TWOPASS_RC
 #include "pass2_strategy.h"
-#endif
 #include "common_dsp_rtcd.h"
 typedef struct ResourceCoordinationContext {
     EbFifo *                       input_buffer_fifo_ptr;
@@ -144,106 +142,38 @@ Output  : Pre-Analysis signal(s)
 EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
                                               PictureParentControlSet *pcs_ptr) {
     EbErrorType return_error     = EB_ErrorNone;
-#if !REFACTOR_ME_HME
-    uint8_t     input_resolution = scs_ptr->input_resolution;
-
-    // HME Flags updated @ signal_derivation_multi_processes_oq
-    uint8_t hme_me_level =
-        use_output_stat(scs_ptr) ? pcs_ptr->snd_pass_enc_mode : pcs_ptr->enc_mode;
-#endif
     // Derive HME Flag
     if (scs_ptr->static_config.use_default_me_hme) {
-#if REFACTOR_ME_HME
         // Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
         // Will be later updated for SC/NSC in PictureDecisionProcess
         pcs_ptr->enable_hme_flag        = 1;
         pcs_ptr->enable_hme_level0_flag = 1;
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
-#else
-        pcs_ptr->enable_hme_flag = enable_hme_flag[0][input_resolution][hme_me_level] ||
-                                   enable_hme_flag[1][input_resolution][hme_me_level];
-        pcs_ptr->enable_hme_level0_flag =
-            enable_hme_level0_flag[0][input_resolution][hme_me_level] ||
-            enable_hme_level0_flag[1][input_resolution][hme_me_level];
-        pcs_ptr->enable_hme_level1_flag =
-            enable_hme_level1_flag[0][input_resolution][hme_me_level] ||
-            enable_hme_level1_flag[1][input_resolution][hme_me_level];
-        pcs_ptr->enable_hme_level2_flag =
-            enable_hme_level2_flag[0][input_resolution][hme_me_level] ||
-            enable_hme_level2_flag[1][input_resolution][hme_me_level];
-#endif
     } else {
         pcs_ptr->enable_hme_flag        = scs_ptr->static_config.enable_hme_flag;
         pcs_ptr->enable_hme_level0_flag = scs_ptr->static_config.enable_hme_level0_flag;
         pcs_ptr->enable_hme_level1_flag = scs_ptr->static_config.enable_hme_level1_flag;
         pcs_ptr->enable_hme_level2_flag = scs_ptr->static_config.enable_hme_level2_flag;
     }
-#if REFACTOR_ME_HME
     // Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
     // Will be later updated for SC/NSC in PictureDecisionProcess
     pcs_ptr->tf_enable_hme_flag        = 1;
     pcs_ptr->tf_enable_hme_level0_flag = 1;
     pcs_ptr->tf_enable_hme_level1_flag = 1;
     pcs_ptr->tf_enable_hme_level2_flag = 1;
-#else
-    pcs_ptr->tf_enable_hme_flag = tf_enable_hme_flag[0][input_resolution][hme_me_level] ||
-                                  tf_enable_hme_flag[1][input_resolution][hme_me_level];
-    pcs_ptr->tf_enable_hme_level0_flag =
-        tf_enable_hme_level0_flag[0][input_resolution][hme_me_level] ||
-        tf_enable_hme_level0_flag[1][input_resolution][hme_me_level];
-    pcs_ptr->tf_enable_hme_level1_flag =
-        tf_enable_hme_level1_flag[0][input_resolution][hme_me_level] ||
-        tf_enable_hme_level1_flag[1][input_resolution][hme_me_level];
-    pcs_ptr->tf_enable_hme_level2_flag =
-        tf_enable_hme_level2_flag[0][input_resolution][hme_me_level] ||
-        tf_enable_hme_level2_flag[1][input_resolution][hme_me_level];
-#endif
     if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
     else
         scs_ptr->seq_header.enable_intra_edge_filter = (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
 
     if (scs_ptr->static_config.pic_based_rate_est == DEFAULT)
-#if PIC_BASED_RE_OFF
         scs_ptr->seq_header.pic_based_rate_est = 0;
-#else
-        scs_ptr->seq_header.pic_based_rate_est = 1;
-#endif
     else
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
-#if !MAR10_ADOPTIONS
-        if (pcs_ptr->enc_mode >= ENC_M8)
-            scs_ptr->seq_header.enable_restoration = 0;
-        else
-#endif
-#if M8_RESTORATION && !UPGRADE_M8
-            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
-#else
-#if REVERT_BLUE
-#if JUNE17_ADOPTIONS
-#if SHIFT_PRESETS
-#if AUG27_ADOPTS
             scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
-#else
-            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
-#endif
-#else
-            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
-#endif
-#else
-#if PRESET_SHIFITNG
-            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M5) ? 1 : 0;
-#else
-            scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M7) ? 1 : 0;
-#endif
-#endif
-#else
-            scs_ptr->seq_header.enable_restoration = 1;
-#endif
-#endif
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
@@ -253,17 +183,6 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
     else
         scs_ptr->seq_header.cdef_level = (uint8_t)(scs_ptr->static_config.cdef_level > 0);
 
-#if !M8_CDF
-#if MAR2_M7_ADOPTIONS
-#if MAR10_ADOPTIONS
-    scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M8) ? 0 : 1;
-#else
-    scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M7) ? 0 : 1;
-#endif
-#else
-    scs_ptr->cdf_mode = (pcs_ptr->enc_mode <= ENC_M6) ? 0 : 1;
-#endif
-#endif
     if (scs_ptr->static_config.enable_warped_motion == DEFAULT) {
         scs_ptr->seq_header.enable_warped_motion = 1;
     } else
@@ -706,7 +625,6 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
     if (src->p_buffer != NULL) copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
 }
 
-#if TWOPASS_RC
 /******************************************************
  * Read Stat from File
  ******************************************************/
@@ -745,52 +663,9 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
     }
 
 }
-#else
-/******************************************************
- * Read Stat from File
- * reads StatStruct per frame from the file and stores under pcs_ptr
- ******************************************************/
-static void read_stat_from_file(PictureParentControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
 
-    int32_t fseek_return_value = fseek(scs_ptr->static_config.input_stat_file,
-                                       (long)pcs_ptr->picture_number * sizeof(StatStruct),
-                                       SEEK_SET);
-
-    if (fseek_return_value != 0) {
-        SVT_LOG("Error in fseek  returnVal %i\n", (int)fseek_return_value);
-    }
-    size_t fread_return_value = fread(&pcs_ptr->stat_struct,
-                                      (size_t)1,
-                                      sizeof(StatStruct),
-                                      scs_ptr->static_config.input_stat_file);
-    if (fread_return_value != sizeof(StatStruct)) {
-        SVT_LOG("Error in freed  returnVal %i\n", (int)fread_return_value);
-    }
-
-    uint64_t referenced_area_avg          = 0;
-    uint64_t referenced_area_has_non_zero = 0;
-    for (int sb_addr = 0; sb_addr < scs_ptr->sb_total_count; ++sb_addr) {
-        referenced_area_avg +=
-            (pcs_ptr->stat_struct.referenced_area[sb_addr] /
-             pcs_ptr->sb_params_array[sb_addr].width / pcs_ptr->sb_params_array[sb_addr].height);
-        referenced_area_has_non_zero += pcs_ptr->stat_struct.referenced_area[sb_addr];
-    }
-    referenced_area_avg /= scs_ptr->sb_total_count;
-    // adjust the reference area based on the intra refresh
-    if (scs_ptr->intra_period_length && scs_ptr->intra_period_length < TWO_PASS_IR_THRSHLD)
-        referenced_area_avg =
-            referenced_area_avg * (scs_ptr->intra_period_length + 1) / TWO_PASS_IR_THRSHLD;
-    pcs_ptr->referenced_area_avg          = referenced_area_avg;
-    pcs_ptr->referenced_area_has_non_zero = referenced_area_has_non_zero ? 1 : 0;
-    eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-}
-#endif
-
-#if FIRST_PASS_SETUP
 extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet *     scs_ptr,
     PictureParentControlSet *pcs_ptr);
-#endif
 
 /* Resource Coordination Kernel */
 /*********************************************************************************
@@ -933,208 +808,25 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 0                 OFF
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound =
-#if MAY12_ADOPTIONS
-#if UNIFY_SC_NSC
-#if JULY31_PRESETS_ADOPTIONS
                 (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#endif
-#else
-#if PRESET_SHIFITNG
-                (scs_ptr->static_config.enc_mode <= ENC_M2 &&
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M4 &&
-#endif
-                    scs_ptr->static_config.screen_content_mode != 1)
-                    ? 1
-                    : 0;
-#endif
-#else
-#if APR24_M3_ADOPTIONS
-                (scs_ptr->static_config.enc_mode <= ENC_M2 &&
-                    scs_ptr->static_config.screen_content_mode != 1)
-                    ? 1
-                    : 0;
-#else
-#if APR23_ADOPTIONS
-                (scs_ptr->static_config.enc_mode <= ENC_M5 &&
-                    scs_ptr->static_config.screen_content_mode != 1)
-                    ? 1
-                    : 0;
-#else
-#if PRESETS_SHIFT
-                    (scs_ptr->static_config.enc_mode <= ENC_M2 &&
-                    scs_ptr->static_config.screen_content_mode != 1)
-                    ? 1
-                    : 0;
-#else
-#if MAR18_MR_TESTS_ADOPTIONS
-                    (scs_ptr->static_config.enc_mode <= ENC_M3 &&
-                    scs_ptr->static_config.screen_content_mode != 1)
-                    ? 1
-                    : 0;
-#else
-#if MAR3_M2_ADOPTIONS
-#if MAR4_M3_ADOPTIONS
-                    MR_MODE || (scs_ptr->static_config.enc_mode <= ENC_M3 &&
-#else
-                    MR_MODE || (scs_ptr->static_config.enc_mode <= ENC_M2 &&
-#endif
-#else
-                    MR_MODE || (scs_ptr->static_config.enc_mode <= ENC_M1 &&
-#endif
-                                scs_ptr->static_config.screen_content_mode != 1)
-                        ? 1
-                        : 0;
-#endif
-#endif
-#endif
-#endif
-#endif
 
             } else
                 scs_ptr->seq_header.enable_interintra_compound =
                     scs_ptr->static_config.inter_intra_compound;
-#if FILTER_INTRA_CLI
             // Enable/Disable Filter Intra
             // seq_header.filter_intra_level | Settings
             // 0                             | Disable
             // 1                             | Enable
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
-#if MAY19_ADOPTIONS
                 scs_ptr->seq_header.filter_intra_level =
-#if JUNE17_ADOPTIONS
-#if SHIFT_PRESETS
-#if BALANCE_M6_M7 // filter_intra
                 (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#endif
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
-#endif
-#else
-#if PRESET_SHIFITNG
-                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
-#endif
-#endif
-#else
-#if APR23_ADOPTIONS_2
-                scs_ptr->seq_header.enable_filter_intra =
-                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#else
-#if PRESETS_SHIFT
-                scs_ptr->seq_header.enable_filter_intra =
-                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#else
-#if MAR10_ADOPTIONS
-                if (scs_ptr->static_config.screen_content_mode == 1)
-#if MAR17_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
-#else
-#if MAR12_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
-#else
-#if MAR11_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
-#else
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#endif
-#endif
-#endif
-                else
-#endif
-#if MAR17_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
-#else
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#endif
-#endif
-#endif
-#endif
             else
                 scs_ptr->seq_header.filter_intra_level = (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;
-#else
-            // Set filter intra mode      Settings
-            // 0                 OFF
-            // 1                 ON
-            if (scs_ptr->static_config.enable_filter_intra)
-#if MAY19_ADOPTIONS
-                scs_ptr->seq_header.enable_filter_intra =
-#if JUNE17_ADOPTIONS
-                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
-#else
-#if PRESET_SHIFITNG
-                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
-#endif
-#endif
-#else
-#if APR23_ADOPTIONS_2
-                scs_ptr->seq_header.enable_filter_intra =
-                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#else
-#if PRESETS_SHIFT
-                scs_ptr->seq_header.enable_filter_intra =
-                (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#else
-#if MAR10_ADOPTIONS
-                if (scs_ptr->static_config.screen_content_mode == 1)
-#if MAR17_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
-#else
-#if MAR12_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
-#else
-#if MAR11_ADOPTIONS
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M1) ? 1 : 0;
-#else
-                    scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#endif
-#endif
-#endif
-                else
-#endif
-#if MAR17_ADOPTIONS
-                scs_ptr->seq_header.enable_filter_intra =
-                (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
-#else
-                scs_ptr->seq_header.enable_filter_intra =
-                    (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#endif
-#endif
-#endif
-#endif
-            else
-                scs_ptr->seq_header.enable_filter_intra = 0;
-#endif
             // Set compound mode      Settings
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
-#if MAR11_ADOPTIONS
-#if SHIFT_PRESETS
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
-#else
-                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
-#endif
-#else
-                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 1 : 0;
-#endif
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 
@@ -1256,13 +948,6 @@ void *resource_coordination_kernel(void *input_ptr) {
             } else
                 pcs_ptr->enc_mode = (EbEncMode)scs_ptr->static_config.enc_mode;
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
-#if !TWOPASS_RC
-            pcs_ptr->snd_pass_enc_mode =
-                (use_output_stat(scs_ptr) &&
-                 scs_ptr->static_config.snd_pass_enc_mode != MAX_ENC_PRESET + 1)
-                    ? (EbEncMode)scs_ptr->static_config.snd_pass_enc_mode
-                    : pcs_ptr->enc_mode;
-#endif
 
             // Set the SCD Mode
             scs_ptr->scd_mode =
@@ -1272,14 +957,10 @@ void *resource_coordination_kernel(void *input_ptr) {
             scs_ptr->block_mean_calc_prec = BLOCK_MEAN_PREC_SUB;
 
             // Pre-Analysis Signal(s) derivation
-#if FIRST_PASS_SETUP
             if(use_output_stat(scs_ptr))
                 first_pass_signal_derivation_pre_analysis(scs_ptr, pcs_ptr);
             else
                 signal_derivation_pre_analysis_oq(scs_ptr, pcs_ptr);
-#else
-            signal_derivation_pre_analysis_oq(scs_ptr, pcs_ptr);
-#endif
             pcs_ptr->filtered_sse    = 0;
             pcs_ptr->filtered_sse_uv = 0;
             // Rate Control
@@ -1312,7 +993,6 @@ void *resource_coordination_kernel(void *input_ptr) {
             else
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             reset_pcs_av1(pcs_ptr);
-#if TWOPASS_RC
             if (pcs_ptr->picture_number == 0) {
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
@@ -1320,13 +1000,6 @@ void *resource_coordination_kernel(void *input_ptr) {
                     setup_two_pass(scs_ptr);
             }
             pcs_ptr->ts_duration = (int64_t)10000000*(1<<16) / scs_ptr->frame_rate;
-#else
-            if (use_input_stat(scs_ptr) && !end_of_sequence_flag)
-                read_stat_from_file(pcs_ptr, scs_ptr);
-            else {
-                memset(&pcs_ptr->stat_struct, 0, sizeof(StatStruct));
-            }
-#endif
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
             // Get Empty Reference Picture Object

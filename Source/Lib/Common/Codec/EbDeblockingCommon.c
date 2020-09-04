@@ -232,19 +232,11 @@ static INLINE int8_t hev_mask(uint8_t thresh, uint8_t p1, uint8_t p0, uint8_t q0
 static INLINE void filter4(int8_t mask, uint8_t thresh, uint8_t *op1, uint8_t *op0, uint8_t *oq0,
                            uint8_t *oq1) {
     int8_t filter1, filter2;
-#if LOOP_FILTER_COVERSION_FIX
     const int8_t ps1 = (int8_t)(*op1 ^ 0x80);
     const int8_t ps0 = (int8_t)(*op0 ^ 0x80);
     const int8_t qs0 = (int8_t)(*oq0 ^ 0x80);
     const int8_t qs1 = (int8_t)(*oq1 ^ 0x80);
     const int8_t hev = hev_mask(thresh, *op1, *op0, *oq0, *oq1);
-#else
-    const int8_t  ps1 = (int8_t)*op1 ^ 0x80;
-    const int8_t  ps0 = (int8_t)*op0 ^ 0x80;
-    const int8_t  qs0 = (int8_t)*oq0 ^ 0x80;
-    const int8_t  qs1 = (int8_t)*oq1 ^ 0x80;
-    const uint8_t hev = hev_mask(thresh, *op1, *op0, *oq0, *oq1);
-#endif
 
     // add outer taps if we have high edge variance
     int8_t filter = signed_char_clamp(ps1 - qs1) & hev;
@@ -257,23 +249,13 @@ static INLINE void filter4(int8_t mask, uint8_t thresh, uint8_t *op1, uint8_t *o
     // we'd round 3 the other way
     filter1 = signed_char_clamp(filter + 4) >> 3;
     filter2 = signed_char_clamp(filter + 3) >> 3;
-#if LOOP_FILTER_COVERSION_FIX
     *oq0 = (uint8_t)(signed_char_clamp(qs0 - filter1) ^ 0x80);
     *op0 = (uint8_t)(signed_char_clamp(ps0 + filter2) ^ 0x80);
-#else
-    *oq0 = signed_char_clamp(qs0 - filter1) ^ 0x80;
-    *op0 = signed_char_clamp(ps0 + filter2) ^ 0x80;
-#endif
 
     // outer tap adjustments
     filter = ROUND_POWER_OF_TWO(filter1, 1) & ~hev;
-#if LOOP_FILTER_COVERSION_FIX
     *oq1 = (uint8_t)(signed_char_clamp(qs1 - filter) ^ 0x80);
     *op1 = (uint8_t)(signed_char_clamp(ps1 + filter) ^ 0x80);
-#else
-    *oq1 = signed_char_clamp(qs1 - filter) ^ 0x80;
-    *op1 = signed_char_clamp(ps1 + filter) ^ 0x80;
-#endif
 }
 
 void svt_aom_lpf_horizontal_4_c(uint8_t *s, int32_t p /* pitch */, const uint8_t *blimit,
@@ -484,11 +466,7 @@ static INLINE void highbd_filter4(int8_t mask, uint8_t thresh, uint16_t *op1, ui
     const int16_t  ps0   = (int16_t)*op0 - (0x80 << shift);
     const int16_t  qs0   = (int16_t)*oq0 - (0x80 << shift);
     const int16_t  qs1   = (int16_t)*oq1 - (0x80 << shift);
-#if LOOP_FILTER_COVERSION_FIX
     const int16_t hev = highbd_hev_mask(thresh, *op1, *op0, *oq0, *oq1, bd);
-#else
-    const uint16_t hev   = highbd_hev_mask(thresh, *op1, *op0, *oq0, *oq1, bd);
-#endif
 
     // Add outer taps if we have high edge variance.
     int16_t filter = signed_char_clamp_high(ps1 - qs1, bd) & hev;

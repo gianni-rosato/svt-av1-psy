@@ -20,14 +20,12 @@
 #include "EbReferenceObject.h"
 #include "EbResize.h"
 #include "common_dsp_rtcd.h"
-#if TPL_LA
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
-#endif
 /**************************************
  * Context
  **************************************/
@@ -39,392 +37,6 @@ typedef struct InitialRateControlContext {
 /**************************************
 * Macros
 **************************************/
-#if !IMPROVE_GMV
-#define PAN_SB_PERCENTAGE 75
-#define LOW_AMPLITUDE_TH 16
-
-static void eb_get_mv(PictureParentControlSet *pcs_ptr, uint32_t sb_index, int32_t *x_current_mv,
-            int32_t *y_current_mv) {
-    uint32_t me_candidate_index;
-#if DECOUPLE_ME_RES
-    MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
-#else
-    const MeSbResults *me_results       = pcs_ptr->me_results[sb_index];
-#endif
-    uint8_t            total_me_cnt     = me_results->total_me_candidate_index[0];
-
-#if ME_MEM_OPT
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[0];
-#else
-    const MeCandidate *me_block_results = me_results->me_candidate[0];
-#endif
-    for (me_candidate_index = 0; me_candidate_index < total_me_cnt; me_candidate_index++) {
-        if (me_block_results->direction == UNI_PRED_LIST_0) {
-#if ME_MEM_OPT
-            *x_current_mv = me_results->me_mv_array[0].x_mv;
-            *y_current_mv = me_results->me_mv_array[0].y_mv;
-#else
-            *x_current_mv = me_results->me_mv_array[0][0].x_mv;
-            *y_current_mv = me_results->me_mv_array[0][0].y_mv;
-#endif
-            break;
-        }
-    }
-}
-EbBool check_mv_for_pan_high_amp(uint32_t hierarchical_levels, uint32_t temporal_layer_index,
-                                 int32_t *x_current_mv, int32_t *x_candidate_mv) {
-    if (*x_current_mv * *x_candidate_mv >
-            0 // both negative or both positives and both different than 0 i.e. same direction and non Stationary)
-        && ABS(*x_current_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*x_candidate_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*x_current_mv - *x_candidate_mv) < LOW_AMPLITUDE_TH) { // close amplitude
-
-        return (EB_TRUE);
-    }
-
-    else
-        return (EB_FALSE);
-}
-
-EbBool check_mv_for_tilt_high_amp(uint32_t hierarchical_levels, uint32_t temporal_layer_index,
-                                  int32_t *y_current_mv, int32_t *y_candidate_mv) {
-    if (*y_current_mv * *y_candidate_mv >
-            0 // both negative or both positives and both different than 0 i.e. same direction and non Stationary)
-        && ABS(*y_current_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*y_candidate_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*y_current_mv - *y_candidate_mv) < LOW_AMPLITUDE_TH) { // close amplitude
-
-        return (EB_TRUE);
-    }
-
-    else
-        return (EB_FALSE);
-}
-
-EbBool check_mv_for_pan(uint32_t hierarchical_levels, uint32_t temporal_layer_index,
-                        int32_t *x_current_mv, int32_t *y_current_mv, int32_t *x_candidate_mv,
-                        int32_t *y_candidate_mv) {
-    if (*y_current_mv < LOW_AMPLITUDE_TH &&
-        *y_candidate_mv<
-            LOW_AMPLITUDE_TH && * x_current_mv * *
-            x_candidate_mv > 0 // both negative or both positives and both different than 0 i.e. same direction and non Stationary)
-        && ABS(*x_current_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*x_candidate_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*x_current_mv - *x_candidate_mv) < LOW_AMPLITUDE_TH) { // close amplitude
-
-        return (EB_TRUE);
-    }
-
-    else
-        return (EB_FALSE);
-}
-
-EbBool check_mv_for_tilt(uint32_t hierarchical_levels, uint32_t temporal_layer_index,
-                         int32_t *x_current_mv, int32_t *y_current_mv, int32_t *x_candidate_mv,
-                         int32_t *y_candidate_mv) {
-    if (*x_current_mv < LOW_AMPLITUDE_TH &&
-        *x_candidate_mv<
-            LOW_AMPLITUDE_TH && * y_current_mv * *
-            y_candidate_mv > 0 // both negative or both positives and both different than 0 i.e. same direction and non Stationary)
-        && ABS(*y_current_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*y_candidate_mv) >=
-               global_motion_threshold[hierarchical_levels][temporal_layer_index] // high amplitude
-        && ABS(*y_current_mv - *y_candidate_mv) < LOW_AMPLITUDE_TH) { // close amplitude
-
-        return (EB_TRUE);
-    }
-
-    else
-        return (EB_FALSE);
-}
-
-EbBool check_mv_for_non_uniform_motion(int32_t *x_current_mv, int32_t *y_current_mv,
-                                       int32_t *x_candidate_mv, int32_t *y_candidate_mv) {
-    int32_t mv_threshold = 40; //LOW_AMPLITUDE_TH + 18;
-    // Either the x or the y direction is greater than threshold
-    if ((ABS(*x_current_mv - *x_candidate_mv) > mv_threshold) ||
-        (ABS(*y_current_mv - *y_candidate_mv) > mv_threshold))
-        return (EB_TRUE);
-    else
-        return (EB_FALSE);
-}
-
-void check_for_non_uniform_motion_vector_field(PictureParentControlSet *pcs_ptr) {
-    uint32_t pic_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) /
-        BLOCK_SIZE_64;
-
-    int32_t x_current_mv = 0;
-    int32_t y_current_mv = 0;
-    int32_t x_left_mv    = 0;
-    int32_t y_left_mv    = 0;
-    int32_t x_top_mv     = 0;
-    int32_t y_top_mv     = 0;
-    int32_t x_right_mv   = 0;
-    int32_t y_right_mv   = 0;
-    int32_t x_bottom_mv  = 0;
-    int32_t y_bottom_mv  = 0;
-
-    for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
-        uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
-        uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
-
-        if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
-            ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
-            // Current MV
-            eb_get_mv(pcs_ptr, sb_count, &x_current_mv, &y_current_mv);
-
-            // Left MV
-            if (sb_origin_x == 0) {
-                x_left_mv = 0;
-                y_left_mv = 0;
-            } else
-                eb_get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
-
-            // Top MV
-            if (sb_origin_y == 0) {
-                x_top_mv = 0;
-                y_top_mv = 0;
-            } else
-                eb_get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
-
-            // Right MV
-            if ((sb_origin_x + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->width) {
-                x_right_mv = 0;
-                y_right_mv   = 0;
-            } else
-                eb_get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
-
-            // Bottom MV
-            if ((sb_origin_y + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->height) {
-                x_bottom_mv = 0;
-                y_bottom_mv = 0;
-            } else
-                eb_get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
-        }
-    }
-}
-
-void detect_global_motion(PictureParentControlSet *pcs_ptr) {
-    //initilize global motion to be OFF for all references frames.
-    memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
-#if GM_DOWN_16
-    if (pcs_ptr->gm_level <= GM_DOWN16) {
-#else
-    if (pcs_ptr->gm_level <= GM_DOWN) {
-#endif
-        uint32_t num_of_list_to_search =
-            (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
-
-        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-            uint32_t num_of_ref_pic_to_search;
-            if (pcs_ptr->is_alt_ref == EB_TRUE)
-                num_of_ref_pic_to_search = 1;
-            else
-                num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
-                                               ? pcs_ptr->ref_list0_count
-                                               : list_index == REF_LIST_0
-                                                     ? pcs_ptr->ref_list0_count
-                                                     : pcs_ptr->ref_list1_count;
-
-            // Ref Picture Loop
-            for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
-                 ++ref_pic_index) {
-                pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_FALSE;
-                if (pcs_ptr->global_motion_estimation[list_index][ref_pic_index].wmtype >
-                    TRANSLATION)
-                    pcs_ptr->is_global_motion[list_index][ref_pic_index] = EB_TRUE;
-            }
-        }
-    } else {
-        uint32_t pic_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) /
-            BLOCK_SIZE_64;
-
-        uint32_t total_checked_sbs = 0;
-        uint32_t total_pan_sbs     = 0;
-
-        int32_t  x_current_mv   = 0;
-        int32_t  y_current_mv   = 0;
-        int32_t  x_left_mv      = 0;
-        int32_t  y_left_mv      = 0;
-        int32_t  x_top_mv       = 0;
-        int32_t  y_top_mv       = 0;
-        int32_t  x_right_mv     = 0;
-        int32_t  y_right_mv       = 0;
-        int32_t  x_bottom_mv    = 0;
-        int32_t  y_bottom_mv    = 0;
-        int64_t  x_tile_mv_sum  = 0;
-        int64_t  y_tilt_mv_sum  = 0;
-        int64_t  x_pan_mv_sum   = 0;
-        int64_t  y_pan_mv_sum   = 0;
-        uint32_t total_tilt_sbs = 0;
-
-        for (uint32_t sb_count = 0; sb_count < pcs_ptr->sb_total_count; ++sb_count) {
-            uint32_t sb_origin_x = (sb_count % pic_width_in_sb) * BLOCK_SIZE_64;
-            uint32_t sb_origin_y = (sb_count / pic_width_in_sb) * BLOCK_SIZE_64;
-            if (((sb_origin_x + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->width) &&
-                ((sb_origin_y + BLOCK_SIZE_64) <= pcs_ptr->enhanced_picture_ptr->height)) {
-                // Current MV
-                eb_get_mv(pcs_ptr, sb_count, &x_current_mv, &y_current_mv);
-
-                // Left MV
-                if (sb_origin_x == 0) {
-                    x_left_mv = 0;
-                    y_left_mv = 0;
-                } else
-                    eb_get_mv(pcs_ptr, sb_count - 1, &x_left_mv, &y_left_mv);
-                // Top MV
-                if (sb_origin_y == 0) {
-                    x_top_mv = 0;
-                    y_top_mv = 0;
-                } else
-                    eb_get_mv(pcs_ptr, sb_count - pic_width_in_sb, &x_top_mv, &y_top_mv);
-                // Right MV
-                if ((sb_origin_x + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->width) {
-                    x_right_mv = 0;
-                    y_right_mv   = 0;
-                } else
-                    eb_get_mv(pcs_ptr, sb_count + 1, &x_right_mv, &y_right_mv);
-                // Bottom MV
-                if ((sb_origin_y + (BLOCK_SIZE_64 << 1)) > pcs_ptr->enhanced_picture_ptr->height) {
-                    x_bottom_mv = 0;
-                    y_bottom_mv = 0;
-                } else
-                    eb_get_mv(pcs_ptr, sb_count + pic_width_in_sb, &x_bottom_mv, &y_bottom_mv);
-                total_checked_sbs++;
-
-                if ((EbBool)(check_mv_for_pan(pcs_ptr->hierarchical_levels,
-                                              pcs_ptr->temporal_layer_index,
-                                              &x_current_mv,
-                                              &y_current_mv,
-                                              &x_left_mv,
-                                              &y_left_mv) ||
-                             check_mv_for_pan(pcs_ptr->hierarchical_levels,
-                                              pcs_ptr->temporal_layer_index,
-                                              &x_current_mv,
-                                              &y_current_mv,
-                                              &x_top_mv,
-                                              &y_top_mv) ||
-                             check_mv_for_pan(pcs_ptr->hierarchical_levels,
-                                              pcs_ptr->temporal_layer_index,
-                                              &x_current_mv,
-                                              &y_current_mv,
-                                              &x_right_mv,
-                                              &y_right_mv) ||
-                             check_mv_for_pan(pcs_ptr->hierarchical_levels,
-                                              pcs_ptr->temporal_layer_index,
-                                              &x_current_mv,
-                                              &y_current_mv,
-                                              &x_bottom_mv,
-                                              &y_bottom_mv))) {
-                    total_pan_sbs++;
-
-                    x_pan_mv_sum += x_current_mv;
-                    y_pan_mv_sum += y_current_mv;
-                }
-
-                if ((EbBool)(check_mv_for_tilt(pcs_ptr->hierarchical_levels,
-                                               pcs_ptr->temporal_layer_index,
-                                               &x_current_mv,
-                                               &y_current_mv,
-                                               &x_left_mv,
-                                               &y_left_mv) ||
-                             check_mv_for_tilt(pcs_ptr->hierarchical_levels,
-                                               pcs_ptr->temporal_layer_index,
-                                               &x_current_mv,
-                                               &y_current_mv,
-                                               &x_top_mv,
-                                               &y_top_mv) ||
-                             check_mv_for_tilt(pcs_ptr->hierarchical_levels,
-                                               pcs_ptr->temporal_layer_index,
-                                               &x_current_mv,
-                                               &y_current_mv,
-                                               &x_right_mv,
-                                               &y_right_mv) ||
-                             check_mv_for_tilt(pcs_ptr->hierarchical_levels,
-                                               pcs_ptr->temporal_layer_index,
-                                               &x_current_mv,
-                                               &y_current_mv,
-                                               &x_bottom_mv,
-                                               &y_bottom_mv))) {
-                    total_tilt_sbs++;
-
-                    x_tile_mv_sum += x_current_mv;
-                    y_tilt_mv_sum += y_current_mv;
-                }
-
-                if ((EbBool)(check_mv_for_pan_high_amp(pcs_ptr->hierarchical_levels,
-                                                       pcs_ptr->temporal_layer_index,
-                                                       &x_current_mv,
-                                                       &x_left_mv) ||
-                             check_mv_for_pan_high_amp(pcs_ptr->hierarchical_levels,
-                                                       pcs_ptr->temporal_layer_index,
-                                                       &x_current_mv,
-                                                       &x_top_mv) ||
-                             check_mv_for_pan_high_amp(pcs_ptr->hierarchical_levels,
-                                                       pcs_ptr->temporal_layer_index,
-                                                       &x_current_mv,
-                                                       &x_right_mv) ||
-                             check_mv_for_pan_high_amp(pcs_ptr->hierarchical_levels,
-                                                       pcs_ptr->temporal_layer_index,
-                                                       &x_current_mv,
-                                                       &x_bottom_mv))) {
-                }
-
-                if ((EbBool)(check_mv_for_tilt_high_amp(pcs_ptr->hierarchical_levels,
-                                                        pcs_ptr->temporal_layer_index,
-                                                        &y_current_mv,
-                                                        &y_left_mv) ||
-                             check_mv_for_tilt_high_amp(pcs_ptr->hierarchical_levels,
-                                                        pcs_ptr->temporal_layer_index,
-                                                        &y_current_mv,
-                                                        &y_top_mv) ||
-                             check_mv_for_tilt_high_amp(pcs_ptr->hierarchical_levels,
-                                                        pcs_ptr->temporal_layer_index,
-                                                        &y_current_mv,
-                                                        &y_right_mv) ||
-                             check_mv_for_tilt_high_amp(pcs_ptr->hierarchical_levels,
-                                                        pcs_ptr->temporal_layer_index,
-                                                        &y_current_mv,
-                                                        &y_bottom_mv))) {
-                }
-            }
-        }
-        pcs_ptr->is_pan  = EB_FALSE;
-        pcs_ptr->is_tilt = EB_FALSE;
-
-        pcs_ptr->pan_mvx  = 0;
-        pcs_ptr->pan_mvy  = 0;
-        pcs_ptr->tilt_mvx = 0;
-        pcs_ptr->tilt_mvy = 0;
-
-        // If more than PAN_SB_PERCENTAGE % of SBs are PAN
-        if ((total_checked_sbs > 0) &&
-            ((total_pan_sbs * 100 / total_checked_sbs) > PAN_SB_PERCENTAGE)) {
-            pcs_ptr->is_pan = EB_TRUE;
-            if (total_pan_sbs > 0) {
-                pcs_ptr->pan_mvx = (int16_t)(x_pan_mv_sum / total_pan_sbs);
-                pcs_ptr->pan_mvy = (int16_t)(y_pan_mv_sum / total_pan_sbs);
-            }
-        }
-
-        if ((total_checked_sbs > 0) &&
-            ((total_tilt_sbs * 100 / total_checked_sbs) > PAN_SB_PERCENTAGE)) {
-            pcs_ptr->is_tilt = EB_TRUE;
-            if (total_tilt_sbs > 0) {
-                pcs_ptr->tilt_mvx = (int16_t)(x_tile_mv_sum / total_tilt_sbs);
-                pcs_ptr->tilt_mvy = (int16_t)(y_tilt_mv_sum / total_tilt_sbs);
-            }
-        }
-    }
-}
-#endif
 static void initial_rate_control_context_dctor(EbPtr p) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)p;
     InitialRateControlContext *obj = (InitialRateControlContext *)thread_context_ptr->priv;
@@ -484,75 +96,6 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
 
     return;
 }
-#if !IMPROVE_GMV
-
-/************************************************
-* Global Motion Detection Based on ME information
-** Mark pictures for pan
-** Mark pictures for tilt
-** No lookahead information used in this function
-************************************************/
-void me_based_global_motion_detection(PictureParentControlSet *pcs_ptr) {
-    // PAN Generation
-    pcs_ptr->is_pan  = EB_FALSE;
-    pcs_ptr->is_tilt = EB_FALSE;
-
-    if (pcs_ptr->slice_type != I_SLICE) detect_global_motion(pcs_ptr);
-    // Check if the motion vector field for temporal layer 0 pictures
-    if (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)
-        check_for_non_uniform_motion_vector_field(pcs_ptr);
-    return;
-}
-/************************************************
-* Global Motion Detection Based on Lookahead
-** Mark pictures for pan
-** Mark pictures for tilt
-** LAD Window: min (8 or sliding window size)
-************************************************/
-void update_global_motion_detection_over_time(EncodeContext *          encode_context_ptr,
-                                              SequenceControlSet *     scs_ptr,
-                                              PictureParentControlSet *pcs_ptr) {
-    uint32_t total_pan_pictures     = 0;
-    uint32_t total_checked_pictures = 0;
-    (void)scs_ptr;
-
-    // Determine number of frames to check (8 frames)
-    uint32_t update_is_pan_frames_to_check = MIN(8, pcs_ptr->frames_in_sw);
-
-    // Walk the first N entries in the sliding window
-    uint32_t input_queue_index = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    uint32_t update_frames_to_check = update_is_pan_frames_to_check;
-    for (uint32_t frames_to_check_index = 0; frames_to_check_index < update_frames_to_check;
-         frames_to_check_index++) {
-        InitialRateControlReorderEntry *temp_queue_entry_ptr =
-            encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-        PictureParentControlSet *temp_pcs_ptr =
-            ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
-
-        if (temp_pcs_ptr->slice_type != I_SLICE) {
-            total_pan_pictures += (temp_pcs_ptr->is_pan == EB_TRUE);
-
-            // Keep track of checked pictures
-            total_checked_pictures++;
-        }
-
-        // Increment the input_queue_index Iterator
-        input_queue_index = (input_queue_index == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                                ? 0
-                                : input_queue_index + 1;
-    }
-
-    pcs_ptr->is_pan  = EB_FALSE;
-    pcs_ptr->is_tilt = EB_FALSE;
-
-    if (total_checked_pictures) {
-        if (pcs_ptr->slice_type != I_SLICE) {
-            if ((total_pan_pictures * 100 / total_checked_pictures) > 75) pcs_ptr->is_pan = EB_TRUE;
-        }
-    }
-    return;
-}
-#endif
 
 /************************************************
 * Update BEA Information Based on Lookahead
@@ -573,17 +116,13 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
         scs_ptr->static_config.look_ahead_distance);
     uint64_t me_dist           = 0;
     uint8_t  me_dist_pic_count = 0;
-#if QPS_UPDATE
     uint32_t complete_sb_count = 0;
-#endif
     // SB Loop
     for (uint16_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
         uint16_t non_moving_index_over_sliding_window = pcs_ptr->non_moving_index_array[sb_idx];
         uint16_t frames_to_check_index;
-#if QPS_UPDATE
         SbParams *sb_params = &pcs_ptr->sb_params_array[sb_idx];
         complete_sb_count++;
-#endif
 
         // Walk the first N entries in the sliding window starting picture + 1
         uint32_t input_queue_index =
@@ -602,11 +141,7 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
 
             if (temp_pcs_ptr->slice_type == I_SLICE || temp_pcs_ptr->end_of_sequence_flag) break;
             // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
-#if QPS_UPDATE
             if (sb_params->is_complete_sb && temp_pcs_ptr->temporal_layer_index <
-#else
-            if (temp_pcs_ptr->temporal_layer_index <
-#endif
                 MAX((int8_t)pcs_ptr->hierarchical_levels - 1, 2)) {
                 if (sb_idx == 0) me_dist_pic_count++;
                 me_dist += (temp_pcs_ptr->slice_type == I_SLICE)
@@ -636,11 +171,7 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
     pcs_ptr->non_moving_index_average = (uint16_t)non_moving_index_sum / pcs_ptr->sb_total_count;
     me_dist_pic_count                 = MAX(me_dist_pic_count, 1);
     pcs_ptr->qp_scaling_average_complexity =
-#if QPS_UPDATE
         (uint16_t)((uint64_t)me_dist / complete_sb_count / 256 / me_dist_pic_count);
-#else
-        (uint16_t)((uint64_t)me_dist / pcs_ptr->sb_total_count / 256 / me_dist_pic_count);
-#endif
     return;
 }
 
@@ -802,8 +333,6 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     return;
 }
 
-#if TPL_LA
-#if TPL_LA_LAMBDA_SCALING
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr, int64_t mc_dep_cost_base)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
@@ -816,11 +345,7 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
     const int stride   = mi_cols_sr >> (1 + pcs_ptr->is_720p_or_larger);
-#if NEW_LAMBDA_SCALING_FACTOR
     const double c = 1.2;
-#else
-    const double c = 2;
-#endif
 
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
@@ -851,7 +376,6 @@ static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_
     return;
 }
 
-#endif
 static AOM_INLINE void get_quantize_error(MacroblockPlane *p,
                                           const TranLow *coeff, TranLow *qcoeff,
                                           TranLow *dqcoeff, TxSize tx_size,
@@ -1025,14 +549,11 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
                             Quants *const quants, Dequants *const deq);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
-#if TPL_IMP
 double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
-#endif
 extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
                             int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
 
-#if FIX_TPL_ME_ACCESS
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
 static uint8_t is_me_data_valid(
@@ -1058,7 +579,6 @@ static uint8_t is_me_data_valid(
     }
     return 0;
 }
-#endif
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size
@@ -1081,9 +601,6 @@ void tpl_mc_flow_dispenser(
     BlockGeom   blk_geom;
     uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-#if !TPL_IMP
-    int64_t recon_error = 1, sse = 1;
-#endif
     TplStats  tpl_stats;
 
     (void)scs_ptr;
@@ -1108,7 +625,6 @@ void tpl_mc_flow_dispenser(
     MacroblockPlane mb_plane;
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
 
-#if TPL_IMP
     const  double delta_rate_new[7][6] =
     {
         { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 1L
@@ -1134,7 +650,6 @@ void tpl_mc_flow_dispenser(
     qIndex =
        (qIndex + delta_qindex);
 
-#endif
     Quants *const quants_bd = &pcs_ptr->quants_bd;
     Dequants *const deq_bd = &pcs_ptr->deq_bd;
     eb_av1_set_quantizer(
@@ -1160,12 +675,6 @@ void tpl_mc_flow_dispenser(
 
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-#if !TPL_NON16ALIGN_FIX
-        uint32_t    sb_origin_x = (sb_index % picture_width_in_sb) * BLOCK_SIZE_64;
-        uint32_t    sb_origin_y = (sb_index / picture_width_in_sb) * BLOCK_SIZE_64;
-        if (((sb_origin_x + 16) <= input_picture_ptr->width) &&
-            ((sb_origin_y + 16) <= input_picture_ptr->height))
-#endif
         {
             SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
             uint32_t pa_blk_index = 0;
@@ -1195,22 +704,12 @@ void tpl_mc_flow_dispenser(
                     const int dst_basic_offset = input_picture_ptr->origin_y * input_picture_ptr->stride_y + input_picture_ptr->origin_x;
                     uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] + dst_basic_offset + dst_mb_offset;
                     int64_t inter_cost;
-#if TPL_IMP
                     int64_t recon_error = 1, sse = 1;
-#endif
-#if FIX_TPL_POC128
                     uint64_t best_ref_poc = 0;
                     int32_t best_rf_idx = -1;
-#else
-                    int32_t best_rf_idx = -1;
-#endif
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = {0, 0};
-#if REMOVE_MRP_MODE
                     uint32_t max_inter_ref = MAX_PA_ME_MV;
-#else
-                    uint32_t max_inter_ref = ((scs_ptr->mrp_mode == 0) ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1);
-#endif
                     OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb + (mb_origin_x >> 4)];
                     int64_t best_intra_cost = ois_mb_results_ptr->intra_cost;
                     uint8_t best_mode = DC_PRED;
@@ -1221,54 +720,26 @@ void tpl_mc_flow_dispenser(
                     blk_geom.origin_y = blk_stats_ptr->origin_y;
                     me_mb_offset = get_me_info_index(pcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
                     for(uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
-#if REMOVE_MRP_MODE
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
-#else
-                        uint32_t list_index = (scs_ptr->mrp_mode == 0) ? (rf_idx < 4 ? 0 : 1)
-                                                                       : (rf_idx < 2 ? 0 : 1);
-                        uint32_t ref_pic_index = (scs_ptr->mrp_mode == 0) ? (rf_idx >= 4 ? (rf_idx - 4) : rf_idx)
-                                                                          : (rf_idx >= 2 ? (rf_idx - 2) : rf_idx);
-#endif
 
-#if FIX_TPL_ME_ACCESS
-#if  !ON_OFF_FEATURE_MRP
                         if( (list_index == 0 && (ref_pic_index+1) > pcs_ptr->ref_list0_count_try) ||
                             (list_index == 1 && (ref_pic_index+1) > pcs_ptr->ref_list1_count_try) )
-#else
-                        if( (list_index == 0 && (ref_pic_index+1) > pcs_ptr->mrp_ctrls.ref_list0_count_try) ||
-                            (list_index == 1 && (ref_pic_index+1) > pcs_ptr->mrp_ctrls.ref_list1_count_try) )
-#endif
                             continue;
                         if( !is_me_data_valid( pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
                             continue;
-#endif
                         if(!pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index])
                             continue;
-#if FIX_TPL_POC128
                         uint64_t ref_poc = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
-#else
-                        uint32_t ref_poc = pcs_ptr->ref_order_hint[rf_idx];
-#endif
                         uint32_t ref_frame_idx = 0;
-#if FIX_WARNINGS_WIN
                         while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
-#else
-                        while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != (int32_t)ref_poc)
-#endif
                             ref_frame_idx++;
                         if(ref_frame_idx == MAX_TPL_LA_SW || (int32_t)ref_frame_idx >= frame_idx) {
                             continue;
                         }
 
-#if FIX_TPL_REF_OBJ
                         EbPaReferenceObject * referenceObject = (EbPaReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
                         ref_pic_ptr = (EbPictureBufferDesc*)referenceObject->input_padded_picture_ptr;
-#else
-                        referenceObject = (EbReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->object_ptr;
-                        ref_pic_ptr = /*is16bit ? (EbPictureBufferDesc*)referenceObject->reference_picture16bit : */(EbPictureBufferDesc*)referenceObject->reference_picture;
-
-#endif
 
                         const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
                         const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
@@ -1277,24 +748,9 @@ void tpl_mc_flow_dispenser(
                         struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
                                                   ref_pic_ptr->width, ref_pic_ptr->height,
                                                   ref_pic_ptr->stride_y };
-#if DECOUPLE_ME_RES
                         const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
-#else
-                        const MeSbResults *me_results = pcs_ptr->me_results[sb_index];
-#endif
-#if ME_MEM_OPT
-#if REMOVE_MRP_MODE
                         x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
                         y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
-#else
-                        uint32_t pu_stride = scs_ptr->mrp_mode == 0 ? ME_MV_MRP_MODE_0 : ME_MV_MRP_MODE_1;
-                        x_curr_mv = me_results->me_mv_array[me_mb_offset * pu_stride + (list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].x_mv << 1;
-                        y_curr_mv = me_results->me_mv_array[me_mb_offset * pu_stride + (list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].y_mv << 1;
-#endif
-#else
-                        x_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].x_mv << 1;
-                        y_curr_mv = me_results->me_mv_array[me_mb_offset][(list_index ? ((scs_ptr->mrp_mode == 0) ? 4 : 2) : 0) + ref_pic_index].y_mv << 1;
-#endif
                         InterPredParams inter_pred_params;
                         svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
                                 mb_origin_x, 0, 0, 8, 0, 0,
@@ -1319,9 +775,7 @@ void tpl_mc_flow_dispenser(
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             memcpy(best_coeff, coeff, sizeof(best_coeff));
-#if FIX_TPL_POC128
                             best_ref_poc = ref_poc;
-#endif
                             best_rf_idx = rf_idx;
                             best_inter_cost = inter_cost;
                             final_best_mv = best_mv;
@@ -1332,11 +786,7 @@ void tpl_mc_flow_dispenser(
                     if(best_inter_cost < INT64_MAX) {
                         uint16_t eob = 0;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
-#if TPL_OPT
                         int rate_cost = pcs_ptr->tpl_opt_flag? 0 : rate_estimator(qcoeff, eob, tx_size);
-#else
-                        int rate_cost = rate_estimator(qcoeff, eob, tx_size);
-#endif
                         tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
                     best_intra_cost = AOMMAX(best_intra_cost, 1);
@@ -1349,17 +799,9 @@ void tpl_mc_flow_dispenser(
 
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
-#if FIX_TPL_POC128
                         uint64_t ref_poc = best_ref_poc;
-#else
-                        uint32_t ref_poc = pcs_ptr->ref_order_hint[best_rf_idx];
-#endif
                         uint32_t ref_frame_idx = 0;
-#if FIX_WARNINGS_WIN
                         while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
-#else
-                        while(ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != (int32_t)ref_poc)
-#endif
                             ref_frame_idx++;
                         assert(ref_frame_idx != MAX_TPL_LA_SW);
 
@@ -1394,7 +836,6 @@ void tpl_mc_flow_dispenser(
 
                         above_row = above_data + 16;
                         left_col = left_data + 16;
-#if TPL_IMP
                         uint8_t *recon_buffer =
                             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] +
                             dst_basic_offset;
@@ -1408,11 +849,6 @@ void tpl_mc_flow_dispenser(
                                                                          16,
                                                                          input_picture_ptr->width,
                                                                          input_picture_ptr->height);
-#else
-                        update_neighbor_samples_array_open_loop_mb(above_row - 1, left_col - 1,
-                                                                   input_picture_ptr,
-                                                                   input_picture_ptr->stride_y, mb_origin_x, mb_origin_y, 16, 16);
-#endif
                         uint8_t ois_intra_mode = ois_mb_results_ptr->intra_mode;
                         int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode) ? mode_to_angle_map[(PredictionMode)ois_intra_mode] : 0;
                         // Edge filter
@@ -1437,11 +873,7 @@ void tpl_mc_flow_dispenser(
                     uint16_t eob = 0;
 
                     get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
-#if TPL_OPT
                     int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#else
-                    int rate_cost = rate_estimator(qcoeff, eob, tx_size);
-#endif
 
                     if(eob) {
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
@@ -1457,11 +889,7 @@ void tpl_mc_flow_dispenser(
                     tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
                     if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
                         tpl_stats.mv = final_best_mv;
-#if FIX_TPL_POC128
                         tpl_stats.ref_frame_poc = best_ref_poc;
-#else
-                        tpl_stats.ref_frame_poc = pcs_ptr->ref_order_hint[best_rf_idx];
-#endif
                     }
                     // Motion flow dependency dispenser.
                     result_model_store(pcs_ptr, &tpl_stats, mb_origin_x, mb_origin_y);
@@ -1470,33 +898,6 @@ void tpl_mc_flow_dispenser(
             }
         }
     }
-#if TPL_SANITIZER_FIX
-    #define MIN_TPL_BLOCK_SIZE 16
-    uint32_t          pad_right;
-    uint32_t          pad_bottom;
-
-    // pad non-multiple of MIN_TPL_BLOCK_SIZE (16) as these blks it not processed by TPL
-    if (input_picture_ptr->width % MIN_TPL_BLOCK_SIZE) {
-        pad_right = MIN_TPL_BLOCK_SIZE - (scs_ptr->max_input_luma_width % MIN_TPL_BLOCK_SIZE);
-    } else {
-        pad_right = 0;
-    }
-    if (input_picture_ptr->height % MIN_TPL_BLOCK_SIZE) {
-        pad_bottom = MIN_TPL_BLOCK_SIZE - (input_picture_ptr->height% MIN_TPL_BLOCK_SIZE);
-    } else {
-        pad_bottom = 0;
-    }
-
-    // padding current recon picture non-mutiple of MIN_TPL_BLOCK_SIZE
-    pad_input_picture(
-        &encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]
-            [input_picture_ptr->origin_x +input_picture_ptr->origin_y * input_picture_ptr->stride_y],
-        input_picture_ptr->stride_y,
-        (input_picture_ptr->width - pad_right),
-        (input_picture_ptr->height - pad_bottom),
-        pad_right,
-        pad_bottom);
-#endif
     // padding current recon picture
     generate_padding(
         encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
@@ -1706,9 +1107,7 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
     }
 
     //SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n", pcs_ptr->picture_number, (double)intra_cost_base, (double)mc_dep_cost_base, pcs_ptr->r0, pcs_ptr->base_rdmult);
-#if TPL_LA_LAMBDA_SCALING
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
-#endif
 
     const uint32_t sb_sz = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
     const uint32_t picture_sb_width  = (uint32_t)((scs_ptr->seq_header.max_frame_width  + sb_sz - 1) / sb_sz);
@@ -1768,7 +1167,6 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr)
 * Genrate TPL MC Flow Based on Lookahead
 ** LAD Window: sliding window size
 ************************************************/
-#if LAD_MEM_RED
 EbErrorType tpl_mc_flow(
     EncodeContext                   *encode_context_ptr,
     SequenceControlSet              *scs_ptr,
@@ -1786,9 +1184,7 @@ EbErrorType tpl_mc_flow(
     EbByte                           mc_flow_rec_picture_buffer_noref = NULL;
 
     (void)scs_ptr;
-#if TPL_SW_UPDATE
     pcs_array[0] = pcs_ptr;
-#endif
     // Walk the first N entries in the sliding window
     inputQueueIndex = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
     for (int32_t frame_idx = 0; frame_idx < pcs_ptr->frames_in_sw; frame_idx++) {
@@ -1921,10 +1317,8 @@ EbErrorType tpl_mc_flow(
         }
         // synthesizer
         for (int32_t frame_idx = sw_length - 1; frame_idx >= 1; frame_idx--)
-#if TPL_SW_UPDATE
             // to make sure synthesizer is not called more than one time
             if(pcs_array[frame_idx]->picture_number <= pcs_array[1]->picture_number)
-#endif
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
     }
 
@@ -1939,134 +1333,6 @@ EbErrorType tpl_mc_flow(
 
     return EB_ErrorNone;
 }
-#else
-EbErrorType tpl_mc_flow(
-    EncodeContext                   *encode_context_ptr,
-    SequenceControlSet              *scs_ptr,
-    PictureParentControlSet         *pcs_ptr)
-{
-    InitialRateControlReorderEntry   *temporaryQueueEntryPtr;
-    PictureParentControlSet          *temp_pcs_ptr;
-    PictureParentControlSet          *pcs_array[MAX_TPL_LA_SW] = {NULL, };
-
-    uint32_t                         inputQueueIndex;
-    int32_t                          frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->frames_in_sw);
-    int32_t                          frame_idx, i;
-    uint32_t                         shift = pcs_ptr->is_720p_or_larger ? 0 : 1;
-    uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width  + 16 - 1) / 16;
-    uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
-    EbBool                           got_intra_in_sw = EB_FALSE;
-    EbByte                           mc_flow_rec_picture_buffer_noref = NULL;
-
-    (void)scs_ptr;
-
-    // Walk the first N entries in the sliding window
-    inputQueueIndex = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    for (frame_idx = 0; frame_idx < pcs_ptr->frames_in_sw; frame_idx++) {
-        temporaryQueueEntryPtr = encode_context_ptr->initial_rate_control_reorder_queue[inputQueueIndex];
-        temp_pcs_ptr = ((PictureParentControlSet*)(temporaryQueueEntryPtr->parent_pcs_wrapper_ptr)->object_ptr);
-
-        // sort to be decode order
-        if(frame_idx == 0) {
-            pcs_array[0] = temp_pcs_ptr;
-        } else {
-            for (i = 0; i < frame_idx; i++) {
-                if (temp_pcs_ptr->decode_order < pcs_array[i]->decode_order) {
-                    for (int32_t j = frame_idx; j > i; j--)
-                        pcs_array[j] = pcs_array[j-1];
-                    pcs_array[i] = temp_pcs_ptr;
-                    break;
-                }
-            }
-            if (i == frame_idx)
-                pcs_array[i] = temp_pcs_ptr;
-        }
-
-        // Increment the inputQueueIndex Iterator
-        inputQueueIndex = (inputQueueIndex == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1) ? 0 : inputQueueIndex + 1;
-    }
-
-    for (frame_idx = 1; frame_idx < MIN(16, frames_in_sw); frame_idx++) {
-        if(frame_is_intra_only(pcs_array[frame_idx])) {
-            got_intra_in_sw = EB_TRUE;
-            break;
-        }
-    }
-    if (got_intra_in_sw) {
-        return EB_ErrorNone;
-    }
-
-    for(frame_idx = 0; frame_idx < MAX_TPL_LA_SW; frame_idx++) {
-        encode_context_ptr->poc_map_idx[frame_idx] = -1;
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
-    }
-    EB_MALLOC_ARRAY(mc_flow_rec_picture_buffer_noref, pcs_ptr->enhanced_picture_ptr->luma_size);
-    for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-        if (pcs_array[frame_idx]->is_used_as_reference_flag) {
-            EB_MALLOC_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx], pcs_ptr->enhanced_picture_ptr->luma_size);
-        } else {
-            encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = mc_flow_rec_picture_buffer_noref;
-        }
-    }
-
-    if (frame_is_intra_only(pcs_array[0]) && pcs_array[0]->temporal_layer_index == 0) {
-        // dispenser I0 or frame_idx0 pic in LA1
-        int32_t sw_length = MIN(17, (frames_in_sw));
-        for(frame_idx = 0; frame_idx < sw_length; frame_idx++) {
-            encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
-            for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
-                memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
-            }
-
-            tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
-        }
-
-        // synthesizer I0 or frame_idx0 pic in LA1
-        for(frame_idx = sw_length - 1; frame_idx >= 0; frame_idx--) {
-            tpl_mc_flow_synthesizer(pcs_array, frame_idx, sw_length);
-        }
-        generate_r0beta(pcs_array[0]);
-    }
-
-    if (pcs_array[1]->temporal_layer_index == 0) {
-        // dispenser frame_idx1 pic in LA1 or LA2+
-        encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
-        for(frame_idx = 1; frame_idx < frames_in_sw; frame_idx++) {
-            encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
-            if (frame_idx == 1) {
-                EbPictureBufferDesc *input_picture_ptr = pcs_array[0]->enhanced_picture_ptr;
-                uint8_t *dst_buffer = encode_context_ptr->mc_flow_rec_picture_buffer[0];
-                memcpy(dst_buffer, input_picture_ptr->buffer_y, input_picture_ptr->stride_y * (input_picture_ptr->origin_y * 2 + input_picture_ptr->height));
-            }
-            for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
-                memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
-            }
-            tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
-        }
-        // synthesizer frame_idx1 pic in LA1 or LA2+
-        PictureParentControlSet *pcs_array_reorder[MAX_TPL_LA_SW] = {NULL, };
-        for (int32_t index = 0; index < (frames_in_sw - 1); index++) {
-            pcs_array_reorder[index] = pcs_array[1 + index];
-        }
-        for(frame_idx = frames_in_sw - 2; frame_idx >= 0; frame_idx--) {
-            tpl_mc_flow_synthesizer(pcs_array_reorder, frame_idx, frames_in_sw - 1);
-        }
-        generate_r0beta(pcs_array[1]);
-    }
-
-    for(frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-        if ( encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] &&
-             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] != mc_flow_rec_picture_buffer_noref ) {
-            EB_FREE_ARRAY(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
-        }
-        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] = NULL;
-    }
-    EB_FREE_ARRAY(mc_flow_rec_picture_buffer_noref);
-
-    return EB_ErrorNone;
-}
-#endif
-#endif
 /* Initial Rate Control Kernel */
 
 /*********************************************************************************
@@ -2126,21 +1392,10 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
-#if !IMPROVE_GMV
-            // Mark picture when global motion is detected using ME results
-            //reset intra_coded_estimation_sb
-            me_based_global_motion_detection(pcs_ptr);
-#endif
-#if TPL_LA
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
             }
-#else
-            // Release Pa Ref pictures when not needed
-            release_pa_reference_objects(scs_ptr, pcs_ptr);
-#endif
-#if DECOUPLE_ME_RES
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             if (scs_ptr->static_config.look_ahead_distance == 0) {
@@ -2157,23 +1412,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
                 init_zz_cost_info(pcs_ptr);
 
-#if !DECOUPLE_ME_RES
-                // Get Empty Reference Picture Object
-                eb_get_empty_object(
-                    scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
-                    &reference_picture_wrapper_ptr);
-                pcs_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
-                // Give the new Reference a nominal live_count of 1
-                eb_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
-#endif
-#if !TWOPASS_RC
-                pcs_ptr->stat_struct_first_pass_ptr =
-                    pcs_ptr->is_used_as_reference_flag ? &((EbReferenceObject *)pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->stat_struct
-                    : &pcs_ptr->stat_struct;
-                if (use_output_stat(scs_ptr))
-                    memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
-#endif
-
                 // Get Empty Results Object
                 eb_get_empty_object(
                     context_ptr->initialrate_control_results_output_fifo_ptr,
@@ -2187,7 +1425,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
             }
             else {
-#endif
             //****************************************************
             // Input Motion Analysis Results into Reordering Queue
             //****************************************************
@@ -2197,11 +1434,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 determine_picture_offset_in_queue(
                     encode_context_ptr, pcs_ptr, in_results_ptr);
 
-#if TWOPASS_RC
             if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                 ; //skip 2pass VBR
             else
-#endif
             if (scs_ptr->static_config.rate_control_mode) {
                 // Getting the Histogram Queue Data
                 get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
@@ -2319,11 +1554,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         else
                             pcs_ptr->end_of_sequence_region = EB_FALSE;
 
-#if TWOPASS_RC
                         if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                             ; //skip 2pass VBR
                         else
-#endif
                         if (scs_ptr->static_config.rate_control_mode) {
                             // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
                             if (scs_ptr->static_config.look_ahead_distance != 0) {
@@ -2332,18 +1565,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
                             }
                         }
-#if !IMPROVE_GMV
-                        // Mark each input picture as PAN or not
-                        // If a lookahead is present then check PAN for a period of time
-                        if (!pcs_ptr->end_of_sequence_flag &&
-                            scs_ptr->static_config.look_ahead_distance != 0) {
-                            // Check for Pan,Tilt, Zoom and other global motion detectors over the future pictures in the lookahead
-                            update_global_motion_detection_over_time(
-                                encode_context_ptr, scs_ptr, pcs_ptr);
-                        } else {
-                            if (pcs_ptr->slice_type != I_SLICE) detect_global_motion(pcs_ptr);
-                        }
-#endif
                         // BACKGROUND ENHANCEMENT Part II
                         if (!pcs_ptr->end_of_sequence_flag &&
                             scs_ptr->static_config.look_ahead_distance != 0) {
@@ -2380,27 +1601,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     ->reference_picture_wrapper_ptr,
                                 1);
                         }
-#if !TWOPASS_RC
-                        pcs_ptr->stat_struct_first_pass_ptr =
-                            pcs_ptr->is_used_as_reference_flag
-                                ? &((EbReferenceObject *)
-                                        pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                                       ->stat_struct
-                                : &pcs_ptr->stat_struct;
-                        if (use_output_stat(scs_ptr))
-                            memset(pcs_ptr->stat_struct_first_pass_ptr, 0, sizeof(StatStruct));
-#endif
-#if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&
-#if !TPL_SW_UPDATE
-                            pcs_ptr->frames_in_sw >= QPS_SW_THRESH &&
-                            //pcs_ptr->frames_in_sw > 16/*(2 << scs_ptr->static_config.hierarchical_levels)*/ &&
-#endif
                             pcs_ptr->temporal_layer_index == 0) {
                             tpl_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
-#endif
                         // Get Empty Results Object
                         eb_get_empty_object(
                             context_ptr->initialrate_control_results_output_fifo_ptr,
@@ -2414,14 +1619,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         else
                             out_results_ptr->pcs_wrapper_ptr =
                                 queue_entry_ptr->parent_pcs_wrapper_ptr;
-#if TPL_LA
                         if (scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->static_config.enable_tpl_la
                             && ((has_overlay == 0 && loop_index == 0) || (has_overlay == 1 && loop_index == 1))) {
                             // Release Pa Ref pictures when not needed
                             release_pa_reference_objects(scs_ptr, pcs_ptr);
                                 //loop_index ? pcs_ptr : queueEntryPtr);
                         }
-#endif
                         // Post the Full Results Object
                         eb_post_full_object(out_results_wrapper_ptr);
                     }
@@ -2441,9 +1644,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             [encode_context_ptr->initial_rate_control_reorder_queue_head_index];
                 }
             }
-#if DECOUPLE_ME_RES
             }
-#endif
         }
 
         // Release the Input Results

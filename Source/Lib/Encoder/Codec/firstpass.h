@@ -16,17 +16,14 @@
 #include "EbRateControlProcess.h"
 #include "EbPictureControlSet.h"
 
-#if TWOPASS_RC
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define TURN_OFF_EC_FIRST_PASS  1
 
-#if FIRST_PASS_SETUP
 #define FORCED_BLK_SIZE 16
 #define FIRST_PASS_Q 10.0
-#endif
 
 #define DOUBLE_DIVIDE_CHECK(x) ((x) < 0 ? (x)-0.000001 : (x) + 0.000001)
 
@@ -329,7 +326,6 @@ struct TileDataEnc;
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section);
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section,
                           const FIRSTPASS_STATS *frame);
-#if FIRST_PASS_SETUP
 struct PictureParentControlSet;
 extern void svt_av1_end_first_pass(struct PictureParentControlSet *pcs_ptr);
 extern void first_pass_frame_end(struct PictureParentControlSet *pcs_ptr, const int64_t ts_duration);
@@ -339,12 +335,10 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv,
     const int mb_row, const int mb_col,
     const int mb_rows, const int mb_cols,
     MV *last_mv, FRAME_STATS *stats);
-#endif
 /*!\endcond */
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // TWOPASS_RC
 #endif  // AOM_AV1_ENCODER_FIRSTPASS_H_
