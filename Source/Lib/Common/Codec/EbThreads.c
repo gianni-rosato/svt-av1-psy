@@ -175,7 +175,7 @@ EbErrorType eb_destroy_thread(EbHandle thread_handle) {
     WaitForSingleObject(thread_handle, INFINITE);
     error_return = CloseHandle(thread_handle) ? EB_ErrorNone : EB_ErrorDestroyThreadFailed;
 #else
-    error_return = pthread_join(*((pthread_t *)thread_handle), NULL) ? EB_ErrorNone : EB_ErrorDestroyThreadFailed;
+    error_return = pthread_join(*((pthread_t *)thread_handle), NULL) ? EB_ErrorDestroyThreadFailed : EB_ErrorNone;
     free(thread_handle);
 #endif // _WIN32
 
