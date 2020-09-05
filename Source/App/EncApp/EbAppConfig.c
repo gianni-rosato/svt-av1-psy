@@ -46,7 +46,6 @@
 #define PASSES_TOKEN "--passes"
 #define INPUT_STAT_FILE_TOKEN "-input-stat-file"
 #define OUTPUT_STAT_FILE_TOKEN "-output-stat-file"
-
 #define STAT_FILE_TOKEN "-stat-file"
 #define INPUT_PREDSTRUCT_FILE_TOKEN "-pred-struct-file"
 #define WIDTH_TOKEN "-w"
@@ -248,18 +247,6 @@ static EbBool fopen_and_lock(FILE** file, const char* name, EbBool write)
     return EB_FALSE;
 }
 
-static void unlock_and_fclose(FILE* file)
-{
-    if (!file)
-        return;
-
-#ifdef _WIN32
-    HANDLE handle = get_file_handle(file);
-    UnlockFile(handle, 0, 0, MAXDWORD, MAXDWORD);
-#endif
-    fclose(file);
-}
-
 /**********************************
  * Set Cfg Functions
  **********************************/
@@ -342,15 +329,6 @@ static void set_passes(const char* value, EbConfig *cfg) {
     return;
 }
 
-static void set_input_stat_file(const char *value, EbConfig *cfg) {
-    if (cfg->input_stat_file) { unlock_and_fclose(cfg->input_stat_file); }
-    fopen_and_lock(&cfg->input_stat_file, value, EB_FALSE);
-};
-static void set_output_stat_file(const char *value, EbConfig *cfg) {
-    if (cfg->output_stat_file) { unlock_and_fclose(cfg->output_stat_file); }
-    fopen_and_lock(&cfg->output_stat_file, value, EB_TRUE);
-    cfg->rc_firstpass_stats_out = EB_TRUE;
-};
 static void set_cfg_stat_file(const char *value, EbConfig *cfg) {
     if (cfg->stat_file) { fclose(cfg->stat_file); }
     FOPEN(cfg->stat_file, value, "wb");
@@ -707,31 +685,6 @@ static void set_unrestricted_motion_vector(const char *value, EbConfig *cfg) {
     cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);
 };
 
-static void set_square_weight(const char *value, EbConfig *cfg) {
-    cfg->sq_weight = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->sq_weight == 0) cfg->sq_weight = (uint32_t)~0;
-}
-
-static void set_md_stage_1_class_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_1_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_1_class_prune_th == 0) cfg->md_stage_1_class_prune_th = (uint64_t)~0;
-}
-
-static void set_md_stage_1_cand_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_1_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_1_cand_prune_th == 0) cfg->md_stage_1_cand_prune_th = (uint64_t)~0;
-}
-
-static void set_md_stage_2_3_class_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_2_3_class_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_2_3_class_prune_th == 0) cfg->md_stage_2_3_class_prune_th = (uint64_t)~0;
-}
-
-static void set_md_stage_2_3_cand_prune_th(const char *value, EbConfig *cfg) {
-    cfg->md_stage_2_3_cand_prune_th = (uint64_t)strtoul(value, NULL, 0);
-    if (cfg->md_stage_2_3_cand_prune_th == 0) cfg->md_stage_2_3_cand_prune_th = (uint64_t)~0;
-}
-
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
     ARRAY_INPUT // Configuration parameters that have multiple values as input
@@ -894,11 +847,6 @@ ConfigEntry config_entry_2p[] = {
     {SINGLE_INPUT, PASS_TOKEN, "Multipass bitrate control (1: first pass, generates stats file , 2: second pass, uses stats file)", set_pass},
     {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Filename for 2 pass stats(\"svtav1_2pass.log\" : [Default])", set_two_pass_stats},
     {SINGLE_INPUT, PASSES_TOKEN, "Number of passes (1: one pass encode, 2: two passes encode)", set_passes},
-    {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "First pass stat file output", set_output_stat_file},
-    {SINGLE_INPUT,
-     INPUT_STAT_FILE_TOKEN,
-     "Input the first pass output to the second pass",
-     set_input_stat_file},
     {SINGLE_INPUT, VBR_BIAS_PCT_TOKEN, "CBR/VBR bias (0=CBR, 100=VBR)", set_vbr_bias_pct},
     {SINGLE_INPUT, VBR_MIN_SECTION_PCT_TOKEN, "GOP min bitrate (% of target)", set_vbr_min_section_pct},
     {SINGLE_INPUT, VBR_MAX_SECTION_PCT_TOKEN, "GOP max bitrate (% of target)", set_vbr_max_section_pct},
@@ -912,7 +860,7 @@ ConfigEntry config_entry_intra_refresh[] = {
     // set_cfg_intra_period},
     {SINGLE_INPUT,
      KEYINT_TOKEN,
-     "Intra period interval(frames) (-2: No intra update, -1: default intra period or [0-255])",
+     "Intra period interval(frames) (-2: default intra period , -1: No intra update or [0-255])",
      set_cfg_intra_period},
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
@@ -1156,7 +1104,7 @@ ConfigEntry config_entry_specific[] = {
     // --- start: ALTREF_FILTERING_SUPPORT
      {SINGLE_INPUT,
       TF_LEVEL,
-      "Set altref level(0: OFF, 1: ON[default])",
+      "Set altref level(-1: Default; 0: OFF; 1: ON; 2 and 3: Faster levels)",
       set_tf_level},
     {SINGLE_INPUT,
      ALTREF_STRENGTH,
@@ -1169,28 +1117,6 @@ ConfigEntry config_entry_specific[] = {
      "extra reference frame for the base-layer picture(0: OFF[default], 1: ON)",
      set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT,
-     SQ_WEIGHT_TOKEN,
-     "Determines if HA, HB, VA, VB, H4 and V4 shapes could be skipped based on the cost of SQ, H "
-     "and V shapes([75-100], default: 100)",
-     set_square_weight},
-    {SINGLE_INPUT,
-     MDS_1_PRUNE_C_TH,
-     "Set MD Stage 1 prune class threshold[5-200]",
-     set_md_stage_1_class_prune_th},
-    {SINGLE_INPUT,
-     MDS_1_PRUNE_S_TH,
-     "Set MD Stage 1 prune candidate threshold[5,150]",
-     set_md_stage_1_cand_prune_th},
-    {SINGLE_INPUT,
-     MDS_2_3_PRUNE_C_TH,
-     "Set MD Stage 2/3 prune class threshold[5,100]",
-     set_md_stage_2_3_class_prune_th},
-    {SINGLE_INPUT,
-     MDS_2_3_PRUNE_S_TH,
-     "Set MD Stage 2/3 prune candidate threshold[5,50]",
-     set_md_stage_2_3_cand_prune_th},
-
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
     {SINGLE_INPUT,
      INTRA_ANGLE_DELTA_NEW_TOKEN,
@@ -1218,8 +1144,6 @@ ConfigEntry config_entry[] = {
     // two pass
     {SINGLE_INPUT, PASS_TOKEN, "Pass", set_pass},
     {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Two pass stat", set_two_pass_stats},
-    {SINGLE_INPUT, INPUT_STAT_FILE_TOKEN, "InputStatFile", set_input_stat_file},
-    {SINGLE_INPUT, OUTPUT_STAT_FILE_TOKEN, "OutputStatFile", set_output_stat_file},
 
     {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
     // Picture Dimensions
@@ -1388,14 +1312,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom},
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
 
-    {SINGLE_INPUT, SQ_WEIGHT_TOKEN, "SquareWeight", set_square_weight},
-    {SINGLE_INPUT, MDS_1_PRUNE_C_TH, "MdFastPruneClassThreshold", set_md_stage_1_class_prune_th},
-    {SINGLE_INPUT, MDS_1_PRUNE_S_TH, "MdFastPruneCandThreshold", set_md_stage_1_cand_prune_th},
-    {SINGLE_INPUT,
-     MDS_2_3_PRUNE_C_TH,
-     "MdFullPruneClassThreshold",
-     set_md_stage_2_3_class_prune_th},
-    {SINGLE_INPUT, MDS_2_3_PRUNE_S_TH, "MdFullPruneCandThreshold", set_md_stage_2_3_cand_prune_th},
     // double dash
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},
     {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "Path to Qp file", set_cfg_qp_file},
@@ -1434,7 +1350,7 @@ ConfigEntry config_entry[] = {
      set_frame_end_cdf_update_flag},
     {SINGLE_INPUT,
      LOCAL_WARPED_ENABLE_NEW_TOKEN,
-     "Local Warped Motion",
+     "Local Warped Motion [0 = OFF, 1 = ON, -1 = DEFAULT]",
      set_enable_local_warped_motion_flag},
     {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_NEW_TOKEN, "Global Motion", set_enable_global_motion_flag},
     {SINGLE_INPUT, RDOQ_NEW_TOKEN, "RDOQ double dash token", set_rdoq_level_flag},
@@ -1592,13 +1508,6 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->superres_qthres   = 43; // random threshold for now
     // end - super-resolution support
 
-    config_ptr->sq_weight = 100;
-
-    config_ptr->md_stage_1_cand_prune_th    = 75;
-    config_ptr->md_stage_1_class_prune_th   = 100;
-    config_ptr->md_stage_2_3_cand_prune_th  = 15;
-    config_ptr->md_stage_2_3_class_prune_th = 25;
-
     config_ptr->pass = DEFAULT;
 
     return;
@@ -1652,14 +1561,6 @@ void eb_config_dtor(EbConfig *config_ptr) {
     if (config_ptr->stat_file) {
         fclose(config_ptr->stat_file);
         config_ptr->stat_file = (FILE *)NULL;
-    }
-    if (config_ptr->input_stat_file) {
-        unlock_and_fclose(config_ptr->input_stat_file);
-        config_ptr->input_stat_file = (FILE *)NULL;
-    }
-    if (config_ptr->output_stat_file) {
-        unlock_and_fclose(config_ptr->output_stat_file);
-        config_ptr->output_stat_file = (FILE *)NULL;
     }
     free((void*)config_ptr->stats);
     return;
@@ -2270,23 +2171,6 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
     } else
         return 0;
 }
-//uint32_t get_help(int32_t argc, char *const argv[]) {
-//    char config_string[COMMAND_LINE_MAX_SIZE];
-//    if (find_token(argc, argv, HELP_TOKEN, config_string) == 0) {
-//        int32_t token_index = -1;
-//
-//        fprintf(stderr, "\n%-25s\t%-25s\t%s\n\n", "TOKEN", "DESCRIPTION", "INPUT TYPE");
-//        fprintf(stderr, "%-25s\t%-25s\t%s\n", "-nch", "NumberOfChannels", "Single input");
-//        while (config_entry[++token_index].token != NULL)
-//            fprintf(stderr,
-//                    "%-25s\t%-25s\t%s\n",
-//                    config_entry[token_index].token,
-//                    config_entry[token_index].name,
-//                    config_entry[token_index].type ? "Array input" : "Single input");
-//        return 1;
-//    } else
-//        return 0;
-//}
 
 /******************************************************
 * Get the number of channels and validate it with input
@@ -2350,8 +2234,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
     }
-    if (check_two_pass_conflicts(argc, argv))
-        return 0;
 
     int preset = MAX_ENC_PRESET;
     if (find_token(argc, argv, PRESET_TOKEN, config_string) == 0
@@ -2368,6 +2250,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
     }
+    if (check_two_pass_conflicts(argc, argv))
+        return 0;
 
     pass[0] = ENCODE_FIRST_PASS;
     pass[1] = ENCODE_LAST_PASS;
@@ -2636,8 +2520,6 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
     if (EB_STRCMP(token, PAETH_TOKEN) == 0) linked_token = PAETH_NEW_TOKEN;
     if (EB_STRCMP(token, SMOOTH_TOKEN) == 0) linked_token = SMOOTH_NEW_TOKEN;
     if (EB_STRCMP(token, PIC_BASED_RATE_EST_TOKEN) == 0) linked_token = PIC_BASED_RATE_EST_NEW_TOKEN;
-    if (EB_STRCMP(token, INPUT_STAT_FILE_TOKEN) == 0) linked_token = TWO_PASS_STATS_TOKEN;
-    if (EB_STRCMP(token, OUTPUT_STAT_FILE_TOKEN) == 0) linked_token = TWO_PASS_STATS_TOKEN;
 
     if (EB_STRLEN(linked_token, WARNING_LENGTH) > 1) {
         const char *message_str = " will be deprecated soon, please use ";

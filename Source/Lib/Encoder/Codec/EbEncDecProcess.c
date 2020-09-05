@@ -2520,8 +2520,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_M5)
             context_ptr->md_stage_1_class_prune_th = (uint64_t)~0;
         else
-            context_ptr->md_stage_1_class_prune_th =
-            sequence_control_set_ptr->static_config.md_stage_1_class_prune_th;
+            context_ptr->md_stage_1_class_prune_th = 100;
 
     // md_stage_2_3_cand_prune_th (for single candidate removal per class)
     // Remove candidate if deviation to the best is higher than
@@ -2548,8 +2547,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_stage_2_3_class_prune_th = 25;
     else
-        context_ptr->md_stage_2_3_class_prune_th =
-        sequence_control_set_ptr->static_config.md_stage_2_3_class_prune_th;
+        context_ptr->md_stage_2_3_class_prune_th = 25;
     // If using a mode offset, do not modify the NSQ-targeting features
     if (!mode_offset) {
         if (pd_pass == PD_PASS_0)

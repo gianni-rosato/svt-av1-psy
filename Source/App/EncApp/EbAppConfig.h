@@ -481,15 +481,6 @@ typedef struct EbConfig {
     uint8_t       superres_kf_denom;
     uint8_t       superres_qthres;
 
-    // square cost weighting for deciding if a/b shapes could be skipped
-    uint32_t sq_weight;
-
-    // inter/intra class pruning costs before MD stage 1/2
-    uint64_t md_stage_1_class_prune_th;
-    uint64_t md_stage_1_cand_prune_th;
-    uint64_t md_stage_2_3_class_prune_th;
-    uint64_t md_stage_2_3_cand_prune_th;
-
     // prediction structure
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
     EbBool                         enable_manual_pred_struct;

@@ -2250,13 +2250,6 @@ void copy_api_from_app(
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;
     scs_ptr->static_config.superres_qthres = config_struct->superres_qthres;
 
-    scs_ptr->static_config.sq_weight = config_struct->sq_weight;
-
-    scs_ptr->static_config.md_stage_1_cand_prune_th = config_struct->md_stage_1_cand_prune_th;
-    scs_ptr->static_config.md_stage_1_class_prune_th = config_struct->md_stage_1_class_prune_th;
-    scs_ptr->static_config.md_stage_2_3_cand_prune_th = config_struct->md_stage_2_3_cand_prune_th;
-    scs_ptr->static_config.md_stage_2_3_class_prune_th = config_struct->md_stage_2_3_class_prune_th;
-
     // Prediction Structure
     scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
     if(scs_ptr->static_config.enable_manual_pred_struct){
@@ -2551,6 +2544,11 @@ static EbErrorType verify_settings(
     // IntraBC
     if (config->intrabc_mode > 3 || config->intrabc_mode < -1) {
         SVT_LOG( "Error instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n", channel_number + 1, config->intrabc_mode);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->intrabc_mode != -1 && config->screen_content_mode != 1) {
+        SVT_LOG("Error instance %u: The intra BC feature is only available when screen_content_mode is set to 1\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2993,13 +2991,6 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->superres_denom = 8;
     config_ptr->superres_kf_denom = 8;
     config_ptr->superres_qthres = 43; // random threshold, change
-
-    config_ptr->sq_weight = 100;
-
-    config_ptr->md_stage_1_cand_prune_th = 75;
-    config_ptr->md_stage_1_class_prune_th = 100;
-    config_ptr->md_stage_2_3_cand_prune_th = 15;
-    config_ptr->md_stage_2_3_class_prune_th = 25;
 
     return return_error;
 }

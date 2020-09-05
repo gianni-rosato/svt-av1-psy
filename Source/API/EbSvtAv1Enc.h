@@ -94,12 +94,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is defined as MAX_ENC_PRESET. */
     int8_t enc_mode;
-    /* For two pass encoding, the enc_mod of the second pass is passed in the first pass.
-    * First pass has the option to run with second pass ME settings.
-    *
-    * Default is defined as MAX_ENC_PRESET. */
-    // hack for gstreamer building
-    uint8_t snd_pass_enc_mode;
+
     // GOP Structure
 
     /* The intra period defines the interval of frames after which you insert an
@@ -696,13 +691,6 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_denom;
     uint8_t superres_kf_denom;
     uint8_t superres_qthres;
-
-    uint32_t sq_weight;
-
-    uint64_t md_stage_1_cand_prune_th;
-    uint64_t md_stage_1_class_prune_th;
-    uint64_t md_stage_2_3_cand_prune_th;
-    uint64_t md_stage_2_3_class_prune_th;
 
   /* Prediction Structure user defined
    */
