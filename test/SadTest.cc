@@ -539,7 +539,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_BLOCK_SIZES)));
 
 typedef std::tuple<int16_t, int16_t> SearchArea;
-
+#if !REMOVE_ME_SUBPEL_CODE
 SearchArea TEST_AREAS[] = {
     SearchArea(64, 125),  SearchArea(192, 75),  SearchArea(128, 50),
     SearchArea(64, 25),   SearchArea(240, 200), SearchArea(144, 120),
@@ -551,7 +551,7 @@ SearchArea TEST_AREAS[] = {
     SearchArea(288, 72),  SearchArea(192, 48),  SearchArea(96, 24),
     SearchArea(160, 60),  SearchArea(96, 36),   SearchArea(64, 24),
     SearchArea(32, 12)};
-
+#endif
 SearchArea TEST_LOOP_AREAS[] = {
     SearchArea(8, 15),    SearchArea(16, 31),   SearchArea(12, 31),
     SearchArea(64, 125),  SearchArea(192, 75),  SearchArea(128, 50),

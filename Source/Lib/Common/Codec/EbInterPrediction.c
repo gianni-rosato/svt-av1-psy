@@ -46,7 +46,7 @@ int is_masked_compound_type(COMPOUND_TYPE type) {
 }
 
 
-void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
+void eb_aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
                                  const uint8_t *src8, ptrdiff_t src_stride, const uint8_t *pred8,
                                  ptrdiff_t pred_stride, int bd) {
     uint16_t *src  = (uint16_t *)(src8);
@@ -62,7 +62,7 @@ void aom_highbd_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t di
     }
 }
 
-void aom_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
+void eb_aom_subtract_block_c(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
                           const uint8_t *src, ptrdiff_t src_stride, const uint8_t *pred,
                           ptrdiff_t pred_stride) {
 
@@ -2140,7 +2140,7 @@ int eb_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, i
  * holds for 8 bit input, and on real input, it should hold practically always,
  * as residuals are expected to be small.
  */
-uint64_t av1_wedge_sse_from_residuals_c(const int16_t *r1, const int16_t *d, const uint8_t *m,
+uint64_t eb_av1_wedge_sse_from_residuals_c(const int16_t *r1, const int16_t *d, const uint8_t *m,
                                         int N) {
     uint64_t csse = 0;
 
@@ -2197,7 +2197,7 @@ void combine_interintra(InterIntraMode mode, int8_t use_wedge_interintra, int we
     }
 }
 
-void eb_aom_highbd_blend_a64_hmask_c(uint16_t *dst, uint32_t dst_stride, const uint16_t *src0,
+void eb_aom_highbd_blend_a64_hmask_c_16bit(uint16_t *dst, uint32_t dst_stride, const uint16_t *src0,
                                      uint32_t src0_stride, const uint16_t *src1,
                                      uint32_t src1_stride, const uint8_t *mask, int w, int h,
                                      int bd) {
@@ -2264,5 +2264,3 @@ const uint8_t *eb_av1_get_obmc_mask(int length) {
         default: assert(0); return NULL;
     }
 }
-
-

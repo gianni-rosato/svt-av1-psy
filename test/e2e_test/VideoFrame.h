@@ -198,6 +198,7 @@ typedef struct VideoFrame : public VideoFrameParam {
             strides[PLANE_U] = strides[PLANE_V] = param.width >> 1;
             break;
         case IMG_FMT_444A: strides[PLANE_A] = param.width;
+        // fall through
         case IMG_FMT_444:
         case IMG_FMT_444P10_PACKED:
             strides[PLANE_U] = strides[PLANE_V] = param.width;

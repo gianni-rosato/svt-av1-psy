@@ -1222,91 +1222,91 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 }
 
                 //pcs_ptr->hash_table.p_lookup_table = NULL;
-                //av1_hash_table_create(&pcs_ptr->hash_table);
+                //svt_av1_hash_table_create(&pcs_ptr->hash_table);
 
                 Yv12BufferConfig cpi_source;
                 link_eb_to_aom_buffer_desc_8bit(pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                                 &cpi_source);
 
-                av1_crc_calculator_init(&pcs_ptr->crc_calculator1, 24, 0x5D6DCB);
-                av1_crc_calculator_init(&pcs_ptr->crc_calculator2, 24, 0x864CFB);
+                svt_av1_crc_calculator_init(&pcs_ptr->crc_calculator1, 24, 0x5D6DCB);
+                svt_av1_crc_calculator_init(&pcs_ptr->crc_calculator2, 24, 0x864CFB);
 
-                av1_generate_block_2x2_hash_value(
+                svt_av1_generate_block_2x2_hash_value(
                     &cpi_source, block_hash_values[0], is_block_same[0], pcs_ptr);
-                av1_generate_block_hash_value(&cpi_source,
+                svt_av1_generate_block_hash_value(&cpi_source,
                                               4,
                                               block_hash_values[0],
                                               block_hash_values[1],
                                               is_block_same[0],
                                               is_block_same[1],
                                               pcs_ptr);
-                av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                             block_hash_values[1],
                                                             is_block_same[1][2],
                                                             pic_width,
                                                             pic_height,
                                                             4);
-                av1_generate_block_hash_value(&cpi_source,
+                svt_av1_generate_block_hash_value(&cpi_source,
                                               8,
                                               block_hash_values[1],
                                               block_hash_values[0],
                                               is_block_same[1],
                                               is_block_same[0],
                                               pcs_ptr);
-                av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                             block_hash_values[0],
                                                             is_block_same[0][2],
                                                             pic_width,
                                                             pic_height,
                                                             8);
-                av1_generate_block_hash_value(&cpi_source,
+                svt_av1_generate_block_hash_value(&cpi_source,
                                               16,
                                               block_hash_values[0],
                                               block_hash_values[1],
                                               is_block_same[0],
                                               is_block_same[1],
                                               pcs_ptr);
-                av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                             block_hash_values[1],
                                                             is_block_same[1][2],
                                                             pic_width,
                                                             pic_height,
                                                             16);
-                av1_generate_block_hash_value(&cpi_source,
+                svt_av1_generate_block_hash_value(&cpi_source,
                                               32,
                                               block_hash_values[1],
                                               block_hash_values[0],
                                               is_block_same[1],
                                               is_block_same[0],
                                               pcs_ptr);
-                av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                             block_hash_values[0],
                                                             is_block_same[0][2],
                                                             pic_width,
                                                             pic_height,
                                                             32);
-                av1_generate_block_hash_value(&cpi_source,
+                svt_av1_generate_block_hash_value(&cpi_source,
                                               64,
                                               block_hash_values[0],
                                               block_hash_values[1],
                                               is_block_same[0],
                                               is_block_same[1],
                                               pcs_ptr);
-                av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                             block_hash_values[1],
                                                             is_block_same[1][2],
                                                             pic_width,
                                                             pic_height,
                                                             64);
 
-                av1_generate_block_hash_value(&cpi_source,
+                svt_av1_generate_block_hash_value(&cpi_source,
                                               128,
                                               block_hash_values[1],
                                               block_hash_values[0],
                                               is_block_same[1],
                                               is_block_same[0],
                                               pcs_ptr);
-                av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                             block_hash_values[0],
                                                             is_block_same[0][2],
                                                             pic_width,

@@ -591,11 +591,11 @@ class HbdSquareVarianceNoRoundTest
 
   private:
     SVTRandom rnd_;
+    uint32_t bd_;
+    uint32_t length_;
+    HighBdVarianceNoRoundFunc tst_func_;
     uint16_t* src_data_;
     uint16_t* ref_data_;
-    uint32_t length_;
-    uint32_t bd_;
-    HighBdVarianceNoRoundFunc tst_func_;
 };
 
 TEST_P(HbdSquareVarianceNoRoundTest, ZeroTest) {

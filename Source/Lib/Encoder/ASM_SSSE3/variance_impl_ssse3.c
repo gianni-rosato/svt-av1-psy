@@ -16,7 +16,7 @@
 
 #include "synonyms.h"
 
-void aom_var_filter_block2d_bil_first_pass_ssse3(const uint8_t *a, uint16_t *b,
+void svt_aom_var_filter_block2d_bil_first_pass_ssse3(const uint8_t *a, uint16_t *b,
                                                  unsigned int src_pixels_per_line,
                                                  unsigned int pixel_step,
                                                  unsigned int output_height,
@@ -81,7 +81,7 @@ void aom_var_filter_block2d_bil_first_pass_ssse3(const uint8_t *a, uint16_t *b,
     }
 }
 
-void aom_var_filter_block2d_bil_second_pass_ssse3(
+void svt_aom_var_filter_block2d_bil_second_pass_ssse3(
     const uint16_t *a, uint8_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,
     unsigned int output_height, unsigned int output_width, const uint8_t *filter) {
     const int16_t round   = (1 << FILTER_BITS) >> 1;

@@ -180,7 +180,7 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
 }
 
 #define OBMCVARWXH(W, H)                                                      \
-    unsigned int aom_obmc_variance##W##x##H##_avx2(const uint8_t *pre,        \
+    unsigned int eb_aom_obmc_variance##W##x##H##_avx2(const uint8_t *pre,        \
                                                    int            pre_stride, \
                                                    const int32_t *wsrc,       \
                                                    const int32_t *mask,       \

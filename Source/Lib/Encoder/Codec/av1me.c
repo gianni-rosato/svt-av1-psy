@@ -1210,13 +1210,13 @@ int eb_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSiz
                 // for the hashMap
                 HashTable *ref_frame_hash = &pcs->hash_table;
 
-                av1_get_block_hash_value(
+                svt_av1_get_block_hash_value(
                     what, what_stride, block_width, &hash_value1, &hash_value2, 0, pcs, x);
 
-                const int count = av1_hash_table_count(ref_frame_hash, hash_value1);
+                const int count = svt_av1_hash_table_count(ref_frame_hash, hash_value1);
                 // for intra, at least one matching can be found, itself.
                 if (count <= (intra ? 1 : 0)) break;
-                Iterator iterator = av1_hash_get_first_iterator(ref_frame_hash, hash_value1);
+                Iterator iterator = svt_av1_hash_get_first_iterator(ref_frame_hash, hash_value1);
                 for (int i = 0; i < count; i++, iterator_increment(&iterator)) {
                     BlockHash ref_block_hash = *(BlockHash *)(iterator_get(&iterator));
                     if (hash_value2 == ref_block_hash.hash_value2) {

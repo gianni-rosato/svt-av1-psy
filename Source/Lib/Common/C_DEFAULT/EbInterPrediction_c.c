@@ -27,7 +27,7 @@ static void diffwtd_mask_d16(uint8_t *mask, int which_inverse, int mask_base,
     }
 }
 
-void av1_build_compound_diffwtd_mask_d16_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
+void eb_av1_build_compound_diffwtd_mask_d16_c(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
                                            const CONV_BUF_TYPE *src0, int src0_stride,
                                            const CONV_BUF_TYPE *src1, int src1_stride, int h, int w,
                                            ConvolveParams *conv_params, int bd) {

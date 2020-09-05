@@ -250,7 +250,7 @@ static double get_max_bitrate(const AV1LevelSpec *const level_spec, int tier,
   return bitrate_basis * bitrate_profile_factor;
 }
 
-double av1_get_max_bitrate_for_level(AV1_LEVEL level_index, int tier,
+double svt_av1_get_max_bitrate_for_level(AV1_LEVEL level_index, int tier,
                                      BITSTREAM_PROFILE profile) {
   assert(is_valid_seq_level_idx((uint8_t)level_index));
   return get_max_bitrate(&av1_level_defs[level_index], tier, profile);

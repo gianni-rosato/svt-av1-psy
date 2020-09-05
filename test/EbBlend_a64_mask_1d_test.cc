@@ -197,7 +197,7 @@ static void blend_a64_hmask_ref(uint8_t *dst, uint32_t dst_stride,
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[col];
 
-    aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
+    eb_aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
                          &mask2d[0][0], BlendA64Mask1DTest8B::kMaxMaskSize,
                          w, h, 0, 0);
 }
@@ -213,7 +213,7 @@ static void blend_a64_vmask_ref(uint8_t *dst, uint32_t dst_stride,
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[row];
 
-    aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
+    eb_aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
                          &mask2d[0][0], BlendA64Mask1DTest8B::kMaxMaskSize,
                          w, h, 0, 0);
 }
@@ -226,9 +226,9 @@ static void blend_a64_vmask_ref(uint8_t *dst, uint32_t dst_stride,
     }
 // C
 TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_hmask_ref,
-          aom_blend_a64_hmask_c, Horz_Blend_C)
+          eb_aom_blend_a64_hmask_c, Horz_Blend_C)
 TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_vmask_ref,
-           aom_blend_a64_vmask_c, Vert_Blend_C)
+           eb_aom_blend_a64_vmask_c, Vert_Blend_C)
 // Intrinsic
 TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_hmask_ref,
            eb_aom_blend_a64_hmask_sse4_1, Horz_Blend_SSE4_1)
@@ -307,7 +307,7 @@ static void highbd_blend_a64_hmask_ref(
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[col];
 
-    aom_highbd_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1,
+    eb_aom_highbd_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1,
         src1_stride, &mask2d[0][0], BlendA64Mask1DTestHBD::kMaxMaskSize,
         w, h, 0, 0, bd);
 }
@@ -323,16 +323,16 @@ static void highbd_blend_a64_vmask_ref(
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[row];
 
-    aom_highbd_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1,
+    eb_aom_highbd_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1,
         src1_stride, &mask2d[0][0], BlendA64Mask1DTestHBD::kMaxMaskSize,
         w, h, 0, 0,bd);
 }
 
 // C
 TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_hmask_ref,
-           aom_highbd_blend_a64_hmask_c, Horz_Blend_Hbd_C)
+           eb_aom_highbd_blend_a64_hmask_c_8bit, Horz_Blend_Hbd_C)
 TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_vmask_ref,
-           aom_highbd_blend_a64_vmask_c, Vert_Blend_Hbd_C)
+           eb_aom_highbd_blend_a64_vmask_c_8bit, Vert_Blend_Hbd_C)
 // Intrinsic
 TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_hmask_ref,
            eb_aom_highbd_blend_a64_hmask_sse4_1_8bit, Horz_Blend_Hbd_SSE4_1)

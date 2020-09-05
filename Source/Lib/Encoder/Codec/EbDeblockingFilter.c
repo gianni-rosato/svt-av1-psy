@@ -383,53 +383,53 @@ void eb_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
                 // apply 4-tap filtering
             case 4:
                 if (is_16bit) {
-                    aom_highbd_lpf_vertical_4((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_vertical_4((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                               dst_stride,
                                               params.mblim,
                                               params.lim,
                                               params.hev_thr,
                                               scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_vertical_4(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_vertical_4(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
             case 6: // apply 6-tap filter for chroma plane only
                 assert(plane != 0);
                 if (is_16bit) {
-                    aom_highbd_lpf_vertical_6((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_vertical_6((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                               dst_stride,
                                               params.mblim,
                                               params.lim,
                                               params.hev_thr,
                                               scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_vertical_6(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_vertical_6(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 8-tap filtering
             case 8:
                 if (is_16bit) {
-                    aom_highbd_lpf_vertical_8((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_vertical_8((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                               dst_stride,
                                               params.mblim,
                                               params.lim,
                                               params.hev_thr,
                                               scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_vertical_8(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_vertical_8(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 14-tap filtering
             case 14:
                 if (is_16bit) {
-                    aom_highbd_lpf_vertical_14((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_vertical_14((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                                dst_stride,
                                                params.mblim,
                                                params.lim,
                                                params.hev_thr,
                                                scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_vertical_14(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_vertical_14(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // no filtering
@@ -516,54 +516,54 @@ void eb_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
                 // apply 4-tap filtering
             case 4:
                 if (is_16bit) {
-                    aom_highbd_lpf_horizontal_4((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_horizontal_4((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                                 dst_stride,
                                                 params.mblim,
                                                 params.lim,
                                                 params.hev_thr,
                                                 scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_horizontal_4(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_4(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 6-tap filtering
             case 6:
                 assert(plane != 0);
                 if (is_16bit) {
-                    aom_highbd_lpf_horizontal_6((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_horizontal_6((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                                 dst_stride,
                                                 params.mblim,
                                                 params.lim,
                                                 params.hev_thr,
                                                 scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_horizontal_6(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_6(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 8-tap filtering
             case 8:
                 if (is_16bit) {
-                    aom_highbd_lpf_horizontal_8((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_horizontal_8((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                                 dst_stride,
                                                 params.mblim,
                                                 params.lim,
                                                 params.hev_thr,
                                                 scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_horizontal_8(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_8(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // apply 14-tap filtering
             case 14:
                 if (is_16bit) {
-                    aom_highbd_lpf_horizontal_14((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                    svt_aom_highbd_lpf_horizontal_14((uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
                                                  dst_stride,
                                                  params.mblim,
                                                  params.lim,
                                                  params.hev_thr,
                                                  scs_ptr->static_config.encoder_bit_depth);
                 } else {
-                    aom_lpf_horizontal_14(p, dst_stride, params.mblim, params.lim, params.hev_thr);
+                    svt_aom_lpf_horizontal_14(p, dst_stride, params.mblim, params.lim, params.hev_thr);
                 }
                 break;
                 // no filtering

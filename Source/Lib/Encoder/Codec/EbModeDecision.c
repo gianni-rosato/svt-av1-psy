@@ -220,8 +220,8 @@ static int64_t pick_interintra_wedge(ModeDecisionCandidate *candidate_ptr,
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]); // src - pred1
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]); // pred1 - pred0
     if (context_ptr->hbd_mode_decision) {
-        aom_highbd_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_10BIT);
-        aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw, EB_10BIT);
+        eb_aom_highbd_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw, EB_10BIT);
+        eb_aom_highbd_subtract_block(bh, bw, diff10, bw, p1, bw, p0, bw, EB_10BIT);
 
     } else {
         eb_aom_subtract_block(bh, bw, residual1, bw, src_buf, src_stride, p1, bw);
@@ -4174,8 +4174,8 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     x->is_exhaustive_allowed =
         context_ptr->blk_geom->bwidth == 4 || context_ptr->blk_geom->bheight == 4 ? 1 : 0;
     //CHKN crc calculator could be moved to mdContext and these init at init time.
-    av1_crc_calculator_init(&x->crc_calculator1, 24, 0x5D6DCB);
-    av1_crc_calculator_init(&x->crc_calculator2, 24, 0x864CFB);
+    svt_av1_crc_calculator_init(&x->crc_calculator1, 24, 0x5D6DCB);
+    svt_av1_crc_calculator_init(&x->crc_calculator2, 24, 0x864CFB);
 
     x->xd            = blk_ptr->av1xd;
     x->nmv_vec_cost  = context_ptr->md_rate_estimation_ptr->nmv_vec_cost;

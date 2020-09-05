@@ -90,6 +90,18 @@ jobs:
           sudo -E ../libvpx/configure --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
           sudo -E make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
 
+      - name: Check for symbol conflicts
+        if: matrix.os == 'ubuntu-18.04'
+        run: |
+          conflicts=$(
+              nm -CAg --defined-only /usr/local/lib/lib{SvtAv1Enc,aom,vpx}.a | cut -d' ' -f3 | sort | uniq -d
+          )
+          if [[ -n $conflicts ]]; then
+            printf 'Conflicts Found!\n'
+            echo "$conflicts"
+            exit 1
+          fi
+
       - name: Configure FFmpeg
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache

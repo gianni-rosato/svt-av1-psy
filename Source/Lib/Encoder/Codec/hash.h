@@ -27,9 +27,9 @@ typedef struct _crc_calculator {
 } CRC_CALCULATOR;
 
 // Initialize the crc calculator. It must be executed at least once before
-// calling av1_get_crc_value().
-void av1_crc_calculator_init(CRC_CALCULATOR *p_crc_calculator, uint32_t bits, uint32_t truncPoly);
-uint32_t av1_get_crc_value(void *crc_calculator, uint8_t *p, int length);
+// calling svt_av1_get_crc_value().
+void svt_av1_crc_calculator_init(CRC_CALCULATOR *p_crc_calculator, uint32_t bits, uint32_t truncPoly);
+uint32_t svt_av1_get_crc_value(void *crc_calculator, uint8_t *p, int length);
 #define AOM_BUFFER_SIZE_FOR_BLOCK_HASH (4096)
 
 #ifdef __cplusplus

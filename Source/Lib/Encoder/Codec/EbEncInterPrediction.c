@@ -513,7 +513,7 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
  *
  * The result is saturated to signed 16 bits.
  */
-void av1_wedge_compute_delta_squares_c(int16_t *d, const int16_t *a, const int16_t *b, int N) {
+void eb_av1_wedge_compute_delta_squares_c(int16_t *d, const int16_t *a, const int16_t *b, int N) {
     int i;
 
     for (i = 0; i < N; i++) d[i] = clamp(a[i] * a[i] - b[i] * b[i], INT16_MIN, INT16_MAX);
@@ -550,7 +550,7 @@ void av1_wedge_compute_delta_squares_c(int16_t *d, const int16_t *a, const int16
  *  Note that for efficiency, ds is stored on 16 bits. Real input residuals
  *  being small, this should not cause a noticeable issue.
  */
-int8_t av1_wedge_sign_from_residuals_c(const int16_t *ds, const uint8_t *m, int N, int64_t limit) {
+int8_t eb_av1_wedge_sign_from_residuals_c(const int16_t *ds, const uint8_t *m, int N, int64_t limit) {
     int64_t acc = 0;
 
     do { acc += *ds++ * *m++; } while (--N);
@@ -585,7 +585,7 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
         uint16_t *src_buf_hbd = (uint16_t *)src_pic->buffer_y +
                                 (context_ptr->blk_origin_x + src_pic->origin_x) +
                                 (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
-        aom_highbd_subtract_block(bh,
+        eb_aom_highbd_subtract_block(bh,
                                   bw,
                                   residual0,
                                   bw,
@@ -6243,7 +6243,7 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
             uint16_t *src_buf_hbd =
                 (uint16_t *)src_pic->buffer_y + (context_ptr->blk_origin_x + src_pic->origin_x) +
                 (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y;
-            aom_highbd_subtract_block(bheight,
+            eb_aom_highbd_subtract_block(bheight,
                 bwidth,
                 context_ptr->residual1,
                 bwidth,
@@ -6252,7 +6252,7 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
                 (uint8_t *)context_ptr->pred1,
                 bwidth,
                 EB_10BIT);
-            aom_highbd_subtract_block(bheight,
+            eb_aom_highbd_subtract_block(bheight,
                 bwidth,
                 context_ptr->diff10,
                 bwidth,

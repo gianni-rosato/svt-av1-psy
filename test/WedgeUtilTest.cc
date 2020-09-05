@@ -60,7 +60,7 @@ class WedgeUtilTest : public ::testing::Test {
         for (int i = 0; i < N; ++i)
             ds[i] = clamp(r0[i] * r0[i] - r1[i] * r1[i], INT16_MIN, INT16_MAX);
         const int8_t ref_sign =
-            av1_wedge_sign_from_residuals_c(ds, m, N, limit);
+            eb_av1_wedge_sign_from_residuals_c(ds, m, N, limit);
         const int8_t tst_sign =
             eb_av1_wedge_sign_from_residuals_avx2(ds, m, N, limit);
         ASSERT_EQ(ref_sign, tst_sign)
@@ -165,7 +165,7 @@ TEST_F(WedgeUtilTest, ComputeDeltaSquareTest) {
         // eb_av1_wedge_compute_delta_squares_avx2
         const int N = 64 * n_rnd.random();
 
-        av1_wedge_compute_delta_squares_c(ref_diff, r0, r1, N);
+        eb_av1_wedge_compute_delta_squares_c(ref_diff, r0, r1, N);
         eb_av1_wedge_compute_delta_squares_avx2(tst_diff, r0, r1, N);
 
         // check the output
@@ -198,7 +198,7 @@ TEST_F(WedgeUtilTest, SseFromResidualRandomTest) {
         // eb_av1_wedge_sse_from_residuals_avx2
         const int N = 64 * n_rnd.random();
 
-        uint64_t ref_sse = av1_wedge_sse_from_residuals_c(r0, r1, m, N);
+        uint64_t ref_sse = eb_av1_wedge_sse_from_residuals_c(r0, r1, m, N);
         uint64_t tst_sse = eb_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
 
         // check output
@@ -251,7 +251,7 @@ TEST_F(WedgeUtilTest, SseFromResidualExtremeTest) {
         // eb_av1_wedge_sse_from_residuals_avx2
         const int N = 64 * n_rnd.random();
 
-        uint64_t ref_sse = av1_wedge_sse_from_residuals_c(r0, r1, m, N);
+        uint64_t ref_sse = eb_av1_wedge_sse_from_residuals_c(r0, r1, m, N);
         uint64_t tst_sse = eb_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
 
         // check output

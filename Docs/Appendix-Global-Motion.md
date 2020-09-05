@@ -135,15 +135,15 @@ but it computes the global motion for the whole frame. The function involves a l
 that runs over all reference frames.
 
 To compute the global motion between two frames, the FAST features of the reference
-frames are extracted and matched to those of the current frame in the ```av1_fast_corner_detect```
-function, thanks to the fastfeat third-party library. The ```av1_fast_corner_detect``` function
+frames are extracted and matched to those of the current frame in the ```svt_av1_fast_corner_detect```
+function, thanks to the fastfeat third-party library. The ```svt_av1_fast_corner_detect``` function
 is first called to determine the features in the source picture. Then it is called again
-from the function ```av1_compute_global_motion``` to determine the features in the reference picture.
+from the function ```svt_av1_compute_global_motion``` to determine the features in the reference picture.
 
 Once the features have been extracted, they are matched. This is done in the
-```av1_determine_correspondence``` function by two nested loops over the features of the
+```svt_av1_determine_correspondence``` function by two nested loops over the features of the
 reference frame and the current frame. A current frame feature is matched to a reference
-frame feature that maximizes their cross-correlation computed by ```av1_compute_cross_correlation_c```.
+frame feature that maximizes their cross-correlation computed by ```eb_av1_compute_cross_correlation_c```.
 However, the match is kept only if the cross-correlation is superior to the ```THRESHOLD_NCC```
 threshold multiplied by the variance of the current feature patch.
 
@@ -173,13 +173,13 @@ numbers of inliers and smallest position variance are kept. These transformation
 then ranked by their number of inliers and their parameters are recomputed by using
 only with the inliers.
 
-The transformation parameters are refined in the ```av1_refine_integerized_param``` function.
+The transformation parameters are refined in the ```svt_av1_refine_integerized_param``` function.
 It uses the ```eb_av1_warp_error``` function to estimate the error between the reference frame
 and the current frame in order to select the model with the smallest error.
 
 As saving global motion parameters takes space in the bit stream, the global motion model
 is kept only if the potential rate-distortion gain is significant. This decision is made
-by the ```av1_is_enough_erroradvantage``` function thanks to the computed frame error, the storage
+by the ```svt_av1_is_enough_erroradvantage``` function thanks to the computed frame error, the storage
 cost of the global motion parameters and empirical thresholds.
 
 

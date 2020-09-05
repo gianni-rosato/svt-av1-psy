@@ -317,7 +317,7 @@ typedef struct IntraBcContext {
     int *        nmv_vec_cost;
     int **       mv_cost_stack;
     // buffer for hash value calculation of a block
-    // used only in av1_get_block_hash_value()
+    // used only in svt_av1_get_block_hash_value()
     // [first hash/second hash]
     // [two buffers used ping-pong]
     uint32_t *     hash_value_buffer[2][2];

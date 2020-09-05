@@ -259,7 +259,7 @@ class KMeansTest : public ::testing::TestWithParam<int> {
         vector<uint16_t>::iterator it =
             std::unique(val_vec.begin(), val_vec.end());
         val_vec.erase(it, val_vec.end());
-        return (const int)val_vec.size();
+        return (int)val_vec.size();
     }
 
     void run_test_2d(size_t times) {

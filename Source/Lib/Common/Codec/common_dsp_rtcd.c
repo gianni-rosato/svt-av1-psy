@@ -242,16 +242,16 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     //to use C: flags=0
     (void)flags;
-    eb_aom_blend_a64_mask = aom_blend_a64_mask_c;
-    eb_aom_blend_a64_hmask = aom_blend_a64_hmask_c;
-    eb_aom_blend_a64_vmask = aom_blend_a64_vmask_c;
+    eb_aom_blend_a64_mask = eb_aom_blend_a64_mask_c;
+    eb_aom_blend_a64_hmask = eb_aom_blend_a64_hmask_c;
+    eb_aom_blend_a64_vmask = eb_aom_blend_a64_vmask_c;
 
-    eb_aom_highbd_blend_a64_mask = aom_highbd_blend_a64_mask_c;
-    eb_aom_highbd_blend_a64_hmask_8bit = aom_highbd_blend_a64_hmask_c;
-    eb_aom_highbd_blend_a64_vmask_8bit = aom_highbd_blend_a64_vmask_c;
+    eb_aom_highbd_blend_a64_mask = eb_aom_highbd_blend_a64_mask_c;
+    eb_aom_highbd_blend_a64_hmask_8bit = eb_aom_highbd_blend_a64_hmask_c_8bit;
+    eb_aom_highbd_blend_a64_vmask_8bit = eb_aom_highbd_blend_a64_vmask_c_8bit;
 
-    eb_aom_highbd_blend_a64_vmask_16bit = eb_aom_highbd_blend_a64_vmask_c;
-    eb_aom_highbd_blend_a64_hmask_16bit = eb_aom_highbd_blend_a64_hmask_c;
+    eb_aom_highbd_blend_a64_vmask_16bit = eb_aom_highbd_blend_a64_vmask_c_16bit;
+    eb_aom_highbd_blend_a64_hmask_16bit = eb_aom_highbd_blend_a64_hmask_c_16bit;
 
     eb_cfl_predict_lbd = eb_cfl_predict_lbd_c;
     eb_cfl_predict_hbd = eb_cfl_predict_hbd_c;
@@ -264,7 +264,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     eb_av1_upsample_intra_edge = eb_av1_upsample_intra_edge_c;
 
-    eb_av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_c;
+    eb_av1_build_compound_diffwtd_mask_d16 = eb_av1_build_compound_diffwtd_mask_d16_c;
 
     eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_c;
 
@@ -352,14 +352,14 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     eb_av1_build_compound_diffwtd_mask = eb_av1_build_compound_diffwtd_mask_c;
     eb_av1_build_compound_diffwtd_mask_highbd = eb_av1_build_compound_diffwtd_mask_highbd_c;
-    eb_av1_wedge_sse_from_residuals = av1_wedge_sse_from_residuals_c;
+    eb_av1_wedge_sse_from_residuals = eb_av1_wedge_sse_from_residuals_c;
 
-    eb_aom_subtract_block = aom_subtract_block_c;
+    eb_aom_subtract_block = eb_aom_subtract_block_c;
 
-    eb_aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_c;
-    eb_aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_c;
+    eb_aom_lowbd_blend_a64_d16_mask = eb_aom_lowbd_blend_a64_d16_mask_c;
+    eb_aom_highbd_blend_a64_d16_mask = eb_aom_highbd_blend_a64_d16_mask_c;
 
-    aom_highbd_subtract_block = aom_highbd_subtract_block_c;
+    eb_aom_highbd_subtract_block = eb_aom_highbd_subtract_block_c;
 
     eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_c;
     eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_c;
@@ -620,22 +620,22 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     eb_av1_warp_affine = eb_av1_warp_affine_c;
 
-    aom_highbd_lpf_horizontal_14 = svt_aom_highbd_lpf_horizontal_14_c;
-    aom_highbd_lpf_horizontal_4 = svt_aom_highbd_lpf_horizontal_4_c;
-    aom_highbd_lpf_horizontal_6 = svt_aom_highbd_lpf_horizontal_6_c;
-    aom_highbd_lpf_horizontal_8 = svt_aom_highbd_lpf_horizontal_8_c;
-    aom_highbd_lpf_vertical_14 = svt_aom_highbd_lpf_vertical_14_c;
-    aom_highbd_lpf_vertical_4 = svt_aom_highbd_lpf_vertical_4_c;
-    aom_highbd_lpf_vertical_6 = svt_aom_highbd_lpf_vertical_6_c;
-    aom_highbd_lpf_vertical_8 = svt_aom_highbd_lpf_vertical_8_c;
-    aom_lpf_horizontal_14 = svt_aom_lpf_horizontal_14_c;
-    aom_lpf_horizontal_4 = svt_aom_lpf_horizontal_4_c;
-    aom_lpf_horizontal_6 = svt_aom_lpf_horizontal_6_c;
-    aom_lpf_horizontal_8 = svt_aom_lpf_horizontal_8_c;
-    aom_lpf_vertical_14 = svt_aom_lpf_vertical_14_c;
-    aom_lpf_vertical_4 = svt_aom_lpf_vertical_4_c;
-    aom_lpf_vertical_6 = svt_aom_lpf_vertical_6_c;
-    aom_lpf_vertical_8 = svt_aom_lpf_vertical_8_c;
+    svt_aom_highbd_lpf_horizontal_14 = svt_aom_highbd_lpf_horizontal_14_c;
+    svt_aom_highbd_lpf_horizontal_4 = svt_aom_highbd_lpf_horizontal_4_c;
+    svt_aom_highbd_lpf_horizontal_6 = svt_aom_highbd_lpf_horizontal_6_c;
+    svt_aom_highbd_lpf_horizontal_8 = svt_aom_highbd_lpf_horizontal_8_c;
+    svt_aom_highbd_lpf_vertical_14 = svt_aom_highbd_lpf_vertical_14_c;
+    svt_aom_highbd_lpf_vertical_4 = svt_aom_highbd_lpf_vertical_4_c;
+    svt_aom_highbd_lpf_vertical_6 = svt_aom_highbd_lpf_vertical_6_c;
+    svt_aom_highbd_lpf_vertical_8 = svt_aom_highbd_lpf_vertical_8_c;
+    svt_aom_lpf_horizontal_14 = svt_aom_lpf_horizontal_14_c;
+    svt_aom_lpf_horizontal_4 = svt_aom_lpf_horizontal_4_c;
+    svt_aom_lpf_horizontal_6 = svt_aom_lpf_horizontal_6_c;
+    svt_aom_lpf_horizontal_8 = svt_aom_lpf_horizontal_8_c;
+    svt_aom_lpf_vertical_14 = svt_aom_lpf_vertical_14_c;
+    svt_aom_lpf_vertical_4 = svt_aom_lpf_vertical_4_c;
+    svt_aom_lpf_vertical_6 = svt_aom_lpf_vertical_6_c;
+    svt_aom_lpf_vertical_8 = svt_aom_lpf_vertical_8_c;
 
     // eb_aom_highbd_v_predictor
     eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_c;
@@ -812,7 +812,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 #ifdef ARCH_X86
     flags &= get_cpu_flags_to_use();
     if (flags & HAS_SSE4_1) eb_aom_blend_a64_mask = eb_aom_blend_a64_mask_sse4_1;
-    if (flags & HAS_AVX2) eb_aom_blend_a64_mask = aom_blend_a64_mask_avx2;
+    if (flags & HAS_AVX2) eb_aom_blend_a64_mask = eb_aom_blend_a64_mask_avx2;
     if (flags & HAS_SSE4_1) eb_aom_blend_a64_hmask = eb_aom_blend_a64_hmask_sse4_1;
     if (flags & HAS_SSE4_1) eb_aom_blend_a64_vmask = eb_aom_blend_a64_vmask_sse4_1;
     if (flags & HAS_SSE4_1) eb_aom_highbd_blend_a64_mask = eb_aom_highbd_blend_a64_mask_sse4_1_8bit;
@@ -826,7 +826,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge_high = eb_av1_filter_intra_edge_high_sse4_1;
     if (flags & HAS_SSE4_1) eb_av1_filter_intra_edge = eb_av1_filter_intra_edge_sse4_1;
     if (flags & HAS_SSE4_1) eb_av1_upsample_intra_edge = eb_av1_upsample_intra_edge_sse4_1;
-    if (flags & HAS_AVX2) eb_av1_build_compound_diffwtd_mask_d16 = av1_build_compound_diffwtd_mask_d16_avx2;
+    if (flags & HAS_AVX2) eb_av1_build_compound_diffwtd_mask_d16 = eb_av1_build_compound_diffwtd_mask_d16_avx2;
     if (flags & HAS_AVX2) eb_av1_highbd_wiener_convolve_add_src = eb_av1_highbd_wiener_convolve_add_src_avx2;
     if (flags & HAS_AVX2) eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_avx2;
     if (flags & HAS_AVX2) eb_av1_selfguided_restoration = eb_av1_selfguided_restoration_avx2;
@@ -950,15 +950,15 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
             eb_av1_jnt_convolve_y_avx2,
             eb_av1_jnt_convolve_y_avx512);
 
-        if (flags & HAS_AVX2) eb_aom_convolve8_horiz = aom_convolve8_horiz_avx2;
-        if (flags & HAS_AVX2) eb_aom_convolve8_vert = aom_convolve8_vert_avx2;
+        if (flags & HAS_AVX2) eb_aom_convolve8_horiz = eb_aom_convolve8_horiz_avx2;
+        if (flags & HAS_AVX2) eb_aom_convolve8_vert = eb_aom_convolve8_vert_avx2;
         if (flags & HAS_AVX2) eb_av1_build_compound_diffwtd_mask = eb_av1_build_compound_diffwtd_mask_avx2;
         if (flags & HAS_AVX2) eb_av1_build_compound_diffwtd_mask_highbd = eb_av1_build_compound_diffwtd_mask_highbd_avx2;
         if (flags & HAS_AVX2) eb_av1_wedge_sse_from_residuals = eb_av1_wedge_sse_from_residuals_avx2;
         if (flags & HAS_AVX2) eb_aom_subtract_block = eb_aom_subtract_block_avx2;
-        if (flags & HAS_AVX2) eb_aom_lowbd_blend_a64_d16_mask = aom_lowbd_blend_a64_d16_mask_avx2;
-        if (flags & HAS_AVX2) eb_aom_highbd_blend_a64_d16_mask = aom_highbd_blend_a64_d16_mask_avx2;
-        if (flags & HAS_AVX2) aom_highbd_subtract_block = aom_highbd_subtract_block_sse2;
+        if (flags & HAS_AVX2) eb_aom_lowbd_blend_a64_d16_mask = eb_aom_lowbd_blend_a64_d16_mask_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_blend_a64_d16_mask = eb_aom_highbd_blend_a64_d16_mask_avx2;
+        if (flags & HAS_AVX2) eb_aom_highbd_subtract_block = eb_aom_highbd_subtract_block_sse2;
         if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x16 = eb_aom_highbd_smooth_v_predictor_16x16_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x32 = eb_aom_highbd_smooth_v_predictor_16x32_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_smooth_v_predictor_16x4 = eb_aom_highbd_smooth_v_predictor_16x4_avx2;
@@ -1230,22 +1230,22 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
         SET_SSE41(
             eb_av1_highbd_warp_affine, eb_av1_highbd_warp_affine_c, eb_av1_highbd_warp_affine_sse4_1);
         if (flags & HAS_AVX2) eb_av1_warp_affine = eb_av1_warp_affine_avx2;
-        SET_SSE2(aom_highbd_lpf_horizontal_14, svt_aom_highbd_lpf_horizontal_14_c, aom_highbd_lpf_horizontal_14_sse2);
-        SET_SSE2(aom_highbd_lpf_horizontal_4, svt_aom_highbd_lpf_horizontal_4_c, aom_highbd_lpf_horizontal_4_sse2);
-        SET_SSE2(aom_highbd_lpf_horizontal_6, svt_aom_highbd_lpf_horizontal_6_c, aom_highbd_lpf_horizontal_6_sse2);
-        SET_SSE2(aom_highbd_lpf_horizontal_8, svt_aom_highbd_lpf_horizontal_8_c, aom_highbd_lpf_horizontal_8_sse2);
-        SET_SSE2(aom_highbd_lpf_vertical_14, svt_aom_highbd_lpf_vertical_14_c, aom_highbd_lpf_vertical_14_sse2);
-        SET_SSE2(aom_highbd_lpf_vertical_4, svt_aom_highbd_lpf_vertical_4_c, aom_highbd_lpf_vertical_4_sse2);
-        SET_SSE2(aom_highbd_lpf_vertical_6, svt_aom_highbd_lpf_vertical_6_c, aom_highbd_lpf_vertical_6_sse2);
-        SET_SSE2(aom_highbd_lpf_vertical_8, svt_aom_highbd_lpf_vertical_8_c, aom_highbd_lpf_vertical_8_sse2);
-        SET_SSE2(aom_lpf_horizontal_14, svt_aom_lpf_horizontal_14_c, aom_lpf_horizontal_14_sse2);
-        SET_SSE2(aom_lpf_horizontal_4, svt_aom_lpf_horizontal_4_c, aom_lpf_horizontal_4_sse2);
-        SET_SSE2(aom_lpf_horizontal_6, svt_aom_lpf_horizontal_6_c, aom_lpf_horizontal_6_sse2);
-        SET_SSE2(aom_lpf_horizontal_8, svt_aom_lpf_horizontal_8_c, aom_lpf_horizontal_8_sse2);
-        SET_SSE2(aom_lpf_vertical_14, svt_aom_lpf_vertical_14_c, aom_lpf_vertical_14_sse2);
-        SET_SSE2(aom_lpf_vertical_4, svt_aom_lpf_vertical_4_c, aom_lpf_vertical_4_sse2);
-        SET_SSE2(aom_lpf_vertical_6, svt_aom_lpf_vertical_6_c, aom_lpf_vertical_6_sse2);
-        SET_SSE2(aom_lpf_vertical_8, svt_aom_lpf_vertical_8_c, aom_lpf_vertical_8_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_horizontal_14, svt_aom_highbd_lpf_horizontal_14_c, svt_aom_highbd_lpf_horizontal_14_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_horizontal_4, svt_aom_highbd_lpf_horizontal_4_c, svt_aom_highbd_lpf_horizontal_4_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_horizontal_6, svt_aom_highbd_lpf_horizontal_6_c, svt_aom_highbd_lpf_horizontal_6_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_horizontal_8, svt_aom_highbd_lpf_horizontal_8_c, svt_aom_highbd_lpf_horizontal_8_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_vertical_14, svt_aom_highbd_lpf_vertical_14_c, svt_aom_highbd_lpf_vertical_14_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_vertical_4, svt_aom_highbd_lpf_vertical_4_c, svt_aom_highbd_lpf_vertical_4_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_vertical_6, svt_aom_highbd_lpf_vertical_6_c, svt_aom_highbd_lpf_vertical_6_sse2);
+        SET_SSE2(svt_aom_highbd_lpf_vertical_8, svt_aom_highbd_lpf_vertical_8_c, svt_aom_highbd_lpf_vertical_8_sse2);
+        SET_SSE2(svt_aom_lpf_horizontal_14, svt_aom_lpf_horizontal_14_c, svt_aom_lpf_horizontal_14_sse2);
+        SET_SSE2(svt_aom_lpf_horizontal_4, svt_aom_lpf_horizontal_4_c, svt_aom_lpf_horizontal_4_sse2);
+        SET_SSE2(svt_aom_lpf_horizontal_6, svt_aom_lpf_horizontal_6_c, svt_aom_lpf_horizontal_6_sse2);
+        SET_SSE2(svt_aom_lpf_horizontal_8, svt_aom_lpf_horizontal_8_c, svt_aom_lpf_horizontal_8_sse2);
+        SET_SSE2(svt_aom_lpf_vertical_14, svt_aom_lpf_vertical_14_c, svt_aom_lpf_vertical_14_sse2);
+        SET_SSE2(svt_aom_lpf_vertical_4, svt_aom_lpf_vertical_4_c, svt_aom_lpf_vertical_4_sse2);
+        SET_SSE2(svt_aom_lpf_vertical_6, svt_aom_lpf_vertical_6_c, svt_aom_lpf_vertical_6_sse2);
+        SET_SSE2(svt_aom_lpf_vertical_8, svt_aom_lpf_vertical_8_c, svt_aom_lpf_vertical_8_sse2);
         if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x32 = eb_aom_highbd_v_predictor_16x32_avx2;
         if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x4 = eb_aom_highbd_v_predictor_16x4_avx2;

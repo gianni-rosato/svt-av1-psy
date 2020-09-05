@@ -2486,4 +2486,3 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     }
   }
 }
-
