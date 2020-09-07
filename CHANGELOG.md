@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.8.5] - 2020-09-04
+Relicensing notice
+- Change the outbound license from BSD+Patent to the AOM license / patent
+
+Encoder
+- Added tpl support to adaptively change lambda and quantization parameters within the frame
+- Added multi staged hme support
+- Quality speed trade-offs tuned to VOD use cases
+- Added first level non-optimized support for 2pass VBR and CRF
+- Added combined cli two pass support with options for stats being written to a memory buffer and a specified file
+- Added non square partitioning optimizations
+- Improved lambda generation
+
+Build and Testing
+- Bug fixes
+- Improve CI
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+- Fix static analysis warnings / errors
+- Add address sanitizer
+- Fix symbol conflicts with libaom and libvpx when staticly lined to ffmpeg
+
+
 ## [0.8.4] - 2020-06-26
 
 Build and Testing

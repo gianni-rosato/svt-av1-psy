@@ -2227,9 +2227,6 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
             (uint32_t)MAX_ENCODE_PASS);
         return 0;
     }
-    if (passes == 2) {
-        printf("[WARNING]:The 2-pass encoding support is a WIP, it is only available for experimental and further development uses and should not be used for benchmarking until fully implemented.");
-    }
     if (passes == 1) {
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;

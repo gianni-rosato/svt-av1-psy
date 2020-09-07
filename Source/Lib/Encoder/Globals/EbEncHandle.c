@@ -2843,6 +2843,10 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: invalid superres-denom %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_denom, MIN_SUPERRES_DENOM, MAX_SUPERRES_DENOM);
         return_error = EB_ErrorBadParameter;
     }
+
+    if (config->rc_twopass_stats_in.sz || config->rc_firstpass_stats_out) {
+        SVT_WARN("The 2-pass encoding support is a work-in-progress, it is only available for experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+    }
     return return_error;
 }
 
@@ -3022,7 +3026,10 @@ static void print_lib_params(
         else
             SVT_LOG("Level %.1f\t", (float)(config->level / 10));
     }
-    SVT_LOG("\nSVT [config]: EncoderMode \t\t\t\t\t\t\t: %d ", config->enc_mode);
+    if (config->rc_firstpass_stats_out)
+        SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t\t: Pass 1 ");
+    else
+        SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t: %d ", config->enc_mode);
     SVT_LOG("\nSVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / %d / %d", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
     SVT_LOG("\nSVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d ", config->source_width, config->source_height);
     if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
@@ -3032,7 +3039,7 @@ static void print_lib_params(
             config->intra_refresh_type);
     else
         SVT_LOG("\nSVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d ", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
-    SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t: %d / %d", config->hierarchical_levels, config->pred_structure);
+    SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d", config->hierarchical_levels, config->pred_structure);
     if (config->rate_control_mode == 1)
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
     else if (config->rate_control_mode == 2)
