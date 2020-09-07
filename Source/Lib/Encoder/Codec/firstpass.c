@@ -50,7 +50,7 @@ static EbErrorType realloc_stats_out(FirstPassStatsOut* out, uint64_t frame_numb
     if (frame_number < out->size)
         return EB_ErrorNone;
     if (frame_number >= out->capability) {
-        size_t capability = frame_number > STATS_CAPABILITY_INIT ?
+        size_t capability = frame_number >= STATS_CAPABILITY_INIT ?
             STATS_CAPABILITY_GROW(frame_number) : STATS_CAPABILITY_INIT;
         EB_REALLOC_ARRAY(out->stat, capability);
         out->capability = capability;
