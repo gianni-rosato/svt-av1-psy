@@ -9,7 +9,7 @@ The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-co
 
 ## License
 
-SVT-AV1 is licensed under the Alliance for Open Media license. See [LICENSE](LICENSE.md) for details. Please refer to the [license Q&A](https://01.org/svt/downloads/svt-av1-license-change-qa) if you have any questions about the licensing history of SVT-AV1.
+SVT-AV1 is licensed under the Alliance for Open Media license and Patent License. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details. Please refer to the [license Q&A](https://01.org/svt/downloads/svt-av1-license-change-qa) if you have any questions about the licensing history of SVT-AV1.
 
 ## Documentation
 
@@ -147,11 +147,11 @@ Refer to the guide [here](https://github.com/OpenVisualCloud/Dockerfiles/blob/ma
 
 ## How to Contribute
 
-We welcome community contributions to the SVT-AV1 Encoder. Thank you for your time! By contributing to the project, you agree to the license and copyright terms in the OSI-approved BSD+Patent license and to the release of your contribution under these terms. See [LICENSE](LICENSE.md) for details.
+We welcome community contributions to the SVT-AV1 Encoder and Decoder. Thank you for your time! By contributing to the project, you agree to the license, patent and copyright terms in the AOM License and Patent License  and to the release of your contribution under these terms. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 
 ### Contribution process
 
-- Follow the [coding guidelines](STYLE.md)
+- Follow the [coding guidelines](STYLE.md) and the [contributing guidelines](CONTRIBUTING.md)
 
 - Validate that your changes do not break a build
 
@@ -170,7 +170,3 @@ Use the [Issues](https://github.com/OpenVisualCloud/SVT-AV1/issues) tab on Githu
 ## Performance tracker
 
 Performance and raw data files available at http://videocodectracker.dev
-
-## Notices and Disclaimers
-
-The notices and disclaimers can be found [here](NOTICES.md)
