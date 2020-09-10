@@ -46,8 +46,8 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->candidate_buffer_tx_depth_2->candidate_ptr);
     EB_DELETE(obj->candidate_buffer_tx_depth_2);
     EB_DELETE(obj->trans_quant_buffers_ptr);
-    if (obj->hbd_mode_decision > EB_8_BIT_MD) EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
-    if (obj->hbd_mode_decision != EB_10_BIT_MD) EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
+    EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon16bit);
+    EB_FREE_ALIGNED_ARRAY(obj->cfl_temp_luma_recon);
     if (obj->is_md_rate_estimation_ptr_owner) EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
     EB_FREE_ARRAY(obj->fast_candidate_array);
     EB_FREE_ARRAY(obj->fast_candidate_ptr_array);
@@ -56,14 +56,10 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->full_cost_skip_ptr);
     EB_FREE_ARRAY(obj->full_cost_merge_ptr);
     if (obj->md_local_blk_unit) {
-        if (obj->hbd_mode_decision > EB_8_BIT_MD) {
-            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon_16bit[0]);
-            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon_16bit[0]);
-        }
-        if (obj->hbd_mode_decision != EB_10_BIT_MD) {
-            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon[0]);
-            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon[0]);
-        }
+        EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon_16bit[0]);
+        EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon_16bit[0]);
+        EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon[0]);
+        EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon[0]);
     }
     if (obj->md_blk_arr_nsq) {
         EB_FREE_ARRAY(obj->md_blk_arr_nsq[0].av1xd);
