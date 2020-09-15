@@ -113,17 +113,11 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
         return EB_ErrorBadParameter;
     // Initialize config
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        configs[inst_cnt] = (EbConfig *)malloc(sizeof(EbConfig));
+        configs[inst_cnt] = eb_config_ctor(pass);
         if (!configs[inst_cnt]) {
-            while (inst_cnt-- > 0) free(configs[inst_cnt]);
+            while (inst_cnt-- > 0) eb_config_dtor(configs[inst_cnt]);
             return EB_ErrorInsufficientResources;
         }
-        eb_config_ctor(configs[inst_cnt]);
-        if (pass == ENCODE_FIRST_PASS)
-            configs[inst_cnt]->pass = 1;
-        else if (pass == ENCODE_LAST_PASS)
-            configs[inst_cnt]->pass = 2;
-        eb_2pass_config_update(configs[inst_cnt]);
         return_errors[inst_cnt] = EB_ErrorNone;
     }
 
@@ -452,8 +446,6 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
     // Destruct the App memory variables
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
         eb_config_dtor(configs[inst_cnt]);
-        if (configs[inst_cnt])
-            free(configs[inst_cnt]);
         if (app_callbacks[inst_cnt])
             free(app_callbacks[inst_cnt]);
     }
