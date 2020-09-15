@@ -164,6 +164,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
 | **RateControlMode** | --rc | [0 - 2] | 0 | 0 = CQP , 1 = VBR , 2 = CVBR |
+| **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
 | **TargetBitRate** | --tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 1, or 2 |
 | **UseQpFile** | --use-q-file | [0-1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile |
 | **QpFile** | --qpfile | any string | Null | Path to qp file |
@@ -199,7 +200,6 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **CompressedTenBitFormat** | --compressed-ten-bit-format | [0-1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
 | **TileRow** | --tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | --tile-columns | [0-6] | 0 | log2 of tile columns |
-| **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 |
 | **LookAheadDistance** | --lookahead | [0 - 120] | 33 | When RateControlMode is set to 1 or 2 it's strongly recommended to set this parameter to be equal to the Intra period value (such is the default set by the encoder). When RateControlMode  is set to 0, it is recommended for this value to be set to a size of a minigop (e.g. 16 for --hierarchichal-levels 4) |
 | **LoopFilterDisable** | --disable-dlf | [0-1] | 0 | Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled) |
 | **EnableTPLModel** | --enable-tpl-la | [0-1] | 1 | RDO based on frame temporal dependency (0: off, 1: backward source based)|
