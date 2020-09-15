@@ -190,7 +190,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 #### Keyframe Placement Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
-| **IntraPeriod** | --keyint | [-2 - 255] | -1 | Intra period interval(frames) -2: default intra period , -1: No intra update or [0-255] |
+| **IntraPeriod** | --keyint | [-2 - 255] | -2 | Intra period interval(frames) -2: default intra period , -1: No intra update or [0-255] |
 | **IntraRefreshType** | --irefresh-type | [1 - 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
 
 #### AV1 Specific Options
