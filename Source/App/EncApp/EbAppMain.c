@@ -452,14 +452,6 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     // Get num_channels
     uint32_t num_channels = enc_context->num_channels;
 
-    for (uint32_t inst_cnt = 0; inst_cnt < MAX_CHANNEL_NUMBER; ++inst_cnt) {
-        exit_cond[inst_cnt]        = APP_ExitConditionError; // Processing loop exit condition
-        exit_cond_output[inst_cnt] = APP_ExitConditionError; // Processing loop exit condition
-        exit_cond_recon[inst_cnt]  = APP_ExitConditionError; // Processing loop exit condition
-        exit_cond_input[inst_cnt]  = APP_ExitConditionError; // Processing loop exit condition
-        channel_active[inst_cnt]   = EB_FALSE;
-    }
-
     EbErrorType* return_errors = enc_context->return_errors;
     EncodePass pass = enc_context->pass;
     // Start the Encoder
