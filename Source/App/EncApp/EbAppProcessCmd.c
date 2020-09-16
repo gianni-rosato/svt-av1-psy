@@ -861,7 +861,7 @@ static unsigned char send_qp_on_the_fly(FILE *const qp_file, uint8_t *use_qp_fil
 // Reads yuv frames from file and copy
 // them into the input buffer
 /************************************/
-AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_call_back) {
+void process_input_buffer(EncChannel* channel, EbConfig *config, EbAppContext *app_call_back) {
     uint8_t             is_16bit         = (uint8_t)(config->encoder_bit_depth > 8);
     EbBufferHeaderType *header_ptr       = app_call_back->input_buffer_pool;
     EbComponentType *   component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
@@ -879,6 +879,8 @@ AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_ca
                    2 * ((input_padded_width * input_padded_width) >> (3 - color_format)));
     compressed10bit_frame_size += compressed10bit_frame_size / 4;
 
+    if (channel->exit_cond_input != APP_ExitConditionNone)
+        return;
     if (config->injector && config->processed_frame_count)
         injector(config->processed_frame_count, config->injector_frame_rate);
     total_bytes_to_process_count =
@@ -935,7 +937,7 @@ AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_ca
             (header_ptr->flags == EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished : return_value;
     }
 
-    return return_value;
+    channel->exit_cond_input = return_value;
 }
 
 #define LONG_ENCODE_FRAME_ENCODE 4000
@@ -1088,7 +1090,7 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
     return;
 }
 
-AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *config, EbAppContext *app_call_back,
+void process_output_stream_buffer(EncChannel* channel, EncApp* enc_app, EbConfig *config, EbAppContext *app_call_back,
                                                   uint8_t pic_send_done, int32_t *frame_count) {
     AppPortActiveType *  port_state = &app_call_back->output_stream_port_active;
     EbBufferHeaderType * header_ptr;
@@ -1104,6 +1106,8 @@ AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *con
     uint64_t finish_s_time = 0;
     uint64_t finish_u_time = 0;
     uint8_t  is_alt_ref    = 1;
+    if (channel->exit_cond_output != APP_ExitConditionNone)
+        return;
     while (is_alt_ref) {
         is_alt_ref = 0;
         // non-blocking call until all input frames are sent
@@ -1113,7 +1117,8 @@ AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *con
         if (stream_status == EB_ErrorMax) {
             fprintf(stderr, "\n");
             log_error_output(config->error_log_file, header_ptr->flags);
-            return APP_ExitConditionError;
+            channel->exit_cond_output = APP_ExitConditionError;
+            return;
         } else if (stream_status != EB_NoErrorEmptyQueue) {
             is_alt_ref        = (header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF);
             if (!(header_ptr->flags & EB_BUFFERFLAG_IS_ALT_REF))
@@ -1220,22 +1225,26 @@ AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *con
                         (double)*frame_count / config->performance_context.total_encode_time);
         }
     }
-    return return_value;
+    channel->exit_cond_output = return_value;
 }
-AppExitConditionType process_output_recon_buffer(EbConfig *config, EbAppContext *app_call_back) {
+void process_output_recon_buffer(EncChannel* channel, EbConfig *config, EbAppContext *app_call_back) {
 
     EbBufferHeaderType *header_ptr =
         app_call_back->recon_buffer; // needs to change for buffered input
     EbComponentType *    component_handle = (EbComponentType *)app_call_back->svt_encoder_handle;
     AppExitConditionType return_value     = APP_ExitConditionNone;
     int32_t              fseek_return_val;
+    if (channel->exit_cond_recon != APP_ExitConditionNone) {
+        return;
+    }
     // non-blocking call until all input frames are sent
     EbErrorType recon_status = svt_av1_get_recon(component_handle, header_ptr);
 
     if (recon_status == EB_ErrorMax) {
         fprintf(stderr, "\n");
         log_error_output(config->error_log_file, header_ptr->flags);
-        return APP_ExitConditionError;
+        channel->exit_cond_recon = APP_ExitConditionError;
+        return;
     } else if (recon_status != EB_NoErrorEmptyQueue) {
         //Sets the File position to the beginning of the file.
         rewind(config->recon_file);
@@ -1245,7 +1254,8 @@ AppExitConditionType process_output_recon_buffer(EbConfig *config, EbAppContext 
 
             if (fseek_return_val != 0) {
                 fprintf(stderr, "Error in fseeko  returnVal %i\n", fseek_return_val);
-                return APP_ExitConditionError;
+                channel->exit_cond_recon = APP_ExitConditionError;
+                return;
             }
             frame_num = frame_num - 1;
         }
@@ -1256,5 +1266,5 @@ AppExitConditionType process_output_recon_buffer(EbConfig *config, EbAppContext 
         return_value = (header_ptr->flags & EB_BUFFERFLAG_EOS) ? APP_ExitConditionFinished
                                                                : APP_ExitConditionNone;
     }
-    return return_value;
+    channel->exit_cond_recon =  return_value;
 }

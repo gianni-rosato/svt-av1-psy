@@ -47,12 +47,12 @@
 /***************************************
  * External Functions
  ***************************************/
-extern AppExitConditionType process_input_buffer(EbConfig *config, EbAppContext *app_call_back);
+void process_input_buffer(EncChannel* c, EbConfig *config, EbAppContext *app_call_back);
 
-extern AppExitConditionType process_output_recon_buffer(EbConfig *    config,
+void process_output_recon_buffer(EncChannel* c, EbConfig *    config,
                                                         EbAppContext *app_call_back);
 
-extern AppExitConditionType process_output_stream_buffer(EncApp* enc_app, EbConfig *    config,
+void process_output_stream_buffer(EncChannel* c, EncApp* enc_app, EbConfig *    config,
                                                          EbAppContext *app_call_back,
                                                          uint8_t       pic_send_done,
                                                          int32_t      *frame_count);
@@ -395,14 +395,9 @@ static void enc_channel_step(EncApp* enc_app, EncContext* enc_context, uint32_t 
 
     EncChannel* c = enc_context->channels + inst_cnt;
     EbConfig **configs = enc_context->configs; // Encoder Configuration
-    if (c->exit_cond_input == APP_ExitConditionNone)
-        c->exit_cond_input = process_input_buffer(
-            configs[inst_cnt], app_callbacks[inst_cnt]);
-    if (c->exit_cond_recon == APP_ExitConditionNone)
-        c->exit_cond_recon = process_output_recon_buffer(
-            configs[inst_cnt], app_callbacks[inst_cnt]);
-    if (c->exit_cond_output == APP_ExitConditionNone)
-        c->exit_cond_output = process_output_stream_buffer(
+    process_input_buffer(c, configs[inst_cnt], app_callbacks[inst_cnt]);
+    process_output_recon_buffer(c, configs[inst_cnt], app_callbacks[inst_cnt]);
+    process_output_stream_buffer(c,
             enc_app,
             configs[inst_cnt],
             app_callbacks[inst_cnt],
