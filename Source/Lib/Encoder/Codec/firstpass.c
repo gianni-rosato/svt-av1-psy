@@ -1489,6 +1489,9 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                        context_ptr->blk_geom->bwidth);
         }
     }
+#if FIX_10BIT
+        if (pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth == EB_8BIT) {
+#endif
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
                 EbPictureBufferDesc *ref_pic = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
                 uint8_t *src_ptr = input_picture_ptr->buffer_y + input_origin_index;//recon_ptr->buffer_y + rec_luma_offset;
@@ -1500,6 +1503,30 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                         src_ptr + j * input_picture_ptr->stride_y,
                         context_ptr->blk_geom->bwidth * sizeof(uint8_t));
             }
+#if FIX_10BIT
+        }
+        else {
+            EbPictureBufferDesc *input_picture = pcs_ptr->input_frame16bit;
+
+            EbPictureBufferDesc *ref_pic = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
+
+             uint32_t src_block_index = input_picture->origin_x + context_ptr->blk_origin_x +
+                    (input_picture->origin_y + context_ptr->blk_origin_y) * input_picture->stride_y;
+
+             uint32_t dst_block_index = ref_pic->origin_x + context_ptr->blk_origin_x +
+                    (ref_pic->origin_y + context_ptr->blk_origin_y) * ref_pic->stride_y;
+
+            uint16_t *src = &(((uint16_t *)input_picture->buffer_y)[src_block_index]);
+            uint16_t *dst = &(((uint16_t *)ref_pic->buffer_y)[dst_block_index]);
+
+            for (int i = 0; i < context_ptr->blk_geom->bheight; i++) {
+                eb_memcpy(dst, src, context_ptr->blk_geom->bwidth * sizeof(uint16_t));
+                src += input_picture->stride_y;
+                dst += ref_pic->stride_y;
+            }
+        }
+#endif
+#if !FIX_VBR_BUG
     //copy neigh recon data in blk_ptr
     {
         uint32_t             j;
@@ -1611,6 +1638,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
             }
         }
     }
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 }
 

@@ -4434,7 +4434,7 @@ static int get_gf_high_motion_quality(int q, AomBitDepth bit_depth) {
 int16_t eb_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolution input_resolution) {
-#if RC_BUG_FIXES
+#if FIX_RC_BUG
     double factor;
     // when frames_to_key not available, it is set to -1. In this case the factor is set to average of min and max
     if (frames_to_key == -1)

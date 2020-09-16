@@ -2238,7 +2238,12 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         preset = strtol(config_string, NULL, 0);
     }
     int rc_mode = 0;
+#if FIX_RC_TOKEN
+    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "--rc", config_string) == 0 )
+#else
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 )
+#endif
         rc_mode = strtol(config_string, NULL, 0);
 
     if (preset > 3 && rc_mode == 0) {

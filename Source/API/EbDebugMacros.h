@@ -35,6 +35,10 @@ extern "C" {
 #define NON_AVX512_SUPPORT
 #endif
 
+#define FIX_RC_BUG 1 // Fix the one pass QP assignment using frames_to_be_encoded
+#define FIX_VBR_BUG 1 // Fix 1st pass bug (bug from rebasing the branch)
+#define FIX_10BIT     1 // fix 1st pass for 10bit input
+#define FIX_RC_TOKEN     1 // fix RC token check to include double dash
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 

@@ -8403,7 +8403,11 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint32_t             d1_block_itr      = 0;
     uint32_t             d1_first_block    = 1;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+#if FIX_10BIT
+    if (context_ptr->hbd_mode_decision || (use_output_stat(scs_ptr) && pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth > EB_8BIT)) {
+#else
     if (context_ptr->hbd_mode_decision) {
+#endif
         const uint32_t input_luma_offset = ((sb_origin_y + input_picture_ptr->origin_y) *
                                             input_picture_ptr->stride_y) +
             (sb_origin_x + input_picture_ptr->origin_x);
@@ -8487,7 +8491,8 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                              scs_ptr->sb_size_pix,
                              scs_ptr->sb_size_pix);
         //input_picture_ptr = context_ptr->input_sample16bit_buffer;
-        input_picture_ptr = pcs_ptr->input_frame16bit;
+        if(!use_output_stat(scs_ptr))
+            input_picture_ptr = pcs_ptr->input_frame16bit;
     }
 
     //CU Loop
