@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 
 #include "EbAppConfig.h"
+#include "EbAppContext.h"
 #include "EbAppInputy4m.h"
 #ifdef _WIN32
 #include <windows.h>
@@ -1581,6 +1582,22 @@ void eb_config_dtor(EbConfig *config_ptr) {
     return;
 }
 
+EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass) {
+    c->config = eb_config_ctor(pass);
+    if (!c->config)
+        return EB_ErrorInsufficientResources;
+    c->app_callback = (EbAppContext *)malloc(sizeof(EbAppContext));
+    if (!c->app_callback)
+        return EB_ErrorInsufficientResources;
+    return EB_ErrorNone;
+}
+
+void enc_channel_dctor(EncChannel* c)
+{
+    eb_config_dtor(c->config);
+    free(c->app_callback);
+}
+
 /**********************************
  * File Size
  **********************************/
@@ -2560,10 +2577,10 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
 /******************************************
 * Read Command Line
 ******************************************/
-EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **configs,
-                              uint32_t num_channels, EbErrorType *return_errors,
+EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
+                              uint32_t num_channels,
                               char *warning_str[WARNING_LENGTH]) {
-    EbErrorType return_error = EB_ErrorBadParameter;
+    EbErrorType return_error = EB_ErrorNone;
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
     char *      config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
     char *      cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
@@ -2593,18 +2610,20 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
         mark_token_as_read(CONFIG_FILE_TOKEN, cmd_copy, &cmd_token_cnt);
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
-            return_errors[index] =
-                (EbErrorType)read_config_file(configs[index], config_strings[index], index);
-            return_error = (EbErrorType)(return_error & return_errors[index]);
+            EncChannel* c = channels + index;
+            c->return_error =
+                (EbErrorType)read_config_file(c->config, config_strings[index], index);
+            return_error = (EbErrorType)(return_error & c->return_error);
         }
     } else if (find_token_multiple_inputs(argc, argv, CONFIG_FILE_LONG_TOKEN, config_strings) ==
                0) {
         mark_token_as_read(CONFIG_FILE_LONG_TOKEN, cmd_copy, &cmd_token_cnt);
         // Parse the config file
         for (index = 0; index < num_channels; ++index) {
-            return_errors[index] =
-                (EbErrorType)read_config_file(configs[index], config_strings[index], index);
-            return_error = (EbErrorType)(return_error & return_errors[index]);
+            EncChannel* c = channels + index;
+            c->return_error =
+                (EbErrorType)read_config_file(c->config, config_strings[index], index);
+            return_error = (EbErrorType)(return_error & c->return_error);
         }
     } else {
         if (find_token(argc, argv, CONFIG_FILE_TOKEN, config_string) == 0) {
@@ -2641,8 +2660,9 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
                 // Fill up the values corresponding to each channel
                 for (index = 0; index < num_channels; ++index) {
+                    EncChannel* c = channels + index;
                     if (strcmp(config_strings[index], " "))
-                        (*config_entry[token_index].scf)(config_strings[index], configs[index]);
+                        (*config_entry[token_index].scf)(config_strings[index], c->config);
                     else
                         break;
                 }
@@ -2663,8 +2683,9 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
 
                 // Fill up the values corresponding to each channel
                 for (index = 0; index < num_channels; ++index) {
+                    EncChannel* c = channels + index;
                     if (strcmp(config_strings[index], " "))
-                        (*config_entry[token_index].scf)(config_strings[index], configs[index]);
+                        (*config_entry[token_index].scf)(config_strings[index], c->config);
                     else
                         break;
                 }
@@ -2679,8 +2700,9 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /***************************************************************************************************/
 
     for (index = 0; index < num_channels; ++index) {
-        if ((configs[index])->y4m_input == EB_TRUE) {
-            ret_y4m = read_y4m_header(configs[index]);
+        EncChannel* c = channels + index;
+        if (c->config->y4m_input == EB_TRUE) {
+            ret_y4m = read_y4m_header(c->config);
             if (ret_y4m == EB_ErrorBadParameter) {
                 fprintf(stderr, "Error found when reading the y4m file parameters.\n");
                 return EB_ErrorBadParameter;
@@ -2691,10 +2713,12 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     /*******************************   Parse manual prediction structure  ******************************/
     /***************************************************************************************************/
     for (index = 0; index < num_channels; ++index) {
-        if ((configs[index])->enable_manual_pred_struct == EB_TRUE) {
-            return_errors[index] = (EbErrorType)read_pred_struct_file(
-                configs[index], configs[index]->input_pred_struct_filename, index);
-            return_error = (EbErrorType)(return_error & return_errors[index]);
+        EncChannel* c = channels + index;
+        EbConfig* config = c->config;
+        if (config->enable_manual_pred_struct == EB_TRUE) {
+            c->return_error = (EbErrorType)read_pred_struct_file(
+                config, config->input_pred_struct_filename, index);
+            return_error = (EbErrorType)(return_error & c->return_error);
         }
     }
     /***************************************************************************************************/
@@ -2704,36 +2728,38 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
     if (return_error == 0) {
         return_error = EB_ErrorBadParameter;
         for (index = 0; index < num_channels; ++index) {
-            if (return_errors[index] == EB_ErrorNone) {
-                return_errors[index] = verify_settings(configs[index], index);
+            EncChannel* c = channels + index;
+            if (c->return_error == EB_ErrorNone) {
+                EbConfig* config = c->config;
+                c->return_error = verify_settings(config, index);
 
                 // Assuming no errors, add padding to width and height
-                if (return_errors[index] == EB_ErrorNone) {
-                    configs[index]->input_padded_width = configs[index]->source_width;
-                    configs[index]->input_padded_height = configs[index]->source_height;
+                if (c->return_error == EB_ErrorNone) {
+                    config->input_padded_width = config->source_width;
+                    config->input_padded_height = config->source_height;
                 }
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv
-                if (return_errors[index] == EB_ErrorNone &&
-                    configs[index]->frames_to_be_encoded == 0)
-                    configs[index]->frames_to_be_encoded =
-                        compute_frames_to_be_encoded(configs[index]);
+                if (c->return_error == EB_ErrorNone &&
+                    config->frames_to_be_encoded == 0)
+                    config->frames_to_be_encoded =
+                        compute_frames_to_be_encoded(config);
 
                 // For pipe input it is fine if we have -1 here (we will update on end of stream)
-                if (configs[index]->frames_to_be_encoded == -1
-                    && configs[index]->input_file != stdin
-                    && !configs[index]->input_file_is_fifo) {
-                    fprintf(configs[index]->error_log_file,
+                if (config->frames_to_be_encoded == -1
+                    && config->input_file != stdin
+                    && !config->input_file_is_fifo) {
+                    fprintf(config->error_log_file,
                             "Error instance %u: Input yuv does not contain enough frames \n",
                             index + 1);
-                    return_errors[index] = EB_ErrorBadParameter;
+                    c->return_error = EB_ErrorBadParameter;
                 }
 
                 // Force the injector latency mode, and injector frame rate when speed control is on
-                if (return_errors[index] == EB_ErrorNone && configs[index]->speed_control_flag == 1)
-                    configs[index]->injector = 1;
+                if (c->return_error == EB_ErrorNone && config->speed_control_flag == 1)
+                    config->injector = 1;
             }
-            return_error = (EbErrorType)(return_error & return_errors[index]);
+            return_error = (EbErrorType)(return_error & c->return_error);
         }
     }
 

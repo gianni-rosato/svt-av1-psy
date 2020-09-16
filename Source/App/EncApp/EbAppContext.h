@@ -19,7 +19,7 @@
 
  * App Callback data struct
  ***************************************/
-typedef struct EbAppContext {
+struct EbAppContext_ {
     EbSvtAv1EncConfiguration eb_enc_parameters;
 
     // Output Ports Active Flags
@@ -34,7 +34,7 @@ typedef struct EbAppContext {
 
     // Instance Index
     uint8_t instance_idx;
-} EbAppContext;
+};
 
 /********************************
  * External Function

@@ -84,10 +84,7 @@ void assign_app_thread_group(uint8_t target_socket) {
 typedef struct EncContext {
     uint32_t        num_channels;
     EncChannel      channels[MAX_CHANNEL_NUMBER];
-    EbConfig        *configs[MAX_CHANNEL_NUMBER]; // Encoder Configuration
-    EbAppContext    *app_callbacks[MAX_CHANNEL_NUMBER]; // Instances App callback date
     char            *warning[MAX_NUM_TOKENS];
-    EbErrorType     return_errors[MAX_CHANNEL_NUMBER]; // Error Handling
 
     EncodePass      pass;
     int32_t         total_frames;
@@ -101,71 +98,63 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
         return EB_ErrorBadParameter;
 
     enc_context->pass = pass;
-
-    EbConfig        **configs = enc_context->configs;
-    EbAppContext    **app_callbacks = enc_context->app_callbacks;
     EbErrorType     return_error   = EB_ErrorNone;
 
     enc_context->num_channels = num_channels;
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        configs[inst_cnt] = eb_config_ctor(pass);
-        if (!configs[inst_cnt]) {
-            return EB_ErrorInsufficientResources;
-        }
-    }
-
-    // Initialize appCallback
-    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        app_callbacks[inst_cnt] = (EbAppContext *)malloc(sizeof(EbAppContext));
-        if (!app_callbacks[inst_cnt]) {
-            return EB_ErrorInsufficientResources;
-        }
+        return_error = enc_channel_ctor(enc_context->channels + inst_cnt, pass);
+        if (return_error != EB_ErrorNone)
+            return return_error;
     }
 
     char **warning = enc_context->warning;
 
     for (int token_id = 0; token_id < MAX_NUM_TOKENS; token_id++) {
         warning[token_id] = (char *)malloc(WARNING_LENGTH);
+        if (!warning[token_id]) {
+            return EB_ErrorInsufficientResources;
+        }
         strcpy_s(warning[token_id], WARNING_LENGTH, "");
     }
     // Process any command line options, including the configuration file
     // Read all configuration files.
-    return_error = read_command_line(argc, argv, configs, num_channels, enc_context->return_errors, warning);
+    return_error = read_command_line(argc, argv, enc_context->channels, num_channels, warning);
     if (return_error != EB_ErrorNone) {
         fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
         fprintf(stderr, "Run %s --help for a list of options\n", argv[0]);
         return return_error;
     }
     // Set main thread affinity
-    if (configs[0]->target_socket != -1)
-        assign_app_thread_group(configs[0]->target_socket);
+    if (enc_context->channels[0].config->target_socket != -1)
+        assign_app_thread_group(enc_context->channels[0].config->target_socket);
 
-    EbErrorType*     return_errors = enc_context->return_errors;
     // Init the Encoder
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        if (return_errors[inst_cnt] == EB_ErrorNone) {
-            configs[inst_cnt]->active_channel_count = num_channels;
-            configs[inst_cnt]->channel_id           = inst_cnt;
+        EncChannel* c = enc_context->channels + inst_cnt;
+        if (c->return_error == EB_ErrorNone) {
+            EbConfig* config = c->config;
+            config->active_channel_count = num_channels;
+            config->channel_id           = inst_cnt;
 
-            start_time((uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
-                        (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
+            start_time((uint64_t *)&config->performance_context.lib_start_time[0],
+                        (uint64_t *)&config->performance_context.lib_start_time[1]);
 
             if (pass == ENCODE_FIRST_PASS) {
                 //TODO: remove this if we can use a quick first pass in svt av1 library.
-                configs[inst_cnt]->enc_mode = MAX_ENC_PRESET;
-                configs[inst_cnt]->look_ahead_distance = 1;
-                configs[inst_cnt]->enable_tpl_la = 0;
-                configs[inst_cnt]->rate_control_mode = 0;
+                config->enc_mode = MAX_ENC_PRESET;
+                config->look_ahead_distance = 1;
+                config->enable_tpl_la = 0;
+                config->rate_control_mode = 0;
             }
-            return_errors[inst_cnt] = set_two_passes_stats(configs[inst_cnt], pass,
+            c->return_error = set_two_passes_stats(config, pass,
                 &enc_app->rc_twopasses_stats, num_channels);
-            if (return_errors[inst_cnt] == EB_ErrorNone) {
-                return_errors[inst_cnt] = init_encoder(
-                    configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
+            if (c->return_error == EB_ErrorNone) {
+                c->return_error = init_encoder(
+                    config, c->app_callback, inst_cnt);
             }
-            return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
+            return_error = (EbErrorType)(return_error | c->return_error);
         } else
-            enc_context->channels[inst_cnt].active = EB_FALSE;
+            c->active = EB_FALSE;
     }
     return EB_ErrorNone;
 }
@@ -173,10 +162,10 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
 static void enc_context_dctor(EncContext* enc_context){
     // DeInit Encoder
     for (int32_t inst_cnt = enc_context->num_channels - 1; inst_cnt >= 0; --inst_cnt) {
-        de_init_encoder(enc_context->app_callbacks[inst_cnt],
+        EncChannel* c = enc_context->channels + inst_cnt;
+        de_init_encoder(c->app_callback,
                         inst_cnt);
-        eb_config_dtor(enc_context->configs[inst_cnt]);
-        free(enc_context->app_callbacks[inst_cnt]);
+        enc_channel_dctor(c);
     }
 
     for (uint32_t warning_id = 0; warning_id < MAX_NUM_TOKENS; warning_id++)
@@ -186,83 +175,83 @@ static void enc_context_dctor(EncContext* enc_context){
 double get_psnr(double sse, double max);
 static void print_summary(const EncContext* const enc_context)
 {
-    EbConfig*   const* configs = enc_context->configs;
     for (uint32_t inst_cnt = 0; inst_cnt < enc_context->num_channels; ++inst_cnt) {
         const EncChannel* const c = &enc_context->channels[inst_cnt];
+        const EbConfig*  config = c->config;
         if (c->exit_cond == APP_ExitConditionFinished &&
-            enc_context->return_errors[inst_cnt] == EB_ErrorNone) {
+            c->return_error == EB_ErrorNone) {
             uint64_t frame_count =
-                (uint32_t)configs[inst_cnt]->performance_context.frame_count;
-            uint32_t max_luma_value = (configs[inst_cnt]->encoder_bit_depth == 8) ? 255
+                (uint32_t)config->performance_context.frame_count;
+            uint32_t max_luma_value = (config->encoder_bit_depth == 8) ? 255
                                                                                     : 1023;
             double max_luma_sse = (double)max_luma_value * max_luma_value *
-                (configs[inst_cnt]->source_width * configs[inst_cnt]->source_height);
+                (config->source_width * config->source_height);
             double max_chroma_sse = (double)max_luma_value * max_luma_value *
-                (configs[inst_cnt]->source_width / 2 * configs[inst_cnt]->source_height /
+                (config->source_width / 2 * config->source_height /
                     2);
 
-            if ((configs[inst_cnt]->frame_rate_numerator != 0 &&
-                    configs[inst_cnt]->frame_rate_denominator != 0) ||
-                configs[inst_cnt]->frame_rate != 0) {
-                double frame_rate = configs[inst_cnt]->frame_rate_numerator &&
-                        configs[inst_cnt]->frame_rate_denominator
-                    ? (double)configs[inst_cnt]->frame_rate_numerator /
-                        (double)configs[inst_cnt]->frame_rate_denominator
-                    : configs[inst_cnt]->frame_rate > 1000
+            if ((config->frame_rate_numerator != 0 &&
+                    config->frame_rate_denominator != 0) ||
+                config->frame_rate != 0) {
+                double frame_rate = config->frame_rate_numerator &&
+                        config->frame_rate_denominator
+                    ? (double)config->frame_rate_numerator /
+                        (double)config->frame_rate_denominator
+                    : config->frame_rate > 1000
                         // Correct for 16-bit fixed-point fractional precision
-                        ? (double)configs[inst_cnt]->frame_rate / (1 << 16)
-                        : (double)configs[inst_cnt]->frame_rate;
+                        ? (double)config->frame_rate / (1 << 16)
+                        : (double)config->frame_rate;
 
-                if (configs[inst_cnt]->stat_report) {
-                    if (configs[inst_cnt]->stat_file) {
-                        fprintf(configs[inst_cnt]->stat_file,
+                if (config->stat_report) {
+                    if (config->stat_file) {
+                        fprintf(config->stat_file,
                                 "\nSUMMARY "
                                 "------------------------------------------------------"
                                 "---------------\n");
-                        fprintf(configs[inst_cnt]->stat_file,
+                        fprintf(config->stat_file,
                                 "\n\t\t\t\tAverage PSNR (using per-frame "
                                 "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|"
                                 "\tAverage SSIM\n");
-                        fprintf(configs[inst_cnt]->stat_file,
+                        fprintf(config->stat_file,
                                 "Total Frames\tAverage QP  \tY-PSNR   \tU-PSNR   "
                                 "\tV-PSNR\t\t| \tY-PSNR   \tU-PSNR   \tV-PSNR   \t|"
                                 "\tY-SSIM   \tU-SSIM   \tV-SSIM   "
                                 "\t|\tBitrate\n");
                         fprintf(
-                            configs[inst_cnt]->stat_file,
+                            config->stat_file,
                             "%10ld  \t   %2.2f    \t%3.2f dB\t%3.2f dB\t%3.2f dB  "
                             "\t|\t%3.2f dB\t%3.2f dB\t%3.2f dB \t|\t%1.5f \t%1.5f "
                             "\t%1.5f\t\t|\t%.2f kbps\n",
                             (long int)frame_count,
-                            (float)configs[inst_cnt]->performance_context.sum_qp /
+                            (float)config->performance_context.sum_qp /
                                 frame_count,
-                            (float)configs[inst_cnt]->performance_context.sum_luma_psnr /
+                            (float)config->performance_context.sum_luma_psnr /
                                 frame_count,
-                            (float)configs[inst_cnt]->performance_context.sum_cb_psnr /
+                            (float)config->performance_context.sum_cb_psnr /
                                 frame_count,
-                            (float)configs[inst_cnt]->performance_context.sum_cr_psnr /
+                            (float)config->performance_context.sum_cr_psnr /
                                 frame_count,
                             (float)(get_psnr(
-                                (configs[inst_cnt]->performance_context.sum_luma_sse /
+                                (config->performance_context.sum_luma_sse /
                                     frame_count),
                                 max_luma_sse)),
                             (float)(get_psnr(
-                                (configs[inst_cnt]->performance_context.sum_cb_sse /
+                                (config->performance_context.sum_cb_sse /
                                     frame_count),
                                 max_chroma_sse)),
                             (float)(get_psnr(
-                                (configs[inst_cnt]->performance_context.sum_cr_sse /
+                                (config->performance_context.sum_cr_sse /
                                     frame_count),
                                 max_chroma_sse)),
-                            (float)configs[inst_cnt]->performance_context.sum_luma_ssim /
+                            (float)config->performance_context.sum_luma_ssim /
                                 frame_count,
-                            (float)configs[inst_cnt]->performance_context.sum_cb_ssim /
+                            (float)config->performance_context.sum_cb_ssim /
                                 frame_count,
-                            (float)configs[inst_cnt]->performance_context.sum_cr_ssim /
+                            (float)config->performance_context.sum_cr_ssim /
                                 frame_count,
-                            ((double)(configs[inst_cnt]->performance_context.byte_count
+                            ((double)(config->performance_context.byte_count
                                         << 3) *
-                                frame_rate / (configs[inst_cnt]->frames_encoded * 1000)));
+                                frame_rate / (config->frames_encoded * 1000)));
                     }
                 }
 
@@ -278,12 +267,12 @@ static void print_summary(const EncContext* const enc_context)
                         "%12d\t\t%4.2f fps\t\t%10.0f\t\t%5.2f kbps\n",
                         (int32_t)frame_count,
                         (double)frame_rate,
-                        (double)configs[inst_cnt]->performance_context.byte_count,
-                        ((double)(configs[inst_cnt]->performance_context.byte_count << 3) *
-                            frame_rate / (configs[inst_cnt]->frames_encoded * 1000)));
+                        (double)config->performance_context.byte_count,
+                        ((double)(config->performance_context.byte_count << 3) *
+                            frame_rate / (config->frames_encoded * 1000)));
                 }
 
-                if (configs[inst_cnt]->stat_report) {
+                if (config->stat_report) {
                     fprintf(stderr,
                             "\n\t\tAverage PSNR (using per-frame "
                             "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|\t"
@@ -296,30 +285,30 @@ static void print_summary(const EncContext* const enc_context)
                         stderr,
                         "%11.2f\t%4.2f dB\t%4.2f dB\t%4.2f dB\t|\t%4.2f "
                         "dB\t%4.2f dB\t%4.2f dB\t|\t%1.5f\t%1.5f\t%1.5f\n",
-                        (float)configs[inst_cnt]->performance_context.sum_qp / frame_count,
-                        (float)configs[inst_cnt]->performance_context.sum_luma_psnr /
+                        (float)config->performance_context.sum_qp / frame_count,
+                        (float)config->performance_context.sum_luma_psnr /
                             frame_count,
-                        (float)configs[inst_cnt]->performance_context.sum_cb_psnr /
+                        (float)config->performance_context.sum_cb_psnr /
                             frame_count,
-                        (float)configs[inst_cnt]->performance_context.sum_cr_psnr /
+                        (float)config->performance_context.sum_cr_psnr /
                             frame_count,
                         (float)(get_psnr(
-                            (configs[inst_cnt]->performance_context.sum_luma_sse /
+                            (config->performance_context.sum_luma_sse /
                                 frame_count),
                             max_luma_sse)),
                         (float)(get_psnr(
-                            (configs[inst_cnt]->performance_context.sum_cb_sse /
+                            (config->performance_context.sum_cb_sse /
                                 frame_count),
                             max_chroma_sse)),
                         (float)(get_psnr(
-                            (configs[inst_cnt]->performance_context.sum_cr_sse /
+                            (config->performance_context.sum_cr_sse /
                                 frame_count),
                             max_chroma_sse)),
-                        (float)configs[inst_cnt]->performance_context.sum_luma_ssim /
+                        (float)config->performance_context.sum_luma_ssim /
                             frame_count,
-                        (float)configs[inst_cnt]->performance_context.sum_cb_ssim /
+                        (float)config->performance_context.sum_cb_ssim /
                             frame_count,
-                        (float)configs[inst_cnt]->performance_context.sum_cr_ssim /
+                        (float)config->performance_context.sum_cr_ssim /
                             frame_count);
                 }
 
@@ -333,26 +322,26 @@ static void print_summary(const EncContext* const enc_context)
 
 static void print_performance(const EncContext* const enc_context)
 {
-    EbConfig*   const* configs = enc_context->configs;
     for (uint32_t inst_cnt = 0; inst_cnt < enc_context->num_channels; ++inst_cnt) {
         const EncChannel* c = enc_context->channels + inst_cnt;
         if (c->exit_cond == APP_ExitConditionFinished &&
-            enc_context->return_errors[inst_cnt] == EB_ErrorNone) {
-            if (configs[inst_cnt]->stop_encoder == EB_FALSE) {
+            c->return_error == EB_ErrorNone) {
+            EbConfig* config = c->config;
+            if (config->stop_encoder == EB_FALSE) {
                 fprintf(stderr,
                         "\nChannel %u\nAverage Speed:\t\t%.3f fps\nTotal Encoding Time:\t%.0f "
                         "ms\nTotal Execution Time:\t%.0f ms\nAverage Latency:\t%.0f ms\nMax "
                         "Latency:\t\t%u ms\n",
                         (uint32_t)(inst_cnt + 1),
-                        configs[inst_cnt]->performance_context.average_speed,
-                        configs[inst_cnt]->performance_context.total_encode_time * 1000,
-                        configs[inst_cnt]->performance_context.total_execution_time * 1000,
-                        configs[inst_cnt]->performance_context.average_latency,
-                        (uint32_t)(configs[inst_cnt]->performance_context.max_latency));
+                        config->performance_context.average_speed,
+                        config->performance_context.total_encode_time * 1000,
+                        config->performance_context.total_execution_time * 1000,
+                        config->performance_context.average_latency,
+                        (uint32_t)(config->performance_context.max_latency));
             } else
                 fprintf(
                     stderr, "\nChannel %u Encoding Interrupted\n", (uint32_t)(inst_cnt + 1));
-        } else if (enc_context->return_errors[inst_cnt] == EB_ErrorInsufficientResources)
+        } else if (c->return_error == EB_ErrorInsufficientResources)
             fprintf(stderr, "Could not allocate enough memory for channel %u\n", inst_cnt + 1);
         else
             fprintf(stderr,
@@ -391,31 +380,30 @@ static EbBool has_active_channel(const EncContext* const enc_context)
 
 static void enc_channel_step(EncApp* enc_app, EncContext* enc_context, uint32_t inst_cnt )
 {
-    EbAppContext **app_callbacks = enc_context->app_callbacks; // Instances App callback date
-
     EncChannel* c = enc_context->channels + inst_cnt;
-    EbConfig **configs = enc_context->configs; // Encoder Configuration
-    process_input_buffer(c, configs[inst_cnt], app_callbacks[inst_cnt]);
-    process_output_recon_buffer(c, configs[inst_cnt], app_callbacks[inst_cnt]);
+    EbConfig* config = c->config;
+    EbAppContext* app_callback = c->app_callback;
+    process_input_buffer(c, config, app_callback);
+    process_output_recon_buffer(c, config, app_callback);
     process_output_stream_buffer(c,
             enc_app,
-            configs[inst_cnt],
-            app_callbacks[inst_cnt],
+            config,
+            app_callback,
             (c->exit_cond_input == APP_ExitConditionNone) ||
                     (c->exit_cond_recon == APP_ExitConditionNone)
                 ? 0
                 : 1, &enc_context->total_frames);
 
     if (((c->exit_cond_recon == APP_ExitConditionFinished ||
-            !configs[inst_cnt]->recon_file) &&
+            !config->recon_file) &&
             c->exit_cond_output == APP_ExitConditionFinished &&
             c->exit_cond_input == APP_ExitConditionFinished) ||
         ((c->exit_cond_recon == APP_ExitConditionError &&
-            configs[inst_cnt]->recon_file) ||
+            config->recon_file) ||
             c->exit_cond_output == APP_ExitConditionError ||
             c->exit_cond_input == APP_ExitConditionError)) {
         c->active = EB_FALSE;
-        if (configs[inst_cnt]->recon_file)
+        if (config->recon_file)
             c->exit_cond = (AppExitConditionType)(
                 c->exit_cond_recon | c->exit_cond_output |
                 c->exit_cond_input);
@@ -437,27 +425,26 @@ static const char *get_pass_name(EncodePass pass) {
 static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     EbErrorType          return_error   = EB_ErrorNone;
 
-    EbConfig **configs = enc_context->configs; // Encoder Configuration
     // Get num_channels
     uint32_t num_channels = enc_context->num_channels;
 
-    EbErrorType* return_errors = enc_context->return_errors;
     EncodePass pass = enc_context->pass;
     // Start the Encoder
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
         EncChannel* c = enc_context->channels + inst_cnt;
-        if (return_errors[inst_cnt] == EB_ErrorNone) {
-            return_error        = (EbErrorType)(return_error & return_errors[inst_cnt]);
+        if (c->return_error == EB_ErrorNone) {
+            EbConfig* config = c->config;
+            return_error        = (EbErrorType)(return_error & c->return_error);
             c->exit_cond = APP_ExitConditionNone;
             c->exit_cond_output = APP_ExitConditionNone;
-            c->exit_cond_recon  = configs[inst_cnt]->recon_file
+            c->exit_cond_recon  = config->recon_file
                 ? APP_ExitConditionNone
                 : APP_ExitConditionError;
             c->exit_cond_input = APP_ExitConditionNone;
             c->active  = EB_TRUE;
             start_time(
-                (uint64_t *)&configs[inst_cnt]->performance_context.encode_start_time[0],
-                (uint64_t *)&configs[inst_cnt]->performance_context.encode_start_time[1]);
+                (uint64_t *)&config->performance_context.encode_start_time[0],
+                (uint64_t *)&config->performance_context.encode_start_time[1]);
         } else {
             c->exit_cond        = APP_ExitConditionError;
             c->exit_cond_output = APP_ExitConditionError;

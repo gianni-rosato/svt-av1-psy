@@ -16,6 +16,8 @@
 
 #include "EbSvtAv1Enc.h"
 
+typedef struct EbAppContext_ EbAppContext;
+
 #ifdef _WIN32
 #define fseeko _fseeki64
 #define ftello _ftelli64
@@ -489,6 +491,9 @@ typedef struct EbConfig {
 } EbConfig;
 
 typedef struct EncChannel {
+    EbConfig        *config; // Encoder Configuration
+    EbAppContext    *app_callback; // Instances App callback date
+    EbErrorType     return_error; // Error Handling
     AppExitConditionType exit_cond_output; // Processing loop exit condition
     AppExitConditionType exit_cond_recon; // Processing loop exit condition
     AppExitConditionType exit_cond_input; // Processing loop exit condition
@@ -504,8 +509,11 @@ EbConfig * eb_config_ctor(EncodePass pass);
 void eb_config_dtor(EbConfig *config_ptr);
 void eb_2pass_config_update(EbConfig *config_ptr);
 
-extern EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **config,
-                                     uint32_t num_channels, EbErrorType *return_errors,
+EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass);
+void enc_channel_dctor(EncChannel* c);
+
+extern EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
+                                     uint32_t num_channels,
                                      char *warning_str[WARNING_LENGTH]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
