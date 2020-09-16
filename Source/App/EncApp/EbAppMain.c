@@ -81,6 +81,106 @@ void assign_app_thread_group(uint8_t target_socket) {
 #endif
 }
 
+typedef struct EncContext {
+    uint32_t        num_channels;
+    EbConfig        *configs[MAX_CHANNEL_NUMBER]; // Encoder Configuration
+    EbAppContext    *app_callbacks[MAX_CHANNEL_NUMBER]; // Instances App callback date
+    char            *warning[MAX_NUM_TOKENS];
+    EbErrorType     return_errors[MAX_CHANNEL_NUMBER]; // Error Handling
+    EbBool          channel_active[MAX_CHANNEL_NUMBER];
+    EncodePass      pass;
+} EncContext;
+
+static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc, char *argv[], EncodePass pass)
+{
+    memset(enc_context, 0, sizeof(*enc_context));
+    uint32_t num_channels = get_number_of_channels(argc, argv);
+    if (num_channels == 0)
+        return EB_ErrorBadParameter;
+
+    enc_context->pass = pass;
+
+    EbConfig        **configs = enc_context->configs;
+    EbAppContext    **app_callbacks = enc_context->app_callbacks;
+    EbErrorType     return_error   = EB_ErrorNone;
+
+    enc_context->num_channels = num_channels;
+    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
+        configs[inst_cnt] = eb_config_ctor(pass);
+        if (!configs[inst_cnt]) {
+            return EB_ErrorInsufficientResources;
+        }
+    }
+
+    // Initialize appCallback
+    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
+        app_callbacks[inst_cnt] = (EbAppContext *)malloc(sizeof(EbAppContext));
+        if (!app_callbacks[inst_cnt]) {
+            return EB_ErrorInsufficientResources;
+        }
+    }
+
+    char **warning = enc_context->warning;
+
+    for (int token_id = 0; token_id < MAX_NUM_TOKENS; token_id++) {
+        warning[token_id] = (char *)malloc(WARNING_LENGTH);
+        strcpy_s(warning[token_id], WARNING_LENGTH, "");
+    }
+    // Process any command line options, including the configuration file
+    // Read all configuration files.
+    return_error = read_command_line(argc, argv, configs, num_channels, enc_context->return_errors, warning);
+    if (return_error != EB_ErrorNone) {
+        fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
+        fprintf(stderr, "Run %s --help for a list of options\n", argv[0]);
+        return return_error;
+    }
+    // Set main thread affinity
+    if (configs[0]->target_socket != -1)
+        assign_app_thread_group(configs[0]->target_socket);
+
+    EbErrorType*     return_errors = enc_context->return_errors;
+    // Init the Encoder
+    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
+        if (return_errors[inst_cnt] == EB_ErrorNone) {
+            configs[inst_cnt]->active_channel_count = num_channels;
+            configs[inst_cnt]->channel_id           = inst_cnt;
+
+            start_time((uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
+                        (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
+
+            if (pass == ENCODE_FIRST_PASS) {
+                //TODO: remove this if we can use a quick first pass in svt av1 library.
+                configs[inst_cnt]->enc_mode = MAX_ENC_PRESET;
+                configs[inst_cnt]->look_ahead_distance = 1;
+                configs[inst_cnt]->enable_tpl_la = 0;
+                configs[inst_cnt]->rate_control_mode = 0;
+            }
+            return_errors[inst_cnt] = set_two_passes_stats(configs[inst_cnt], pass,
+                &enc_app->rc_twopasses_stats, num_channels);
+            if (return_errors[inst_cnt] == EB_ErrorNone) {
+                return_errors[inst_cnt] = init_encoder(
+                    configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
+            }
+            return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
+        } else
+            enc_context->channel_active[inst_cnt] = EB_FALSE;
+    }
+    return EB_ErrorNone;
+}
+
+static void enc_context_dctor(EncContext* enc_context){
+    // DeInit Encoder
+    for (int32_t inst_cnt = enc_context->num_channels - 1; inst_cnt >= 0; --inst_cnt) {
+        de_init_encoder(enc_context->app_callbacks[inst_cnt],
+                        inst_cnt);
+        eb_config_dtor(enc_context->configs[inst_cnt]);
+        free(enc_context->app_callbacks[inst_cnt]);
+    }
+
+    for (uint32_t warning_id = 0; warning_id < MAX_NUM_TOKENS; warning_id++)
+        free(enc_context->warning[warning_id]);
+}
+
 double get_psnr(double sse, double max);
 
 static const char *get_pass_name(EncodePass pass) {
@@ -91,44 +191,21 @@ static const char *get_pass_name(EncodePass pass) {
     }
 }
 
-static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePass pass) {
+static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     EbErrorType          return_error   = EB_ErrorNone;
     AppExitConditionType exit_condition = APP_ExitConditionNone; // Processing loop exit condition
 
-    EbErrorType          return_errors[MAX_CHANNEL_NUMBER]; // Error Handling
     AppExitConditionType exit_cond[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_output[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_recon[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_input[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
 
-    EbBool channel_active[MAX_CHANNEL_NUMBER];
-
-    EbConfig *configs[MAX_CHANNEL_NUMBER]; // Encoder Configuration
-
-    EbAppContext *app_callbacks[MAX_CHANNEL_NUMBER]; // Instances App callback date
-
+    EbBool* channel_active = enc_context->channel_active;
+    EbConfig **configs = enc_context->configs; // Encoder Configuration
+    EbAppContext **app_callbacks = enc_context->app_callbacks; // Instances App callback date
+    char **warning = enc_context->warning;
     // Get num_channels
-    uint32_t num_channels = get_number_of_channels(argc, argv);
-    if (num_channels == 0)
-        return EB_ErrorBadParameter;
-    // Initialize config
-    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        configs[inst_cnt] = eb_config_ctor(pass);
-        if (!configs[inst_cnt]) {
-            while (inst_cnt-- > 0) eb_config_dtor(configs[inst_cnt]);
-            return EB_ErrorInsufficientResources;
-        }
-        return_errors[inst_cnt] = EB_ErrorNone;
-    }
-
-    // Initialize appCallback
-    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        app_callbacks[inst_cnt] = (EbAppContext *)malloc(sizeof(EbAppContext));
-        if (!app_callbacks[inst_cnt]) {
-            while (inst_cnt-- > 0) free(app_callbacks[inst_cnt]);
-            return EB_ErrorInsufficientResources;
-        }
-    }
+    uint32_t num_channels = enc_context->num_channels;
 
     for (uint32_t inst_cnt = 0; inst_cnt < MAX_CHANNEL_NUMBER; ++inst_cnt) {
         exit_cond[inst_cnt]        = APP_ExitConditionError; // Processing loop exit condition
@@ -138,50 +215,9 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
         channel_active[inst_cnt]   = EB_FALSE;
     }
 
-    //  setup warning array
-    //char  warning_arr[MAX_NUM_TOKENS][WARNING_LENGTH];
-    char *warning[MAX_NUM_TOKENS];
-    for (int token_id = 0; token_id < MAX_NUM_TOKENS; token_id++) {
-        warning[token_id] = (char *)malloc(WARNING_LENGTH);
-        strcpy_s(warning[token_id], WARNING_LENGTH, "");
-    }
-    // Read all configuration files.
-    return_error = read_command_line(argc, argv, configs, num_channels, return_errors, warning);
-
-    // Process any command line options, including the configuration file
-
+    EbErrorType* return_errors = enc_context->return_errors;
+    EncodePass pass = enc_context->pass;
     if (return_error == EB_ErrorNone) {
-        // Set main thread affinity
-        if (configs[0]->target_socket != -1)
-            assign_app_thread_group(configs[0]->target_socket);
-
-        // Init the Encoder
-        for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-            if (return_errors[inst_cnt] == EB_ErrorNone) {
-                configs[inst_cnt]->active_channel_count = num_channels;
-                configs[inst_cnt]->channel_id           = inst_cnt;
-
-                start_time((uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[0],
-                           (uint64_t *)&configs[inst_cnt]->performance_context.lib_start_time[1]);
-
-                if (pass == ENCODE_FIRST_PASS) {
-                    //TODO: remove this if we can use a quick first pass in svt av1 library.
-                    configs[inst_cnt]->enc_mode = MAX_ENC_PRESET;
-                    configs[inst_cnt]->look_ahead_distance = 1;
-                    configs[inst_cnt]->enable_tpl_la = 0;
-                    configs[inst_cnt]->rate_control_mode = 0;
-                }
-                return_errors[inst_cnt] = set_two_passes_stats(configs[inst_cnt], pass,
-                    &enc_app->rc_twopasses_stats, num_channels);
-                if (return_errors[inst_cnt] == EB_ErrorNone) {
-                    return_errors[inst_cnt] = init_encoder(
-                        configs[inst_cnt], app_callbacks[inst_cnt], inst_cnt);
-                }
-                return_error = (EbErrorType)(return_error | return_errors[inst_cnt]);
-            } else
-                channel_active[inst_cnt] = EB_FALSE;
-        }
-
         {
             // Start the Encoder
             for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
@@ -214,8 +250,6 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
                 else if (*warning[warning_id + 1] != '-')
                     break;
             }
-            for (uint32_t warning_id = 0; warning_id < MAX_NUM_TOKENS; warning_id++)
-                free(warning[warning_id]);
 
             fprintf(stderr, "%sEncoding          ", get_pass_name(pass));
 
@@ -433,22 +467,9 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
                         "... \n",
                         inst_cnt + 1);
         }
-        // DeInit Encoder
-        for (uint32_t inst_cnt = num_channels; inst_cnt > 0; --inst_cnt) {
-            if (return_errors[inst_cnt - 1] == EB_ErrorNone)
-                return_errors[inst_cnt - 1] = de_init_encoder(app_callbacks[inst_cnt - 1],
-                                                              inst_cnt - 1);
-        }
     } else {
-        fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
-        fprintf(stderr, "Run %s --help for a list of options\n", argv[0]);
     }
     // Destruct the App memory variables
-    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        eb_config_dtor(configs[inst_cnt]);
-        if (app_callbacks[inst_cnt])
-            free(app_callbacks[inst_cnt]);
-    }
     return return_error;
 }
 
@@ -476,6 +497,7 @@ int32_t main(int32_t argc, char *argv[]) {
     uint32_t    passes;
     EncodePass  pass[MAX_ENCODE_PASS];
     EncApp      enc_app;
+    EncContext   enc_context;
 
     signal(SIGINT, event_handler);
     if (get_help(argc, argv))
@@ -484,7 +506,12 @@ int32_t main(int32_t argc, char *argv[]) {
     enc_app_ctor(&enc_app);
     passes = get_passes(argc, argv, pass);
     for (uint32_t i = 0; i < passes; i++) {
-        return_error = encode(&enc_app, argc, argv, pass[i]);
+        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i]);
+
+        if (return_error == EB_ErrorNone)
+            return_error = encode(&enc_app, &enc_context);
+
+        enc_context_dctor(&enc_context);
         if (return_error != EB_ErrorNone)
             break;
     }
