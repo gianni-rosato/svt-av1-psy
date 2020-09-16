@@ -1589,6 +1589,11 @@ EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass) {
     c->app_callback = (EbAppContext *)malloc(sizeof(EbAppContext));
     if (!c->app_callback)
         return EB_ErrorInsufficientResources;
+    c->exit_cond        = APP_ExitConditionError;
+    c->exit_cond_output = APP_ExitConditionError;
+    c->exit_cond_recon  = APP_ExitConditionError;
+    c->exit_cond_input  = APP_ExitConditionError;
+    c->active = EB_FALSE;
     return EB_ErrorNone;
 }
 

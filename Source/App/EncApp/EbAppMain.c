@@ -422,6 +422,24 @@ static const char *get_pass_name(EncodePass pass) {
     }
 }
 
+static void enc_channel_start(EncChannel* c)
+{
+    if (c->return_error == EB_ErrorNone) {
+        EbConfig* config = c->config;
+        c->exit_cond = APP_ExitConditionNone;
+        c->exit_cond_output = APP_ExitConditionNone;
+        c->exit_cond_recon  = config->recon_file
+            ? APP_ExitConditionNone
+            : APP_ExitConditionError;
+        c->exit_cond_input = APP_ExitConditionNone;
+        c->active  = EB_TRUE;
+        start_time(
+            (uint64_t *)&config->performance_context.encode_start_time[0],
+            (uint64_t *)&config->performance_context.encode_start_time[1]);
+    }
+
+}
+
 static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     EbErrorType          return_error   = EB_ErrorNone;
 
@@ -431,26 +449,7 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     EncodePass pass = enc_context->pass;
     // Start the Encoder
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-        EncChannel* c = enc_context->channels + inst_cnt;
-        if (c->return_error == EB_ErrorNone) {
-            EbConfig* config = c->config;
-            return_error        = (EbErrorType)(return_error & c->return_error);
-            c->exit_cond = APP_ExitConditionNone;
-            c->exit_cond_output = APP_ExitConditionNone;
-            c->exit_cond_recon  = config->recon_file
-                ? APP_ExitConditionNone
-                : APP_ExitConditionError;
-            c->exit_cond_input = APP_ExitConditionNone;
-            c->active  = EB_TRUE;
-            start_time(
-                (uint64_t *)&config->performance_context.encode_start_time[0],
-                (uint64_t *)&config->performance_context.encode_start_time[1]);
-        } else {
-            c->exit_cond        = APP_ExitConditionError;
-            c->exit_cond_output = APP_ExitConditionError;
-            c->exit_cond_recon  = APP_ExitConditionError;
-            c->exit_cond_input  = APP_ExitConditionError;
-        }
+        enc_channel_start(enc_context->channels + inst_cnt);
 
 #if DISPLAY_MEMORY
         EB_APP_MEMORY();
