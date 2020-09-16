@@ -488,6 +488,14 @@ typedef struct EbConfig {
     int                 mrp_level;
 } EbConfig;
 
+typedef struct EncChannel {
+    AppExitConditionType exit_cond_output; // Processing loop exit condition
+    AppExitConditionType exit_cond_recon; // Processing loop exit condition
+    AppExitConditionType exit_cond_input; // Processing loop exit condition
+    AppExitConditionType exit_cond; // Processing loop exit condition
+    EbBool active;
+} EncChannel;
+
 typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
