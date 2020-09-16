@@ -371,6 +371,16 @@ static void print_warnnings(const EncContext* const enc_context)
 
 }
 
+EbBool has_active_channel(const EncContext* const enc_context)
+{
+    // check if all channels are inactive
+    for (uint32_t inst_cnt = 0; inst_cnt < enc_context->num_channels; ++inst_cnt) {
+        if (enc_context->channel_active[inst_cnt])
+            return EB_TRUE;
+    }
+    return EB_FALSE;
+}
+
 static const char *get_pass_name(EncodePass pass) {
     switch (pass) {
     case ENCODE_FIRST_PASS: return "Pass 1/2 ";
@@ -381,7 +391,6 @@ static const char *get_pass_name(EncodePass pass) {
 
 static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     EbErrorType          return_error   = EB_ErrorNone;
-    AppExitConditionType exit_condition = APP_ExitConditionNone; // Processing loop exit condition
 
     AppExitConditionType exit_cond_output[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
     AppExitConditionType exit_cond_recon[MAX_CHANNEL_NUMBER]; // Processing loop exit condition
@@ -437,8 +446,7 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
 
             int32_t total_frames = 0;
 
-            while (exit_condition == APP_ExitConditionNone) {
-                exit_condition = APP_ExitConditionFinished;
+            while (has_active_channel(enc_context)) {
                 for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
                     if (channel_active[inst_cnt] == EB_TRUE) {
                         if (exit_cond_input[inst_cnt] == APP_ExitConditionNone)
@@ -474,11 +482,6 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
                                     exit_cond_output[inst_cnt] | exit_cond_input[inst_cnt]);
                         }
                     }
-                }
-                // check if all channels are inactive
-                for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-                    if (channel_active[inst_cnt] == EB_TRUE)
-                        exit_condition = APP_ExitConditionNone;
                 }
             }
             print_summary(enc_context);
