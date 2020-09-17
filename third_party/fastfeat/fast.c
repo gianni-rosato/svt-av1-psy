@@ -6,7 +6,7 @@
 xy* svt_aom_fast9_detect_nonmax(const byte* im, int xsize, int ysize, int stride, int b, int* ret_num_corners)
 {
     xy* corners;
-    int num_corners;
+    int num_corners = 0;
     int* scores;
     xy* nonmax;
 

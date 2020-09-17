@@ -140,6 +140,9 @@ const uint8_t *eb_av1_get_obmc_mask(int length);
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 
+void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
+                       uint32_t *rate, uint64_t *dist);
+
 #ifdef __cplusplus
 }
 #endif

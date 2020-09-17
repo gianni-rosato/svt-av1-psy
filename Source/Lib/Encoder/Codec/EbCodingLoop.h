@@ -353,6 +353,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr,
     EbEncMode mode_offset);
+
+void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+                        EbPictureBufferDesc *input_picture_ptr);
+void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+                                  EbPictureBufferDesc *input_picture_ptr);
 #ifdef __cplusplus
 }
 #endif

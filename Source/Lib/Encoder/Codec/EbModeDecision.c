@@ -525,7 +525,7 @@ void choose_best_av1_mv_pred(ModeDecisionContext *           context_ptr,
         return;
     }
     uint8_t  drli, max_drl_index;
-    IntMv    nearestmv[2];
+    IntMv    nearestmv[2] = {{0}};
     IntMv    nearmv[2];
     IntMv    ref_mv[2];
     uint32_t best_mv_cost = 0xFFFFFFFF;

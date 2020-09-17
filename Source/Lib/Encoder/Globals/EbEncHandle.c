@@ -3630,6 +3630,7 @@ static EbErrorType allocate_frame_buffer(
     input_pic_buf_desc_init_data.split_mode = is_16bit ? EB_TRUE : EB_FALSE;
 
     input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    input_pic_buf_desc_init_data.is_16bit_pipeline = 0;
 
     if (is_16bit && config->compressed_ten_bit_format == 1)
         //do special allocation for 2bit data down below.

@@ -17,6 +17,7 @@
 #include "EbCommonUtils.h"
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
+#include "EbEncInterPrediction.h"
 
 #include <assert.h>
 #define FIRST_PASS_COST_PENALTY 20 // The penalty is added in cost calculation of the first pass.
@@ -545,13 +546,6 @@ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8_t palette_size,
                              uint32_t mode);
 
-/*static*/ void model_rd_from_sse(BlockSize bsize, int16_t quantizer,
-                                  //const Av1Comp *const cpi,
-                                  //const MacroBlockD *const xd,
-                                  //BlockSize bsize,
-                                  //int32_t plane,
-                                  uint64_t sse, uint32_t *rate, uint64_t *dist);
-
 uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
                              EbBool use_ssd, PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
@@ -769,13 +763,23 @@ uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
             Dequants *const dequants = &pcs_ptr->parent_pcs_ptr->deq_bd;
             int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
             rate              = 0;
-            model_rd_from_sse(blk_geom->bsize, quantizer, luma_distortion, &rate, &luma_sad);
+
+            model_rd_from_sse(blk_geom->bsize,
+                              quantizer,
+                              scs_ptr->encoder_bit_depth,
+                              luma_distortion,
+                              &rate,
+                              &luma_sad);
             luma_rate += rate;
             total_distortion = luma_sad;
 
             rate = 0;
-            model_rd_from_sse(
-                blk_geom->bsize_uv, quantizer, chroma_distortion, &chroma_rate, &chromasad_);
+            model_rd_from_sse(blk_geom->bsize_uv,
+                              quantizer,
+                              scs_ptr->encoder_bit_depth,
+                              chroma_distortion,
+                              &chroma_rate,
+                              &chromasad_);
             chroma_rate += rate;
             total_distortion += chromasad_;
 
@@ -1615,13 +1619,22 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
 
         int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
         rate              = 0;
-        model_rd_from_sse(blk_geom->bsize, quantizer, luma_distortion, &rate, &luma_sad);
+        model_rd_from_sse(blk_geom->bsize,
+                          quantizer,
+                          pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth,
+                          luma_distortion,
+                          &rate,
+                          &luma_sad);
         luma_rate += rate;
         total_distortion = luma_sad;
 
         rate = 0;
-        model_rd_from_sse(
-            blk_geom->bsize_uv, quantizer, chroma_distortion, &chroma_rate, &chromasad_);
+        model_rd_from_sse(blk_geom->bsize_uv,
+                          quantizer,
+                          pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth,
+                          chroma_distortion,
+                          &chroma_rate,
+                          &chromasad_);
         chroma_rate += rate;
         total_distortion += chromasad_;
 
