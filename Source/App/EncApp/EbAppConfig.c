@@ -2611,7 +2611,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbConfig **confi
             char message[WARNING_LENGTH] = "";
             // concat strings with '-'
             char concat_str[WARNING_LENGTH] = "-";
-            strcpy_s(concat_str + 1, sizeof(concat_str), config_entry[token_index].token);
+            strcpy_s(concat_str + 1, sizeof(concat_str) - 1, config_entry[token_index].token);
             if (find_token_multiple_inputs(
                     argc, argv, config_entry[token_index].token, config_strings) == 0) {
                 //Warning for one dash
