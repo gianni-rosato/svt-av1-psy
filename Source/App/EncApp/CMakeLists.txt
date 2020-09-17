@@ -13,7 +13,7 @@
 
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
-    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${CMAKE_OUTPUT_DIRECTORY}/
     ${PROJECT_SOURCE_DIR}/third_party/safestringlib)
 
 file(GLOB all_files

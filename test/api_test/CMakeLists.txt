@@ -14,7 +14,7 @@
 
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/test/
-    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${CMAKE_OUTPUT_DIRECTORY}/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/include
     ${PROJECT_SOURCE_DIR}/third_party/googletest/src
     ${PROJECT_SOURCE_DIR}/Source/API)
@@ -51,4 +51,4 @@ endif()
 
 install(TARGETS SvtAv1ApiTests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-add_test(SvtAv1ApiTests ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/SvtAv1ApiTests)
+add_test(SvtAv1ApiTests ${CMAKE_OUTPUT_DIRECTORY}/SvtAv1ApiTests)

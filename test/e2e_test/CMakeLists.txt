@@ -18,7 +18,7 @@ include("${SVT_AV1_E2E_ROOT}/libaom_dependency.cmake")
 
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/test/
-    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${CMAKE_OUTPUT_DIRECTORY}/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/include
     ${PROJECT_SOURCE_DIR}/third_party/googletest/src
     ${PROJECT_SOURCE_DIR}/third_party/aom/inc
@@ -45,7 +45,8 @@ set(lib_list
     SvtAv1Dec
     gtest_all
     #SDL2.lib
-    aom)
+    aom
+    $<TARGET_OBJECTS:safestringlib>)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
@@ -58,10 +59,10 @@ if(UNIX)
 
     if(APPLE)
         add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac/* ${CMAKE_OUTPUT_DIRECTORY}/)
     else()
         add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux/* ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux/* ${CMAKE_OUTPUT_DIRECTORY}/)
     endif()
 
     # Link the Encoder App
@@ -83,7 +84,7 @@ target_include_directories(SvtAv1E2ETests PRIVATE ${PROJECT_SOURCE_DIR}/third_pa
 
 install(TARGETS SvtAv1E2ETests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-add_test(SvtAv1E2ETests ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/SvtAv1E2ETests)
+add_test(SvtAv1E2ETests ${CMAKE_OUTPUT_DIRECTORY}/SvtAv1E2ETests)
 add_dependencies(SvtAv1E2ETests DepLibAom)
 
 # testdata download targets.
