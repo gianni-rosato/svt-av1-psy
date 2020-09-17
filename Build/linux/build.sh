@@ -82,7 +82,7 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
 
 Example usage:
     build.sh -xi debug test
-    build.sh jobs=8 all cc=clang cpp=clang++
+    build.sh jobs=8 all cc=clang cxx=clang++
     build.sh -j 4 all -t "https://gist.githubusercontent.com/peterspackman/8cf73f7f12ba270aa8192d6911972fe8/raw/mingw-w64-x86_64.cmake"
     build.sh generator=Xcode cc=clang
 EOF
