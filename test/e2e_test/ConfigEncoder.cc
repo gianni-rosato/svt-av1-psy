@@ -60,7 +60,7 @@ std::string get_enc_token(const char *name) {
     std::string str;
     int index = 0;
     while (config_entry[index].name != NULL) {
-        if (EB_STRCMP(name, config_entry[index].name) == 0) {
+        if (strcmp(name, config_entry[index].name) == 0) {
             str = config_entry[index].token;
             break;
         }

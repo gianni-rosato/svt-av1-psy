@@ -79,6 +79,8 @@ else()
         COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
 
+target_include_directories(SvtAv1E2ETests PRIVATE ${PROJECT_SOURCE_DIR}/third_party/safestringlib)
+
 install(TARGETS SvtAv1E2ETests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_test(SvtAv1E2ETests ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/SvtAv1E2ETests)

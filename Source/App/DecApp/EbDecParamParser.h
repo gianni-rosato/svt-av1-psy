@@ -53,8 +53,6 @@
 #define ANNEX_B_TOKEN "-annex-b"
 #define MAX_NUM_TOKENS 200
 
-#define EB_STRCMP(target, token) strcmp(target, token)
-
 /**********************************
  * Config Entry Struct
  **********************************/

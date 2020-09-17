@@ -13,7 +13,8 @@
 
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
-    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/)
+    ${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/
+    ${PROJECT_SOURCE_DIR}/third_party/safestringlib)
 
 file(GLOB all_files
     "*.h"
@@ -22,7 +23,8 @@ file(GLOB all_files
 
 # App Source Files
 add_executable(SvtAv1EncApp
-    ${all_files})
+    ${all_files}
+    $<TARGET_OBJECTS:safestringlib>)
 
 #********** SET COMPILE FLAGS************
 # Link the Encoder App

@@ -23,7 +23,6 @@
 #include "EbThreads.h"
 #include "EbUtility.h"
 #include "EbEncHandle.h"
-#include "EbString.h"
 #include "EbPictureControlSet.h"
 #include "EbPictureOperators.h"
 #include "EbReferenceObject.h"

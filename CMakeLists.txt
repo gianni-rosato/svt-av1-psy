@@ -230,6 +230,8 @@ macro(ASM_COMPILE_TO_TARGET target)
     endif()
 endmacro()
 
+add_subdirectory(third_party/safestringlib)
+
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)
 if(BUILD_ENC)

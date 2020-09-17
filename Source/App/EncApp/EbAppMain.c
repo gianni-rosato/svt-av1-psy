@@ -29,7 +29,6 @@
 #include "EbAppConfig.h"
 #include "EbAppContext.h"
 #include "EbTime.h"
-#include "EbAppString.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h> /* _setmode() */
@@ -39,6 +38,7 @@
 #include <semaphore.h>
 #include <time.h>
 #include <errno.h>
+#include "safe_str_lib.h"
 #endif
 
 /***************************************
@@ -146,7 +146,7 @@ static EbErrorType encode(EncApp* enc_app, int32_t argc, char *argv[], EncodePas
     char *warning[MAX_NUM_TOKENS];
     for (int token_id = 0; token_id < MAX_NUM_TOKENS; token_id++) {
         warning[token_id] = (char *)malloc(WARNING_LENGTH);
-        EB_STRCPY(warning[token_id], WARNING_LENGTH, "");
+        strcpy_s(warning[token_id], WARNING_LENGTH, "");
     }
     // Read all configuration files.
     return_error = read_command_line(argc, argv, configs, num_channels, return_errors, warning);

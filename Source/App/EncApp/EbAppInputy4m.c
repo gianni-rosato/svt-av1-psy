@@ -9,8 +9,12 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#include "EbAppString.h"
 #include "EbAppInputy4m.h"
+#ifdef _WIN32
+#include <string.h>
+#else
+#include "safe_str_lib.h"
+#endif
 #define YFM_HEADER_MAX 80
 #define YUV4MPEG2_IND_SIZE 9
 #define PRINT_HEADER 0
@@ -26,7 +30,7 @@ char *copy_until_char_or_newline(char *src, char *dst, char chr) {
         count++;
     }
 
-    EB_STRNCPY(dst, YFM_HEADER_MAX, src_init, count);
+    strncpy_s(dst, YFM_HEADER_MAX, src_init, count);
 
     return src;
 }
@@ -93,89 +97,89 @@ int32_t read_y4m_header(EbConfig *cfg) {
             break;
         case 'C': /* color space, not required: default "420" */
             tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
-            if (EB_STRCMP("420mpeg2", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            if (strcmp("420mpeg2", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 // chroma left
                 bitdepth = 8;
-            } else if (EB_STRCMP("420paldv", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420paldv", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 // chroma top-left
                 bitdepth = 8;
-            } else if (EB_STRCMP("420jpeg", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420jpeg", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 // chroma center
                 bitdepth = 8;
-            } else if (EB_STRCMP("420p16", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420p16", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 16;
-            } else if (EB_STRCMP("422p16", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "422");
+            } else if (strcmp("422p16", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 16;
-            } else if (EB_STRCMP("444p16", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "444");
+            } else if (strcmp("444p16", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 16;
-            } else if (EB_STRCMP("420p14", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420p14", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 14;
-            } else if (EB_STRCMP("422p14", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "422");
+            } else if (strcmp("422p14", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 14;
-            } else if (EB_STRCMP("444p14", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "444");
+            } else if (strcmp("444p14", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 14;
-            } else if (EB_STRCMP("420p12", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420p12", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 12;
-            } else if (EB_STRCMP("422p12", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "422");
+            } else if (strcmp("422p12", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 12;
-            } else if (EB_STRCMP("444p12", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "444");
+            } else if (strcmp("444p12", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 12;
-            } else if (EB_STRCMP("420p10", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420p10", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 10;
-            } else if (EB_STRCMP("422p10", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "422");
+            } else if (strcmp("422p10", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 10;
-            } else if (EB_STRCMP("444p10", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "444");
+            } else if (strcmp("444p10", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 10;
-            } else if (EB_STRCMP("420p9", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420p9", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 9;
-            } else if (EB_STRCMP("422p9", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "422");
+            } else if (strcmp("422p9", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 9;
-            } else if (EB_STRCMP("444p9", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "444");
+            } else if (strcmp("444p9", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 9;
-            } else if (EB_STRCMP("420", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "420");
+            } else if (strcmp("420", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 8;
-            } else if (EB_STRCMP("411", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "411");
+            } else if (strcmp("411", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "411");
                 bitdepth = 8;
-            } else if (EB_STRCMP("422", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "422");
+            } else if (strcmp("422", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 8;
-            } else if (EB_STRCMP("444", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "444");
+            } else if (strcmp("444", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 8;
-            } else if (EB_STRCMP("mono16", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "400");
+            } else if (strcmp("mono16", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 16;
-            } else if (EB_STRCMP("mono12", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "400");
+            } else if (strcmp("mono12", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 12;
-            } else if (EB_STRCMP("mono10", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "400");
+            } else if (strcmp("mono10", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 10;
-            } else if (EB_STRCMP("mono9", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "400");
+            } else if (strcmp("mono9", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 9;
-            } else if (EB_STRCMP("mono", format_str) == 0) {
-                EB_STRCPY(chroma, CHROMA_MAX, "400");
+            } else if (strcmp("mono", format_str) == 0) {
+                strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 8;
             } else {
                 fprintf(cfg->error_log_file, "chroma format not supported\n");
@@ -250,8 +254,8 @@ int32_t read_y4m_frame_delimiter(EbConfig *cfg) {
         return EB_ErrorNone;
     }
 
-    if (EB_STRCMP((const char *)buffer_y4m_header, "FRAME\n") !=0
-        && EB_STRCMP((const char *)buffer_y4m_header, "FRAME\r\n") != 0) {
+    if (strcmp((const char *)buffer_y4m_header, "FRAME\n") !=0
+        && strcmp((const char *)buffer_y4m_header, "FRAME\r\n") != 0) {
         fprintf(cfg->error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
         return EB_ErrorBadParameter;
     }
@@ -273,5 +277,5 @@ EbBool check_if_y4m(EbConfig *cfg) {
     }
 
     buf[YUV4MPEG2_IND_SIZE] = 0;
-    return (EB_STRCMP(buf, "YUV4MPEG2") == 0);
+    return (strcmp(buf, "YUV4MPEG2") == 0);
 }

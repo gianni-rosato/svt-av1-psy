@@ -131,7 +131,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
     // Parse command line for tokens
     while (token_index < cmd_token_cnt) {
         if (cmd_copy[token_index] != NULL) {
-            if (EB_STRCMP(cmd_copy[token_index], INPUT_FILE_TOKEN) == 0) {
+            if (strcmp(cmd_copy[token_index], INPUT_FILE_TOKEN) == 0) {
                 FILE *fin;
                 FOPEN(fin, config_strings[token_index], "rb");
                 if (!fin) {
@@ -141,7 +141,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
                     cli->in_file     = fin;
                     cli->in_filename = config_strings[token_index];
                 }
-            } else if (EB_STRCMP(cmd_copy[token_index], OUTPUT_FILE_TOKEN) == 0) {
+            } else if (strcmp(cmd_copy[token_index], OUTPUT_FILE_TOKEN) == 0) {
                 FILE *fout;
                 FOPEN(fout, config_strings[token_index], "wb");
                 if (!fout) {
@@ -151,23 +151,23 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
                     cli->out_file     = fout;
                     cli->out_filename = config_strings[token_index];
                 }
-            } else if (EB_STRCMP(cmd_copy[token_index], MD5_SUPPORT_TOKEN) == 0)
+            } else if (strcmp(cmd_copy[token_index], MD5_SUPPORT_TOKEN) == 0)
                 cli->enable_md5 = 1;
-            else if (EB_STRCMP(cmd_copy[token_index], FPS_FRM_TOKEN) == 0)
+            else if (strcmp(cmd_copy[token_index], FPS_FRM_TOKEN) == 0)
                 cli->fps_frm = 1;
-            else if (EB_STRCMP(cmd_copy[token_index], FPS_SUMMARY_TOKEN) == 0)
+            else if (strcmp(cmd_copy[token_index], FPS_SUMMARY_TOKEN) == 0)
                 cli->fps_summary = 1;
-            else if (EB_STRCMP(cmd_copy[token_index], FILM_GRAIN_TOKEN) == 0)
+            else if (strcmp(cmd_copy[token_index], FILM_GRAIN_TOKEN) == 0)
                 cli->skip_film_grain = 1;
-            else if (EB_STRCMP(cmd_copy[token_index], ANNEX_B_TOKEN) == 0)
+            else if (strcmp(cmd_copy[token_index], ANNEX_B_TOKEN) == 0)
                 obu_ctx->is_annexb = 1;
-            else if (EB_STRCMP(cmd_copy[token_index], HELP_TOKEN) == 0)
+            else if (strcmp(cmd_copy[token_index], HELP_TOKEN) == 0)
                 show_help();
             else {
                 int temp_ind = 0;
                 int cli_read = 0;
                 while (config_entry[temp_ind].name != NULL) {
-                    if (EB_STRCMP(cmd_copy[token_index], config_entry[temp_ind].token) == 0) {
+                    if (strcmp(cmd_copy[token_index], config_entry[temp_ind].token) == 0) {
                         if (config_strings[token_index] == NULL) {
                             if (config_entry[temp_ind].value_required == 1) {
                                 fprintf(stderr, "Invalid CLI option: %s \n", cmd_copy[token_index]);
