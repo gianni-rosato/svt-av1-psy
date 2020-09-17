@@ -47,15 +47,11 @@
 /***************************************
  * External Functions
  ***************************************/
-void process_input_buffer(EncChannel* c, EbConfig *config, EbAppContext *app_call_back);
+void process_input_buffer(EncChannel* c);
 
-void process_output_recon_buffer(EncChannel* c, EbConfig *    config,
-                                                        EbAppContext *app_call_back);
+void process_output_recon_buffer(EncChannel* c);
 
-void process_output_stream_buffer(EncChannel* c, EncApp* enc_app, EbConfig *    config,
-                                                         EbAppContext *app_call_back,
-                                                         uint8_t       pic_send_done,
-                                                         int32_t      *frame_count);
+void process_output_stream_buffer(EncChannel* c, EncApp* enc_app, int32_t *frame_count);
 
 volatile int32_t keep_running = 1;
 
@@ -378,21 +374,14 @@ static EbBool has_active_channel(const EncContext* const enc_context)
     return EB_FALSE;
 }
 
-static void enc_channel_step(EncApp* enc_app, EncContext* enc_context, uint32_t inst_cnt )
+static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_context)
 {
-    EncChannel* c = enc_context->channels + inst_cnt;
     EbConfig* config = c->config;
-    EbAppContext* app_callback = c->app_callback;
-    process_input_buffer(c, config, app_callback);
-    process_output_recon_buffer(c, config, app_callback);
+    process_input_buffer(c);
+    process_output_recon_buffer(c);
     process_output_stream_buffer(c,
             enc_app,
-            config,
-            app_callback,
-            (c->exit_cond_input == APP_ExitConditionNone) ||
-                    (c->exit_cond_recon == APP_ExitConditionNone)
-                ? 0
-                : 1, &enc_context->total_frames);
+            &enc_context->total_frames);
 
     if (((c->exit_cond_recon == APP_ExitConditionFinished ||
             !config->recon_file) &&
@@ -461,8 +450,9 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
 
     while (has_active_channel(enc_context)) {
         for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-            if (is_active(enc_context->channels + inst_cnt)) {
-                enc_channel_step(enc_app, enc_context, inst_cnt);
+            EncChannel* c = enc_context->channels + inst_cnt;
+            if (is_active(c)) {
+                enc_channel_step(c, enc_app, enc_context);
             }
         }
     }
