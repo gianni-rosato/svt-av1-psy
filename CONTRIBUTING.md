@@ -2,6 +2,10 @@
 
 We welcome community contributions to the SVT-AV1 Encoder and Decoder. Thank you for your time! By contributing to the project, you agree to the license, patent and copyright terms in the AOM License and Patent License  and to the release of your contribution under these terms. See [LICENSE](LICENSE.md) and [PATENTS](PATENTS.md) for details.
 
+## Contributor agreement
+
+You will be required to execute the appropriate [contributor agreement](http://aomedia.org/license/) to ensure that the AOMedia Project has the right to distribute your changes.
+
 ## Contribution process
 
 - Follow the [coding guidelines](STYLE.md)
