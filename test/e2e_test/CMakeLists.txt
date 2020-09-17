@@ -16,23 +16,8 @@ set(SVT_AV1_E2E_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 include("${SVT_AV1_E2E_ROOT}/test_data_util.cmake")
 include("${SVT_AV1_E2E_ROOT}/libaom_dependency.cmake")
 
-# Include Subdirectories
-include_directories(${PROJECT_SOURCE_DIR}/test/
-    ${CMAKE_OUTPUT_DIRECTORY}/
-    ${PROJECT_SOURCE_DIR}/third_party/googletest/include
-    ${PROJECT_SOURCE_DIR}/third_party/googletest/src
-    ${PROJECT_SOURCE_DIR}/third_party/aom/inc
-    ${PROJECT_SOURCE_DIR}/Source/API
-    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec)
-
 # Link Subdirectories
-if(APPLE)
-    link_directories(${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac)
-elseif(UNIX)
-    link_directories(${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux)
-else()
-    link_directories(${PROJECT_SOURCE_DIR}/third_party/aom/lib/msvc)
-endif()
+link_directories(${PROJECT_SOURCE_DIR}/third_party/aom/lib)
 
 file(GLOB all_files
     "*.h"
@@ -57,14 +42,8 @@ if(UNIX)
     add_executable(SvtAv1E2ETests
         ${all_files})
 
-    if(APPLE)
-        add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/mac/* ${CMAKE_OUTPUT_DIRECTORY}/)
-    else()
-        add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/linux/* ${CMAKE_OUTPUT_DIRECTORY}/)
-    endif()
-
+    add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/* ${CMAKE_OUTPUT_DIRECTORY}/)
     # Link the Encoder App
      target_link_libraries(SvtAv1E2ETests
         ${lib_list}
@@ -80,7 +59,15 @@ else()
         COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
 
-target_include_directories(SvtAv1E2ETests PRIVATE ${PROJECT_SOURCE_DIR}/third_party/safestringlib)
+target_include_directories(SvtAv1E2ETests PRIVATE
+    ${CMAKE_OUTPUT_DIRECTORY}
+    ${PROJECT_SOURCE_DIR}/Source/API
+    ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec
+    ${PROJECT_SOURCE_DIR}/test
+    ${PROJECT_SOURCE_DIR}/third_party/aom/inc
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/include
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/src
+    ${PROJECT_SOURCE_DIR}/third_party/safestringlib)
 
 install(TARGETS SvtAv1E2ETests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

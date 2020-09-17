@@ -1,17 +1,15 @@
 include(ExternalProject)
 #/property:Configuration=${CMAKE_BUILD_TYPE} ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/
+set(TARGET_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/aom/lib)
 if(APPLE)
-    set(TARGET_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/aom/lib/mac)
     set(TARGET "libaom*dylib")
     install(FILES ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/libaom.dylib DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(FILES ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/libaom.0.dylib DESTINATION ${CMAKE_INSTALL_LIBDIR})
 elseif(UNIX)
-    set(TARGET_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/aom/lib/linux)
     set(TARGET "libaom.so*")
     install(FILES ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/libaom.so DESTINATION ${CMAKE_INSTALL_LIBDIR})
     install(FILES ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/libaom.so.0 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 else()
-    set(TARGET_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/aom/lib/msvc)
     set(CUSTOM_POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${TARGET_OUTPUT_PATH}/Release/
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/libaom/src/DepLibAom-build/MinSizeRel/aom.lib ${TARGET_OUTPUT_PATH}/Release/
