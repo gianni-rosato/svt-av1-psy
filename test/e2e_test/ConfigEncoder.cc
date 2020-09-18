@@ -22,9 +22,8 @@ void set_enc_config(void *config_ptr, const char *name, const char *value) {
 }
 
 void *create_enc_config() {
-    EbConfig *config = (EbConfig *)malloc(sizeof(EbConfig));
+    EbConfig *config = eb_config_ctor(ENCODE_SINGLE_PASS);
     assert(config != NULL);
-    eb_config_ctor(config);
     return config;
 }
 
@@ -32,7 +31,6 @@ void release_enc_config(void *config_ptr) {
     if (config_ptr) {
         EbConfig *config = (EbConfig *)config_ptr;
         eb_config_dtor(config);
-        free(config_ptr);
     }
 }
 
