@@ -10,9 +10,8 @@
 */
 
 #include "EbAppInputy4m.h"
-#ifdef _WIN32
 #include <string.h>
-#else
+#if !defined(_WIN32) || !defined(HAVE_STRNLEN_S)
 #include "safe_str_lib.h"
 #endif
 #define YFM_HEADER_MAX 80

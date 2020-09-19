@@ -22,6 +22,9 @@
 #else
 #include <unistd.h>
 #include <sys/file.h>
+#endif
+
+#if !defined(_WIN32) || !defined(HAVE_STRNLEN_S)
 #include "safe_str_lib.h"
 #endif
 

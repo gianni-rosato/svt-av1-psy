@@ -230,6 +230,18 @@ macro(ASM_COMPILE_TO_TARGET target)
     endif()
 endmacro()
 
+file(WRITE ${CMAKE_BINARY_DIR}/conftest.c "
+#include <string.h>
+#include <stdint.h>
+int main() {
+    return (uintptr_t)strnlen_s;
+}
+")
+
+try_compile(HAVE_STRNLEN_S ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/conftest.c)
+
+add_definitions(-DHAVE_STRNLEN_S=1)
+
 add_subdirectory(third_party/safestringlib)
 
 # Add Subdirectories
