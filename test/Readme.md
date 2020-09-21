@@ -68,7 +68,7 @@ SvtAv1UnitTests --gtest_filter="*transform*"
 
 ## Test Results Summary
 
-Here is the test results summary on commit: [3009e99](https://github.com/OpenVisualCloud/SVT-AV1/commit/3009e99f32e3476e028aadd17a265630f80a8e36). The developers can use this summary as a reference.
+Here is the test results summary on commit: [3009e99](https://github.com/AOMediaCodec/SVT-AV1/commit/3009e99f32e3476e028aadd17a265630f80a8e36). The developers can use this summary as a reference.
 
 Unit Tests on Ubuntu 16.04:
 

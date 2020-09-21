@@ -1,9 +1,9 @@
 # Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder)
 
-[![CI](https://github.com/OpenVisualCloud/SVT-AV1/workflows/CI/badge.svg)](https://github.com/OpenVisualCloud/SVT-AV1/actions?query=workflow%3ACI+branch%3Amaster)
-[![MSVC builds](https://github.com/OpenVisualCloud/SVT-AV1/workflows/MSVC%20builds/badge.svg)](https://github.com/OpenVisualCloud/SVT-AV1/actions?query=workflow%3A%22MSVC+builds%22+branch%3Amaster)
-[![macOS](https://github.com/OpenVisualCloud/SVT-AV1/workflows/macOS/badge.svg)](https://github.com/OpenVisualCloud/SVT-AV1/actions?query=workflow%3AmacOS+branch%3Amaster)
-[![Travis Build Status](https://travis-ci.com/OpenVisualCloud/SVT-AV1.svg?branch=master)](https://travis-ci.com/OpenVisualCloud/SVT-AV1)
+[![CI](https://github.com/AOMediaCodec/SVT-AV1/workflows/CI/badge.svg)](https://github.com/AOMediaCodec/SVT-AV1/actions?query=workflow%3ACI+branch%3Amaster)
+[![MSVC builds](https://github.com/AOMediaCodec/SVT-AV1/workflows/MSVC%20builds/badge.svg)](https://github.com/AOMediaCodec/SVT-AV1/actions?query=workflow%3A%22MSVC+builds%22+branch%3Amaster)
+[![macOS](https://github.com/AOMediaCodec/SVT-AV1/workflows/macOS/badge.svg)](https://github.com/AOMediaCodec/SVT-AV1/actions?query=workflow%3AmacOS+branch%3Amaster)
+[![Travis Build Status](https://travis-ci.com/AOMediaCodec/SVT-AV1.svg?branch=master)](https://travis-ci.com/AOMediaCodec/SVT-AV1)
 
 The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-compliant encoder/decoder library core. The SVT-AV1 encoder development is a work-in-progress targeting performance levels applicable to both VOD and Live encoding / transcoding video applications. The SVT-AV1 decoder implementation is targeting future codec research activities.
 
@@ -109,7 +109,7 @@ The SVT-AV1 Encoder library supports the x86 architecture
 ### 1. Build and install SVT-AV1
 
 ``` bash
-   git clone --depth=1 https://github.com/OpenVisualCloud/SVT-AV1
+   git clone --depth=1 https://github.com/AOMediaCodec/SVT-AV1
    cd SVT-AV1
    cd Build
    cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
@@ -119,7 +119,7 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 ###  2. Enable libsvtav1 in FFmpeg
 
-NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](https://github.com/OpenVisualCloud/SVT-AV1/tree/v0.8.4/ffmpeg_plugin) and consult that page to properly patch ffmpeg for use with SVT-AV1.
+NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](https://github.com/AOMediaCodec/SVT-AV1/tree/v0.8.4/ffmpeg_plugin) and consult that page to properly patch ffmpeg for use with SVT-AV1.
 
 ``` bash
    git clone --depth=1 https://github.com/FFmpeg/FFmpeg ffmpeg
@@ -138,7 +138,7 @@ NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](h
 
 ## How to evaluate by ready-to-run executables with docker
 
-Refer to the guide [here](https://github.com/OpenVisualCloud/Dockerfiles/blob/master/doc/svt.md#Evaluate-SVT).
+Refer to the guide [here](https://github.com/AOMediaCodec/Dockerfiles/blob/master/doc/svt.md#Evaluate-SVT).
 
 ## Demo features and limitations
 
@@ -165,7 +165,7 @@ You will be required to execute the appropriate [contributor agreement](http://a
 
 ### How to Report Bugs and Provide Feedback
 
-Use the [Issues](https://github.com/OpenVisualCloud/SVT-AV1/issues) tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
+Use the [Issues](https://github.com/AOMediaCodec/SVT-AV1/issues) tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
 
 ## IRC
 
