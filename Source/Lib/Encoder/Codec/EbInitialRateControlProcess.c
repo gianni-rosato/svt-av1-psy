@@ -1184,6 +1184,7 @@ EbErrorType tpl_mc_flow(
     EbByte                           mc_flow_rec_picture_buffer_noref = NULL;
 
     (void)scs_ptr;
+    pcs_ptr->r0 = 0;
     pcs_array[0] = pcs_ptr;
     // Walk the first N entries in the sliding window
     inputQueueIndex = encode_context_ptr->initial_rate_control_reorder_queue_head_index;
