@@ -143,7 +143,7 @@ check_executable() (
 
 install_build() (
     build_type="Release"
-    sudo=
+    sudo=$(check_executable -p sudo)
     while [ -n "$*" ]; do
         case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
         release) build_type="Release" && shift ;;
@@ -151,11 +151,13 @@ install_build() (
         *) break ;;
         esac
     done
-    check_executable sudo && sudo -v > /dev/null 2>&1 && sudo=sudo
+
     { [ -d "$build_type" ] && cd_safe "$build_type"; } ||
         die "Unable to find the build folder. Did the build command run?"
-    $sudo cmake --build . --target install --config "$build_type" ||
-        die "Unable to run install"
+    cmake --build . --target install --config "$build_type" || {
+        test -n "$sudo" &&
+            eval ${sudo:+echo cmake failed to install, trying with sudo && $sudo cmake --build . --target install --config "$build_type"}
+    } || die "Unable to run install"
 )
 
 if [ -z "$CC" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
