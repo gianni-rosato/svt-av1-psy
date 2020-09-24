@@ -2843,9 +2843,15 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    /* Warnings about the use of features that are incomplete */
     if (config->rc_twopass_stats_in.sz || config->rc_firstpass_stats_out) {
         SVT_WARN("The 2-pass encoding support is a work-in-progress, it is only available for experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
+
+    if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
+        SVT_WARN("The VBR and CVBR rate control modes are a work-in-progress projects, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+    }
+
     return return_error;
 }
 
