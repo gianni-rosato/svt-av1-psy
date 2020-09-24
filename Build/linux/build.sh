@@ -67,6 +67,7 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
 -b, --bindir, bindir=*  Directory to install binaries
     --cc, cc=*          Set C compiler [$CC]
     --cxx, cxx=*        Set CXX compiler [$CXX]
+    --c-only, c-only    Compile only C code
     --clean, clean      Remove build and Bin folders
     --debug, debug      Build debug
     --shared, shared    Build shared libs
@@ -218,6 +219,7 @@ parse_options() {
             fi
             shift
             ;;
+        c-only) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCOMPILE_C_ONLY=ON" && shift ;;
         clean)
             for d in *; do
                 [ -d "$d" ] && rm -rf "$d"
@@ -285,6 +287,7 @@ else
             bindir) parse_options bindir="$2" && shift 2 ;;
             cc) parse_options cc="$2" && shift 2 ;;
             cxx) parse_options cxx="$2" && shift 2 ;;
+            c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
             gen) parse_options generator="$2" && shift 2 ;;
@@ -367,6 +370,7 @@ else
             bindir=*) parse_options bindir="${1#*=}" && shift ;;
             cc=*) parse_options cc="${1#*=}" && shift ;;
             cxx=*) parse_options cxx="${1#*=}" && shift ;;
+            c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
             gen=*) parse_options generator="${1#*=}" && shift ;;

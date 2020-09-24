@@ -30,7 +30,7 @@ add_library(common_lib INTERFACE)
 add_subdirectory(Codec)
 add_subdirectory(C_DEFAULT)
 
-if(X86)
+if(NOT COMPILE_C_ONLY AND X86)
     add_subdirectory(ASM_SSE2)
     add_subdirectory(ASM_SSSE3)
     add_subdirectory(ASM_SSE4_1)

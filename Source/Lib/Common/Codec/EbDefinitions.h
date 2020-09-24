@@ -27,17 +27,6 @@
 #define inline
 #endif
 
-#if defined(_MSC_VER)
-#if defined(_M_IX86) || defined(_M_X64)
-#define ARCH_X86
-#endif
-#endif
-
-#if __GNUC__
-#if defined(__i386__) || defined(__x86_64__)
-#define ARCH_X86
-#endif
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -264,7 +253,7 @@ typedef int16_t InterpKernel[SUBPEL_TAPS];
 /***************************************************/
 /****************** Helper Macros ******************/
 /***************************************************/
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 extern void RunEmms();
 #define aom_clear_system_state() RunEmms()
 #endif
@@ -2179,7 +2168,7 @@ typedef int32_t errno_t;
 
 extern void
     eb_memcpy_app(void  *dst_ptr, const void  *src_ptr, size_t size);
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 #define EB_MEMCPY(dst, src, size) \
     eb_memcpy_app(dst, src, size)
 #else

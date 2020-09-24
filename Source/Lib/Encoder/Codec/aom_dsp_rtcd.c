@@ -339,7 +339,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     variance_highbd = variance_highbd_c;
     eb_av1_haar_ac_sad_8x8_uint8_input = eb_av1_haar_ac_sad_8x8_uint8_input_c;
 
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     flags &= get_cpu_flags_to_use();
     if (flags & HAS_AVX2) eb_aom_sse = eb_aom_sse_avx2;
     if (flags & HAS_AVX2) eb_aom_highbd_sse = eb_aom_highbd_sse_avx2;

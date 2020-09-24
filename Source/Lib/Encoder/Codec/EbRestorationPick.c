@@ -437,7 +437,7 @@ static int64_t finer_search_pixel_proj_error(const uint8_t *src8, int32_t width,
     return err;
 }
 
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 extern void RunEmms();
 #endif
 
@@ -452,7 +452,7 @@ void get_proj_subspace_c(const uint8_t *src8, int32_t width, int32_t height, int
     double        x[2];
     const int32_t size = width * height;
 
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
 
@@ -615,7 +615,7 @@ static SgrprojInfo search_selfguided_restoration(
                   flt0,
                   flt1,
                   flt_stride);
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
         aom_clear_system_state();
 #endif
         const SgrParamsType *const params = &eb_sgr_params[ep];
@@ -632,7 +632,7 @@ static SgrprojInfo search_selfguided_restoration(
                           flt_stride,
                           exq,
                           params);
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
         aom_clear_system_state();
 #endif
         encode_xq(exq, exqd, params);
@@ -983,7 +983,7 @@ static int64_t compute_score(int32_t wiener_win, int64_t *M, int64_t *H, InterpK
     int32_t       i, k, l;
     const int32_t plane_off   = (WIENER_WIN - wiener_win) >> 1;
     const int32_t wiener_win2 = wiener_win * wiener_win;
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
 
@@ -1388,7 +1388,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
         return;
     }
 
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
 
@@ -1435,7 +1435,7 @@ static void search_wiener_finish(const RestorationTileLimits *limits, const Av1P
         return;
     }
 
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
 

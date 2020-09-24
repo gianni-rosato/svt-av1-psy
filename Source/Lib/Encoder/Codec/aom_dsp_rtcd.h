@@ -564,7 +564,7 @@ extern "C" {
     uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w, int h, uint32_t *sse);
     RTCD_EXTERN int(*eb_av1_haar_ac_sad_8x8_uint8_input)(uint8_t *input, int stride, int hbd);
     int eb_av1_haar_ac_sad_8x8_uint8_input_c(uint8_t *input, int stride, int hbd);
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     uint32_t combined_averaging_ssd_avx2(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
     uint32_t combined_averaging_ssd_avx512(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
 

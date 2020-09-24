@@ -21,7 +21,7 @@ add_custom_target(EbVersionHeaderGen
     COMMENT "Generating version header"
     VERBATIM)
 
-if(X86)
+if(NOT COMPILE_C_ONLY AND X86)
 # Include Encoder Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/

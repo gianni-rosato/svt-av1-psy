@@ -24,7 +24,7 @@
 #include "EbPictureAnalysisProcess.h"
 #include "EbMcp.h"
 #include "av1me.h"
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 #include <xmmintrin.h>
 #endif
 #include "EbObject.h"
@@ -392,7 +392,7 @@ static void create_me_context_and_picture_control(
                          ->buffer_y[buffer_index + sb_row * input_picture_ptr_central->stride_y])),
                   BLOCK_SIZE_64 * sizeof(uint8_t));
     }
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     {
         uint8_t *src_ptr = &(padded_pic_ptr->buffer_y[buffer_index]);
 

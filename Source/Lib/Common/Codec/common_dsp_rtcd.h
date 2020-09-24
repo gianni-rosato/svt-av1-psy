@@ -1087,7 +1087,7 @@ extern "C" {
     RTCD_EXTERN uint32_t(*eb_log2f)(uint32_t x);
     void eb_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size);
     RTCD_EXTERN void (*eb_memcpy)(void  *dst_ptr, void  const*src_ptr, size_t size);
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 
     void eb_aom_blend_a64_vmask_sse4_1(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, int w, int h);
 

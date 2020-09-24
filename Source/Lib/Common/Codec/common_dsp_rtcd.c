@@ -64,7 +64,7 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
 /**************************************
  * Instruction Set Support
  **************************************/
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 // Helper Functions
 static INLINE void run_cpuid(uint32_t eax, uint32_t ecx, uint32_t* abcd) {
 #ifdef _WIN32
@@ -809,7 +809,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_highbd_h_predictor_16x32 = eb_aom_highbd_h_predictor_16x32_c;
     eb_log2f = log2f_32;
     eb_memcpy = eb_memcpy_c;
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     flags &= get_cpu_flags_to_use();
     if (flags & HAS_SSE4_1) eb_aom_blend_a64_mask = eb_aom_blend_a64_mask_sse4_1;
     if (flags & HAS_AVX2) eb_aom_blend_a64_mask = eb_aom_blend_a64_mask_avx2;

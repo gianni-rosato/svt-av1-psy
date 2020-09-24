@@ -49,7 +49,7 @@ link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec/
 add_subdirectory(C_DEFAULT)
 add_subdirectory(Codec)
 add_subdirectory(Globals)
-if(X86)
+if(NOT COMPILE_C_ONLY AND X86)
     # Include Encoder Subdirectories
     include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/
@@ -96,7 +96,7 @@ if(common_lib_source)
 endif()
 
 # Encoder Lib Source Files
-if(X86)
+if(NOT COMPILE_C_ONLY AND X86)
     add_library(SvtAv1Enc
         ${all_files}
         $<TARGET_OBJECTS:COMMON_CODEC>

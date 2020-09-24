@@ -473,7 +473,7 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
         if (dist) *dist = 0;
         return;
     }
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
     const double sse_norm = (double)sse / num_samples;
@@ -485,7 +485,7 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     const double dist_f = dist_by_sse_norm_f * sse_norm;
     int          rate_i = (int)((rate_f * num_samples) + 0.5);
     int64_t      dist_i = (int64_t)((dist_f * num_samples) + 0.5);
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
 

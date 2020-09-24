@@ -53,7 +53,7 @@
 #include "EbCdefProcess.h"
 #include "EbDlfProcess.h"
 #include "EbRateControlResults.h"
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 #include <immintrin.h>
 #endif
 #include "EbLog.h"
@@ -644,7 +644,7 @@ EbErrorType load_default_buffer_configuration_settings(
     /******************************************************************
     * Platform detection, limit cpu flags to hardware available CPU
     ******************************************************************/
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
     const CPU_FLAGS cpu_flags = get_cpu_flags();
     const CPU_FLAGS cpu_flags_to_use = get_cpu_flags_to_use();
     scs_ptr->static_config.use_cpu_flags &= cpu_flags_to_use;

@@ -21,7 +21,7 @@
 #include "EbMotionEstimation.h"
 #include "EbLambdaRateTables.h"
 #include "EbComputeSAD.h"
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 #include <emmintrin.h>
 #endif
 #include "EbTemporalFiltering.h"
@@ -776,7 +776,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                  sb_row * input_picture_ptr->stride_y]),
                                 sizeof(uint8_t) * BLOCK_SIZE_64);
                         }
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
                         uint8_t *src_ptr   = &input_padded_picture_ptr->buffer_y[buffer_index];
                         uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) < BLOCK_SIZE_64
                             ? pcs_ptr->aligned_height - sb_origin_y

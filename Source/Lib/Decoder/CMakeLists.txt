@@ -45,7 +45,7 @@ link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Decoder/Codec/
     ${PROJECT_SOURCE_DIR}/third_party/fastfeat/)
 
-if(X86)
+if(NOT COMPILE_C_ONLY AND X86)
     # Include Decoder Subdirectories
     include_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/
         ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/
@@ -75,7 +75,7 @@ if(common_lib_source)
 endif()
 
 # Decoder Lib Source Files
-if(X86)
+if(NOT COMPILE_C_ONLY AND X86)
     add_library(SvtAv1Dec
         ${all_files}
         $<TARGET_OBJECTS:COMMON_CODEC>

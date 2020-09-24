@@ -1083,7 +1083,7 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
     av1_zero(encode_context_ptr->gf_group);
     pcs_ptr->gf_group_index = 0;
   }
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
   aom_clear_system_state();
 #endif
   av1_zero(next_frame);
@@ -2077,7 +2077,7 @@ void svt_av1_get_second_pass_params(PictureParentControlSet *pcs_ptr) {
     EncodeFrameParams temp_frame_params, *frame_params = &temp_frame_params;
     pcs_ptr->gf_group_index = gf_group->index;
   if (/*is_stat_consumption_stage(cpi) &&*/ !twopass->stats_in) return;
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
   aom_clear_system_state();
 #endif
   if (encode_context_ptr->rc_cfg.mode == AOM_Q)

@@ -858,7 +858,7 @@ static int firstpass_inter_prediction(
 
     // Start by assuming that intra mode is best.
     if (motion_error <= this_intra_error) {
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
         aom_clear_system_state();
 #endif
         // Keep a count of cases where the inter and intra were very close

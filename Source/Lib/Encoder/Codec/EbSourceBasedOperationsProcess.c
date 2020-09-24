@@ -15,7 +15,7 @@
 #include "EbSourceBasedOperationsProcess.h"
 #include "EbInitialRateControlResults.h"
 #include "EbPictureDemuxResults.h"
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
 #include <emmintrin.h>
 #endif
 #include "EbEncHandle.h"
@@ -131,12 +131,12 @@ void *source_based_operations_kernel(void *input_ptr) {
             SbParams *sb_params      = &pcs_ptr->sb_params_array[sb_index];
             EbBool    is_complete_sb = sb_params->is_complete_sb;
             uint8_t * y_mean_ptr     = pcs_ptr->y_mean[sb_index];
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
             _mm_prefetch((const char *)y_mean_ptr, _MM_HINT_T0);
 #endif
             uint8_t *cr_mean_ptr = pcs_ptr->cr_mean[sb_index];
             uint8_t *cb_mean_ptr = pcs_ptr->cb_mean[sb_index];
-#ifdef ARCH_X86
+#ifdef ARCH_X86_64
             _mm_prefetch((const char *)cr_mean_ptr, _MM_HINT_T0);
             _mm_prefetch((const char *)cb_mean_ptr, _MM_HINT_T0);
 #endif
