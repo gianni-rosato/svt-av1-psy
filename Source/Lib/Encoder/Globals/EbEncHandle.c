@@ -2380,8 +2380,13 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Hierarchical Levels supported [3-5]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->intra_period_length < -2 || config->intra_period_length > 255) {
-        SVT_LOG("Error Instance %u: The intra period must be [-2 - 255] \n", channel_number + 1);
+    if ((config->intra_period_length < -2 || config->intra_period_length > 2*((1 << 30) - 1)) && config->rate_control_mode == 0) {
+        SVT_LOG("Error Instance %u: The intra period must be [-2, 2^31-2]  \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if ((config->intra_period_length < -2 || config->intra_period_length > 255) && config->rate_control_mode >=1) {
+        SVT_LOG("Error Instance %u: The intra period must be [-2, 255] for RateControlMode %d \n", channel_number + 1, config->rate_control_mode);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -2477,10 +2482,7 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: The frame rate should be greater than 0 fps \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->intra_period_length < -2 || config->intra_period_length > 255) {
-        SVT_LOG("Error Instance %u: The intra period must be [-2 - 255] \n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
+
     if (config->rate_control_mode > 2) {
 
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
