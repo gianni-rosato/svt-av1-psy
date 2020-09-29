@@ -704,7 +704,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
         int16_t y_search_center0 = 0;
         int16_t y_search_center1 = 0;
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func_c_(src_aligned_,
@@ -721,7 +721,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                     search_area_height_);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func_o_(src_aligned_,
@@ -738,7 +738,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                     search_area_height_);
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
         EXPECT_EQ(best_sad0, best_sad1)
             << "compare best_sad error"
@@ -756,16 +756,14 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
             << "search area [" << search_area_width_ << " x "
             << search_area_height_ << "]";
 
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                           start_time_useconds,
-                                           middle_time_seconds,
-                                           middle_time_useconds,
-                                           &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                           middle_time_useconds,
-                                           finish_time_seconds,
-                                           finish_time_useconds,
-                                           &time_o);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf("    sad_loop_kernel(%dx%d) search area[%dx%d]: %5.2fx)\n",
                width_,
@@ -1330,33 +1328,33 @@ class SADTestSubSample16bit
         for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
             const uint32_t area_height = area_width;
             const int num_loops = 1000000000 / (area_width * area_height);
-            eb_start_time(&start_time_seconds, &start_time_useconds);
+            svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
             for (int i = 0; i < num_loops; ++i) {
                 sad_c = sad_16b_kernel_c(
                     src_, src_stride_, ref_, ref_stride_, height_, width_);
             }
 
-            eb_start_time(&middle_time_seconds, &middle_time_useconds);
+            svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
             for (int i = 0; i < num_loops; ++i) {
                 sad_avx2 = sad_16bit_kernel_avx2(
                     src_, src_stride_, ref_, ref_stride_, height_, width_);
             }
-            eb_start_time(&finish_time_seconds, &finish_time_useconds);
+            svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
             EXPECT_EQ(sad_c, sad_avx2) << area_width << "x" << area_height;
 
-            eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                               start_time_useconds,
-                                               middle_time_seconds,
-                                               middle_time_useconds,
-                                               &time_c);
-            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                               middle_time_useconds,
-                                               finish_time_seconds,
-                                               finish_time_useconds,
-                                               &time_o);
+            time_c =
+                svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                        start_time_useconds,
+                                                        middle_time_seconds,
+                                                        middle_time_useconds);
+            time_o =
+                svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                        middle_time_useconds,
+                                                        finish_time_seconds,
+                                                        finish_time_useconds);
             printf("Average Nanoseconds per Function Call\n");
             printf("    sad_16b_kernel_c  (%dx%d) : %6.2f\n",
                    area_width,

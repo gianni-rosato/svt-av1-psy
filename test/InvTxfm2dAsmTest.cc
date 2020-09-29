@@ -547,27 +547,27 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             eb_buf_random_s32(input_, MAX_TX_SQUARE);
             memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
 
-            eb_start_time(&start_time_seconds, &start_time_useconds);
+            svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++)
                 energy_ref = htf_ref_funcs[idx](input_);
 
-            eb_start_time(&middle_time_seconds, &middle_time_useconds);
+            svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t i = 0; i < num_loop; i++)
                 energy_asm = htf_asm_funcs[idx](input);
 
-            eb_start_time(&finish_time_seconds, &finish_time_useconds);
-            eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                          start_time_useconds,
-                                          middle_time_seconds,
-                                          middle_time_useconds,
-                                          &time_c);
-            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                          middle_time_useconds,
-                                          finish_time_seconds,
-                                          finish_time_useconds,
-                                          &time_o);
+            svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+            time_c =
+                svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                        start_time_useconds,
+                                                        middle_time_seconds,
+                                                        middle_time_useconds);
+            time_o =
+                svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                        middle_time_useconds,
+                                                        finish_time_seconds,
+                                                        finish_time_useconds);
 
             ASSERT_EQ(energy_ref, energy_asm);
 

@@ -213,24 +213,23 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     eb_block_on_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
 
     if (scs_ptr->encode_context_ptr->sc_frame_in == 0)
-        eb_start_time(&context_ptr->first_in_pic_arrived_time_seconds,
-                      &context_ptr->first_in_pic_arrived_timeu_seconds);
+        svt_av1_get_time(&context_ptr->first_in_pic_arrived_time_seconds,
+                         &context_ptr->first_in_pic_arrived_timeu_seconds);
     else if (scs_ptr->encode_context_ptr->sc_frame_in == SC_FRAMES_TO_IGNORE)
         context_ptr->start_flag = EB_TRUE;
     // Compute duration since the start of the encode and since the previous checkpoint
-    eb_finish_time(&curs_time_seconds, &curs_time_useconds);
+    svt_av1_get_time(&curs_time_seconds, &curs_time_useconds);
 
-    eb_compute_overall_elapsed_time_ms(context_ptr->first_in_pic_arrived_time_seconds,
-                                       context_ptr->first_in_pic_arrived_timeu_seconds,
-                                       curs_time_seconds,
-                                       curs_time_useconds,
-                                       &overall_duration);
+    overall_duration = svt_av1_compute_overall_elapsed_time_ms(
+        context_ptr->first_in_pic_arrived_time_seconds,
+        context_ptr->first_in_pic_arrived_timeu_seconds,
+        curs_time_seconds,
+        curs_time_useconds);
 
-    eb_compute_overall_elapsed_time_ms(context_ptr->prevs_time_seconds,
-                                       context_ptr->prevs_timeu_seconds,
-                                       curs_time_seconds,
-                                       curs_time_useconds,
-                                       &inst_duration);
+    inst_duration = svt_av1_compute_overall_elapsed_time_ms(context_ptr->prevs_time_seconds,
+                                                            context_ptr->prevs_timeu_seconds,
+                                                            curs_time_seconds,
+                                                            curs_time_useconds);
 
     input_frames_count =
         (int64_t)overall_duration * (scs_ptr->static_config.injector_frame_rate >> 16) / 1000;
@@ -906,7 +905,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->input_ptr            = eb_input_ptr;
             end_of_sequence_flag =
                 (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? EB_TRUE : EB_FALSE;
-            eb_start_time(&pcs_ptr->start_time_seconds, &pcs_ptr->start_time_u_seconds);
+            svt_av1_get_time(&pcs_ptr->start_time_seconds, &pcs_ptr->start_time_u_seconds);
 
             pcs_ptr->scs_wrapper_ptr =
                 context_ptr->sequence_control_set_active_array[instance_index];

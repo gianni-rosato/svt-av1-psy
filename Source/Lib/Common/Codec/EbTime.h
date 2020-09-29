@@ -16,23 +16,17 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif
 
-#define NANOSECS_PER_SEC ((uint32_t)(1000000000L))
-
-void eb_start_time(uint64_t *start_seconds, uint64_t *start_u_seconds);
-void eb_finish_time(uint64_t *finish_seconds, uint64_t *finish_u_seconds);
-void eb_compute_overall_elapsed_time(uint64_t start_seconds, uint64_t start_u_seconds,
-                                     uint64_t finish_seconds, uint64_t finish_u_seconds,
-                                     double *duration);
-void eb_compute_overall_elapsed_time_ms(uint64_t start_seconds, uint64_t start_u_seconds,
-                                        uint64_t finish_seconds, uint64_t finish_u_seconds,
-                                        double *duration);
-void eb_sleep_ms(uint64_t milli_seconds);
+double svt_av1_compute_overall_elapsed_time_ms(const uint64_t start_seconds,
+                                               const uint64_t start_useconds,
+                                               const uint64_t finish_seconds,
+                                               const uint64_t finish_useconds);
+void   svt_av1_get_time(uint64_t *const seconds, uint64_t *const useconds);
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus
+#endif
 
 #endif // EbTime_h
 /* File EOF */

@@ -709,7 +709,7 @@ class AV1LbdConvolve2DTest
 
         const uint64_t num_loop = 10000000000 / (output_w * output_h);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func_ref_(input + offset_r * src_stride + offset_c,
@@ -725,7 +725,7 @@ class AV1LbdConvolve2DTest
                       conv_params_ref);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func_tst_(input + offset_r * src_stride + offset_c,
@@ -741,17 +741,15 @@ class AV1LbdConvolve2DTest
                       conv_params_tst);
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf("convolve(%3dx%3d, tap (%d, %d)): %6.2f\n",
                output_w,
@@ -916,7 +914,7 @@ class AV1HbdConvolve2DTest
 
         const uint64_t num_loop = 10000000 / (output_w * output_h);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func_ref_(input + offset_r * src_stride + offset_c,
@@ -933,7 +931,7 @@ class AV1HbdConvolve2DTest
                       bd);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func_tst_(input + offset_r * src_stride + offset_c,
@@ -950,17 +948,15 @@ class AV1HbdConvolve2DTest
                       bd);
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf(
             "convolve(%3dx%3d): %6.2f\n", output_w, output_h, time_c / time_o);

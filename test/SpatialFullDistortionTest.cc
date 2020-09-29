@@ -122,7 +122,7 @@ void SpatialFullDistortionTest::RunSpeedTest() {
     for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
         const uint32_t area_height = area_width;
         const int num_loops = 1000000000 / (area_width * area_height);
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (int i = 0; i < num_loops; ++i) {
             dist_org = spatial_full_distortion_kernel_c(input_,
@@ -135,7 +135,7 @@ void SpatialFullDistortionTest::RunSpeedTest() {
                                                         area_height);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (int i = 0; i < num_loops; ++i) {
             dist_opt = func_(input_,
@@ -147,20 +147,18 @@ void SpatialFullDistortionTest::RunSpeedTest() {
                              area_width,
                              area_height);
         }
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
         EXPECT_EQ(dist_org, dist_opt) << area_width << "x" << area_height;
 
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
         printf("Average Nanoseconds per Function Call\n");
         printf("    spatial_full_distortion_kernel_c  (%dx%d) : %6.2f\n",
                area_width,
@@ -478,7 +476,7 @@ void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
     for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
         const uint32_t area_height = area_width;
         const int num_loops = 1000000000 / (area_width * area_height);
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (int i = 0; i < num_loops; ++i) {
             dist_org = full_distortion_kernel16_bits_c(input_,
@@ -491,7 +489,7 @@ void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
                                                        area_height);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (int i = 0; i < num_loops; ++i) {
             dist_opt = test_func_(input_,
@@ -503,20 +501,18 @@ void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
                                   area_width,
                                   area_height);
         }
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
         EXPECT_EQ(dist_org, dist_opt) << area_width << "x" << area_height;
 
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
         printf("Average Nanoseconds per Function Call\n");
         printf("    full_distortion_kernel16_bits_c  (%dx%d) : %6.2f\n",
                area_width,

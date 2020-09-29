@@ -494,18 +494,15 @@ static void collect_frames_info(PacketizationContext* context_ptr, const EncodeC
         (void)context_ptr;
 #endif
         // Calculate frame latency in milliseconds
-        double   latency               = 0.0;
         uint64_t finish_time_seconds   = 0;
         uint64_t finish_time_u_seconds = 0;
-        eb_finish_time(&finish_time_seconds, &finish_time_u_seconds);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_u_seconds);
 
-        eb_compute_overall_elapsed_time_ms(queue_entry_ptr->start_time_seconds,
-                                            queue_entry_ptr->start_time_u_seconds,
-                                            finish_time_seconds,
-                                            finish_time_u_seconds,
-                                            &latency);
-
-        output_stream_ptr->n_tick_count  = (uint32_t)latency;
+        output_stream_ptr->n_tick_count = (uint32_t)svt_av1_compute_overall_elapsed_time_ms(
+            queue_entry_ptr->start_time_seconds,
+            queue_entry_ptr->start_time_u_seconds,
+            finish_time_seconds,
+            finish_time_u_seconds);
         output_stream_ptr->p_app_private = queue_entry_ptr->out_meta_data;
         if (queue_entry_ptr->is_alt_ref)
             output_stream_ptr->flags |= (uint32_t)EB_BUFFERFLAG_IS_ALT_REF;

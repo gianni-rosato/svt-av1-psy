@@ -39,8 +39,9 @@
 #include "EbUtility.h"
 
 #include <stdlib.h>
-
+#include <time.h>
 #ifdef _WIN32
+#include <windows.h>
 extern uint8_t        num_groups;
 extern GROUP_AFFINITY group_affinity;
 extern EbBool         alternate_groups;
@@ -1363,6 +1364,16 @@ void *dec_all_stage_kernel(void *input_ptr) {
     return NULL;
 }
 
+static void svt_av1_sleep(const int milliseconds) {
+    if (!milliseconds)
+        return;
+#ifdef _WIN32
+    Sleep(milliseconds);
+#else
+    nanosleep(&(struct timespec){milliseconds / 1000, (milliseconds % 1000) * 1000000}, NULL);
+#endif
+}
+
 void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
@@ -1399,7 +1410,7 @@ void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {
         eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
 
     while (dec_mt_frame_data->num_threads_exited != dec_handle_ptr->dec_config.threads - 1)
-        eb_sleep_ms(5);
+        svt_av1_sleep(5);
 
     /*Destroying lib created thread's*/
     EB_DESTROY_THREAD_ARRAY(dec_handle_ptr->decode_thread_handle_array,

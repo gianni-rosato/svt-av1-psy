@@ -338,7 +338,7 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
     for (int cnt = 0; cnt <= rows; cnt++) {
         FillCoeffRandomRows(cnt * cols);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
         for (int n = 0; n < kNumTests; ++n) {
             quant_ref_(coeff_ptr,
                        n_coeffs,
@@ -354,7 +354,7 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
                        sc->iscan);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (int n = 0; n < kNumTests; ++n) {
             quant_(coeff_ptr,
@@ -370,17 +370,15 @@ TEST_P(QuantizeLbdTest, DISABLED_Speed) {
                    sc->scan,
                    sc->iscan);
         }
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf("c_time = %f \t simd_time = %f \t Gain = %f \n",
                time_c,
@@ -546,7 +544,7 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
     for (int cnt = 0; cnt <= rows; cnt++) {
         FillCoeffRandomRows(cnt * cols);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
         for (int n = 0; n < kNumTests; ++n) {
             quant_ref_(coeff_ptr,
                        n_coeffs,
@@ -563,7 +561,7 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
                        av1_get_tx_scale(tx_size_));
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (int n = 0; n < kNumTests; ++n) {
             quant_(coeff_ptr,
@@ -580,17 +578,15 @@ TEST_P(QuantizeHbdTest, DISABLED_Speed) {
                    sc->iscan,
                    av1_get_tx_scale(tx_size_));
         }
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf("c_time = %f \t simd_time = %f \t Gain = %f \n",
                time_c,

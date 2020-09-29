@@ -240,7 +240,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
 
         prepare_data(0, 1);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             for (dir = 0; dir < 8; dir++) {
@@ -273,7 +273,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
             }
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             for (dir = 0; dir < 8; dir++) {
@@ -306,17 +306,15 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
             }
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf("Average Nanoseconds per Function Call\n");
         printf("    eb_cdef_filter_block_c()   : %6.2f\n",
@@ -796,7 +794,7 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
             uint64_t middle_time_seconds, middle_time_useconds;
             uint64_t finish_time_seconds, finish_time_useconds;
             const uint64_t num_loop = 10000;
-            eb_start_time(&start_time_seconds, &start_time_useconds);
+            svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
             for (uint64_t k = 0; k < num_loop; k++) {
                 best_mse_ref = search_one_dual_c(lvl_luma_ref,
@@ -808,7 +806,7 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                                                  end_gi);
             }
 
-            eb_start_time(&middle_time_seconds, &middle_time_useconds);
+            svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t k = 0; k < num_loop; k++) {
                 best_mse_tst = search_one_dual_func_table[i](lvl_luma_tst,
@@ -820,7 +818,7 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                                                              end_gi);
             }
 
-            eb_start_time(&finish_time_seconds, &finish_time_useconds);
+            svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
             ASSERT_EQ(best_mse_tst, best_mse_ref)
                 << "search_one_dual_avx2 return different best mse "
@@ -834,16 +832,16 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
                     << " nb_strength: " << nb_strengths << " pos " << h;
             }
 
-            eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                          start_time_useconds,
-                                          middle_time_seconds,
-                                          middle_time_useconds,
-                                          &time_c);
-            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                          middle_time_useconds,
-                                          finish_time_seconds,
-                                          finish_time_useconds,
-                                          &time_o);
+            time_c =
+                svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                        start_time_useconds,
+                                                        middle_time_seconds,
+                                                        middle_time_useconds);
+            time_o =
+                svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                        middle_time_useconds,
+                                                        finish_time_seconds,
+                                                        finish_time_useconds);
 
             printf("Average Nanoseconds per Function Call\n");
             printf("    search_one_dual_c()       : %6.2f\n",

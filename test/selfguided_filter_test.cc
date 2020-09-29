@@ -84,7 +84,7 @@ class AV1SelfguidedFilterTest
         uint64_t middle_time_seconds, middle_time_useconds;
         uint64_t finish_time_seconds, finish_time_useconds;
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
                 for (j = 0; j < width; j += pu_width) {
@@ -105,7 +105,7 @@ class AV1SelfguidedFilterTest
                                                    0);
                 }
         }
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
@@ -128,17 +128,17 @@ class AV1SelfguidedFilterTest
                 }
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &ref_time);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &tst_time);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        ref_time =
+            svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                    start_time_useconds,
+                                                    middle_time_seconds,
+                                                    middle_time_useconds);
+        tst_time =
+            svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                    middle_time_useconds,
+                                                    finish_time_seconds,
+                                                    finish_time_useconds);
 
         std::cout << "[          ] C time = " << ref_time / 1000
                   << " ms, SIMD time = " << tst_time / 1000 << " ms\n";
@@ -307,7 +307,7 @@ class AV1HighbdSelfguidedFilterTest
         uint64_t middle_time_seconds, middle_time_useconds;
         uint64_t finish_time_seconds, finish_time_useconds;
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
                 for (j = 0; j < width; j += pu_width) {
@@ -328,7 +328,7 @@ class AV1HighbdSelfguidedFilterTest
                                                    1);
                 }
         }
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (i = 0; i < NUM_ITERS; ++i) {
             for (k = 0; k < height; k += pu_height)
@@ -351,17 +351,17 @@ class AV1HighbdSelfguidedFilterTest
                 }
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &ref_time);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                      middle_time_useconds,
-                                      finish_time_seconds,
-                                      finish_time_useconds,
-                                      &tst_time);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        ref_time =
+            svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                    start_time_useconds,
+                                                    middle_time_seconds,
+                                                    middle_time_useconds);
+        tst_time =
+            svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                    middle_time_useconds,
+                                                    finish_time_seconds,
+                                                    finish_time_useconds);
 
         std::cout << "[          ] C time = " << ref_time / 1000
                   << " ms, SIMD time = " << tst_time / 1000 << " ms\n";
@@ -777,31 +777,29 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
 
     const uint64_t num_loop = 1000000;
 
-    eb_start_time(&start_time_seconds, &start_time_useconds);
+    svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images_c(
             src8, src_stride, width_ext, height_ext, Ctl_c, Dtl_c, buf_stride);
     }
 
-    eb_start_time(&middle_time_seconds, &middle_time_useconds);
+    svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images(
             src8, src_stride, width_ext, height_ext, Ctl_o, Dtl_o, buf_stride);
     }
 
-    eb_start_time(&finish_time_seconds, &finish_time_useconds);
-    eb_compute_overall_elapsed_time_ms(start_time_seconds,
+    svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+    time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
                                   start_time_useconds,
                                   middle_time_seconds,
-                                  middle_time_useconds,
-                                  &time_c);
-    eb_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                  middle_time_useconds);
+    time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
                                   middle_time_useconds,
                                   finish_time_seconds,
-                                  finish_time_useconds,
-                                  &time_o);
+                                  finish_time_useconds);
 
     for (int y = 0; y < height_ext; y++) {
         for (int x = 0; x < width_ext; x++) {
@@ -817,31 +815,29 @@ TEST(IntegralImagesTest, DISABLED_integral_images_speed) {
            1000000 * time_o / num_loop,
            time_c / time_o);
 
-    eb_start_time(&start_time_seconds, &start_time_useconds);
+    svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images_highbd_c(
             src16, src_stride, width_ext, height_ext, Ctl_c, Dtl_c, buf_stride);
     }
 
-    eb_start_time(&middle_time_seconds, &middle_time_useconds);
+    svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
     for (uint64_t i = 0; i < num_loop; i++) {
         integral_images_highbd(
             src16, src_stride, width_ext, height_ext, Ctl_o, Dtl_o, buf_stride);
     }
 
-    eb_start_time(&finish_time_seconds, &finish_time_useconds);
-    eb_compute_overall_elapsed_time_ms(start_time_seconds,
+    svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+    time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
                                   start_time_useconds,
                                   middle_time_seconds,
-                                  middle_time_useconds,
-                                  &time_c);
-    eb_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                  middle_time_useconds);
+    time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
                                   middle_time_useconds,
                                   finish_time_seconds,
-                                  finish_time_useconds,
-                                  &time_o);
+                                  finish_time_useconds);
 
     for (int y = 0; y < height_ext; y++) {
         for (int x = 0; x < width_ext; x++) {

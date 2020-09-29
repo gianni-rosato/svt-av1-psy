@@ -856,6 +856,33 @@ static unsigned char send_qp_on_the_fly(FILE *const qp_file, uint8_t *use_qp_fil
     return (unsigned)CLIP3(0, 63, tmp_qp);
 }
 
+static void injector(uint64_t processed_frame_count, uint32_t injector_frame_rate) {
+    static uint64_t start_times_seconds;
+    static uint64_t start_timesu_seconds;
+    static int      first_time = 0;
+
+    if (first_time == 0) {
+        first_time = 1;
+        app_svt_av1_get_time(&start_times_seconds, &start_timesu_seconds);
+    } else {
+        uint64_t current_times_seconds, current_timesu_seconds;
+        app_svt_av1_get_time(&current_times_seconds, &current_timesu_seconds);
+        const double elapsed_time = app_svt_av1_compute_overall_elapsed_time(
+            start_times_seconds,
+            start_timesu_seconds,
+            current_times_seconds,
+            current_timesu_seconds);
+        const int    buffer_frames     = 1; // How far ahead of time should we let it get
+        const double injector_interval = (double)(1 << 16) /
+            injector_frame_rate; // 1.0 / injector frame rate (in this
+        // case, 1.0/encodRate)
+        const double predicted_time  = (processed_frame_count - buffer_frames) * injector_interval;
+        const int    milli_sec_ahead = (int)(1000 * (predicted_time - elapsed_time));
+        if (milli_sec_ahead > 0)
+            app_svt_av1_sleep(milli_sec_ahead);
+    }
+}
+
 //************************************/
 // process_input_buffer
 // Reads yuv frames from file and copy
@@ -1135,21 +1162,23 @@ void process_output_stream_buffer(EncChannel* channel, EncApp* enc_app,
             *max_latency =
                 (header_ptr->n_tick_count > *max_latency) ? header_ptr->n_tick_count : *max_latency;
 
-            finish_time((uint64_t *)&finish_s_time, (uint64_t *)&finish_u_time);
+            app_svt_av1_get_time(&finish_s_time, &finish_u_time);
 
             // total execution time, inc init time
-            compute_overall_elapsed_time(config->performance_context.lib_start_time[0],
-                                         config->performance_context.lib_start_time[1],
-                                         finish_s_time,
-                                         finish_u_time,
-                                         &config->performance_context.total_execution_time);
+            config->performance_context.total_execution_time =
+                app_svt_av1_compute_overall_elapsed_time(
+                    config->performance_context.lib_start_time[0],
+                    config->performance_context.lib_start_time[1],
+                    finish_s_time,
+                    finish_u_time);
 
             // total encode time
-            compute_overall_elapsed_time(config->performance_context.encode_start_time[0],
-                                         config->performance_context.encode_start_time[1],
-                                         finish_s_time,
-                                         finish_u_time,
-                                         &config->performance_context.total_encode_time);
+            config->performance_context.total_encode_time =
+                app_svt_av1_compute_overall_elapsed_time(
+                    config->performance_context.encode_start_time[0],
+                    config->performance_context.encode_start_time[1],
+                    finish_s_time,
+                    finish_u_time);
 
             // Write Stream Data to file
             if (stream_file) {

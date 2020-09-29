@@ -159,7 +159,7 @@ class av1_compute_stats_test
 
         const uint64_t num_loop = 100000 / (wiener_win * wiener_win);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             eb_av1_compute_stats_c(wiener_win,
@@ -175,7 +175,7 @@ class av1_compute_stats_test
                                    H_org);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func(wiener_win,
@@ -191,17 +191,15 @@ class av1_compute_stats_test
                  H_opt);
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                            start_time_useconds,
-                                            middle_time_seconds,
-                                            middle_time_useconds,
-                                            &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                            middle_time_useconds,
-                                            finish_time_seconds,
-                                            finish_time_useconds,
-                                            &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         ASSERT_EQ(0, memcmp(M_org, M_opt, sizeof(M_org)));
         ASSERT_EQ(0, memcmp(H_org, H_opt, sizeof(H_org)));
@@ -405,7 +403,7 @@ class av1_compute_stats_test_hbd
 
         const uint64_t num_loop = 1000000 / (wiener_win * wiener_win);
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             eb_av1_compute_stats_highbd_c(wiener_win,
@@ -422,7 +420,7 @@ class av1_compute_stats_test_hbd
                                             bit_depth);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             func(wiener_win,
@@ -439,17 +437,15 @@ class av1_compute_stats_test_hbd
                     bit_depth);
         }
 
-        eb_start_time(&finish_time_seconds, &finish_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                            start_time_useconds,
-                                            middle_time_seconds,
-                                            middle_time_useconds,
-                                            &time_c);
-        eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                            middle_time_useconds,
-                                            finish_time_seconds,
-                                            finish_time_useconds,
-                                            &time_o);
+        svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
+        time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         ASSERT_EQ(0, memcmp(M_org, M_opt, sizeof(M_org)));
         ASSERT_EQ(0, memcmp(H_org, H_opt, sizeof(H_org)));

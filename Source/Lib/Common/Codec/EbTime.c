@@ -9,93 +9,45 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-#ifndef __USE_POSIX199309
+#ifdef _WIN32
+#include <sys/timeb.h>
+#include <windows.h>
+#elif !defined(__USE_POSIX199309)
 #define __USE_POSIX199309
 #endif
 
 #include <time.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
+#if !defined(CLOCK_MONOTONIC) && !defined(_WIN32)
 #include <sys/time.h>
 #endif
 
 #include "EbTime.h"
 
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC__)
-__attribute__((optimize("unroll-loops")))
-#endif
-
-void eb_start_time(uint64_t *start_seconds, uint64_t *start_u_seconds) {
-#ifdef _WIN32
-    *start_seconds = (uint64_t)clock();
-    (void)(*start_u_seconds);
-#else
-    struct timeval start;
-    gettimeofday(&start, NULL);
-    *start_seconds   = start.tv_sec;
-    *start_u_seconds = start.tv_usec;
-#endif
+double svt_av1_compute_overall_elapsed_time_ms(const uint64_t start_seconds,
+                                               const uint64_t start_useconds,
+                                               const uint64_t finish_seconds,
+                                               const uint64_t finish_useconds) {
+    const int64_t s_diff = (int64_t)finish_seconds - (int64_t)start_seconds,
+                  u_diff = (int64_t)finish_useconds - (int64_t)start_useconds;
+    return (double)s_diff * 1000.0 + (double)u_diff / 1000.0 + 0.5;
 }
 
-void eb_finish_time(uint64_t *finish_seconds, uint64_t *finish_u_seconds) {
+void svt_av1_get_time(uint64_t *const seconds, uint64_t *const useconds) {
 #ifdef _WIN32
-    *finish_seconds = (uint64_t)clock();
-    (void)(*finish_u_seconds);
+    struct _timeb curr_time;
+    _ftime_s(&curr_time);
+    *seconds  = curr_time.time;
+    *useconds = curr_time.millitm;
+#elif defined(CLOCK_MONOTONIC)
+    struct timespec curr_time;
+    clock_gettime(CLOCK_MONOTONIC, &curr_time);
+    *seconds  = curr_time.tv_sec;
+    *useconds = curr_time.tv_nsec / 1000;
 #else
-    struct timeval finish;
-    gettimeofday(&finish, NULL);
-    *finish_seconds   = finish.tv_sec;
-    *finish_u_seconds = finish.tv_usec;
+    struct timeval curr_time;
+    gettimeofday(&curr_time, NULL);
+    *seconds  = curr_time.tv_sec;
+    *useconds = curr_time.tv_usec;
 #endif
 }
-
-void eb_compute_overall_elapsed_time(uint64_t start_seconds, uint64_t start_u_seconds,
-                                     uint64_t finish_seconds, uint64_t finish_u_seconds,
-                                     double *duration) {
-#ifdef _WIN32
-    //double  duration;
-    *duration = (double)(finish_seconds - start_seconds) / CLOCKS_PER_SEC;
-    (void)(start_u_seconds);
-    (void)(finish_u_seconds);
-#else
-    long mtime, seconds, useconds;
-    seconds   = finish_seconds - start_seconds;
-    useconds  = finish_u_seconds - start_u_seconds;
-    mtime     = ((seconds)*1000 + useconds / 1000.0) + 0.5;
-    *duration = (double)mtime / 1000;
-#endif
-}
-
-void eb_compute_overall_elapsed_time_ms(uint64_t start_seconds, uint64_t start_u_seconds,
-                                        uint64_t finish_seconds, uint64_t finish_u_seconds,
-                                        double *duration) {
-#ifdef _WIN32
-    //double  duration;
-    *duration = (double)(finish_seconds - start_seconds);
-    (void)(start_u_seconds);
-    (void)(finish_u_seconds);
-#else
-    long mtime, seconds, useconds;
-    seconds   = finish_seconds - start_seconds;
-    useconds  = finish_u_seconds - start_u_seconds;
-    mtime     = ((seconds)*1000 + useconds / 1000.0) + 0.5;
-    *duration = (double)mtime;
-#endif
-}
-
-void eb_sleep_ms(uint64_t milli_seconds) {
-    if (milli_seconds) {
-#ifdef _WIN32
-        Sleep((DWORD)milli_seconds);
-#else
-        struct timespec req, rem;
-        req.tv_sec = (int32_t)(milli_seconds / 1000);
-        milli_seconds -= req.tv_sec * 1000;
-        req.tv_nsec = milli_seconds * 1000000UL;
-        nanosleep(&req, &rem);
-#endif
-    }
-}
-

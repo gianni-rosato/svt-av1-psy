@@ -201,7 +201,7 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
     uint64_t start_time_seconds, start_time_useconds;
     uint64_t finish_time_seconds, finish_time_useconds;
 
-    eb_start_time(&start_time_seconds, &start_time_useconds);
+    svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
     for (int i = 0; i < num_loops; ++i)
         test_impl(mat,
@@ -223,12 +223,12 @@ void AV1WarpFilterTest::RunSpeedTest(warp_affine_func test_impl) {
                   gamma,
                   delta);
 
-    eb_start_time(&finish_time_seconds, &finish_time_useconds);
-    eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                  start_time_useconds,
-                                  finish_time_seconds,
-                                  finish_time_useconds,
-                                  &elapsed_time);
+    svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+    elapsed_time =
+        svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                start_time_useconds,
+                                                finish_time_seconds,
+                                                finish_time_useconds);
     printf("warp %3dx%-3d: %7.2f ns\n",
            out_w,
            out_h,
@@ -499,7 +499,7 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
     uint64_t start_time_seconds_ref, start_time_useconds_ref;
     uint64_t finish_time_seconds_ref, finish_time_useconds_ref;
 
-    eb_start_time(&start_time_seconds_tst, &start_time_useconds_tst);
+    svt_av1_get_time(&start_time_seconds_tst, &start_time_useconds_tst);
 
     for (int i = 0; i < num_loops; ++i)
         test_impl(mat,
@@ -522,14 +522,14 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
                   gamma,
                   delta);
 
-    eb_start_time(&finish_time_seconds_tst, &finish_time_useconds_tst);
-    eb_compute_overall_elapsed_time_ms(start_time_seconds_tst,
-                                  start_time_useconds_tst,
-                                  finish_time_seconds_tst,
-                                  finish_time_useconds_tst,
-                                  &elapsed_time_tst);
+    svt_av1_get_time(&finish_time_seconds_tst, &finish_time_useconds_tst);
+    elapsed_time_tst =
+        svt_av1_compute_overall_elapsed_time_ms(start_time_seconds_tst,
+                                                start_time_useconds_tst,
+                                                finish_time_seconds_tst,
+                                                finish_time_useconds_tst);
 
-    eb_start_time(&start_time_seconds_ref, &start_time_useconds_ref);
+    svt_av1_get_time(&start_time_seconds_ref, &start_time_useconds_ref);
 
     for (int i = 0; i < num_loops; ++i)
         eb_av1_highbd_warp_affine_c(mat,
@@ -552,12 +552,12 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
                                     gamma,
                                     delta);
 
-    eb_start_time(&finish_time_seconds_ref, &finish_time_useconds_ref);
-    eb_compute_overall_elapsed_time_ms(start_time_seconds_ref,
-                                  start_time_useconds_ref,
-                                  finish_time_seconds_ref,
-                                  finish_time_useconds_ref,
-                                  &elapsed_time_ref);
+    svt_av1_get_time(&finish_time_seconds_ref, &finish_time_useconds_ref);
+    elapsed_time_ref =
+        svt_av1_compute_overall_elapsed_time_ms(start_time_seconds_ref,
+                                                start_time_useconds_ref,
+                                                finish_time_seconds_ref,
+                                                finish_time_useconds_ref);
 
     printf("highbd warp %3dx%-3d: %7.2fx faster\n",
            out_w,

@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "EbDefinitions.h"
+#include "EbTime.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -185,14 +186,6 @@ extern void eb_unit_test_log_image_u32(const char *const nameBuf,
                                        const uint32_t width,
                                        const uint32_t height,
                                        const ptrdiff_t stride);
-
-extern void eb_start_time(uint64_t *Startseconds, uint64_t *Startuseconds);
-extern void eb_finish_time(uint64_t *Finishseconds, uint64_t *Finishuseconds);
-extern void eb_compute_overall_elapsed_time_ms(uint64_t Startseconds,
-                                          uint64_t Startuseconds,
-                                          uint64_t Finishseconds,
-                                          uint64_t Finishuseconds,
-                                          double *duration);
 
 #ifdef __cplusplus
 }

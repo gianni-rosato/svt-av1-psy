@@ -308,7 +308,7 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
         uint64_t test_timer_seconds, test_timer_useconds;
         double ref_time, tst_time;
 
-        eb_start_time(&ref_timer_seconds, &ref_timer_useconds);
+        svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
                 context_ptr = &context1;
@@ -340,7 +340,7 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      accum_ref_ptr[C_V],
                      count_ref_ptr[C_V]);
         }
-        eb_start_time(&middle_timer_seconds, &middle_timer_useconds);
+        svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
@@ -373,19 +373,19 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      accum_tst_ptr[C_V],
                      count_tst_ptr[C_V]);
         }
-        eb_start_time(&test_timer_seconds, &test_timer_useconds);
+        svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
 
-        eb_compute_overall_elapsed_time_ms(ref_timer_seconds,
-                                           ref_timer_useconds,
-                                           middle_timer_seconds,
-                                           middle_timer_useconds,
-                                           &ref_time);
+        ref_time =
+            svt_av1_compute_overall_elapsed_time_ms(ref_timer_seconds,
+                                                    ref_timer_useconds,
+                                                    middle_timer_seconds,
+                                                    middle_timer_useconds);
 
-        eb_compute_overall_elapsed_time_ms(middle_timer_seconds,
-                                           middle_timer_useconds,
-                                           test_timer_seconds,
-                                           test_timer_useconds,
-                                           &tst_time);
+        tst_time =
+            svt_av1_compute_overall_elapsed_time_ms(middle_timer_seconds,
+                                                    middle_timer_useconds,
+                                                    test_timer_seconds,
+                                                    test_timer_useconds);
 
         printf(
             "c_time=%lf \t simd_time=%lf \t "
@@ -597,7 +597,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         uint64_t test_timer_seconds, test_timer_useconds;
         double ref_time, tst_time;
 
-        eb_start_time(&ref_timer_seconds, &ref_timer_useconds);
+        svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
                 context_ptr = &context1;
@@ -629,7 +629,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      accum_ref_ptr[C_V],
                      count_ref_ptr[C_V]);
         }
-        eb_start_time(&middle_timer_seconds, &middle_timer_useconds);
+        svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
         for (int j = 0; j < run_times; j++) {
             tst_func(
@@ -657,19 +657,19 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      accum_tst_ptr[C_V],
                      count_tst_ptr[C_V]);
         }
-        eb_start_time(&test_timer_seconds, &test_timer_useconds);
+        svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
 
-        eb_compute_overall_elapsed_time_ms(ref_timer_seconds,
-                                           ref_timer_useconds,
-                                           middle_timer_seconds,
-                                           middle_timer_useconds,
-                                           &ref_time);
+        ref_time =
+            svt_av1_compute_overall_elapsed_time_ms(ref_timer_seconds,
+                                                    ref_timer_useconds,
+                                                    middle_timer_seconds,
+                                                    middle_timer_useconds);
 
-        eb_compute_overall_elapsed_time_ms(middle_timer_seconds,
-                                           middle_timer_useconds,
-                                           test_timer_seconds,
-                                           test_timer_useconds,
-                                           &tst_time);
+        tst_time =
+            svt_av1_compute_overall_elapsed_time_ms(middle_timer_seconds,
+                                                    middle_timer_useconds,
+                                                    test_timer_seconds,
+                                                    test_timer_useconds);
 
         printf(
             "c_time=%lf \t simd_time=%lf \t "
@@ -699,4 +699,3 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_c),
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_avx2)));
-

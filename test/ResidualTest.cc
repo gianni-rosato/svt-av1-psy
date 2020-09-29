@@ -226,7 +226,7 @@ class ResidualKernelTest
 
         prepare_data();
 
-        eb_start_time(&start_time_seconds, &start_time_useconds);
+        svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
             residual_kernel8bit_c(input_,
@@ -239,19 +239,18 @@ class ResidualKernelTest
                           area_height_);
         }
 
-        eb_start_time(&middle_time_seconds, &middle_time_useconds);
-        eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                      start_time_useconds,
-                                      middle_time_seconds,
-                                      middle_time_useconds,
-                                      &time_c);
+        svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
+        time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
 
         for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
                                 sizeof(*residual_kernel8bit_func_table));
              i++) {
             eb_buf_random_s16(residual2_, test_size_);
 
-            eb_start_time(&middle_time_seconds, &middle_time_useconds);
+            svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
             for (uint64_t j = 0; j < num_loop; j++) {
                 residual_kernel8bit_func_table[i](input_,
@@ -265,12 +264,12 @@ class ResidualKernelTest
             }
             check_residuals(area_width_, area_height_);
 
-            eb_start_time(&finish_time_seconds, &finish_time_useconds);
-            eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                              middle_time_useconds,
-                                              finish_time_seconds,
-                                              finish_time_useconds,
-                                              &time_o);
+            svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
+            time_o =
+                svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                        middle_time_useconds,
+                                                        finish_time_seconds,
+                                                        finish_time_useconds);
 
             printf("residual_kernel8bit(%3dx%3d): %6.2f\n",
                    area_width_,

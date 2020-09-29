@@ -94,30 +94,28 @@ void AV1CornerMatchTest::RunCheckOutput(int run_times) {
     double res_simd = target_func(input1, w, x1, y1, input2, w, x2, y2);
 
     if (run_times > 1) {
-      eb_start_time(&start_time_seconds, &start_time_useconds);
+      svt_av1_get_time(&start_time_seconds, &start_time_useconds);
       for (j = 0; j < run_times; j++) {
-        eb_av1_compute_cross_correlation_c(input1, w, x1, y1, input2, w, x2, y2);
+          eb_av1_compute_cross_correlation_c(
+              input1, w, x1, y1, input2, w, x2, y2);
       }
-      eb_start_time(&middle_time_seconds, &middle_time_useconds);
+      svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
 
       for (j = 0; j < run_times; j++) {
         target_func(input1, w, x1, y1, input2, w, x2, y2);
       }
 
-      eb_start_time(&finish_time_seconds, &finish_time_useconds);
+      svt_av1_get_time(&finish_time_seconds, &finish_time_useconds);
 
-
-       eb_compute_overall_elapsed_time_ms(start_time_seconds,
-                                    start_time_useconds,
-                                    middle_time_seconds,
-                                    middle_time_useconds,
-                                    &time);
+      time = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
+                                                     start_time_useconds,
+                                                     middle_time_seconds,
+                                                     middle_time_useconds);
       time_c += time;
-      eb_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                    middle_time_useconds,
-                                    finish_time_seconds,
-                                    finish_time_useconds,
-                                    &time);
+      time = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
+                                                     middle_time_useconds,
+                                                     finish_time_seconds,
+                                                     finish_time_useconds);
       time_o += time;
 
 
