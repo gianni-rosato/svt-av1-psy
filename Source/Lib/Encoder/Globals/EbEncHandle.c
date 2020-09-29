@@ -1950,6 +1950,19 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->static_config.source_width = scs_ptr->max_input_luma_width;
     scs_ptr->static_config.source_height = scs_ptr->max_input_luma_height;
 
+    if (use_output_stat(scs_ptr)) {
+        scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+        scs_ptr->static_config.look_ahead_distance = 1;
+        scs_ptr->static_config.enable_tpl_la = 0;
+        scs_ptr->static_config.rate_control_mode = 0;
+        scs_ptr->static_config.intra_refresh_type     = 2;
+    }
+    else if (use_input_stat(scs_ptr)) {
+        scs_ptr->static_config.look_ahead_distance = 16;
+        scs_ptr->static_config.enable_tpl_la = 1;
+        scs_ptr->static_config.intra_refresh_type     = 2;
+    }
+
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
@@ -2431,6 +2444,11 @@ static EbErrorType verify_settings(
 
     if ((config->search_area_height > 480) || (config->search_area_height == 0)) {
         SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 480]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->rate_control_mode > 1 && (config->rc_firstpass_stats_out || config->rc_twopass_stats_in.buf)) {
+        SVT_LOG("Error Instance %u: Only rate control mode 0 and 1 are supported for 2-pass \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 

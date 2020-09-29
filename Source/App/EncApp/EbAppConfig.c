@@ -1388,21 +1388,6 @@ ConfigEntry config_entry[] = {
 /**********************************
  * Constructor
  **********************************/
-void eb_2pass_config_update(EbConfig *config_ptr) {
-    if (config_ptr->pass == ENCODE_FIRST_PASS || config_ptr->output_stat_file) {
-        config_ptr->enc_mode = MAX_ENC_PRESET;
-        config_ptr->look_ahead_distance = 1;
-        config_ptr->enable_tpl_la = 0;
-        config_ptr->rate_control_mode = 0;
-        config_ptr->intra_refresh_type     = 2;
-    }
-    else if (config_ptr->pass == ENCODE_LAST_PASS || config_ptr->input_stat_file) {
-        config_ptr->look_ahead_distance = 16;
-        config_ptr->enable_tpl_la = 1;
-        config_ptr->intra_refresh_type     = 2;
-    }
-    return;
-}
 EbConfig * eb_config_ctor(EncodePass pass) {
     EbConfig *config_ptr = (EbConfig *)calloc(1, sizeof(EbConfig));
     if (!config_ptr)
@@ -1412,7 +1397,6 @@ EbConfig * eb_config_ctor(EncodePass pass) {
         config_ptr->pass = 1;
     else if (pass == ENCODE_LAST_PASS)
         config_ptr->pass = 2;
-    eb_2pass_config_update(config_ptr);
 
     config_ptr->error_log_file         = stderr;
     config_ptr->frame_rate             = 30 << 16;
