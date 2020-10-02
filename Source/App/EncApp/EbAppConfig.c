@@ -1423,6 +1423,7 @@ EbConfig * eb_config_ctor(EncodePass pass) {
     config_ptr->intra_refresh_type                        = 1;
     config_ptr->hierarchical_levels                       = 4;
     config_ptr->pred_structure                            = 2;
+    config_ptr->disable_dlf_flag                          = EB_FALSE;
     config_ptr->enable_global_motion                      = EB_TRUE;
     config_ptr->progress                                  = 1;
     config_ptr->enable_warped_motion                      = DEFAULT;
@@ -1452,9 +1453,12 @@ EbConfig * eb_config_ctor(EncodePass pass) {
     config_ptr->filter_intra_level                        = DEFAULT;
     config_ptr->enable_intra_edge_filter                  = DEFAULT;
     config_ptr->pic_based_rate_est                        = DEFAULT;
+    config_ptr->ext_block_flag                            = EB_FALSE;
     config_ptr->use_default_me_hme                        = EB_TRUE;
     config_ptr->enable_hme_flag                           = EB_TRUE;
     config_ptr->enable_hme_level0_flag                    = EB_TRUE;
+    config_ptr->enable_hme_level1_flag                    = EB_FALSE;
+    config_ptr->enable_hme_level2_flag                    = EB_FALSE;
     config_ptr->search_area_width                         = 16;
     config_ptr->search_area_height                        = 7;
     config_ptr->number_hme_search_region_in_width         = 2;
@@ -1478,6 +1482,7 @@ EbConfig * eb_config_ctor(EncodePass pass) {
     config_ptr->intrabc_mode                              = DEFAULT;
     config_ptr->palette_level                             = DEFAULT;
     config_ptr->injector_frame_rate                       = 60 << 16;
+    config_ptr->speed_control_flag                        = 0;
 
     // ASM Type
     config_ptr->cpu_flags_limit = CPU_FLAGS_ALL;

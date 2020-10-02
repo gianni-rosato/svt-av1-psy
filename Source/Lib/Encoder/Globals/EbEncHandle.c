@@ -2909,6 +2909,8 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 10;
+
+    config_ptr->enable_adaptive_quantization = 2;
     config_ptr->enc_mode = MAX_ENC_PRESET;
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 1;
@@ -2970,13 +2972,15 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->palette_level = DEFAULT;
     config_ptr->enable_manual_pred_struct = EB_FALSE;
     config_ptr->encoder_color_format = EB_YUV420;
+    config_ptr->mrp_level = DEFAULT;
+
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;
     config_ptr->unrestricted_motion_vector = EB_TRUE;
 
     config_ptr->high_dynamic_range_input = 0;
-    config_ptr->screen_content_mode = 0;
+    config_ptr->screen_content_mode = 2;
 
     config_ptr->intrabc_mode = DEFAULT;
 
