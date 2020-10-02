@@ -111,9 +111,11 @@ jobs:
       - name: Install dependencies
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
-          brew update
-          brew upgrade
-          brew install yasm ccache cmake ninja
+          {
+            brew update &&
+            brew upgrade &&
+            brew install -q yasm ccache cmake ninja
+          } || brew update-reset
           printf '%s\n' \
             "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
             "::set-env name=CCACHE_DIR::$HOME/.ccache"
