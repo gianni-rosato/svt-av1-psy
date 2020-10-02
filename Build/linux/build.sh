@@ -110,10 +110,15 @@ build() (
     cd_safe $build_type
 
     cmake ../../.. -DCMAKE_BUILD_TYPE=$build_type $CMAKE_EXTRA_FLAGS "$@"
-    set --
 
+    if [ -f Makefile ]; then
+        make -j "$jobs"
+        return
+    fi
+
+    set --
     if cmake --build 2>&1 | grep -q parallel; then
-        set -- --parallel $(($(nproc) + 2))
+        set -- --parallel "$jobs"
     fi
 
     # Compile the Library
@@ -182,10 +187,6 @@ if [ -z "$CXX" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
     export CXX
 fi
 
-case $jobs in
-*[!0-9]*) jobs=$(getconf _NPROCESSORS_ONLN 2> /dev/null || nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null) ;;
-esac
-
 build_release=false
 build_debug=false
 build_install=false
@@ -198,11 +199,14 @@ parse_options() {
         all) build_debug=true build_release=true && shift ;;
         asm=*)
             check_executable "${1#*=}" &&
-                CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_ASM_NASM_COMPILER=$(check_executable -p "${1#*=}")"
+                CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_ASM_NASM_COMPILER=$(check_executable -p "${1#*=}")" &&
+                case $1 in
+                *nasm*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_NASM=ON" ;;
+                esac
             shift
             ;;
         bindir=*)
-            CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -CMAKE_INSTALL_BINDIR=${1#*=}"
+            CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_BINDIR=${1#*=}"
             shift
             ;;
         cc=*)
@@ -230,9 +234,9 @@ parse_options() {
             shift && ${IN_SCRIPT:-false} && exit
             ;;
         debug) build_debug=true && shift ;;
-        build_shared) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=ON" && shift ;;
-        build_static) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=OFF" && shift ;;
-        generator=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
+        shared) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=ON" && shift ;;
+        static) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=OFF" && shift ;;
+        gen=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
         install) build_install=true && shift ;;
         jobs=*) jobs="${1#*=}" && shift ;;
         no-enc) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_ENC=OFF" && shift ;;
@@ -272,37 +276,43 @@ parse_options() {
     done
 }
 
+parse_equal_option() {
+    case $1 in
+    *=*) parse_options "$(printf %s "$1" | cut -c3- | cut -d= -f1 | tr '[:upper:]' '[:lower:]')=${1#*=}" ;;
+    *) parse_options "$(printf %s "$1" | cut -c3- | cut -d= -f1 | tr '[:upper:]' '[:lower:]')=$2" ;;
+    esac
+}
+
 if [ -z "$*" ]; then
     build_release=true
 else
     while [ -n "$*" ]; do
         case $1 in
         --*) # Handle --* based args
-            case $(printf %s "$1" | cut -c3- | tr '[:upper:]' '[:lower:]') in
+            case $(printf %s "$1" | cut -c3- | cut -d= -f1 | tr '[:upper:]' '[:lower:]') in
             # Stop on "--", pass the rest to cmake
             "") shift && break ;;
             help) parse_options help && shift ;;
             all) parse_options debug release && shift ;;
-            asm) parse_options asm="$2" && shift 2 ;;
-            bindir) parse_options bindir="$2" && shift 2 ;;
-            cc) parse_options cc="$2" && shift 2 ;;
-            cxx) parse_options cxx="$2" && shift 2 ;;
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
-            gen) parse_options generator="$2" && shift 2 ;;
             install) parse_options install && shift ;;
-            jobs) parse_options jobs="$2" && shift 2 ;;
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
-            prefix) parse_options prefix="$2" && shift 2 ;;
             release) parse_options release && shift ;;
-            shared) parse_options build_shared && shift ;;
-            static) parse_options build_static && shift ;;
-            target_system) parse_options target_system="$2" && shift 2 ;;
+            shared) parse_options shared && shift ;;
+            static) parse_options static && shift ;;
             toolchain) parse_options toolchain="$2" && shift ;;
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
+            asm | bindir | cc | cxx | gen | jobs | prefix | target_system)
+                parse_equal_option "$1" "$2"
+                case $1 in
+                *=*) shift ;;
+                *) shift 2 ;;
+                esac
+                ;;
             *) die "Error, unknown option: $1" ;;
             esac
             ;;
@@ -323,18 +333,40 @@ else
                     shift
                     ;;
                 g)
-                    parse_options generator="$1"
-                    i=$((i + 1))
-                    shift
+                    case $(echo "$match" | cut -c$((i + 1))-) in
+                    "")
+                        # if it's -g Ninja
+                        parse_options gen="$1"
+                        i=$((i + 1))
+                        shift
+                        ;;
+                    *)
+                        # if it's -GNinja
+                        # Just put everything past -g as the generator
+                        parse_options gen="$(echo "$match" | cut -c$((i + 1))-)"
+                        # go ahead and skip this block
+                        i=$((${#match} + 1))
+                        ;;
+                    esac
                     ;;
                 i)
                     parse_options install
                     i=$((i + 1))
                     ;;
                 j)
-                    parse_options jobs="$1"
-                    i=$((i + 1))
-                    shift
+                    case $(echo "$match" | cut -c$((i + 1))-) in
+                    *[!0-9]*)
+                        parse_options jobs="$1"
+                        i=$((i + 1))
+                        shift
+                        ;;
+                    *)
+                        # Found number right after
+                        parse_options jobs="$(echo "$match" | cut -c$((i + 1))-)"
+                        # go ahead and skip this block
+                        i=$((${#match} + 1))
+                        ;;
+                    esac
                     ;;
                 p)
                     parse_options prefix="$1"
@@ -352,7 +384,7 @@ else
                     shift
                     ;;
                 x)
-                    parse_options build_static
+                    parse_options static
                     i=$((i + 1))
                     ;;
                 v)
@@ -373,7 +405,7 @@ else
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
-            gen=*) parse_options generator="${1#*=}" && shift ;;
+            gen=*) parse_options gen="${1#*=}" && shift ;;
             help) parse_options help && shift ;;
             install) parse_options install && shift ;;
             jobs=*) parse_options jobs="${1#*=}" && shift ;;
@@ -381,8 +413,8 @@ else
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
-            shared) parse_options build_shared && shift ;;
-            static) parse_options build_static && shift ;;
+            shared) parse_options shared && shift ;;
+            static) parse_options static && shift ;;
             release) parse_options release && shift ;;
             test) parse_options tests && shift ;;
             toolchain=*) parse_options toolchain="${1#*=}" && shift ;;
@@ -394,6 +426,10 @@ else
         esac
     done
 fi
+
+case $jobs in
+*[!0-9]* | "") jobs=$(getconf _NPROCESSORS_ONLN 2> /dev/null || nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null) ;;
+esac
 
 [ "${PATH#*\/usr\/local\/bin}" = "$PATH" ] && PATH=$PATH:/usr/local/bin
 
