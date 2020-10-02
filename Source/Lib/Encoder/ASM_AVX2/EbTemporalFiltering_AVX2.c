@@ -129,6 +129,23 @@ static AOM_FORCE_INLINE int32_t xx_mask_and_hadd(__m256i vsum, int i) {
     return _mm_extract_epi32(v128a, 0);
 }
 
+static AOM_FORCE_INLINE __m256 exp_256_ps(__m256 _x) {
+    float buff[8];
+    _mm256_storeu_ps(buff, _x);
+
+    buff[0] = expf(buff[0]);
+    buff[1] = expf(buff[1]);
+    buff[2] = expf(buff[2]);
+    buff[3] = expf(buff[3]);
+    buff[4] = expf(buff[4]);
+    buff[5] = expf(buff[5]);
+    buff[6] = expf(buff[6]);
+    buff[7] = expf(buff[7]);
+
+    __m256 res = _mm256_loadu_ps(buff);
+    return res;
+}
+
 static void apply_temporal_filter_planewise(
     struct MeContext *context_ptr, const uint8_t *frame1, const unsigned int stride,
     const uint8_t *frame2, const unsigned int stride2, const int block_width,
@@ -206,72 +223,136 @@ static void apply_temporal_filter_planewise(
         }
     }
 
-    for (int i = 0; i < block_height; i++) {
-        for (int j = 0; j < block_width; j++) {
-            const int pixel_value = frame2[i * stride2 + j];
+    int idx_32x32 = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
+    int num_ref_pixels = TF_PLANEWISE_FILTER_WINDOW_LENGTH * TF_PLANEWISE_FILTER_WINDOW_LENGTH;
 
-            int diff_sse = acc_5x5_sse[i][j];
-            int num_ref_pixels =
-                TF_PLANEWISE_FILTER_WINDOW_LENGTH * TF_PLANEWISE_FILTER_WINDOW_LENGTH;
+    if (plane != PLANE_TYPE_Y) {
+        num_ref_pixels += (1 << ss_y_shift) * (1 << ss_x_shift);
 
-             //Filter U-plane and V-plane using Y-plane. This is because motion
-             //search is only done on Y-plane, so the information from Y-plane will
-             //be more accurate.
-            if (plane != PLANE_TYPE_Y) {
+        for (int i = 0; i < block_height; i++) {
+            for (int j = 0; j < block_width; j++) {
                 for (int ii = 0; ii < (1 << ss_y_shift); ++ii) {
                     for (int jj = 0; jj < (1 << ss_x_shift); ++jj) {
-                        const int yy = (i << ss_y_shift) + ii;  // Y-coord on Y-plane.
-                        const int xx = (j << ss_x_shift) + jj;  // X-coord on Y-plane.
-                        diff_sse += luma_sq_error[yy * SSE_STRIDE + xx];
-                        ++num_ref_pixels;
+                        const int yy = (i << ss_y_shift) + ii; // Y-coord on Y-plane.
+                        const int xx = (j << ss_x_shift) + jj; // X-coord on Y-plane.
+                        acc_5x5_sse[i][j] += luma_sq_error[yy * SSE_STRIDE + xx];
                     }
                 }
             }
-            // Combine window error and block error, and normalize it.
-            double    window_error = (double)diff_sse / num_ref_pixels;
-            const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
-            double    block_error;
-            int       idx_32x32 = context_ptr->tf_block_col + context_ptr->tf_block_row * 2;
-            if (context_ptr->tf_32x32_block_split_flag[idx_32x32])
-                // 16x16
-                block_error =
-                    (double)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + subblock_idx] / 256.0;
-            else
-                //32x32
-                block_error = (double)context_ptr->tf_32x32_block_error[idx_32x32] / 1024.0;
+        }
+    }
 
-            double combined_error =
-                (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) * block_balacne_inv;
+    assert(!(block_width & 7));
+    __m256d num_ref_pix            = _mm256_set1_pd((double)num_ref_pixels);
+    __m256d blk_balacne_inv        = _mm256_set1_pd(block_balacne_inv);
+    __m256d wnd_blk_balacne_weight = _mm256_set1_pd((double)TF_WINDOW_BLOCK_BALANCE_WEIGHT);
+    __m256 seven                  = _mm256_set1_ps(7.0f);
+    __m256 zero                   = _mm256_set1_ps(0.0f);
+    __m256  tf_weight_scale        = _mm256_set1_ps((float)TF_WEIGHT_SCALE);
+    __m256d blk_errors[4];
+    __m256d d_factor_mul_n_decay_qr_invs[4];
 
-            // Decay factors for non-local mean approach.
-            // Smaller q -> smaller filtering weight. WIP
-            //  CLIP(pow((double)q_factor / TF_Q_DECAY_THRESHOLD, 2), 1e-5, 1);
-            // Smaller strength -> smaller filtering weight.  WIP
-            // CLIP(
-            //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
-            // Larger motion vector -> smaller filtering weight.
-            MV mv;
-            if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
-                // 16x16
-                mv.col = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + subblock_idx];
-                mv.row = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + subblock_idx];
-            } else {
-                //32x32
-                mv.col = context_ptr->tf_32x32_mv_x[idx_32x32];
-                mv.row = context_ptr->tf_32x32_mv_y[idx_32x32];
-            }
-            const float distance = sqrtf((float)(mv.row * mv.row + mv.col * mv.col));
-            const double d_factor = AOMMAX(distance * distance_threshold_inv, 1);
+    if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
+        for (int i = 0; i < 4; i++) {
+            blk_errors[i] = _mm256_set1_pd((double)context_ptr->tf_16x16_block_error[idx_32x32 * 4 + i] / 256.0);
 
-            // Compute filter weight.
-            double scaled_diff     = AOMMIN(combined_error * d_factor * n_decay_qr_inv, 7);
-            int    adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
-            // updated the index
-            count[i * stride2 + j] += adjusted_weight;
-            accumulator[i * stride2 + j] += adjusted_weight * pixel_value;
+            int16_t col                     = context_ptr->tf_16x16_mv_x[idx_32x32 * 4 + i];
+            int16_t row                     = context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + i];
+            float   distance                = sqrtf((float)(row * row + col * col));
+            double  d_factor                = AOMMAX(distance * distance_threshold_inv, 1);
+            d_factor_mul_n_decay_qr_invs[i] = _mm256_set1_pd(d_factor * n_decay_qr_inv);
+        }
+    } else {
+        double       block_error = (double)context_ptr->tf_32x32_block_error[idx_32x32] / 1024.0;
+        int16_t      col         = context_ptr->tf_32x32_mv_x[idx_32x32];
+        int16_t      row         = context_ptr->tf_32x32_mv_y[idx_32x32];
+        const float  distance    = sqrtf((float)(row * row + col * col));
+        const double d_factor    = AOMMAX(distance * distance_threshold_inv, 1);
+
+        const double d_factor_mul_n_decay_qr_inv = d_factor * n_decay_qr_inv;
+
+        for (int i = 0; i < 4; i++) {
+            blk_errors[i] = _mm256_set1_pd(block_error);
+            d_factor_mul_n_decay_qr_invs[i] = _mm256_set1_pd(d_factor_mul_n_decay_qr_inv);
+        }
+    }
+
+    for (int i = 0; i < block_height; i++) {
+        const int subblock_idx_h = (i >= block_height / 2) * 2;
+        for (int j = 0; j < block_width; j += 8) {
+            //int diff_sse = acc_5x5_sse[i][j];
+            __m128i diff_sse1 = _mm_loadu_si128((__m128i *)(acc_5x5_sse[i] + j));
+            __m128i diff_sse2 = _mm_loadu_si128((__m128i *)(acc_5x5_sse[i] + j + 4));
+
+            //double    window_error = (double)diff_sse / num_ref_pixels;
+            __m256d diff_sse_pd1  = _mm256_cvtepi32_pd(diff_sse1);
+            __m256d diff_sse_pd2  = _mm256_cvtepi32_pd(diff_sse2);
+            __m256d window_error1 = _mm256_div_pd(diff_sse_pd1, num_ref_pix);
+            __m256d window_error2 = _mm256_div_pd(diff_sse_pd2, num_ref_pix);
+
+            //const int subblock_idx = subblock_idx_h + (j >= block_width / 2);
+            __m256d blk_error1 = blk_errors[subblock_idx_h + (j >= block_width / 2)];
+            __m256d blk_error2 = blk_errors[subblock_idx_h + ((j+4) >= block_width / 2)];
+
+            //double combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) * block_balacne_inv;
+            __m256d combined_error1 = _mm256_mul_pd(window_error1, wnd_blk_balacne_weight);
+            combined_error1         = _mm256_add_pd(combined_error1, blk_error1);
+            combined_error1         = _mm256_mul_pd(combined_error1, blk_balacne_inv);
+
+            __m256d combined_error2 = _mm256_mul_pd(window_error2, wnd_blk_balacne_weight);
+            combined_error2         = _mm256_add_pd(combined_error2, blk_error2);
+            combined_error2         = _mm256_mul_pd(combined_error2, blk_balacne_inv);
+
+            //double scaled_diff     = AOMMIN(combined_error * d_factor_mul_n_decay_qr_inv, 7);
+            //float   exp_mul_tf_scale = expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE;
+            //int     adjusted_weight  = (int)(exp_mul_tf_scale);
+
+            __m256d d_fact_mul_n_decay1 = d_factor_mul_n_decay_qr_invs[subblock_idx_h + (j >= block_width / 2)];
+            __m256d d_fact_mul_n_decay2 = d_factor_mul_n_decay_qr_invs[subblock_idx_h + ((j+4) >= block_width / 2)];
+
+            combined_error1 = _mm256_mul_pd(combined_error1, d_fact_mul_n_decay1);
+            combined_error2 = _mm256_mul_pd(combined_error2, d_fact_mul_n_decay2);
+
+            __m128 combined_error_ps1 = _mm256_cvtpd_ps(combined_error1);
+            __m128 combined_error_ps2 = _mm256_cvtpd_ps(combined_error2);
+
+            __m256 combined_error_ps = _mm256_insertf128_ps(
+                _mm256_castps128_ps256(combined_error_ps1), combined_error_ps2, 0x1);
+
+            __m256 scaled_diff_ps = _mm256_min_ps(combined_error_ps, seven);
+            scaled_diff_ps        = _mm256_sub_ps(zero, scaled_diff_ps); //-scaled_diff
+
+            //int    adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+            /*
+            ** Semi-lossless optimization:
+            **     Write SIMD friendly approximating algorithm for exp, this will require changes in "C" kernel too
+            */
+            scaled_diff_ps = exp_256_ps(scaled_diff_ps);
+            scaled_diff_ps = _mm256_mul_ps(scaled_diff_ps, tf_weight_scale);
+
+            __m256i adjusted_weight1      = _mm256_cvttps_epi32(scaled_diff_ps);
+            __m128i adjusted_weight_int16 = _mm_packus_epi32(
+                _mm256_castsi256_si128(adjusted_weight1), _mm256_extractf128_si256(adjusted_weight1, 0x1));
+
+            //count[i * stride2 + j] += adjusted_weight;
+            __m128i count_array = _mm_loadu_si128((__m128i *)(count + i * stride2 + j));
+            count_array         = _mm_adds_epu16(count_array, adjusted_weight_int16);
+            _mm_storeu_si128((__m128i *)(count + i * stride2 + j), count_array);
+
+            //accumulator[i * stride2 + j] += adjusted_weight * frame2[i * stride2 + j];
+            __m256i accumulator_array = _mm256_loadu_si256(
+                (__m256i *)(accumulator + i * stride2 + j));
+            __m128i frame2_array     = _mm_loadl_epi64((__m128i *)(frame2 + i * stride2 + j));
+            frame2_array             = _mm_cvtepu8_epi16(frame2_array);
+            __m256i frame2_array_u32 = _mm256_cvtepi16_epi32(frame2_array);
+            frame2_array_u32         = _mm256_mullo_epi32(frame2_array_u32, adjusted_weight1);
+
+            accumulator_array = _mm256_add_epi32(accumulator_array, frame2_array_u32);
+            _mm256_storeu_si256((__m256i *)(accumulator + i * stride2 + j), accumulator_array);
         }
     }
 }
+
 void svt_av1_apply_temporal_filter_planewise_avx2(
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
