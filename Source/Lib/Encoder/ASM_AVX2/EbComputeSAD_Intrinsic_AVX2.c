@@ -4359,7 +4359,7 @@ void ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_stride, u
                                             uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
                                             uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
                                             uint32_t p_eight_sad16x16[16][8],
-                                            uint32_t p_eight_sad8x8[64][8]) {
+                                            uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
@@ -4372,32 +4372,61 @@ void ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_stride, u
             __m256i        sad02           = _mm256_setzero_si256();
             __m256i        sad13           = _mm256_setzero_si256();
 
-            for (int i = 0; i < 4; i++) {
-                const __m128i src01 = _mm_loadu_si128((__m128i *)(s + 0 * src_stride));
-                const __m128i src23 = _mm_loadu_si128((__m128i *)(s + 8 * src_stride));
-                const __m128i ref0  = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 0));
-                const __m128i ref1  = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 8));
-                const __m128i ref2  = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 0));
-                const __m128i ref3  = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 8));
-                const __m256i src0123 =
-                    _mm256_insertf128_si256(_mm256_castsi128_si256(src01), src23, 1);
-                const __m256i ref02 =
-                    _mm256_insertf128_si256(_mm256_castsi128_si256(ref0), ref2, 1);
-                const __m256i ref13 =
-                    _mm256_insertf128_si256(_mm256_castsi128_si256(ref1), ref3, 1);
-                sad02 = _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 0)); // 000 000
-                sad02 =
-                    _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 45)); // 101 101
-                sad13 =
-                    _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 18)); // 010 010
-                sad13 =
-                    _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 63)); // 111 111
-                s += 2 * src_stride;
-                r += 2 * ref_stride;
-            }
+            if (sub_sad)
+            {
+                for (int i = 0; i < 4; i++) {
+                    const __m128i src01 = _mm_loadu_si128((__m128i *)(s + 0 * src_stride));
+                    const __m128i src23 = _mm_loadu_si128((__m128i *)(s + 8 * src_stride));
+                    const __m128i ref0 = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 0));
+                    const __m128i ref1 = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 8));
+                    const __m128i ref2 = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 0));
+                    const __m128i ref3 = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 8));
+                    const __m256i src0123 =
+                        _mm256_insertf128_si256(_mm256_castsi128_si256(src01), src23, 1);
+                    const __m256i ref02 =
+                        _mm256_insertf128_si256(_mm256_castsi128_si256(ref0), ref2, 1);
+                    const __m256i ref13 =
+                        _mm256_insertf128_si256(_mm256_castsi128_si256(ref1), ref3, 1);
+                    sad02 = _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 0)); // 000 000
+                    sad02 =
+                        _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 45)); // 101 101
+                    sad13 =
+                        _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 18)); // 010 010
+                    sad13 =
+                        _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 63)); // 111 111
+                    s += 2 * src_stride;
+                    r += 2 * ref_stride;
+                }
 
-            sad02 = _mm256_slli_epi16(sad02, 1);
-            sad13 = _mm256_slli_epi16(sad13, 1);
+                sad02 = _mm256_slli_epi16(sad02, 1);
+                sad13 = _mm256_slli_epi16(sad13, 1);
+            }
+            else
+            {
+                for (int i = 0; i < 8; i++) {
+                    const __m128i src01 = _mm_loadu_si128((__m128i *)(s + 0 * src_stride));
+                    const __m128i src23 = _mm_loadu_si128((__m128i *)(s + 8 * src_stride));
+                    const __m128i ref0 = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 0));
+                    const __m128i ref1 = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 8));
+                    const __m128i ref2 = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 0));
+                    const __m128i ref3 = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 8));
+                    const __m256i src0123 =
+                        _mm256_insertf128_si256(_mm256_castsi128_si256(src01), src23, 1);
+                    const __m256i ref02 =
+                        _mm256_insertf128_si256(_mm256_castsi128_si256(ref0), ref2, 1);
+                    const __m256i ref13 =
+                        _mm256_insertf128_si256(_mm256_castsi128_si256(ref1), ref3, 1);
+                    sad02 = _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 0)); // 000 000
+                    sad02 =
+                        _mm256_adds_epu16(sad02, _mm256_mpsadbw_epu8(ref02, src0123, 45)); // 101 101
+                    sad13 =
+                        _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 18)); // 010 010
+                    sad13 =
+                        _mm256_adds_epu16(sad13, _mm256_mpsadbw_epu8(ref13, src0123, 63)); // 111 111
+                    s += src_stride;
+                    r += ref_stride;
+                }
+            }
 
             const __m256i sad0202 = _mm256_permute4x64_epi64(sad02, 0xD8);
             const __m256i sad1313 = _mm256_permute4x64_epi64(sad13, 0xD8);

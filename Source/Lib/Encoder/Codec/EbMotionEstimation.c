@@ -233,71 +233,129 @@ static void ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_strid
                                                 uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
                                                 uint32_t *p_best_mv16x16,
                                                 uint32_t  p_eight_sad16x16[16][8],
-                                                uint32_t  p_eight_sad8x8[64][8]) {
+                                                uint32_t  p_eight_sad8x8[64][8],EbBool sub_sad) {
     const uint32_t start_8x8_pos = 4 * start_16x16_pos;
     int16_t        x_mv, y_mv;
-    uint32_t       src_stride_sub = (src_stride << 1);
-    uint32_t       ref_stride_sub = (ref_stride << 1);
 
     p_best_sad_8x8 += start_8x8_pos;
     p_best_mv8x8 += start_8x8_pos;
     p_best_sad_16x16 += start_16x16_pos;
     p_best_mv16x16 += start_16x16_pos;
+    if (sub_sad)
+    {
+        uint32_t       src_stride_sub = (src_stride << 1);
+        uint32_t       ref_stride_sub = (ref_stride << 1);
+        for (int search_index = 0; search_index < 8; search_index++) {
+            uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
+                (compute8x4_sad_kernel_c(src, src_stride_sub, ref + search_index, ref_stride_sub)) << 1;
+            if (sad8x8_0 < p_best_sad_8x8[0]) {
+                p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
 
-    for (int search_index = 0; search_index < 8; search_index++) {
-        uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
-            (compute8x4_sad_kernel_c(src, src_stride_sub, ref + search_index, ref_stride_sub)) << 1;
-        if (sad8x8_0 < p_best_sad_8x8[0]) {
-            p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
-            x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
-            y_mv              = _MVYT(mv);
-            p_best_mv8x8[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
+                (compute8x4_sad_kernel_c(
+                    src + 8, src_stride_sub, ref + 8 + search_index, ref_stride_sub))
+                << 1;
+            if (sad8x8_1 < p_best_sad_8x8[1]) {
+                p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+
+            uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
+                (compute8x4_sad_kernel_c(src + (src_stride << 3),
+                    src_stride_sub,
+                    ref + (ref_stride << 3) + search_index,
+                    ref_stride_sub))
+                << 1;
+            if (sad8x8_2 < p_best_sad_8x8[2]) {
+                p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+
+            uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
+                (compute8x4_sad_kernel_c(src + (src_stride << 3) + 8,
+                    src_stride_sub,
+                    ref + (ref_stride << 3) + 8 + search_index,
+                    ref_stride_sub))
+                << 1;
+            if (sad8x8_3 < p_best_sad_8x8[3]) {
+                p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+            uint32_t sad16x16 = p_eight_sad16x16[start_16x16_pos][search_index] = sad8x8_0 + sad8x8_1 +
+                sad8x8_2 + sad8x8_3;
+            if (sad16x16 < p_best_sad_16x16[0]) {
+                p_best_sad_16x16[0] = (uint32_t)sad16x16;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv16x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+        }
+    }
+    else
+    {
+        for (int search_index = 0; search_index < 8; search_index++) {
+            uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
+                compute8x8_sad_kernel_c(src, src_stride, ref + search_index, ref_stride);
+            if (sad8x8_0 < p_best_sad_8x8[0]) {
+                p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+
+            uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
+                (compute8x8_sad_kernel_c(
+                    src + 8, src_stride, ref + 8 + search_index, ref_stride));
+            if (sad8x8_1 < p_best_sad_8x8[1]) {
+                p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+
+            uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
+                (compute8x8_sad_kernel_c(src + (src_stride << 3),
+                    src_stride,
+                    ref + (ref_stride << 3) + search_index,
+                    ref_stride));
+            if (sad8x8_2 < p_best_sad_8x8[2]) {
+                p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+
+            uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
+                (compute8x8_sad_kernel_c(src + (src_stride << 3) + 8,
+                    src_stride,
+                    ref + (ref_stride << 3) + 8 + search_index,
+                    ref_stride));
+            if (sad8x8_3 < p_best_sad_8x8[3]) {
+                p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv8x8[3] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
+            uint32_t sad16x16 = p_eight_sad16x16[start_16x16_pos][search_index] = sad8x8_0 + sad8x8_1 +
+                sad8x8_2 + sad8x8_3;
+            if (sad16x16 < p_best_sad_16x16[0]) {
+                p_best_sad_16x16[0] = (uint32_t)sad16x16;
+                x_mv = _MVXT(mv) + (int16_t)search_index * 4;
+                y_mv = _MVYT(mv);
+                p_best_mv16x16[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
+            }
         }
 
-        uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
-            (compute8x4_sad_kernel_c(
-                src + 8, src_stride_sub, ref + 8 + search_index, ref_stride_sub))
-            << 1;
-        if (sad8x8_1 < p_best_sad_8x8[1]) {
-            p_best_sad_8x8[1] = (uint32_t)sad8x8_1;
-            x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
-            y_mv              = _MVYT(mv);
-            p_best_mv8x8[1]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
-
-        uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
-            (compute8x4_sad_kernel_c(src + (src_stride << 3),
-                                     src_stride_sub,
-                                     ref + (ref_stride << 3) + search_index,
-                                     ref_stride_sub))
-            << 1;
-        if (sad8x8_2 < p_best_sad_8x8[2]) {
-            p_best_sad_8x8[2] = (uint32_t)sad8x8_2;
-            x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
-            y_mv              = _MVYT(mv);
-            p_best_mv8x8[2]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
-
-        uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
-            (compute8x4_sad_kernel_c(src + (src_stride << 3) + 8,
-                                     src_stride_sub,
-                                     ref + (ref_stride << 3) + 8 + search_index,
-                                     ref_stride_sub))
-            << 1;
-        if (sad8x8_3 < p_best_sad_8x8[3]) {
-            p_best_sad_8x8[3] = (uint32_t)sad8x8_3;
-            x_mv              = _MVXT(mv) + (int16_t)search_index * 4;
-            y_mv              = _MVYT(mv);
-            p_best_mv8x8[3]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
-        uint32_t sad16x16 = p_eight_sad16x16[start_16x16_pos][search_index] = sad8x8_0 + sad8x8_1 +
-            sad8x8_2 + sad8x8_3;
-        if (sad16x16 < p_best_sad_16x16[0]) {
-            p_best_sad_16x16[0] = (uint32_t)sad16x16;
-            x_mv                = _MVXT(mv) + (int16_t)search_index * 4;
-            y_mv                = _MVYT(mv);
-            p_best_mv16x16[0]   = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
-        }
     }
 }
 
@@ -305,7 +363,7 @@ void ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint
                                          uint32_t ref_stride, uint32_t mv, uint32_t *p_best_sad_8x8,
                                          uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
                                          uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-                                         uint32_t p_eight_sad8x8[64][8]) {
+                                         uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
@@ -324,7 +382,8 @@ void ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint
                                                 p_best_mv8x8,
                                                 p_best_mv16x16,
                                                 p_eight_sad16x16,
-                                                p_eight_sad8x8);
+                                                p_eight_sad8x8,
+                                                sub_sad);
         }
     }
 }
@@ -408,6 +467,7 @@ static void open_loop_me_get_eight_search_point_results_block(
 ) {
     // uint32_t ref_luma_stride = ref_pic_ptr->stride_y; // NADER
     // uint8_t  *ref_ptr = ref_pic_ptr->buffer_y; // NADER
+    const EbBool sub_sad = (context_ptr->me_search_method == SUB_SAD_SEARCH);
     uint32_t ref_luma_stride = context_ptr->interpolated_full_stride[list_index][ref_pic_index];
     uint8_t *ref_ptr =
         context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
@@ -428,7 +488,8 @@ static void open_loop_me_get_eight_search_point_results_block(
                                       context_ptr->p_best_mv8x8,
                                       context_ptr->p_best_mv16x16,
                                       context_ptr->p_eight_sad16x16,
-                                      context_ptr->p_eight_sad8x8);
+                                      context_ptr->p_eight_sad8x8,
+                                      sub_sad);
 
     ext_eight_sad_calculation_32x32_64x64(context_ptr->p_eight_sad16x16,
                                           context_ptr->p_best_sad_32x32,

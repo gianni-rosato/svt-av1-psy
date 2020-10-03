@@ -174,7 +174,8 @@ extern "C" {
         uint32_t *p_best_mv8x8,
         uint32_t *p_best_mv16x16,
         uint32_t p_eight_sad16x16[16][8],
-        uint32_t p_eight_sad8x8[64][8]);
+        uint32_t p_eight_sad8x8[64][8],
+        EbBool sub_sad);
 
     /*******************************************
     Calculate SAD for 32x32,64x64 from 16x16

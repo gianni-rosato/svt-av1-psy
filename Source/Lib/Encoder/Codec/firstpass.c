@@ -2144,7 +2144,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
 
     // ME Search Method
-    context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+    context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
 
     context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
 

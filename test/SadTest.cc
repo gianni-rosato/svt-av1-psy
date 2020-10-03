@@ -57,7 +57,7 @@ extern "C" void ext_all_sad_calculation_8x8_16x16_c(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t mv, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
     uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
-    uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8]);
+    uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
 extern "C" void ext_eigth_sad_calculation_nsq_c(
     uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8],
     uint32_t p_sad32x32[4][8], uint32_t *p_best_sad_64x32,
@@ -864,7 +864,7 @@ class Allsad_CalculationTest
         uint32_t best_mv16x16[2][16] = {{0}};
         uint32_t eight_sad16x16[2][16][8];
         uint32_t eight_sad8x8[2][64][8];
-
+        EbBool sub_sad = false;
         fill_buf_with_value(&best_sad8x8[0][0], 2 * 64, BEST_SAD_MAX);
         fill_buf_with_value(&best_sad16x16[0][0], 2 * 16, UINT_MAX);
         fill_buf_with_value(&eight_sad16x16[0][0][0], 2 * 16 * 8, UINT_MAX);
@@ -882,7 +882,8 @@ class Allsad_CalculationTest
                                             best_mv8x8[0],
                                             best_mv16x16[0],
                                             eight_sad16x16[0],
-                                            eight_sad8x8[0]);
+                                            eight_sad8x8[0],
+                                            sub_sad);
 
         ext_all_sad_calculation_8x8_16x16_avx2(src_aligned_,
                                                src_stride_,
@@ -894,32 +895,92 @@ class Allsad_CalculationTest
                                                best_mv8x8[1],
                                                best_mv16x16[1],
                                                eight_sad16x16[1],
-                                               eight_sad8x8[1]);
+                                               eight_sad8x8[1],
+                                               sub_sad);
 
         EXPECT_EQ(
             0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
-            << "compare best_sad8x8 error";
+            << "compare best_sad8x8 error sub_sad false";
         EXPECT_EQ(0,
                   memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
-            << "compare best_mv8x8 error";
+            << "compare best_mv8x8 error sub_sad false";
         EXPECT_EQ(
             0,
             memcmp(
                 best_sad16x16[0], best_sad16x16[1], sizeof(best_sad16x16[0])))
-            << "compare best_sad16x16 error";
+            << "compare best_sad16x16 error sub_sad false";
         EXPECT_EQ(
             0,
             memcmp(best_mv16x16[0], best_mv16x16[1], sizeof(best_mv16x16[0])))
-            << "compare best_mv16x16 error";
+            << "compare best_mv16x16 error sub_sad false";
         EXPECT_EQ(
             0,
             memcmp(eight_sad8x8[0], eight_sad8x8[1], sizeof(eight_sad8x8[0])))
-            << "compare eight_sad8x8 error";
+            << "compare eight_sad8x8 error sub_sad false";
         EXPECT_EQ(0,
                   memcmp(eight_sad16x16[0],
                          eight_sad16x16[1],
                          sizeof(eight_sad16x16[0])))
-            << "compare eight_sad16x16 error";
+            << "compare eight_sad16x16 error sub_sad false";
+
+        sub_sad = true;
+        fill_buf_with_value(&best_sad8x8[0][0], 2 * 64, BEST_SAD_MAX);
+        fill_buf_with_value(&best_sad16x16[0][0], 2 * 16, UINT_MAX);
+        fill_buf_with_value(&eight_sad16x16[0][0][0], 2 * 16 * 8, UINT_MAX);
+        fill_buf_with_value(&eight_sad8x8[0][0][0], 2 * 64 * 8, UINT_MAX);
+
+        prepare_data();
+
+        ext_all_sad_calculation_8x8_16x16_c(src_aligned_,
+            src_stride_,
+            ref1_aligned_,
+            ref1_stride_,
+            0,
+            best_sad8x8[0],
+            best_sad16x16[0],
+            best_mv8x8[0],
+            best_mv16x16[0],
+            eight_sad16x16[0],
+            eight_sad8x8[0],
+            sub_sad);
+
+        ext_all_sad_calculation_8x8_16x16_avx2(src_aligned_,
+            src_stride_,
+            ref1_aligned_,
+            ref1_stride_,
+            0,
+            best_sad8x8[1],
+            best_sad16x16[1],
+            best_mv8x8[1],
+            best_mv16x16[1],
+            eight_sad16x16[1],
+            eight_sad8x8[1],
+            sub_sad);
+
+        EXPECT_EQ(
+            0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
+            << "compare best_sad8x8 error sub_sad true";
+        EXPECT_EQ(0,
+            memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
+            << "compare best_mv8x8 error sub_sad true";
+        EXPECT_EQ(
+            0,
+            memcmp(
+                best_sad16x16[0], best_sad16x16[1], sizeof(best_sad16x16[0])))
+            << "compare best_sad16x16 error sub_sad true";
+        EXPECT_EQ(
+            0,
+            memcmp(best_mv16x16[0], best_mv16x16[1], sizeof(best_mv16x16[0])))
+            << "compare best_mv16x16 error sub_sad true";
+        EXPECT_EQ(
+            0,
+            memcmp(eight_sad8x8[0], eight_sad8x8[1], sizeof(eight_sad8x8[0])))
+            << "compare eight_sad8x8 error sub_sad true";
+        EXPECT_EQ(0,
+            memcmp(eight_sad16x16[0],
+                eight_sad16x16[1],
+                sizeof(eight_sad16x16[0])))
+            << "compare eight_sad16x16 error sub_sad true";
     }
 
     void check_get_32x32_sad() {
@@ -1016,6 +1077,7 @@ class Extsad_CalculationTest
         uint32_t best_sad16x16[2], best_mv16x16[2] = {0};
         uint32_t sad16x16[2];
         uint32_t sad8x8[2][4];
+        EbBool sub_sad = false;
         fill_buf_with_value(&best_sad8x8[0][0], 2 * 4, BEST_SAD_MAX);
         fill_buf_with_value(&best_sad16x16[0], 2, UINT_MAX);
         fill_buf_with_value(&sad16x16[0], 2, UINT_MAX);
@@ -1034,7 +1096,7 @@ class Extsad_CalculationTest
                                         0,
                                         &sad16x16[0],
                                         sad8x8[0],
-                                        false);
+                                        sub_sad);
 
         ext_sad_calculation_8x8_16x16_avx2_intrin(src_aligned_,
                                                   src_stride_,
@@ -1047,21 +1109,69 @@ class Extsad_CalculationTest
                                                   0,
                                                   &sad16x16[1],
                                                   sad8x8[1],
-                                                  false);
+                                                  sub_sad);
 
         EXPECT_EQ(
             0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
-            << "compare best_sad8x8 error";
+            << "compare best_sad8x8 error sub_sad false";
         EXPECT_EQ(0,
                   memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
-            << "compare best_mv8x8 error";
+            << "compare best_mv8x8 error sub_sad false";
         EXPECT_EQ(best_sad16x16[0], best_sad16x16[1])
-            << "compare best_sad16x16 error";
+            << "compare best_sad16x16 error sub_sad false";
         EXPECT_EQ(best_mv16x16[0], best_mv16x16[1])
-            << "compare best_mv16x16 error";
+            << "compare best_mv16x16 error sub_sad false";
         EXPECT_EQ(0, memcmp(sad8x8[0], sad8x8[1], sizeof(sad8x8[0])))
-            << "compare sad8x8 error";
-        EXPECT_EQ(sad16x16[0], sad16x16[1]) << "compare sad16x16 error";
+            << "compare sad8x8 error sub_sad false";
+        EXPECT_EQ(sad16x16[0], sad16x16[1]) << "compare sad16x16 error sub_sad false";
+
+        sub_sad = true;
+        fill_buf_with_value(&best_sad8x8[0][0], 2 * 4, BEST_SAD_MAX);
+        fill_buf_with_value(&best_sad16x16[0], 2, UINT_MAX);
+        fill_buf_with_value(&sad16x16[0], 2, UINT_MAX);
+        fill_buf_with_value(&sad8x8[0][0], 2 * 4, UINT_MAX);
+
+        prepare_data();
+
+        ext_sad_calculation_8x8_16x16_c(src_aligned_,
+            src_stride_,
+            ref1_aligned_,
+            ref1_stride_,
+            best_sad8x8[0],
+            &best_sad16x16[0],
+            best_mv8x8[0],
+            &best_mv16x16[0],
+            0,
+            &sad16x16[0],
+            sad8x8[0],
+            sub_sad);
+
+        ext_sad_calculation_8x8_16x16_avx2_intrin(src_aligned_,
+            src_stride_,
+            ref1_aligned_,
+            ref1_stride_,
+            best_sad8x8[1],
+            &best_sad16x16[1],
+            best_mv8x8[1],
+            &best_mv16x16[1],
+            0,
+            &sad16x16[1],
+            sad8x8[1],
+            sub_sad);
+
+        EXPECT_EQ(
+            0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
+            << "compare best_sad8x8 error sub_sad true";
+        EXPECT_EQ(0,
+            memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
+            << "compare best_mv8x8 error sub_sad true";
+        EXPECT_EQ(best_sad16x16[0], best_sad16x16[1])
+            << "compare best_sad16x16 error sub_sad true";
+        EXPECT_EQ(best_mv16x16[0], best_mv16x16[1])
+            << "compare best_mv16x16 error sub_sad true";
+        EXPECT_EQ(0, memcmp(sad8x8[0], sad8x8[1], sizeof(sad8x8[0])))
+            << "compare sad8x8 error sub_sad true";
+        EXPECT_EQ(sad16x16[0], sad16x16[1]) << "compare sad16x16 error sub_sad true";
     }
 
     void check_get_32x32_sad() {

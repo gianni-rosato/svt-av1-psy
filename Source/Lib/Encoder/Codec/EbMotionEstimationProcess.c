@@ -444,7 +444,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     // HME Search Method
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
     // ME Search Method
-        context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+        context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
 
     // Set hme/me based reference pruning level (0-4)
     // Ref pruning is disallowed for TF in motion_estimate_sb()
