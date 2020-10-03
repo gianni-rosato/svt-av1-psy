@@ -126,7 +126,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
-    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
 double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height,
     uint16_t stride_y);
 

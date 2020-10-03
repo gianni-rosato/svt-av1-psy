@@ -37,7 +37,7 @@ typedef void (*TemporalFilterFuncHbd)(
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count,
-    uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+    uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
 
 #define MAX_STRIDE 256
 
@@ -511,6 +511,7 @@ class TemporalFilterTestPlanewiseHbd
     uint32_t stride_pred[COLOR_CHANNELS];
     double noise_levels[COLOR_CHANNELS];
     int decay_control;
+    uint32_t encoder_bit_depth;
 };
 
 void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
@@ -527,6 +528,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+            encoder_bit_depth = 10;
             ref_func(
                      context_ptr,
                      src_ptr[C_Y],
@@ -550,11 +552,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      accum_ref_ptr[C_U],
                      count_ref_ptr[C_U],
                      accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V]);
+                     count_ref_ptr[C_V],
+                     encoder_bit_depth);
 
             tst_func(
                      context_ptr,
-
                      src_ptr[C_Y],
                      stride[C_Y],
                      pred_ptr[C_Y],
@@ -576,7 +578,8 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      accum_tst_ptr[C_U],
                      count_tst_ptr[C_U],
                      accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V]);
+                     count_tst_ptr[C_V],
+                     encoder_bit_depth);
 
             for (int color_channel = 0; color_channel < COLOR_CHANNELS;
                  color_channel++) {
@@ -590,6 +593,71 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                                  MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)),
                           0);
             }
+            encoder_bit_depth = 12;
+            ref_func(
+                context_ptr,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                noise_levels,
+                decay_control,
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V],
+                encoder_bit_depth);
+
+            tst_func(
+                context_ptr,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                noise_levels,
+                decay_control,
+                accum_tst_ptr[C_Y],
+                count_tst_ptr[C_Y],
+                accum_tst_ptr[C_U],
+                count_tst_ptr[C_U],
+                accum_tst_ptr[C_V],
+                count_tst_ptr[C_V],
+                encoder_bit_depth);
+
+            for (int color_channel = 0; color_channel < COLOR_CHANNELS;
+                color_channel++) {
+                EXPECT_EQ(memcmp(accum_ref_ptr[color_channel],
+                    accum_tst_ptr[color_channel],
+                    MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)),
+                    0);
+
+                EXPECT_EQ(memcmp(count_ref_ptr[color_channel],
+                    count_tst_ptr[color_channel],
+                    MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)),
+                    0);
+            }
         }
     } else {
         uint64_t ref_timer_seconds, ref_timer_useconds;
@@ -597,6 +665,7 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
         uint64_t test_timer_seconds, test_timer_useconds;
         double ref_time, tst_time;
 
+        encoder_bit_depth = 10;
         svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
         for (int j = 0; j < run_times; j++) {
             if (j % 2 == 0) {
@@ -627,7 +696,8 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      accum_ref_ptr[C_U],
                      count_ref_ptr[C_U],
                      accum_ref_ptr[C_V],
-                     count_ref_ptr[C_V]);
+                     count_ref_ptr[C_V],
+                     encoder_bit_depth);
         }
         svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
 
@@ -655,7 +725,8 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      accum_tst_ptr[C_U],
                      count_tst_ptr[C_U],
                      accum_tst_ptr[C_V],
-                     count_tst_ptr[C_V]);
+                     count_tst_ptr[C_V],
+                     encoder_bit_depth);
         }
         svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
 
@@ -673,12 +744,101 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
 
         printf(
             "c_time=%lf \t simd_time=%lf \t "
-            "gain=%lf\t width=%d\t height=%d \n",
+            "gain=%lf\t width=%d\t height=%d \t encoder_bit_depth=%d \n",
             ref_time / 1000,
             tst_time / 1000,
             ref_time / tst_time,
             width,
-            height);
+            height,
+            encoder_bit_depth);
+
+        encoder_bit_depth = 12;
+        svt_av1_get_time(&ref_timer_seconds, &ref_timer_useconds);
+        for (int j = 0; j < run_times; j++) {
+            if (j % 2 == 0) {
+                context_ptr = &context1;
+            }
+            else {
+                context_ptr = &context2;
+            }
+            ref_func(
+                context_ptr,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                noise_levels,
+                decay_control,
+                accum_ref_ptr[C_Y],
+                count_ref_ptr[C_Y],
+                accum_ref_ptr[C_U],
+                count_ref_ptr[C_U],
+                accum_ref_ptr[C_V],
+                count_ref_ptr[C_V],
+                encoder_bit_depth);
+        }
+        svt_av1_get_time(&middle_timer_seconds, &middle_timer_useconds);
+
+        for (int j = 0; j < run_times; j++) {
+            tst_func(
+                context_ptr,
+                src_ptr[C_Y],
+                stride[C_Y],
+                pred_ptr[C_Y],
+                stride_pred[C_Y],
+                src_ptr[C_U],
+                src_ptr[C_V],
+                stride[C_U],
+                pred_ptr[C_U],
+                pred_ptr[C_V],
+                stride_pred[C_U],
+                width,
+                height,
+                1,  // subsampling
+                1,  // subsampling
+                noise_levels,
+                decay_control,
+                accum_tst_ptr[C_Y],
+                count_tst_ptr[C_Y],
+                accum_tst_ptr[C_U],
+                count_tst_ptr[C_U],
+                accum_tst_ptr[C_V],
+                count_tst_ptr[C_V],
+                encoder_bit_depth);
+        }
+        svt_av1_get_time(&test_timer_seconds, &test_timer_useconds);
+
+        ref_time =
+            svt_av1_compute_overall_elapsed_time_ms(ref_timer_seconds,
+                                                    ref_timer_useconds,
+                                                    middle_timer_seconds,
+                                                    middle_timer_useconds);
+
+        tst_time =
+            svt_av1_compute_overall_elapsed_time_ms(middle_timer_seconds,
+                                                    middle_timer_useconds,
+                                                    test_timer_seconds,
+                                                    test_timer_useconds);
+
+        printf(
+            "c_time=%lf \t simd_time=%lf \t "
+            "gain=%lf\t width=%d\t height=%d \t encoder_bit_depth=%d \n",
+            ref_time / 1000,
+            tst_time / 1000,
+            ref_time / tst_time,
+            width,
+            height,
+            encoder_bit_depth);
     }
 }
 

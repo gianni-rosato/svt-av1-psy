@@ -535,7 +535,7 @@ extern "C" {
         const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
         unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
         const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
-        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
     RTCD_EXTERN void(*ext_sad_calculation_8x8_16x16)(uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv, uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad);
     void ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
         uint32_t ref_stride, uint32_t *p_best_sad_8x8,
@@ -1122,7 +1122,7 @@ extern "C" {
         const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
         unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
         const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
-        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
     uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse);
     int eb_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd);

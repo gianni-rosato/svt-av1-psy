@@ -1141,7 +1141,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
-    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth ) {
     unsigned int       i, j, k, m;
     int                idx, idy;
     uint64_t           sum_square_diff;
@@ -1185,7 +1185,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
             }
             // Combine window error and block error, and normalize it.
             // Scale down the difference for high bit depth input.
-            sum_square_diff >>= 4;
+            sum_square_diff >>= ((encoder_bit_depth - 8) * 2);
             double window_error = (double)sum_square_diff / num_ref_pixels;
 
             const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
@@ -1273,8 +1273,8 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
 
                 m = (i >> ss_y) * uv_pre_stride + (j >> ss_x);
                 // Scale down the difference for high bit depth input.
-                u_sum_square_diff >>= 4;
-                v_sum_square_diff >>= 4;
+                u_sum_square_diff >>= ((encoder_bit_depth - 8) * 2);
+                v_sum_square_diff >>= ((encoder_bit_depth - 8) * 2);
                 // Combine window error and block error, and normalize it.
                 window_error = (double)u_sum_square_diff / num_ref_pixels;
                 combined_error =
@@ -1336,7 +1336,7 @@ static void apply_filtering_block_plane_wise(
     EbByte *pred,
     uint16_t **pred_16bit, uint32_t **accum, uint16_t **count, uint32_t *stride,
     uint32_t *stride_pred, int block_width, int block_height, uint32_t ss_x, uint32_t ss_y,
-    const double *noise_levels, const int decay_control, EbBool is_highbd) {
+    const double *noise_levels, const int decay_control, uint32_t encoder_bit_depth) {
     int blk_h = block_height;
     int blk_w = block_width;
     int offset_src_buffer_Y = block_row * blk_h * stride[C_Y] + block_col * blk_w;
@@ -1362,7 +1362,7 @@ static void apply_filtering_block_plane_wise(
     count_ptr[C_U] = count[C_U] + offset_block_buffer_U;
     count_ptr[C_V] = count[C_V] + offset_block_buffer_V;
 
-    if (!is_highbd) {
+    if (encoder_bit_depth == 8) {
         uint8_t *src_ptr[COLOR_CHANNELS] = {
             src[C_Y] + offset_src_buffer_Y,
             src[C_U] + offset_src_buffer_U,
@@ -1437,7 +1437,8 @@ static void apply_filtering_block_plane_wise(
             accum_ptr[C_U],
             count_ptr[C_U],
             accum_ptr[C_V],
-            count_ptr[C_V]);
+            count_ptr[C_V],
+            encoder_bit_depth);
     }
 }
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128);
@@ -2609,7 +2610,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                                              ss_y,
                                                              noise_levels,
                                                              decay_control,
-                                                             is_highbd);
+                                                             encoder_bit_depth);
                         }
                     }
                 }

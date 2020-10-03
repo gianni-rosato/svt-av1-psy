@@ -1227,8 +1227,8 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
             eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
         }
 #endif
-        SET_SSE41(
-            eb_av1_highbd_warp_affine, eb_av1_highbd_warp_affine_c, eb_av1_highbd_warp_affine_sse4_1);
+        SET_AVX2(
+            eb_av1_highbd_warp_affine, eb_av1_highbd_warp_affine_c, eb_av1_highbd_warp_affine_avx2);
         if (flags & HAS_AVX2) eb_av1_warp_affine = eb_av1_warp_affine_avx2;
         SET_SSE2(svt_aom_highbd_lpf_horizontal_14, svt_aom_highbd_lpf_horizontal_14_c, svt_aom_highbd_lpf_horizontal_14_sse2);
         SET_SSE2(svt_aom_highbd_lpf_horizontal_4, svt_aom_highbd_lpf_horizontal_4_c, svt_aom_highbd_lpf_horizontal_4_sse2);

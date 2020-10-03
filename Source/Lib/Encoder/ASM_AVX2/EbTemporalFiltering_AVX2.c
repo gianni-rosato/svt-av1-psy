@@ -418,7 +418,7 @@ static void apply_temporal_filter_planewise_hbd(
     const uint16_t *frame2, const unsigned int stride2, const int block_width,
     const int block_height, const double sigma, const int decay_control, unsigned int *accumulator,
     uint16_t *count, uint32_t *luma_sq_error, uint32_t *chroma_sq_error, int plane, int ss_x_shift,
-    int ss_y_shift) {
+    int ss_y_shift, uint32_t encoder_bit_depth) {
     assert(TF_PLANEWISE_FILTER_WINDOW_LENGTH == 5);
     assert(((block_width == 32) && (block_height == 32)) ||
            ((block_width == 16) && (block_height == 16)));
@@ -502,7 +502,7 @@ static void apply_temporal_filter_planewise_hbd(
                     }
                 }
             }
-            diff_sse >>= 4;
+            diff_sse >>= ((encoder_bit_depth - 8) * 2);
             // Combine window error and block error, and normalize it.
             double    window_error = (double)diff_sse / num_ref_pixels;
             const int subblock_idx = (i >= block_height / 2) * 2 + (j >= block_width / 2);
@@ -557,7 +557,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
     unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
     const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
-    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count,uint32_t encoder_bit_depth) {
     // Loop variables
     assert(block_width <= BW && "block width too large");
     assert(block_height <= BH && "block height too large");
@@ -597,6 +597,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
                                             chroma_sq_error,
                                             plane,
                                             ss_x_shift,
-                                            ss_y_shift);
+                                            ss_y_shift,
+                                            encoder_bit_depth);
     }
 }
