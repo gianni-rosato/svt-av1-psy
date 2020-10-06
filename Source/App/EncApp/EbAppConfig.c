@@ -1573,6 +1573,7 @@ EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass) {
     c->app_callback = (EbAppContext *)malloc(sizeof(EbAppContext));
     if (!c->app_callback)
         return EB_ErrorInsufficientResources;
+    memset(c->app_callback, 0, sizeof(EbAppContext));
     c->exit_cond        = APP_ExitConditionError;
     c->exit_cond_output = APP_ExitConditionError;
     c->exit_cond_recon  = APP_ExitConditionError;
@@ -2519,18 +2520,21 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
 
     if (strnlen_s(linked_token, WARNING_LENGTH) > 1) {
         const char *message_str = " will be deprecated soon, please use ";
+        size_t offset;
         strcpy_s(print_message, WARNING_LENGTH, token);
-        strcpy_s(
-            print_message + strnlen_s(print_message, WARNING_LENGTH), WARNING_LENGTH, message_str);
-        strcpy_s(
-            print_message + strnlen_s(print_message, WARNING_LENGTH), WARNING_LENGTH, linked_token);
+        offset = strnlen_s(print_message, WARNING_LENGTH);
+        strcpy_s(print_message + offset, WARNING_LENGTH - offset, message_str);
+        offset = strnlen_s(print_message, WARNING_LENGTH);
+        strcpy_s(print_message + offset, WARNING_LENGTH - offset, linked_token);
         return print_message;
     } else if (double_dash_token == 0) {
-        const char *message_str = " will be deprecated soon, please use -";
+       const char *message_str = " will be deprecated soon, please use -";
+        size_t offset;
         strcpy_s(print_message, WARNING_LENGTH, token);
-        strcpy_s(
-            print_message + strnlen_s(print_message, WARNING_LENGTH), WARNING_LENGTH, message_str);
-        strcpy_s(print_message + strnlen_s(print_message, WARNING_LENGTH), WARNING_LENGTH, token);
+        offset = strnlen_s(print_message, WARNING_LENGTH);
+        strcpy_s(print_message + offset, WARNING_LENGTH - offset, message_str);
+        offset = strnlen_s(print_message, WARNING_LENGTH);
+        strcpy_s(print_message + offset, WARNING_LENGTH - offset, token);
         return print_message;
     }
     return "";
