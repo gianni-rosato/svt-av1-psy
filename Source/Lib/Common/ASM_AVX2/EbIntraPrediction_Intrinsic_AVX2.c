@@ -121,8 +121,8 @@ static INLINE void get_gradient_hist_avx2_internal(const __m256i *src1, const __
     _mm256_storeu_si256((__m256i *)&temp_array[8], tmp2_32);
 }
 
-void av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride, int rows, int cols,
-                                uint64_t *hist) {
+void svt_av1_get_gradient_hist_avx2(const uint8_t *src, int src_stride,
+                                    int rows, int cols, uint64_t *hist) {
     src += src_stride;
 
     __m128i tmp_src;

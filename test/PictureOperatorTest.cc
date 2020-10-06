@@ -13,8 +13,8 @@
  * @file PictureOperatorTest.cc
  *
  * @brief Unit test for PictureOperatorTest functions:
- * - picture_average_kernel_sse2_intrin
- * - picture_average_kernel1_line_sse2_intrin
+ * - svt_picture_average_kernel_sse2_intrin
+ * - svt_picture_average_kernel1_line_sse2_intrin
  * - picture_copy_kernel_sse2
  *
  * @author Cidana-Ivy
@@ -63,8 +63,8 @@ typedef std::tuple<PUSize, TestPattern> TestParam;
 
 /**
  * @brief Unit test for Picture functions in PU size include:
- *  - picture_average_kernel_sse2_intrin
- *  - picture_average_kernel1_line_sse2_intrin
+ *  - svt_picture_average_kernel_sse2_intrin
+ *  - svt_picture_average_kernel1_line_sse2_intrin
  *  - picture_copy_kernel_sse2
  *
  *
@@ -140,22 +140,22 @@ class PictureOperatorTest : public ::testing::Test,
 
     void run_avg_test() {
         prepare_data();
-        picture_average_kernel_sse2_intrin(tst1_aligned_,
-                                           tst_stride_,
-                                           tst2_aligned_,
-                                           tst_stride_,
-                                           dst1_aligned_,
-                                           tst_stride_,
-                                           pu_width_,
-                                           pu_height_);
-        picture_average_kernel_c(tst1_aligned_,
-                               tst_stride_,
-                               tst2_aligned_,
-                               tst_stride_,
-                               dst2_aligned_,
-                               tst_stride_,
-                               pu_width_,
-                               pu_height_);
+        svt_picture_average_kernel_sse2_intrin(tst1_aligned_,
+                                               tst_stride_,
+                                               tst2_aligned_,
+                                               tst_stride_,
+                                               dst1_aligned_,
+                                               tst_stride_,
+                                               pu_width_,
+                                               pu_height_);
+        svt_picture_average_kernel_c(tst1_aligned_,
+                                     tst_stride_,
+                                     tst2_aligned_,
+                                     tst_stride_,
+                                     dst2_aligned_,
+                                     tst_stride_,
+                                     pu_width_,
+                                     pu_height_);
 
         int fail_pixel_count = 0;
         for (uint16_t j = 0; j < pu_height_; j++) {
@@ -170,9 +170,9 @@ class PictureOperatorTest : public ::testing::Test,
             << "in pu for " << fail_pixel_count << "times,"
             << " at func: [picture average] ";
 
-        picture_average_kernel1_line_sse2_intrin(
+        svt_picture_average_kernel1_line_sse2_intrin(
             tst1_aligned_, tst2_aligned_, dst1_aligned_, pu_width_);
-        picture_average_kernel1_line_c(
+        svt_picture_average_kernel1_line_c(
             tst1_aligned_, tst2_aligned_, dst2_aligned_, pu_width_);
 
         fail_pixel_count = 0;

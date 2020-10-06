@@ -13,8 +13,8 @@
 #include <emmintrin.h>
 #include <stdint.h>
 
-void initialize_buffer_32bits_sse2_intrin(uint32_t *pointer, uint32_t count128, uint32_t count32,
-                                          uint32_t value) {
+void svt_initialize_buffer_32bits_sse2_intrin(uint32_t *pointer, uint32_t count128,
+                                              uint32_t count32, uint32_t value) {
     __m128i  xmm1, xmm2;
     uint32_t index128;
     xmm2 = _mm_cvtsi32_si128(value);

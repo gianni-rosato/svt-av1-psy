@@ -935,7 +935,7 @@ class GetGRadientHistTest
                 src_[j] = rnd_.random();
             }
 
-            av1_get_gradient_hist_c(src_, width, height, width, out_ref_);
+            svt_av1_get_gradient_hist_c(src_, width, height, width, out_ref_);
 
             test_impl(src_, width, height, width, out_tst_);
 
@@ -954,4 +954,4 @@ TEST_P(GetGRadientHistTest, MatchTest) {
 INSTANTIATE_TEST_CASE_P(
     GET_GRADIENT_HIST, GetGRadientHistTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(av1_get_gradient_hist_avx2)));
+                       ::testing::Values(svt_av1_get_gradient_hist_avx2)));

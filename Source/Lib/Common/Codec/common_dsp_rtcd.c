@@ -295,29 +295,29 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_c;
 
-    compressed_packmsb = compressed_packmsb_c;
-    c_pack = c_pack_c;
-    unpack_avg = unpack_avg_c;
-    unpack_avg_safe_sub = unpack_avg_safe_sub_c;
-    un_pack8_bit_data = un_pack8_bit_data_c;
-    cfl_luma_subsampling_420_lbd = cfl_luma_subsampling_420_lbd_c;
-    cfl_luma_subsampling_420_hbd = cfl_luma_subsampling_420_hbd_c;
-    convert_8bit_to_16bit = convert_8bit_to_16bit_c;
-    convert_16bit_to_8bit = convert_16bit_to_8bit_c;
-    pack2d_16_bit_src_mul4 = eb_enc_msb_pack2_d;
-    un_pack2d_16_bit_src_mul4 = eb_enc_msb_un_pack2_d;
+    svt_compressed_packmsb = svt_compressed_packmsb_c;
+    svt_c_pack = svt_c_pack_c;
+    svt_unpack_avg = svt_unpack_avg_c;
+    svt_unpack_avg_safe_sub = svt_unpack_avg_safe_sub_c;
+    svt_un_pack8_bit_data = svt_un_pack8_bit_data_c;
+    svt_cfl_luma_subsampling_420_lbd = svt_cfl_luma_subsampling_420_lbd_c;
+    svt_cfl_luma_subsampling_420_hbd = svt_cfl_luma_subsampling_420_hbd_c;
+    svt_convert_8bit_to_16bit = svt_convert_8bit_to_16bit_c;
+    svt_convert_16bit_to_8bit = svt_convert_16bit_to_8bit_c;
+    svt_pack2d_16_bit_src_mul4 = svt_enc_msb_pack2_d;
+    svt_un_pack2d_16_bit_src_mul4 = svt_enc_msb_un_pack2_d;
 
-    full_distortion_kernel_cbf_zero32_bits = full_distortion_kernel_cbf_zero32_bits_c;
-    full_distortion_kernel32_bits = full_distortion_kernel32_bits_c;
+    svt_full_distortion_kernel_cbf_zero32_bits = svt_full_distortion_kernel_cbf_zero32_bits_c;
+    svt_full_distortion_kernel32_bits = svt_full_distortion_kernel32_bits_c;
 
-    spatial_full_distortion_kernel = spatial_full_distortion_kernel_c;
-    full_distortion_kernel16_bits = full_distortion_kernel16_bits_c;
-    residual_kernel8bit = residual_kernel8bit_c;
+    svt_spatial_full_distortion_kernel = svt_spatial_full_distortion_kernel_c;
+    svt_full_distortion_kernel16_bits = svt_full_distortion_kernel16_bits_c;
+    svt_residual_kernel8bit = svt_residual_kernel8bit_c;
 
-    residual_kernel16bit = residual_kernel16bit_c;
+    svt_residual_kernel16bit = svt_residual_kernel16bit_c;
 
-    picture_average_kernel = picture_average_kernel_c;
-    picture_average_kernel1_line = picture_average_kernel1_line_c;
+    svt_picture_average_kernel = svt_picture_average_kernel_c;
+    svt_picture_average_kernel1_line = svt_picture_average_kernel1_line_c;
     eb_av1_wiener_convolve_add_src = eb_av1_wiener_convolve_add_src_c,
 
 
@@ -865,44 +865,50 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
         if (flags & HAS_SSSE3) eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_ssse3;
         if (flags & HAS_AVX2) eb_av1_inv_txfm_add = eb_av1_inv_txfm_add_avx2;
-        SET_AVX2(compressed_packmsb, compressed_packmsb_c, compressed_packmsb_avx2_intrin);
-        SET_AVX2(c_pack, c_pack_c, c_pack_avx2_intrin);
-        SET_SSE2_AVX2(unpack_avg, unpack_avg_c, unpack_avg_sse2_intrin, unpack_avg_avx2_intrin);
-        SET_AVX2(unpack_avg_safe_sub, unpack_avg_safe_sub_c, unpack_avg_safe_sub_avx2_intrin);
-        SET_AVX2(un_pack8_bit_data, un_pack8_bit_data_c, eb_enc_un_pack8_bit_data_avx2_intrin);
-        SET_AVX2(cfl_luma_subsampling_420_lbd, cfl_luma_subsampling_420_lbd_c, cfl_luma_subsampling_420_lbd_avx2);
-        SET_AVX2(cfl_luma_subsampling_420_hbd, cfl_luma_subsampling_420_hbd_c, cfl_luma_subsampling_420_hbd_avx2);
-        SET_AVX2(convert_8bit_to_16bit, convert_8bit_to_16bit_c, convert_8bit_to_16bit_avx2);
-        SET_AVX2(convert_16bit_to_8bit, convert_16bit_to_8bit_c, convert_16bit_to_8bit_avx2);
-        SET_SSE2_AVX2(pack2d_16_bit_src_mul4,
-            eb_enc_msb_pack2_d,
-            eb_enc_msb_pack2d_sse2_intrin,
-            eb_enc_msb_pack2d_avx2_intrin_al);
-        SET_SSE2(un_pack2d_16_bit_src_mul4, eb_enc_msb_un_pack2_d, eb_enc_msb_un_pack2d_sse2_intrin);
-        SET_AVX2(full_distortion_kernel_cbf_zero32_bits,
-            full_distortion_kernel_cbf_zero32_bits_c,
-            full_distortion_kernel_cbf_zero32_bits_avx2);
-        SET_AVX2(full_distortion_kernel32_bits,
-            full_distortion_kernel32_bits_c,
-            full_distortion_kernel32_bits_avx2);
+        SET_AVX2(svt_compressed_packmsb, svt_compressed_packmsb_c, svt_compressed_packmsb_avx2_intrin);
+        SET_AVX2(svt_c_pack, svt_c_pack_c, svt_c_pack_avx2_intrin);
+        SET_SSE2_AVX2(svt_unpack_avg, svt_unpack_avg_c, svt_unpack_avg_sse2_intrin, svt_unpack_avg_avx2_intrin);
+        SET_AVX2(svt_unpack_avg_safe_sub, svt_unpack_avg_safe_sub_c, svt_unpack_avg_safe_sub_avx2_intrin);
+        SET_AVX2(svt_un_pack8_bit_data, svt_un_pack8_bit_data_c, svt_enc_un_pack8_bit_data_avx2_intrin);
+        SET_AVX2(svt_cfl_luma_subsampling_420_lbd,
+                 svt_cfl_luma_subsampling_420_lbd_c,
+                 svt_cfl_luma_subsampling_420_lbd_avx2);
+        SET_AVX2(svt_cfl_luma_subsampling_420_hbd,
+                 svt_cfl_luma_subsampling_420_hbd_c,
+                 svt_cfl_luma_subsampling_420_hbd_avx2);
+        SET_AVX2(svt_convert_8bit_to_16bit, svt_convert_8bit_to_16bit_c, svt_convert_8bit_to_16bit_avx2);
+        SET_AVX2(svt_convert_16bit_to_8bit, svt_convert_16bit_to_8bit_c, svt_convert_16bit_to_8bit_avx2);
+        SET_SSE2_AVX2(svt_pack2d_16_bit_src_mul4,
+                      svt_enc_msb_pack2_d,
+                      svt_enc_msb_pack2d_sse2_intrin,
+                      svt_enc_msb_pack2d_avx2_intrin_al);
+        SET_SSE2(svt_un_pack2d_16_bit_src_mul4, svt_enc_msb_un_pack2_d, svt_enc_msb_un_pack2d_sse2_intrin);
+        SET_AVX2(svt_full_distortion_kernel_cbf_zero32_bits,
+                 svt_full_distortion_kernel_cbf_zero32_bits_c,
+                 svt_full_distortion_kernel_cbf_zero32_bits_avx2);
+        SET_AVX2(svt_full_distortion_kernel32_bits,
+                 svt_full_distortion_kernel32_bits_c,
+                 svt_full_distortion_kernel32_bits_avx2);
 
-        SET_AVX2_AVX512(spatial_full_distortion_kernel,
-            spatial_full_distortion_kernel_c,
-            spatial_full_distortion_kernel_avx2,
-            spatial_full_distortion_kernel_avx512);
-        SET_AVX2(full_distortion_kernel16_bits,
-            full_distortion_kernel16_bits_c,
-            full_distortion_kernel16_bits_avx2);
-        SET_AVX2_AVX512(residual_kernel8bit,
-            residual_kernel8bit_c,
-            residual_kernel8bit_avx2,
-            residual_kernel8bit_avx512);
+        SET_AVX2_AVX512(svt_spatial_full_distortion_kernel,
+                        svt_spatial_full_distortion_kernel_c,
+                        svt_spatial_full_distortion_kernel_avx2,
+                        svt_spatial_full_distortion_kernel_avx512);
+        SET_AVX2(svt_full_distortion_kernel16_bits,
+                 svt_full_distortion_kernel16_bits_c,
+                 svt_full_distortion_kernel16_bits_avx2);
+        SET_AVX2_AVX512(svt_residual_kernel8bit,
+                        svt_residual_kernel8bit_c,
+                        svt_residual_kernel8bit_avx2,
+                        svt_residual_kernel8bit_avx512);
 
-        SET_SSE2(residual_kernel16bit, residual_kernel16bit_c, residual_kernel16bit_sse2_intrin);
-        SET_SSE2(picture_average_kernel, picture_average_kernel_c, picture_average_kernel_sse2_intrin);
-        SET_SSE2(picture_average_kernel1_line,
-            picture_average_kernel1_line_c,
-            picture_average_kernel1_line_sse2_intrin);
+        SET_SSE2(svt_residual_kernel16bit, svt_residual_kernel16bit_c, svt_residual_kernel16bit_sse2_intrin);
+        SET_SSE2(svt_picture_average_kernel,
+                 svt_picture_average_kernel_c,
+                 svt_picture_average_kernel_sse2_intrin);
+        SET_SSE2(svt_picture_average_kernel1_line,
+                 svt_picture_average_kernel1_line_c,
+                 svt_picture_average_kernel1_line_sse2_intrin);
         SET_AVX2_AVX512(eb_av1_wiener_convolve_add_src,
             eb_av1_wiener_convolve_add_src_c,
             eb_av1_wiener_convolve_add_src_avx2,

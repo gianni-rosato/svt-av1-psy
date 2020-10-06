@@ -1076,9 +1076,9 @@ static uint64_t search_one(int32_t *lev, int32_t nb_strengths, uint64_t mse[][TO
 
 /* Search for the best luma+chroma strength to add as an option, knowing we
 already selected nb_strengths options. */
-uint64_t search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
-                           uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count, int start_gi,
-                           int end_gi) {
+uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
+                               uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count,
+                               int start_gi, int end_gi) {
     uint64_t tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS];
     int32_t  i, j;
     uint64_t best_tot_mse = (uint64_t)1 << 63;
@@ -1154,8 +1154,8 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     best_tot_mse = (uint64_t)1 << 63;
     /* Greedy search: add one strength options at a time. */
     for (i = 0; i < nb_strengths; i++)
-        best_tot_mse =
-            search_one_dual(best_lev0, best_lev1, i, mse, sb_count, start_gi, end_gi);
+        best_tot_mse = svt_search_one_dual(
+            best_lev0, best_lev1, i, mse, sb_count, start_gi, end_gi);
     /* Trying to refine the greedy search by reconsidering each
     already-selected option. */
     for (i = 0; i < 4 * nb_strengths; i++) {
@@ -1164,7 +1164,7 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
             best_lev0[j] = best_lev0[j + 1];
             best_lev1[j] = best_lev1[j + 1];
         }
-        best_tot_mse = search_one_dual(
+        best_tot_mse = svt_search_one_dual(
             best_lev0, best_lev1, nb_strengths - 1, mse, sb_count, start_gi, end_gi);
     }
     return best_tot_mse;

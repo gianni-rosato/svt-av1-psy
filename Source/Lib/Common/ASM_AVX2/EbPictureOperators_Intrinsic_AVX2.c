@@ -17,7 +17,7 @@
 #define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
 
-void compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+void svt_compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
                                     uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
                                     uint32_t inn_stride, uint32_t out_stride, uint32_t width,
                                     uint32_t height) {
@@ -143,7 +143,7 @@ void compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride
     }
 }
 
-void c_pack_avx2_intrin(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
+void svt_c_pack_avx2_intrin(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
                         uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint8_t *local_cache,
                         uint32_t width, uint32_t height) {
     uint32_t y;
@@ -284,10 +284,10 @@ void c_pack_avx2_intrin(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
     }
 }
 
-void eb_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stride,
-                                      uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
-                                      uint32_t inn_stride, uint32_t out_stride, uint32_t width,
-                                      uint32_t height) {
+void svt_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+                                       uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
+                                       uint32_t inn_stride, uint32_t out_stride, uint32_t width,
+                                       uint32_t height) {
     //(out_pixel | n_bit_pixel) concatenation is done with unpacklo_epi8 and unpackhi_epi8
 
     uint32_t y, x;
@@ -500,7 +500,7 @@ void eb_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stri
 #define ALSTORE 1
 #define B256 1
 
-void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
+void svt_unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
                             uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
                             uint32_t width, uint32_t height) {
     uint32_t y;
@@ -929,9 +929,10 @@ void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
     return;
 }
 
-void unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
-                                     uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
-                                     EbBool sub_pred, uint32_t width, uint32_t height) {
+void svt_unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride,
+                                         uint16_t *ref16_l1,
+                                         uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
+                                         EbBool sub_pred, uint32_t width, uint32_t height) {
     uint32_t y;
     __m128i  in_pixel0, in_pixel1;
 
@@ -1239,7 +1240,7 @@ void unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride,
 
     return;
 }
-void full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
+void svt_full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
                                         uint32_t recon_coeff_stride,
                                         uint64_t distortion_result[DIST_CALC_TOTAL],
                                         uint32_t area_width, uint32_t area_height) {
@@ -1290,7 +1291,7 @@ void full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, i
     _mm_storeu_si128((__m128i *)distortion_result, temp1);
 }
 
-void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_stride,
+void svt_full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_stride,
                                                  uint64_t distortion_result[DIST_CALC_TOTAL],
                                                  uint32_t area_width, uint32_t area_height) {
     uint32_t row_count;
@@ -1387,9 +1388,9 @@ SIMD_INLINE void residual_kernel128_avx2(const uint8_t *input, const uint32_t in
     } while (--y);
 }
 
-void residual_kernel8bit_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pred,
-                              uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,
-                              uint32_t area_width, uint32_t area_height) {
+void svt_residual_kernel8bit_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pred,
+                                  uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,
+                                  uint32_t area_width, uint32_t area_height) {
     switch (area_width) {
     case 4:
         residual_kernel4_avx2(
@@ -1423,10 +1424,10 @@ void residual_kernel8bit_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pr
     }
 }
 
-uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset,
-                                             uint32_t input_stride, uint8_t *recon,
-                                             int32_t recon_offset, uint32_t recon_stride,
-                                             uint32_t area_width, uint32_t area_height) {
+uint64_t svt_spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset,
+                                                 uint32_t input_stride, uint8_t *recon,
+                                                 int32_t recon_offset, uint32_t recon_stride,
+                                                 uint32_t area_width, uint32_t area_height) {
     const uint32_t leftover = area_width & 31;
     int32_t        h;
     __m256i        sum = _mm256_setzero_si256();
@@ -1573,10 +1574,10 @@ uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offs
  * Support for params *input and *recon up to 15bit values
  * This assumption allow to use faster _mm256_madd_epi16() instruction
  ************************************************/
-uint64_t full_distortion_kernel16_bits_avx2(uint8_t *input, uint32_t input_offset,
-                                            uint32_t input_stride, uint8_t *recon,
-                                            int32_t recon_offset, uint32_t recon_stride,
-                                            uint32_t area_width, uint32_t area_height) {
+uint64_t svt_full_distortion_kernel16_bits_avx2(uint8_t *input, uint32_t input_offset,
+                                                uint32_t input_stride, uint8_t *recon,
+                                                int32_t recon_offset, uint32_t recon_stride,
+                                                uint32_t area_width, uint32_t area_height) {
     const uint32_t leftover = area_width & 15;
     __m256i        sum32 = _mm256_setzero_si256();
     __m256i        sum64 = _mm256_setzero_si256();
@@ -1669,7 +1670,7 @@ uint64_t full_distortion_kernel16_bits_avx2(uint8_t *input, uint32_t input_offse
     __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum64), _mm256_extracti128_si256(sum64, 1));
     return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
 }
-void convert_8bit_to_16bit_avx2(uint8_t* src, uint32_t src_stride, uint16_t* dst,
+void svt_convert_8bit_to_16bit_avx2(uint8_t* src, uint32_t src_stride, uint16_t* dst,
     uint32_t dst_stride, uint32_t width, uint32_t height) {
     __m128i tmp128, tmp128_2;
     __m256i tmp1, tmp2, tmp3, tmp4, tmp5, tmp6;
@@ -1784,7 +1785,7 @@ void convert_8bit_to_16bit_avx2(uint8_t* src, uint32_t src_stride, uint16_t* dst
 }
 
 //Function is created with assumption that src buffer store values in range [0..255]
-void convert_16bit_to_8bit_avx2(uint16_t *src, uint32_t src_stride, uint8_t *dst, uint32_t dst_stride,
+void svt_convert_16bit_to_8bit_avx2(uint16_t *src, uint32_t src_stride, uint8_t *dst, uint32_t dst_stride,
     uint32_t width, uint32_t height) {
     int32_t k;
     __m256i   tmp1, tmp2, tmp3;

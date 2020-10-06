@@ -86,8 +86,8 @@ static INLINE void cfl_pad(CflCtx *cfl, int32_t width, int32_t height) {
     }
 }
 
-void cfl_luma_subsampling_422_lbd_c(const uint8_t *input, int32_t input_stride, int16_t *output_q3,
-                                    int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_422_lbd_c(const uint8_t *input, int32_t input_stride,
+                                        int16_t *output_q3, int32_t width, int32_t height) {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i += 2) output_q3[i >> 1] = (input[i] + input[i + 1]) << 2;
@@ -96,8 +96,8 @@ void cfl_luma_subsampling_422_lbd_c(const uint8_t *input, int32_t input_stride, 
     }
 }
 
-void cfl_luma_subsampling_444_lbd_c(const uint8_t *input, int32_t input_stride, int16_t *output_q3,
-                                    int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_444_lbd_c(const uint8_t *input, int32_t input_stride,
+                                        int16_t *output_q3, int32_t width, int32_t height) {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) output_q3[i] = input[i] << 3;
@@ -106,8 +106,8 @@ void cfl_luma_subsampling_444_lbd_c(const uint8_t *input, int32_t input_stride, 
     }
 }
 
-void cfl_luma_subsampling_422_hbd_c(const uint16_t *input, int32_t input_stride, int16_t *output_q3,
-                                    int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_422_hbd_c(const uint16_t *input, int32_t input_stride,
+                                        int16_t *output_q3, int32_t width, int32_t height) {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i += 2) output_q3[i >> 1] = (input[i] + input[i + 1]) << 2;
@@ -116,8 +116,8 @@ void cfl_luma_subsampling_422_hbd_c(const uint16_t *input, int32_t input_stride,
     }
 }
 
-void cfl_luma_subsampling_444_hbd_c(const uint16_t *input, int32_t input_stride, int16_t *output_q3,
-                                    int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_444_hbd_c(const uint16_t *input, int32_t input_stride,
+                                        int16_t *output_q3, int32_t width, int32_t height) {
     assert((height - 1) * CFL_BUF_LINE + width <= CFL_BUF_SQUARE);
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) output_q3[i] = input[i] << 3;
@@ -134,15 +134,15 @@ static void cfl_subsampling_highbd(TxSize tx_size, int32_t sub_x, int32_t sub_y,
     int32_t height = tx_size_high[tx_size];
     assert(width != 64 || height != 64);
     if (sub_x == 1 && sub_y == 1) {
-        cfl_luma_subsampling_420_hbd(input, input_stride, recon_buf_q3,
+        svt_cfl_luma_subsampling_420_hbd(input, input_stride, recon_buf_q3,
             width, height);
     }
     else if (sub_x == 1 && sub_y == 0) {
-        cfl_luma_subsampling_422_hbd_c(input, input_stride, recon_buf_q3,
+        svt_cfl_luma_subsampling_422_hbd_c(input, input_stride, recon_buf_q3,
             width, height);
 }
     else {
-        cfl_luma_subsampling_444_hbd_c(input, input_stride, recon_buf_q3,
+        svt_cfl_luma_subsampling_444_hbd_c(input, input_stride, recon_buf_q3,
             width, height);
     }
 }
@@ -155,15 +155,15 @@ static void cfl_subsampling_lowbd(TxSize tx_size, int32_t sub_x, int32_t sub_y,
     int32_t height = tx_size_high[tx_size];
     assert(width != 64 || height != 64);
     if (sub_x == 1 && sub_y == 1) {
-        cfl_luma_subsampling_420_lbd(input, input_stride, recon_buf_q3,
+        svt_cfl_luma_subsampling_420_lbd(input, input_stride, recon_buf_q3,
             width, height);
     }
     else if (sub_x == 1 && sub_y == 0) {
-        cfl_luma_subsampling_422_lbd_c(input, input_stride, recon_buf_q3,
+        svt_cfl_luma_subsampling_422_lbd_c(input, input_stride, recon_buf_q3,
             width, height);
     }
     else {
-        cfl_luma_subsampling_444_lbd_c(input, input_stride, recon_buf_q3,
+        svt_cfl_luma_subsampling_444_lbd_c(input, input_stride, recon_buf_q3,
             width, height);
     }
 }

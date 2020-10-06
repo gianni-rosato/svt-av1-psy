@@ -348,7 +348,7 @@ void eb_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int32
 
 /* clang-format on */
 
-void cfl_luma_subsampling_420_lbd_c(
+void svt_cfl_luma_subsampling_420_lbd_c(
     const uint8_t *input,
     int32_t input_stride, int16_t *output_q3,
     int32_t width, int32_t height)
@@ -363,7 +363,7 @@ void cfl_luma_subsampling_420_lbd_c(
         output_q3 += CFL_BUF_LINE;
     }
 }
-void cfl_luma_subsampling_420_hbd_c(
+void svt_cfl_luma_subsampling_420_hbd_c(
     const uint16_t *input,
     int32_t input_stride, int16_t *output_q3,
     int32_t width, int32_t height)

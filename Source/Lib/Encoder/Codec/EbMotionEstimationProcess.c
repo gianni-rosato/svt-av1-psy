@@ -550,7 +550,7 @@ EbErrorType compute_decimated_zz_sad(MotionEstimationContext_t *context_ptr, Pic
                               4);
 
                 // ZZ SAD between 1/16 current & 1/16 collocated
-                decimated_sb_collocated_sad = nxm_sad_kernel(
+                decimated_sb_collocated_sad = svt_nxm_sad_kernel(
                     &(sixteenth_decimated_picture_ptr->buffer_y[blk_displacement_decimated]),
                     sixteenth_decimated_picture_ptr->stride_y,
                     context_ptr->me_context_ptr->sixteenth_sb_buffer,
@@ -607,7 +607,7 @@ EbErrorType compute_zz_ssd(/*MotionEstimationContext_t *context_ptr, */PicturePa
 
     uint32_t x_sb_index;
     uint32_t y_sb_index;
-    EbSpatialFullDistType spatial_full_dist_type_fun = spatial_full_distortion_kernel;
+    EbSpatialFullDistType spatial_full_dist_type_fun = svt_spatial_full_distortion_kernel;
 
     for (y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index; ++y_sb_index) {
         for (x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index; ++x_sb_index) {

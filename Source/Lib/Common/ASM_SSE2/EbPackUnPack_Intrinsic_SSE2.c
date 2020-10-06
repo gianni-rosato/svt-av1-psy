@@ -14,13 +14,13 @@
 #include <stdint.h>
 
 /****************************************************************************************
-eb_enc_msb_un_pack2d_sse2_intrin
+svt_enc_msb_un_pack2d_sse2_intrin
 ******************************************************************************************/
 
-void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_stride,
-                                      uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer,
-                                      uint32_t out8_stride, uint32_t outn_stride, uint32_t width,
-                                      uint32_t height) {
+void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_stride,
+                                       uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer,
+                                       uint32_t out8_stride, uint32_t outn_stride,
+                                       uint32_t width, uint32_t height) {
     uint32_t x, y;
 
     __m128i xmm_3, xmm_00ff, in_pixel0, in_pixel1, temp_pixel0, temp_pixel1, in_pixel1_shft_r_2_u8,
@@ -490,9 +490,9 @@ void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_str
     return;
 }
 
-void unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
-                            uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
-                            uint32_t width, uint32_t height) {
+void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
+                                uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
+                                uint32_t width, uint32_t height) {
     uint32_t y;
     __m128i  in_pixel0, in_pixel1;
 
@@ -808,12 +808,12 @@ void unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t
     return;
 }
 /********************************************************************************************************************
-eb_enc_msb_pack2d_sse2_intrin
+svt_enc_msb_pack2d_sse2_intrin
 *********************************************************************************************************************/
-void eb_enc_msb_pack2d_sse2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
-                                   uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
-                                   uint32_t inn_stride, uint32_t out_stride, uint32_t width,
-                                   uint32_t height) {
+void svt_enc_msb_pack2d_sse2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+                                    uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
+                                    uint32_t inn_stride, uint32_t out_stride,
+                                    uint32_t width, uint32_t height) {
     uint32_t count_width, count_height;
 
     if (width == 4) {

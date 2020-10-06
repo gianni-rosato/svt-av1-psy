@@ -104,13 +104,13 @@ extern "C" {
     RTCD_EXTERN void(*eb_cfl_predict_lbd)(const int16_t *pred_buf_q3, uint8_t *pred, int32_t pred_stride, uint8_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width, int32_t height);
     void eb_cfl_predict_hbd_c(const int16_t *pred_buf_q3, uint16_t *pred, int32_t pred_stride, uint16_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width, int32_t height);
     RTCD_EXTERN void(*eb_cfl_predict_hbd)(const int16_t *pred_buf_q3, uint16_t *pred, int32_t pred_stride, uint16_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width, int32_t height);
-    void cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
-    void cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
-    RTCD_EXTERN void(*cfl_luma_subsampling_420_lbd)(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
+    void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
+    void svt_cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
+    RTCD_EXTERN void(*svt_cfl_luma_subsampling_420_lbd)(const uint8_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
 
-    void cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
-    void cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
-    RTCD_EXTERN void(*cfl_luma_subsampling_420_hbd)(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
+    void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
+    void svt_cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
+    RTCD_EXTERN void(*svt_cfl_luma_subsampling_420_hbd)(const uint16_t *input, int32_t input_stride, int16_t *output_q3, int32_t width, int32_t height);
 
     void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above, const uint8_t *left, int32_t mode);
     RTCD_EXTERN void(*eb_av1_filter_intra_predictor) (uint8_t *dst, ptrdiff_t stride, TxSize tx_size, const uint8_t *above, const uint8_t *left, int32_t mode);
@@ -166,30 +166,30 @@ extern "C" {
     RTCD_EXTERN void(*eb_av1_inv_txfm2d_add_16x4)(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size, int32_t bd);
     void eb_av1_inv_txfm_add_c(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r, uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param);
     RTCD_EXTERN void(*eb_av1_inv_txfm_add)(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r, uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param);
-    RTCD_EXTERN void(*compressed_packmsb)(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*c_pack)(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint8_t *local_cache, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*unpack_avg)(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1, uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*unpack_avg_safe_sub)(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1, uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride, EbBool sub_pred, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*un_pack8_bit_data)(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer, uint32_t out8_stride, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*convert_8bit_to_16bit)(uint8_t *src, uint32_t src_stride, uint16_t *dst, uint32_t dst_stride, uint32_t width, uint32_t height);
-    void convert_8bit_to_16bit_avx2(uint8_t* src, uint32_t src_stride, uint16_t* dst,uint32_t dst_stride, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*convert_16bit_to_8bit)(uint16_t *src, uint32_t src_stride, uint8_t *dst, uint32_t dst_stride, uint32_t width, uint32_t height);
-    void convert_16bit_to_8bit_avx2(uint16_t *src, uint32_t src_stride, uint8_t *dst, uint32_t dst_stride, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*pack2d_16_bit_src_mul4)(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride, uint32_t width, uint32_t height);
-    RTCD_EXTERN void(*un_pack2d_16_bit_src_mul4)(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer, uint32_t out8_stride, uint32_t outn_stride, uint32_t width, uint32_t height);
-    void residual_kernel8bit_c(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN void(*residual_kernel8bit)(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_compressed_packmsb)(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_c_pack)(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint8_t *local_cache, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_unpack_avg)(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1, uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_unpack_avg_safe_sub)(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1, uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride, EbBool sub_pred, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_un_pack8_bit_data)(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer, uint32_t out8_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_convert_8bit_to_16bit)(uint8_t *src, uint32_t src_stride, uint16_t *dst, uint32_t dst_stride, uint32_t width, uint32_t height);
+    void svt_convert_8bit_to_16bit_avx2(uint8_t* src, uint32_t src_stride, uint16_t* dst,uint32_t dst_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_convert_16bit_to_8bit)(uint16_t *src, uint32_t src_stride, uint8_t *dst, uint32_t dst_stride, uint32_t width, uint32_t height);
+    void svt_convert_16bit_to_8bit_avx2(uint16_t *src, uint32_t src_stride, uint8_t *dst, uint32_t dst_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_pack2d_16_bit_src_mul4)(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void(*svt_un_pack2d_16_bit_src_mul4)(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer, uint32_t out8_stride, uint32_t outn_stride, uint32_t width, uint32_t height);
+    void svt_residual_kernel8bit_c(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_residual_kernel8bit)(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
     RTCD_EXTERN uint64_t(*compute8x8_satd_u8)(uint8_t *diff, uint64_t *dc_value, uint32_t src_stride);
     RTCD_EXTERN int32_t(*sum_residual8bit)(int16_t *in_ptr, uint32_t size, uint32_t stride_in);
-    RTCD_EXTERN void(*full_distortion_kernel_cbf_zero32_bits)(int32_t *coeff, uint32_t coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN void(*full_distortion_kernel32_bits)(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff, uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN void(*picture_average_kernel)(EbByte src0, uint32_t src0_stride, EbByte src1, uint32_t src1_stride, EbByte dst, uint32_t dst_stride, uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN void(*picture_average_kernel1_line)(EbByte src0, EbByte src1, EbByte dst, uint32_t area_width);
-    uint64_t spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN uint64_t(*spatial_full_distortion_kernel)(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
-    uint64_t full_distortion_kernel16_bits_c(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN uint64_t(*full_distortion_kernel16_bits)(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
-    RTCD_EXTERN void(*residual_kernel16bit)(uint16_t *input, uint32_t input_stride, uint16_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_full_distortion_kernel_cbf_zero32_bits)(int32_t *coeff, uint32_t coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_full_distortion_kernel32_bits)(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff, uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_picture_average_kernel)(EbByte src0, uint32_t src0_stride, EbByte src1, uint32_t src1_stride, EbByte dst, uint32_t dst_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_picture_average_kernel1_line)(EbByte src0, EbByte src1, EbByte dst, uint32_t area_width);
+    uint64_t svt_spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN uint64_t(*svt_spatial_full_distortion_kernel)(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint64_t svt_full_distortion_kernel16_bits_c(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN uint64_t(*svt_full_distortion_kernel16_bits)(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    RTCD_EXTERN void(*svt_residual_kernel16bit)(uint16_t *input, uint32_t input_stride, uint16_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
     RTCD_EXTERN void(*avc_style_luma_interpolation_filter)(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32_t dst_stride, uint32_t pu_width, uint32_t pu_height, EbByte temp_buf, uint32_t frac_pos, uint8_t choice);
     void eb_av1_wiener_convolve_add_src_c(const uint8_t *const src, const ptrdiff_t src_stride, uint8_t *const dst, const ptrdiff_t dst_stride, const int16_t *const filter_x, const int16_t *const filter_y, const int32_t w, const int32_t h, const ConvolveParams *const conv_params);
     RTCD_EXTERN void(*eb_av1_wiener_convolve_add_src)(const uint8_t *const src, const ptrdiff_t src_stride, uint8_t *const dst, const ptrdiff_t dst_stride, const int16_t *const filter_x, const int16_t *const filter_y, const int32_t w, const int32_t h, const ConvolveParams *const conv_params);
@@ -1172,57 +1172,57 @@ extern "C" {
     void eb_av1_inv_txfm_add_ssse3(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r, uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param);
     void eb_av1_inv_txfm_add_avx2(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r, uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param);
 
-    void compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+    void svt_compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
         uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
         uint32_t inn_stride, uint32_t out_stride, uint32_t width,
         uint32_t height);
-    void c_pack_avx2_intrin(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
+    void svt_c_pack_avx2_intrin(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
         uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint8_t *local_cache,
         uint32_t width, uint32_t height);
-    void unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
+    void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
         uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
         uint32_t width, uint32_t height);
-    void unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
+    void svt_unpack_avg_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
         uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
         uint32_t width, uint32_t height);
-    void unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
+    void svt_unpack_avg_safe_sub_avx2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint16_t *ref16_l1,
         uint32_t ref_l1_stride, uint8_t *dst_ptr, uint32_t dst_stride,
         EbBool sub_pred, uint32_t width, uint32_t height);
-    void eb_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t in_stride,
+    void svt_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t in_stride,
         uint8_t *out_8bit_buffer, uint32_t out_stride,
         uint32_t width, uint32_t height);
-    void eb_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_stride,
+    void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_stride,
         uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer,
         uint32_t out8_stride, uint32_t outn_stride, uint32_t width,
         uint32_t height);
-    void eb_enc_msb_pack2d_sse2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+    void svt_enc_msb_pack2d_sse2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
         uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
         uint32_t inn_stride, uint32_t out_stride, uint32_t width,
         uint32_t height);
-    void eb_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+    void svt_enc_msb_pack2d_avx2_intrin_al(uint8_t *in8_bit_buffer, uint32_t in8_stride,
         uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
         uint32_t inn_stride, uint32_t out_stride,
         uint32_t width, uint32_t height);
-    void residual_kernel8bit_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
-    void residual_kernel8bit_avx512(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
+    void svt_residual_kernel8bit_avx2(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
+    void svt_residual_kernel8bit_avx512(uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride, int16_t *residual, uint32_t residual_stride, uint32_t area_width, uint32_t area_height);
 
-    void full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_stride,
+    void svt_full_distortion_kernel_cbf_zero32_bits_avx2(int32_t *coeff, uint32_t coeff_stride,
         uint64_t distortion_result[DIST_CALC_TOTAL],
         uint32_t area_width, uint32_t area_height);
-    void full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
+    void svt_full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
         uint32_t recon_coeff_stride,
         uint64_t distortion_result[DIST_CALC_TOTAL],
         uint32_t area_width, uint32_t area_height);
-    void picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
+    void svt_picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
         uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
         uint32_t area_width, uint32_t area_height);
-    void picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
+    void svt_picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
         uint32_t area_width);
-    uint64_t spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
-    uint64_t spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint64_t svt_spatial_full_distortion_kernel_avx2(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    uint64_t svt_spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
 
-    uint64_t full_distortion_kernel16_bits_avx2(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
-    extern void residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred,
+    uint64_t svt_full_distortion_kernel16_bits_avx2(uint8_t* input, uint32_t input_offset, uint32_t input_stride, uint8_t* recon, int32_t recon_offset, uint32_t recon_stride, uint32_t area_width, uint32_t area_height);
+    extern void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred,
         uint32_t pred_stride, int16_t *residual,
         uint32_t residual_stride, uint32_t area_width,
         uint32_t area_height);

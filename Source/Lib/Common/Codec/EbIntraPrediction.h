@@ -206,11 +206,11 @@ typedef void (*EB_INTRA_ANG_16BIT_TYPE)(
     const EbBool skip, int32_t intra_pred_angle);
 
 
-extern void cfl_luma_subsampling_420_lbd_c(const uint8_t *input, // AMIR-> Changed to 8 bit
-                                           int32_t input_stride, int16_t *output_q3, int32_t width,
-                                           int32_t height);
-extern void cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride,
-                                           int16_t *output_q3, int32_t width, int32_t height);
+extern void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, // AMIR-> Changed to 8 bit
+                                               int32_t input_stride, int16_t *output_q3, int32_t width,
+                                               int32_t height);
+extern void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride,
+                                               int16_t *output_q3, int32_t width, int32_t height);
 extern void eb_subtract_average_c(int16_t *pred_buf_q3, int32_t width, int32_t height,
                                   int32_t round_offset, int32_t num_pel_log2);
 

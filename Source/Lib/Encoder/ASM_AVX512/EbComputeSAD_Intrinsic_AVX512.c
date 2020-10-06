@@ -1953,7 +1953,7 @@ void sad_loop_kernel_generalized_avx512(
 * Requirement: height <= 64
 * Requirement: height % 2 = 0
 *******************************************************************************/
-void sad_loop_kernel_avx512_intrin(
+void svt_sad_loop_kernel_avx512_intrin(
     uint8_t * src, // input parameter, source samples Ptr
     uint32_t  src_stride, // input parameter, source stride
     uint8_t * ref, // input parameter, reference samples Ptr

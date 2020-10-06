@@ -4423,7 +4423,7 @@ static const uint8_t mode_to_angle_bin[INTRA_MODES] = {
   0, 2, 6, 0, 4, 3, 5, 7, 1, 0,
   0,
 };
-void av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
+void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
     int cols, uint64_t *hist) {
     src += src_stride;
     for (int r = 1; r < rows; ++r) {
@@ -4463,7 +4463,7 @@ void av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
     //if (is_hbd)
     //    get_highbd_gradient_hist(src, src_stride, rows, cols, hist);
     //else
-    av1_get_gradient_hist(src, src_stride, rows, cols, hist);
+    svt_av1_get_gradient_hist(src, src_stride, rows, cols, hist);
 
     int i;
     uint64_t hist_sum = 0;

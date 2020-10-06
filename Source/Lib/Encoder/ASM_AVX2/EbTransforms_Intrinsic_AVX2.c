@@ -95,7 +95,7 @@ static INLINE void copy_256x_bytes_avx2(const int32_t *src, int32_t *dst, const 
     } while (--h);
 }
 
-uint64_t handle_transform16x64_avx2(int32_t *output) {
+uint64_t svt_handle_transform16x64_avx2(int32_t *output) {
     //bottom 16x32 area.
     const uint64_t three_quad_energy = energy_computation_avx2(output + 16 * 32, 16 * 32);
 
@@ -105,7 +105,7 @@ uint64_t handle_transform16x64_avx2(int32_t *output) {
     return three_quad_energy;
 }
 
-uint64_t handle_transform32x64_avx2(int32_t *output) {
+uint64_t svt_handle_transform32x64_avx2(int32_t *output) {
     //bottom 32x32 area.
     const uint64_t three_quad_energy = energy_computation_avx2(output + 32 * 32, 32 * 32);
 
@@ -115,7 +115,7 @@ uint64_t handle_transform32x64_avx2(int32_t *output) {
     return three_quad_energy;
 }
 
-uint64_t handle_transform64x16_avx2(int32_t *output) {
+uint64_t svt_handle_transform64x16_avx2(int32_t *output) {
     // top - right 32x16 area.
     const uint64_t three_quad_energy = energy_computation_64_avx2(output + 32, 16);
 
@@ -128,7 +128,7 @@ uint64_t handle_transform64x16_avx2(int32_t *output) {
     return three_quad_energy;
 }
 
-uint64_t handle_transform64x32_avx2(int32_t *output) {
+uint64_t svt_handle_transform64x32_avx2(int32_t *output) {
     // top - right 32x32 area.
     const uint64_t three_quad_energy = energy_computation_64_avx2(output + 32, 32);
 
@@ -141,7 +141,7 @@ uint64_t handle_transform64x32_avx2(int32_t *output) {
     return three_quad_energy;
 }
 
-uint64_t handle_transform64x64_avx2(int32_t *output) {
+uint64_t svt_handle_transform64x64_avx2(int32_t *output) {
     uint64_t three_quad_energy;
 
     // top - right 32x32 area.

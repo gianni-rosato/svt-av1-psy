@@ -14,11 +14,11 @@
  *
  * @brief Unit test for compute mean function:
  * - compute_mean8x8_sse2_intrin
- * - compute_mean_of_squared_values8x8_sse2_intrin
+ * - svt_compute_mean_of_squared_values8x8_sse2_intrin
  * - compute_sub_mean8x8_sse2_intrin
  * - compute_subd_mean_of_squared_values8x8_sse2_intrin
  * - compute_mean8x8_avx2_intrin
- * - compute_interm_var_four8x8_avx2_intrin
+ * - svt_compute_interm_var_four8x8_avx2_intrin
  *
  * @author Cidana-Edmond,Cidana-Ivy
  *
@@ -32,8 +32,8 @@
 /**
  * @brief Unit test for compute mean function:
  * - compute_mean8x8_sse2_intrin
- * - compute_mean_of_squared_values8x8_sse2_intrin
- * - compute_sub_mean8x8_sse2_intrin
+ * - svt_compute_mean_of_squared_values8x8_sse2_intrin
+ * - svt_compute_sub_mean8x8_sse2_intrin
  * - compute_subd_mean_of_squared_values8x8_sse2_intrin
  * - compute_mean8x8_avx2_intrin
  *
@@ -94,10 +94,10 @@ TEST(ComputeMeanTest, run_compute_mean_squared_values_test) {
 
             // compute mean
             uint64_t output_sse2_tst =
-                compute_mean_of_squared_values8x8_sse2_intrin(
+                svt_compute_mean_of_squared_values8x8_sse2_intrin(
                     input_data, 8, 8, 8);
             uint64_t output_c_ref =
-                compute_mean_squared_values_c(input_data, 8, 8, 8);
+                svt_compute_mean_squared_values_c(input_data, 8, 8, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -122,8 +122,8 @@ TEST(ComputeMeanTest, run_compute_sub_mean_test) {
 
             // compute mean
             uint64_t output_sse2_tst =
-                compute_sub_mean8x8_sse2_intrin(input_data, 8);
-            uint64_t output_c_ref = compute_sub_mean_8x8_c(input_data, 8);
+                svt_compute_sub_mean8x8_sse2_intrin(input_data, 8);
+            uint64_t output_c_ref = svt_compute_sub_mean_8x8_c(input_data, 8);
 
             // compare results
             ASSERT_EQ(output_sse2_tst, output_c_ref)
@@ -178,11 +178,11 @@ TEST(ComputeMeanTest, run_compute_mean_avx2_test) {
         uint64_t output_sse2_squared_tst =
             compute_subd_mean_of_squared_values8x8_sse2_intrin(input_data, 8);
         uint64_t output_sse2_tst =
-            compute_sub_mean8x8_sse2_intrin(input_data, 8);
+            svt_compute_sub_mean8x8_sse2_intrin(input_data, 8);
 
         uint64_t output_avx2_tst[4] = {0};
         uint64_t output_avx2_squared_tst[4] = {0};
-        compute_interm_var_four8x8_avx2_intrin(
+        svt_compute_interm_var_four8x8_avx2_intrin(
             input_data, 8, output_avx2_tst, output_avx2_squared_tst);
 
         // compare results

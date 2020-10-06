@@ -133,7 +133,7 @@ void *dlf_kernel(void *input_ptr) {
                         + input_buffer_8bit->origin_y * input_buffer_8bit->stride_y;
             input_stride_8bit = input_buffer_8bit->stride_y;
 
-            convert_8bit_to_16bit(input_8bit,
+            svt_convert_8bit_to_16bit(input_8bit,
                 input_stride_8bit,
                 input_16bit,
                 input_stride_16bit,
@@ -150,7 +150,7 @@ void *dlf_kernel(void *input_ptr) {
                         + input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cb;
             input_stride_8bit = input_buffer_8bit->stride_cb;
 
-            convert_8bit_to_16bit(input_8bit,
+            svt_convert_8bit_to_16bit(input_8bit,
                 input_stride_8bit,
                 input_16bit,
                 input_stride_16bit,
@@ -167,7 +167,7 @@ void *dlf_kernel(void *input_ptr) {
                         + input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cr;
             input_stride_8bit = input_buffer_8bit->stride_cr;
 
-            convert_8bit_to_16bit(input_8bit,
+            svt_convert_8bit_to_16bit(input_8bit,
                 input_stride_8bit,
                 input_16bit,
                 input_stride_16bit,

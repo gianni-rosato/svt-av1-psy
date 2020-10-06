@@ -2764,7 +2764,7 @@ static uint64_t energy_computation(int32_t *coeff, uint32_t coeff_stride, uint32
     return prediction_distortion;
 }
 
-uint64_t handle_transform64x64_c(int32_t *output) {
+uint64_t svt_handle_transform64x64_c(int32_t *output) {
     uint64_t three_quad_energy;
 
     // top - right 32x32 area.
@@ -2785,8 +2785,8 @@ uint64_t handle_transform64x64_c(int32_t *output) {
     return three_quad_energy;
 }
 
-void av1_transform_two_d_64x64_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                 TxType transform_type, uint8_t bit_depth) {
+void svt_av1_transform_two_d_64x64_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                     TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[64 * 64];
     Txfm2dFlipCfg cfg;
     //av1_get_fwd_txfm_cfg
@@ -2796,8 +2796,8 @@ void av1_transform_two_d_64x64_c(int16_t *input, int32_t *output, uint32_t input
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_32x32_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                 TxType transform_type, uint8_t bit_depth) {
+void svt_av1_transform_two_d_32x32_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                     TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 32];
     Txfm2dFlipCfg cfg;
 
@@ -2806,8 +2806,8 @@ void av1_transform_two_d_32x32_c(int16_t *input, int32_t *output, uint32_t input
     av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
-void av1_transform_two_d_16x16_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                                 TxType transform_type, uint8_t bit_depth) {
+void svt_av1_transform_two_d_16x16_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                     TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[16 * 16];
     Txfm2dFlipCfg cfg;
 
@@ -2817,8 +2817,8 @@ void av1_transform_two_d_16x16_c(int16_t *input, int32_t *output, uint32_t input
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_8x8_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                               TxType transform_type, uint8_t bit_depth) {
+void svt_av1_transform_two_d_8x8_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[8 * 8];
     Txfm2dFlipCfg cfg;
 
@@ -2828,8 +2828,8 @@ void av1_transform_two_d_8x8_c(int16_t *input, int32_t *output, uint32_t input_s
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-void av1_transform_two_d_4x4_c(int16_t *input, int32_t *output, uint32_t input_stride,
-                               TxType transform_type, uint8_t bit_depth) {
+void svt_av1_transform_two_d_4x4_c(int16_t *input, int32_t *output, uint32_t input_stride,
+                                   TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[4 * 4];
     Txfm2dFlipCfg cfg;
 
@@ -2852,7 +2852,7 @@ void eb_av1_fwd_txfm2d_64x32_c(int16_t *input, int32_t *output, uint32_t input_s
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-uint64_t handle_transform64x32_c(int32_t *output) {
+uint64_t svt_handle_transform64x32_c(int32_t *output) {
     // top - right 32x32 area.
     const uint64_t three_quad_energy = energy_computation(output + 32, 64, 32, 32);
 
@@ -2878,7 +2878,7 @@ void eb_av1_fwd_txfm2d_32x64_c(int16_t *input, int32_t *output, uint32_t input_s
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-uint64_t handle_transform32x64_c(int32_t *output) {
+uint64_t svt_handle_transform32x64_c(int32_t *output) {
     //bottom 32x32 area.
     const uint64_t three_quad_energy = energy_computation(output + 32 * 32, 32, 32, 32);
 
@@ -2898,7 +2898,7 @@ void eb_av1_fwd_txfm2d_64x16_c(int16_t *input, int32_t *output, uint32_t input_s
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-uint64_t handle_transform64x16_c(int32_t *output) {
+uint64_t svt_handle_transform64x16_c(int32_t *output) {
     // top - right 32x16 area.
     const uint64_t three_quad_energy = energy_computation(output + 32, 64, 32, 16);
 
@@ -2924,7 +2924,7 @@ void eb_av1_fwd_txfm2d_16x64_c(int16_t *input, int32_t *output, uint32_t input_s
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
 
-uint64_t handle_transform16x64_c(int32_t *output) {
+uint64_t svt_handle_transform16x64_c(int32_t *output) {
     //bottom 16x32 area.
     const uint64_t three_quad_energy = energy_computation(output + 16 * 32, 16, 16, 32);
 
@@ -3051,7 +3051,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             eb_av1_fwd_txfm2d_64x32_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x32(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x32(coeff_buffer);
 
         break;
 
@@ -3063,7 +3063,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             eb_av1_fwd_txfm2d_32x64_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform32x64(coeff_buffer);
+        *three_quad_energy = svt_handle_transform32x64(coeff_buffer);
 
         break;
 
@@ -3075,7 +3075,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             eb_av1_fwd_txfm2d_64x16_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x16(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x16(coeff_buffer);
 
         break;
 
@@ -3087,7 +3087,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             eb_av1_fwd_txfm2d_16x64_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform16x64(coeff_buffer);
+        *three_quad_energy = svt_handle_transform16x64(coeff_buffer);
 
         break;
 
@@ -3163,7 +3163,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
         eb_av1_fwd_txfm2d_64x64(
             residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x64(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x64(coeff_buffer);
 
         break;
 
@@ -3172,7 +3172,7 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
             transform_type == H_ADST || transform_type == V_FLIPADST ||
             transform_type == H_FLIPADST)
             // Tahani: I believe those cases are never hit
-            av1_transform_two_d_32x32_c(
+            svt_av1_transform_two_d_32x32_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
         else {

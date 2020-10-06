@@ -480,17 +480,17 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const TxSize htf_tx_size[num_htf_sizes] = {
             TX_16X64, TX_32X64, TX_64X16, TX_64X32, TX_64X64};
         const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
-            handle_transform16x64_c,
-            handle_transform32x64_c,
-            handle_transform64x16_c,
-            handle_transform64x32_c,
-            handle_transform64x64_c};
+            svt_handle_transform16x64_c,
+            svt_handle_transform32x64_c,
+            svt_handle_transform64x16_c,
+            svt_handle_transform64x32_c,
+            svt_handle_transform64x64_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
-            handle_transform16x64_avx2,
-            handle_transform32x64_avx2,
-            handle_transform64x16_avx2,
-            handle_transform64x32_avx2,
-            handle_transform64x64_avx2};
+            svt_handle_transform16x64_avx2,
+            svt_handle_transform32x64_avx2,
+            svt_handle_transform64x16_avx2,
+            svt_handle_transform64x32_avx2,
+            svt_handle_transform64x64_avx2};
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
 
         for (int idx = 0; idx < num_htf_sizes; ++idx) {
@@ -522,17 +522,17 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const int widths[num_htf_sizes] = {16, 32, 64, 64, 64};
         const int heights[num_htf_sizes] = {64, 64, 16, 32, 64};
         const HandleTxfmFunc htf_ref_funcs[num_htf_sizes] = {
-            handle_transform16x64_c,
-            handle_transform32x64_c,
-            handle_transform64x16_c,
-            handle_transform64x32_c,
-            handle_transform64x64_c};
+            svt_handle_transform16x64_c,
+            svt_handle_transform32x64_c,
+            svt_handle_transform64x16_c,
+            svt_handle_transform64x32_c,
+            svt_handle_transform64x64_c};
         const HandleTxfmFunc htf_asm_funcs[num_htf_sizes] = {
-            handle_transform16x64_avx2,
-            handle_transform32x64_avx2,
-            handle_transform64x16_avx2,
-            handle_transform64x32_avx2,
-            handle_transform64x64_avx2};
+            svt_handle_transform16x64_avx2,
+            svt_handle_transform32x64_avx2,
+            svt_handle_transform64x16_avx2,
+            svt_handle_transform64x32_avx2,
+            svt_handle_transform64x64_avx2};
         DECLARE_ALIGNED(32, int32_t, input[MAX_TX_SQUARE]);
         double time_c, time_o;
         uint64_t start_time_seconds, start_time_useconds;
@@ -620,9 +620,9 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                        uint8_t bd);
 
         const FwdTxfm2dFunc fwd_txfm_func[TX_SIZES_ALL] = {
-            av1_transform_two_d_4x4_c,   av1_transform_two_d_8x8_c,
-            av1_transform_two_d_16x16_c, av1_transform_two_d_32x32_c,
-            av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
+            svt_av1_transform_two_d_4x4_c,   svt_av1_transform_two_d_8x8_c,
+            svt_av1_transform_two_d_16x16_c, svt_av1_transform_two_d_32x32_c,
+            svt_av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
             eb_av1_fwd_txfm2d_8x4_c,     eb_av1_fwd_txfm2d_8x16_c,
             eb_av1_fwd_txfm2d_16x8_c,    eb_av1_fwd_txfm2d_16x32_c,
             eb_av1_fwd_txfm2d_32x16_c,   eb_av1_fwd_txfm2d_32x64_c,
@@ -650,11 +650,11 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             pixel_input_, input_, stride_, tx_type, static_cast<uint8_t>(bd_));
         // post-process, re-pack the coeffcients
         switch (tx_size) {
-        case TX_64X64: handle_transform64x64_c(input_); break;
-        case TX_64X32: handle_transform64x32_c(input_); break;
-        case TX_32X64: handle_transform32x64_c(input_); break;
-        case TX_64X16: handle_transform64x16_c(input_); break;
-        case TX_16X64: handle_transform16x64_c(input_); break;
+        case TX_64X64: svt_handle_transform64x64_c(input_); break;
+        case TX_64X32: svt_handle_transform64x32_c(input_); break;
+        case TX_32X64: svt_handle_transform32x64_c(input_); break;
+        case TX_64X16: svt_handle_transform64x16_c(input_); break;
+        case TX_16X64: svt_handle_transform16x64_c(input_); break;
         default: break;
         }
         return;

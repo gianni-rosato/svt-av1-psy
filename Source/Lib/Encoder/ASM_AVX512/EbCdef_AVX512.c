@@ -19,9 +19,9 @@
 #include "EbMemory_AVX2.h"
 #include "synonyms_avx512.h"
 
-uint64_t search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
-                                uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count,
-                                int start_gi, int end_gi) {
+uint64_t svt_search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
+                                    uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count,
+                                    int start_gi, int end_gi) {
     const int start        = start_gi & ~7;
     uint64_t  best_tot_mse = (uint64_t)1 << 63;
     int32_t   best_id0     = 0;

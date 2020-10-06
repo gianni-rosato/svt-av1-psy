@@ -972,8 +972,8 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     // Y
     if (use_ssd) {
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-            ? full_distortion_kernel16_bits
-            : spatial_full_distortion_kernel;
+            ? svt_full_distortion_kernel16_bits
+            : svt_spatial_full_distortion_kernel;
 
         candidate_buffer->candidate_ptr->luma_fast_distortion = (uint32_t)(
             luma_fast_distortion = spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
@@ -988,7 +988,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         assert((context_ptr->blk_geom->bwidth >> 3) < 17);
         if (!context_ptr->hbd_mode_decision) {
             candidate_buffer->candidate_ptr->luma_fast_distortion = (uint32_t)(
-                luma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                luma_fast_distortion = svt_nxm_sad_kernel_sub_sampled(
                     input_picture_ptr->buffer_y + input_origin_index,
                     input_picture_ptr->stride_y,
                     prediction_ptr->buffer_y + cu_origin_index,
@@ -1011,8 +1011,8 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
         context_ptr->md_staging_skip_chroma_pred == EB_FALSE) {
         if (use_ssd) {
             EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                ? full_distortion_kernel16_bits
-                : spatial_full_distortion_kernel;
+                ? svt_full_distortion_kernel16_bits
+                : svt_spatial_full_distortion_kernel;
 
             chroma_fast_distortion = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_cb,
@@ -1037,7 +1037,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
             assert((context_ptr->blk_geom->bwidth_uv >> 3) < 17);
 
             if (!context_ptr->hbd_mode_decision) {
-                chroma_fast_distortion = nxm_sad_kernel_sub_sampled(
+                chroma_fast_distortion = svt_nxm_sad_kernel_sub_sampled(
                     input_picture_ptr->buffer_cb + input_cb_origin_in_index,
                     input_picture_ptr->stride_cb,
                     candidate_buffer->prediction_ptr->buffer_cb + cu_chroma_origin_index,
@@ -1045,7 +1045,7 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
                     context_ptr->blk_geom->bheight_uv,
                     context_ptr->blk_geom->bwidth_uv);
 
-                chroma_fast_distortion += nxm_sad_kernel_sub_sampled(
+                chroma_fast_distortion += svt_nxm_sad_kernel_sub_sampled(
                     input_picture_ptr->buffer_cr + input_cr_origin_in_index,
                     input_picture_ptr->stride_cr,
                     candidate_buffer->prediction_ptr->buffer_cr + cu_chroma_origin_index,
@@ -1871,8 +1871,8 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                     ref_pic->stride_y;
             if (use_ssd) {
                 EbSpatialFullDistType spatial_full_dist_type_fun = hbd_mode_decision
-                    ? full_distortion_kernel16_bits
-                    : spatial_full_distortion_kernel;
+                    ? svt_full_distortion_kernel16_bits
+                    : svt_spatial_full_distortion_kernel;
 
                 cost = (uint32_t)spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
                                                                   input_origin_index,
@@ -1894,7 +1894,7 @@ void md_full_pel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                         context_ptr->blk_geom->bheight,
                         context_ptr->blk_geom->bwidth);
                 } else {
-                    cost = nxm_sad_kernel_sub_sampled(
+                    cost = svt_nxm_sad_kernel_sub_sampled(
                         input_picture_ptr->buffer_y + input_origin_index,
                         input_picture_ptr->stride_y,
                         ref_pic->buffer_y + ref_origin_index,
@@ -2608,7 +2608,7 @@ void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
                             ref_pic->stride_y,
                             context_ptr->blk_geom->bheight,
                             context_ptr->blk_geom->bwidth)
-                    : nxm_sad_kernel_sub_sampled(
+                    : svt_nxm_sad_kernel_sub_sampled(
                             input_picture_ptr->buffer_y + input_origin_index,
                             input_picture_ptr->stride_y,
                             ref_pic->buffer_y + ref_origin_index,
@@ -2661,7 +2661,7 @@ void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
                             ref_pic->stride_y,
                             context_ptr->blk_geom->bheight,
                             context_ptr->blk_geom->bwidth)
-                    : nxm_sad_kernel_sub_sampled(
+                    : svt_nxm_sad_kernel_sub_sampled(
                             input_picture_ptr->buffer_y + input_origin_index,
                             input_picture_ptr->stride_y,
                             ref_pic->buffer_y + ref_origin_index,
@@ -3356,7 +3356,7 @@ static void cfl_prediction(PictureControlSet *          pcs_ptr,
 
         // Down sample Luma
         if (!context_ptr->hbd_mode_decision) {
-            cfl_luma_subsampling_420_lbd(
+            svt_cfl_luma_subsampling_420_lbd(
                 &(context_ptr->cfl_temp_luma_recon[rec_luma_offset]),
                 candidate_buffer->recon_ptr->stride_y,
                 context_ptr->pred_buf_q3,
@@ -3367,7 +3367,7 @@ static void cfl_prediction(PictureControlSet *          pcs_ptr,
                     ? (context_ptr->blk_geom->bheight_uv << 1)
                     : context_ptr->blk_geom->bheight);
         } else {
-            cfl_luma_subsampling_420_hbd(
+            svt_cfl_luma_subsampling_420_hbd(
                 context_ptr->cfl_temp_luma_recon16bit + rec_luma_offset,
                 candidate_buffer->recon_ptr->stride_y,
                 context_ptr->pred_buf_q3,
@@ -4717,8 +4717,8 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     context_ptr->hbd_mode_decision);
 
             EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                ? full_distortion_kernel16_bits
-                : spatial_full_distortion_kernel;
+                ? svt_full_distortion_kernel16_bits
+                : svt_spatial_full_distortion_kernel;
             txb_full_distortion_txt[tx_type][DIST_CALC_PREDICTION] = spatial_full_dist_type_fun(
                 input_picture_ptr->buffer_y,
                 input_txb_origin_index,
@@ -6970,7 +6970,7 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
 
         uint32_t chroma_fast_distortion;
         if (!context_ptr->hbd_mode_decision) {
-            chroma_fast_distortion = nxm_sad_kernel_sub_sampled(
+            chroma_fast_distortion = svt_nxm_sad_kernel_sub_sampled(
                 input_picture_ptr->buffer_cb + input_cb_origin_in_index,
                 input_picture_ptr->stride_cb,
                 candidate_buffer->prediction_ptr->buffer_cb + cu_chroma_origin_index,
@@ -6978,7 +6978,7 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                 context_ptr->blk_geom->bheight_uv,
                 context_ptr->blk_geom->bwidth_uv);
 
-            chroma_fast_distortion += nxm_sad_kernel_sub_sampled(
+            chroma_fast_distortion += svt_nxm_sad_kernel_sub_sampled(
                 input_picture_ptr->buffer_cr + input_cr_origin_in_index,
                 input_picture_ptr->stride_cr,
                 candidate_buffer->prediction_ptr->buffer_cr + cu_chroma_origin_index,
@@ -7398,9 +7398,8 @@ void distortion_based_modulator(ModeDecisionContext *context_ptr,
                 for (c = 0; c < min_size_num; c++) {
 
                     int32_t min_blk_index = (int32_t)blk_origin_index + ((c * min_size) + ((r*min_size) * recon_ptr->stride_y));
-                    EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                        ? full_distortion_kernel16_bits
-                        : spatial_full_distortion_kernel;
+                    EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision ? svt_full_distortion_kernel16_bits
+                        : svt_spatial_full_distortion_kernel;
                     min_blk_dist[r][c] = spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
                         input_origin_index,
                         input_picture_ptr->stride_y,

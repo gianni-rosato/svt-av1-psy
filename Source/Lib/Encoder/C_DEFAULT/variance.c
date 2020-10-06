@@ -211,11 +211,11 @@ static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
 }
 
 // Get pred block from up-sampled reference.
-void eb_aom_upsampled_pred_c(MacroBlockD *                 xd,
-                             const struct AV1Common *const cm, //const AV1_COMMON *const cm,
-                             int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred, int width,
-                             int height, int subpel_x_q3, int subpel_y_q3, const uint8_t *ref,
-                             int ref_stride, int subpel_search) {
+void svt_aom_upsampled_pred_c(MacroBlockD *                 xd,
+                              const struct AV1Common *const cm, //const AV1_COMMON *const cm,
+                              int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred, int width,
+                              int height, int subpel_x_q3, int subpel_y_q3, const uint8_t *ref,
+                              int ref_stride, int subpel_search) {
     (void)xd;
     (void)cm;
     (void)mi_row;

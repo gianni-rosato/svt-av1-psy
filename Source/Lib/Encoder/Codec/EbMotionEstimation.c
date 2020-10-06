@@ -119,11 +119,11 @@ Calculate SAD for 16x16 and its 8x8 sublcoks
 and check if there is improvment, if yes keep
 the best SAD+MV
 *******************************************/
-void ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                     uint32_t ref_stride, uint32_t *p_best_sad_8x8,
-                                     uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-                                     uint32_t *p_best_mv16x16, uint32_t mv, uint32_t *p_sad16x16,
-                                     uint32_t *p_sad8x8, EbBool sub_sad) {
+void svt_ext_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
+                                         uint32_t ref_stride, uint32_t *p_best_sad_8x8,
+                                         uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
+                                         uint32_t *p_best_mv16x16, uint32_t mv, uint32_t *p_sad16x16,
+                                         uint32_t *p_sad8x8, EbBool sub_sad) {
     uint32_t sad16x16;
 
     if (sub_sad) {
@@ -188,10 +188,10 @@ Calculate SAD for 32x32,64x64 from 16x16
 and check if there is improvment, if yes keep
 the best SAD+MV
 *******************************************/
-void ext_sad_calculation_32x32_64x64_c(uint32_t *p_sad16x16, uint32_t *p_best_sad_32x32,
-                                       uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32,
-                                       uint32_t *p_best_mv64x64, uint32_t mv,
-                                       uint32_t *p_sad32x32) {
+void svt_ext_sad_calculation_32x32_64x64_c(uint32_t *p_sad16x16, uint32_t *p_best_sad_32x32,
+                                           uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32,
+                                           uint32_t *p_best_mv64x64, uint32_t mv,
+                                           uint32_t *p_sad32x32) {
     uint32_t sad32x32_0, sad32x32_1, sad32x32_2, sad32x32_3, sad64x64;
 
     p_sad32x32[0] = sad32x32_0 = p_sad16x16[0] + p_sad16x16[1] + p_sad16x16[2] + p_sad16x16[3];
@@ -225,15 +225,15 @@ void ext_sad_calculation_32x32_64x64_c(uint32_t *p_sad16x16, uint32_t *p_best_sa
 }
 
 /*******************************************
- * ext_eight_sad_calculation_8x8_16x16
+ * svt_ext_eight_sad_calculation_8x8_16x16
  *******************************************/
-static void ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                                uint32_t ref_stride, uint32_t mv,
-                                                uint32_t start_16x16_pos, uint32_t *p_best_sad_8x8,
-                                                uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-                                                uint32_t *p_best_mv16x16,
-                                                uint32_t  p_eight_sad16x16[16][8],
-                                                uint32_t  p_eight_sad8x8[64][8],EbBool sub_sad) {
+static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_stride, uint8_t *ref,
+                                                    uint32_t ref_stride, uint32_t mv,
+                                                    uint32_t start_16x16_pos, uint32_t *p_best_sad_8x8,
+                                                    uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
+                                                    uint32_t *p_best_mv16x16,
+                                                    uint32_t  p_eight_sad16x16[16][8],
+                                                    uint32_t  p_eight_sad8x8[64][8],EbBool sub_sad) {
     const uint32_t start_8x8_pos = 4 * start_16x16_pos;
     int16_t        x_mv, y_mv;
 
@@ -359,11 +359,11 @@ static void ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_strid
     }
 }
 
-void ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                         uint32_t ref_stride, uint32_t mv, uint32_t *p_best_sad_8x8,
-                                         uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-                                         uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
-                                         uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
+void svt_ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
+                                             uint32_t ref_stride, uint32_t mv, uint32_t *p_best_sad_8x8,
+                                             uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
+                                             uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
+                                             uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
@@ -371,19 +371,19 @@ void ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint
         for (int x = 0; x < 4; x++) {
             const uint32_t block_index           = 16 * y * src_stride + 16 * x;
             const uint32_t search_position_index = 16 * y * ref_stride + 16 * x;
-            ext_eight_sad_calculation_8x8_16x16(src + block_index,
-                                                src_stride,
-                                                ref + search_position_index,
-                                                ref_stride,
-                                                mv,
-                                                offsets[4 * y + x],
-                                                p_best_sad_8x8,
-                                                p_best_sad_16x16,
-                                                p_best_mv8x8,
-                                                p_best_mv16x16,
-                                                p_eight_sad16x16,
-                                                p_eight_sad8x8,
-                                                sub_sad);
+            svt_ext_eight_sad_calculation_8x8_16x16(src + block_index,
+                                                    src_stride,
+                                                    ref + search_position_index,
+                                                    ref_stride,
+                                                    mv,
+                                                    offsets[4 * y + x],
+                                                    p_best_sad_8x8,
+                                                    p_best_sad_16x16,
+                                                    p_best_mv8x8,
+                                                    p_best_mv16x16,
+                                                    p_eight_sad16x16,
+                                                    p_eight_sad8x8,
+                                                    sub_sad);
         }
     }
 }
@@ -393,10 +393,13 @@ Calculate SAD for 32x32,64x64 from 16x16
 and check if there is improvment, if yes keep
 the best SAD+MV
 *******************************************/
-void ext_eight_sad_calculation_32x32_64x64_c(uint32_t p_sad16x16[16][8], uint32_t *p_best_sad_32x32,
-                                             uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32,
-                                             uint32_t *p_best_mv64x64, uint32_t mv,
-                                             uint32_t p_sad32x32[4][8]) {
+void svt_ext_eight_sad_calculation_32x32_64x64_c(uint32_t  p_sad16x16[16][8],
+                                                 uint32_t *p_best_sad_32x32,
+                                                 uint32_t *p_best_sad_64x64,
+                                                 uint32_t *p_best_mv32x32,
+                                                 uint32_t *p_best_mv64x64,
+                                                 uint32_t mv,
+                                                 uint32_t p_sad32x32[4][8]) {
     uint32_t search_index;
     int16_t  x_mv, y_mv;
     for (search_index = 0; search_index < 8; search_index++) {
@@ -478,26 +481,26 @@ static void open_loop_me_get_eight_search_point_results_block(
     uint16_t curr_mv_2 = (((uint16_t)x_search_index << 2));
     uint32_t curr_mv   = curr_mv_1 | curr_mv_2;
 
-    ext_all_sad_calculation_8x8_16x16(context_ptr->sb_src_ptr,
-                                      context_ptr->sb_src_stride,
-                                      ref_ptr,
-                                      ref_luma_stride,
-                                      curr_mv,
-                                      context_ptr->p_best_sad_8x8,
-                                      context_ptr->p_best_sad_16x16,
-                                      context_ptr->p_best_mv8x8,
-                                      context_ptr->p_best_mv16x16,
-                                      context_ptr->p_eight_sad16x16,
-                                      context_ptr->p_eight_sad8x8,
-                                      sub_sad);
-
-    ext_eight_sad_calculation_32x32_64x64(context_ptr->p_eight_sad16x16,
-                                          context_ptr->p_best_sad_32x32,
-                                          context_ptr->p_best_sad_64x64,
-                                          context_ptr->p_best_mv32x32,
-                                          context_ptr->p_best_mv64x64,
+    svt_ext_all_sad_calculation_8x8_16x16(context_ptr->sb_src_ptr,
+                                          context_ptr->sb_src_stride,
+                                          ref_ptr,
+                                          ref_luma_stride,
                                           curr_mv,
-                                          context_ptr->p_eight_sad32x32);
+                                          context_ptr->p_best_sad_8x8,
+                                          context_ptr->p_best_sad_16x16,
+                                          context_ptr->p_best_mv8x8,
+                                          context_ptr->p_best_mv16x16,
+                                          context_ptr->p_eight_sad16x16,
+                                          context_ptr->p_eight_sad8x8,
+                                          sub_sad);
+
+   svt_ext_eight_sad_calculation_32x32_64x64(context_ptr->p_eight_sad16x16,
+                                             context_ptr->p_best_sad_32x32,
+                                             context_ptr->p_best_sad_64x64,
+                                             context_ptr->p_best_mv32x32,
+                                             context_ptr->p_best_mv64x64,
+                                             curr_mv,
+                                             context_ptr->p_eight_sad32x32);
 }
 /*******************************************
  * open_loop_me_get_search_point_results_block
@@ -552,257 +555,257 @@ static void open_loop_me_get_search_point_results_block(
     block_index           = 0;
     search_position_index = search_position_tl_index;
 
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[0],
-                                  &p_best_sad_16x16[0],
-                                  &p_best_mv8x8[0],
-                                  &p_best_mv16x16[0],
-                                  curr_mv,
-                                  &p_sad16x16[0],
-                                  &p_sad8x8[0],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[0],
+                                      &p_best_sad_16x16[0],
+                                      &p_best_mv8x8[0],
+                                      &p_best_mv16x16[0],
+                                      curr_mv,
+                                      &p_sad16x16[0],
+                                      &p_sad8x8[0],
+                                      sub_sad);
 
     //---- 16x16 : 1
     block_index           = block_index + 16;
     search_position_index = search_position_tl_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[4],
-                                  &p_best_sad_16x16[1],
-                                  &p_best_mv8x8[4],
-                                  &p_best_mv16x16[1],
-                                  curr_mv,
-                                  &p_sad16x16[1],
-                                  &p_sad8x8[4],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[4],
+                                      &p_best_sad_16x16[1],
+                                      &p_best_mv8x8[4],
+                                      &p_best_mv16x16[1],
+                                      curr_mv,
+                                      &p_sad16x16[1],
+                                      &p_sad8x8[4],
+                                      sub_sad);
     //---- 16x16 : 4
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
 
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[16],
-                                  &p_best_sad_16x16[4],
-                                  &p_best_mv8x8[16],
-                                  &p_best_mv16x16[4],
-                                  curr_mv,
-                                  &p_sad16x16[4],
-                                  &p_sad8x8[16],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[16],
+                                      &p_best_sad_16x16[4],
+                                      &p_best_mv8x8[16],
+                                      &p_best_mv16x16[4],
+                                      curr_mv,
+                                      &p_sad16x16[4],
+                                      &p_sad8x8[16],
+                                      sub_sad);
 
     //---- 16x16 : 5
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[20],
-                                  &p_best_sad_16x16[5],
-                                  &p_best_mv8x8[20],
-                                  &p_best_mv16x16[5],
-                                  curr_mv,
-                                  &p_sad16x16[5],
-                                  &p_sad8x8[20],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[20],
+                                      &p_best_sad_16x16[5],
+                                      &p_best_mv8x8[20],
+                                      &p_best_mv16x16[5],
+                                      curr_mv,
+                                      &p_sad16x16[5],
+                                      &p_sad8x8[20],
+                                      sub_sad);
 
     //---- 16x16 : 2
     block_index           = src_next_16x16_offset;
     search_position_index = search_position_tl_index + ref_next_16x16_offset;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[8],
-                                  &p_best_sad_16x16[2],
-                                  &p_best_mv8x8[8],
-                                  &p_best_mv16x16[2],
-                                  curr_mv,
-                                  &p_sad16x16[2],
-                                  &p_sad8x8[8],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                     src_stride,
+                                     ref_ptr + search_position_index,
+                                     ref_luma_stride,
+                                     &p_best_sad_8x8[8],
+                                     &p_best_sad_16x16[2],
+                                     &p_best_mv8x8[8],
+                                     &p_best_mv16x16[2],
+                                     curr_mv,
+                                     &p_sad16x16[2],
+                                     &p_sad8x8[8],
+                                     sub_sad);
     //---- 16x16 : 3
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[12],
-                                  &p_best_sad_16x16[3],
-                                  &p_best_mv8x8[12],
-                                  &p_best_mv16x16[3],
-                                  curr_mv,
-                                  &p_sad16x16[3],
-                                  &p_sad8x8[12],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[12],
+                                      &p_best_sad_16x16[3],
+                                      &p_best_mv8x8[12],
+                                      &p_best_mv16x16[3],
+                                      curr_mv,
+                                      &p_sad16x16[3],
+                                      &p_sad8x8[12],
+                                      sub_sad);
     //---- 16x16 : 6
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[24],
-                                  &p_best_sad_16x16[6],
-                                  &p_best_mv8x8[24],
-                                  &p_best_mv16x16[6],
-                                  curr_mv,
-                                  &p_sad16x16[6],
-                                  &p_sad8x8[24],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[24],
+                                      &p_best_sad_16x16[6],
+                                      &p_best_mv8x8[24],
+                                      &p_best_mv16x16[6],
+                                      curr_mv,
+                                      &p_sad16x16[6],
+                                      &p_sad8x8[24],
+                                      sub_sad);
     //---- 16x16 : 7
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[28],
-                                  &p_best_sad_16x16[7],
-                                  &p_best_mv8x8[28],
-                                  &p_best_mv16x16[7],
-                                  curr_mv,
-                                  &p_sad16x16[7],
-                                  &p_sad8x8[28],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[28],
+                                      &p_best_sad_16x16[7],
+                                      &p_best_mv8x8[28],
+                                      &p_best_mv16x16[7],
+                                      curr_mv,
+                                      &p_sad16x16[7],
+                                      &p_sad8x8[28],
+                                      sub_sad);
 
     //---- 16x16 : 8
     block_index           = (src_next_16x16_offset << 1);
     search_position_index = search_position_tl_index + (ref_next_16x16_offset << 1);
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[32],
-                                  &p_best_sad_16x16[8],
-                                  &p_best_mv8x8[32],
-                                  &p_best_mv16x16[8],
-                                  curr_mv,
-                                  &p_sad16x16[8],
-                                  &p_sad8x8[32],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[32],
+                                      &p_best_sad_16x16[8],
+                                      &p_best_mv8x8[32],
+                                      &p_best_mv16x16[8],
+                                      curr_mv,
+                                      &p_sad16x16[8],
+                                      &p_sad8x8[32],
+                                      sub_sad);
     //---- 16x16 : 9
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[36],
-                                  &p_best_sad_16x16[9],
-                                  &p_best_mv8x8[36],
-                                  &p_best_mv16x16[9],
-                                  curr_mv,
-                                  &p_sad16x16[9],
-                                  &p_sad8x8[36],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[36],
+                                      &p_best_sad_16x16[9],
+                                      &p_best_mv8x8[36],
+                                      &p_best_mv16x16[9],
+                                      curr_mv,
+                                      &p_sad16x16[9],
+                                      &p_sad8x8[36],
+                                      sub_sad);
     //---- 16x16 : 12
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[48],
-                                  &p_best_sad_16x16[12],
-                                  &p_best_mv8x8[48],
-                                  &p_best_mv16x16[12],
-                                  curr_mv,
-                                  &p_sad16x16[12],
-                                  &p_sad8x8[48],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[48],
+                                      &p_best_sad_16x16[12],
+                                      &p_best_mv8x8[48],
+                                      &p_best_mv16x16[12],
+                                      curr_mv,
+                                      &p_sad16x16[12],
+                                      &p_sad8x8[48],
+                                      sub_sad);
     //---- 16x16 : 13
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[52],
-                                  &p_best_sad_16x16[13],
-                                  &p_best_mv8x8[52],
-                                  &p_best_mv16x16[13],
-                                  curr_mv,
-                                  &p_sad16x16[13],
-                                  &p_sad8x8[52],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[52],
+                                      &p_best_sad_16x16[13],
+                                      &p_best_mv8x8[52],
+                                      &p_best_mv16x16[13],
+                                      curr_mv,
+                                      &p_sad16x16[13],
+                                      &p_sad8x8[52],
+                                      sub_sad);
 
     //---- 16x16 : 10
     block_index           = (src_next_16x16_offset * 3);
     search_position_index = search_position_tl_index + (ref_next_16x16_offset * 3);
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[40],
-                                  &p_best_sad_16x16[10],
-                                  &p_best_mv8x8[40],
-                                  &p_best_mv16x16[10],
-                                  curr_mv,
-                                  &p_sad16x16[10],
-                                  &p_sad8x8[40],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[40],
+                                      &p_best_sad_16x16[10],
+                                      &p_best_mv8x8[40],
+                                      &p_best_mv16x16[10],
+                                      curr_mv,
+                                      &p_sad16x16[10],
+                                      &p_sad8x8[40],
+                                      sub_sad);
     //---- 16x16 : 11
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[44],
-                                  &p_best_sad_16x16[11],
-                                  &p_best_mv8x8[44],
-                                  &p_best_mv16x16[11],
-                                  curr_mv,
-                                  &p_sad16x16[11],
-                                  &p_sad8x8[44],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[44],
+                                      &p_best_sad_16x16[11],
+                                      &p_best_mv8x8[44],
+                                      &p_best_mv16x16[11],
+                                      curr_mv,
+                                      &p_sad16x16[11],
+                                      &p_sad8x8[44],
+                                      sub_sad);
     //---- 16x16 : 14
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[56],
-                                  &p_best_sad_16x16[14],
-                                  &p_best_mv8x8[56],
-                                  &p_best_mv16x16[14],
-                                  curr_mv,
-                                  &p_sad16x16[14],
-                                  &p_sad8x8[56],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[56],
+                                      &p_best_sad_16x16[14],
+                                      &p_best_mv8x8[56],
+                                      &p_best_mv16x16[14],
+                                      curr_mv,
+                                      &p_sad16x16[14],
+                                      &p_sad8x8[56],
+                                      sub_sad);
     //---- 16x16 : 15
     block_index           = block_index + 16;
     search_position_index = search_position_index + 16;
-    ext_sad_calculation_8x8_16x16(src_ptr + block_index,
-                                  src_stride,
-                                  ref_ptr + search_position_index,
-                                  ref_luma_stride,
-                                  &p_best_sad_8x8[60],
-                                  &p_best_sad_16x16[15],
-                                  &p_best_mv8x8[60],
-                                  &p_best_mv16x16[15],
-                                  curr_mv,
-                                  &p_sad16x16[15],
-                                  &p_sad8x8[60],
-                                  sub_sad);
+    svt_ext_sad_calculation_8x8_16x16(src_ptr + block_index,
+                                      src_stride,
+                                      ref_ptr + search_position_index,
+                                      ref_luma_stride,
+                                      &p_best_sad_8x8[60],
+                                      &p_best_sad_16x16[15],
+                                      &p_best_mv8x8[60],
+                                      &p_best_mv16x16[15],
+                                      curr_mv,
+                                      &p_sad16x16[15],
+                                      &p_sad8x8[60],
+                                      sub_sad);
 
-    ext_sad_calculation_32x32_64x64(p_sad16x16,
-                                    p_best_sad_32x32,
-                                    p_best_sad_64x64,
-                                    p_best_mv32x32,
-                                    p_best_mv64x64,
-                                    curr_mv,
-                                    &p_sad32x32[0]);
+    svt_ext_sad_calculation_32x32_64x64(p_sad16x16,
+                                        p_best_sad_32x32,
+                                        p_best_sad_64x64,
+                                        p_best_mv32x32,
+                                        p_best_mv64x64,
+                                        curr_mv,
+                                        &p_sad32x32[0]);
 }
 
 /*******************************************
@@ -991,8 +994,8 @@ void hme_level_0(
     search_region_index =
         x_top_left_search_region + y_top_left_search_region * sixteenth_ref_pic_ptr->stride_y;
 
-            // Put the first search location into level0 results
-            sad_loop_kernel(
+    // Put the first search location into level0 results
+    svt_sad_loop_kernel(
                 &context_ptr->sixteenth_sb_buffer[0],
                 context_ptr->sixteenth_sb_buffer_stride,
                 &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
@@ -1140,7 +1143,7 @@ void hme_level_1(
         x_top_left_search_region + y_top_left_search_region * quarter_ref_pic_ptr->stride_y;
 
     // Put the first search location into level0 results
-    sad_loop_kernel(
+    svt_sad_loop_kernel(
         &context_ptr->quarter_sb_buffer[0],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH)
             ? context_ptr->quarter_sb_buffer_stride
@@ -1285,7 +1288,7 @@ void hme_level_2(PictureParentControlSet *pcs_ptr, // input parameter, Picture c
         x_top_left_search_region + y_top_left_search_region * ref_pic_ptr->stride_y;
 
     // Put the first search location into level0 results
-    sad_loop_kernel(
+    svt_sad_loop_kernel(
         context_ptr->sb_src_ptr,
         (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? context_ptr->sb_src_stride
                                                             : context_ptr->sb_src_stride * 2,
@@ -1359,12 +1362,12 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
     search_region_index = (int16_t)ref_pic_ptr->origin_x + origin_x +
                           ((int16_t)ref_pic_ptr->origin_y + origin_y) * ref_pic_ptr->stride_y;
 
-    zero_mv_sad = nxm_sad_kernel(context_ptr->sb_src_ptr,
-                                 context_ptr->sb_src_stride << subsample_sad,
-                                 &(ref_pic_ptr->buffer_y[search_region_index]),
-                                 ref_pic_ptr->stride_y << subsample_sad,
-                                 sb_height >> subsample_sad,
-                                 sb_width);
+    zero_mv_sad = svt_nxm_sad_kernel(context_ptr->sb_src_ptr,
+                                     context_ptr->sb_src_stride << subsample_sad,
+                                     &(ref_pic_ptr->buffer_y[search_region_index]),
+                                     ref_pic_ptr->stride_y << subsample_sad,
+                                     sb_height >> subsample_sad,
+                                     sb_width);
 
     zero_mv_sad = zero_mv_sad << subsample_sad;
 
@@ -1396,12 +1399,12 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
         (int16_t)(ref_pic_ptr->origin_x + origin_x) + *x_search_center +
         ((int16_t)(ref_pic_ptr->origin_y + origin_y) + *y_search_center) * ref_pic_ptr->stride_y;
 
-    hme_mv_sad = nxm_sad_kernel(context_ptr->sb_src_ptr,
-                               context_ptr->sb_src_stride << subsample_sad,
-                               &(ref_pic_ptr->buffer_y[search_region_index]),
-                               ref_pic_ptr->stride_y << subsample_sad,
-                               sb_height >> subsample_sad,
-                               sb_width);
+    hme_mv_sad = svt_nxm_sad_kernel(context_ptr->sb_src_ptr,
+                                    context_ptr->sb_src_stride << subsample_sad,
+                                    &(ref_pic_ptr->buffer_y[search_region_index]),
+                                    ref_pic_ptr->stride_y << subsample_sad,
+                                    sb_height >> subsample_sad,
+                                    sb_width);
 
     hme_mv_sad = hme_mv_sad << subsample_sad;
 
@@ -2077,7 +2080,7 @@ void integer_search_sb(
                 (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) + y_search_area_origin;
             search_region_index =
                 x_top_left_search_region + y_top_left_search_region * ref_pic_ptr->stride_y;
-                initialize_buffer_32bits(
+                svt_initialize_buffer_32bits(
                             context_ptr->p_sb_best_sad[list_index][ref_pic_index],
                             21,
                             1,

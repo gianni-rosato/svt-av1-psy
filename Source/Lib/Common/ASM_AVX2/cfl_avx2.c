@@ -278,7 +278,7 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
     }
 }
 
-void cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride,
+void svt_cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride,
                                        int16_t *output_q3, int32_t width, int32_t height) {
     const int      luma_stride = input_stride << 1;
     __m256i *      row         = (__m256i *)output_q3;
@@ -333,8 +333,8 @@ void cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stri
     } while ((row += CFL_BUF_LINE_I256) < row_end);
 }
 
-void cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_stride,
-                                       int16_t *output_q3, int32_t width, int32_t height) {
+void svt_cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_stride,
+                                           int16_t *output_q3, int32_t width, int32_t height) {
     const __m128i  twos_128    = _mm_set1_epi8(2);
     const __m256i  twos_256    = _mm256_set1_epi8(2); // Thirty two twos
     const int      luma_stride = input_stride << 1;

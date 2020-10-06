@@ -149,9 +149,9 @@ static int svt_upsampled_pref_error(MacroBlockD *xd, const struct AV1Common *con
     DECLARE_ALIGNED(16, uint8_t, pred[MAX_SB_SQUARE]);
 
     {
-      aom_upsampled_pred(xd, cm, mi_row, mi_col, this_mv, pred, w, h,
-                         subpel_x_q3, subpel_y_q3, ref, ref_stride,
-                         subpel_search_type);
+      svt_aom_upsampled_pred(xd, cm, mi_row, mi_col, this_mv, pred, w, h,
+                             subpel_x_q3, subpel_y_q3, ref, ref_stride,
+                             subpel_search_type);
     }
     besterr = vfp->vf(pred, w, src, src_stride, sse);
   }

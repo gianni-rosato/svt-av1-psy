@@ -847,8 +847,25 @@ static int upsampled_obmc_pref_error(MacroBlockD *xd, const AV1_COMMON *const cm
                                   subpel_search);
         besterr = vfp->ovf(pred8, w, wsrc, mask, sse);
     } else {
-        aom_upsampled_pred(xd,
-                           cm,
+        svt_aom_upsampled_pred(xd,
+                               cm,
+                               mi_row,
+                               mi_col,
+                               mv,
+                               pred,
+                               w,
+                               h,
+                               subpel_x_q3,
+                               subpel_y_q3,
+                               y,
+                               y_stride,
+                               subpel_search);
+
+        besterr = vfp->ovf(pred, w, wsrc, mask, sse);
+    }
+#else
+    svt_aom_upsampled_pred(xd,
+                           (const struct AV1Common *const)cm,
                            mi_row,
                            mi_col,
                            mv,
@@ -860,23 +877,6 @@ static int upsampled_obmc_pref_error(MacroBlockD *xd, const AV1_COMMON *const cm
                            y,
                            y_stride,
                            subpel_search);
-
-        besterr = vfp->ovf(pred, w, wsrc, mask, sse);
-    }
-#else
-    aom_upsampled_pred(xd,
-                       (const struct AV1Common *const)cm,
-                       mi_row,
-                       mi_col,
-                       mv,
-                       pred,
-                       w,
-                       h,
-                       subpel_x_q3,
-                       subpel_y_q3,
-                       y,
-                       y_stride,
-                       subpel_search);
 
     besterr = vfp->ovf(pred, w, wsrc, mask, sse);
 #endif

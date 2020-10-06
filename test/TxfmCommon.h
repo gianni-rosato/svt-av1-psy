@@ -143,9 +143,9 @@ static INLINE Txfm1dFunc inv_txfm_type_to_func(TxfmType txfm_type) {
 using FwdTxfm2dFunc = void (*)(int16_t *input, int32_t *output, uint32_t stride,
                                TxType tx_type, uint8_t bd);
 static const FwdTxfm2dFunc fwd_txfm_2d_c_func[TX_SIZES_ALL] = {
-    av1_transform_two_d_4x4_c,   av1_transform_two_d_8x8_c,
-    av1_transform_two_d_16x16_c, av1_transform_two_d_32x32_c,
-    av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
+    svt_av1_transform_two_d_4x4_c,   svt_av1_transform_two_d_8x8_c,
+    svt_av1_transform_two_d_16x16_c, svt_av1_transform_two_d_32x32_c,
+    svt_av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
     eb_av1_fwd_txfm2d_8x4_c,     eb_av1_fwd_txfm2d_8x16_c,
     eb_av1_fwd_txfm2d_16x8_c,    eb_av1_fwd_txfm2d_16x32_c,
     eb_av1_fwd_txfm2d_32x16_c,   eb_av1_fwd_txfm2d_32x64_c,

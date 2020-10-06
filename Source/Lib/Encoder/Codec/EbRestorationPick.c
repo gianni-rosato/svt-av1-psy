@@ -441,10 +441,10 @@ static int64_t finer_search_pixel_proj_error(const uint8_t *src8, int32_t width,
 extern void RunEmms();
 #endif
 
-void get_proj_subspace_c(const uint8_t *src8, int32_t width, int32_t height, int32_t src_stride,
-                         const uint8_t *dat8, int32_t dat_stride, int32_t use_highbitdepth,
-                         int32_t *flt0, int32_t flt0_stride, int32_t *flt1, int32_t flt1_stride,
-                         int32_t *xq, const SgrParamsType *params) {
+void svt_get_proj_subspace_c(const uint8_t *src8, int32_t width, int32_t height, int32_t src_stride,
+                             const uint8_t *dat8, int32_t dat_stride, int32_t use_highbitdepth,
+                             int32_t *flt0, int32_t flt0_stride, int32_t *flt1, int32_t flt1_stride,
+                             int32_t *xq, const SgrParamsType *params) {
     int32_t       i, j;
     double        H[2][2] = {{0, 0}, {0, 0}};
     double        C[2]    = {0, 0};
@@ -619,19 +619,19 @@ static SgrprojInfo search_selfguided_restoration(
         aom_clear_system_state();
 #endif
         const SgrParamsType *const params = &eb_sgr_params[ep];
-        get_proj_subspace(src8,
-                          width,
-                          height,
-                          src_stride,
-                          dat8,
-                          dat_stride,
-                          use_highbitdepth,
-                          flt0,
-                          flt_stride,
-                          flt1,
-                          flt_stride,
-                          exq,
-                          params);
+        svt_get_proj_subspace(src8,
+                              width,
+                              height,
+                              src_stride,
+                              dat8,
+                              dat_stride,
+                              use_highbitdepth,
+                              flt0,
+                              flt_stride,
+                              flt1,
+                              flt_stride,
+                              exq,
+                              params);
 #ifdef ARCH_X86_64
         aom_clear_system_state();
 #endif

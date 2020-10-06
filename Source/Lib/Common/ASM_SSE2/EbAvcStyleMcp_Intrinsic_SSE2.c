@@ -23,7 +23,7 @@ void avc_style_copy_sse2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32
 
 //This function should be removed and replace by avc_style_copy_sse2
 
-void picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
+void svt_picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
                                         uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
                                         uint32_t area_width, uint32_t area_height) {
     __m128i  xmm_avg1, xmm_avg2;
@@ -85,7 +85,7 @@ void picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByt
     }
 }
 
-void picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
+void svt_picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
                                               uint32_t area_width) {
     __m128i xmm_avg1, xmm_avg2, xmm_avg3, xmm_avg4;
 

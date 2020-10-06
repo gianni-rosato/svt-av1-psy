@@ -14,9 +14,9 @@
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
 /********************************************************************************************************************************/
-void compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t input_stride,
-                                            uint64_t *mean_of8x8_blocks, // mean of four  8x8
-                                            uint64_t *mean_of_squared8x8_blocks) // meanSquared
+void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t input_stride,
+                                                uint64_t *mean_of8x8_blocks, // mean of four  8x8
+                                                uint64_t *mean_of_squared8x8_blocks) // meanSquared
 {
     __m256i ymm1, ymm2, ymm3, ymm4, ymm_sum1, ymm_sum2, ymm_final_sum, ymm_shift,
         /* ymm_blockMeanSquared*/ //,

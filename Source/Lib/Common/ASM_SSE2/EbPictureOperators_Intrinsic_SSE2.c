@@ -14,12 +14,12 @@
 #include "EbDefinitions.h"
 
 /******************************************************************************************************
-                                       residual_kernel16bit_sse2_intrin
+                                       svt_residual_kernel16bit_sse2_intrin
 ******************************************************************************************************/
-void residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred,
-                                      uint32_t pred_stride, int16_t *residual,
-                                      uint32_t residual_stride, uint32_t area_width,
-                                      uint32_t area_height) {
+void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride, uint16_t *pred,
+                                          uint32_t pred_stride, int16_t *residual,
+                                          uint32_t residual_stride, uint32_t area_width,
+                                          uint32_t area_height) {
     uint32_t x, y;
     __m128i  residual0, residual1;
 

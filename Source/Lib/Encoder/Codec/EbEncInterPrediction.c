@@ -3031,8 +3031,8 @@ static void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
         2;
 
     EbSpatialFullDistType spatial_full_dist_type_fun = bit_depth > 8
-        ? full_distortion_kernel16_bits
-        : spatial_full_distortion_kernel;
+        ? svt_full_distortion_kernel16_bits
+        : svt_spatial_full_distortion_kernel;
 
     for (int32_t plane = plane_from; plane <= plane_to; ++plane) {
         uint64_t sse;

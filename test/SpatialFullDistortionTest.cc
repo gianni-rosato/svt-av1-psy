@@ -86,14 +86,14 @@ void SpatialFullDistortionTest::RunCheckOutput() {
             for (uint32_t area_height = 4; area_height <= 32;
                  area_height += 4) {
                 const uint64_t dist_org =
-                    spatial_full_distortion_kernel_c(input_,
-                                                     0,
-                                                     input_stride_,
-                                                     recon_,
-                                                     0,
-                                                     recon_stride_,
-                                                     area_width,
-                                                     area_height);
+                    svt_spatial_full_distortion_kernel_c(input_,
+                                                         0,
+                                                         input_stride_,
+                                                         recon_,
+                                                         0,
+                                                         recon_stride_,
+                                                         area_width,
+                                                         area_height);
                 const uint64_t dist_opt = func_(input_,
                                                 0,
                                                 input_stride_,
@@ -125,14 +125,14 @@ void SpatialFullDistortionTest::RunSpeedTest() {
         svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (int i = 0; i < num_loops; ++i) {
-            dist_org = spatial_full_distortion_kernel_c(input_,
-                                                        0,
-                                                        input_stride_,
-                                                        recon_,
-                                                        0,
-                                                        recon_stride_,
-                                                        area_width,
-                                                        area_height);
+            dist_org = svt_spatial_full_distortion_kernel_c(input_,
+                                                            0,
+                                                            input_stride_,
+                                                            recon_,
+                                                            0,
+                                                            recon_stride_,
+                                                            area_width,
+                                                            area_height);
         }
 
         svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
@@ -160,12 +160,12 @@ void SpatialFullDistortionTest::RunSpeedTest() {
                                                          finish_time_seconds,
                                                          finish_time_useconds);
         printf("Average Nanoseconds per Function Call\n");
-        printf("    spatial_full_distortion_kernel_c  (%dx%d) : %6.2f\n",
+        printf("    svt_spatial_full_distortion_kernel_c  (%dx%d) : %6.2f\n",
                area_width,
                area_height,
                1000000 * time_c / num_loops);
         printf(
-            "    spatial_full_distortion_kernel_opt(%dx%d) : %6.2f   "
+            "    svt_spatial_full_distortion_kernel_opt(%dx%d) : %6.2f   "
             "(Comparison: %5.2fx)\n",
             area_width,
             area_height,
@@ -183,12 +183,12 @@ TEST_P(SpatialFullDistortionTest, DISABLED_Speed) {
 }
 
 INSTANTIATE_TEST_CASE_P(AVX2, SpatialFullDistortionTest,
-                        ::testing::Values(spatial_full_distortion_kernel_avx2));
+    ::testing::Values(svt_spatial_full_distortion_kernel_avx2));
 
 #ifndef NON_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     AVX512, SpatialFullDistortionTest,
-    ::testing::Values(spatial_full_distortion_kernel_avx512));
+    ::testing::Values(svt_spatial_full_distortion_kernel_avx512));
 #endif
 
 typedef enum { VAL_MIN, VAL_MAX, VAL_RANDOM } TestPattern;
@@ -260,7 +260,7 @@ typedef std::tuple<TestParam, TestPattern> SpatialTestParam;
 
 /**
  * @brief Unit test for spatial distortion calculation functions include:
- *  - spatial_full_distortion_kernel{4, 8, 16, 32, 64,
+ *  - svt_spatial_full_distortion_kernel{4, 8, 16, 32, 64,
       128}x_n_{sse2,avx2,avx512}_intrin
  *
  *
@@ -294,7 +294,7 @@ typedef std::tuple<AreaSize, TestPattern, SpatialFullDistortionKernelFunc>
 
 /**
  * @brief Unit test for spatial distortion calculation functions include:
- *  - spatial_full_distortion_kernel_{avx2,avx512}
+ *  - svt_spatial_full_distortion_kernel_{avx2,avx512}
  *
  *
  * Test strategy:
@@ -343,14 +343,14 @@ void SpatialFullDistortionKernelFuncTest::RunCheckOutput() {
                                               recon_stride_,
                                               area_width_,
                                               area_height_);
-        const uint64_t dist_c = spatial_full_distortion_kernel_c(input_,
-                                                                 0,
-                                                                 input_stride_,
-                                                                 recon_,
-                                                                 0,
-                                                                 recon_stride_,
-                                                                 area_width_,
-                                                                 area_height_);
+        const uint64_t dist_c = svt_spatial_full_distortion_kernel_c(input_,
+                                                                     0,
+                                                                     input_stride_,
+                                                                     recon_,
+                                                                     0,
+                                                                     recon_stride_,
+                                                                     area_width_,
+                                                                     area_height_);
 
         EXPECT_EQ(dist_test, dist_c)
             << "Compare Spatial distortion result error";
@@ -366,14 +366,14 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
         ::testing::ValuesIn(TEST_PATTERNS),
-        ::testing::Values(spatial_full_distortion_kernel_avx2,
-                          spatial_full_distortion_kernel_avx512)));
+        ::testing::Values(svt_spatial_full_distortion_kernel_avx2,
+                          svt_spatial_full_distortion_kernel_avx512)));
 #else
 INSTANTIATE_TEST_CASE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
     ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
                        ::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::Values(spatial_full_distortion_kernel_avx2)));
+                        ::testing::Values(svt_spatial_full_distortion_kernel_avx2)));
 #endif
 
 class FullDistortionKernel16BitsFuncTest
@@ -451,14 +451,14 @@ void FullDistortionKernel16BitsFuncTest::RunCheckOutput() {
                                               recon_stride_,
                                               area_width_,
                                               area_height_);
-        const uint64_t dist_c = full_distortion_kernel16_bits_c(input_,
-                                                                0,
-                                                                input_stride_,
-                                                                recon_,
-                                                                0,
-                                                                recon_stride_,
-                                                                area_width_,
-                                                                area_height_);
+        const uint64_t dist_c = svt_full_distortion_kernel16_bits_c(input_,
+                                                                    0,
+                                                                    input_stride_,
+                                                                    recon_,
+                                                                    0,
+                                                                    recon_stride_,
+                                                                    area_width_,
+                                                                    area_height_);
 
         EXPECT_EQ(dist_test, dist_c)
             << "Compare Full distortion kernel 16 bits result error";
@@ -479,14 +479,14 @@ void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
         svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (int i = 0; i < num_loops; ++i) {
-            dist_org = full_distortion_kernel16_bits_c(input_,
-                                                       0,
-                                                       input_stride_,
-                                                       recon_,
-                                                       0,
-                                                       recon_stride_,
-                                                       area_width,
-                                                       area_height);
+            dist_org = svt_full_distortion_kernel16_bits_c(input_,
+                                                           0,
+                                                           input_stride_,
+                                                           recon_,
+                                                           0,
+                                                           recon_stride_,
+                                                           area_width,
+                                                           area_height);
         }
 
         svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
@@ -514,12 +514,12 @@ void FullDistortionKernel16BitsFuncTest::RunSpeedTest() {
                                                          finish_time_seconds,
                                                          finish_time_useconds);
         printf("Average Nanoseconds per Function Call\n");
-        printf("    full_distortion_kernel16_bits_c  (%dx%d) : %6.2f\n",
+        printf("    svt_full_distortion_kernel16_bits_c  (%dx%d) : %6.2f\n",
                area_width,
                area_height,
                1000000 * time_c / num_loops);
         printf(
-               "    full_distortion_kernel16_bits_opt(%dx%d) : %6.2f   "
+               "    svt_full_distortion_kernel16_bits_opt(%dx%d) : %6.2f   "
                "(Comparison: %5.2fx)\n",
                area_width,
                area_height,
@@ -540,6 +540,6 @@ INSTANTIATE_TEST_CASE_P(
     FullDistortionKernel16FuncTest, FullDistortionKernel16BitsFuncTest,
     ::testing::Combine(::testing::ValuesIn(TEST_AREA_SIZES),
                        ::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::Values(full_distortion_kernel16_bits_avx2)));
+                       ::testing::Values(svt_full_distortion_kernel16_bits_avx2)));
 
 }  // namespace

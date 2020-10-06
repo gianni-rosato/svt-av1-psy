@@ -615,8 +615,8 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
                          blk_origin_index);
 
     EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                                                           ? full_distortion_kernel16_bits
-                                                           : spatial_full_distortion_kernel;
+                                                           ? svt_full_distortion_kernel16_bits
+                                                           : svt_spatial_full_distortion_kernel;
 
     int this_intra_error =
         (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
@@ -728,8 +728,8 @@ static int firstpass_inter_prediction(
     int errorperbit = full_lambda >> RD_EPB_SHIFT;
     errorperbit += (errorperbit == 0);
     EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                                                           ? full_distortion_kernel16_bits
-                                                           : spatial_full_distortion_kernel;
+                                                           ? svt_full_distortion_kernel16_bits
+                                                           : svt_spatial_full_distortion_kernel;
 
     int motion_error = 0;
     // TODO(pengchong): Replace the hard-coded threshold

@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 
-uint32_t eb_compute8x_m_sad_avx2_intrin(
+uint32_t svt_compute8x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr
@@ -26,7 +26,7 @@ uint32_t eb_compute8x_m_sad_avx2_intrin(
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
 
-uint32_t eb_compute16x_m_sad_avx2_intrin(
+uint32_t svt_compute16x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr
@@ -34,7 +34,7 @@ uint32_t eb_compute16x_m_sad_avx2_intrin(
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
 
-uint32_t eb_compute24x_m_sad_avx2_intrin(
+uint32_t svt_compute24x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr
@@ -42,7 +42,7 @@ uint32_t eb_compute24x_m_sad_avx2_intrin(
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
 
-uint32_t eb_compute32x_m_sad_avx2_intrin(
+uint32_t svt_compute32x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr
@@ -50,7 +50,7 @@ uint32_t eb_compute32x_m_sad_avx2_intrin(
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
 
-uint32_t eb_compute48x_m_sad_avx2_intrin(
+uint32_t svt_compute48x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr
@@ -58,7 +58,7 @@ uint32_t eb_compute48x_m_sad_avx2_intrin(
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
 
-uint32_t eb_compute64x_m_sad_avx2_intrin(
+uint32_t svt_compute64x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr
@@ -66,7 +66,7 @@ uint32_t eb_compute64x_m_sad_avx2_intrin(
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
 
-uint32_t eb_compute128x_m_sad_avx2_intrin(
+uint32_t svt_compute128x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
     const uint8_t *ref, // input parameter, reference samples Ptr

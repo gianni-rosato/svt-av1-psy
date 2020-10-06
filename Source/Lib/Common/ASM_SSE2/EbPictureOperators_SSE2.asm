@@ -216,7 +216,7 @@ Label_PictureCopyKernel_SSE2_WIDTH16:
 
 ; ----------------------------------------------------------------------------------------
 
-cglobal picture_average_kernel_sse2
+cglobal svt_picture_average_kernel_sse2
 
 ; Requirement: pu_width         = 4, 8, 12, 16, 24, 32, 48 or 64
 ; Requirement: pu_height   %  2 = 0

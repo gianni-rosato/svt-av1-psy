@@ -16,7 +16,7 @@
  *
  * - av1_lowbd_pixel_proj_error_avx2
  * - av1_highbd_pixel_proj_error_avx2
- * - get_proj_subspace_avx2
+ * - svt_get_proj_subspace_avx2
  *
  * @author Cidana-Edmond, Cidana-Wenyao
  *
@@ -383,7 +383,7 @@ static const PixelProjErrorTestParam hbd_test_vector[] = {make_tuple(
 INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorHbdTest,
                         ::testing::ValuesIn(hbd_test_vector));
 
-// test get_proj_subspace
+// test svt_get_proj_subspace
 TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
     const int32_t pu_width = RESTORATION_PROC_UNIT_SIZE;
     const int32_t pu_height = RESTORATION_PROC_UNIT_SIZE;
@@ -444,32 +444,32 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
             int32_t xqd_c[2] = {0};
             int32_t xqd_asm[2] = {0};
             const SgrParamsType *const params = &eb_sgr_params[ep];
-            get_proj_subspace_c(input,
-                                width,
-                                height,
-                                stride,
-                                output,
-                                out_stride,
-                                0,
-                                flt0,
-                                flt_stride,
-                                flt1,
-                                flt_stride,
-                                xqd_c,
-                                params);
-            get_proj_subspace_avx2(input,
-                                   width,
-                                   height,
-                                   stride,
-                                   output,
-                                   out_stride,
-                                   0,
-                                   flt0,
-                                   flt_stride,
-                                   flt1,
-                                   flt_stride,
-                                   xqd_asm,
-                                   params);
+            svt_get_proj_subspace_c(input,
+                                    width,
+                                    height,
+                                    stride,
+                                    output,
+                                    out_stride,
+                                    0,
+                                    flt0,
+                                    flt_stride,
+                                    flt1,
+                                    flt_stride,
+                                    xqd_c,
+                                    params);
+            svt_get_proj_subspace_avx2(input,
+                                       width,
+                                       height,
+                                       stride,
+                                       output,
+                                       out_stride,
+                                       0,
+                                       flt0,
+                                       flt_stride,
+                                       flt1,
+                                       flt_stride,
+                                       xqd_asm,
+                                       params);
             ASSERT_EQ(xqd_c[0], xqd_asm[0])
                 << "xqd_asm[0] does not match with xqd_asm[0] with iter "
                 << iter << " ep " << ep;

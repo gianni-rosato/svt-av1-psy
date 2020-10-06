@@ -27,7 +27,7 @@ static INLINE void avx2_mul_epi16_epi32(__m256i *a, __m256i *b, __m256i *out) {
     out[0] = _mm256_mullo_epi32(a_32[0], b_32[0]);
     out[1] = _mm256_mullo_epi32(a_32[1], b_32[1]);
 }
-void get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_stride,
+void svt_get_proj_subspace_avx2(const uint8_t *src8, int width, int height, int src_stride,
                             const uint8_t *dat8, int dat_stride, int use_highbitdepth,
                             int32_t *flt0, int flt0_stride, int32_t *flt1, int flt1_stride, int *xq,
                             const SgrParamsType *params) {

@@ -19,7 +19,7 @@
 #include "EbSvtAv1ErrorCodes.h"
 #include "EbUtility.h"
 #include "grainSynthesis.h"
-//To fix warning C4013: 'convert_16bit_to_8bit' undefined; assuming extern returning int
+//To fix warning C4013: 'svt_convert_16bit_to_8bit' undefined; assuming extern returning int
 #include "common_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 #include "EbPictureDecisionProcess.h"
@@ -1570,7 +1570,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         //Y
         uint16_t *buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_y);
         uint8_t * buf_8bit = ref_pic_ptr->buffer_y;
-        convert_16bit_to_8bit(buf_16bit,
+        svt_convert_16bit_to_8bit(buf_16bit,
             ref_pic_16bit_ptr->stride_y,
             buf_8bit,
             ref_pic_ptr->stride_y,
@@ -1580,7 +1580,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         //CB
         buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_cb);
         buf_8bit = ref_pic_ptr->buffer_cb;
-        convert_16bit_to_8bit(buf_16bit,
+        svt_convert_16bit_to_8bit(buf_16bit,
             ref_pic_16bit_ptr->stride_cb,
             buf_8bit,
             ref_pic_ptr->stride_cb,
@@ -1590,7 +1590,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         //CR
         buf_16bit = (uint16_t *)(ref_pic_16bit_ptr->buffer_cr);
         buf_8bit = ref_pic_ptr->buffer_cr;
-        convert_16bit_to_8bit(buf_16bit,
+        svt_convert_16bit_to_8bit(buf_16bit,
             ref_pic_16bit_ptr->stride_cr,
             buf_8bit,
             ref_pic_ptr->stride_cr,

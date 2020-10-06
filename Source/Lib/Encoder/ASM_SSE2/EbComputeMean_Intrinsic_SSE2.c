@@ -53,7 +53,7 @@ uint64_t compute_subd_mean_of_squared_values8x8_sse2_intrin(
     return (uint64_t)_mm_cvtsi128_si32(xmm_block_mean) << 11;
 }
 
-uint64_t compute_sub_mean8x8_sse2_intrin(
+uint64_t svt_compute_sub_mean8x8_sse2_intrin(
     uint8_t *input_samples, // input parameter, input samples Ptr
     uint16_t input_stride) // input parameter, input stride
 
@@ -77,7 +77,7 @@ uint64_t compute_sub_mean8x8_sse2_intrin(
     return (uint64_t)_mm_cvtsi128_si32(xmm_sum2) << 3;
 }
 
-uint64_t compute_mean_of_squared_values8x8_sse2_intrin(
+uint64_t svt_compute_mean_of_squared_values8x8_sse2_intrin(
     uint8_t *input_samples, // input parameter, input samples Ptr
     uint32_t input_stride, // input parameter, input stride
     uint32_t input_area_width, // input parameter, input area width
@@ -122,35 +122,35 @@ uint64_t compute_mean_of_squared_values8x8_sse2_intrin(
 
     return (uint64_t)_mm_cvtsi128_si32(xmm_block_mean) << 10;
 }
-void compute_interm_var_four8x8_helper_sse2(uint8_t *input_samples, uint16_t input_stride,
-                                            uint64_t *mean_of8x8_blocks, // mean of four  8x8
-                                            uint64_t *mean_of_squared8x8_blocks) // meanSquared
+void svt_compute_interm_var_four8x8_helper_sse2(uint8_t *input_samples, uint16_t input_stride,
+                                                uint64_t *mean_of8x8_blocks, // mean of four  8x8
+                                                uint64_t *mean_of_squared8x8_blocks) // meanSquared
 {
     uint32_t block_index = 0;
     // (0,1)
-    mean_of8x8_blocks[0] =
-        compute_sub_mean8x8_sse2_intrin(input_samples + block_index, input_stride);
+    mean_of8x8_blocks[0] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+                                                               input_stride);
     mean_of_squared8x8_blocks[0] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,2)
     block_index = block_index + 8;
-    mean_of8x8_blocks[1] =
-        compute_sub_mean8x8_sse2_intrin(input_samples + block_index, input_stride);
+    mean_of8x8_blocks[1] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+                                                               input_stride);
     mean_of_squared8x8_blocks[1] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,3)
     block_index = block_index + 8;
-    mean_of8x8_blocks[2] =
-        compute_sub_mean8x8_sse2_intrin(input_samples + block_index, input_stride);
+    mean_of8x8_blocks[2] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+                                                               input_stride);
     mean_of_squared8x8_blocks[2] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,4)
     block_index = block_index + 8;
-    mean_of8x8_blocks[3] =
-        compute_sub_mean8x8_sse2_intrin(input_samples + block_index, input_stride);
+    mean_of8x8_blocks[3] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+                                                               input_stride);
     mean_of_squared8x8_blocks[3] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 }

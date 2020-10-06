@@ -1713,8 +1713,8 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
         }
 
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
-                                                               ? full_distortion_kernel16_bits
-                                                               : spatial_full_distortion_kernel;
+                                                                ? svt_full_distortion_kernel16_bits
+                                                                : svt_spatial_full_distortion_kernel;
 
         txb_full_distortion[0][DIST_CALC_PREDICTION] =
             spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
@@ -2167,9 +2167,9 @@ void cu_full_distortion_fast_txb_mode_r(
                       context_ptr->residual_quant_coeff_ptr->stride_cb)) >>
                     1;
 
-                EbSpatialFullDistType spatial_full_dist_type_fun =
-                    context_ptr->hbd_mode_decision ? full_distortion_kernel16_bits
-                                                   : spatial_full_distortion_kernel;
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
+                                                    ? svt_full_distortion_kernel16_bits
+                                                    : svt_spatial_full_distortion_kernel;
 
                 txb_full_distortion[1][DIST_CALC_PREDICTION] =
                     spatial_full_dist_type_fun(input_picture_ptr->buffer_cb,
