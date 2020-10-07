@@ -98,7 +98,8 @@ BlkSize TEST_BLOCK_SIZES[] = {
     BlkSize(24, 16), BlkSize(16, 24), BlkSize(24, 8),  BlkSize(8, 24),
     BlkSize(64, 24), BlkSize(48, 24), BlkSize(32, 24), BlkSize(24, 32),
     BlkSize(48, 48), BlkSize(48, 16), BlkSize(48, 32), BlkSize(16, 48),
-    BlkSize(32, 48), BlkSize(48, 64), BlkSize(64, 48)};
+    BlkSize(32, 48), BlkSize(48, 64), BlkSize(64, 48), BlkSize(56, 32),
+    BlkSize(40, 32)};
 
 BlkSize TEST_BLOCK_SIZES_SMALL[] = {
     BlkSize(6, 2),   BlkSize(6, 4),   BlkSize(6, 8),   BlkSize(6, 16),

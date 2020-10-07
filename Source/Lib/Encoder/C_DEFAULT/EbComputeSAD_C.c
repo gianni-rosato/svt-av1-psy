@@ -206,21 +206,6 @@ sadMxNx4D(64, 16);
 
 uint32_t nxm_sad_kernel_helper_c(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
                                  uint32_t ref_stride, uint32_t height, uint32_t width) {
-    uint32_t nxm_sad = 0;
 
-    switch (width) {
-    case 4:
-    case 8:
-    case 16:
-    case 24:
-    case 32:
-    case 48:
-    case 64:
-    case 128:
-        nxm_sad = fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width);
-        break;
-    default: assert(0);
-    }
-
-    return nxm_sad;
+    return fast_loop_nxm_sad_kernel(src, src_stride, ref, ref_stride, height, width);
 };
