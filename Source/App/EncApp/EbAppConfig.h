@@ -178,28 +178,18 @@ typedef struct EbConfig {
     const char*   stats;
     FILE *        input_stat_file;
     FILE *        output_stat_file;
-    EbBool        rc_firstpass_stats_out;
-    SvtAv1FixedBuf rc_twopass_stats_in;
+
 
     FILE *        input_pred_struct_file;
     char *        input_pred_struct_filename;
     EbBool        y4m_input;
     unsigned char y4m_buf[9];
-    EbBool        use_qp_file;
+
     uint8_t       progress; // 0 = no progress output, 1 = normal, 2 = aomenc style verbose progress
-    uint8_t       stat_report;
-    uint32_t      frame_rate;
-    uint32_t      frame_rate_numerator;
-    uint32_t      frame_rate_denominator;
-    uint32_t      injector_frame_rate;
-    uint32_t      injector;
-    uint32_t      speed_control_flag;
-    uint32_t      encoder_bit_depth;
-    EbBool        is_16bit_pipeline;
-    uint32_t      encoder_color_format;
-    uint32_t      compressed_ten_bit_format;
-    uint32_t      source_width;
-    uint32_t      source_height;
+    /****************************************
+     * Computational Performance Data
+     ****************************************/
+    EbPerformanceContext performance_context;
 
     uint32_t input_padded_width;
     uint32_t input_padded_height;
@@ -211,6 +201,30 @@ typedef struct EbConfig {
     int32_t   buffered_input;
     uint8_t **sequence_buffer;
 
+    uint32_t      injector_frame_rate;
+    uint32_t      injector;
+    uint32_t      speed_control_flag;
+
+
+    uint32_t hme_level0_column_index;
+    uint32_t hme_level0_row_index;
+    uint32_t hme_level1_column_index;
+    uint32_t hme_level1_row_index;
+    uint32_t hme_level2_column_index;
+    uint32_t hme_level2_row_index;
+    EbBool   stop_encoder; // to signal CTRL+C Event, need to stop encoding.
+
+    uint64_t processed_frame_count;
+    uint64_t processed_byte_count;
+
+    uint64_t byte_count_since_ivf;
+    uint64_t ivf_count;
+    /****************************************
+     * On-the-fly Testing
+     ****************************************/
+    EbBool eos_flag;
+
+
     /*****************************************
      * Coding Structure
      *****************************************/
@@ -219,20 +233,37 @@ typedef struct EbConfig {
     uint32_t intra_refresh_type;
     uint32_t hierarchical_levels;
     uint32_t pred_structure;
+    uint32_t      source_width;
+    uint32_t      source_height;
+    uint32_t      frame_rate;
+    uint32_t      frame_rate_numerator;
+    uint32_t      frame_rate_denominator;
+    uint32_t      encoder_bit_depth;
+    EbBool        is_16bit_pipeline;
+    uint32_t      encoder_color_format;
+    uint32_t      compressed_ten_bit_format;
+
+    uint8_t       stat_report;
 
     /****************************************
      * Quantization
      ****************************************/
     uint32_t qp;
 
-    /****************************************
-     * Film Grain
-     ****************************************/
-    uint32_t film_grain_denoise_strength;
+    EbBool        use_qp_file;
+
+    SvtAv1FixedBuf rc_twopass_stats_in;
+    EbBool        rc_firstpass_stats_out;
     /****************************************
      * DLF
      ****************************************/
     EbBool disable_dlf_flag;
+
+    /****************************************
+     * Film Grain
+     ****************************************/
+    uint32_t film_grain_denoise_strength;
+
 
     /****************************************
      * Local Warped Motion
@@ -273,6 +304,8 @@ typedef struct EbConfig {
      * paeth
     ****************************************/
     int enable_paeth;
+
+    int                 mrp_level;
     /****************************************
      * smooth
     ****************************************/
@@ -360,9 +393,7 @@ typedef struct EbConfig {
      ****************************************/
     EbBool use_default_me_hme;
     EbBool enable_hme_flag;
-    EbBool enable_hme_level0_flag;
-    EbBool enable_hme_level1_flag;
-    EbBool enable_hme_level2_flag;
+
     EbBool ext_block_flag;
 
     /****************************************
@@ -371,52 +402,33 @@ typedef struct EbConfig {
     uint32_t search_area_width;
     uint32_t search_area_height;
 
-    /****************************************
-     * HME Parameters
-     ****************************************/
-    uint32_t number_hme_search_region_in_width;
-    uint32_t number_hme_search_region_in_height;
-    uint32_t hme_level0_total_search_area_width;
-    uint32_t hme_level0_total_search_area_height;
-    uint32_t hme_level0_column_index;
-    uint32_t hme_level0_row_index;
-    uint32_t hme_level1_column_index;
-    uint32_t hme_level1_row_index;
-    uint32_t hme_level2_column_index;
-    uint32_t hme_level2_row_index;
-    uint32_t hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
 
     /****************************************
      * MD Parameters
      ****************************************/
     int8_t  enable_hbd_mode_decision;
     int32_t palette_level;
-    int32_t tile_columns;
-    int32_t tile_rows;
 
     /****************************************
      * Rate Control
      ****************************************/
-    uint32_t scene_change_detection;
     uint32_t rate_control_mode;
+    uint32_t scene_change_detection;
+
     uint32_t look_ahead_distance;
     uint32_t enable_tpl_la;
     uint32_t target_bit_rate;
+    uint32_t vbv_bufsize;
     uint32_t max_qp_allowed;
     uint32_t min_qp_allowed;
-    uint32_t vbv_bufsize;
+
     uint32_t vbr_bias_pct;
     uint32_t vbr_min_section_pct;
     uint32_t vbr_max_section_pct;
     uint32_t under_shoot_pct;
     uint32_t over_shoot_pct;
 
-    EbBool enable_adaptive_quantization;
+
 
     /****************************************
      * Optional Features
@@ -424,8 +436,8 @@ typedef struct EbConfig {
 
     uint32_t screen_content_mode;
     int      intrabc_mode;
+    EbBool enable_adaptive_quantization;
     uint32_t high_dynamic_range_input;
-    EbBool   unrestricted_motion_vector;
 
     /****************************************
      * Annex A Parameters
@@ -434,38 +446,44 @@ typedef struct EbConfig {
     uint32_t tier;
     uint32_t level;
 
-    /****************************************
-     * On-the-fly Testing
-     ****************************************/
-    EbBool eos_flag;
 
     /****************************************
     * CPU FLAGS available
     ****************************************/
     CPU_FLAGS cpu_flags_limit;
 
-    /****************************************
-     * Computational Performance Data
-     ****************************************/
-    EbPerformanceContext performance_context;
 
     /****************************************
     * Instance Info
     ****************************************/
     uint32_t channel_id;
     uint32_t active_channel_count;
+    EbBool   unrestricted_motion_vector;
     uint32_t logical_processors;
     uint32_t unpin;
     int32_t  target_socket;
-    EbBool   stop_encoder; // to signal CTRL+C Event, need to stop encoding.
-
-    uint64_t processed_frame_count;
-    uint64_t processed_byte_count;
-
-    uint64_t byte_count_since_ivf;
-    uint64_t ivf_count;
+    int32_t tile_columns;
+    int32_t tile_rows;
+    EbBool enable_hme_level0_flag;
+    EbBool enable_hme_level1_flag;
+    EbBool enable_hme_level2_flag;
 
     // --- start: ALTREF_FILTERING_SUPPORT
+
+    /****************************************
+     * HME Parameters
+     ****************************************/
+    uint32_t number_hme_search_region_in_width;
+    uint32_t number_hme_search_region_in_height;
+    uint32_t hme_level0_total_search_area_width;
+    uint32_t hme_level0_total_search_area_height;
+
+    uint32_t hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint32_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     /****************************************
      * ALT-REF related Parameters
      ****************************************/
@@ -487,7 +505,6 @@ typedef struct EbConfig {
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
     EbBool                         enable_manual_pred_struct;
     int32_t                        manual_pred_struct_entry_num;
-    int                 mrp_level;
 } EbConfig;
 
 typedef struct EncChannel {
