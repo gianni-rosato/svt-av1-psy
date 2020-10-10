@@ -289,7 +289,7 @@ static void set_pred_struct_file(const char *value, EbConfig *cfg) {
     cfg->input_pred_struct_filename = (char *)malloc(strlen(value) + 1);
     strcpy_s(cfg->input_pred_struct_filename, strlen(value) + 1, value);
 
-    cfg->enable_manual_pred_struct = EB_TRUE;
+    cfg->config.enable_manual_pred_struct = EB_TRUE;
 };
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
@@ -338,13 +338,13 @@ static void set_cfg_stat_file(const char *value, EbConfig *cfg) {
     FOPEN(cfg->stat_file, value, "wb");
 };
 static void set_stat_report(const char *value, EbConfig *cfg) {
-    cfg->stat_report = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.stat_report = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_cfg_source_width(const char *value, EbConfig *cfg) {
-    cfg->source_width = strtoul(value, NULL, 0);
+    cfg->config.source_width = strtoul(value, NULL, 0);
 };
 static void set_cfg_source_height(const char *value, EbConfig *cfg) {
-    cfg->source_height = strtoul(value, NULL, 0);
+    cfg->config.source_height = strtoul(value, NULL, 0);
 };
 static void set_cfg_frames_to_be_encoded(const char *value, EbConfig *cfg) {
     cfg->frames_to_be_encoded = strtol(value, NULL, 0);
@@ -366,262 +366,262 @@ static void set_progress(const char *value, EbConfig *cfg) {
     }
 }
 static void set_frame_rate(const char *value, EbConfig *cfg) {
-    cfg->frame_rate = strtoul(value, NULL, 0);
-    if (cfg->frame_rate <= 1000)
-        cfg->frame_rate <<= 16;
+    cfg->config.frame_rate = strtoul(value, NULL, 0);
+    if (cfg->config.frame_rate <= 1000)
+        cfg->config.frame_rate <<= 16;
 }
 
 static void set_frame_rate_numerator(const char *value, EbConfig *cfg) {
-    cfg->frame_rate_numerator = strtoul(value, NULL, 0);
+    cfg->config.frame_rate_numerator = strtoul(value, NULL, 0);
 };
 static void set_frame_rate_denominator(const char *value, EbConfig *cfg) {
-    cfg->frame_rate_denominator = strtoul(value, NULL, 0);
+    cfg->config.frame_rate_denominator = strtoul(value, NULL, 0);
 };
 static void set_encoder_bit_depth(const char *value, EbConfig *cfg) {
-    cfg->encoder_bit_depth = strtoul(value, NULL, 0);
+    cfg->config.encoder_bit_depth = strtoul(value, NULL, 0);
 }
 static void set_encoder_16bit_pipeline(const char *value, EbConfig *cfg) {
-    cfg->is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
 }
 static void set_encoder_color_format(const char *value, EbConfig *cfg) {
-    cfg->encoder_color_format = strtoul(value, NULL, 0);
+    cfg->config.encoder_color_format = (EbColorFormat)strtoul(value, NULL, 0);
 }
 static void set_compressed_ten_bit_format(const char *value, EbConfig *cfg) {
-    cfg->compressed_ten_bit_format = strtoul(value, NULL, 0);
+    cfg->config.compressed_ten_bit_format = strtoul(value, NULL, 0);
 }
 static void set_enc_mode(const char *value, EbConfig *cfg) {
-    cfg->enc_mode = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.enc_mode = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
-    cfg->intra_period = strtol(value, NULL, 0);
+    cfg->config.intra_period_length = strtol(value, NULL, 0);
 };
 static void set_cfg_intra_refresh_type(const char *value, EbConfig *cfg) {
-    cfg->intra_refresh_type = strtol(value, NULL, 0);
+    cfg->config.intra_refresh_type = strtol(value, NULL, 0);
 };
 static void set_hierarchical_levels(const char *value, EbConfig *cfg) {
-    cfg->hierarchical_levels = strtol(value, NULL, 0);
+    cfg->config.hierarchical_levels = strtol(value, NULL, 0);
 };
 static void set_cfg_pred_structure(const char *value, EbConfig *cfg) {
-    cfg->pred_structure = strtol(value, NULL, 0);
+    cfg->config.pred_structure = (uint8_t)strtol(value, NULL, 0);
 };
-static void set_cfg_qp(const char *value, EbConfig *cfg) { cfg->qp = strtoul(value, NULL, 0); };
+static void set_cfg_qp(const char *value, EbConfig *cfg) { cfg->config.qp = strtoul(value, NULL, 0); };
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
-    cfg->use_qp_file = (EbBool)strtol(value, NULL, 0);
+    cfg->config.use_qp_file = (EbBool)strtol(value, NULL, 0);
 };
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
-    cfg->film_grain_denoise_strength = strtol(value, NULL, 0);
+    cfg->config.film_grain_denoise_strength = strtol(value, NULL, 0);
 }; //not bool to enable possible algorithm extension in the future
 static void set_disable_dlf_flag(const char *value, EbConfig *cfg) {
-    cfg->disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_enable_local_warped_motion_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_warped_motion = strtol(value, NULL, 0);
+    cfg->config.enable_warped_motion = strtol(value, NULL, 0);
 };
 static void set_enable_global_motion_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_global_motion = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_global_motion = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_cdef_level(const char *value, EbConfig *cfg) {
-    cfg->cdef_level = strtol(value, NULL, 0);
+    cfg->config.cdef_level = strtol(value, NULL, 0);
 };
 static void set_enable_restoration_filter_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_restoration_filtering = strtol(value, NULL, 0);
+    cfg->config.enable_restoration_filtering = strtol(value, NULL, 0);
 };
 static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
-    cfg->sg_filter_mode = strtol(value, NULL, 0);
+    cfg->config.sg_filter_mode = strtol(value, NULL, 0);
 };
 static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
-    cfg->wn_filter_mode = strtol(value, NULL, 0);
+    cfg->config.wn_filter_mode = strtol(value, NULL, 0);
 };
 static void set_intra_angle_delta_flag(const char *value, EbConfig *cfg) {
-    cfg->intra_angle_delta = strtol(value, NULL, 0);
+    cfg->config.intra_angle_delta = strtol(value, NULL, 0);
 };
 static void set_interintra_compound_flag(const char *value, EbConfig *cfg) {
-    cfg->inter_intra_compound = strtol(value, NULL, 0);
+    cfg->config.inter_intra_compound = strtol(value, NULL, 0);
 };
 static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_paeth = strtol(value, NULL, 0);
+    cfg->config.enable_paeth = strtol(value, NULL, 0);
 };
 static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_smooth = strtol(value, NULL, 0);
+    cfg->config.enable_smooth = strtol(value, NULL, 0);
 };
 static void set_mrp_level(const char *value, EbConfig *cfg) {
-    cfg->mrp_level = strtol(value, NULL, 0);
+    cfg->config.mrp_level = strtol(value, NULL, 0);
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_mfmv = strtol(value, NULL, 0);
+    cfg->config.enable_mfmv = strtol(value, NULL, 0);
 };
 static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_redundant_blk = strtol(value, NULL, 0);
+    cfg->config.enable_redundant_blk = strtol(value, NULL, 0);
 };
 static void set_spatial_sse_full_loop_level_flag(const char *value, EbConfig *cfg) {
-    cfg->spatial_sse_full_loop_level = strtol(value, NULL, 0);
+    cfg->config.spatial_sse_full_loop_level = strtol(value, NULL, 0);
 };
 static void set_over_bndry_blk_flag(const char *value, EbConfig *cfg) {
-    cfg->over_bndry_blk = strtol(value, NULL, 0);
+    cfg->config.over_bndry_blk = strtol(value, NULL, 0);
 };
 static void set_new_nearest_comb_inject_flag(const char *value, EbConfig *cfg) {
-    cfg->new_nearest_comb_inject = strtol(value, NULL, 0);
+    cfg->config.new_nearest_comb_inject = strtol(value, NULL, 0);
 };
 static void set_nsq_table_flag(const char *value, EbConfig *cfg) {
-    cfg->nsq_table = strtol(value, NULL, 0);
+    cfg->config.nsq_table = strtol(value, NULL, 0);
 };
 static void set_frame_end_cdf_update_flag(const char *value, EbConfig *cfg) {
-    cfg->frame_end_cdf_update = strtol(value, NULL, 0);
+    cfg->config.frame_end_cdf_update = strtol(value, NULL, 0);
 };
 static void set_chroma_mode(const char *value, EbConfig *cfg) {
-    cfg->set_chroma_mode = strtol(value, NULL, 0);
+    cfg->config.set_chroma_mode = strtol(value, NULL, 0);
 };
 static void set_disable_cfl_flag(const char *value, EbConfig *cfg) {
-    cfg->disable_cfl_flag = strtol(value, NULL, 0);
+    cfg->config.disable_cfl_flag = strtol(value, NULL, 0);
 };
 static void set_obmc_level_flag(const char *value, EbConfig *cfg) {
-    cfg->obmc_level = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.obmc_level = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_rdoq_level_flag(const char *value, EbConfig *cfg) {
-    cfg->rdoq_level = strtol(value, NULL, 0);
+    cfg->config.rdoq_level = strtol(value, NULL, 0);
 };
 static void set_predictive_me_flag(const char *value, EbConfig *cfg) {
-    cfg->pred_me = strtol(value, NULL, 0);
+    cfg->config.pred_me = strtol(value, NULL, 0);
 };
 static void set_bipred3x3inject_flag(const char *value, EbConfig *cfg) {
-    cfg->bipred_3x3_inject = strtol(value, NULL, 0);
+    cfg->config.bipred_3x3_inject = strtol(value, NULL, 0);
 };
 static void set_compound_level_flag(const char *value, EbConfig *cfg) {
-    cfg->compound_level = strtol(value, NULL, 0);
+    cfg->config.compound_level = strtol(value, NULL, 0);
 };
 static void set_filter_intra_level_flag(const char *value, EbConfig *cfg) {
-    cfg->filter_intra_level = (int8_t)strtoul(value, NULL, 0);
+    cfg->config.filter_intra_level = (int8_t)strtoul(value, NULL, 0);
 };
 static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_intra_edge_filter = strtol(value, NULL, 0);
+    cfg->config.enable_intra_edge_filter = strtol(value, NULL, 0);
 };
 static void set_pic_based_rate_est(const char *value, EbConfig *cfg) {
-    cfg->pic_based_rate_est = strtol(value, NULL, 0);
+    cfg->config.pic_based_rate_est = strtol(value, NULL, 0);
 };
 static void set_enable_hme_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_enable_hme_level_0_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_tile_row(const char *value, EbConfig *cfg) {
-    cfg->tile_rows = strtoul(value, NULL, 0);
+    cfg->config.tile_rows = strtoul(value, NULL, 0);
 };
 static void set_tile_col(const char *value, EbConfig *cfg) {
-    cfg->tile_columns = strtoul(value, NULL, 0);
+    cfg->config.tile_columns = strtoul(value, NULL, 0);
 };
 static void set_scene_change_detection(const char *value, EbConfig *cfg) {
-    cfg->scene_change_detection = strtoul(value, NULL, 0);
+    cfg->config.scene_change_detection = strtoul(value, NULL, 0);
 }
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
-    cfg->look_ahead_distance = strtoul(value, NULL, 0);
+    cfg->config.look_ahead_distance = strtoul(value, NULL, 0);
 };
 static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
-    cfg->enable_tpl_la = strtoul(value, NULL, 0);
+    cfg->config.enable_tpl_la = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_rate_control_mode(const char *value, EbConfig *cfg) {
-    cfg->rate_control_mode = strtoul(value, NULL, 0);
+    cfg->config.rate_control_mode = strtoul(value, NULL, 0);
 };
 static void set_target_bit_rate(const char *value, EbConfig *cfg) {
-    cfg->target_bit_rate = 1000 * strtoul(value, NULL, 0);
+    cfg->config.target_bit_rate = 1000 * strtoul(value, NULL, 0);
 };
 static void set_vbv_buf_size(const char *value, EbConfig *cfg) {
-    cfg->vbv_bufsize = 1000 * strtoul(value, NULL, 0);
+    cfg->config.vbv_bufsize = 1000 * strtoul(value, NULL, 0);
 };
 static void set_max_qp_allowed(const char *value, EbConfig *cfg) {
-    cfg->max_qp_allowed = strtoul(value, NULL, 0);
+    cfg->config.max_qp_allowed = strtoul(value, NULL, 0);
 };
 static void set_min_qp_allowed(const char *value, EbConfig *cfg) {
-    cfg->min_qp_allowed = strtoul(value, NULL, 0);
+    cfg->config.min_qp_allowed = strtoul(value, NULL, 0);
 };
 static void set_vbr_bias_pct(const char *value, EbConfig *cfg) {
-    cfg->vbr_bias_pct = strtoul(value, NULL, 0);
+    cfg->config.vbr_bias_pct = strtoul(value, NULL, 0);
 };
 static void set_vbr_min_section_pct(const char *value, EbConfig *cfg) {
-    cfg->vbr_min_section_pct = strtoul(value, NULL, 0);
+    cfg->config.vbr_min_section_pct = strtoul(value, NULL, 0);
 };
 static void set_vbr_max_section_pct(const char *value, EbConfig *cfg) {
-    cfg->vbr_max_section_pct = strtoul(value, NULL, 0);
+    cfg->config.vbr_max_section_pct = strtoul(value, NULL, 0);
 };
 static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
-    cfg->under_shoot_pct = strtoul(value, NULL, 0);
+    cfg->config.under_shoot_pct = strtoul(value, NULL, 0);
 };
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
-    cfg->over_shoot_pct = strtoul(value, NULL, 0);
+    cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
 };
 static void set_adaptive_quantization(const char *value, EbConfig *cfg) {
-    cfg->enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
+    cfg->config.enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
 };
 static void set_enable_hme_level_1_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_hme_level1_flag = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_hme_level1_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_enable_hme_level_2_flag(const char *value, EbConfig *cfg) {
-    cfg->enable_hme_level2_flag = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_hme_level2_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_cfg_search_area_width(const char *value, EbConfig *cfg) {
-    cfg->search_area_width = strtoul(value, NULL, 0);
+    cfg->config.search_area_width = strtoul(value, NULL, 0);
 };
 static void set_cfg_search_area_height(const char *value, EbConfig *cfg) {
-    cfg->search_area_height = strtoul(value, NULL, 0);
+    cfg->config.search_area_height = strtoul(value, NULL, 0);
 };
 static void set_cfg_use_default_me_hme(const char *value, EbConfig *cfg) {
-    cfg->use_default_me_hme = (EbBool)strtol(value, NULL, 0);
+    cfg->config.use_default_me_hme = (EbBool)strtol(value, NULL, 0);
 };
 static void set_enable_ext_block_flag(const char *value, EbConfig *cfg) {
-    cfg->ext_block_flag = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.ext_block_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
-    cfg->screen_content_mode = strtoul(value, NULL, 0);
+    cfg->config.screen_content_mode = strtoul(value, NULL, 0);
 };
 static void set_intrabc_mode(const char *value, EbConfig *cfg) {
-    cfg->intrabc_mode = strtol(value, NULL, 0);
+    cfg->config.intrabc_mode = strtol(value, NULL, 0);
 };
 // --- start: ALTREF_FILTERING_SUPPORT
 static void set_tf_level(const char *value, EbConfig *cfg) {
-    cfg->tf_level = (int8_t)strtoul(value, NULL, 0);
+    cfg->config.tf_level = (int8_t)strtoul(value, NULL, 0);
 };
 static void set_altref_strength(const char *value, EbConfig *cfg) {
-    cfg->altref_strength = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.altref_strength = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_altref_n_frames(const char *value, EbConfig *cfg) {
-    cfg->altref_nframes = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.altref_nframes = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_enable_overlays(const char *value, EbConfig *cfg) {
-    cfg->enable_overlays = (EbBool)strtoul(value, NULL, 0);
+    cfg->config.enable_overlays = (EbBool)strtoul(value, NULL, 0);
 };
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
 static void set_superres_mode(const char *value, EbConfig *cfg) {
-    cfg->superres_mode = (SUPERRES_MODE)strtoul(value, NULL, 0);
+    cfg->config.superres_mode = (SUPERRES_MODE)strtoul(value, NULL, 0);
 };
 static void set_superres_denom(const char *value, EbConfig *cfg) {
-    cfg->superres_denom = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.superres_denom = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_superres_kf_denom(const char *value, EbConfig *cfg) {
-    cfg->superres_kf_denom = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.superres_kf_denom = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_superres_qthres(const char *value, EbConfig *cfg) {
-    cfg->superres_qthres = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.superres_qthres = (uint8_t)strtoul(value, NULL, 0);
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
-    cfg->enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
+    cfg->config.enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_palette_level(const char *value, EbConfig *cfg) {
-    cfg->palette_level = (int32_t)strtoul(value, NULL, 0);
+    cfg->config.palette_level = (int32_t)strtoul(value, NULL, 0);
 };
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
-    cfg->high_dynamic_range_input = strtol(value, NULL, 0);
+    cfg->config.high_dynamic_range_input = strtol(value, NULL, 0);
 };
 static void set_profile(const char *value, EbConfig *cfg) {
-    cfg->profile = strtol(value, NULL, 0);
+    cfg->config.profile = strtol(value, NULL, 0);
 };
-static void set_tier(const char *value, EbConfig *cfg) { cfg->tier = strtol(value, NULL, 0); };
+static void set_tier(const char *value, EbConfig *cfg) { cfg->config.tier = strtol(value, NULL, 0); };
 static void set_level(const char *value, EbConfig *cfg) {
     if (strtoul(value, NULL, 0) != 0 || strcmp(value, "0") == 0)
-        cfg->level = (uint32_t)(10 * strtod(value, NULL));
+        cfg->config.level = (uint32_t)(10 * strtod(value, NULL));
     else
-        cfg->level = 9999999;
+        cfg->config.level = 9999999;
 };
 static void set_injector(const char *value, EbConfig *cfg) {
     cfg->injector = strtol(value, NULL, 0);
@@ -669,24 +669,24 @@ static void set_asm_type(const char *value, EbConfig *cfg) {
 
     for (i = 0; i < para_map_size; ++i) {
         if (strcmp(value, param_maps[i].name) == 0) {
-            cfg->cpu_flags_limit = param_maps[i].flags;
+            cfg->config.use_cpu_flags = param_maps[i].flags;
             return;
         }
     }
 
-    cfg->cpu_flags_limit = CPU_FLAGS_INVALID;
+    cfg->config.use_cpu_flags = CPU_FLAGS_INVALID;
 };
 static void set_logical_processors(const char *value, EbConfig *cfg) {
-    cfg->logical_processors = (uint32_t)strtoul(value, NULL, 0);
+    cfg->config.logical_processors = (uint32_t)strtoul(value, NULL, 0);
 };
 static void set_unpin_execution(const char *value, EbConfig *cfg) {
-    cfg->unpin = (uint32_t)strtoul(value, NULL, 0);
+    cfg->config.unpin = (uint32_t)strtoul(value, NULL, 0);
 };
 static void set_target_socket(const char *value, EbConfig *cfg) {
-    cfg->target_socket = (int32_t)strtol(value, NULL, 0);
+    cfg->config.target_socket = (int32_t)strtol(value, NULL, 0);
 };
 static void set_unrestricted_motion_vector(const char *value, EbConfig *cfg) {
-    cfg->unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);
+    cfg->config.unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);
 };
 
 enum CfgType {
@@ -1399,111 +1399,7 @@ EbConfig * eb_config_ctor(EncodePass pass) {
         config_ptr->pass = 2;
 
     config_ptr->error_log_file         = stderr;
-    config_ptr->frame_rate             = 30 << 16;
-    config_ptr->encoder_bit_depth      = 8;
-    config_ptr->is_16bit_pipeline = 0;
-    config_ptr->encoder_color_format   = 1; //EB_YUV420
     config_ptr->buffered_input         = -1;
-    config_ptr->qp                  = 50;
-    config_ptr->use_qp_file         = EB_FALSE;
-    config_ptr->look_ahead_distance = (uint32_t)~0;
-    config_ptr->enable_tpl_la       = 1;
-    config_ptr->target_bit_rate     = 7000000;
-    config_ptr->max_qp_allowed      = 63;
-    config_ptr->min_qp_allowed      = 10;
-
-    config_ptr->enable_adaptive_quantization              = 2;
-    config_ptr->enc_mode                                  = MAX_ENC_PRESET;
-    config_ptr->vbr_bias_pct        = 50;
-    config_ptr->vbr_min_section_pct = 0;
-    config_ptr->vbr_max_section_pct = 2000;
-    config_ptr->under_shoot_pct     = 25;
-    config_ptr->over_shoot_pct      = 25;
-    config_ptr->intra_period                              = -2;
-    config_ptr->intra_refresh_type                        = 1;
-    config_ptr->hierarchical_levels                       = 4;
-    config_ptr->pred_structure                            = 2;
-    config_ptr->disable_dlf_flag                          = EB_FALSE;
-    config_ptr->enable_global_motion                      = EB_TRUE;
-    config_ptr->progress                                  = 1;
-    config_ptr->enable_warped_motion                      = DEFAULT;
-    config_ptr->cdef_level                                = DEFAULT;
-    config_ptr->enable_restoration_filtering              = DEFAULT;
-    config_ptr->sg_filter_mode                            = DEFAULT;
-    config_ptr->wn_filter_mode                            = DEFAULT;
-    config_ptr->intra_angle_delta                         = DEFAULT;
-    config_ptr->inter_intra_compound                      = DEFAULT;
-    config_ptr->enable_paeth                              = DEFAULT;
-    config_ptr->enable_smooth                             = DEFAULT;
-    config_ptr->mrp_level                                 = DEFAULT;
-    config_ptr->enable_mfmv                               = DEFAULT;
-    config_ptr->enable_redundant_blk                      = DEFAULT;
-    config_ptr->spatial_sse_full_loop_level               = DEFAULT;
-    config_ptr->over_bndry_blk                            = DEFAULT;
-    config_ptr->new_nearest_comb_inject                   = DEFAULT;
-    config_ptr->nsq_table                                 = DEFAULT;
-    config_ptr->frame_end_cdf_update                      = DEFAULT;
-    config_ptr->set_chroma_mode                           = DEFAULT;
-    config_ptr->disable_cfl_flag                          = DEFAULT;
-    config_ptr->obmc_level                                = DEFAULT;
-    config_ptr->rdoq_level                                = DEFAULT;
-    config_ptr->pred_me                                   = DEFAULT;
-    config_ptr->bipred_3x3_inject                         = DEFAULT;
-    config_ptr->compound_level                            = DEFAULT;
-    config_ptr->filter_intra_level                        = DEFAULT;
-    config_ptr->enable_intra_edge_filter                  = DEFAULT;
-    config_ptr->pic_based_rate_est                        = DEFAULT;
-    config_ptr->ext_block_flag                            = EB_FALSE;
-    config_ptr->use_default_me_hme                        = EB_TRUE;
-    config_ptr->enable_hme_flag                           = EB_TRUE;
-    config_ptr->enable_hme_level0_flag                    = EB_TRUE;
-    config_ptr->enable_hme_level1_flag                    = EB_FALSE;
-    config_ptr->enable_hme_level2_flag                    = EB_FALSE;
-    config_ptr->search_area_width                         = 16;
-    config_ptr->search_area_height                        = 7;
-    config_ptr->number_hme_search_region_in_width         = 2;
-    config_ptr->number_hme_search_region_in_height        = 2;
-    config_ptr->hme_level0_total_search_area_width        = 64;
-    config_ptr->hme_level0_total_search_area_height       = 25;
-    config_ptr->hme_level0_search_area_in_width_array[0]  = 32;
-    config_ptr->hme_level0_search_area_in_width_array[1]  = 32;
-    config_ptr->hme_level0_search_area_in_height_array[0] = 12;
-    config_ptr->hme_level0_search_area_in_height_array[1] = 13;
-    config_ptr->hme_level1_search_area_in_width_array[0]  = 1;
-    config_ptr->hme_level1_search_area_in_width_array[1]  = 1;
-    config_ptr->hme_level1_search_area_in_height_array[0] = 1;
-    config_ptr->hme_level1_search_area_in_height_array[1] = 1;
-    config_ptr->hme_level2_search_area_in_width_array[0]  = 1;
-    config_ptr->hme_level2_search_area_in_width_array[1]  = 1;
-    config_ptr->hme_level2_search_area_in_height_array[0] = 1;
-    config_ptr->hme_level2_search_area_in_height_array[1] = 1;
-    config_ptr->screen_content_mode                       = 2;
-    config_ptr->enable_hbd_mode_decision                  = DEFAULT;
-    config_ptr->intrabc_mode                              = DEFAULT;
-    config_ptr->palette_level                             = DEFAULT;
-    config_ptr->injector_frame_rate                       = 60 << 16;
-    config_ptr->speed_control_flag                        = 0;
-
-    // ASM Type
-    config_ptr->cpu_flags_limit = CPU_FLAGS_ALL;
-
-    config_ptr->unpin     = 1;
-    config_ptr->target_socket = -1;
-
-    config_ptr->unrestricted_motion_vector = EB_TRUE;
-
-    // --- start: ALTREF_FILTERING_SUPPORT
-    config_ptr->tf_level = DEFAULT;
-    config_ptr->altref_strength = 5;
-    config_ptr->altref_nframes = 13;
-    // --- end: ALTREF_FILTERING_SUPPORT
-
-    // start - super-resolution support
-    config_ptr->superres_mode     = SUPERRES_NONE; // disabled
-    config_ptr->superres_denom    = 8; // no scaling
-    config_ptr->superres_kf_denom = 8; // no scaling
-    config_ptr->superres_qthres   = 43; // random threshold for now
-    // end - super-resolution support
 
     config_ptr->pass = DEFAULT;
 
@@ -1579,11 +1475,17 @@ EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass) {
     c->exit_cond_recon  = APP_ExitConditionError;
     c->exit_cond_input  = APP_ExitConditionError;
     c->active = EB_FALSE;
-    return EB_ErrorNone;
+    return svt_av1_enc_init_handle(
+        &c->app_callback ->svt_encoder_handle, c->app_callback, &c->config->config);
 }
 
-void enc_channel_dctor(EncChannel* c)
+void enc_channel_dctor(EncChannel* c, uint32_t inst_cnt)
 {
+    EbAppContext* ctx = c->app_callback;
+    if (ctx && ctx->svt_encoder_handle) {
+        svt_av1_enc_deinit(ctx->svt_encoder_handle);
+        de_init_encoder(ctx, inst_cnt);
+    }
     eb_config_dtor(c->config);
     free(c->app_callback);
 }
@@ -1780,14 +1682,15 @@ static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t in
 }
 
 /* get config->rc_twopass_stats_in from config->input_stat_file */
-EbBool load_twopass_stats_in(EbConfig *config)
+EbBool load_twopass_stats_in(EbConfig *cfg)
 {
+    EbSvtAv1EncConfiguration* config = &cfg->config;
 #ifdef _WIN32
-    int fd = _fileno(config->input_stat_file);
+    int fd = _fileno(cfg->input_stat_file);
     struct _stat file_stat;
     int ret = _fstat(fd, &file_stat);
 #else
-    int fd = fileno(config->input_stat_file);
+    int fd = fileno(cfg->input_stat_file);
     struct stat file_stat;
     int ret = fstat(fd, &file_stat);
 #endif
@@ -1798,7 +1701,7 @@ EbBool load_twopass_stats_in(EbConfig *config)
     if (config->rc_twopass_stats_in.buf) {
         config->rc_twopass_stats_in.sz = (uint64_t)file_stat.st_size;
         if (fread(config->rc_twopass_stats_in.buf, 1, file_stat.st_size,
-            config->input_stat_file) != (size_t)file_stat.st_size) {
+            cfg->input_stat_file) != (size_t)file_stat.st_size) {
             return EB_FALSE;
         }
     }
@@ -1820,7 +1723,7 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                         channel_number + 1, stats);
                     return EB_ErrorBadParameter;
                 }
-                config->rc_firstpass_stats_out = EB_TRUE;
+                config->config.rc_firstpass_stats_out = EB_TRUE;
             } else if (config->pass == 2) {
                 if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
                     fprintf(config->error_log_file,
@@ -1848,7 +1751,7 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                     return EB_ErrorBadParameter;
                 }
             }
-            config->rc_firstpass_stats_out = EB_TRUE;
+            config->config.rc_firstpass_stats_out = EB_TRUE;
             break;
         }
         case ENCODE_LAST_PASS: {
@@ -1858,7 +1761,7 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                         channel_number + 1);
                 return EB_ErrorBadParameter;
             }
-            config->rc_twopass_stats_in = *rc_twopass_stats_in;
+            config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
             break;
         }
         default: {
@@ -1905,14 +1808,14 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->use_qp_file == EB_TRUE && config->qp_file == NULL) {
+    if (config->config.use_qp_file == EB_TRUE && config->qp_file == NULL) {
         fprintf(config->error_log_file,
                 "Error instance %u: Could not find QP file, UseQpFile is set to 1\n",
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->encoder_color_format != 1) {
+    if (config->config.encoder_color_format != 1) {
         fprintf(config->error_log_file,
                 "Error instance %u: Only support 420 now \n",
                 channel_number + 1);
@@ -1940,11 +1843,11 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
     }
 
     // target_socket
-    if (config->target_socket != -1 && config->target_socket != 0 && config->target_socket != 1) {
+    if (config->config.target_socket != -1 && config->config.target_socket != 0 && config->config.target_socket != 1) {
         fprintf(config->error_log_file,
                 "Error instance %u: Invalid target_socket [-1 - 1], your input: %d\n",
                 channel_number + 1,
-                config->target_socket);
+                config->config.target_socket);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -1977,22 +1880,22 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return EB_ErrorBadParameter;
     }
     if (pass != DEFAULT || config->input_stat_file || config->output_stat_file) {
-        if (config->hierarchical_levels != 4) {
+        if (config->config.hierarchical_levels != 4) {
             fprintf(config->error_log_file,
                 "Error instance %u: 2 pass encode for hierarchical_levels %u is not supported\n",
-                channel_number + 1, config->hierarchical_levels);
+                channel_number + 1, config->config.hierarchical_levels);
             return EB_ErrorBadParameter;
         }
-        if (config->enable_overlays) {
+        if (config->config.enable_overlays) {
             fprintf(config->error_log_file,
                 "Error instance %u: 2 pass encode for overlays is not supported\n",
                 channel_number + 1);
             return EB_ErrorBadParameter;
         }
-        if (config->intra_refresh_type != 2) {
+        if (config->config.intra_refresh_type != 2) {
             fprintf(config->error_log_file,
                 "Error instance %u: 2 pass encode for intra_refresh_type %u is not supported\n",
-                channel_number + 1,config->intra_refresh_type);
+                channel_number + 1,config->config.intra_refresh_type);
             return EB_ErrorBadParameter;
         }
     }
@@ -2291,12 +2194,12 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
     }
 
     frame_size = config->input_padded_width * config->input_padded_height; // Luma
-    frame_size += 2 * (frame_size >> (3 - config->encoder_color_format)); // Add Chroma
-    frame_size = frame_size << ((config->encoder_bit_depth == 10) ? 1 : 0);
+    frame_size += 2 * (frame_size >> (3 - config->config.encoder_color_format)); // Add Chroma
+    frame_size = frame_size << ((config->config.encoder_bit_depth == 10) ? 1 : 0);
 
     if (frame_size == 0) return -1;
 
-    if (config->encoder_bit_depth == 10 && config->compressed_ten_bit_format == 1)
+    if (config->config.encoder_bit_depth == 10 && config->config.compressed_ten_bit_format == 1)
         frame_count = (int32_t)(2 * ((double)file_size / frame_size) / 1.25);
     else
         frame_count = (int32_t)(file_size / frame_size);
@@ -2324,7 +2227,7 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
     int32_t  entry_num            = 0;
     int32_t  display_order = 0, num_ref_list0 = 0, num_ref_list1 = 0;
     int32_t  idx_ref_list0 = 0, idx_ref_list1 = 0;
-
+    EbSvtAv1EncConfiguration* cfg = &config->config;
     // Keep looping until we process the entire file
     while (size--) {
         comment_section_flag =
@@ -2376,15 +2279,15 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                         if (display_order >= (1 << (MAX_HIERARCHICAL_LEVEL - 1))) { return -1; }
                         break;
                     case 1:
-                        config->pred_struct[display_order].decode_order =
+                        cfg->pred_struct[display_order].decode_order =
                             strtoul(var_value[value_index], NULL, 0);
-                        if (config->pred_struct[display_order].decode_order >=
+                        if (cfg->pred_struct[display_order].decode_order >=
                             (1 << (MAX_HIERARCHICAL_LEVEL - 1))) {
                             return -1;
                         }
                         break;
                     case 2:
-                        config->pred_struct[display_order].temporal_layer_index =
+                        cfg->pred_struct[display_order].temporal_layer_index =
                             strtoul(var_value[value_index], NULL, 0);
                         break;
                     case 3: num_ref_list0 = strtoul(var_value[value_index], NULL, 0); break;
@@ -2392,13 +2295,13 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                     default:
                         if (idx_ref_list0 < num_ref_list0) {
                             if (idx_ref_list0 < REF_LIST_MAX_DEPTH) {
-                                config->pred_struct[display_order].ref_list0[idx_ref_list0] =
+                                cfg->pred_struct[display_order].ref_list0[idx_ref_list0] =
                                     strtoul(var_value[value_index], NULL, 0);
                             }
                             ++idx_ref_list0;
                         } else if (idx_ref_list1 < num_ref_list1) {
                             if (idx_ref_list1 < REF_LIST_MAX_DEPTH - 1) {
-                                config->pred_struct[display_order].ref_list1[idx_ref_list1] =
+                                cfg->pred_struct[display_order].ref_list1[idx_ref_list1] =
                                     strtoul(var_value[value_index], NULL, 0);
                             }
                             ++idx_ref_list1;
@@ -2407,10 +2310,10 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
                     }
                 }
                 for (; num_ref_list0 < REF_LIST_MAX_DEPTH; ++num_ref_list0) {
-                    config->pred_struct[display_order].ref_list0[num_ref_list0] = 0;
+                    cfg->pred_struct[display_order].ref_list0[num_ref_list0] = 0;
                 }
                 for (; num_ref_list1 < REF_LIST_MAX_DEPTH - 1; ++num_ref_list1) {
-                    config->pred_struct[display_order].ref_list1[num_ref_list1] = 0;
+                    cfg->pred_struct[display_order].ref_list1[num_ref_list1] = 0;
                 }
             }
         }
@@ -2419,7 +2322,7 @@ static int32_t parse_pred_struct_file(EbConfig *config, char *buffer, int32_t si
         new_line_flag        = (*buffer == CONFIG_FILE_NEWLINE_CHAR) ? 1 : 0;
         ++buffer;
     }
-    config->manual_pred_struct_entry_num = entry_num;
+    cfg->manual_pred_struct_entry_num = entry_num;
 
     return 0;
 }
@@ -2681,7 +2584,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     for (index = 0; index < num_channels; ++index) {
         EncChannel* c = channels + index;
         EbConfig* config = c->config;
-        if (config->enable_manual_pred_struct == EB_TRUE) {
+        if (config->config.enable_manual_pred_struct == EB_TRUE) {
             c->return_error = (EbErrorType)read_pred_struct_file(
                 config, config->input_pred_struct_filename, index);
             return_error = (EbErrorType)(return_error & c->return_error);
@@ -2701,8 +2604,8 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
                 // Assuming no errors, add padding to width and height
                 if (c->return_error == EB_ErrorNone) {
-                    config->input_padded_width = config->source_width;
-                    config->input_padded_height = config->source_height;
+                    config->input_padded_width = config->config.source_width;
+                    config->input_padded_height = config->config.source_height;
                 }
 
                 // Assuming no errors, set the frames to be encoded to the number of frames in the input yuv

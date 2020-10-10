@@ -21,10 +21,14 @@ void set_enc_config(void *config_ptr, const char *name, const char *value) {
     set_config_value(config, name, value);
 }
 
-void *create_enc_config() {
-    EbConfig *config = eb_config_ctor(ENCODE_SINGLE_PASS);
-    assert(config != NULL);
-    return config;
+bool set_default_config(EbSvtAv1EncConfiguration* config)
+{
+    EbComponentType* handle;
+    if (svt_av1_enc_init_handle(&handle, NULL, config) != EB_ErrorNone) {
+        return false;
+    }
+    svt_av1_enc_deinit_handle(handle);
+    return true;
 }
 
 void release_enc_config(void *config_ptr) {
@@ -34,21 +38,21 @@ void release_enc_config(void *config_ptr) {
     }
 }
 
+void *create_enc_config() {
+    EbConfig *config = eb_config_ctor(ENCODE_SINGLE_PASS);
+    assert(config != NULL);
+    if (!set_default_config(&config->config)) {
+        release_enc_config(config);
+        config = NULL;
+    }
+    assert(config != NULL);
+    return config;
+}
+
 int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr) {
-    EbAppContext app_ctx;
     EbConfig *config = (EbConfig *)config_ptr;
-    // Initial app_ctx.eb_enc_parameters by copying from dst_enc_config,
-    // which should be initialed in svt_av1_enc_init_handle
-    memcpy(&app_ctx.eb_enc_parameters,
-           dst_enc_config,
-           sizeof(EbSvtAv1EncConfiguration));
-
-    copy_configuration_parameters(
-        config, &app_ctx, 0);  // instance_idx is not used;
-
-    // copy back to dst_enc_config
     memcpy(dst_enc_config,
-           &app_ctx.eb_enc_parameters,
+           &config->config,
            sizeof(EbSvtAv1EncConfiguration));
     return 0;
 }

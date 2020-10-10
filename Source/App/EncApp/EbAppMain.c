@@ -120,16 +120,16 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
         return return_error;
     }
     // Set main thread affinity
-    if (enc_context->channels[0].config->target_socket != -1)
-        assign_app_thread_group(enc_context->channels[0].config->target_socket);
+    if (enc_context->channels[0].config->config.target_socket != -1)
+        assign_app_thread_group(enc_context->channels[0].config->config.target_socket);
 
     // Init the Encoder
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
         EncChannel* c = enc_context->channels + inst_cnt;
         if (c->return_error == EB_ErrorNone) {
             EbConfig* config = c->config;
-            config->active_channel_count = num_channels;
-            config->channel_id           = inst_cnt;
+            config->config.active_channel_count = num_channels;
+            config->config.channel_id           = inst_cnt;
 
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
                                  &config->performance_context.lib_start_time[1]);
@@ -151,9 +151,7 @@ static void enc_context_dctor(EncContext* enc_context){
     // DeInit Encoder
     for (int32_t inst_cnt = enc_context->num_channels - 1; inst_cnt >= 0; --inst_cnt) {
         EncChannel* c = enc_context->channels + inst_cnt;
-        de_init_encoder(c->app_callback,
-                        inst_cnt);
-        enc_channel_dctor(c);
+        enc_channel_dctor(c, inst_cnt);
     }
 
     for (uint32_t warning_id = 0; warning_id < MAX_NUM_TOKENS; warning_id++)
@@ -170,27 +168,27 @@ static void print_summary(const EncContext* const enc_context)
             c->return_error == EB_ErrorNone) {
             uint64_t frame_count =
                 (uint32_t)config->performance_context.frame_count;
-            uint32_t max_luma_value = (config->encoder_bit_depth == 8) ? 255
+            uint32_t max_luma_value = (config->config.encoder_bit_depth == 8) ? 255
                                                                                     : 1023;
             double max_luma_sse = (double)max_luma_value * max_luma_value *
-                (config->source_width * config->source_height);
+                (config->config.source_width * config->config.source_height);
             double max_chroma_sse = (double)max_luma_value * max_luma_value *
-                (config->source_width / 2 * config->source_height /
+                (config->config.source_width / 2 * config->config.source_height /
                     2);
 
-            if ((config->frame_rate_numerator != 0 &&
-                    config->frame_rate_denominator != 0) ||
-                config->frame_rate != 0) {
-                double frame_rate = config->frame_rate_numerator &&
-                        config->frame_rate_denominator
-                    ? (double)config->frame_rate_numerator /
-                        (double)config->frame_rate_denominator
-                    : config->frame_rate > 1000
+            if ((config->config.frame_rate_numerator != 0 &&
+                    config->config.frame_rate_denominator != 0) ||
+                config->config.frame_rate != 0) {
+                double frame_rate = config->config.frame_rate_numerator &&
+                        config->config.frame_rate_denominator
+                    ? (double)config->config.frame_rate_numerator /
+                        (double)config->config.frame_rate_denominator
+                    : config->config.frame_rate > 1000
                         // Correct for 16-bit fixed-point fractional precision
-                        ? (double)config->frame_rate / (1 << 16)
-                        : (double)config->frame_rate;
+                        ? (double)config->config.frame_rate / (1 << 16)
+                        : (double)config->config.frame_rate;
 
-                if (config->stat_report) {
+                if (config->config.stat_report) {
                     if (config->stat_file) {
                         fprintf(config->stat_file,
                                 "\nSUMMARY "
@@ -260,7 +258,7 @@ static void print_summary(const EncContext* const enc_context)
                             frame_rate / (config->frames_encoded * 1000)));
                 }
 
-                if (config->stat_report) {
+                if (config->config.stat_report) {
                     fprintf(stderr,
                             "\n\t\tAverage PSNR (using per-frame "
                             "PSNR)\t\t|\tOverall PSNR (using per-frame MSE)\t\t|\t"

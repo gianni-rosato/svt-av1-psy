@@ -229,12 +229,12 @@ int32_t read_y4m_header(EbConfig *cfg) {
     }
 
     /* Assign parameters to cfg */
-    cfg->source_width           = width;
-    cfg->source_height          = height;
-    cfg->frame_rate_numerator   = fr_n;
-    cfg->frame_rate_denominator = fr_d;
-    cfg->frame_rate             = fr_n / fr_d;
-    cfg->encoder_bit_depth      = bitdepth;
+    cfg->config.source_width           = width;
+    cfg->config.source_height          = height;
+    cfg->config.frame_rate_numerator   = fr_n;
+    cfg->config.frame_rate_denominator = fr_d;
+    cfg->config.frame_rate             = fr_n / fr_d;
+    cfg->config.encoder_bit_depth      = bitdepth;
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */
 

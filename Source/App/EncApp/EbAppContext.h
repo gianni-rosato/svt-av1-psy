@@ -20,7 +20,6 @@
  * App Callback data struct
  ***************************************/
 struct EbAppContext_ {
-    EbSvtAv1EncConfiguration eb_enc_parameters;
 
     // Output Ports Active Flags
     AppPortActiveType output_stream_port_active;

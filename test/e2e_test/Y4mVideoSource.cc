@@ -62,10 +62,10 @@ EbErrorType Y4MVideoSource::parse_file_info() {
         return EB_ErrorBadParameter;
     read_y4m_header(&cfg);
 
-    width_ = cfg.source_width;
-    height_ = cfg.source_height;
-    bit_depth_ = cfg.encoder_bit_depth;
-    svt_compressed_2bit_plane_ = cfg.compressed_ten_bit_format;
+    width_ = cfg.config.source_width;
+    height_ = cfg.config.source_height;
+    bit_depth_ = cfg.config.encoder_bit_depth;
+    svt_compressed_2bit_plane_ = cfg.config.compressed_ten_bit_format;
 
     // y4m video source use the color format type from test vector param for
     // "read_y4m_header" does not output color format info
