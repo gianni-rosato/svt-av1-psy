@@ -39,8 +39,9 @@ jobs:
           brew update
           brew upgrade -f
           brew install -f yasm ccache cmake
-          printf '%s\n' "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
-            "::set-env name=CCACHE_DIR::$HOME/.ccache"
+          printf '%s\n' \
+            "PATH=/usr/local/opt/ccache/libexec:$PATH" \
+            "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
           clang -v
       - name: Run CMake
         run: cmake -S "$GITHUB_WORKSPACE" -B Build -G"${{ matrix.generator }}" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
@@ -117,8 +118,8 @@ jobs:
             brew install -q yasm ccache cmake ninja
           } || brew update-reset
           printf '%s\n' \
-            "::set-env name=PATH::/usr/local/opt/ccache/libexec:$PATH" \
-            "::set-env name=CCACHE_DIR::$HOME/.ccache"
+            "PATH=/usr/local/opt/ccache/libexec:$PATH" \
+            "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
           clang -v
           rm -rf macos-build
       - name: Run CMake

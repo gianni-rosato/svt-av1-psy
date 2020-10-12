@@ -45,7 +45,7 @@ jobs:
           update: true
 
       - name: Set ccache dir
-        run: Write-Output "::set-env name=CCACHE_DIR::$PWD/.ccache"
+        run: echo "CCACHE_DIR=$PWD/.ccache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Clone SVT-AV1
         uses: actions/checkout@v2

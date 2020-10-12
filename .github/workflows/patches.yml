@@ -60,7 +60,7 @@ jobs:
       - name: Check dependencies
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
-          echo "::set-env name=CCACHE_DIR::$HOME/.ccache"
+          printf '%s\n' "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
           $CC --version
           yasm --version
           cmake --version
@@ -145,8 +145,9 @@ jobs:
             ninja-build \
             python3{,-{pip,setuptools,wheel}}
           pip3 install --user meson
-          printf '%s\n' "::set-env name=CCACHE_DIR::$HOME/.ccache" \
-            "::set-env name=PATH::$PATH:$HOME/.local/bin"
+          printf '%s\n' \
+            "CCACHE_DIR=$HOME/.ccache" \
+            "PATH=$PATH:$HOME/.local/bin" >> $GITHUB_ENV
       - name: Configure SVT-AV1
         run: cmake -S "$GITHUB_WORKSPACE" -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr
       - name: Build and install SVT-AV1
