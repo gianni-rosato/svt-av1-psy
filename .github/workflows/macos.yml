@@ -36,9 +36,10 @@ jobs:
         run: |
           set -x
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
-          brew update
-          brew upgrade -f
-          brew install -f yasm ccache cmake
+          {
+            brew update || brew update-reset
+            brew upgrade yasm ccache cmake ninja || brew install -q yasm ccache cmake ninja
+          } || brew update-reset
           printf '%s\n' \
             "PATH=/usr/local/opt/ccache/libexec:$PATH" \
             "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
@@ -113,9 +114,8 @@ jobs:
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
           {
-            brew update &&
-            brew upgrade &&
-            brew install -q yasm ccache cmake ninja
+            brew update || brew update-reset
+            brew upgrade yasm ccache cmake ninja || brew install -q yasm ccache cmake ninja
           } || brew update-reset
           printf '%s\n' \
             "PATH=/usr/local/opt/ccache/libexec:$PATH" \
