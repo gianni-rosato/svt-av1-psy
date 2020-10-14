@@ -149,7 +149,7 @@ jobs:
           path: Bin/Release
       - name: Run unit tests
         run: |
-          [ -d  macos-vectors ] || cmake -S "$GITHUB_WORKSPACE" -B macos-vectors -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DBUILD_APPS=OFF
+          cmake -S "$GITHUB_WORKSPACE" -B macos-vectors -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON -DBUILD_APPS=OFF
           cmake --build macos-vectors --config Release --target TestVectors
           chmod +x ./Bin/Release/SvtAv1UnitTests
           parallel -u -j 4 GTEST_SHARD_INDEX={} ./Bin/Release/SvtAv1UnitTests ::: $(seq 0 $((GTEST_TOTAL_SHARDS - 1)))
