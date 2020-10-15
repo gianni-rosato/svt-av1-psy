@@ -522,10 +522,10 @@ static int get_projected_gfu_boost(const RATE_CONTROL *rc, int gfu_boost,
 
   double min_boost_factor = sqrt(rc->baseline_gf_interval);
   // Get the current tpl factor (number of frames = frames_to_project).
-  double tpl_factor = av1_get_gfu_boost_projection_factor(
+  double tpl_factor = svt_av1_get_gfu_boost_projection_factor(
       min_boost_factor, MAX_GFUBOOST_FACTOR, frames_to_project);
   // Get the tpl factor when number of frames = num_stats_used_for_prior_boost.
-  double tpl_factor_num_stats = av1_get_gfu_boost_projection_factor(
+  double tpl_factor_num_stats = svt_av1_get_gfu_boost_projection_factor(
       min_boost_factor, MAX_GFUBOOST_FACTOR, num_stats_used_for_gfu_boost);
   int projected_gfu_boost =
       (int)rint((tpl_factor * gfu_boost) / tpl_factor_num_stats);

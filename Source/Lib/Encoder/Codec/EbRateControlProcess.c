@@ -4455,7 +4455,7 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
     return boost;
 }
 
-double av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
+double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
                                            int frame_count) {
   double factor = sqrt((double)frame_count);
   factor = AOMMIN(factor, max_factor);
@@ -4468,12 +4468,12 @@ double av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
 //#define MIN_GFUBOOST_FACTOR 4.0
 static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor,
                                      double r0, int frames_to_key) {
-  double factor = av1_get_gfu_boost_projection_factor(min_factor, max_factor, frames_to_key);
+  double factor = svt_av1_get_gfu_boost_projection_factor(min_factor, max_factor, frames_to_key);
   const int boost = (int)rint(factor / r0);
   return boost;
 }
 
-int combine_prior_with_tpl_boost(int prior_boost, int tpl_boost,
+int svt_combine_prior_with_tpl_boost(int prior_boost, int tpl_boost,
     int frames_to_key) {
     double factor = sqrt((double)frames_to_key);
     factor = AOMMIN(factor, 12.0);
