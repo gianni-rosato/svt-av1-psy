@@ -4473,16 +4473,6 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor,
   return boost;
 }
 
-int svt_combine_prior_with_tpl_boost(int prior_boost, int tpl_boost,
-    int frames_to_key) {
-    double factor = sqrt((double)frames_to_key);
-    factor = AOMMIN(factor, 12.0);
-    factor = AOMMAX(factor, 4.0);
-    factor -= 4.0;
-    int boost = (int)((factor * prior_boost + (8.0 - factor) * tpl_boost) / 8.0);
-    return boost;
-}
-
 int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
     assert(beta > 0.0);
     int q = eb_av1_dc_quant_qtx(qindex, 0, bit_depth);
