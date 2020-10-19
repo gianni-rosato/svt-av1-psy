@@ -278,7 +278,7 @@ class ResidualKernelTest
         }
     }
 
-    void run_16bit_test() {
+    void run_16bit_test_sse2() {
         prepare_16bit_data();
 
         svt_residual_kernel16bit_sse2_intrin(input16bit_,
@@ -289,6 +289,31 @@ class ResidualKernelTest
                                              residual_stride_,
                                              area_width_,
                                              area_height_);
+        svt_residual_kernel16bit_c(input16bit_,
+                                   input_stride_,
+                                   pred16bit_,
+                                   pred_stride_,
+                                   residual2_,
+                                   residual_stride_,
+                                   area_width_,
+                                   area_height_);
+
+        check_residuals(area_width_, area_height_);
+
+
+    }
+
+    void run_16bit_test_avx2() {
+        prepare_16bit_data();
+
+        svt_residual_kernel16bit_avx2(input16bit_,
+                                      input_stride_,
+                                      pred16bit_,
+                                      pred_stride_,
+                                      residual1_,
+                                      residual_stride_,
+                                      area_width_,
+                                      area_height_);
         svt_residual_kernel16bit_c(input16bit_,
                                    input_stride_,
                                    pred16bit_,
@@ -313,7 +338,8 @@ TEST_P(ResidualKernelTest, DISABLED_SpeedTest) {
 };
 
 TEST_P(ResidualKernelTest, 16bitMatchTest) {
-    run_16bit_test();
+    run_16bit_test_sse2();
+    run_16bit_test_avx2();
 };
 
 INSTANTIATE_TEST_CASE_P(ResidualUtil, ResidualKernelTest,

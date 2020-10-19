@@ -1981,9 +1981,9 @@ static void write_buffer_64x64_avx512(__m512i *in, uint16_t *output_r, int32_t s
         in32x32, right_down_r, stride_r, right_down_w, stride_w, fliplr, flipud, bd);
 }
 
-void eb_av1_inv_txfm2d_add_64x64_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        int32_t bd) {
+void svt_av1_inv_txfm2d_add_64x64_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         int32_t bd) {
     __m512i       in[64 * 64 / 16], out[64 * 64 / 16];
     const int8_t *shift   = eb_inv_txfm_shift_ls[TX_64X64];
     const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
@@ -2002,7 +2002,7 @@ void eb_av1_inv_txfm2d_add_64x64_avx512(const int32_t *coeff, uint16_t *output_r
         break;
 
     default:
-        eb_av1_inv_txfm2d_add_64x64_c(coeff, output_r, stride_r, output_w, stride_w, tx_type, bd);
+        svt_av1_inv_txfm2d_add_64x64_c(coeff, output_r, stride_r, output_w, stride_w, tx_type, bd);
         break;
     }
 }

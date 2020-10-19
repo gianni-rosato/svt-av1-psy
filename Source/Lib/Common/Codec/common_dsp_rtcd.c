@@ -275,7 +275,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_c;
     eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_c;
     eb_av1_inv_txfm2d_add_4x4 = eb_av1_inv_txfm2d_add_4x4_c;
-    eb_av1_inv_txfm2d_add_64x64 = eb_av1_inv_txfm2d_add_64x64_c;
+    svt_av1_inv_txfm2d_add_64x64 = svt_av1_inv_txfm2d_add_64x64_c;
     eb_av1_inv_txfm2d_add_8x8 = eb_av1_inv_txfm2d_add_8x8_c;
 
     eb_av1_inv_txfm2d_add_8x16 = eb_av1_inv_txfm2d_add_8x16_c;
@@ -842,7 +842,10 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_16x4 = eb_av1_inv_txfm2d_add_16x4_sse4_1;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_avx2;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_avx2;
-    if (flags & HAS_SSE4_1) eb_av1_inv_txfm2d_add_64x64 = eb_av1_inv_txfm2d_add_64x64_sse4_1;
+    SET_SSE41_AVX2(svt_av1_inv_txfm2d_add_64x64,
+                   svt_av1_inv_txfm2d_add_64x64_c,
+                   svt_av1_inv_txfm2d_add_64x64_sse4_1,
+                   svt_av1_inv_txfm2d_add_64x64_avx2);
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_16x64 = eb_av1_highbd_inv_txfm_add_avx2;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_64x16 = eb_av1_highbd_inv_txfm_add_avx2;
     if (flags & HAS_AVX2) eb_av1_inv_txfm2d_add_32x64 = eb_av1_highbd_inv_txfm_add_avx2;
@@ -853,7 +856,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_AVX512F) {
         eb_av1_inv_txfm2d_add_16x16 = eb_av1_inv_txfm2d_add_16x16_avx512;
         eb_av1_inv_txfm2d_add_32x32 = eb_av1_inv_txfm2d_add_32x32_avx512;
-        eb_av1_inv_txfm2d_add_64x64 = eb_av1_inv_txfm2d_add_64x64_avx512;
+        svt_av1_inv_txfm2d_add_64x64 = svt_av1_inv_txfm2d_add_64x64_avx512;
         eb_av1_inv_txfm2d_add_16x64 = eb_av1_inv_txfm2d_add_16x64_avx512;
         eb_av1_inv_txfm2d_add_64x16 = eb_av1_inv_txfm2d_add_64x16_avx512;
         eb_av1_inv_txfm2d_add_32x64 = eb_av1_inv_txfm2d_add_32x64_avx512;
@@ -902,7 +905,10 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
                         svt_residual_kernel8bit_avx2,
                         svt_residual_kernel8bit_avx512);
 
-        SET_SSE2(svt_residual_kernel16bit, svt_residual_kernel16bit_c, svt_residual_kernel16bit_sse2_intrin);
+        SET_SSE2_AVX2(svt_residual_kernel16bit,
+                      svt_residual_kernel16bit_c,
+                      svt_residual_kernel16bit_sse2_intrin,
+                      svt_residual_kernel16bit_avx2);
         SET_SSE2(svt_picture_average_kernel,
                  svt_picture_average_kernel_c,
                  svt_picture_average_kernel_sse2_intrin);

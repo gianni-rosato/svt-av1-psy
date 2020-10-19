@@ -107,7 +107,7 @@ static const InvSqrTxfmFuncPair inv_txfm_c_avx2_func_pairs[TX_64X64 + 1] = {
     SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_8x8, avx2, all_txtype_imp),
     SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_16x16, avx2, all_txtype_imp),
     SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_32x32, avx2, is_tx_type_imp_32x32_avx2),
-    EMPTY_FUNC_PAIRS(eb_av1_inv_txfm2d_add_64x64),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, avx2, is_tx_type_imp_64x64_sse4),
 };
 
 static const InvSqrTxfmFuncPair inv_txfm_c_sse4_1_func_pairs[TX_64X64 + 1] = {
@@ -115,7 +115,7 @@ static const InvSqrTxfmFuncPair inv_txfm_c_sse4_1_func_pairs[TX_64X64 + 1] = {
     SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_8x8, sse4_1, dct_adst_combine_imp),
     SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_16x16, sse4_1, dct_adst_combine_imp),
     EMPTY_FUNC_PAIRS(eb_av1_inv_txfm2d_add_32x32),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_64x64, sse4_1, is_tx_type_imp_64x64_sse4),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, sse4_1, is_tx_type_imp_64x64_sse4),
 };
 
 // from TX_4X8 to TX_SIZES_ALL
@@ -394,7 +394,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             eb_av1_inv_txfm2d_add_8x8_c,
             eb_av1_inv_txfm2d_add_16x16_c,
             eb_av1_inv_txfm2d_add_32x32_c,
-            eb_av1_inv_txfm2d_add_64x64_c};
+            svt_av1_inv_txfm2d_add_64x64_c};
         const LowbdInvRectTxfmRefFunc lowbd_rect_ref_funcs[TX_SIZES_ALL] = {
             nullptr,
             nullptr,

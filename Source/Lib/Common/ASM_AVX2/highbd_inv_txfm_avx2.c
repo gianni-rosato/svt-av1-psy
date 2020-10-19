@@ -1118,6 +1118,46 @@ void eb_av1_inv_txfm2d_add_8x8_avx2(const int32_t *input, uint16_t *output_r, in
     const int32_t txh_idx = get_txh_idx(TX_8X8);
 
     switch (tx_type) {
+    case DCT_DCT:
+        load_buffer_8x8(input, in);
+        transpose_8x8_avx2(in, out);
+        idct8_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx]);
+        transpose_8x8_avx2(in, out);
+        round_shift_8x8(out, -shift[0]);
+        idct8_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx]);
+        round_shift_8x8(in, -shift[1]);
+        write_buffer_8x8(in, output_r, stride_r, output_w, stride_w, 0, 0, bd);
+        break;
+    case DCT_ADST:
+        load_buffer_8x8(input, in);
+        transpose_8x8_avx2(in, out);
+        iadst8_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx]);
+        transpose_8x8_avx2(in, out);
+        round_shift_8x8(out, -shift[0]);
+        idct8_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx]);
+        round_shift_8x8(in, -shift[1]);
+        write_buffer_8x8(in, output_r, stride_r, output_w, stride_w, 0, 0, bd);
+        break;
+    case ADST_DCT:
+        load_buffer_8x8(input, in);
+        transpose_8x8_avx2(in, out);
+        idct8_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx]);
+        transpose_8x8_avx2(in, out);
+        round_shift_8x8(out, -shift[0]);
+        iadst8_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx]);
+        round_shift_8x8(in, -shift[1]);
+        write_buffer_8x8(in, output_r, stride_r, output_w, stride_w, 0, 0, bd);
+        break;
+    case ADST_ADST:
+        load_buffer_8x8(input, in);
+        transpose_8x8_avx2(in, out);
+        iadst8_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx]);
+        transpose_8x8_avx2(in, out);
+        round_shift_8x8(out, -shift[0]);
+        iadst8_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx]);
+        round_shift_8x8(in, -shift[1]);
+        write_buffer_8x8(in, output_r, stride_r, output_w, stride_w, 0, 0, bd);
+        break;
     case IDTX:
         load_buffer_8x8(input, in);
         // Operations can be joined together without losing precision
@@ -1235,6 +1275,44 @@ static INLINE void write_buffer_16x16(__m256i *in, uint16_t *output_r, int32_t s
         v0 = _mm256_packus_epi32(v0, v1);
 
         _mm256_storeu_si256((__m256i *)output_w, v0);
+
+        output_r += stride_r;
+        output_w += stride_w;
+        i += 2;
+    }
+}
+
+static INLINE void write_buffer_16x16_new(__m256i *in, uint16_t *output_r, int32_t stride_r,
+                                          uint16_t *output_w, int32_t stride_w, int32_t bd) {
+    __m128i u0_a, u0_b;
+    __m256i u1_a, u1_b;
+    __m256i v0_a, v0_b;
+    __m128i p, q, r, s;
+
+    int32_t i = 0;
+
+    while (i < 32) {
+        u0_a = _mm_loadu_si128((const __m128i *)output_r);
+        u0_b = _mm_loadu_si128((const __m128i *)(output_r + 8));
+
+        u1_a = _mm256_cvtepu16_epi32(u0_a);
+        u1_b = _mm256_cvtepu16_epi32(u0_b);
+        v0_a = in[i];
+        v0_b = in[i + 1];
+
+        v0_a = _mm256_add_epi32(v0_a, u1_a);
+        v0_b = _mm256_add_epi32(v0_b, u1_b);
+
+        p    = _mm256_castsi256_si128(v0_a);
+        q    = _mm256_extracti128_si256(v0_a, 0x1);
+        r    = _mm256_castsi256_si128(v0_b);
+        s    = _mm256_extracti128_si256(v0_b, 0x1);
+        p    = _mm_packus_epi32(p, q);
+        r    = _mm_packus_epi32(r, s);
+        u1_a = _mm256_castsi128_si256(p);
+        u1_a = _mm256_insertf128_si256(u1_a, r, 0x1);
+        u1_a = highbd_clamp_epi16_avx2(u1_a, bd);
+        _mm256_storeu_si256((__m256i *)output_w, u1_a);
 
         output_r += stride_r;
         output_w += stride_w;
@@ -1605,6 +1683,46 @@ void eb_av1_inv_txfm2d_add_16x16_avx2(const int32_t *input, uint16_t *output_r, 
     const int32_t txh_idx = get_txh_idx(TX_16X16);
 
     switch (tx_type) {
+    case DCT_DCT:
+        load_buffer_16x16(input, in);
+        transpose_16x16_avx2(in, out);
+        idct16_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx], shift);
+        round_shift_16x16(in, -shift[0]);
+        transpose_16x16_avx2(in, out);
+        idct16_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx], shift);
+        round_shift_16x16(in, -shift[1]);
+        write_buffer_16x16_new(in, output_r, stride_r, output_w, stride_w, bd);
+        break;
+    case DCT_ADST:
+        load_buffer_16x16(input, in);
+        transpose_16x16_avx2(in, out);
+        iadst16_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx]);
+        round_shift_16x16(in, -shift[0]);
+        transpose_16x16_avx2(in, out);
+        idct16_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx], shift);
+        round_shift_16x16(in, -shift[1]);
+        write_buffer_16x16_new(in, output_r, stride_r, output_w, stride_w, bd);
+        break;
+    case ADST_DCT:
+        load_buffer_16x16(input, in);
+        transpose_16x16_avx2(in, out);
+        idct16_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx], shift);
+        round_shift_16x16(in, -shift[0]);
+        transpose_16x16_avx2(in, out);
+        iadst16_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx]);
+        round_shift_16x16(in, -shift[1]);
+        write_buffer_16x16_new(in, output_r, stride_r, output_w, stride_w, bd);
+        break;
+    case ADST_ADST:
+        load_buffer_16x16(input, in);
+        transpose_16x16_avx2(in, out);
+        iadst16_col_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx]);
+        round_shift_16x16(in, -shift[0]);
+        transpose_16x16_avx2(in, out);
+        iadst16_col_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx]);
+        round_shift_16x16(in, -shift[1]);
+        write_buffer_16x16_new(in, output_r, stride_r, output_w, stride_w, bd);
+        break;
     case IDTX:
         load_buffer_16x16(input, in);
         iidentity16_and_round_shift_avx2(in, -shift[0]);
@@ -6145,4 +6263,627 @@ void eb_av1_highbd_inv_txfm_add_avx2(const int32_t *input, uint16_t *output_r, i
 
     eb_av1_highbd_inv_txfm2d_add_universe_avx2(
         input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob, bd);
+}
+
+static void load_buffer_64x64_lower_32x32_avx2(const int32_t *coeff, __m256i *in) {
+    int32_t i, j;
+
+    __m256i zero = _mm256_setzero_si256();
+
+    for (i = 0; i < 32; ++i) {
+        for (j = 0; j < 4; ++j) {
+            in[8 * i + j]     = _mm256_loadu_si256((const __m256i *)(coeff + 32 * i + 8 * j));
+            in[8 * i + j + 4] = zero;
+        }
+    }
+
+    for (i = 0; i < 256; ++i) in[256 + i] = zero;
+}
+
+static INLINE void transpose_8nx8n(const __m256i *input, __m256i *output, const int32_t width,
+                                   const int32_t height) {
+    const int32_t numcol = height >> 3;
+    const int32_t numrow = width >> 3;
+    __m256i       out1[8];
+    for (int32_t j = 0; j < numrow; j++) {
+        for (int32_t i = 0; i < numcol; i++) {
+            TRANSPOSE_4X4_AVX2(input[i * width + j + (numrow * 0)],
+                               input[i * width + j + (numrow * 1)],
+                               input[i * width + j + (numrow * 2)],
+                               input[i * width + j + (numrow * 3)],
+                               out1[0],
+                               out1[1],
+                               out1[4],
+                               out1[5]);
+            TRANSPOSE_4X4_AVX2(input[i * width + j + (numrow * 4)],
+                               input[i * width + j + (numrow * 5)],
+                               input[i * width + j + (numrow * 6)],
+                               input[i * width + j + (numrow * 7)],
+                               out1[2],
+                               out1[3],
+                               out1[6],
+                               out1[7]);
+            output[j * height + i + (numcol * 0)] = _mm256_permute2x128_si256(
+                out1[0], out1[2], 0x20);
+            output[j * height + i + (numcol * 1)] = _mm256_permute2x128_si256(
+                out1[1], out1[3], 0x20);
+            output[j * height + i + (numcol * 2)] = _mm256_permute2x128_si256(
+                out1[4], out1[6], 0x20);
+            output[j * height + i + (numcol * 3)] = _mm256_permute2x128_si256(
+                out1[5], out1[7], 0x20);
+            output[j * height + i + (numcol * 4)] = _mm256_permute2x128_si256(
+                out1[0], out1[2], 0x31);
+            output[j * height + i + (numcol * 5)] = _mm256_permute2x128_si256(
+                out1[1], out1[3], 0x31);
+            output[j * height + i + (numcol * 6)] = _mm256_permute2x128_si256(
+                out1[4], out1[6], 0x31);
+            output[j * height + i + (numcol * 7)] = _mm256_permute2x128_si256(
+                out1[5], out1[7], 0x31);
+        }
+    }
+}
+
+static void round_shift_64x64_avx2(__m256i *in, const int8_t shift) {
+    uint8_t ushift = (uint8_t)shift;
+    __m256i rnding = _mm256_set1_epi32(1 << (ushift - 1));
+
+    for (int32_t i = 0; i < 512; i += 4) {
+        in[i]     = _mm256_add_epi32(in[i], rnding);
+        in[i + 1] = _mm256_add_epi32(in[i + 1], rnding);
+        in[i + 2] = _mm256_add_epi32(in[i + 2], rnding);
+        in[i + 3] = _mm256_add_epi32(in[i + 3], rnding);
+
+        in[i]     = _mm256_srai_epi32(in[i], ushift);
+        in[i + 1] = _mm256_srai_epi32(in[i + 1], ushift);
+        in[i + 2] = _mm256_srai_epi32(in[i + 2], ushift);
+        in[i + 3] = _mm256_srai_epi32(in[i + 3], ushift);
+    }
+}
+
+static void assign_32x32_input_from_64x64(const __m256i *in, __m256i *in32x32, int32_t col) {
+    int32_t i;
+    for (i = 0; i < 32 * 32 / 8; i += 4) {
+        in32x32[i]     = in[col];
+        in32x32[i + 1] = in[col + 1];
+        in32x32[i + 2] = in[col + 2];
+        in32x32[i + 3] = in[col + 3];
+        col += 8;
+    }
+}
+
+static void assign_16x16_input_from_32x32(const __m256i *in, __m256i *in16x16, int32_t col) {
+    int32_t i;
+    for (i = 0; i < 32; i += 2) {
+        in16x16[i]     = in[col];
+        in16x16[i + 1] = in[col + 1];
+        col += 4;
+    }
+}
+
+static void write_buffer_32x32_new(__m256i *in, uint16_t *output_r, int32_t stride_r,
+                                   uint16_t *output_w, int32_t stride_w, int32_t bd) {
+    __m256i   in16x16[32];
+    uint16_t *left_up_r    = &output_r[0];
+    uint16_t *right_up_r   = &output_r[16];
+    uint16_t *left_down_r  = &output_r[16 * stride_r];
+    uint16_t *right_down_r = &output_r[16 * stride_r + 16];
+    uint16_t *left_up_w    = &output_w[0];
+    uint16_t *right_up_w   = &output_w[16];
+    uint16_t *left_down_w  = &output_w[16 * stride_w];
+    uint16_t *right_down_w = &output_w[16 * stride_w + 16];
+
+    // Left-up quarter
+    assign_16x16_input_from_32x32(in, in16x16, 0);
+    write_buffer_16x16_new(in16x16, left_up_r, stride_r, left_up_w, stride_w, bd);
+
+    // Right-up quarter
+    assign_16x16_input_from_32x32(in, in16x16, 32 / 2 / 8);
+    write_buffer_16x16_new(in16x16, right_up_r, stride_r, right_up_w, stride_w, bd);
+
+    // Left-down quarter
+    assign_16x16_input_from_32x32(in, in16x16, 32 * 32 / 2 / 8);
+    write_buffer_16x16_new(in16x16, left_down_r, stride_r, left_down_w, stride_w, bd);
+
+    // Right-down quarter
+    assign_16x16_input_from_32x32(in, in16x16, 32 * 32 / 2 / 8 + 32 / 2 / 8);
+    write_buffer_16x16_new(in16x16, right_down_r, stride_r, right_down_w, stride_w, bd);
+}
+
+static void write_buffer_64x64_avx2(__m256i *in, uint16_t *output_r, int32_t stride_r,
+                                   uint16_t *output_w, int32_t stride_w, int32_t bd) {
+    __m256i   in32x32[32 * 32 / 8];
+    uint16_t *left_up_r    = &output_r[0];
+    uint16_t *right_up_r   = &output_r[32];
+    uint16_t *left_down_r  = &output_r[32 * stride_r];
+    uint16_t *right_down_r = &output_r[32 * stride_r + 32];
+    uint16_t *left_up_w    = &output_w[0];
+    uint16_t *right_up_w   = &output_w[32];
+    uint16_t *left_down_w  = &output_w[32 * stride_w];
+    uint16_t *right_down_w = &output_w[32 * stride_w + 32];
+
+    // Left-up quarter
+    assign_32x32_input_from_64x64(in, in32x32, 0);
+    write_buffer_32x32_new(in32x32, left_up_r, stride_r, left_up_w, stride_w, bd);
+
+    // Right-up quarter
+    assign_32x32_input_from_64x64(in, in32x32, 64 / 2 / 8);
+    write_buffer_32x32_new(in32x32, right_up_r, stride_r, right_up_w, stride_w, bd);
+
+    // Left-down quarter
+    assign_32x32_input_from_64x64(in, in32x32, 64 * 64 / 2 / 8);
+    write_buffer_32x32_new(in32x32, left_down_r, stride_r, left_down_w, stride_w, bd);
+
+    // Right-down quarter
+    assign_32x32_input_from_64x64(in, in32x32, 64 * 64 / 2 / 8 + 64 / 2 / 8);
+    write_buffer_32x32_new(in32x32, right_down_r, stride_r, right_down_w, stride_w, bd);
+}
+
+static void idct64x64_avx2(__m256i *in, __m256i *out, int32_t bit, int32_t do_cols, int32_t bd) {
+    int32_t        i, j;
+    const int32_t *cospi     = cospi_arr(bit);
+    const __m256i  rnding    = _mm256_set1_epi32(1 << (bit - 1));
+    const int32_t  log_range = AOMMAX(16, bd + (do_cols ? 6 : 8));
+    const __m256i  clamp_lo  = _mm256_set1_epi32(-(1 << (log_range - 1)));
+    const __m256i  clamp_hi  = _mm256_set1_epi32((1 << (log_range - 1)) - 1);
+    int32_t        col;
+
+    const __m256i cospi1  = _mm256_set1_epi32(cospi[1]);
+    const __m256i cospi2  = _mm256_set1_epi32(cospi[2]);
+    const __m256i cospi3  = _mm256_set1_epi32(cospi[3]);
+    const __m256i cospi4  = _mm256_set1_epi32(cospi[4]);
+    const __m256i cospi5  = _mm256_set1_epi32(cospi[5]);
+    const __m256i cospi6  = _mm256_set1_epi32(cospi[6]);
+    const __m256i cospi7  = _mm256_set1_epi32(cospi[7]);
+    const __m256i cospi8  = _mm256_set1_epi32(cospi[8]);
+    const __m256i cospi9  = _mm256_set1_epi32(cospi[9]);
+    const __m256i cospi10 = _mm256_set1_epi32(cospi[10]);
+    const __m256i cospi11 = _mm256_set1_epi32(cospi[11]);
+    const __m256i cospi12 = _mm256_set1_epi32(cospi[12]);
+    const __m256i cospi13 = _mm256_set1_epi32(cospi[13]);
+    const __m256i cospi14 = _mm256_set1_epi32(cospi[14]);
+    const __m256i cospi15 = _mm256_set1_epi32(cospi[15]);
+    const __m256i cospi16 = _mm256_set1_epi32(cospi[16]);
+    const __m256i cospi17 = _mm256_set1_epi32(cospi[17]);
+    const __m256i cospi18 = _mm256_set1_epi32(cospi[18]);
+    const __m256i cospi19 = _mm256_set1_epi32(cospi[19]);
+    const __m256i cospi20 = _mm256_set1_epi32(cospi[20]);
+    const __m256i cospi21 = _mm256_set1_epi32(cospi[21]);
+    const __m256i cospi22 = _mm256_set1_epi32(cospi[22]);
+    const __m256i cospi23 = _mm256_set1_epi32(cospi[23]);
+    const __m256i cospi24 = _mm256_set1_epi32(cospi[24]);
+    const __m256i cospi25 = _mm256_set1_epi32(cospi[25]);
+    const __m256i cospi26 = _mm256_set1_epi32(cospi[26]);
+    const __m256i cospi27 = _mm256_set1_epi32(cospi[27]);
+    const __m256i cospi28 = _mm256_set1_epi32(cospi[28]);
+    const __m256i cospi29 = _mm256_set1_epi32(cospi[29]);
+    const __m256i cospi30 = _mm256_set1_epi32(cospi[30]);
+    const __m256i cospi31 = _mm256_set1_epi32(cospi[31]);
+    const __m256i cospi32 = _mm256_set1_epi32(cospi[32]);
+    const __m256i cospi35 = _mm256_set1_epi32(cospi[35]);
+    const __m256i cospi36 = _mm256_set1_epi32(cospi[36]);
+    const __m256i cospi38 = _mm256_set1_epi32(cospi[38]);
+    const __m256i cospi39 = _mm256_set1_epi32(cospi[39]);
+    const __m256i cospi40 = _mm256_set1_epi32(cospi[40]);
+    const __m256i cospi43 = _mm256_set1_epi32(cospi[43]);
+    const __m256i cospi44 = _mm256_set1_epi32(cospi[44]);
+    const __m256i cospi46 = _mm256_set1_epi32(cospi[46]);
+    const __m256i cospi47 = _mm256_set1_epi32(cospi[47]);
+    const __m256i cospi48 = _mm256_set1_epi32(cospi[48]);
+    const __m256i cospi51 = _mm256_set1_epi32(cospi[51]);
+    const __m256i cospi52 = _mm256_set1_epi32(cospi[52]);
+    const __m256i cospi54 = _mm256_set1_epi32(cospi[54]);
+    const __m256i cospi55 = _mm256_set1_epi32(cospi[55]);
+    const __m256i cospi56 = _mm256_set1_epi32(cospi[56]);
+    const __m256i cospi59 = _mm256_set1_epi32(cospi[59]);
+    const __m256i cospi60 = _mm256_set1_epi32(cospi[60]);
+    const __m256i cospi62 = _mm256_set1_epi32(cospi[62]);
+    const __m256i cospi63 = _mm256_set1_epi32(cospi[63]);
+
+    const __m256i cospim4  = _mm256_set1_epi32(-cospi[4]);
+    const __m256i cospim8  = _mm256_set1_epi32(-cospi[8]);
+    const __m256i cospim12 = _mm256_set1_epi32(-cospi[12]);
+    const __m256i cospim16 = _mm256_set1_epi32(-cospi[16]);
+    const __m256i cospim20 = _mm256_set1_epi32(-cospi[20]);
+    const __m256i cospim24 = _mm256_set1_epi32(-cospi[24]);
+    const __m256i cospim28 = _mm256_set1_epi32(-cospi[28]);
+    const __m256i cospim32 = _mm256_set1_epi32(-cospi[32]);
+    const __m256i cospim33 = _mm256_set1_epi32(-cospi[33]);
+    const __m256i cospim34 = _mm256_set1_epi32(-cospi[34]);
+    const __m256i cospim36 = _mm256_set1_epi32(-cospi[36]);
+    const __m256i cospim37 = _mm256_set1_epi32(-cospi[37]);
+    const __m256i cospim40 = _mm256_set1_epi32(-cospi[40]);
+    const __m256i cospim41 = _mm256_set1_epi32(-cospi[41]);
+    const __m256i cospim42 = _mm256_set1_epi32(-cospi[42]);
+    const __m256i cospim44 = _mm256_set1_epi32(-cospi[44]);
+    const __m256i cospim45 = _mm256_set1_epi32(-cospi[45]);
+    const __m256i cospim48 = _mm256_set1_epi32(-cospi[48]);
+    const __m256i cospim49 = _mm256_set1_epi32(-cospi[49]);
+    const __m256i cospim50 = _mm256_set1_epi32(-cospi[50]);
+    const __m256i cospim52 = _mm256_set1_epi32(-cospi[52]);
+    const __m256i cospim53 = _mm256_set1_epi32(-cospi[53]);
+    const __m256i cospim56 = _mm256_set1_epi32(-cospi[56]);
+    const __m256i cospim57 = _mm256_set1_epi32(-cospi[57]);
+    const __m256i cospim58 = _mm256_set1_epi32(-cospi[58]);
+    const __m256i cospim60 = _mm256_set1_epi32(-cospi[60]);
+    const __m256i cospim61 = _mm256_set1_epi32(-cospi[61]);
+
+    for (col = 0; col < (do_cols ? 64 / 8 : 32 / 8); ++col) {
+        __m256i u[64], v[64];
+
+        // stage 1
+        u[32] = in[1 * 8 + col];
+        u[34] = in[17 * 8 + col];
+        u[36] = in[9 * 8 + col];
+        u[38] = in[25 * 8 + col];
+        u[40] = in[5 * 8 + col];
+        u[42] = in[21 * 8 + col];
+        u[44] = in[13 * 8 + col];
+        u[46] = in[29 * 8 + col];
+        u[48] = in[3 * 8 + col];
+        u[50] = in[19 * 8 + col];
+        u[52] = in[11 * 8 + col];
+        u[54] = in[27 * 8 + col];
+        u[56] = in[7 * 8 + col];
+        u[58] = in[23 * 8 + col];
+        u[60] = in[15 * 8 + col];
+        u[62] = in[31 * 8 + col];
+
+        v[16] = in[2 * 8 + col];
+        v[18] = in[18 * 8 + col];
+        v[20] = in[10 * 8 + col];
+        v[22] = in[26 * 8 + col];
+        v[24] = in[6 * 8 + col];
+        v[26] = in[22 * 8 + col];
+        v[28] = in[14 * 8 + col];
+        v[30] = in[30 * 8 + col];
+
+        u[8]  = in[4 * 8 + col];
+        u[10] = in[20 * 8 + col];
+        u[12] = in[12 * 8 + col];
+        u[14] = in[28 * 8 + col];
+
+        v[4] = in[8 * 8 + col];
+        v[6] = in[24 * 8 + col];
+
+        u[0] = in[0 * 8 + col];
+        u[2] = in[16 * 8 + col];
+
+        // stage 2
+        v[32] = half_btf_0_avx2(&cospi63, &u[32], &rnding, bit);
+        v[33] = half_btf_0_avx2(&cospim33, &u[62], &rnding, bit);
+        v[34] = half_btf_0_avx2(&cospi47, &u[34], &rnding, bit);
+        v[35] = half_btf_0_avx2(&cospim49, &u[60], &rnding, bit);
+        v[36] = half_btf_0_avx2(&cospi55, &u[36], &rnding, bit);
+        v[37] = half_btf_0_avx2(&cospim41, &u[58], &rnding, bit);
+        v[38] = half_btf_0_avx2(&cospi39, &u[38], &rnding, bit);
+        v[39] = half_btf_0_avx2(&cospim57, &u[56], &rnding, bit);
+        v[40] = half_btf_0_avx2(&cospi59, &u[40], &rnding, bit);
+        v[41] = half_btf_0_avx2(&cospim37, &u[54], &rnding, bit);
+        v[42] = half_btf_0_avx2(&cospi43, &u[42], &rnding, bit);
+        v[43] = half_btf_0_avx2(&cospim53, &u[52], &rnding, bit);
+        v[44] = half_btf_0_avx2(&cospi51, &u[44], &rnding, bit);
+        v[45] = half_btf_0_avx2(&cospim45, &u[50], &rnding, bit);
+        v[46] = half_btf_0_avx2(&cospi35, &u[46], &rnding, bit);
+        v[47] = half_btf_0_avx2(&cospim61, &u[48], &rnding, bit);
+        v[48] = half_btf_0_avx2(&cospi3, &u[48], &rnding, bit);
+        v[49] = half_btf_0_avx2(&cospi29, &u[46], &rnding, bit);
+        v[50] = half_btf_0_avx2(&cospi19, &u[50], &rnding, bit);
+        v[51] = half_btf_0_avx2(&cospi13, &u[44], &rnding, bit);
+        v[52] = half_btf_0_avx2(&cospi11, &u[52], &rnding, bit);
+        v[53] = half_btf_0_avx2(&cospi21, &u[42], &rnding, bit);
+        v[54] = half_btf_0_avx2(&cospi27, &u[54], &rnding, bit);
+        v[55] = half_btf_0_avx2(&cospi5, &u[40], &rnding, bit);
+        v[56] = half_btf_0_avx2(&cospi7, &u[56], &rnding, bit);
+        v[57] = half_btf_0_avx2(&cospi25, &u[38], &rnding, bit);
+        v[58] = half_btf_0_avx2(&cospi23, &u[58], &rnding, bit);
+        v[59] = half_btf_0_avx2(&cospi9, &u[36], &rnding, bit);
+        v[60] = half_btf_0_avx2(&cospi15, &u[60], &rnding, bit);
+        v[61] = half_btf_0_avx2(&cospi17, &u[34], &rnding, bit);
+        v[62] = half_btf_0_avx2(&cospi31, &u[62], &rnding, bit);
+        v[63] = half_btf_0_avx2(&cospi1, &u[32], &rnding, bit);
+
+        // stage 3
+        u[16] = half_btf_0_avx2(&cospi62, &v[16], &rnding, bit);
+        u[17] = half_btf_0_avx2(&cospim34, &v[30], &rnding, bit);
+        u[18] = half_btf_0_avx2(&cospi46, &v[18], &rnding, bit);
+        u[19] = half_btf_0_avx2(&cospim50, &v[28], &rnding, bit);
+        u[20] = half_btf_0_avx2(&cospi54, &v[20], &rnding, bit);
+        u[21] = half_btf_0_avx2(&cospim42, &v[26], &rnding, bit);
+        u[22] = half_btf_0_avx2(&cospi38, &v[22], &rnding, bit);
+        u[23] = half_btf_0_avx2(&cospim58, &v[24], &rnding, bit);
+        u[24] = half_btf_0_avx2(&cospi6, &v[24], &rnding, bit);
+        u[25] = half_btf_0_avx2(&cospi26, &v[22], &rnding, bit);
+        u[26] = half_btf_0_avx2(&cospi22, &v[26], &rnding, bit);
+        u[27] = half_btf_0_avx2(&cospi10, &v[20], &rnding, bit);
+        u[28] = half_btf_0_avx2(&cospi14, &v[28], &rnding, bit);
+        u[29] = half_btf_0_avx2(&cospi18, &v[18], &rnding, bit);
+        u[30] = half_btf_0_avx2(&cospi30, &v[30], &rnding, bit);
+        u[31] = half_btf_0_avx2(&cospi2, &v[16], &rnding, bit);
+
+        for (i = 32; i < 64; i += 4) {
+            addsub_avx2(v[i + 0], v[i + 1], &u[i + 0], &u[i + 1], &clamp_lo, &clamp_hi);
+            addsub_avx2(v[i + 3], v[i + 2], &u[i + 3], &u[i + 2], &clamp_lo, &clamp_hi);
+        }
+
+        // stage 4
+        v[8]  = half_btf_0_avx2(&cospi60, &u[8], &rnding, bit);
+        v[9]  = half_btf_0_avx2(&cospim36, &u[14], &rnding, bit);
+        v[10] = half_btf_0_avx2(&cospi44, &u[10], &rnding, bit);
+        v[11] = half_btf_0_avx2(&cospim52, &u[12], &rnding, bit);
+        v[12] = half_btf_0_avx2(&cospi12, &u[12], &rnding, bit);
+        v[13] = half_btf_0_avx2(&cospi20, &u[10], &rnding, bit);
+        v[14] = half_btf_0_avx2(&cospi28, &u[14], &rnding, bit);
+        v[15] = half_btf_0_avx2(&cospi4, &u[8], &rnding, bit);
+
+        for (i = 16; i < 32; i += 4) {
+            addsub_avx2(u[i + 0], u[i + 1], &v[i + 0], &v[i + 1], &clamp_lo, &clamp_hi);
+            addsub_avx2(u[i + 3], u[i + 2], &v[i + 3], &v[i + 2], &clamp_lo, &clamp_hi);
+        }
+
+        for (i = 32; i < 64; i += 4) {
+            v[i + 0] = u[i + 0];
+            v[i + 3] = u[i + 3];
+        }
+
+        v[33] = half_btf_avx2(&cospim4, &u[33], &cospi60, &u[62], &rnding, bit);
+        v[34] = half_btf_avx2(&cospim60, &u[34], &cospim4, &u[61], &rnding, bit);
+        v[37] = half_btf_avx2(&cospim36, &u[37], &cospi28, &u[58], &rnding, bit);
+        v[38] = half_btf_avx2(&cospim28, &u[38], &cospim36, &u[57], &rnding, bit);
+        v[41] = half_btf_avx2(&cospim20, &u[41], &cospi44, &u[54], &rnding, bit);
+        v[42] = half_btf_avx2(&cospim44, &u[42], &cospim20, &u[53], &rnding, bit);
+        v[45] = half_btf_avx2(&cospim52, &u[45], &cospi12, &u[50], &rnding, bit);
+        v[46] = half_btf_avx2(&cospim12, &u[46], &cospim52, &u[49], &rnding, bit);
+        v[49] = half_btf_avx2(&cospim52, &u[46], &cospi12, &u[49], &rnding, bit);
+        v[50] = half_btf_avx2(&cospi12, &u[45], &cospi52, &u[50], &rnding, bit);
+        v[53] = half_btf_avx2(&cospim20, &u[42], &cospi44, &u[53], &rnding, bit);
+        v[54] = half_btf_avx2(&cospi44, &u[41], &cospi20, &u[54], &rnding, bit);
+        v[57] = half_btf_avx2(&cospim36, &u[38], &cospi28, &u[57], &rnding, bit);
+        v[58] = half_btf_avx2(&cospi28, &u[37], &cospi36, &u[58], &rnding, bit);
+        v[61] = half_btf_avx2(&cospim4, &u[34], &cospi60, &u[61], &rnding, bit);
+        v[62] = half_btf_avx2(&cospi60, &u[33], &cospi4, &u[62], &rnding, bit);
+
+        // stage 5
+        u[4] = half_btf_0_avx2(&cospi56, &v[4], &rnding, bit);
+        u[5] = half_btf_0_avx2(&cospim40, &v[6], &rnding, bit);
+        u[6] = half_btf_0_avx2(&cospi24, &v[6], &rnding, bit);
+        u[7] = half_btf_0_avx2(&cospi8, &v[4], &rnding, bit);
+
+        for (i = 8; i < 16; i += 4) {
+            addsub_avx2(v[i + 0], v[i + 1], &u[i + 0], &u[i + 1], &clamp_lo, &clamp_hi);
+            addsub_avx2(v[i + 3], v[i + 2], &u[i + 3], &u[i + 2], &clamp_lo, &clamp_hi);
+        }
+
+        for (i = 16; i < 32; i += 4) {
+            u[i + 0] = v[i + 0];
+            u[i + 3] = v[i + 3];
+        }
+
+        u[17] = half_btf_avx2(&cospim8, &v[17], &cospi56, &v[30], &rnding, bit);
+        u[18] = half_btf_avx2(&cospim56, &v[18], &cospim8, &v[29], &rnding, bit);
+        u[21] = half_btf_avx2(&cospim40, &v[21], &cospi24, &v[26], &rnding, bit);
+        u[22] = half_btf_avx2(&cospim24, &v[22], &cospim40, &v[25], &rnding, bit);
+        u[25] = half_btf_avx2(&cospim40, &v[22], &cospi24, &v[25], &rnding, bit);
+        u[26] = half_btf_avx2(&cospi24, &v[21], &cospi40, &v[26], &rnding, bit);
+        u[29] = half_btf_avx2(&cospim8, &v[18], &cospi56, &v[29], &rnding, bit);
+        u[30] = half_btf_avx2(&cospi56, &v[17], &cospi8, &v[30], &rnding, bit);
+
+        for (i = 32; i < 64; i += 8) {
+            addsub_avx2(v[i + 0], v[i + 3], &u[i + 0], &u[i + 3], &clamp_lo, &clamp_hi);
+            addsub_avx2(v[i + 1], v[i + 2], &u[i + 1], &u[i + 2], &clamp_lo, &clamp_hi);
+
+            addsub_avx2(v[i + 7], v[i + 4], &u[i + 7], &u[i + 4], &clamp_lo, &clamp_hi);
+            addsub_avx2(v[i + 6], v[i + 5], &u[i + 6], &u[i + 5], &clamp_lo, &clamp_hi);
+        }
+
+        // stage 6
+        v[0] = half_btf_0_avx2(&cospi32, &u[0], &rnding, bit);
+        v[1] = half_btf_0_avx2(&cospi32, &u[0], &rnding, bit);
+        v[2] = half_btf_0_avx2(&cospi48, &u[2], &rnding, bit);
+        v[3] = half_btf_0_avx2(&cospi16, &u[2], &rnding, bit);
+
+        addsub_avx2(u[4], u[5], &v[4], &v[5], &clamp_lo, &clamp_hi);
+        addsub_avx2(u[7], u[6], &v[7], &v[6], &clamp_lo, &clamp_hi);
+
+        for (i = 8; i < 16; i += 4) {
+            v[i + 0] = u[i + 0];
+            v[i + 3] = u[i + 3];
+        }
+
+        v[9]  = half_btf_avx2(&cospim16, &u[9], &cospi48, &u[14], &rnding, bit);
+        v[10] = half_btf_avx2(&cospim48, &u[10], &cospim16, &u[13], &rnding, bit);
+        v[13] = half_btf_avx2(&cospim16, &u[10], &cospi48, &u[13], &rnding, bit);
+        v[14] = half_btf_avx2(&cospi48, &u[9], &cospi16, &u[14], &rnding, bit);
+
+        for (i = 16; i < 32; i += 8) {
+            addsub_avx2(u[i + 0], u[i + 3], &v[i + 0], &v[i + 3], &clamp_lo, &clamp_hi);
+            addsub_avx2(u[i + 1], u[i + 2], &v[i + 1], &v[i + 2], &clamp_lo, &clamp_hi);
+
+            addsub_avx2(u[i + 7], u[i + 4], &v[i + 7], &v[i + 4], &clamp_lo, &clamp_hi);
+            addsub_avx2(u[i + 6], u[i + 5], &v[i + 6], &v[i + 5], &clamp_lo, &clamp_hi);
+        }
+
+        for (i = 32; i < 64; i += 8) {
+            v[i + 0] = u[i + 0];
+            v[i + 1] = u[i + 1];
+            v[i + 6] = u[i + 6];
+            v[i + 7] = u[i + 7];
+        }
+
+        v[34] = half_btf_avx2(&cospim8, &u[34], &cospi56, &u[61], &rnding, bit);
+        v[35] = half_btf_avx2(&cospim8, &u[35], &cospi56, &u[60], &rnding, bit);
+        v[36] = half_btf_avx2(&cospim56, &u[36], &cospim8, &u[59], &rnding, bit);
+        v[37] = half_btf_avx2(&cospim56, &u[37], &cospim8, &u[58], &rnding, bit);
+        v[42] = half_btf_avx2(&cospim40, &u[42], &cospi24, &u[53], &rnding, bit);
+        v[43] = half_btf_avx2(&cospim40, &u[43], &cospi24, &u[52], &rnding, bit);
+        v[44] = half_btf_avx2(&cospim24, &u[44], &cospim40, &u[51], &rnding, bit);
+        v[45] = half_btf_avx2(&cospim24, &u[45], &cospim40, &u[50], &rnding, bit);
+        v[50] = half_btf_avx2(&cospim40, &u[45], &cospi24, &u[50], &rnding, bit);
+        v[51] = half_btf_avx2(&cospim40, &u[44], &cospi24, &u[51], &rnding, bit);
+        v[52] = half_btf_avx2(&cospi24, &u[43], &cospi40, &u[52], &rnding, bit);
+        v[53] = half_btf_avx2(&cospi24, &u[42], &cospi40, &u[53], &rnding, bit);
+        v[58] = half_btf_avx2(&cospim8, &u[37], &cospi56, &u[58], &rnding, bit);
+        v[59] = half_btf_avx2(&cospim8, &u[36], &cospi56, &u[59], &rnding, bit);
+        v[60] = half_btf_avx2(&cospi56, &u[35], &cospi8, &u[60], &rnding, bit);
+        v[61] = half_btf_avx2(&cospi56, &u[34], &cospi8, &u[61], &rnding, bit);
+
+        // stage 7
+        addsub_avx2(v[0], v[3], &u[0], &u[3], &clamp_lo, &clamp_hi);
+        addsub_avx2(v[1], v[2], &u[1], &u[2], &clamp_lo, &clamp_hi);
+
+        u[4] = v[4];
+        u[7] = v[7];
+        u[5] = half_btf_avx2(&cospim32, &v[5], &cospi32, &v[6], &rnding, bit);
+        u[6] = half_btf_avx2(&cospi32, &v[5], &cospi32, &v[6], &rnding, bit);
+
+        addsub_avx2(v[8], v[11], &u[8], &u[11], &clamp_lo, &clamp_hi);
+        addsub_avx2(v[9], v[10], &u[9], &u[10], &clamp_lo, &clamp_hi);
+        addsub_avx2(v[15], v[12], &u[15], &u[12], &clamp_lo, &clamp_hi);
+        addsub_avx2(v[14], v[13], &u[14], &u[13], &clamp_lo, &clamp_hi);
+
+        for (i = 16; i < 32; i += 8) {
+            u[i + 0] = v[i + 0];
+            u[i + 1] = v[i + 1];
+            u[i + 6] = v[i + 6];
+            u[i + 7] = v[i + 7];
+        }
+
+        u[18] = half_btf_avx2(&cospim16, &v[18], &cospi48, &v[29], &rnding, bit);
+        u[19] = half_btf_avx2(&cospim16, &v[19], &cospi48, &v[28], &rnding, bit);
+        u[20] = half_btf_avx2(&cospim48, &v[20], &cospim16, &v[27], &rnding, bit);
+        u[21] = half_btf_avx2(&cospim48, &v[21], &cospim16, &v[26], &rnding, bit);
+        u[26] = half_btf_avx2(&cospim16, &v[21], &cospi48, &v[26], &rnding, bit);
+        u[27] = half_btf_avx2(&cospim16, &v[20], &cospi48, &v[27], &rnding, bit);
+        u[28] = half_btf_avx2(&cospi48, &v[19], &cospi16, &v[28], &rnding, bit);
+        u[29] = half_btf_avx2(&cospi48, &v[18], &cospi16, &v[29], &rnding, bit);
+
+        for (i = 32; i < 64; i += 16) {
+            for (j = i; j < i + 4; j++) {
+                addsub_avx2(v[j], v[j ^ 7], &u[j], &u[j ^ 7], &clamp_lo, &clamp_hi);
+                addsub_avx2(v[j ^ 15], v[j ^ 8], &u[j ^ 15], &u[j ^ 8], &clamp_lo, &clamp_hi);
+            }
+        }
+
+        // stage 8
+        for (i = 0; i < 4; ++i)
+            addsub_avx2(u[i], u[7 - i], &v[i], &v[7 - i], &clamp_lo, &clamp_hi);
+        v[8]  = u[8];
+        v[9]  = u[9];
+        v[14] = u[14];
+        v[15] = u[15];
+
+        v[10] = half_btf_avx2(&cospim32, &u[10], &cospi32, &u[13], &rnding, bit);
+        v[11] = half_btf_avx2(&cospim32, &u[11], &cospi32, &u[12], &rnding, bit);
+        v[12] = half_btf_avx2(&cospi32, &u[11], &cospi32, &u[12], &rnding, bit);
+        v[13] = half_btf_avx2(&cospi32, &u[10], &cospi32, &u[13], &rnding, bit);
+
+        for (i = 16; i < 20; ++i) {
+            addsub_avx2(u[i], u[i ^ 7], &v[i], &v[i ^ 7], &clamp_lo, &clamp_hi);
+            addsub_avx2(u[i ^ 15], u[i ^ 8], &v[i ^ 15], &v[i ^ 8], &clamp_lo, &clamp_hi);
+        }
+
+        for (i = 32; i < 36; ++i) {
+            v[i]      = u[i];
+            v[i + 12] = u[i + 12];
+            v[i + 16] = u[i + 16];
+            v[i + 28] = u[i + 28];
+        }
+
+        v[36] = half_btf_avx2(&cospim16, &u[36], &cospi48, &u[59], &rnding, bit);
+        v[37] = half_btf_avx2(&cospim16, &u[37], &cospi48, &u[58], &rnding, bit);
+        v[38] = half_btf_avx2(&cospim16, &u[38], &cospi48, &u[57], &rnding, bit);
+        v[39] = half_btf_avx2(&cospim16, &u[39], &cospi48, &u[56], &rnding, bit);
+        v[40] = half_btf_avx2(&cospim48, &u[40], &cospim16, &u[55], &rnding, bit);
+        v[41] = half_btf_avx2(&cospim48, &u[41], &cospim16, &u[54], &rnding, bit);
+        v[42] = half_btf_avx2(&cospim48, &u[42], &cospim16, &u[53], &rnding, bit);
+        v[43] = half_btf_avx2(&cospim48, &u[43], &cospim16, &u[52], &rnding, bit);
+        v[52] = half_btf_avx2(&cospim16, &u[43], &cospi48, &u[52], &rnding, bit);
+        v[53] = half_btf_avx2(&cospim16, &u[42], &cospi48, &u[53], &rnding, bit);
+        v[54] = half_btf_avx2(&cospim16, &u[41], &cospi48, &u[54], &rnding, bit);
+        v[55] = half_btf_avx2(&cospim16, &u[40], &cospi48, &u[55], &rnding, bit);
+        v[56] = half_btf_avx2(&cospi48, &u[39], &cospi16, &u[56], &rnding, bit);
+        v[57] = half_btf_avx2(&cospi48, &u[38], &cospi16, &u[57], &rnding, bit);
+        v[58] = half_btf_avx2(&cospi48, &u[37], &cospi16, &u[58], &rnding, bit);
+        v[59] = half_btf_avx2(&cospi48, &u[36], &cospi16, &u[59], &rnding, bit);
+
+        // stage 9
+        for (i = 0; i < 8; ++i)
+            addsub_avx2(v[i], v[15 - i], &u[i], &u[15 - i], &clamp_lo, &clamp_hi);
+        for (i = 16; i < 20; ++i) {
+            u[i]      = v[i];
+            u[i + 12] = v[i + 12];
+        }
+
+        u[20] = half_btf_avx2(&cospim32, &v[20], &cospi32, &v[27], &rnding, bit);
+        u[21] = half_btf_avx2(&cospim32, &v[21], &cospi32, &v[26], &rnding, bit);
+        u[22] = half_btf_avx2(&cospim32, &v[22], &cospi32, &v[25], &rnding, bit);
+        u[23] = half_btf_avx2(&cospim32, &v[23], &cospi32, &v[24], &rnding, bit);
+        u[24] = half_btf_avx2(&cospi32, &v[23], &cospi32, &v[24], &rnding, bit);
+        u[25] = half_btf_avx2(&cospi32, &v[22], &cospi32, &v[25], &rnding, bit);
+        u[26] = half_btf_avx2(&cospi32, &v[21], &cospi32, &v[26], &rnding, bit);
+        u[27] = half_btf_avx2(&cospi32, &v[20], &cospi32, &v[27], &rnding, bit);
+
+        for (i = 32; i < 40; i++)
+            addsub_avx2(v[i], v[i ^ 15], &u[i], &u[i ^ 15], &clamp_lo, &clamp_hi);
+        for (i = 48; i < 56; i++)
+            addsub_avx2(v[i ^ 15], v[i], &u[i ^ 15], &u[i], &clamp_lo, &clamp_hi);
+        // stage 10
+        for (i = 0; i < 16; i++)
+            addsub_avx2(u[i], u[31 - i], &v[i], &v[31 - i], &clamp_lo, &clamp_hi);
+        for (i = 32; i < 40; i++) v[i] = u[i];
+
+        v[40] = half_btf_avx2(&cospim32, &u[40], &cospi32, &u[55], &rnding, bit);
+        v[41] = half_btf_avx2(&cospim32, &u[41], &cospi32, &u[54], &rnding, bit);
+        v[42] = half_btf_avx2(&cospim32, &u[42], &cospi32, &u[53], &rnding, bit);
+        v[43] = half_btf_avx2(&cospim32, &u[43], &cospi32, &u[52], &rnding, bit);
+        v[44] = half_btf_avx2(&cospim32, &u[44], &cospi32, &u[51], &rnding, bit);
+        v[45] = half_btf_avx2(&cospim32, &u[45], &cospi32, &u[50], &rnding, bit);
+        v[46] = half_btf_avx2(&cospim32, &u[46], &cospi32, &u[49], &rnding, bit);
+        v[47] = half_btf_avx2(&cospim32, &u[47], &cospi32, &u[48], &rnding, bit);
+        v[48] = half_btf_avx2(&cospi32, &u[47], &cospi32, &u[48], &rnding, bit);
+        v[49] = half_btf_avx2(&cospi32, &u[46], &cospi32, &u[49], &rnding, bit);
+        v[50] = half_btf_avx2(&cospi32, &u[45], &cospi32, &u[50], &rnding, bit);
+        v[51] = half_btf_avx2(&cospi32, &u[44], &cospi32, &u[51], &rnding, bit);
+        v[52] = half_btf_avx2(&cospi32, &u[43], &cospi32, &u[52], &rnding, bit);
+        v[53] = half_btf_avx2(&cospi32, &u[42], &cospi32, &u[53], &rnding, bit);
+        v[54] = half_btf_avx2(&cospi32, &u[41], &cospi32, &u[54], &rnding, bit);
+        v[55] = half_btf_avx2(&cospi32, &u[40], &cospi32, &u[55], &rnding, bit);
+
+        for (i = 56; i < 64; i++) v[i] = u[i];
+
+        // stage 11
+        for (i = 0; i < 32; i++) {
+            addsub_avx2(v[i],
+                        v[63 - i],
+                        &out[8 * (i) + col],
+                        &out[8 * (63 - i) + col],
+                        &clamp_lo,
+                        &clamp_hi);
+        }
+    }
+}
+
+void svt_av1_inv_txfm2d_add_64x64_avx2(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                       int32_t bd) {
+    __m256i       in[64 * 64 / 8], out[64 * 64 / 8];
+    const int8_t *shift   = eb_inv_txfm_shift_ls[TX_64X64];
+    const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
+    const int32_t txh_idx = tx_size_high_log2[TX_64X64] - tx_size_high_log2[0];
+
+    switch (tx_type) {
+    case DCT_DCT:
+        load_buffer_64x64_lower_32x32_avx2(input, in);
+        transpose_8nx8n(in, out, 64, 64);
+        idct64x64_avx2(out, in, inv_cos_bit_row[txw_idx][txh_idx], 0, bd);
+        transpose_8nx8n(in, out, 64, 64);
+        round_shift_64x64_avx2(out, -shift[0]);
+        idct64x64_avx2(out, in, inv_cos_bit_col[txw_idx][txh_idx], 1, bd);
+        round_shift_64x64_avx2(in, -shift[1]);
+        write_buffer_64x64_avx2(in, output_r, stride_r, output_w, stride_w, bd);
+        break;
+
+    default:
+        svt_av1_inv_txfm2d_add_64x64_c(input, output_r, stride_r, output_w, stride_w, tx_type, bd);
+        break;
+    }
 }

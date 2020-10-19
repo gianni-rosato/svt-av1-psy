@@ -2425,9 +2425,9 @@ static void idct64x64_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_
     }
 }
 
-void eb_av1_inv_txfm2d_add_64x64_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        int32_t bd) {
+void svt_av1_inv_txfm2d_add_64x64_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         int32_t bd) {
     __m128i       in[64 * 64 / 4], out[64 * 64 / 4];
     const int8_t *shift   = eb_inv_txfm_shift_ls[TX_64X64];
     const int32_t txw_idx = tx_size_wide_log2[TX_64X64] - tx_size_wide_log2[0];
@@ -2446,7 +2446,7 @@ void eb_av1_inv_txfm2d_add_64x64_sse4_1(const int32_t *input, uint16_t *output_r
         break;
 
     default:
-        eb_av1_inv_txfm2d_add_64x64_c(input, output_r, stride_r, output_w, stride_w, tx_type, bd);
+        svt_av1_inv_txfm2d_add_64x64_c(input, output_r, stride_r, output_w, stride_w, tx_type, bd);
         break;
     }
 }

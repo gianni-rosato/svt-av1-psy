@@ -1811,3 +1811,103 @@ void svt_convert_16bit_to_8bit_avx2(uint16_t *src, uint32_t src_stride, uint8_t 
 
 
 }
+
+void svt_residual_kernel16bit_avx2(uint16_t *input, uint32_t input_stride, uint16_t *pred,
+                                      uint32_t pred_stride, int16_t *residual,
+                                      uint32_t residual_stride, uint32_t area_width,
+                                      uint32_t area_height) {
+    __m128i  residual0_sse, residual1_sse;
+    __m256i  residual0, residual1, residual2, residual3;
+    switch (area_width) {
+    case 4:
+        for (uint32_t y = 0; y < area_height; y += 2) {
+            residual0_sse = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)input),
+                                      _mm_loadl_epi64((__m128i *)pred));
+            residual1_sse = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)(input + input_stride)),
+                                      _mm_loadl_epi64((__m128i *)(pred + pred_stride)));
+
+            _mm_storel_epi64((__m128i *)residual, residual0_sse);
+            _mm_storel_epi64((__m128i *)(residual + residual_stride), residual1_sse);
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+        break;
+    case 8:
+        for (uint32_t y = 0; y < area_height; y += 2) {
+            residual0_sse = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
+                                      _mm_loadu_si128((__m128i *)pred));
+            residual1_sse = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
+                                      _mm_loadu_si128((__m128i *)(pred + pred_stride)));
+
+            _mm_storeu_si128((__m128i *)residual, residual0_sse);
+            _mm_storeu_si128((__m128i *)(residual + residual_stride), residual1_sse);
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+        break;
+    case 16:
+        for (uint32_t y = 0; y < area_height; y += 2) {
+            residual0 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)input),
+                                         _mm256_loadu_si256((__m256i *)pred));
+            residual1 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + input_stride)),
+                                         _mm256_loadu_si256((__m256i *)(pred + pred_stride)));
+            _mm256_storeu_si256((__m256i *)residual, residual0);
+            _mm256_storeu_si256((__m256i *)(residual + residual_stride), residual1);
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+        break;
+    case 32:
+        for (uint32_t y = 0; y < area_height; y += 2) {
+            residual0 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)input),
+                                         _mm256_loadu_si256((__m256i *)pred));
+            residual1 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + 16)),
+                                         _mm256_loadu_si256((__m256i *)(pred + 16)));
+            residual2 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + input_stride)),
+                                         _mm256_loadu_si256((__m256i *)(pred + pred_stride)));
+            residual3 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + input_stride + 16)),
+                                         _mm256_loadu_si256((__m256i *)(pred + pred_stride + 16)));
+
+            _mm256_storeu_si256((__m256i *)residual, residual0);
+            _mm256_storeu_si256((__m256i *)(residual + 16), residual1);
+            _mm256_storeu_si256((__m256i *)(residual + residual_stride), residual2);
+            _mm256_storeu_si256((__m256i *)(residual + residual_stride + 16), residual3);
+
+            input += input_stride << 1;
+            pred += pred_stride << 1;
+            residual += residual_stride << 1;
+        }
+        break;
+    case 64:
+        for (uint32_t y = 0; y < area_height; y++) {
+            residual0 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)input),
+                                         _mm256_loadu_si256((__m256i *)pred));
+            residual1 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + 16)),
+                                         _mm256_loadu_si256((__m256i *)(pred + 16)));
+            residual2 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + 32)),
+                                         _mm256_loadu_si256((__m256i *)(pred + 32)));
+            residual3 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i *)(input + 48)),
+                                         _mm256_loadu_si256((__m256i *)(pred + 48)));
+
+            _mm256_storeu_si256((__m256i *)residual, residual0);
+            _mm256_storeu_si256((__m256i *)(residual + 16), residual1);
+            _mm256_storeu_si256((__m256i *)(residual + 32), residual2);
+            _mm256_storeu_si256((__m256i *)(residual + 48), residual3);
+
+            input += input_stride;
+            pred += pred_stride;
+            residual += residual_stride;
+        }
+        break;
+    default:
+        svt_residual_kernel16bit_sse2_intrin(input, input_stride, pred, pred_stride, residual,
+                                         residual_stride, area_width, area_height);
+        break;
+    }
+}

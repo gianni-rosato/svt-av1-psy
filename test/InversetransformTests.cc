@@ -19,8 +19,8 @@
 
 typedef void (*av1_inv_txfm_highbd_func)(const int32_t *coeff, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, int32_t bd);
 typedef void (*av1_inv_txfm2d_highbd_rect_func)(const int32_t *input, uint16_t *output_r, int32_t stride_r, uint16_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size, int32_t eob, int32_t bd);
-av1_inv_txfm_highbd_func av1_inv_txfm_highbd_func_ptr_array_base[3] = { eb_av1_inv_txfm2d_add_16x16_avx2 , eb_av1_inv_txfm2d_add_32x32_avx2 , eb_av1_inv_txfm2d_add_64x64_sse4_1 };
-av1_inv_txfm_highbd_func av1_inv_txfm_highbd_func_ptr_array_opt[3] = { eb_av1_inv_txfm2d_add_16x16_avx512, eb_av1_inv_txfm2d_add_32x32_avx512 , eb_av1_inv_txfm2d_add_64x64_avx512 };
+av1_inv_txfm_highbd_func av1_inv_txfm_highbd_func_ptr_array_base[3] = { eb_av1_inv_txfm2d_add_16x16_avx2 , eb_av1_inv_txfm2d_add_32x32_avx2 , svt_av1_inv_txfm2d_add_64x64_sse4_1 };
+av1_inv_txfm_highbd_func av1_inv_txfm_highbd_func_ptr_array_opt[3] = { eb_av1_inv_txfm2d_add_16x16_avx512, eb_av1_inv_txfm2d_add_32x32_avx512 , svt_av1_inv_txfm2d_add_64x64_avx512 };
 av1_inv_txfm2d_highbd_rect_func av1_inv_txfm_highbd_rect_func_ptr_array_base[6] = { eb_av1_inv_txfm2d_add_32x16_c , eb_av1_inv_txfm2d_add_16x32_c , eb_av1_inv_txfm2d_add_16x64_c , eb_av1_inv_txfm2d_add_32x64_c , eb_av1_inv_txfm2d_add_64x32_c , eb_av1_inv_txfm2d_add_64x16_c };
 av1_inv_txfm2d_highbd_rect_func av1_inv_txfm_highbd_rect_func_ptr_array_opt[6] = { eb_av1_inv_txfm2d_add_32x16_avx512 , eb_av1_inv_txfm2d_add_16x32_avx512 , eb_av1_inv_txfm2d_add_16x64_avx512 , eb_av1_inv_txfm2d_add_32x64_avx512 , eb_av1_inv_txfm2d_add_64x32_avx512 , eb_av1_inv_txfm2d_add_64x16_avx512 };
 int txsize_16[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8 ,9, 10, 11, 12, 13, 14, 15};
