@@ -233,19 +233,15 @@ macro(ASM_COMPILE_TO_TARGET target)
     endif()
 endmacro()
 
-file(WRITE ${CMAKE_BINARY_DIR}/conftest.c "
-#include <string.h>
-#include <stdint.h>
-int main() {
-    return (uintptr_t)strnlen_s;
-}
-")
-
-try_compile(HAVE_STRNLEN_S ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/conftest.c)
-
-add_definitions(-DHAVE_STRNLEN_S=1)
-
 add_subdirectory(third_party/safestringlib)
+
+set_property(DIRECTORY .
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS
+        $<$<BOOL:${HAVE_STRCPY_S}>:HAVE_STRCPY_S=1>
+        $<$<BOOL:${HAVE_STRNCPY_S}>:HAVE_STRNCPY_S=1>
+        $<$<BOOL:${HAVE_STRNLEN_S}>:HAVE_STRNLEN_S=1>
+        $<$<BOOL:${WIN32}>:_WIN32_WINNT=0x0601>)
 
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)

@@ -55,6 +55,8 @@
 /* set string constraint handler */
 extern constraint_handler_t set_str_constraint_handler_s(constraint_handler_t handler);
 
+#if 0
+
 /* string compare */
 extern errno_t strcasecmp_s(const char *dest, rsize_t dmax, const char *src, int *indicator);
 
@@ -71,8 +73,14 @@ extern errno_t strcmp_s(const char *dest, rsize_t dmax, const char *src, int *in
 /* fixed field string compare */
 extern errno_t strcmpfld_s(const char *dest, rsize_t dmax, const char *src, int *indicator);
 
+#endif
+
+#ifndef HAVE_STRCPY_S
 /* string copy */
 extern errno_t strcpy_s(char *dest, rsize_t dmax, const char *src);
+#endif
+
+#if 0
 
 /* string copy */
 extern char *stpcpy_s(char *dest, rsize_t dmax, const char *src, errno_t *err);
@@ -135,11 +143,19 @@ extern errno_t strljustify_s(char *dest, rsize_t dmax);
 /* fitted string concatenate */
 extern errno_t strncat_s(char *dest, rsize_t dmax, const char *src, rsize_t slen);
 
+#endif
+
+#ifndef HAVE_STRNCPY_S
 /* fitted string copy */
 extern errno_t strncpy_s(char *dest, rsize_t dmax, const char *src, rsize_t slen);
+#endif
 
+#ifndef HAVE_STRNLEN_S
 /* string length */
 extern rsize_t strnlen_s(const char *s, rsize_t smax);
+#endif
+
+#if 0
 
 /* string terminate */
 extern rsize_t strnterminate_s(char *s, rsize_t smax);
@@ -193,5 +209,6 @@ extern errno_t wcsncpy_s(wchar_t *dest, rsize_t dmax, const wchar_t *src, rsize_
 
 /* wide string length */
 extern rsize_t wcsnlen_s(const wchar_t *dest, rsize_t dmax);
+#endif
 
 #endif /* __SAFE_STR_LIB_H__ */
