@@ -2974,6 +2974,13 @@ EbErrorType eb_svt_enc_init_parameter(
     config_ptr->encoder_color_format = EB_YUV420;
     config_ptr->mrp_level = DEFAULT;
 
+    // Two pass data rate control options
+    config_ptr->vbr_bias_pct = 50;
+    config_ptr->vbr_min_section_pct = 0;
+    config_ptr->vbr_max_section_pct = 2000;
+    config_ptr->under_shoot_pct = 25;
+    config_ptr->over_shoot_pct = 25;
+
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;
