@@ -1,0 +1,284 @@
+stages:
+  - compile
+  - test
+
+style check:
+  stage: .pre
+  image: alpine
+  before_script:
+    - apk add --no-cache git
+  script:
+    - |
+      ! git grep -InP --heading "\t" -- . ':!third_party/**/*'
+    - |
+      ! git grep -InP --heading "\r" -- . ':!third_party/**/*'
+    - |
+      ! git grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch'
+    - git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git master
+    - |
+      while read -r file; do
+        if test -n "$(tail -c1 "$file")"; then
+          echo "No newline at end of $file"
+          ret=1
+        fi
+      done <<EOF
+      $(
+        git diff --name-only --diff-filter=d FETCH_HEAD -- . \
+        ':!third_party' ':!test/e2e_test/test_vector_list.txt' \
+        ':!test/vectors/smoking_test.cfg' \
+        ':!test/vectors/video_src.cfg' \
+        ':!*.png'
+      )
+      EOF
+    - |
+      while read -r i; do
+        echo "Checking commit message of $i"
+        msg=$(git log --format=%B -n 1 "$i")
+        if test -n "$(printf '%s' "$msg" | sed -n 2p)"; then
+          echo "Malformed commit message in $i, second line must be empty"
+          ret=1
+        fi
+        if printf '%s' "$msg" | head -1 | grep -q '\.$'; then
+          echo "Malformed commit message in $i, trailing period in subject line"
+          ret=1
+        fi
+      done <<EOF
+      $(git rev-list HEAD ^FETCH_HEAD)
+      EOF
+      exit ${ret:-0}
+
+cppcheck:
+  stage: compile
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  cache:
+    key: cppcheck
+    paths:
+      - .cppcheck
+    policy: pull-push
+  script:
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    - |
+      mkdir -p .cppcheck
+      cppcheck \
+        --project=Build/compile_commands.json \
+        --error-exitcode=1 \
+        --enable=all \
+        -j 2 \
+        -rp=$PWD \
+        -ithird_party \
+        --cppcheck-build-dir=.cppcheck
+
+.linux-compiler-base:
+  stage: compile
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  variables:
+    CFLAGS: -Werror -Wshadow $EXTRA_CFLAGS
+    CXXFLAGS: -Werror -Wshadow $EXTRA_CXXFLAGS
+    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+  cache:
+    key: ${CI_JOB_NAME}
+    paths:
+      - .ccache
+    policy: pull-push
+  script:
+    - ccache -s
+    - eval cmake -GNinja -B Build -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:=Release} -DBUILD_SHARED_LIBS=OFF $EXTRA_CMAKE_FLAGS
+    - cmake --build Build --config $CMAKE_BUILD_TYPE --target install
+    - ccache -s
+
+clang 6:
+  extends: .linux-compiler-base
+  variables:
+    CC: clang-6.0
+    CXX: clang++-6.0
+
+clang 10:
+  extends: .linux-compiler-base
+  variables:
+    CC: clang-10
+    CXX: clang++-10
+
+gcc 4:
+  extends: .linux-compiler-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  variables:
+    CC: gcc-4.8
+    CXX: g++-4.8
+
+valgrind compile:
+  extends: .linux-compiler-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  variables:
+    EXTRA_CFLAGS: -Wno-error -g
+    EXTRA_CXXFLAGS: -Wno-error -g
+    LDFLAGS: -static -static-libgcc
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=valgrind
+    CMAKE_BUILD_TYPE: Debug
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - valgrind/
+
+gcc 7:
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-7
+    CXX: g++-7
+
+gcc 8:
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-8
+    CXX: g++-8
+
+gcc 9:
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-9
+    CXX: g++-9
+
+gcc 10:
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    LDFLAGS: -static -static-libgcc -static-libstdc++
+    GIT_DEPTH: 0
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - Bin/Release/SvtAv1EncApp
+      - Bin/Release/SvtAv1DecApp
+
+gcc 10 test building:
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    EXTRA_CFLAGS: -Wno-error -g
+    EXTRA_CXXFLAGS: -Wno-error -g
+    LDFLAGS: -static -static-libgcc -static-libstdc++
+    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON -DBUILD_APPS=OFF
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+    paths:
+      - Bin/Release/SvtAv1UnitTests
+      - Bin/Release/SvtAv1ApiTests
+      - Bin/Release/SvtAv1E2ETests
+
+.tests:
+  stage: test
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  before_script:
+    - zstd -d /video.tar.zst
+    - tar xf /video.tar
+
+valgrind:
+  extends: .tests
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  allow_failure: true
+  script:
+    # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 -i akiyo_cif.y4m -n 10 -b test1.ivf
+
+.sanitizer compile:
+  extends: .linux-compiler-base
+  variables:
+    CC: clang-10
+    CXX: clang++-10
+    CMAKE_BUILD_TYPE: Debug
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - address/
+      - memory/
+      - thread/
+
+sanitizer address:
+  extends: .sanitizer compile
+  variables:
+    EXTRA_CFLAGS: -fsanitize=address
+    EXTRA_CXXFLAGS: -fsanitize=address
+    LDFLAGS: -fsanitize=address
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=address
+
+sanitizer memory:
+  extends: .sanitizer compile
+  variables:
+    EXTRA_CFLAGS: -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins
+    EXTRA_CXXFLAGS: -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins
+    LDFLAGS: -fsanitize=memory -fsanitize-memory-track-origins
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=memory
+
+sanitizer thread:
+  extends: .sanitizer compile
+  variables:
+    EXTRA_CFLAGS: -fsanitize=thread
+    EXTRA_CXXFLAGS: -fsanitize=thread
+    LDFLAGS: -fsanitize=thread
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=thread
+
+.sanitizer test:
+  extends: .tests
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  variables:
+    LSAN_OPTIONS: "verbosity=2:color=always:log_threads=1:report_objects=1"
+    ASAN_OPTIONS: "verbosity=2:color=always:print_cmdline=1:strict_string_checks=1"
+    MSAN_OPTIONS: "verbosity=2:color=always"
+    TSAN_OPTIONS: "verbosity=2:color=always:suppressions=./.github/workflows/sanitizers-known-warnings.txt"
+  script:
+    - |
+      command="$PWD/$SANITIZER/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${svt_asm:+--asm $svt_asm} -n 60 --preset 8 -b output.ivf"
+      case $SANITIZER in
+      address|memory) $command ;;
+      *) gdb -q -ex "handle SIG32 nostop" -ex r -ex bt -ex q --return-child-result --args $command ;;
+      esac
+
+sanitizer address test:
+  extends: .sanitizer test
+  variables:
+    SANITIZER: address
+
+sanitizer memory test:
+  extends: .sanitizer test
+  variables:
+    SANITIZER: memory
+    svt_asm: 0
+
+sanitizer thread test:
+  extends: .sanitizer test
+  allow_failure: true
+  variables:
+    SANITIZER: thread
+
+.unit tests:
+  extends: .tests
+  parallel: 50
+  variables:
+    GTEST_TOTAL_SHARDS: 50
+    GTEST_OUTPUT: "xml:report.xml"
+
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+unit tests linux:
+  extends: .unit tests
+  script:
+    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
+    - mkdir -p unittests
+    - ./Bin/Release/SvtAv1UnitTests
+
+e2e tests linux:
+  extends: .unit tests
+  script:
+    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
+    - export SVT_AV1_TEST_VECTOR_PATH=$PWD
+    - mkdir -p unittests
+    - mv test/vectors/* .
+    - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
