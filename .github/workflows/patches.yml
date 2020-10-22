@@ -55,8 +55,10 @@ jobs:
       - name: Install dependencies (mac)
         if: matrix.os == 'macos-10.15'
         run: |
-          brew update
-          brew install yasm nasm ccache pkg-config ninja
+          {
+            brew update || brew update-reset
+            brew upgrade yasm nasm ccache pkg-config ninja || brew install -q yasm nasm ccache pkg-config ninja
+          } || brew update-reset
       - name: Check dependencies
         run: |
           [ -d ~/.ccache ] && sudo chown -R "$USER": ~/.ccache
