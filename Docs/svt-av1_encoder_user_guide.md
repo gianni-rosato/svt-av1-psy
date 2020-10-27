@@ -191,7 +191,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
 | **IntraPeriod** | --keyint | [-2 - 2^31-2] | -2 | Intra period interval(frames) -2: default intra period , -1: No intra update or an integer >= 0. if RateControlMode >= 1 intra-period limited to [-2, 255] |
-| **IntraRefreshType** | --irefresh-type | [1 - 2] | 1 | 1: CRA (Open GOP)2: IDR (Closed GOP) |
+| **IntraRefreshType** | --irefresh-type | [1 - 2] | 2 | 1: CRA (Open GOP), 2: IDR (Closed GOP)[default] |
 
 #### AV1 Specific Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |

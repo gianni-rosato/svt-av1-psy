@@ -863,7 +863,7 @@ ConfigEntry config_entry_intra_refresh[] = {
      set_cfg_intra_period},
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
-     "Intra refresh type (1: CRA (Open GOP)2: IDR (Closed GOP))",
+     "Intra refresh type (1: CRA (Open GOP), 2: IDR (Closed GOP)[default])",
      set_tile_row},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
