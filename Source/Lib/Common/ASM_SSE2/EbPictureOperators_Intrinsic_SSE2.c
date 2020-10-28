@@ -224,7 +224,7 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC__)
 __attribute__((optimize("unroll-loops")))
 #endif
-static void eb_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
+static void svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
     const unsigned char *src = src_ptr;
     unsigned char *      dst = dst_ptr;
     size_t               i   = 0;
@@ -245,7 +245,7 @@ static void eb_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
     for (; i < size; ++i) dst[i] = src[i];
 }
 #define EB_MIN(a, b) (((a) < (b)) ? (a) : (b))
-static void eb_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
+static void svt_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     const unsigned char *src       = src_ptr;
     unsigned char *      dst       = dst_ptr;
     size_t               i         = 0;
@@ -253,7 +253,7 @@ static void eb_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
 
     // align dest to a $line
     if (align_cnt != 64) {
-        eb_memcpy_small(dst, src, align_cnt);
+        svt_memcpy_small(dst, src, align_cnt);
         dst += align_cnt;
         src += align_cnt;
         size -= align_cnt;
@@ -275,12 +275,12 @@ static void eb_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     }
 
     // copy the remainder
-    if (i < size) eb_memcpy_small(dst + i, src + i, size - i);
+    if (i < size) svt_memcpy_small(dst + i, src + i, size - i);
 }
-extern void eb_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size) {
+extern void svt_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     if (size > 64)
-        eb_memcpy_sse(dst_ptr, src_ptr, size);
+        svt_memcpy_sse(dst_ptr, src_ptr, size);
     else
-        eb_memcpy_small(dst_ptr, src_ptr, size);
+        svt_memcpy_small(dst_ptr, src_ptr, size);
 }
 #endif

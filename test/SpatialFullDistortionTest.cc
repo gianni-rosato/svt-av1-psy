@@ -47,8 +47,8 @@ class SpatialFullDistortionTest
     ~SpatialFullDistortionTest();
 
     void SetUp() {
-        input_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-        recon_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        input_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        recon_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
         input_ = reinterpret_cast<uint8_t *>(
             malloc(sizeof(*input_) * MAX_SB_SIZE * input_stride_));
         recon_ = reinterpret_cast<uint8_t *>(
@@ -65,8 +65,8 @@ class SpatialFullDistortionTest
     void RunSpeedTest();
 
     void init_data() {
-        eb_buf_random_u8(input_, MAX_SB_SIZE * input_stride_);
-        eb_buf_random_u8(recon_, MAX_SB_SIZE * recon_stride_);
+        svt_buf_random_u8(input_, MAX_SB_SIZE * input_stride_);
+        svt_buf_random_u8(recon_, MAX_SB_SIZE * recon_stride_);
     }
 
     SpatialFullDistortionKernelFunc func_;
@@ -200,8 +200,8 @@ typedef std::tuple<uint32_t, uint32_t> AreaSize;
  */
 class SpatialFullDistortionFuncTestBase : public ::testing::Test {
     void SetUp() override {
-        input_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-        recon_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        input_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        recon_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
         input_test_size_ = MAX_SB_SIZE * input_stride_;
         recon_test_size_ = MAX_SB_SIZE * recon_stride_;
         input_ = reinterpret_cast<uint8_t *>(
@@ -233,8 +233,8 @@ class SpatialFullDistortionFuncTestBase : public ::testing::Test {
             break;
         }
         case VAL_RANDOM: {
-            eb_buf_random_u8(input_, input_test_size_);
-            eb_buf_random_u8(recon_, recon_test_size_);
+            svt_buf_random_u8(input_, input_test_size_);
+            svt_buf_random_u8(recon_, recon_test_size_);
             break;
         }
         default: break;
@@ -380,8 +380,8 @@ class FullDistortionKernel16BitsFuncTest
     : public SpatialFullDistortionFuncTestBase,
       public ::testing::WithParamInterface<SpatialKernelTestParam> {
     void SetUp() override {
-        input_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-        recon_stride_ = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        input_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        recon_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
         input_test_size_ = MAX_SB_SIZE * input_stride_ * 2;
         recon_test_size_ = MAX_SB_SIZE * recon_stride_ * 2;
         input_ = reinterpret_cast<uint8_t *>(

@@ -12,7 +12,7 @@
 /******************************************************************************
  * @file EncodeTxbAsmTest.cc
  *
- * @brief Unit test for eb_av1_txb_init_levels_avx2:
+ * @brief Unit test for svt_av1_txb_init_levels_avx2:
  *
  * @author Cidana-Wenyao
  *
@@ -57,7 +57,7 @@ static INLINE int get_padded_idx(const int idx, const int bwl) {
 }
 
 // test assembly code of av1_get_nz_map_contexts
-extern "C" void eb_av1_get_nz_map_contexts_sse2(
+extern "C" void svt_av1_get_nz_map_contexts_sse2(
     const uint8_t *const levels, const int16_t *const scan, const uint16_t eob,
     TxSize tx_size, const TxClass tx_class, int8_t *const coeff_contexts);
 using GetNzMapContextsFunc = void (*)(const uint8_t *const levels,
@@ -72,7 +72,7 @@ class EncodeTxbTest : public ::testing::TestWithParam<GetNzMapContextParam> {
     EncodeTxbTest()
         : level_rnd_(0, INT8_MAX),
           coeff_rnd_(0, UINT8_MAX),
-          ref_func_(&eb_av1_get_nz_map_contexts_c) {
+          ref_func_(&svt_av1_get_nz_map_contexts_c) {
     }
 
     virtual ~EncodeTxbTest() {
@@ -163,16 +163,16 @@ TEST_P(EncodeTxbTest, GetNzMapTest) {
 
 INSTANTIATE_TEST_CASE_P(
     SSE2, EncodeTxbTest,
-    ::testing::Combine(::testing::Values(&eb_av1_get_nz_map_contexts_sse2),
+    ::testing::Combine(::testing::Values(&svt_av1_get_nz_map_contexts_sse2),
                        ::testing::Range(0, static_cast<int>(TX_TYPES), 1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
-// test assembly code of eb_av1_txb_init_levels
+// test assembly code of svt_av1_txb_init_levels
 using TxbInitLevelsFunc = void (*)(const TranLow *const coeff, const int width,
                                    const int height, uint8_t *const levels);
 using TxbInitLevelParam = std::tuple<TxbInitLevelsFunc, int>;
 /**
- * @brief Unit test for eb_av1_txb_init_levels_avx2:
+ * @brief Unit test for svt_av1_txb_init_levels_avx2:
  *
  * Test strategy:
  * Verify this assembly code by comparing with reference c implementation.
@@ -191,7 +191,7 @@ using TxbInitLevelParam = std::tuple<TxbInitLevelsFunc, int>;
 class EncodeTxbInitLevelTest
     : public ::testing::TestWithParam<TxbInitLevelParam> {
   public:
-    EncodeTxbInitLevelTest() : ref_func_(&eb_av1_txb_init_levels_c) {
+    EncodeTxbInitLevelTest() : ref_func_(&svt_av1_txb_init_levels_c) {
         // fill input_coeff_ with 16bit signed random
         // The random is only used in prepare_data function, however
         // we should not declare in that function, otherwise
@@ -253,7 +253,7 @@ class EncodeTxbInitLevelTest
                                                         middle_time_useconds,
                                                         finish_time_seconds,
                                                         finish_time_useconds);
-            printf("eb_av1_txb_init_levels(%2dx%2d): %6.2f\n",
+            printf("svt_av1_txb_init_levels(%2dx%2d): %6.2f\n",
                    width,
                    height,
                    time_c / time_o);
@@ -302,13 +302,13 @@ TEST_P(EncodeTxbInitLevelTest, DISABLED_txb_init_levels_speed) {
 
 INSTANTIATE_TEST_CASE_P(
     Entropy, EncodeTxbInitLevelTest,
-    ::testing::Combine(::testing::Values(&eb_av1_txb_init_levels_avx2),
+    ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
 #ifndef NON_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     EntropyAVX512, EncodeTxbInitLevelTest,
-    ::testing::Combine(::testing::Values(&eb_av1_txb_init_levels_avx512),
+    ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx512),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 #endif
 }  // namespace

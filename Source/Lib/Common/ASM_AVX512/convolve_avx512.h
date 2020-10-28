@@ -23,7 +23,7 @@
 
 #ifndef NON_AVX512_SUPPORT
 
-static INLINE __m512i eb_mm512_broadcast_i64x2(const __m128i v) {
+static INLINE __m512i svt_mm512_broadcast_i64x2(const __m128i v) {
 #ifdef _WIN32
     // Work around of Visual Studio warning C4305: 'function': truncation from
     // 'int' to '__mmask8'. It's a flaw in header file zmmintrin.h.
@@ -65,7 +65,7 @@ static INLINE void storeu_u8_32x2_avx512(const __m512i src, uint8_t *const dst,
 }
 
 static INLINE void populate_coeffs_4tap_avx512(const __m128i coeffs_128, __m512i coeffs[2]) {
-    const __m512i coeffs_512 = eb_mm512_broadcast_i64x2(coeffs_128);
+    const __m512i coeffs_512 = svt_mm512_broadcast_i64x2(coeffs_128);
 
     // coeffs 2 3 2 3 2 3 2 3
     coeffs[0] = _mm512_shuffle_epi8(coeffs_512, _mm512_set1_epi16(0x0604u));
@@ -74,7 +74,7 @@ static INLINE void populate_coeffs_4tap_avx512(const __m128i coeffs_128, __m512i
 }
 
 static INLINE void populate_coeffs_6tap_avx512(const __m128i coeffs_128, __m512i coeffs[3]) {
-    const __m512i coeffs_512 = eb_mm512_broadcast_i64x2(coeffs_128);
+    const __m512i coeffs_512 = svt_mm512_broadcast_i64x2(coeffs_128);
 
     // coeffs 1 2 1 2 1 2 1 2
     coeffs[0] = _mm512_shuffle_epi8(coeffs_512, _mm512_set1_epi16(0x0402u));
@@ -85,7 +85,7 @@ static INLINE void populate_coeffs_6tap_avx512(const __m128i coeffs_128, __m512i
 }
 
 static INLINE void populate_coeffs_8tap_avx512(const __m128i coeffs_128, __m512i coeffs[4]) {
-    const __m512i coeffs_512 = eb_mm512_broadcast_i64x2(coeffs_128);
+    const __m512i coeffs_512 = svt_mm512_broadcast_i64x2(coeffs_128);
 
     // coeffs 0 1 0 1 0 1 0 1
     coeffs[0] = _mm512_shuffle_epi8(coeffs_512, _mm512_set1_epi16(0x0200u));
@@ -193,7 +193,7 @@ static INLINE void prepare_coeffs_4tap_avx512(const InterpFilterParams *const fi
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
 
     const __m128i coeff_8 = _mm_loadu_si128((__m128i *)filter);
-    const __m512i coeff   = eb_mm512_broadcast_i64x2(coeff_8);
+    const __m512i coeff   = svt_mm512_broadcast_i64x2(coeff_8);
 
     // coeffs 2 3 2 3 2 3 2 3
     coeffs[0] = _mm512_shuffle_epi32(coeff, 0x55);
@@ -207,7 +207,7 @@ static INLINE void prepare_coeffs_6tap_avx512(const InterpFilterParams *const fi
     const int16_t *const filter =
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
     const __m128i coeffs_8 = _mm_loadu_si128((__m128i *)filter);
-    const __m512i coeff    = eb_mm512_broadcast_i64x2(coeffs_8);
+    const __m512i coeff    = svt_mm512_broadcast_i64x2(coeffs_8);
 
     // coeffs 1 2 1 2 1 2 1 2
     coeffs[0] = _mm512_shuffle_epi8(coeff, _mm512_set1_epi32(0x05040302u));
@@ -224,7 +224,7 @@ static INLINE void prepare_coeffs_8tap_avx512(const InterpFilterParams *const fi
         av1_get_interp_filter_subpel_kernel(*filter_params, subpel_q4 & SUBPEL_MASK);
 
     const __m128i coeff_8 = _mm_loadu_si128((__m128i *)filter);
-    const __m512i coeff   = eb_mm512_broadcast_i64x2(coeff_8);
+    const __m512i coeff   = svt_mm512_broadcast_i64x2(coeff_8);
 
     // coeffs 0 1 0 1 0 1 0 1
     coeffs[0] = _mm512_shuffle_epi32(coeff, 0x00);

@@ -831,7 +831,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
     for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
         memset(lf_info->lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
 
-    eb_av1_loop_filter_frame_init(frm_hdr, lf_info, plane_start, plane_end);
+    svt_av1_loop_filter_frame_init(frm_hdr, lf_info, plane_start, plane_end);
 
     set_lbd_lf_filter_tap_functions();
     set_hbd_lf_filter_tap_functions();

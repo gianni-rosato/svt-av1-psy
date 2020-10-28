@@ -20,12 +20,12 @@
 // -----------------------------------------------------------------------------
 // Copy and average
 
-void eb_av1_highbd_convolve_y_sr_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst,
-                                      int32_t dst_stride, int32_t w, int32_t h,
-                                      const InterpFilterParams *filter_params_x,
-                                      const InterpFilterParams *filter_params_y,
-                                      const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                      ConvolveParams *conv_params, int32_t bd) {
+void svt_av1_highbd_convolve_y_sr_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst,
+                                       int32_t dst_stride, int32_t w, int32_t h,
+                                       const InterpFilterParams *filter_params_x,
+                                       const InterpFilterParams *filter_params_y,
+                                       const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                       ConvolveParams *conv_params, int32_t bd) {
     int32_t               i, j;
     const int32_t         fo_vert = filter_params_y->taps / 2 - 1;
     const uint16_t *const src_ptr = src - fo_vert * src_stride;
@@ -155,12 +155,12 @@ void eb_av1_highbd_convolve_y_sr_avx2(const uint16_t *src, int32_t src_stride, u
     }
 }
 
-void eb_av1_highbd_convolve_x_sr_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst,
-                                      int32_t dst_stride, int32_t w, int32_t h,
-                                      const InterpFilterParams *filter_params_x,
-                                      const InterpFilterParams *filter_params_y,
-                                      const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                      ConvolveParams *conv_params, int32_t bd) {
+void svt_av1_highbd_convolve_x_sr_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst,
+                                       int32_t dst_stride, int32_t w, int32_t h,
+                                       const InterpFilterParams *filter_params_x,
+                                       const InterpFilterParams *filter_params_y,
+                                       const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                       ConvolveParams *conv_params, int32_t bd) {
     int32_t               i, j;
     const int32_t         fo_horiz = filter_params_x->taps / 2 - 1;
     const uint16_t *const src_ptr  = src - fo_horiz;

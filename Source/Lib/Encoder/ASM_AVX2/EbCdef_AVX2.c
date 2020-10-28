@@ -271,7 +271,7 @@ static INLINE uint64_t sum64(const __m256i src) {
 }
 
 /* Compute MSE only on the blocks we filtered. */
-uint64_t compute_cdef_dist_avx2(const uint16_t *dst, int32_t dstride, const uint16_t *src,
+uint64_t compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride, const uint16_t *src,
                                 const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
                                 int32_t coeff_shift, int32_t pli) {
     uint64_t sum;

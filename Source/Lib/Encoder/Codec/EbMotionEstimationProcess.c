@@ -473,9 +473,9 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = motion_estimation_context_dctor;
-    context_ptr->picture_decision_results_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+    context_ptr->picture_decision_results_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->picture_decision_results_resource_ptr, index);
-    context_ptr->motion_estimation_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->motion_estimation_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, index);
     EB_NEW(context_ptr->me_context_ptr,
         me_context_ctor);
@@ -769,7 +769,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 input_picture_ptr->stride_y +
                             input_picture_ptr->origin_x + sb_origin_x;
                         for (unsigned sb_row = 0; sb_row < BLOCK_SIZE_64; sb_row++) {
-                            eb_memcpy(
+                            svt_memcpy(
                                 &(context_ptr->me_context_ptr->sb_buffer[sb_row * BLOCK_SIZE_64]),
                                 &(input_picture_ptr
                                       ->buffer_y[buffer_index +
@@ -801,7 +801,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 quarter_picture_ptr->origin_x + (sb_origin_x >> 1);
 
                             for (unsigned sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 1); sb_row++) {
-                                eb_memcpy(
+                                svt_memcpy(
                                     &(context_ptr->me_context_ptr->quarter_sb_buffer
                                           [sb_row *
                                            context_ptr->me_context_ptr->quarter_sb_buffer_stride]),
@@ -825,7 +825,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                          FULL_SAD_SEARCH
                                      ? 1
                                      : 2) {
-                                eb_memcpy(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
+                                svt_memcpy(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
                                 local_ptr += 16;
                                 frame_ptr += sixteenth_picture_ptr->stride_y
                                     << (context_ptr->me_context_ptr->hme_search_method !=
@@ -840,9 +840,9 @@ void *motion_estimation_kernel(void *input_ptr) {
                                            sb_origin_y,
                                            context_ptr->me_context_ptr,
                                            input_picture_ptr);
-                        eb_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
+                        svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
                         pcs_ptr->me_processed_sb_count++;
-                        eb_release_mutex(pcs_ptr->me_processed_sb_mutex);
+                        svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
                     }
                 }
             }
@@ -895,7 +895,7 @@ void *motion_estimation_kernel(void *input_ptr) {
             }
             // Calculate the ME Distortion and OIS Historgrams
 
-            eb_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+            svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
             if (scs_ptr->static_config.rate_control_mode
                 && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
@@ -1014,10 +1014,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                         }
             }
 
-            eb_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+            svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
             // Get Empty Results Object
-            eb_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,
+            svt_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,
                                 &out_results_wrapper_ptr);
 
             MotionEstimationResults *out_results_ptr = (MotionEstimationResults *)
@@ -1026,10 +1026,10 @@ void *motion_estimation_kernel(void *input_ptr) {
             out_results_ptr->segment_index   = segment_index;
 
             // Release the Input Results
-            eb_release_object(in_results_wrapper_ptr);
+            svt_release_object(in_results_wrapper_ptr);
 
             // Post the Full Results Object
-            eb_post_full_object(out_results_wrapper_ptr);
+            svt_post_full_object(out_results_wrapper_ptr);
         } else {
             // ME Kernel Signal(s) derivation
             tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
@@ -1040,7 +1040,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 pcs_ptr->temp_filt_pcs_list, pcs_ptr, context_ptr, in_results_ptr->segment_index);
 
             // Release the Input Results
-            eb_release_object(in_results_wrapper_ptr);
+            svt_release_object(in_results_wrapper_ptr);
         }
     }
 

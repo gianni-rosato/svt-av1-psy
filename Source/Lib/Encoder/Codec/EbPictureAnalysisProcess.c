@@ -77,9 +77,9 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
     thread_context_ptr->dctor = picture_analysis_context_dctor;
 
     context_ptr->resource_coordination_results_input_fifo_ptr =
-        eb_system_resource_get_consumer_fifo(
+        svt_system_resource_get_consumer_fifo(
             enc_handle_ptr->resource_coordination_results_resource_ptr, index);
-    context_ptr->picture_analysis_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->picture_analysis_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_analysis_results_resource_ptr, index);
 
     if (denoise_flag == EB_TRUE) {
@@ -99,7 +99,7 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
             desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
         } else
             desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG | PICTURE_BUFFER_DESC_Cb_FLAG;
-        EB_NEW(context_ptr->denoised_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&desc);
+        EB_NEW(context_ptr->denoised_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&desc);
 
         if (desc.color_format != EB_YUV444) {
             context_ptr->denoised_picture_ptr->buffer_cb =
@@ -114,7 +114,7 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
         desc.max_height         = BLOCK_SIZE_64;
         desc.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
 
-        EB_NEW(context_ptr->noise_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&desc);
+        EB_NEW(context_ptr->noise_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&desc);
     }
     return EB_ErrorNone;
 }
@@ -2576,10 +2576,10 @@ EbErrorType compute_block_mean_compute_variance(
 
 static int32_t apply_denoise_2d(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                                 EbPictureBufferDesc *inputPicturePointer) {
-    if (eb_aom_denoise_and_model_run(pcs_ptr->denoise_and_model,
-                                     inputPicturePointer,
-                                     &pcs_ptr->frm_hdr.film_grain_params,
-                                     scs_ptr->static_config.encoder_bit_depth > EB_8BIT)) {}
+    if (svt_aom_denoise_and_model_run(pcs_ptr->denoise_and_model,
+                                      inputPicturePointer,
+                                      &pcs_ptr->frm_hdr.film_grain_params,
+                                      scs_ptr->static_config.encoder_bit_depth > EB_8BIT)) {}
     return 0;
 }
 
@@ -3206,8 +3206,8 @@ void downsample_decimation_input_picture(PictureParentControlSet *pcs_ptr,
                      sixteenth_decimated_picture_ptr->origin_y);
 }
 
-int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
-                               int *val_count) {
+int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, int bit_depth,
+                                int *val_count) {
     assert(bit_depth <= 12);
     const int max_pix_val = 1 << bit_depth;
     // const uint16_t *src = CONVERT_TO_SHORTPTR(src8);
@@ -3227,7 +3227,7 @@ int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, in
     return n;
 }
 
-int eb_av1_count_colors(const uint8_t *src, int stride, int rows, int cols, int *val_count) {
+int svt_av1_count_colors(const uint8_t *src, int stride, int rows, int cols, int *val_count) {
     const int max_pix_val = 1 << 8;
     memset(val_count, 0, max_pix_val * sizeof(val_count[0]));
     for (int r = 0; r < rows; ++r) {
@@ -3276,10 +3276,10 @@ static const uint16_t eb_AV1_HIGH_VAR_OFFS_10[MAX_SB_SIZE] = {
   128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4
 };
 
-unsigned int eb_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, //const AV1_COMP *cpi,
-                                              const uint8_t *         src,
-                                              int       stride, //const struct Buf2D *ref,
-                                              BlockSize bs) {
+unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, //const AV1_COMP *cpi,
+                                               const uint8_t *         src,
+                                               int       stride, //const struct Buf2D *ref,
+                                               BlockSize bs) {
     unsigned int       sse;
     const unsigned int var =
         //cpi->fn_ptr[bs].vf(ref->buf, ref->stride, eb_av1_var_offs, 0, &sse);
@@ -3287,9 +3287,9 @@ unsigned int eb_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, //
     return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
 }
 
-unsigned int eb_av1_high_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr,
-                                                   const uint16_t *src, int stride,
-                                                   BlockSize bs) {
+unsigned int svt_av1_high_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr,
+                                                    const uint16_t *src, int stride,
+                                                    BlockSize bs) {
   unsigned int sse;
   const unsigned int var =
      fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(src), stride,
@@ -3410,8 +3410,8 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
                                                       bit_depth))
                 {
                     ++counts_1;
-                    int var = eb_av1_high_get_sby_perpixel_variance(fn_ptr, src, blk_w,
-                                                                    BLOCK_16X16);
+                    int var = svt_av1_high_get_sby_perpixel_variance(fn_ptr, src, blk_w,
+                                                                     BLOCK_16X16);
                     if (var > var_thresh)
                         ++counts_2;
                 }
@@ -3426,8 +3426,8 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
                                                blk_w, blk_h, color_thresh))
                 {
                     ++counts_1;
-                    int var = eb_av1_get_sby_perpixel_variance(fn_ptr, src, input_picture_ptr->stride_y,
-                                                               BLOCK_16X16);
+                    int var = svt_av1_get_sby_perpixel_variance(fn_ptr, src, input_picture_ptr->stride_y,
+                                                                BLOCK_16X16);
                     if (var > var_thresh)
                         ++counts_2;
                 }
@@ -3631,9 +3631,9 @@ void *picture_analysis_kernel(void *input_ptr) {
                 uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
                               input_picture_ptr->origin_y * input_picture_ptr->stride_y;
                 for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-                    eb_memcpy(pa + row * input_padded_picture_ptr->stride_y,
-                              in + row * input_picture_ptr->stride_y,
-                              sizeof(uint8_t) * input_picture_ptr->width);
+                    svt_memcpy(pa + row * input_padded_picture_ptr->stride_y,
+                               in + row * input_picture_ptr->stride_y,
+                               sizeof(uint8_t) * input_picture_ptr->width);
             }
 
             // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
@@ -3692,18 +3692,18 @@ void *picture_analysis_kernel(void *input_ptr) {
             }
         }
         // Get Empty Results Object
-        eb_get_empty_object(context_ptr->picture_analysis_results_output_fifo_ptr,
-                            &out_results_wrapper_ptr);
+        svt_get_empty_object(context_ptr->picture_analysis_results_output_fifo_ptr,
+                             &out_results_wrapper_ptr);
 
         PictureAnalysisResults *out_results_ptr = (PictureAnalysisResults *)
                                                       out_results_wrapper_ptr->object_ptr;
         out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
 
         // Release the Input Results
-        eb_release_object(in_results_wrapper_ptr);
+        svt_release_object(in_results_wrapper_ptr);
 
         // Post the Full Results Object
-        eb_post_full_object(out_results_wrapper_ptr);
+        svt_post_full_object(out_results_wrapper_ptr);
     }
     return NULL;
 }

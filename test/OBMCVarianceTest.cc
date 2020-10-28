@@ -13,8 +13,8 @@
  * @file OBMCVarianceTest.cc
  *
  * @brief Unit test for obmc variance functions:
- * - eb_aom_obmc_variance{4-128}x{4-128}_{c, avx2}
- * - eb_aom_obmc_sub_pixel_variance{4-128}x{4-128}_{c, sse4_1}
+ * - svt_aom_obmc_variance{4-128}x{4-128}_{c, avx2}
+ * - svt_aom_obmc_sub_pixel_variance{4-128}x{4-128}_{c, sse4_1}
  *
  * @author Cidana-Edmond
  *
@@ -52,20 +52,20 @@ class OBMCVarianceTest : public ::testing::TestWithParam<ObmcVarParam> {
           rnd_msk_(0, MaskMax * MaskMax + 1),
           func_ref_(TEST_GET_PARAM(0)),
           func_tst_(TEST_GET_PARAM(1)) {
-        pre_ = reinterpret_cast<uint8_t *>(eb_aom_memalign(32, MAX_SB_SQUARE));
+        pre_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, MAX_SB_SQUARE));
         wsrc_buf_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
         mask_buf_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
     }
 
     ~OBMCVarianceTest() {
         if (pre_)
-            eb_aom_free(pre_);
+            svt_aom_free(pre_);
         if (wsrc_buf_)
-            eb_aom_free(wsrc_buf_);
+            svt_aom_free(wsrc_buf_);
         if (mask_buf_)
-            eb_aom_free(mask_buf_);
+            svt_aom_free(mask_buf_);
     }
 
   protected:
@@ -102,8 +102,8 @@ TEST_P(OBMCVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_VAR_FUNC_C(W, H) eb_aom_obmc_variance##W##x##H##_c
-#define OBMC_VAR_FUNC_AVX2(W, H) eb_aom_obmc_variance##W##x##H##_avx2
+#define OBMC_VAR_FUNC_C(W, H) svt_aom_obmc_variance##W##x##H##_c
+#define OBMC_VAR_FUNC_AVX2(W, H) svt_aom_obmc_variance##W##x##H##_avx2
 #define GEN_OBMC_VAR_TEST_PARAM(W, H) \
     ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_AVX2(W, H))
 #define GEN_TEST_PARAMS(GEN_PARAM)                                          \
@@ -137,20 +137,20 @@ class OBMCSubPixelVarianceTest
           rnd_offset_(0, BIL_SUBPEL_SHIFTS - 1),
           func_ref_(TEST_GET_PARAM(0)),
           func_tst_(TEST_GET_PARAM(1)) {
-        pre_ = reinterpret_cast<uint8_t *>(eb_aom_memalign(32, MAX_SB_SQUARE));
+        pre_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, MAX_SB_SQUARE));
         wsrc_buf_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
         mask_buf_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(int32_t)));
     }
 
     ~OBMCSubPixelVarianceTest() {
         if (pre_)
-            eb_aom_free(pre_);
+            svt_aom_free(pre_);
         if (wsrc_buf_)
-            eb_aom_free(wsrc_buf_);
+            svt_aom_free(wsrc_buf_);
         if (mask_buf_)
-            eb_aom_free(mask_buf_);
+            svt_aom_free(mask_buf_);
     }
 
   protected:
@@ -204,9 +204,9 @@ TEST_P(OBMCSubPixelVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) eb_aom_obmc_sub_pixel_variance##W##x##H##_c
+#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) svt_aom_obmc_sub_pixel_variance##W##x##H##_c
 #define OBMC_SUB_PIX_VAR_FUNC_SSE41(W, H) \
-    eb_aom_obmc_sub_pixel_variance##W##x##H##_sse4_1
+    svt_aom_obmc_sub_pixel_variance##W##x##H##_sse4_1
 #define GEN_OBMC_SUB_PIX_VAR_TEST_PARAM(W, H)         \
     ObmcSubPixVarParam(OBMC_SUB_PIX_VAR_FUNC_C(W, H), \
                        OBMC_SUB_PIX_VAR_FUNC_SSE41(W, H))

@@ -58,11 +58,11 @@ void lr_generate_padding(
     for (vertical_idx = LR_PAD_SIDE; vertical_idx > 0; --vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        eb_memcpy(
+        svt_memcpy(
             temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        eb_memcpy(
+        svt_memcpy(
            temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * (original_src_width + LR_PAD_MAX));
     }
     return;
@@ -103,14 +103,14 @@ void lr_generate_padding16_bit(
     for (vertical_idx = LR_PAD_SIDE; vertical_idx > 0; --vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        eb_memcpy(temp_src_pic2,
-                 temp_src_pic0,
-                  sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
+        svt_memcpy(temp_src_pic2,
+                   temp_src_pic0,
+                   sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        eb_memcpy(temp_src_pic3,
-                 temp_src_pic1,
-                  sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
+        svt_memcpy(temp_src_pic3,
+                   temp_src_pic1,
+                   sizeof(uint8_t) * (original_src_width + (LR_PAD_MAX << use_highbd)));
     }
 
     return;
@@ -186,16 +186,16 @@ static const StripeFilterFun stripe_filters[NUM_STRIPE_FILTERS] = { wiener_filte
 // Filter one restoration unit
 // Duplicated to avoid frame level buffer copy ( frame to block level copy)
 // and unnecessary block copy based on LR_Type
-void eb_dec_av1_loop_restoration_filter_unit(uint8_t need_bounadaries,
-                                            const RestorationTileLimits *limits,
-                                            const RestorationUnitInfo *rui,
-                                            const RestorationStripeBoundaries *rsb,
-                                            RestorationLineBuffers *rlbs,
-                                            const Av1PixelRect *tile_rect, int32_t tile_stripe0,
-                                            int32_t ss_x, int32_t ss_y, int32_t highbd,
-                                            int32_t bit_depth, uint8_t *data8,
-                                            int32_t stride, uint8_t *dst8, int32_t dst_stride,
-                                            int32_t *tmpbuf, int32_t optimized_lr)
+void svt_dec_av1_loop_restoration_filter_unit(uint8_t need_bounadaries,
+                                              const RestorationTileLimits *limits,
+                                              const RestorationUnitInfo *rui,
+                                              const RestorationStripeBoundaries *rsb,
+                                              RestorationLineBuffers *rlbs,
+                                              const Av1PixelRect *tile_rect, int32_t tile_stripe0,
+                                              int32_t ss_x, int32_t ss_y, int32_t highbd,
+                                              int32_t bit_depth, uint8_t *data8,
+                                              int32_t stride, uint8_t *dst8, int32_t dst_stride,
+                                              int32_t *tmpbuf, int32_t optimized_lr)
 {
     RestorationType unit_rtype = rui->restoration_type;
 
@@ -241,7 +241,7 @@ void eb_dec_av1_loop_restoration_filter_unit(uint8_t need_bounadaries,
         const int32_t nominal_stripe_height =
             full_stripe_height - ((tile_stripe == 0) ? runit_offset : 0);
         /*In wiener filter leaf level function assumes always h to be multiple of 2.
-          we can see assert related to h in this function->eb_av1_wiener_convolve_add_src_avx2*/
+          we can see assert related to h in this function->svt_av1_wiener_convolve_add_src_avx2*/
         const int32_t h = AOMMIN(nominal_stripe_height,
             ((remaining_stripes.v_end - remaining_stripes.v_start) + 1) & ~1);
 
@@ -400,19 +400,19 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
             {
                 /* save cdef_data of current block to temp
                 _buf before LR processing */
-                eb_memcpy(bdry_cdef_ptr, src_ptr, width);
+                svt_memcpy(bdry_cdef_ptr, src_ptr, width);
                 src_ptr += stride;
                 bdry_cdef_ptr += width;
             }
 
             if (!use_highbd)
-                eb_dec_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
+                svt_dec_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
                     &lr_ctxt->boundaries[plane], lr_ctxt->rlbs[index][plane],
                     &tile_rect[plane], tile_stripe0, sx, sy, use_highbd, bit_depth,
                     src, src_stride, dst, dst_stride,
                     lr_ctxt->rst_tmpbuf[index], optimized_lr);
             else
-                eb_dec_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
+                svt_dec_av1_loop_restoration_filter_unit(1, &tile_limit, lr_unit,
                     &lr_ctxt->boundaries[plane], lr_ctxt->rlbs[index][plane],
                     &tile_rect[plane],
                     tile_stripe0, sx, sy, use_highbd, bit_depth,
@@ -422,7 +422,7 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
             // restore LR_data of previous block
             if (col)
                 for (int proc = 0; proc < height; proc++) {
-                    eb_memcpy(src_ptr, bdry_lr_ptr, width);
+                    svt_memcpy(src_ptr, bdry_lr_ptr, width);
                     src_ptr += stride;
                     bdry_lr_ptr += width;
                 }
@@ -430,9 +430,9 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
             if ((col + block_w) < plane_tile_w)
                 for (int proc = 0; proc < height; proc++) {
                     // save lr_data of current block to temp_buf
-                    eb_memcpy(bdry_lr, src_proc, width);
+                    svt_memcpy(bdry_lr, src_proc, width);
                     // save cdef_data of current block to src
-                    eb_memcpy(src_proc, bdry_cdef, width);
+                    svt_memcpy(src_proc, bdry_cdef, width);
 
                     src_proc += stride;
                     bdry_cdef += width;

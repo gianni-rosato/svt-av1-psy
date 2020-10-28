@@ -245,7 +245,7 @@ static void *get_actual_malloc_address(void *const mem) {
     return (void *)(*malloc_addr_location);
 }
 
-void *eb_aom_memalign(size_t align, size_t size) {
+void *svt_aom_memalign(size_t align, size_t size) {
     void *x = NULL;
     const size_t aligned_size = get_aligned_malloc_size(size, align);
 #if defined(AOM_MAX_ALLOCABLE_MEMORY)
@@ -259,9 +259,9 @@ void *eb_aom_memalign(size_t align, size_t size) {
     return x;
 }
 
-void *eb_aom_malloc(size_t size) { return eb_aom_memalign(DEFAULT_ALIGNMENT, size); }
+void *svt_aom_malloc(size_t size) { return svt_aom_memalign(DEFAULT_ALIGNMENT, size); }
 
-void eb_aom_free(void *memblk) {
+void svt_aom_free(void *memblk) {
     if (memblk) {
         void *addr = get_actual_malloc_address(memblk);
         free(addr);
@@ -853,7 +853,7 @@ void fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_s
                    int32_t width, int32_t height, int32_t use_high_bit_depth) {
     int32_t hbd_coeff = use_high_bit_depth ? 2 : 1;
     while (height) {
-        eb_memcpy(dst, src, width * sizeof(uint8_t) * hbd_coeff);
+        svt_memcpy(dst, src, width * sizeof(uint8_t) * hbd_coeff);
         src += src_stride * hbd_coeff;
         dst += dst_stride * hbd_coeff;
         --height;
@@ -864,10 +864,10 @@ void fgn_copy_rect(uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_s
 static void copy_area(int32_t *src, int32_t src_stride, int32_t *dst, int32_t dst_stride,
                       int32_t width, int32_t height) {
     while (height) {
-        if (eb_memcpy != NULL)
-            eb_memcpy(dst, src, width * sizeof(*src));
+        if (svt_memcpy != NULL)
+            svt_memcpy(dst, src, width * sizeof(*src));
         else
-            eb_memcpy_c(dst, src, width * sizeof(*src));
+            svt_memcpy_c(dst, src, width * sizeof(*src));
         src += src_stride;
         dst += dst_stride;
         --height;
@@ -933,10 +933,10 @@ static void hor_boundary_overlap(int32_t *top_block, int32_t top_stride, int32_t
     }
 }
 
-void eb_av1_add_film_grain_run(AomFilmGrain *params, uint8_t *luma, uint8_t *cb, uint8_t *cr,
-                               int32_t height, int32_t width, int32_t luma_stride,
-                               int32_t chroma_stride, int32_t use_high_bit_depth,
-                               int32_t chroma_subsamp_y, int32_t chroma_subsamp_x) {
+void svt_av1_add_film_grain_run(AomFilmGrain *params, uint8_t *luma, uint8_t *cb, uint8_t *cr,
+                                int32_t height, int32_t width, int32_t luma_stride,
+                                int32_t chroma_stride, int32_t use_high_bit_depth,
+                                int32_t chroma_subsamp_y, int32_t chroma_subsamp_x) {
     int32_t **pred_pos_luma;
     int32_t **pred_pos_chroma;
     int32_t * luma_grain_block;
@@ -1041,8 +1041,8 @@ void eb_av1_add_film_grain_run(AomFilmGrain *params, uint8_t *luma, uint8_t *cb,
     init_scaling_function(params->scaling_points_y, params->num_y_points, scaling_lut_y);
 
     if (params->chroma_scaling_from_luma) {
-        eb_memcpy(scaling_lut_cb, scaling_lut_y, sizeof(*scaling_lut_y) * 256);
-        eb_memcpy(scaling_lut_cr, scaling_lut_y, sizeof(*scaling_lut_y) * 256);
+        svt_memcpy(scaling_lut_cb, scaling_lut_y, sizeof(*scaling_lut_y) * 256);
+        svt_memcpy(scaling_lut_cr, scaling_lut_y, sizeof(*scaling_lut_y) * 256);
     } else {
         init_scaling_function(params->scaling_points_cb, params->num_cb_points, scaling_lut_cb);
         init_scaling_function(params->scaling_points_cr, params->num_cr_points, scaling_lut_cr);
@@ -1409,35 +1409,35 @@ void eb_av1_add_film_grain_run(AomFilmGrain *params, uint8_t *luma, uint8_t *cb,
 void av1_film_grain_write_updated(const AomFilmGrain *pars,
                                   int32_t monochrome,
                                   struct AomWriteBitBuffer *wb) {
-  eb_aom_wb_write_literal(wb, pars->num_y_points, 4);  // max 14
+  svt_aom_wb_write_literal(wb, pars->num_y_points, 4);  // max 14
   for (int32_t i = 0; i < pars->num_y_points; i++) {
-    eb_aom_wb_write_literal(wb, pars->scaling_points_y[i][0], 8);
-    eb_aom_wb_write_literal(wb, pars->scaling_points_y[i][1], 8);
+    svt_aom_wb_write_literal(wb, pars->scaling_points_y[i][0], 8);
+    svt_aom_wb_write_literal(wb, pars->scaling_points_y[i][1], 8);
   }
 
   if (!monochrome)
-    eb_aom_wb_write_bit(wb, pars->chroma_scaling_from_luma);
+    svt_aom_wb_write_bit(wb, pars->chroma_scaling_from_luma);
 
   if (!(monochrome || pars->chroma_scaling_from_luma)) {
-    eb_aom_wb_write_literal(wb, pars->num_cb_points, 4);  // max 10
+    svt_aom_wb_write_literal(wb, pars->num_cb_points, 4);  // max 10
     for (int32_t i = 0; i < pars->num_cb_points; i++) {
-      eb_aom_wb_write_literal(wb, pars->scaling_points_cb[i][0], 8);
-      eb_aom_wb_write_literal(wb, pars->scaling_points_cb[i][1], 8);
+      svt_aom_wb_write_literal(wb, pars->scaling_points_cb[i][0], 8);
+      svt_aom_wb_write_literal(wb, pars->scaling_points_cb[i][1], 8);
     }
 
-    eb_aom_wb_write_literal(wb, pars->num_cr_points, 4);  // max 10
+    svt_aom_wb_write_literal(wb, pars->num_cr_points, 4);  // max 10
     for (int32_t i = 0; i < pars->num_cr_points; i++) {
-      eb_aom_wb_write_literal(wb, pars->scaling_points_cr[i][0], 8);
-      eb_aom_wb_write_literal(wb, pars->scaling_points_cr[i][1], 8);
+      svt_aom_wb_write_literal(wb, pars->scaling_points_cr[i][0], 8);
+      svt_aom_wb_write_literal(wb, pars->scaling_points_cr[i][1], 8);
     }
   }
 
-  eb_aom_wb_write_literal(wb, pars->scaling_shift - 8, 2);  // 8 + value
+  svt_aom_wb_write_literal(wb, pars->scaling_shift - 8, 2);  // 8 + value
 
   // AR coefficients
   // Only sent if the corresponsing scaling function has
   // more than 0 points
-  eb_aom_wb_write_literal(wb, pars->ar_coeff_lag, 2);
+  svt_aom_wb_write_literal(wb, pars->ar_coeff_lag, 2);
 
   int32_t num_pos_luma = 2 * pars->ar_coeff_lag * (pars->ar_coeff_lag + 1);
   int32_t num_pos_chroma = num_pos_luma;
@@ -1445,35 +1445,35 @@ void av1_film_grain_write_updated(const AomFilmGrain *pars,
 
   if (pars->num_y_points)
     for (int32_t i = 0; i < num_pos_luma; i++)
-      eb_aom_wb_write_literal(wb, pars->ar_coeffs_y[i] + 128, 8);
+      svt_aom_wb_write_literal(wb, pars->ar_coeffs_y[i] + 128, 8);
 
   if (pars->num_cb_points || pars->chroma_scaling_from_luma)
     for (int32_t i = 0; i < num_pos_chroma; i++)
-      eb_aom_wb_write_literal(wb, pars->ar_coeffs_cb[i] + 128, 8);
+      svt_aom_wb_write_literal(wb, pars->ar_coeffs_cb[i] + 128, 8);
 
   if (pars->num_cr_points || pars->chroma_scaling_from_luma)
     for (int32_t i = 0; i < num_pos_chroma; i++)
-      eb_aom_wb_write_literal(wb, pars->ar_coeffs_cr[i] + 128, 8);
+      svt_aom_wb_write_literal(wb, pars->ar_coeffs_cr[i] + 128, 8);
 
-  eb_aom_wb_write_literal(wb, pars->ar_coeff_shift - 6, 2);  // 8 + value
+  svt_aom_wb_write_literal(wb, pars->ar_coeff_shift - 6, 2);  // 8 + value
 
-  eb_aom_wb_write_literal(wb, pars->grain_scale_shift, 2);
+  svt_aom_wb_write_literal(wb, pars->grain_scale_shift, 2);
 
   if (pars->num_cb_points) {
-    eb_aom_wb_write_literal(wb, pars->cb_mult, 8);
-    eb_aom_wb_write_literal(wb, pars->cb_luma_mult, 8);
-    eb_aom_wb_write_literal(wb, pars->cb_offset, 9);
+    svt_aom_wb_write_literal(wb, pars->cb_mult, 8);
+    svt_aom_wb_write_literal(wb, pars->cb_luma_mult, 8);
+    svt_aom_wb_write_literal(wb, pars->cb_offset, 9);
   }
 
   if (pars->num_cr_points) {
-    eb_aom_wb_write_literal(wb, pars->cr_mult, 8);
-    eb_aom_wb_write_literal(wb, pars->cr_luma_mult, 8);
-    eb_aom_wb_write_literal(wb, pars->cr_offset, 9);
+    svt_aom_wb_write_literal(wb, pars->cr_mult, 8);
+    svt_aom_wb_write_literal(wb, pars->cr_luma_mult, 8);
+    svt_aom_wb_write_literal(wb, pars->cr_offset, 9);
   }
 
-  eb_aom_wb_write_bit(wb, pars->overlap_flag);
+  svt_aom_wb_write_bit(wb, pars->overlap_flag);
 
-  eb_aom_wb_write_bit(wb, pars->clip_to_restricted_range);
+  svt_aom_wb_write_bit(wb, pars->clip_to_restricted_range);
 }
 */
 /*

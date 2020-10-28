@@ -104,7 +104,7 @@ static void highbd_10_variance_avx2(const uint16_t *src, int src_stride,
 }
 
 #define VAR_FN(w, h, block_size, shift)                                    \
-  uint32_t eb_aom_highbd_10_variance##w##x##h##_avx2(                      \
+  uint32_t svt_aom_highbd_10_variance##w##x##h##_avx2(                     \
       const uint8_t *src8, int src_stride, const uint8_t *ref8,            \
       int ref_stride, uint32_t *sse) {                                     \
     int sum;                                                               \

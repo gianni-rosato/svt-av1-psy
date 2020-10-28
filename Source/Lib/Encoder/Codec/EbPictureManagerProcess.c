@@ -104,10 +104,10 @@ EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
     thread_context_ptr->dctor = picture_manager_context_dctor;
 
     context_ptr->picture_input_fifo_ptr =
-        eb_system_resource_get_consumer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, 0);
-    context_ptr->picture_manager_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+        svt_system_resource_get_consumer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, 0);
+    context_ptr->picture_manager_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
-    context_ptr->picture_control_set_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->picture_control_set_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_control_set_pool_ptr_array[0], 0); //The Child PCS Pool here
 
     return EB_ErrorNone;
@@ -399,7 +399,7 @@ void *picture_manager_kernel(void *input_ptr) {
                 // Release the Reference Buffer once we know it is not a reference
                 if (pcs_ptr->is_used_as_reference_flag == EB_FALSE) {
                     // Release the nominal live_count value
-                    eb_release_object(pcs_ptr->reference_picture_wrapper_ptr);
+                    svt_release_object(pcs_ptr->reference_picture_wrapper_ptr);
                     pcs_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)NULL;
                 }
 
@@ -447,7 +447,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
             //keep the relase of SCS here because we still need the encodeContext strucutre here
             // Release the Reference's SequenceControlSet
-            eb_release_object(input_picture_demux_ptr->scs_wrapper_ptr);
+            svt_release_object(input_picture_demux_ptr->scs_wrapper_ptr);
 
             break;
         case EB_PIC_FEEDBACK:
@@ -480,7 +480,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
             //keep the release of SCS here because we still need the encodeContext structure here
             // Release the Reference's SequenceControlSet
-            eb_release_object(input_picture_demux_ptr->scs_wrapper_ptr);
+            svt_release_object(input_picture_demux_ptr->scs_wrapper_ptr);
 
             break;
         default:
@@ -617,11 +617,11 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     if (availability_flag == EB_TRUE) {
                         // Get New  Empty Child PCS from PCS Pool
-                        eb_get_empty_object(context_ptr->picture_control_set_fifo_ptr,
+                        svt_get_empty_object(context_ptr->picture_control_set_fifo_ptr,
                                             &child_pcs_wrapper_ptr);
 
                         // Child PCS is released by Packetization
-                        eb_object_inc_live_count(child_pcs_wrapper_ptr, 1);
+                        svt_object_inc_live_count(child_pcs_wrapper_ptr, 1);
 
                         child_pcs_ptr = (PictureControlSet *)child_pcs_wrapper_ptr->object_ptr;
 
@@ -824,10 +824,10 @@ void *picture_manager_kernel(void *input_ptr) {
                         unsigned int tile_tok = 0;
                         //Tile Loop
                         for (tile_row = 0; tile_row < tile_rows; tile_row++) {
-                            eb_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
+                            svt_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
 
                             for (tile_col = 0; tile_col < tile_cols; tile_col++) {
-                                eb_av1_tile_set_col(
+                                svt_av1_tile_set_col(
                                     &tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
                                 tile_info.tile_rs_index = tile_col + tile_row * tile_cols;
 
@@ -982,7 +982,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                             reference_entry_ptr->reference_object_ptr->object_ptr)
                                         ->r0;
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
-                                    eb_object_inc_live_count(
+                                    svt_object_inc_live_count(
                                         reference_entry_ptr->reference_object_ptr, 1);
 
                                     // Decrement the Reference's dependent_count Count
@@ -1078,7 +1078,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                             reference_entry_ptr->reference_object_ptr->object_ptr)
                                         ->r0;
                                     // Increment the Reference's liveCount by the number of tiles in the input picture
-                                    eb_object_inc_live_count(
+                                    svt_object_inc_live_count(
                                         reference_entry_ptr->reference_object_ptr, 1);
 
                                     // Decrement the Reference's dependent_count Count
@@ -1122,12 +1122,12 @@ void *picture_manager_kernel(void *input_ptr) {
                         }
                         // Increment the sequenceControlSet Wrapper's live count by 1 for only the pictures which are used as reference
                         if (child_pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-                            eb_object_inc_live_count(child_pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr,
+                            svt_object_inc_live_count(child_pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr,
                                                      1);
                         }
 
                         // Get Empty Results Object
-                        eb_get_empty_object(context_ptr->picture_manager_output_fifo_ptr,
+                        svt_get_empty_object(context_ptr->picture_manager_output_fifo_ptr,
                                             &output_wrapper_ptr);
 
                         rate_control_tasks_ptr = (RateControlTasks *)output_wrapper_ptr->object_ptr;
@@ -1135,7 +1135,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         rate_control_tasks_ptr->task_type       = RC_PICTURE_MANAGER_RESULT;
 
                         // Post the Full Results Object
-                        eb_post_full_object(output_wrapper_ptr);
+                        svt_post_full_object(output_wrapper_ptr);
 
                         // Remove the Input Entry from the Input Queue
                         input_entry_ptr->input_object_ptr = (EbObjectWrapper *)NULL;
@@ -1171,7 +1171,7 @@ void *picture_manager_kernel(void *input_ptr) {
                     (reference_entry_ptr->release_enable) &&
                     (reference_entry_ptr->reference_object_ptr)) {
                     // Release the nominal live_count value
-                    eb_release_object(reference_entry_ptr->reference_object_ptr);
+                    svt_release_object(reference_entry_ptr->reference_object_ptr);
                     reference_entry_ptr->reference_object_ptr      = (EbObjectWrapper *)NULL;
                     reference_entry_ptr->reference_available       = EB_FALSE;
                     reference_entry_ptr->is_used_as_reference_flag = EB_FALSE;
@@ -1211,7 +1211,7 @@ void *picture_manager_kernel(void *input_ptr) {
         }
 
         // Release the Input Picture Demux Results
-        eb_release_object(input_picture_demux_wrapper_ptr);
+        svt_release_object(input_picture_demux_wrapper_ptr);
     }
     return NULL;
 }

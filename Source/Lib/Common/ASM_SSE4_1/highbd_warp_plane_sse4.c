@@ -298,11 +298,11 @@ static INLINE void highbd_prepare_warp_horizontal_filter(const uint16_t *ref, __
                                       reduce_bits_horiz);
 }
 
-void eb_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, int width,
-                                      int height, int stride, uint16_t *pred, int p_col, int p_row,
-                                      int p_width, int p_height, int p_stride, int subsampling_x,
-                                      int subsampling_y, int bd, ConvolveParams *conv_params,
-                                      int16_t alpha, int16_t beta, int16_t gamma, int16_t delta) {
+void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, int width,
+                                       int height, int stride, uint16_t *pred, int p_col, int p_row,
+                                       int p_width, int p_height, int p_stride, int subsampling_x,
+                                       int subsampling_y, int bd, ConvolveParams *conv_params,
+                                       int16_t alpha, int16_t beta, int16_t gamma, int16_t delta) {
     __m128i   tmp[15];
     int       i, j, k;
     const int reduce_bits_horiz =

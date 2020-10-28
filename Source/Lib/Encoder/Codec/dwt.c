@@ -110,12 +110,12 @@ static void dyadic_analyze_53_uint8_input(int levels, int width, int height,
   }
 }
 
-void eb_av1_fdwt8x8_uint8_input_c(uint8_t *input, tran_low_t *output, int stride,
-                               int hbd) {
+void svt_av1_fdwt8x8_uint8_input_c(uint8_t *input, tran_low_t *output, int stride,
+                                   int hbd) {
   dyadic_analyze_53_uint8_input(4, 8, 8, input, stride, output, 8, 2, hbd);
 }
 
-int eb_av1_haar_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
+int svt_av1_haar_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
   int acsad = 0;
 
   for (int r = 0; r < bh; ++r)
@@ -125,7 +125,7 @@ int eb_av1_haar_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
   return acsad;
 }
 
-uint64_t eb_av1_dct_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
+uint64_t svt_av1_dct_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
   uint64_t acsad = 0;
 
   for (int r = 0; r < bh; ++r)
@@ -136,7 +136,7 @@ uint64_t eb_av1_dct_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
   return acsad;
 }
 
-uint32_t eb_av1_variance(uint8_t *input, int bw, int bh, int stride) {
+uint32_t svt_av1_variance(uint8_t *input, int bw, int bh, int stride) {
   int sum = 0;
   uint32_t sse = 0;
 
@@ -148,9 +148,9 @@ uint32_t eb_av1_variance(uint8_t *input, int bw, int bh, int stride) {
   return sse - (uint32_t)(((int64_t)sum * sum) / (bw * bh));
 }
 
-int eb_av1_haar_ac_sad_8x8_uint8_input_c(uint8_t *input, int stride, int hbd) {
+int svt_av1_haar_ac_sad_8x8_uint8_input_c(uint8_t *input, int stride, int hbd) {
   tran_low_t output[64];
 
-  eb_av1_fdwt8x8_uint8_input_c(input, output, stride, hbd);
-  return eb_av1_haar_ac_sad(output, 8, 8, 8);
+  svt_av1_fdwt8x8_uint8_input_c(input, output, stride, hbd);
+  return svt_av1_haar_ac_sad(output, 8, 8, 8);
 }

@@ -131,10 +131,10 @@ typedef struct CodedBlockStats {
     uint8_t  parent32x32_index;
 } CodedBlockStats;
 
-extern void* eb_aom_memalign(size_t align, size_t size);
-extern void* eb_aom_malloc(size_t size);
-extern void  eb_aom_free(void* memblk);
-extern void* eb_aom_memset16(void* dest, int32_t val, size_t length);
+extern void* svt_aom_memalign(size_t align, size_t size);
+extern void* svt_aom_malloc(size_t size);
+extern void  svt_aom_free(void* memblk);
+extern void* svt_aom_memset16(void* dest, int32_t val, size_t length);
 
 extern uint64_t log2f_high_precision(uint64_t x, uint8_t precision);
 
@@ -288,6 +288,13 @@ static inline int gcc_right_shift(int a, unsigned shift) {
     a                          = (unsigned)a >> shift;
     while (shift) a |= sbit >> shift--;
     return a ^ sbit;
+}
+
+static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
+    if (allow_hp)
+        return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 3);
+    else
+        return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
 
 #ifdef __cplusplus

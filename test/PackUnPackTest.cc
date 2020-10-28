@@ -82,15 +82,15 @@ class PackTest : public ::testing::TestWithParam<AreaSize> {
 
     void SetUp() override {
         in_compn_bit_buffer1_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         in_compn_bit_buffer2_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         in_bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         local_cache1_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         local_cache2_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         memset(in_compn_bit_buffer1_, 0, test_size_);
         memset(in_compn_bit_buffer2_, 0, test_size_);
         memset(local_cache1_, 0, test_size_);
@@ -99,15 +99,15 @@ class PackTest : public ::testing::TestWithParam<AreaSize> {
 
     void TearDown() override {
         if (in_bit_buffer_)
-            eb_aom_free(in_bit_buffer_);
+            svt_aom_free(in_bit_buffer_);
         if (in_compn_bit_buffer1_)
-            eb_aom_free(in_compn_bit_buffer1_);
+            svt_aom_free(in_compn_bit_buffer1_);
         if (in_compn_bit_buffer2_)
-            eb_aom_free(in_compn_bit_buffer2_);
+            svt_aom_free(in_compn_bit_buffer2_);
         if (local_cache1_)
-            eb_aom_free(local_cache1_);
+            svt_aom_free(local_cache1_);
         if (local_cache2_)
-            eb_aom_free(local_cache2_);
+            svt_aom_free(local_cache2_);
         aom_clear_system_state();
     }
 
@@ -128,7 +128,7 @@ class PackTest : public ::testing::TestWithParam<AreaSize> {
 
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u8(in_bit_buffer_, test_size_);
+            svt_buf_random_u8(in_bit_buffer_, test_size_);
             svt_c_pack_avx2_intrin(in_bit_buffer_,
                                    in_stride_,
                                    in_compn_bit_buffer1_,
@@ -188,26 +188,26 @@ class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
 
     void SetUp() override {
         inn_bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_ >> 2));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
         in_8bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_16bit_buffer1_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         out_16bit_buffer2_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         memset(out_16bit_buffer1_, 0, sizeof(uint16_t) * test_size_);
         memset(out_16bit_buffer2_, 0, sizeof(uint16_t) * test_size_);
     }
 
     void TearDown() override {
         if (inn_bit_buffer_)
-            eb_aom_free(inn_bit_buffer_);
+            svt_aom_free(inn_bit_buffer_);
         if (in_8bit_buffer_)
-            eb_aom_free(in_8bit_buffer_);
+            svt_aom_free(in_8bit_buffer_);
         if (out_16bit_buffer1_)
-            eb_aom_free(out_16bit_buffer1_);
+            svt_aom_free(out_16bit_buffer1_);
         if (out_16bit_buffer2_)
-            eb_aom_free(out_16bit_buffer2_);
+            svt_aom_free(out_16bit_buffer2_);
         aom_clear_system_state();
     }
 
@@ -228,8 +228,8 @@ class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
 
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u8(inn_bit_buffer_, test_size_ >> 2);
-            eb_buf_random_u8(in_8bit_buffer_, test_size_);
+            svt_buf_random_u8(inn_bit_buffer_, test_size_ >> 2);
+            svt_buf_random_u8(in_8bit_buffer_, test_size_);
             svt_compressed_packmsb_avx2_intrin(in_8bit_buffer_,
                                            in8_stride_,
                                            inn_bit_buffer_,
@@ -303,15 +303,15 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
 
     void SetUp() override {
         in_8bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         inn_bit_buffer_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_16bit_buffer_avx2_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         out_16bit_buffer_c_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         out_16bit_buffer_sse2_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         memset(out_16bit_buffer_avx2_, 0, sizeof(uint16_t) * test_size_);
         memset(out_16bit_buffer_c_, 0, sizeof(uint16_t) * test_size_);
         memset(out_16bit_buffer_sse2_, 0, sizeof(uint16_t) * test_size_);
@@ -319,15 +319,15 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
 
     void TearDown() override {
         if (in_8bit_buffer_)
-            eb_aom_free(in_8bit_buffer_);
+            svt_aom_free(in_8bit_buffer_);
         if (inn_bit_buffer_)
-            eb_aom_free(inn_bit_buffer_);
+            svt_aom_free(inn_bit_buffer_);
         if (out_16bit_buffer_avx2_)
-            eb_aom_free(out_16bit_buffer_avx2_);
+            svt_aom_free(out_16bit_buffer_avx2_);
         if (out_16bit_buffer_c_)
-            eb_aom_free(out_16bit_buffer_c_);
+            svt_aom_free(out_16bit_buffer_c_);
         if (out_16bit_buffer_sse2_)
-            eb_aom_free(out_16bit_buffer_sse2_);
+            svt_aom_free(out_16bit_buffer_sse2_);
         aom_clear_system_state();
     }
 
@@ -348,8 +348,8 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
 
     void run_2d_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u8(in_8bit_buffer_, test_size_);
-            eb_buf_random_u8(inn_bit_buffer_, test_size_);
+            svt_buf_random_u8(in_8bit_buffer_, test_size_);
+            svt_buf_random_u8(inn_bit_buffer_, test_size_);
 
             svt_enc_msb_pack2d_avx2_intrin_al(in_8bit_buffer_,
                                               in_stride_,
@@ -426,15 +426,15 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
 
     void SetUp() override {
         out_8bit_buffer1_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_8bit_buffer2_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_nbit_buffer1_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_nbit_buffer2_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         in_16bit_buffer_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         memset(out_8bit_buffer1_, 0, test_size_);
         memset(out_8bit_buffer2_, 0, test_size_);
         memset(out_nbit_buffer1_, 0, test_size_);
@@ -443,15 +443,15 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
 
     void TearDown() override {
         if (in_16bit_buffer_)
-            eb_aom_free(in_16bit_buffer_);
+            svt_aom_free(in_16bit_buffer_);
         if (out_8bit_buffer1_)
-            eb_aom_free(out_8bit_buffer1_);
+            svt_aom_free(out_8bit_buffer1_);
         if (out_8bit_buffer2_)
-            eb_aom_free(out_8bit_buffer2_);
+            svt_aom_free(out_8bit_buffer2_);
         if (out_nbit_buffer1_)
-            eb_aom_free(out_nbit_buffer1_);
+            svt_aom_free(out_nbit_buffer1_);
         if (out_nbit_buffer2_)
-            eb_aom_free(out_nbit_buffer2_);
+            svt_aom_free(out_nbit_buffer2_);
         aom_clear_system_state();
     }
 
@@ -472,7 +472,7 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
 
     void run_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u16(in_16bit_buffer_, test_size_);
+            svt_buf_random_u16(in_16bit_buffer_, test_size_);
             svt_enc_un_pack8_bit_data_avx2_intrin(in_16bit_buffer_,
                                                      in_stride_,
                                                      out_8bit_buffer1_,
@@ -500,7 +500,7 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
 
     void run_2d_test() {
         for (int i = 0; i < RANDOM_TIME; i++) {
-            eb_buf_random_u16(in_16bit_buffer_, test_size_);
+            svt_buf_random_u16(in_16bit_buffer_, test_size_);
             svt_enc_msb_un_pack2d_sse2_intrin(in_16bit_buffer_,
                                               in_stride_,
                                               out_8bit_buffer1_,
@@ -593,15 +593,15 @@ class UnPackAvgTest : public ::testing::TestWithParam<AreaSize> {
 
     void SetUp() override {
         out_8bit_buffer_avx2_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_8bit_buffer_c_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         out_8bit_buffer_sse2_ =
-            reinterpret_cast<uint8_t *>(eb_aom_memalign(32, test_size_));
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
         in_16bit_buffer1_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         in_16bit_buffer2_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(32, sizeof(uint16_t) * test_size_));
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
         memset(in_16bit_buffer1_, 0, sizeof(uint16_t) * test_size_);
         memset(in_16bit_buffer2_, 0, sizeof(uint16_t) * test_size_);
         memset(out_8bit_buffer_avx2_, 0, test_size_);
@@ -611,15 +611,15 @@ class UnPackAvgTest : public ::testing::TestWithParam<AreaSize> {
 
     void TearDown() override {
         if (in_16bit_buffer1_)
-            eb_aom_free(in_16bit_buffer1_);
+            svt_aom_free(in_16bit_buffer1_);
         if (in_16bit_buffer2_)
-            eb_aom_free(in_16bit_buffer2_);
+            svt_aom_free(in_16bit_buffer2_);
         if (out_8bit_buffer_avx2_)
-            eb_aom_free(out_8bit_buffer_avx2_);
+            svt_aom_free(out_8bit_buffer_avx2_);
         if (out_8bit_buffer_c_)
-            eb_aom_free(out_8bit_buffer_c_);
+            svt_aom_free(out_8bit_buffer_c_);
         if (out_8bit_buffer_sse2_)
-            eb_aom_free(out_8bit_buffer_sse2_);
+            svt_aom_free(out_8bit_buffer_sse2_);
         aom_clear_system_state();
     }
 

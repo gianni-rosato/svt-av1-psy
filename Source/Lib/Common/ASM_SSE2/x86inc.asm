@@ -108,7 +108,7 @@ HAVE_WXWIDGETS equ 0
 
 
 %ifndef private_prefix
-    %define private_prefix eb_aom
+    %define private_prefix svt_aom
 %endif
 
 %ifndef public_prefix

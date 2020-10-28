@@ -2186,7 +2186,7 @@ void me_prune_ref(
             }
         }
     }
-    eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
+    svt_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
     HmeResults     * res_p = sorted[0];
     uint32_t i, j;
     for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
@@ -2941,7 +2941,7 @@ void hme_sb(
 void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
     HmeResults    sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t      num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
-    eb_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
+    svt_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
     HmeResults     * res_p = sorted[0];
     uint32_t i, j;
     for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
@@ -3305,7 +3305,7 @@ EbErrorType open_loop_intra_search_mb(
                 intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, 16);
 
                 // Distortion
-                eb_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+                svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
                 svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
                 int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
 

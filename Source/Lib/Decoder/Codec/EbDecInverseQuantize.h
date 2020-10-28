@@ -15,8 +15,8 @@
 #include "EbAv1Structs.h"
 #include "EbDecProcessFrame.h"
 
-int16_t eb_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-int16_t eb_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 void    setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt);
 void    av1_inverse_qm_init(DecModCtxt *dec_mod_ctxt, SeqHeader *seq_header);

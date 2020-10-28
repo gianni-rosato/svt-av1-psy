@@ -315,24 +315,24 @@ void AV1WarpFilterTest::RunCheckOutput(warp_affine_func test_impl) {
                                 conv_params.bck_offset =
                                     quant_dist_lookup_table[ii][jj][1];
                             }
-                            eb_av1_warp_affine_c(mat,
-                                              input,
-                                              w,
-                                              h,
-                                              stride,
-                                              output,
-                                              32,
-                                              32,
-                                              out_w,
-                                              out_h,
-                                              out_w,
-                                              sub_x,
-                                              sub_y,
-                                              &conv_params,
-                                              alpha,
-                                              beta,
-                                              gamma,
-                                              delta);
+                            svt_av1_warp_affine_c(mat,
+                                                  input,
+                                                  w,
+                                                  h,
+                                                  stride,
+                                                  output,
+                                                  32,
+                                                  32,
+                                                  out_w,
+                                                  out_h,
+                                                  out_w,
+                                                  sub_x,
+                                                  sub_y,
+                                                  &conv_params,
+                                                  alpha,
+                                                  beta,
+                                                  gamma,
+                                                  delta);
                             if (use_no_round) {
                                 conv_params = get_conv_params_no_round(
                                     ref, do_average, 0, dstb, out_w, 1, bd);
@@ -532,25 +532,25 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
     svt_av1_get_time(&start_time_seconds_ref, &start_time_useconds_ref);
 
     for (int i = 0; i < num_loops; ++i)
-        eb_av1_highbd_warp_affine_c(mat,
-                                    input,
-                                    w,
-                                    h,
-                                    stride,
-                                    output,
-                                    32,
-                                    32,
-                                    out_w,
-                                    out_h,
-                                    out_w,
-                                    sub_x,
-                                    sub_y,
-                                    bd,
-                                    &conv_params,
-                                    alpha,
-                                    beta,
-                                    gamma,
-                                    delta);
+        svt_av1_highbd_warp_affine_c(mat,
+                                     input,
+                                     w,
+                                     h,
+                                     stride,
+                                     output,
+                                     32,
+                                     32,
+                                     out_w,
+                                     out_h,
+                                     out_w,
+                                     sub_x,
+                                     sub_y,
+                                     bd,
+                                     &conv_params,
+                                     alpha,
+                                     beta,
+                                     gamma,
+                                     delta);
 
     svt_av1_get_time(&finish_time_seconds_ref, &finish_time_useconds_ref);
     elapsed_time_ref =
@@ -649,25 +649,25 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                                     quant_dist_lookup_table[ii][jj][1];
                             }
 
-                            eb_av1_highbd_warp_affine_c(mat,
-                                                     input,
-                                                     w,
-                                                     h,
-                                                     stride,
-                                                     output,
-                                                     32,
-                                                     32,
-                                                     out_w,
-                                                     out_h,
-                                                     out_w,
-                                                     sub_x,
-                                                     sub_y,
-                                                     bd,
-                                                     &conv_params,
-                                                     alpha,
-                                                     beta,
-                                                     gamma,
-                                                     delta);
+                            svt_av1_highbd_warp_affine_c(mat,
+                                                         input,
+                                                         w,
+                                                         h,
+                                                         stride,
+                                                         output,
+                                                         32,
+                                                         32,
+                                                         out_w,
+                                                         out_h,
+                                                         out_w,
+                                                         sub_x,
+                                                         sub_y,
+                                                         bd,
+                                                         &conv_params,
+                                                         alpha,
+                                                         beta,
+                                                         gamma,
+                                                         delta);
                             if (use_no_round) {
                                 // TODO(angiebird): Change this to test_impl
                                 // once we have SIMD implementation

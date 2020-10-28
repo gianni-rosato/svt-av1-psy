@@ -181,7 +181,7 @@
 
 SECTION .text
 
-;void eb_aom_filter_block1d4_v8_sse2
+;void svt_aom_filter_block1d4_v8_sse2
 ;(
 ;    unsigned char *src_ptr,
 ;    unsigned int   src_pitch,
@@ -190,8 +190,8 @@ SECTION .text
 ;    unsigned int   output_height,
 ;    short *filter
 ;)
-global sym(eb_aom_filter_block1d4_v8_sse2) PRIVATE
-sym(eb_aom_filter_block1d4_v8_sse2):
+global sym(svt_aom_filter_block1d4_v8_sse2) PRIVATE
+sym(svt_aom_filter_block1d4_v8_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -248,7 +248,7 @@ sym(eb_aom_filter_block1d4_v8_sse2):
     pop         rbp
     ret
 
-;void eb_aom_filter_block1d8_v8_sse2
+;void svt_aom_filter_block1d8_v8_sse2
 ;(
 ;    unsigned char *src_ptr,
 ;    unsigned int   src_pitch,
@@ -257,8 +257,8 @@ sym(eb_aom_filter_block1d4_v8_sse2):
 ;    unsigned int   output_height,
 ;    short *filter
 ;)
-global sym(eb_aom_filter_block1d8_v8_sse2) PRIVATE
-sym(eb_aom_filter_block1d8_v8_sse2):
+global sym(svt_aom_filter_block1d8_v8_sse2) PRIVATE
+sym(svt_aom_filter_block1d8_v8_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -307,7 +307,7 @@ sym(eb_aom_filter_block1d8_v8_sse2):
     pop         rbp
     ret
 
-;void eb_aom_filter_block1d16_v8_sse2
+;void svt_aom_filter_block1d16_v8_sse2
 ;(
 ;    unsigned char *src_ptr,
 ;    unsigned int   src_pitch,
@@ -316,8 +316,8 @@ sym(eb_aom_filter_block1d8_v8_sse2):
 ;    unsigned int   output_height,
 ;    short *filter
 ;)
-global sym(eb_aom_filter_block1d16_v8_sse2) PRIVATE
-sym(eb_aom_filter_block1d16_v8_sse2):
+global sym(svt_aom_filter_block1d16_v8_sse2) PRIVATE
+sym(svt_aom_filter_block1d16_v8_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -370,7 +370,7 @@ sym(eb_aom_filter_block1d16_v8_sse2):
     pop         rbp
     ret
 
-;void eb_aom_filter_block1d4_h8_sse2
+;void svt_aom_filter_block1d4_h8_sse2
 ;(
 ;    unsigned char  *src_ptr,
 ;    unsigned int    src_pixels_per_line,
@@ -379,8 +379,8 @@ sym(eb_aom_filter_block1d16_v8_sse2):
 ;    unsigned int    output_height,
 ;    short *filter
 ;)
-global sym(eb_aom_filter_block1d4_h8_sse2) PRIVATE
-sym(eb_aom_filter_block1d4_h8_sse2):
+global sym(svt_aom_filter_block1d4_h8_sse2) PRIVATE
+sym(svt_aom_filter_block1d4_h8_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -444,7 +444,7 @@ sym(eb_aom_filter_block1d4_h8_sse2):
     pop         rbp
     ret
 
-;void eb_aom_filter_block1d8_h8_sse2
+;void svt_aom_filter_block1d8_h8_sse2
 ;(
 ;    unsigned char  *src_ptr,
 ;    unsigned int    src_pixels_per_line,
@@ -453,8 +453,8 @@ sym(eb_aom_filter_block1d4_h8_sse2):
 ;    unsigned int    output_height,
 ;    short *filter
 ;)
-global sym(eb_aom_filter_block1d8_h8_sse2) PRIVATE
-sym(eb_aom_filter_block1d8_h8_sse2):
+global sym(svt_aom_filter_block1d8_h8_sse2) PRIVATE
+sym(svt_aom_filter_block1d8_h8_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -519,7 +519,7 @@ sym(eb_aom_filter_block1d8_h8_sse2):
     pop         rbp
     ret
 
-;void eb_aom_filter_block1d16_h8_sse2
+;void svt_aom_filter_block1d16_h8_sse2
 ;(
 ;    unsigned char  *src_ptr,
 ;    unsigned int    src_pixels_per_line,
@@ -528,8 +528,8 @@ sym(eb_aom_filter_block1d8_h8_sse2):
 ;    unsigned int    output_height,
 ;    short *filter
 ;)
-global sym(eb_aom_filter_block1d16_h8_sse2) PRIVATE
-sym(eb_aom_filter_block1d16_h8_sse2):
+global sym(svt_aom_filter_block1d16_h8_sse2) PRIVATE
+sym(svt_aom_filter_block1d16_h8_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6

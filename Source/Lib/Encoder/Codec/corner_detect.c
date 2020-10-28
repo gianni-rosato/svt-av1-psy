@@ -23,7 +23,7 @@ int svt_av1_fast_corner_detect(unsigned char *buf, int width, int height, int st
         svt_aom_fast9_detect_nonmax(buf, width, height, stride, FAST_BARRIER, &num_points);
     num_points = (num_points <= max_points ? num_points : max_points);
     if (num_points > 0 && frm_corners_xy) {
-        eb_memcpy(points, frm_corners_xy, sizeof(*frm_corners_xy) * num_points);
+        svt_memcpy(points, frm_corners_xy, sizeof(*frm_corners_xy) * num_points);
         free(frm_corners_xy);
         return num_points;
     }

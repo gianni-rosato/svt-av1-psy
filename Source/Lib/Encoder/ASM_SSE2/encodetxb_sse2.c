@@ -470,9 +470,9 @@ static INLINE void get_16n_coeff_contexts_ver(const uint8_t *levels, const int32
     } while (--row);
 }
 
-void eb_av1_get_nz_map_contexts_sse2(const uint8_t *const levels, const int16_t *const scan,
-                                     const uint16_t eob, TxSize tx_size, const TxClass tx_class,
-                                     int8_t *const coeff_contexts) {
+void svt_av1_get_nz_map_contexts_sse2(const uint8_t *const levels, const int16_t *const scan,
+                                      const uint16_t eob, TxSize tx_size, const TxClass tx_class,
+                                      int8_t *const coeff_contexts) {
     const int32_t last_idx = eob - 1;
     if (!last_idx) {
         coeff_contexts[0] = 0;

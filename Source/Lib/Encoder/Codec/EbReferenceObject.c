@@ -129,7 +129,7 @@ void initialize_samples_neighboring_reference_picture(
     }
 }
 
-static void eb_reference_object_dctor(EbPtr p) {
+static void svt_reference_object_dctor(EbPtr p) {
     EbReferenceObject *obj = (EbReferenceObject *)p;
     EB_DELETE(obj->reference_picture16bit);
     EB_DELETE(obj->reference_picture);
@@ -147,26 +147,26 @@ static void eb_reference_object_dctor(EbPtr p) {
 }
 
 /*****************************************
- * eb_picture_buffer_desc_ctor
+ * svt_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
  *  values that are fixed for the life of
  *  the descriptor.
  *****************************************/
-EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
-                                     EbPtr              object_init_data_ptr) {
+EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
+                                      EbPtr              object_init_data_ptr) {
     EbReferenceObjectDescInitData* ref_init_ptr = (EbReferenceObjectDescInitData*)object_init_data_ptr;
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         &ref_init_ptr->reference_picture_desc_init_data;
     EbPictureBufferDescInitData picture_buffer_desc_init_data_16bit_ptr =
         *picture_buffer_desc_init_data_ptr;
 
-    reference_object->dctor = eb_reference_object_dctor;
+    reference_object->dctor = svt_reference_object_dctor;
     //TODO:12bit
     if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
         EB_NEW(reference_object->reference_picture16bit,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
 
         initialize_samples_neighboring_reference_picture(
@@ -182,13 +182,13 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
             picture_buffer_desc_init_data_16bit_ptr.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         }
         EB_NEW(reference_object->reference_picture,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
     } else {
         // Hsan: set split_mode to 0 to as 8BIT input
         picture_buffer_desc_init_data_ptr->split_mode = EB_FALSE;
         EB_NEW(reference_object->reference_picture,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)picture_buffer_desc_init_data_ptr);
 
         initialize_samples_neighboring_reference_picture(
@@ -200,7 +200,7 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
             picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
             picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
             EB_NEW(reference_object->reference_picture16bit,
-                eb_picture_buffer_desc_ctor,
+                svt_picture_buffer_desc_ctor,
                 (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
 
             initialize_samples_neighboring_reference_picture(
@@ -234,17 +234,17 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
     return EB_ErrorNone;
 }
 
-EbErrorType eb_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     EbReferenceObject *obj;
 
     *object_dbl_ptr = NULL;
-    EB_NEW(obj, eb_reference_object_ctor, object_init_data_ptr);
+    EB_NEW(obj, svt_reference_object_ctor, object_init_data_ptr);
     *object_dbl_ptr = obj;
 
     return EB_ErrorNone;
 }
 
-static void eb_pa_reference_object_dctor(EbPtr p) {
+static void svt_pa_reference_object_dctor(EbPtr p) {
     EbPaReferenceObject *obj = (EbPaReferenceObject *)p;
     EB_DELETE(obj->input_padded_picture_ptr);
     EB_DELETE(obj->quarter_decimated_picture_ptr);
@@ -264,39 +264,39 @@ static void eb_pa_reference_object_dctor(EbPtr p) {
 }
 
 /*****************************************
- * eb_pa_reference_object_ctor
+ * svt_pa_reference_object_ctor
  *  Initializes the Buffer Descriptor's
  *  values that are fixed for the life of
  *  the descriptor.
  *****************************************/
-EbErrorType eb_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
-                                        EbPtr                object_init_data_ptr) {
+EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
+                                         EbPtr                object_init_data_ptr) {
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         (EbPictureBufferDescInitData *)object_init_data_ptr;
 
-    pa_ref_obj_->dctor = eb_pa_reference_object_dctor;
+    pa_ref_obj_->dctor = svt_pa_reference_object_dctor;
 
     // Reference picture constructor
     EB_NEW(pa_ref_obj_->input_padded_picture_ptr,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            (EbPtr)picture_buffer_desc_init_data_ptr);
     // Quarter Decim reference picture constructor
     EB_NEW(pa_ref_obj_->quarter_decimated_picture_ptr,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            (EbPtr)(picture_buffer_desc_init_data_ptr + 1));
     EB_NEW(pa_ref_obj_->sixteenth_decimated_picture_ptr,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
     // Quarter Filtered reference picture constructor
     if ((picture_buffer_desc_init_data_ptr + 1)->down_sampled_filtered) {
         EB_NEW(pa_ref_obj_->quarter_filtered_picture_ptr,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)(picture_buffer_desc_init_data_ptr + 1));
     }
     // Sixteenth Filtered reference picture constructor
     if ((picture_buffer_desc_init_data_ptr + 2)->down_sampled_filtered) {
         EB_NEW(pa_ref_obj_->sixteenth_filtered_picture_ptr,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
     }
 
@@ -312,11 +312,11 @@ EbErrorType eb_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
     return EB_ErrorNone;
 }
 
-EbErrorType eb_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     EbPaReferenceObject *obj;
 
     *object_dbl_ptr = NULL;
-    EB_NEW(obj, eb_pa_reference_object_ctor, object_init_data_ptr);
+    EB_NEW(obj, svt_pa_reference_object_ctor, object_init_data_ptr);
     *object_dbl_ptr = obj;
 
     return EB_ErrorNone;

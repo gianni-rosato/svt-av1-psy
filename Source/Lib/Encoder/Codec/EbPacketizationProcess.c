@@ -75,11 +75,11 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
     thread_context_ptr->dctor = packetization_context_dctor;
 
     context_ptr->dctor                         = packetization_context_dctor;
-    context_ptr->entropy_coding_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+    context_ptr->entropy_coding_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->entropy_coding_results_resource_ptr, 0);
-    context_ptr->rate_control_tasks_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->rate_control_tasks_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
-    context_ptr->picture_manager_input_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->picture_manager_input_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
     EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
 
@@ -121,7 +121,7 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                 }
             }
         }
-        eb_block_on_mutex(encode_context_ptr->rate_table_update_mutex);
+        svt_block_on_mutex(encode_context_ptr->rate_table_update_mutex);
 
         uint64_t ref_qindex_dequant =
             (uint64_t)pcs_ptr->parent_pcs_ptr->deq_bd
@@ -300,7 +300,7 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                 }
             }
         }
-        eb_release_mutex(encode_context_ptr->rate_table_update_mutex);
+        svt_release_mutex(encode_context_ptr->rate_table_update_mutex);
     }
 }
 
@@ -650,8 +650,8 @@ void *packetization_kernel(void *input_ptr) {
         queue_entry_ptr->start_time_seconds   = pcs_ptr->parent_pcs_ptr->start_time_seconds;
         queue_entry_ptr->start_time_u_seconds = pcs_ptr->parent_pcs_ptr->start_time_u_seconds;
         queue_entry_ptr->is_alt_ref           = pcs_ptr->parent_pcs_ptr->is_alt_ref;
-        eb_get_empty_object(scs_ptr->encode_context_ptr->stream_output_fifo_ptr,
-                            &pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr);
+        svt_get_empty_object(scs_ptr->encode_context_ptr->stream_output_fifo_ptr,
+                             &pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr);
         EbObjectWrapper *output_stream_wrapper_ptr =
             pcs_ptr->parent_pcs_ptr->output_stream_wrapper_ptr;
         EbBufferHeaderType *output_stream_ptr = (EbBufferHeaderType *)
@@ -692,8 +692,8 @@ void *packetization_kernel(void *input_ptr) {
         }
 
         // Get Empty Rate Control Input Tasks
-        eb_get_empty_object(context_ptr->rate_control_tasks_output_fifo_ptr,
-                            &rate_control_tasks_wrapper_ptr);
+        svt_get_empty_object(context_ptr->rate_control_tasks_output_fifo_ptr,
+                             &rate_control_tasks_wrapper_ptr);
         RateControlTasks *rate_control_tasks_ptr = (RateControlTasks *)
                                                        rate_control_tasks_wrapper_ptr->object_ptr;
         rate_control_tasks_ptr->pcs_wrapper_ptr = pcs_ptr->picture_parent_control_set_wrapper_ptr;
@@ -706,7 +706,7 @@ void *packetization_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr &&
                 pcs_ptr->parent_pcs_ptr->frame_end_cdf_update_mode) {
                 for (uint16_t tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
-                    eb_av1_reset_cdf_symbol_counters(
+                    svt_av1_reset_cdf_symbol_counters(
                         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc);
                     ((EbReferenceObject *)
                          pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
@@ -715,8 +715,8 @@ void *packetization_kernel(void *input_ptr) {
                 }
             }
             // Get Empty Results Object
-            eb_get_empty_object(context_ptr->picture_manager_input_fifo_ptr,
-                                &picture_manager_results_wrapper_ptr);
+            svt_get_empty_object(context_ptr->picture_manager_input_fifo_ptr,
+                                 &picture_manager_results_wrapper_ptr);
 
             PictureDemuxResults *picture_manager_results_ptr =
                 (PictureDemuxResults *)picture_manager_results_wrapper_ptr->object_ptr;
@@ -755,7 +755,7 @@ void *packetization_kernel(void *input_ptr) {
         update_rc_rate_tables(pcs_ptr, scs_ptr);
         queue_entry_ptr->frame_type = frm_hdr->frame_type;
         queue_entry_ptr->poc        = pcs_ptr->picture_number;
-        eb_memcpy(&queue_entry_ptr->av1_ref_signal,
+        svt_memcpy(&queue_entry_ptr->av1_ref_signal,
                &pcs_ptr->parent_pcs_ptr->av1_ref_signal,
                sizeof(Av1RpsNode));
 
@@ -763,7 +763,7 @@ void *packetization_kernel(void *input_ptr) {
 #if DETAILED_FRAME_OUTPUT
         queue_entry_ptr->ref_poc_list0 = pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_0][0];
         queue_entry_ptr->ref_poc_list1 = pcs_ptr->parent_pcs_ptr->ref_pic_poc_array[REF_LIST_1][0];
-        eb_memcpy(queue_entry_ptr->ref_poc_array,
+        svt_memcpy(queue_entry_ptr->ref_poc_array,
                pcs_ptr->parent_pcs_ptr->av1_ref_signal.ref_poc_array,
                7 * sizeof(uint64_t));
 #endif
@@ -794,25 +794,25 @@ void *packetization_kernel(void *input_ptr) {
 
         if (scs_ptr->static_config.speed_control_flag) {
             // update speed control variables
-            eb_block_on_mutex(encode_context_ptr->sc_buffer_mutex);
+            svt_block_on_mutex(encode_context_ptr->sc_buffer_mutex);
             encode_context_ptr->sc_frame_out++;
-            eb_release_mutex(encode_context_ptr->sc_buffer_mutex);
+            svt_release_mutex(encode_context_ptr->sc_buffer_mutex);
         }
 
         // Post Rate Control Taks
-        eb_post_full_object(rate_control_tasks_wrapper_ptr);
+        svt_post_full_object(rate_control_tasks_wrapper_ptr);
         if (use_input_stat(scs_ptr) || (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
             // Post the Full Results Object
-            eb_post_full_object(picture_manager_results_wrapper_ptr);
+            svt_post_full_object(picture_manager_results_wrapper_ptr);
         else
             // Since feedback is not set to PM, life count of is reduced here instead of PM
-            eb_release_object(pcs_ptr->scs_wrapper_ptr);
+            svt_release_object(pcs_ptr->scs_wrapper_ptr);
         //Release the Parent PCS then the Child PCS
-        eb_release_object(entropy_coding_results_ptr->pcs_wrapper_ptr); //Child
+        svt_release_object(entropy_coding_results_ptr->pcs_wrapper_ptr); //Child
 
         // Release the Entropy Coding Result
-        eb_release_object(entropy_coding_results_wrapper_ptr);
+        svt_release_object(entropy_coding_results_wrapper_ptr);
 
         //****************************************************
         // Process the head of the queue
@@ -833,7 +833,7 @@ void *packetization_kernel(void *input_ptr) {
             if (eos && queue_entry_ptr->has_show_existing)
                 clear_eos_flag(output_stream_ptr);
 
-            eb_post_full_object(output_stream_wrapper_ptr);
+            svt_post_full_object(output_stream_wrapper_ptr);
             if (queue_entry_ptr->has_show_existing) {
                 EbObjectWrapper *existed = pop_undisplayed_frame(encode_context_ptr);
                 if (existed) {
@@ -841,7 +841,7 @@ void *packetization_kernel(void *input_ptr) {
                     encode_show_existing(encode_context_ptr, queue_entry_ptr, existed_output_stream_ptr);
                     if (eos)
                         set_eos_flag(existed_output_stream_ptr);
-                    eb_post_full_object(existed);
+                    svt_post_full_object(existed);
                 }
             }
             release_frames(encode_context_ptr, frames);

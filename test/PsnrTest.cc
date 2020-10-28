@@ -13,19 +13,19 @@
  * @file PsnrTest.cc
  *
  * @brief Unit test of PSNR calculation:
- * - eb_aom_sse_to_psnr
- * - eb_aom_get_y_sse_part
- * - eb_aom_get_y_sse
- * - eb_aom_get_u_sse_part
- * - eb_aom_get_u_sse
- * - eb_aom_get_v_sse_part
- * - eb_aom_get_v_sse
- * - eb_aom_highbd_get_y_sse_part
- * - eb_aom_highbd_get_y_sse
- * - eb_aom_highbd_get_u_sse_part
- * - eb_aom_highbd_get_u_sse
- * - eb_aom_highbd_get_v_sse_part
- * - eb_aom_highbd_get_v_sse
+ * - svt_aom_sse_to_psnr
+ * - svt_aom_get_y_sse_part
+ * - svt_aom_get_y_sse
+ * - svt_aom_get_u_sse_part
+ * - svt_aom_get_u_sse
+ * - svt_aom_get_v_sse_part
+ * - svt_aom_get_v_sse
+ * - svt_aom_highbd_get_y_sse_part
+ * - svt_aom_highbd_get_y_sse
+ * - svt_aom_highbd_get_u_sse_part
+ * - svt_aom_highbd_get_u_sse
+ * - svt_aom_highbd_get_v_sse_part
+ * - svt_aom_highbd_get_v_sse
  * - aom_psnrhvs
  *
  * @author Cidana-Edmond
@@ -49,7 +49,7 @@ namespace {
 using std::make_tuple;
 using svt_av1_test_tool::SVTRandom;
 
-extern "C" int32_t eb_aom_realloc_frame_buffer(
+extern "C" int32_t svt_aom_realloc_frame_buffer(
     Yv12BufferConfig* ybf, int32_t width, int32_t height, int32_t ss_x,
     int32_t ss_y, int32_t use_highbitdepth, int32_t border,
     int32_t byte_alignment, AomCodecFrameBuffer* fb,
@@ -78,7 +78,7 @@ using PsnrCalcFuncs = struct {
     SseCalcPartFunc v_sse_part_func;
 };
 
-static void eb_aom_free_frame_buffer(Yv12BufferConfig* ybf) {
+static void svt_aom_free_frame_buffer(Yv12BufferConfig* ybf) {
     if (ybf->buffer_alloc_sz > 0)
         free(ybf->buffer_alloc);
     memset(ybf, 0, sizeof(Yv12BufferConfig));
@@ -97,10 +97,10 @@ class PsnrCalcTest : public ::testing::TestWithParam<ParamType> {
         setup_test_env();
     }
     virtual ~PsnrCalcTest() {
-        eb_aom_free_frame_buffer(&tst_src_);
-        eb_aom_free_frame_buffer(&tst_ref_);
-        eb_aom_free_frame_buffer(&lbd_src_);
-        eb_aom_free_frame_buffer(&lbd_ref_);
+        svt_aom_free_frame_buffer(&tst_src_);
+        svt_aom_free_frame_buffer(&tst_ref_);
+        svt_aom_free_frame_buffer(&lbd_src_);
+        svt_aom_free_frame_buffer(&lbd_ref_);
         aom_clear_system_state();
     }
 
@@ -112,36 +112,36 @@ class PsnrCalcTest : public ::testing::TestWithParam<ParamType> {
 
     /**< prepare frame buffers for test */
     void prepare_buffer() {
-        ASSERT_EQ(eb_aom_realloc_frame_buffer(&tst_src_,
-                                              width_,
-                                              height_,
-                                              1,
-                                              1,
-                                              use_hbd_,
-                                              32,
-                                              16,
-                                              NULL,
-                                              NULL,
-                                              NULL),
+        ASSERT_EQ(svt_aom_realloc_frame_buffer(&tst_src_,
+                                               width_,
+                                               height_,
+                                               1,
+                                               1,
+                                               use_hbd_,
+                                               32,
+                                               16,
+                                               NULL,
+                                               NULL,
+                                               NULL),
                   0);
-        ASSERT_EQ(eb_aom_realloc_frame_buffer(&tst_ref_,
-                                              width_,
-                                              height_,
-                                              1,
-                                              1,
-                                              use_hbd_,
-                                              32,
-                                              16,
-                                              NULL,
-                                              NULL,
-                                              NULL),
+        ASSERT_EQ(svt_aom_realloc_frame_buffer(&tst_ref_,
+                                               width_,
+                                               height_,
+                                               1,
+                                               1,
+                                               use_hbd_,
+                                               32,
+                                               16,
+                                               NULL,
+                                               NULL,
+                                               NULL),
                   0);
         ASSERT_EQ(
-            eb_aom_realloc_frame_buffer(
+            svt_aom_realloc_frame_buffer(
                 &lbd_src_, width_, height_, 1, 1, 0, 32, 16, NULL, NULL, NULL),
             0);
         ASSERT_EQ(
-            eb_aom_realloc_frame_buffer(
+            svt_aom_realloc_frame_buffer(
                 &lbd_ref_, width_, height_, 1, 1, 0, 32, 16, NULL, NULL, NULL),
             0);
     }
@@ -159,9 +159,9 @@ class PsnrCalcTest : public ::testing::TestWithParam<ParamType> {
 
         uint32_t peak = (1 << bd_) - 1;
         double size = (double)width_ * height_;
-        ASSERT_DOUBLE_EQ(eb_aom_sse_to_psnr(size, peak, y_sse), MAX_PSNR);
-        ASSERT_DOUBLE_EQ(eb_aom_sse_to_psnr(size / 4, peak, u_sse), MAX_PSNR);
-        ASSERT_DOUBLE_EQ(eb_aom_sse_to_psnr(size / 4, peak, v_sse), MAX_PSNR);
+        ASSERT_DOUBLE_EQ(svt_aom_sse_to_psnr(size, peak, y_sse), MAX_PSNR);
+        ASSERT_DOUBLE_EQ(svt_aom_sse_to_psnr(size / 4, peak, u_sse), MAX_PSNR);
+        ASSERT_DOUBLE_EQ(svt_aom_sse_to_psnr(size / 4, peak, v_sse), MAX_PSNR);
     }
 
     /**< fill video frame buffer with random value */
@@ -234,12 +234,12 @@ class PsnrCalcLbdTest : public PsnrCalcTest<uint8_t, PsnrCalcParam> {
     PsnrCalcLbdTest() {
         width_ = TEST_GET_PARAM(0);
         height_ = TEST_GET_PARAM(1);
-        calc_.y_sse_func = eb_aom_get_y_sse;
-        calc_.u_sse_func = eb_aom_get_u_sse;
-        calc_.v_sse_func = eb_aom_get_v_sse;
-        calc_.y_sse_part_func = eb_aom_get_y_sse_part;
-        calc_.u_sse_part_func = eb_aom_get_u_sse_part;
-        calc_.v_sse_part_func = eb_aom_get_v_sse_part;
+        calc_.y_sse_func = svt_aom_get_y_sse;
+        calc_.u_sse_func = svt_aom_get_u_sse;
+        calc_.v_sse_func = svt_aom_get_v_sse;
+        calc_.y_sse_part_func = svt_aom_get_y_sse_part;
+        calc_.u_sse_part_func = svt_aom_get_u_sse_part;
+        calc_.v_sse_part_func = svt_aom_get_v_sse_part;
     }
 };
 
@@ -273,12 +273,12 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
         height_ = std::get<1>(TEST_GET_PARAM(0));
         bd_ = TEST_GET_PARAM(1);
         use_hbd_ = 1;
-        calc_.y_sse_func = eb_aom_highbd_get_y_sse;
-        calc_.u_sse_func = eb_aom_highbd_get_u_sse;
-        calc_.v_sse_func = eb_aom_highbd_get_v_sse;
-        calc_.y_sse_part_func = eb_aom_highbd_get_y_sse_part;
-        calc_.u_sse_part_func = eb_aom_highbd_get_u_sse_part;
-        calc_.v_sse_part_func = eb_aom_highbd_get_v_sse_part;
+        calc_.y_sse_func = svt_aom_highbd_get_y_sse;
+        calc_.u_sse_func = svt_aom_highbd_get_u_sse;
+        calc_.v_sse_func = svt_aom_highbd_get_v_sse;
+        calc_.y_sse_part_func = svt_aom_highbd_get_y_sse_part;
+        calc_.u_sse_part_func = svt_aom_highbd_get_u_sse_part;
+        calc_.v_sse_part_func = svt_aom_highbd_get_v_sse_part;
     }
 
     void run_accuracy_check(int32_t part_w = 0, int32_t part_h = 0) {
@@ -337,11 +337,11 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
     /**< calculate psnr and check if the difference is less than threshold */
     void calc_psnr_and_check() {
         double ref_y_sse =
-            static_cast<double>(eb_aom_get_y_sse(&lbd_src_, &lbd_ref_));
+            static_cast<double>(svt_aom_get_y_sse(&lbd_src_, &lbd_ref_));
         double ref_u_sse =
-            static_cast<double>(eb_aom_get_u_sse(&lbd_src_, &lbd_ref_));
+            static_cast<double>(svt_aom_get_u_sse(&lbd_src_, &lbd_ref_));
         double ref_v_sse =
-            static_cast<double>(eb_aom_get_v_sse(&lbd_src_, &lbd_ref_));
+            static_cast<double>(svt_aom_get_v_sse(&lbd_src_, &lbd_ref_));
         double y_sse =
             static_cast<double>(calc_.y_sse_func(&tst_src_, &tst_ref_));
         double u_sse =
@@ -352,14 +352,14 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
         uint32_t peak = (1 << bd_) - 1;
         double size = (double)width_ * height_;
         const double threshold = 0.3f;
-        ASSERT_LE(fabs(eb_aom_sse_to_psnr(size, 255.0f, ref_y_sse) -
-                       eb_aom_sse_to_psnr(size, peak, y_sse)),
+        ASSERT_LE(fabs(svt_aom_sse_to_psnr(size, 255.0f, ref_y_sse) -
+                       svt_aom_sse_to_psnr(size, peak, y_sse)),
                   threshold);
-        ASSERT_LE(fabs(eb_aom_sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
-                       eb_aom_sse_to_psnr(size / 4, peak, u_sse)),
+        ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
+                       svt_aom_sse_to_psnr(size / 4, peak, u_sse)),
                   threshold);
-        ASSERT_LE(fabs(eb_aom_sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
-                       eb_aom_sse_to_psnr(size / 4, peak, v_sse)),
+        ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
+                       svt_aom_sse_to_psnr(size / 4, peak, v_sse)),
                   threshold);
     }
 
@@ -375,11 +375,11 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
         for (int32_t h = 0; h <= height_ - part_h; h += part_h) {
             for (int32_t w = 0; w <= width_ - part_w; w += part_w) {
                 int32_t hw = w >> 1, hh = h >> 1;
-                double ref_y_sse = static_cast<double>(eb_aom_get_y_sse_part(
+                double ref_y_sse = static_cast<double>(svt_aom_get_y_sse_part(
                     &lbd_src_, &lbd_ref_, w, part_w, h, part_h));
-                double ref_u_sse = static_cast<double>(eb_aom_get_u_sse_part(
+                double ref_u_sse = static_cast<double>(svt_aom_get_u_sse_part(
                     &lbd_src_, &lbd_ref_, hw, part_hw, hh, part_hh));
-                double ref_v_sse = static_cast<double>(eb_aom_get_v_sse_part(
+                double ref_v_sse = static_cast<double>(svt_aom_get_v_sse_part(
                     &lbd_src_, &lbd_ref_, hw, part_hw, hh, part_hh));
                 double y_sse = static_cast<double>(calc_.y_sse_part_func(
                     &tst_src_, &tst_ref_, w, part_w, h, part_h));
@@ -391,16 +391,16 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
                 uint32_t peak = (1 << bd_) - 1;
                 double size = (double)part_h * part_w;
                 const double threshold = 0.3f;
-                ASSERT_LE(fabs(eb_aom_sse_to_psnr(size, 255.0f, ref_y_sse) -
-                               eb_aom_sse_to_psnr(size, peak, y_sse)),
+                ASSERT_LE(fabs(svt_aom_sse_to_psnr(size, 255.0f, ref_y_sse) -
+                               svt_aom_sse_to_psnr(size, peak, y_sse)),
                           threshold)
                     << "sse y error found in (" << w << "," << h << ")";
-                ASSERT_LE(fabs(eb_aom_sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
-                               eb_aom_sse_to_psnr(size / 4, peak, u_sse)),
+                ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
+                               svt_aom_sse_to_psnr(size / 4, peak, u_sse)),
                           threshold)
                     << "sse u error found in (" << w << "," << h << ")";
-                ASSERT_LE(fabs(eb_aom_sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
-                               eb_aom_sse_to_psnr(size / 4, peak, v_sse)),
+                ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
+                               svt_aom_sse_to_psnr(size / 4, peak, v_sse)),
                           threshold)
                     << "sse v error found in (" << w << "," << h << ")";
             }

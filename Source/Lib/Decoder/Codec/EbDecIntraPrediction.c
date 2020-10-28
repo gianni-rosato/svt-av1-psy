@@ -23,7 +23,7 @@
 
 /* Avoid 12-bit output mismatch by intra pred intrinsic kernel */
 void dec_init_intra_predictors_12b_internal(void) {
-    eb_av1_highbd_dr_prediction_z2 = eb_av1_highbd_dr_prediction_z2_c;
+    svt_av1_highbd_dr_prediction_z2 = svt_av1_highbd_dr_prediction_z2_c;
 }
 
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
@@ -212,27 +212,27 @@ void cfl_predict_block(PartitionInfo *xd, CflCtx *cfl_ctx, uint8_t *dst, int32_t
     assert((tx_size_high[tx_size] - 1) * CFL_BUF_LINE + tx_size_wide[tx_size] <= CFL_BUF_SQUARE);
 
     if ((cc->bit_depth != EB_8BIT) || is_16bit) {
-        eb_cfl_predict_hbd(cfl_ctx->recon_buf_q3,
-                           (uint16_t *)dst,
-                           dst_stride,
-                           (uint16_t *)dst,
-                           dst_stride,
-                           alpha_q3,
-                           cc->bit_depth,
-                           tx_size_wide[tx_size],
-                           tx_size_high[tx_size]);
+        svt_cfl_predict_hbd(cfl_ctx->recon_buf_q3,
+                            (uint16_t *)dst,
+                            dst_stride,
+                            (uint16_t *)dst,
+                            dst_stride,
+                            alpha_q3,
+                            cc->bit_depth,
+                            tx_size_wide[tx_size],
+                            tx_size_high[tx_size]);
         return;
     }
 
-    eb_cfl_predict_lbd(cfl_ctx->recon_buf_q3,
-                       dst,
-                       dst_stride,
-                       dst,
-                       dst_stride,
-                       alpha_q3,
-                       cc->bit_depth,
-                       tx_size_wide[tx_size],
-                       tx_size_high[tx_size]);
+    svt_cfl_predict_lbd(cfl_ctx->recon_buf_q3,
+                        dst,
+                        dst_stride,
+                        dst,
+                        dst_stride,
+                        alpha_q3,
+                        cc->bit_depth,
+                        tx_size_wide[tx_size],
+                        tx_size_high[tx_size]);
 }
 
 static void cfl_store(CflCtx *cfl_ctx, const uint8_t *input, int input_stride, int row, int col,
@@ -393,11 +393,11 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            eb_memcpy(above_row, above_ref, n_top_px);
+            svt_memcpy(above_row, above_ref, n_top_px);
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                eb_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
+                svt_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px);
                 i += n_topright_px;
             }
             if (i < num_top_pixels_needed)
@@ -423,7 +423,7 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
     }
 
     if (use_filter_intra) {
-        eb_av1_filter_intra_predictor(
+        svt_av1_filter_intra_predictor(
             dst, dst_stride, tx_size, above_row, left_col, filter_intra_mode);
         return;
     }
@@ -445,26 +445,26 @@ static void decode_build_intra_predictors(PartitionInfo *part_info, uint8_t *top
                     const int32_t strength =
                         intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
-                    eb_av1_filter_intra_edge(above_row - ab_le, n_px, strength);
+                    svt_av1_filter_intra_edge(above_row - ab_le, n_px, strength);
                 }
                 if (need_left && n_left_px > 0) {
                     const int32_t strength =
                         intra_edge_filter_strength(txhpx, txwpx, p_angle - 180, filt_type);
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
-                    eb_av1_filter_intra_edge(left_col - ab_le, n_px, strength);
+                    svt_av1_filter_intra_edge(left_col - ab_le, n_px, strength);
                 }
             }
             upsample_above = use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
             if (need_above && upsample_above) {
                 const int32_t n_px = txwpx + (need_right ? txhpx : 0);
 
-                eb_av1_upsample_intra_edge(above_row, n_px);
+                svt_av1_upsample_intra_edge(above_row, n_px);
             }
             upsample_left = use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
             if (need_left && upsample_left) {
                 const int32_t n_px = txhpx + (need_bottom ? txwpx : 0);
 
-                eb_av1_upsample_intra_edge(left_col, n_px);
+                svt_av1_upsample_intra_edge(left_col, n_px);
             }
         }
         dr_predictor(
@@ -538,7 +538,7 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
         else
             val = (n_left_px > 0) ? left_ref[0] : base - 1;
         for (i = 0; i < txhpx; ++i) {
-            eb_aom_memset16(dst, val, txwpx);
+            svt_aom_memset16(dst, val, txwpx);
             dst += dst_stride;
         }
         return;
@@ -558,12 +558,12 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
                 for (; i < txhpx + n_bottomleft_px; i++) left_col[i] = left_ref[i * ref_stride];
             }
             if (i < num_left_pixels_needed)
-                eb_aom_memset16(&left_col[i], left_col[i - 1], num_left_pixels_needed - i);
+                svt_aom_memset16(&left_col[i], left_col[i - 1], num_left_pixels_needed - i);
         } else {
             if (n_top_px > 0)
-                eb_aom_memset16(left_col, above_ref[0], num_left_pixels_needed);
+                svt_aom_memset16(left_col, above_ref[0], num_left_pixels_needed);
             else
-                eb_aom_memset16(left_col, base + 1, num_left_pixels_needed);
+                svt_aom_memset16(left_col, base + 1, num_left_pixels_needed);
         }
     }
 
@@ -574,20 +574,20 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
         if (is_dr_mode) need_right = p_angle < 90;
         const int32_t num_top_pixels_needed = txwpx + (need_right ? txhpx : 0);
         if (n_top_px > 0) {
-            eb_memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
+            svt_memcpy(above_row, above_ref, n_top_px * sizeof(above_ref[0]));
             i = n_top_px;
             if (need_right && n_topright_px > 0) {
                 assert(n_top_px == txwpx);
-                eb_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px * sizeof(above_ref[0]));
+                svt_memcpy(above_row + txwpx, above_ref + txwpx, n_topright_px * sizeof(above_ref[0]));
                 i += n_topright_px;
             }
             if (i < num_top_pixels_needed)
-                eb_aom_memset16(&above_row[i], above_row[i - 1], num_top_pixels_needed - i);
+                svt_aom_memset16(&above_row[i], above_row[i - 1], num_top_pixels_needed - i);
         } else {
             if (n_left_px > 0)
-                eb_aom_memset16(above_row, left_ref[0], num_top_pixels_needed);
+                svt_aom_memset16(above_row, left_ref[0], num_top_pixels_needed);
             else
-                eb_aom_memset16(above_row, base - 1, num_top_pixels_needed);
+                svt_aom_memset16(above_row, base - 1, num_top_pixels_needed);
         }
     }
 
@@ -624,27 +624,27 @@ static void decode_build_intra_predictors_high(PartitionInfo *part_info, uint16_
                     const int32_t strength =
                         intra_edge_filter_strength(txwpx, txhpx, p_angle - 90, filt_type);
                     const int32_t n_px = n_top_px + ab_le + (need_right ? txhpx : 0);
-                    eb_av1_filter_intra_edge_high(above_row - ab_le, n_px, strength);
+                    svt_av1_filter_intra_edge_high(above_row - ab_le, n_px, strength);
                 }
                 if (need_left && n_left_px > 0) {
                     const int32_t strength =
                         intra_edge_filter_strength(txhpx, txwpx, p_angle - 180, filt_type);
                     const int32_t n_px = n_left_px + ab_le + (need_bottom ? txwpx : 0);
 
-                    eb_av1_filter_intra_edge_high(left_col - ab_le, n_px, strength);
+                    svt_av1_filter_intra_edge_high(left_col - ab_le, n_px, strength);
                 }
             }
             upsample_above = use_intra_edge_upsample(txwpx, txhpx, p_angle - 90, filt_type);
             if (need_above && upsample_above) {
                 const int32_t n_px = txwpx + (need_right ? txhpx : 0);
                 //av1_upsample_intra_edge_high(above_row, n_px, bd);// AMIR : to be replaced by optimized code
-                eb_av1_upsample_intra_edge_high_c(above_row, n_px, bd);
+                svt_av1_upsample_intra_edge_high_c(above_row, n_px, bd);
             }
             upsample_left = use_intra_edge_upsample(txhpx, txwpx, p_angle - 180, filt_type);
             if (need_left && upsample_left) {
                 const int32_t n_px = txhpx + (need_bottom ? txwpx : 0);
                 //av1_upsample_intra_edge_high(left_col, n_px, bd);// AMIR: to be replaced by optimized code
-                eb_av1_upsample_intra_edge_high_c(left_col, n_px, bd);
+                svt_av1_upsample_intra_edge_high_c(left_col, n_px, bd);
             }
         }
         highbd_dr_predictor(dst,

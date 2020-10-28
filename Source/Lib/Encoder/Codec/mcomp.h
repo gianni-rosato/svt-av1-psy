@@ -17,6 +17,8 @@
 #include "EbBlockStructures.h"
 #include "Av1Common.h"
 #include "av1me.h"
+#include "EbRateDistortionCost.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -154,6 +156,14 @@ static INLINE int svt_av1_is_subpelmv_in_range(const SubpelMvLimits *mv_limits,
                                            MV mv) {
   return (mv.col >= mv_limits->col_min) && (mv.col <= mv_limits->col_max) &&
          (mv.row >= mv_limits->row_min) && (mv.row <= mv_limits->row_max);
+}
+
+// Returns the rate of encoding the current motion vector based on the
+// joint_cost and comp_cost. joint_costs covers the cost of transmitting
+// JOINT_MV, and comp_cost covers the cost of transmitting the actual motion
+// vector.
+static INLINE int svt_mv_cost(const MV *mv, const int *joint_cost, const int *const comp_cost[2]) {
+    return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
 }
 
 #ifdef __cplusplus

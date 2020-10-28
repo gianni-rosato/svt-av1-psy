@@ -16,7 +16,7 @@
 #define LOG_TAG "SvtMalloc"
 #include "EbLog.h"
 
-void eb_print_alloc_fail(const char* file, int line)
+void svt_print_alloc_fail(const char* file, int line)
 {
     SVT_FATAL("allocate memory failed, at %s, L%d\n", file, line);
 }
@@ -35,7 +35,7 @@ BOOL CALLBACK create_malloc_mutex(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* l
     (void)InitOnce;
     (void)Parameter;
     (void)lpContext;
-    g_malloc_mutex = eb_create_mutex();
+    g_malloc_mutex = svt_create_mutex();
     return TRUE;
 }
 
@@ -45,7 +45,7 @@ static EbHandle get_malloc_mutex() {
 }
 #else
 #include <pthread.h>
-static void create_malloc_mutex() { g_malloc_mutex = eb_create_mutex(); }
+static void create_malloc_mutex() { g_malloc_mutex = svt_create_mutex(); }
 
 static pthread_once_t g_malloc_once = PTHREAD_ONCE_INIT;
 
@@ -138,9 +138,9 @@ static EbBool for_each_hash_entry(MemoryEntry* bucket, uint32_t start, Predicate
 static EbBool for_each_mem_entry(uint32_t start, Predicate pred, void* param) {
     EbBool   ret;
     EbHandle m = get_malloc_mutex();
-    eb_block_on_mutex(m);
+    svt_block_on_mutex(m);
     ret = for_each_hash_entry(g_mem_entry, start, pred, param);
-    eb_release_mutex(m);
+    svt_release_mutex(m);
     return ret;
 }
 
@@ -231,11 +231,11 @@ static int compare_count(const void* a, const void* b) {
 static void print_top_10_locations() {
     EbHandle  m    = get_malloc_mutex();
     EbPtrType type = EB_N_PTR;
-    eb_block_on_mutex(m);
+    svt_block_on_mutex(m);
     g_profile_entry = calloc(MEM_ENTRY_SIZE, sizeof(*g_profile_entry));
     if (!g_profile_entry) {
         SVT_ERROR("not enough memory for memory profile");
-        eb_release_mutex(m);
+        svt_release_mutex(m);
         return;
     }
 
@@ -251,7 +251,7 @@ static void print_top_10_locations() {
         SVT_INFO("(%.2lf %cB): %s:%d\n", usage, scale, e->file, e->line);
     }
     free(g_profile_entry);
-    eb_release_mutex(m);
+    svt_release_mutex(m);
 }
 #endif //PROFILE_MEMORY_USAGE
 
@@ -267,7 +267,7 @@ static EbBool print_leak(MemoryEntry* e, void* param) {
     return EB_FALSE;
 }
 
-void eb_print_memory_usage() {
+void svt_print_memory_usage() {
 
     MemSummary sum;
     double     usage;
@@ -297,16 +297,16 @@ void eb_print_memory_usage() {
 #endif
 }
 
-void eb_increase_component_count() {
+void svt_increase_component_count() {
     EbHandle m = get_malloc_mutex();
-    eb_block_on_mutex(m);
+    svt_block_on_mutex(m);
     g_component_count++;
-    eb_release_mutex(m);
+    svt_release_mutex(m);
 }
 
-void eb_decrease_component_count() {
+void svt_decrease_component_count() {
     EbHandle m = get_malloc_mutex();
-    eb_block_on_mutex(m);
+    svt_block_on_mutex(m);
     g_component_count--;
     if (!g_component_count) {
         EbBool leaked = EB_FALSE;
@@ -314,10 +314,10 @@ void eb_decrease_component_count() {
         if (!leaked)
             SVT_INFO("you have no memory leak\n");
     }
-    eb_release_mutex(m);
+    svt_release_mutex(m);
 }
 
-void eb_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line) {
+void svt_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line) {
     if (for_each_mem_entry(
             hash(ptr),
             add_mem_entry,
@@ -331,7 +331,7 @@ void eb_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file,
     }
 }
 
-void eb_remove_mem_entry(void* ptr, EbPtrType type) {
+void svt_remove_mem_entry(void* ptr, EbPtrType type) {
     if (!ptr)
         return;
     if (for_each_mem_entry(hash(ptr), remove_mem_entry, &(MemoryEntry){.ptr = ptr, .type = type}))

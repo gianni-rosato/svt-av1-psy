@@ -13,7 +13,7 @@
  * @file FwdTxfm2dAsmTest.c
  *
  * @brief Unit test for forward 2d transform functions written in assembly code:
- * - eb_av1_fwd_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
+ * - svt_av1_fwd_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
  *
  * @author Cidana-Wenyao
  *
@@ -46,21 +46,21 @@ using svt_av1_test_tool::SVTRandom;
 namespace {
 using FwdTxfm2dAsmParam = std::tuple<int, int>;
 static const FwdTxfm2dFunc fwd_txfm_2d_asm_func[TX_SIZES_ALL] = {
-    eb_av1_fwd_txfm2d_4x4_sse4_1, eb_av1_fwd_txfm2d_8x8_avx2,
-    eb_av1_fwd_txfm2d_16x16_avx2, eb_av1_fwd_txfm2d_32x32_avx2,
-    eb_av1_fwd_txfm2d_64x64_avx2, eb_av1_fwd_txfm2d_4x8_avx2,
-    eb_av1_fwd_txfm2d_8x4_avx2,   eb_av1_fwd_txfm2d_8x16_avx2,
-    eb_av1_fwd_txfm2d_16x8_avx2,  eb_av1_fwd_txfm2d_16x32_avx2,
-    eb_av1_fwd_txfm2d_32x16_avx2, eb_av1_fwd_txfm2d_32x64_avx2,
-    eb_av1_fwd_txfm2d_64x32_avx2, eb_av1_fwd_txfm2d_4x16_avx2,
-    eb_av1_fwd_txfm2d_16x4_avx2,  eb_av1_fwd_txfm2d_8x32_avx2,
-    eb_av1_fwd_txfm2d_32x8_avx2,  eb_av1_fwd_txfm2d_16x64_avx2,
-    eb_av1_fwd_txfm2d_64x16_avx2,
+    svt_av1_fwd_txfm2d_4x4_sse4_1, svt_av1_fwd_txfm2d_8x8_avx2,
+    svt_av1_fwd_txfm2d_16x16_avx2, svt_av1_fwd_txfm2d_32x32_avx2,
+    svt_av1_fwd_txfm2d_64x64_avx2, svt_av1_fwd_txfm2d_4x8_avx2,
+    svt_av1_fwd_txfm2d_8x4_avx2,   svt_av1_fwd_txfm2d_8x16_avx2,
+    svt_av1_fwd_txfm2d_16x8_avx2,  svt_av1_fwd_txfm2d_16x32_avx2,
+    svt_av1_fwd_txfm2d_32x16_avx2, svt_av1_fwd_txfm2d_32x64_avx2,
+    svt_av1_fwd_txfm2d_64x32_avx2, svt_av1_fwd_txfm2d_4x16_avx2,
+    svt_av1_fwd_txfm2d_16x4_avx2,  svt_av1_fwd_txfm2d_8x32_avx2,
+    svt_av1_fwd_txfm2d_32x8_avx2,  svt_av1_fwd_txfm2d_16x64_avx2,
+    svt_av1_fwd_txfm2d_64x16_avx2,
 };
 
 /**
  * @brief Unit test for fwd tx 2d avx2 functions:
- * - eb_av1_fwd_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
+ * - svt_av1_fwd_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
  *
  * Test strategy:
  * Verify this assembly code by comparing with reference c implementation.

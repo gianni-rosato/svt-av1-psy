@@ -76,16 +76,16 @@ typedef struct aom_variance_vtable {
 } AomVarianceFnPtr;
 
 void av1_init_dsmotion_compensation(SearchSiteConfig *cfg, int stride);
-void eb_av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
-void eb_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv);
+void svt_av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride);
+void svt_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv);
 struct Av1Comp;
 struct SpeedFeatures;
 
-int eb_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
-                             BlockSize bsize, MV *mvp_full, int step_param, int method,
-                             int run_mesh_search, int error_per_bit, int *cost_list,
-                             const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
-                             int intra);
+int svt_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MACROBLOCK*/ *x,
+                              BlockSize bsize, MV *mvp_full, int step_param, int method,
+                              int run_mesh_search, int error_per_bit, int *cost_list,
+                              const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
+                              int intra);
 int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2], int error_per_bit);
 #ifdef __cplusplus
 } // extern "C"

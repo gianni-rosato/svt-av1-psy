@@ -387,10 +387,10 @@ static void create_me_context_and_picture_control(
 
     // populate src block buffers: sb_buffer, quarter_sb_buffer and sixteenth_sb_buffer
     for (sb_row = 0; sb_row < BLOCK_SIZE_64; sb_row++) {
-        eb_memcpy((&(context_ptr->me_context_ptr->sb_buffer[sb_row * BLOCK_SIZE_64])),
-                  (&(input_picture_ptr_central
+        svt_memcpy((&(context_ptr->me_context_ptr->sb_buffer[sb_row * BLOCK_SIZE_64])),
+                   (&(input_picture_ptr_central
                          ->buffer_y[buffer_index + sb_row * input_picture_ptr_central->stride_y])),
-                  BLOCK_SIZE_64 * sizeof(uint8_t));
+                   BLOCK_SIZE_64 * sizeof(uint8_t));
     }
 #ifdef ARCH_X86_64
     {
@@ -415,10 +415,10 @@ static void create_me_context_and_picture_control(
                    quarter_pic_ptr->origin_x + (sb_origin_x >> ss_x);
 
     for (sb_row = 0; sb_row < (sb_height >> ss_y); sb_row++) {
-        eb_memcpy((&(context_ptr->me_context_ptr->quarter_sb_buffer
+        svt_memcpy((&(context_ptr->me_context_ptr->quarter_sb_buffer
                          [sb_row * context_ptr->me_context_ptr->quarter_sb_buffer_stride])),
-                  (&(quarter_pic_ptr->buffer_y[buffer_index + sb_row * quarter_pic_ptr->stride_y])),
-                  (sb_width >> ss_x) * sizeof(uint8_t));
+                   (&(quarter_pic_ptr->buffer_y[buffer_index + sb_row * quarter_pic_ptr->stride_y])),
+                   (sb_width >> ss_x) * sizeof(uint8_t));
     }
 
     // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
@@ -432,13 +432,13 @@ static void create_me_context_and_picture_control(
 
         if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
             for (sb_row = 0; sb_row < (sb_height >> 2); sb_row += 1) {
-                eb_memcpy(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
+                svt_memcpy(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
                 local_ptr += 16;
                 frame_ptr += sixteenth_pic_ptr->stride_y;
             }
         } else {
             for (sb_row = 0; sb_row < (sb_height >> 2); sb_row += 2) {
-                eb_memcpy(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
+                svt_memcpy(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
                 local_ptr += 16;
                 frame_ptr += sixteenth_pic_ptr->stride_y << 1;
             }
@@ -2792,9 +2792,9 @@ void pad_and_decimate_filtered_pic(
                          input_picture_ptr->origin_x,
                          input_picture_ptr->origin_y);
         for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-            eb_memcpy(pa + row * padded_pic_ptr->stride_y,
-                      in + row * input_picture_ptr->stride_y,
-                      sizeof(uint8_t) * input_picture_ptr->width);
+            svt_memcpy(pa + row * padded_pic_ptr->stride_y,
+                       in + row * input_picture_ptr->stride_y,
+                       sizeof(uint8_t) * input_picture_ptr->width);
     }
     generate_padding(&(padded_pic_ptr->buffer_y[C_Y]),
                      padded_pic_ptr->stride_y,
@@ -2936,7 +2936,7 @@ EbErrorType svt_av1_init_temporal_filtering(
     uint32_t ss_y = picture_control_set_ptr_central->scs_ptr->subsampling_y;
     double *noise_levels = &(picture_control_set_ptr_central->noise_levels[0]);
     //only one performs any picture based prep
-    eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
+    svt_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     if (picture_control_set_ptr_central->temp_filt_prep_done == 0) {
         picture_control_set_ptr_central->temp_filt_prep_done = 1;
         // adjust filter parameter based on the estimated noise of the picture
@@ -2972,7 +2972,7 @@ EbErrorType svt_av1_init_temporal_filtering(
             save_src_pic_buffers(picture_control_set_ptr_central, ss_y, is_highbd);
         }
     }
-    eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
+    svt_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     me_context_ptr->me_context_ptr->min_frame_size = MIN(picture_control_set_ptr_central->aligned_height, picture_control_set_ptr_central->aligned_width);
     // index of the central source frame
    // index_center = picture_control_set_ptr_central->past_altref_nframes;
@@ -2995,7 +2995,7 @@ EbErrorType svt_av1_init_temporal_filtering(
                                     segment_index,
                                     is_highbd);
 
-    eb_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
+    svt_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     picture_control_set_ptr_central->temp_filt_seg_acc++;
 
     if (!is_highbd) {
@@ -3071,10 +3071,10 @@ EbErrorType svt_av1_init_temporal_filtering(
             2;
 
         // signal that temp filt is done
-        eb_post_semaphore(picture_control_set_ptr_central->temp_filt_done_semaphore);
+        svt_post_semaphore(picture_control_set_ptr_central->temp_filt_done_semaphore);
     }
 
-    eb_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
+    svt_release_mutex(picture_control_set_ptr_central->temp_filt_mutex);
 
     return EB_ErrorNone;
 }

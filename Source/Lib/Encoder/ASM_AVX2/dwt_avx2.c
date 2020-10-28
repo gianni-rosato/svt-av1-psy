@@ -11,7 +11,7 @@
 
 #include "transpose_avx2.h"
 
-int eb_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd) {
+int svt_av1_haar_ac_sad_8x8_uint8_input_avx2(uint8_t *input, int stride, int hbd) {
     DECLARE_ALIGNED(32, int32_t, output[64]);
 
     int32_t *out_ptr = output;

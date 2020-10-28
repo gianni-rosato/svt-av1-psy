@@ -400,7 +400,7 @@ set to ```filt_mid/4```.
 
     - Filter the frame with filter level set to filt\_mid and evaluate the
 SSE for the filtered frame (```try_filter_frame``` and then
-```eb_av1_loop_filter_frame```. See below for more details on the two
+```svt_av1_loop_filter_frame```. See below for more details on the two
 functions), update the best SSE ```best_err``` and corresponding filter
 level ```filt_best```.
 
@@ -426,18 +426,18 @@ the previous iteration, halve the ```filter_step```.
     - Return the best filter level and corresponding cost.
 
 **Step 3**: Applying loop filtering to the frame based on the selected
-loop filter parameters (```eb_av1_loop_filter_frame```).
+loop filter parameters (```svt_av1_loop_filter_frame```).
 
 **More details on** (```try_filter_frame```)
 
 (```try_filter_frame```) is just an intermediate function to prepare for
-(```eb_av1_loop_filter_frame```), mainly setting the filter levels,
+(```svt_av1_loop_filter_frame```), mainly setting the filter levels,
 computing the filtering sse, and resetting the recon buffer. Returns the
 filtering SSE.
 
-**More details on** (```eb_av1_loop_filter_frame```)
+**More details on** (```svt_av1_loop_filter_frame```)
 
-The function calls that start at ```eb_av1_loop_filter_frame``` are
+The function calls that start at ```svt_av1_loop_filter_frame``` are
 indicated in Figure 4 below according to the depth of the function
 call.
 
@@ -447,7 +447,7 @@ call.
 
 The main steps involved in are outlines as follows.
 
-1.  (```eb_av1_loop_filter_frame_init```)
+1.  (```svt_av1_loop_filter_frame_init```)
 
     - For the given plane, loop over all segments (i.e. segments as defined
 by the segmentation feature in AV1 specifications) in the picture

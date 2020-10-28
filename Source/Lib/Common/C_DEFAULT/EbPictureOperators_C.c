@@ -36,7 +36,7 @@ void svt_picture_average_kernel1_line_c(EbByte src0, EbByte src1, EbByte dst, ui
 /*********************************
 * Picture Copy Kernel
 *********************************/
-void eb_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size)
+void svt_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size)
 {
     memcpy(dst_ptr, src_ptr, size);
 }
@@ -52,7 +52,7 @@ void picture_copy_kernel(EbByte src, uint32_t src_stride, EbByte dst, uint32_t d
     dst_stride *= bytes_per_sample;
 
     while (sample_count < sample_total_count) {
-        eb_memcpy_c(dst, src, copy_length);
+        svt_memcpy_c(dst, src, copy_length);
         src += src_stride;
         dst += dst_stride;
         sample_count += area_width;

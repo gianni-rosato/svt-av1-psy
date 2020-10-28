@@ -124,7 +124,7 @@ allowed in the intra part of the prediction.
 ### Generation of the filter intra prediction
 
 The generation of the filter predictions is performed in the function
-```eb_av1_filter_intra_predictor```. The generation of the prediction is
+```svt_av1_filter_intra_predictor```. The generation of the prediction is
 performed as described above. The block is split into 4x2 blocks and the
 predictions for the 4x2 blocks are generated in a raster scan order.
 

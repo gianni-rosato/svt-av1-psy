@@ -79,7 +79,7 @@ static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
     return diff;
 }
 
-void eb_av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
+void svt_av1_setup_skip_mode_allowed(PictureParentControlSet  *parent_pcs_ptr) {
 
     FrameHeader *frm_hdr = &parent_pcs_ptr->frm_hdr;
 
@@ -214,7 +214,7 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define SCENE_TH                            3000
 #define NOISY_SCENE_TH                      4500    // SCD TH in presence of noise
 #define HIGH_PICTURE_VARIANCE_TH            1500
-#define NUM64x64INPIC(w,h)          ((w*h)>> (eb_log2f(BLOCK_SIZE_64)<<1))
+#define NUM64x64INPIC(w,h)          ((w*h)>> (svt_log2f(BLOCK_SIZE_64)<<1))
 #define QUEUE_GET_PREVIOUS_SPOT(h)  ((h == 0) ? PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH - 1 : h - 1)
 #define QUEUE_GET_NEXT_SPOT(h,off)  (( (h+off) >= PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH) ? h+off - PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH  : h + off)
 
@@ -246,9 +246,9 @@ EbErrorType picture_decision_context_ctor(
     thread_context_ptr->dctor = picture_decision_context_dctor;
 
     context_ptr->picture_analysis_results_input_fifo_ptr =
-        eb_system_resource_get_consumer_fifo(enc_handle_ptr->picture_analysis_results_resource_ptr, 0);
+        svt_system_resource_get_consumer_fifo(enc_handle_ptr->picture_analysis_results_resource_ptr, 0);
     context_ptr->picture_decision_results_output_fifo_ptr =
-        eb_system_resource_get_producer_fifo(enc_handle_ptr->picture_decision_results_resource_ptr, 0);
+        svt_system_resource_get_producer_fifo(enc_handle_ptr->picture_decision_results_resource_ptr, 0);
 
     EB_MALLOC_2D(context_ptr->ahd_running_avg_cb,  MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
     EB_MALLOC_2D(context_ptr->ahd_running_avg_cr, MAX_NUMBER_OF_REGIONS_IN_WIDTH, MAX_NUMBER_OF_REGIONS_IN_HEIGHT);
@@ -264,7 +264,7 @@ EbErrorType picture_decision_context_ctor(
     }
 
     context_ptr->reset_running_avg = EB_TRUE;
-    context_ptr->me_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->me_fifo_ptr = svt_system_resource_get_producer_fifo(
             enc_handle_ptr->me_pool_ptr_array[0], 0);
     return EB_ErrorNone;
 }
@@ -3664,7 +3664,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
                       input_picture_ptr->origin_y * input_picture_ptr->stride_y;
         for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-            eb_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
+            svt_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
     }
 
     // Pad input picture to complete border SBs
@@ -4498,11 +4498,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 // release the overlay PCS for non alt ref pictures. First picture does not have overlay PCS
                                 else if (pcs_ptr->picture_number) {
-                                    eb_release_object(pcs_ptr->overlay_ppcs_ptr->input_picture_wrapper_ptr);
+                                    svt_release_object(pcs_ptr->overlay_ppcs_ptr->input_picture_wrapper_ptr);
                                     // release the pa_reference_picture
-                                    eb_release_object(pcs_ptr->overlay_ppcs_ptr->pa_reference_picture_wrapper_ptr);
+                                    svt_release_object(pcs_ptr->overlay_ppcs_ptr->pa_reference_picture_wrapper_ptr);
                                     // release the parent pcs
-                                    eb_release_object(pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
+                                    svt_release_object(pcs_ptr->overlay_ppcs_ptr->p_pcs_wrapper_ptr);
                                     pcs_ptr->overlay_ppcs_ptr = NULL;
                                 }
                             }
@@ -4885,17 +4885,17 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->altref_strength = 2;
 
                                     for (seg_idx = 0; seg_idx < pcs_ptr->tf_segments_total_count; ++seg_idx) {
-                                        eb_get_empty_object(
+                                        svt_get_empty_object(
                                             context_ptr->picture_decision_results_output_fifo_ptr,
                                             &out_results_wrapper_ptr);
                                         out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
                                         out_results_ptr->pcs_wrapper_ptr = encode_context_ptr->pre_assignment_buffer[out_stride_diff64];
                                         out_results_ptr->segment_index = seg_idx;
                                         out_results_ptr->task_type = 1;
-                                        eb_post_full_object(out_results_wrapper_ptr);
+                                        svt_post_full_object(out_results_wrapper_ptr);
                                     }
 
-                                    eb_block_on_semaphore(pcs_ptr->temp_filt_done_semaphore);
+                                    svt_block_on_semaphore(pcs_ptr->temp_filt_done_semaphore);
                                 }
 
                             }else
@@ -4989,7 +4989,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = pa_reference_entry_ptr->input_object_ptr;
                                         pcs_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
                                         // Increment the PA Reference's liveCount by the number of tiles in the input picture
-                                        eb_object_inc_live_count(
+                                        svt_object_inc_live_count(
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
                                         --pa_reference_entry_ptr->dependent_count;
@@ -5017,7 +5017,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_pic_poc_array[REF_LIST_1][ref_pic_index] = ref_poc;
 
                                         // Increment the PA Reference's liveCount by the number of tiles in the input picture
-                                        eb_object_inc_live_count(
+                                        svt_object_inc_live_count(
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
                                         --pa_reference_entry_ptr->dependent_count;
@@ -5025,7 +5025,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                             }
 
-                            eb_av1_setup_skip_mode_allowed(pcs_ptr);
+                            svt_av1_setup_skip_mode_allowed(pcs_ptr);
 
                             pcs_ptr->is_skip_mode_allowed = frm_hdr->skip_mode_params.skip_mode_allowed;
                             pcs_ptr->skip_mode_flag = pcs_ptr->is_skip_mode_allowed;
@@ -5097,15 +5097,15 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 EbObjectWrapper* reference_picture_wrapper_ptr;
                                 // Get Empty Reference Picture Object
-                                eb_get_empty_object(
+                                svt_get_empty_object(
                                     scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
                                     &reference_picture_wrapper_ptr);
                                 pcs_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
                                 // Give the new Reference a nominal live_count of 1
-                                eb_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
+                                svt_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
                             }
                             //get a new ME data buffer
-                            eb_get_empty_object(context_ptr->me_fifo_ptr,
+                            svt_get_empty_object(context_ptr->me_fifo_ptr,
                                 &me_wrapper_ptr);
                             pcs_ptr->me_data_wrapper_ptr = me_wrapper_ptr;
 
@@ -5113,7 +5113,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                             for (uint32_t segment_index = 0; segment_index < pcs_ptr->me_segments_total_count; ++segment_index) {
                                 // Get Empty Results Object
-                                eb_get_empty_object(
+                                svt_get_empty_object(
                                     context_ptr->picture_decision_results_output_fifo_ptr,
                                     &out_results_wrapper_ptr);
 
@@ -5126,7 +5126,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 out_results_ptr->segment_index = segment_index;
                                 out_results_ptr->task_type = 0;
                                 // Post the Full Results Object
-                                eb_post_full_object(out_results_wrapper_ptr);
+                                svt_post_full_object(out_results_wrapper_ptr);
                             }
 
 
@@ -5144,7 +5144,7 @@ void* picture_decision_kernel(void *input_ptr)
                     if ((input_entry_ptr->dependent_count == 0) &&
                         (input_entry_ptr->input_object_ptr)) {
                         // Release the nominal live_count value
-                        eb_release_object(input_entry_ptr->input_object_ptr);
+                        svt_release_object(input_entry_ptr->input_object_ptr);
                         input_entry_ptr->input_object_ptr = (EbObjectWrapper*)NULL;
                     }
 
@@ -5175,7 +5175,7 @@ void* picture_decision_kernel(void *input_ptr)
         }
 
         // Release the Input Results
-        eb_release_object(in_results_wrapper_ptr);
+        svt_release_object(in_results_wrapper_ptr);
     }
 
     return NULL;

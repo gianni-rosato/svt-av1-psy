@@ -27,18 +27,18 @@
 
 #define FC_SKIP_TX_SR_TH025 125 // Fast cost skip tx search threshold.
 #define FC_SKIP_TX_SR_TH010 110 // Fast cost skip tx search threshold.
-void eb_av1_cdef_search(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
-                        PictureControlSet *pcs_ptr);
+void svt_av1_cdef_search(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
+                         PictureControlSet *pcs_ptr);
 
 void av1_cdef_frame16bit(uint8_t is_16bit, SequenceControlSet *scs_ptr, PictureControlSet *pCs);
 
-void eb_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
-                           AomFilmGrain *film_grain_ptr);
+void svt_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
+                            AomFilmGrain *film_grain_ptr);
 
-void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
-                                                 int32_t after_cdef);
-void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
-                                          int32_t optimized_lr);
+void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
+                                                  int32_t after_cdef);
+void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
+                                           int32_t optimized_lr);
 
 static void enc_dec_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
@@ -75,13 +75,13 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->color_format = color_format;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->mode_decision_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+    context_ptr->mode_decision_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->enc_dec_tasks_resource_ptr, index);
-    context_ptr->enc_dec_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->enc_dec_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->enc_dec_results_resource_ptr, index);
-    context_ptr->enc_dec_feedback_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->enc_dec_feedback_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->enc_dec_tasks_resource_ptr, tasks_index);
-    context_ptr->picture_demux_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->picture_demux_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
     // MD rate Estimation tables
@@ -92,7 +92,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->input_sample16bit_buffer = NULL;
     if (is_16bit || static_config->is_16bit_pipeline)
         EB_NEW(context_ptr->input_sample16bit_buffer,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                &(EbPictureBufferDescInitData){
                    .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
                    .max_width          = SB_STRIDE_Y,
@@ -120,10 +120,10 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
         .split_mode         = EB_FALSE,
     };
 
-    EB_NEW(context_ptr->inverse_quant_buffer, eb_picture_buffer_desc_ctor, &init_32bit_data);
-    EB_NEW(context_ptr->transform_buffer, eb_picture_buffer_desc_ctor, &init_32bit_data);
+    EB_NEW(context_ptr->inverse_quant_buffer, svt_picture_buffer_desc_ctor, &init_32bit_data);
+    EB_NEW(context_ptr->transform_buffer, svt_picture_buffer_desc_ctor, &init_32bit_data);
     EB_NEW(context_ptr->residual_buffer,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            &(EbPictureBufferDescInitData){
                .buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK,
                .max_width          = SB_STRIDE_Y,
@@ -344,7 +344,7 @@ EbBool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOu
 
         // Right Neighbor
         if (segment_index < segmentPtr->row_array[row_segment_index].ending_seg_index) {
-            eb_block_on_mutex(segmentPtr->row_array[row_segment_index].assignment_mutex);
+            svt_block_on_mutex(segmentPtr->row_array[row_segment_index].assignment_mutex);
 
             --segmentPtr->dep_map.dependency_map[right_segment_index];
 
@@ -359,14 +359,14 @@ EbBool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOu
                 //    *segmentInOutIndex);
             }
 
-            eb_release_mutex(segmentPtr->row_array[row_segment_index].assignment_mutex);
+            svt_release_mutex(segmentPtr->row_array[row_segment_index].assignment_mutex);
         }
 
         // Bottom-left Neighbor
         if (row_segment_index < segmentPtr->segment_row_count - 1 &&
             bottom_left_segment_index >=
                 segmentPtr->row_array[row_segment_index + 1].starting_seg_index) {
-            eb_block_on_mutex(segmentPtr->row_array[row_segment_index + 1].assignment_mutex);
+            svt_block_on_mutex(segmentPtr->row_array[row_segment_index + 1].assignment_mutex);
 
             --segmentPtr->dep_map.dependency_map[bottom_left_segment_index];
 
@@ -384,18 +384,18 @@ EbBool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOu
                     //    *segmentInOutIndex);
                 }
             }
-            eb_release_mutex(segmentPtr->row_array[row_segment_index + 1].assignment_mutex);
+            svt_release_mutex(segmentPtr->row_array[row_segment_index + 1].assignment_mutex);
         }
 
         if (feedback_row_index > 0) {
             EbObjectWrapper *wrapper_ptr;
-            eb_get_empty_object(srmFifoPtr, &wrapper_ptr);
+            svt_get_empty_object(srmFifoPtr, &wrapper_ptr);
             EncDecTasks *    feedback_task_ptr     = (EncDecTasks *)wrapper_ptr->object_ptr;
             feedback_task_ptr->input_type          = ENCDEC_TASKS_ENCDEC_INPUT;
             feedback_task_ptr->enc_dec_segment_row = feedback_row_index;
             feedback_task_ptr->pcs_wrapper_ptr     = taskPtr->pcs_wrapper_ptr;
             feedback_task_ptr->tile_group_index = taskPtr->tile_group_index;
-            eb_post_full_object(wrapper_ptr);
+            svt_post_full_object(wrapper_ptr);
         }
 
         break;
@@ -410,14 +410,14 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
     // The totalNumberOfReconFrames counter has to be write/read protected as
     //   it is used to determine the end of the stream.  If it is not protected
     //   the encoder might not properly terminate.
-    eb_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
+    svt_block_on_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 
     if (!pcs_ptr->parent_pcs_ptr->is_alt_ref) {
         EbBool           is_16bit = (scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
         EbObjectWrapper *output_recon_wrapper_ptr;
         // Get Recon Buffer
-        eb_get_empty_object(scs_ptr->encode_context_ptr->recon_output_fifo_ptr,
-                            &output_recon_wrapper_ptr);
+        svt_get_empty_object(scs_ptr->encode_context_ptr->recon_output_fifo_ptr,
+                             &output_recon_wrapper_ptr);
         EbBufferHeaderType *output_recon_ptr = (EbBufferHeaderType *)output_recon_wrapper_ptr->object_ptr;
         output_recon_ptr->flags = 0;
 
@@ -477,7 +477,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
                 else
                     film_grain_ptr = &pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
 
-                eb_av1_add_film_grain(recon_ptr, intermediate_buffer_ptr, film_grain_ptr);
+                svt_av1_add_film_grain(recon_ptr, intermediate_buffer_ptr, film_grain_ptr);
                 recon_ptr = intermediate_buffer_ptr;
             }
 
@@ -561,13 +561,13 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
         }
 
         // Post the Recon object
-        eb_post_full_object(output_recon_wrapper_ptr);
+        svt_post_full_object(output_recon_wrapper_ptr);
     } else {
         // Overlay and altref have 1 recon only, which is from overlay pictures. So the recon of the alt_ref is not sent to the application.
         // However, to hanlde the end of sequence properly, total_number_of_recon_frames is increamented
         encode_context_ptr->total_number_of_recon_frames++;
     }
-    eb_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
+    svt_release_mutex(encode_context_ptr->total_number_of_recon_frame_mutex);
 }
 
 //************************************/
@@ -1644,11 +1644,11 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
             ->frame_type = pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type;
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->order_hint = pcs_ptr->parent_pcs_ptr->cur_order_hint;
-        eb_memcpy(((EbReferenceObject *)
-                    pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+        svt_memcpy(((EbReferenceObject *)
+                   pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                    ->ref_order_hint,
-               pcs_ptr->parent_pcs_ptr->ref_order_hint,
-               7 * sizeof(uint32_t));
+                   pcs_ptr->parent_pcs_ptr->ref_order_hint,
+                   7 * sizeof(uint32_t));
     }
 }
 
@@ -3376,7 +3376,7 @@ void generate_statistics_nsq(
                 if (context_ptr->md_blk_arr_nsq[blk_index].split_flag == EB_FALSE) {
                     if (context_ptr->md_local_blk_unit[blk_index].avail_blk_flag) {
                         uint8_t band_idx = 0;
-                        uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)blk_geom->sq_size);
+                        uint8_t sq_size_idx = 7 - (uint8_t)svt_log2f((uint8_t)blk_geom->sq_size);
                         uint64_t band_width = (sq_size_idx == 0) ? 100 : (sq_size_idx == 1) ? 50 : 20;
                         uint8_t part_idx = part_to_shape[context_ptr->md_blk_arr_nsq[blk_index].part];
                         uint8_t sse_g_band = (!context_ptr->md_disallow_nsq && context_ptr->md_local_blk_unit[blk_geom->sqi_mds].avail_blk_flag) ?
@@ -3738,7 +3738,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             EB_FALSE;
                     }
 
-                    uint8_t sq_size_idx = 7 - (uint8_t)eb_log2f((uint8_t)blk_geom->sq_size);
+                    uint8_t sq_size_idx = 7 - (uint8_t)svt_log2f((uint8_t)blk_geom->sq_size);
                     // Add block indices of upper depth(s)
                     // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_parent_depth = 1;
@@ -3945,7 +3945,7 @@ void *mode_decision_kernel(void *input_ptr) {
         EbBool last_sb_flag           = EB_FALSE;
         // SB Constants
         uint8_t sb_sz      = (uint8_t)scs_ptr->sb_size_pix;
-        uint8_t sb_size_log2 = (uint8_t)eb_log2f(sb_sz);
+        uint8_t sb_size_log2 = (uint8_t)svt_log2f(sb_sz);
         context_ptr->sb_sz = sb_sz;
         uint32_t pic_width_in_sb = (pcs_ptr->parent_pcs_ptr->aligned_width + sb_sz - 1) >>
             sb_size_log2;
@@ -4256,7 +4256,7 @@ void *mode_decision_kernel(void *input_ptr) {
             }
         }
 
-        eb_block_on_mutex(pcs_ptr->intra_mutex);
+        svt_block_on_mutex(pcs_ptr->intra_mutex);
         pcs_ptr->intra_coded_area += (uint32_t)context_ptr->tot_intra_coded_area;
         // Accumulate block selection
         for (uint8_t partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++)
@@ -4275,7 +4275,7 @@ void *mode_decision_kernel(void *input_ptr) {
 
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
         last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
-        eb_release_mutex(pcs_ptr->intra_mutex);
+        svt_release_mutex(pcs_ptr->intra_mutex);
 
         if (last_sb_flag) {
             // Copy film grain data from parent picture set to the reference object for further reference
@@ -4294,15 +4294,15 @@ void *mode_decision_kernel(void *input_ptr) {
                     ((EbReferenceObject *)
                          pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                         ->global_motion[frame] = pcs_ptr->parent_pcs_ptr->global_motion[frame];
-            eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost,
-                      context_ptr->md_rate_estimation_ptr->sgrproj_restore_fac_bits,
-                      2 * sizeof(int32_t));
-            eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->switchable_restore_cost,
-                      context_ptr->md_rate_estimation_ptr->switchable_restore_fac_bits,
-                      3 * sizeof(int32_t));
-            eb_memcpy(pcs_ptr->parent_pcs_ptr->av1x->wiener_restore_cost,
-                      context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits,
-                      2 * sizeof(int32_t));
+            svt_memcpy(pcs_ptr->parent_pcs_ptr->av1x->sgrproj_restore_cost,
+                       context_ptr->md_rate_estimation_ptr->sgrproj_restore_fac_bits,
+                       2 * sizeof(int32_t));
+            svt_memcpy(pcs_ptr->parent_pcs_ptr->av1x->switchable_restore_cost,
+                       context_ptr->md_rate_estimation_ptr->switchable_restore_fac_bits,
+                       3 * sizeof(int32_t));
+            svt_memcpy(pcs_ptr->parent_pcs_ptr->av1x->wiener_restore_cost,
+                       context_ptr->md_rate_estimation_ptr->wiener_restore_fac_bits,
+                       2 * sizeof(int32_t));
             pcs_ptr->parent_pcs_ptr->av1x->rdmult =
                 context_ptr->pic_full_lambda[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD
                                                                                   : EB_8_BIT_MD];
@@ -4311,10 +4311,10 @@ void *mode_decision_kernel(void *input_ptr) {
                 if(pcs_ptr->parent_pcs_ptr->end_of_sequence_flag)
                     svt_av1_end_first_pass(pcs_ptr->parent_pcs_ptr);
             }
-            eb_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
             pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
             // Get Empty EncDec Results
-            eb_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
+            svt_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
             enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
             //CHKN these are not needed for DLF
@@ -4322,16 +4322,16 @@ void *mode_decision_kernel(void *input_ptr) {
             enc_dec_results_ptr->completed_sb_row_count =
                 ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
             // Post EncDec Results
-            eb_post_full_object(enc_dec_results_wrapper_ptr);
+            svt_post_full_object(enc_dec_results_wrapper_ptr);
         }
         // Release Mode Decision Results
-        eb_release_object(enc_dec_tasks_wrapper_ptr);
+        svt_release_object(enc_dec_tasks_wrapper_ptr);
     }
     return NULL;
 }
 
-void eb_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
-                           AomFilmGrain *film_grain_ptr) {
+void svt_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
+                            AomFilmGrain *film_grain_ptr) {
     uint8_t *luma, *cb, *cr;
     int32_t  height, width, luma_stride, chroma_stride;
     int32_t  use_high_bit_depth = 0;
@@ -4410,16 +4410,16 @@ void eb_av1_add_film_grain(EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
     width  = dst->width;
     height = dst->height;
 
-    eb_av1_add_film_grain_run(&params,
-                              luma,
-                              cb,
-                              cr,
-                              height,
-                              width,
-                              luma_stride,
-                              chroma_stride,
-                              use_high_bit_depth,
-                              chroma_subsamp_y,
-                              chroma_subsamp_x);
+    svt_av1_add_film_grain_run(&params,
+                               luma,
+                               cb,
+                               cr,
+                               height,
+                               width,
+                               luma_stride,
+                               chroma_stride,
+                               use_high_bit_depth,
+                               chroma_subsamp_y,
+                               chroma_subsamp_x);
     return;
 }

@@ -13,6 +13,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "av1me.h"
+#include "mcomp.h"
 #include "EbUtility.h"
 #include "EbPictureControlSet.h"
 #include "EbSequenceControlSet.h"
@@ -23,8 +24,8 @@
 int av1_is_dv_valid(const MV dv, const MacroBlockD *xd, int mi_row, int mi_col, BlockSize bsize,
                     int mib_size_log2);
 
-int eb_av1_refining_search_sad(IntraBcContext *x, MV *ref_mv, int error_per_bit, int search_range,
-                               const AomVarianceFnPtr *fn_ptr, const MV *center_mv);
+int svt_av1_refining_search_sad(IntraBcContext *x, MV *ref_mv, int error_per_bit, int search_range,
+                                const AomVarianceFnPtr *fn_ptr, const MV *center_mv);
 
 AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 
@@ -35,63 +36,63 @@ void init_fn_ptr(void) {
     mefn_ptr[BT].vf_hbd_10 = VF_HBD_10;            \
     mefn_ptr[BT].sdx4df = SDX4DF;
 
-    BFP0(BLOCK_4X16, eb_aom_sad4x16, eb_aom_variance4x16, eb_aom_highbd_10_variance4x16, eb_aom_sad4x16x4d)
-    BFP0(BLOCK_16X4, eb_aom_sad16x4, eb_aom_variance16x4, eb_aom_highbd_10_variance16x4, eb_aom_sad16x4x4d)
-    BFP0(BLOCK_8X32, eb_aom_sad8x32, eb_aom_variance8x32, eb_aom_highbd_10_variance8x32, eb_aom_sad8x32x4d)
-    BFP0(BLOCK_32X8, eb_aom_sad32x8, eb_aom_variance32x8, eb_aom_highbd_10_variance32x8, eb_aom_sad32x8x4d)
-    BFP0(BLOCK_16X64, eb_aom_sad16x64, eb_aom_variance16x64, eb_aom_highbd_10_variance16x64, eb_aom_sad16x64x4d)
-    BFP0(BLOCK_64X16, eb_aom_sad64x16, eb_aom_variance64x16, eb_aom_highbd_10_variance64x16, eb_aom_sad64x16x4d)
-    BFP0(BLOCK_128X128, eb_aom_sad128x128, eb_aom_variance128x128, eb_aom_highbd_10_variance128x128, eb_aom_sad128x128x4d)
-    BFP0(BLOCK_128X64, eb_aom_sad128x64, eb_aom_variance128x64, eb_aom_highbd_10_variance128x64, eb_aom_sad128x64x4d)
-    BFP0(BLOCK_64X128, eb_aom_sad64x128, eb_aom_variance64x128, eb_aom_highbd_10_variance64x128, eb_aom_sad64x128x4d)
-    BFP0(BLOCK_32X16, eb_aom_sad32x16, eb_aom_variance32x16, eb_aom_highbd_10_variance32x16, eb_aom_sad32x16x4d)
-    BFP0(BLOCK_16X32, eb_aom_sad16x32, eb_aom_variance16x32, eb_aom_highbd_10_variance16x32, eb_aom_sad16x32x4d)
-    BFP0(BLOCK_64X32, eb_aom_sad64x32, eb_aom_variance64x32, eb_aom_highbd_10_variance64x32, eb_aom_sad64x32x4d)
-    BFP0(BLOCK_32X64, eb_aom_sad32x64, eb_aom_variance32x64, eb_aom_highbd_10_variance32x64, eb_aom_sad32x64x4d)
-    BFP0(BLOCK_32X32, eb_aom_sad32x32, eb_aom_variance32x32, eb_aom_highbd_10_variance32x32, eb_aom_sad32x32x4d)
-    BFP0(BLOCK_64X64, eb_aom_sad64x64, eb_aom_variance64x64, eb_aom_highbd_10_variance64x64, eb_aom_sad64x64x4d)
-    BFP0(BLOCK_16X16, eb_aom_sad16x16, eb_aom_variance16x16, eb_aom_highbd_10_variance16x16, eb_aom_sad16x16x4d)
-    BFP0(BLOCK_16X8, eb_aom_sad16x8, eb_aom_variance16x8, eb_aom_highbd_10_variance16x8, eb_aom_sad16x8x4d)
-    BFP0(BLOCK_8X16, eb_aom_sad8x16, eb_aom_variance8x16, eb_aom_highbd_10_variance8x16, eb_aom_sad8x16x4d)
-    BFP0(BLOCK_8X8, eb_aom_sad8x8, eb_aom_variance8x8, eb_aom_highbd_10_variance8x8, eb_aom_sad8x8x4d)
-    BFP0(BLOCK_8X4, eb_aom_sad8x4, eb_aom_variance8x4, eb_aom_highbd_10_variance8x4, eb_aom_sad8x4x4d)
-    BFP0(BLOCK_4X8, eb_aom_sad4x8, eb_aom_variance4x8, eb_aom_highbd_10_variance4x8, eb_aom_sad4x8x4d)
-    BFP0(BLOCK_4X4, eb_aom_sad4x4, eb_aom_variance4x4, eb_aom_highbd_10_variance4x4, eb_aom_sad4x4x4d)
+    BFP0(BLOCK_4X16, svt_aom_sad4x16, svt_aom_variance4x16, svt_aom_highbd_10_variance4x16, svt_aom_sad4x16x4d)
+    BFP0(BLOCK_16X4, svt_aom_sad16x4, svt_aom_variance16x4, svt_aom_highbd_10_variance16x4, svt_aom_sad16x4x4d)
+    BFP0(BLOCK_8X32, svt_aom_sad8x32, svt_aom_variance8x32, svt_aom_highbd_10_variance8x32, svt_aom_sad8x32x4d)
+    BFP0(BLOCK_32X8, svt_aom_sad32x8, svt_aom_variance32x8, svt_aom_highbd_10_variance32x8, svt_aom_sad32x8x4d)
+    BFP0(BLOCK_16X64, svt_aom_sad16x64, svt_aom_variance16x64, svt_aom_highbd_10_variance16x64, svt_aom_sad16x64x4d)
+    BFP0(BLOCK_64X16, svt_aom_sad64x16, svt_aom_variance64x16, svt_aom_highbd_10_variance64x16, svt_aom_sad64x16x4d)
+    BFP0(BLOCK_128X128, svt_aom_sad128x128, svt_aom_variance128x128, svt_aom_highbd_10_variance128x128, svt_aom_sad128x128x4d)
+    BFP0(BLOCK_128X64, svt_aom_sad128x64, svt_aom_variance128x64, svt_aom_highbd_10_variance128x64, svt_aom_sad128x64x4d)
+    BFP0(BLOCK_64X128, svt_aom_sad64x128, svt_aom_variance64x128, svt_aom_highbd_10_variance64x128, svt_aom_sad64x128x4d)
+    BFP0(BLOCK_32X16, svt_aom_sad32x16, svt_aom_variance32x16, svt_aom_highbd_10_variance32x16, svt_aom_sad32x16x4d)
+    BFP0(BLOCK_16X32, svt_aom_sad16x32, svt_aom_variance16x32, svt_aom_highbd_10_variance16x32, svt_aom_sad16x32x4d)
+    BFP0(BLOCK_64X32, svt_aom_sad64x32, svt_aom_variance64x32, svt_aom_highbd_10_variance64x32, svt_aom_sad64x32x4d)
+    BFP0(BLOCK_32X64, svt_aom_sad32x64, svt_aom_variance32x64, svt_aom_highbd_10_variance32x64, svt_aom_sad32x64x4d)
+    BFP0(BLOCK_32X32, svt_aom_sad32x32, svt_aom_variance32x32, svt_aom_highbd_10_variance32x32, svt_aom_sad32x32x4d)
+    BFP0(BLOCK_64X64, svt_aom_sad64x64, svt_aom_variance64x64, svt_aom_highbd_10_variance64x64, svt_aom_sad64x64x4d)
+    BFP0(BLOCK_16X16, svt_aom_sad16x16, svt_aom_variance16x16, svt_aom_highbd_10_variance16x16, svt_aom_sad16x16x4d)
+    BFP0(BLOCK_16X8, svt_aom_sad16x8, svt_aom_variance16x8, svt_aom_highbd_10_variance16x8, svt_aom_sad16x8x4d)
+    BFP0(BLOCK_8X16, svt_aom_sad8x16, svt_aom_variance8x16, svt_aom_highbd_10_variance8x16, svt_aom_sad8x16x4d)
+    BFP0(BLOCK_8X8, svt_aom_sad8x8, svt_aom_variance8x8, svt_aom_highbd_10_variance8x8, svt_aom_sad8x8x4d)
+    BFP0(BLOCK_8X4, svt_aom_sad8x4, svt_aom_variance8x4, svt_aom_highbd_10_variance8x4, svt_aom_sad8x4x4d)
+    BFP0(BLOCK_4X8, svt_aom_sad4x8, svt_aom_variance4x8, svt_aom_highbd_10_variance4x8, svt_aom_sad4x8x4d)
+    BFP0(BLOCK_4X4, svt_aom_sad4x4, svt_aom_variance4x4, svt_aom_highbd_10_variance4x4, svt_aom_sad4x4x4d)
 #define OBFP(BT, OSDF, OVF, OSVF) \
     mefn_ptr[BT].osdf = OSDF;     \
     mefn_ptr[BT].ovf  = OVF;      \
     mefn_ptr[BT].osvf = OSVF;
     OBFP(BLOCK_128X128,
-         eb_aom_obmc_sad128x128,
-         eb_aom_obmc_variance128x128,
-         eb_aom_obmc_sub_pixel_variance128x128)
+         svt_aom_obmc_sad128x128,
+         svt_aom_obmc_variance128x128,
+         svt_aom_obmc_sub_pixel_variance128x128)
     OBFP(BLOCK_128X64,
-         eb_aom_obmc_sad128x64,
-         eb_aom_obmc_variance128x64,
-         eb_aom_obmc_sub_pixel_variance128x64)
+         svt_aom_obmc_sad128x64,
+         svt_aom_obmc_variance128x64,
+         svt_aom_obmc_sub_pixel_variance128x64)
     OBFP(BLOCK_64X128,
-         eb_aom_obmc_sad64x128,
-         eb_aom_obmc_variance64x128,
-         eb_aom_obmc_sub_pixel_variance64x128)
-    OBFP(BLOCK_64X64, eb_aom_obmc_sad64x64, eb_aom_obmc_variance64x64, eb_aom_obmc_sub_pixel_variance64x64)
-    OBFP(BLOCK_64X32, eb_aom_obmc_sad64x32, eb_aom_obmc_variance64x32, eb_aom_obmc_sub_pixel_variance64x32)
-    OBFP(BLOCK_32X64, eb_aom_obmc_sad32x64, eb_aom_obmc_variance32x64, eb_aom_obmc_sub_pixel_variance32x64)
-    OBFP(BLOCK_32X32, eb_aom_obmc_sad32x32, eb_aom_obmc_variance32x32, eb_aom_obmc_sub_pixel_variance32x32)
-    OBFP(BLOCK_32X16, eb_aom_obmc_sad32x16, eb_aom_obmc_variance32x16, eb_aom_obmc_sub_pixel_variance32x16)
-    OBFP(BLOCK_16X32, eb_aom_obmc_sad16x32, eb_aom_obmc_variance16x32, eb_aom_obmc_sub_pixel_variance16x32)
-    OBFP(BLOCK_16X16, eb_aom_obmc_sad16x16, eb_aom_obmc_variance16x16, eb_aom_obmc_sub_pixel_variance16x16)
-    OBFP(BLOCK_16X8, eb_aom_obmc_sad16x8, eb_aom_obmc_variance16x8, eb_aom_obmc_sub_pixel_variance16x8)
-    OBFP(BLOCK_8X16, eb_aom_obmc_sad8x16, eb_aom_obmc_variance8x16, eb_aom_obmc_sub_pixel_variance8x16)
-    OBFP(BLOCK_8X8, eb_aom_obmc_sad8x8, eb_aom_obmc_variance8x8, eb_aom_obmc_sub_pixel_variance8x8)
-    OBFP(BLOCK_4X8, eb_aom_obmc_sad4x8, eb_aom_obmc_variance4x8, eb_aom_obmc_sub_pixel_variance4x8)
-    OBFP(BLOCK_8X4, eb_aom_obmc_sad8x4, eb_aom_obmc_variance8x4, eb_aom_obmc_sub_pixel_variance8x4)
-    OBFP(BLOCK_4X4, eb_aom_obmc_sad4x4, eb_aom_obmc_variance4x4, eb_aom_obmc_sub_pixel_variance4x4)
-    OBFP(BLOCK_4X16, eb_aom_obmc_sad4x16, eb_aom_obmc_variance4x16, eb_aom_obmc_sub_pixel_variance4x16)
-    OBFP(BLOCK_16X4, eb_aom_obmc_sad16x4, eb_aom_obmc_variance16x4, eb_aom_obmc_sub_pixel_variance16x4)
-    OBFP(BLOCK_8X32, eb_aom_obmc_sad8x32, eb_aom_obmc_variance8x32, eb_aom_obmc_sub_pixel_variance8x32)
-    OBFP(BLOCK_32X8, eb_aom_obmc_sad32x8, eb_aom_obmc_variance32x8, eb_aom_obmc_sub_pixel_variance32x8)
-    OBFP(BLOCK_16X64, eb_aom_obmc_sad16x64, eb_aom_obmc_variance16x64, eb_aom_obmc_sub_pixel_variance16x64)
-    OBFP(BLOCK_64X16, eb_aom_obmc_sad64x16, eb_aom_obmc_variance64x16, eb_aom_obmc_sub_pixel_variance64x16)
+         svt_aom_obmc_sad64x128,
+         svt_aom_obmc_variance64x128,
+         svt_aom_obmc_sub_pixel_variance64x128)
+    OBFP(BLOCK_64X64, svt_aom_obmc_sad64x64, svt_aom_obmc_variance64x64, svt_aom_obmc_sub_pixel_variance64x64)
+    OBFP(BLOCK_64X32, svt_aom_obmc_sad64x32, svt_aom_obmc_variance64x32, svt_aom_obmc_sub_pixel_variance64x32)
+    OBFP(BLOCK_32X64, svt_aom_obmc_sad32x64, svt_aom_obmc_variance32x64, svt_aom_obmc_sub_pixel_variance32x64)
+    OBFP(BLOCK_32X32, svt_aom_obmc_sad32x32, svt_aom_obmc_variance32x32, svt_aom_obmc_sub_pixel_variance32x32)
+    OBFP(BLOCK_32X16, svt_aom_obmc_sad32x16, svt_aom_obmc_variance32x16, svt_aom_obmc_sub_pixel_variance32x16)
+    OBFP(BLOCK_16X32, svt_aom_obmc_sad16x32, svt_aom_obmc_variance16x32, svt_aom_obmc_sub_pixel_variance16x32)
+    OBFP(BLOCK_16X16, svt_aom_obmc_sad16x16, svt_aom_obmc_variance16x16, svt_aom_obmc_sub_pixel_variance16x16)
+    OBFP(BLOCK_16X8, svt_aom_obmc_sad16x8, svt_aom_obmc_variance16x8, svt_aom_obmc_sub_pixel_variance16x8)
+    OBFP(BLOCK_8X16, svt_aom_obmc_sad8x16, svt_aom_obmc_variance8x16, svt_aom_obmc_sub_pixel_variance8x16)
+    OBFP(BLOCK_8X8, svt_aom_obmc_sad8x8, svt_aom_obmc_variance8x8, svt_aom_obmc_sub_pixel_variance8x8)
+    OBFP(BLOCK_4X8, svt_aom_obmc_sad4x8, svt_aom_obmc_variance4x8, svt_aom_obmc_sub_pixel_variance4x8)
+    OBFP(BLOCK_8X4, svt_aom_obmc_sad8x4, svt_aom_obmc_variance8x4, svt_aom_obmc_sub_pixel_variance8x4)
+    OBFP(BLOCK_4X4, svt_aom_obmc_sad4x4, svt_aom_obmc_variance4x4, svt_aom_obmc_sub_pixel_variance4x4)
+    OBFP(BLOCK_4X16, svt_aom_obmc_sad4x16, svt_aom_obmc_variance4x16, svt_aom_obmc_sub_pixel_variance4x16)
+    OBFP(BLOCK_16X4, svt_aom_obmc_sad16x4, svt_aom_obmc_variance16x4, svt_aom_obmc_sub_pixel_variance16x4)
+    OBFP(BLOCK_8X32, svt_aom_obmc_sad8x32, svt_aom_obmc_variance8x32, svt_aom_obmc_sub_pixel_variance8x32)
+    OBFP(BLOCK_32X8, svt_aom_obmc_sad32x8, svt_aom_obmc_variance32x8, svt_aom_obmc_sub_pixel_variance32x8)
+    OBFP(BLOCK_16X64, svt_aom_obmc_sad16x64, svt_aom_obmc_variance16x64, svt_aom_obmc_sub_pixel_variance16x64)
+    OBFP(BLOCK_64X16, svt_aom_obmc_sad64x16, svt_aom_obmc_variance64x16, svt_aom_obmc_sub_pixel_variance64x16)
 }
 
 // #define NEW_DIAMOND_SEARCH
@@ -100,7 +101,7 @@ static INLINE const uint8_t *get_buf_from_mv(const struct Buf2D *buf, const MV *
     return &buf->buf[mv->row * buf->stride + mv->col];
 }
 
-void eb_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv) {
+void svt_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv) {
     int col_min = (mv->col >> 3) - MAX_FULL_PEL_VAL + !!(mv->col & 7);
     int row_min = (mv->row >> 3) - MAX_FULL_PEL_VAL + !!(mv->row & 7);
     int col_max = (mv->col >> 3) + MAX_FULL_PEL_VAL;
@@ -119,19 +120,13 @@ void eb_av1_set_mv_search_range(MvLimits *mv_limits, const MV *mv) {
     if (mv_limits->row_max > row_max) mv_limits->row_max = row_max;
 }
 
-MvJointType svt_av1_get_mv_joint(const MV *mv);
-
-static INLINE int mv_cost(const MV *mv, const int *joint_cost, int *const comp_cost[2]) {
-    return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
-}
-
 #define PIXEL_TRANSFORM_ERROR_SCALE 4
 int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
                        int error_per_bit) {
     if (mvcost) {
         const MV diff = {mv->row - ref->row, mv->col - ref->col};
         return (int)ROUND_POWER_OF_TWO_64(
-            (int64_t)mv_cost(&diff, mvjcost, mvcost) * error_per_bit,
+            (int64_t)svt_mv_cost(&diff, mvjcost, (const int* const *)mvcost) * error_per_bit,
             RDDIV_BITS + AV1_PROB_COST_SHIFT - RD_EPB_SHIFT + PIXEL_TRANSFORM_ERROR_SCALE);
     }
     return 0;
@@ -140,11 +135,11 @@ int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
 static int mvsad_err_cost(const IntraBcContext *x, const MV *mv, const MV *ref, int sad_per_bit) {
     const MV diff = {(mv->row - ref->row) * 8, (mv->col - ref->col) * 8};
     return ROUND_POWER_OF_TWO(
-        (unsigned)mv_cost(&diff, x->nmv_vec_cost, x->mv_cost_stack) * sad_per_bit,
-        AV1_PROB_COST_SHIFT);
+        (unsigned)svt_mv_cost(&diff, x->nmv_vec_cost, (const int *const *)x->mv_cost_stack) *
+            sad_per_bit, AV1_PROB_COST_SHIFT);
 }
 
-void eb_av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride) {
+void svt_av1_init3smotion_compensation(SearchSiteConfig *cfg, int stride) {
     int len, ss_count = 1;
 
     cfg->ss[0].mv.col = cfg->ss[0].mv.row = 0;
@@ -180,8 +175,8 @@ static INLINE int is_mv_in(const MvLimits *mv_limits, const MV *mv) {
 #define MAX_PATTERN_CANDIDATES 8 // max number of canddiates per scale
 #define PATTERN_CANDIDATES_REF 3 // number of refinement candidates
 
-int eb_av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv, const MV *center_mv,
-                          const AomVarianceFnPtr *vfp, int use_mvcost) {
+int svt_av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv, const MV *center_mv,
+                           const AomVarianceFnPtr *vfp, int use_mvcost) {
     const struct Buf2D *const what    = &x->plane[0].src;
     const struct Buf2D *const in_what = &x->xdplane[0].pre[0];
     const MV                  mv      = {best_mv->row * 8, best_mv->col * 8};
@@ -289,9 +284,9 @@ static int exhuastive_mesh_search(IntraBcContext *x, MV *ref_mv, MV *best_mv, in
     return best_sad;
 }
 
-int eb_av1_diamond_search_sad_c(IntraBcContext *x, const SearchSiteConfig *cfg, MV *ref_mv,
-                                MV *best_mv, int search_param, int sad_per_bit, int *num00,
-                                const AomVarianceFnPtr *fn_ptr, const MV *center_mv) {
+int svt_av1_diamond_search_sad_c(IntraBcContext *x, const SearchSiteConfig *cfg, MV *ref_mv,
+                                 MV *best_mv, int search_param, int sad_per_bit, int *num00,
+                                 const AomVarianceFnPtr *fn_ptr, const MV *center_mv) {
     int i, j, step;
 
     uint8_t *      what        = x->plane[0].src.buf;
@@ -439,10 +434,10 @@ static int full_pixel_diamond(PictureControlSet *pcs, IntraBcContext /*MACROBLOC
     (void)cost_list;
     /*int bestsme = cpi->diamond_search_sad(x, &cpi->ss_cfg, mvp_full, &temp_mv,
                                         step_param, sadpb, &n, fn_ptr, ref_mv);*/
-    int bestsme = eb_av1_diamond_search_sad_c(
+    int bestsme = svt_av1_diamond_search_sad_c(
         x, &pcs->ss_cfg, mvp_full, &temp_mv, step_param, sadpb, &n, fn_ptr, ref_mv);
 
-    if (bestsme < INT_MAX) bestsme = eb_av1_get_mvpred_var(x, &temp_mv, ref_mv, fn_ptr, 1);
+    if (bestsme < INT_MAX) bestsme = svt_av1_get_mvpred_var(x, &temp_mv, ref_mv, fn_ptr, 1);
     x->best_mv.as_mv = temp_mv;
 
     // If there won't be more n-step search, check to see if refining search is
@@ -458,10 +453,10 @@ static int full_pixel_diamond(PictureControlSet *pcs, IntraBcContext /*MACROBLOC
             /*thissme = cpi->diamond_search_sad(x, &cpi->ss_cfg, mvp_full, &temp_mv,
                                         step_param + n, sadpb, &num00, fn_ptr,
                                         ref_mv);*/
-            thissme = eb_av1_diamond_search_sad_c(
+            thissme = svt_av1_diamond_search_sad_c(
                 x, &pcs->ss_cfg, mvp_full, &temp_mv, step_param + n, sadpb, &num00, fn_ptr, ref_mv);
 
-            if (thissme < INT_MAX) thissme = eb_av1_get_mvpred_var(x, &temp_mv, ref_mv, fn_ptr, 1);
+            if (thissme < INT_MAX) thissme = svt_av1_get_mvpred_var(x, &temp_mv, ref_mv, fn_ptr, 1);
 
             // check to see if refining search is needed.
             if (num00 > further_steps - n) do_refine = 0;
@@ -477,8 +472,8 @@ static int full_pixel_diamond(PictureControlSet *pcs, IntraBcContext /*MACROBLOC
     if (do_refine) {
         const int search_range = 8;
         MV        best_mv      = x->best_mv.as_mv;
-        thissme = eb_av1_refining_search_sad(x, &best_mv, sadpb, search_range, fn_ptr, ref_mv);
-        if (thissme < INT_MAX) thissme = eb_av1_get_mvpred_var(x, &best_mv, ref_mv, fn_ptr, 1);
+        thissme = svt_av1_refining_search_sad(x, &best_mv, sadpb, search_range, fn_ptr, ref_mv);
+        if (thissme < INT_MAX) thissme = svt_av1_get_mvpred_var(x, &best_mv, ref_mv, fn_ptr, 1);
         if (thissme < bestsme) {
             bestsme          = thissme;
             x->best_mv.as_mv = best_mv;
@@ -548,7 +543,7 @@ static int full_pixel_exhaustive(PictureControlSet *pcs, IntraBcContext *x,
         }
     }
 
-    if (bestsme < INT_MAX) bestsme = eb_av1_get_mvpred_var(x, &temp_mv, ref_mv, fn_ptr, 1);
+    if (bestsme < INT_MAX) bestsme = svt_av1_get_mvpred_var(x, &temp_mv, ref_mv, fn_ptr, 1);
     *dst_mv = temp_mv;
 
     // Return cost list.
@@ -558,8 +553,8 @@ static int full_pixel_exhaustive(PictureControlSet *pcs, IntraBcContext *x,
     return bestsme;
 }
 
-int eb_av1_refining_search_sad(IntraBcContext *x, MV *ref_mv, int error_per_bit, int search_range,
-                               const AomVarianceFnPtr *fn_ptr, const MV *center_mv) {
+int svt_av1_refining_search_sad(IntraBcContext *x, MV *ref_mv, int error_per_bit, int search_range,
+                                const AomVarianceFnPtr *fn_ptr, const MV *center_mv) {
     const MV                  neighbors[4] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
     const struct Buf2D *const what         = &x->plane[0].src;
     const struct Buf2D *const in_what      = &x->xdplane[0].pre[0];
@@ -682,9 +677,9 @@ static int obmc_refining_search_sad(const IntraBcContext *x, const int32_t *wsrc
     return best_sad;
 }
 
-int eb_av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcContext *x, MV *mvp_full,
-                                  int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
-                                  MV *dst_mv, int is_second) {
+int svt_av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcContext *x, MV *mvp_full,
+                                   int sadpb, const AomVarianceFnPtr *fn_ptr, const MV *ref_mv,
+                                   MV *dst_mv, int is_second) {
     // obmc_full_pixel_diamond does not provide BDR gain on 360p
     const int32_t *wsrc         = context_ptr->wsrc_buf;
     const int32_t *mask         = context_ptr->mask_buf;
@@ -915,13 +910,13 @@ static INLINE const uint8_t *pre(const uint8_t *buf, int stride, int r, int c) {
     return buf + offset;
 }
 
-int eb_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
-                                            const AV1_COMMON *const cm, int mi_row, int mi_col,
-                                            MV *bestmv, const MV *ref_mv, int allow_hp,
-                                            int error_per_bit, const AomVarianceFnPtr *vfp,
-                                            int forced_stop, int iters_per_step, int *mvjcost,
-                                            int *mvcost[2], int *distortion, unsigned int *sse1,
-                                            int is_second, int use_accurate_subpel_search) {
+int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, IntraBcContext *x,
+                                             const AV1_COMMON *const cm, int mi_row, int mi_col,
+                                             MV *bestmv, const MV *ref_mv, int allow_hp,
+                                             int error_per_bit, const AomVarianceFnPtr *vfp,
+                                             int forced_stop, int iters_per_step, int *mvjcost,
+                                             int *mvcost[2], int *distortion, unsigned int *sse1,
+                                             int is_second, int use_accurate_subpel_search) {
     const int32_t *                wsrc        = context_ptr->wsrc_buf;
     const int32_t *                mask        = context_ptr->mask_buf;
     const int *const               z           = wsrc;
@@ -1102,10 +1097,10 @@ int eb_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, In
     return besterr;
 }
 
-int eb_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSize bsize,
-                             MV *mvp_full, int step_param, int method, int run_mesh_search,
-                             int error_per_bit, int *cost_list, const MV *ref_mv, int var_max,
-                             int rd, int x_pos, int y_pos, int intra) {
+int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSize bsize,
+                              MV *mvp_full, int step_param, int method, int run_mesh_search,
+                              int error_per_bit, int *cost_list, const MV *ref_mv, int var_max,
+                              int rd, int x_pos, int y_pos, int intra) {
     UNUSED(run_mesh_search);
     UNUSED(var_max);
     UNUSED(rd);
@@ -1239,7 +1234,7 @@ int eb_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSiz
                         hash_mv.col = ref_block_hash.x - x_pos;
                         hash_mv.row = ref_block_hash.y - y_pos;
                         if (!is_mv_in(&x->mv_limits, &hash_mv)) continue;
-                        const int ref_cost = eb_av1_get_mvpred_var(x, &hash_mv, ref_mv, fn_ptr, 1);
+                        const int ref_cost = svt_av1_get_mvpred_var(x, &hash_mv, ref_mv, fn_ptr, 1);
                         if (ref_cost < best_hash_cost) {
                             best_hash_cost = ref_cost;
                             best_hash_mv   = hash_mv;

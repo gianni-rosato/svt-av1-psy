@@ -13,22 +13,22 @@
  * @file Convolve2dTest.cc
  *
  * @brief Unit test for interpolation in inter prediction:
- * - eb_av1_highbd_convolve_2d_copy_sr_avx2
- * - eb_av1_highbd_jnt_convolve_2d_copy_avx2
- * - eb_av1_highbd_convolve_x_sr_avx2
- * - eb_av1_highbd_convolve_y_sr_avx2
- * - eb_av1_highbd_convolve_2d_sr_avx2
- * - eb_av1_highbd_jnt_convolve_x_avx2
- * - eb_av1_highbd_jnt_convolve_y_avx2
- * - eb_av1_highbd_jnt_convolve_2d_avx2
- * - eb_av1_convolve_2d_copy_sr_avx2
- * - eb_av1_jnt_convolve_2d_copy_avx2
- * - eb_av1_convolve_x_sr_avx2
- * - eb_av1_convolve_y_sr_avx2
- * - eb_av1_convolve_2d_sr_avx2
- * - eb_av1_jnt_convolve_x_avx2
- * - eb_av1_jnt_convolve_y_avx2
- * - eb_av1_jnt_convolve_2d_avx2
+ * - svt_av1_highbd_convolve_2d_copy_sr_avx2
+ * - svt_av1_highbd_jnt_convolve_2d_copy_avx2
+ * - svt_av1_highbd_convolve_x_sr_avx2
+ * - svt_av1_highbd_convolve_y_sr_avx2
+ * - svt_av1_highbd_convolve_2d_sr_avx2
+ * - svt_av1_highbd_jnt_convolve_x_avx2
+ * - svt_av1_highbd_jnt_convolve_y_avx2
+ * - svt_av1_highbd_jnt_convolve_2d_avx2
+ * - svt_av1_convolve_2d_copy_sr_avx2
+ * - svt_av1_jnt_convolve_2d_copy_avx2
+ * - svt_av1_convolve_x_sr_avx2
+ * - svt_av1_convolve_y_sr_avx2
+ * - svt_av1_convolve_2d_sr_avx2
+ * - svt_av1_jnt_convolve_x_avx2
+ * - svt_av1_jnt_convolve_y_avx2
+ * - svt_av1_jnt_convolve_2d_avx2
  *
  * @author Cidana-Wenyao
  *
@@ -66,58 +66,58 @@ using lowbd_convolve_func = void (*)(const uint8_t *src, int src_stride,
                                      ConvolveParams *conv_params);
 
 static const lowbd_convolve_func lowbd_convolve_2d_sr_func_table[] = {
-    eb_av1_convolve_2d_sr_avx2,
+    svt_av1_convolve_2d_sr_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_convolve_2d_sr_avx512
+    svt_av1_convolve_2d_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_convolve_x_sr_func_table[] = {
-    eb_av1_convolve_x_sr_avx2,
+    svt_av1_convolve_x_sr_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_convolve_x_sr_avx512
+    svt_av1_convolve_x_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_convolve_y_sr_func_table[] = {
-    eb_av1_convolve_y_sr_avx2,
+    svt_av1_convolve_y_sr_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_convolve_y_sr_avx512
+    svt_av1_convolve_y_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_convolve_copy_sr_func_table[] = {
-    eb_av1_convolve_2d_copy_sr_avx2,
+    svt_av1_convolve_2d_copy_sr_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_convolve_2d_copy_sr_avx512
+    svt_av1_convolve_2d_copy_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_2d_func_table[] = {
-    eb_av1_jnt_convolve_2d_avx2,
+    svt_av1_jnt_convolve_2d_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_jnt_convolve_2d_avx512
+    svt_av1_jnt_convolve_2d_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_x_func_table[] = {
-    eb_av1_jnt_convolve_x_avx2,
+    svt_av1_jnt_convolve_x_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_jnt_convolve_x_avx512
+    svt_av1_jnt_convolve_x_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_y_func_table[] = {
-    eb_av1_jnt_convolve_y_avx2,
+    svt_av1_jnt_convolve_y_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_jnt_convolve_y_avx512
+    svt_av1_jnt_convolve_y_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_copy_func_table[] = {
-    eb_av1_jnt_convolve_2d_copy_avx2,
+    svt_av1_jnt_convolve_2d_copy_avx2,
 #ifndef NON_AVX512_SUPPORT
-    eb_av1_jnt_convolve_2d_copy_avx512
+    svt_av1_jnt_convolve_2d_copy_avx512
 #endif
 };
 
@@ -156,26 +156,26 @@ class AV1Convolve2DTest : public ::testing::TestWithParam<Convolve2DParam> {
     // make the address algined to 32.
     void SetUp() override {
         conv_buf_init_ = reinterpret_cast<ConvBufType *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(ConvBufType)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(ConvBufType)));
         conv_buf_ref_ = reinterpret_cast<ConvBufType *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(ConvBufType)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(ConvBufType)));
         conv_buf_tst_ = reinterpret_cast<ConvBufType *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(ConvBufType)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(ConvBufType)));
         output_init_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(Sample)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(Sample)));
         output_ref_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(Sample)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(Sample)));
         output_tst_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, MAX_SB_SQUARE * sizeof(Sample)));
+            svt_aom_memalign(32, MAX_SB_SQUARE * sizeof(Sample)));
     }
 
     void TearDown() override {
-        eb_aom_free(conv_buf_init_);
-        eb_aom_free(conv_buf_ref_);
-        eb_aom_free(conv_buf_tst_);
-        eb_aom_free(output_init_);
-        eb_aom_free(output_ref_);
-        eb_aom_free(output_tst_);
+        svt_aom_free(conv_buf_init_);
+        svt_aom_free(conv_buf_ref_);
+        svt_aom_free(conv_buf_tst_);
+        svt_aom_free(output_init_);
+        svt_aom_free(output_ref_);
+        svt_aom_free(output_tst_);
         aom_clear_system_state();
     }
 
@@ -764,7 +764,7 @@ class AV1LbdJntConvolve2DTest : public AV1LbdConvolve2DTest {
   public:
     AV1LbdJntConvolve2DTest() {
         is_jnt_ = 1;
-        func_ref_ = eb_av1_jnt_convolve_2d_c;
+        func_ref_ = svt_av1_jnt_convolve_2d_c;
         const int has_subx = TEST_GET_PARAM(1);
         const int has_suby = TEST_GET_PARAM(2);
         const int func_idx = TEST_GET_PARAM(3);
@@ -814,7 +814,7 @@ class AV1LbdSrConvolve2DTest : public AV1LbdConvolve2DTest {
   public:
     AV1LbdSrConvolve2DTest() {
         is_jnt_ = 0;
-        func_ref_ = eb_av1_convolve_2d_sr_c;
+        func_ref_ = svt_av1_convolve_2d_sr_c;
         const int has_subx = TEST_GET_PARAM(1);
         const int has_suby = TEST_GET_PARAM(2);
         const int func_idx = TEST_GET_PARAM(3);
@@ -967,17 +967,17 @@ class AV1HbdJntConvolve2DTest : public AV1HbdConvolve2DTest {
   public:
     AV1HbdJntConvolve2DTest() {
         is_jnt_ = 1;
-        func_ref_ = eb_av1_highbd_jnt_convolve_2d_c;
+        func_ref_ = svt_av1_highbd_jnt_convolve_2d_c;
         const int has_subx = TEST_GET_PARAM(1);
         const int has_suby = TEST_GET_PARAM(2);
         if (has_subx == 1 && has_suby == 1)
-            func_tst_ = eb_av1_highbd_jnt_convolve_2d_avx2;
+            func_tst_ = svt_av1_highbd_jnt_convolve_2d_avx2;
         else if (has_subx == 1)
-            func_tst_ = eb_av1_highbd_jnt_convolve_x_avx2;
+            func_tst_ = svt_av1_highbd_jnt_convolve_x_avx2;
         else if (has_suby == 1)
-            func_tst_ = eb_av1_highbd_jnt_convolve_y_avx2;
+            func_tst_ = svt_av1_highbd_jnt_convolve_y_avx2;
         else
-            func_tst_ = eb_av1_highbd_jnt_convolve_2d_copy_avx2;
+            func_tst_ = svt_av1_highbd_jnt_convolve_2d_copy_avx2;
 
         bd_ = TEST_GET_PARAM(0);
     }
@@ -1006,17 +1006,17 @@ class AV1HbdSrConvolve2DTest : public AV1HbdConvolve2DTest {
   public:
     AV1HbdSrConvolve2DTest() {
         is_jnt_ = 0;
-        func_ref_ = eb_av1_highbd_convolve_2d_sr_c;
+        func_ref_ = svt_av1_highbd_convolve_2d_sr_c;
         const int has_subx = TEST_GET_PARAM(1);
         const int has_suby = TEST_GET_PARAM(2);
         if (has_subx == 1 && has_suby == 1)
-            func_tst_ = eb_av1_highbd_convolve_2d_sr_avx2;
+            func_tst_ = svt_av1_highbd_convolve_2d_sr_avx2;
         else if (has_subx == 1)
-            func_tst_ = eb_av1_highbd_convolve_x_sr_avx2;
+            func_tst_ = svt_av1_highbd_convolve_x_sr_avx2;
         else if (has_suby == 1)
-            func_tst_ = eb_av1_highbd_convolve_y_sr_avx2;
+            func_tst_ = svt_av1_highbd_convolve_y_sr_avx2;
         else
-            func_tst_ = eb_av1_highbd_convolve_2d_copy_sr_avx2;
+            func_tst_ = svt_av1_highbd_convolve_2d_copy_sr_avx2;
         bd_ = TEST_GET_PARAM(0);
     }
     virtual ~AV1HbdSrConvolve2DTest() {

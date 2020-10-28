@@ -1039,11 +1039,11 @@ typedef void (*Convolve2dSrVerTapFunc)(const int16_t *const im_block, const int3
                                        const int32_t subpel_y_q4, uint8_t *dst,
                                        const int32_t dst_stride);
 
-void eb_av1_convolve_2d_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                int32_t dst_stride, int32_t w, int32_t h,
-                                InterpFilterParams *filter_params_x,
-                                InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_2d_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                 int32_t dst_stride, int32_t w, int32_t h,
+                                 InterpFilterParams *filter_params_x,
+                                 InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                 const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     static const Convolve2dSrHorTapFunc convolve_2d_sr_hor_tap_func_table[MAX_FILTER_TAP + 1] = {
         NULL,
         NULL,
@@ -1102,11 +1102,11 @@ static INLINE void copy_128(const uint8_t *src, uint8_t *dst) {
     _mm256_storeu_si256((__m256i *)(dst + 3 * 32), s[3]);
 }
 
-void eb_av1_convolve_2d_copy_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                     int32_t dst_stride, int32_t w, int32_t h,
-                                     InterpFilterParams *filter_params_x,
-                                     InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                     const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_2d_copy_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                      int32_t dst_stride, int32_t w, int32_t h,
+                                      InterpFilterParams *filter_params_x,
+                                      InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                      const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     (void)filter_params_x;
     (void)filter_params_y;
     (void)subpel_x_q4;
@@ -1115,20 +1115,20 @@ void eb_av1_convolve_2d_copy_sr_avx2(const uint8_t *src, int32_t src_stride, uin
 
     if (w == 2) {
         do {
-            eb_memcpy_intrin_sse(dst, src, 2 * sizeof(*src));
+            svt_memcpy_intrin_sse(dst, src, 2 * sizeof(*src));
             src += src_stride;
             dst += dst_stride;
-            eb_memcpy_intrin_sse(dst, src, 2 * sizeof(*src));
+            svt_memcpy_intrin_sse(dst, src, 2 * sizeof(*src));
             src += src_stride;
             dst += dst_stride;
             h -= 2;
         } while (h);
     } else if (w == 4) {
         do {
-            eb_memcpy_intrin_sse(dst, src, 4 * sizeof(*src));
+            svt_memcpy_intrin_sse(dst, src, 4 * sizeof(*src));
             src += src_stride;
             dst += dst_stride;
-            eb_memcpy_intrin_sse(dst, src, 4 * sizeof(*src));
+            svt_memcpy_intrin_sse(dst, src, 4 * sizeof(*src));
             src += src_stride;
             dst += dst_stride;
             h -= 2;

@@ -161,7 +161,7 @@ EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
     if (!frame_header->disable_frame_end_update_cdf &&
         (tile_num == tiles_info->context_update_tile_id)) {
         dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = parse_ctxt->cur_tile_ctx;
-        eb_av1_reset_cdf_symbol_counters(&dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx);
+        svt_av1_reset_cdf_symbol_counters(&dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx);
     }
     return status;
 }

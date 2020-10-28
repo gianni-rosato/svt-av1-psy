@@ -30,9 +30,9 @@
 
 int32_t get_qzbin_factor(int32_t q, AomBitDepth bit_depth);
 void invert_quant(int16_t *quant, int16_t *shift, int32_t d);
-int16_t eb_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-int16_t eb_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
-int16_t eb_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 #define MAX_MESH_SPEED 5 // Max speed setting for mesh motion method
 static MeshPattern good_quality_mesh_patterns[MAX_MESH_SPEED + 1][MAX_MESH_STEP] = {
@@ -164,7 +164,7 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
     }
 }
 
-void eb_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
+void svt_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
     // quantizer has to be reinitialized with av1_init_quantizer() if any
     // delta_q changes.
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
@@ -198,9 +198,9 @@ void eb_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
                             pcs_ptr->max_qmlevel);
 }
 
-void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
-                            int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
-                            Quants *const quants, Dequants *const deq) {
+void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+                             int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
+                             Quants *const quants, Dequants *const deq) {
     int32_t i, q, quant_q3, quant_qtx;
 
     for (q = 0; q < QINDEX_RANGE; q++) {
@@ -210,11 +210,11 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
         for (i = 0; i < 2; ++i) {
             int32_t qrounding_factor_fp = 64;
             // y quantizer setup with original coeff shift of Q3
-            quant_q3 = i == 0 ? eb_av1_dc_quant_q3(q, y_dc_delta_q, bit_depth)
-                              : eb_av1_ac_quant_q3(q, 0, bit_depth);
+            quant_q3 = i == 0 ? svt_av1_dc_quant_q3(q, y_dc_delta_q, bit_depth)
+                              : svt_av1_ac_quant_q3(q, 0, bit_depth);
             // y quantizer with TX scale
-            quant_qtx = i == 0 ? eb_av1_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
-                               : eb_av1_ac_quant_qtx(q, 0, bit_depth);
+            quant_qtx = i == 0 ? svt_av1_dc_quant_qtx(q, y_dc_delta_q, bit_depth)
+                               : svt_av1_ac_quant_qtx(q, 0, bit_depth);
             invert_quant(&quants->y_quant[q][i], &quants->y_quant_shift[q][i], quant_qtx);
             quants->y_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->y_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
@@ -224,11 +224,11 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             deq->y_dequant_q3[q][i]  = (int16_t)quant_q3;
 
             // u quantizer setup with original coeff shift of Q3
-            quant_q3 = i == 0 ? eb_av1_dc_quant_q3(q, u_dc_delta_q, bit_depth)
-                              : eb_av1_ac_quant_q3(q, u_ac_delta_q, bit_depth);
+            quant_q3 = i == 0 ? svt_av1_dc_quant_q3(q, u_dc_delta_q, bit_depth)
+                              : svt_av1_ac_quant_q3(q, u_ac_delta_q, bit_depth);
             // u quantizer with TX scale
-            quant_qtx = i == 0 ? eb_av1_dc_quant_qtx(q, u_dc_delta_q, bit_depth)
-                               : eb_av1_ac_quant_qtx(q, u_ac_delta_q, bit_depth);
+            quant_qtx = i == 0 ? svt_av1_dc_quant_qtx(q, u_dc_delta_q, bit_depth)
+                               : svt_av1_ac_quant_qtx(q, u_ac_delta_q, bit_depth);
             invert_quant(&quants->u_quant[q][i], &quants->u_quant_shift[q][i], quant_qtx);
             quants->u_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->u_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
@@ -238,11 +238,11 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
             deq->u_dequant_q3[q][i]  = (int16_t)quant_q3;
 
             // v quantizer setup with original coeff shift of Q3
-            quant_q3 = i == 0 ? eb_av1_dc_quant_q3(q, v_dc_delta_q, bit_depth)
-                              : eb_av1_ac_quant_q3(q, v_ac_delta_q, bit_depth);
+            quant_q3 = i == 0 ? svt_av1_dc_quant_q3(q, v_dc_delta_q, bit_depth)
+                              : svt_av1_ac_quant_q3(q, v_ac_delta_q, bit_depth);
             // v quantizer with TX scale
-            quant_qtx = i == 0 ? eb_av1_dc_quant_qtx(q, v_dc_delta_q, bit_depth)
-                               : eb_av1_ac_quant_qtx(q, v_ac_delta_q, bit_depth);
+            quant_qtx = i == 0 ? svt_av1_dc_quant_qtx(q, v_dc_delta_q, bit_depth)
+                               : svt_av1_ac_quant_qtx(q, v_ac_delta_q, bit_depth);
             invert_quant(&quants->v_quant[q][i], &quants->v_quant_shift[q][i], quant_qtx);
             quants->v_quant_fp[q][i] = (int16_t)((1 << 16) / quant_qtx);
             quants->v_round_fp[q][i] = (int16_t)((qrounding_factor_fp * quant_qtx) >> 7);
@@ -282,7 +282,7 @@ void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t
     }
 }
 
-void eb_av1_qm_init(PictureParentControlSet *pcs_ptr) {
+void svt_av1_qm_init(PictureParentControlSet *pcs_ptr) {
     const uint8_t num_planes = 3; // MAX_MB_PLANE;// NM- No monochroma
     uint8_t       q, c, t;
     int32_t       current;
@@ -405,9 +405,9 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     thread_context_ptr->dctor = mode_decision_configuration_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->rate_control_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+    context_ptr->rate_control_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->rate_control_results_resource_ptr, input_index);
-    context_ptr->mode_decision_configuration_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->mode_decision_configuration_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->enc_dec_tasks_resource_ptr, output_index);
     // Rate estimation
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
@@ -1114,13 +1114,13 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         set_reference_sg_ep(pcs_ptr);
         set_global_motion_field(pcs_ptr);
 
-        eb_av1_qm_init(pcs_ptr->parent_pcs_ptr);
+        svt_av1_qm_init(pcs_ptr->parent_pcs_ptr);
         Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
         Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
-        eb_av1_set_quantizer(
+        svt_av1_set_quantizer(
             pcs_ptr->parent_pcs_ptr,
             frm_hdr->quantization_params.base_q_idx);
-        eb_av1_build_quantizer(
+        svt_av1_build_quantizer(
             (AomBitDepth)scs_ptr->static_config.encoder_bit_depth,
             frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
             frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
@@ -1132,7 +1132,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         Quants *const quants_8bit = &pcs_ptr->parent_pcs_ptr->quants_8bit;
         Dequants *const deq_8bit = &pcs_ptr->parent_pcs_ptr->deq_8bit;
-        eb_av1_build_quantizer(
+        svt_av1_build_quantizer(
             AOM_BITS_8,
             frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
             frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
@@ -1163,7 +1163,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
                 sizeof(FRAME_CONTEXT));
         else {
-            eb_av1_default_coef_probs(&pcs_ptr->md_frame_context, frm_hdr->quantization_params.base_q_idx);
+            svt_av1_default_coef_probs(&pcs_ptr->md_frame_context, frm_hdr->quantization_params.base_q_idx);
             init_mode_probs(&pcs_ptr->md_frame_context);
         }
         // Initial Rate Estimation of the syntax elements
@@ -1319,7 +1319,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 }
             }
 
-            eb_av1_init3smotion_compensation(
+            svt_av1_init3smotion_compensation(
                 &pcs_ptr->ss_cfg, pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->stride_y);
         }
 
@@ -1328,8 +1328,8 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         uint16_t tg_count =
             pcs_ptr->parent_pcs_ptr->tile_group_cols * pcs_ptr->parent_pcs_ptr->tile_group_rows;
         for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
-            eb_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
-                                &enc_dec_tasks_wrapper_ptr);
+            svt_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
+                                 &enc_dec_tasks_wrapper_ptr);
 
             EncDecTasks *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
             enc_dec_tasks_ptr->pcs_wrapper_ptr  = rate_control_results_ptr->pcs_wrapper_ptr;
@@ -1337,11 +1337,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             enc_dec_tasks_ptr->tile_group_index = tile_group_idx;
 
             // Post the Full Results Object
-            eb_post_full_object(enc_dec_tasks_wrapper_ptr);
+            svt_post_full_object(enc_dec_tasks_wrapper_ptr);
         }
 
         // Release Rate Control Results
-        eb_release_object(rate_control_results_wrapper_ptr);
+        svt_release_object(rate_control_results_wrapper_ptr);
     }
 
     return NULL;

@@ -13,9 +13,9 @@
 #include "aom_dsp_rtcd.h"
 #include "EbEncWarpedMotion.h"
 
-int64_t eb_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
-                                     const uint8_t *const dst, int p_width, int p_height,
-                                     int dst_stride) {
+int64_t svt_av1_calc_frame_error_avx2(const uint8_t *const ref, int ref_stride,
+                                      const uint8_t *const dst, int p_width, int p_height,
+                                      int dst_stride) {
     int64_t sum_error = 0;
     int     i, j;
     __m256i row_error, col_error;

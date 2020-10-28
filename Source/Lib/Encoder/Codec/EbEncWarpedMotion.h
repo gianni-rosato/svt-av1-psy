@@ -22,15 +22,15 @@ static INLINE int error_measure(int err) { return error_measure_lut[255 + err]; 
 
 // Returns the error between the result of applying motion 'wm' to the frame
 // described by 'ref' and the frame described by 'dst'.
-int64_t eb_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
-                          int width, int height, int stride, uint8_t *dst, int p_col, int p_row,
-                          int p_width, int p_height, int p_stride, int subsampling_x,
-                          int subsampling_y, int64_t best_error);
+int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
+                           int width, int height, int stride, uint8_t *dst, int p_col, int p_row,
+                           int p_width, int p_height, int p_stride, int subsampling_x,
+                           int subsampling_y, int64_t best_error);
 
 // Returns the error between the frame described by 'ref' and the frame
 // described by 'dst'.
-int64_t eb_av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride, uint8_t *dst,
-                           int p_width, int p_height, int p_stride);
+int64_t svt_av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride, uint8_t *dst,
+                            int p_width, int p_height, int p_stride);
 
 
 #ifdef __cplusplus

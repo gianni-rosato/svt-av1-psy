@@ -205,15 +205,15 @@ class AddFilmGrainTest : public ::testing::Test {
     static const int chroma_size = luma_size >> 2;
 
     void SetUp() override {
-        luma_ = (uint8_t *)eb_aom_malloc(luma_size);
-        cb_ = (uint8_t *)eb_aom_malloc(chroma_size);
-        cr_ = (uint8_t *)eb_aom_malloc(chroma_size);
+        luma_ = (uint8_t *)svt_aom_malloc(luma_size);
+        cb_ = (uint8_t *)svt_aom_malloc(chroma_size);
+        cr_ = (uint8_t *)svt_aom_malloc(chroma_size);
     }
 
     void TearDown() override {
-        eb_aom_free(luma_);
-        eb_aom_free(cb_);
-        eb_aom_free(cr_);
+        svt_aom_free(luma_);
+        svt_aom_free(cb_);
+        svt_aom_free(cr_);
     }
 
   protected:
@@ -251,17 +251,17 @@ class AddFilmGrainTest : public ::testing::Test {
 TEST_F(AddFilmGrainTest, MatchTest) {
     for (int i = 0; i < 3; ++i) {
         init_data();
-        eb_av1_add_film_grain_run(film_grain_test_vectors + i,
-                                  luma_,
-                                  cb_,
-                                  cr_,
-                                  kHeight,
-                                  kWidth,
-                                  kWidth,     /* luma stride */
-                                  kWidth / 2, /* chroma stride */
-                                  0,
-                                  1,
-                                  1);
+        svt_av1_add_film_grain_run(film_grain_test_vectors + i,
+                                   luma_,
+                                   cb_,
+                                   cr_,
+                                   kHeight,
+                                   kWidth,
+                                   kWidth,     /* luma stride */
+                                   kWidth / 2, /* chroma stride */
+                                   0,
+                                   1,
+                                   1);
         check_output(i);
         EXPECT_FALSE(HasFailure());
     }
@@ -273,7 +273,7 @@ extern "C" {
 #include "EbPictureAnalysisProcess.h"
 }
 
-static void eb_picture_buffer_desc_dctor(EbPtr p) {
+static void svt_picture_buffer_desc_dctor(EbPtr p) {
     EbPictureBufferDesc *obj = (EbPictureBufferDesc *)p;
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
@@ -315,8 +315,8 @@ static void denoise_and_model_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->noise_psd[i]);
         EB_FREE_ARRAY(obj->packed[i]);
     }
-    eb_aom_noise_model_free(&obj->noise_model);
-    eb_aom_flat_block_finder_free(&obj->flat_block_finder);
+    svt_aom_noise_model_free(&obj->noise_model);
+    svt_aom_flat_block_finder_free(&obj->flat_block_finder);
 }
 
 /* clang-format off */
@@ -377,7 +377,7 @@ class DenoiseModelRunTest : public ::testing::Test {
         subsampling_x_ = (pbd_init_data.color_format == EB_YUV444 ? 1 : 2) - 1;
         subsampling_y_ = (pbd_init_data.color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-        EbErrorType err = eb_picture_buffer_desc_ctor(&in_pic_, &pbd_init_data);
+        EbErrorType err = svt_picture_buffer_desc_ctor(&in_pic_, &pbd_init_data);
         EXPECT_EQ(err, 0) << "create input pic fail";
 
         // create the denoise and noise model
@@ -397,7 +397,7 @@ class DenoiseModelRunTest : public ::testing::Test {
     }
 
     ~DenoiseModelRunTest() {
-        eb_picture_buffer_desc_dctor(&in_pic_);
+        svt_picture_buffer_desc_dctor(&in_pic_);
         denoise_and_model_dctor(&noise_model);
     }
 
@@ -409,19 +409,19 @@ class DenoiseModelRunTest : public ::testing::Test {
 
         memset(&output_film_grain, 0, sizeof(output_film_grain));
         // initialize the global function variables since
-        // eb_aom_wiener_denoise_2d will use these vars;
+        // svt_aom_wiener_denoise_2d will use these vars;
         {
-            eb_aom_fft2x2_float = eb_aom_fft2x2_float_c;
-            eb_aom_fft4x4_float = eb_aom_fft4x4_float_c;
-            eb_aom_fft16x16_float = eb_aom_fft16x16_float_c;
-            eb_aom_fft32x32_float = eb_aom_fft32x32_float_c;
-            eb_aom_fft8x8_float = eb_aom_fft8x8_float_c;
+            svt_aom_fft2x2_float = svt_aom_fft2x2_float_c;
+            svt_aom_fft4x4_float = svt_aom_fft4x4_float_c;
+            svt_aom_fft16x16_float = svt_aom_fft16x16_float_c;
+            svt_aom_fft32x32_float = svt_aom_fft32x32_float_c;
+            svt_aom_fft8x8_float = svt_aom_fft8x8_float_c;
 
-            eb_aom_ifft16x16_float = eb_aom_ifft16x16_float_avx2;
-            eb_aom_ifft32x32_float = eb_aom_ifft32x32_float_avx2;
-            eb_aom_ifft8x8_float = eb_aom_ifft8x8_float_avx2;
-            eb_aom_ifft2x2_float = eb_aom_ifft2x2_float_c;
-            eb_aom_ifft4x4_float = eb_aom_ifft4x4_float_sse2;
+            svt_aom_ifft16x16_float = svt_aom_ifft16x16_float_avx2;
+            svt_aom_ifft32x32_float = svt_aom_ifft32x32_float_avx2;
+            svt_aom_ifft8x8_float = svt_aom_ifft8x8_float_avx2;
+            svt_aom_ifft2x2_float = svt_aom_ifft2x2_float_c;
+            svt_aom_ifft4x4_float = svt_aom_ifft4x4_float_sse2;
         }
     }
 
@@ -449,7 +449,7 @@ class DenoiseModelRunTest : public ::testing::Test {
     void run_test() {
         init_data();
 
-        eb_aom_denoise_and_model_run(
+        svt_aom_denoise_and_model_run(
             &noise_model, &in_pic_, &output_film_grain, 0);
     }
 

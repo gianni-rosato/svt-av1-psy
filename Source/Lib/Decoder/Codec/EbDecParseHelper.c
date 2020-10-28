@@ -162,13 +162,6 @@ static INLINE int block_center_y(int mi_row, BlockSize bs) {
     return mi_row * MI_SIZE + bh / 2 - 1;
 }
 
-static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
-    if (allow_hp)
-        return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 3);
-    else
-        return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
-}
-
 IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize bsize, int mi_col,
                            int mi_row, int is_integer) {
     IntMv res;

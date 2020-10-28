@@ -91,11 +91,11 @@ static INLINE void cdef_filter_block_8x8_16_sec_avx512(const uint16_t *const in,
                            _mm512_add_epi16(_mm512_add_epi16(q0, q1), _mm512_add_epi16(q2, q3))));
 }
 
-void eb_cdef_filter_block_8x8_16_avx512(const uint16_t *const in, const int32_t pri_strength,
-                                        const int32_t sec_strength, const int32_t dir,
-                                        int32_t pri_damping, int32_t sec_damping,
-                                        const int32_t coeff_shift, uint16_t *const dst,
-                                        const int32_t dstride) {
+void svt_cdef_filter_block_8x8_16_avx512(const uint16_t *const in, const int32_t pri_strength,
+                                         const int32_t sec_strength, const int32_t dir,
+                                         int32_t pri_damping, int32_t sec_damping,
+                                         const int32_t coeff_shift, uint16_t *const dst,
+                                         const int32_t dstride) {
     const int32_t  po1              = eb_cdef_directions[dir][0];
     const int32_t  po2              = eb_cdef_directions[dir][1];
     const int32_t  s1o1             = eb_cdef_directions[(dir + 2) & 7][0];

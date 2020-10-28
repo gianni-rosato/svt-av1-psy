@@ -52,9 +52,9 @@ EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_conte
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = source_based_operations_context_dctor;
 
-    context_ptr->initial_rate_control_results_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+    context_ptr->initial_rate_control_results_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->initial_rate_control_results_resource_ptr, index);
-    context_ptr->picture_demux_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->picture_demux_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, index);
     return EB_ErrorNone;
 }
@@ -152,8 +152,8 @@ void *source_based_operations_kernel(void *input_ptr) {
         derive_picture_activity_statistics(pcs_ptr);
 
         // Get Empty Results Object
-        eb_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
-                            &out_results_wrapper_ptr);
+        svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
+                             &out_results_wrapper_ptr);
 
         PictureDemuxResults *out_results_ptr = (PictureDemuxResults *)
                                                    out_results_wrapper_ptr->object_ptr;
@@ -161,10 +161,10 @@ void *source_based_operations_kernel(void *input_ptr) {
         out_results_ptr->picture_type    = EB_PIC_INPUT;
 
         // Release the Input Results
-        eb_release_object(in_results_wrapper_ptr);
+        svt_release_object(in_results_wrapper_ptr);
 
         // Post the Full Results Object
-        eb_post_full_object(out_results_wrapper_ptr);
+        svt_post_full_object(out_results_wrapper_ptr);
     }
     return NULL;
 }

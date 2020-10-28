@@ -417,9 +417,9 @@ static INLINE int get_nz_map_ctx(const uint8_t* const levels, const int coeff_id
     return get_nz_map_ctx_from_stats(stats, coeff_idx, bwl, tx_size, tx_class);
 }
 
-void eb_av1_get_nz_map_contexts_c(const uint8_t* const levels, const int16_t* const scan,
-                                  const uint16_t eob, const TxSize tx_size, const TxClass tx_class,
-                                  int8_t* const coeff_contexts) {
+void svt_av1_get_nz_map_contexts_c(const uint8_t* const levels, const int16_t* const scan,
+                                   const uint16_t eob, const TxSize tx_size, const TxClass tx_class,
+                                   int8_t* const coeff_contexts) {
     const int bwl    = get_txb_bwl(tx_size);
     const int height = get_txb_high(tx_size);
     for (int i = 0; i < eob; ++i) {

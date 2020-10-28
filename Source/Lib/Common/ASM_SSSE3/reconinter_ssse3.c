@@ -14,12 +14,12 @@
 #include <tmmintrin.h>
 #include "synonyms.h"
 
-void eb_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                                  const uint8_t *src0, int src0_stride,
-                                                  const uint8_t *src1, int src1_stride, int h,
-                                                  int w, int bd) {
+void svt_av1_build_compound_diffwtd_mask_highbd_ssse3(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
+                                                      const uint8_t *src0, int src0_stride,
+                                                      const uint8_t *src1, int src1_stride,
+                                                      int h, int w, int bd) {
     if (w < 8) {
-        eb_av1_build_compound_diffwtd_mask_highbd_c(
+        svt_av1_build_compound_diffwtd_mask_highbd_c(
             mask, mask_type, src0, src0_stride, src1, src1_stride, h, w, bd);
     } else {
         assert(bd >= 8);

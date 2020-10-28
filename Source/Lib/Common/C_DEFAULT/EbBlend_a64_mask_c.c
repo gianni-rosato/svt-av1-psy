@@ -13,10 +13,10 @@
 #include "EbDefinitions.h"
 
 
-void eb_aom_highbd_blend_a64_vmask_c_16bit(uint16_t *dst, uint32_t dst_stride, const uint16_t *src0,
-                                     uint32_t src0_stride, const uint16_t *src1,
-                                     uint32_t src1_stride, const uint8_t *mask, int w, int h,
-                                     int bd) {
+void svt_aom_highbd_blend_a64_vmask_16bit_c(uint16_t *dst, uint32_t dst_stride, const uint16_t *src0,
+                                            uint32_t src0_stride, const uint16_t *src1,
+                                            uint32_t src1_stride, const uint8_t *mask, int w, int h,
+                                            int bd) {
     (void)bd;
     int i, j;
 

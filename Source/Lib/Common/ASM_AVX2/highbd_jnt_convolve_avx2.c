@@ -21,12 +21,12 @@
 
 #include "EbInterPrediction.h"
 
-void eb_av1_highbd_jnt_convolve_2d_copy_avx2(const uint16_t *src, int32_t src_stride,
-                                             uint16_t *dst0, int32_t dst_stride0, int32_t w,
-                                             int32_t h, const InterpFilterParams *filter_params_x,
-                                             const InterpFilterParams *filter_params_y,
-                                             const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                             ConvolveParams *conv_params, int32_t bd) {
+void svt_av1_highbd_jnt_convolve_2d_copy_avx2(const uint16_t *src, int32_t src_stride,
+                                              uint16_t *dst0, int32_t dst_stride0, int32_t w,
+                                              int32_t h, const InterpFilterParams *filter_params_x,
+                                              const InterpFilterParams *filter_params_y,
+                                              const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                              ConvolveParams *conv_params, int32_t bd) {
     ConvBufType *dst        = conv_params->dst;
     int32_t      dst_stride = conv_params->dst_stride;
     (void)filter_params_x;
@@ -196,27 +196,27 @@ void eb_av1_highbd_jnt_convolve_2d_copy_avx2(const uint16_t *src, int32_t src_st
             }
         }
     } else{
-        eb_av1_highbd_jnt_convolve_2d_c(src,
-                                        src_stride,
-                                        dst0,
-                                        dst_stride0,
-                                        w,
-                                        h,
-                                        filter_params_x,
-                                        filter_params_y,
-                                        subpel_x_q4,
-                                        subpel_y_q4,
-                                        conv_params,
-                                        bd);
+        svt_av1_highbd_jnt_convolve_2d_c(src,
+                                         src_stride,
+                                         dst0,
+                                         dst_stride0,
+                                         w,
+                                         h,
+                                         filter_params_x,
+                                         filter_params_y,
+                                         subpel_x_q4,
+                                         subpel_y_q4,
+                                         conv_params,
+                                         bd);
     }
 }
 
-void eb_av1_highbd_jnt_convolve_2d_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst0,
-                                        int32_t dst_stride0, int32_t w, int32_t h,
-                                        const InterpFilterParams *filter_params_x,
-                                        const InterpFilterParams *filter_params_y,
-                                        const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                        ConvolveParams *conv_params, int32_t bd) {
+void svt_av1_highbd_jnt_convolve_2d_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst0,
+                                         int32_t dst_stride0, int32_t w, int32_t h,
+                                         const InterpFilterParams *filter_params_x,
+                                         const InterpFilterParams *filter_params_y,
+                                         const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                         ConvolveParams *conv_params, int32_t bd) {
     DECLARE_ALIGNED(32, int16_t, im_block[(MAX_SB_SIZE + MAX_FILTER_TAP) * 8]);
     ConvBufType *         dst        = conv_params->dst;
     int32_t               dst_stride = conv_params->dst_stride;
@@ -424,27 +424,27 @@ void eb_av1_highbd_jnt_convolve_2d_avx2(const uint16_t *src, int32_t src_stride,
         }
     }
     if (j < w) {
-        eb_av1_highbd_jnt_convolve_2d_c(src + src_stride * j,
-                                       src_stride,
-                                       dst0 + dst_stride0 * j,
-                                       dst_stride0,
-                                       w - j,
-                                       h,
-                                       filter_params_x,
-                                       filter_params_y,
-                                       subpel_x_q4,
-                                       subpel_y_q4,
-                                       conv_params,
-                                       bd);
+        svt_av1_highbd_jnt_convolve_2d_c(src + src_stride * j,
+                                         src_stride,
+                                         dst0 + dst_stride0 * j,
+                                         dst_stride0,
+                                         w - j,
+                                         h,
+                                         filter_params_x,
+                                         filter_params_y,
+                                         subpel_x_q4,
+                                         subpel_y_q4,
+                                         conv_params,
+                                         bd);
     }
 }
 
-void eb_av1_highbd_jnt_convolve_x_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst0,
-                                       int32_t dst_stride0, int32_t w, int32_t h,
-                                       const InterpFilterParams *filter_params_x,
-                                       const InterpFilterParams *filter_params_y,
-                                       const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                       ConvolveParams *conv_params, int32_t bd) {
+void svt_av1_highbd_jnt_convolve_x_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst0,
+                                        int32_t dst_stride0, int32_t w, int32_t h,
+                                        const InterpFilterParams *filter_params_x,
+                                        const InterpFilterParams *filter_params_y,
+                                        const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                        ConvolveParams *conv_params, int32_t bd) {
     ConvBufType *         dst        = conv_params->dst;
     int32_t               dst_stride = conv_params->dst_stride;
     const int32_t         fo_horiz   = filter_params_x->taps / 2 - 1;
@@ -588,27 +588,27 @@ void eb_av1_highbd_jnt_convolve_x_avx2(const uint16_t *src, int32_t src_stride, 
         }
     }
     if (j < w) {
-        eb_av1_highbd_jnt_convolve_x_c(src + src_stride * j,
-                                       src_stride,
-                                       dst0 + dst_stride0 * j,
-                                       dst_stride0,
-                                       w - j,
-                                       h,
-                                       filter_params_x,
-                                       filter_params_y,
-                                       subpel_x_q4,
-                                       subpel_y_q4,
-                                       conv_params,
-                                       bd);
+        svt_av1_highbd_jnt_convolve_x_c(src + src_stride * j,
+                                        src_stride,
+                                        dst0 + dst_stride0 * j,
+                                        dst_stride0,
+                                        w - j,
+                                        h,
+                                        filter_params_x,
+                                        filter_params_y,
+                                        subpel_x_q4,
+                                        subpel_y_q4,
+                                        conv_params,
+                                        bd);
     }
 }
 
-void eb_av1_highbd_jnt_convolve_y_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst0,
-                                       int32_t dst_stride0, int32_t w, int32_t h,
-                                       const InterpFilterParams *filter_params_x,
-                                       const InterpFilterParams *filter_params_y,
-                                       const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                       ConvolveParams *conv_params, int32_t bd) {
+void svt_av1_highbd_jnt_convolve_y_avx2(const uint16_t *src, int32_t src_stride, uint16_t *dst0,
+                                        int32_t dst_stride0, int32_t w, int32_t h,
+                                        const InterpFilterParams *filter_params_x,
+                                        const InterpFilterParams *filter_params_y,
+                                        const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                        ConvolveParams *conv_params, int32_t bd) {
     ConvBufType *         dst        = conv_params->dst;
     int32_t               dst_stride = conv_params->dst_stride;
     const int32_t         fo_vert    = filter_params_y->taps / 2 - 1;
@@ -797,17 +797,17 @@ void eb_av1_highbd_jnt_convolve_y_avx2(const uint16_t *src, int32_t src_stride, 
         }
     }
     if (j < w) {
-    eb_av1_highbd_jnt_convolve_y_c(src + src_stride * j,
-                                   src_stride,
-                                   dst0 + dst_stride0 * j,
-                                   dst_stride0,
-                                   w - j,
-                                   h,
-                                   filter_params_x,
-                                   filter_params_y,
-                                   subpel_x_q4,
-                                   subpel_y_q4,
-                                   conv_params,
-                                   bd);
+    svt_av1_highbd_jnt_convolve_y_c(src + src_stride * j,
+                                    src_stride,
+                                    dst0 + dst_stride0 * j,
+                                    dst_stride0,
+                                    w - j,
+                                    h,
+                                    filter_params_x,
+                                    filter_params_y,
+                                    subpel_x_q4,
+                                    subpel_y_q4,
+                                    conv_params,
+                                    bd);
     }
 }

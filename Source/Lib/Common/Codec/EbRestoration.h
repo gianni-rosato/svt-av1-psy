@@ -22,10 +22,10 @@
 extern "C" {
 #endif
 
-void eb_apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int32_t height,
-                                       int32_t stride, int32_t eps, const int32_t *xqd,
-                                       uint8_t *dst8, int32_t dst_stride, int32_t *tmpbuf,
-                                       int32_t bit_depth, int32_t highbd);
+void svt_apply_selfguided_restoration_c(const uint8_t *dat8, int32_t width, int32_t height,
+                                        int32_t stride, int32_t eps, const int32_t *xqd,
+                                        uint8_t *dst8, int32_t dst_stride, int32_t *tmpbuf,
+                                        int32_t bit_depth, int32_t highbd);
 
 #define CLIP(x, lo, hi) ((x) < (lo) ? (lo) : (x) > (hi) ? (hi) : (x))
 #define RINT(x) ((x) < 0 ? (int32_t)((x)-0.5) : (int32_t)((x) + 0.5))
@@ -225,7 +225,7 @@ typedef struct RestorationInfo {
     int32_t         restoration_unit_size;
 
     // Fields below here are allocated and initialised by
-    // eb_av1_alloc_restoration_struct. (horz_)units_per_tile give the number of
+    // svt_av1_alloc_restoration_struct. (horz_)units_per_tile give the number of
     // restoration units in (one row of) the largest tile in the frame. The data
     // in unit_info is laid out with units_per_tile entries for each tile, which
     // have stride horz_units_per_tile.
@@ -264,11 +264,11 @@ extern int32_t             sgrproj_mtable[SGRPROJ_PARAMS][2];
 extern const int32_t       eb_x_by_xplus1[256];
 extern const int32_t       eb_one_by_x[MAX_NELEM];
 
-//void eb_av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInfo *rsi,
-//                                  int32_t is_uv);
-void eb_extend_frame(uint8_t *data, int32_t width, int32_t height, int32_t stride,
-                     int32_t border_horz, int32_t border_vert, int32_t highbd);
-void eb_decode_xq(const int32_t *xqd, int32_t *xq, const SgrParamsType *params);
+//void svt_av1_alloc_restoration_struct(struct Av1Common *cm, RestorationInfo *rsi,
+//                                      int32_t is_uv);
+void svt_extend_frame(uint8_t *data, int32_t width, int32_t height, int32_t stride,
+                      int32_t border_horz, int32_t border_vert, int32_t highbd);
+void svt_decode_xq(const int32_t *xqd, int32_t *xq, const SgrParamsType *params);
 
 // Filter a single loop restoration unit.
 //
@@ -289,7 +289,7 @@ void eb_decode_xq(const int32_t *xqd, int32_t *xq, const SgrParamsType *params);
 //
 // Finally tmpbuf is a scratch buffer used by the sgrproj filter which should
 // be at least SGRPROJ_TMPBUF_SIZE big.
-void eb_av1_loop_restoration_filter_unit(
+void svt_av1_loop_restoration_filter_unit(
     uint8_t need_bounadaries, const RestorationTileLimits *limits, const RestorationUnitInfo *rui,
     const RestorationStripeBoundaries *rsb, RestorationLineBuffers *rlbs,
     const Av1PixelRect *tile_rect, int32_t tile_stripe0, int32_t ss_x, int32_t ss_y, int32_t highbd,
@@ -299,8 +299,8 @@ void eb_av1_loop_restoration_filter_unit(
 void extend_lines(uint8_t *buf, int32_t width, int32_t height, int32_t stride, int32_t extend,
                   int32_t use_highbitdepth);
 
-//void eb_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
-//                                       Av1Common *cm, int32_t optimized_lr);
+//void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame,
+//                                           Av1Common *cm, int32_t optimized_lr);
 typedef void (*RestUnitVisitor)(const RestorationTileLimits *limits, const Av1PixelRect *tile_rect,
                                 int32_t rest_unit_idx, void *priv);
 
@@ -322,14 +322,14 @@ typedef void (*RestTileStartVisitor)(int32_t tile_row, int32_t tile_col, void *p
 // indices given by [*rcol0, *rcol1) x [*rrow0, *rrow1) are relative
 // to the current tile, whose starting index is returned as
 // *tile_tl_idx.
-//int32_t eb_av1_loop_restoration_corners_in_sb(const struct AV1Common *cm, int32_t plane,
+//int32_t svt_av1_loop_restoration_corners_in_sb(const struct AV1Common *cm, int32_t plane,
 //                                       int32_t mi_row, int32_t mi_col, BlockSize bsize,
 //                                       int32_t *rcol0, int32_t *rcol1, int32_t *rrow0,
 //                                       int32_t *rrow1, int32_t *tile_tl_idx);
 
-//void eb_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
-//                                              struct AV1Common *cm,
-//                                              int32_t after_cdef);
+//void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
+//                                                  struct AV1Common *cm,
+//                                                  int32_t after_cdef);
 
 static const double tiny_near_zero = 1.0E-16;
 

@@ -14,8 +14,8 @@
  *
  * @brief Unit test for HBD variance
  * functions:
- * - eb_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}_sse2
- * - eb_aom_highbd_BD{8,10,12}_getS{8,16}xS{8,16}var_sse2
+ * - svt_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}_sse2
+ * - svt_aom_highbd_BD{8,10,12}_getS{8,16}xS{8,16}var_sse2
  *
  * @author  Cidana-Wenyao, Cidana-Edmond
  *
@@ -107,7 +107,7 @@ using HbdVarianceParam = std::tuple<uint32_t,            /**< width */
                                     uint32_t,            /**< bit-depth */
                                     HighBdVarianceFunc>; /**< test function */
 
-#define GEN_VAR_FUNC_(w, h, bd) eb_aom_highbd_##bd##_variance##w##x##h##_sse2
+#define GEN_VAR_FUNC_(w, h, bd) svt_aom_highbd_##bd##_variance##w##x##h##_sse2
 #define GEN_VAR_PARAM_(w, h, bd) \
     HbdVarianceParam(w, h, bd, GEN_VAR_FUNC_(w, h, bd))
 #define GEN_HBD_PARAM(w, h) \
@@ -139,7 +139,7 @@ EXTERN_HBD_FUNC(64, 16);
 /**
  * @brief Unit test for HBD variance
  * functions:
- * - eb_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}_sse2
+ * - svt_aom_highbd_BD{8,10,12}_varianceW{8,16,32,64}xH{4,8,16,32,64}_sse2
  *
  * Test strategy:
  *  This test case use random source, max source, zero source as test
@@ -164,15 +164,15 @@ class HbdVarianceTest : public ::testing::TestWithParam<HbdVarianceParam> {
           bd_(TEST_GET_PARAM(2)),
           tst_func_(TEST_GET_PARAM(3)) {
         src_data_ = reinterpret_cast<uint16_t*>(
-            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
         ref_data_ = reinterpret_cast<uint16_t*>(
-            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
     }
 
     ~HbdVarianceTest() {
-        eb_aom_free(src_data_);
+        svt_aom_free(src_data_);
         src_data_ = nullptr;
-        eb_aom_free(ref_data_);
+        svt_aom_free(ref_data_);
         ref_data_ = nullptr;
     }
 
@@ -285,9 +285,9 @@ static const HbdVarianceParam HbdTestVector[] = {
 
 INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
                         ::testing::ValuesIn(HbdTestVector));
-#define eb_aom_highbd_8_get8x8var_sse2 eb_aom_highbd_get8x8var_sse2
-#define eb_aom_highbd_8_get16x16var_sse2 eb_aom_highbd_get16x16var_sse2
-#define GEN_GET_VAR_FUNC_(S, bd) eb_aom_highbd_##bd##_get##S##x##S##var_sse2
+#define svt_aom_highbd_8_get8x8var_sse2 svt_aom_highbd_get8x8var_sse2
+#define svt_aom_highbd_8_get16x16var_sse2 svt_aom_highbd_get16x16var_sse2
+#define GEN_GET_VAR_FUNC_(S, bd) svt_aom_highbd_##bd##_get##S##x##S##var_sse2
 #define GEN_SQUARE_VAR_PARAM_(S, bd) \
     HbdSquareVarianceParam(S, bd, GEN_GET_VAR_FUNC_(S, bd))
 #define GEN_HBD_SQUARE_VAR_PARAM(S)                            \
@@ -325,7 +325,7 @@ using HbdSquareVarianceParam =
 /**
  * @brief Unit test for HBD variance
  * functions:
- * - eb_aom_highbd_BD{8,10,12}_getS{8,16}xS{8,16}var_sse2
+ * - svt_aom_highbd_BD{8,10,12}_getS{8,16}xS{8,16}var_sse2
  *
  * Test strategy:
  *  This test case use random source, max source, zero source as test
@@ -350,15 +350,15 @@ class HbdSquareVarianceTest
           bd_(TEST_GET_PARAM(1)),
           tst_func_(TEST_GET_PARAM(2)) {
         src_data_ = reinterpret_cast<uint16_t*>(
-            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
         ref_data_ = reinterpret_cast<uint16_t*>(
-            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
     }
 
     ~HbdSquareVarianceTest() {
-        eb_aom_free(src_data_);
+        svt_aom_free(src_data_);
         src_data_ = nullptr;
-        eb_aom_free(ref_data_);
+        svt_aom_free(ref_data_);
         ref_data_ = nullptr;
     }
 
@@ -506,15 +506,15 @@ class HbdSquareVarianceNoRoundTest
           length_(TEST_GET_PARAM(0)),
           tst_func_(TEST_GET_PARAM(1)) {
         src_data_ = reinterpret_cast<uint16_t*>(
-            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
         ref_data_ = reinterpret_cast<uint16_t*>(
-            eb_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
+            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
     }
 
     ~HbdSquareVarianceNoRoundTest() {
-        eb_aom_free(src_data_);
+        svt_aom_free(src_data_);
         src_data_ = nullptr;
-        eb_aom_free(ref_data_);
+        svt_aom_free(ref_data_);
         ref_data_ = nullptr;
     }
 

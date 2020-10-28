@@ -141,7 +141,7 @@ extern uint32_t od_divu_small_consts[OD_DIVU_DMAX][2];
 /** Copy n elements of memory from src to dst. The 0* term provides
 compile-time type checking  */
 #if !defined(OVERRIDE_OD_COPY)
-#define OD_COPY(dst, src, n) (eb_memcpy((dst), (src), sizeof(*(dst)) * (n) + 0 * ((dst) - (src))))
+#define OD_COPY(dst, src, n) (svt_memcpy((dst), (src), sizeof(*(dst)) * (n) + 0 * ((dst) - (src))))
 #endif
 
 /** Copy n elements of memory from src to dst, allowing overlapping regions.
@@ -180,7 +180,7 @@ typedef struct OdEcEnc OdEcEnc;
 /*The entropy encoder context.*/
 struct OdEcEnc {
     /*Buffered output.
-        This contains only the raw bits until the final call to eb_od_ec_enc_done(),
+        This contains only the raw bits until the final call to svt_od_ec_enc_done(),
         where all the arithmetic-coded data gets prepended to it.*/
     uint8_t *buf;
     /*The size of the buffer.*/
@@ -209,20 +209,20 @@ struct OdEcEnc {
 
 /*See entenc.c for further documentation.*/
 
-void eb_od_ec_enc_init(OdEcEnc *enc, uint32_t size) OD_ARG_NONNULL(1);
-void eb_od_ec_enc_reset(OdEcEnc *enc) OD_ARG_NONNULL(1);
-void eb_od_ec_enc_clear(OdEcEnc *enc) OD_ARG_NONNULL(1);
+void svt_od_ec_enc_init(OdEcEnc *enc, uint32_t size) OD_ARG_NONNULL(1);
+void svt_od_ec_enc_reset(OdEcEnc *enc) OD_ARG_NONNULL(1);
+void svt_od_ec_enc_clear(OdEcEnc *enc) OD_ARG_NONNULL(1);
 
-void eb_od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f_q15) OD_ARG_NONNULL(1);
-void eb_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *cdf, int32_t nsyms)
+void svt_od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f_q15) OD_ARG_NONNULL(1);
+void svt_od_ec_encode_cdf_q15(OdEcEnc *enc, int32_t s, const uint16_t *cdf, int32_t nsyms)
     OD_ARG_NONNULL(1) OD_ARG_NONNULL(3);
 
 void od_ec_enc_bits(OdEcEnc *enc, uint32_t fl, unsigned ftb) OD_ARG_NONNULL(1);
 
-OD_WARN_UNUSED_RESULT uint8_t *eb_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) OD_ARG_NONNULL(1)
+OD_WARN_UNUSED_RESULT uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) OD_ARG_NONNULL(1)
     OD_ARG_NONNULL(2);
 
-OD_WARN_UNUSED_RESULT int32_t eb_od_ec_enc_tell(const OdEcEnc *enc) OD_ARG_NONNULL(1);
+OD_WARN_UNUSED_RESULT int32_t svt_od_ec_enc_tell(const OdEcEnc *enc) OD_ARG_NONNULL(1);
 
 /********************************************************************************************************************************/
 //daalaboolwriter.h
@@ -235,8 +235,8 @@ struct DaalaWriter {
 
 typedef struct DaalaWriter DaalaWriter;
 
-void    eb_aom_daala_start_encode(DaalaWriter *w, uint8_t *buffer);
-int32_t eb_aom_daala_stop_encode(DaalaWriter *w);
+void    svt_aom_daala_start_encode(DaalaWriter *w, uint8_t *buffer);
+int32_t svt_aom_daala_stop_encode(DaalaWriter *w);
 
 static INLINE void aom_daala_write(DaalaWriter *w, int32_t bit, int32_t prob) {
     int32_t p = (0x7FFFFF - (prob << 15) + prob) >> 8;
@@ -244,7 +244,7 @@ static INLINE void aom_daala_write(DaalaWriter *w, int32_t bit, int32_t prob) {
     AomCdfProb cdf[2] = {(AomCdfProb)p, 32767};
     bitstream_queue_push(bit, cdf, 2);
 #endif
-    eb_od_ec_encode_bool_q15(&w->ec, bit, p);
+    svt_od_ec_encode_bool_q15(&w->ec, bit, p);
 }
 
 static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdfProb *cdf,
@@ -252,7 +252,7 @@ static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdf
 #if CONFIG_BITSTREAM_DEBUG
     bitstream_queue_push(symb, cdf, nsymbs);
 #endif
-    eb_od_ec_encode_cdf_q15(&w->ec, symb, cdf, nsymbs);
+    svt_od_ec_encode_cdf_q15(&w->ec, symb, cdf, nsymbs);
 }
 
 /********************************************************************************************************************************/
@@ -260,10 +260,10 @@ static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdf
 typedef struct DaalaWriter AomWriter;
 
 static INLINE void aom_start_encode(AomWriter *bc, uint8_t *buffer) {
-    eb_aom_daala_start_encode(bc, buffer);
+    svt_aom_daala_start_encode(bc, buffer);
 }
 
-static INLINE int32_t aom_stop_encode(AomWriter *bc) { return eb_aom_daala_stop_encode(bc); }
+static INLINE int32_t aom_stop_encode(AomWriter *bc) { return svt_aom_daala_stop_encode(bc); }
 
 static INLINE void aom_write(AomWriter *br, int32_t bit, int32_t probability) {
     aom_daala_write(br, bit, probability);

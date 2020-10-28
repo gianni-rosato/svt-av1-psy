@@ -217,8 +217,8 @@ typedef struct MbModeInfo {
 } MbModeInfo;
 
 
-void eb_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);
-void eb_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info, int32_t mi_rows, int row);
+void svt_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);
+void svt_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info, int32_t mi_rows, int row);
 
 static INLINE int32_t tile_log2(int32_t blk_size, int32_t target) {
     int32_t k;

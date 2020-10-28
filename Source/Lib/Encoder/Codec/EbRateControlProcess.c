@@ -391,9 +391,9 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
     thread_context_ptr->dctor = rate_control_context_dctor;
 
     context_ptr->rate_control_input_tasks_fifo_ptr =
-        eb_system_resource_get_consumer_fifo(enc_handle_ptr->rate_control_tasks_resource_ptr, 0);
+        svt_system_resource_get_consumer_fifo(enc_handle_ptr->rate_control_tasks_resource_ptr, 0);
     context_ptr->rate_control_output_results_fifo_ptr =
-        eb_system_resource_get_producer_fifo(enc_handle_ptr->rate_control_results_resource_ptr, 0);
+        svt_system_resource_get_producer_fifo(enc_handle_ptr->rate_control_results_resource_ptr, 0);
 
     // High level RC
     EB_NEW(context_ptr->high_level_rate_control_ptr, high_level_rate_control_context_ctor);
@@ -496,7 +496,7 @@ void high_level_rc_input_picture_vbr(PictureParentControlSet *pcs_ptr, SequenceC
 
     area_in_pixel = pcs_ptr->aligned_width * pcs_ptr->aligned_height;
 
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
+    svt_block_on_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
 
     tables_updated              = scs_ptr->encode_context_ptr->rate_control_tables_array_updated;
     pcs_ptr->percentage_updated = EB_FALSE;
@@ -507,7 +507,7 @@ void high_level_rc_input_picture_vbr(PictureParentControlSet *pcs_ptr, SequenceC
                  [encode_context_ptr->hl_rate_control_historgram_queue_head_index]);
         while ((hl_rate_control_histogram_ptr_temp->life_count == 0) &&
                hl_rate_control_histogram_ptr_temp->passed_to_hlrc) {
-            eb_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+            svt_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             // Reset the Reorder Queue Entry
             hl_rate_control_histogram_ptr_temp->picture_number +=
                 INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
@@ -522,7 +522,7 @@ void high_level_rc_input_picture_vbr(PictureParentControlSet *pcs_ptr, SequenceC
                  HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1)
                 ? 0
                 : encode_context_ptr->hl_rate_control_historgram_queue_head_index + 1;
-            eb_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+            svt_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             hl_rate_control_histogram_ptr_temp =
                 encode_context_ptr->hl_rate_control_historgram_queue
                     [encode_context_ptr->hl_rate_control_historgram_queue_head_index];
@@ -717,10 +717,10 @@ void high_level_rc_input_picture_vbr(PictureParentControlSet *pcs_ptr, SequenceC
                     hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = 0;
 
                     if (ref_qp_table_index == previous_selected_ref_qp) {
-                        eb_block_on_mutex(
+                        svt_block_on_mutex(
                             scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                         hl_rate_control_histogram_ptr_temp->life_count--;
-                        eb_release_mutex(
+                        svt_release_mutex(
                             scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                     }
                     hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] =
@@ -966,7 +966,7 @@ void high_level_rc_input_picture_vbr(PictureParentControlSet *pcs_ptr, SequenceC
         }
 #endif
     }
-    eb_release_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
+    svt_release_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
 }
 void frame_level_rc_input_picture_vbr(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                                       RateControlContext *             context_ptr,
@@ -2021,7 +2021,7 @@ void high_level_rc_input_picture_cvbr(PictureParentControlSet *pcs_ptr, Sequence
 
     uint32_t area_in_pixel = pcs_ptr->aligned_width * pcs_ptr->aligned_height;
 
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
+    svt_block_on_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
 
     EbBool tables_updated       = scs_ptr->encode_context_ptr->rate_control_tables_array_updated;
     pcs_ptr->percentage_updated = EB_FALSE;
@@ -2034,7 +2034,7 @@ void high_level_rc_input_picture_cvbr(PictureParentControlSet *pcs_ptr, Sequence
 
         while ((hl_rate_control_histogram_ptr_temp->life_count == 0) &&
                hl_rate_control_histogram_ptr_temp->passed_to_hlrc) {
-            eb_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+            svt_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             // Reset the Reorder Queue Entry
             hl_rate_control_histogram_ptr_temp->picture_number +=
                 INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
@@ -2049,7 +2049,7 @@ void high_level_rc_input_picture_cvbr(PictureParentControlSet *pcs_ptr, Sequence
                  HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1)
                 ? 0
                 : encode_context_ptr->hl_rate_control_historgram_queue_head_index + 1;
-            eb_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+            svt_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             hl_rate_control_histogram_ptr_temp =
                 encode_context_ptr->hl_rate_control_historgram_queue
                     [encode_context_ptr->hl_rate_control_historgram_queue_head_index];
@@ -2250,10 +2250,10 @@ void high_level_rc_input_picture_cvbr(PictureParentControlSet *pcs_ptr, Sequence
                         hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = 0;
 
                         if (ref_qp_table_index == previous_selected_ref_qp) {
-                            eb_block_on_mutex(scs_ptr->encode_context_ptr
+                            svt_block_on_mutex(scs_ptr->encode_context_ptr
                                                   ->hl_rate_control_historgram_queue_mutex);
                             hl_rate_control_histogram_ptr_temp->life_count--;
-                            eb_release_mutex(scs_ptr->encode_context_ptr
+                            svt_release_mutex(scs_ptr->encode_context_ptr
                                                  ->hl_rate_control_historgram_queue_mutex);
                         }
                         hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] =
@@ -2495,7 +2495,7 @@ void high_level_rc_input_picture_cvbr(PictureParentControlSet *pcs_ptr, Sequence
             (int)high_level_rate_control_ptr->virtual_buffer_level*/);
 #endif
     }
-    eb_release_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
+    svt_release_mutex(scs_ptr->encode_context_ptr->rate_table_update_mutex);
 }
 void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                                        RateControlContext *             context_ptr,
@@ -2733,10 +2733,10 @@ void frame_level_rc_input_picture_cvbr(PictureControlSet *pcs_ptr, SequenceContr
                 hl_rate_control_histogram_ptr_temp->pred_bits_ref_qp[ref_qp_index_temp] = 0;
 
                 if (ref_qp_table_index == previous_selected_ref_qp) {
-                    eb_block_on_mutex(
+                    svt_block_on_mutex(
                         scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                     hl_rate_control_histogram_ptr_temp->life_count--;
-                    eb_release_mutex(
+                    svt_release_mutex(
                         scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                 }
 
@@ -3403,11 +3403,11 @@ void high_level_rc_feed_back_picture(PictureParentControlSet *pcs_ptr,
                     ->hl_rate_control_historgram_queue[queue_entry_index_head_temp];
             if (hl_rate_control_histogram_ptr_temp->picture_number == pcs_ptr->picture_number &&
                 hl_rate_control_histogram_ptr_temp->passed_to_hlrc) {
-                eb_block_on_mutex(
+                svt_block_on_mutex(
                     scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
                 hl_rate_control_histogram_ptr_temp->total_num_bits_coded = pcs_ptr->total_num_bits;
                 hl_rate_control_histogram_ptr_temp->is_coded             = EB_TRUE;
-                eb_release_mutex(
+                svt_release_mutex(
                     scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
             }
         }
@@ -3611,21 +3611,21 @@ void init_rc(RateControlContext *context_ptr, PictureControlSet *pcs_ptr,
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
 
-extern int16_t eb_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 // These functions use formulaic calculations to make playing with the
 // quantizer tables easier. If necessary they can be replaced by lookup
 // tables if and when things settle down in the experimental Bitstream
 
-double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth) {
+double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth) {
     // Convert the index to a real Q value (scaled down to match old Q values)
     switch (bit_depth) {
-    case AOM_BITS_8: return eb_av1_ac_quant_q3(qindex, 0, bit_depth) / 4.0;
-    case AOM_BITS_10: return eb_av1_ac_quant_q3(qindex, 0, bit_depth) / 16.0;
-    case AOM_BITS_12: return eb_av1_ac_quant_q3(qindex, 0, bit_depth) / 64.0;
+    case AOM_BITS_8: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 4.0;
+    case AOM_BITS_10: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 16.0;
+    case AOM_BITS_12: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) / 64.0;
     default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1.0;
     }
 }
-int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth) {
+int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth) {
     int32_t start_index  = MAX_Q_INDEX;
     int32_t target_index = MAX_Q_INDEX;
     int32_t i;
@@ -3633,13 +3633,13 @@ int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_dep
     // Convert the average q value to an index.
     for (i = MIN_Q_INDEX; i < MAX_Q_INDEX; ++i) {
         start_index = i;
-        if (eb_av1_convert_qindex_to_q(i, bit_depth) >= qstart) break;
+        if (svt_av1_convert_qindex_to_q(i, bit_depth) >= qstart) break;
     }
 
     // Convert the q target to an index
     for (i = MIN_Q_INDEX; i < MAX_Q_INDEX; ++i) {
         target_index = i;
-        if (eb_av1_convert_qindex_to_q(i, bit_depth) >= qtarget) break;
+        if (svt_av1_convert_qindex_to_q(i, bit_depth) >= qtarget) break;
     }
 
     return target_index - start_index;
@@ -3656,14 +3656,14 @@ uint32_t qp_scaling_calc(SequenceControlSet *scs_ptr, EB_SLICE slice_type,
 
     int          qindex = quantizer_to_qindex[base_qp];
     const double q =
-        eb_av1_convert_qindex_to_q(qindex, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
+        svt_av1_convert_qindex_to_q(qindex, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
     int delta_qindex;
 
     if (slice_type == I_SLICE) {
-        delta_qindex = eb_av1_compute_qdelta(
+        delta_qindex = svt_av1_compute_qdelta(
             q, q * 0.25, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
     } else {
-        delta_qindex = eb_av1_compute_qdelta(
+        delta_qindex = svt_av1_compute_qdelta(
             q,
             q * delta_rate_new[scs_ptr->static_config.hierarchical_levels == 4]
                               [temporal_layer_index], // RC does not support 5L
@@ -4431,7 +4431,7 @@ static int get_gf_high_motion_quality(int q, AomBitDepth bit_depth) {
     ASSIGN_MINQ_TABLE(bit_depth, arfgf_high_motion_minq);
     return arfgf_high_motion_minq[q];
 }
-int16_t eb_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolution input_resolution) {
 #if FIX_RC_BUG
@@ -4475,19 +4475,19 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor,
 
 int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
     assert(beta > 0.0);
-    int q = eb_av1_dc_quant_qtx(qindex, 0, bit_depth);
+    int q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
     int newq = (int)rint(q / sqrt(beta));
     int orig_qindex = qindex;
     if (newq < q) {
         do {
             qindex--;
-            q = eb_av1_dc_quant_qtx(qindex, 0, bit_depth);
+            q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
         } while (newq < q && qindex > 0);
     }
     else {
         do {
             qindex++;
-            q = eb_av1_dc_quant_qtx(qindex, 0, bit_depth);
+            q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
         } while (newq > q && qindex < MAXQ);
     }
     return qindex - orig_qindex;
@@ -4497,7 +4497,7 @@ int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
 #define MAX_BPB_FACTOR 50
 int svt_av1_rc_bits_per_mb(FrameType frame_type, int qindex,
                        double correction_factor, const int bit_depth) {
-  const double q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
+  const double q = svt_av1_convert_qindex_to_q(qindex, bit_depth);
   int enumerator = frame_type == KEY_FRAME ? 2000000 : 1500000;
 
   assert(correction_factor <= MAX_BPB_FACTOR &&
@@ -4727,8 +4727,8 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
-        q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
-        active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
+        q_val = svt_av1_convert_qindex_to_q(active_best_quality, bit_depth);
+        active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
@@ -4833,8 +4833,8 @@ static int cqp_qindex_calc(
             { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0},  //5L
             { 0.35, 0.6, 0.8,  0.9, 0.95, 1.0}  //6L
         };
-        double q_val = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-        const int32_t delta_qindex = eb_av1_compute_qdelta(
+        double q_val = svt_av1_convert_qindex_to_q(qindex, bit_depth);
+        const int32_t delta_qindex = svt_av1_compute_qdelta(
             q_val,
             q_val * delta_rate_new[pcs_ptr->parent_pcs_ptr->hierarchical_levels]
             [pcs_ptr->parent_pcs_ptr->temporal_layer_index],
@@ -4978,7 +4978,7 @@ static int av1_find_qindex(double desired_q, aom_bit_depth_t bit_depth,
     int high = worst_qindex;
     while (low < high) {
         const int mid = (low + high) >> 1;
-        const double mid_q = eb_av1_convert_qindex_to_q(mid, bit_depth);
+        const double mid_q = svt_av1_convert_qindex_to_q(mid, bit_depth);
         if (mid_q < desired_q) {
             low = mid + 1;
         }
@@ -4987,7 +4987,7 @@ static int av1_find_qindex(double desired_q, aom_bit_depth_t bit_depth,
         }
     }
     assert(low == high);
-    assert(eb_av1_convert_qindex_to_q(low, bit_depth) >= desired_q ||
+    assert(svt_av1_convert_qindex_to_q(low, bit_depth) >= desired_q ||
         low == worst_qindex);
     return low;
 }
@@ -5091,7 +5091,7 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
   rc->ni_frames = 0;
 
   rc->tot_q = 0.0;
-  rc->avg_q = eb_av1_convert_qindex_to_q(rc_cfg->worst_allowed_q, scs_ptr->static_config.encoder_bit_depth);
+  rc->avg_q = svt_av1_convert_qindex_to_q(rc_cfg->worst_allowed_q, scs_ptr->static_config.encoder_bit_depth);
 
   for (i = 0; i < RATE_FACTOR_LEVELS; ++i) {
     rc->rate_correction_factors[i] = 0.7;
@@ -5177,8 +5177,8 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
         // Increase the boost because this keyframe is used as a forward and
         // backward reference.
         const int qindex = rc->last_boosted_qindex;
-        const double last_boosted_q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-        const int delta_qindex = eb_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.25, bit_depth);
+        const double last_boosted_q = svt_av1_convert_qindex_to_q(qindex, bit_depth);
+        const int delta_qindex = svt_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.25, bit_depth);
         active_best_quality = AOMMAX(qindex + delta_qindex, rc->best_quality);
     } else if (rc->this_key_frame_forced) {
         // Handle the special case for key frames forced when we have reached
@@ -5192,14 +5192,14 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
                 twopass->last_kfgroup_zeromotion_pct >= STATIC_MOTION_THRESH) {
             qindex = AOMMIN(rc->last_kf_qindex, rc->last_boosted_qindex);
             active_best_quality = qindex;
-            last_boosted_q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-            delta_qindex = eb_av1_compute_qdelta(last_boosted_q, last_boosted_q * 1.25, bit_depth);
+            last_boosted_q = svt_av1_convert_qindex_to_q(qindex, bit_depth);
+            delta_qindex = svt_av1_compute_qdelta(last_boosted_q, last_boosted_q * 1.25, bit_depth);
             active_worst_quality =
                 AOMMIN(qindex + delta_qindex, active_worst_quality);
         } else {
             qindex = rc->last_boosted_qindex;
-            last_boosted_q = eb_av1_convert_qindex_to_q(qindex, bit_depth);
-            delta_qindex = eb_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.50, bit_depth);
+            last_boosted_q = svt_av1_convert_qindex_to_q(qindex, bit_depth);
+            delta_qindex = svt_av1_compute_qdelta(last_boosted_q, last_boosted_q * 0.50, bit_depth);
             active_best_quality = AOMMAX(qindex + delta_qindex, rc->best_quality);
         }
     } else {
@@ -5224,8 +5224,8 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
-        q_val = eb_av1_convert_qindex_to_q(active_best_quality, bit_depth);
-        active_best_quality += eb_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
+        q_val = svt_av1_convert_qindex_to_q(active_best_quality, bit_depth);
+        active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
 
     }
 
@@ -5703,7 +5703,7 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr, uint64_t
       rc->avg_frame_qindex[INTER_FRAME] =
           ROUND_POWER_OF_TWO(3 * rc->avg_frame_qindex[INTER_FRAME] + qindex, 2);
       rc->ni_frames++;
-      rc->tot_q += eb_av1_convert_qindex_to_q(qindex, scs_ptr->static_config.encoder_bit_depth);
+      rc->tot_q += svt_av1_convert_qindex_to_q(qindex, scs_ptr->static_config.encoder_bit_depth);
       rc->avg_q = rc->tot_q / rc->ni_frames;
       // Calculate the average Q for normal inter frames (not key or GFU
       // frames).
@@ -6232,17 +6232,17 @@ void *rate_control_kernel(void *input_ptr) {
             if (use_input_stat(scs_ptr))
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             // Get Empty Rate Control Results Buffer
-            eb_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
+            svt_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
                                 &rate_control_results_wrapper_ptr);
             rate_control_results_ptr =
                 (RateControlResults *)rate_control_results_wrapper_ptr->object_ptr;
             rate_control_results_ptr->pcs_wrapper_ptr = rate_control_tasks_ptr->pcs_wrapper_ptr;
 
             // Post Full Rate Control Results
-            eb_post_full_object(rate_control_results_wrapper_ptr);
+            svt_post_full_object(rate_control_results_wrapper_ptr);
 
             // Release Rate Control Tasks
-            eb_release_object(rate_control_tasks_wrapper_ptr);
+            svt_release_object(rate_control_tasks_wrapper_ptr);
 
             break;
 
@@ -6514,13 +6514,13 @@ void *rate_control_kernel(void *input_ptr) {
             total_number_of_fb_frames++;
 
             // Release the SequenceControlSet
-            eb_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);
+            svt_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);
             // Release the ParentPictureControlSet
-            eb_release_object(parentpicture_control_set_ptr->input_picture_wrapper_ptr);
-            eb_release_object(rate_control_tasks_ptr->pcs_wrapper_ptr);
+            svt_release_object(parentpicture_control_set_ptr->input_picture_wrapper_ptr);
+            svt_release_object(rate_control_tasks_ptr->pcs_wrapper_ptr);
 
             // Release Rate Control Tasks
-            eb_release_object(rate_control_tasks_wrapper_ptr);
+            svt_release_object(rate_control_tasks_wrapper_ptr);
             break;
 
         case RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT:
@@ -6528,7 +6528,7 @@ void *rate_control_kernel(void *input_ptr) {
             // Extract bits-per-sb-row
 
             // Release Rate Control Tasks
-            eb_release_object(rate_control_tasks_wrapper_ptr);
+            svt_release_object(rate_control_tasks_wrapper_ptr);
 
             break;
 

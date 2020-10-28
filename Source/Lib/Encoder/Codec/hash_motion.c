@@ -13,7 +13,7 @@
 #include "hash_motion.h"
 #include "EbPictureControlSet.h"
 
-void             eb_aom_free(void *memblk);
+void             svt_aom_free(void *memblk);
 static const int crc_bits        = 16;
 static const int block_size_bits = 3;
 
@@ -22,7 +22,7 @@ static void hash_table_clear_all(HashTable *p_hash_table) {
     int max_addr = 1 << (crc_bits + block_size_bits);
     for (int i = 0; i < max_addr; i++) {
         if (p_hash_table->p_lookup_table[i] != NULL) {
-            eb_aom_vector_destroy(p_hash_table->p_lookup_table[i]);
+            svt_aom_vector_destroy(p_hash_table->p_lookup_table[i]);
             free(p_hash_table->p_lookup_table[i]);
             p_hash_table->p_lookup_table[i] = NULL;
         }
@@ -110,11 +110,11 @@ static void hash_table_add_to_table(HashTable *p_hash_table, uint32_t hash_value
     if (p_hash_table->p_lookup_table[hash_value] == NULL) {
         p_hash_table->p_lookup_table[hash_value] =
             malloc(sizeof(p_hash_table->p_lookup_table[0][0]));
-        eb_aom_vector_setup(
+        svt_aom_vector_setup(
             p_hash_table->p_lookup_table[hash_value], 10, sizeof(curr_block_hash[0]));
-        eb_aom_vector_push_back(p_hash_table->p_lookup_table[hash_value], curr_block_hash);
+        svt_aom_vector_push_back(p_hash_table->p_lookup_table[hash_value], curr_block_hash);
     } else {
-        eb_aom_vector_push_back(p_hash_table->p_lookup_table[hash_value], curr_block_hash);
+        svt_aom_vector_push_back(p_hash_table->p_lookup_table[hash_value], curr_block_hash);
     }
 }
 
@@ -127,7 +127,7 @@ int32_t svt_av1_hash_table_count(const HashTable *p_hash_table, uint32_t hash_va
 
 Iterator svt_av1_hash_get_first_iterator(HashTable *p_hash_table, uint32_t hash_value) {
     assert(svt_av1_hash_table_count(p_hash_table, hash_value) > 0);
-    return eb_aom_vector_begin(p_hash_table->p_lookup_table[hash_value]);
+    return svt_aom_vector_begin(p_hash_table->p_lookup_table[hash_value]);
 }
 
 void svt_av1_generate_block_2x2_hash_value(const Yv12BufferConfig *picture, uint32_t *pic_block_hash[2],

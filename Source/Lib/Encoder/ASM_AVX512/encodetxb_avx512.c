@@ -42,8 +42,8 @@ static INLINE __m512i txb_init_levels_64_avx512(const TranLow *const coeff) {
     return _mm512_permutexvar_epi32(idx, abs_8);
 }
 
-void eb_av1_txb_init_levels_avx512(const TranLow *const coeff, const int32_t width,
-                                   const int32_t height, uint8_t *const levels) {
+void svt_av1_txb_init_levels_avx512(const TranLow *const coeff, const int32_t width,
+                                    const int32_t height, uint8_t *const levels) {
     const TranLow *cf      = coeff;
     const __m128i  x_zeros = _mm_setzero_si128();
     uint8_t *      ls      = levels;

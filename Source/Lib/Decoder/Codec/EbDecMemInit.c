@@ -38,7 +38,7 @@
 
 /*TODO: Remove and harmonize with encoder. Globals prevent harmonization now! */
 /*****************************************
- * eb_recon_picture_buffer_desc_ctor
+ * svt_recon_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
  *  values that are fixed for the life of
  *  the descriptor.

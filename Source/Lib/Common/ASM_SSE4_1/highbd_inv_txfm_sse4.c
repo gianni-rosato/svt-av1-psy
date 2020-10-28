@@ -401,9 +401,9 @@ static void write_buffer_4x4(__m128i *in, uint16_t *output_r, int32_t stride_r, 
     _mm_storel_epi64((__m128i *)(output_w + 3 * stride_w), v3);
 }
 
-void eb_av1_inv_txfm2d_add_4x4_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                      uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                      int32_t bd) {
+void svt_av1_inv_txfm2d_add_4x4_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                       int32_t bd) {
     __m128i       in[4];
     const int8_t *shift   = eb_inv_txfm_shift_ls[TX_4X4];
     const int32_t txw_idx = get_txw_idx(TX_4X4);
@@ -981,9 +981,9 @@ static void write_buffer_8x8(__m128i *in, uint16_t *output_r, int32_t stride_r, 
     _mm_storeu_si128((__m128i *)(output_w + 7 * stride_w), u7);
 }
 
-void eb_av1_inv_txfm2d_add_8x8_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                      uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                      int32_t bd) {
+void svt_av1_inv_txfm2d_add_8x8_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                       int32_t bd) {
     __m128i       in[16], out[16];
     const int8_t *shift   = eb_inv_txfm_shift_ls[TX_8X8];
     const int32_t txw_idx = get_txw_idx(TX_8X8);
@@ -1722,9 +1722,9 @@ static void round_shift_16x16(__m128i *in, int32_t shift) {
     round_shift_8x8(&in[48], shift);
 }
 
-void eb_av1_inv_txfm2d_add_16x16_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        int32_t bd) {
+void svt_av1_inv_txfm2d_add_16x16_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         int32_t bd) {
     __m128i       in[64], out[64];
     const int8_t *shift   = eb_inv_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
@@ -4316,9 +4316,9 @@ static const Transform1dSse41 highbd_txfm_all_1d_zeros_w8_arr[TX_SIZES][ITX_TYPE
     {{NULL, NULL, NULL, NULL}, {NULL, NULL, NULL, NULL}, {NULL, NULL, NULL, NULL}},
     {{NULL, NULL, NULL, NULL}, {NULL, NULL, NULL, NULL}, {NULL, NULL, NULL, NULL}}};
 
-void eb_av1_inv_txfm2d_add_4x8_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                      uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                      TxSize tx_size, int32_t bd) {
+void svt_av1_inv_txfm2d_add_4x8_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                       TxSize tx_size, int32_t bd) {
     __m128i                buf1[8];
     const int8_t *         shift         = eb_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx       = get_txw_idx(tx_size);
@@ -4399,9 +4399,9 @@ static INLINE void highbd_write_buffer_8xn_sse4_1(__m128i *in, uint16_t *output_
         _mm_storeu_si128((__m128i *)(output_w + i * stride_w), u);
     }
 }
-void eb_av1_inv_txfm2d_add_8x4_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                      uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                      TxSize tx_size, int32_t bd) {
+void svt_av1_inv_txfm2d_add_8x4_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                       TxSize tx_size, int32_t bd) {
     __m128i                buf1[8];
     const int8_t *         shift         = eb_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx       = get_txw_idx(tx_size);
@@ -4451,9 +4451,9 @@ void eb_av1_inv_txfm2d_add_8x4_sse4_1(const int32_t *input, uint16_t *output_r, 
 }
 
 //4x16
-void eb_av1_inv_txfm2d_add_4x16_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                       TxSize tx_size, int32_t bd) {
+void svt_av1_inv_txfm2d_add_4x16_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                        TxSize tx_size, int32_t bd) {
     __m128i                buf1[16];
     const int8_t *         shift           = eb_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx         = get_txw_idx(tx_size);
@@ -4517,9 +4517,9 @@ void eb_av1_inv_txfm2d_add_4x16_sse4_1(const int32_t *input, uint16_t *output_r,
 }
 
 //16x4
-void eb_av1_inv_txfm2d_add_16x4_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
-                                       uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                       TxSize tx_size, int32_t bd) {
+void svt_av1_inv_txfm2d_add_16x4_sse4_1(const int32_t *input, uint16_t *output_r, int32_t stride_r,
+                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                        TxSize tx_size, int32_t bd) {
     __m128i                buf1[16];
     const int8_t *         shift           = eb_inv_txfm_shift_ls[tx_size];
     const int32_t          txw_idx         = get_txw_idx(tx_size);

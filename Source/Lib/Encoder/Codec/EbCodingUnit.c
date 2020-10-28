@@ -72,7 +72,7 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     coeff_init_data.split_mode         = EB_FALSE;
 
     EB_NEW(larget_coding_unit_ptr->quantized_coeff,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            (EbPtr)&coeff_init_data);
 
     return EB_ErrorNone;

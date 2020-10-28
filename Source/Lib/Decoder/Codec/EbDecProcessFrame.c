@@ -139,7 +139,7 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
             dec_mod_ctxt->seq_header->sb_size_log2;
 
         //lock mutex
-        eb_block_on_mutex(parse_recon_tile_info_array->tile_sbrow_mutex);
+        svt_block_on_mutex(parse_recon_tile_info_array->tile_sbrow_mutex);
 
         //pick up a row and increment the sb row counter
         if (parse_recon_tile_info_array->sb_row_to_process !=
@@ -149,7 +149,7 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
         }
 
         //unlock mutex
-        eb_release_mutex(parse_recon_tile_info_array->tile_sbrow_mutex);
+        svt_release_mutex(parse_recon_tile_info_array->tile_sbrow_mutex);
 
         //wait for parse
         if (-1 != sb_row_in_tile) {

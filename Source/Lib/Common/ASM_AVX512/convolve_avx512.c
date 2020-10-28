@@ -90,11 +90,11 @@ static INLINE void sr_y_2tap_64_avg_avx512(const uint8_t *const src, const __m51
     _mm512_storeu_si512((__m512i *)dst, d);
 }
 
-void eb_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                 int32_t dst_stride, int32_t w, int32_t h,
-                                 InterpFilterParams *filter_params_x,
-                                 InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                 const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_y_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                  int32_t dst_stride, int32_t w, int32_t h,
+                                  InterpFilterParams *filter_params_x,
+                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     int32_t x, y;
     __m128i coeffs_128[4];
     __m256i coeffs_256[4];
@@ -1084,11 +1084,11 @@ SIMD_INLINE void sr_x_8tap_64_avx512(const uint8_t *const src, const __m512i coe
     sr_x_round_store_64_avx512(r, dst);
 }
 
-void eb_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                 int32_t dst_stride, int32_t w, int32_t h,
-                                 InterpFilterParams *filter_params_x,
-                                 InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                 const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_x_sr_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                  int32_t dst_stride, int32_t w, int32_t h,
+                                  InterpFilterParams *filter_params_x,
+                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     int32_t y = h;
     __m128i coeffs_128[4];
     __m256i coeffs_256[4];

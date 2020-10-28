@@ -228,15 +228,15 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
 
             part_info.num_samples = nsamples;
 
-            apply_wm = !eb_find_projection(nsamples,
-                                           pts,
-                                           pts_inref,
-                                           bsize,
-                                           mv.row,
-                                           mv.col,
-                                           &part_info.local_warp_params,
-                                           mi_row,
-                                           mi_col);
+            apply_wm = !svt_find_projection(nsamples,
+                                            pts,
+                                            pts_inref,
+                                            bsize,
+                                            mv.row,
+                                            mv.col,
+                                            &part_info.local_warp_params,
+                                            mi_row,
+                                            mi_col);
 
             /* local warp mode should find valid projection */
             assert(apply_wm);

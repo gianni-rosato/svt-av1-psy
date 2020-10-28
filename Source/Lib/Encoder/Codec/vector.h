@@ -57,20 +57,20 @@ typedef struct Iterator {
 /***** METHODS *****/
 
 /* Constructor */
-int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size);
+int svt_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size);
 
 /* Destructor */
-int eb_aom_vector_destroy(Vector *vector);
+int svt_aom_vector_destroy(Vector *vector);
 
 /* Insertion */
-int eb_aom_vector_push_back(Vector *vector, void *element);
+int svt_aom_vector_push_back(Vector *vector, void *element);
 
 /* Information */
-size_t eb_aom_vector_byte_size(const Vector *vector);
+size_t svt_aom_vector_byte_size(const Vector *vector);
 
 /* Iterators */
-Iterator eb_aom_vector_begin(Vector *vector);
-Iterator eb_aom_vector_iterator(Vector *vector, size_t index);
+Iterator svt_aom_vector_begin(Vector *vector);
+Iterator svt_aom_vector_iterator(Vector *vector, size_t index);
 
 void *iterator_get(Iterator *iterator);
 #define ITERATOR_GET_AS(type, iterator) *((type *)iterator_get((iterator)))

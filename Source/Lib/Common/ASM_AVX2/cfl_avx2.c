@@ -36,9 +36,9 @@ static INLINE void _mm_storeh_epi32(__m128i const *mem_addr, __m128i a) {
     *((int32_t *)mem_addr) = _mm_cvtsi128_si32(a);
 }
 
-void eb_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3, uint8_t *pred, int32_t pred_stride,
-                             uint8_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth,
-                             int32_t width, int32_t height) {
+void svt_cfl_predict_lbd_avx2(const int16_t *pred_buf_q3, uint8_t *pred, int32_t pred_stride,
+                              uint8_t *dst, int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth,
+                              int32_t width, int32_t height) {
     (void)bit_depth;
     (void)pred_stride;
     if (width <= 16) {
@@ -100,12 +100,12 @@ static INLINE __m128i highbd_clamp_epi16_ssse3(__m128i u, __m128i zero, __m128i 
     return _mm_max_epi16(_mm_min_epi16(u, max), zero);
 }
 
-void eb_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
-                             uint16_t *     pred, // AMIR ADDED
-                             int32_t        pred_stride,
-                             uint16_t *     dst, // AMIR changed to 8 bit
-                             int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
-                             int32_t height) {
+void svt_cfl_predict_hbd_avx2(const int16_t *pred_buf_q3,
+                              uint16_t *     pred, // AMIR ADDED
+                              int32_t        pred_stride,
+                              uint16_t *     dst, // AMIR changed to 8 bit
+                              int32_t dst_stride, int32_t alpha_q3, int32_t bit_depth, int32_t width,
+                              int32_t height) {
     (void)pred_stride;
     // Use SSSE3 version for smaller widths
     if (width < 16) {
@@ -173,8 +173,8 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
                             _mm256_unpackhi_epi16(a, _mm256_setzero_si256()));
 }
 
-/*staticINLINE*/ void eb_subtract_average_avx2(int16_t *pred_buf_q3, int32_t width, int32_t height,
-                                               int32_t round_offset, int32_t num_pel_log2) {
+/*staticINLINE*/ void svt_subtract_average_avx2(int16_t *pred_buf_q3, int32_t width, int32_t height,
+                                                int32_t round_offset, int32_t num_pel_log2) {
     // Use SSE2 version for smaller widths
 
     if ((width == 4) || (width == 8)) {
@@ -279,7 +279,7 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
 }
 
 void svt_cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride,
-                                       int16_t *output_q3, int32_t width, int32_t height) {
+                                           int16_t *output_q3, int32_t width, int32_t height) {
     const int      luma_stride = input_stride << 1;
     __m256i *      row         = (__m256i *)output_q3;
     const __m256i *row_end     = row + (height >> 1) * CFL_BUF_LINE_I256;

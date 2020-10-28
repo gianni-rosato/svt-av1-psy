@@ -410,7 +410,7 @@ static void interpolate(const uint8_t *const input, int in_length, uint8_t *outp
 static void resize_multistep(const uint8_t *const input, int length, uint8_t *output, int olength,
                              uint8_t *otmp) {
     if (length == olength) {
-        eb_memcpy(output, input, sizeof(output[0]) * length);
+        svt_memcpy(output, input, sizeof(output[0]) * length);
         return;
     }
     const int steps = get_down2_steps(length, olength);
@@ -682,7 +682,7 @@ static void highbd_down2_symodd(const uint16_t *const input, int length, uint16_
 static void highbd_resize_multistep(const uint16_t *const input, int length, uint16_t *output,
                                     int olength, uint16_t *otmp, int bd) {
     if (length == olength) {
-        eb_memcpy(output, input, sizeof(output[0]) * length);
+        svt_memcpy(output, input, sizeof(output[0]) * length);
         return;
     }
     const int steps = get_down2_steps(length, olength);
@@ -1035,7 +1035,7 @@ static EbErrorType downscaled_source_buffer_desc_ctor(EbPictureBufferDesc **pict
     initData.top_padding        = picture_ptr_for_reference->origin_y;
     initData.bot_padding        = picture_ptr_for_reference->origin_y;
 
-    EB_NEW(*picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&initData);
+    EB_NEW(*picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     return EB_ErrorNone;
 }
@@ -1139,19 +1139,19 @@ static EbErrorType allocate_downscaled_reference_pics(EbPictureBufferDesc **down
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
         EB_NEW(*downscaled_reference_picture16bit,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
 
         // Hsan: set split_mode to 1 to construct the unpacked reference buffer (used @ MD)
         ref_pic_buf_desc_init_data.split_mode = EB_TRUE;
         EB_NEW(*downscaled_reference_picture_ptr,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
     } else {
         // Hsan: set split_mode to 0 to as 8BIT input
         ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
         EB_NEW(*downscaled_reference_picture_ptr,
-               eb_picture_buffer_desc_ctor,
+               svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
     }
 
@@ -1183,7 +1183,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
     initData.top_padding        = picture_ptr_for_reference->origin_y;
     initData.bot_padding        = picture_ptr_for_reference->origin_y;
 
-    EB_NEW(*input_padded_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&initData);
+    EB_NEW(*input_padded_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
     initData.max_width          = spr_params.encoding_width >> 1;
@@ -1196,7 +1196,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
     initData.top_padding        = picture_ptr_for_reference->origin_y >> 1;
     initData.bot_padding        = picture_ptr_for_reference->origin_y >> 1;
 
-    EB_NEW(*quarter_decimated_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&initData);
+    EB_NEW(*quarter_decimated_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
     initData.max_width          = spr_params.encoding_width >> 2;
@@ -1209,7 +1209,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
     initData.top_padding        = picture_ptr_for_reference->origin_y >> 2;
     initData.bot_padding        = picture_ptr_for_reference->origin_y >> 2;
 
-    EB_NEW(*sixteenth_decimated_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&initData);
+    EB_NEW(*sixteenth_decimated_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     if(down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED){
 
@@ -1224,7 +1224,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
         initData.top_padding        = picture_ptr_for_reference->origin_y >> 1;
         initData.bot_padding        = picture_ptr_for_reference->origin_y >> 1;
 
-        EB_NEW(*quarter_filtered_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&initData);
+        EB_NEW(*quarter_filtered_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
         initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
         initData.max_width          = spr_params.encoding_width >> 2;
@@ -1237,7 +1237,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(EbPictureBufferDesc
         initData.top_padding        = picture_ptr_for_reference->origin_y >> 2;
         initData.bot_padding        = picture_ptr_for_reference->origin_y >> 2;
 
-        EB_NEW(*sixteenth_filtered_picture_ptr, eb_picture_buffer_desc_ctor, (EbPtr)&initData);
+        EB_NEW(*sixteenth_filtered_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     }
 

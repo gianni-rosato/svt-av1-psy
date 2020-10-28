@@ -93,23 +93,23 @@ class PictureOperatorTest : public ::testing::Test,
           test_pattern_(TEST_GET_PARAM(1)) {
         tst_size = 2 * MAX_PU_SIZE * MAX_PU_SIZE;
         tst_stride_ = 2 * MAX_PU_SIZE;
-        tst1_aligned_ = (uint8_t *)eb_aom_memalign(8, tst_size);
-        tst2_aligned_ = (uint8_t *)eb_aom_memalign(8, tst_size);
-        dst1_aligned_ = (uint8_t *)eb_aom_memalign(8, tst_size);
-        dst2_aligned_ = (uint8_t *)eb_aom_memalign(8, tst_size);
+        tst1_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        tst2_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        dst1_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
+        dst2_aligned_ = (uint8_t *)svt_aom_memalign(8, tst_size);
         memset(dst1_aligned_, 0, tst_size * sizeof(dst1_aligned_[0]));
         memset(dst2_aligned_, 0, tst_size * sizeof(dst2_aligned_[0]));
     }
 
     void TearDown() override {
         if (tst1_aligned_)
-            eb_aom_free(tst1_aligned_);
+            svt_aom_free(tst1_aligned_);
         if (tst2_aligned_)
-            eb_aom_free(tst2_aligned_);
+            svt_aom_free(tst2_aligned_);
         if (dst1_aligned_)
-            eb_aom_free(dst1_aligned_);
+            svt_aom_free(dst1_aligned_);
         if (dst2_aligned_)
-            eb_aom_free(dst2_aligned_);
+            svt_aom_free(dst2_aligned_);
     }
 
   protected:

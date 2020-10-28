@@ -72,13 +72,13 @@ static INLINE EbBool has_overlappable_candidates(const BlkStruct *blk_ptr) {
 }
 
 
-void eb_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
-                                         const BlockSize bsize, int32_t mi_row, int32_t mi_col);
+void svt_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
+                                          const BlockSize bsize, int32_t mi_row, int32_t mi_col);
 
-void eb_av1_find_best_ref_mvs_from_stack(int          allow_hp,
-                                         CandidateMv  ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
-                                         MacroBlockD *xd, MvReferenceFrame ref_frame,
-                                         IntMv *nearest_mv, IntMv *near_mv, int is_integer);
+void svt_av1_find_best_ref_mvs_from_stack(int          allow_hp,
+                                          CandidateMv  ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
+                                          MacroBlockD *xd, MvReferenceFrame ref_frame,
+                                          IntMv *nearest_mv, IntMv *near_mv, int is_integer);
 int  av1_is_dv_valid(const MV dv, const MacroBlockD *xd, int mi_row, int mi_col, BlockSize bsize,
                      int mib_size_log2);
 int  is_inside_tile_boundary(TileInfo *tile, int16_t mvx, int16_t mvy, int mi_col, int mi_row,

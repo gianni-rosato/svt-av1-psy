@@ -325,7 +325,7 @@ static INLINE int32_t get_rect_tx_log_ratio(int32_t col, int32_t row) {
     return 0; // Invalid
 }
 
-void eb_av1_round_shift_array_c(int32_t *arr, int32_t size, int32_t bit);
+void svt_av1_round_shift_array_c(int32_t *arr, int32_t size, int32_t bit);
 
 
 static const BlockSize txsize_to_bsize[TX_SIZES_ALL] = {
@@ -372,7 +372,7 @@ static const int8_t txsize_log2_minus4[TX_SIZES_ALL] = {
         5, // TX_64X16
 };
 
-int16_t eb_av1_ac_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
+int16_t svt_av1_ac_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 #ifdef __cplusplus
 }

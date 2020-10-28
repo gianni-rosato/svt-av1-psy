@@ -78,8 +78,8 @@ static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
     return /*is_intrabc_block(mbmi) ||*/ ref_frame_0 > INTRA_FRAME;
 }
 
-void eb_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lf_info,
-                                   int32_t plane_start, int32_t plane_end);
+void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lf_info,
+                                    int32_t plane_start, int32_t plane_end);
 
 
 

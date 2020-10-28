@@ -288,9 +288,9 @@ static INLINE void get_eobx_eoby_scan_v_identity(int32_t *eobx, int32_t *eoby, T
 
 typedef void (*Transform1dSsse3)(const __m128i *input, __m128i *output, int8_t cos_bit);
 
-void eb_av1_lowbd_inv_txfm2d_add_ssse3(const int32_t *input, uint8_t *output_r, int32_t stride_r,
-                                       uint8_t *output_w, int32_t stride_w, TxType tx_type,
-                                       TxSize tx_size, int32_t eob);
+void svt_av1_lowbd_inv_txfm2d_add_ssse3(const int32_t *input, uint8_t *output_r, int32_t stride_r,
+                                        uint8_t *output_w, int32_t stride_w, TxType tx_type,
+                                        TxSize tx_size, int32_t eob);
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -1161,11 +1161,11 @@ void svt_aom_lpf_vertical_6_sse2(uint8_t *s, int32_t p, const uint8_t *blimit, c
     transpose6x6_sse2(&d0d1, &p0, &p1p0, &q1q0, &q0, &d5, &d0d1, &d2d3, &d4d5);
 
     _mm_storeu_si128((__m128i *)(temp_dst), d0d1);
-    eb_memcpy_intrin_sse((s - 3) + 0 * p, temp_dst, 6);
-    eb_memcpy_intrin_sse((s - 3) + 1 * p, temp_dst + 8, 6);
+    svt_memcpy_intrin_sse((s - 3) + 0 * p, temp_dst, 6);
+    svt_memcpy_intrin_sse((s - 3) + 1 * p, temp_dst + 8, 6);
     _mm_storeu_si128((__m128i *)(temp_dst), d2d3);
-    eb_memcpy_intrin_sse((s - 3) + 2 * p, temp_dst, 6);
-    eb_memcpy_intrin_sse((s - 3) + 3 * p, temp_dst + 8, 6);
+    svt_memcpy_intrin_sse((s - 3) + 2 * p, temp_dst, 6);
+    svt_memcpy_intrin_sse((s - 3) + 3 * p, temp_dst + 8, 6);
 }
 
 void svt_aom_lpf_vertical_8_sse2(uint8_t *s, int32_t p, const uint8_t *blimit, const uint8_t *limit,

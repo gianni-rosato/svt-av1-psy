@@ -41,54 +41,54 @@
 
 typedef void Filter81dFunction(const uint8_t *src_ptr, ptrdiff_t src_pitch, uint8_t *output_ptr,
                                ptrdiff_t out_pitch, uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d4_v8_sse2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                            uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d16_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+void         svt_aom_filter_block1d4_v8_sse2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                             uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d16_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                               uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                               uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d16_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                               uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                               uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d8_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
                                               uint8_t *output_ptr, ptrdiff_t out_pitch,
                                               uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d16_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+void         svt_aom_filter_block1d8_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
                                               uint8_t *output_ptr, ptrdiff_t out_pitch,
                                               uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d8_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d8_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d4_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter);
-void         eb_aom_filter_block1d4_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                             uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d4_v2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                              uint32_t output_height, const int16_t *filter);
+void         svt_aom_filter_block1d4_h2_ssse3(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                              uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                              uint32_t output_height, const int16_t *filter);
 
-Filter81dFunction eb_aom_filter_block1d4_v8_ssse3;
-Filter81dFunction eb_aom_filter_block1d16_v2_ssse3;
-Filter81dFunction eb_aom_filter_block1d16_h2_ssse3;
-Filter81dFunction eb_aom_filter_block1d8_v2_ssse3;
-Filter81dFunction eb_aom_filter_block1d8_h2_ssse3;
-Filter81dFunction eb_aom_filter_block1d4_v2_ssse3;
-Filter81dFunction eb_aom_filter_block1d4_h2_ssse3;
-#define eb_aom_filter_block1d4_v8_avx2 eb_aom_filter_block1d4_v8_sse2
-#define eb_aom_filter_block1d16_v2_avx2 eb_aom_filter_block1d16_v2_ssse3
-#define eb_aom_filter_block1d16_h2_avx2 eb_aom_filter_block1d16_h2_ssse3
-#define eb_aom_filter_block1d8_v2_avx2 eb_aom_filter_block1d8_v2_ssse3
-#define eb_aom_filter_block1d8_h2_avx2 eb_aom_filter_block1d8_h2_ssse3
-#define eb_aom_filter_block1d4_v2_avx2 eb_aom_filter_block1d4_v2_ssse3
-#define eb_aom_filter_block1d4_h2_avx2 eb_aom_filter_block1d4_h2_ssse3
+Filter81dFunction svt_aom_filter_block1d4_v8_ssse3;
+Filter81dFunction svt_aom_filter_block1d16_v2_ssse3;
+Filter81dFunction svt_aom_filter_block1d16_h2_ssse3;
+Filter81dFunction svt_aom_filter_block1d8_v2_ssse3;
+Filter81dFunction svt_aom_filter_block1d8_h2_ssse3;
+Filter81dFunction svt_aom_filter_block1d4_v2_ssse3;
+Filter81dFunction svt_aom_filter_block1d4_h2_ssse3;
+#define svt_aom_filter_block1d4_v8_avx2 svt_aom_filter_block1d4_v8_sse2
+#define svt_aom_filter_block1d16_v2_avx2 svt_aom_filter_block1d16_v2_ssse3
+#define svt_aom_filter_block1d16_h2_avx2 svt_aom_filter_block1d16_h2_ssse3
+#define svt_aom_filter_block1d8_v2_avx2 svt_aom_filter_block1d8_v2_ssse3
+#define svt_aom_filter_block1d8_h2_avx2 svt_aom_filter_block1d8_h2_ssse3
+#define svt_aom_filter_block1d4_v2_avx2 svt_aom_filter_block1d4_v2_ssse3
+#define svt_aom_filter_block1d4_h2_avx2 svt_aom_filter_block1d4_h2_ssse3
 
 #define FUN_CONV_1D(name, step_q4, filter, dir, src_start, avg, opt)                               \
-    void eb_aom_convolve8_##name##_##opt(const uint8_t *src,                                       \
-                                         ptrdiff_t      src_stride,                                \
-                                         uint8_t *      dst,                                       \
-                                         ptrdiff_t      dst_stride,                                \
-                                         const int16_t *filter_x,                                  \
-                                         int            x_step_q4,                                 \
-                                         const int16_t *filter_y,                                  \
-                                         int            y_step_q4,                                 \
-                                         int            w,                                         \
-                                         int            h) {                                                  \
+    void svt_aom_convolve8_##name##_##opt(const uint8_t *src,                                      \
+                                          ptrdiff_t      src_stride,                               \
+                                          uint8_t *      dst,                                      \
+                                          ptrdiff_t      dst_stride,                               \
+                                          const int16_t *filter_x,                                 \
+                                          int            x_step_q4,                                \
+                                          const int16_t *filter_y,                                 \
+                                          int            y_step_q4,                                \
+                                          int            w,                                        \
+                                          int            h) {                                      \
         (void)filter_x;                                                                            \
         (void)x_step_q4;                                                                           \
         (void)filter_y;                                                                            \
@@ -97,21 +97,21 @@ Filter81dFunction eb_aom_filter_block1d4_h2_ssse3;
         assert(step_q4 == 16);                                                                     \
         if (((filter[0] | filter[1] | filter[6] | filter[7]) == 0) && (filter[2] | filter[5])) {   \
             while (w >= 16) {                                                                      \
-                eb_aom_filter_block1d16_##dir##4_##avg##opt(                                       \
+                svt_aom_filter_block1d16_##dir##4_##avg##opt(                                      \
                     src_start, src_stride, dst, dst_stride, h, filter);                            \
                 src += 16;                                                                         \
                 dst += 16;                                                                         \
                 w -= 16;                                                                           \
             }                                                                                      \
             while (w >= 8) {                                                                       \
-                eb_aom_filter_block1d8_##dir##4_##avg##opt(                                        \
+                svt_aom_filter_block1d8_##dir##4_##avg##opt(                                       \
                     src_start, src_stride, dst, dst_stride, h, filter);                            \
                 src += 8;                                                                          \
                 dst += 8;                                                                          \
                 w -= 8;                                                                            \
             }                                                                                      \
             while (w >= 4) {                                                                       \
-                eb_aom_filter_block1d4_##dir##4_##avg##opt(                                        \
+                svt_aom_filter_block1d4_##dir##4_##avg##opt(                                       \
                     src_start, src_stride, dst, dst_stride, h, filter);                            \
                 src += 4;                                                                          \
                 dst += 4;                                                                          \
@@ -119,21 +119,21 @@ Filter81dFunction eb_aom_filter_block1d4_h2_ssse3;
             }                                                                                      \
         } else if (filter[0] | filter[1] | filter[2]) {                                            \
             while (w >= 16) {                                                                      \
-                eb_aom_filter_block1d16_##dir##8_##avg##opt(                                       \
+                svt_aom_filter_block1d16_##dir##8_##avg##opt(                                      \
                     src_start, src_stride, dst, dst_stride, h, filter);                            \
                 src += 16;                                                                         \
                 dst += 16;                                                                         \
                 w -= 16;                                                                           \
             }                                                                                      \
             while (w >= 8) {                                                                       \
-                eb_aom_filter_block1d8_##dir##8_##avg##opt(                                        \
+                svt_aom_filter_block1d8_##dir##8_##avg##opt(                                       \
                     src_start, src_stride, dst, dst_stride, h, filter);                            \
                 src += 8;                                                                          \
                 dst += 8;                                                                          \
                 w -= 8;                                                                            \
             }                                                                                      \
             while (w >= 4) {                                                                       \
-                eb_aom_filter_block1d4_##dir##8_##avg##opt(                                        \
+                svt_aom_filter_block1d4_##dir##8_##avg##opt(                                       \
                     src_start, src_stride, dst, dst_stride, h, filter);                            \
                 src += 4;                                                                          \
                 dst += 4;                                                                          \
@@ -141,21 +141,21 @@ Filter81dFunction eb_aom_filter_block1d4_h2_ssse3;
             }                                                                                      \
         } else {                                                                                   \
             while (w >= 16) {                                                                      \
-                eb_aom_filter_block1d16_##dir##2_##avg##opt(                                       \
+                svt_aom_filter_block1d16_##dir##2_##avg##opt(                                      \
                     src, src_stride, dst, dst_stride, h, filter);                                  \
                 src += 16;                                                                         \
                 dst += 16;                                                                         \
                 w -= 16;                                                                           \
             }                                                                                      \
             while (w >= 8) {                                                                       \
-                eb_aom_filter_block1d8_##dir##2_##avg##opt(                                        \
+                svt_aom_filter_block1d8_##dir##2_##avg##opt(                                       \
                     src, src_stride, dst, dst_stride, h, filter);                                  \
                 src += 8;                                                                          \
                 dst += 8;                                                                          \
                 w -= 8;                                                                            \
             }                                                                                      \
             while (w >= 4) {                                                                       \
-                eb_aom_filter_block1d4_##dir##2_##avg##opt(                                        \
+                svt_aom_filter_block1d4_##dir##2_##avg##opt(                                       \
                     src, src_stride, dst, dst_stride, h, filter);                                  \
                 src += 4;                                                                          \
                 dst += 4;                                                                          \
@@ -163,7 +163,7 @@ Filter81dFunction eb_aom_filter_block1d4_h2_ssse3;
             }                                                                                      \
         }                                                                                          \
         if (w) {                                                                                   \
-            eb_aom_convolve8_##name##_c(                                                           \
+            svt_aom_convolve8_##name##_c(                                                          \
                 src, src_stride, dst, dst_stride, filter_x, x_step_q4, filter_y, y_step_q4, w, h); \
         }                                                                                          \
     }
@@ -217,9 +217,9 @@ static INLINE void xx_store2_mi128(const uint8_t *output_ptr, const ptrdiff_t st
     _mm_storeu_si128((__m128i *)(output_ptr + stride), _mm256_extractf128_si256(*a, 1));
 }
 
-static void eb_aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                        uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
+                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, first_filters, src_reg32b1, src_reg_filt32b1_1;
     unsigned int i;
@@ -293,9 +293,9 @@ static void eb_aom_filter_block1d4_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src
     }
 }
 
-static void eb_aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                        uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
+                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, filt2_reg;
     __m256i      first_filters, second_filters;
@@ -393,9 +393,9 @@ static void eb_aom_filter_block1d4_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src
     }
 }
 
-static void eb_aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                        uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
+                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt2_reg, filt3_reg;
     __m256i      second_filters, third_filters;
@@ -484,9 +484,9 @@ static void eb_aom_filter_block1d8_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src
     }
 }
 
-static void eb_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                        uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
+                                            uint8_t *output_ptr, ptrdiff_t output_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, filt2_reg, filt3_reg, filt4_reg;
     __m256i      first_filters, second_filters, third_filters, forth_filters;
@@ -610,9 +610,9 @@ static void eb_aom_filter_block1d8_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src
     }
 }
 
-static void eb_aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                         uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                         uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
+                                             uint8_t *output_ptr, ptrdiff_t output_pitch,
+                                             uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt2_reg, filt3_reg;
     __m256i      second_filters, third_filters;
@@ -723,9 +723,9 @@ static void eb_aom_filter_block1d16_h4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void eb_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
-                                         uint8_t *output_ptr, ptrdiff_t output_pitch,
-                                         uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pixels_per_line,
+                                             uint8_t *output_ptr, ptrdiff_t output_pitch,
+                                             uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32, filt1_reg, filt2_reg, filt3_reg, filt4_reg;
     __m256i      first_filters, second_filters, third_filters, forth_filters;
@@ -908,9 +908,9 @@ static void eb_aom_filter_block1d16_h8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void eb_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                        uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      filters_reg32, add_filter_reg32;
     __m256i      src_reg23, src_reg_4x, src_reg_34, src_reg_5x, src_reg_45, src_reg_6x, src_reg_56;
@@ -992,9 +992,9 @@ static void eb_aom_filter_block1d8_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src
     }
 }
 
-static void eb_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                        uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32;
     __m256i      src_reg32b1, src_reg_32b2, src_reg_32b3, src_reg_32b4, src_reg_32b5;
@@ -1138,9 +1138,9 @@ static void eb_aom_filter_block1d8_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src
     }
 }
 
-static void eb_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                         uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                         uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                             uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      filters_reg32, add_filter_reg32;
     __m256i      src_reg23, src_reg_4x, src_reg_34, src_reg_5x, src_reg_45, src_reg_6x, src_reg_56;
@@ -1234,9 +1234,9 @@ static void eb_aom_filter_block1d16_v4_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void eb_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                         uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                         uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                             uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                             uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      add_filter_reg32;
     __m256i      src_reg32b1, src_reg_32b2, src_reg_32b3, src_reg_32b4, src_reg_32b5;
@@ -1419,9 +1419,9 @@ static void eb_aom_filter_block1d16_v8_avx2(const uint8_t *src_ptr, ptrdiff_t sr
     }
 }
 
-static void eb_aom_filter_block1d4_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
-                                        uint8_t *output_ptr, ptrdiff_t out_pitch,
-                                        uint32_t output_height, const int16_t *filter) {
+static void svt_aom_filter_block1d4_v4_avx2(const uint8_t *src_ptr, ptrdiff_t src_pitch,
+                                            uint8_t *output_ptr, ptrdiff_t out_pitch,
+                                            uint32_t output_height, const int16_t *filter) {
     __m128i      filters_reg;
     __m256i      filters_reg32, add_filter_reg32;
     __m256i      src_reg23, src_reg_4x, src_reg_34, src_reg_5x, src_reg_45, src_reg_6x, src_reg_56;

@@ -73,7 +73,7 @@ More detailed steps involved in the DV search are listed below:
 1.  Set the reference frame to ```INTRA_FRAME```.
 
 2.  Get nearest and near MVs from MV stack for the specified reference
-    frame. See (```eb_av1_find_best_ref_mvs_from_stack```)
+    frame. See (```svt_av1_find_best_ref_mvs_from_stack```)
 
 3.  Set ```dv_ref``` to either nearest or near.
 
@@ -89,10 +89,10 @@ More detailed steps involved in the DV search are listed below:
     be generated.
 
 6.  Limits on mv sizes are computed and refined
-    (```eb_av1_set_mv_search_range```).
+    (```svt_av1_set_mv_search_range```).
 
 7.  Perform full-pel diamond search followed by hash search
-    (```eb_av1_full_pixel_search```).
+    (```svt_av1_full_pixel_search```).
 
 8.  Make sure returned mv is within the specified mv bounds
     (```mv_check_bounds```)

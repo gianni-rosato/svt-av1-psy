@@ -19,8 +19,9 @@
 #include "EbDecMemInit.h"
 
 
-void eb_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
-                                   uint8_t *dst, int dst_stride, int rows, int sub_x, int bd, EbBool is_16bit_pipeline);
+void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
+                                    uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
+                                    EbBool is_16bit_pipeline);
 
 void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *frm_hdr,
                                             SeqHeader *seq_hdr, EbPictureBufferDesc *src,
@@ -36,15 +37,15 @@ void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *f
         derive_blk_pointers(src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
         derive_blk_pointers(dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
 
-        eb_av1_upscale_normative_rows(cm,
-                                      (const uint8_t *)src_buf,
-                                      src_stride,
-                                      dst_buf,
-                                      dst_stride,
-                                      frm_hdr->frame_size.frame_height >> sub_x,
-                                      sub_x,
-                                      src->bit_depth,
-                                      dst->is_16bit_pipeline);
+        svt_av1_upscale_normative_rows(cm,
+                                       (const uint8_t *)src_buf,
+                                       src_stride,
+                                       dst_buf,
+                                       dst_stride,
+                                       frm_hdr->frame_size.frame_height >> sub_x,
+                                       sub_x,
+                                       src->bit_depth,
+                                       dst->is_16bit_pipeline);
     }
 }
 
@@ -122,9 +123,9 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
 
         int height = (recon_picture_src->height >> sub_y);
         for (int row = 0; row < height; ++row) {
-            eb_memcpy(dst_buf,
-                    src_buf,
-                   (recon_picture_src->width >> sub_x) * sizeof(*src_buf) << use_highbd);
+            svt_memcpy(dst_buf,
+                       src_buf,
+                       (recon_picture_src->width >> sub_x) * sizeof(*src_buf) << use_highbd);
             src_buf += src_stride << use_highbd;
             dst_buf += dst_stride << use_highbd;
         }

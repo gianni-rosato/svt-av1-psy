@@ -82,9 +82,9 @@ uint8_t get_filter_level_delta_lf(FrameHeader* frm_hdr,
 
 // Update the loop filter for the current frame.
 // This should be called before loop_filter_rows(),
-// eb_av1_loop_filter_frame() calls this function directly.
-void eb_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,
-                                   int32_t plane_end) {
+// svt_av1_loop_filter_frame() calls this function directly.
+void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,
+                                    int32_t plane_end) {
     int32_t filt_lvl[MAX_MB_PLANE], filt_lvl_r[MAX_MB_PLANE];
     int32_t plane;
     int32_t seg_id;

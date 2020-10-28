@@ -53,7 +53,7 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
 }
 
 #define VAR(W, H)                                                                        \
-    uint32_t eb_aom_variance##W##x##H##_c(                                               \
+    uint32_t svt_aom_variance##W##x##H##_c(                                              \
         const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, uint32_t *sse) { \
         int sum;                                                                         \
         variance_c(a, a_stride, b, b_stride, W, H, sse, &sum);                           \

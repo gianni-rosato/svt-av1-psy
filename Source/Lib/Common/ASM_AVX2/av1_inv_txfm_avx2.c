@@ -1877,15 +1877,15 @@ static INLINE void lowbd_inv_txfm2d_add_universe_avx2(const int32_t *input, uint
             input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
         break;
     default:
-        eb_av1_lowbd_inv_txfm2d_add_ssse3(
+        svt_av1_lowbd_inv_txfm2d_add_ssse3(
             input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
         break;
     }
 }
 
-void eb_av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input, uint8_t *output_r, int32_t stride_r,
-                                      uint8_t *output_w, int32_t stride_w, TxType tx_type,
-                                      TxSize tx_size, int32_t eob) {
+void svt_av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input, uint8_t *output_r, int32_t stride_r,
+                                       uint8_t *output_w, int32_t stride_w, TxType tx_type,
+                                       TxSize tx_size, int32_t eob) {
     switch (tx_size) {
     case TX_4X4:
     case TX_8X8:
@@ -1897,7 +1897,7 @@ void eb_av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input, uint8_t *output_r, i
     case TX_16X4:
     case TX_8X32:
     case TX_32X8:
-        eb_av1_lowbd_inv_txfm2d_add_ssse3(
+        svt_av1_lowbd_inv_txfm2d_add_ssse3(
             input, output_r, stride_r, output_w, stride_w, tx_type, tx_size, eob);
         break;
     case TX_16X16:
@@ -1916,18 +1916,18 @@ void eb_av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input, uint8_t *output_r, i
     }
 }
 
-void eb_av1_inv_txfm_add_avx2(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r,
-                              uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param) {
+void svt_av1_inv_txfm_add_avx2(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r,
+                               uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param) {
     const TxType tx_type = txfm_param->tx_type;
     if (!txfm_param->lossless)
-        eb_av1_lowbd_inv_txfm2d_add_avx2(dqcoeff,
-                                         dst_r,
-                                         stride_r,
-                                         dst_w,
-                                         stride_w,
-                                         tx_type,
-                                         txfm_param->tx_size,
-                                         txfm_param->eob);
+        svt_av1_lowbd_inv_txfm2d_add_avx2(dqcoeff,
+                                          dst_r,
+                                          stride_r,
+                                          dst_w,
+                                          stride_w,
+                                          tx_type,
+                                          txfm_param->tx_size,
+                                          txfm_param->eob);
     else
-        eb_av1_inv_txfm_add_c(dqcoeff, dst_r, stride_r, dst_w, stride_w, txfm_param);
+        svt_av1_inv_txfm_add_c(dqcoeff, dst_r, stride_r, dst_w, stride_w, txfm_param);
 }

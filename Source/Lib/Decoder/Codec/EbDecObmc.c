@@ -39,11 +39,11 @@ void av1_modify_neighbor_predictor_for_obmc(BlockModeInfo *mbmi) {
     return;
 }
 
-int eb_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int32_t sub_x, int32_t sub_y);
+int svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int32_t sub_x, int32_t sub_y);
 
 // obmc_mask_N[overlap_position]
 
-const uint8_t *eb_av1_get_obmc_mask(int length);
+const uint8_t *svt_av1_get_obmc_mask(int length);
 
 static INLINE void build_obmc_inter_pred_above(
     EbDecHandle *dec_handle, PartitionInfo *pi, BlockSize bsize, int rel_mi_col,
@@ -65,7 +65,7 @@ static INLINE void build_obmc_inter_pred_above(
         const int bw    = (above_mi_width * MI_SIZE) >> sub_x;
         const int bh    = overlap >> sub_y;
 
-        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
 
         if (is_hbd) {
             above_buf =
@@ -86,30 +86,30 @@ static INLINE void build_obmc_inter_pred_above(
             tmp_recon_stride = curr_recon_stride[plane];
         }
 
-        const uint8_t *const mask = eb_av1_get_obmc_mask(bh);
+        const uint8_t *const mask = svt_av1_get_obmc_mask(bh);
 
         if (is_hbd)
-            eb_aom_highbd_blend_a64_vmask_8bit((tmp_recon_buf),
-                                               tmp_recon_stride,
-                                               (tmp_recon_buf),
-                                               tmp_recon_stride,
-                                               (above_buf),
-                                               above_stride,
-                                               mask,
-                                               bw,
-                                               bh,
-                                               recon_picture_buf->bit_depth);
+            svt_aom_highbd_blend_a64_vmask_8bit((tmp_recon_buf),
+                                                tmp_recon_stride,
+                                                (tmp_recon_buf),
+                                                tmp_recon_stride,
+                                                (above_buf),
+                                                above_stride,
+                                                mask,
+                                                bw,
+                                                bh,
+                                                recon_picture_buf->bit_depth);
 
         else
-            eb_aom_blend_a64_vmask(tmp_recon_buf,
-                                   tmp_recon_stride,
-                                   tmp_recon_buf,
-                                   tmp_recon_stride,
-                                   above_buf,
-                                   above_stride,
-                                   mask,
-                                   bw,
-                                   bh);
+            svt_aom_blend_a64_vmask(tmp_recon_buf,
+                                    tmp_recon_stride,
+                                    tmp_recon_buf,
+                                    tmp_recon_stride,
+                                    above_buf,
+                                    above_stride,
+                                    mask,
+                                    bw,
+                                    bh);
     }
 }
 
@@ -133,7 +133,7 @@ static INLINE void build_obmc_inter_pred_left(
         const int bw    = overlap >> sub_x;
         const int bh    = (left_mi_height * MI_SIZE) >> sub_y;
 
-        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
 
         if (is_hbd) {
             left_buf    = (uint8_t *)((uint16_t *)left_tmp_buf[plane] +
@@ -158,29 +158,29 @@ static INLINE void build_obmc_inter_pred_left(
             tmp_recon_stride = curr_recon_stride[plane];
         }
 
-        const uint8_t *const mask = eb_av1_get_obmc_mask(bw);
+        const uint8_t *const mask = svt_av1_get_obmc_mask(bw);
 
         if (is_hbd)
-            eb_aom_highbd_blend_a64_hmask_8bit((uint8_t *)tmp_recon_buf,
-                                               tmp_recon_stride,
-                                               (uint8_t *)tmp_recon_buf,
-                                               tmp_recon_stride,
-                                               (uint8_t *)left_buf,
-                                               left_stride,
-                                               mask,
-                                               bw,
-                                               bh,
-                                               recon_picture_buf->bit_depth);
+            svt_aom_highbd_blend_a64_hmask_8bit((uint8_t *)tmp_recon_buf,
+                                                tmp_recon_stride,
+                                                (uint8_t *)tmp_recon_buf,
+                                                tmp_recon_stride,
+                                                (uint8_t *)left_buf,
+                                                left_stride,
+                                                mask,
+                                                bw,
+                                                bh,
+                                                recon_picture_buf->bit_depth);
         else
-            eb_aom_blend_a64_hmask(tmp_recon_buf,
-                                   tmp_recon_stride,
-                                   tmp_recon_buf,
-                                   tmp_recon_stride,
-                                   left_buf,
-                                   left_stride,
-                                   mask,
-                                   bw,
-                                   bh);
+            svt_aom_blend_a64_hmask(tmp_recon_buf,
+                                    tmp_recon_stride,
+                                    tmp_recon_buf,
+                                    tmp_recon_stride,
+                                    left_buf,
+                                    left_stride,
+                                    mask,
+                                    bw,
+                                    bh);
     }
 }
 
@@ -199,7 +199,7 @@ static INLINE void dec_build_prediction_by_above_pred(
         return;
     BlockModeInfo *backup_pi_mi = backup_pi->mi;
     backup_pi->mi               = bakup_abv_mbmi;
-    eb_memcpy(bakup_abv_mbmi, above_mbmi, sizeof(*bakup_abv_mbmi));
+    svt_memcpy(bakup_abv_mbmi, above_mbmi, sizeof(*bakup_abv_mbmi));
     av1_modify_neighbor_predictor_for_obmc(bakup_abv_mbmi);
 
     const int num_refs = 1 + has_second_ref(bakup_abv_mbmi);
@@ -238,7 +238,7 @@ static INLINE void dec_build_prediction_by_above_pred(
             tmp_recon_stride = tmp_stride[plane];
         }
 
-        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
         svtav1_predict_inter_block_plane(dec_mod_ctx,
                                          dec_handle,
                                          backup_pi,
@@ -363,7 +363,7 @@ static INLINE void dec_build_prediction_by_left_pred(
         return;
     BlockModeInfo *backup_pi_mi = backup_pi->mi;
     backup_pi->mi               = bakup_left_mbmi;
-    eb_memcpy(bakup_left_mbmi, left_mbmi, sizeof(*bakup_left_mbmi));
+    svt_memcpy(bakup_left_mbmi, left_mbmi, sizeof(*bakup_left_mbmi));
     av1_modify_neighbor_predictor_for_obmc(bakup_left_mbmi);
 
     const int num_refs = 1 + has_second_ref(bakup_left_mbmi);
@@ -402,7 +402,7 @@ static INLINE void dec_build_prediction_by_left_pred(
             tmp_recon_stride = tmp_stride[plane];
         }
 
-        if (eb_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
         // dec_build_inter_predictors(ctxt->cm, pi, j, &backup_mbmi, 1, bw, bh, mi_x,
         //                            mi_y);
         svtav1_predict_inter_block_plane(dec_mod_ctx,

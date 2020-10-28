@@ -136,7 +136,7 @@ EbErrorType warped_motion_prediction(
         EbBool                                perform_chroma,
         EbBool                                is_encode_pass);
 
-const uint8_t *eb_av1_get_obmc_mask(int length);
+const uint8_t *svt_av1_get_obmc_mask(int length);
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 

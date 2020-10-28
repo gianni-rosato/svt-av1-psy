@@ -62,7 +62,7 @@ static EbErrorType realloc_stats_out(FirstPassStatsOut* out, uint64_t frame_numb
 static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
     FirstPassStatsOut* stats_out = &scs_ptr->encode_context_ptr->stats_out;
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+    svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
     if (realloc_stats_out(stats_out, frame_number) != EB_ErrorNone) {
         SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
     } else {
@@ -105,7 +105,7 @@ static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS
         fclose(fpfile);
     }
 #endif
-    eb_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+    svt_release_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
 }
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->frame                    = 0.0;
@@ -679,7 +679,7 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
         uint16_t *buf = &((uint16_t *)input_picture_ptr->buffer_y)[input_origin_index];
         for (int r8 = 0; r8 < 2; ++r8) {
             for (int c8 = 0; c8 < 2; ++c8) {
-                stats->frame_avg_wavelet_energy += eb_av1_haar_ac_sad_8x8_uint8_input(
+                stats->frame_avg_wavelet_energy += svt_av1_haar_ac_sad_8x8_uint8_input(
                     CONVERT_TO_BYTEPTR(buf) + c8 * 8 + r8 * 8 * stride, stride, hbd);
             }
         }
@@ -688,7 +688,7 @@ static int firstpass_intra_prediction(PictureControlSet *pcs_ptr,
         for (int r8 = 0; r8 < 2; ++r8) {
             for (int c8 = 0; c8 < 2; ++c8) {
                 stats->frame_avg_wavelet_energy +=
-                    eb_av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
+                    svt_av1_haar_ac_sad_8x8_uint8_input(buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
             }
         }
     }
@@ -1450,7 +1450,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 
     bestcandidate_buffers[0] = candidate_buffer;
-    uint8_t sq_index         = eb_log2f(context_ptr->blk_geom->sq_size) - 2;
+    uint8_t sq_index         = svt_log2f(context_ptr->blk_geom->sq_size) - 2;
     if (context_ptr->blk_geom->shape == PART_N) {
         context_ptr->parent_sq_type[sq_index] = candidate_buffer->candidate_ptr->type;
 
@@ -1492,7 +1492,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                     ref_pic->buffer_y + ref_pic->origin_x + context_ptr->blk_origin_x +
                     (ref_pic->origin_y + context_ptr->blk_origin_y) * ref_pic->stride_y;
                 for (uint32_t j = 0; j < context_ptr->blk_geom->bheight; j++)
-                    eb_memcpy(dst_ptr + j * ref_pic->stride_y,
+                    svt_memcpy(dst_ptr + j * ref_pic->stride_y,
                         src_ptr + j * input_picture_ptr->stride_y,
                         context_ptr->blk_geom->bwidth * sizeof(uint8_t));
             }
@@ -1513,7 +1513,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
             uint16_t *dst = &(((uint16_t *)ref_pic->buffer_y)[dst_block_index]);
 
             for (int i = 0; i < context_ptr->blk_geom->bheight; i++) {
-                eb_memcpy(dst, src, context_ptr->blk_geom->bwidth * sizeof(uint16_t));
+                svt_memcpy(dst, src, context_ptr->blk_geom->bwidth * sizeof(uint16_t));
                 src += input_picture->stride_y;
                 dst += ref_pic->stride_y;
             }
@@ -1580,7 +1580,7 @@ extern void first_pass_md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionC
                     ref_pic->buffer_y + ref_pic->origin_x + context_ptr->blk_origin_x +
                     (ref_pic->origin_y + context_ptr->blk_origin_y) * ref_pic->stride_y;
                 for (j = 0; j < context_ptr->blk_geom->bheight; j++)
-                    eb_memcpy(dst_ptr + j * ref_pic->stride_y,
+                    svt_memcpy(dst_ptr + j * ref_pic->stride_y,
                         src_ptr + j * recon_ptr->stride_y,
                         context_ptr->blk_geom->bwidth * sizeof(uint8_t));
             }

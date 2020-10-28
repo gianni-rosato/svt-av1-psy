@@ -27,7 +27,7 @@ typedef struct EbTransQuantBuffers {
     EbPictureBufferDesc *txb_quant_coeff_n2x_n2_ptr;
 } EbTransQuantBuffers;
 
-extern EbErrorType eb_trans_quant_buffers_ctor(EbTransQuantBuffers *trans_quant_buffers_ptr, uint8_t sb_size);
+extern EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers *trans_quant_buffers_ptr, uint8_t sb_size);
 
 #ifdef __cplusplus
 }

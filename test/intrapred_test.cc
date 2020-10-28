@@ -116,20 +116,20 @@ class AV1IntraPredTest : public ::testing::TestWithParam<TupleType> {
         stride_ = 64 * 3;
         mask_ = (1 << bd_) - 1;
         above_row_data_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, 3 * 64 * sizeof(Sample)));
+            svt_aom_memalign(32, 3 * 64 * sizeof(Sample)));
         above_row_ = above_row_data_ + 16;
         left_col_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, 2 * 64 * sizeof(Sample)));
+            svt_aom_memalign(32, 2 * 64 * sizeof(Sample)));
         dst_tst_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
+            svt_aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
         dst_ref_ = reinterpret_cast<Sample *>(
-            eb_aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
+            svt_aom_memalign(32, 3 * 64 * 64 * sizeof(Sample)));
     }
     void TearDown() override {
-        eb_aom_free(above_row_data_);
-        eb_aom_free(left_col_);
-        eb_aom_free(dst_tst_);
-        eb_aom_free(dst_ref_);
+        svt_aom_free(above_row_data_);
+        svt_aom_free(left_col_);
+        svt_aom_free(dst_tst_);
+        svt_aom_free(dst_ref_);
     }
 
     virtual void Predict() = 0;
@@ -180,11 +180,11 @@ TEST_P(LowbdIntraPredTest, match_test) {
 
 // -----------------------------------------------------------------------------
 // High Bit Depth Tests
-#define hbd_entry(type, width, height, opt)                                  \
-    make_tuple(&eb_aom_highbd_##type##_predictor_##width##x##height##_##opt, \
-               &eb_aom_highbd_##type##_predictor_##width##x##height##_c,     \
-               width,                                                        \
-               height,                                                       \
+#define hbd_entry(type, width, height, opt)                                   \
+    make_tuple(&svt_aom_highbd_##type##_predictor_##width##x##height##_##opt, \
+               &svt_aom_highbd_##type##_predictor_##width##x##height##_c,     \
+               width,                                                         \
+               height,                                                        \
                10)
 
 const HBD_PARAMS HighbdIntraPredTestVectorAsm[] = {
@@ -290,11 +290,11 @@ INSTANTIATE_TEST_CASE_P(intrapred, HighbdIntraPredTest,
 
 // ---------------------------------------------------------------------------
 // Low Bit Depth Tests
-#define lbd_entry(type, width, height, opt)                           \
-    LBD_PARAMS(&eb_aom_##type##_predictor_##width##x##height##_##opt, \
-               &eb_aom_##type##_predictor_##width##x##height##_c,     \
-               width,                                                 \
-               height,                                                \
+#define lbd_entry(type, width, height, opt)                            \
+    LBD_PARAMS(&svt_aom_##type##_predictor_##width##x##height##_##opt, \
+               &svt_aom_##type##_predictor_##width##x##height##_c,     \
+               width,                                                  \
+               height,                                                 \
                8)
 
 const LBD_PARAMS LowbdIntraPredTestVectorAsm[] = {

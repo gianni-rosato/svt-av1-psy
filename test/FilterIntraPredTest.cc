@@ -14,7 +14,7 @@
  * @file FilterIntraPredTest.cc
  *
  * @brief Unit test for filter intra predictor functions:
- * - eb_av1_filter_intra_predictor_sse4_1
+ * - svt_av1_filter_intra_predictor_sse4_1
  *
  * @author Cidana-Edmond
  *
@@ -46,16 +46,16 @@ class FilterIntraPredTest : public ::testing::TestWithParam<PredParams> {
           tx_size_(TEST_GET_PARAM(1)),
           rnd_(8, false) {
         input_ = reinterpret_cast<uint8_t*>(
-            eb_aom_memalign(32, 2 * MAX_TX_SIZE + 1));
+            svt_aom_memalign(32, 2 * MAX_TX_SIZE + 1));
         pred_ref_ =
-            reinterpret_cast<uint8_t*>(eb_aom_memalign(32, MAX_TX_SQUARE));
+            reinterpret_cast<uint8_t*>(svt_aom_memalign(32, MAX_TX_SQUARE));
         pred_tst_ =
-            reinterpret_cast<uint8_t*>(eb_aom_memalign(32, MAX_TX_SQUARE));
+            reinterpret_cast<uint8_t*>(svt_aom_memalign(32, MAX_TX_SQUARE));
     }
     virtual ~FilterIntraPredTest() {
-        eb_aom_free(input_);
-        eb_aom_free(pred_ref_);
-        eb_aom_free(pred_tst_);
+        svt_aom_free(input_);
+        svt_aom_free(pred_ref_);
+        svt_aom_free(pred_tst_);
         aom_clear_system_state();
     }
 
@@ -66,9 +66,9 @@ class FilterIntraPredTest : public ::testing::TestWithParam<PredParams> {
         const uint8_t* above = input_ + MAX_TX_SIZE;
         for (size_t i = 0; i < test_num; i++) {
             prepare_data();
-            eb_av1_filter_intra_predictor_c(
+            svt_av1_filter_intra_predictor_c(
                 pred_ref_, stride, tx_size_, &above[1], left, pred_mode_);
-            eb_av1_filter_intra_predictor_sse4_1(
+            svt_av1_filter_intra_predictor_sse4_1(
                 pred_tst_, stride, tx_size_, &above[1], left, pred_mode_);
             check_output(i);
         }

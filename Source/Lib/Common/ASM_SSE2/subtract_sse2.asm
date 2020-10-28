@@ -15,10 +15,10 @@
 
 SECTION .text
 
-; void eb_aom_subtract_block(int rows, int cols,
-;                         int16_t *diff, ptrdiff_t diff_stride,
-;                         const uint8_t *src, ptrdiff_t src_stride,
-;                         const uint8_t *pred, ptrdiff_t pred_stride)
+; void svt_aom_subtract_block(int rows, int cols,
+;                             int16_t *diff, ptrdiff_t diff_stride,
+;                             const uint8_t *src, ptrdiff_t src_stride,
+;                             const uint8_t *pred, ptrdiff_t pred_stride)
 
 INIT_XMM sse2
 cglobal subtract_block, 7, 7, 8, \

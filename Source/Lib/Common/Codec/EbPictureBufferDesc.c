@@ -14,7 +14,7 @@
 
 #include "EbPictureBufferDesc.h"
 
-static void eb_picture_buffer_desc_dctor(EbPtr p) {
+static void svt_picture_buffer_desc_dctor(EbPtr p) {
     EbPictureBufferDesc *obj = (EbPictureBufferDesc *)p;
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
@@ -31,13 +31,13 @@ static void eb_picture_buffer_desc_dctor(EbPtr p) {
 }
 
 /*****************************************
- * eb_picture_buffer_desc_ctor
+ * svt_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
  *  values that are fixed for the life of
  *  the descriptor.
  *****************************************/
-EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr,
-                                        const EbPtr          object_init_data_ptr) {
+EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr,
+                                         const EbPtr          object_init_data_ptr) {
     const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         (EbPictureBufferDescInitData *)object_init_data_ptr;
 
@@ -48,7 +48,7 @@ EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPt
     const uint16_t subsampling_x =
         (picture_buffer_desc_init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
 
-    pictureBufferDescPtr->dctor = eb_picture_buffer_desc_dctor;
+    pictureBufferDescPtr->dctor = svt_picture_buffer_desc_dctor;
 
     if (picture_buffer_desc_init_data_ptr->bit_depth > EB_8BIT &&
         picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT &&
@@ -124,7 +124,7 @@ EbErrorType eb_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPt
     return EB_ErrorNone;
 }
 
-static void eb_recon_picture_buffer_desc_dctor(EbPtr p) {
+static void svt_recon_picture_buffer_desc_dctor(EbPtr p) {
     EbPictureBufferDesc *obj = (EbPictureBufferDesc *)p;
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
@@ -133,13 +133,13 @@ static void eb_recon_picture_buffer_desc_dctor(EbPtr p) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_cr);
 }
 /*****************************************
- * eb_recon_picture_buffer_desc_ctor
+ * svt_recon_picture_buffer_desc_ctor
  *  Initializes the Buffer Descriptor's
  *  values that are fixed for the life of
  *  the descriptor.
  *****************************************/
-EbErrorType eb_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr,
-                                              EbPtr                object_init_data_ptr) {
+EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr,
+                                               EbPtr                object_init_data_ptr) {
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         (EbPictureBufferDescInitData *)object_init_data_ptr;
     const uint16_t subsampling_x =
@@ -147,7 +147,7 @@ EbErrorType eb_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBuffer
 
     uint32_t bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_8BIT) ? 1 : 2;
 
-    pictureBufferDescPtr->dctor = eb_recon_picture_buffer_desc_dctor;
+    pictureBufferDescPtr->dctor = svt_recon_picture_buffer_desc_dctor;
     // Set the Picture Buffer Static variables
     pictureBufferDescPtr->max_width    = picture_buffer_desc_init_data_ptr->max_width;
     pictureBufferDescPtr->max_height   = picture_buffer_desc_init_data_ptr->max_height;
@@ -319,15 +319,15 @@ void link_eb_to_aom_buffer_desc(EbPictureBufferDesc *picBuffDsc, Yv12BufferConfi
     }
 }
 
-void *eb_aom_memalign(size_t align, size_t size);
-void  eb_aom_free(void *memblk);
+void *svt_aom_memalign(size_t align, size_t size);
+void  svt_aom_free(void *memblk);
 
 #define yv12_align_addr(addr, align) (void *)(((size_t)(addr) + ((align)-1)) & (size_t) - (align))
 
-int32_t eb_aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
-                                    int32_t ss_x, int32_t ss_y, int32_t use_highbitdepth,
-                                    int32_t border, int32_t byte_alignment, AomCodecFrameBuffer *fb,
-                                    AomGetFrameBufferCbFn cb, void *cb_priv) {
+int32_t svt_aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_t height,
+                                     int32_t ss_x, int32_t ss_y, int32_t use_highbitdepth,
+                                     int32_t border, int32_t byte_alignment, AomCodecFrameBuffer *fb,
+                                     AomGetFrameBufferCbFn cb, void *cb_priv) {
     if (ybf) {
         const int32_t  aom_byte_align = (byte_alignment == 0) ? 1 : byte_alignment;
         const int32_t  aligned_width  = (width + 7) & ~7;
@@ -428,8 +428,8 @@ int32_t eb_aom_realloc_frame_buffer(Yv12BufferConfig *ybf, int32_t width, int32_
         ybf->use_external_refernce_buffers = 0;
 
         //if (use_highbitdepth) {
-        //    if (ybf->y_buffer_8bit) eb_aom_free(ybf->y_buffer_8bit);
-        //    ybf->y_buffer_8bit = (uint8_t *)eb_aom_memalign(32, (size_t)yplane_size);
+        //    if (ybf->y_buffer_8bit) svt_aom_free(ybf->y_buffer_8bit);
+        //    ybf->y_buffer_8bit = (uint8_t *)svt_aom_memalign(32, (size_t)yplane_size);
         //    if (!ybf->y_buffer_8bit) return -1;
         //}
         //else {

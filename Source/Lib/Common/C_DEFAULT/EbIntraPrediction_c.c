@@ -11,7 +11,7 @@
 
 //#include "EbUtility.h"
 #include "EbDefinitions.h"
-void eb_av1_upsample_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t bd) {
+void svt_av1_upsample_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t bd) {
     // interpolate half-sample positions
     assert(sz <= MAX_UPSAMPLE_SZ);
 
@@ -34,7 +34,7 @@ void eb_av1_upsample_intra_edge_high_c(uint16_t *p, int32_t sz, int32_t bd) {
     }
 }
 
-void eb_av1_upsample_intra_edge_c(uint8_t *p, int32_t sz) {
+void svt_av1_upsample_intra_edge_c(uint8_t *p, int32_t sz) {
     // interpolate half-sample positions
     assert(sz <= MAX_UPSAMPLE_SZ);
 
@@ -57,10 +57,10 @@ void eb_av1_upsample_intra_edge_c(uint8_t *p, int32_t sz) {
 }
 
 // Directional prediction, zone 3: 180 < angle < 270
-void eb_av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int32_t bw,
-                                      int32_t bh, const uint16_t *above,
-                                      const uint16_t *left, int32_t upsample_left,
-                                      int32_t dx, int32_t dy, int32_t bd) {
+void svt_av1_highbd_dr_prediction_z3_c(uint16_t *dst, ptrdiff_t stride, int32_t bw,
+                                       int32_t bh, const uint16_t *above,
+                                       const uint16_t *left, int32_t upsample_left,
+                                       int32_t dx, int32_t dy, int32_t bd) {
     (void)above;
     (void)dx;
     (void)bd;

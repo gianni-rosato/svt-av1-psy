@@ -16,7 +16,7 @@
 
 SECTION .text
 
-;uint32_t eb_aom_highbd_calc16x16var_sse2
+;uint32_t svt_aom_highbd_calc16x16var_sse2
 ;(
 ;    uint8_t   *  src_ptr,
 ;    int32_t             source_stride,
@@ -27,8 +27,8 @@ SECTION .text
 ;)
 
 
-global sym(eb_aom_highbd_calc16x16var_sse2) PRIVATE
-sym(eb_aom_highbd_calc16x16var_sse2):
+global sym(svt_aom_highbd_calc16x16var_sse2) PRIVATE
+sym(svt_aom_highbd_calc16x16var_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -171,7 +171,7 @@ sym(eb_aom_highbd_calc16x16var_sse2):
     ret
 
 
-;uint32_t eb_aom_highbd_calc8x8var_sse2
+;uint32_t svt_aom_highbd_calc8x8var_sse2
 ;(
 ;    uint8_t   *  src_ptr,
 ;    int32_t             source_stride,
@@ -180,8 +180,8 @@ sym(eb_aom_highbd_calc16x16var_sse2):
 ;    uint32_t    *  SSE,
 ;    int32_t             *  Sum
 ;)
-global sym(eb_aom_highbd_calc8x8var_sse2) PRIVATE
-sym(eb_aom_highbd_calc8x8var_sse2):
+global sym(svt_aom_highbd_calc8x8var_sse2) PRIVATE
+sym(svt_aom_highbd_calc8x8var_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6
@@ -320,7 +320,7 @@ sym(eb_aom_highbd_calc8x8var_sse2):
     ret
 
 
-;uint32_t eb_aom_highbd_calc4x4var_sse2
+;uint32_t svt_aom_highbd_calc4x4var_sse2
 ;(
 ;    uint8_t   *  src_ptr,
 ;    int32_t             source_stride,
@@ -329,8 +329,8 @@ sym(eb_aom_highbd_calc8x8var_sse2):
 ;    uint32_t    *  SSE,
 ;    int32_t             *  Sum
 ;)
-global sym(eb_aom_highbd_calc4x4var_sse2) PRIVATE
-sym(eb_aom_highbd_calc4x4var_sse2):
+global sym(svt_aom_highbd_calc4x4var_sse2) PRIVATE
+sym(svt_aom_highbd_calc4x4var_sse2):
     push        rbp
     mov         rbp, rsp
     SHADOW_ARGS_TO_STACK 6

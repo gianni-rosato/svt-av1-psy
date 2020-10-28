@@ -50,26 +50,26 @@ class av1_compute_stats_test
             memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
             memset(src, 0, sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (1 == idx) {
-            eb_buf_random_u8_to_255(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
-            eb_buf_random_u8_to_255(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+            svt_buf_random_u8_to_255(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+            svt_buf_random_u8_to_255(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (2 == idx) {
-            eb_buf_random_u8_to_255(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+            svt_buf_random_u8_to_255(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
             memset(src, 0, sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (3 == idx) {
             memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
-            eb_buf_random_u8_to_255(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+            svt_buf_random_u8_to_255(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (4 == idx) {
-            eb_buf_random_u8_to_0_or_255(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
-            eb_buf_random_u8_to_0_or_255(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+            svt_buf_random_u8_to_0_or_255(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+            svt_buf_random_u8_to_0_or_255(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else {
-            eb_buf_random_u8(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
-            eb_buf_random_u8(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+            svt_buf_random_u8(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+            svt_buf_random_u8(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         }
     }
 
     void init_output() {
-        eb_buf_random_s64(M_org, WIENER_WIN2);
-        eb_buf_random_s64(H_org, WIENER_WIN2 * WIENER_WIN2);
+        svt_buf_random_s64(M_org, WIENER_WIN2);
+        svt_buf_random_s64(H_org, WIENER_WIN2 * WIENER_WIN2);
         memcpy(M_opt, M_org, sizeof(*M_org) * WIENER_WIN2);
         memcpy(H_opt, H_org, sizeof(*H_org) * WIENER_WIN2 * WIENER_WIN2);
     }
@@ -85,9 +85,9 @@ class av1_compute_stats_test
         init_output();
 
         dgd_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         dgd = (uint8_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
                                 dgd_stride);
         src = (uint8_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
@@ -101,17 +101,17 @@ class av1_compute_stats_test
             uint8_t *const d = dgd + WIENER_WIN * dgd_stride;
             uint8_t *const s = src + WIENER_WIN * src_stride;
 
-            eb_av1_compute_stats_c(wiener_win,
-                                   d,
-                                   s,
-                                   0,
-                                   width,
-                                   0,
-                                   height,
-                                   dgd_stride,
-                                   src_stride,
-                                   M_org,
-                                   H_org);
+            svt_av1_compute_stats_c(wiener_win,
+                                    d,
+                                    s,
+                                    0,
+                                    width,
+                                    0,
+                                    height,
+                                    dgd_stride,
+                                    src_stride,
+                                    M_org,
+                                    H_org);
 
             func(wiener_win,
                  d,
@@ -142,9 +142,9 @@ class av1_compute_stats_test
 
         init_output();
         dgd_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         dgd = (uint8_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
                                 dgd_stride);
         src = (uint8_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
@@ -162,17 +162,17 @@ class av1_compute_stats_test
         svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
-            eb_av1_compute_stats_c(wiener_win,
-                                   d,
-                                   s,
-                                   h_start,
-                                   h_end,
-                                   v_start,
-                                   v_end,
-                                   dgd_stride,
-                                   src_stride,
-                                   M_org,
-                                   H_org);
+            svt_av1_compute_stats_c(wiener_win,
+                                    d,
+                                    s,
+                                    h_start,
+                                    h_end,
+                                    v_start,
+                                    v_end,
+                                    dgd_stride,
+                                    src_stride,
+                                    M_org,
+                                    H_org);
         }
 
         svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
@@ -205,11 +205,11 @@ class av1_compute_stats_test
         ASSERT_EQ(0, memcmp(H_org, H_opt, sizeof(H_org)));
 
         printf("Average Nanoseconds per Function Call\n");
-        printf("    eb_av1_compute_stats_c(%d)   : %6.2f\n",
+        printf("    svt_av1_compute_stats_c(%d)   : %6.2f\n",
                 wiener_win,
                 1000000 * time_c / num_loop);
         printf(
-            "    eb_av1_compute_stats_opt(%d) : %6.2f   (Comparison: "
+            "    svt_av1_compute_stats_opt(%d) : %6.2f   (Comparison: "
             "%5.2fx)\n",
             wiener_win,
             1000000 * time_o / num_loop,
@@ -228,7 +228,7 @@ TEST_P(av1_compute_stats_test, DISABLED_speed) {
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX2, av1_compute_stats_test,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(eb_av1_compute_stats_avx2),
+                       ::testing::Values(svt_av1_compute_stats_avx2),
                        ::testing::Range(0, 6),
                        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN,
                                          WIENER_WIN_3TAP)));
@@ -237,7 +237,7 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX512, av1_compute_stats_test,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(eb_av1_compute_stats_avx512),
+                       ::testing::Values(svt_av1_compute_stats_avx512),
                        ::testing::Range(0, 6),
                        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN,
                                          WIENER_WIN_3TAP)));
@@ -258,26 +258,26 @@ class av1_compute_stats_test_hbd
             memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
             memset(src, 0, sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (1 == idx) {
-            eb_buf_random_u16_to_bd(
+            svt_buf_random_u16_to_bd(
                 dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
-            eb_buf_random_u16_to_bd(
+            svt_buf_random_u16_to_bd(
                 src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
         } else if (2 == idx) {
-            eb_buf_random_u16_to_bd(
+            svt_buf_random_u16_to_bd(
                 dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
             memset(src, 0, sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (3 == idx) {
             memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
-            eb_buf_random_u16_to_bd(
+            svt_buf_random_u16_to_bd(
                 src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
         } else if (4 == idx) {
-            eb_buf_random_u16_to_0_or_bd(
+            svt_buf_random_u16_to_0_or_bd(
                 dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
-            eb_buf_random_u16_to_0_or_bd(
+            svt_buf_random_u16_to_0_or_bd(
                 src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
         } else if (5 == idx) {
             // Trigger the 32-bit overflow in Step 3 and 4 for AOM_BITS_12.
-            eb_buf_random_u16_to_bd(
+            svt_buf_random_u16_to_bd(
                 dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
             for (int i = 0; i < 2 * RESTORATION_UNITSIZE_MAX; i++) {
                 memset(dgd + i * dgd_stride, 0, sizeof(*dgd) * 20);
@@ -285,21 +285,21 @@ class av1_compute_stats_test_hbd
             memset(src, 0, sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else if (6 == idx) {
             // Trigger the 32-bit overflow in Step 5 and 6 for AOM_BITS_12.
-            eb_buf_random_u16_to_bd(
+            svt_buf_random_u16_to_bd(
                 dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
             memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * 20);
             memset(src, 0, sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
         } else {
-            eb_buf_random_u16_with_bd(
+            svt_buf_random_u16_with_bd(
                 dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
-            eb_buf_random_u16_with_bd(
+            svt_buf_random_u16_with_bd(
                 src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
         }
     }
 
     void init_output() {
-        eb_buf_random_s64(M_org, WIENER_WIN2);
-        eb_buf_random_s64(H_org, WIENER_WIN2 * WIENER_WIN2);
+        svt_buf_random_s64(M_org, WIENER_WIN2);
+        svt_buf_random_s64(H_org, WIENER_WIN2 * WIENER_WIN2);
         memcpy(M_opt, M_org, sizeof(*M_org) * WIENER_WIN2);
         memcpy(H_opt, H_org, sizeof(*H_org) * WIENER_WIN2 * WIENER_WIN2);
     }
@@ -316,9 +316,9 @@ class av1_compute_stats_test_hbd
         init_output();
 
         dgd_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         dgd = (uint16_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
                                   dgd_stride);
         src = (uint16_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
@@ -337,18 +337,18 @@ class av1_compute_stats_test_hbd
             const uint8_t *const dgd8 = CONVERT_TO_BYTEPTR(d);
             const uint8_t *const src8 = CONVERT_TO_BYTEPTR(s);
 
-            eb_av1_compute_stats_highbd_c(wiener_win,
-                                          dgd8,
-                                          src8,
-                                          0,
-                                          width,
-                                          0,
-                                          height,
-                                          dgd_stride,
-                                          src_stride,
-                                          M_org,
-                                          H_org,
-                                          bit_depth);
+            svt_av1_compute_stats_highbd_c(wiener_win,
+                                           dgd8,
+                                           src8,
+                                           0,
+                                           width,
+                                           0,
+                                           height,
+                                           dgd_stride,
+                                           src_stride,
+                                           M_org,
+                                           H_org,
+                                           bit_depth);
 
             func(wiener_win,
                  dgd8,
@@ -382,9 +382,9 @@ class av1_compute_stats_test_hbd
         init_output();
 
         dgd_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
-            eb_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
+            svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         dgd = (uint16_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
                                  dgd_stride);
         src = (uint16_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
@@ -406,18 +406,18 @@ class av1_compute_stats_test_hbd
         svt_av1_get_time(&start_time_seconds, &start_time_useconds);
 
         for (uint64_t i = 0; i < num_loop; i++) {
-            eb_av1_compute_stats_highbd_c(wiener_win,
-                                            dgd8,
-                                            src8,
-                                            h_start,
-                                            h_end,
-                                            v_start,
-                                            v_end,
-                                            dgd_stride,
-                                            src_stride,
-                                            M_org,
-                                            H_org,
-                                            bit_depth);
+            svt_av1_compute_stats_highbd_c(wiener_win,
+                                           dgd8,
+                                           src8,
+                                           h_start,
+                                           h_end,
+                                           v_start,
+                                           v_end,
+                                           dgd_stride,
+                                           src_stride,
+                                           M_org,
+                                           H_org,
+                                           bit_depth);
         }
 
         svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
@@ -451,7 +451,7 @@ class av1_compute_stats_test_hbd
         ASSERT_EQ(0, memcmp(H_org, H_opt, sizeof(H_org)));
 
         printf("Average Nanoseconds per Function Call\n");
-        printf("    eb_av1_compute_stats_highbd_c(%d)   : %6.2f\n",
+        printf("    svt_av1_compute_stats_highbd_c(%d)   : %6.2f\n",
                 wiener_win,
                 1000000 * time_c / num_loop);
         printf(
@@ -476,7 +476,7 @@ INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX2, av1_compute_stats_test_hbd,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-        ::testing::Values(eb_av1_compute_stats_highbd_avx2),
+        ::testing::Values(svt_av1_compute_stats_highbd_avx2),
         ::testing::Range(0, 8),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
         ::testing::Values(AOM_BITS_8, AOM_BITS_10, AOM_BITS_12)));
@@ -486,7 +486,7 @@ INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX512, av1_compute_stats_test_hbd,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-        ::testing::Values(eb_av1_compute_stats_highbd_avx512),
+        ::testing::Values(svt_av1_compute_stats_highbd_avx512),
         ::testing::Range(0, 8),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
         ::testing::Values(AOM_BITS_8, AOM_BITS_10, AOM_BITS_12)));

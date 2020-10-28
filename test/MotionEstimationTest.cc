@@ -40,67 +40,67 @@ typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride,
                                      int b_stride, uint32_t *sad_array);
 
 AomSadFn aom_sad_c_func_ptr_array[num_sad] = {
-    eb_aom_sad4x4_c,    eb_aom_sad4x8_c,    eb_aom_sad4x16_c,
-    eb_aom_sad8x4_c,    eb_aom_sad8x8_c,    eb_aom_sad8x16_c,
-    eb_aom_sad8x32_c,   eb_aom_sad16x4_c,   eb_aom_sad16x8_c,
-    eb_aom_sad16x16_c,  eb_aom_sad16x32_c,  eb_aom_sad16x64_c,
-    eb_aom_sad32x8_c,   eb_aom_sad32x16_c,  eb_aom_sad32x32_c,
-    eb_aom_sad32x64_c,  eb_aom_sad64x16_c,  eb_aom_sad64x32_c,
-    eb_aom_sad64x64_c,  eb_aom_sad64x128_c, eb_aom_sad128x64_c,
-    eb_aom_sad128x128_c};
+    svt_aom_sad4x4_c,    svt_aom_sad4x8_c,    svt_aom_sad4x16_c,
+    svt_aom_sad8x4_c,    svt_aom_sad8x8_c,    svt_aom_sad8x16_c,
+    svt_aom_sad8x32_c,   svt_aom_sad16x4_c,   svt_aom_sad16x8_c,
+    svt_aom_sad16x16_c,  svt_aom_sad16x32_c,  svt_aom_sad16x64_c,
+    svt_aom_sad32x8_c,   svt_aom_sad32x16_c,  svt_aom_sad32x32_c,
+    svt_aom_sad32x64_c,  svt_aom_sad64x16_c,  svt_aom_sad64x32_c,
+    svt_aom_sad64x64_c,  svt_aom_sad64x128_c, svt_aom_sad128x64_c,
+    svt_aom_sad128x128_c};
 
 AomSadMultiDFn aom_sad_4d_c_func_ptr_array[num_sad] = {
-    eb_aom_sad4x4x4d_c,    eb_aom_sad4x8x4d_c,    eb_aom_sad4x16x4d_c,
-    eb_aom_sad8x4x4d_c,    eb_aom_sad8x8x4d_c,    eb_aom_sad8x16x4d_c,
-    eb_aom_sad8x32x4d_c,   eb_aom_sad16x4x4d_c,   eb_aom_sad16x8x4d_c,
-    eb_aom_sad16x16x4d_c,  eb_aom_sad16x32x4d_c,  eb_aom_sad16x64x4d_c,
-    eb_aom_sad32x8x4d_c,   eb_aom_sad32x16x4d_c,  eb_aom_sad32x32x4d_c,
-    eb_aom_sad32x64x4d_c,  eb_aom_sad64x16x4d_c,  eb_aom_sad64x32x4d_c,
-    eb_aom_sad64x64x4d_c,  eb_aom_sad64x128x4d_c, eb_aom_sad128x64x4d_c,
-    eb_aom_sad128x128x4d_c};
+    svt_aom_sad4x4x4d_c,    svt_aom_sad4x8x4d_c,    svt_aom_sad4x16x4d_c,
+    svt_aom_sad8x4x4d_c,    svt_aom_sad8x8x4d_c,    svt_aom_sad8x16x4d_c,
+    svt_aom_sad8x32x4d_c,   svt_aom_sad16x4x4d_c,   svt_aom_sad16x8x4d_c,
+    svt_aom_sad16x16x4d_c,  svt_aom_sad16x32x4d_c,  svt_aom_sad16x64x4d_c,
+    svt_aom_sad32x8x4d_c,   svt_aom_sad32x16x4d_c,  svt_aom_sad32x32x4d_c,
+    svt_aom_sad32x64x4d_c,  svt_aom_sad64x16x4d_c,  svt_aom_sad64x32x4d_c,
+    svt_aom_sad64x64x4d_c,  svt_aom_sad64x128x4d_c, svt_aom_sad128x64x4d_c,
+    svt_aom_sad128x128x4d_c};
 
 AomSadFn aom_sad_avx2_func_ptr_array[num_sad] = {
-    eb_aom_sad4x4_avx2,    eb_aom_sad4x8_avx2,    eb_aom_sad4x16_avx2,
-    eb_aom_sad8x4_avx2,    eb_aom_sad8x8_avx2,    eb_aom_sad8x16_avx2,
-    eb_aom_sad8x32_avx2,   eb_aom_sad16x4_avx2,   eb_aom_sad16x8_avx2,
-    eb_aom_sad16x16_avx2,  eb_aom_sad16x32_avx2,  eb_aom_sad16x64_avx2,
-    eb_aom_sad32x8_avx2,   eb_aom_sad32x16_avx2,  eb_aom_sad32x32_avx2,
-    eb_aom_sad32x64_avx2,  eb_aom_sad64x16_avx2,  eb_aom_sad64x32_avx2,
-    eb_aom_sad64x64_avx2,  eb_aom_sad64x128_avx2, eb_aom_sad128x64_avx2,
-    eb_aom_sad128x128_avx2};
+    svt_aom_sad4x4_avx2,    svt_aom_sad4x8_avx2,    svt_aom_sad4x16_avx2,
+    svt_aom_sad8x4_avx2,    svt_aom_sad8x8_avx2,    svt_aom_sad8x16_avx2,
+    svt_aom_sad8x32_avx2,   svt_aom_sad16x4_avx2,   svt_aom_sad16x8_avx2,
+    svt_aom_sad16x16_avx2,  svt_aom_sad16x32_avx2,  svt_aom_sad16x64_avx2,
+    svt_aom_sad32x8_avx2,   svt_aom_sad32x16_avx2,  svt_aom_sad32x32_avx2,
+    svt_aom_sad32x64_avx2,  svt_aom_sad64x16_avx2,  svt_aom_sad64x32_avx2,
+    svt_aom_sad64x64_avx2,  svt_aom_sad64x128_avx2, svt_aom_sad128x64_avx2,
+    svt_aom_sad128x128_avx2};
 
 AomSadMultiDFn aom_sad_4d_avx2_func_ptr_array[num_sad] = {
-    eb_aom_sad4x4x4d_avx2,    eb_aom_sad4x8x4d_avx2,
-    eb_aom_sad4x16x4d_avx2,   eb_aom_sad8x4x4d_avx2,
-    eb_aom_sad8x8x4d_avx2,    eb_aom_sad8x16x4d_avx2,
-    eb_aom_sad8x32x4d_avx2,   eb_aom_sad16x4x4d_avx2,
-    eb_aom_sad16x8x4d_avx2,   eb_aom_sad16x16x4d_avx2,
-    eb_aom_sad16x32x4d_avx2,  eb_aom_sad16x64x4d_avx2,
-    eb_aom_sad32x8x4d_avx2,   eb_aom_sad32x16x4d_avx2,
-    eb_aom_sad32x32x4d_avx2,  eb_aom_sad32x64x4d_avx2,
-    eb_aom_sad64x16x4d_avx2,  eb_aom_sad64x32x4d_avx2,
-    eb_aom_sad64x64x4d_avx2,  eb_aom_sad64x128x4d_avx2,
-    eb_aom_sad128x64x4d_avx2, eb_aom_sad128x128x4d_avx2};
+    svt_aom_sad4x4x4d_avx2,    svt_aom_sad4x8x4d_avx2,
+    svt_aom_sad4x16x4d_avx2,   svt_aom_sad8x4x4d_avx2,
+    svt_aom_sad8x8x4d_avx2,    svt_aom_sad8x16x4d_avx2,
+    svt_aom_sad8x32x4d_avx2,   svt_aom_sad16x4x4d_avx2,
+    svt_aom_sad16x8x4d_avx2,   svt_aom_sad16x16x4d_avx2,
+    svt_aom_sad16x32x4d_avx2,  svt_aom_sad16x64x4d_avx2,
+    svt_aom_sad32x8x4d_avx2,   svt_aom_sad32x16x4d_avx2,
+    svt_aom_sad32x32x4d_avx2,  svt_aom_sad32x64x4d_avx2,
+    svt_aom_sad64x16x4d_avx2,  svt_aom_sad64x32x4d_avx2,
+    svt_aom_sad64x64x4d_avx2,  svt_aom_sad64x128x4d_avx2,
+    svt_aom_sad128x64x4d_avx2, svt_aom_sad128x128x4d_avx2};
 
 static void init_data_sadMxN(uint8_t **src_ptr, uint32_t *src_stride,
                              uint8_t **ref_ptr, uint32_t *ref_stride) {
-    *src_stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-    *ref_stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+    *src_stride = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+    *ref_stride = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
     *src_ptr = (uint8_t *)malloc(sizeof(**src_ptr) * MAX_SB_SIZE * *src_stride);
     *ref_ptr = (uint8_t *)malloc(sizeof(**ref_ptr) * MAX_SB_SIZE * *ref_stride);
-    eb_buf_random_u8(*src_ptr, MAX_SB_SIZE * *src_stride);
-    eb_buf_random_u8(*ref_ptr, MAX_SB_SIZE * *ref_stride);
+    svt_buf_random_u8(*src_ptr, MAX_SB_SIZE * *src_stride);
+    svt_buf_random_u8(*ref_ptr, MAX_SB_SIZE * *ref_stride);
 }
 
 static void init_data_sadMxNx4d(uint8_t **src_ptr, uint32_t *src_stride,
                                 uint8_t *ref_ptr[4], uint32_t *ref_stride) {
-    *src_stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
-    *ref_stride = eb_create_random_aligned_stride(MAX_SB_SIZE, 64);
+    *src_stride = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+    *ref_stride = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
     *src_ptr = (uint8_t *)malloc(sizeof(**src_ptr) * MAX_SB_SIZE * *src_stride);
     ref_ptr[0] =
         (uint8_t *)malloc(sizeof(**ref_ptr) * (MAX_SB_SIZE + 3) * *ref_stride);
-    eb_buf_random_u8(*src_ptr, MAX_SB_SIZE * *src_stride);
-    eb_buf_random_u8(ref_ptr[0], (MAX_SB_SIZE + 3) * *ref_stride);
+    svt_buf_random_u8(*src_ptr, MAX_SB_SIZE * *src_stride);
+    svt_buf_random_u8(ref_ptr[0], (MAX_SB_SIZE + 3) * *ref_stride);
     ref_ptr[1] = ref_ptr[0] + *ref_stride;
     ref_ptr[2] = ref_ptr[1] + *ref_stride;
     ref_ptr[3] = ref_ptr[2] + *ref_stride;
@@ -144,7 +144,7 @@ void sadMxNx4d_match_test(const AomSadMultiDFn *const func_table) {
         for (int j = 0; j < num_sad; j++) {
             if(func_table[j] == NULL)
                 continue;
-            eb_buf_random_u32(sad_array_opt, 4);
+            svt_buf_random_u32(sad_array_opt, 4);
             aom_sad_4d_c_func_ptr_array[j](
                 src_ptr, src_stride, ref_ptr, ref_stride, sad_array_org);
             func_table[j](
@@ -226,7 +226,7 @@ void sadMxNx4d_speed_test(const AomSadMultiDFn *const func_table) {
     uint64_t finish_time_seconds, finish_time_useconds;
 
     init_data_sadMxNx4d(&src_ptr, &src_stride, ref_ptr, &ref_stride);
-    eb_buf_random_u32(sad_array_opt, 4);
+    svt_buf_random_u32(sad_array_opt, 4);
 
     for (int j = 0; j < num_sad; j++) {
         if(func_table[j] == NULL)
@@ -302,9 +302,9 @@ AomSadFn aom_sad_avx512_func_ptr_array[num_sad] = {
     NULL, NULL, NULL,
     NULL, NULL, NULL,
     NULL, NULL, NULL,
-    NULL, eb_aom_sad64x16_avx512, eb_aom_sad64x32_avx512,
-    eb_aom_sad64x64_avx512, eb_aom_sad64x128_avx512,
-    eb_aom_sad128x64_avx512, eb_aom_sad128x128_avx512};
+    NULL, svt_aom_sad64x16_avx512, svt_aom_sad64x32_avx512,
+    svt_aom_sad64x64_avx512, svt_aom_sad64x128_avx512,
+    svt_aom_sad128x64_avx512, svt_aom_sad128x128_avx512};
 
 //NULL means not implemented
 AomSadMultiDFn aom_sad_4d_avx512_func_ptr_array[num_sad] = {
@@ -313,9 +313,9 @@ AomSadMultiDFn aom_sad_4d_avx512_func_ptr_array[num_sad] = {
     NULL, NULL, NULL,
     NULL, NULL, NULL,
     NULL, NULL, NULL,
-    NULL, eb_aom_sad64x16x4d_avx2, eb_aom_sad64x32x4d_avx2,
-    eb_aom_sad64x64x4d_avx2, eb_aom_sad64x128x4d_avx2,
-    eb_aom_sad128x64x4d_avx512, eb_aom_sad128x128x4d_avx512};
+    NULL, svt_aom_sad64x16x4d_avx2, svt_aom_sad64x32x4d_avx2,
+    svt_aom_sad64x64x4d_avx2, svt_aom_sad64x128x4d_avx2,
+    svt_aom_sad128x64x4d_avx512, svt_aom_sad128x128x4d_avx512};
 
 TEST(MotionEstimation_avx512, sadMxN_match) {
     sadMxN_match_test(aom_sad_avx512_func_ptr_array);

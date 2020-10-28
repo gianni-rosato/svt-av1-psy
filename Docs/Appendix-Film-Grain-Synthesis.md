@@ -145,22 +145,22 @@ estimation are included in Figure 3 below.
 The film grain parameters estimation is performed in
 ```picture_analysis_kernel```. When the flag
 film\_grain\_denoise\_strength is set to 1, a series of function calls
-leads to the function ```eb_aom_denoise_and_model_run```, which is the
+leads to the function ```svt_aom_denoise_and_model_run```, which is the
 main function that performs denoising and film grain parameters
 estimation. The function consecutively runs flat block estimation, 2D Wiener denoising on the
 copy of the input data, flat blocks estimation, and film grain
 parameters estimation.
 
-  - Identification of flat blocks: ```eb_aom_flat_block_finder_run```
+  - Identification of flat blocks: ```svt_aom_flat_block_finder_run```
 
   - Denoise the input pictures: Denoising is performed using a 2D wiener
-    filter. ```eb_aom_wiener_denoise_2d```
+    filter. ```svt_aom_wiener_denoise_2d```
 
   - Generate noise model parameters: Noise in the picture is derived by
     taking the difference between the source picture and the denoised
     picture. The resulting noise in the identified flat blocks is used
     to generate the noise model parameters.
-  ```eb_aom_noise_model_update```
+  ```svt_aom_noise_model_update```
 
 Once the noise model has been estimated, the algorithm sets the
 apply\_grain flag equal to 1 in the frame film grain parameters, writes
@@ -182,14 +182,14 @@ compression efficiency).
 
 In the ```ReconOutput``` function in EbEncDecProcess.c, if the
 ```film_grain_params_present``` flag in the sequence header is set to 1,
-the film grain function ```eb_av1_add_film_grain``` is invoked, with
+the film grain function ```svt_av1_add_film_grain``` is invoked, with
 parameters ```recon_ptr```, intermediateBufferPtr, and ```film_grain_ptr```. The
 reconstructed picture is copied into the intermediateBuffer, film grain
 is applied to the intermediate buffer, and the ```recon_ptr``` is set to the
 intermediateBuffer, which follows by the output process.
 
 The film grain application is performed by the
-```eb_av1_add_film_grain_run``` in grainSynthesis.c.
+```svt_av1_add_film_grain_run``` in grainSynthesis.c.
 
 ## 3.  Optimization of the algorithm
 

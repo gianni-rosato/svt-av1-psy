@@ -90,13 +90,13 @@ void AV1CornerMatchTest::RunCheckOutput(int run_times) {
     int y2 = MATCH_SZ_BY2 + rnd_.PseudoUniform(h - 2 * MATCH_SZ_BY2);
 
     double res_c =
-        eb_av1_compute_cross_correlation_c(input1, w, x1, y1, input2, w, x2, y2);
+        svt_av1_compute_cross_correlation_c(input1, w, x1, y1, input2, w, x2, y2);
     double res_simd = target_func(input1, w, x1, y1, input2, w, x2, y2);
 
     if (run_times > 1) {
       svt_av1_get_time(&start_time_seconds, &start_time_useconds);
       for (j = 0; j < run_times; j++) {
-          eb_av1_compute_cross_correlation_c(
+          svt_av1_compute_cross_correlation_c(
               input1, w, x1, y1, input2, w, x2, y2);
       }
       svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
@@ -127,7 +127,7 @@ void AV1CornerMatchTest::RunCheckOutput(int run_times) {
 
    if (run_times > 1) {
       printf("Average Nanoseconds per Function Call\n");
-      printf("    eb_av1_compute_cross_correlation_c : %6.2f\n",
+      printf("    svt_av1_compute_cross_correlation_c : %6.2f\n",
              1000000 * time_c / run_times * num_iters);
       printf(
           "    av1_compute_cross_correlation (AVX2) : %6.2f   (Comparison: "
@@ -146,7 +146,7 @@ TEST_P(AV1CornerMatchTest, DISABLED_Speed) { RunCheckOutput(1000); }
 
 INSTANTIATE_TEST_CASE_P(
     AV1CornerMatchTest, AV1CornerMatchTest,
-    ::testing::Values(make_tuple(0, &eb_av1_compute_cross_correlation_avx2),
-                      make_tuple(1, &eb_av1_compute_cross_correlation_avx2)));
+    ::testing::Values(make_tuple(0, &svt_av1_compute_cross_correlation_avx2),
+                      make_tuple(1, &svt_av1_compute_cross_correlation_avx2)));
 
 }

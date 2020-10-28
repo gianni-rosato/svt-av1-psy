@@ -479,10 +479,11 @@ static INLINE void blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const 
     }
 }
 
-void eb_aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
-                             uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
-                             const uint8_t *mask, uint32_t mask_stride, int w, int h, int subx,
-                             int suby) {
+void svt_aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
+                                 uint32_t src0_stride, const uint8_t *src1,
+                                 uint32_t src1_stride, const uint8_t *mask,
+                                 uint32_t mask_stride, int w, int h, int subx,
+                                 int suby) {
     assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
     assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
 
@@ -492,18 +493,18 @@ void eb_aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t
     assert(IS_POWER_OF_TWO(w));
 
     if (UNLIKELY((h | w) & 3)) { // if (w <= 2 || h <= 2)
-        eb_aom_blend_a64_mask_c(dst,
-                             dst_stride,
-                             src0,
-                             src0_stride,
-                             src1,
-                             src1_stride,
-                             mask,
-                             mask_stride,
-                             w,
-                             h,
-                             subx,
-                             suby);
+        svt_aom_blend_a64_mask_c(dst,
+                                 dst_stride,
+                                 src0,
+                                 src0_stride,
+                                 src1,
+                                 src1_stride,
+                                 mask,
+                                 mask_stride,
+                                 w,
+                                 h,
+                                 subx,
+                                 suby);
     } else {
         if (subx & suby) {
             blend_a64_mask_sx_sy_avx2(
@@ -760,11 +761,11 @@ static INLINE void lowbd_blend_a64_d16_mask_subw0_subh1_w32_avx2(
     }
 }
 
-void eb_aom_lowbd_blend_a64_d16_mask_avx2(uint8_t *dst, uint32_t dst_stride, const CONV_BUF_TYPE *src0,
-                                       uint32_t src0_stride, const CONV_BUF_TYPE *src1,
-                                       uint32_t src1_stride, const uint8_t *mask,
-                                       uint32_t mask_stride, int w, int h, int subw, int subh,
-                                       ConvolveParams *conv_params) {
+void svt_aom_lowbd_blend_a64_d16_mask_avx2(uint8_t *dst, uint32_t dst_stride, const CONV_BUF_TYPE *src0,
+                                           uint32_t src0_stride, const CONV_BUF_TYPE *src1,
+                                           uint32_t src1_stride, const uint8_t *mask,
+                                           uint32_t mask_stride, int w, int h, int subw, int subh,
+                                           ConvolveParams *conv_params) {
     const int bd         = 8;
     const int round_bits = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
 
@@ -1013,7 +1014,7 @@ void eb_aom_lowbd_blend_a64_d16_mask_avx2(uint8_t *dst, uint32_t dst_stride, con
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// eb_aom_highbd_blend_a64_d16_mask_avx2()
+// svt_aom_highbd_blend_a64_d16_mask_avx2()
 //////////////////////////////////////////////////////////////////////////////
 
 static INLINE void highbd_blend_a64_d16_mask_w4_avx2(
@@ -1422,12 +1423,12 @@ static INLINE void highbd_blend_a64_d16_mask_subw1_subh1_w16_avx2(
     }
 }
 
-void eb_aom_highbd_blend_a64_d16_mask_avx2(uint8_t *dst8, uint32_t dst_stride,
-                                        const CONV_BUF_TYPE *src0, uint32_t src0_stride,
-                                        const CONV_BUF_TYPE *src1, uint32_t src1_stride,
-                                        const uint8_t *mask, uint32_t mask_stride, int w, int h,
-                                        int subw, int subh, ConvolveParams *conv_params,
-                                        const int bd) {
+void svt_aom_highbd_blend_a64_d16_mask_avx2(uint8_t *dst8, uint32_t dst_stride,
+                                            const CONV_BUF_TYPE *src0, uint32_t src0_stride,
+                                            const CONV_BUF_TYPE *src1, uint32_t src1_stride,
+                                            const uint8_t *mask, uint32_t mask_stride, int w, int h,
+                                            int subw, int subh, ConvolveParams *conv_params,
+                                            const int bd) {
     uint16_t *    dst        = (uint16_t *)(dst8); //CONVERT_TO_SHORTPTR(dst8);
     const int     round_bits = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
     const int32_t round_offset =
@@ -1557,19 +1558,19 @@ void eb_aom_highbd_blend_a64_d16_mask_avx2(uint8_t *dst8, uint32_t dst_stride,
         // Sub-sampling in only one axis doesn't seem to happen very much, so fall
         // back to the vanilla C implementation instead of having all the optimised
         // code for these.
-        eb_aom_highbd_blend_a64_d16_mask_c(dst8,
-                                        dst_stride,
-                                        src0,
-                                        src0_stride,
-                                        src1,
-                                        src1_stride,
-                                        mask,
-                                        mask_stride,
-                                        w,
-                                        h,
-                                        subw,
-                                        subh,
-                                        conv_params,
-                                        bd);
+        svt_aom_highbd_blend_a64_d16_mask_c(dst8,
+                                            dst_stride,
+                                            src0,
+                                            src0_stride,
+                                            src1,
+                                            src1_stride,
+                                            mask,
+                                            mask_stride,
+                                            w,
+                                            h,
+                                            subw,
+                                            subh,
+                                            conv_params,
+                                            bd);
     }
 }

@@ -57,9 +57,9 @@ void printfTime(const char *fmt, ...) {
 #endif
 
 /****************************************
- * eb_create_thread
+ * svt_create_thread
  ****************************************/
-EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
+EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) {
     EbHandle thread_handle = NULL;
 
 #ifdef _WIN32
@@ -119,9 +119,9 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
 }
 
 ///****************************************
-// * eb_start_thread
+// * svt_start_thread
 // ****************************************/
-//EbErrorType eb_start_thread(
+//EbErrorType svt_start_thread(
 //    EbHandle thread_handle)
 //{
 //    EbErrorType error_return = EB_ErrorNone;
@@ -148,9 +148,9 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
 //}
 //
 ///****************************************
-// * eb_stop_thread
+// * svt_stop_thread
 // ****************************************/
-//EbErrorType eb_stop_thread(
+//EbErrorType svt_stop_thread(
 //    EbHandle thread_handle)
 //{
 //    EbErrorType error_return = EB_ErrorNone;
@@ -166,9 +166,9 @@ EbHandle eb_create_thread(void *thread_function(void *), void *thread_context) {
 //}
 //
 /****************************************
- * eb_destroy_thread
+ * svt_destroy_thread
  ****************************************/
-EbErrorType eb_destroy_thread(EbHandle thread_handle) {
+EbErrorType svt_destroy_thread(EbHandle thread_handle) {
     EbErrorType error_return;
 
 #ifdef _WIN32
@@ -183,9 +183,9 @@ EbErrorType eb_destroy_thread(EbHandle thread_handle) {
 }
 
 /***************************************
- * eb_create_semaphore
+ * svt_create_semaphore
  ***************************************/
-EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
+EbHandle svt_create_semaphore(uint32_t initial_count, uint32_t max_count)
 {
     EbHandle semaphore_handle;
 
@@ -211,9 +211,9 @@ EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count)
 }
 
 /***************************************
- * eb_post_semaphore
+ * svt_post_semaphore
  ***************************************/
-EbErrorType eb_post_semaphore(EbHandle semaphore_handle)
+EbErrorType svt_post_semaphore(EbHandle semaphore_handle)
 {
     EbErrorType return_error;
 
@@ -235,9 +235,9 @@ EbErrorType eb_post_semaphore(EbHandle semaphore_handle)
 }
 
 /***************************************
- * eb_block_on_semaphore
+ * svt_block_on_semaphore
  ***************************************/
-EbErrorType eb_block_on_semaphore(EbHandle semaphore_handle)
+EbErrorType svt_block_on_semaphore(EbHandle semaphore_handle)
 {
     EbErrorType return_error;
 
@@ -262,9 +262,9 @@ EbErrorType eb_block_on_semaphore(EbHandle semaphore_handle)
 }
 
 /***************************************
- * eb_destroy_semaphore
+ * svt_destroy_semaphore
  ***************************************/
-EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle)
+EbErrorType svt_destroy_semaphore(EbHandle semaphore_handle)
 {
     EbErrorType return_error;
 
@@ -283,9 +283,9 @@ EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle)
     return return_error;
 }
 /***************************************
- * eb_create_mutex
+ * svt_create_mutex
  ***************************************/
-EbHandle eb_create_mutex(void)
+EbHandle svt_create_mutex(void)
 {
     EbHandle mutex_handle;
 
@@ -308,9 +308,9 @@ EbHandle eb_create_mutex(void)
 }
 
 /***************************************
- * eb_release_mutex
+ * svt_release_mutex
  ***************************************/
-EbErrorType eb_release_mutex(EbHandle mutex_handle)
+EbErrorType svt_release_mutex(EbHandle mutex_handle)
 {
     EbErrorType return_error;
 
@@ -325,9 +325,9 @@ EbErrorType eb_release_mutex(EbHandle mutex_handle)
 }
 
 /***************************************
- * eb_block_on_mutex
+ * svt_block_on_mutex
  ***************************************/
-EbErrorType eb_block_on_mutex(EbHandle mutex_handle)
+EbErrorType svt_block_on_mutex(EbHandle mutex_handle)
 {
     EbErrorType return_error;
 
@@ -343,9 +343,9 @@ EbErrorType eb_block_on_mutex(EbHandle mutex_handle)
 }
 
 /***************************************
- * eb_destroy_mutex
+ * svt_destroy_mutex
  ***************************************/
-EbErrorType eb_destroy_mutex(EbHandle mutex_handle)
+EbErrorType svt_destroy_mutex(EbHandle mutex_handle)
 {
     EbErrorType return_error;
 

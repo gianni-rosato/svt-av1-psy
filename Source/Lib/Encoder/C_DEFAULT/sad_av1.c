@@ -32,7 +32,7 @@ static INLINE unsigned int obmc_sad(const uint8_t *pre, int pre_stride, const in
 }
 
 #define OBMCSADMxN(m, n)                                                                \
-    unsigned int eb_aom_obmc_sad##m##x##n##_c(                                             \
+    unsigned int svt_aom_obmc_sad##m##x##n##_c(                                         \
         const uint8_t *ref, int ref_stride, const int32_t *wsrc, const int32_t *mask) { \
         return obmc_sad(ref, ref_stride, wsrc, mask, m, n);                             \
     }

@@ -2121,14 +2121,14 @@ extern    uint32_t                   app_malloc_count;
 
 #define EB_CREATE_SEMAPHORE(pointer, initial_count, max_count) \
     do { \
-        pointer = eb_create_semaphore(initial_count, max_count); \
+        pointer = svt_create_semaphore(initial_count, max_count); \
         EB_ADD_MEM(pointer, 1, EB_SEMAPHORE); \
     }while (0)
 
 #define EB_DESTROY_SEMAPHORE(pointer) \
     do { \
         if (pointer) { \
-            eb_destroy_semaphore(pointer); \
+            svt_destroy_semaphore(pointer); \
             EB_REMOVE_MEM_ENTRY(pointer, EB_SEMAPHORE); \
             pointer = NULL; \
         } \
@@ -2136,14 +2136,14 @@ extern    uint32_t                   app_malloc_count;
 
 #define EB_CREATE_MUTEX(pointer) \
     do { \
-        pointer = eb_create_mutex(); \
+        pointer = svt_create_mutex(); \
         EB_ADD_MEM(pointer, 1, EB_MUTEX); \
     } while (0)
 
 #define EB_DESTROY_MUTEX(pointer) \
     do { \
         if (pointer) { \
-            eb_destroy_mutex(pointer); \
+            svt_destroy_mutex(pointer); \
             EB_REMOVE_MEM_ENTRY(pointer, EB_MUTEX); \
             pointer = NULL; \
         } \
@@ -2167,10 +2167,10 @@ typedef int32_t errno_t;
 #endif  /* _ERRNO_T_DEFINED */
 
 extern void
-    eb_memcpy_app(void  *dst_ptr, const void  *src_ptr, size_t size);
+    svt_memcpy_app(void  *dst_ptr, const void  *src_ptr, size_t size);
 #ifdef ARCH_X86_64
 #define EB_MEMCPY(dst, src, size) \
-    eb_memcpy_app(dst, src, size)
+    svt_memcpy_app(dst, src, size)
 #else
 #define EB_MEMCPY(dst, src, size) \
     memcpy(dst, src, size)

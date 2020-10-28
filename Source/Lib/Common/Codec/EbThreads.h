@@ -28,32 +28,32 @@ extern "C" {
 /**************************************
      * Threads
      **************************************/
-extern EbHandle eb_create_thread(void *thread_function(void *), void *thread_context);
+extern EbHandle svt_create_thread(void *thread_function(void *), void *thread_context);
 
-extern EbErrorType eb_start_thread(EbHandle thread_handle);
+extern EbErrorType svt_start_thread(EbHandle thread_handle);
 
-extern EbErrorType eb_stop_thread(EbHandle thread_handle);
+extern EbErrorType svt_stop_thread(EbHandle thread_handle);
 
-extern EbErrorType eb_destroy_thread(EbHandle thread_handle);
+extern EbErrorType svt_destroy_thread(EbHandle thread_handle);
 
 /**************************************
      * Semaphores
      **************************************/
-extern EbHandle eb_create_semaphore(uint32_t initial_count, uint32_t max_count);
+extern EbHandle svt_create_semaphore(uint32_t initial_count, uint32_t max_count);
 
-extern EbErrorType eb_post_semaphore(EbHandle semaphore_handle);
+extern EbErrorType svt_post_semaphore(EbHandle semaphore_handle);
 
-extern EbErrorType eb_block_on_semaphore(EbHandle semaphore_handle);
+extern EbErrorType svt_block_on_semaphore(EbHandle semaphore_handle);
 
-extern EbErrorType eb_destroy_semaphore(EbHandle semaphore_handle);
+extern EbErrorType svt_destroy_semaphore(EbHandle semaphore_handle);
 
 /**************************************
      * Mutex
      **************************************/
-extern EbHandle eb_create_mutex(void);
-extern EbErrorType eb_release_mutex(EbHandle mutex_handle);
-extern EbErrorType eb_block_on_mutex(EbHandle mutex_handle);
-extern EbErrorType eb_destroy_mutex(EbHandle mutex_handle);
+extern EbHandle svt_create_mutex(void);
+extern EbErrorType svt_release_mutex(EbHandle mutex_handle);
+extern EbErrorType svt_block_on_mutex(EbHandle mutex_handle);
+extern EbErrorType svt_destroy_mutex(EbHandle mutex_handle);
 extern EbMemoryMapEntry *memory_map; // library Memory table
 extern uint32_t *        memory_map_index; // library memory index
 extern uint64_t *        total_lib_memory; // library Memory malloc'd
@@ -61,7 +61,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
 
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)   \
     do {                                                             \
-        pointer = eb_create_thread(thread_function, thread_context); \
+        pointer = svt_create_thread(thread_function, thread_context);\
         EB_ADD_MEM(pointer, 1, EB_THREAD);                           \
         if (num_groups == 1)                                         \
             SetThreadAffinityMask(pointer, group_affinity.Mask);     \
@@ -83,14 +83,14 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
 #include <pthread.h>
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)                           \
     do {                                                                                     \
-        pointer = eb_create_thread(thread_function, thread_context);                         \
+        pointer = svt_create_thread(thread_function, thread_context);                        \
         EB_ADD_MEM(pointer, 1, EB_THREAD);                                                   \
         pthread_setaffinity_np(*((pthread_t *)pointer), sizeof(cpu_set_t), &group_affinity); \
     } while (0)
 #else
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)   \
     do {                                                             \
-        pointer = eb_create_thread(thread_function, thread_context); \
+        pointer = svt_create_thread(thread_function, thread_context);\
         EB_ADD_MEM(pointer, 1, EB_THREAD);                           \
     } while (0)
 #endif
@@ -98,7 +98,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
 #define EB_DESTROY_THREAD(pointer)                   \
     do {                                             \
         if (pointer) {                               \
-            eb_destroy_thread(pointer);              \
+            svt_destroy_thread(pointer);             \
             EB_REMOVE_MEM_ENTRY(pointer, EB_THREAD); \
             pointer = NULL;                          \
         }                                            \

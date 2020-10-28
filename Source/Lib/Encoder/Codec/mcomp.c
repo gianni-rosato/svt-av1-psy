@@ -12,7 +12,6 @@
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
-
 #include "mcomp.h"
 #include "mv.h"
 #include "Av1Common.h"
@@ -20,6 +19,7 @@
 #include "EbBlockStructures.h"
 #include "av1me.h"
 #include "aom_dsp_rtcd.h"
+#include "EbRateDistortionCost.h"
 // ============================================================================
 //  Cost of motion vectors
 // ============================================================================
@@ -37,29 +37,6 @@
 // HDRES
 #define SSE_LAMBDA_HDRES 1  // Used by mv_cost_err_fn
 #define SAD_LAMBDA_HDRES 8  // Used by mvsad_err_cost during full pixel search
-
-// Returns the rate of encoding the current motion vector based on the
-// joint_cost and comp_cost. joint_costs covers the cost of transmitting
-// JOINT_MV, and comp_cost covers the cost of transmitting the actual motion
-// vector.
-MvJointType svt_av1_get_mv_joint(const MV *mv);
-static INLINE int svt_mv_cost(const MV *mv, const int *joint_cost,
-                          const int *const comp_cost[2]) {
-  return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][mv->row] +
-         comp_cost[1][mv->col];
-}
-
-#define CONVERT_TO_CONST_MVCOST(ptr) ((const int *const *)(ptr))
-// Returns the cost of encoding the motion vector diff := *mv - *ref. The cost
-// is defined as the rate required to encode diff * weight, rounded to the
-// nearest 2 ** 7.
-// This is NOT used during motion compensation.
-int svt_av1_mv_bit_cost(const MV *mv, const MV *ref_mv, const int *mvjcost,
-                    int *mvcost[2], int weight) {
-  const MV diff = { mv->row - ref_mv->row, mv->col - ref_mv->col };
-  return ROUND_POWER_OF_TWO(
-      svt_mv_cost(&diff, mvjcost, CONVERT_TO_CONST_MVCOST(mvcost)) * weight, 7);
-}
 
 // Returns the cost of using the current mv during the motion search. This is
 // used when var is used as the error metric.

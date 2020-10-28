@@ -42,22 +42,22 @@ void svt_aom_var_filter_block2d_bil_second_pass_ssse3(const uint16_t *a, uint8_t
                                                   unsigned int output_width, const uint8_t *filter);
 
 #define OBMC_SUBPIX_VAR(W, H)                                                         \
-    uint32_t eb_aom_obmc_sub_pixel_variance##W##x##H##_sse4_1(const uint8_t *pre,        \
+    uint32_t svt_aom_obmc_sub_pixel_variance##W##x##H##_sse4_1(const uint8_t *pre,    \
                                                            int            pre_stride, \
                                                            int            xoffset,    \
                                                            int            yoffset,    \
                                                            const int32_t *wsrc,       \
                                                            const int32_t *mask,       \
-                                                           unsigned int * sse) {       \
+                                                           unsigned int * sse) {      \
         uint16_t fdata3[(H + 1) * W];                                                 \
         uint8_t  temp2[H * W];                                                        \
                                                                                       \
-        svt_aom_var_filter_block2d_bil_first_pass_ssse3(                                  \
+        svt_aom_var_filter_block2d_bil_first_pass_ssse3(                              \
             pre, fdata3, pre_stride, 1, H + 1, W, bilinear_filters_2t[xoffset]);      \
-        svt_aom_var_filter_block2d_bil_second_pass_ssse3(                                 \
+        svt_aom_var_filter_block2d_bil_second_pass_ssse3(                             \
             fdata3, temp2, W, W, H, W, bilinear_filters_2t[yoffset]);                 \
                                                                                       \
-        return eb_aom_obmc_variance##W##x##H##_avx2(temp2, W, wsrc, mask, sse);          \
+        return svt_aom_obmc_variance##W##x##H##_avx2(temp2, W, wsrc, mask, sse);      \
     }
 
 OBMC_SUBPIX_VAR(128, 128)

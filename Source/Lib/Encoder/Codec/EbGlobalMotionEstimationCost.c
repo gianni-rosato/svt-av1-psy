@@ -18,7 +18,7 @@ static int aom_count_signed_primitive_refsubexpfin(uint16_t n, uint16_t k, int16
     ref += n - 1;
     v += n - 1;
     const uint16_t scaled_n = (n << 1) - 1;
-    return eb_aom_count_primitive_refsubexpfin(scaled_n, k, ref, v);
+    return svt_aom_count_primitive_refsubexpfin(scaled_n, k, ref, v);
 }
 
 #define GLOBAL_TRANS_TYPES_ENC 3 // highest motion model to search

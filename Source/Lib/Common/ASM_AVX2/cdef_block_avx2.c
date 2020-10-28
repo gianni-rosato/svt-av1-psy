@@ -160,8 +160,8 @@ static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
     res[0] = _mm_unpackhi_epi64(tr1_6, tr1_7);
 }
 
-int32_t eb_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t *var,
-                              int32_t coeff_shift) {
+int32_t svt_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t *var,
+                               int32_t coeff_shift) {
     int32_t i;
     int32_t cost[8];
     int32_t best_cost = 0;
@@ -211,10 +211,10 @@ static INLINE __m256i constrain16(const __m256i in0, const __m256i in1, const __
     return _mm256_xor_si256(d, sign);
 }
 
-static void eb_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, const uint16_t *in,
-                                            int32_t pri_strength, int32_t sec_strength, int32_t dir,
-                                            int32_t pri_damping, int32_t sec_damping,
-                                            int32_t coeff_shift) {
+static void svt_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, const uint16_t *in,
+                                             int32_t pri_strength, int32_t sec_strength, int32_t dir,
+                                             int32_t pri_damping, int32_t sec_damping,
+                                             int32_t coeff_shift) {
     __m256i p0, p1, p2, p3, sum, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
     int32_t po1  = eb_cdef_directions[dir][0];
@@ -370,10 +370,10 @@ static void eb_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, const
     *(int32_t *)(dst + 3 * dstride) = _mm256_cvtsi256_si32(res);
 }
 
-static void eb_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, const uint16_t *in,
-                                            int32_t pri_strength, int32_t sec_strength, int32_t dir,
-                                            int32_t pri_damping, int32_t sec_damping,
-                                            int32_t coeff_shift) {
+static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, const uint16_t *in,
+                                             int32_t pri_strength, int32_t sec_strength, int32_t dir,
+                                             int32_t pri_damping, int32_t sec_damping,
+                                             int32_t coeff_shift) {
     int32_t i;
     __m256i sum, p0, p1, p2, p3, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
@@ -505,10 +505,10 @@ static void eb_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, const
     }
 }
 
-static void eb_cdef_filter_block_4x4_16_avx2(uint16_t *dst, int32_t dstride, const uint16_t *in,
-                                             int32_t pri_strength, int32_t sec_strength,
-                                             int32_t dir, int32_t pri_damping, int32_t sec_damping,
-                                             int32_t coeff_shift) {
+static void svt_cdef_filter_block_4x4_16_avx2(uint16_t *dst, int32_t dstride, const uint16_t *in,
+                                              int32_t pri_strength, int32_t sec_strength,
+                                              int32_t dir, int32_t pri_damping, int32_t sec_damping,
+                                              int32_t coeff_shift) {
     __m256i p0, p1, p2, p3, sum, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
     int32_t po1  = eb_cdef_directions[dir][0];
@@ -713,11 +713,11 @@ static INLINE void cdef_filter_block_8x8_16_sec_avx2(const uint16_t *const in,
                            _mm256_add_epi16(_mm256_add_epi16(q0, q1), _mm256_add_epi16(q2, q3))));
 }
 
-void eb_cdef_filter_block_8x8_16_avx2(const uint16_t *const in, const int32_t pri_strength,
-                                      const int32_t sec_strength, const int32_t dir,
-                                      int32_t pri_damping, int32_t sec_damping,
-                                      const int32_t coeff_shift, uint16_t *const dst,
-                                      const int32_t dstride) {
+void svt_cdef_filter_block_8x8_16_avx2(const uint16_t *const in, const int32_t pri_strength,
+                                       const int32_t sec_strength, const int32_t dir,
+                                       int32_t pri_damping, int32_t sec_damping,
+                                       const int32_t coeff_shift, uint16_t *const dst,
+                                       const int32_t dstride) {
     const int32_t po1  = eb_cdef_directions[dir][0];
     const int32_t po2  = eb_cdef_directions[dir][1];
     const int32_t s1o1 = eb_cdef_directions[(dir + 2) & 7][0];
@@ -803,83 +803,13 @@ void eb_cdef_filter_block_8x8_16_avx2(const uint16_t *const in, const int32_t pr
     }
 }
 
-void eb_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, const uint16_t *in,
-                               int32_t pri_strength, int32_t sec_strength, int32_t dir,
-                               int32_t pri_damping, int32_t sec_damping, int32_t bsize,
-                               int32_t coeff_shift) {
+void svt_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, const uint16_t *in,
+                                int32_t pri_strength, int32_t sec_strength, int32_t dir,
+                                int32_t pri_damping, int32_t sec_damping, int32_t bsize,
+                                int32_t coeff_shift) {
     if (dst8) {
         if (bsize == BLOCK_8X8) {
-            eb_cdef_filter_block_8x8_8_avx2(dst8,
-                                            dstride,
-                                            in,
-                                            pri_strength,
-                                            sec_strength,
-                                            dir,
-                                            pri_damping,
-                                            sec_damping,
-                                            coeff_shift);
-        } else if (bsize == BLOCK_4X8) {
-            eb_cdef_filter_block_4x4_8_avx2(dst8,
-                                            dstride,
-                                            in,
-                                            pri_strength,
-                                            sec_strength,
-                                            dir,
-                                            pri_damping,
-                                            sec_damping,
-                                            coeff_shift);
-            eb_cdef_filter_block_4x4_8_avx2(dst8 + 4 * dstride,
-                                            dstride,
-                                            in + 4 * CDEF_BSTRIDE,
-                                            pri_strength,
-                                            sec_strength,
-                                            dir,
-                                            pri_damping,
-                                            sec_damping,
-                                            coeff_shift);
-        } else if (bsize == BLOCK_8X4) {
-            eb_cdef_filter_block_4x4_8_avx2(dst8,
-                                            dstride,
-                                            in,
-                                            pri_strength,
-                                            sec_strength,
-                                            dir,
-                                            pri_damping,
-                                            sec_damping,
-                                            coeff_shift);
-            eb_cdef_filter_block_4x4_8_avx2(dst8 + 4,
-                                            dstride,
-                                            in + 4,
-                                            pri_strength,
-                                            sec_strength,
-                                            dir,
-                                            pri_damping,
-                                            sec_damping,
-                                            coeff_shift);
-        } else {
-            eb_cdef_filter_block_4x4_8_avx2(dst8,
-                                            dstride,
-                                            in,
-                                            pri_strength,
-                                            sec_strength,
-                                            dir,
-                                            pri_damping,
-                                            sec_damping,
-                                            coeff_shift);
-        }
-    } else {
-        if (bsize == BLOCK_8X8) {
-            eb_cdef_filter_block_8x8_16(in,
-                                        pri_strength,
-                                        sec_strength,
-                                        dir,
-                                        pri_damping,
-                                        sec_damping,
-                                        coeff_shift,
-                                        dst16,
-                                        dstride);
-        } else if (bsize == BLOCK_4X8) {
-            eb_cdef_filter_block_4x4_16_avx2(dst16,
+            svt_cdef_filter_block_8x8_8_avx2(dst8,
                                              dstride,
                                              in,
                                              pri_strength,
@@ -888,7 +818,17 @@ void eb_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, 
                                              pri_damping,
                                              sec_damping,
                                              coeff_shift);
-            eb_cdef_filter_block_4x4_16_avx2(dst16 + 4 * dstride,
+        } else if (bsize == BLOCK_4X8) {
+            svt_cdef_filter_block_4x4_8_avx2(dst8,
+                                             dstride,
+                                             in,
+                                             pri_strength,
+                                             sec_strength,
+                                             dir,
+                                             pri_damping,
+                                             sec_damping,
+                                             coeff_shift);
+            svt_cdef_filter_block_4x4_8_avx2(dst8 + 4 * dstride,
                                              dstride,
                                              in + 4 * CDEF_BSTRIDE,
                                              pri_strength,
@@ -898,7 +838,7 @@ void eb_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, 
                                              sec_damping,
                                              coeff_shift);
         } else if (bsize == BLOCK_8X4) {
-            eb_cdef_filter_block_4x4_16_avx2(dst16,
+            svt_cdef_filter_block_4x4_8_avx2(dst8,
                                              dstride,
                                              in,
                                              pri_strength,
@@ -907,7 +847,7 @@ void eb_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, 
                                              pri_damping,
                                              sec_damping,
                                              coeff_shift);
-            eb_cdef_filter_block_4x4_16_avx2(dst16 + 4,
+            svt_cdef_filter_block_4x4_8_avx2(dst8 + 4,
                                              dstride,
                                              in + 4,
                                              pri_strength,
@@ -917,8 +857,7 @@ void eb_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, 
                                              sec_damping,
                                              coeff_shift);
         } else {
-            assert(bsize == BLOCK_4X4);
-            eb_cdef_filter_block_4x4_16_avx2(dst16,
+            svt_cdef_filter_block_4x4_8_avx2(dst8,
                                              dstride,
                                              in,
                                              pri_strength,
@@ -928,11 +867,72 @@ void eb_cdef_filter_block_avx2(uint8_t *dst8, uint16_t *dst16, int32_t dstride, 
                                              sec_damping,
                                              coeff_shift);
         }
+    } else {
+        if (bsize == BLOCK_8X8) {
+            svt_cdef_filter_block_8x8_16(in,
+                                         pri_strength,
+                                         sec_strength,
+                                         dir,
+                                         pri_damping,
+                                         sec_damping,
+                                         coeff_shift,
+                                         dst16,
+                                         dstride);
+        } else if (bsize == BLOCK_4X8) {
+            svt_cdef_filter_block_4x4_16_avx2(dst16,
+                                              dstride,
+                                              in,
+                                              pri_strength,
+                                              sec_strength,
+                                              dir,
+                                              pri_damping,
+                                              sec_damping,
+                                              coeff_shift);
+            svt_cdef_filter_block_4x4_16_avx2(dst16 + 4 * dstride,
+                                              dstride,
+                                              in + 4 * CDEF_BSTRIDE,
+                                              pri_strength,
+                                              sec_strength,
+                                              dir,
+                                              pri_damping,
+                                              sec_damping,
+                                              coeff_shift);
+        } else if (bsize == BLOCK_8X4) {
+            svt_cdef_filter_block_4x4_16_avx2(dst16,
+                                              dstride,
+                                              in,
+                                              pri_strength,
+                                              sec_strength,
+                                              dir,
+                                              pri_damping,
+                                              sec_damping,
+                                              coeff_shift);
+            svt_cdef_filter_block_4x4_16_avx2(dst16 + 4,
+                                              dstride,
+                                              in + 4,
+                                              pri_strength,
+                                              sec_strength,
+                                              dir,
+                                              pri_damping,
+                                              sec_damping,
+                                              coeff_shift);
+        } else {
+            assert(bsize == BLOCK_4X4);
+            svt_cdef_filter_block_4x4_16_avx2(dst16,
+                                              dstride,
+                                              in,
+                                              pri_strength,
+                                              sec_strength,
+                                              dir,
+                                              pri_damping,
+                                              sec_damping,
+                                              coeff_shift);
+        }
     }
 }
 
-void eb_copy_rect8_8bit_to_16bit_avx2(uint16_t *dst, int32_t dstride, const uint8_t *src,
-                                      int32_t sstride, int32_t v, int32_t h) {
+void svt_copy_rect8_8bit_to_16bit_avx2(uint16_t *dst, int32_t dstride, const uint8_t *src,
+                                       int32_t sstride, int32_t v, int32_t h) {
     int32_t i, j;
     for (i = 0; i < v; i++) {
         for (j = 0; j < (h & ~0x7); j += 8) {

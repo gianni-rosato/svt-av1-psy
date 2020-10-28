@@ -212,7 +212,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
     const int base_qindex = 20;
     FRAME_CONTEXT fc;
     memset(&fc, 0, sizeof(fc));
-    eb_av1_default_coef_probs(&fc, base_qindex);
+    svt_av1_default_coef_probs(&fc, base_qindex);
 
     // write random bit sequences and expect read out
     // the same random sequences.
@@ -253,7 +253,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
     FRAME_CONTEXT fc;
     memset(&fc, 0, sizeof(fc));
 
-    eb_av1_default_coef_probs(&fc, base_qindex);
+    svt_av1_default_coef_probs(&fc, base_qindex);
 
     // write random bit sequences and expect read out
     // the same random sequences.
@@ -274,7 +274,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
     SvtReader br;
     svt_reader_init(&br, stream_buffer, bw.pos);
     br.allow_update_cdf = 1;
-    eb_av1_default_coef_probs(&fc, base_qindex);  // reset cdf
+    svt_av1_default_coef_probs(&fc, base_qindex);  // reset cdf
     for (int i = 0; i < 500; i++) {
         ASSERT_EQ(svt_read_symbol(&br, fc.txb_skip_cdf[0][0], 2, nullptr),
                   rnd(gen));

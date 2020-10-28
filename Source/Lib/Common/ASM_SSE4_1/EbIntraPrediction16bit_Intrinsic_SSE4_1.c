@@ -12,7 +12,7 @@
 #include "EbDefinitions.h"
 #include <smmintrin.h>
 
-void eb_av1_filter_intra_edge_sse4_1(uint8_t *p, int32_t sz, int32_t strength) {
+void svt_av1_filter_intra_edge_sse4_1(uint8_t *p, int32_t sz, int32_t strength) {
     if (!strength) return;
 
     DECLARE_ALIGNED(16, static const int8_t, kern[3][16]) = {
@@ -110,7 +110,7 @@ void eb_av1_filter_intra_edge_sse4_1(uint8_t *p, int32_t sz, int32_t strength) {
     }
 }
 
-void eb_av1_filter_intra_edge_high_sse4_1(uint16_t *p, int32_t sz, int32_t strength) {
+void svt_av1_filter_intra_edge_high_sse4_1(uint16_t *p, int32_t sz, int32_t strength) {
     if (!strength) return;
 
     DECLARE_ALIGNED(16, static const int16_t, kern[3][8]) = {
@@ -200,7 +200,7 @@ void eb_av1_filter_intra_edge_high_sse4_1(uint16_t *p, int32_t sz, int32_t stren
     }
 }
 
-void eb_av1_upsample_intra_edge_sse4_1(uint8_t *p, int32_t sz) {
+void svt_av1_upsample_intra_edge_sse4_1(uint8_t *p, int32_t sz) {
     // interpolate half-sample positions
     assert(sz <= 24);
 

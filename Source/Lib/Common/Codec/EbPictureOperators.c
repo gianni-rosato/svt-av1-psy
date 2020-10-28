@@ -22,7 +22,7 @@
 #define VARIANCE_PRECISION 16
 #define MEAN_PRECISION (VARIANCE_PRECISION >> 1)
 
-void *eb_aom_memset16(void *dest, int32_t val, size_t length);
+void *svt_aom_memset16(void *dest, int32_t val, size_t length);
 
 /*********************************
  * Picture Copy
@@ -31,12 +31,12 @@ void *eb_aom_memset16(void *dest, int32_t val, size_t length);
 void pic_copy_kernel_8bit(EbByte src, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
                           uint32_t area_width, uint32_t area_height) {
     for (uint32_t j = 0; j < area_height; j++)
-        eb_memcpy(dst + j * dst_stride, src + j * src_stride, area_width);
+        svt_memcpy(dst + j * dst_stride, src + j * src_stride, area_width);
 }
 void pic_copy_kernel_16bit(uint16_t *src, uint32_t src_stride, uint16_t *dst, uint32_t dst_stride,
                            uint32_t width, uint32_t height) {
     for (uint32_t j = 0; j < height; j++)
-        eb_memcpy(dst + j * dst_stride, src + j * src_stride, sizeof(uint16_t) * width);
+        svt_memcpy(dst + j * dst_stride, src + j * src_stride, sizeof(uint16_t) * width);
 }
 
 EbErrorType picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_origin_index,
@@ -393,7 +393,7 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
 // Copies the source image into the destination image and updates the
 // destination's UMV borders.
 // Note: The frames are assumed to be identical in size.
-void eb_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *dst_ybc) {
+void svt_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *dst_ybc) {
     int32_t        row;
     const uint8_t *src = src_ybc->y_buffer;
     uint8_t *      dst = dst_ybc->y_buffer;
@@ -402,7 +402,7 @@ void eb_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *dst
         const uint16_t *src16 = CONVERT_TO_SHORTPTR(src);
         uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst);
         for (row = 0; row < src_ybc->y_height; ++row) {
-            eb_memcpy(dst16, src16, src_ybc->y_width * sizeof(uint16_t));
+            svt_memcpy(dst16, src16, src_ybc->y_width * sizeof(uint16_t));
             src16 += src_ybc->y_stride;
             dst16 += dst_ybc->y_stride;
         }
@@ -410,13 +410,13 @@ void eb_aom_yv12_copy_y_c(const Yv12BufferConfig *src_ybc, Yv12BufferConfig *dst
     }
 
     for (row = 0; row < src_ybc->y_height; ++row) {
-        eb_memcpy(dst, src, src_ybc->y_width);
+        svt_memcpy(dst, src, src_ybc->y_width);
         src += src_ybc->y_stride;
         dst += dst_ybc->y_stride;
     }
 }
 
-void eb_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc) {
+void svt_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc) {
     int32_t        row;
     const uint8_t *src = src_bc->u_buffer;
     uint8_t *      dst = dst_bc->u_buffer;
@@ -425,7 +425,7 @@ void eb_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_
         const uint16_t *src16 = CONVERT_TO_SHORTPTR(src);
         uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst);
         for (row = 0; row < src_bc->uv_height; ++row) {
-            eb_memcpy(dst16, src16, src_bc->uv_width * sizeof(uint16_t));
+            svt_memcpy(dst16, src16, src_bc->uv_width * sizeof(uint16_t));
             src16 += src_bc->uv_stride;
             dst16 += dst_bc->uv_stride;
         }
@@ -433,13 +433,13 @@ void eb_aom_yv12_copy_u_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_
     }
 
     for (row = 0; row < src_bc->uv_height; ++row) {
-        eb_memcpy(dst, src, src_bc->uv_width);
+        svt_memcpy(dst, src, src_bc->uv_width);
         src += src_bc->uv_stride;
         dst += dst_bc->uv_stride;
     }
 }
 
-void eb_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc) {
+void svt_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_bc) {
     int32_t        row;
     const uint8_t *src = src_bc->v_buffer;
     uint8_t *      dst = dst_bc->v_buffer;
@@ -448,7 +448,7 @@ void eb_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_
         const uint16_t *src16 = CONVERT_TO_SHORTPTR(src);
         uint16_t *      dst16 = CONVERT_TO_SHORTPTR(dst);
         for (row = 0; row < src_bc->uv_height; ++row) {
-            eb_memcpy(dst16, src16, src_bc->uv_width * sizeof(uint16_t));
+            svt_memcpy(dst16, src16, src_bc->uv_width * sizeof(uint16_t));
             src16 += src_bc->uv_stride;
             dst16 += dst_bc->uv_stride;
         }
@@ -456,7 +456,7 @@ void eb_aom_yv12_copy_v_c(const Yv12BufferConfig *src_bc, Yv12BufferConfig *dst_
     }
 
     for (row = 0; row < src_bc->uv_height; ++row) {
-        eb_memcpy(dst, src, src_bc->uv_width);
+        svt_memcpy(dst, src, src_bc->uv_width);
         src += src_bc->uv_stride;
         dst += dst_bc->uv_stride;
     }

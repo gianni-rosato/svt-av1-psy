@@ -174,9 +174,9 @@ class SADTestBase : public ::testing::Test {
     }
 
     void SetUp() override {
-        src_aligned_ = (uint8_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE);
-        ref1_aligned_ = (uint8_t *)eb_aom_memalign(32, MAX_REF_BLOCK_SIZE);
-        ref2_aligned_ = (uint8_t *)eb_aom_memalign(32, MAX_REF_BLOCK_SIZE);
+        src_aligned_ = (uint8_t *)svt_aom_memalign(32, MAX_BLOCK_SIZE);
+        ref1_aligned_ = (uint8_t *)svt_aom_memalign(32, MAX_REF_BLOCK_SIZE);
+        ref2_aligned_ = (uint8_t *)svt_aom_memalign(32, MAX_REF_BLOCK_SIZE);
         ASSERT_NE(src_aligned_, nullptr);
         ASSERT_NE(ref1_aligned_, nullptr);
         ASSERT_NE(ref2_aligned_, nullptr);
@@ -184,11 +184,11 @@ class SADTestBase : public ::testing::Test {
 
     void TearDown() override {
         if (src_aligned_)
-            eb_aom_free(src_aligned_);
+            svt_aom_free(src_aligned_);
         if (ref1_aligned_)
-            eb_aom_free(ref1_aligned_);
+            svt_aom_free(ref1_aligned_);
         if (ref2_aligned_)
-            eb_aom_free(ref2_aligned_);
+            svt_aom_free(ref2_aligned_);
     }
 
     void prepare_data() {
@@ -1242,17 +1242,17 @@ class InitializeBuffer32
           count32(TEST_GET_PARAM(1)),
           rnd_(0, (1 << 30) - 1) {
         value = rnd_.random();
-        _ref_ = (uint32_t *)eb_aom_memalign(32, MAX_BUFFER_SIZE);
-        _test_ = (uint32_t *)eb_aom_memalign(32, MAX_BUFFER_SIZE);
+        _ref_ = (uint32_t *)svt_aom_memalign(32, MAX_BUFFER_SIZE);
+        _test_ = (uint32_t *)svt_aom_memalign(32, MAX_BUFFER_SIZE);
         memset(_ref_, 0, MAX_BUFFER_SIZE);
         memset(_test_, 0, MAX_BUFFER_SIZE);
     }
 
     ~InitializeBuffer32() {
         if (_ref_)
-            eb_aom_free(_ref_);
+            svt_aom_free(_ref_);
         if (_test_)
-            eb_aom_free(_test_);
+            svt_aom_free(_test_);
     }
 
   protected:
@@ -1298,17 +1298,17 @@ class SADTestBase16bit : public ::testing::Test {
     }
 
     void SetUp() override {
-        src_ = (uint16_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE * sizeof(*src_));
-        ref_ = (uint16_t *)eb_aom_memalign(32, MAX_BLOCK_SIZE * sizeof(*ref_));
+        src_ = (uint16_t *)svt_aom_memalign(32, MAX_BLOCK_SIZE * sizeof(*src_));
+        ref_ = (uint16_t *)svt_aom_memalign(32, MAX_BLOCK_SIZE * sizeof(*ref_));
         ASSERT_NE(src_, nullptr);
         ASSERT_NE(ref_, nullptr);
     }
 
     void TearDown() override {
         if (src_)
-            eb_aom_free(src_);
+            svt_aom_free(src_);
         if (ref_)
-            eb_aom_free(ref_);
+            svt_aom_free(ref_);
     }
 
     void prepare_data() {

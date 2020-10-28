@@ -20,7 +20,7 @@
 #include "EbMemory_SSE4_1.h"
 
 // TODO: When calculating conv_params->dst using AVX512 (such as those jnt
-// convolve functions themselves and eb_av1_warp_affine etc.), always leave
+// convolve functions themselves and svt_av1_warp_affine etc.), always leave
 // it twisted in memory, then when it is loaded as input, we don't need to
 // twist it again to get what we want. In this way we eliminate permutation
 // instructions in both sides (both storing and loading).
@@ -2352,11 +2352,11 @@ typedef void (*JntConvolveYTapFunc)(const uint8_t *const src, const int32_t src_
                                     const int32_t                   subpel_y_q4,
                                     const ConvolveParams *const     conv_params);
 
-void eb_av1_jnt_convolve_y_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
-                                  int32_t dst8_stride, int32_t w, int32_t h,
-                                  InterpFilterParams *filter_params_x,
-                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_jnt_convolve_y_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
+                                   int32_t dst8_stride, int32_t w, int32_t h,
+                                   InterpFilterParams *filter_params_x,
+                                   InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                   const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     static const JntConvolveYTapFunc jnt_convolve_y_tap_func_table[MAX_FILTER_TAP + 1] = {
         NULL,
         NULL,
@@ -2406,12 +2406,12 @@ static INLINE void jnt_copy_no_avg_32_avx512(const uint8_t *const     src,
     _mm512_storeu_si512((__m512i *)dst, d);
 }
 
-void eb_av1_jnt_convolve_2d_copy_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
-                                        int32_t dst8_stride, int32_t w, int32_t h,
-                                        InterpFilterParams *filter_params_x,
-                                        InterpFilterParams *filter_params_y,
-                                        const int32_t subpel_x_q4, const int32_t subpel_y_q4,
-                                        ConvolveParams *conv_params) {
+void svt_av1_jnt_convolve_2d_copy_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
+                                         int32_t dst8_stride, int32_t w, int32_t h,
+                                         InterpFilterParams *filter_params_x,
+                                         InterpFilterParams *filter_params_y,
+                                         const int32_t subpel_x_q4, const int32_t subpel_y_q4,
+                                         ConvolveParams *conv_params) {
     const int32_t round_0      = 3;
     const int32_t round_1      = COMPOUND_ROUND1_BITS;
     const int32_t bits         = 2 * FILTER_BITS - round_0 - round_1;
@@ -3978,11 +3978,11 @@ typedef void (*JntConvolveXTapFunc)(const uint8_t *const src, const int32_t src_
                                     const int32_t                   subpel_x_q4,
                                     const ConvolveParams *const     conv_params);
 
-void eb_av1_jnt_convolve_x_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
-                                  int32_t dst8_stride, int32_t w, int32_t h,
-                                  InterpFilterParams *filter_params_x,
-                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_jnt_convolve_x_avx512(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
+                                   int32_t dst8_stride, int32_t w, int32_t h,
+                                   InterpFilterParams *filter_params_x,
+                                   InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                   const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     static const JntConvolveXTapFunc jnt_convolve_x_tap_func_table[MAX_FILTER_TAP + 1] = {
         NULL,
         NULL,

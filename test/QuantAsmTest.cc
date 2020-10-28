@@ -13,8 +13,8 @@
  * @file QuantAsmTest.c
  *
  * @brief Unit test for quantize avx2 functions:
- * - eb_aom_highbd_quantize_b_avx2
- * - eb_aom_quantize_b_avx2
+ * - svt_aom_highbd_quantize_b_avx2
+ * - svt_aom_quantize_b_avx2
  *
  * @author Cidana-Zhengwen
  *
@@ -44,10 +44,10 @@
 #include "random.h"
 
 namespace QuantizeAsmTest {
-extern "C" void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q,
-                                    int32_t u_dc_delta_q, int32_t u_ac_delta_q,
-                                    int32_t v_dc_delta_q, int32_t v_ac_delta_q,
-                                    Quants *const quants, Dequants *const deq);
+extern "C" void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q,
+                                        int32_t u_dc_delta_q, int32_t u_ac_delta_q,
+                                        int32_t v_dc_delta_q, int32_t v_ac_delta_q,
+                                        Quants *const quants, Dequants *const deq);
 
 using QuantizeFunc = void (*)(const TranLow *coeff_ptr, intptr_t n_coeffs,
                               const int16_t *zbin_ptr,
@@ -65,8 +65,8 @@ using QuantizeParam = std::tuple<int, int>;
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 /**
  * @brief Unit test for quantize avx2 functions:
- * - eb_aom_highbd_quantize_b_avx2
- * - eb_aom_quantize_b_avx2
+ * - svt_aom_highbd_quantize_b_avx2
+ * - svt_aom_quantize_b_avx2
   *
  * Test strategy:
  * These tests use quantize C function as reference, input the same data and
@@ -97,7 +97,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
         coeff_max_ = (1 << (7 + bd_)) - 1;
         rnd_ = new SVTRandom(coeff_min_, coeff_max_);
 
-        eb_av1_build_quantizer(bd_, 0, 0, 0, 0, 0, &qtab_quants_, &qtab_deq_);
+        svt_av1_build_quantizer(bd_, 0, 0, 0, 0, 0, &qtab_quants_, &qtab_deq_);
         setup_func_ptrs();
     }
 
@@ -108,23 +108,23 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
 
     void SetUp() override {
         coeff_in_ = reinterpret_cast<TranLow *>(
-            eb_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+            svt_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
         qcoeff_ref_ = reinterpret_cast<TranLow *>(
-            eb_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+            svt_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
         dqcoeff_ref_ = reinterpret_cast<TranLow *>(
-            eb_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+            svt_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
         qcoeff_test_ = reinterpret_cast<TranLow *>(
-            eb_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+            svt_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
         dqcoeff_test_ = reinterpret_cast<TranLow *>(
-            eb_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
+            svt_aom_memalign(32, MAX_TX_SQUARE * sizeof(TranLow)));
     }
 
     void TearDown() override {
-        eb_aom_free(coeff_in_);
-        eb_aom_free(qcoeff_ref_);
-        eb_aom_free(dqcoeff_ref_);
-        eb_aom_free(qcoeff_test_);
-        eb_aom_free(dqcoeff_test_);
+        svt_aom_free(coeff_in_);
+        svt_aom_free(qcoeff_ref_);
+        svt_aom_free(dqcoeff_ref_);
+        svt_aom_free(qcoeff_test_);
+        svt_aom_free(dqcoeff_test_);
         aom_clear_system_state();
     }
 
@@ -134,11 +134,11 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
      */
     void setup_func_ptrs() {
         if (bd_ == AOM_BITS_8) {
-                quant_ref_ = eb_aom_quantize_b_c_ii;
-                quant_test_ = eb_aom_quantize_b_avx2;
+                quant_ref_ = svt_aom_quantize_b_c_ii;
+                quant_test_ = svt_aom_quantize_b_avx2;
         } else {
-                quant_ref_ = eb_aom_highbd_quantize_b_c;
-                quant_test_ = eb_aom_highbd_quantize_b_avx2;
+                quant_ref_ = svt_aom_highbd_quantize_b_c;
+                quant_test_ = svt_aom_highbd_quantize_b_avx2;
         }
         if (tx_size_ == TX_32X32) {
             log_scale = 1;

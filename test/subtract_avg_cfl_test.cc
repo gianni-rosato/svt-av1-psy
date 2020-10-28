@@ -86,8 +86,8 @@ class CflSubAvgTest : public ::testing::TestWithParam<TxSize> {
         memset(data_ref_, 0, sizeof(data_ref_));
 
         /** get test and reference function */
-        sub_avg_tst_ = eb_get_subtract_average_fn_avx2(tx_size_);
-        sub_avg_ref_ = eb_get_subtract_average_fn_c(tx_size_);
+        sub_avg_tst_ = svt_get_subtract_average_fn_avx2(tx_size_);
+        sub_avg_ref_ = svt_get_subtract_average_fn_c(tx_size_);
     }
 
     virtual ~CflSubAvgTest() {

@@ -36,18 +36,18 @@ class Compute8x8SatdTest : public ::testing::Test {
   public:
     Compute8x8SatdTest() : _width_(8), _height_(8), _dcSize_(10) {
         _stride_ = _width_ + 4;
-        _dcValue1_ = (uint64_t *)eb_aom_malloc(_dcSize_ * sizeof(uint64_t));
-        _dcValue2_ = (uint64_t *)eb_aom_malloc(_dcSize_ * sizeof(uint64_t));
-        _src_ = (uint8_t *)eb_aom_malloc(_height_ * _stride_ * sizeof(uint8_t));
+        _dcValue1_ = (uint64_t *)svt_aom_malloc(_dcSize_ * sizeof(uint64_t));
+        _dcValue2_ = (uint64_t *)svt_aom_malloc(_dcSize_ * sizeof(uint64_t));
+        _src_ = (uint8_t *)svt_aom_malloc(_height_ * _stride_ * sizeof(uint8_t));
     }
 
     void TearDown() override {
         if (_dcValue1_)
-            eb_aom_free(_dcValue1_);
+            svt_aom_free(_dcValue1_);
         if (_dcValue2_)
-            eb_aom_free(_dcValue2_);
+            svt_aom_free(_dcValue2_);
         if (_src_)
-            eb_aom_free(_src_);
+            svt_aom_free(_src_);
     }
 
   protected:

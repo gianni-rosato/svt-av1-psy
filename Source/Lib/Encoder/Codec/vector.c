@@ -28,7 +28,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "vector.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
-int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
+int svt_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
     assert(vector != NULL);
 
     if (vector == NULL) return VECTOR_ERROR;
@@ -42,7 +42,7 @@ int eb_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
 }
 
 
-int eb_aom_vector_destroy(Vector *vector) {
+int svt_aom_vector_destroy(Vector *vector) {
     assert(vector != NULL);
 
     if (vector == NULL) return VECTOR_ERROR;
@@ -54,7 +54,7 @@ int eb_aom_vector_destroy(Vector *vector) {
 }
 
 /* Insertion */
-int eb_aom_vector_push_back(Vector *vector, void *element) {
+int svt_aom_vector_push_back(Vector *vector, void *element) {
     assert(vector != NULL);
     assert(element != NULL);
 
@@ -71,12 +71,12 @@ int eb_aom_vector_push_back(Vector *vector, void *element) {
 
 /* Information */
 
-size_t eb_aom_vector_byte_size(const Vector *vector) { return vector->size * vector->element_size; }
+size_t svt_aom_vector_byte_size(const Vector *vector) { return vector->size * vector->element_size; }
 
 /* Iterators */
-Iterator eb_aom_vector_begin(Vector *vector) { return eb_aom_vector_iterator(vector, 0); }
+Iterator svt_aom_vector_begin(Vector *vector) { return svt_aom_vector_iterator(vector, 0); }
 
-Iterator eb_aom_vector_iterator(Vector *vector, size_t index) {
+Iterator svt_aom_vector_iterator(Vector *vector, size_t index) {
     Iterator iterator = {NULL, 0};
 
     assert(vector != NULL && index <= vector->size);
@@ -113,7 +113,7 @@ void *_vector_offset(Vector *vector, size_t index) {
 void _vector_assign(Vector *vector, size_t index, void *element) {
     /* Insert the element */
     void *offset = _vector_offset(vector, index);
-    eb_memcpy(offset, element, vector->element_size);
+    svt_memcpy(offset, element, vector->element_size);
 }
 
 int _vector_adjust_capacity(Vector *vector) {
@@ -143,12 +143,12 @@ int _vector_reallocate(Vector *vector, size_t new_capacity) {
     if (memcpy_s(vector->data,
                              new_capacity_in_bytes,
                              old,
-                             eb_aom_vector_byte_size(vector)) != 0) {
+                             svt_aom_vector_byte_size(vector)) != 0) {
         return VECTOR_ERROR;
     }
 /* clang-format on */
 #else
-    eb_memcpy(vector->data, old, eb_aom_vector_byte_size(vector));
+    svt_memcpy(vector->data, old, svt_aom_vector_byte_size(vector));
 #endif
 
     vector->capacity = new_capacity;

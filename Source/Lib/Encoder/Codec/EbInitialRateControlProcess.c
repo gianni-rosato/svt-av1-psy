@@ -53,9 +53,9 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = initial_rate_control_context_dctor;
 
-    context_ptr->motion_estimation_results_input_fifo_ptr = eb_system_resource_get_consumer_fifo(
+    context_ptr->motion_estimation_results_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->motion_estimation_results_resource_ptr, 0);
-    context_ptr->initialrate_control_results_output_fifo_ptr = eb_system_resource_get_producer_fifo(
+    context_ptr->initialrate_control_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->initial_rate_control_results_resource_ptr, 0);
 
     return EB_ErrorNone;
@@ -84,14 +84,14 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
             for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
                  ++ref_pic_index) {
                 if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
-                    eb_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
+                    svt_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
                 }
             }
         }
     }
 
     if (pcs_ptr->pa_reference_picture_wrapper_ptr != NULL) {
-        eb_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
+        svt_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
     }
 
     return;
@@ -254,7 +254,7 @@ void get_histogram_queue_data(SequenceControlSet *scs_ptr, EncodeContext *encode
     int32_t                      histogram_queue_entry_index;
 
     // Determine offset from the Head Ptr for HLRC histogram queue
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+    svt_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
     histogram_queue_entry_index = (int32_t)(
         pcs_ptr->picture_number -
         encode_context_ptr
@@ -282,15 +282,15 @@ void get_histogram_queue_data(SequenceControlSet *scs_ptr, EncodeContext *encode
     histogram_queue_entry_ptr->is_coded             = EB_FALSE;
     histogram_queue_entry_ptr->total_num_bits_coded = 0;
     histogram_queue_entry_ptr->frames_in_sw         = 0;
-    eb_memcpy(histogram_queue_entry_ptr->me_distortion_histogram,
+    svt_memcpy(histogram_queue_entry_ptr->me_distortion_histogram,
               pcs_ptr->me_distortion_histogram,
               sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS);
 
-    eb_memcpy(histogram_queue_entry_ptr->ois_distortion_histogram,
+    svt_memcpy(histogram_queue_entry_ptr->ois_distortion_histogram,
               pcs_ptr->ois_distortion_histogram,
               sizeof(uint16_t) * NUMBER_OF_INTRA_SAD_INTERVALS);
 
-    eb_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+    svt_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
     //SVT_LOG("Test1 POC: %d\t POC: %d\t LifeCount: %d\n", histogram_queue_entry_ptr->picture_number, pcs_ptr->picture_number,  histogram_queue_entry_ptr->life_count);
 
     return;
@@ -301,7 +301,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     HlRateControlHistogramEntry *histogram_queue_entry_ptr;
     int32_t                      histogram_queue_entry_index;
 
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+    svt_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
 
     histogram_queue_entry_index = (int32_t)(
         pcs_ptr->picture_number -
@@ -328,7 +328,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
         histogram_queue_entry_ptr->life_count += pcs_ptr->historgram_life_count;
 
     histogram_queue_entry_ptr->frames_in_sw = frames_in_sw;
-    eb_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+    svt_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
 
     return;
 }
@@ -385,9 +385,9 @@ static AOM_INLINE void get_quantize_error(MacroblockPlane *p,
   int pix_num = 1 << num_pels_log2_lookup[txsize_to_bsize[tx_size]];
   const int shift = tx_size == TX_32X32 ? 0 : 2;
 
-  eb_av1_quantize_fp(coeff, pix_num, p->zbin_qtx, p->round_fp_qtx, p->quant_fp_qtx,
-                  p->quant_shift_qtx, qcoeff, dqcoeff, p->dequant_qtx, eob,
-                  scan_order->scan, scan_order->iscan);
+  svt_av1_quantize_fp(coeff, pix_num, p->zbin_qtx, p->round_fp_qtx, p->quant_fp_qtx,
+                      p->quant_shift_qtx, qcoeff, dqcoeff, p->dequant_qtx, eob,
+                      scan_order->scan, scan_order->iscan);
 
   *recon_error = svt_av1_block_error(coeff, dqcoeff, pix_num, sse) >> shift;
   *recon_error = AOMMAX(*recon_error, 1);
@@ -529,7 +529,7 @@ int16_t av1_dc_quant_qtx(int qindex, int delta, AomBitDepth bit_depth) {
 
 int svt_av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
   const int q = av1_dc_quant_qtx(qindex, 0, bit_depth);
-  //const int q = eb_av1_dc_quant_Q3(qindex, 0, bit_depth);
+  //const int q = svt_av1_dc_quant_Q3(qindex, 0, bit_depth);
   int rdmult = q * q;
   rdmult = rdmult * 3 + (rdmult * 2 / 3);
   switch (bit_depth) {
@@ -543,14 +543,14 @@ int svt_av1_compute_rd_mult_based_on_qindex(AomBitDepth bit_depth, int qindex) {
   return rdmult > 0 ? rdmult : 1;
 }
 
-void eb_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q);
-void eb_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
-                            int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
-                            Quants *const quants, Dequants *const deq);
+void svt_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q);
+void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+                             int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
+                             Quants *const quants, Dequants *const deq);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
-double eb_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
-int32_t eb_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
+double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
+int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
 extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode, uint16_t max_frame_width, uint16_t max_frame_height,
                             int32_t p_angle, int32_t cu_origin_x, int32_t cu_origin_y, uint8_t *above_row, uint8_t *left_col);
 
@@ -616,7 +616,7 @@ void tpl_mc_flow_dispenser(
     blk_geom.bwidth  = 16;
     blk_geom.bheight = 16;
 
-    eb_av1_setup_scale_factors_for_frame(
+    svt_av1_setup_scale_factors_for_frame(
                 &sf, picture_width_in_sb * BLOCK_SIZE_64,
                 picture_height_in_sb * BLOCK_SIZE_64,
                 picture_width_in_sb * BLOCK_SIZE_64,
@@ -634,15 +634,15 @@ void tpl_mc_flow_dispenser(
         { 0.35, 0.6, 0.8,  0.9, 1.0, 1.0},  //5L
         { 0.35, 0.6, 0.8,  0.9, 0.95, 1.0}  //6L
     };
-    double q_val;  q_val = eb_av1_convert_qindex_to_q(qIndex, 8);
+    double q_val;  q_val = svt_av1_convert_qindex_to_q(qIndex, 8);
     int32_t delta_qindex;
     if(pcs_ptr->slice_type == I_SLICE)
-        delta_qindex = eb_av1_compute_qdelta(
+        delta_qindex = svt_av1_compute_qdelta(
             q_val,
             q_val * 0.25,
             8);
     else
-         delta_qindex = eb_av1_compute_qdelta(
+         delta_qindex = svt_av1_compute_qdelta(
             q_val,
             q_val * delta_rate_new[pcs_ptr->hierarchical_levels]
             [pcs_ptr->temporal_layer_index],
@@ -652,10 +652,10 @@ void tpl_mc_flow_dispenser(
 
     Quants *const quants_bd = &pcs_ptr->quants_bd;
     Dequants *const deq_bd = &pcs_ptr->deq_bd;
-    eb_av1_set_quantizer(
+    svt_av1_set_quantizer(
         pcs_ptr,
         pcs_ptr->frm_hdr.quantization_params.base_q_idx);
-    eb_av1_build_quantizer(
+    svt_av1_build_quantizer(
         /*pcs_ptr->hbd_mode_decision ? AOM_BITS_10 :*/ AOM_BITS_8,
         pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
         pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
@@ -768,7 +768,7 @@ void tpl_mc_flow_dispenser(
                                                   mb_origin_x,
                                                   mb_origin_y,
                                                   &inter_pred_params);
-                        eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
+                        svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
 
                         svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
@@ -867,7 +867,7 @@ void tpl_mc_flow_dispenser(
                                                       dst_buffer_stride);
                     }
 
-                    eb_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
+                    svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, dst_buffer, dst_buffer_stride);
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                     uint16_t eob = 0;
@@ -1386,7 +1386,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 init_zz_cost_info(pcs_ptr);
 
                 // Get Empty Results Object
-                eb_get_empty_object(
+                svt_get_empty_object(
                     context_ptr->initialrate_control_results_output_fifo_ptr,
                     &out_results_wrapper_ptr);
 
@@ -1394,7 +1394,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
 
                 out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
-                eb_post_full_object(out_results_wrapper_ptr);
+                svt_post_full_object(out_results_wrapper_ptr);
 
             }
             else {
@@ -1556,19 +1556,19 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 encode_context_ptr, scs_ptr, pcs_ptr);
                         }
                         // Get Empty Reference Picture Object
-                        eb_get_empty_object(
+                        svt_get_empty_object(
                             scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
                             &reference_picture_wrapper_ptr);
                         if (loop_index) {
                             pcs_ptr->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
                             // Give the new Reference a nominal live_count of 1
-                            eb_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
+                            svt_object_inc_live_count(pcs_ptr->reference_picture_wrapper_ptr, 1);
                         } else {
                             ((PictureParentControlSet *)(queue_entry_ptr->parent_pcs_wrapper_ptr
                                                              ->object_ptr))
                                 ->reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
                             // Give the new Reference a nominal live_count of 1
-                            eb_object_inc_live_count(
+                            svt_object_inc_live_count(
                                 ((PictureParentControlSet *)(queue_entry_ptr->parent_pcs_wrapper_ptr
                                                                  ->object_ptr))
                                     ->reference_picture_wrapper_ptr,
@@ -1580,7 +1580,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             tpl_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
                         // Get Empty Results Object
-                        eb_get_empty_object(
+                        svt_get_empty_object(
                             context_ptr->initialrate_control_results_output_fifo_ptr,
                             &out_results_wrapper_ptr);
 
@@ -1599,7 +1599,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 //loop_index ? pcs_ptr : queueEntryPtr);
                         }
                         // Post the Full Results Object
-                        eb_post_full_object(out_results_wrapper_ptr);
+                        svt_post_full_object(out_results_wrapper_ptr);
                     }
                     // Reset the Reorder Queue Entry
                     queue_entry_ptr->picture_number += INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
@@ -1621,7 +1621,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
         }
 
         // Release the Input Results
-        eb_release_object(in_results_wrapper_ptr);
+        svt_release_object(in_results_wrapper_ptr);
     }
     return NULL;
 }

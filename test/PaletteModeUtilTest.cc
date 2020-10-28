@@ -13,8 +13,8 @@
  * @file PaletteModeUtilTest.cc
  *
  * @brief Unit test for util functions in palette mode:
- * - eb_av1_count_colors
- * - eb_av1_count_colors_highbd
+ * - svt_av1_count_colors
+ * - svt_av1_count_colors_highbd
  * - av1_k_means_dim1
  * - av1_k_means_dim2
  *
@@ -44,15 +44,15 @@ using svt_av1_test_tool::SVTRandom;
 
 namespace {
 
-extern "C" int eb_av1_count_colors(const uint8_t *src, int stride, int rows,
-                                   int cols, int *val_count);
-extern "C" int eb_av1_count_colors_highbd(uint16_t *src, int stride, int rows,
-                                          int cols, int bit_depth, int *val_count);
+extern "C" int svt_av1_count_colors(const uint8_t *src, int stride, int rows,
+                                    int cols, int *val_count);
+extern "C" int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows,
+                                           int cols, int bit_depth, int *val_count);
 
 /**
  * @brief Unit test for counting colors:
- * - eb_av1_count_colors
- * - eb_av1_count_colors_highbd
+ * - svt_av1_count_colors
+ * - svt_av1_count_colors_highbd
  *
  * Test strategy:
  * Feeds the random value both into test function and the vector without
@@ -70,7 +70,7 @@ class ColorCountTest : public ::testing::Test {
   protected:
     ColorCountTest() : rnd_(16, false) {
         input_ =
-            (Sample *)eb_aom_memalign(32, MAX_PALETTE_SQUARE * sizeof(Sample));
+            (Sample *)svt_aom_memalign(32, MAX_PALETTE_SQUARE * sizeof(Sample));
         bd_ = 8;
         ref_.clear();
         val_count_ = nullptr;
@@ -78,7 +78,7 @@ class ColorCountTest : public ::testing::Test {
 
     ~ColorCountTest() {
         if (input_) {
-            eb_aom_free(input_);
+            svt_aom_free(input_);
             input_ = nullptr;
         }
         aom_clear_system_state();
@@ -101,14 +101,14 @@ class ColorCountTest : public ::testing::Test {
 
     void run_test(size_t times) {
         const int max_colors = (1 << bd_);
-        val_count_ = (int *)eb_aom_memalign(32, max_colors * sizeof(int));
+        val_count_ = (int *)svt_aom_memalign(32, max_colors * sizeof(int));
         for (size_t i = 0; i < times; i++) {
             prepare_data();
             ASSERT_EQ(count_color(), ref_.size())
                 << "color count failed at: " << i;
         }
         if (val_count_) {
-            eb_aom_free(val_count_);
+            svt_aom_free(val_count_);
             val_count_ = nullptr;
         }
     }
@@ -129,7 +129,7 @@ class ColorCountLbdTest : public ColorCountTest<uint8_t> {
         const int max_colors = (1 << bd_);
         memset(val_count_, 0, max_colors * sizeof(int));
         unsigned int colors =
-            (unsigned int)eb_av1_count_colors(input_, 64, 64, 64, val_count_);
+            (unsigned int)svt_av1_count_colors(input_, 64, 64, 64, val_count_);
         return colors;
     }
 };
@@ -143,7 +143,7 @@ class ColorCountHbdTest : public ColorCountTest<uint16_t> {
     unsigned int count_color() override {
         const int max_colors = (1 << bd_);
         memset(val_count_, 0, max_colors * sizeof(int));
-        unsigned int colors = (unsigned int)eb_av1_count_colors_highbd(
+        unsigned int colors = (unsigned int)svt_av1_count_colors_highbd(
             input_, 64, 64, 64, bd_, val_count_);
         return colors;
     }
@@ -211,7 +211,7 @@ class KMeansTest : public ::testing::TestWithParam<int> {
             data_[i] = tmp[i] = palette[rnd_.random() % max_colors];
         delete[] palette;
         int val_count[MAX_PALETTE_SQUARE] = {0};
-        return eb_av1_count_colors(tmp, 64, 64, 64, val_count);
+        return svt_av1_count_colors(tmp, 64, 64, 64, val_count);
     }
 
     void run_test(size_t times) {

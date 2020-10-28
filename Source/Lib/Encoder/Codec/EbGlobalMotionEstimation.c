@@ -155,13 +155,6 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     }
 }
 
-static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
-    if (allow_hp)
-        return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 3);
-    else
-        return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
-}
-
 void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
                            EbWarpedMotionParams *bestWarpedMotion, int allow_high_precision_mv) {
     MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
@@ -206,7 +199,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
             int64_t best_warp_error = INT64_MAX;
             // Initially set all params to identity.
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {
-                eb_memcpy(params_by_motion[i].params,
+                svt_memcpy(params_by_motion[i].params,
                        k_indentity_params,
                        (MAX_PARAMDIM - 1) * sizeof(*(params_by_motion[i].params)));
                 params_by_motion[i].num_inliers = 0;
@@ -251,12 +244,12 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
                         // Save the wm_params modified by
                         // svt_av1_refine_integerized_param() rather than motion index to
                         // avoid rerunning refine() below.
-                        eb_memcpy(&global_motion, &tmp_wm_params, sizeof(EbWarpedMotionParams));
+                        svt_memcpy(&global_motion, &tmp_wm_params, sizeof(EbWarpedMotionParams));
                     }
                 }
             }
             if (global_motion.wmtype <= AFFINE)
-                if (!eb_get_shear_params(&global_motion)) global_motion = default_warp_params;
+                if (!svt_get_shear_params(&global_motion)) global_motion = default_warp_params;
 
             if (global_motion.wmtype == TRANSLATION) {
                 global_motion.wmmat[0] =
@@ -269,14 +262,14 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 
             if (global_motion.wmtype == IDENTITY) continue;
 
-            const int64_t ref_frame_error = eb_av1_frame_error(EB_FALSE,
-                                                               EB_8BIT,
-                                                               ref_buffer,
-                                                               ref_pic->stride_y,
-                                                               frm_buffer,
-                                                               input_pic->width,
-                                                               input_pic->height,
-                                                               input_pic->stride_y);
+            const int64_t ref_frame_error = svt_av1_frame_error(EB_FALSE,
+                                                                EB_8BIT,
+                                                                ref_buffer,
+                                                                ref_pic->stride_y,
+                                                                frm_buffer,
+                                                                input_pic->width,
+                                                                input_pic->height,
+                                                                input_pic->stride_y);
 
             if (ref_frame_error == 0) continue;
 

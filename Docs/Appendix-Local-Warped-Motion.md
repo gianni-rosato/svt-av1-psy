@@ -196,7 +196,7 @@ A diagram of the relevant function calls is given in Figure 4.
                 warp motion parameters would be unreliable.
 
         2.  **Warp parameters estimation (function
-            ```eb_find_projection```)**
+            ```svt_find_projection```)**
 
             1.  Generate the warp motion parameters with the warp
                 samples using the least squares fit
@@ -206,7 +206,7 @@ A diagram of the relevant function calls is given in Figure 4.
             2.  Generate warp variables alpha, beta, gamma and delta
                 for the two shearing operations (i.e., horizontal and
                 vertical, which combined make the full affine
-                transformation). (```eb_get_shear_params```). Stop if
+                transformation). (```svt_get_shear_params```). Stop if
                 the shear parameters are not valid
                 (```is_affine_shear_allowed```).
 
@@ -256,10 +256,10 @@ are outlined below.
                 is the called to perform the blending of the two inter predictions using
                 the generated mask.
 
-        3. ```eb_av1_warp_plane``` is invoked in the case of BIPRED where inter-inter
+        3. ```svt_av1_warp_plane``` is invoked in the case of BIPRED where inter-inter
             compound type is COMPOUND_DISTWTD. In this case the ```function highbd_warp_plane```
-            / ```warp_plane``` is called and in turn calls the function ```eb_av1_highbd_warp_affine``` /
-            ```eb_av1_warp_affine```. The latter applies the affine transform and generates the warped
+            / ```warp_plane``` is called and in turn calls the function ```svt_av1_highbd_warp_affine``` /
+            ```svt_av1_warp_affine```. The latter applies the affine transform and generates the warped
             motion prediction using the forward offset and backward offset weights associated with the COMPOUND_DISTWTD mode.
             This last step is performed at the level of 8x8 blocks, until the prediction for the entire block is generated.
 

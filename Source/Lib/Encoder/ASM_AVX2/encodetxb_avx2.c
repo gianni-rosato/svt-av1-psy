@@ -29,8 +29,8 @@ static INLINE __m256i txb_init_levels_avx2(const TranLow *const coeff) {
     return _mm256_permutevar8x32_epi32(res, idx);
 }
 
-void eb_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width,
-                                 const int32_t height, uint8_t *const levels) {
+void svt_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t width,
+                                  const int32_t height, uint8_t *const levels) {
     const TranLow *cf      = coeff;
     const __m128i  x_zeros = _mm_setzero_si128();
     const __m256i  y_zeros = _mm256_setzero_si256();

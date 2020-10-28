@@ -92,7 +92,7 @@ added to the prediction to build the reconstructed samples.
 In this step, the luma reconstructed samples are down sampled to match
 the size of chroma samples using the ``` cfl_luma_subsampling_420 ```
 function. Then the AC luma values are calculated by subtracting the DC luma
-value using the ```eb_subtract_average``` function. The resulting AC values are stored
+value using the ```svt_subtract_average``` function. The resulting AC values are stored
 in the ```pred_buf_q3 buffer```.
 
 **Step 3**: Find the best ![math](http://latex.codecogs.com/gif.latex?\alpha)
@@ -107,7 +107,7 @@ After the best value for ![math](http://latex.codecogs.com/gif.latex?\alpha) is 
 **Step 4**: Generate the chroma prediction
 
 After the best ![math](http://latex.codecogs.com/gif.latex?\alpha) is selected, the prediction using the
-CfL mode is performed using the ```eb_cfl_predict``` function. The chroma
+CfL mode is performed using the ```svt_cfl_predict``` function. The chroma
 residuals are then calculated using the function ```residual_kernel```.
 
 ## 3.  Optimization of the algorithm

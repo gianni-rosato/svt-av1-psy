@@ -169,15 +169,15 @@ void av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, in
 
     for (int i = 0; i < max_itr; ++i) {
         const int64_t pre_dist = this_dist;
-        eb_memcpy_intrin_sse(pre_centroids, centroids, sizeof(pre_centroids[0]) * k);
-        eb_memcpy_intrin_sse(pre_indices, indices, sizeof(pre_indices[0]) * n);
+        svt_memcpy_intrin_sse(pre_centroids, centroids, sizeof(pre_centroids[0]) * k);
+        svt_memcpy_intrin_sse(pre_indices, indices, sizeof(pre_indices[0]) * n);
 
         calc_centroids_1_avx2(data, centroids, indices, n, k);
         this_dist = av1_calc_indices_dist_dim1_avx2(data, centroids, indices, n, k);
 
         if (this_dist > pre_dist) {
-            eb_memcpy_intrin_sse(centroids, pre_centroids, sizeof(pre_centroids[0]) * k);
-            eb_memcpy_intrin_sse(indices, pre_indices, sizeof(pre_indices[0]) * n);
+            svt_memcpy_intrin_sse(centroids, pre_centroids, sizeof(pre_centroids[0]) * k);
+            svt_memcpy_intrin_sse(indices, pre_indices, sizeof(pre_indices[0]) * n);
             break;
         }
         if (!memcmp(centroids, pre_centroids, sizeof(pre_centroids[0]) * k)) break;
@@ -361,7 +361,7 @@ static INLINE void calc_centroids_2_avx2(const int *data, int *centroids, const 
 
     for (i = 0; i < k; ++i) {
         if (count[i] == 0) {
-            eb_memcpy_intrin_sse(centroids + i * 2,
+            svt_memcpy_intrin_sse(centroids + i * 2,
                     (void*)(data + (lcg_rand16(&rand_state) % n) * 2),
                    sizeof(centroids[0]) * 2);
         } else {
@@ -382,15 +382,15 @@ void av1_k_means_dim2_avx2(const int *data, int *centroids, uint8_t *indices, in
 
     for (int i = 0; i < max_itr; ++i) {
         const int64_t pre_dist = this_dist;
-        eb_memcpy_intrin_sse(pre_centroids, centroids, sizeof(pre_centroids[0]) * k * 2);
-        eb_memcpy_intrin_sse(pre_indices, indices, sizeof(pre_indices[0]) * n);
+        svt_memcpy_intrin_sse(pre_centroids, centroids, sizeof(pre_centroids[0]) * k * 2);
+        svt_memcpy_intrin_sse(pre_indices, indices, sizeof(pre_indices[0]) * n);
 
         calc_centroids_2_avx2(data, centroids, indices, n, k);
         this_dist = av1_calc_indices_dist_dim2_avx2(data, centroids, indices, n, k);
 
         if (this_dist > pre_dist) {
-            eb_memcpy_intrin_sse(centroids, pre_centroids, sizeof(pre_centroids[0]) * k * 2);
-            eb_memcpy_intrin_sse(indices, pre_indices, sizeof(pre_indices[0]) * n);
+            svt_memcpy_intrin_sse(centroids, pre_centroids, sizeof(pre_centroids[0]) * k * 2);
+            svt_memcpy_intrin_sse(indices, pre_indices, sizeof(pre_indices[0]) * n);
             break;
         }
         if (!memcmp(centroids, pre_centroids, sizeof(pre_centroids[0]) * k * 2)) break;

@@ -225,7 +225,7 @@ cost.
 
   - Compute the residual for intra prediction and the difference between
  the inter prediction and the intra prediction.
- (```eb_aom_highbd_subtract_block / aom_subtract_block```)
+ (```svt_aom_highbd_subtract_block / aom_subtract_block```)
 
   - Determine the best wedge option to use based on the above computed
  residuals and difference. (```pick_wedge_fixed_sign```). The details of

@@ -133,7 +133,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         else
             context_ptr->palette_cand_array[cd].color_idx_map = NULL;
     // Transform and Quantization Buffers
-    EB_NEW(context_ptr->trans_quant_buffers_ptr, eb_trans_quant_buffers_ctor, sb_size);
+    EB_NEW(context_ptr->trans_quant_buffers_ptr, svt_trans_quant_buffers_ctor, sb_size);
 
     // Cost Arrays
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array, MAX_NFL_BUFF);
@@ -218,7 +218,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             init_data.split_mode         = EB_FALSE;
 
             EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].coeff_tmp,
-                   eb_picture_buffer_desc_ctor,
+                   svt_picture_buffer_desc_ctor,
                    (EbPtr)&init_data);
 
             init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -233,7 +233,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             init_data.split_mode         = EB_FALSE;
 
             EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp,
-                   eb_picture_buffer_desc_ctor,
+                   svt_picture_buffer_desc_ctor,
                    (EbPtr)&init_data);
         }
 #endif
@@ -270,22 +270,22 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     for (uint32_t txt_itr = 0; txt_itr < TX_TYPES; ++txt_itr) {
         EB_NEW(context_ptr->recon_coeff_ptr[txt_itr],
-            eb_picture_buffer_desc_ctor,
+            svt_picture_buffer_desc_ctor,
             (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
         EB_NEW(context_ptr->recon_ptr[txt_itr],
-            eb_picture_buffer_desc_ctor,
+            svt_picture_buffer_desc_ctor,
             (EbPtr)&picture_buffer_desc_init_data);
     }
     EB_NEW(context_ptr->residual_quant_coeff_ptr,
-        eb_picture_buffer_desc_ctor,
+        svt_picture_buffer_desc_ctor,
         (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
 
     EB_NEW(context_ptr->prediction_ptr_temp,
-        eb_picture_buffer_desc_ctor,
+        svt_picture_buffer_desc_ctor,
         (EbPtr)&picture_buffer_desc_init_data);
 
     EB_NEW(context_ptr->cfl_temp_prediction_ptr,
-        eb_picture_buffer_desc_ctor,
+        svt_picture_buffer_desc_ctor,
         (EbPtr)&picture_buffer_desc_init_data);
 
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
@@ -303,10 +303,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     // The temp_recon_ptr and temp_residual_ptr will be shared by all candidates
     // If you want to do something with residual or recon, you need to create one
     EB_NEW(context_ptr->temp_recon_ptr,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
     EB_NEW(context_ptr->temp_residual_ptr,
-           eb_picture_buffer_desc_ctor,
+           svt_picture_buffer_desc_ctor,
            (EbPtr)&double_width_picture_buffer_desc_init_data);
 
     // Candidate Buffers

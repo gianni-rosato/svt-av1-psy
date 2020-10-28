@@ -28,7 +28,7 @@ void SequenceHeaderParser::input_obu_data(const uint8_t* obu_data,
                                           const uint32_t size,
                                           RefDecoder::StreamInfo* stream_info) {
     SeqHeader seg_header;
-    if (eb_get_sequence_info(obu_data, size, &seg_header) == EB_ErrorNone) {
+    if (svt_get_sequence_info(obu_data, size, &seg_header) == EB_ErrorNone) {
         profile_ = seg_header.seq_profile;
         switch (seg_header.sb_size) {
         case BLOCK_64X64: sb_size_ = 64; break;

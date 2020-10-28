@@ -1207,9 +1207,9 @@ static INLINE void iadst16_col_avx512(__m512i *in, __m512i *out, const int8_t co
     out[15] = _mm512_inserti64x4(out[15], temp2, ONE);
 }
 
-void eb_av1_inv_txfm2d_add_16x16_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        int32_t bd) {
+void svt_av1_inv_txfm2d_add_16x16_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         int32_t bd) {
     __m512i       in[16], out[16];
     const int8_t *shift   = eb_inv_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
@@ -1902,9 +1902,9 @@ static void assign_32x32_input_from_64x64_avx512(const __m512i *in, __m512i *in3
     }
 }
 
-void eb_av1_inv_txfm2d_add_32x32_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        int32_t bd) {
+void svt_av1_inv_txfm2d_add_32x32_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         int32_t bd) {
     __m512i       in_avx512[64], out_avx512[128];
     const int8_t *shift     = eb_inv_txfm_shift_ls[TX_32X32];
     const int32_t txw_idx   = get_txw_idx(TX_32X32);
@@ -2939,9 +2939,9 @@ static INLINE void av1_round_shift_rect_array_32_avx512(__m512i *input, __m512i 
     }
 }
 
-void eb_av1_inv_txfm2d_add_16x64_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        TxSize tx_size, int32_t eob, int32_t bd) {
+void svt_av1_inv_txfm2d_add_16x64_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         TxSize tx_size, int32_t eob, int32_t bd) {
     (void)tx_type;
     (void)eob;
     __m512i       in[64], out[64];
@@ -2970,9 +2970,9 @@ void eb_av1_inv_txfm2d_add_16x64_avx512(const int32_t *coeff, uint16_t *output_r
     write_buffer_16x16n_avx512(in, output_r, stride_r, output_w, stride_w, 0, 0, bd, 64);
 }
 
-void eb_av1_inv_txfm2d_add_64x16_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        TxSize tx_size, int32_t eob, int32_t bd) {
+void svt_av1_inv_txfm2d_add_64x16_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         TxSize tx_size, int32_t eob, int32_t bd) {
     (void)tx_type;
     (void)eob;
     __m512i       in[64], out[64];
@@ -2998,9 +2998,9 @@ void eb_av1_inv_txfm2d_add_64x16_avx512(const int32_t *coeff, uint16_t *output_r
     write_buffer_64x16n_avx512(out, output_r, stride_r, output_w, stride_w, 0, 0, bd, 64);
 }
 
-void eb_av1_inv_txfm2d_add_32x64_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        TxSize tx_size, int32_t eob, int32_t bd) {
+void svt_av1_inv_txfm2d_add_32x64_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         TxSize tx_size, int32_t eob, int32_t bd) {
     (void)tx_type;
     (void)eob;
     __m512i       in[128], out[128];
@@ -3028,9 +3028,9 @@ void eb_av1_inv_txfm2d_add_32x64_avx512(const int32_t *coeff, uint16_t *output_r
     write_buffer_32x16n_avx512(in, output_r, stride_r, output_w, stride_w, 0, 0, bd, 128);
 }
 
-void eb_av1_inv_txfm2d_add_64x32_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        TxSize tx_size, int32_t eob, int32_t bd) {
+void svt_av1_inv_txfm2d_add_64x32_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         TxSize tx_size, int32_t eob, int32_t bd) {
     (void)tx_type;
     (void)eob;
     __m512i       in[128], out[128];
@@ -3098,9 +3098,9 @@ static const inv_transform_1d_avx512 row_invtxfm_16x32_arr[TX_TYPES] = {
     NULL // H_FLIPADST
 };
 
-void eb_av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        TxSize tx_size, int32_t eob, int32_t bd) {
+void svt_av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         TxSize tx_size, int32_t eob, int32_t bd) {
     (void)eob;
     __m512i                       in[32], out[32];
     const int8_t *                shift         = eb_inv_txfm_shift_ls[tx_size];
@@ -3129,9 +3129,9 @@ void eb_av1_inv_txfm2d_add_16x32_avx512(const int32_t *coeff, uint16_t *output_r
     write_buffer_16x16n_avx512(out, output_r, stride_r, output_w, stride_w, 0, 0, bd, 32);
 }
 
-void eb_av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
-                                        uint16_t *output_w, int32_t stride_w, TxType tx_type,
-                                        TxSize tx_size, int32_t eob, int32_t bd) {
+void svt_av1_inv_txfm2d_add_32x16_avx512(const int32_t *coeff, uint16_t *output_r, int32_t stride_r,
+                                         uint16_t *output_w, int32_t stride_w, TxType tx_type,
+                                         TxSize tx_size, int32_t eob, int32_t bd) {
     (void)eob;
     __m512i                       in[32], out[32];
     const int8_t *                shift         = eb_inv_txfm_shift_ls[tx_size];

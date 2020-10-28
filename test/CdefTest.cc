@@ -13,9 +13,9 @@
  * @file CdefTest.cc
  *
  * @brief Unit test for cdef tools:
- * * eb_cdef_find_dir_avx2
- * * eb_cdef_filter_block_avx2
- * * compute_cdef_dist_avx2
+ * * svt_cdef_find_dir_avx2
+ * * svt_cdef_filter_block_avx2
+ * * compute_cdef_dist_16bit_avx2
  * * copy_rect8_8bit_to_16bit_avx2
  * * svt_search_one_dual_avx2
  *
@@ -45,26 +45,26 @@ using ::testing::make_tuple;
 using svt_av1_test_tool::SVTRandom;
 namespace {
 
-typedef void (*eb_cdef_filter_block_8x8_16_func)(
+typedef void (*svt_cdef_filter_block_8x8_16_func)(
     const uint16_t *const in, const int32_t pri_strength,
     const int32_t sec_strength, const int32_t dir, int32_t pri_damping,
     int32_t sec_damping, const int32_t coeff_shift, uint16_t *const dst,
     const int32_t dstride);
 
-static const eb_cdef_filter_block_8x8_16_func
-    eb_cdef_filter_block_8x8_16_func_table[] = {
-        eb_cdef_filter_block_8x8_16_avx2,
+static const svt_cdef_filter_block_8x8_16_func
+    svt_cdef_filter_block_8x8_16_func_table[] = {
+        svt_cdef_filter_block_8x8_16_avx2,
 #ifndef NON_AVX512_SUPPORT
-        eb_cdef_filter_block_8x8_16_avx512
+        svt_cdef_filter_block_8x8_16_avx512
 #endif
 };
 
 using cdef_dir_param_t =
     ::testing::tuple<CdefFilterBlockFunc, CdefFilterBlockFunc, BlockSize,
-                     int, int, eb_cdef_filter_block_8x8_16_func>;
+                     int, int, svt_cdef_filter_block_8x8_16_func>;
 
 /**
- * @brief Unit test for eb_cdef_filter_block_avx2
+ * @brief Unit test for svt_cdef_filter_block_avx2
  *
  * Test strategy:
  * Feed src data generated randomly and all possible input,
@@ -99,7 +99,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
         bsize_ = TEST_GET_PARAM(2);
         boundary_ = TEST_GET_PARAM(3);
         bd_ = TEST_GET_PARAM(4);
-        eb_cdef_filter_block_8x8_16 = TEST_GET_PARAM(5);
+        svt_cdef_filter_block_8x8_16 = TEST_GET_PARAM(5);
 
         memset(dst_ref_, 0, sizeof(dst_ref_));
         memset(dst_tst_, 0, sizeof(dst_tst_));
@@ -317,10 +317,10 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                                                          finish_time_useconds);
 
         printf("Average Nanoseconds per Function Call\n");
-        printf("    eb_cdef_filter_block_c()   : %6.2f\n",
+        printf("    svt_cdef_filter_block_c()   : %6.2f\n",
                1000000 * time_c / num_loop);
         printf(
-            "    eb_cdef_filter_block_opt() : %6.2f   (Comparison: %5.2fx)\n",
+            "    svt_cdef_filter_block_opt() : %6.2f   (Comparison: %5.2fx)\n",
             1000000 * time_o / num_loop,
             time_c / time_o);
     }
@@ -355,11 +355,11 @@ TEST_P(CDEFBlockTest, DISABLED_SpeedTest) {
 INSTANTIATE_TEST_CASE_P(
     Cdef, CDEFBlockTest,
     ::testing::Combine(
-        ::testing::Values(&eb_cdef_filter_block_avx2),
-        ::testing::Values(&eb_cdef_filter_block_c),
+        ::testing::Values(&svt_cdef_filter_block_avx2),
+        ::testing::Values(&svt_cdef_filter_block_c),
         ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
         ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
-        ::testing::ValuesIn(eb_cdef_filter_block_8x8_16_func_table)));
+        ::testing::ValuesIn(svt_cdef_filter_block_8x8_16_func_table)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 
@@ -368,7 +368,7 @@ using FindDirFunc = int (*)(const uint16_t *img, int stride, int32_t *var,
 using TestFindDirParam = ::testing::tuple<FindDirFunc, FindDirFunc>;
 
 /**
- * @brief Unit test for eb_cdef_find_dir_avx2
+ * @brief Unit test for svt_cdef_find_dir_avx2
  *
  * Test strategy:
  * Feed src data generated randomly, and check the best mse and
@@ -454,8 +454,8 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
 
 INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirTest,
-                        ::testing::Values(make_tuple(&eb_cdef_find_dir_avx2,
-                                                     &eb_cdef_find_dir_c)));
+                        ::testing::Values(make_tuple(&svt_cdef_find_dir_avx2,
+                                                     &svt_cdef_find_dir_c)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 }  // namespace
@@ -499,9 +499,9 @@ TEST(CdefToolTest, CopyRectMatchTest) {
             uint16_t *dst_ref_ =
                 dst_data_ref_ + CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER;
 
-            eb_copy_rect8_8bit_to_16bit_c(
+            svt_copy_rect8_8bit_to_16bit_c(
                 dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-            eb_copy_rect8_8bit_to_16bit_avx2(
+            svt_copy_rect8_8bit_to_16bit_avx2(
                 dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
 
             for (int i = 0; i < vsize; ++i) {
@@ -515,7 +515,7 @@ TEST(CdefToolTest, CopyRectMatchTest) {
 }
 
 /**
- * @brief Unit test for compute_cdef_dist_avx2
+ * @brief Unit test for compute_cdef_dist_16bit_avx2
  *
  * Test strategy:
  * Feed cdef list, src buffer, dst buffer generated randomly to targeted
@@ -577,16 +577,16 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                                test_bs[i],
                                                                coeff_shift,
                                                                plane);
-                    const uint64_t avx_mse = compute_cdef_dist_avx2(dst_data_,
-                                                                    stride,
-                                                                    src_data_,
-                                                                    dlist,
-                                                                    cdef_count,
-                                                                    test_bs[i],
-                                                                    coeff_shift,
-                                                                    plane);
+                    const uint64_t avx_mse = compute_cdef_dist_16bit_avx2(dst_data_,
+                                                                          stride,
+                                                                          src_data_,
+                                                                          dlist,
+                                                                          cdef_count,
+                                                                          test_bs[i],
+                                                                          coeff_shift,
+                                                                          plane);
                     ASSERT_EQ(c_mse, avx_mse)
-                        << "compute_cdef_dist_avx2 failed "
+                        << "compute_cdef_dist_16bit_avx2 failed "
                         << "bitdepth: " << bd << " plane: " << plane
                         << " BlockSize " << test_bs[i] << " loop: " << k;
                 }
@@ -697,8 +697,8 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
     int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
     int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
-    mse[0] = (uint64_t(*)[64])eb_aom_memalign(32, sizeof(**mse) * sb_count);
-    mse[1] = (uint64_t(*)[64])eb_aom_memalign(32, sizeof(**mse) * sb_count);
+    mse[0] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
+    mse[1] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
 
     SVTRandom rnd_(10, false);
     for (int k = 0; k < 100; ++k) {
@@ -754,8 +754,8 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
         }
     }
 
-    eb_aom_free(mse[0]);
-    eb_aom_free(mse[1]);
+    svt_aom_free(mse[0]);
+    svt_aom_free(mse[1]);
 }
 
 TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
@@ -767,8 +767,8 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
     int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
     int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
-    mse[0] = (uint64_t(*)[64])eb_aom_memalign(32, sizeof(**mse) * sb_count);
-    mse[1] = (uint64_t(*)[64])eb_aom_memalign(32, sizeof(**mse) * sb_count);
+    mse[0] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
+    mse[1] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
 
     SVTRandom rnd_(10, false);
 
@@ -856,6 +856,6 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
         }
     }
 
-    eb_aom_free(mse[0]);
-    eb_aom_free(mse[1]);
+    svt_aom_free(mse[0]);
+    svt_aom_free(mse[1]);
 }

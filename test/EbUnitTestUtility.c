@@ -37,19 +37,19 @@
 /***************************************
  * Randomize Data
  ***************************************/
-void eb_buf_random_void(void *const buf, const uint32_t sizeBuf) {
+void svt_buf_random_void(void *const buf, const uint32_t sizeBuf) {
     uint8_t *const buffer = (uint8_t *)buf;
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buffer[i] = (uint8_t)(rand() % 256);
 }
 
-void eb_buf_random_s8(int8_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeBuf);
+void svt_buf_random_s8(int8_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeBuf);
 }
 
-void eb_buf_random_s8_with_max(int8_t *const buf, const uint32_t sizeBuf,
-                               const uint8_t max) {
+void svt_buf_random_s8_with_max(int8_t *const buf, const uint32_t sizeBuf,
+                                const uint8_t max) {
     for (uint32_t i = 0; i < sizeBuf; i++) {
         const uint32_t val = rand() % (max + 1);
         const uint32_t sign = rand() & 1;
@@ -57,26 +57,26 @@ void eb_buf_random_s8_with_max(int8_t *const buf, const uint32_t sizeBuf,
     }
 }
 
-void eb_buf_random_u8(uint8_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeBuf);
+void svt_buf_random_u8(uint8_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeBuf);
 }
 
-void eb_buf_random_u8_to_0_or_255(uint8_t *const buf, const uint32_t sizeBuf) {
+void svt_buf_random_u8_to_0_or_255(uint8_t *const buf, const uint32_t sizeBuf) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (rand() > (RAND_MAX >> 1)) ? 255 : 0;
 }
 
-void eb_buf_random_u8_to_255(uint8_t *const buf, const uint32_t sizeBuf) {
+void svt_buf_random_u8_to_255(uint8_t *const buf, const uint32_t sizeBuf) {
     memset(buf, 255, sizeBuf);
 }
 
-void eb_buf_random_u8_to_large(uint8_t *const buf, const uint32_t sizeBuf) {
+void svt_buf_random_u8_to_large(uint8_t *const buf, const uint32_t sizeBuf) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = 255 - (rand() % 10);
 }
 
-void eb_buf_random_u8_to_near_value(uint8_t *const buf, const uint32_t sizeBuf,
-                                    const uint8_t val, const uint32_t range) {
+void svt_buf_random_u8_to_near_value(uint8_t *const buf, const uint32_t sizeBuf,
+                                     const uint8_t val, const uint32_t range) {
     for (uint32_t i = 0; i < sizeBuf; i++) {
         int32_t v = val;
         v += (rand() % range);
@@ -89,38 +89,38 @@ void eb_buf_random_u8_to_near_value(uint8_t *const buf, const uint32_t sizeBuf,
     }
 }
 
-void eb_buf_random_u8_to_small(uint8_t *const buf, const uint32_t sizeBuf) {
+void svt_buf_random_u8_to_small(uint8_t *const buf, const uint32_t sizeBuf) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (rand() % 10);
 }
 
-void eb_buf_random_u8_to_small_or_large(uint8_t *const buf,
-                                        const uint32_t sizeBuf) {
+void svt_buf_random_u8_to_small_or_large(uint8_t *const buf,
+                                         const uint32_t sizeBuf) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] =
             (rand() > (RAND_MAX >> 1)) ? (rand() % 10) : (255 - (rand() % 10));
 }
 
-void eb_buf_random_u8_with_max(uint8_t *const buf, const uint32_t sizeBuf,
-                               const uint8_t max) {
+void svt_buf_random_u8_with_max(uint8_t *const buf, const uint32_t sizeBuf,
+                                const uint8_t max) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (uint8_t)((uint32_t)rand() % (max + 1));
 }
 
-void eb_buf_random_s16(int16_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_s16(int16_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 }
 
-void eb_buf_random_s16_to_bd(int16_t *const buf, const uint32_t sizeBuf,
-                             const uint32_t bd) {
+void svt_buf_random_s16_to_bd(int16_t *const buf, const uint32_t sizeBuf,
+                              const uint32_t bd) {
     const int16_t max = (1 << bd) - 1;
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (rand() & 1) ? max : -max;
 }
 
-void eb_buf_random_s16_with_bd(int16_t *const buf, const uint32_t sizeBuf,
-                               const uint32_t bd) {
+void svt_buf_random_s16_with_bd(int16_t *const buf, const uint32_t sizeBuf,
+                                const uint32_t bd) {
     assert(bd >= 8);
 
     for (uint32_t i = 0; i < sizeBuf; i++) {
@@ -130,8 +130,8 @@ void eb_buf_random_s16_with_bd(int16_t *const buf, const uint32_t sizeBuf,
     }
 }
 
-void eb_buf_random_s16_with_max(int16_t *const buf, const uint32_t sizeBuf,
-                                const uint16_t max) {
+void svt_buf_random_s16_with_max(int16_t *const buf, const uint32_t sizeBuf,
+                                 const uint16_t max) {
     for (uint32_t i = 0; i < sizeBuf; i++) {
         const uint32_t val = rand() % (max + 1);
         const uint32_t sign = rand() & 1;
@@ -139,90 +139,90 @@ void eb_buf_random_s16_with_max(int16_t *const buf, const uint32_t sizeBuf,
     }
 }
 
-void eb_buf_random_u16(uint16_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_u16(uint16_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 }
 
-void eb_buf_random_u16_to_0_or_1023(uint16_t *const buf,
-                                    const uint32_t sizeBuf) {
+void svt_buf_random_u16_to_0_or_1023(uint16_t *const buf,
+                                     const uint32_t sizeBuf) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (rand() > (RAND_MAX >> 1)) ? 1023 : 0;
 }
 
-void eb_buf_random_u16_to_0_or_bd(uint16_t *const buf, const uint32_t sizeBuf,
-                                  const uint32_t bd) {
+void svt_buf_random_u16_to_0_or_bd(uint16_t *const buf, const uint32_t sizeBuf,
+                                   const uint32_t bd) {
     const uint16_t max = (uint16_t)((1 << bd) - 1);
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (rand() > (RAND_MAX >> 1)) ? max : 0;
 }
 
-void eb_buf_random_u16_to_bd(uint16_t *const buf, const uint32_t sizeBuf,
-                             const uint32_t bd) {
+void svt_buf_random_u16_to_bd(uint16_t *const buf, const uint32_t sizeBuf,
+                              const uint32_t bd) {
     const uint16_t max = (uint16_t)((1 << bd) - 1);
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = max;
 }
 
-void eb_buf_random_u16_with_bd(uint16_t *const buf, const uint32_t sizeBuf,
-                               const uint32_t bd) {
+void svt_buf_random_u16_with_bd(uint16_t *const buf, const uint32_t sizeBuf,
+                                const uint32_t bd) {
     assert(bd >= 8);
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (uint16_t)((uint32_t)rand() % (1 << bd));
 }
 
-void eb_buf_random_u16_with_max(uint16_t *const buf, const uint32_t sizeBuf,
-                                const uint32_t max) {
+void svt_buf_random_u16_with_max(uint16_t *const buf, const uint32_t sizeBuf,
+                                 const uint32_t max) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (uint16_t)((uint32_t)rand() % (max + 1));
 }
 
-void eb_buf_random_s32(int32_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_s32(int32_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 }
 
-void eb_buf_random_s32_with_max(int32_t *const buf, const uint32_t sizeBuf,
-                                const int32_t max) {
+void svt_buf_random_s32_with_max(int32_t *const buf, const uint32_t sizeBuf,
+                                 const int32_t max) {
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] = (rand() & 1) ? max : -max;
 }
 
-void eb_buf_random_u32(uint32_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_u32(uint32_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 }
 
-void eb_buf_random_u32_with_max(uint32_t *const buf, const uint32_t sizeBuf,
-                                const uint32_t max) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_u32_with_max(uint32_t *const buf, const uint32_t sizeBuf,
+                                 const uint32_t max) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] %= (max + 1);
 }
 
-void eb_buf_random_s64(int64_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_s64(int64_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 }
 
-void eb_buf_random_u64(uint64_t *const buf, const uint32_t sizeBuf) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_u64(uint64_t *const buf, const uint32_t sizeBuf) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 }
 
-void eb_buf_random_ptrdiff_with_max(ptrdiff_t *const buf,
-                                    const uint32_t sizeBuf,
-                                    const ptrdiff_t max) {
-    eb_buf_random_void(buf, sizeof(*buf) * sizeBuf);
+void svt_buf_random_ptrdiff_with_max(ptrdiff_t *const buf,
+                                     const uint32_t sizeBuf,
+                                     const ptrdiff_t max) {
+    svt_buf_random_void(buf, sizeof(*buf) * sizeBuf);
 
     for (uint32_t i = 0; i < sizeBuf; i++)
         buf[i] %= (max + 1);
 }
 
-uint32_t eb_create_random_aligned_stride(const uint32_t width,
-                                         const uint32_t align) {
+uint32_t svt_create_random_aligned_stride(const uint32_t width,
+                                          const uint32_t align) {
     uint32_t stride;
 
-    eb_buf_random_u32_with_max(&stride, 1, 100);
+    svt_buf_random_u32_with_max(&stride, 1, 100);
     stride += width + align;
     stride -= stride % align;
     return stride;
@@ -254,12 +254,12 @@ uint32_t eb_create_random_aligned_stride(const uint32_t width,
         return result;                                           \
     }
 
-BUF_COMPARE_FUNCTION(eb_buf_compare_u8, uint8_t)
-BUF_COMPARE_FUNCTION(eb_buf_compare_s8, int8_t)
-BUF_COMPARE_FUNCTION(eb_buf_compare_u16, uint16_t)
-BUF_COMPARE_FUNCTION(eb_buf_compare_s16, int16_t)
-BUF_COMPARE_FUNCTION(eb_buf_compare_u32, uint32_t)
-BUF_COMPARE_FUNCTION(eb_buf_compare_s32, int32_t)
+BUF_COMPARE_FUNCTION(svt_buf_compare_u8, uint8_t)
+BUF_COMPARE_FUNCTION(svt_buf_compare_s8, int8_t)
+BUF_COMPARE_FUNCTION(svt_buf_compare_u16, uint16_t)
+BUF_COMPARE_FUNCTION(svt_buf_compare_s16, int16_t)
+BUF_COMPARE_FUNCTION(svt_buf_compare_u32, uint32_t)
+BUF_COMPARE_FUNCTION(svt_buf_compare_s32, int32_t)
 
 #define IMAGE_COMPARE_FUNCTION(name, type)                                 \
     EbBool name(const type *buf1,                                          \
@@ -296,19 +296,19 @@ BUF_COMPARE_FUNCTION(eb_buf_compare_s32, int32_t)
         return result;                                                     \
     }
 
-IMAGE_COMPARE_FUNCTION(eb_image_compare_u8, uint8_t)
-IMAGE_COMPARE_FUNCTION(eb_image_compare_s8, int8_t)
-IMAGE_COMPARE_FUNCTION(eb_image_compare_u16, uint16_t)
-IMAGE_COMPARE_FUNCTION(eb_image_compare_s16, int16_t)
-IMAGE_COMPARE_FUNCTION(eb_image_compare_u32, uint32_t)
-IMAGE_COMPARE_FUNCTION(eb_image_compare_s32, int32_t)
-IMAGE_COMPARE_FUNCTION(eb_image_compare_u64, uint64_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_u8, uint8_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_s8, int8_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_u16, uint16_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_s16, int16_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_u32, uint32_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_s32, int32_t)
+IMAGE_COMPARE_FUNCTION(svt_image_compare_u64, uint64_t)
 
 /***************************************
  * Log Data
  ***************************************/
-void eb_unit_test_log_s8(const char *const nameBuf, const int8_t *const buf,
-                         const uint32_t sizeBuf) {
+void svt_unit_test_log_s8(const char *const nameBuf, const int8_t *const buf,
+                          const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
@@ -323,8 +323,8 @@ void eb_unit_test_log_s8(const char *const nameBuf, const int8_t *const buf,
     }
 }
 
-void eb_unit_test_log_u8(const char *const nameBuf, const uint8_t *const buf,
-                         const uint32_t sizeBuf) {
+void svt_unit_test_log_u8(const char *const nameBuf, const uint8_t *const buf,
+                          const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
@@ -339,8 +339,8 @@ void eb_unit_test_log_u8(const char *const nameBuf, const uint8_t *const buf,
     }
 }
 
-void eb_unit_test_log_s16(const char *const nameBuf, const int16_t *const buf,
-                          const uint32_t sizeBuf) {
+void svt_unit_test_log_s16(const char *const nameBuf, const int16_t *const buf,
+                           const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
@@ -355,8 +355,8 @@ void eb_unit_test_log_s16(const char *const nameBuf, const int16_t *const buf,
     }
 }
 
-void eb_unit_test_log_u16(const char *const nameBuf, const uint16_t *const buf,
-                          const uint32_t sizeBuf) {
+void svt_unit_test_log_u16(const char *const nameBuf, const uint16_t *const buf,
+                           const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
@@ -371,8 +371,8 @@ void eb_unit_test_log_u16(const char *const nameBuf, const uint16_t *const buf,
     }
 }
 
-void eb_unit_test_log_s32(const char *const nameBuf, const int32_t *const buf,
-                          const uint32_t sizeBuf) {
+void svt_unit_test_log_s32(const char *const nameBuf, const int32_t *const buf,
+                           const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
@@ -387,72 +387,7 @@ void eb_unit_test_log_s32(const char *const nameBuf, const int32_t *const buf,
     }
 }
 
-void eb_unit_test_log_u32(const char *const nameBuf, const uint32_t *const buf,
-                          const uint32_t sizeBuf) {
-    printf("%16s = ", nameBuf);
-
-    if (sizeBuf == 1)
-        printf("%u\n", buf[0]);
-    else {
-        for (uint32_t i = 0; i < sizeBuf; i++) {
-            printf("%10u,", buf[i]);
-            if (!((i + 1) % 32))
-                printf("\n  ");
-        }
-        printf("\n");
-    }
-}
-
-void eb_unit_test_log_s64(const char *const nameBuf, const int64_t *const buf,
-                          const uint32_t sizeBuf) {
-    printf("%16s = ", nameBuf);
-
-    if (sizeBuf == 1)
-        printf("%" PRIx64 "\n", buf[0]);
-    else {
-        for (uint32_t i = 0; i < sizeBuf; i++) {
-            printf("%10" PRIx64 ",", buf[i]);
-            if (!((i + 1) % 32))
-                printf("\n  ");
-        }
-        printf("\n");
-    }
-}
-
-void eb_unit_test_log_u64(const char *const nameBuf, const uint64_t *const buf,
-                          const uint32_t sizeBuf) {
-    printf("%16s = ", nameBuf);
-
-    if (sizeBuf == 1)
-        printf("%" PRIu64 "\n", buf[0]);
-    else {
-        for (uint32_t i = 0; i < sizeBuf; i++) {
-            printf("%10" PRIu64 ",", buf[i]);
-            if (!((i + 1) % 32))
-                printf("\n  ");
-        }
-        printf("\n");
-    }
-}
-
-void eb_unit_test_log_ptrdiff(const char *const nameBuf,
-                              const ptrdiff_t *const buf,
-                              const uint32_t sizeBuf) {
-    printf("%16s = ", nameBuf);
-
-    if (sizeBuf == 1)
-        printf("%td\n", buf[0]);
-    else {
-        for (uint32_t i = 0; i < sizeBuf; i++) {
-            printf("%10td,", buf[i]);
-            if (!((i + 1) % 32))
-                printf("\n  ");
-        }
-        printf("\n");
-    }
-}
-
-void eb_unit_test_log_bool(const char *const nameBuf, const EbBool *const buf,
+void svt_unit_test_log_u32(const char *const nameBuf, const uint32_t *const buf,
                            const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
@@ -468,8 +403,73 @@ void eb_unit_test_log_bool(const char *const nameBuf, const EbBool *const buf,
     }
 }
 
-void eb_unit_test_log_double(const char *const nameBuf, const double *const buf,
-                             const uint32_t sizeBuf) {
+void svt_unit_test_log_s64(const char *const nameBuf, const int64_t *const buf,
+                           const uint32_t sizeBuf) {
+    printf("%16s = ", nameBuf);
+
+    if (sizeBuf == 1)
+        printf("%" PRIx64 "\n", buf[0]);
+    else {
+        for (uint32_t i = 0; i < sizeBuf; i++) {
+            printf("%10" PRIx64 ",", buf[i]);
+            if (!((i + 1) % 32))
+                printf("\n  ");
+        }
+        printf("\n");
+    }
+}
+
+void svt_unit_test_log_u64(const char *const nameBuf, const uint64_t *const buf,
+                           const uint32_t sizeBuf) {
+    printf("%16s = ", nameBuf);
+
+    if (sizeBuf == 1)
+        printf("%" PRIu64 "\n", buf[0]);
+    else {
+        for (uint32_t i = 0; i < sizeBuf; i++) {
+            printf("%10" PRIu64 ",", buf[i]);
+            if (!((i + 1) % 32))
+                printf("\n  ");
+        }
+        printf("\n");
+    }
+}
+
+void svt_unit_test_log_ptrdiff(const char *const nameBuf,
+                               const ptrdiff_t *const buf,
+                               const uint32_t sizeBuf) {
+    printf("%16s = ", nameBuf);
+
+    if (sizeBuf == 1)
+        printf("%td\n", buf[0]);
+    else {
+        for (uint32_t i = 0; i < sizeBuf; i++) {
+            printf("%10td,", buf[i]);
+            if (!((i + 1) % 32))
+                printf("\n  ");
+        }
+        printf("\n");
+    }
+}
+
+void svt_unit_test_log_bool(const char *const nameBuf, const EbBool *const buf,
+                            const uint32_t sizeBuf) {
+    printf("%16s = ", nameBuf);
+
+    if (sizeBuf == 1)
+        printf("%u\n", buf[0]);
+    else {
+        for (uint32_t i = 0; i < sizeBuf; i++) {
+            printf("%10u,", buf[i]);
+            if (!((i + 1) % 32))
+                printf("\n  ");
+        }
+        printf("\n");
+    }
+}
+
+void svt_unit_test_log_double(const char *const nameBuf, const double *const buf,
+                              const uint32_t sizeBuf) {
     printf("%16s = ", nameBuf);
 
     if (sizeBuf == 1)
@@ -501,8 +501,8 @@ void eb_unit_test_log_double(const char *const nameBuf, const double *const buf,
         printf("\n");                                 \
     }
 
-LOG_IMAGE_FUNCTION(eb_unit_test_log_image_u8, uint8_t)
-LOG_IMAGE_FUNCTION(eb_unit_test_log_image_s16, int16_t)
-LOG_IMAGE_FUNCTION(eb_unit_test_log_image_u16, uint16_t)
-LOG_IMAGE_FUNCTION(eb_unit_test_log_image_s32, int32_t)
-LOG_IMAGE_FUNCTION(eb_unit_test_log_image_u32, uint32_t)
+LOG_IMAGE_FUNCTION(svt_unit_test_log_image_u8, uint8_t)
+LOG_IMAGE_FUNCTION(svt_unit_test_log_image_s16, int16_t)
+LOG_IMAGE_FUNCTION(svt_unit_test_log_image_u16, uint16_t)
+LOG_IMAGE_FUNCTION(svt_unit_test_log_image_s32, int32_t)
+LOG_IMAGE_FUNCTION(svt_unit_test_log_image_u32, uint32_t)

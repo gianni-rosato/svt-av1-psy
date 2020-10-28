@@ -946,8 +946,8 @@ void read_loop_filter_params(Bitstrm *bs, EbDecHandle *dec_handle, int num_plane
 
     if (dec_handle->prev_frame) {
         // write deltas to frame buffer
-        eb_memcpy(lf->ref_deltas, dec_handle->prev_frame->ref_deltas, REF_FRAMES);
-        eb_memcpy(lf->mode_deltas, dec_handle->prev_frame->mode_deltas, MAX_MODE_LF_DELTAS);
+        svt_memcpy(lf->ref_deltas, dec_handle->prev_frame->ref_deltas, REF_FRAMES);
+        svt_memcpy(lf->mode_deltas, dec_handle->prev_frame->mode_deltas, MAX_MODE_LF_DELTAS);
     }
     else {
         av1_set_default_ref_and_mode_deltas(lf->ref_deltas, lf->mode_deltas);
@@ -993,8 +993,8 @@ void read_loop_filter_params(Bitstrm *bs, EbDecHandle *dec_handle, int num_plane
     }
 
     /*write deltas to prev_frame buffer*/
-    eb_memcpy(dec_handle->cur_pic_buf[0]->ref_deltas, lf->ref_deltas, REF_FRAMES);
-    eb_memcpy(dec_handle->cur_pic_buf[0]->mode_deltas, lf->mode_deltas, MAX_MODE_LF_DELTAS);
+    svt_memcpy(dec_handle->cur_pic_buf[0]->ref_deltas, lf->ref_deltas, REF_FRAMES);
+    svt_memcpy(dec_handle->cur_pic_buf[0]->mode_deltas, lf->mode_deltas, MAX_MODE_LF_DELTAS);
 }
 
 void read_tx_mode(Bitstrm *bs, FrameHeader *frame_info) {
@@ -1214,10 +1214,10 @@ void read_global_motion_params(Bitstrm *bs, EbDecHandle *dec_handle, FrameHeader
             EbWarpedMotionParams *wm_global =
                 &dec_handle->master_frame_buf.cur_frame_bufs[0].global_motion_warp[ref];
             wm_global->wmtype = cur_buf->global_motion[ref].gm_type;
-            eb_memcpy(wm_global->wmmat,
+            svt_memcpy(wm_global->wmmat,
                    cur_buf->global_motion[ref].gm_params,
                    sizeof(cur_buf->global_motion[ref].gm_params));
-            int return_val = eb_get_shear_params(wm_global);
+            int return_val = svt_get_shear_params(wm_global);
             assert(1 == return_val);
             (void)return_val;
         }
@@ -1464,7 +1464,7 @@ int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx) {
 EbErrorType reset_parse_ctx(FRAME_CONTEXT *frm_ctx, uint8_t base_qp) {
     EbErrorType return_error = EB_ErrorNone;
 
-    eb_av1_default_coef_probs(frm_ctx, base_qp);
+    svt_av1_default_coef_probs(frm_ctx, base_qp);
     init_mode_probs(frm_ctx);
 
     return return_error;
@@ -1626,7 +1626,7 @@ void set_prev_frame_info(EbDecHandle *dec_handle_ptr) {
     dec_mt_frame_data->prev_frame_info.frame_header_read = EB_TRUE;
     dec_mt_frame_data->prev_frame_info.prev_sb_size =
         dec_handle_ptr->seq_header.sb_size;
-    eb_memcpy(&dec_mt_frame_data->prev_frame_info.prev_tiles_info,
+    svt_memcpy(&dec_mt_frame_data->prev_frame_info.prev_tiles_info,
         &tiles_info, sizeof(TilesInfo));
 }
 
@@ -1727,9 +1727,9 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
                 free(memory_entry->ptr);
 #endif
                 break;
-            case EB_SEMAPHORE: eb_destroy_semaphore(memory_entry->ptr); break;
-            case EB_THREAD: eb_destroy_thread(memory_entry->ptr); break;
-            case EB_MUTEX: eb_destroy_mutex(memory_entry->ptr); break;
+            case EB_SEMAPHORE: svt_destroy_semaphore(memory_entry->ptr); break;
+            case EB_THREAD: svt_destroy_thread(memory_entry->ptr); break;
+            case EB_MUTEX: svt_destroy_mutex(memory_entry->ptr); break;
             default: break;
             }
             EbMemoryMapEntry *tmp_memory_entry = memory_entry;
@@ -2031,11 +2031,11 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
             const EbDecPicBuf *const   ref_buf           = get_ref_frame_buf(dec_handle_ptr, i);
             struct ScaleFactors *const ref_scale_factors = get_ref_scale_factors(dec_handle_ptr, i);
 
-            eb_av1_setup_scale_factors_for_frame(ref_scale_factors,
-                                                 ref_buf->superres_upscaled_width,
-                                                 ref_buf->frame_height,
-                                                 frame_info->frame_size.frame_width,
-                                                 frame_info->frame_size.frame_height);
+            svt_av1_setup_scale_factors_for_frame(ref_scale_factors,
+                                                  ref_buf->superres_upscaled_width,
+                                                  ref_buf->frame_height,
+                                                  frame_info->frame_size.frame_width,
+                                                  frame_info->frame_size.frame_height);
 
             if ((!av1_is_valid_scale(ref_scale_factors))) {
                 SVT_LOG("\n Reference frame has invalid dimensions \n");
@@ -2192,11 +2192,11 @@ EbErrorType read_frame_header_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuH
     read_uncompressed_header(bs, dec_handle_ptr, obu_header, num_planes);
 
     if (allow_intrabc(dec_handle_ptr)) {
-        eb_av1_setup_scale_factors_for_frame(&dec_handle_ptr->sf_identity,
-                                             dec_handle_ptr->cur_pic_buf[0]->frame_width,
-                                             dec_handle_ptr->cur_pic_buf[0]->frame_height,
-                                             dec_handle_ptr->cur_pic_buf[0]->frame_width,
-                                             dec_handle_ptr->cur_pic_buf[0]->frame_height);
+        svt_av1_setup_scale_factors_for_frame(&dec_handle_ptr->sf_identity,
+                                              dec_handle_ptr->cur_pic_buf[0]->frame_width,
+                                              dec_handle_ptr->cur_pic_buf[0]->frame_height,
+                                              dec_handle_ptr->cur_pic_buf[0]->frame_width,
+                                              dec_handle_ptr->cur_pic_buf[0]->frame_height);
     }
 
     if (trailing_bit) {
@@ -2340,42 +2340,42 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         dec_mt_frame_data->motion_proj_info.motion_proj_init_done      = EB_FALSE;
         dec_mt_frame_data->num_threads_header                          = 0;
 
-        eb_block_on_mutex(dec_mt_frame_data->temp_mutex);
+        svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
         dec_mt_frame_data->start_motion_proj = EB_TRUE;
-        eb_release_mutex(dec_mt_frame_data->temp_mutex);
-        eb_post_semaphore(dec_handle_ptr->thread_semaphore);
+        svt_release_mutex(dec_mt_frame_data->temp_mutex);
+        svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
-            eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+            svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
 
         svt_setup_motion_field(dec_handle_ptr, NULL);
 
         svt_av1_queue_parse_jobs(dec_handle_ptr, tiles_info);
 
-        eb_block_on_mutex(dec_mt_frame_data->temp_mutex);
+        svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
         dec_mt_frame_data->start_parse_frame = EB_TRUE;
 
         dec_mt_frame_data->num_threads_cdefed = 0;
         dec_mt_frame_data->num_threads_lred   = 0;
 
-        eb_release_mutex(dec_mt_frame_data->temp_mutex);
-        eb_post_semaphore(dec_handle_ptr->thread_semaphore);
+        svt_release_mutex(dec_mt_frame_data->temp_mutex);
+        svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
-            eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+            svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
 
         svt_av1_queue_lf_jobs(dec_handle_ptr);
         svt_av1_queue_cdef_jobs(dec_handle_ptr);
-        eb_block_on_mutex(dec_mt_frame_data->temp_mutex);
+        svt_block_on_mutex(dec_mt_frame_data->temp_mutex);
 
         dec_mt_frame_data->start_lf_frame = EB_TRUE;
         /*ToDo : Post outside mutex lock */
-        eb_post_semaphore(dec_handle_ptr->thread_semaphore);
+        svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
-            eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+            svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
         dec_mt_frame_data->start_cdef_frame = EB_TRUE;
-        eb_post_semaphore(dec_handle_ptr->thread_semaphore);
+        svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
-            eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
-        eb_release_mutex(dec_mt_frame_data->temp_mutex);
+            svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+        svt_release_mutex(dec_mt_frame_data->temp_mutex);
 
         if(!do_upscale) svt_av1_queue_lr_jobs(dec_handle_ptr);
 
@@ -2452,9 +2452,9 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         if (do_upscale) svt_av1_queue_lr_jobs(dec_handle_ptr);
         dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.start_lr_frame =
             EB_TRUE;
-        eb_post_semaphore(dec_handle_ptr->thread_semaphore);
+        svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)
-            eb_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
+            svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
         dec_av1_loop_restoration_filter_frame_mt(dec_handle_ptr, NULL);
     } else
         dec_av1_loop_restoration_filter_frame(dec_handle_ptr, 0, /*opt_lr*/ do_lr);
@@ -2607,8 +2607,8 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
     return status;
 }
 
-EB_API EbErrorType eb_get_sequence_info(const uint8_t *obu_data, size_t size,
-                                        SeqHeader *sequence_info) {
+EB_API EbErrorType svt_get_sequence_info(const uint8_t *obu_data, size_t size,
+                                         SeqHeader *sequence_info) {
     if (obu_data == NULL || size == 0 || sequence_info == NULL) return EB_ErrorBadParameter;
     const uint8_t *frame_buf = obu_data;
     size_t         frame_sz  = size;

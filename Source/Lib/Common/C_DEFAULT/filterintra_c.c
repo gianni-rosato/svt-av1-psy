@@ -69,10 +69,10 @@ eb_av1_filter_intra_taps[FILTER_INTRA_MODES][8][8]) = {
 };
 
 
-void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
-                                     TxSize tx_size,
-                                     const uint8_t *above,
-                                     const uint8_t *left, int32_t mode) {
+void svt_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
+                                      TxSize tx_size,
+                                      const uint8_t *above,
+                                      const uint8_t *left, int32_t mode) {
     int r, c;
     uint8_t buffer[33][33];
     const int bw = tx_size_wide[tx_size];
@@ -85,7 +85,7 @@ void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
         memset(buffer[r], 0, (bw + 1) * sizeof(buffer[0][0]));
 
     for (r = 0; r < bh; ++r) buffer[r + 1][0] = left[r];
-    eb_memcpy_c(buffer[0], &above[-1], (bw + 1) * sizeof(uint8_t));
+    svt_memcpy_c(buffer[0], &above[-1], (bw + 1) * sizeof(uint8_t));
 
     for (r = 1; r < bh + 1; r += 2)
         for (c = 1; c < bw + 1; c += 4) {
@@ -113,7 +113,7 @@ void eb_av1_filter_intra_predictor_c(uint8_t *dst, ptrdiff_t stride,
         }
 
     for (r = 0; r < bh; ++r) {
-        eb_memcpy_c(dst, &buffer[r + 1][1], bw * sizeof(uint8_t));
+        svt_memcpy_c(dst, &buffer[r + 1][1], bw * sizeof(uint8_t));
         dst += stride;
     }
 }

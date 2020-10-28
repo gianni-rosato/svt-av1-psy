@@ -89,18 +89,18 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
                     enc_handle_ptr->encode_instance_total_count);
     for (uint32_t i = 0; i < enc_handle_ptr->encode_instance_total_count; i++) {
         //ResourceCoordination works with ParentPCS
-        context_ptr->picture_control_set_fifo_ptr_array[i] = eb_system_resource_get_producer_fifo(
+        context_ptr->picture_control_set_fifo_ptr_array[i] = svt_system_resource_get_producer_fifo(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[i], 0);
     }
 
     context_ptr->input_buffer_fifo_ptr =
-        eb_system_resource_get_consumer_fifo(enc_handle_ptr->input_buffer_resource_ptr, 0);
+        svt_system_resource_get_consumer_fifo(enc_handle_ptr->input_buffer_resource_ptr, 0);
     context_ptr->resource_coordination_results_output_fifo_ptr =
-        eb_system_resource_get_producer_fifo(
+        svt_system_resource_get_producer_fifo(
             enc_handle_ptr->resource_coordination_results_resource_ptr, 0);
     context_ptr->scs_instance_array = enc_handle_ptr->scs_instance_array;
     context_ptr->sequence_control_set_empty_fifo_ptr =
-        eb_system_resource_get_producer_fifo(enc_handle_ptr->scs_pool_ptr, 0);
+        svt_system_resource_get_producer_fifo(enc_handle_ptr->scs_pool_ptr, 0);
     context_ptr->app_callback_ptr_array = enc_handle_ptr->app_callback_ptr_array;
     context_ptr->compute_segments_total_count_array =
         enc_handle_ptr->compute_segments_total_count_array;
@@ -210,7 +210,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     int64_t buffer_threshold_1 = SC_FRAMES_INTERVAL_T1;
     int64_t buffer_threshold_2 = SC_FRAMES_INTERVAL_T2;
     int64_t buffer_threshold_3 = MIN(target_fps * 3, SC_FRAMES_INTERVAL_T3);
-    eb_block_on_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
+    svt_block_on_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
 
     if (scs_ptr->encode_context_ptr->sc_frame_in == 0)
         svt_av1_get_time(&context_ptr->first_in_pic_arrived_time_seconds,
@@ -364,7 +364,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     // Set the encoder level
     pcs_ptr->enc_mode = scs_ptr->encode_context_ptr->enc_mode;
 
-    eb_release_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
+    svt_release_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
     context_ptr->prev_enc_mod = scs_ptr->encode_context_ptr->enc_mode;
 }
 
@@ -500,7 +500,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
         //uint16_t     luma_height  = input_picture_ptr->max_height;
         // Y
         for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-            eb_memcpy(
+            svt_memcpy(
                 (dst_picture_ptr->buffer_y + luma_buffer_offset + luma_stride * input_row_index),
                 (src_picture_ptr->buffer_y + luma_buffer_offset + luma_stride * input_row_index),
                 luma_width);
@@ -508,20 +508,20 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
         // U
         for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-            eb_memcpy((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
+            svt_memcpy((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
                        chroma_stride * input_row_index),
-                      (src_picture_ptr->buffer_cb + chroma_buffer_offset +
+                       (src_picture_ptr->buffer_cb + chroma_buffer_offset +
                        chroma_stride * input_row_index),
-                      chroma_width);
+                       chroma_width);
         }
 
         // V
         for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-            eb_memcpy((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
+            svt_memcpy((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
                        chroma_stride * input_row_index),
-                      (src_picture_ptr->buffer_cr + chroma_buffer_offset +
+                       (src_picture_ptr->buffer_cr + chroma_buffer_offset +
                        chroma_stride * input_row_index),
-                      chroma_width);
+                       chroma_width);
         }
     } else if (config->compressed_ten_bit_format == 1) {
         {
@@ -539,29 +539,29 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
             // Y 8bit
             for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-                eb_memcpy((dst_picture_ptr->buffer_y + luma_buffer_offset +
+                svt_memcpy((dst_picture_ptr->buffer_y + luma_buffer_offset +
                            luma_stride * input_row_index),
-                          (src_picture_ptr->buffer_y + luma_buffer_offset +
+                           (src_picture_ptr->buffer_y + luma_buffer_offset +
                            luma_stride * input_row_index),
-                          luma_width);
+                           luma_width);
             }
 
             // U 8bit
             for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-                eb_memcpy((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
+                svt_memcpy((dst_picture_ptr->buffer_cb + chroma_buffer_offset +
                            chroma_stride * input_row_index),
-                          (src_picture_ptr->buffer_cb + chroma_buffer_offset +
+                           (src_picture_ptr->buffer_cb + chroma_buffer_offset +
                            chroma_stride * input_row_index),
-                          chroma_width);
+                           chroma_width);
             }
 
             // V 8bit
             for (input_row_index = 0; input_row_index<(luma_height>> 1); input_row_index++) {
-                eb_memcpy((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
+                svt_memcpy((dst_picture_ptr->buffer_cr + chroma_buffer_offset +
                            chroma_stride * input_row_index),
-                          (src_picture_ptr->buffer_cr + chroma_buffer_offset +
+                           (src_picture_ptr->buffer_cr + chroma_buffer_offset +
                            chroma_stride * input_row_index),
-                          chroma_width);
+                           chroma_width);
             }
             // AMIR to update
             ////efficient copy - final
@@ -574,37 +574,37 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
             //    uint16_t source_chroma_2bit_stride = source_luma_2bit_stride >> 1;
 
             //    for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
-            //        eb_memcpy(input_picture_ptr->buffer_bit_inc_y + luma_2bit_width * input_row_index, input_ptr->luma_ext + source_luma_2bit_stride * input_row_index, luma_2bit_width);
+            //        svt_memcpy(input_picture_ptr->buffer_bit_inc_y + luma_2bit_width * input_row_index, input_ptr->luma_ext + source_luma_2bit_stride * input_row_index, luma_2bit_width);
             //    }
             //    for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
-            //        eb_memcpy(input_picture_ptr->buffer_bit_inc_cb + (luma_2bit_width >> 1)*input_row_index, input_ptr->cb_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
+            //        svt_memcpy(input_picture_ptr->buffer_bit_inc_cb + (luma_2bit_width >> 1)*input_row_index, input_ptr->cb_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
             //    }
             //    for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
-            //        eb_memcpy(input_picture_ptr->buffer_bit_inc_cr + (luma_2bit_width >> 1)*input_row_index, input_ptr->cr_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
+            //        svt_memcpy(input_picture_ptr->buffer_bit_inc_cr + (luma_2bit_width >> 1)*input_row_index, input_ptr->cr_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
             //    }
             //}
         }
     } else { // 10bit packed
 
-        eb_memcpy(dst_picture_ptr->buffer_y, src_picture_ptr->buffer_y, src_picture_ptr->luma_size);
+        svt_memcpy(dst_picture_ptr->buffer_y, src_picture_ptr->buffer_y, src_picture_ptr->luma_size);
 
-        eb_memcpy(
+        svt_memcpy(
             dst_picture_ptr->buffer_cb, src_picture_ptr->buffer_cb, src_picture_ptr->chroma_size);
 
-        eb_memcpy(
+        svt_memcpy(
             dst_picture_ptr->buffer_cr, src_picture_ptr->buffer_cr, src_picture_ptr->chroma_size);
 
-        eb_memcpy(dst_picture_ptr->buffer_bit_inc_y,
-                  src_picture_ptr->buffer_bit_inc_y,
-                  src_picture_ptr->luma_size);
+        svt_memcpy(dst_picture_ptr->buffer_bit_inc_y,
+                   src_picture_ptr->buffer_bit_inc_y,
+                   src_picture_ptr->luma_size);
 
-        eb_memcpy(dst_picture_ptr->buffer_bit_inc_cb,
-                  src_picture_ptr->buffer_bit_inc_cb,
-                  src_picture_ptr->chroma_size);
+        svt_memcpy(dst_picture_ptr->buffer_bit_inc_cb,
+                   src_picture_ptr->buffer_bit_inc_cb,
+                   src_picture_ptr->chroma_size);
 
-        eb_memcpy(dst_picture_ptr->buffer_bit_inc_cr,
-                  src_picture_ptr->buffer_bit_inc_cr,
-                  src_picture_ptr->chroma_size);
+        svt_memcpy(dst_picture_ptr->buffer_bit_inc_cr,
+                   src_picture_ptr->buffer_bit_inc_cr,
+                   src_picture_ptr->chroma_size);
     }
     return return_error;
 }
@@ -731,7 +731,7 @@ void *resource_coordination_kernel(void *input_ptr) {
         // If config changes occured since the last picture began encoding, then
         //   prepare a new scs_ptr containing the new changes and update the state
         //   of the previous Active SequenceControlSet
-        eb_block_on_mutex(context_ptr->scs_instance_array[instance_index]->config_mutex);
+        svt_block_on_mutex(context_ptr->scs_instance_array[instance_index]->config_mutex);
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
             // Update picture width, picture height, cropping right offset, cropping bottom offset, and conformance windows
             context_ptr->scs_instance_array[instance_index]->scs_ptr->seq_header.max_frame_width =
@@ -758,8 +758,8 @@ void *resource_coordination_kernel(void *input_ptr) {
             prev_scs_wrapper_ptr = context_ptr->sequence_control_set_active_array[instance_index];
 
             // Get empty SequenceControlSet [BLOCKING]
-            eb_get_empty_object(context_ptr->sequence_control_set_empty_fifo_ptr,
-                                &context_ptr->sequence_control_set_active_array[instance_index]);
+            svt_get_empty_object(context_ptr->sequence_control_set_empty_fifo_ptr,
+                                 &context_ptr->sequence_control_set_active_array[instance_index]);
 
             // Copy the contents of the active SequenceControlSet into the new empty SequenceControlSet
             copy_sequence_control_set(
@@ -768,23 +768,23 @@ void *resource_coordination_kernel(void *input_ptr) {
                 context_ptr->scs_instance_array[instance_index]->scs_ptr);
 
             // Disable releaseFlag of new SequenceControlSet
-            eb_object_release_disable(
+            svt_object_release_disable(
                 context_ptr->sequence_control_set_active_array[instance_index]);
 
             if (prev_scs_wrapper_ptr != NULL) {
                 // Enable releaseFlag of old SequenceControlSet
-                eb_object_release_enable(prev_scs_wrapper_ptr);
+                svt_object_release_enable(prev_scs_wrapper_ptr);
 
                 // Check to see if previous SequenceControlSet is already inactive, if TRUE then release the SequenceControlSet
                 if (prev_scs_wrapper_ptr->live_count == 0) {
-                    eb_release_object(prev_scs_wrapper_ptr);
+                    svt_release_object(prev_scs_wrapper_ptr);
                 }
             }
         }
-        eb_release_mutex(context_ptr->scs_instance_array[instance_index]->config_mutex);
+        svt_release_mutex(context_ptr->scs_instance_array[instance_index]->config_mutex);
         // Seque Control Set is released by Rate Control after passing through MDC->MD->ENCDEC->Packetization->RateControl,
         // in the PictureManager after receiving the reference and in PictureManager after receiving the feedback
-        eb_object_inc_live_count(context_ptr->sequence_control_set_active_array[instance_index], 3);
+        svt_object_inc_live_count(context_ptr->sequence_control_set_active_array[instance_index], 3);
 
         // Set the current SequenceControlSet
         scs_ptr =
@@ -851,11 +851,11 @@ void *resource_coordination_kernel(void *input_ptr) {
         for (uint8_t loop_index = 0; loop_index <= has_overlay && !end_of_sequence_flag;
              loop_index++) {
             //Get a New ParentPCS where we will hold the new input_picture
-            eb_get_empty_object(context_ptr->picture_control_set_fifo_ptr_array[instance_index],
-                                &pcs_wrapper_ptr);
+            svt_get_empty_object(context_ptr->picture_control_set_fifo_ptr_array[instance_index],
+                                 &pcs_wrapper_ptr);
 
             // Parent PCS is released by the Rate Control after passing through MDC->MD->ENCDEC->Packetization
-            eb_object_inc_live_count(pcs_wrapper_ptr, 1);
+            svt_object_inc_live_count(pcs_wrapper_ptr, 1);
 
             pcs_ptr = (PictureParentControlSet *)pcs_wrapper_ptr->object_ptr;
 
@@ -918,7 +918,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 EbObjectWrapper *input_pic_wrapper_ptr;
 
                 // Get a new input picture for overlay.
-                eb_get_empty_object(
+                svt_get_empty_object(
                     scs_ptr->encode_context_ptr->overlay_input_picture_pool_fifo_ptr,
                     &input_pic_wrapper_ptr);
 
@@ -1002,16 +1002,16 @@ void *resource_coordination_kernel(void *input_ptr) {
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
             // Get Empty Reference Picture Object
-            eb_get_empty_object(scs_ptr->encode_context_ptr->pa_reference_picture_pool_fifo_ptr,
-                                &reference_picture_wrapper_ptr);
+            svt_get_empty_object(scs_ptr->encode_context_ptr->pa_reference_picture_pool_fifo_ptr,
+                                 &reference_picture_wrapper_ptr);
 
             pcs_ptr->pa_reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
             // Since overlay pictures are not added to PA_Reference queue in PD and not released there, the life count is only set to 1
             if (pcs_ptr->is_overlay)
                 // Give the new Reference a nominal live_count of 1
-                eb_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
+                svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             else
-                eb_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
+                svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;
@@ -1026,10 +1026,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 int       sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
                 //Tile Loop
                 for (tile_row = 0; tile_row < tile_rows; tile_row++) {
-                    eb_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
+                    svt_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
 
                     for (tile_col = 0; tile_col < tile_cols; tile_col++) {
-                        eb_av1_tile_set_col(&tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
+                        svt_av1_tile_set_col(&tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
 
                         for ((y_sb_index =
                                   cm->tiles_info.tile_row_start_mi[tile_row] >> sb_size_log2);
@@ -1061,8 +1061,8 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (pcs_ptr->picture_number > 0 && (prev_pcs_wrapper_ptr != NULL)) {
                 ((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)
                     ->end_of_sequence_flag = end_of_sequence_flag;
-                eb_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
-                                    &output_wrapper_ptr);
+                svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
+                                     &output_wrapper_ptr);
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
                 out_results_ptr->pcs_wrapper_ptr = prev_pcs_wrapper_ptr;
                 // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
@@ -1071,7 +1071,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                     ((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)
                         ->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
                 // Post the finished Results Object
-                eb_post_full_object(output_wrapper_ptr);
+                svt_post_full_object(output_wrapper_ptr);
             }
             prev_pcs_wrapper_ptr = pcs_wrapper_ptr;
         }

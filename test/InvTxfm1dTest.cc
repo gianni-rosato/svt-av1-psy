@@ -77,17 +77,17 @@ class AV1InvTxfm1dTest : public ::testing::TestWithParam<InvTxfm1dParam> {
 
     void SetUp() override {
         input_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
         output_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
         inv_output_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
+            svt_aom_memalign(32, MAX_TX_SIZE * sizeof(int32_t)));
     }
 
     void TearDown() override {
-        eb_aom_free(input_);
-        eb_aom_free(output_);
-        eb_aom_free(inv_output_);
+        svt_aom_free(input_);
+        svt_aom_free(output_);
+        svt_aom_free(inv_output_);
         aom_clear_system_state();
     }
 

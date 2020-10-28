@@ -20,28 +20,28 @@
 #define DEBUG_MEMORY_USAGE
 #endif
 
-void eb_print_alloc_fail(const char* file, int line);
+void svt_print_alloc_fail(const char* file, int line);
 
 #ifdef DEBUG_MEMORY_USAGE
-void eb_print_memory_usage(void);
-void eb_increase_component_count(void);
-void eb_decrease_component_count(void);
-void eb_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line);
-void eb_remove_mem_entry(void* ptr, EbPtrType type);
+void svt_print_memory_usage(void);
+void svt_increase_component_count(void);
+void svt_decrease_component_count(void);
+void svt_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line);
+void svt_remove_mem_entry(void* ptr, EbPtrType type);
 
-#define EB_ADD_MEM_ENTRY(p, type, count) eb_add_mem_entry(p, type, count, __FILE__, __LINE__)
+#define EB_ADD_MEM_ENTRY(p, type, count) svt_add_mem_entry(p, type, count, __FILE__, __LINE__)
 
-#define EB_REMOVE_MEM_ENTRY(p, type) eb_remove_mem_entry(p, type);
+#define EB_REMOVE_MEM_ENTRY(p, type) svt_remove_mem_entry(p, type);
 
 #else
-#define eb_print_memory_usage() \
-    do {                        \
+#define svt_print_memory_usage() \
+    do {                         \
     } while (0)
-#define eb_increase_component_count() \
-    do {                              \
+#define svt_increase_component_count() \
+    do {                               \
     } while (0)
-#define eb_decrease_component_count() \
-    do {                              \
+#define svt_decrease_component_count() \
+    do {                               \
     } while (0)
 #define EB_ADD_MEM_ENTRY(p, type, count) \
     do {                                 \
@@ -55,7 +55,7 @@ void eb_remove_mem_entry(void* ptr, EbPtrType type);
 #define EB_NO_THROW_ADD_MEM(p, size, type)                                               \
     do {                                                                                 \
         if (!p)                                                                          \
-            eb_print_alloc_fail(__FILE__, __LINE__);                                     \
+            svt_print_alloc_fail(__FILE__, __LINE__);                                    \
         else                                                                             \
             EB_ADD_MEM_ENTRY(p, type, size);                                             \
     } while (0)

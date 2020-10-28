@@ -143,7 +143,7 @@ from the function ```svt_av1_compute_global_motion``` to determine the features 
 Once the features have been extracted, they are matched. This is done in the
 ```svt_av1_determine_correspondence``` function by two nested loops over the features of the
 reference frame and the current frame. A current frame feature is matched to a reference
-frame feature that maximizes their cross-correlation computed by ```eb_av1_compute_cross_correlation_c```.
+frame feature that maximizes their cross-correlation computed by ```svt_av1_compute_cross_correlation_c```.
 However, the match is kept only if the cross-correlation is superior to the ```THRESHOLD_NCC```
 threshold multiplied by the variance of the current feature patch.
 
@@ -174,7 +174,7 @@ then ranked by their number of inliers and their parameters are recomputed by us
 only with the inliers.
 
 The transformation parameters are refined in the ```svt_av1_refine_integerized_param``` function.
-It uses the ```eb_av1_warp_error``` function to estimate the error between the reference frame
+It uses the ```svt_av1_warp_error``` function to estimate the error between the reference frame
 and the current frame in order to select the model with the smallest error.
 
 As saving global motion parameters takes space in the bit stream, the global motion model

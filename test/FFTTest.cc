@@ -13,8 +13,8 @@
  * @file FFTTest.cc
  *
  * @brief Unit test for FFT and iFFT 2d functions:
- * - eb_aom_fft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
- * - eb_aom_ifft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
+ * - svt_aom_fft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
+ * - svt_aom_ifft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
  *
  * @author Cidana-Edmond
  *
@@ -43,8 +43,8 @@ using svt_av1_test_tool::SVTRandom;
 namespace {
 /**
  * @brief Unit test for FFT and iFFT 2d functions:
- * - eb_aom_fft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
- * - eb_aom_ifft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
+ * - svt_aom_fft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
+ * - svt_aom_ifft{2x2, 4x4, 8x8, 16x16, 32x32}_float_{c, sse2, avx2}
  *
  * Test strategy:
  * 1) Verify these FFT functions by comparing with reference implementation.
@@ -93,28 +93,28 @@ class FFT2DTest : public ::testing::TestWithParam<FFT2DTestParam> {
 
     void SetUp() override {
         input_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(input_, 0, txfm_size_ * txfm_size_ * sizeof(float));
         temp_tst_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(temp_tst_, 0, txfm_size_ * txfm_size_ * sizeof(float));
         temp_ref_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(temp_ref_, 0, txfm_size_ * txfm_size_ * sizeof(float));
         output_tst_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
         memset(output_tst_, 0, 2 * txfm_size_ * txfm_size_ * sizeof(float));
         output_ref_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
         memset(output_ref_, 0, 2 * txfm_size_ * txfm_size_ * sizeof(float));
     }
 
     void TearDown() override {
-        eb_aom_free(input_);
-        eb_aom_free(temp_tst_);
-        eb_aom_free(temp_ref_);
-        eb_aom_free(output_tst_);
-        eb_aom_free(output_ref_);
+        svt_aom_free(input_);
+        svt_aom_free(temp_tst_);
+        svt_aom_free(temp_ref_);
+        svt_aom_free(output_tst_);
+        svt_aom_free(output_ref_);
         aom_clear_system_state();
     }
 
@@ -190,26 +190,26 @@ TEST_P(FFT2DTest, run_fft_ifft_check) {
 INSTANTIATE_TEST_CASE_P(
     FFT, FFT2DTest,
     ::testing::Values(
-        FFT2DTestParam(eb_aom_fft2x2_float_c, eb_aom_fft2x2_float_c,
-                       eb_aom_ifft2x2_float_c, 2),
-        FFT2DTestParam(eb_aom_fft4x4_float_sse2, eb_aom_fft4x4_float_c,
-                       eb_aom_ifft4x4_float_sse2, 4),
-        FFT2DTestParam(eb_aom_fft8x8_float_avx2, eb_aom_fft8x8_float_c,
-                       eb_aom_ifft8x8_float_avx2, 8),
-        FFT2DTestParam(eb_aom_fft16x16_float_avx2, eb_aom_fft16x16_float_c,
-                       eb_aom_ifft16x16_float_avx2, 16),
-        FFT2DTestParam(eb_aom_fft32x32_float_avx2, eb_aom_fft32x32_float_c,
-                       eb_aom_ifft32x32_float_avx2, 32),
-        FFT2DTestParam(eb_aom_fft2x2_float_c, eb_aom_fft2x2_float_c,
-                       eb_aom_ifft2x2_float_c, 2),
-        FFT2DTestParam(eb_aom_fft4x4_float_sse2, eb_aom_fft4x4_float_c,
-                       eb_aom_ifft4x4_float_c, 4),
-        FFT2DTestParam(eb_aom_fft8x8_float_avx2, eb_aom_fft8x8_float_c,
-                       eb_aom_ifft8x8_float_c, 8),
-        FFT2DTestParam(eb_aom_fft16x16_float_avx2, eb_aom_fft16x16_float_c,
-                       eb_aom_ifft16x16_float_c, 16),
-        FFT2DTestParam(eb_aom_fft32x32_float_avx2, eb_aom_fft32x32_float_c,
-                       eb_aom_ifft32x32_float_c, 32)));
+        FFT2DTestParam(svt_aom_fft2x2_float_c, svt_aom_fft2x2_float_c,
+                       svt_aom_ifft2x2_float_c, 2),
+        FFT2DTestParam(svt_aom_fft4x4_float_sse2, svt_aom_fft4x4_float_c,
+                       svt_aom_ifft4x4_float_sse2, 4),
+        FFT2DTestParam(svt_aom_fft8x8_float_avx2, svt_aom_fft8x8_float_c,
+                       svt_aom_ifft8x8_float_avx2, 8),
+        FFT2DTestParam(svt_aom_fft16x16_float_avx2, svt_aom_fft16x16_float_c,
+                       svt_aom_ifft16x16_float_avx2, 16),
+        FFT2DTestParam(svt_aom_fft32x32_float_avx2, svt_aom_fft32x32_float_c,
+                       svt_aom_ifft32x32_float_avx2, 32),
+        FFT2DTestParam(svt_aom_fft2x2_float_c, svt_aom_fft2x2_float_c,
+                       svt_aom_ifft2x2_float_c, 2),
+        FFT2DTestParam(svt_aom_fft4x4_float_sse2, svt_aom_fft4x4_float_c,
+                       svt_aom_ifft4x4_float_c, 4),
+        FFT2DTestParam(svt_aom_fft8x8_float_avx2, svt_aom_fft8x8_float_c,
+                       svt_aom_ifft8x8_float_c, 8),
+        FFT2DTestParam(svt_aom_fft16x16_float_avx2, svt_aom_fft16x16_float_c,
+                       svt_aom_ifft16x16_float_c, 16),
+        FFT2DTestParam(svt_aom_fft32x32_float_avx2, svt_aom_fft32x32_float_c,
+                       svt_aom_ifft32x32_float_c, 32)));
 
 
 class IFFT2DTest : public ::testing::TestWithParam<IFFT2DTestParam> {
@@ -221,29 +221,29 @@ class IFFT2DTest : public ::testing::TestWithParam<IFFT2DTestParam> {
     }
 
     void SetUp() override {
-        input_ = reinterpret_cast<float *>(eb_aom_memalign(
+        input_ = reinterpret_cast<float *>(svt_aom_memalign(
             32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
         memset(input_, 0, 2 * txfm_size_ * txfm_size_ * sizeof(float));
         temp_tst_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(temp_tst_, 0, txfm_size_ * txfm_size_ * sizeof(float));
         temp_ref_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(temp_ref_, 0, txfm_size_ * txfm_size_ * sizeof(float));
         output_tst_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(output_tst_, 0, txfm_size_ * txfm_size_ * sizeof(float));
         output_ref_ = reinterpret_cast<float *>(
-            eb_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
+            svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
         memset(output_ref_, 0, txfm_size_ * txfm_size_ * sizeof(float));
     }
 
     void TearDown() override {
-        eb_aom_free(input_);
-        eb_aom_free(temp_tst_);
-        eb_aom_free(temp_ref_);
-        eb_aom_free(output_tst_);
-        eb_aom_free(output_ref_);
+        svt_aom_free(input_);
+        svt_aom_free(temp_tst_);
+        svt_aom_free(temp_ref_);
+        svt_aom_free(output_tst_);
+        svt_aom_free(output_ref_);
         aom_clear_system_state();
     }
 
@@ -289,10 +289,10 @@ TEST_P(IFFT2DTest, run_ifft_accuracy_check) {
 INSTANTIATE_TEST_CASE_P(
     IFFT, IFFT2DTest,
     ::testing::Values(
-        IFFT2DTestParam(eb_aom_ifft2x2_float_c, eb_aom_ifft2x2_float_c, 2),
-        IFFT2DTestParam(eb_aom_ifft4x4_float_sse2, eb_aom_ifft4x4_float_c, 4),
-        IFFT2DTestParam(eb_aom_ifft8x8_float_avx2, eb_aom_ifft8x8_float_c, 8),
-        IFFT2DTestParam(eb_aom_ifft16x16_float_avx2, eb_aom_ifft16x16_float_c, 16),
-        IFFT2DTestParam(eb_aom_ifft32x32_float_avx2, eb_aom_ifft32x32_float_c, 32))
+        IFFT2DTestParam(svt_aom_ifft2x2_float_c, svt_aom_ifft2x2_float_c, 2),
+        IFFT2DTestParam(svt_aom_ifft4x4_float_sse2, svt_aom_ifft4x4_float_c, 4),
+        IFFT2DTestParam(svt_aom_ifft8x8_float_avx2, svt_aom_ifft8x8_float_c, 8),
+        IFFT2DTestParam(svt_aom_ifft16x16_float_avx2, svt_aom_ifft16x16_float_c, 16),
+        IFFT2DTestParam(svt_aom_ifft32x32_float_avx2, svt_aom_ifft32x32_float_c, 32))
 );
 }  // namespace

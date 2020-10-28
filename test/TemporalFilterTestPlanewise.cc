@@ -138,22 +138,22 @@ class TemporalFilterTestPlanewise
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS; color_channel++) {
             src_ptr[color_channel] = reinterpret_cast<uint8_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
             pred_ptr[color_channel] = reinterpret_cast<uint8_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
 
             accum_ref_ptr[color_channel] =
                 reinterpret_cast<uint32_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
             count_ref_ptr[color_channel] =
                 reinterpret_cast<uint16_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
             accum_tst_ptr[color_channel] =
                 reinterpret_cast<uint32_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
             count_tst_ptr[color_channel] =
                 reinterpret_cast<uint16_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
 
             memset(accum_ref_ptr[color_channel],
                    0,
@@ -180,13 +180,13 @@ class TemporalFilterTestPlanewise
     void TearDown() {
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS; color_channel++) {
-            eb_aom_free(src_ptr[color_channel]);
-            eb_aom_free(pred_ptr[color_channel]);
+            svt_aom_free(src_ptr[color_channel]);
+            svt_aom_free(pred_ptr[color_channel]);
 
-            eb_aom_free(accum_ref_ptr[color_channel]);
-            eb_aom_free(count_ref_ptr[color_channel]);
-            eb_aom_free(accum_tst_ptr[color_channel]);
-            eb_aom_free(count_tst_ptr[color_channel]);
+            svt_aom_free(accum_ref_ptr[color_channel]);
+            svt_aom_free(count_ref_ptr[color_channel]);
+            svt_aom_free(accum_tst_ptr[color_channel]);
+            svt_aom_free(count_tst_ptr[color_channel]);
         }
 
     }
@@ -432,18 +432,18 @@ class TemporalFilterTestPlanewiseHbd
         for (int color_channel = 0; color_channel < COLOR_CHANNELS;
              color_channel++) {
             src_ptr[color_channel] = reinterpret_cast<uint16_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
             pred_ptr[color_channel] = reinterpret_cast<uint16_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE));
 
             accum_ref_ptr[color_channel] = reinterpret_cast<uint32_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
             count_ref_ptr[color_channel] = reinterpret_cast<uint16_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
             accum_tst_ptr[color_channel] = reinterpret_cast<uint32_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint32_t)));
             count_tst_ptr[color_channel] = reinterpret_cast<uint16_t *>(
-                eb_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
+                svt_aom_memalign(8, MAX_STRIDE * MAX_STRIDE * sizeof(uint16_t)));
 
             memset(accum_ref_ptr[color_channel],
                    0,
@@ -470,13 +470,13 @@ class TemporalFilterTestPlanewiseHbd
     void TearDown() {
         for (int color_channel = 0; color_channel < COLOR_CHANNELS;
              color_channel++) {
-            eb_aom_free(src_ptr[color_channel]);
-            eb_aom_free(pred_ptr[color_channel]);
+            svt_aom_free(src_ptr[color_channel]);
+            svt_aom_free(pred_ptr[color_channel]);
 
-            eb_aom_free(accum_ref_ptr[color_channel]);
-            eb_aom_free(count_ref_ptr[color_channel]);
-            eb_aom_free(accum_tst_ptr[color_channel]);
-            eb_aom_free(count_tst_ptr[color_channel]);
+            svt_aom_free(accum_ref_ptr[color_channel]);
+            svt_aom_free(count_ref_ptr[color_channel]);
+            svt_aom_free(accum_tst_ptr[color_channel]);
+            svt_aom_free(count_tst_ptr[color_channel]);
         }
     }
     void RunTest(int width, int height, int run_times);

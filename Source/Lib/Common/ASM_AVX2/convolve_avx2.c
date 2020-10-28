@@ -39,11 +39,11 @@ static INLINE void sr_y_2tap_32_avx2(const uint8_t *const src, const __m256i coe
     sr_y_round_store_32_avx2(r, dst);
 }
 
-void eb_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                               int32_t dst_stride, int32_t w, int32_t h,
-                               InterpFilterParams *filter_params_x,
-                               InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                               const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                int32_t dst_stride, int32_t w, int32_t h,
+                                InterpFilterParams *filter_params_x,
+                                InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     int32_t x, y;
     __m128i coeffs_128[4];
     __m256i coeffs_256[4];
@@ -967,11 +967,11 @@ SIMD_INLINE void sr_x_8tap_32_avx2(const uint8_t *const src, const __m256i coeff
     sr_x_round_store_32_avx2(r, dst);
 }
 
-void eb_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                               int32_t dst_stride, int32_t w, int32_t h,
-                               InterpFilterParams *filter_params_x,
-                               InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                               const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+void svt_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                int32_t dst_stride, int32_t w, int32_t h,
+                                InterpFilterParams *filter_params_x,
+                                InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     int32_t y = h;
     __m128i coeffs_128[4];
     __m256i coeffs_256[4];
@@ -1304,12 +1304,12 @@ static INLINE __m256i calc_mask_avx2(const __m256i mask_base, const __m256i s0, 
     return _mm256_abs_epi16(_mm256_add_epi16(mask_base, _mm256_srli_epi16(diff, 4)));
     // clamp(diff, 0, 64) can be skiped for diff is always in the range ( 38, 54)
 }
-void eb_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                                    const uint8_t *src0, int src0_stride,
-                                                    const uint8_t *src1, int src1_stride, int h, int w,
-                                                    int bd) {
+void svt_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
+                                                     const uint8_t *src0, int src0_stride,
+                                                     const uint8_t *src1, int src1_stride, int h, int w,
+                                                     int bd) {
     if (w < 16) {
-        eb_av1_build_compound_diffwtd_mask_highbd_ssse3(
+        svt_av1_build_compound_diffwtd_mask_highbd_ssse3(
             mask, mask_type, src0, src0_stride, src1, src1_stride, h, w, bd);
     } else {
         assert(mask_type == DIFFWTD_38 || mask_type == DIFFWTD_38_INV);
@@ -1408,9 +1408,9 @@ void eb_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK_
     }
 }
 
-void eb_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                             const uint8_t *src0, int src0_stride, const uint8_t *src1,
-                                             int src1_stride, int h, int w) {
+void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
+                                              const uint8_t *src0, int src0_stride, const uint8_t *src1,
+                                              int src1_stride, int h, int w) {
     const int     mb          = (mask_type == DIFFWTD_38_INV) ? AOM_BLEND_A64_MAX_ALPHA : 0;
     const __m256i y_mask_base = _mm256_set1_epi16(38 - mb);
     int           i           = 0;
@@ -1517,10 +1517,10 @@ void eb_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE ma
 #define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
 
 /**
- * See eb_av1_wedge_sse_from_residuals_c
+ * See svt_av1_wedge_sse_from_residuals_c
  */
-uint64_t eb_av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t *d, const uint8_t *m,
-                                              int N) {
+uint64_t svt_av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t *d, const uint8_t *m,
+                                               int N) {
     int n = -N;
 
     uint64_t csse;
@@ -1640,9 +1640,9 @@ static INLINE void aom_subtract_block_128xn_avx2(int rows, int16_t *diff_ptr, pt
         diff_ptr += diff_stride;
     }
 }
-void eb_aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr, ptrdiff_t diff_stride,
-                                const uint8_t *src_ptr, ptrdiff_t src_stride, const uint8_t *pred_ptr,
-                                ptrdiff_t pred_stride) {
+void svt_aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr, ptrdiff_t diff_stride,
+                                 const uint8_t *src_ptr, ptrdiff_t src_stride, const uint8_t *pred_ptr,
+                                 ptrdiff_t pred_stride) {
     switch (cols) {
     case 16:
         aom_subtract_block_16xn_avx2(
@@ -1661,7 +1661,7 @@ void eb_aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr, ptrdiff_t
             rows, diff_ptr, diff_stride, src_ptr, src_stride, pred_ptr, pred_stride);
         break;
     default:
-        eb_aom_subtract_block_sse2(
+        svt_aom_subtract_block_sse2(
             rows, cols, diff_ptr, diff_stride, src_ptr, src_stride, pred_ptr, pred_stride);
         break;
     }
@@ -1725,8 +1725,8 @@ static INLINE int64_t summary_all_avx2(const __m256i *sum_all) {
     xx_storel_64(&sum, sum_1x64);
     return sum;
 }
-int64_t eb_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width,
-                        int height) {
+int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width,
+                         int height) {
     int32_t y    = 0;
     int64_t sse  = 0;
     __m256i sum  = _mm256_setzero_si256();
@@ -1875,7 +1875,7 @@ static INLINE void read_coeff(const TranLow *coeff, intptr_t offset,
 }
 
 int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
-                             intptr_t block_size, int64_t *ssz) {
+                                 intptr_t block_size, int64_t *ssz) {
   __m256i sse_reg, ssz_reg, coeff_reg, dqcoeff_reg;
   __m256i exp_dqcoeff_lo, exp_dqcoeff_hi, exp_coeff_lo, exp_coeff_hi;
   __m256i sse_reg_64hi, ssz_reg_64hi;
@@ -1991,22 +1991,22 @@ static uint64_t aom_sum_squares_i16_64n_sse2(const int16_t *src, uint32_t n) {
     return xx_cvtsi128_si64(v_acc0_q);
 }
 
-uint64_t eb_aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
+uint64_t svt_aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
     if (n % 64 == 0) {
         return aom_sum_squares_i16_64n_sse2(src, n);
     } else if (n > 64) {
         int k = n & ~(64 - 1);
-        return aom_sum_squares_i16_64n_sse2(src, k) + eb_aom_sum_squares_i16_c(src + k, n - k);
+        return aom_sum_squares_i16_64n_sse2(src, k) + svt_aom_sum_squares_i16_c(src + k, n - k);
     } else {
-        return eb_aom_sum_squares_i16_c(src, n);
+        return svt_aom_sum_squares_i16_c(src, n);
     }
 }
 
 /**
- * See eb_av1_wedge_sign_from_residuals_c
+ * See svt_av1_wedge_sign_from_residuals_c
  */
-int8_t eb_av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *m, int N,
-                                             int64_t limit) {
+int8_t svt_av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *m, int N,
+                                              int64_t limit) {
     int64_t acc;
     __m256i v_acc0_d = _mm256_setzero_si256();
 
@@ -2068,9 +2068,9 @@ int8_t eb_av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *m
 }
 
 /**
- * eb_av1_wedge_compute_delta_squares_c
+ * svt_av1_wedge_compute_delta_squares_c
  */
-void eb_av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a, const int16_t *b, int N) {
+void svt_av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a, const int16_t *b, int N) {
     const __m256i v_neg_w = _mm256_set1_epi32(0xffff0001);
 
     assert(N % 64 == 0);

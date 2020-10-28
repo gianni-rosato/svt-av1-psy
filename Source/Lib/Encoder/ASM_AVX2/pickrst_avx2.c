@@ -3097,9 +3097,9 @@ static INLINE void compute_stats_win7_avx2(const int16_t *const d, const int32_t
     } while (++i < wiener_win);
 }
 
-void eb_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd, const uint8_t *src,
-                               int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end,
-                               int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H) {
+void svt_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd, const uint8_t *src,
+                                int32_t h_start, int32_t h_end, int32_t v_start, int32_t v_end,
+                                int32_t dgd_stride, int32_t src_stride, int64_t *M, int64_t *H) {
     const int32_t wiener_win2    = wiener_win * wiener_win;
     const int32_t wiener_halfwin = wiener_win >> 1;
     const uint8_t avg      = find_average_avx2(dgd, h_start, h_end, v_start, v_end, dgd_stride);
@@ -3113,7 +3113,7 @@ void eb_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd, const uin
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
     // 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX considering
     // paddings.
-    d = eb_aom_memalign(32, sizeof(*d) * 6 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX);
+    d = svt_aom_memalign(32, sizeof(*d) * 6 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX);
     s = d + 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX;
 
     sub_avg_block_avx2(
@@ -3139,13 +3139,13 @@ void eb_av1_compute_stats_avx2(int32_t wiener_win, const uint8_t *dgd, const uin
     // We can copy it down to the lower triangle outside the (i, j) loops.
     diagonal_copy_stats_avx2(wiener_win2, H);
 
-    eb_aom_free(d);
+    svt_aom_free(d);
 }
 
-void eb_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8,
-                                      int32_t h_start, int32_t h_end, int32_t v_start,
-                                      int32_t v_end, int32_t dgd_stride, int32_t src_stride,
-                                      int64_t *M, int64_t *H, AomBitDepth bit_depth) {
+void svt_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, const uint8_t *src8,
+                                       int32_t h_start, int32_t h_end, int32_t v_start,
+                                       int32_t v_end, int32_t dgd_stride, int32_t src_stride,
+                                       int64_t *M, int64_t *H, AomBitDepth bit_depth) {
     const int32_t   wiener_win2    = wiener_win * wiener_win;
     const int32_t   wiener_halfwin = (wiener_win >> 1);
     const uint16_t *src            = CONVERT_TO_SHORTPTR(src8);
@@ -3163,7 +3163,7 @@ void eb_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, c
     // (9 / 4) * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX. Enlarge to
     // 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX considering
     // paddings.
-    d = eb_aom_memalign(32, sizeof(*d) * 6 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX);
+    d = svt_aom_memalign(32, sizeof(*d) * 6 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX);
     s = d + 3 * RESTORATION_UNITSIZE_MAX * RESTORATION_UNITSIZE_MAX;
 
     sub_avg_block_highbd_avx2(
@@ -3224,18 +3224,18 @@ void eb_av1_compute_stats_highbd_avx2(int32_t wiener_win, const uint8_t *dgd8, c
         div16_diagonal_copy_stats_avx2(wiener_win2, H);
     }
 
-    eb_aom_free(d);
+    svt_aom_free(d);
 }
 
 static INLINE __m256i pair_set_epi16(int32_t a, int32_t b) {
     return _mm256_set1_epi32((int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)));
 }
 
-int64_t eb_av1_lowbd_pixel_proj_error_avx2(const uint8_t *src8, int32_t width, int32_t height,
-                                           int32_t src_stride, const uint8_t *dat8,
-                                           int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
-                                           int32_t *flt1, int32_t flt1_stride, int32_t xq[2],
-                                           const SgrParamsType *params) {
+int64_t svt_av1_lowbd_pixel_proj_error_avx2(const uint8_t *src8, int32_t width, int32_t height,
+                                            int32_t src_stride, const uint8_t *dat8,
+                                            int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
+                                            int32_t *flt1, int32_t flt1_stride, int32_t xq[2],
+                                            const SgrParamsType *params) {
     const int32_t  shift = SGRPROJ_RST_BITS + SGRPROJ_PRJ_BITS;
     const uint8_t *src   = src8;
     const uint8_t *dat   = dat8;
@@ -3357,11 +3357,11 @@ int64_t eb_av1_lowbd_pixel_proj_error_avx2(const uint8_t *src8, int32_t width, i
     return err + _mm_cvtsi128_si64(hadd_64_avx2(sum64));
 }
 
-int64_t eb_av1_highbd_pixel_proj_error_avx2(const uint8_t *src8, int32_t width, int32_t height,
-                                            int32_t src_stride, const uint8_t *dat8,
-                                            int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
-                                            int32_t *flt1, int32_t flt1_stride, int32_t xq[2],
-                                            const SgrParamsType *params) {
+int64_t svt_av1_highbd_pixel_proj_error_avx2(const uint8_t *src8, int32_t width, int32_t height,
+                                             int32_t src_stride, const uint8_t *dat8,
+                                             int32_t dat_stride, int32_t *flt0, int32_t flt0_stride,
+                                             int32_t *flt1, int32_t flt1_stride, int32_t xq[2],
+                                             const SgrParamsType *params) {
     int32_t         i, j, k;
     const int32_t   shift    = SGRPROJ_RST_BITS + SGRPROJ_PRJ_BITS;
     const __m256i   rounding = _mm256_set1_epi32(1 << (shift - 1));

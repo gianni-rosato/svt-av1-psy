@@ -15,7 +15,7 @@
  *
  * @brief Unit test for forward 2d transform functions:
  * - Av1TransformTwoD_{4x4, 8x8, 16x16, 32x32, 64x64}
- * - eb_av1_fwd_txfm2d_{rectangle}
+ * - svt_av1_fwd_txfm2d_{rectangle}
  *
  * @author Cidana-Wenyao
  *
@@ -103,27 +103,27 @@ static bool is_tx_type_imp_64x64_sse4(const TxType tx_type) {
 }
 
 static const InvSqrTxfmFuncPair inv_txfm_c_avx2_func_pairs[TX_64X64 + 1] = {
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_4x4, avx2, all_txtype_imp),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_8x8, avx2, all_txtype_imp),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_16x16, avx2, all_txtype_imp),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_32x32, avx2, is_tx_type_imp_32x32_avx2),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_4x4, avx2, all_txtype_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_8x8, avx2, all_txtype_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_16x16, avx2, all_txtype_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_32x32, avx2, is_tx_type_imp_32x32_avx2),
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, avx2, is_tx_type_imp_64x64_sse4),
 };
 
 static const InvSqrTxfmFuncPair inv_txfm_c_sse4_1_func_pairs[TX_64X64 + 1] = {
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_4x4, sse4_1, dct_adst_combine_imp),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_8x8, sse4_1, dct_adst_combine_imp),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_16x16, sse4_1, dct_adst_combine_imp),
-    EMPTY_FUNC_PAIRS(eb_av1_inv_txfm2d_add_32x32),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_4x4, sse4_1, dct_adst_combine_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_8x8, sse4_1, dct_adst_combine_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_16x16, sse4_1, dct_adst_combine_imp),
+    EMPTY_FUNC_PAIRS(svt_av1_inv_txfm2d_add_32x32),
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, sse4_1, is_tx_type_imp_64x64_sse4),
 };
 
 #ifndef NON_AVX512_SUPPORT
 static const InvSqrTxfmFuncPair inv_txfm_c_avx512_func_pairs[TX_64X64 + 1] = {
-    EMPTY_FUNC_PAIRS(eb_av1_inv_txfm2d_add_4x4),
-    EMPTY_FUNC_PAIRS(eb_av1_inv_txfm2d_add_8x8),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_16x16, avx512, all_txtype_imp),
-    SQR_FUNC_PAIRS(eb_av1_inv_txfm2d_add_32x32, avx512, is_tx_type_imp_32x32_avx2),
+    EMPTY_FUNC_PAIRS(svt_av1_inv_txfm2d_add_4x4),
+    EMPTY_FUNC_PAIRS(svt_av1_inv_txfm2d_add_8x8),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_16x16, avx512, all_txtype_imp),
+    SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_32x32, avx512, is_tx_type_imp_32x32_avx2),
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, avx512,is_tx_type_imp_64x64_sse4),
 };
 #endif
@@ -138,18 +138,18 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     nullptr,
     nullptr,
     nullptr,  // 4x8 and 8x4
-    eb_av1_inv_txfm2d_add_8x16_c,
-    eb_av1_inv_txfm2d_add_16x8_c,
-    eb_av1_inv_txfm2d_add_16x32_c,
-    eb_av1_inv_txfm2d_add_32x16_c,
-    eb_av1_inv_txfm2d_add_32x64_c,
-    eb_av1_inv_txfm2d_add_64x32_c,
+    svt_av1_inv_txfm2d_add_8x16_c,
+    svt_av1_inv_txfm2d_add_16x8_c,
+    svt_av1_inv_txfm2d_add_16x32_c,
+    svt_av1_inv_txfm2d_add_32x16_c,
+    svt_av1_inv_txfm2d_add_32x64_c,
+    svt_av1_inv_txfm2d_add_64x32_c,
     nullptr,
     nullptr,  // 4x16 and 16x4
-    eb_av1_inv_txfm2d_add_8x32_c,
-    eb_av1_inv_txfm2d_add_32x8_c,
-    eb_av1_inv_txfm2d_add_16x64_c,
-    eb_av1_inv_txfm2d_add_64x16_c};
+    svt_av1_inv_txfm2d_add_8x32_c,
+    svt_av1_inv_txfm2d_add_32x8_c,
+    svt_av1_inv_txfm2d_add_16x64_c,
+    svt_av1_inv_txfm2d_add_64x16_c};
 
 #ifndef NON_AVX512_SUPPORT
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_avx512[TX_SIZES_ALL] = {
@@ -162,26 +162,26 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs_avx512[TX_SIZES_ALL] = 
     nullptr,  // 4x8 and 8x4
     nullptr,
     nullptr,
-    eb_av1_inv_txfm2d_add_16x32_avx512,
-    eb_av1_inv_txfm2d_add_32x16_avx512,
-    eb_av1_inv_txfm2d_add_32x64_avx512,
-    eb_av1_inv_txfm2d_add_64x32_avx512,
+    svt_av1_inv_txfm2d_add_16x32_avx512,
+    svt_av1_inv_txfm2d_add_32x16_avx512,
+    svt_av1_inv_txfm2d_add_32x64_avx512,
+    svt_av1_inv_txfm2d_add_64x32_avx512,
     nullptr,
     nullptr,  // 4x16 and 16x4
     nullptr,
     nullptr,
-    eb_av1_inv_txfm2d_add_16x64_avx512,
-    eb_av1_inv_txfm2d_add_64x16_avx512};
+    svt_av1_inv_txfm2d_add_16x64_avx512,
+    svt_av1_inv_txfm2d_add_64x16_avx512};
 #endif
 
-static const InvRectType2TxfmFuncPair inv_4x8{eb_av1_inv_txfm2d_add_4x8_c,
-                                              eb_av1_inv_txfm2d_add_4x8_sse4_1};
-static const InvRectType2TxfmFuncPair inv_8x4{eb_av1_inv_txfm2d_add_8x4_c,
-                                              eb_av1_inv_txfm2d_add_8x4_sse4_1};
-static const InvRectType2TxfmFuncPair inv_4x16{eb_av1_inv_txfm2d_add_4x16_c,
-                                               eb_av1_inv_txfm2d_add_4x16_sse4_1};
-static const InvRectType2TxfmFuncPair inv_16x4{eb_av1_inv_txfm2d_add_16x4_c,
-                                               eb_av1_inv_txfm2d_add_16x4_sse4_1};
+static const InvRectType2TxfmFuncPair inv_4x8{svt_av1_inv_txfm2d_add_4x8_c,
+                                              svt_av1_inv_txfm2d_add_4x8_sse4_1};
+static const InvRectType2TxfmFuncPair inv_8x4{svt_av1_inv_txfm2d_add_8x4_c,
+                                              svt_av1_inv_txfm2d_add_8x4_sse4_1};
+static const InvRectType2TxfmFuncPair inv_4x16{svt_av1_inv_txfm2d_add_4x16_c,
+                                               svt_av1_inv_txfm2d_add_4x16_sse4_1};
+static const InvRectType2TxfmFuncPair inv_16x4{svt_av1_inv_txfm2d_add_16x4_c,
+                                               svt_av1_inv_txfm2d_add_16x4_sse4_1};
 static const InvRectType2TxfmFuncPair *get_rect_type2_func_pair(
     const TxSize tx_size) {
     switch (tx_size) {
@@ -195,7 +195,7 @@ static const InvRectType2TxfmFuncPair *get_rect_type2_func_pair(
 
 /**
  * @brief Unit test for inverse tx 2d avx2/sse4_1 functions:
- * - eb_av1_inv_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
+ * - svt_av1_inv_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
  *
  * Test strategy:
  * Verify this assembly code by comparing with reference c implementation.
@@ -234,23 +234,23 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 
     void SetUp() override {
         pixel_input_ = reinterpret_cast<int16_t *>(
-            eb_aom_memalign(64, MAX_TX_SQUARE * sizeof(int16_t)));
+            svt_aom_memalign(64, MAX_TX_SQUARE * sizeof(int16_t)));
         input_ = reinterpret_cast<int32_t *>(
-            eb_aom_memalign(64, MAX_TX_SQUARE * sizeof(int32_t)));
+            svt_aom_memalign(64, MAX_TX_SQUARE * sizeof(int32_t)));
         output_test_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(64, MAX_TX_SQUARE * sizeof(uint16_t)));
+            svt_aom_memalign(64, MAX_TX_SQUARE * sizeof(uint16_t)));
         output_ref_ = reinterpret_cast<uint16_t *>(
-            eb_aom_memalign(64, MAX_TX_SQUARE * sizeof(uint16_t)));
+            svt_aom_memalign(64, MAX_TX_SQUARE * sizeof(uint16_t)));
         lowbd_output_test_ = reinterpret_cast<uint8_t *>(
-            eb_aom_memalign(64, MAX_TX_SQUARE * sizeof(uint8_t)));
+            svt_aom_memalign(64, MAX_TX_SQUARE * sizeof(uint8_t)));
     }
 
     void TearDown() override {
-        eb_aom_free(pixel_input_);
-        eb_aom_free(input_);
-        eb_aom_free(output_test_);
-        eb_aom_free(output_ref_);
-        eb_aom_free(lowbd_output_test_);
+        svt_aom_free(pixel_input_);
+        svt_aom_free(input_);
+        svt_aom_free(output_test_);
+        svt_aom_free(output_ref_);
+        svt_aom_free(lowbd_output_test_);
         aom_clear_system_state();
     }
 
@@ -307,7 +307,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const int height = tx_size_high[tx_size];
         const int max_eob = av1_get_max_eob(tx_size);
 
-        const InvRectTxfm2dType1Func test_func = eb_av1_highbd_inv_txfm_add_avx2;
+        const InvRectTxfm2dType1Func test_func = svt_av1_highbd_inv_txfm_add_avx2;
         const InvRectTxfm2dType1Func ref_func = function_arr[tx_size];
         if (ref_func == nullptr)
             return;
@@ -404,10 +404,10 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                                                 TxType tx_type,
                                                 int32_t bd);
         const LowbdInvSqrTxfmRefFunc lowbd_sqr_ref_funcs[TX_SIZES] = {
-            eb_av1_inv_txfm2d_add_4x4_c,
-            eb_av1_inv_txfm2d_add_8x8_c,
-            eb_av1_inv_txfm2d_add_16x16_c,
-            eb_av1_inv_txfm2d_add_32x32_c,
+            svt_av1_inv_txfm2d_add_4x4_c,
+            svt_av1_inv_txfm2d_add_8x8_c,
+            svt_av1_inv_txfm2d_add_16x16_c,
+            svt_av1_inv_txfm2d_add_32x32_c,
             svt_av1_inv_txfm2d_add_64x64_c};
         const LowbdInvRectTxfmRefFunc lowbd_rect_ref_funcs[TX_SIZES_ALL] = {
             nullptr,
@@ -417,18 +417,18 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             nullptr,
             nullptr,
             nullptr,
-            eb_av1_inv_txfm2d_add_8x16_c,
-            eb_av1_inv_txfm2d_add_16x8_c,
-            eb_av1_inv_txfm2d_add_16x32_c,
-            eb_av1_inv_txfm2d_add_32x16_c,
-            eb_av1_inv_txfm2d_add_32x64_c,
-            eb_av1_inv_txfm2d_add_64x32_c,
+            svt_av1_inv_txfm2d_add_8x16_c,
+            svt_av1_inv_txfm2d_add_16x8_c,
+            svt_av1_inv_txfm2d_add_16x32_c,
+            svt_av1_inv_txfm2d_add_32x16_c,
+            svt_av1_inv_txfm2d_add_32x64_c,
+            svt_av1_inv_txfm2d_add_64x32_c,
             nullptr,
             nullptr,
-            eb_av1_inv_txfm2d_add_8x32_c,
-            eb_av1_inv_txfm2d_add_32x8_c,
-            eb_av1_inv_txfm2d_add_16x64_c,
-            eb_av1_inv_txfm2d_add_64x16_c};
+            svt_av1_inv_txfm2d_add_8x32_c,
+            svt_av1_inv_txfm2d_add_32x8_c,
+            svt_av1_inv_txfm2d_add_16x64_c,
+            svt_av1_inv_txfm2d_add_64x16_c};
 
         if (tx_size >= TX_SIZES && lowbd_rect_ref_funcs[tx_size] == nullptr)
             return;
@@ -510,7 +510,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         for (int idx = 0; idx < num_htf_sizes; ++idx) {
             const TxSize tx_size = htf_tx_size[idx];
 
-            eb_buf_random_s32(input_, MAX_TX_SQUARE);
+            svt_buf_random_s32(input_, MAX_TX_SQUARE);
             memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
 
             const uint64_t energy_ref = htf_ref_funcs[idx](input_);
@@ -558,7 +558,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
             const uint64_t num_loop = 10000000;
             uint64_t energy_ref, energy_asm;
 
-            eb_buf_random_s32(input_, MAX_TX_SQUARE);
+            svt_buf_random_s32(input_, MAX_TX_SQUARE);
             memcpy(input, input_, MAX_TX_SQUARE * sizeof(int32_t));
 
             svt_av1_get_time(&start_time_seconds, &start_time_useconds);
@@ -636,14 +636,14 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const FwdTxfm2dFunc fwd_txfm_func[TX_SIZES_ALL] = {
             svt_av1_transform_two_d_4x4_c,   svt_av1_transform_two_d_8x8_c,
             svt_av1_transform_two_d_16x16_c, svt_av1_transform_two_d_32x32_c,
-            svt_av1_transform_two_d_64x64_c, eb_av1_fwd_txfm2d_4x8_c,
-            eb_av1_fwd_txfm2d_8x4_c,     eb_av1_fwd_txfm2d_8x16_c,
-            eb_av1_fwd_txfm2d_16x8_c,    eb_av1_fwd_txfm2d_16x32_c,
-            eb_av1_fwd_txfm2d_32x16_c,   eb_av1_fwd_txfm2d_32x64_c,
-            eb_av1_fwd_txfm2d_64x32_c,   eb_av1_fwd_txfm2d_4x16_c,
-            eb_av1_fwd_txfm2d_16x4_c,    eb_av1_fwd_txfm2d_8x32_c,
-            eb_av1_fwd_txfm2d_32x8_c,    eb_av1_fwd_txfm2d_16x64_c,
-            eb_av1_fwd_txfm2d_64x16_c,
+            svt_av1_transform_two_d_64x64_c, svt_av1_fwd_txfm2d_4x8_c,
+            svt_av1_fwd_txfm2d_8x4_c,     svt_av1_fwd_txfm2d_8x16_c,
+            svt_av1_fwd_txfm2d_16x8_c,    svt_av1_fwd_txfm2d_16x32_c,
+            svt_av1_fwd_txfm2d_32x16_c,   svt_av1_fwd_txfm2d_32x64_c,
+            svt_av1_fwd_txfm2d_64x32_c,   svt_av1_fwd_txfm2d_4x16_c,
+            svt_av1_fwd_txfm2d_16x4_c,    svt_av1_fwd_txfm2d_8x32_c,
+            svt_av1_fwd_txfm2d_32x8_c,    svt_av1_fwd_txfm2d_16x64_c,
+            svt_av1_fwd_txfm2d_64x16_c,
         };
 
         memset(output_ref_, 0, MAX_TX_SQUARE * sizeof(uint16_t));
@@ -740,18 +740,18 @@ TEST_P(InvTxfm2dAsmTest, DISABLED_HandleTransform_speed_test) {
 
 INSTANTIATE_TEST_CASE_P(
     TX, InvTxfm2dAsmTest,
-    ::testing::Combine(::testing::Values(eb_av1_lowbd_inv_txfm2d_add_ssse3),
+    ::testing::Combine(::testing::Values(svt_av1_lowbd_inv_txfm2d_add_ssse3),
                        ::testing::Values(static_cast<int>(AOM_BITS_8),
                                          static_cast<int>(AOM_BITS_10))));
 
-extern "C" void eb_av1_lowbd_inv_txfm2d_add_avx2(
+extern "C" void svt_av1_lowbd_inv_txfm2d_add_avx2(
     const int32_t *input, uint8_t *output_r, int32_t stride_r,
     uint8_t *output_w, int32_t stride_w, TxType tx_type, TxSize tx_size,
     int32_t eob);
 
 INSTANTIATE_TEST_CASE_P(
     TX_AVX2, InvTxfm2dAsmTest,
-    ::testing::Combine(::testing::Values(eb_av1_lowbd_inv_txfm2d_add_avx2),
+    ::testing::Combine(::testing::Values(svt_av1_lowbd_inv_txfm2d_add_avx2),
                        ::testing::Values(static_cast<int>(AOM_BITS_8),
                                          static_cast<int>(AOM_BITS_10))));
 

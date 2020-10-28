@@ -14,7 +14,7 @@
 #include "EbSequenceControlSet.h"
 #include "EbUtility.h"
 
-static void eb_sequence_control_set_dctor(EbPtr p) {
+static void svt_sequence_control_set_dctor(EbPtr p) {
     SequenceControlSet *obj = (SequenceControlSet *)p;
     EB_FREE_ARRAY(obj->sb_params_array);
     EB_FREE_ARRAY(obj->sb_geom);
@@ -45,12 +45,12 @@ static void eb_sequence_control_set_dctor(EbPtr p) {
         take great care not to have pipeline mismanagement.  Once an object enters use in the
         pipeline, it cannot be changed on the fly or you will have pipeline coherency problems.
  ***************************************************************************************************/
-EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr object_init_data_ptr) {
     EbSequenceControlSetInitData *scs_init_data =
         (EbSequenceControlSetInitData *)object_init_data_ptr;
     uint32_t segment_index;
 
-    scs_ptr->dctor = eb_sequence_control_set_dctor;
+    scs_ptr->dctor = svt_sequence_control_set_dctor;
 
     scs_ptr->static_config.sb_sz           = 64;
     scs_ptr->static_config.partition_depth = 4;
@@ -189,11 +189,11 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     return EB_ErrorNone;
 }
 
-EbErrorType eb_sequence_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+EbErrorType svt_sequence_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     SequenceControlSet *obj;
 
     *object_dbl_ptr = NULL;
-    EB_NEW(obj, eb_sequence_control_set_ctor, object_init_data_ptr);
+    EB_NEW(obj, svt_sequence_control_set_ctor, object_init_data_ptr);
     *object_dbl_ptr = obj;
     return EB_ErrorNone;
 }
@@ -318,7 +318,7 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, 
     return return_error;
 }
 
-static void eb_sequence_control_set_instance_dctor(EbPtr p) {
+static void svt_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
     if (obj->encode_context_ptr && obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved)
         EB_FREE_ARRAY(obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved);
@@ -327,10 +327,10 @@ static void eb_sequence_control_set_instance_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->config_mutex);
 }
 
-EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr) {
+EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *object_ptr) {
     EbSequenceControlSetInitData scs_init_data;
 
-    object_ptr->dctor = eb_sequence_control_set_instance_dctor;
+    object_ptr->dctor = svt_sequence_control_set_instance_dctor;
 
     EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, NULL);
     scs_init_data.encode_context_ptr = object_ptr->encode_context_ptr;
@@ -339,7 +339,7 @@ EbErrorType eb_sequence_control_set_instance_ctor(EbSequenceControlSetInstance *
 
     scs_init_data.sb_size = 64;
 
-    EB_NEW(object_ptr->scs_ptr, eb_sequence_control_set_ctor, (void *)&scs_init_data);
+    EB_NEW(object_ptr->scs_ptr, svt_sequence_control_set_ctor, (void *)&scs_init_data);
     EB_CREATE_MUTEX(object_ptr->config_mutex);
 
     return EB_ErrorNone;
