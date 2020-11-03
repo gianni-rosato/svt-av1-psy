@@ -1,0 +1,18 @@
+#List of known warnings for CI task Sanitizer(thread-skip-known-warnings)
+#CI runs sanitizer with skip known warnings to detect regression of new potential issues.
+#Known warnings are tracked in issue: #1308
+
+#Race warnings (data races and use-after-free reports):
+race:svt_memcpy_small
+race:svt_memcpy_sse
+race:mode_decision_kernel
+race:picture_decision_kernel
+race:calculate_input_average_intensity
+race:compute_luma_sad_between_center_and_target_frame
+race:compute_block_mean_compute_variance
+race:picture_manager_kernel
+race:packetization_kernel
+race:signal_derivation_pre_analysis_oq
+race:compute_chroma_block_mean
+
+#End of file

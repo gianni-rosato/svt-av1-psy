@@ -27,21 +27,30 @@ jobs:
       matrix:
         include:
           - sanitizer: address
+            sanitizer-type: address
             allows-failure: false
             ASAN_OPTIONS: detect_leaks=1
 
           - sanitizer: memory
+            sanitizer-type: memory
             allows-failure: false
             CFLAGS: -fno-omit-frame-pointer
             CXXFLAGS: -fno-omit-frame-pointer
             svt-args: --asm 0
 
           - sanitizer: thread
+            sanitizer-type: thread
             allows-failure: true
+
+          - sanitizer: thread-skip-known-warnings
+            sanitizer-type: thread
+            allows-failure: false
+            run-prefix: TSAN_OPTIONS="suppressions=./.github/workflows/sanitizers-known-warnings.txt"
+
     env:
-      CFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.CFLAGS }}
-      CXXFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.CXXFLAGS }}
-      LDFLAGS: -fsanitize=${{ matrix.sanitizer }} ${{ matrix.LDFLAGS }}
+      CFLAGS: -fsanitize=${{ matrix.sanitizer-type }} ${{ matrix.CFLAGS }}
+      CXXFLAGS: -fsanitize=${{ matrix.sanitizer-type }} ${{ matrix.CXXFLAGS }}
+      LDFLAGS: -fsanitize=${{ matrix.sanitizer-type }} ${{ matrix.LDFLAGS }}
       ASAN_OPTIONS: ${{ matrix.ASAN_OPTIONS }}
 
     steps:
@@ -73,5 +82,5 @@ jobs:
           tar xzf video.tar.gz
 
       - name: Run Encoder
-        run: ./Bin/Debug/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${{ matrix.svt-args }} -n 120 --preset 8 -b output.ivf
+        run: ${{ matrix.run-prefix }} ./Bin/Debug/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${{ matrix.svt-args }} -n 120 --preset 8 -b output.ivf
         continue-on-error: ${{ matrix.allows-failure }}
