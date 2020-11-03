@@ -565,6 +565,8 @@ extern void first_pass_loop_core(PictureControlSet *pcs_ptr,
             ? EB_TRUE
             : EB_FALSE;
 
+    candidate_ptr->count_non_zero_coeffs = 0;
+
     //ALL PLANE
     *(candidate_buffer->full_cost_ptr) = 0;
 }
@@ -753,6 +755,12 @@ static int firstpass_inter_prediction(
         candidate_buffer->candidate_ptr->interp_filters   = 0;
         svt_product_prediction_fun_table[candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
+        candidate_ptr->y_has_coeff = 0;
+        candidate_ptr->u_has_coeff = 0;
+        candidate_ptr->v_has_coeff = 0;
+        candidate_ptr->count_non_zero_coeffs = 0;
+        candidate_ptr->chroma_distortion = 0;
+        candidate_ptr->chroma_distortion_inter_depth = 0;
         *(candidate_buffer->full_cost_ptr) = 0;
         // To convert full-pel MV
         mv.col = candidate_buffer->candidate_ptr->motion_vector_xl0 >> 3;

@@ -3832,6 +3832,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
 
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].final_pred_depth_refinement = 0;
                     if (use_output_stat(scs_ptr)) {
                         if (blk_geom->sq_size == force_blk_size)
                             results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
