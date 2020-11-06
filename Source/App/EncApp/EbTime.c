@@ -18,7 +18,11 @@
 
 #include <time.h>
 
-#if !defined(CLOCK_MONOTONIC) && !defined(_WIN32)
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && (__MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_12)
+#define OLD_MACOS
+#endif
+
+#if !defined(CLOCK_MONOTONIC) && !defined(_WIN32) || defined(OLD_MACOS)
 #include <sys/time.h>
 #endif
 
@@ -49,7 +53,7 @@ void app_svt_av1_get_time(uint64_t *const seconds, uint64_t *const useconds) {
     _ftime_s(&curr_time);
     *seconds  = curr_time.time;
     *useconds = curr_time.millitm;
-#elif defined(CLOCK_MONOTONIC)
+#elif defined(CLOCK_MONOTONIC) && !defined(OLD_MACOS)
     struct timespec curr_time;
     clock_gettime(CLOCK_MONOTONIC, &curr_time);
     *seconds  = (uint64_t)curr_time.tv_sec;
