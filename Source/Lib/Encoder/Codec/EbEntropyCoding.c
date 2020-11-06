@@ -281,8 +281,6 @@ static void set_bitstream_level_tier(SequenceControlSet *scs_ptr) {
     }
 }
 
-const uint8_t k_eob_offset_bits[12] = {0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-
 static void write_golomb(AomWriter *w, int32_t level) {
     int32_t x      = level + 1;
     int32_t i      = x;
@@ -326,7 +324,6 @@ static const uint8_t eob_to_pos_large[17] = {
     10, // 257-512
     11 // 513-
 };
-const int16_t k_eob_group_start[12] = {0, 1, 2, 3, 5, 9, 17, 33, 65, 129, 257, 513};
 
 static INLINE int16_t get_eob_pos_token(const int16_t eob, int16_t *const extra) {
     int16_t t;
@@ -338,7 +335,7 @@ static INLINE int16_t get_eob_pos_token(const int16_t eob, int16_t *const extra)
         t               = eob_to_pos_large[e];
     }
 
-    *extra = eob - k_eob_group_start[t];
+    *extra = eob - eb_k_eob_group_start[t];
 
     return t;
 }
@@ -643,7 +640,7 @@ int32_t av1_write_coeffs_txb_1d(PictureParentControlSet *parent_pcs_ptr,
         break;
     }
 
-    uint8_t eob_offset_bits = k_eob_offset_bits[eob_pt];
+    const int16_t eob_offset_bits = eb_k_eob_offset_bits[eob_pt];
     if (eob_offset_bits > 0) {
         int32_t eob_shift = eob_offset_bits - 1;
         int32_t bit       = (eob_extra & (1 << eob_shift)) ? 1 : 0;
@@ -1773,7 +1770,7 @@ static void        encode_mv_component(AomWriter *w, int32_t comp, NmvComponent 
     int32_t       offset;
     const int32_t sign     = comp < 0;
     const int32_t mag      = sign ? -comp : comp;
-    const int32_t mv_class = av1_get_mv_class(mag - 1, &offset);
+    const int32_t mv_class = svt_av1_get_mv_class(mag - 1, &offset);
     const int32_t d        = offset >> 3; // int32_t mv data
     const int32_t fr       = (offset >> 1) & 3; // fractional mv data
     const int32_t hp       = offset & 1; // high precision mv data

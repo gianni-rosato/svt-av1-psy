@@ -101,10 +101,6 @@ else()
         "${cxx_default}"
         "${lib_list}"
         ${all_files})
-
-    set_target_properties(SvtAv1UnitTests
-        PROPERTIES
-        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
 
 add_dependencies(SvtAv1UnitTests SvtAv1Enc SvtAv1Dec)

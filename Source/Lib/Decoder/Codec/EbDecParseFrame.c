@@ -210,7 +210,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
         /*TODO: Move CFL to thread ctxt! We need to access DecModCtxt
           from parse_tile function . Add tile level cfl init. */
         if (!is_mt) {
-            cfl_init(&((DecModCtxt *)dec_handle_ptr->pv_dec_mod_ctxt)->cfl_ctx, color_config);
+            svt_cfl_init(&((DecModCtxt *)dec_handle_ptr->pv_dec_mod_ctxt)->cfl_ctx, color_config);
         }
 
         for (uint32_t mi_col = tile_info->tile_col_start_mi[tile_col];

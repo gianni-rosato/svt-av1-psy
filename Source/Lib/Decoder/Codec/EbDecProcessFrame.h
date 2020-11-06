@@ -104,7 +104,7 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
                         DecMtParseReconTileInfo *parse_recon_tile_info_array, int32_t tile_col);
 
 /* TODO: Should be moved out once decode tile is moved out from parse_tile */
-void cfl_init(CflCtx *cfl, EbColorConfig *cc);
+void svt_cfl_init(CflCtx *cfl, EbColorConfig *cc);
 
 #ifdef __cplusplus
 }

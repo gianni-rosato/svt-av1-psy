@@ -1187,7 +1187,7 @@ static INLINE int16_t svt_mode_context_analyzer(const int16_t *const          mo
     return comp_ctx;
 }
 
-void av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo *pi, ParseCtxt *parse_ctx,
+void svt_av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo *pi, ParseCtxt *parse_ctx,
                       MvReferenceFrame ref_frame, CandidateMv ref_mv_stack[][MAX_REF_MV_STACK_SIZE],
                       IntMv mv_ref_list[][MAX_MV_REF_CANDIDATES], IntMv global_mvs[2],
                       int16_t *mode_context, MvCount *mv_cnt) {
@@ -2009,7 +2009,7 @@ void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Parti
 
     MvReferenceFrame ref_frame = av1_ref_frame_type(mbmi->ref_frame);
     IntMv            global_mvs[2];
-    av1_find_mv_refs(dec_handle,
+    svt_av1_find_mv_refs(dec_handle,
                      pi,
                      parse_ctxt,
                      ref_frame,

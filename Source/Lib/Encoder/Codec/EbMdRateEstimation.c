@@ -332,7 +332,7 @@ static const uint8_t log_in_base_2[] = {
 
 static INLINE int32_t mv_class_base(MvClassType c) { return c ? CLASS0_SIZE << (c + 2) : 0; }
 
-MvClassType av1_get_mv_class(int32_t z, int32_t *offset) {
+MvClassType svt_av1_get_mv_class(int32_t z, int32_t *offset) {
     const MvClassType c =
         (z >= CLASS0_SIZE * 4096) ? MV_CLASS_10 : (MvClassType)log_in_base_2[z >> 3];
     if (offset) *offset = z - mv_class_base(c);
@@ -669,7 +669,7 @@ static AOM_INLINE void update_filter_type_cdf(MacroBlockD *xd, const MbModeInfo 
         update_cdf(xd->tile_ctx->switchable_interp_cdf[ctx], filter, SWITCHABLE_FILTERS);
     }
 }
-MvClassType av1_get_mv_class(int32_t z, int32_t *offset);
+
 /*******************************************************************************
  * Updates all the mv component stats/CDF for the current block
  ******************************************************************************/
@@ -678,7 +678,7 @@ static void update_mv_component_stats(int comp, NmvComponent *mvcomp, MvSubpelPr
     int       offset;
     const int sign     = comp < 0;
     const int mag      = sign ? -comp : comp;
-    const int mv_class = av1_get_mv_class(mag - 1, &offset);
+    const int mv_class = svt_av1_get_mv_class(mag - 1, &offset);
     const int d        = offset >> 3; // int mv data
     const int fr       = (offset >> 1) & 3; // fractional mv data
     const int hp       = offset & 1; // high precision mv data

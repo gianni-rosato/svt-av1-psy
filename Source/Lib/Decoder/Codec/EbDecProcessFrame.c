@@ -163,7 +163,7 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
             int32_t mi_row = (sb_row << dec_mod_ctxt->seq_header->sb_size_log2) >> MI_SIZE_LOG2;
 
             EbColorConfig *color_config = &dec_mod_ctxt->seq_header->color_config;
-            cfl_init(&dec_mod_ctxt->cfl_ctx, color_config);
+            svt_cfl_init(&dec_mod_ctxt->cfl_ctx, color_config);
 
             //update the row started status
             parse_recon_tile_info_array->sb_recon_row_started[sb_row_in_tile] = 1;

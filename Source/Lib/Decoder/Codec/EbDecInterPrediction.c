@@ -64,12 +64,6 @@ static INLINE MV dec_clamp_mv_to_umv_border_sb(int32_t mb_to_left_edge, int32_t 
 }
 
 #define OPT_DYN_PAD        0
-void *aom_memset16(void *dest, int val, size_t length) {
-    size_t i;
-    uint16_t *dest16 = (uint16_t *)dest;
-    for (i = 0; i < length; i++) *dest16++ = val;
-    return dest;
-}
 
 static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
     uint8_t *dst8, int32_t dst_stride, int32_t x, int32_t y,
@@ -121,7 +115,7 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
     if (left) {
         y0 = y0 + top;
         for (int32_t i = 0; i < blk_fill_itt; i++) {
-            aom_memset16((void *)dst_temp, ref_temp[0], left);
+            svt_aom_memset16((void *)dst_temp, ref_temp[0], left);
             if (right) svt_memcpy(dst_temp + left, ref_temp, right * sizeof(uint16_t));
             dst_temp += dst_stride;
             ++y0;
@@ -142,7 +136,7 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
         }
         for (int32_t i = 0; i < blk_fill_itt; i++) {
             if (copy) svt_memcpy(dst_temp, ref_temp + x0, copy * sizeof(uint16_t));
-            if (set) aom_memset16((void *)(dst_temp + ptr_ext), ref_temp[w - 1], set);
+            if (set) svt_aom_memset16((void *)(dst_temp + ptr_ext), ref_temp[w - 1], set);
             dst_temp += dst_stride;
             ++y0;
             if (y0 > 0 && y0 < h) ref_temp += src_stride;
@@ -185,11 +179,11 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
 
         copy = b_w - left - right;
 
-        if (left) aom_memset16((void*)dst, ref_row[0], left);
+        if (left) svt_aom_memset16((void*)dst, ref_row[0], left);
 
         if (copy) svt_memcpy(dst + left, ref_row + x + left, copy * sizeof(uint16_t));
 
-        if (right) aom_memset16((void*)(dst + left + copy), ref_row[w - 1], right);
+        if (right) svt_aom_memset16((void*)(dst + left + copy), ref_row[w - 1], right);
 
         dst += dst_stride;
         ++y;
@@ -640,7 +634,7 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
                                    is_16bit);
 }
 
-void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane,
+static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane,
                             uint8_t *inter_pred, int inter_stride, uint8_t *intra_pred,
                             int intra_stride, EbBitDepthEnum bit_depth, EbBool is_16bit) {
     BlockModeInfo * mi          = part_info->mi;
@@ -682,7 +676,7 @@ void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane
                        intra_stride);
 }
 
-void av1_build_intra_predictors_for_interintra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info,
+static void av1_build_intra_predictors_for_interintra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info,
                                                void *pv_blk_recon_buf, int32_t recon_stride,
                                                BlockSize bsize, int32_t plane, uint8_t *dst,
                                                int dst_stride, EbBitDepthEnum bit_depth) {
@@ -731,7 +725,7 @@ void av1_build_intra_predictors_for_interintra(DecModCtxt *dec_mod_ctxt, Partiti
 }
 
 /* Build interintra_predictors */
-void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, void *pred,
+static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, void *pred,
                                      int32_t stride, int plane, BlockSize bsize,
                                      EbBitDepthEnum bit_depth, EbBool is_16bit) {
     if (bit_depth > EB_8BIT || is_16bit) {

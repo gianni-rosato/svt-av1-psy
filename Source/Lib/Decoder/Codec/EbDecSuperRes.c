@@ -23,7 +23,7 @@ void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
                                     EbBool is_16bit_pipeline);
 
-void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *frm_hdr,
+static void av1_upscale_normative_and_extend_frame(struct Av1Common *cm, FrameHeader *frm_hdr,
                                             SeqHeader *seq_hdr, EbPictureBufferDesc *src,
                                             EbPictureBufferDesc *dst) {
     const int num_planes = seq_hdr->color_config.mono_chrome ? 1 : MAX_MB_PLANE;
@@ -133,8 +133,8 @@ EbErrorType copy_recon(SeqHeader *seq_hdr, EbPictureBufferDesc *recon_picture_sr
     return EB_ErrorNone;
 }
 
-void av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader *seq_hdr,
-                          EbPictureBufferDesc *recon_picture_src, int enable_flag) {
+void svt_av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader *seq_hdr,
+                              EbPictureBufferDesc *recon_picture_src, int enable_flag) {
     if (!enable_flag) return;
 
     const int num_planes = seq_hdr->color_config.mono_chrome ? 1 : MAX_MB_PLANE;

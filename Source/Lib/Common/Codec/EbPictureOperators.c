@@ -18,11 +18,10 @@
 #include "EbPackUnPack.h"
 #include "common_dsp_rtcd.h"
 #include "EbUtility.h"
+#include "EbIntraPrediction.h"
 
 #define VARIANCE_PRECISION 16
 #define MEAN_PRECISION (VARIANCE_PRECISION >> 1)
-
-void *svt_aom_memset16(void *dest, int32_t val, size_t length);
 
 /*********************************
  * Picture Copy

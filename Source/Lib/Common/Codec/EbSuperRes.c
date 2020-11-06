@@ -13,6 +13,7 @@
 #include "EbResize.h"
 #include "EbUtility.h"
 #include "EbSuperRes.h"
+#include "EbIntraPrediction.h"
 
 #define FILTER_BITS 7
 

@@ -43,10 +43,6 @@ else()
         "${cxx_default}"
         "${lib_list}"
         ${all_files})
-
-    set_target_properties(SvtAv1ApiTests
-        PROPERTIES
-        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
 
 install(TARGETS SvtAv1ApiTests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -66,7 +66,7 @@ static INLINE void palette_add_to_cache(uint16_t *cache, int *n, uint16_t val) {
     cache[(*n)++] = val;
 }
 
-int av1_get_palette_cache(ParseCtxt *parse_ctx, PartitionInfo *pi, int plane, uint16_t *cache) {
+static int av1_get_palette_cache(ParseCtxt *parse_ctx, PartitionInfo *pi, int plane, uint16_t *cache) {
     const int row = -pi->mb_to_top_edge >> 3;
     // Do not refer to above SB row when on SB boundary.
     BlockModeInfo *       above_mi  = (row % (1 << MIN_SB_SIZE_LOG2)) ? pi->above_mbmi : NULL;
@@ -628,7 +628,7 @@ void intra_frame_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, Parti
         mbmi->interp_filters = av1_broadcast_interp_filter(BILINEAR);
         IntMv global_mvs[2];
         int16_t inter_mode_ctx[MODE_CTX_REF_FRAMES];
-        av1_find_mv_refs(dec_handle,
+        svt_av1_find_mv_refs(dec_handle,
                          xd,
                          parse_ctxt,
                          INTRA_FRAME,

@@ -45,7 +45,7 @@ int32_t dec_get_filt_type(const PartitionInfo *part_info, int32_t plane) {
     return (ab_sm || le_sm) ? 1 : 0;
 }
 
-void cfl_init(CflCtx *cfl, EbColorConfig *cc) {
+void svt_cfl_init(CflCtx *cfl, EbColorConfig *cc) {
     assert(block_size_wide[CFL_MAX_BlockSize] == CFL_BUF_LINE);
     assert(block_size_high[CFL_MAX_BlockSize] == CFL_BUF_LINE);
 
@@ -189,7 +189,7 @@ static INLINE CflAllowedType is_cfl_allowed_with_frame_header(const PartitionInf
     return (CflAllowedType)(block_size_wide[bsize] <= 32 && block_size_high[bsize] <= 32);
 }
 
-void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
+static void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
     //CFL_CTX *const cfl = &xd->cfl;
     // Do not call cfl_compute_parameters multiple time on the same values.
     assert(cfl_ctx->are_parameters_computed == 0);
@@ -198,7 +198,7 @@ void cfl_compute_parameters(CflCtx *cfl_ctx, TxSize tx_size) {
     cfl_ctx->are_parameters_computed = 1;
 }
 
-void cfl_predict_block(PartitionInfo *xd, CflCtx *cfl_ctx, uint8_t *dst, int32_t dst_stride,
+static void cfl_predict_block(PartitionInfo *xd, CflCtx *cfl_ctx, uint8_t *dst, int32_t dst_stride,
                        TxSize tx_size, int32_t plane, EbColorConfig *cc, FrameHeader *fh, EbBool is_16bit) {
     BlockModeInfo *mbmi                = xd->mi;
     CflAllowedType is_cfl_allowed_flag = is_cfl_allowed_with_frame_header(xd, cc, fh);
@@ -294,7 +294,7 @@ static INLINE void sub8x8_adjust_offset(PartitionInfo *xd, const CflCtx *cfl_ctx
     }
 }
 
-void cfl_store_tx(PartitionInfo *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
+void svt_cfl_store_tx(PartitionInfo *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
                   BlockSize bsize, EbColorConfig *cc, uint8_t *dst_buff, uint32_t dst_stride, EbBool is_16bit) {
     if (block_size_high[bsize] == 4 || block_size_wide[bsize] == 4) {
         // Only dimensions of size 4 can have an odd offset.

@@ -33,7 +33,7 @@ static INLINE int dec_is_neighbor_overlappable(const BlockModeInfo *mbmi) {
 //    return AOMMIN(block_size_wide[bsize], block_size_high[bsize]) >= 8;
 //}
 
-void av1_modify_neighbor_predictor_for_obmc(BlockModeInfo *mbmi) {
+static void av1_modify_neighbor_predictor_for_obmc(BlockModeInfo *mbmi) {
     mbmi->ref_frame[1]              = NONE_FRAME;
     mbmi->inter_inter_compound.type = COMPOUND_AVERAGE;
     return;

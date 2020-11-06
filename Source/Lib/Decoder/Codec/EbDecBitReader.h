@@ -42,15 +42,15 @@ extern "C" {
 typedef DaalaReader_t SvtReader;
 
 static INLINE int svt_reader_init(SvtReader *r, const uint8_t *buffer, size_t size) {
-    return aom_daala_reader_init(r, buffer, (int)size);
+    return svt_aom_daala_reader_init(r, buffer, (int)size);
 }
 
 static INLINE const uint8_t *aom_reader_find_begin(SvtReader *r) {
-    return aom_daala_reader_find_begin(r);
+    return svt_aom_daala_reader_find_begin(r);
 }
 
 static INLINE const uint8_t *aom_reader_find_end(SvtReader *r) {
-    return aom_daala_reader_find_end(r);
+    return svt_aom_daala_reader_find_end(r);
 }
 
 static INLINE int aom_read_(SvtReader *r, int prob ACCT_STR_PARAM) {

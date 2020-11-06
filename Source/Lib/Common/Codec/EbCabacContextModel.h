@@ -675,7 +675,7 @@ typedef struct NmvContext {
     NmvComponent comps[2];
 } NmvContext;
 
-MvClassType av1_get_mv_class(int32_t z, int32_t *offset);
+MvClassType svt_av1_get_mv_class(int32_t z, int32_t *offset);
 
 typedef enum MvSubpelPrecision {
     MV_SUBPEL_NONE          = -1,

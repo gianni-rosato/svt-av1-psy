@@ -19,8 +19,6 @@
 #include "EbModeDecisionProcess.h"
 #include "common_dsp_rtcd.h"
 
-void *svt_aom_memset16(void *dest, int32_t val, size_t length);
-
 int32_t is_inter_block(const BlockModeInfo *mbmi);
 // Weights are quadratic from '1' to '1 / BlockSize', scaled by
 // 2^sm_weight_log2_scale.

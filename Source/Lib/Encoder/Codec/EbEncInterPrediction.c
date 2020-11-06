@@ -106,7 +106,7 @@ void svt_av1_make_inter_predictor(const uint8_t *src, int src_stride, uint8_t *d
         interp_filters, 0);
   }
 }
-void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
+void svt_av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
                                int dst_stride, const MV *src_mv, int pix_col, int pix_row,
                                InterPredParams *inter_pred_params) {
   SubpelParams subpel_params;

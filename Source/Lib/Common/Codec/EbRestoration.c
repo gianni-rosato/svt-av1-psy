@@ -16,6 +16,7 @@
 #include "EbRestoration.h"
 #include "EbUtility.h"
 #include "EbLog.h"
+#include "EbIntraPrediction.h"
 
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
@@ -60,8 +61,6 @@ typedef uint32_t InterpFilters;
 
 InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
                                                                 const int32_t      w);
-
-void *svt_aom_memset16(void *dest, int32_t val, size_t length);
 
 ///---convolve.h
 #define FILTER_BITS 7

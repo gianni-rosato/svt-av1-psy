@@ -396,7 +396,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
             /* Store Luma for CFL if required! */
             if (plane == AOM_PLANE_Y &&
                 store_cfl_required(color_config, &part_info, is_chroma_ref)) {
-                cfl_store_tx(&part_info,
+                svt_cfl_store_tx(&part_info,
                              &dec_mod_ctxt->cfl_ctx,
                              trans_info->txb_y_offset,
                              trans_info->txb_x_offset,

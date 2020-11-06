@@ -763,7 +763,7 @@ void tpl_mc_flow_dispenser(
                         inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
 
                         MV best_mv = {y_curr_mv, x_curr_mv};
-                        av1_build_inter_predictor(pcs_ptr->av1_cm,
+                        svt_av1_build_inter_predictor(pcs_ptr->av1_cm,
                                                   ref_mb,
                                                   input_picture_ptr->stride_y,
                                                   predictor,
@@ -822,7 +822,7 @@ void tpl_mc_flow_dispenser(
                             &sf, &ref_buf, kernel);
 
                         inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
-                        av1_build_inter_predictor(pcs_ptr->av1_cm,
+                        svt_av1_build_inter_predictor(pcs_ptr->av1_cm,
                                                   ref_mb,
                                                   input_picture_ptr->stride_y,
                                                   dst_buffer,

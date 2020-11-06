@@ -66,12 +66,9 @@ void dec_init_intra_predictors_12b_internal(void);
 
 int remap_lr_type[4] = {RESTORE_NONE, RESTORE_SWITCHABLE, RESTORE_WIENER, RESTORE_SGRPROJ};
 
-void av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader *seq_hdr,
-                          EbPictureBufferDesc *recon_picture_src, int enable_flag);
-
 /* Checks that the remaining bits start with a 1 and ends with 0s.
  * It consumes an additional byte, if already byte aligned before the check. */
-int av1_check_trailing_bits(Bitstrm *bs) {
+static int av1_check_trailing_bits(Bitstrm *bs) {
     // bit_offset is set to 0 (mod 8) when the reader is already byte aligned
     int bits_before_alignment = 8 - bs->bit_ofst % 8;
     int trailing              = dec_get_bits(bs, bits_before_alignment);
@@ -79,7 +76,7 @@ int av1_check_trailing_bits(Bitstrm *bs) {
     return 0;
 }
 
-int byte_alignment(Bitstrm *bs) {
+static int byte_alignment(Bitstrm *bs) {
     while (bs->bit_ofst & 7) {
         if (dec_get_bits(bs, 1)) return EB_Corrupt_Frame;
     }
@@ -2435,11 +2432,11 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     } else
         svt_cdef_frame(dec_handle_ptr, do_cdef);
 
-    av1_superres_upscale(&dec_handle_ptr->cm,
-                         &dec_handle_ptr->frame_header,
-                         &dec_handle_ptr->seq_header,
-                         dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
-                         do_upscale);
+    svt_av1_superres_upscale(&dec_handle_ptr->cm,
+                             &dec_handle_ptr->frame_header,
+                             &dec_handle_ptr->seq_header,
+                             dec_handle_ptr->cur_pic_buf[0]->ps_pic_buf,
+                             do_upscale);
 
     if (do_upscale)
         dec_handle_ptr->cm.frm_size.frame_width =

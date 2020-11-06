@@ -126,7 +126,7 @@ static void build_nmv_component_cost_table(int32_t *mvcost, const NmvComponent *
     for (v = 1; v <= MV_MAX; ++v) {
         int32_t z, c, o, d, e, f, cost = 0;
         z = v - 1;
-        c = av1_get_mv_class(z, &o);
+        c = svt_av1_get_mv_class(z, &o);
         cost += class_cost[c];
         d = (o >> 3); /* int32_t mv data */
         f = (o >> 1) & 3; /* fractional pel mv data */

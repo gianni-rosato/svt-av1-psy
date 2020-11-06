@@ -61,6 +61,9 @@ void pad_row(EbPictureBufferDesc *recon_picture_buf,
 
 int inverse_recenter(int r, int v);
 
+void svt_av1_superres_upscale(Av1Common *cm, FrameHeader *frm_hdr, SeqHeader *seq_hdr,
+                              EbPictureBufferDesc *recon_picture_src, int enable_flag);
+
 static INLINE int is_interintra_allowed_bsize(const BlockSize bsize) {
     return (bsize >= BLOCK_8X8) && (bsize <= BLOCK_32X32);
 }

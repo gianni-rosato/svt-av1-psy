@@ -32,7 +32,7 @@ void svt_av1_init_inter_params(InterPredParams *inter_pred_params, int block_wid
                        const struct ScaleFactors *sf,
                        const struct Buf2D *ref_buf,
                        uint32_t interp_filters);
-void av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
+void svt_av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_stride, uint8_t *dst,
                                int dst_stride, const MV *src_mv, int pix_col, int pix_row,
                                InterPredParams *inter_pred_params);
 EbErrorType av1_inter_prediction(

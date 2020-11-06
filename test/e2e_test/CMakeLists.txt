@@ -17,7 +17,7 @@ include("${SVT_AV1_E2E_ROOT}/test_data_util.cmake")
 include("${SVT_AV1_E2E_ROOT}/libaom_dependency.cmake")
 
 # Link Subdirectories
-link_directories(${PROJECT_SOURCE_DIR}/third_party/aom/lib)
+link_directories(${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 file(GLOB all_files
     "*.h"
@@ -41,9 +41,6 @@ if(UNIX)
   # App Source Files
     add_executable(SvtAv1E2ETests
         ${all_files})
-
-    add_custom_command(TARGET SvtAv1E2ETests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/third_party/aom/lib/* ${CMAKE_OUTPUT_DIRECTORY}/)
     # Link the Encoder App
      target_link_libraries(SvtAv1E2ETests
         ${lib_list}
@@ -54,9 +51,6 @@ else()
         "${cxx_default}"
         "${lib_list}"
         ${all_files})
-    set_target_properties(SvtAv1E2ETests
-        PROPERTIES
-        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 endif()
 
 target_include_directories(SvtAv1E2ETests PRIVATE

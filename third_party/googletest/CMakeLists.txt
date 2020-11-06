@@ -144,8 +144,7 @@ if (DEFINED CMAKE_VERSION AND NOT "${CMAKE_VERSION}" VERSION_LESS "2.8.11")
 endif()
 target_link_libraries(gtest_main PUBLIC gtest)
 
-cxx_shared_library(gtest_all "${cxx_default}"
-        src/gtest-all.cc src/gtest_main.cc)
+cxx_library(gtest_all "${cxx_default}" src/gtest-all.cc src/gtest_main.cc)
 target_link_libraries(gtest_all)
 
 ########################################################################
@@ -249,9 +248,6 @@ if (gtest_build_tests)
 
   cxx_executable_with_flags(gtest_dll_test_ "${cxx_default}"
     gtest_dll test/gtest_all_test.cc)
-  set_target_properties(gtest_dll_test_
-                        PROPERTIES
-                        COMPILE_DEFINITIONS "GTEST_LINKED_AS_SHARED_LIBRARY=1")
 
   if (NOT MSVC OR MSVC_VERSION LESS 1600)  # 1600 is Visual Studio 2010.
     # Visual Studio 2010, 2012, and 2013 define symbols in std::tr1 that
