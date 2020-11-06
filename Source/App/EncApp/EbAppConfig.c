@@ -1400,6 +1400,7 @@ EbConfig * eb_config_ctor(EncodePass pass) {
 
     config_ptr->error_log_file         = stderr;
     config_ptr->buffered_input         = -1;
+    config_ptr->progress               = 1;
 
     config_ptr->pass = DEFAULT;
 
