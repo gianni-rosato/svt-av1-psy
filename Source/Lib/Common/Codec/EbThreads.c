@@ -76,13 +76,13 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
 
     int ret;
     pthread_t *th;
-    pthread_attr_t attr;
 
     th = malloc(sizeof(pthread_t));
     if (th == NULL)
         return NULL;
 
 #ifndef EB_THREAD_SANITIZER_ENABLED
+    pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
