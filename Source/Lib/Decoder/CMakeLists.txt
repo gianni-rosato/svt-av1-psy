@@ -18,7 +18,7 @@ set(DEC_VERSION ${DEC_VERSION_MAJOR}.${DEC_VERSION_MINOR}.${DEC_VERSION_PATCH})
 
 if(UNIX)
     if(NOT APPLE)
-        find_library(M_LIB name m)
+        find_library(M_LIB NAMES m)
         if(M_LIB)
             list(APPEND PLATFORM_LIBS m)
         endif()
