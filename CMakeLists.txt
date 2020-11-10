@@ -111,12 +111,13 @@ if(UNIX)
     endif()
 endif()
 
+# Always build with -fPIC
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 set(flags_to_test
     -Wextra
     -Wformat
-    -Wformat-security
-    -fPIE
-    -fPIC)
+    -Wformat-security)
 if(MSVC)
     list(INSERT flags_to_test 0 /W3)
     list(APPEND flags_to_test /MP)
