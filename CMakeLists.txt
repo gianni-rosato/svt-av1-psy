@@ -241,6 +241,10 @@ set_property(DIRECTORY .
         $<$<BOOL:${HAVE_STRNLEN_S}>:HAVE_STRNLEN_S=1>
         $<$<BOOL:${WIN32}>:_WIN32_WINNT=0x0601>)
 
+# Find out if we have threading available
+set(CMAKE_THREAD_PREFER_PTHREADS ON)
+find_package(Threads)
+
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)
 if(BUILD_ENC)
