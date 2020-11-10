@@ -19,7 +19,7 @@ include_directories(../../../API
         ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/Globals/
         )
 
-if(NOT COMPILE_C_ONLY AND X86)
+if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
 # Include Encoder Subdirectories
 include_directories(
         ${PROJECT_SOURCE_DIR}/Source/Lib/Encoder/ASM_SSE2/

@@ -31,19 +31,17 @@ endif()
 
 option(COMPILE_C_ONLY "Compile only C code with no simds (autodetect, default off for x86)" OFF)
 
-file(WRITE ${CMAKE_BINARY_DIR}/conftest.c "
+include(CheckCSourceCompiles)
+
+check_c_source_compiles("
 #if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
 #else
 #error \"Non-x86\"
 #endif
-int main() {}
-")
+int main(void) {}
+" HAVE_X86_PLATFORM)
 
-try_compile(X86 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/conftest.c)
-
-message(STATUS "x86 detected: ${X86}")
-
-if(NOT COMPILE_C_ONLY AND X86)
+if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
     find_program(YASM_EXE yasm)
     option(ENABLE_NASM "Use nasm if available (Uses yasm by default if found)" OFF)
     if(YASM_EXE AND NOT CMAKE_ASM_NASM_COMPILER MATCHES "yasm" AND NOT ENABLE_NASM)
