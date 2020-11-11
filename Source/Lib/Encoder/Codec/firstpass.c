@@ -131,6 +131,9 @@ void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->new_mv_count             = 0.0;
     section->count                    = 0.0;
     section->duration                 = 1.0;
+    section->raw_error_stdev          = 0.0;
+    section->pcnt_third_ref           = 0.0;
+    section->tr_coded_error           = 0.0;
 }
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *frame) {
     section->frame += frame->frame;
