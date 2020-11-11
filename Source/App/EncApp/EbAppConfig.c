@@ -1393,16 +1393,15 @@ EbConfig * svt_config_ctor(EncodePass pass) {
     if (!config_ptr)
         return NULL;
 
-    if (pass == ENCODE_FIRST_PASS)
-        config_ptr->pass = 1;
-    else if (pass == ENCODE_LAST_PASS)
-        config_ptr->pass = 2;
+    switch (pass) {
+    case ENCODE_FIRST_PASS: config_ptr->pass = 1; break;
+    case ENCODE_LAST_PASS: config_ptr->pass = 2; break;
+    default: config_ptr->pass = DEFAULT;
+    }
 
     config_ptr->error_log_file         = stderr;
     config_ptr->buffered_input         = -1;
     config_ptr->progress               = 1;
-
-    config_ptr->pass = DEFAULT;
 
     return config_ptr;
 }
