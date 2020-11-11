@@ -16,11 +16,24 @@
 #include "EbObject.h"
 #include "EbCabacContextModel.h"
 #include "EbCodingUnit.h"
+#if FEATURE_INL_ME
+#include "EbSequenceControlSet.h"
+#endif
 
 typedef struct EbReferenceObject {
     EbDctor              dctor;
     EbPictureBufferDesc *reference_picture;
     EbPictureBufferDesc *reference_picture16bit;
+#if FEATURE_INL_ME
+    EbPictureBufferDesc *quarter_reference_picture;
+    EbPictureBufferDesc *sixteenth_reference_picture;
+    EbDownScaledBufDescPtrArray ds_pics; // Pointer array for down scaled pictures
+#if TUNE_INL_ME_RECON_INPUT
+    EbPictureBufferDesc *input_picture;
+    EbPictureBufferDesc *quarter_input_picture;
+    EbPictureBufferDesc *sixteenth_input_picture;
+#endif
+#endif
     EbPictureBufferDesc *downscaled_reference_picture[NUM_SCALES];
     EbPictureBufferDesc *downscaled_reference_picture16bit[NUM_SCALES];
     uint64_t             ref_poc;
@@ -58,6 +71,11 @@ typedef struct EbReferenceObject {
 typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
     int8_t hbd_mode_decision;
+#if FEATURE_INL_ME
+    // whether enable 1/4,1/16 8bit luma for inloop me
+    uint8_t hme_quarter_luma_recon;
+    uint8_t hme_sixteenth_luma_recon;
+#endif
 } EbReferenceObjectDescInitData;
 
 typedef struct EbPaReferenceObject {
@@ -73,16 +91,26 @@ typedef struct EbPaReferenceObject {
     EbPictureBufferDesc *downscaled_sixteenth_decimated_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_quarter_filtered_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_sixteenth_filtered_picture_ptr[NUM_SCALES];
+#if !FEATURE_INL_ME
     uint16_t             variance[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
     uint8_t              y_mean[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
     EB_SLICE             slice_type;
     uint32_t             dependent_pictures_count; //number of pic using this reference frame
+#endif
+
+#if FEATURE_INL_ME
+    uint64_t             picture_number;
+    uint8_t              dummy_obj;
+#endif
 } EbPaReferenceObject;
 
 typedef struct EbPaReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
     EbPictureBufferDescInitData quarter_picture_desc_init_data;
     EbPictureBufferDescInitData sixteenth_picture_desc_init_data;
+#if FEATURE_INL_ME
+    uint8_t empty_pa_buffers;
+#endif
 } EbPaReferenceObjectDescInitData;
 
 /**************************************
@@ -92,5 +120,10 @@ extern EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr obj
 
 extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
                                                    EbPtr  object_init_data_ptr);
+#if FEATURE_INL_ME
+extern EbErrorType svt_down_scaled_object_creator(EbPtr *object_dbl_ptr,
+                                                  EbPtr object_init_data_ptr);
+void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
+#endif
 
 #endif //EbReferenceObject_h

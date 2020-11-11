@@ -208,7 +208,16 @@ uint8_t  circ_inc(uint8_t max, uint8_t off, uint8_t input)
 #define POC_CIRCULAR_ADD(base, offset/*, bits*/)             (/*(((int32_t) (base)) + ((int32_t) (offset)) > ((int32_t) (1 << (bits))))   ? ((base) + (offset) - (1 << (bits))) : \
                                                              (((int32_t) (base)) + ((int32_t) (offset)) < 0)                           ? ((base) + (offset) + (1 << (bits))) : \
                                                                                                                                        */((base) + (offset)))
+#if FEATURE_NEW_DELAY
+EbErrorType derive_tf_window_params(
+    SequenceControlSet *scs_ptr,
+    EncodeContext *encode_context_ptr,
+    PictureParentControlSet *pcs_ptr,
+    PictureDecisionContext *context_ptr,
+    uint32_t out_stride_diff64);
+#else
 #define FUTURE_WINDOW_WIDTH                 12
+#endif
 #define FLASH_TH                            5
 #define FADE_TH                             3
 #define SCENE_TH                            3000
@@ -807,7 +816,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_nsq = EB_FALSE;
     else
         pcs_ptr->disallow_nsq = EB_TRUE;
+#if !TUNE_INL_TPL_ENHANCEMENT
     pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
+#endif
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
     if (pcs_ptr->enc_mode <= ENC_M9)
         pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
@@ -1024,6 +1035,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0: OFF
         // 1: ON
     pcs_ptr->tx_size_early_exit = 1;
+#if FEATURE_NEW_DELAY
+    (void)context_ptr;
+#else
         //Prune reference and reduce ME SR based on HME/ME distortion
         // 0: OFF
         // 1: ON
@@ -1073,11 +1087,18 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         context_ptr->tf_level = 0;
     set_tf_controls(context_ptr, context_ptr->tf_level);
-
+#endif
+#if !ENABLE_TPL_TRAILING
     if (pcs_ptr->enc_mode <= ENC_M4)
         pcs_ptr->tpl_opt_flag = 0;
     else
         pcs_ptr->tpl_opt_flag = 1;
+#endif
+#if ENABLE_TPL_TRAILING
+        // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
+        pcs_ptr->tpl_trailing_frame_count = 0;
+#endif
+    pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
     return return_error;
 }
 
@@ -3642,10 +3663,16 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         input_picture_ptr);
 
     // Pre processing operations performed on the input picture
+#if FEATURE_INL_ME
+    picture_pre_processing_operations(
+        pcs_ptr,
+        scs_ptr);
+#else
     picture_pre_processing_operations(
         pcs_ptr,
         scs_ptr,
         sb_total_count);
+#endif
 
     if (input_picture_ptr->color_format >= EB_YUV422) {
         // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
@@ -3718,6 +3745,390 @@ void initialize_overlay_frame(PictureParentControlSet     *pcs_ptr) {
     perform_simple_picture_analysis_for_overlay(pcs_ptr);
  }
 
+#if FEATURE_NEW_DELAY
+/*
+  ret number of past picture(not including current) in mg buffer.
+
+*/
+int32_t avail_past_pictures(PictureParentControlSet**buf, uint32_t buf_size, uint64_t input_pic)
+{
+    //buffer has at least curr picture
+    int32_t tot_past = 0;
+    for (uint32_t pic = 0; pic < buf_size; pic++) {
+        if (buf[pic]->picture_number < input_pic) {
+            tot_past++;
+        }
+    }
+    return tot_past;
+}
+
+
+/*
+  searches a picture in a given pcs buffer
+*/
+int32_t search_this_pic(PictureParentControlSet**buf, uint32_t buf_size, uint64_t input_pic)
+{
+    int32_t index = -1;
+    for (uint32_t pic = 0; pic < buf_size; pic++) {
+        if (buf[pic]->picture_number == input_pic) {
+            index = (int32_t)pic;
+            break;
+        }
+    }
+    return index;
+}
+/*
+  Tells if an Intra picture should be delayed to get next mini-gop
+*/
+EbBool is_delayed_intra(PictureParentControlSet *pcs) {
+    if (pcs->idr_flag || pcs->cra_flag) {
+        if (pcs->scs_ptr->static_config.intra_period_length == 0 || pcs->end_of_sequence_flag)
+            return 0;
+        else if (pcs->idr_flag || (pcs->cra_flag && pcs->pre_assignment_buffer_count < pcs->pred_struct_ptr->pred_struct_period))
+            return 1;
+        else
+            return 0;
+    }
+    else
+        return 0;
+}
+
+/*
+  Performs Motion Compensated Temporal Filtering in ME process
+*/
+void mctf_frame(
+    SequenceControlSet      *scs_ptr,
+    PictureParentControlSet *pcs_ptr,
+    PictureDecisionContext  *context_ptr,
+    uint32_t               out_stride_diff64
+)
+{
+    uint8_t perform_filtering =
+        (scs_ptr->tf_level && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && scs_ptr->static_config.hierarchical_levels >= 1)
+        ? 1 : 0;
+
+    // tf_level is used to indicate whether temporal filtering is to be used,
+    // and if so, what level of the feature to consider.
+
+    // tf_level controls through the function set_tf_controls whether the feature is enabled or not,
+    // and the total number of pictures (window_size) to consider in temporal filtering, including the current frame,
+    // and whether to adjust the window size based on noise characteristics.
+    // Level 0 corresponds to temporal filtering being OFF.
+    // Levels 1, 2 and 3 correspond to feature active with fewer pictures considered in the temporal filtering operations.
+
+    // In the table below, ON refers to temporal filtering performed for temporal layer 0 pictures
+    // and (for pictures in temporal layer 1 in at least a 4-layer prediction structure)
+
+    //    tf_level   |                  Default Encoder Settings                   |  Command Line Settings
+    //       0       | OFF subject to possible constraints                         |  OFF
+    //       1       | ON subject to possible constraints                          |  ON
+    //       2       | ON with smaller window_size subject to possible constraints |  ON with smaller window_size
+    //       3       | ON with smaller window_size subject to possible constraints |  ON with even smaller window_size
+    if (perform_filtering) {
+        if (scs_ptr->static_config.tf_level == DEFAULT) {
+        if (pcs_ptr->enc_mode <= ENC_M4) {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 1;
+            else
+                context_ptr->tf_level = 0;
+        }
+        else {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 2;
+            else
+                context_ptr->tf_level = 0;
+        }
+        }
+        else {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = scs_ptr->static_config.tf_level;
+            else
+                context_ptr->tf_level = 0;
+        }
+    }
+    else
+        context_ptr->tf_level = 0;
+    set_tf_controls(context_ptr, context_ptr->tf_level);
+
+    if (context_ptr->tf_ctrls.enabled) {
+        derive_tf_window_params(
+            scs_ptr,
+            scs_ptr->encode_context_ptr,
+            pcs_ptr,
+            context_ptr,
+            out_stride_diff64);
+        pcs_ptr->temp_filt_prep_done = 0;
+
+        // Start Filtering in ME processes
+        {
+            int16_t seg_idx;
+
+            // Initialize Segments
+            pcs_ptr->tf_segments_column_count = scs_ptr->tf_segment_column_count;
+            pcs_ptr->tf_segments_row_count = scs_ptr->tf_segment_row_count;
+            pcs_ptr->tf_segments_total_count = (uint16_t)(pcs_ptr->tf_segments_column_count  * pcs_ptr->tf_segments_row_count);
+            pcs_ptr->temp_filt_seg_acc = 0;
+            if (pcs_ptr->temporal_layer_index == 0)
+                pcs_ptr->altref_strength = scs_ptr->static_config.altref_strength;
+            else
+                pcs_ptr->altref_strength = 2;
+
+            for (seg_idx = 0; seg_idx < pcs_ptr->tf_segments_total_count; ++seg_idx) {
+
+                EbObjectWrapper               *out_results_wrapper_ptr;
+                PictureDecisionResults        *out_results_ptr;
+
+                svt_get_empty_object(
+                    context_ptr->picture_decision_results_output_fifo_ptr,
+                    &out_results_wrapper_ptr);
+                out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
+                out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
+                out_results_ptr->segment_index = seg_idx;
+                out_results_ptr->task_type = 1;
+                svt_post_full_object(out_results_wrapper_ptr);
+            }
+
+            svt_block_on_semaphore(pcs_ptr->temp_filt_done_semaphore);
+        }
+
+    }
+    else
+        pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
+}
+
+
+#if TUNE_TPL_OPT
+extern void set_tpl_controls(
+    PictureParentControlSet       *pcs_ptr, uint8_t tpl_level) {
+    TplControls *tpl_ctrls = &pcs_ptr->tpl_data.tpl_ctrls;
+
+    switch (tpl_level) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        tpl_ctrls->tpl_opt_flag = 0;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 0;
+        tpl_ctrls->disable_tpl_nref = 0;
+        tpl_ctrls->disable_tpl_pic_dist = 0;
+        break;
+    case 5:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 0;
+        tpl_ctrls->disable_tpl_nref = 0;
+        tpl_ctrls->disable_tpl_pic_dist = 0;
+        break;
+    case 6:
+    case 7:
+    case 8:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        break;
+    }
+}
+#endif
+void store_tpl_pictures(
+    PictureParentControlSet *pcs,
+    PictureDecisionContext  *ctx,
+    uint32_t                 mg_size)
+{
+
+    if(is_delayed_intra(pcs))
+    {
+        pcs->tpl_group[0] = (void*)pcs;
+        EB_MEMCPY(&pcs->tpl_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+        pcs->tpl_group_size = 1 + mg_size;
+
+    }
+    else {
+        EB_MEMCPY(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+        pcs->tpl_group_size = mg_size;
+#if !TUNE_TPL
+        //add 3 future pictures from PD future window
+        for (uint32_t pic_i = 0; pic_i < 3; ++pic_i) {
+            if (pcs->pd_window[2 + pic_i]) {
+                pcs->tpl_group[mg_size + pic_i] = pcs->pd_window[2 + pic_i];
+                pcs->tpl_group_size++;
+            }
+            else
+                break;
+        }
+#endif
+#if ENABLE_TPL_TRAILING
+        //add 6 future pictures from PD future window
+        for (uint32_t pic_i = 0; pic_i < pcs->tpl_trailing_frame_count; ++pic_i) {
+            if (pcs->pd_window[2 + pic_i]) {
+                pcs->tpl_group[mg_size + pic_i] = pcs->pd_window[2 + pic_i];
+                pcs->tpl_group_size++;
+            }
+            else
+                break;
+        }
+#endif
+
+    }
+
+#if FEATURE_INL_ME
+    for (uint32_t pic_i = 0; pic_i < pcs->tpl_group_size; ++pic_i) {
+        PictureParentControlSet* pcs_tpl_ptr = (PictureParentControlSet *)pcs->tpl_group[pic_i];
+
+        if (pcs_tpl_ptr->me_data_wrapper_ptr==NULL) {
+            EbObjectWrapper               *me_wrapper;
+            svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
+            pcs_tpl_ptr->me_data_wrapper_ptr = me_wrapper;
+            pcs_tpl_ptr->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
+            //printf("[%ld]: Got me data [TPL] %p\n", pcs_tpl_ptr->picture_number, pcs_tpl_ptr->pa_me_data);
+        }
+        //printf("====[%ld]: TPL group Base %ld, TPL group size %d\n",pcs->picture_number, pcs_tpl_ptr->picture_number, pcs->tpl_group_size);
+
+#if FEATURE_PA_ME
+        pcs_tpl_ptr->num_tpl_grps++;
+#endif
+#if ENABLE_TPL_TRAILING
+        set_tpl_controls(pcs_tpl_ptr,pcs_tpl_ptr->enc_mode);
+#endif
+    }
+#endif
+}
+
+void send_picture_out(
+    SequenceControlSet      *scs,
+    PictureParentControlSet *pcs,
+    PictureDecisionContext  *ctx)
+{
+    EbObjectWrapper               *me_wrapper;
+    EbObjectWrapper               *out_results_wrapper;
+
+
+    if (scs->static_config.look_ahead_distance == 0) {
+        EbObjectWrapper* reference_picture_wrapper;
+        // Get Empty Reference Picture Object
+        svt_get_empty_object(
+            scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
+            &reference_picture_wrapper);
+        pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
+        // Give the new Reference a nominal live_count of 1
+        svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+#if TUNE_INL_ME_RECON_INPUT
+        if (pcs->is_used_as_reference_flag) {
+            EbReferenceObject *reference_object =
+        (EbReferenceObject *)pcs->reference_picture_wrapper_ptr->object_ptr;
+            // Copy original input to reference->input_picture
+            EbPictureBufferDesc *src_ptr = pcs->enhanced_picture_ptr;
+            uint16_t luma_height = (uint16_t)(src_ptr->height - scs->max_input_pad_bottom);
+            uint32_t src_offset = (src_ptr->stride_y*src_ptr->origin_y + src_ptr->origin_x);
+            uint16_t src_stride = src_ptr->stride_y;
+            uint8_t *src = src_ptr->buffer_y + src_offset;
+
+            EbPictureBufferDesc *dst_ptr = reference_object->input_picture;
+            uint32_t dst_offset = (dst_ptr->stride_y*dst_ptr->origin_y + dst_ptr->origin_x);
+            uint16_t dst_stride = dst_ptr->stride_y;
+            uint8_t *dst = dst_ptr->buffer_y + dst_offset;
+            for (int i = 0; i < luma_height; i++) {
+                EB_MEMCPY(dst, src, src_stride);
+                src += src_stride;
+                dst += dst_stride;
+            }
+            pad_input_pictures(scs, dst_ptr);
+
+            if (scs->in_loop_me ) {
+                // Generate 1/4 and 1/16 for reference->quarter_input_picture and reference->sixteenth_input_picture
+                if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    downsample_filtering_input_picture(
+                        pcs,
+                        reference_object->input_picture,
+                        reference_object->quarter_input_picture,
+                        reference_object->sixteenth_input_picture);
+                }
+                else {
+                    downsample_decimation_input_picture(
+                        pcs,
+                        reference_object->input_picture,
+                        reference_object->quarter_input_picture,
+                        reference_object->sixteenth_input_picture);
+                }
+            }
+        }
+#endif
+    }
+    //get a new ME data buffer
+#if FEATURE_INL_ME
+    if (pcs->me_data_wrapper_ptr == NULL) {
+        svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
+        pcs->me_data_wrapper_ptr = me_wrapper;
+        pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
+        //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
+    }
+#else
+    svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
+    pcs->me_data_wrapper_ptr = me_wrapper;
+
+    pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
+#endif
+
+    for (uint32_t segment_index = 0; segment_index < pcs->me_segments_total_count; ++segment_index) {
+        // Get Empty Results Object
+        svt_get_empty_object(
+            ctx->picture_decision_results_output_fifo_ptr,
+            &out_results_wrapper);
+
+        PictureDecisionResults* out_results = (PictureDecisionResults*)out_results_wrapper->object_ptr;
+        out_results->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
+        out_results->segment_index = segment_index;
+        out_results->task_type = 0;
+        //Post the Full Results Object
+        svt_post_full_object(out_results_wrapper);
+    }
+
+}
+
+void print_pre_ass(EncodeContext *ctxt)
+{
+
+    SVT_LOG("\n Pre-Assign(%i):  ", ctxt->pre_assignment_buffer_count);
+    for (uint32_t pic = 0; pic < ctxt->pre_assignment_buffer_count; pic++) {
+
+        PictureParentControlSet *pcs = (PictureParentControlSet*)ctxt->pre_assignment_buffer[pic]->object_ptr;
+        SVT_LOG("%ld ", pcs->picture_number);
+    }
+    SVT_LOG("\n");
+}
+void print_pd_reord_queue(EncodeContext *ctxt)
+{
+    uint32_t idx = ctxt->picture_decision_reorder_queue_head_index;
+    PictureDecisionReorderEntry   *queue_entry = ctxt->picture_decision_reorder_queue[idx];
+
+    while (queue_entry->parent_pcs_wrapper_ptr != NULL) {
+
+        PictureParentControlSet *pcs = (PictureParentControlSet*)queue_entry->parent_pcs_wrapper_ptr->object_ptr;
+        SVT_LOG("%ld  ", pcs->picture_number);
+        queue_entry = ctxt->picture_decision_reorder_queue[++idx];
+    }
+    SVT_LOG("\n");
+}
+
+uint32_t  get_reord_q_size(EncodeContext *ctxt)
+{
+    uint32_t size = 0;
+    uint32_t idx = ctxt->picture_decision_reorder_queue_head_index;
+    PictureDecisionReorderEntry   *queue_entry = ctxt->picture_decision_reorder_queue[idx];
+    while (queue_entry->parent_pcs_wrapper_ptr != NULL) {
+        queue_entry = ctxt->picture_decision_reorder_queue[++idx];
+        size++;
+    }
+    return size;
+}
+#endif
 /***************************************************************************************************
  * Helper function. Compare two frames: center frame and target frame. Return the summation of
  * absolute difference between the two frames from a histogram of luma values
@@ -3868,6 +4279,44 @@ EbErrorType derive_tf_window_params(
     }
     }
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
+#if FEATURE_NEW_DELAY
+    (void)out_stride_diff64;
+    if (is_delayed_intra(pcs_ptr)) {
+        //initilize list
+        for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+            pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+
+        pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
+        uint32_t num_future_pics = altref_nframes - 1;
+
+        uint32_t pic_i;
+        for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+            int32_t idx = search_this_pic(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number + pic_i + 1);
+            if (idx >= 0)
+                pcs_ptr->temp_filt_pcs_list[pic_i + 1] = context_ptr->mg_pictures_array[idx];
+            else
+                break;
+        }
+
+        pcs_ptr->past_altref_nframes = 0;
+        pcs_ptr->future_altref_nframes = pic_i;
+        int index_center = 0;
+        uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
+        int pic_itr;
+
+        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
+
+        // Accumulative histogram absolute differences between the central and future frame
+        for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
+            int ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+
+            if (ahd < ahd_th)
+               break;
+        }
+        pcs_ptr->future_altref_nframes = pic_itr - index_center;
+    }
+    else
+#endif
     if (pcs_ptr->idr_flag) {
 
         //initilize list
@@ -3917,13 +4366,25 @@ EbErrorType derive_tf_window_params(
         for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
         // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
+#if FEATURE_NEW_DELAY
+        // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
+        num_past_pics = MIN(num_past_pics, avail_past_pictures(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number));
+#else
         num_past_pics = MIN(MIN(num_past_pics, (int)encode_context_ptr->pre_assignment_buffer_count - 1), (int)out_stride_diff64);
-
+#endif
         //get previous+current pictures from the the pre-assign buffer
+#if  FEATURE_NEW_DELAY
+        for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
+            int32_t idx = search_this_pic(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number - num_past_pics + pic_itr);
+            if (idx >= 0)
+                pcs_ptr->temp_filt_pcs_list[pic_itr] = context_ptr->mg_pictures_array[idx];
+        }
+#else
         for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
             PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64 - num_past_pics + pic_itr]->object_ptr;
             pcs_ptr->temp_filt_pcs_list[pic_itr] = pcs_itr;
         }
+#endif
         int actual_past_pics = num_past_pics;
         int actual_future_pics = 0;
         int pic_i;
@@ -4130,12 +4591,16 @@ void* picture_decision_kernel(void *input_ptr)
 
     EncodeContext                 *encode_context_ptr;
     SequenceControlSet            *scs_ptr;
+#if !FEATURE_NEW_DELAY
     EbObjectWrapper               *me_wrapper_ptr;
+#endif
     EbObjectWrapper               *in_results_wrapper_ptr;
     PictureAnalysisResults        *in_results_ptr;
 
+#if !FEATURE_NEW_DELAY
     EbObjectWrapper               *out_results_wrapper_ptr;
     PictureDecisionResults        *out_results_ptr;
+#endif
 
     PredictionStructureEntry      *pred_position_ptr;
 
@@ -4165,8 +4630,9 @@ void* picture_decision_kernel(void *input_ptr)
     EbBool                          window_avail, frame_passthrough;
     uint32_t                           window_index;
     uint32_t                           entry_index;
+#if !FEATURE_NEW_DELAY
     PictureParentControlSet        *parent_pcs_window[FUTURE_WINDOW_WIDTH + 2];
-
+#endif
     // Debug
     uint64_t                           loop_count = 0;
 
@@ -4215,16 +4681,33 @@ void* picture_decision_kernel(void *input_ptr)
                 frame_passthrough = EB_FALSE;
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
+#if FEATURE_NEW_DELAY
+            pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
+            memset(pcs_ptr->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));
+#if TUNE_TPL
+            pcs_ptr->pd_window_count = 0;
+#endif
+#else
             parent_pcs_window[ 0] = parent_pcs_window[ 1] = parent_pcs_window[ 2] = parent_pcs_window[ 3] = parent_pcs_window[ 4] = parent_pcs_window[ 5] =
             parent_pcs_window[ 6] = parent_pcs_window[ 7] = parent_pcs_window[ 8] = parent_pcs_window[ 9] = parent_pcs_window[10] = parent_pcs_window[11] =
             parent_pcs_window[12] = parent_pcs_window[13] = NULL;
+#endif
             //for poc 0, ignore previous frame check
             if (queue_entry_ptr->picture_number > 0 && encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr == NULL)
                 window_avail = EB_FALSE;
             else {
 
+#if FEATURE_NEW_DELAY
+                //TODO: risk of a race condition accessing prev(pcs0 is released, and pcs1 still doing sc).
+                //Actually we dont need to keep prev, just keep previous copy of histograms.
+                pcs_ptr->pd_window[0] =
+                    queue_entry_ptr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
+                pcs_ptr->pd_window[1] =
+                    (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
+#else
                 parent_pcs_window[0] = queue_entry_ptr->picture_number > 0 ? (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[previous_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
                 parent_pcs_window[1] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index]->parent_pcs_wrapper_ptr->object_ptr;
+#endif
                 for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++) {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index + 1);
                     if (encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr == NULL) {
@@ -4236,9 +4719,39 @@ void* picture_decision_kernel(void *input_ptr)
                         frame_passthrough = EB_TRUE;
                         break;
                     }else {
+#if FEATURE_NEW_DELAY
+                        pcs_ptr->pd_window[2 + window_index] =
+                            (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr->object_ptr;
+#else
                         parent_pcs_window[2 + window_index] = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[entry_index]->parent_pcs_wrapper_ptr->object_ptr;
+#endif
                     }
                 }
+#if TUNE_TPL
+                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
+                    if (pcs_ptr->pd_window[2 + window_index])
+#if TUNE_TPL_END_OF_GOP
+                    {
+                        uint8_t is_frame_intra = 0;
+                        if (scs_ptr->intra_period_length == 0)
+                            is_frame_intra = 1;
+                        else if (scs_ptr->intra_period_length == -1)
+                            is_frame_intra = 0;
+                        else
+                            is_frame_intra =
+                            (((PictureParentControlSet *)pcs_ptr->pd_window[2 + window_index])->picture_number %
+                            (scs_ptr->intra_period_length + 1)) ? 0 : 1;
+                        if (is_frame_intra)
+                            break;
+                        else
+                            pcs_ptr->pd_window_count++;
+                    }
+#else
+                        pcs_ptr->pd_window_count++;
+#endif
+                    else
+                        break;
+#endif
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
@@ -4252,7 +4765,11 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->scene_change_flag = scene_transition_detector(
                         context_ptr,
                         scs_ptr,
+#if FEATURE_NEW_DELAY
+                        (PictureParentControlSet **)pcs_ptr->pd_window);
+#else
                         parent_pcs_window);
+#endif
                 }
                 else
                     pcs_ptr->scene_change_flag = EB_FALSE;
@@ -4286,6 +4803,13 @@ void* picture_decision_kernel(void *input_ptr)
 
                 pcs_ptr->self_updated_links = 0;
                 pcs_ptr->other_updated_links_cnt = 0;
+#if FEATURE_NEW_DELAY
+
+                pcs_ptr->tpl_group_size = 0;
+                if (pcs_ptr->picture_number == 0)
+                    context_ptr->prev_delayed_intra = NULL;
+
+#endif
                 release_prev_picture_from_reorder_queue(
                     encode_context_ptr);
 
@@ -4309,6 +4833,16 @@ void* picture_decision_kernel(void *input_ptr)
                         pcs_ptr->idr_flag;
                 }
 
+
+#if FEATURE_NEW_DELAY
+                //TODO: scene change update
+                if (scs_ptr->intra_period_length == 0)
+                    pcs_ptr->is_next_frame_intra = 1;
+                else if (scs_ptr->intra_period_length == -1)
+                    pcs_ptr->is_next_frame_intra = 0;
+                else
+                    pcs_ptr->is_next_frame_intra = (int32_t)(encode_context_ptr->intra_period_position + 1) == scs_ptr->intra_period_length;
+#endif
                 encode_context_ptr->pre_assignment_buffer_eos_flag = (pcs_ptr->end_of_sequence_flag) ? (uint32_t)EB_TRUE : encode_context_ptr->pre_assignment_buffer_eos_flag;
 
                 // Increment the Pre-Assignment Buffer Intra Count
@@ -4516,7 +5050,9 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 // Set the Slice type
                                 pcs_ptr->slice_type = picture_type;
+#if !FEATURE_INL_ME
                                 ((EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->slice_type = pcs_ptr->slice_type;
+#endif
 
                                 switch (picture_type) {
                                 case I_SLICE:
@@ -4845,7 +5381,10 @@ void* picture_decision_kernel(void *input_ptr)
                                     input_entry_ptr->dep_list1_count = input_entry_ptr->list1.list_count;
                                     input_entry_ptr->dependent_count = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count;
 
+
+#if !FEATURE_INL_ME
                                     ((EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr)->dependent_pictures_count = input_entry_ptr->dependent_count;
+#endif
                                 }
 
                                 CHECK_REPORT_ERROR(
@@ -4861,6 +5400,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
                             pcs_ptr = cur_picture_control_set_ptr;
+#if ! FEATURE_NEW_DELAY
                             if(context_ptr->tf_ctrls.enabled) {
                                 derive_tf_window_params(
                                     scs_ptr,
@@ -4900,7 +5440,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                             }else
                                 pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
-
+#endif
                         }
                         if(scs_ptr->static_config.enable_manual_pred_struct){
                             EbErrorType ret = av1_generate_minigop_rps_info_from_user_config(encode_context_ptr,context_ptr,mini_gop_index);
@@ -5041,11 +5581,33 @@ void* picture_decision_kernel(void *input_ptr)
                             //set the ref frame types used for this picture,
                             set_all_ref_frame_type(pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
                             // Initialize Segments
+#if !FEATURE_INL_ME
                             pcs_ptr->me_segments_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count  * pcs_ptr->me_segments_row_count);
                             pcs_ptr->me_segments_completion_mask = 0;
+#else
+                            pcs_ptr->me_segments_completion_mask = 0;
+                            pcs_ptr->inloop_me_segments_completion_mask = 0;
+
+                            pcs_ptr->inloop_me_segments_column_count = 1;
+                            pcs_ptr->inloop_me_segments_row_count = 1;
+                            pcs_ptr->me_segments_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[pcs_ptr->temporal_layer_index]);
+                            pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
+                            if (scs_ptr->in_loop_me) {
+                                pcs_ptr->inloop_me_segments_column_count =
+                                    (uint8_t)(scs_ptr->me_segment_column_count_array[pcs_ptr->temporal_layer_index]);
+                                pcs_ptr->inloop_me_segments_row_count =
+                                    (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
+                            }
+                            pcs_ptr->me_segments_total_count =
+                                (uint16_t)(pcs_ptr->me_segments_column_count * pcs_ptr->me_segments_row_count);
+                            pcs_ptr->inloop_me_segments_total_count =
+                                (uint16_t)(pcs_ptr->inloop_me_segments_column_count * pcs_ptr->inloop_me_segments_row_count);
+#endif
+#if !FEATURE_IN_LOOP_TPL|| FIX_GM_COMPUTATION
                             pcs_ptr->me_processed_sb_count = 0;
+#endif
                             //****************************************************
                             // Picture resizing for super-res tool
                             //****************************************************
@@ -5061,6 +5623,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 // Increment the Decode Base Number
                                 encode_context_ptr->decode_base_number += context_ptr->mini_gop_length[mini_gop_index] + has_overlay;
                             }
+#if ! FEATURE_NEW_DELAY
                             if (out_stride_diff64 == encode_context_ptr->pre_assignment_buffer_count - 1 + has_overlay) {
 
                                 // Reset the Pre-Assignment Buffer
@@ -5070,9 +5633,13 @@ void* picture_decision_kernel(void *input_ptr)
                                 encode_context_ptr->pre_assignment_buffer_scene_change_count = 0;
                                 encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
                             }
+#endif
                         }
                         uint32_t mg_size = context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay - context_ptr->mini_gop_start_index[mini_gop_index]+1;
-
+#if FEATURE_NEW_DELAY
+                        context_ptr->mg_size = mg_size;
+                        EB_MEMCPY(context_ptr->mg_pictures_array_disp_order, context_ptr->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+#endif
                         //sort based on decoder order
                         {
                             uint32_t  num_of_cand_to_sort = mg_size;
@@ -5088,10 +5655,46 @@ void* picture_decision_kernel(void *input_ptr)
                             }
                         }
 
+#if FEATURE_NEW_DELAY
+                        //Process previous delayed Intra if we have one
+                        if (context_ptr->prev_delayed_intra) {
+                            pcs_ptr = context_ptr->prev_delayed_intra;
+                            if (scs_ptr->static_config.enable_tpl_la)
+                                store_tpl_pictures(pcs_ptr, context_ptr, mg_size);
+
+                            mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
+
+                        }
+
+                        //Do TF loop in display order
+                        for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
+                            pcs_ptr = context_ptr->mg_pictures_array_disp_order[pic_i];
+
+                            if (is_delayed_intra(pcs_ptr) == EB_FALSE) {
+                                if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->temporal_layer_index == 0 )
+                                    store_tpl_pictures(pcs_ptr, context_ptr, mg_size);
+
+                                mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
+                            }
+                        }
+
+                        if (context_ptr->prev_delayed_intra) {
+                            pcs_ptr = context_ptr->prev_delayed_intra;
+                            context_ptr->prev_delayed_intra = NULL;
+                            send_picture_out(scs_ptr, pcs_ptr, context_ptr);
+                        }
+#endif
 
                         for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i){
 
                             pcs_ptr = context_ptr->mg_pictures_array[pic_i];
+#if FEATURE_NEW_DELAY
+                            if (is_delayed_intra(pcs_ptr)) {
+                                context_ptr->prev_delayed_intra = pcs_ptr;
+                            }else{
+                                send_picture_out(scs_ptr, pcs_ptr, context_ptr);
+                            }
+#else
 
                             if (scs_ptr->static_config.look_ahead_distance == 0) {
 
@@ -5128,10 +5731,19 @@ void* picture_decision_kernel(void *input_ptr)
                                 // Post the Full Results Object
                                 svt_post_full_object(out_results_wrapper_ptr);
                             }
+#endif
 
 
                         }
                     } // End MINI GOPs loop
+#if FEATURE_NEW_DELAY
+                    // Reset the Pre-Assignment Buffer
+                    encode_context_ptr->pre_assignment_buffer_count = 0;
+                    encode_context_ptr->pre_assignment_buffer_idr_count = 0;
+                    encode_context_ptr->pre_assignment_buffer_intra_count = 0;
+                    encode_context_ptr->pre_assignment_buffer_scene_change_count = 0;
+                    encode_context_ptr->pre_assignment_buffer_eos_flag = EB_FALSE;
+#endif
                 }
 
                 // Walk the picture_decision_pa_reference_queue and remove entries that have been completely referenced.
@@ -5170,7 +5782,11 @@ void* picture_decision_kernel(void *input_ptr)
                 // Get the next entry from the Picture Decision Reordering Queue (Entry N+1)
                 queue_entry_ptr = encode_context_ptr->picture_decision_reorder_queue[encode_context_ptr->picture_decision_reorder_queue_head_index];
             }
+#if FEATURE_NEW_DELAY
+            else
+#else
             if (window_avail == EB_FALSE && frame_passthrough == EB_FALSE)
+#endif
                 break;
         }
 

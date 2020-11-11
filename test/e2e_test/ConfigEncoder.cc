@@ -34,12 +34,12 @@ bool set_default_config(EbSvtAv1EncConfiguration* config)
 void release_enc_config(void *config_ptr) {
     if (config_ptr) {
         EbConfig *config = (EbConfig *)config_ptr;
-        eb_config_dtor(config);
+        svt_config_dtor(config);
     }
 }
 
 void *create_enc_config() {
-    EbConfig *config = eb_config_ctor(ENCODE_SINGLE_PASS);
+    EbConfig *config = svt_config_ctor(ENCODE_SINGLE_PASS);
     assert(config != NULL);
     if (!set_default_config(&config->config)) {
         release_enc_config(config);

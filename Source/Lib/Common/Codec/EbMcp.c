@@ -13,6 +13,9 @@
 
 #include "EbPictureOperators.h"
 #include "common_dsp_rtcd.h"
+#if TUNE_INL_TPL_ENHANCEMENT
+#include "EbLog.h"
+#endif
 
 
 #if (InternalBitDepthIncrement == 0)
@@ -137,6 +140,13 @@ void generate_padding(
     EbByte   temp_src_pic2;
     EbByte   temp_src_pic3;
 
+#if TUNE_INL_TPL_ENHANCEMENT
+    if (!src_pic) {
+         SVT_ERROR("padding NULL pointers\n");
+         return;
+    }
+#endif
+
     temp_src_pic0 = src_pic + padding_width + padding_height * src_stride;
     while (vertical_idx) {
         // horizontal padding
@@ -240,6 +250,13 @@ void pad_input_picture(
 {
     uint32_t vertical_idx;
     EbByte   temp_src_pic0;
+
+#if TUNE_INL_TPL_ENHANCEMENT
+    if (!src_pic) {
+         SVT_ERROR("padding NULL pointers\n");
+         return;
+    }
+#endif
 
     if (pad_right) {
         // Add padding @ the right

@@ -41,6 +41,14 @@ typedef struct MePredictionUnit {
     uint32_t sub_pel_direction;
 } MePredictionUnit;
 
+#if FEATURE_INL_ME
+typedef enum EbMeType {
+    ME_CLOSE_LOOP  = 0,
+    ME_MCTF = 1,
+    ME_TPL = 2,
+    ME_OPEN_LOOP = 3
+} EbMeType;
+#endif
 typedef enum EbMeTierZeroPu {
     // 2Nx2N [85 partitions]
     ME_TIER_ZERO_PU_64x64    = 0,
@@ -402,8 +410,21 @@ typedef struct MeContext {
     // ------- Context for Alt-Ref ME ------
     uint16_t adj_search_area_width;
     uint16_t adj_search_area_height;
+#if !FEATURE_INL_ME
     EbBool   me_alt_ref;
+#endif
     void *   alt_ref_reference_ptr;
+#if FEATURE_INL_ME
+    // Open Loop ME
+    EbMeType me_type;
+    EbDownScaledBufDescPtrArray mctf_ref_desc_ptr_array;
+
+    uint8_t num_of_list_to_search;
+    uint8_t num_of_ref_pic_to_search[2];
+    uint8_t temporal_layer_index;
+    EbBool  is_used_as_reference_flag;
+    EbDownScaledBufDescPtrArray me_ds_ref_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     // tf
     uint8_t high_precision;
     int tf_frame_index;

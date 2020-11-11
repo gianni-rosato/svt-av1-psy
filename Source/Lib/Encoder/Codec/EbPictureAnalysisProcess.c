@@ -2623,6 +2623,21 @@ void set_picture_parameters_for_statistics_gathering(SequenceControlSet *scs_ptr
  ***** Borders preprocessing
  ***** Denoising
  ************************************************/
+#if FEATURE_INL_ME
+void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
+                                       SequenceControlSet *scs_ptr) {
+    if (scs_ptr->film_grain_denoise_strength) {
+        denoise_estimate_film_grain(scs_ptr, pcs_ptr);
+    } else {
+        //Reset the flat noise flag array to False for both RealTime/HighComplexity Modes
+        for (uint32_t sb_coding_order = 0; sb_coding_order < pcs_ptr->sb_total_count; ++sb_coding_order)
+            pcs_ptr->sb_flat_noise_array[sb_coding_order] = 0;
+        pcs_ptr->pic_noise_class =
+            PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
+    }
+    return;
+}
+#else
 void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
                                        SequenceControlSet *scs_ptr, uint32_t sb_total_count) {
     if (scs_ptr->film_grain_denoise_strength) {
@@ -2636,6 +2651,7 @@ void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
     }
     return;
 }
+#endif
 
 /**************************************************************
 * Generate picture histogram bins for YUV pixel intensity *
@@ -2723,10 +2739,99 @@ void sub_sample_luma_generate_pixel_intensity_histogram_bins(
     return;
 }
 
+#if FEATURE_INL_ME
+    // Histogram bins
+    // Luma for Histogram generation
+void sub_sample_luma_generate_pixel_intensity_histogram_bins_ime(
+    SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+    EbPictureBufferDesc *input_picture_ptr, uint64_t *sum_avg_intensity_ttl_regions_luma,
+    uint8_t decim_step) {
+    uint32_t region_width;
+    uint32_t region_height;
+    uint32_t region_width_offset;
+    uint32_t region_height_offset;
+    uint32_t region_in_picture_width_index;
+    uint32_t region_in_picture_height_index;
+    uint32_t histogram_bin;
+    uint64_t sum;
+
+    region_width = input_picture_ptr->width / scs_ptr->picture_analysis_number_of_regions_per_width;
+    region_height =
+        input_picture_ptr->height / scs_ptr->picture_analysis_number_of_regions_per_height;
+
+    // Loop over regions inside the picture
+    for (region_in_picture_width_index = 0;
+         region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width;
+         region_in_picture_width_index++) { // loop over horizontal regions
+        for (region_in_picture_height_index = 0;
+             region_in_picture_height_index <
+             scs_ptr->picture_analysis_number_of_regions_per_height;
+             region_in_picture_height_index++) { // loop over vertical regions
+
+            // Initialize bins to 1
+            svt_initialize_buffer_32bits(pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                                               [region_in_picture_height_index][0],
+                                     64,
+                                     0,
+                                     1);
+
+            region_width_offset =
+                (region_in_picture_width_index ==
+                 scs_ptr->picture_analysis_number_of_regions_per_width - 1)
+                    ? input_picture_ptr->width -
+                          (scs_ptr->picture_analysis_number_of_regions_per_width * region_width)
+                    : 0;
+            region_height_offset =
+                (region_in_picture_height_index ==
+                 scs_ptr->picture_analysis_number_of_regions_per_height - 1)
+                    ? input_picture_ptr->height -
+                          (scs_ptr->picture_analysis_number_of_regions_per_height * region_height)
+                    : 0;
+
+            // Y Histogram
+            calculate_histogram(
+                &input_picture_ptr->buffer_y[(input_picture_ptr->origin_x +
+                                              region_in_picture_width_index * region_width) +
+                                             ((input_picture_ptr->origin_y +
+                                               region_in_picture_height_index * region_height) *
+                                              input_picture_ptr->stride_y)],
+                region_width + region_width_offset,
+                region_height + region_height_offset,
+                input_picture_ptr->stride_y,
+                decim_step,
+                pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                          [region_in_picture_height_index][0],
+                &sum);
+
+            pcs_ptr->average_intensity_per_region[region_in_picture_width_index]
+                                                 [region_in_picture_height_index][0] = (uint8_t)(
+                (sum +
+                 (((region_width + region_width_offset) * (region_height + region_height_offset)) >>
+                  1)) /
+                ((region_width + region_width_offset) * (region_height + region_height_offset)));
+            (*sum_avg_intensity_ttl_regions_luma) += (sum << decim_step);
+            for (histogram_bin = 0; histogram_bin < HISTOGRAM_NUMBER_OF_BINS;
+                 histogram_bin++) { // Loop over the histogram bins
+                pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                          [region_in_picture_height_index][0][histogram_bin] =
+                    pcs_ptr->picture_histogram[region_in_picture_width_index]
+                                              [region_in_picture_height_index][0][histogram_bin]
+                    << decim_step;
+            }
+        }
+    }
+
+    return;
+}
+#endif
 void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
     SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
     EbPictureBufferDesc *input_picture_ptr, uint64_t *sum_avg_intensity_ttl_regions_cb,
+#if FEATURE_INL_ME
+    uint64_t *sum_avg_intensity_ttl_regions_cr, uint8_t decim_step) {
+#else
     uint64_t *sum_avg_intensity_ttl_regions_cr) {
+#endif
     uint64_t sum;
     uint32_t region_width;
     uint32_t region_height;
@@ -2736,7 +2841,9 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
     uint32_t region_in_picture_height_index;
 
     uint16_t histogram_bin;
+#if !FEATURE_INL_ME
     uint8_t  decim_step = 4;
+#endif
 
     region_width = input_picture_ptr->width / scs_ptr->picture_analysis_number_of_regions_per_width;
     region_height =
@@ -2904,6 +3011,55 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
     return;
 }
 
+#if FEATURE_INL_ME
+// compute mean & variance
+void compute_picture_spatial_statistics_ime(SequenceControlSet *     scs_ptr,
+                                        PictureParentControlSet *pcs_ptr,
+                                        EbPictureBufferDesc *    input_picture_ptr) {
+    uint64_t pic_tot_variance;
+
+    // Variance
+    pic_tot_variance = 0;
+
+    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
+        SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
+
+        uint16_t sb_origin_x             = sb_params->origin_x;
+        uint16_t sb_origin_y             = sb_params->origin_y;
+        uint32_t input_luma_origin_index = (input_picture_ptr->origin_y + sb_origin_y) *
+                                      input_picture_ptr->stride_y +
+                                  input_picture_ptr->origin_x + sb_origin_x;
+
+        uint32_t input_cb_origin_index =
+            ((input_picture_ptr->origin_y + sb_origin_y) >> 1) * input_picture_ptr->stride_cb +
+            ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
+        uint32_t input_cr_origin_index =
+            ((input_picture_ptr->origin_y + sb_origin_y) >> 1) * input_picture_ptr->stride_cr +
+            ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
+
+        compute_block_mean_compute_variance(
+            scs_ptr, pcs_ptr, input_picture_ptr, sb_index, input_luma_origin_index);
+
+        if (sb_params->is_complete_sb) {
+            compute_chroma_block_mean(scs_ptr,
+                                      pcs_ptr,
+                                      input_picture_ptr,
+                                      sb_index,
+                                      input_cb_origin_index,
+                                      input_cr_origin_index);
+        } else {
+            zero_out_chroma_block_mean(pcs_ptr, sb_index);
+        }
+
+        pic_tot_variance += (pcs_ptr->variance[sb_index][RASTER_SCAN_CU_INDEX_64x64]);
+    }
+
+    pcs_ptr->pic_avg_variance = (uint16_t)(pic_tot_variance / pcs_ptr->sb_total_count);
+
+    return;
+}
+#endif
+
 void calculate_input_average_intensity(SequenceControlSet *     scs_ptr,
                                        PictureParentControlSet *pcs_ptr,
                                        EbPictureBufferDesc *    input_picture_ptr,
@@ -2991,7 +3147,12 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
                                                               pcs_ptr,
                                                               input_picture_ptr,
                                                               &sum_avg_intensity_ttl_regions_cb,
+#if FEATURE_INL_ME
+                                                              &sum_avg_intensity_ttl_regions_cr,
+                                                              4);
+#else
                                                               &sum_avg_intensity_ttl_regions_cr);
+#endif
     //
     // Calculate the LUMA average intensity
     calculate_input_average_intensity(scs_ptr,
@@ -3006,6 +3167,42 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 
     return;
 }
+
+#if FEATURE_INL_ME
+// calculate picture statistics
+// mean , variance , Luma intensity, Histogram
+static void gathering_picture_statistics_ime(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+                                  EbPictureBufferDesc *input_picture_ptr) {
+ uint64_t sum_avg_intensity_ttl_regions_luma = 0;
+    uint64_t sum_avg_intensity_ttl_regions_cb   = 0;
+    uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
+
+    // Histogram bins
+    // Use 1/16 Luma for Histogram generation
+    sub_sample_luma_generate_pixel_intensity_histogram_bins_ime(
+        scs_ptr, pcs_ptr,input_picture_ptr, &sum_avg_intensity_ttl_regions_luma, 4);
+
+    // Use 1/16 Chroma for Histogram generation
+    sub_sample_chroma_generate_pixel_intensity_histogram_bins(scs_ptr,
+                                                              pcs_ptr,
+                                                              input_picture_ptr,
+                                                              &sum_avg_intensity_ttl_regions_cb,
+                                                              &sum_avg_intensity_ttl_regions_cr,
+                                                              4);
+
+     // Calculate the LUMA average intensity
+    calculate_input_average_intensity(scs_ptr,
+                                      pcs_ptr,
+                                      input_picture_ptr,
+                                      sum_avg_intensity_ttl_regions_luma,
+                                      sum_avg_intensity_ttl_regions_cb,
+                                      sum_avg_intensity_ttl_regions_cr);
+
+    compute_picture_spatial_statistics_ime(
+        scs_ptr, pcs_ptr, input_picture_ptr);
+
+}
+#endif
 
 /************************************************
  * Pad Picture at the right and bottom sides
@@ -3029,6 +3226,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
         scs_ptr->pad_right,
         scs_ptr->pad_bottom);
 
+#if TUNE_INL_TPL_ENHANCEMENT
+    if (input_picture_ptr->buffer_cb)
+#endif
     pad_input_picture(
         &input_picture_ptr->buffer_cb[(input_picture_ptr->origin_x >> subsampling_x) +
                                       ((input_picture_ptr->origin_y >> subsampling_y) *
@@ -3039,6 +3239,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
         scs_ptr->pad_right >> subsampling_x,
         scs_ptr->pad_bottom >> subsampling_y);
 
+#if TUNE_INL_TPL_ENHANCEMENT
+    if (input_picture_ptr->buffer_cr)
+#endif
     pad_input_picture(
         &input_picture_ptr->buffer_cr[(input_picture_ptr->origin_x >> subsampling_x) +
                                       ((input_picture_ptr->origin_y >> subsampling_y) *
@@ -3050,6 +3253,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
         scs_ptr->pad_bottom >> subsampling_y);
 
     if (is16_bit_input) {
+#if TUNE_INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_y)
+#endif
         pad_input_picture(
             &input_picture_ptr->buffer_bit_inc_y[input_picture_ptr->origin_x +
                                                  (input_picture_ptr->origin_y *
@@ -3060,6 +3266,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
             scs_ptr->pad_right,
             scs_ptr->pad_bottom);
 
+#if TUNE_INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_cb)
+#endif
         pad_input_picture(
             &input_picture_ptr->buffer_bit_inc_cb[(input_picture_ptr->origin_x >> subsampling_x) +
                                                   ((input_picture_ptr->origin_y >> subsampling_y) *
@@ -3070,6 +3279,9 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
             scs_ptr->pad_right >> subsampling_x,
             scs_ptr->pad_bottom >> subsampling_y);
 
+#if TUNE_INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_cr)
+#endif
         pad_input_picture(
             &input_picture_ptr->buffer_bit_inc_cr[(input_picture_ptr->origin_x >> subsampling_x) +
                                                   ((input_picture_ptr->origin_y >> subsampling_y) *
@@ -3514,6 +3726,186 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
     }
 }
 
+#if FEATURE_INL_ME
+// Current down sampled input is not used for HME, but mainly used for GM
+// So don't do the unnecessary check here
+void downsample_filtering_input_picture_ime(
+                                        EbPictureBufferDesc *    input_padded_picture_ptr,
+                                        EbPictureBufferDesc *    quarter_picture_ptr,
+                                        EbPictureBufferDesc *    sixteenth_picture_ptr) {
+    if (quarter_picture_ptr) {
+        downsample_2d(
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
+                input_padded_picture_ptr->origin_y *
+                input_padded_picture_ptr->stride_y],
+                input_padded_picture_ptr->stride_y,
+                input_padded_picture_ptr->width,
+                input_padded_picture_ptr->height,
+                &quarter_picture_ptr
+                ->buffer_y[quarter_picture_ptr->origin_x +
+                quarter_picture_ptr->origin_x * quarter_picture_ptr->stride_y],
+                quarter_picture_ptr->stride_y,
+                2);
+        generate_padding(&quarter_picture_ptr->buffer_y[0],
+                quarter_picture_ptr->stride_y,
+                quarter_picture_ptr->width,
+                quarter_picture_ptr->height,
+                quarter_picture_ptr->origin_x,
+                quarter_picture_ptr->origin_y);
+    }
+
+    if (sixteenth_picture_ptr) {
+        // Sixteenth Input Picture Downsampling
+        if (quarter_picture_ptr)
+            downsample_2d(
+                    &quarter_picture_ptr
+                    ->buffer_y[quarter_picture_ptr->origin_x +
+                    quarter_picture_ptr->origin_y * quarter_picture_ptr->stride_y],
+                    quarter_picture_ptr->stride_y,
+                    quarter_picture_ptr->width,
+                    quarter_picture_ptr->height,
+                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x +
+                    sixteenth_picture_ptr->origin_x *
+                    sixteenth_picture_ptr->stride_y],
+                    sixteenth_picture_ptr->stride_y,
+                    2);
+        else
+            downsample_2d(
+                    &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
+                    input_padded_picture_ptr->origin_y *
+                    input_padded_picture_ptr->stride_y],
+                    input_padded_picture_ptr->stride_y,
+                    input_padded_picture_ptr->width,
+                    input_padded_picture_ptr->height,
+                    &sixteenth_picture_ptr->buffer_y[sixteenth_picture_ptr->origin_x +
+                    sixteenth_picture_ptr->origin_x *
+                    sixteenth_picture_ptr->stride_y],
+                    sixteenth_picture_ptr->stride_y,
+                    4);
+
+        generate_padding(&sixteenth_picture_ptr->buffer_y[0],
+                sixteenth_picture_ptr->stride_y,
+                sixteenth_picture_ptr->width,
+                sixteenth_picture_ptr->height,
+                sixteenth_picture_ptr->origin_x,
+                sixteenth_picture_ptr->origin_y);
+    }
+}
+/************************************************
+* 1/4 & 1/16 input picture decimation
+************************************************/
+void downsample_decimation_input_picture_ime(
+                                         EbPictureBufferDesc *    input_padded_picture_ptr,
+                                         EbPictureBufferDesc *    quarter_decimated_picture_ptr,
+                                         EbPictureBufferDesc *    sixteenth_decimated_picture_ptr) {
+    if (quarter_decimated_picture_ptr) {
+        decimation_2d(
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
+                input_padded_picture_ptr->origin_y *
+                input_padded_picture_ptr->stride_y],
+                input_padded_picture_ptr->stride_y,
+                input_padded_picture_ptr->width,
+                input_padded_picture_ptr->height,
+                &quarter_decimated_picture_ptr->buffer_y[quarter_decimated_picture_ptr->origin_x +
+                quarter_decimated_picture_ptr->origin_x *
+                quarter_decimated_picture_ptr->stride_y],
+                quarter_decimated_picture_ptr->stride_y,
+                2);
+        generate_padding(&quarter_decimated_picture_ptr->buffer_y[0],
+                quarter_decimated_picture_ptr->stride_y,
+                quarter_decimated_picture_ptr->width,
+                quarter_decimated_picture_ptr->height,
+                quarter_decimated_picture_ptr->origin_x,
+                quarter_decimated_picture_ptr->origin_y);
+    }
+
+    if (sixteenth_decimated_picture_ptr) {
+        decimation_2d(
+                &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
+                input_padded_picture_ptr->origin_y *
+                input_padded_picture_ptr->stride_y],
+                input_padded_picture_ptr->stride_y,
+                input_padded_picture_ptr->width,
+                input_padded_picture_ptr->height,
+                &sixteenth_decimated_picture_ptr->buffer_y[sixteenth_decimated_picture_ptr->origin_x +
+                sixteenth_decimated_picture_ptr->origin_x *
+                sixteenth_decimated_picture_ptr->stride_y],
+                sixteenth_decimated_picture_ptr->stride_y,
+                4);
+
+        generate_padding(&sixteenth_decimated_picture_ptr->buffer_y[0],
+                sixteenth_decimated_picture_ptr->stride_y,
+                sixteenth_decimated_picture_ptr->width,
+                sixteenth_decimated_picture_ptr->height,
+                sixteenth_decimated_picture_ptr->origin_x,
+                sixteenth_decimated_picture_ptr->origin_y);
+    }
+}
+
+void pad_input_pictures(SequenceControlSet *scs_ptr,
+                               EbPictureBufferDesc *input_picture_ptr) {
+    // Pad pictures to multiple min cu size
+    // For non-8 aligned case, like 426x240, padding to 432x240 first
+    pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
+    generate_padding(input_picture_ptr->buffer_y,
+            input_picture_ptr->stride_y,
+            input_picture_ptr->width,
+            input_picture_ptr->height,
+            input_picture_ptr->origin_x,
+            input_picture_ptr->origin_y);
+
+    // PAD the bit inc buffer in 10bit
+    if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
+#if TUNE_INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_y)
+#endif
+        generate_padding(input_picture_ptr->buffer_bit_inc_y,
+                input_picture_ptr->stride_bit_inc_y,
+                input_picture_ptr->width,
+                input_picture_ptr->height,
+                input_picture_ptr->origin_x,
+                input_picture_ptr->origin_y);
+
+    if (input_picture_ptr->buffer_cb)
+        generate_padding(input_picture_ptr->buffer_cb,
+                input_picture_ptr->stride_cb,
+                input_picture_ptr->width >> scs_ptr->subsampling_x,
+                input_picture_ptr->height >> scs_ptr->subsampling_y,
+                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+
+    if (input_picture_ptr->buffer_cr)
+        generate_padding(input_picture_ptr->buffer_cr,
+                input_picture_ptr->stride_cr,
+                input_picture_ptr->width >> scs_ptr->subsampling_x,
+                input_picture_ptr->height >> scs_ptr->subsampling_y,
+                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    // PAD the bit inc buffer in 10bit
+    if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT) {
+#if TUNE_INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_cb)
+#endif
+        generate_padding(input_picture_ptr->buffer_bit_inc_cb,
+                input_picture_ptr->stride_bit_inc_cb,
+                input_picture_ptr->width >> scs_ptr->subsampling_x,
+                input_picture_ptr->height >> scs_ptr->subsampling_y,
+                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+
+#if TUNE_INL_TPL_ENHANCEMENT
+        if (input_picture_ptr->buffer_bit_inc_cr)
+#endif
+        generate_padding(input_picture_ptr->buffer_bit_inc_cr,
+                input_picture_ptr->stride_bit_inc_cr,
+                input_picture_ptr->width >> scs_ptr->subsampling_x,
+                input_picture_ptr->height >> scs_ptr->subsampling_y,
+                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    }
+}
+#endif
+
 /* Picture Analysis Kernel */
 
 /*********************************************************************************
@@ -3537,7 +3929,7 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
 *  n-bin histogram is created to gather 1st and 2nd moment statistics for each 8x8 block which is then used to compute statistics
 *
 ********************************************************************************/
-
+#if !FEATURE_INL_ME
 void *picture_analysis_kernel(void *input_ptr) {
     EbThreadContext *        thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureAnalysisContext * context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
@@ -3707,3 +4099,170 @@ void *picture_analysis_kernel(void *input_ptr) {
     }
     return NULL;
 }
+#else
+void *picture_analysis_kernel(void *input_ptr) {
+    EbThreadContext *        thread_context_ptr = (EbThreadContext *)input_ptr;
+    PictureAnalysisContext * context_ptr = (PictureAnalysisContext *)thread_context_ptr->priv;
+    PictureParentControlSet *pcs_ptr;
+    SequenceControlSet *     scs_ptr;
+
+    EbObjectWrapper *            in_results_wrapper_ptr;
+    ResourceCoordinationResults *in_results_ptr;
+    EbObjectWrapper *            out_results_wrapper_ptr;
+    EbPaReferenceObject *        pa_ref_obj_;
+    EbDownScaledObject*          ds_obj;
+
+    EbPictureBufferDesc *input_padded_picture_ptr;
+    EbPictureBufferDesc *input_picture_ptr;
+
+
+    for (;;) {
+        // Get Input Full Object
+        EB_GET_FULL_OBJECT(context_ptr->resource_coordination_results_input_fifo_ptr,
+                           &in_results_wrapper_ptr);
+
+        in_results_ptr = (ResourceCoordinationResults *)in_results_wrapper_ptr->object_ptr;
+        pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+
+        // Mariana : save enhanced picture ptr, move this from here
+        pcs_ptr->enhanced_unscaled_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+
+        // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
+        if (!pcs_ptr->is_overlay) {
+            scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+            input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+
+            // Padding for input pictures
+            pad_input_pictures(scs_ptr, input_picture_ptr);
+
+            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
+            set_picture_parameters_for_statistics_gathering(scs_ptr);
+
+            // Pre processing operations performed on the input picture
+            picture_pre_processing_operations(pcs_ptr, scs_ptr);
+
+            if (input_picture_ptr->color_format >= EB_YUV422) {
+                // Jing: Do the conversion of 422/444=>420 here since it's multi-threaded kernel
+                //       Reuse the Y, only add cb/cr in the newly created buffer desc
+                //       NOTE: since denoise may change the src, so this part is after picture_pre_processing_operations()
+                pcs_ptr->chroma_downsampled_picture_ptr->buffer_y = input_picture_ptr->buffer_y;
+                down_sample_chroma(input_picture_ptr, pcs_ptr->chroma_downsampled_picture_ptr);
+            } else
+                pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
+
+            if (scs_ptr->in_loop_me) {
+                ds_obj =
+                    (EbDownScaledObject*)pcs_ptr->down_scaled_picture_wrapper_ptr->object_ptr;
+
+                //ds_obj->picture_ptr = input_picture_ptr; // Save original picture pointer
+                //ds_obj->picture_number = pcs_ptr->picture_number;
+                //pcs_ptr->downscaled_input_pic = ds_obj;
+
+                pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;
+                pcs_ptr->ds_pics.quarter_picture_ptr = ds_obj->quarter_picture_ptr;
+                pcs_ptr->ds_pics.sixteenth_picture_ptr = ds_obj->sixteenth_picture_ptr;
+                pcs_ptr->ds_pics.picture_number = pcs_ptr->picture_number;
+
+                // Get the 1/2, 1/4 of input picture, only used for global motion
+                // TODO: Check for global motion whether we need these
+                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    downsample_filtering_input_picture_ime(
+                            input_picture_ptr,
+                            (EbPictureBufferDesc *)ds_obj->quarter_picture_ptr,
+                            (EbPictureBufferDesc *)ds_obj->sixteenth_picture_ptr);
+                } else {
+                    downsample_decimation_input_picture_ime(
+                            input_picture_ptr,
+                            (EbPictureBufferDesc *)ds_obj->quarter_picture_ptr,
+                            (EbPictureBufferDesc *)ds_obj->sixteenth_picture_ptr);
+                }
+
+                // TODO: Refine this function
+                // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+                gathering_picture_statistics_ime(
+                        scs_ptr, pcs_ptr,
+                        pcs_ptr->chroma_downsampled_picture_ptr);
+
+                // Save pointer of raw input to PA
+                // TODO: This is just to make it work for current TPL in iRC
+                // When moving the TPL logic from iRC to RC, should use input picture directly and remove the codes here
+                pa_ref_obj_ = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+                pa_ref_obj_->input_padded_picture_ptr = input_picture_ptr;
+                pa_ref_obj_->quarter_decimated_picture_ptr = pa_ref_obj_->quarter_filtered_picture_ptr = ds_obj->quarter_picture_ptr;
+                pa_ref_obj_->sixteenth_decimated_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr = ds_obj->sixteenth_picture_ptr;
+
+            } else {
+#if  FEATURE_PA_ME
+                if (scs_ptr->in_loop_me == 0){
+                  //not passing through the DS pool, so 1/4 and 1/16 are not used
+                  pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;
+                  pcs_ptr->ds_pics.quarter_picture_ptr = NULL;
+                  pcs_ptr->ds_pics.sixteenth_picture_ptr = NULL;
+                  pcs_ptr->ds_pics.picture_number = pcs_ptr->picture_number;
+                  }
+#endif
+                // Original path
+                // Get PA ref, copy 8bit luma to pa_ref->input_padded_picture_ptr
+                pa_ref_obj_ =
+                    (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+                pa_ref_obj_->picture_number = pcs_ptr->picture_number;
+                input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
+                uint8_t *pa =
+                    input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
+                    input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+                uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+                              input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+                for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+                    EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y,
+                              in + row * input_picture_ptr->stride_y,
+                              sizeof(uint8_t) * input_picture_ptr->width);
+                // Pad input picture to complete border SBs
+                pad_picture_to_multiple_of_sb_dimensions(input_padded_picture_ptr);
+                // 1/4 & 1/16 input picture decimation
+                downsample_decimation_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_decimated_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr);
+
+                // 1/4 & 1/16 input picture downsampling through filtering
+                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    downsample_filtering_input_picture(
+                            pcs_ptr,
+                            input_padded_picture_ptr,
+                            (EbPictureBufferDesc *)pa_ref_obj_->quarter_filtered_picture_ptr,
+                            (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr);
+                }
+                // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+                gathering_picture_statistics(
+                        scs_ptr,
+                        pcs_ptr,
+                        pcs_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_
+                        ->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
+                        pcs_ptr->sb_total_count);
+            }
+
+            if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
+                is_screen_content(pcs_ptr,
+                                  scs_ptr->static_config.encoder_bit_depth);
+            } else // off / on
+                pcs_ptr->sc_content_detected = scs_ptr->static_config.screen_content_mode;
+        }
+        // Get Empty Results Object
+        svt_get_empty_object(context_ptr->picture_analysis_results_output_fifo_ptr,
+                             &out_results_wrapper_ptr);
+
+        PictureAnalysisResults* out_results_ptr = (PictureAnalysisResults *)out_results_wrapper_ptr->object_ptr;
+        out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
+
+        // Release the Input Results
+        svt_release_object(in_results_wrapper_ptr);
+
+        // Post the Full Results Object
+        svt_post_full_object(out_results_wrapper_ptr);
+    }
+    return NULL;
+}
+#endif

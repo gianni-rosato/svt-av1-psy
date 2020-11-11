@@ -1791,8 +1791,12 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 9: (1,1) ; No-override features
     // Level 0 , 1  : set ref_list0_count_try and ref_list1_count_try and Override MRP-related features
     // Level 2 .. 9 : Only set ref_list0_count_try and ref_list1_count_try
-
+#if !ENABLE_TPL_TRAILING
     pcs_ptr->tpl_opt_flag = 1;
+#endif
+#if ENABLE_TPL_TRAILING
+    pcs_ptr->tpl_trailing_frame_count = 0;
+#endif
     return return_error;
 }
 void set_txt_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txt_cycles_red_mode);

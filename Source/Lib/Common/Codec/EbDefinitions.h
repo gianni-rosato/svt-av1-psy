@@ -30,7 +30,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if FEATURE_NEW_DELAY
+#define SCD_LAD                                             6  //number of future frames
+#define PD_WINDOW_SIZE                                      (SCD_LAD +2) //adding previous+current to future
+#define MAX_TPL_GROUP_SIZE                                  64 //enough to cover 6L gop
+#endif
+#if FEATURE_IN_LOOP_TPL
+#define TPL_DEP_COST_SCALE_LOG2 4
+#endif
 #define MAX_TX_WEIGHT 500
 #define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
 #define DEPTH_PROB_PRECISION 10000
@@ -2003,6 +2010,18 @@ typedef struct {
 semaphores, mutexs, etc.
 */
 typedef void * EbHandle;
+
+
+
+#if FEATURE_PA_ME
+/** The AtomicVarU32 type is used to define sn obj with its mutex
+*/
+typedef struct AtomicVarU32 {
+    uint32_t  obj;
+    EbHandle mutex;
+} AtomicVarU32;
+#endif
+
 
 /**
 object_ptr is a EbPtr to the object being constructed.

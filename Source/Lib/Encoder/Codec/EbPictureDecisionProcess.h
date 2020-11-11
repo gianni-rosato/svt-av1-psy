@@ -34,8 +34,13 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
                                                         EbPictureBufferDesc *input_picture_ptr);
 void pad_picture_to_multiple_of_min_blk_size_dimensions_16bit(
     SequenceControlSet * scs_ptr, EbPictureBufferDesc *input_picture_ptr);
+#if FEATURE_INL_ME
+void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
+                                       SequenceControlSet *scs_ptr);
+#else
 void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
                                        SequenceControlSet *scs_ptr, uint32_t sb_total_count);
+#endif
 void pad_picture_to_multiple_of_sb_dimensions(EbPictureBufferDesc *input_padded_picture_ptr);
 
 void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
@@ -98,6 +103,11 @@ typedef struct PictureDecisionContext
     DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
                                                       //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
+#if FEATURE_NEW_DELAY
+    PictureParentControlSet* prev_delayed_intra; //Key frame or I of LDP short MG
+    uint32_t                 mg_size;//number of active pictures in above array
+    PictureParentControlSet* mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

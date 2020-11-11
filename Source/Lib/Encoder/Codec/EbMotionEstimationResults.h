@@ -36,6 +36,10 @@ typedef struct MotionEstimationResultsInitData {
      **************************************/
 extern EbErrorType motion_estimation_results_creator(EbPtr *object_dbl_ptr,
                                                      EbPtr  object_init_data_ptr);
+#if FEATURE_INL_ME
+extern EbErrorType ime_results_creator(EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr);
+#endif
 
 #ifdef __cplusplus
 }

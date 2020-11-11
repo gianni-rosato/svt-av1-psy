@@ -20,7 +20,11 @@
  * Tasks Types
  **************************************/
 typedef enum RateControlTaskTypes {
+#if FEATURE_INL_ME
+    RC_INPUT,
+#else
     RC_PICTURE_MANAGER_RESULT,
+#endif
     RC_PACKETIZATION_FEEDBACK_RESULT,
     RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT,
     RC_INVALID_TASK

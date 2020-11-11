@@ -28,6 +28,16 @@ typedef struct MotionEstimationContext {
     uint8_t *index_table1;
 } MotionEstimationContext_t;
 
+#if FEATURE_INL_ME
+typedef struct InLoopMeContext {
+    EbFifo *   input_fifo_ptr;
+    EbFifo *   output_fifo_ptr;
+    MeContext *me_context_ptr;
+
+    uint8_t *index_table0;
+    uint8_t *index_table1;
+} InLoopMeContext;
+#endif
 /***************************************
  * Extern Function Declaration
  ***************************************/
@@ -36,6 +46,11 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
 
 extern void *motion_estimation_kernel(void *input_ptr);
 
+#if FEATURE_INL_ME
+EbErrorType ime_context_ctor(EbThreadContext *thread_context_ptr,
+                             const EbEncHandle *enc_handle_ptr, int index);
+extern void *inloop_me_kernel(void *input_ptr);
+#endif
 EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
                                            PictureParentControlSet *  pcs_ptr,
                                            MotionEstimationContext_t *context_ptr);

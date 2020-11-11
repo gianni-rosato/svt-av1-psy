@@ -242,8 +242,8 @@ typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
 
-EbConfig * eb_config_ctor(EncodePass pass);
-void eb_config_dtor(EbConfig *config_ptr);
+EbConfig * svt_config_ctor(EncodePass pass);
+void svt_config_dtor(EbConfig *config_ptr);
 
 EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass);
 void enc_channel_dctor(EncChannel* c, uint32_t inst_cnt);

@@ -20,12 +20,14 @@
 #include "EbReferenceObject.h"
 #include "EbResize.h"
 #include "common_dsp_rtcd.h"
+#if !FEATURE_IN_LOOP_TPL
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
+#endif
 /**************************************
  * Context
  **************************************/
@@ -61,6 +63,7 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
     return EB_ErrorNone;
 }
 
+#if !FEATURE_INL_ME
 /************************************************
 * Release Pa Reference Objects
 ** Check if reference pictures are needed
@@ -96,7 +99,7 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
 
     return;
 }
-
+#endif
 /************************************************
 * Update BEA Information Based on Lookahead
 ** Average zzCost of Collocated SB throughout lookahead frames
@@ -333,6 +336,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
     return;
 }
 
+#if !FEATURE_IN_LOOP_TPL
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr, int64_t mc_dep_cost_base)
 {
     Av1Common *cm = pcs_ptr->av1_cm;
@@ -1306,6 +1310,8 @@ EbErrorType tpl_mc_flow(
 
     return EB_ErrorNone;
 }
+#endif
+
 /* Initial Rate Control Kernel */
 
 /*********************************************************************************
@@ -1365,9 +1371,28 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+#if FEATURE_PA_ME
+            if (scs_ptr->static_config.enable_tpl_la && scs_ptr->in_loop_me == 0)
+            {
+                svt_post_semaphore(pcs_ptr->pame_done_semaphore);
+                atomic_set_u32(& pcs_ptr->pame_done, 1);
+
+            }
+#endif
             if (scs_ptr->static_config.look_ahead_distance == 0 || scs_ptr->static_config.enable_tpl_la == 0) {
                 // Release Pa Ref pictures when not needed
+#if FEATURE_INL_ME
+#if FEATURE_PA_ME
+                // Release Pa ref after when TPL is OFF
+                if (!scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la == 0)
+#else
+                // Release Pa ref after TPL
+                if (!scs_ptr->in_loop_me)
+#endif
+                    release_pa_reference_objects(scs_ptr, pcs_ptr);
+#else
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
+#endif
             }
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
@@ -1449,6 +1474,18 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         ? queue_entry_index_temp - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
                         : queue_entry_index_temp;
 
+#if FEATURE_NEW_DELAY
+                    if (encode_context_ptr->initial_rate_control_reorder_queue[queue_entry_index_temp2]->parent_pcs_wrapper_ptr != NULL) {
+                        PictureParentControlSet* pcs =
+                            (PictureParentControlSet*)(encode_context_ptr
+                                                           ->initial_rate_control_reorder_queue
+                                                               [queue_entry_index_temp]
+                                                               ->parent_pcs_wrapper_ptr)->object_ptr;
+                        if (pcs->is_next_frame_intra)
+                            break;
+                    }
+#endif
+
                     move_slide_window_flag =
                         (EbBool)(move_slide_window_flag &&
                                  (encode_context_ptr
@@ -1498,6 +1535,13 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 ? queue_entry_index_temp -
                                     INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
                                 : queue_entry_index_temp;
+#if FEATURE_NEW_DELAY
+                            //exit if we hit a non valid entry
+                            if (encode_context_ptr
+                                    ->initial_rate_control_reorder_queue[queue_entry_index_temp2]
+                                    ->parent_pcs_wrapper_ptr == NULL)
+                                break;
+#endif
                             PictureParentControlSet *pcs_ptr_temp =
                                 ((PictureParentControlSet
                                       *)(encode_context_ptr
@@ -1574,11 +1618,13 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     ->reference_picture_wrapper_ptr,
                                 1);
                         }
+#if !FEATURE_IN_LOOP_TPL
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&
                             pcs_ptr->temporal_layer_index == 0) {
                             tpl_mc_flow(encode_context_ptr, scs_ptr, pcs_ptr);
                         }
+#endif
                         // Get Empty Results Object
                         svt_get_empty_object(
                             context_ptr->initialrate_control_results_output_fifo_ptr,

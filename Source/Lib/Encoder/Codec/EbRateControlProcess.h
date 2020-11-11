@@ -206,7 +206,11 @@ typedef struct {
  * Input Port Types
  **************************************/
 typedef enum RateControlInputPortTypes {
+#if FEATURE_INL_ME
+    RATE_CONTROL_INPUT_PORT_INLME = 0,
+#else
     RATE_CONTROL_INPUT_PORT_PICTURE_MANAGER = 0,
+#endif
     RATE_CONTROL_INPUT_PORT_PACKETIZATION   = 1,
     RATE_CONTROL_INPUT_PORT_ENTROPY_CODING  = 2,
     RATE_CONTROL_INPUT_PORT_TOTAL_COUNT     = 3,
