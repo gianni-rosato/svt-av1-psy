@@ -1612,7 +1612,7 @@ void *inloop_me_kernel(void *input_ptr) {
 
     EbPictureBufferDesc *input_picture_ptr;
 
-    uint32_t pic_width_in_sb;
+    uint32_t pic_width_in_sb = 0;
     uint32_t picture_height_in_sb;
     uint32_t sb_origin_x;
     uint32_t sb_origin_y;
@@ -1621,10 +1621,10 @@ void *inloop_me_kernel(void *input_ptr) {
     uint32_t segment_index = 0;
     uint32_t x_segment_index;
     uint32_t y_segment_index;
-    uint32_t x_sb_start_index;
-    uint32_t x_sb_end_index;
-    uint32_t y_sb_start_index;
-    uint32_t y_sb_end_index;
+    uint32_t x_sb_start_index = 0;
+    uint32_t x_sb_end_index = 0;
+    uint32_t y_sb_start_index = 0;
+    uint32_t y_sb_end_index = 0;
     uint32_t segment_col_count = 0;
     uint32_t segment_row_count = 0;
 
