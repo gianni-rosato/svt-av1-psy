@@ -20,12 +20,6 @@ extern "C" {
 #endif
 
 // Segment Macros
-#define SEGMENT_MAX_COUNT 64
-#define SEGMENT_COMPLETION_MASK_SET(mask, index)                \
-    MULTI_LINE_MACRO_BEGIN(mask) |= (((uint64_t)1) << (index)); \
-    MULTI_LINE_MACRO_END
-#define SEGMENT_COMPLETION_MASK_TEST(mask, total_count) \
-    (mask) == ((((uint64_t)1) << (total_count)) - 1)
 #define SEGMENT_ROW_COMPLETION_TEST(mask, row_index, width) \
     ((((mask) >> ((row_index) * (width))) & ((1ull << (width)) - 1)) == ((1ull << (width)) - 1))
 #define SEGMENT_CONVERT_IDX_TO_XY(index, x, y, pic_width_in_sb)    \

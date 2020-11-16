@@ -5585,10 +5585,10 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr->me_segments_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[pcs_ptr->temporal_layer_index]);
                             pcs_ptr->me_segments_total_count = (uint16_t)(pcs_ptr->me_segments_column_count  * pcs_ptr->me_segments_row_count);
-                            pcs_ptr->me_segments_completion_mask = 0;
+                            pcs_ptr->me_segments_completion_count = 0;
 #else
-                            pcs_ptr->me_segments_completion_mask = 0;
-                            pcs_ptr->inloop_me_segments_completion_mask = 0;
+                            pcs_ptr->me_segments_completion_count = 0;
+                            pcs_ptr->inloop_me_segments_completion_count = 0;
 
                             pcs_ptr->inloop_me_segments_column_count = 1;
                             pcs_ptr->inloop_me_segments_row_count = 1;

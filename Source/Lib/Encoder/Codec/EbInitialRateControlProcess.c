@@ -1360,14 +1360,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
         PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
 
-        uint32_t segment_index = in_results_ptr->segment_index;
-
-        // Set the segment mask
-        SEGMENT_COMPLETION_MASK_SET(pcs_ptr->me_segments_completion_mask, segment_index);
+        // Set the segment counter
+        pcs_ptr->me_segments_completion_count++;
 
         // If the picture is complete, proceed
-        if (SEGMENT_COMPLETION_MASK_TEST(pcs_ptr->me_segments_completion_mask,
-                                         pcs_ptr->me_segments_total_count)) {
+        if (pcs_ptr->me_segments_completion_count == pcs_ptr->me_segments_total_count) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;

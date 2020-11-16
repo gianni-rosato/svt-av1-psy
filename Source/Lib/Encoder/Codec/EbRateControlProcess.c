@@ -7385,13 +7385,11 @@ void *rate_control_kernel(void *input_ptr) {
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
 
-            // Set the segment mask
-            SEGMENT_COMPLETION_MASK_SET(pcs_ptr->parent_pcs_ptr->inloop_me_segments_completion_mask,
-                    rate_control_tasks_ptr->segment_index);
+            // Set the segment counter
+            pcs_ptr->parent_pcs_ptr->inloop_me_segments_completion_count++;
 
             // If the picture is complete, proceed
-            if (!(SEGMENT_COMPLETION_MASK_TEST(pcs_ptr->parent_pcs_ptr->inloop_me_segments_completion_mask,
-                        pcs_ptr->parent_pcs_ptr->inloop_me_segments_total_count))) {
+            if (!(pcs_ptr->parent_pcs_ptr->inloop_me_segments_completion_count == pcs_ptr->parent_pcs_ptr->inloop_me_segments_total_count)) {
                 svt_release_object(rate_control_tasks_wrapper_ptr);
                 continue;
             }
