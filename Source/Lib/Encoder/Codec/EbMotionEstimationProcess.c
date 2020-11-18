@@ -150,7 +150,8 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
     }
-    else {
+#if TUNE_HME_ME_TUNING
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
@@ -160,7 +161,23 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
         }
     }
-
+#endif
+    else {
+        if (use_output_stat(scs_ptr)) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+            me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+        }
+        else {
+#if TUNE_HME_ME_TUNING
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+            me_context_ptr->max_me_search_width = 64;
+            me_context_ptr->max_me_search_height = 32;
+#else
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
+#endif
+        }
+    }
         if (pcs_ptr->enc_mode <= ENC_M2) {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
@@ -186,16 +203,45 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     me_context_ptr->hme_level0_search_area_in_height_array[0] =
         me_context_ptr->hme_level0_search_area_in_height_array[1] =
         me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
-
+#if TUNE_HME_ME_TUNING
+    if (pcs_ptr->enc_mode <= ENC_M7) {
+        me_context_ptr->hme_level1_search_area_in_width_array[0] =
+            me_context_ptr->hme_level1_search_area_in_width_array[1] =
+            me_context_ptr->hme_level1_search_area_in_height_array[0] =
+            me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
+    }
+    else {
+        me_context_ptr->hme_level1_search_area_in_width_array[0] =
+            me_context_ptr->hme_level1_search_area_in_width_array[1] = 8;
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =
+            me_context_ptr->hme_level1_search_area_in_height_array[1] = 3;
+    }
+#else
     me_context_ptr->hme_level1_search_area_in_width_array[0] =
         me_context_ptr->hme_level1_search_area_in_width_array[1] =
         me_context_ptr->hme_level1_search_area_in_height_array[0] =
         me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
+#endif
+#if TUNE_HME_ME_TUNING
+    if (pcs_ptr->enc_mode <= ENC_M7) {
+        me_context_ptr->hme_level2_search_area_in_width_array[0] =
+            me_context_ptr->hme_level2_search_area_in_width_array[1] =
+            me_context_ptr->hme_level2_search_area_in_height_array[0] =
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+    }
+    else {
+        me_context_ptr->hme_level2_search_area_in_width_array[0] =
+            me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;
 
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
+    }
+#else
     me_context_ptr->hme_level2_search_area_in_width_array[0] =
         me_context_ptr->hme_level2_search_area_in_width_array[1] =
         me_context_ptr->hme_level2_search_area_in_height_array[0] =
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+#endif
     if (!pcs_ptr->sc_content_detected)
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->hme_level1_search_area_in_width_array[0] =
@@ -292,6 +338,48 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
         break;
     }
 }
+#if FEATURE_GM_OPT // GmControls
+/******************************************************
+* GM controls
+******************************************************/
+void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
+{
+    GmControls *gm_ctrls = &pcs_ptr->gm_ctrls;
+    switch (gm_level)
+    {
+    case 0:
+        gm_ctrls->enabled = 0;
+        break;
+    case 1:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 0;
+        gm_ctrls->rotzoom_model_only = 0;
+        gm_ctrls->bipred_only = 0;
+        break;
+    case 2:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 0;
+        gm_ctrls->bipred_only = 0;
+        break;
+    case 3:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 0;
+        gm_ctrls->bipred_only = 1;
+        break;
+    case 4:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive ME Settings for OQ
   Input   : encoder mode and tune
@@ -326,16 +414,40 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
     else
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+#if FEATURE_GM_OPT // GmControls
+    uint8_t gm_level = 0;
+    if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
+        pcs_ptr->frame_superres_enabled == EB_FALSE) {
+        if (enc_mode <= ENC_M6)
+            gm_level = 2;
+        else if (enc_mode <= ENC_M7)
+            gm_level = pcs_ptr->is_used_as_reference_flag ? 3 : 0;
+        else
+            gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
+    }
+    set_gm_controls(pcs_ptr, gm_level);
+#else
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (enc_mode <= ENC_M6)
             context_ptr->me_context_ptr->compute_global_motion = EB_TRUE;
+#if FEATURE_GM_OPT // GM
+        else if (enc_mode <= ENC_M8)
+            context_ptr->me_context_ptr->compute_global_motion = pcs_ptr->is_used_as_reference_flag ? EB_TRUE : EB_FALSE;
+#endif
         else
             context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
         //TODO: enclose all gm signals into a control
         context_ptr->me_context_ptr->gm_identiy_exit = EB_TRUE;
+#if FEATURE_GM_OPT
+        if (enc_mode <= ENC_M7)
+            context_ptr->me_context_ptr->gm_rotzoom_model_only = EB_FALSE;
+        else
+            context_ptr->me_context_ptr->gm_rotzoom_model_only = EB_TRUE;
+#endif
     } else
         context_ptr->me_context_ptr->compute_global_motion = EB_FALSE;
+#endif
 
     // Set hme/me based reference pruning level (0-4)
     if (enc_mode <= ENC_MR)
@@ -500,13 +612,14 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
 
     if (input_resolution <= INPUT_SIZE_480p_RANGE)
         me_context_ptr->update_hme_search_center_flag = 0;
-
+#if !FEATURE_OPT_TF
     if (pcs_ptr->enc_mode <= ENC_M5) {
         me_context_ptr->high_precision = 1;
     }
     else {
         me_context_ptr->high_precision = 0;
     }
+#endif
     return NULL;
 };
 /******************************************************
@@ -997,9 +1110,17 @@ void *motion_estimation_kernel(void *input_ptr) {
 #if FIX_GM_COMPUTATION
                         // We need to finish ME for all SBs to do GM
                         if (pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
+#if FEATURE_GM_OPT
+                            if (pcs_ptr->gm_ctrls.enabled)
+#else
                             if (context_ptr->me_context_ptr->compute_global_motion)
+#endif
                                 global_motion_estimation(
+#if FEATURE_GM_OPT
+                                    pcs_ptr, input_picture_ptr);
+#else
                                     pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
                             else
                             // Initilize global motion to be OFF when GM is OFF
                                 memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
@@ -1010,10 +1131,14 @@ void *motion_estimation_kernel(void *input_ptr) {
                     }
                 }
             }
+#if !FIX_GM_COMPUTATION
             // Global motion estimation
             // TODO: create an other kernel ?
-#if !FIX_GM_COMPUTATION
+#if FEATURE_GM_OPT
+            if (pcs_ptr->gm_ctrls.enabled &&
+#else
             if (context_ptr->me_context_ptr->compute_global_motion &&
+#endif
 #if FEATURE_IN_LOOP_TPL
                 segment_index == 0) {
 #else
@@ -1023,8 +1148,13 @@ void *motion_estimation_kernel(void *input_ptr) {
 
 #if FEATURE_INL_ME
                 if (!scs_ptr->in_loop_me)
+#if FEATURE_GM_OPT
+                    global_motion_estimation(
+                        pcs_ptr, input_picture_ptr);
+#else
                     global_motion_estimation(
                         pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
 #else
                 global_motion_estimation(
                     pcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
@@ -1654,9 +1784,17 @@ void *inloop_me_kernel(void *input_ptr) {
 #if FIX_GM_COMPUTATION
                 if (scs_ptr->static_config.enable_tpl_la) {
                     if (segment_index == 0) {
+#if FEATURE_GM_OPT
+                        if (ppcs_ptr->gm_ctrls.enabled && ppcs_ptr->slice_type != I_SLICE)
+#else
                         if (context_ptr->me_context_ptr->compute_global_motion && ppcs_ptr->slice_type != I_SLICE)
+#endif
                             global_motion_estimation_inl(
+#if FEATURE_GM_OPT
+                                ppcs_ptr, input_picture_ptr);
+#else
                                 ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
                         else
                             // Initilize global motion to be OFF for all references frames.
                             memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
@@ -1666,9 +1804,17 @@ void *inloop_me_kernel(void *input_ptr) {
                 else {
                     svt_block_on_mutex(ppcs_ptr->me_processed_sb_mutex);
                     if (ppcs_ptr->me_processed_sb_count == ppcs_ptr->sb_total_count) {
+#if FEATURE_GM_OPT
+                        if (ppcs_ptr->gm_ctrls.enabled && ppcs_ptr->slice_type != I_SLICE)
+#else
                         if (context_ptr->me_context_ptr->compute_global_motion && ppcs_ptr->slice_type != I_SLICE)
+#endif
                             global_motion_estimation_inl(
+#if FEATURE_GM_OPT
+                                ppcs_ptr, input_picture_ptr);
+#else
                                 ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
                         else
                             // Initilize global motion to be OFF for all references frames.
                             memset(ppcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
@@ -1679,7 +1825,11 @@ void *inloop_me_kernel(void *input_ptr) {
 #else
                 // Global motion estimation
                 // TODO: create an other kernel ?
+#if FEATURE_GM_OPT
+                if (ppcs_ptr->gm_ctrls.enabled &&
+#else
                 if (context_ptr->me_context_ptr->compute_global_motion &&
+#endif
                         ppcs_ptr->slice_type != I_SLICE &&
 #if FEATURE_IN_LOOP_TPL
                         segment_index== 0) {
@@ -1687,8 +1837,13 @@ void *inloop_me_kernel(void *input_ptr) {
                         // Compute only when ME of all 64x64 SBs is performed
                         ppcs_ptr->me_processed_sb_count == ppcs_ptr->sb_total_count) {
 #endif
+#if FEATURE_GM_OPT
+                    global_motion_estimation_inl(
+                        ppcs_ptr, input_picture_ptr);
+#else
                     global_motion_estimation_inl(
                             ppcs_ptr, context_ptr->me_context_ptr, input_picture_ptr);
+#endif
                 }
 #endif
                 svt_get_empty_object(context_ptr->output_fifo_ptr,

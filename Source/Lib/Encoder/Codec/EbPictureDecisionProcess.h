@@ -51,11 +51,13 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
+#if !FEATURE_OPT_TF
 typedef struct  TfControls {
     uint8_t enabled;
     uint8_t window_size;
     uint8_t noise_based_window_adjust;
 }TfControls;
+#endif
 
 /**************************************
  * Context
@@ -98,7 +100,9 @@ typedef struct PictureDecisionContext
     uint8_t       last_i_picture_sc_detection;
     uint64_t      key_poc;
     uint8_t tf_level;
+#if !FEATURE_OPT_TF
     TfControls tf_ctrls;
+#endif
     PictureParentControlSet* mg_pictures_array[1<<MAX_TEMPORAL_LAYERS];
     DepCntPicInfo updated_links_arr[UPDATED_LINKS];//if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
                                                       //this array will store all others pictures needing a dep-cnt clean up.

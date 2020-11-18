@@ -49,7 +49,9 @@ typedef struct EbReferenceObject {
     uint16_t             pic_avg_variance;
     uint8_t              average_intensity;
     AomFilmGrain         film_grain_params; //Film grain parameters for a reference frame
+#if !TUNE_CDEF_FILTER
     uint32_t             cdef_frame_strength;
+#endif
     int8_t               sg_frame_ep;
     FRAME_CONTEXT        frame_context;
     EbWarpedMotionParams global_motion[TOTAL_REFS_PER_FRAME];

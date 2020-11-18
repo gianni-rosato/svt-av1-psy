@@ -489,11 +489,13 @@ typedef struct InterpFilterParams {
     uint16_t       subpel_shifts;
     InterpFilter   interp_filter;
 } InterpFilterParams;
+#if !TUNE_TX_TYPE_LEVELS
 typedef enum TxSearchLevel {
     TX_SEARCH_DCT_DCT_ONLY, // DCT_DCT only
     TX_SEARCH_DCT_TX_TYPES, // Tx search DCT type(s): DCT_DCT, V_DCT, H_DCT
     TX_SEARCH_ALL_TX_TYPES, // Tx search all type(s)
 } TxSearchLevel;
+#endif
 typedef enum IfsLevel {
     IFS_OFF,  // IFS OFF
     IFS_MDS0, // IFS @ md_stage_0()
@@ -738,8 +740,30 @@ typedef enum ATTRIBUTE_PACKED {
     V_FLIPADST,
     H_FLIPADST,
     TX_TYPES,
+#if TUNE_TX_TYPE_LEVELS
+    INVALID_TX_TYPE,
+#endif
 } TxType;
 
+#if TUNE_TX_TYPE_LEVELS
+#define MAX_TX_TYPE_GROUP 6
+static const TxType tx_type_group[MAX_TX_TYPE_GROUP][TX_TYPES] = {
+    { DCT_DCT, INVALID_TX_TYPE},
+    { V_DCT, H_DCT, INVALID_TX_TYPE},
+    { ADST_ADST, INVALID_TX_TYPE},
+    { ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
+    { FLIPADST_FLIPADST, IDTX, INVALID_TX_TYPE},
+    { FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST, INVALID_TX_TYPE}
+};
+static const TxType tx_type_group_sc[MAX_TX_TYPE_GROUP][TX_TYPES] = {
+    { DCT_DCT, IDTX, INVALID_TX_TYPE},
+    { V_DCT, H_DCT, INVALID_TX_TYPE},
+    { ADST_ADST, INVALID_TX_TYPE},
+    { ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
+    { FLIPADST_FLIPADST, INVALID_TX_TYPE},
+    { FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST, INVALID_TX_TYPE}
+};
+#endif
 typedef enum ATTRIBUTE_PACKED {
     // DCT only
     EXT_TX_SET_DCTONLY,
@@ -1640,10 +1664,66 @@ typedef struct LoopFilterInfoN {
 
 //**********************************************************************************************************************//
 // cdef.h
+#if TUNE_CDEF_FILTER
+typedef enum {
+  CDEF_FULL_SEARCH,      /**< Full search */
+  CDEF_FAST_SEARCH_LVL1, /**< Search among a subset of all possible filters. */
+  CDEF_FAST_SEARCH_LVL2, /**< Search reduced subset of filters than Level 1. */
+  CDEF_FAST_SEARCH_LVL3, /**< Search reduced subset of secondary filters than
+                              Level 2. */
+  CDEF_PICK_FROM_Q,      /**< Estimate filter strength based on quantizer. */
+  CDEF_PICK_METHODS
+} CDEF_PICK_METHOD;
+#endif
 #define CDEF_STRENGTH_BITS 6
 
 #define CDEF_PRI_STRENGTHS 16
 #define CDEF_SEC_STRENGTHS 4
+#if TUNE_CDEF_FILTER
+#define REDUCED_PRI_STRENGTHS_LVL1 8
+#define REDUCED_PRI_STRENGTHS_LVL2 5
+#define REDUCED_SEC_STRENGTHS_LVL3 2
+
+#define REDUCED_TOTAL_STRENGTHS_LVL1 \
+  (REDUCED_PRI_STRENGTHS_LVL1 * CDEF_SEC_STRENGTHS)
+#define REDUCED_TOTAL_STRENGTHS_LVL2 \
+  (REDUCED_PRI_STRENGTHS_LVL2 * CDEF_SEC_STRENGTHS)
+#define REDUCED_TOTAL_STRENGTHS_LVL3 \
+  (REDUCED_PRI_STRENGTHS_LVL2 * REDUCED_SEC_STRENGTHS_LVL3)
+#define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
+
+static const int priconv_lvl1[REDUCED_PRI_STRENGTHS_LVL1] = { 0, 1, 2,  3,
+                                                              5, 7, 10, 13 };
+static const int priconv_lvl2[REDUCED_PRI_STRENGTHS_LVL2] = { 0, 2, 4, 8, 14 };
+static const int secconv_lvl3[REDUCED_SEC_STRENGTHS_LVL3] = { 0, 2 };
+static const int nb_cdef_strengths[CDEF_PICK_METHODS] = {
+  TOTAL_STRENGTHS, REDUCED_TOTAL_STRENGTHS_LVL1, REDUCED_TOTAL_STRENGTHS_LVL2,
+  REDUCED_TOTAL_STRENGTHS_LVL3, TOTAL_STRENGTHS
+};
+static INLINE void get_cdef_filter_strengths(CDEF_PICK_METHOD pick_method,
+                                             int *pri_strength,
+                                             int *sec_strength,
+                                             int strength_idx) {
+  const int tot_sec_filter = (pick_method == CDEF_FAST_SEARCH_LVL3)
+                                 ? REDUCED_SEC_STRENGTHS_LVL3
+                                 : CDEF_SEC_STRENGTHS;
+  const int pri_idx = strength_idx / tot_sec_filter;
+  const int sec_idx = strength_idx % tot_sec_filter;
+  *pri_strength = pri_idx;
+  *sec_strength = sec_idx;
+  if (pick_method == CDEF_FULL_SEARCH) return;
+
+  switch (pick_method) {
+    case CDEF_FAST_SEARCH_LVL1: *pri_strength = priconv_lvl1[pri_idx]; break;
+    case CDEF_FAST_SEARCH_LVL2: *pri_strength = priconv_lvl2[pri_idx]; break;
+    case CDEF_FAST_SEARCH_LVL3:
+      *pri_strength = priconv_lvl2[pri_idx];
+      *sec_strength = secconv_lvl3[sec_idx];
+      break;
+    default: assert(0 && "Invalid CDEF search method");
+  }
+}
+#endif
 
 // Bits of precision used for the model
 #define WARPEDMODEL_PREC_BITS 16

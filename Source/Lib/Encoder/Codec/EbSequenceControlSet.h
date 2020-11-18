@@ -212,6 +212,12 @@ typedef struct SequenceControlSet {
     int32_t  lap_enabled;
     TWO_PASS twopass;
     double   double_frame_rate;
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+    Quants quants_bd; // follows input bit depth
+    Dequants deq_bd;  // follows input bit depth
+    Quants quants_8bit;  // 8bit
+    Dequants deq_8bit; // 8bit
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

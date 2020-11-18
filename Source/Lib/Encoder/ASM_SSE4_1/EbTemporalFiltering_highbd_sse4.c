@@ -15,6 +15,7 @@
 #include "EbDefinitions.h"
 #include "EbTemporalFiltering_constants.h"
 
+#if !FIX_REMOVE_UNUSED_CODE
 // Compute (a-b)**2 for 8 pixels with size 16-bit
 static INLINE void highbd_store_dist_8(const uint16_t *a, const uint16_t *b, uint32_t *dst) {
     const __m128i zero  = _mm_setzero_si128();
@@ -1042,3 +1043,4 @@ void svt_av1_highbd_apply_temporal_filter_sse4_1(
                                         u_dist_ptr,
                                         v_dist_ptr);
 }
+#endif

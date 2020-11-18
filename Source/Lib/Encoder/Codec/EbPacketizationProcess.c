@@ -87,6 +87,11 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
 }
 
 void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+    Dequants *const dequants = pcs_ptr->hbd_mode_decision ?
+        &scs_ptr->deq_bd :
+        &scs_ptr->deq_8bit;
+#endif
     if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
         return; //skip update for 2pass VBR
     // SB Loop
@@ -124,8 +129,12 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
         svt_block_on_mutex(encode_context_ptr->rate_table_update_mutex);
 
         uint64_t ref_qindex_dequant =
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+        (uint64_t)dequants->y_dequant_qtx[frm_hdr->quantization_params.base_q_idx][1];
+#else
             (uint64_t)pcs_ptr->parent_pcs_ptr->deq_bd
                 .y_dequant_qtx[frm_hdr->quantization_params.base_q_idx][1];
+#endif
         uint64_t sad_bits_ref_dequant;
         uint64_t weight               = 0;
         if (pcs_ptr->slice_type == I_SLICE) {
@@ -150,8 +159,12 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
                                                         [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+                                    dequants->y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#endif
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
                                             ->rate_control_tables_array[qp_index]
@@ -193,8 +206,12 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .intra_sad_bits_array[pcs_ptr->temporal_layer_index]
                                                         [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+                                    dequants->y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#endif
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
                                             ->rate_control_tables_array[qp_index]
@@ -237,8 +254,12 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .sad_bits_array[pcs_ptr->temporal_layer_index]
                                                 [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+                                    dequants->y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#endif
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
                                             ->rate_control_tables_array[qp_index]
@@ -278,8 +299,12 @@ void update_rc_rate_tables(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                                 .sad_bits_array[pcs_ptr->temporal_layer_index]
                                                 [sad_interval_index] = (EbBitNumber)(
                                 ((weight * sad_bits_ref_dequant /
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+                                    dequants->y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#else
                                     pcs_ptr->parent_pcs_ptr->deq_bd
                                         .y_dequant_qtx[quantizer_to_qindex[qp_index]][1]) +
+#endif
                                     (10 - weight) *
                                         (uint32_t)encode_context_ptr
                                             ->rate_control_tables_array[qp_index]

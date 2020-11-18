@@ -1312,6 +1312,12 @@ EbErrorType tpl_mc_flow(
 }
 #endif
 
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+    int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
+    Quants *const quants, Dequants *const deq);
+#endif
+
 /* Initial Rate Control Kernel */
 
 /*********************************************************************************
@@ -1368,6 +1374,36 @@ void *initial_rate_control_kernel(void *input_ptr) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
             EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+            if (pcs_ptr->picture_number == 0) {
+                Quants *const quants_8bit = &scs_ptr->quants_8bit;
+                Dequants *const deq_8bit = &scs_ptr->deq_8bit;
+                svt_av1_build_quantizer(
+                    AOM_BITS_8,
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
+                    pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
+                    quants_8bit,
+                    deq_8bit);
+
+                if (scs_ptr->static_config.encoder_bit_depth == AOM_BITS_10)
+                {
+                    Quants *const quants_bd = &scs_ptr->quants_bd;
+                    Dequants *const deq_bd = &scs_ptr->deq_bd;
+                    svt_av1_build_quantizer(
+                        AOM_BITS_10,
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
+                        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
+                        quants_bd,
+                        deq_bd);
+                }
+            }
+#endif
 #if FEATURE_PA_ME
             if (scs_ptr->static_config.enable_tpl_la && scs_ptr->in_loop_me == 0)
             {
@@ -1596,6 +1632,10 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             update_motion_field_uniformity_over_time(
                                 encode_context_ptr, scs_ptr, pcs_ptr);
                         }
+#if FEATURE_PA_ME
+                        if (pcs_ptr->is_used_as_reference_flag)
+                        {
+#endif
                         // Get Empty Reference Picture Object
                         svt_get_empty_object(
                             scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
@@ -1615,6 +1655,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     ->reference_picture_wrapper_ptr,
                                 1);
                         }
+#if FEATURE_PA_ME
+                        }
+                        else {
+                            pcs_ptr->reference_picture_wrapper_ptr = NULL;
+                        }
+#endif
 #if !FEATURE_IN_LOOP_TPL
                         if (scs_ptr->static_config.look_ahead_distance != 0 &&
                             scs_ptr->static_config.enable_tpl_la &&

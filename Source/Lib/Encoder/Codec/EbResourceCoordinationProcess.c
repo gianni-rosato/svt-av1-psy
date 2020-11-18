@@ -1015,9 +1015,9 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index]++;
             else
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
-
+#if  !FEATURE_PA_ME
             reset_pcs_av1(pcs_ptr);
-
+#endif
             if (pcs_ptr->picture_number == 0) {
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
@@ -1093,17 +1093,30 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // Get Empty Output Results Object
             if (pcs_ptr->picture_number > 0 && (prev_pcs_wrapper_ptr != NULL)) {
+#if  FEATURE_PA_ME
+                PictureParentControlSet * ppcs_out = (PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr;
+
+                ppcs_out->end_of_sequence_flag = end_of_sequence_flag;
+                // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
+                if (ppcs_out->is_overlay && end_of_sequence_flag)
+                    ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
+
+                reset_pcs_av1(ppcs_out);
+#else
                 ((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)
                     ->end_of_sequence_flag = end_of_sequence_flag;
+#endif
                 svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
                                      &output_wrapper_ptr);
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
                 out_results_ptr->pcs_wrapper_ptr = prev_pcs_wrapper_ptr;
+#if  !FEATURE_PA_ME
                 // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
                 if (((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)->is_overlay &&
                     end_of_sequence_flag)
                     ((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)
                         ->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
+#endif
                 // Post the finished Results Object
                 svt_post_full_object(output_wrapper_ptr);
             }

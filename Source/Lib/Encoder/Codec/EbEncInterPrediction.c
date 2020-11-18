@@ -460,10 +460,18 @@ static void model_rd_with_curvfit(PictureControlSet *picture_control_set_ptr, Bl
     const int dequant_shift = 3;
     int32_t   current_q_index =
             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
 
     Dequants *const dequants = context_ptr->hbd_mode_decision ?
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+                               &scs_ptr->deq_bd :
+                               &scs_ptr->deq_8bit;
+#else
                                &picture_control_set_ptr->parent_pcs_ptr->deq_bd:
                                &picture_control_set_ptr->parent_pcs_ptr->deq_8bit;
+#endif
     int16_t         quantizer = dequants->y_dequant_q3[current_q_index][1];
 
     const int qstep = AOMMAX(quantizer >> dequant_shift, 1);
@@ -630,6 +638,7 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
 }
 
 
+#if !FEATURE_NEW_INTER_COMP_LEVELS
 static int8_t estimate_wedge_sign(PictureControlSet *  picture_control_set_ptr,
                                   ModeDecisionContext *context_ptr, const BlockSize bsize,
                                   const uint8_t *pred0, int stride0, const uint8_t *pred1,
@@ -715,6 +724,7 @@ static int8_t estimate_wedge_sign(PictureControlSet *  picture_control_set_ptr,
             ((int64_t)esq[1][3] + esq[1][1] + esq[1][2]) - ((int64_t)esq[0][3] + esq[0][1] + esq[0][2]);
     return (tl + br > 0);
 }
+#endif
 // Choose the best wedge index the specified sign
 int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
                               PictureControlSet *    picture_control_set_ptr,
@@ -758,6 +768,13 @@ int64_t pick_wedge_fixed_sign(ModeDecisionCandidate *candidate_ptr,
     return best_rd; //- RDCOST(x->rdmult, x->wedge_idx_cost[bsize][*best_wedge_index], 0);
 }
 
+#if FEATURE_NEW_INTER_COMP_LEVELS
+static void pick_interinter_wedge(PictureControlSet *     picture_control_set_ptr,
+                                  ModeDecisionContext *   context_ptr,
+                                  InterInterCompoundData *interinter_comp, const BlockSize bsize,
+                                  const uint8_t *const p0, const int16_t *const residual1,
+                                  const int16_t *const diff10) {
+#else
 static void pick_interinter_wedge(ModeDecisionCandidate * candidate_ptr,
                                   PictureControlSet *     picture_control_set_ptr,
                                   ModeDecisionContext *   context_ptr,
@@ -767,12 +784,23 @@ static void pick_interinter_wedge(ModeDecisionCandidate * candidate_ptr,
     (void)candidate_ptr;
     const int bw = block_size_wide[bsize];
     //int64_t rd;
+#endif
     int8_t wedge_index = -1;
     int8_t wedge_sign  = 0;
 
     assert(is_interinter_compound_used(COMPOUND_WEDGE, bsize));
     //TODO: OMK+CHKN to check on FIX_RATE_E_WEDGE
 
+#if FEATURE_NEW_INTER_COMP_LEVELS
+    pick_wedge(picture_control_set_ptr,
+        context_ptr,
+        bsize,
+        p0,
+        residual1,
+        diff10,
+        &wedge_sign,
+        &wedge_index);
+#else
     // Two method
     // Fast seatch method to be added  OMK
     if (context_ptr->inter_comp_ctrls.wedge_search_mode == 0){
@@ -789,7 +817,7 @@ static void pick_interinter_wedge(ModeDecisionCandidate * candidate_ptr,
                    &wedge_sign,
                    &wedge_index);
     }
-
+#endif
     interinter_comp->wedge_sign  = wedge_sign;
     interinter_comp->wedge_index = wedge_index;
 }
@@ -852,12 +880,28 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
     interinter_comp->mask_type = best_mask_type;
 }
 
+#if FEATURE_NEW_INTER_COMP_LEVELS
+void pick_interinter_mask(PictureControlSet *    picture_control_set_ptr,
+                          ModeDecisionContext *context_ptr, InterInterCompoundData *interinter_comp,
+                          const BlockSize bsize, const uint8_t *const p0, const uint8_t *const p1,
+                          const int16_t *const residual1, const int16_t *const diff10) {
+#else
 void pick_interinter_mask(ModeDecisionCandidate *candidate_ptr,
                           PictureControlSet *    picture_control_set_ptr,
                           ModeDecisionContext *context_ptr, InterInterCompoundData *interinter_comp,
                           const BlockSize bsize, const uint8_t *const p0, const uint8_t *const p1,
                           const int16_t *const residual1, const int16_t *const diff10) {
+#endif
     if (interinter_comp->type == COMPOUND_WEDGE)
+#if FEATURE_NEW_INTER_COMP_LEVELS
+        pick_interinter_wedge(picture_control_set_ptr,
+                              context_ptr,
+                              interinter_comp,
+                              bsize,
+                              p0,
+                              residual1,
+                              diff10);
+#else
         pick_interinter_wedge(candidate_ptr,
                               picture_control_set_ptr,
                               context_ptr,
@@ -867,6 +911,7 @@ void pick_interinter_mask(ModeDecisionCandidate *candidate_ptr,
                               p1,
                               residual1,
                               diff10);
+#endif
     else if (interinter_comp->type == COMPOUND_DIFFWTD)
         pick_interinter_seg(picture_control_set_ptr,
                             context_ptr,
@@ -2974,6 +3019,15 @@ void svt_av1_model_rd_from_var_lapndz(int64_t var, uint32_t n_log2, uint32_t qst
     }
 }
 
+#if FIX_REMOVE_UNUSED_CODE
+void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
+    uint32_t *rate, uint64_t *dist, uint8_t simple_model_rd_from_var) {
+
+    int32_t dequant_shift = bit_depth - 5;
+
+    // Fast approximate the modelling function.
+    if (simple_model_rd_from_var) {
+#else
 void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
                        uint32_t *rate, uint64_t *dist) {
     /* OMK (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) ? xd->bd - 5 :3;*/
@@ -2981,6 +3035,7 @@ void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, ui
 
     // Fast approximate the modelling function.
     if (0 /*cpi->sf.simple_model_rd_from_var*/) {
+#endif
         int64_t square_error = (uint64_t)sse;
         quantizer            = quantizer >> dequant_shift;
 
@@ -3071,12 +3126,19 @@ static void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
                                              md_context_ptr->blk_geom->bheight_uv);
             break;
         }
-
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+        SequenceControlSet *scs_ptr = (SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#endif
         const uint8_t current_q_index =
             picture_control_set_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
         Dequants *const dequants = md_context_ptr->hbd_mode_decision
+#if FIX_OPTIMIZE_BUILD_QUANTIZER
+            ? &scs_ptr->deq_bd
+            : &scs_ptr->deq_8bit;
+#else
             ? &picture_control_set_ptr->parent_pcs_ptr->deq_bd
             : &picture_control_set_ptr->parent_pcs_ptr->deq_8bit;
+#endif
         int16_t quantizer = dequants->y_dequant_q3[current_q_index][1];
         model_rd_from_sse(
             plane == 0 ? md_context_ptr->blk_geom->bsize : md_context_ptr->blk_geom->bsize_uv,
@@ -3084,7 +3146,12 @@ static void model_rd_for_sb(PictureControlSet *  picture_control_set_ptr,
             bit_depth,
             ROUND_POWER_OF_TWO(sse, 2 * (bit_depth - 8)),
             &rate,
+#if FIX_REMOVE_UNUSED_CODE
+            &dist,
+            0);
+#else
             &dist);
+#endif
 
         rate_sum += rate;
         dist_sum += dist;
@@ -3144,7 +3211,9 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
 };
 
 void interpolation_filter_search(PictureControlSet *          picture_control_set_ptr,
+#if !FIX_IFS
                                  EbPictureBufferDesc *        prediction_ptr,
+#endif
                                  ModeDecisionContext *        md_context_ptr,
                                  ModeDecisionCandidateBuffer *candidate_buffer_ptr, MvUnit mv_unit,
                                  EbPictureBufferDesc *ref_pic_list0,
@@ -3161,9 +3230,25 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
         md_context_ptr->full_lambda_md[EB_8_BIT_MD];
 
     InterpFilter assign_filter = SWITCHABLE;
+#if FIX_IFS
+    NeighborArrayUnit *luma_recon_neighbor_array;
+    NeighborArrayUnit *cb_recon_neighbor_array;
+    NeighborArrayUnit *cr_recon_neighbor_array;
+    if (!hbd_mode_decision) {
+        luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array;
+        cb_recon_neighbor_array = md_context_ptr->cb_recon_neighbor_array;
+        cr_recon_neighbor_array = md_context_ptr->cr_recon_neighbor_array;
+    }
+    else {
+        luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array16bit;
+        cb_recon_neighbor_array = md_context_ptr->cb_recon_neighbor_array16bit;
+        cr_recon_neighbor_array = md_context_ptr->cr_recon_neighbor_array16bit;
+    }
+#endif
 
     if (cm->interp_filter != SWITCHABLE) assign_filter = cm->interp_filter;
 
+#if !FEATURE_OPT_IFS
     //set_default_interp_filters(mbmi, assign_filter);
     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters = //EIGHTTAP_REGULAR ;
                      av1_broadcast_interp_filter(av1_unswitchable_filter(assign_filter));
@@ -3212,15 +3297,21 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     int64_t rd = RDCOST(full_lambda_divided, switchable_rate + tmp_rate, tmp_dist);
-
+#endif
     if (assign_filter == SWITCHABLE) {
+#if FEATURE_OPT_IFS
+    int32_t switchable_rate = 0;
+    uint64_t rd = (uint64_t)~0;
+#endif
         // do interp_filter search
         if (av1_is_interp_needed(
                 candidate_buffer_ptr,
                 picture_control_set_ptr,
                 md_context_ptr->blk_geom->bsize) /*&& av1_is_interp_search_needed(xd)*/) {
             const int filter_set_size = DUAL_FILTER_SET_SIZE;
+#if !FEATURE_OPT_IFS
             int32_t       best_in_temp    = 0;
+#endif
             uint32_t      best_filters    = 0; // mbmi->interp_filters;
             if (md_context_ptr->interpolation_search_level &&
                 picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter) {
@@ -3228,14 +3319,57 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                 // default to (R,R): EIGHTTAP_REGULARxEIGHTTAP_REGULAR
                 int best_dual_mode = 0;
                 // Find best of {R}x{R,Sm,Sh}
+#if FEATURE_OPT_IFS
+                for (int i = 0; i < filter_set_size; ++i) {
+#else
                 // EIGHTTAP_REGULAR mode is calculated beforehand
                 for (int i = 1; i < SWITCHABLE_FILTERS; ++i) {
+#endif
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                                      (InterpFilter)av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                                            (InterpFilter)filter_sets[i][1]);
 
                     const int32_t tmp_rs = svt_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
-
+#if FIX_IFS
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->blk_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+                        (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
+                            .encoder_bit_depth > EB_8BIT)
+                        ? 0
+                        : candidate_buffer_ptr->candidate_ptr->motion_mode,
+                        1,
+                        md_context_ptr,
+                        candidate_buffer_ptr->candidate_ptr->compound_idx,
+                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+                        &md_context_ptr->sb_ptr->tile_info,
+                        luma_recon_neighbor_array,
+                        cb_recon_neighbor_array,
+                        cr_recon_neighbor_array,
+                        (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
+                             .encoder_bit_depth > EB_8BIT)
+                            ? 0
+                            : candidate_buffer_ptr->candidate_ptr
+                                  ->is_interintra_used,
+                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
+                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
+                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
+                        md_context_ptr->blk_origin_x,
+                        md_context_ptr->blk_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        candidate_buffer_ptr->prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+                        use_uv,
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3267,22 +3401,33 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if FEATURE_OPT_IFS
+                    const uint64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < rd) {
                         best_dual_mode  = i;
                         rd              = tmp_rd;
                         switchable_rate = tmp_rs;
                         best_filters = /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters;
+#if !FEATURE_OPT_IFS
                         best_in_temp = !best_in_temp;
+#endif
                     }
                 }
 
@@ -3295,7 +3440,45 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     const int32_t tmp_rs = svt_av1_get_switchable_rate(
                         candidate_buffer_ptr, cm, md_context_ptr);
-
+#if FIX_IFS
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->blk_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+                        (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
+                            .encoder_bit_depth > EB_8BIT)
+                        ? 0
+                        : candidate_buffer_ptr->candidate_ptr->motion_mode,
+                        1,
+                        md_context_ptr,
+                        candidate_buffer_ptr->candidate_ptr->compound_idx,
+                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+                        &md_context_ptr->sb_ptr->tile_info,
+                        luma_recon_neighbor_array,
+                        cb_recon_neighbor_array,
+                        cr_recon_neighbor_array,
+                        (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
+                             .encoder_bit_depth > EB_8BIT)
+                            ? 0
+                            : candidate_buffer_ptr->candidate_ptr->is_interintra_used,
+                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
+                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
+                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
+                        md_context_ptr->blk_origin_x,
+                        md_context_ptr->blk_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        candidate_buffer_ptr->prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+                        (i == 0) ? md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE : use_uv,
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3327,26 +3510,41 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             md_context_ptr->blk_geom->origin_y,
                             use_uv,
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if FEATURE_OPT_IFS
+                    const uint64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
                         switchable_rate = tmp_rs;
                         best_filters = /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters;
+#if !FEATURE_OPT_IFS
                         best_in_temp = !best_in_temp;
+#endif
                     }
                 }
             } else {
+#if FEATURE_OPT_IFS
+            for (int i = filter_set_size - 1; i >= 0; --i) {
+#else
                 // EIGHTTAP_REGULAR mode is calculated beforehand
                 for (int i = 1; i < filter_set_size; ++i) {
+#endif
                     if (/*cm->seq_params.enable_dual_filter*/ picture_control_set_ptr
                                                                       ->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter == 0)
                         if (filter_sets[i][0] != filter_sets[i][1]) continue;
@@ -3357,7 +3555,45 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
                     const int32_t tmp_rs = svt_av1_get_switchable_rate(
                         candidate_buffer_ptr, cm, md_context_ptr);
-
+#if FIX_IFS
+                    av1_inter_prediction(
+                        picture_control_set_ptr,
+                        candidate_buffer_ptr->candidate_ptr->interp_filters,
+                        md_context_ptr->blk_ptr,
+                        candidate_buffer_ptr->candidate_ptr->ref_frame_type,
+                        &mv_unit,
+                        candidate_buffer_ptr->candidate_ptr->use_intrabc,
+                        (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
+                            .encoder_bit_depth > EB_8BIT)
+                        ? 0
+                        : candidate_buffer_ptr->candidate_ptr->motion_mode,
+                        1,
+                        md_context_ptr,
+                        candidate_buffer_ptr->candidate_ptr->compound_idx,
+                        &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+                        &md_context_ptr->sb_ptr->tile_info,
+                        luma_recon_neighbor_array,
+                        cb_recon_neighbor_array,
+                        cr_recon_neighbor_array,
+                        (picture_control_set_ptr->parent_pcs_ptr->scs_ptr->static_config
+                             .encoder_bit_depth > EB_8BIT)
+                            ? 0
+                            : candidate_buffer_ptr->candidate_ptr->is_interintra_used,
+                        candidate_buffer_ptr->candidate_ptr->interintra_mode,
+                        candidate_buffer_ptr->candidate_ptr->use_wedge_interintra,
+                        candidate_buffer_ptr->candidate_ptr->interintra_wedge_index,
+                        md_context_ptr->blk_origin_x,
+                        md_context_ptr->blk_origin_y,
+                        md_context_ptr->blk_geom->bwidth,
+                        md_context_ptr->blk_geom->bheight,
+                        ref_pic_list0,
+                        ref_pic_list1,
+                        candidate_buffer_ptr->prediction_ptr,
+                        md_context_ptr->blk_geom->origin_x,
+                        md_context_ptr->blk_geom->origin_y,
+                        (i == 0) ? md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE : use_uv,
+                        hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#else
                     av1_inter_prediction(
                             picture_control_set_ptr,
                             candidate_buffer_ptr->candidate_ptr->interp_filters,
@@ -3387,24 +3623,42 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                             prediction_ptr,
                             md_context_ptr->blk_geom->origin_x,
                             md_context_ptr->blk_geom->origin_y,
+#if FEATURE_OPT_IFS
+                            (i == 0) ? md_context_ptr->chroma_level <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE : use_uv,
+#else
                             use_uv,
+#endif
                             hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#endif
 
                     model_rd_for_sb(picture_control_set_ptr,
+#if FIX_IFS
+                                    candidate_buffer_ptr->prediction_ptr,
+#else
                                     prediction_ptr,
+#endif
                                     md_context_ptr,
                                     0,
                                     num_planes - 1,
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if FEATURE_OPT_IFS
+                    const uint64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     const int64_t tmp_rd = RDCOST(full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
                         switchable_rate = tmp_rs;
                         best_filters = /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters;
+#if !FEATURE_OPT_IFS
                         best_in_temp = !best_in_temp;
+#endif
+#if FEATURE_OPT_IFS
+                        md_context_ptr->ifs_is_regular_last = (best_filters == 0) ? 1 : 0;
+#endif
                     }
                 }
             }
@@ -3412,6 +3666,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters = best_filters;
         } else {
             candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
+#if FEATURE_OPT_IFS
+            switchable_rate = svt_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
+#endif
         }
         // Update fast_luma_rate to take into account switchable_rate
         candidate_buffer_ptr->candidate_ptr->fast_luma_rate += switchable_rate;
@@ -6287,6 +6544,16 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
 void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                                 ModeDecisionContext *  context_ptr,
                                 ModeDecisionCandidate *candidate_ptr) {
+#if FEATURE_NEW_INTER_COMP_LEVELS
+    pick_interinter_mask(picture_control_set_ptr,
+                         context_ptr,
+                         &candidate_ptr->interinter_comp,
+                         context_ptr->blk_geom->bsize,
+                         context_ptr->pred0,
+                         context_ptr->pred1,
+                         context_ptr->residual1,
+                         context_ptr->diff10);
+#else
     pick_interinter_mask(candidate_ptr,
                          picture_control_set_ptr,
                          context_ptr,
@@ -6296,6 +6563,7 @@ void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                          context_ptr->pred1,
                          context_ptr->residual1,
                          context_ptr->diff10);
+#endif
 }
 
 EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionContext *md_context_ptr,
@@ -6442,6 +6710,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 
         return return_error;
     }
+#if FEATURE_OPT_IFS
+    md_context_ptr->ifs_is_regular_last = 0;
+#endif
     if (md_context_ptr->interpolation_search_level != IFS_OFF) {
         if (md_context_ptr->md_staging_skip_interpolation_search == EB_FALSE) {
             // ON for 8x8 and above
@@ -6463,7 +6734,13 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                                 ->reference_picture;
                 }
                 interpolation_filter_search(picture_control_set_ptr,
+#if !FIX_IFS
+#if FEATURE_OPT_IFS
+                                           candidate_buffer_ptr->prediction_ptr,
+#else
                                             md_context_ptr->prediction_ptr_temp,
+#endif
+#endif
                                             md_context_ptr,
                                             candidate_buffer_ptr,
                                             mv_unit,
@@ -6503,7 +6780,17 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         cb_recon_neighbor_array   = md_context_ptr->cb_recon_neighbor_array16bit;
         cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
     }
-
+#if FEATURE_OPT_IFS
+#if FIX_IFS
+#if FEATURE_OPT_TF
+    if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT || !md_context_ptr->ifs_is_regular_last)
+#else
+    if (!md_context_ptr->ifs_is_regular_last)
+#endif
+#else
+    if (!md_context_ptr->ifs_is_regular_last || candidate_buffer_ptr->candidate_ptr->motion_mode != SIMPLE_TRANSLATION || candidate_ptr->is_interintra_used)
+#endif
+#endif
     av1_inter_prediction(
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,

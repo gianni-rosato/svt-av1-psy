@@ -26,6 +26,9 @@
 #include "EbEncIntraPrediction.h"
 #include "aom_dsp_rtcd.h"
 #include "EbMdRateEstimation.h"
+#if FEATURE_OPT_RDOQ
+#include "EbFullLoop.h"
+#endif
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 
@@ -385,7 +388,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_Y],
             PLANE_TYPE_Y,
+#if FEATURE_PARTIAL_FREQUENCY
+            context_ptr->md_context->pf_ctrls.pf_shape);
+#else
             DEFAULT_SHAPE);
+#endif
 
         int32_t seg_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
                              ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
@@ -539,7 +546,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
+#if FEATURE_PARTIAL_FREQUENCY
+            context_ptr->md_context->pf_ctrls.pf_shape);
+#else
             DEFAULT_SHAPE);
+#endif
 
         int32_t seg_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
                              ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
@@ -591,7 +602,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             EB_8BIT,
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
+#if FEATURE_PARTIAL_FREQUENCY
+            context_ptr->md_context->pf_ctrls.pf_shape);
+#else
             DEFAULT_SHAPE);
+#endif
         blk_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
             sb_ptr->pcs_ptr,
             context_ptr->md_context,
@@ -766,7 +781,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_Y],
                 PLANE_TYPE_Y,
+#if FEATURE_PARTIAL_FREQUENCY
+                context_ptr->md_context->pf_ctrls.pf_shape);
+#else
                 DEFAULT_SHAPE);
+#endif
 
             int32_t seg_qp =
                 pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
@@ -919,7 +938,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
+#if FEATURE_PARTIAL_FREQUENCY
+                context_ptr->md_context->pf_ctrls.pf_shape);
+#else
                 DEFAULT_SHAPE);
+#endif
             int32_t seg_qp =
                 pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
                     ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
@@ -971,7 +994,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 bit_depth,
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
+#if FEATURE_PARTIAL_FREQUENCY
+                context_ptr->md_context->pf_ctrls.pf_shape);
+#else
                 DEFAULT_SHAPE);
+#endif
 
             blk_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
                 sb_ptr->pcs_ptr,
@@ -1500,7 +1527,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              PICTURE_BUFFER_DESC_LUMA_MASK,
                                             eobs[context_ptr->txb_itr]);
 
+#if TUNE_CDF
+        if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
         if (pcs_ptr->update_cdf) {
+#endif
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                 context_ptr->md_context->candidate_buffer_ptr_array;
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -1815,7 +1846,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                              PICTURE_BUFFER_DESC_CHROMA_MASK,
                                              eobs[context_ptr->txb_itr]);
 
+#if TUNE_CDF
+        if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
         if (pcs_ptr->update_cdf) {
+#endif
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                 context_ptr->md_context->candidate_buffer_ptr_array;
             ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -2251,7 +2286,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
         }
     }
 
+#if !TUNE_CDF
     uint8_t  allow_update_cdf = pcs_ptr->update_cdf;
+#endif
     uint32_t final_blk_itr    = 0;
     // CU Loop
     uint32_t blk_it = 0;
@@ -2267,7 +2304,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
         const BlockGeom *blk_geom = context_ptr->blk_geom = get_blk_geom_mds(blk_it);
         sb_ptr->cu_partition_array[blk_it] = context_ptr->md_context->md_blk_arr_nsq[blk_it].part;
+#if TUNE_CDF
+        if (pcs_ptr->cdf_ctrl.update_se) {
+#else
         if (pcs_ptr->update_cdf) {
+#endif
             blk_ptr->av1xd->tile_ctx = &pcs_ptr->ec_ctx_array[sb_addr];
             // Update the partition stats
             update_part_stats(pcs_ptr,
@@ -2601,7 +2642,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                                                                  PICTURE_BUFFER_DESC_LUMA_MASK,
                                     eobs[context_ptr->txb_itr]);
 
+#if TUNE_CDF
+                                if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
                                 if (allow_update_cdf) {
+#endif
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                         context_ptr->md_context->candidate_buffer_ptr_array;
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3102,7 +3147,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     COMPONENT_LUMA);
                                 TxSize tx_size =
                                     blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr];
+#if FEATURE_OPT_RDOQ
+                                int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
+#else
                                 int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale(tx_size)) * 2;
+#endif
                                 y_tu_full_distortion[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(
                                     y_tu_full_distortion[DIST_CALC_RESIDUAL], shift);
                                 y_tu_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(
@@ -3201,7 +3250,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                 y_full_distortion[DIST_CALC_PREDICTION] +=
                                     y_tu_full_distortion[DIST_CALC_PREDICTION];
 
+#if TUNE_CDF
+                                if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
                                 if (allow_update_cdf) {
+#endif
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                         context_ptr->md_context->candidate_buffer_ptr_array;
                                     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3421,7 +3474,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                 eobs[context_ptr->txb_itr]);
 
 
+#if TUNE_CDF
+                            if (pcs_ptr->cdf_ctrl.update_coef) {
+#else
                             if (allow_update_cdf) {
+#endif
                                 ModeDecisionCandidateBuffer **candidate_buffer_ptr_array_base =
                                     context_ptr->md_context->candidate_buffer_ptr_array;
                                 ModeDecisionCandidateBuffer **candidate_buffer_ptr_array =
@@ -3724,7 +3781,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                   context_ptr->blk_origin_y,
                                   blk_geom,
                                   pcs_ptr);
+#if TUNE_CDF
+                if (pcs_ptr->cdf_ctrl.update_se) {
+#else
                 if (pcs_ptr->update_cdf) {
+#endif
                     // Update the partition Neighbor Array
                     PartitionContext partition;
                     partition.above = partition_context_lookup[blk_geom->bsize].above;

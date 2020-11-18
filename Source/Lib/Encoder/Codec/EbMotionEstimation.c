@@ -2187,11 +2187,15 @@ void integer_search_sb(
   using previous stage ME results (Integer Search) for each reference
   frame. keep only the references that are close to the best reference.
 */
+#if FEATURE_INTER_INTRA_LEVELS
+void me_prune_ref(MeContext* context_ptr) {
+#else
 void me_prune_ref(
     PictureParentControlSet   *pcs_ptr,
     uint32_t                   sb_index,
     MeContext                 *context_ptr)
 {
+#endif
     HmeResults sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
     uint8_t list_index, ref_pic_index;
@@ -2259,10 +2263,13 @@ void me_prune_ref(
         }
     }
     uint64_t best = sorted[0][0].hme_sad;//is this always the best?
+#if !FEATURE_INTER_INTRA_LEVELS
     uint8_t counter = 0;
 #define NUMBER_REF_INTER_COMP   2
+#endif
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
+#if !FEATURE_INTER_INTRA_LEVELS
 #if FEATURE_INL_ME
             if (context_ptr->me_type != ME_MCTF)
 #else
@@ -2278,6 +2285,7 @@ void me_prune_ref(
                 counter++;
 
             }
+#endif
             // Prune references based on ME sad
             uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
@@ -3277,7 +3285,9 @@ EbErrorType motion_estimate_sb(
             if(context_ptr->me_type != ME_MCTF && context_ptr->me_type != ME_TPL)
 #endif
 #endif
+#if !FEATURE_INTER_INTRA_LEVELS
                 pcs_ptr->pa_me_data->me_results[sb_index]->do_comp[li][ri] = 1;
+#endif
             context_ptr->hme_results[li][ri].list_i   = li;
             context_ptr->hme_results[li][ri].ref_i    = ri;
             context_ptr->hme_results[li][ri].do_ref   = 1;
@@ -3301,7 +3311,11 @@ EbErrorType motion_estimate_sb(
     integer_search_sb(pcs_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr, input_ptr);
     // prune the refrence frames
     if (prune_ref && context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning) {
+#if FEATURE_INTER_INTRA_LEVELS
+        me_prune_ref(context_ptr);
+#else
         me_prune_ref(pcs_ptr, sb_index, context_ptr);
+#endif
     }
 
 #if !FEATURE_INL_ME

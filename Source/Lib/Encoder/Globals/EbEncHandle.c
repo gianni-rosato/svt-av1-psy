@@ -545,7 +545,7 @@ EbErrorType load_default_buffer_configuration_settings(
 
 #if FEATURE_PA_ME
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
-        min_ref = 24;
+        min_ref = 18;
 #else
         //References. Min to sustain flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 10 needed for curr mini-GoP
         min_ref = 17;
@@ -3049,10 +3049,17 @@ static EbErrorType verify_settings(
     }
 
     // CDEF
+#if TUNE_CDEF_FILTER
+    if (config->cdef_level > 4 || config->cdef_level < -1) {
+        SVT_LOG("Error instance %u: Invalid CDEF level [0 - 4, -1 for auto], your input: %d\n", channel_number + 1, config->cdef_level);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->cdef_level > 5 || config->cdef_level < -1) {
         SVT_LOG("Error instance %u: Invalid CDEF level [0 - 5, -1 for auto], your input: %d\n", channel_number + 1, config->cdef_level);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     // Restoration Filtering
     if (config->enable_restoration_filtering != 0 && config->enable_restoration_filtering != 1 && config->enable_restoration_filtering != -1) {

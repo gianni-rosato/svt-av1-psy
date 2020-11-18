@@ -747,10 +747,15 @@ EbErrorType generate_mini_gop_rps(
     return return_error;
 }
 
+#if FEATURE_OPT_TF
+void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
+
+    TfControls *tf_ctrls = &pcs_ptr->tf_ctrls;
+#else
 void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
 
     TfControls *tf_ctrls = &context_ptr->tf_ctrls;
-
+#endif
     switch (tf_level)
     {
     case 0:
@@ -760,16 +765,59 @@ void set_tf_controls(PictureDecisionContext *context_ptr, uint8_t tf_level) {
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 7;
         tf_ctrls->noise_based_window_adjust = 1;
+#if FEATURE_OPT_TF
+        tf_ctrls->hp = 1;
+        tf_ctrls->chroma = 1;
+#endif
+#if FEATURE_OPT_TF
+        tf_ctrls->block_32x32_16x16_th = 0;
+#endif
         break;
+#if FEATURE_OPT_TF
     case 2:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
         tf_ctrls->noise_based_window_adjust = 1;
+#if FEATURE_OPT_TF
+        tf_ctrls->hp = 1;
+        tf_ctrls->chroma = 1;
+#endif
+#if FEATURE_OPT_TF
+        tf_ctrls->block_32x32_16x16_th = 0;
+#endif
         break;
+    case 3:
+#else
+    case 2:
+#endif
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 1;
+#if FEATURE_OPT_TF
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 1;
+#endif
+#if FEATURE_OPT_TF
+        tf_ctrls->block_32x32_16x16_th = 0;
+#endif
+        break;
+
+#if FEATURE_OPT_TF
+    case 4:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 1;
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+#if FEATURE_OPT_TF
+        tf_ctrls->block_32x32_16x16_th = 20 * 32 * 32;
+#endif
+#else
     case 3:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
         tf_ctrls->noise_based_window_adjust = 0;
+#endif
         break;
     default:
         assert(0);
@@ -901,7 +949,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (scs_ptr->static_config.palette_level == -1)//auto mode; if not set by cfg
             pcs_ptr->palette_level =
             (frm_hdr->allow_screen_content_tools) &&
+#if TUNE_PALETTE_LEVEL
+            (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M9)
+#else
             ((pcs_ptr->enc_mode <= ENC_M3) || (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M9))
+#endif
 
                 ? 6 : 0;
         else
@@ -923,17 +975,28 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // CDEF Level                                   Settings
     // 0                                            OFF
+#if TUNE_CDEF_FILTER
+    // 1                                            FULL_SEARCH
+    // 2                                            CDEF_FAST_SEARCH_LVL1
+    // 3                                            CDEF_FAST_SEARCH_LVL2
+    // 4                                            CDEF_FAST_SEARCH_LVL3
+#else
     // 1                                            16 step refinement
     // 2                                            16 step refinement
     // 3                                            8 step refinement
     // 4                                            4 step refinement
     // 5                                            1 step refinement
+#endif
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
             if (pcs_ptr->enc_mode <= ENC_M4)
                     pcs_ptr->cdef_level = 1;
                 else
+#if TUNE_CDEF_FILTER
+                    pcs_ptr->cdef_level = 4;
+#else
                     pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
+#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
@@ -1099,6 +1162,14 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tpl_trailing_frame_count = 0;
 #endif
     pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
+#if TUNE_TPL_TOWARD_CHROMA
+    // Tune TPL for better chroma.Only for 240P. 0 is OFF
+#if TUNE_CHROMA_SSIM
+    pcs_ptr->tune_tpl_for_chroma = 1;
+#else
+    pcs_ptr->tune_tpl_for_chroma = 0;
+#endif
+#endif
     return return_error;
 }
 
@@ -3832,12 +3903,38 @@ void mctf_frame(
             else
                 context_ptr->tf_level = 0;
         }
+#if FEATURE_OPT_TF
+        else if (pcs_ptr->enc_mode <= ENC_M5) {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 2;
+            else
+                context_ptr->tf_level = 0;
+        }
+        else if (pcs_ptr->enc_mode <= ENC_M7) {
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 3;
+            else
+                context_ptr->tf_level = 0;
+        }
+        else {
+#if FEATURE_OPT_TF
+            if (pcs_ptr->temporal_layer_index == 0)
+#else
+            if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+#endif
+                context_ptr->tf_level = 4;
+            else
+                context_ptr->tf_level = 0;
+
+        }
+#else
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 2;
             else
                 context_ptr->tf_level = 0;
         }
+#endif
         }
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
@@ -3848,9 +3945,14 @@ void mctf_frame(
     }
     else
         context_ptr->tf_level = 0;
+#if FEATURE_OPT_TF
+    set_tf_controls(pcs_ptr, context_ptr->tf_level);
+    if (pcs_ptr->tf_ctrls.enabled) {
+#else
     set_tf_controls(context_ptr, context_ptr->tf_level);
 
     if (context_ptr->tf_ctrls.enabled) {
+#endif
         derive_tf_window_params(
             scs_ptr,
             scs_ptr->encode_context_ptr,
@@ -4011,6 +4113,9 @@ void send_picture_out(
 
 
     if (scs->static_config.look_ahead_distance == 0) {
+#if FEATURE_PA_ME
+        if (pcs->is_used_as_reference_flag) {
+#endif
         EbObjectWrapper* reference_picture_wrapper;
         // Get Empty Reference Picture Object
         svt_get_empty_object(
@@ -4019,6 +4124,11 @@ void send_picture_out(
         pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
         // Give the new Reference a nominal live_count of 1
         svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+#if FEATURE_PA_ME
+        }else {
+            pcs->reference_picture_wrapper_ptr = NULL;
+        }
+#endif
 #if TUNE_INL_ME_RECON_INPUT
         if (pcs->is_used_as_reference_flag) {
             EbReferenceObject *reference_object =
@@ -4217,7 +4327,9 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->height,
             central_picture_ptr->stride_y,
             encoder_bit_depth);
-
+#if FEATURE_OPT_TF
+        if (pcs_ptr->tf_ctrls.chroma) {
+#endif
         noise_levels[1] = estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
             (central_picture_ptr->width >> 1),
             (central_picture_ptr->height >> 1),
@@ -4229,6 +4341,9 @@ EbErrorType derive_tf_window_params(
             (central_picture_ptr->height >> 1),
             central_picture_ptr->stride_cb,
             encoder_bit_depth);
+#if FEATURE_OPT_TF
+        }
+#endif
 
     }
     else {
@@ -4248,7 +4363,9 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->width,
             central_picture_ptr->height,
             central_picture_ptr->stride_y);
-
+#if FEATURE_OPT_TF
+        if (pcs_ptr->tf_ctrls.chroma) {
+#endif
         noise_levels[1] = estimate_noise(buffer_u, // U
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
@@ -4258,6 +4375,9 @@ EbErrorType derive_tf_window_params(
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
             central_picture_ptr->stride_cr);
+#if FEATURE_OPT_TF
+        }
+#endif
     }
 
     // Adjust number of filtering frames based on noise and quantization factor.
@@ -4267,7 +4387,11 @@ EbErrorType derive_tf_window_params(
     // we will not change the number of frames for key frame filtering, which is
     // to avoid visual quality drop.
     int adjust_num = 0;
+#if FEATURE_OPT_TF
+    if (pcs_ptr->tf_ctrls.noise_based_window_adjust) {
+#else
     if (context_ptr->tf_ctrls.noise_based_window_adjust) {
+#endif
     if (noise_levels[0] < 0.5) {
         adjust_num = 6;
     }
@@ -4278,7 +4402,11 @@ EbErrorType derive_tf_window_params(
         adjust_num = 2;
     }
     }
+#if FEATURE_OPT_TF
+    int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, pcs_ptr->tf_ctrls.window_size + adjust_num);
+#else
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, context_ptr->tf_ctrls.window_size + adjust_num);
+    #endif
 #if FEATURE_NEW_DELAY
     (void)out_stride_diff64;
     if (is_delayed_intra(pcs_ptr)) {

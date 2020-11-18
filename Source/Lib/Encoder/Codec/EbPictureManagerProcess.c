@@ -755,14 +755,14 @@ void *picture_manager_kernel(void *input_ptr) {
                         encode_context_ptr->app_callback_ptr,
                         EB_ENC_PM_ERROR6);
                 }
-
+#if  !FEATURE_PA_ME
                 // Release the Reference Buffer once we know it is not a reference
                 if (pcs_ptr->is_used_as_reference_flag == EB_FALSE) {
                     // Release the nominal live_count value
                     svt_release_object(pcs_ptr->reference_picture_wrapper_ptr);
                     pcs_ptr->reference_picture_wrapper_ptr = (EbObjectWrapper *)NULL;
                 }
-
+#endif
             break;
 
         case EB_PIC_REFERENCE:
