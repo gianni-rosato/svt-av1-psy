@@ -19,6 +19,10 @@ git --no-pager grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' &&
 echo "Checking EOF for newlines" >&2
 git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git master && FETCH_HEAD=FETCH_HEAD || FETCH_HEAD=master
 while read -r file; do
+    if ! test -f "$file"; then
+        echo "Ignoring folder or not found file: '$file'"
+        continue
+    fi
     if test -n "$(tail -c1 "$file")"; then
         echo "No newline at end of $file"
         ret=1
