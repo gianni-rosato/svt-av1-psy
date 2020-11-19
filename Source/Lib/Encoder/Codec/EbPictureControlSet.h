@@ -393,7 +393,6 @@ typedef struct PictureControlSet {
 
     int32_t   mi_stride;
     EbReflist colocated_pu_ref_list;
-    EbBool    is_low_delay;
     EbEncMode enc_mode;
     int32_t     cdef_preset[MAX_TILE_CNTS][4];
     WienerInfo  wiener_info[MAX_TILE_CNTS][MAX_MB_PLANE];

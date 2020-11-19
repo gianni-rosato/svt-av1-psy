@@ -1251,12 +1251,6 @@ void *picture_manager_kernel(void *input_ptr) {
                         // Error resilience related
                         child_pcs_ptr->colocated_pu_ref_list = REF_LIST_0; // to be modified
 
-                        child_pcs_ptr->is_low_delay =
-                            (EbBool)(child_pcs_ptr->parent_pcs_ptr->pred_struct_ptr
-                                         ->pred_struct_entry_ptr_array[child_pcs_ptr->parent_pcs_ptr
-                                                                           ->pred_struct_index]
-                                         ->positive_ref_pics_total_count == 0);
-
                         // Rate Control
                         child_pcs_ptr->dif_blk_delta_qp_depth =
                             (uint8_t)entry_scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2 : 3;

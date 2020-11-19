@@ -89,52 +89,6 @@ typedef struct PredictionStructureEntry {
     uint32_t      temporal_layer_index;
     uint32_t      decode_order;
     EbBool        is_referenced;
-
-    // High-level RPS
-    EbBool   short_term_rps_in_sps_flag;
-    uint32_t short_term_rps_in_sps_index;
-    EbBool   inter_rps_prediction_flag;
-    EbBool   long_term_rps_present_flag;
-    uint32_t gop_position_least_significant_bits;
-
-    // Predicted Short-Term RPS
-    uint32_t delta_rps_index_minus1;
-    uint32_t absolute_delta_rps_minus1;
-    uint32_t delta_rps_sign;
-    EbBool   used_by_curr_pic_flag[MAX_NUM_OF_REF_PICS_TOTAL];
-    EbBool   used_by_future_pic_flag[MAX_NUM_OF_REF_PICS_TOTAL];
-    // Non-Predicted Short-Term RPS
-    uint32_t negative_ref_pics_total_count;
-    uint32_t positive_ref_pics_total_count;
-    uint32_t delta_negative_gop_pos_minus1[MAX_NUM_OF_NEGATIVE_REF_PICS];
-    uint32_t delta_positive_gop_pos_minus1[MAX_NUM_OF_POSITIVE_REF_PICS];
-    EbBool   used_by_negative_curr_pic_flag[MAX_NUM_OF_NEGATIVE_REF_PICS];
-    EbBool   used_by_positive_curr_pic_flag[MAX_NUM_OF_POSITIVE_REF_PICS];
-
-    // Long-Term RPS
-    uint32_t long_term_ref_pics_total_count;
-    uint32_t delta_gop_poslsb[MAX_NUM_OF_REF_PICS_TOTAL];
-    EbBool   delta_gop_pos_msb_present_flag[MAX_NUM_OF_REF_PICS_TOTAL];
-    uint32_t delta_gop_pos_msb_minus1[MAX_NUM_OF_REF_PICS_TOTAL];
-    EbBool   used_by_lt_curr_pic_flag_array[MAX_NUM_OF_REF_PICS_TOTAL];
-    // List Construction
-    EbBool  ref_pics_override_total_count_flag;
-    int32_t ref_pics_list0_total_count_minus1;
-    int32_t ref_pics_list1_total_count_minus1;
-    EbBool  lists_modification_present_flag;
-    EbBool  restricted_ref_pic_lists_flag; // Same list enable flag (if set,
-        //   it implies all slices of the
-        //   same type in the same picture
-        //   have identical lists)
-
-    // List Modification
-    // *Note - This should probably be moved to the slice header since its a dynamic control - JMJ Jan 2, 2013
-    EbBool   list0_modification_flag;
-    EbBool   list1_modification_flag;
-    uint32_t list0_mod_index[MAX_NUM_OF_REF_PICS_TOTAL];
-    uint32_t list1_mod_index[MAX_NUM_OF_REF_PICS_TOTAL];
-
-    // Lists Combination (STUB)
 } PredictionStructureEntry;
 
 /************************************************
@@ -155,13 +109,6 @@ typedef struct PredictionStructure {
     uint32_t leading_pic_index;
     uint32_t init_pic_index;
     uint32_t steady_state_index;
-
-    // RPS Related Entries
-    EbBool   restricted_ref_pic_lists_enable_flag;
-    EbBool   lists_modification_enable_flag;
-    EbBool   long_term_enable_flag;
-    uint32_t default_ref_pics_list0_total_count_minus1;
-    uint32_t default_ref_pics_list1_total_count_minus1;
 
     //private use only
     int32_t * decode_order_table;
