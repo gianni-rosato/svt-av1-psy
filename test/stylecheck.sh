@@ -8,13 +8,13 @@ if ! type git > /dev/null 2>&1; then
 fi
 
 echo "Checking for tabs" >&2
-git grep -InP --heading "\t" -- . ':!third_party/**/*' && ret=1
+git --no-pager grep -InP --heading "\t" -- . ':!third_party/**/*' && ret=1
 
 echo "Checking for carriage returns" >&2
-git grep -InP --heading "\r" -- . ':!third_party/**/*' && ret=1
+git --no-pager grep -InP --heading "\r" -- . ':!third_party/**/*' && ret=1
 
 echo "Checking for trailing spaces" >&2
-git grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' && ret=1
+git --no-pager grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' && ret=1
 
 echo "Checking EOF for newlines" >&2
 git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git master && FETCH_HEAD=FETCH_HEAD || FETCH_HEAD=master
