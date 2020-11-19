@@ -2,6 +2,11 @@
 
 set -e
 
+if ! type git > /dev/null 2>&1; then
+    echo "ERROR: git not found, can't continue" >&2
+    exit 1
+fi
+
 echo "Checking for tabs" >&2
 git grep -InP --heading "\t" -- . ':!third_party/**/*' && ret=1
 
@@ -10,11 +15,6 @@ git grep -InP --heading "\r" -- . ':!third_party/**/*' && ret=1
 
 echo "Checking for trailing spaces" >&2
 git grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' && ret=1
-
-if ! type git > /dev/null 2>&1; then
-    echo "ERROR: git not found, can't continue" >&2
-    exit 1
-fi
 
 echo "Checking EOF for newlines" >&2
 git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git master && FETCH_HEAD=FETCH_HEAD || FETCH_HEAD=master
