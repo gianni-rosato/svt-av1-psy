@@ -152,7 +152,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **FrameRateDenominator** | --fps-denom | [0 - 2^64 -1] | 0 | Frame rate denominator e.g. 100 |
 | **EncoderBitDepth** | --input-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **Encoder16BitPipeline** | --16bit-pipeline | [0 , 1] | 0 | Bit depth for enc-dec(0: lbd[default], 1: hbd) |
-| **HierarchicalLevels** | --hierarchical-levels | [3 - 4] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 3 == > 7B pyramid, 4 == > 15B Pyramid) |
+| **HierarchicalLevels** | --hierarchical-levels | [0 - 5] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 0 == > 0B pyramid, 1 == > 1B pyramid, 2 == > 3B pyramid, 3 == > 7B pyramid, 4 == > 15B Pyramid) |
 | **PredStructure** | --pred-struct | [0-2] | 2 | Set prediction structure( 0: low delay P, 1: low delay B, 2: random access [default]) |
 | **HighDynamicRangeInput** | --enable-hdr | [0-1] | 0 | Enable high dynamic range(0: OFF[default], ON: 1) |
 | **Asm** | --asm |  [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max] | 11 or max | Limit assembly instruction set ("0" is equivalent to "c", "1" is "mmx" etc, max value is "11" or "max"), by default select highest assembly instruction that is supported by CPU |
