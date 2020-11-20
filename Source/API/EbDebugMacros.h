@@ -111,6 +111,12 @@ extern "C" {
 #define TUNE_TPL_TOWARD_CHROMA                       1 //Tune TPL for better chroma. Only for 240P
 #define TUNE_LOW_DELAY                               1 // Tuning the 0B, 1B and 3B settings to support mingop 1, 2 and 4
 
+#define FEATURE_RE_ENCODE         1 // Add re-encode support
+#define FIX_VBR_LAST_GOP_BITS     1 // Fix 2nd pass last small group too big frame size error
+#define FIX_ONE_MIN_QP_ALLOWED    1 // Set default min_qp_allowed=1 for VBR good quality
+#define FIX_ALLOW_SB128_2PASS_VBR 1 // To allow SB128x128 for 2pass VBR
+#define FIX_2PASS_VBR_4L_SUPPORT  1 // Add 2pass VBR 4L support
+#define FIX_FIRST_PASS_HME        1 // Fix the hme/me based reference pruning level for the first pass
 
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC         0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

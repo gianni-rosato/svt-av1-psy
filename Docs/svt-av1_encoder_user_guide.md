@@ -186,6 +186,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **MaxSectionPct** | --maxsection-pct | [0 - ] | 2000 | 2pass VBR GOP max bitrate (percent of target) |
 | **UnderShortPct** | --undershoot-pct | [0 - 100] | 25 | Datarate undershoot (min) target (percent) |
 | **OverShortPct** | --overshoot-pct | [0 - 100] | 25 | Datarate overshoot (max) target (percent) |
+| **RecodeLoop** | --recode-loop | [0 - 3] | 2 | Recode loop levels for 2pass VBR (0=disable reencode, 1=reencode key frames, 2=reencode base layer frames, 3=reencode all frames) |
 
 #### Keyframe Placement Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |

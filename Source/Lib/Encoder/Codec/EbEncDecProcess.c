@@ -311,6 +311,13 @@ EbBool assign_enc_dec_segments(EncDecSegments *segmentPtr, uint16_t *segmentInOu
 
         // The entire picture is provided by the MDC process, so
         //   no logic is necessary to clear input dependencies.
+#if FEATURE_RE_ENCODE
+        // Reset enc_dec segments
+        for (uint32_t row_index = 0; row_index < segmentPtr->segment_row_count; ++row_index) {
+            segmentPtr->row_array[row_index].current_seg_index =
+                segmentPtr->row_array[row_index].starting_seg_index;
+        }
+#endif
 
         // Start on Segment 0 immediately
         *segmentInOutIndex  = segmentPtr->row_array[0].current_seg_index;
@@ -4853,6 +4860,84 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
     }
 }
 
+#if FEATURE_RE_ENCODE
+void recode_loop_update_q(
+    PictureParentControlSet *ppcs_ptr,
+    int *const loop, int *const q, int *const q_low,
+    int *const q_high, const int top_index, const int bottom_index,
+    int *const undershoot_seen, int *const overshoot_seen,
+    int *const low_cr_seen, const int loop_count);
+void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr);
+void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr);
+void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_ptr);
+
+static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
+            SequenceControlSet *scs_ptr, EbBool *do_recode) {
+    PictureParentControlSet *ppcs_ptr = pcs_ptr->parent_pcs_ptr;
+    EncodeContext *const encode_context_ptr = ppcs_ptr->scs_ptr->encode_context_ptr;
+    RATE_CONTROL *const rc = &(encode_context_ptr->rc);
+    int32_t loop = 0;
+    FrameHeader *frm_hdr = &ppcs_ptr->frm_hdr;
+    int32_t q = frm_hdr->quantization_params.base_q_idx;
+    if (ppcs_ptr->loop_count == 0) {
+        ppcs_ptr->q_low  = rc->bottom_index;
+        ppcs_ptr->q_high = rc->top_index;
+    }
+
+    // Update q and decide whether to do a recode loop
+    recode_loop_update_q(ppcs_ptr, &loop, &q,
+            &ppcs_ptr->q_low, &ppcs_ptr->q_high,
+            rc->top_index, rc->bottom_index,
+            &ppcs_ptr->undershoot_seen, &ppcs_ptr->overshoot_seen,
+            &ppcs_ptr->low_cr_seen, ppcs_ptr->loop_count);
+
+    // Special case for overlay frame.
+    if (loop && rc->is_src_frame_alt_ref &&
+        rc->projected_frame_size < rc->max_frame_bandwidth) {
+        loop = 0;
+    }
+    *do_recode = loop == 1;
+
+    if (*do_recode) {
+        ppcs_ptr->loop_count++;
+
+        frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
+                (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+                q);
+
+        ppcs_ptr->picture_qp =
+            (uint8_t)CLIP3((int32_t)scs_ptr->static_config.min_qp_allowed,
+                    (int32_t)scs_ptr->static_config.max_qp_allowed,
+                    (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+        pcs_ptr->picture_qp = ppcs_ptr->picture_qp;
+
+        // 2pass QPM with tpl_la
+        if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
+            !use_output_stat(scs_ptr) &&
+            use_input_stat(scs_ptr) &&
+#if !ENABLE_TPL_ZERO_LAD
+            scs_ptr->static_config.look_ahead_distance != 0 &&
+#endif
+            scs_ptr->static_config.enable_tpl_la &&
+            ppcs_ptr->r0 != 0)
+            sb_qp_derivation_tpl_la(pcs_ptr);
+        else
+        {
+            ppcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
+            ppcs_ptr->average_qp = 0;
+            for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
+                SuperBlock * sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
+                sb_ptr->qindex   = quantizer_to_qindex[pcs_ptr->picture_qp];
+                ppcs_ptr->average_qp += pcs_ptr->picture_qp;
+            }
+        }
+    } else {
+        ppcs_ptr->loop_count = 0;
+    }
+}
+#endif
+
 /* EncDec (Encode Decode) Kernel */
 /*********************************************************************************
 *
@@ -5312,6 +5397,47 @@ void *mode_decision_kernel(void *input_ptr) {
         svt_release_mutex(pcs_ptr->intra_mutex);
 
         if (last_sb_flag) {
+#if FEATURE_RE_ENCODE
+            EbBool do_recode = EB_FALSE;
+            scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
+            if (use_input_stat(scs_ptr) &&
+                scs_ptr->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
+                recode_loop_decision_maker(pcs_ptr, scs_ptr, &do_recode);
+            }
+
+            if (do_recode) {
+
+                pcs_ptr->enc_dec_coded_sb_count = 0;
+                last_sb_flag = EB_FALSE;
+                // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
+                if (context_ptr->is_md_rate_estimation_ptr_owner) {
+                    EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
+                    context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
+                }
+                context_ptr->md_rate_estimation_ptr = pcs_ptr->md_rate_estimation_array;
+                // re-init mode decision configuration for qp update for re-encode frame
+                mode_decision_configuration_init_qp_update(pcs_ptr);
+                // init segment for re-encode frame
+                init_enc_dec_segement(pcs_ptr->parent_pcs_ptr);
+                EbObjectWrapper *enc_dec_re_encode_tasks_wrapper_ptr;
+                uint16_t tg_count =
+                    pcs_ptr->parent_pcs_ptr->tile_group_cols * pcs_ptr->parent_pcs_ptr->tile_group_rows;
+                for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
+                    svt_get_empty_object(context_ptr->enc_dec_feedback_fifo_ptr,
+                            &enc_dec_re_encode_tasks_wrapper_ptr);
+
+                    EncDecTasks *enc_dec_re_encode_tasks_ptr = (EncDecTasks *)enc_dec_re_encode_tasks_wrapper_ptr->object_ptr;
+                    enc_dec_re_encode_tasks_ptr->pcs_wrapper_ptr  = enc_dec_tasks_ptr->pcs_wrapper_ptr;
+                    enc_dec_re_encode_tasks_ptr->input_type       = ENCDEC_TASKS_MDC_INPUT;
+                    enc_dec_re_encode_tasks_ptr->tile_group_index = tile_group_idx;
+
+                    // Post the Full Results Object
+                    svt_post_full_object(enc_dec_re_encode_tasks_wrapper_ptr);
+                }
+
+            }
+            else {
+#endif
             // Copy film grain data from parent picture set to the reference object for further reference
             if (scs_ptr->seq_header.film_grain_params_present) {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
@@ -5357,6 +5483,9 @@ void *mode_decision_kernel(void *input_ptr) {
                 ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
             // Post EncDec Results
             svt_post_full_object(enc_dec_results_wrapper_ptr);
+#if FEATURE_RE_ENCODE
+            }
+#endif
         }
         // Release Mode Decision Results
         svt_release_object(enc_dec_tasks_wrapper_ptr);

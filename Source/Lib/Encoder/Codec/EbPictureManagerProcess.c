@@ -576,6 +576,135 @@ static EbErrorType tpl_init_pcs_tpl_data(
     return 0;
 }
 #endif
+
+#if FEATURE_RE_ENCODE
+void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_ptr) {
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+    uint8_t pic_width_in_sb = (uint8_t)((parentpicture_control_set_ptr->aligned_width +
+                scs_ptr->sb_size_pix - 1) /
+            scs_ptr->sb_size_pix);
+    uint8_t picture_height_in_sb = (uint8_t)((parentpicture_control_set_ptr->aligned_height +
+                scs_ptr->sb_size_pix - 1) /
+            scs_ptr->sb_size_pix);
+    set_tile_info(parentpicture_control_set_ptr);
+    int sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
+    uint32_t enc_dec_seg_col_cnt = scs_ptr->enc_dec_segment_col_count_array[parentpicture_control_set_ptr->temporal_layer_index];
+    uint32_t enc_dec_seg_row_cnt = scs_ptr->enc_dec_segment_row_count_array[parentpicture_control_set_ptr->temporal_layer_index];
+    Av1Common *const cm = parentpicture_control_set_ptr->av1_cm;
+    const int tile_cols = parentpicture_control_set_ptr->av1_cm->tiles_info.tile_cols;
+    const int tile_rows = parentpicture_control_set_ptr->av1_cm->tiles_info.tile_rows;
+    uint8_t tile_group_cols = MIN(
+            tile_cols,
+            scs_ptr
+            ->tile_group_col_count_array[parentpicture_control_set_ptr->temporal_layer_index]);
+    uint8_t tile_group_rows = MIN(
+            tile_rows,
+            scs_ptr
+            ->tile_group_row_count_array[parentpicture_control_set_ptr->temporal_layer_index]);
+
+    if (tile_group_cols * tile_group_rows > 1) {
+        enc_dec_seg_col_cnt = MIN(enc_dec_seg_col_cnt,
+                (uint8_t)(pic_width_in_sb / tile_group_cols));
+        enc_dec_seg_row_cnt = MIN(
+                enc_dec_seg_row_cnt,
+                (uint8_t)(picture_height_in_sb / tile_group_rows));
+    }
+    parentpicture_control_set_ptr->tile_group_cols = tile_group_cols;
+    parentpicture_control_set_ptr->tile_group_rows = tile_group_rows;
+
+    uint8_t tile_group_col_start_tile_idx[1024];
+    uint8_t tile_group_row_start_tile_idx[1024];
+
+    // Get the tile start index for tile group
+    for (uint8_t c = 0; c <= tile_group_cols; c++) {
+        tile_group_col_start_tile_idx[c] = c * tile_cols / tile_group_cols;
+    }
+    for (uint8_t r = 0; r <= tile_group_rows; r++) {
+        tile_group_row_start_tile_idx[r] = r * tile_rows / tile_group_rows;
+    }
+    for (uint8_t r = 0; r < tile_group_rows; r++) {
+        for (uint8_t c = 0; c < tile_group_cols; c++) {
+            uint16_t tile_group_idx        = r * tile_group_cols + c;
+            uint16_t top_left_tile_col_idx = tile_group_col_start_tile_idx[c];
+            uint16_t top_left_tile_row_idx = tile_group_row_start_tile_idx[r];
+            uint16_t bottom_right_tile_col_idx =
+                tile_group_col_start_tile_idx[c + 1];
+            uint16_t bottom_right_tile_row_idx =
+                tile_group_row_start_tile_idx[r + 1];
+
+            TileGroupInfo *tg_info_ptr =
+                &parentpicture_control_set_ptr->tile_group_info[tile_group_idx];
+
+            tg_info_ptr->tile_group_tile_start_x = top_left_tile_col_idx;
+            tg_info_ptr->tile_group_tile_end_x   = bottom_right_tile_col_idx;
+
+            tg_info_ptr->tile_group_tile_start_y = top_left_tile_row_idx;
+            tg_info_ptr->tile_group_tile_end_y   = bottom_right_tile_row_idx;
+
+            tg_info_ptr->tile_group_sb_start_x =
+                cm->tiles_info.tile_col_start_mi[top_left_tile_col_idx] >>
+                sb_size_log2;
+            tg_info_ptr->tile_group_sb_start_y =
+                cm->tiles_info.tile_row_start_mi[top_left_tile_row_idx] >>
+                sb_size_log2;
+
+            // Get the SB end of the bottom right tile
+            tg_info_ptr->tile_group_sb_end_x =
+                (cm->tiles_info.tile_col_start_mi[bottom_right_tile_col_idx] >>
+                 sb_size_log2);
+            tg_info_ptr->tile_group_sb_end_y =
+                (cm->tiles_info.tile_row_start_mi[bottom_right_tile_row_idx] >>
+                 sb_size_log2);
+
+            // Get the width/height of tile group in SB
+            tg_info_ptr->tile_group_height_in_sb =
+                tg_info_ptr->tile_group_sb_end_y -
+                tg_info_ptr->tile_group_sb_start_y;
+            tg_info_ptr->tile_group_width_in_sb =
+                tg_info_ptr->tile_group_sb_end_x -
+                tg_info_ptr->tile_group_sb_start_x;
+
+            // Init segments within the tile group
+            enc_dec_segments_init(
+                    parentpicture_control_set_ptr->child_pcs->enc_dec_segment_ctrl[tile_group_idx],
+                    enc_dec_seg_col_cnt,
+                    enc_dec_seg_row_cnt,
+                    tg_info_ptr->tile_group_width_in_sb,
+                    tg_info_ptr->tile_group_height_in_sb);
+            // Enable tile parallelism in Entropy Coding stage
+            for (uint16_t s = top_left_tile_row_idx;
+                    s < bottom_right_tile_row_idx;
+                    s++) {
+                for (uint16_t d = top_left_tile_col_idx;
+                        d < bottom_right_tile_col_idx;
+                        d++) {
+                    uint16_t tileIdx = s * tile_cols + d;
+                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
+                        ->entropy_coding_current_row = 0;
+                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
+                        ->entropy_coding_current_available_row = 0;
+                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
+                        ->entropy_coding_row_count =
+                        (cm->tiles_info.tile_row_start_mi[s + 1] -
+                         cm->tiles_info.tile_row_start_mi[s]) >>
+                        sb_size_log2;
+                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
+                        ->entropy_coding_in_progress = EB_FALSE;
+                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
+                        ->entropy_coding_tile_done = EB_FALSE;
+
+                    for (unsigned rowIndex = 0; rowIndex < MAX_SB_ROWS;
+                            ++rowIndex) {
+                        parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
+                            ->entropy_coding_row_array[rowIndex] = EB_FALSE;
+                    }
+                }
+            }
+            parentpicture_control_set_ptr->child_pcs->entropy_coding_pic_reset_flag = EB_TRUE;
+        }
+    }
+}
+#endif
 /* Picture Manager Kernel */
 
 /***************************************************************************************************
@@ -1040,6 +1169,18 @@ void *picture_manager_kernel(void *input_ptr) {
                                        entry_scs_ptr->sb_size_pix - 1) /
                                       entry_scs_ptr->sb_size_pix);
 
+#if FEATURE_RE_ENCODE
+                        init_enc_dec_segement(entry_pcs_ptr);
+
+                        int      sb_size_log2    = entry_scs_ptr->seq_header.sb_size_log2;
+                        struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->parent_pcs_ptr;
+                        const int tile_cols = ppcs_ptr->av1_cm->tiles_info.tile_cols;
+                        const int tile_rows = ppcs_ptr->av1_cm->tiles_info.tile_rows;
+                        Av1Common *const                cm       = ppcs_ptr->av1_cm;
+                        uint16_t                        tile_row, tile_col;
+                        uint32_t                        x_sb_index, y_sb_index;
+                        TileInfo  tile_info;
+#else
                         set_tile_info(entry_pcs_ptr);
 
                         int      sb_size_log2    = entry_scs_ptr->seq_header.sb_size_log2;
@@ -1169,6 +1310,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                 child_pcs_ptr->entropy_coding_pic_reset_flag = EB_TRUE;
                             }
                         }
+#endif
 
                         child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
 

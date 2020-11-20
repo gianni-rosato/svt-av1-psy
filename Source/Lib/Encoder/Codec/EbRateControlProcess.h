@@ -200,6 +200,10 @@ typedef struct {
     int enable_scenecut_detection;
     int use_arf_in_this_kf_group;
     int next_is_fwd_key;
+#if FEATURE_RE_ENCODE
+    int top_index;
+    int bottom_index;
+#endif
 } RATE_CONTROL;
 
 /**************************************

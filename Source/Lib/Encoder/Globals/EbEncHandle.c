@@ -2270,6 +2270,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.enable_tpl_la = 1;
         scs_ptr->static_config.intra_refresh_type     = 2;
     }
+#if FEATURE_RE_ENCODE
+    if (scs_ptr->static_config.recode_loop > 0 &&
+        (!use_input_stat(scs_ptr) || scs_ptr->static_config.rate_control_mode != 1)) {
+        // Only allow re-encoding for 2pass VBR, otherwise force recode_loop to DISALLOW_RECODE or 0
+        scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
+    }
+#endif
 
     derive_input_resolution(
         &scs_ptr->input_resolution,
@@ -2281,7 +2288,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.super_block_size = 64;
     else
         scs_ptr->static_config.super_block_size = (scs_ptr->static_config.enc_mode <= ENC_M4) ? 128 : 64;
+#if FIX_ALLOW_SB128_2PASS_VBR
+    scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0 && !use_input_stat(scs_ptr))
+                                              ? 64
+                                              : scs_ptr->static_config.super_block_size;
+#else
     scs_ptr->static_config.super_block_size = (scs_ptr->static_config.rate_control_mode > 0) ? 64 : scs_ptr->static_config.super_block_size;
+#endif
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     if (use_output_stat(scs_ptr))
         scs_ptr->static_config.hierarchical_levels = 0;
@@ -2524,6 +2537,9 @@ void copy_api_from_app(
     scs_ptr->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
+#if FEATURE_RE_ENCODE
+    scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
+#endif
 
     //Segmentation
     //TODO: check RC mode and set only when RC is enabled in the final version.
@@ -3265,7 +3281,11 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->enable_tpl_la = 1;
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
+#if FIX_ONE_MIN_QP_ALLOWED
+    config_ptr->min_qp_allowed = 1;
+#else
     config_ptr->min_qp_allowed = 10;
+#endif
 
     config_ptr->enable_adaptive_quantization = 2;
     config_ptr->enc_mode = MAX_ENC_PRESET;
@@ -3337,6 +3357,9 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->vbr_max_section_pct = 2000;
     config_ptr->under_shoot_pct = 25;
     config_ptr->over_shoot_pct = 25;
+#if FEATURE_RE_ENCODE
+    config_ptr->recode_loop = ALLOW_RECODE_KFARFGF;
+#endif
 
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;

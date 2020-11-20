@@ -103,6 +103,19 @@ enum {
     FAST_DIAMOND = 6
 } UENUM1BYTE(SEARCH_METHODS);
 
+#if FEATURE_RE_ENCODE
+enum {
+    // No recode.
+    DISALLOW_RECODE = 0,
+    // Allow recode for KF and exceeding maximum frame bandwidth.
+    ALLOW_RECODE_KFMAXBW = 1,
+    // Allow recode only for KF/ARF/GF frames.
+    ALLOW_RECODE_KFARFGF = 2,
+    // Allow recode for all frames based on bitrate constraints.
+    ALLOW_RECODE = 3,
+} UENUM1BYTE(RecodeLoopType);
+#endif
+
 /********************************************************/
 /****************** Pre-defined Values ******************/
 /********************************************************/

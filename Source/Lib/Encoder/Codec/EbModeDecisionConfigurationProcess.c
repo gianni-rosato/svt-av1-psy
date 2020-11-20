@@ -372,6 +372,83 @@ void set_reference_cdef_strength(PictureControlSet *pcs_ptr) {
 }
 #endif
 
+#if FEATURE_RE_ENCODE
+void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
+    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    pcs_ptr->parent_pcs_ptr->average_qp = 0;
+    pcs_ptr->intra_coded_area           = 0;
+    // Init block selection
+    memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);
+    // Init pred_depth selection
+    memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+    // Init tx_type selection
+    memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
+    // Compute Tc, and Beta offsets for a given picture
+#if !TUNE_CDEF_FILTER
+    // Set reference cdef strength
+    set_reference_cdef_strength(pcs_ptr);
+#endif
+    // Set reference sg ep
+    set_reference_sg_ep(pcs_ptr);
+    set_global_motion_field(pcs_ptr);
+
+    svt_av1_qm_init(pcs_ptr->parent_pcs_ptr);
+#if !FIX_OPTIMIZE_BUILD_QUANTIZER
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+    Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
+    Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
+    svt_av1_set_quantizer(
+            pcs_ptr->parent_pcs_ptr,
+            frm_hdr->quantization_params.base_q_idx);
+    svt_av1_build_quantizer(
+            (AomBitDepth)scs_ptr->static_config.encoder_bit_depth,
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
+            quants_bd,
+            deq_bd);
+
+    Quants *const quants_8bit = &pcs_ptr->parent_pcs_ptr->quants_8bit;
+    Dequants *const deq_8bit = &pcs_ptr->parent_pcs_ptr->deq_8bit;
+    svt_av1_build_quantizer(
+            AOM_BITS_8,
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
+            quants_8bit,
+            deq_8bit);
+
+    // Hsan: collapse spare code
+#endif
+    MdRateEstimationContext *md_rate_estimation_array;
+
+    md_rate_estimation_array = pcs_ptr->md_rate_estimation_array;
+
+    if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
+        memcpy(&pcs_ptr->md_frame_context,
+                &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
+                sizeof(FRAME_CONTEXT));
+    else {
+        svt_av1_default_coef_probs(&pcs_ptr->md_frame_context, frm_hdr->quantization_params.base_q_idx);
+        init_mode_probs(&pcs_ptr->md_frame_context);
+    }
+    // Initial Rate Estimation of the syntax elements
+    av1_estimate_syntax_rate(md_rate_estimation_array,
+            pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+            &pcs_ptr->md_frame_context);
+    // Initial Rate Estimation of the Motion vectors
+    av1_estimate_mv_rate(
+            pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
+    // Initial Rate Estimation of the quantized coefficients
+    av1_estimate_coefficients_rate(md_rate_estimation_array,
+            &pcs_ptr->md_frame_context);
+}
+#endif
+
 /******************************************************
 * Compute Tc, and Beta offsets for a given picture
 ******************************************************/

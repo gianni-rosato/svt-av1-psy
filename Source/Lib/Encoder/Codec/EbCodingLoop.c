@@ -2317,6 +2317,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                               (sb_origin_y + blk_geom->origin_y) >> MI_SIZE_LOG2,
                               (sb_origin_x + blk_geom->origin_x) >> MI_SIZE_LOG2);
         }
+#if FEATURE_RE_ENCODE
+        if (use_input_stat(scs_ptr) &&
+            blk_it == 0 && sb_origin_x == 0 && blk_geom->origin_x == 0 && sb_origin_y == 0 && blk_geom->origin_y == 0) {
+            pcs_ptr->parent_pcs_ptr->pcs_total_rate = 0;
+        }
+#endif
         if (part != PARTITION_SPLIT && pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]) {
             int32_t offset_d1 = ns_blk_offset[(int32_t)part]; //blk_ptr->best_d1_blk; // TOCKECK
             int32_t num_d1_block =
@@ -2360,6 +2366,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                     blk_ptr->qindex = sb_ptr->qindex;
                 }
 
+#if FEATURE_RE_ENCODE
+                pcs_ptr->parent_pcs_ptr->pcs_total_rate += blk_ptr->total_rate;
+#endif
                 if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                     context_ptr->is_inter = blk_ptr->use_intrabc;
                     context_ptr->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;

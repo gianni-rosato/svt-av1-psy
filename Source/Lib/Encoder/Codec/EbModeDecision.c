@@ -5606,6 +5606,11 @@ uint32_t product_full_mode_decision(
             lowest_cost = *(buffer_ptr_array[cand_index]->full_cost_ptr);
         }
     }
+#if FEATURE_RE_ENCODE
+    if (context_ptr->pd_pass == PD_PASS_2) {
+        blk_ptr->total_rate = buffer_ptr_array[lowest_cost_index]->candidate_ptr->total_rate;
+    }
+#endif
 
     candidate_ptr = buffer_ptr_array[lowest_cost_index]->candidate_ptr;
     if (context_ptr->blk_lambda_tuning){
