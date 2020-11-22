@@ -16,8 +16,15 @@ git --no-pager grep -InP --heading "\r" -- . ':!third_party/**/*' && ret=1
 echo "Checking for trailing spaces" >&2
 git --no-pager grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' && ret=1
 
-echo "Checking EOF for newlines" >&2
+
+# Test only "new" commits, that is, commits that are not upstream on
+# the master branch.
 git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git master && FETCH_HEAD=FETCH_HEAD || FETCH_HEAD=master
+if git diff --exit-code HEAD ^$FETCH_HEAD > /dev/null 2>&1; then
+    echo "No differences to upstream  master, skipping further tests"
+    exit 0
+fi
+
 while read -r file; do
     if ! test -f "$file"; then
         echo "Ignoring folder or not found file: '$file'"
