@@ -56,6 +56,6 @@ while read -r i; do
         ret=1
     fi
 done << EOF
-$(git rev-list HEAD ^FETCH_HEAD)
+$(git rev-list HEAD ^$FETCH_HEAD)
 EOF
 exit ${ret:-0}
