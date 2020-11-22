@@ -21,7 +21,7 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 
 /* That same calculation as: av1_calc_indices_dist_dim1_avx2(),
    but not calculate sum at the end. */
-void av1_calc_indices_dim1_avx2(const int *data, const int *centroids, uint8_t *indices, int n,
+void svt_av1_calc_indices_dim1_avx2(const int *data, const int *centroids, uint8_t *indices, int n,
                                 int k) {
     int i = 0;
     int results[MAX_SB_SQUARE];
@@ -159,7 +159,7 @@ static INLINE void calc_centroids_1_avx2(const int *data, int *centroids, const 
     }
 }
 
-void av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k,
+void svt_av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k,
                            int max_itr) {
     int     pre_centroids[2 * PALETTE_MAX_SIZE];
     uint8_t pre_indices[MAX_SB_SQUARE];
@@ -186,7 +186,7 @@ void av1_k_means_dim1_avx2(const int *data, int *centroids, uint8_t *indices, in
 
 /* That same calculation as: av1_calc_indices_dist_dim2_avx2(),
    but not calculate sum at the end. */
-void av1_calc_indices_dim2_avx2(const int *data, const int *centroids, uint8_t *indices, int n,
+void svt_av1_calc_indices_dim2_avx2(const int *data, const int *centroids, uint8_t *indices, int n,
                                 int k) {
     int results[MAX_SB_SQUARE];
     memset(indices, 0, n * sizeof(uint8_t));
@@ -371,7 +371,7 @@ static INLINE void calc_centroids_2_avx2(const int *data, int *centroids, const 
     }
 }
 
-void av1_k_means_dim2_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k,
+void svt_av1_k_means_dim2_avx2(const int *data, int *centroids, uint8_t *indices, int n, int k,
                            int max_itr) {
     int     pre_centroids[2 * PALETTE_MAX_SIZE];
     uint8_t pre_indices[MAX_SB_SQUARE];

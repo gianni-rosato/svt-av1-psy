@@ -25,13 +25,13 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 
 #define AV1_K_MEANS_RENAME(func, dim) func##_dim##dim##_c
 
-void AV1_K_MEANS_RENAME(av1_calc_indices, 1)(const int *data, const int *centroids,
+void AV1_K_MEANS_RENAME(svt_av1_calc_indices, 1)(const int *data, const int *centroids,
                                              uint8_t *indices, int n, int k);
-void AV1_K_MEANS_RENAME(av1_calc_indices, 2)(const int *data, const int *centroids,
+void AV1_K_MEANS_RENAME(svt_av1_calc_indices, 2)(const int *data, const int *centroids,
                                              uint8_t *indices, int n, int k);
-void AV1_K_MEANS_RENAME(av1_k_means, 1)(const int *data, int *centroids, uint8_t *indices, int n,
+void AV1_K_MEANS_RENAME(svt_av1_k_means, 1)(const int *data, int *centroids, uint8_t *indices, int n,
                                         int k, int max_itr);
-void AV1_K_MEANS_RENAME(av1_k_means, 2)(const int *data, int *centroids, uint8_t *indices, int n,
+void AV1_K_MEANS_RENAME(svt_av1_k_means, 2)(const int *data, int *centroids, uint8_t *indices, int n,
                                         int k, int max_itr);
 
 // Given 'n' 'data' points and 'k' 'centroids' each of dimension 'dim',

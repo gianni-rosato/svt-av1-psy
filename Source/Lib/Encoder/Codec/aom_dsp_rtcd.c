@@ -379,10 +379,10 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2_AVX2(svt_compute_interm_var_four8x8, svt_compute_interm_var_four8x8_c, svt_compute_interm_var_four8x8_helper_sse2, svt_compute_interm_var_four8x8_avx2_intrin);
     SET_AVX2(sad_16b_kernel, sad_16b_kernel_c, sad_16bit_kernel_avx2);
     SET_AVX2(svt_av1_compute_cross_correlation, svt_av1_compute_cross_correlation_c, svt_av1_compute_cross_correlation_avx2);
-    SET_AVX2(svt_av1_k_means_dim1, av1_k_means_dim1_c, av1_k_means_dim1_avx2);
-    SET_AVX2(svt_av1_k_means_dim2, av1_k_means_dim2_c, av1_k_means_dim2_avx2);
-    SET_AVX2(svt_av1_calc_indices_dim1, av1_calc_indices_dim1_c, av1_calc_indices_dim1_avx2);
-    SET_AVX2(svt_av1_calc_indices_dim2, av1_calc_indices_dim2_c, av1_calc_indices_dim2_avx2);
+    SET_AVX2(svt_av1_k_means_dim1, svt_av1_k_means_dim1_c, svt_av1_k_means_dim1_avx2);
+    SET_AVX2(svt_av1_k_means_dim2, svt_av1_k_means_dim2_c, svt_av1_k_means_dim2_avx2);
+    SET_AVX2(svt_av1_calc_indices_dim1, svt_av1_calc_indices_dim1_c, svt_av1_calc_indices_dim1_avx2);
+    SET_AVX2(svt_av1_calc_indices_dim2, svt_av1_calc_indices_dim2_c, svt_av1_calc_indices_dim2_avx2);
     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
 
