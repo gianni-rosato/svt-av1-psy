@@ -1638,19 +1638,41 @@ static void parse_config_file(EbConfig *config, char *buffer, int32_t size) {
     return;
 }
 
-/******************************************
-* Find Token
-******************************************/
+/**
+ * @brief Find token and its argument
+ * @param argc      Argument count
+ * @param argv      Argument array
+ * @param token     The token to look for
+ * @param configStr Output buffer to write the argument to or NULL
+ * @return 0 if found, non-zero otherwise
+ *
+ * @note The configStr buffer must be at least
+ *       COMMAND_LINE_MAX_SIZE bytes big.
+ *       The argv must contain an additional NULL
+ *       element to terminate it, so that
+ *       argv[argc] == NULL.
+ */
 static int32_t find_token(int32_t argc, char *const argv[], char const *token, char *configStr) {
-    int32_t return_error = -1;
+    assert(argv[argc] == NULL);
 
-    while ((argc > 0) && (return_error != 0)) {
-        return_error = strcmp(argv[--argc], token);
-        if (return_error == 0 && configStr)
-            strcpy_s(configStr, COMMAND_LINE_MAX_SIZE, argv[argc + 1]);
+    if (argc == 0)
+        return -1;
+
+    for (int32_t i = argc - 1; i >= 0; i--) {
+        if (strcmp(argv[i], token) != 0)
+            continue;
+
+        // The argument matches the token.
+        // If given, try to copy its argument to configStr
+        if (configStr && argv[i + 1] != NULL) {
+            strcpy_s(configStr, COMMAND_LINE_MAX_SIZE, argv[i + 1]);
+        } else if (configStr) {
+            configStr[0] = '\0';
+        }
+
+        return 0;
     }
-
-    return return_error;
+    return -1;
 }
 
 /**********************************
