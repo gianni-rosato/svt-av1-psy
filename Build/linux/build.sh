@@ -260,7 +260,7 @@ parse_options() {
                 ;;
             *) toolchain=$(
                 case ${url%/*} in
-                */*)
+                */*\)
                     [ -n "$prev_pwd" ] && cd "$prev_pwd"
                     cd "${url%/*}"
                     ;;
