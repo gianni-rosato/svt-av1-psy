@@ -218,7 +218,7 @@ CPU_FLAGS get_cpu_flags_to_use() {
 
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)     \
     do {                                                                                          \
-        if (ptr != 0) {                                                                           \
+        if (check_pointer_was_set && ptr != 0) {                                                                           \
             printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, __LINE__, #ptr);    \
             assert(0);                                                                            \
         }                                                                                         \
@@ -230,7 +230,7 @@ CPU_FLAGS get_cpu_flags_to_use() {
         SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
     } while (0)
 
-/* Macros SET_* use local variable CPU_FLAGS flags */
+/* Macros SET_* use local variable CPU_FLAGS flags and EbBool check_pointer_was_set */
 #define SET_ONLY_C(ptr, c)                                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #define SET_SSE2(ptr, c, sse2)                              SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, 0, 0)
 #define SET_SSE2_AVX2(ptr, c, sse2, avx2)                   SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, 0)
@@ -246,6 +246,11 @@ CPU_FLAGS get_cpu_flags_to_use() {
 
 void setup_common_rtcd_internal(CPU_FLAGS flags) {
 #ifdef ARCH_X86_64
+    /* Avoid check that pointer is set double, after first  setup. */
+    static EbBool first_call_setup = EB_TRUE;
+    EbBool check_pointer_was_set = first_call_setup;
+    first_call_setup = EB_FALSE;
+
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */
     flags &= get_cpu_flags_to_use();
