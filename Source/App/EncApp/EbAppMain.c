@@ -130,6 +130,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             EbConfig* config = c->config;
             config->config.active_channel_count = num_channels;
             config->config.channel_id           = inst_cnt;
+            config->config.recon_enabled = config->recon_file ? EB_TRUE : EB_FALSE;
 
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
                                  &config->performance_context.lib_start_time[1]);
