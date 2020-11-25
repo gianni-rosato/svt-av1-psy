@@ -326,19 +326,19 @@ static EbErrorType init_main_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
 static EbErrorType init_parse_context (EbDecHandle  *dec_handle_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_master_parse_ctxt,
-        sizeof(MasterParseCtxt), EB_N_PTR);
-    MasterParseCtxt *master_parse_ctx =
-        (MasterParseCtxt*)dec_handle_ptr->pv_master_parse_ctxt;
+    EB_MALLOC_DEC(void *, dec_handle_ptr->pv_main_parse_ctxt,
+        sizeof(MainParseCtxt), EB_N_PTR);
+    MainParseCtxt *main_parse_ctx =
+        (MainParseCtxt*)dec_handle_ptr->pv_main_parse_ctxt;
 
-    master_parse_ctx->context_count = 0;
-    master_parse_ctx->tile_parse_ctxt = NULL;
+    main_parse_ctx->context_count = 0;
+    main_parse_ctx->tile_parse_ctxt = NULL;
 
-    master_parse_ctx->parse_above_nbr4x4_ctxt = NULL;
-    master_parse_ctx->parse_left_nbr4x4_ctxt = NULL;
+    main_parse_ctx->parse_above_nbr4x4_ctxt = NULL;
+    main_parse_ctx->parse_left_nbr4x4_ctxt = NULL;
 
-    master_parse_ctx->num_tiles = 0;
-    master_parse_ctx->parse_tile_data = NULL;
+    main_parse_ctx->num_tiles = 0;
+    main_parse_ctx->parse_tile_data = NULL;
 
     return return_error;
 }

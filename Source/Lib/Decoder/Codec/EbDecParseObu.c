@@ -1519,12 +1519,12 @@ void setup_past_independence(EbDecHandle *dec_handle_ptr, FrameHeader *frame_inf
 }
 
 static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *    dec_handle_ptr,
-                                                          MasterParseCtxt *master_parse_ctx,
+                                                          MainParseCtxt *main_parse_ctx,
                                                           int              num_instances) {
     SeqHeader *seq_header = &dec_handle_ptr->seq_header;
     int32_t    num_mi_frame;
 
-    master_parse_ctx->context_count = num_instances;
+    main_parse_ctx->context_count = num_instances;
 
     int32_t num_mi_sb        = seq_header->sb_mi_size;
     int32_t sb_size_log2     = seq_header->sb_size_log2;
@@ -1537,20 +1537,20 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *    dec_h
     TilesInfo tiles_info = dec_handle_ptr->frame_header.tiles_info;
     int       num_tiles  = tiles_info.tile_cols * tiles_info.tile_rows;
     int32_t   num_ctx    = num_instances == 1 ? 1 : num_tiles;
-    if (num_instances == 1) master_parse_ctx->context_count = num_tiles;
+    if (num_instances == 1) main_parse_ctx->context_count = num_tiles;
 
     /* TO-DO this memory will be freed at the end of decode.
        Can be optimized by reallocating the memory when
        the number of tiles changes within a sequence. */
     EB_MALLOC_DEC(
-        ParseCtxt *, master_parse_ctx->tile_parse_ctxt, sizeof(ParseCtxt) * num_ctx, EB_N_PTR);
+        ParseCtxt *, main_parse_ctx->tile_parse_ctxt, sizeof(ParseCtxt) * num_ctx, EB_N_PTR);
 
     EB_MALLOC_DEC(ParseAboveNbr4x4Ctxt *,
-                  master_parse_ctx->parse_above_nbr4x4_ctxt,
+                  main_parse_ctx->parse_above_nbr4x4_ctxt,
                   sizeof(ParseAboveNbr4x4Ctxt) * num_ctx,
                   EB_N_PTR);
     EB_MALLOC_DEC(ParseLeftNbr4x4Ctxt *,
-                  master_parse_ctx->parse_left_nbr4x4_ctxt,
+                  main_parse_ctx->parse_left_nbr4x4_ctxt,
                   sizeof(ParseLeftNbr4x4Ctxt) * num_ctx,
                   EB_N_PTR);
     int total_rows = num_instances == 1 ? 1 : tiles_info.tile_rows;
@@ -1562,8 +1562,8 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *    dec_h
                 tiles_info.tile_col_start_mi[col + 1] - tiles_info.tile_col_start_mi[col];
             int32_t num_mi_wide = num_instances == 1 ? num_mi_frame : num_mi_tile;
             num_mi_wide         = ALIGN_POWER_OF_TWO(num_mi_wide, sb_size_log2 - MI_SIZE_LOG2);
-            ParseAboveNbr4x4Ctxt *above_ctx = &master_parse_ctx->parse_above_nbr4x4_ctxt[instance];
-            ParseLeftNbr4x4Ctxt * left_ctx  = &master_parse_ctx->parse_left_nbr4x4_ctxt[instance];
+            ParseAboveNbr4x4Ctxt *above_ctx = &main_parse_ctx->parse_above_nbr4x4_ctxt[instance];
+            ParseLeftNbr4x4Ctxt * left_ctx  = &main_parse_ctx->parse_left_nbr4x4_ctxt[instance];
             EB_MALLOC_DEC(
                 uint8_t *, above_ctx->above_tx_wd, num_mi_wide * sizeof(uint8_t), EB_N_PTR);
             EB_MALLOC_DEC(
@@ -1599,14 +1599,14 @@ static INLINE EbErrorType reallocate_parse_context_memory(EbDecHandle *    dec_h
     return EB_ErrorNone;
 }
 
-static INLINE EbErrorType reallocate_parse_tile_data(MasterParseCtxt *master_parse_ctx,
+static INLINE EbErrorType reallocate_parse_tile_data(MainParseCtxt *main_parse_ctx,
                                                      int              num_tiles) {
-    master_parse_ctx->num_tiles = num_tiles;
+    main_parse_ctx->num_tiles = num_tiles;
     /* TO-DO this memory will be freed at the end of decode.
        Can be optimized by reallocating the memory when
        the number of tiles changes within a sequence. */
     EB_MALLOC_DEC(ParseTileData *,
-                  master_parse_ctx->parse_tile_data,
+                  main_parse_ctx->parse_tile_data,
                   sizeof(ParseTileData) * num_tiles,
                   EB_N_PTR);
     return EB_ErrorNone;
@@ -1628,8 +1628,8 @@ void set_prev_frame_info(EbDecHandle *dec_handle_ptr) {
 }
 
 static void realloc_parse_memory(EbDecHandle *dec_handle_ptr) {
-    MasterParseCtxt *master_parse_ctx =
-        (MasterParseCtxt *)dec_handle_ptr->pv_master_parse_ctxt;
+    MainParseCtxt *main_parse_ctx =
+        (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
     TilesInfo tiles_info = dec_handle_ptr->frame_header.tiles_info;
     int num_tiles = tiles_info.tile_cols * tiles_info.tile_rows;
     int num_instances = MIN((int32_t)dec_handle_ptr->dec_config.threads,
@@ -1638,14 +1638,14 @@ static void realloc_parse_memory(EbDecHandle *dec_handle_ptr) {
         /* For single thread case, allocate memory for one
            frame row above and one sb column for the left context. */
         reallocate_parse_context_memory(dec_handle_ptr,
-            master_parse_ctx, 1);
+            main_parse_ctx, 1);
     }
     else {
         reallocate_parse_context_memory(dec_handle_ptr,
-            master_parse_ctx, num_instances);
+            main_parse_ctx, num_instances);
     }
-    if (num_tiles != master_parse_ctx->num_tiles)
-        reallocate_parse_tile_data(master_parse_ctx, num_tiles);
+    if (num_tiles != main_parse_ctx->num_tiles)
+        reallocate_parse_tile_data(main_parse_ctx, num_tiles);
 }
 
 static void check_mt_support(EbDecHandle *dec_handle_ptr) {
@@ -2081,13 +2081,13 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
     read_frame_delta_lf_params(bs, frame_info);
     setup_segmentation_dequant((DecModCtxt *)dec_handle_ptr->pv_dec_mod_ctxt);
 
-    MasterParseCtxt *master_parse_ctx = (MasterParseCtxt *)dec_handle_ptr->pv_master_parse_ctxt;
+    MainParseCtxt *main_parse_ctx = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
     if (frame_info->primary_ref_frame == PRIMARY_REF_NONE)
-        reset_parse_ctx(&master_parse_ctx->init_frm_ctx,
+        reset_parse_ctx(&main_parse_ctx->init_frm_ctx,
                         frame_info->quantization_params.base_q_idx);
     else
         /* Load CDF */
-        master_parse_ctx->init_frm_ctx = dec_handle_ptr->prev_frame->final_frm_ctx;
+        main_parse_ctx->init_frm_ctx = dec_handle_ptr->prev_frame->final_frm_ctx;
 
     TilesInfo tiles_info = dec_handle_ptr->frame_header.tiles_info;
 
@@ -2106,7 +2106,7 @@ void read_uncompressed_header(Bitstrm *bs, EbDecHandle *dec_handle_ptr, ObuHeade
     if(dec_handle_ptr->dec_config.threads != 1)
         num_instances = MIN((int32_t)dec_handle_ptr->dec_config.threads, num_tiles);
 
-    if (num_instances != master_parse_ctx->context_count)
+    if (num_instances != main_parse_ctx->context_count)
         realloc_parse_memory(dec_handle_ptr);
 
     frame_info->coded_lossless = 1;
@@ -2215,7 +2215,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
                                 ObuHeader *obu_header, int *is_last_tg) {
     EbErrorType status = EB_ErrorNone;
 
-    MasterParseCtxt *master_parse_ctxt = (MasterParseCtxt *)dec_handle_ptr->pv_master_parse_ctxt;
+    MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
 
     FrameHeader *frame_header = &dec_handle_ptr->frame_header;
 
@@ -2381,11 +2381,11 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
         decode_frame_tiles(dec_handle_ptr, NULL);
     } else {
         //TO-DO assign to appropriate tile_parse_ctxt
-        ParseCtxt *parse_ctxt               = &master_parse_ctxt->tile_parse_ctxt[0];
+        ParseCtxt *parse_ctxt               = &main_parse_ctxt->tile_parse_ctxt[0];
         parse_ctxt->seq_header              = &dec_handle_ptr->seq_header;
         parse_ctxt->frame_header            = &dec_handle_ptr->frame_header;
-        parse_ctxt->parse_above_nbr4x4_ctxt = &master_parse_ctxt->parse_above_nbr4x4_ctxt[0];
-        parse_ctxt->parse_left_nbr4x4_ctxt  = &master_parse_ctxt->parse_left_nbr4x4_ctxt[0];
+        parse_ctxt->parse_above_nbr4x4_ctxt = &main_parse_ctxt->parse_above_nbr4x4_ctxt[0];
+        parse_ctxt->parse_left_nbr4x4_ctxt  = &main_parse_ctxt->parse_left_nbr4x4_ctxt[0];
 
         for (int tile_num = tg_start; tile_num <= tg_end; tile_num++) {
             size_t tile_size;
@@ -2396,7 +2396,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
                 obu_header->payload_size -= (tiles_info->tile_size_bytes + tile_size);
             }
 
-            ParseTileData *parse_tile_data      = master_parse_ctxt->parse_tile_data;
+            ParseTileData *parse_tile_data      = main_parse_ctxt->parse_tile_data;
             parse_tile_data[tile_num].data      = get_bitsteam_buf(bs);
             parse_tile_data[tile_num].data_end  = bs->buf_max;
             parse_tile_data[tile_num].tile_size = tile_size;
@@ -2458,7 +2458,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
 
     /* Save CDF */
     if (frame_header->disable_frame_end_update_cdf)
-        dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = master_parse_ctxt->init_frm_ctx;
+        dec_handle_ptr->cur_pic_buf[0]->final_frm_ctx = main_parse_ctxt->init_frm_ctx;
 
     if (!is_mt) { pad_pic(dec_handle_ptr); }
 

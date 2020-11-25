@@ -424,8 +424,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 void svt_av1_scan_tiles(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info, ObuHeader *obu_header,
                         Bitstrm *bs, uint32_t tg_start, uint32_t tg_end) {
     size_t           tile_size;
-    MasterParseCtxt *master_parse_ctxt = (MasterParseCtxt *)dec_handle_ptr->pv_master_parse_ctxt;
-    ParseTileData *  parse_tile_data   = master_parse_ctxt->parse_tile_data;
+    MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
+    ParseTileData *  parse_tile_data   = main_parse_ctxt->parse_tile_data;
 
     for (uint32_t tile_num = tg_start; tile_num <= tg_end; tile_num++) {
         if (tile_num == tg_end)
@@ -466,14 +466,14 @@ EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
     EbErrorType status = EB_ErrorNone;
 
     TilesInfo *      tiles_info        = &dec_handle_ptr->frame_header.tiles_info;
-    MasterParseCtxt *master_parse_ctxt = (MasterParseCtxt *)dec_handle_ptr->pv_master_parse_ctxt;
-    ParseCtxt *      parse_ctxt        = &master_parse_ctxt->tile_parse_ctxt[tile_num];
+    MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
+    ParseCtxt *      parse_ctxt        = &main_parse_ctxt->tile_parse_ctxt[tile_num];
 
     parse_ctxt->seq_header   = &dec_handle_ptr->seq_header;
     parse_ctxt->frame_header = &dec_handle_ptr->frame_header;
 
-    parse_ctxt->parse_above_nbr4x4_ctxt = &master_parse_ctxt->parse_above_nbr4x4_ctxt[tile_num];
-    parse_ctxt->parse_left_nbr4x4_ctxt  = &master_parse_ctxt->parse_left_nbr4x4_ctxt[tile_num];
+    parse_ctxt->parse_above_nbr4x4_ctxt = &main_parse_ctxt->parse_above_nbr4x4_ctxt[tile_num];
+    parse_ctxt->parse_left_nbr4x4_ctxt  = &main_parse_ctxt->parse_left_nbr4x4_ctxt[tile_num];
 
     start_parse_tile(dec_handle_ptr, parse_ctxt, tiles_info, tile_num, 1);
 

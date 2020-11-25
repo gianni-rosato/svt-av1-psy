@@ -178,7 +178,7 @@ typedef struct EbDecHandle {
     // Thread Handles
 
     // Module Contexts
-    void *pv_master_parse_ctxt;
+    void *pv_main_parse_ctxt;
 
     void *pv_dec_mod_ctxt;
 

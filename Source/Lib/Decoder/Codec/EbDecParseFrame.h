@@ -134,7 +134,7 @@ typedef struct ParseCtxt {
     int32_t cur_q_ind;
 } ParseCtxt;
 
-typedef struct MasterParseCtxt {
+typedef struct MainParseCtxt {
     /* Array holding the context for each of the tile.*/
     ParseCtxt *tile_parse_ctxt;
 
@@ -155,7 +155,7 @@ typedef struct MasterParseCtxt {
 
     /* Array of ParseTileData for each Tile */
     ParseTileData *parse_tile_data;
-} MasterParseCtxt;
+} MainParseCtxt;
 
 void parse_super_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, uint32_t blk_row,
                        uint32_t blk_col, SBInfo *sb_info);
