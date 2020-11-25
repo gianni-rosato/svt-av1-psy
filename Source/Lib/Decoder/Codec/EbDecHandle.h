@@ -128,9 +128,9 @@ typedef struct FrameMiMap {
     int32_t num_mis_in_sb_wd;
 } FrameMiMap;
 
-/* Master Frame Buf containing all frame level bufs like ModeInfo
+/* Main Frame Buffer containing all frame level bufs like ModeInfo
        for all the frames in parallel */
-typedef struct MasterFrameBuf {
+typedef struct MainFrameBuf {
     CurFrameBuf cur_frame_bufs[DEC_MAX_NUM_FRM_PRLL];
 
     int32_t num_mis_in_sb;
@@ -145,7 +145,7 @@ typedef struct MasterFrameBuf {
     int32_t        tpl_mvs_size;
     int8_t         ref_frame_side[REF_FRAMES];
 
-} MasterFrameBuf;
+} MainFrameBuf;
 
 /**************************************
  * Component Private Data
@@ -225,9 +225,9 @@ typedef struct EbDecHandle {
 
     //DPB + MV, ... buf
 
-    /* Master Frame Buf containing all frame level bufs like ModeInfo
+    /* Main Frame Buffer containing all frame level bufs like ModeInfo
        for all the frames in parallel */
-    MasterFrameBuf master_frame_buf;
+    MainFrameBuf main_frame_buf;
 
     // Memory Map
     EbMemoryMapEntry *memory_map_init_address;

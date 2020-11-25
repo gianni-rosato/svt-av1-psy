@@ -1209,7 +1209,7 @@ void read_global_motion_params(Bitstrm *bs, EbDecHandle *dec_handle, FrameHeader
         /* Convert to EbWarpedMotionParams type */
         {
             EbWarpedMotionParams *wm_global =
-                &dec_handle->master_frame_buf.cur_frame_bufs[0].global_motion_warp[ref];
+                &dec_handle->main_frame_buf.cur_frame_bufs[0].global_motion_warp[ref];
             wm_global->wmtype = cur_buf->global_motion[ref].gm_type;
             svt_memcpy(wm_global->wmmat,
                    cur_buf->global_motion[ref].gm_params,
@@ -1614,7 +1614,7 @@ static INLINE EbErrorType reallocate_parse_tile_data(MasterParseCtxt *master_par
 
 void set_prev_frame_info(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     TilesInfo tiles_info = dec_handle_ptr->frame_header.tiles_info;
     dec_mt_frame_data->prev_frame_info.prev_max_frame_width =
         dec_handle_ptr->frame_header.frame_size.frame_width;
@@ -1652,7 +1652,7 @@ static void check_mt_support(EbDecHandle *dec_handle_ptr) {
     TilesInfo       tiles_info = dec_handle_ptr->frame_header.tiles_info;
 
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     if (dec_mt_frame_data->prev_frame_info.frame_header_read != EB_TRUE) {
         set_prev_frame_info(dec_handle_ptr);
@@ -2220,7 +2220,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
     FrameHeader *frame_header = &dec_handle_ptr->frame_header;
 
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     int      num_tiles, tg_start, tg_end, tile_start_and_end_present_flag = 0;
     uint32_t start_position, end_position, header_bytes;
@@ -2447,7 +2447,7 @@ EbErrorType read_tile_group_obu(Bitstrm *bs, EbDecHandle *dec_handle_ptr, TilesI
 
     if (is_mt) {
         if (do_upscale) svt_av1_queue_lr_jobs(dec_handle_ptr);
-        dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.start_lr_frame =
+        dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.start_lr_frame =
             EB_TRUE;
         svt_post_semaphore(dec_handle_ptr->thread_semaphore);
         for (uint32_t lib_thrd = 0; lib_thrd < num_threads - 1; lib_thrd++)

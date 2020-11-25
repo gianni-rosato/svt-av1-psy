@@ -125,16 +125,16 @@ EbErrorType dec_eb_recon_picture_buffer_desc_ctor(
 }
 
 /**********************************
-* Master Frame Buf containing all frame level bufs like ModeInfo
+* Main Frame Buffer containing all frame level bufs like ModeInfo
 for all the frames in parallel
 **********************************/
 
-static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
+static EbErrorType init_main_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     int32_t i, num_sb;
     CurFrameBuf *cur_frame_buf;
-    MasterFrameBuf  *master_frame_buf = &dec_handle_ptr->master_frame_buf;
+    MainFrameBuf  *main_frame_buf = &dec_handle_ptr->main_frame_buf;
     SeqHeader   *seq_header = &dec_handle_ptr->seq_header;
 
     EbBool is_st = dec_handle_ptr->dec_config.threads == 1 ? EB_TRUE : EB_FALSE;
@@ -156,16 +156,16 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
 
     int32_t num_mis_in_sb = (1 << (sb_size_log2 - MI_SIZE_LOG2)) * (1 << (sb_size_log2 - MI_SIZE_LOG2));
 
-    master_frame_buf->num_mis_in_sb = num_mis_in_sb;
+    main_frame_buf->num_mis_in_sb = num_mis_in_sb;
 
-    //master_frame_buf->mi_cols = mi_cols;
-    //master_frame_buf->mi_rows = mi_rows;
+    //main_frame_buf->mi_cols = mi_cols;
+    //main_frame_buf->mi_rows = mi_rows;
 
-    master_frame_buf->sb_cols = sb_cols;
-    master_frame_buf->sb_rows = sb_rows;
+    main_frame_buf->sb_cols = sb_cols;
+    main_frame_buf->sb_rows = sb_rows;
 
     for (i = 0; i < dec_handle_ptr->num_frms_prll; i++) {
-        cur_frame_buf = &master_frame_buf->cur_frame_bufs[i];
+        cur_frame_buf = &main_frame_buf->cur_frame_bufs[i];
 
         /* SuperBlock str allocation at SB level */
         EB_MALLOC_DEC(SBInfo*, cur_frame_buf->sb_info,
@@ -301,7 +301,7 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
             lr_ctxt->lr_stride[plane] = sb_cols;
         }
     }
-    FrameMiMap *frame_mi_map = &master_frame_buf->frame_mi_map;
+    FrameMiMap *frame_mi_map = &main_frame_buf->frame_mi_map;
     frame_mi_map->sb_cols = sb_cols;
     frame_mi_map->sb_rows = sb_rows;
     frame_mi_map->mi_cols_algnsb = sb_cols * (1 << (sb_size_log2 - MI_SIZE_LOG2));
@@ -316,8 +316,8 @@ static EbErrorType init_master_frame_ctxt(EbDecHandle  *dec_handle_ptr) {
     frame_mi_map->num_mis_in_sb_wd = (1 << (sb_size_log2 - MI_SIZE_LOG2));
 
 
-    master_frame_buf->tpl_mvs = NULL;
-    master_frame_buf->tpl_mvs_size = 0;
+    main_frame_buf->tpl_mvs = NULL;
+    main_frame_buf->tpl_mvs_size = 0;
 
     return return_error;
 }
@@ -517,7 +517,7 @@ EbErrorType dec_mem_init(EbDecHandle  *dec_handle_ptr) {
     return_error |= init_lr_ctxt(dec_handle_ptr);
 
     /* init frame buffers */
-    return_error |= init_master_frame_ctxt(dec_handle_ptr);
+    return_error |= init_main_frame_ctxt(dec_handle_ptr);
 
     /* Initialize the references to NULL */
     for (int i = 0; i < REF_FRAMES; i++) {

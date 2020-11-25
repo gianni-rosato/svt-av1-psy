@@ -181,7 +181,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
     int32_t sb_row_tile_start = 0;
     if (is_mt) {
         DecMtParseReconTileInfo *parse_recon_tile_info =
-            &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0]
+            &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0]
                  .dec_mt_frame_data.parse_recon_tile_info_array[tile_num];
 
         sb_row_tile_start = (parse_recon_tile_info->tile_info.mi_row_start << MI_SIZE_LOG2) >>
@@ -210,24 +210,24 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
             uint8_t sy     = color_config->subsampling_y;
 
             //clear_block_decoded_flags(r, c, sbSize4)
-            MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
-            CurFrameBuf *   frame_buf        = &master_frame_buf->cur_frame_bufs[0];
-            int32_t         num_mis_in_sb    = master_frame_buf->num_mis_in_sb;
+            MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
+            CurFrameBuf * frame_buf        = &main_frame_buf->cur_frame_bufs[0];
+            int32_t       num_mis_in_sb    = main_frame_buf->num_mis_in_sb;
 
-            SBInfo *sb_info = frame_buf->sb_info + (sb_row * master_frame_buf->sb_cols) + sb_col;
-            *(master_frame_buf->frame_mi_map.pps_sb_info +
-              sb_row * master_frame_buf->frame_mi_map.sb_cols + sb_col) = sb_info;
+            SBInfo *sb_info = frame_buf->sb_info + (sb_row * main_frame_buf->sb_cols) + sb_col;
+            *(main_frame_buf->frame_mi_map.pps_sb_info +
+              sb_row * main_frame_buf->frame_mi_map.sb_cols + sb_col) = sb_info;
             sb_info->sb_mode_info                                       = frame_buf->mode_info +
-                                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) +
+                                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols) +
                                     sb_col * num_mis_in_sb;
 
             sb_info->sb_trans_info[AOM_PLANE_Y] =
                 frame_buf->trans_info[AOM_PLANE_Y] +
-                (sb_row * num_mis_in_sb * master_frame_buf->sb_cols) + sb_col * num_mis_in_sb;
+                (sb_row * num_mis_in_sb * main_frame_buf->sb_cols) + sb_col * num_mis_in_sb;
 
             sb_info->sb_trans_info[AOM_PLANE_U] =
                 frame_buf->trans_info[AOM_PLANE_U] +
-                ((sb_row * num_mis_in_sb * master_frame_buf->sb_cols >> sy) +
+                ((sb_row * num_mis_in_sb * main_frame_buf->sb_cols >> sy) +
                  (sb_col * num_mis_in_sb >> sx)) *
                     2;
             if (dec_handle_ptr->dec_config.threads == 1) {
@@ -240,29 +240,29 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
                 /*TODO : Change to macro */
                 sb_info->sb_coeff[AOM_PLANE_Y] =
                     frame_buf->coeff[AOM_PLANE_Y] +
-                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1))
+                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1))
                         + sb_col * num_mis_in_sb* (16 + 1);
                 /*TODO : Change to macro */
                 sb_info->sb_coeff[AOM_PLANE_U] =
                     frame_buf->coeff[AOM_PLANE_U] +
-                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
+                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
                         + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
                 sb_info->sb_coeff[AOM_PLANE_V] =
                     frame_buf->coeff[AOM_PLANE_V] +
-                    (sb_row * num_mis_in_sb * master_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
+                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
                         + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
             }
             int cdef_factor = dec_handle_ptr->seq_header.use_128x128_superblock ? 4 : 1;
             sb_info->sb_cdef_strength =
                 frame_buf->cdef_strength +
-                (((sb_row * master_frame_buf->sb_cols) + sb_col) * cdef_factor);
+                (((sb_row * main_frame_buf->sb_cols) + sb_col) * cdef_factor);
 
             sb_info->sb_delta_lf =
                 frame_buf->delta_lf +
-                (FRAME_LF_COUNT * ((sb_row * master_frame_buf->sb_cols) + sb_col));
+                (FRAME_LF_COUNT * ((sb_row * main_frame_buf->sb_cols) + sb_col));
 
             sb_info->sb_delta_q =
-                frame_buf->delta_q + (sb_row * master_frame_buf->sb_cols) + sb_col;
+                frame_buf->delta_q + (sb_row * main_frame_buf->sb_cols) + sb_col;
 
             clear_cdef(sb_info->sb_cdef_strength, cdef_factor);
 
@@ -297,7 +297,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
         }
         if (is_mt) {
             DecMtFrameData *dec_mt_frame_data =
-                &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0]
+                &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0]
                      .dec_mt_frame_data; //multi frame Parallel 0 -> idx
             assert(sb_row >= sb_row_tile_start);
             dec_mt_frame_data->parse_recon_tile_info_array[tile_num]

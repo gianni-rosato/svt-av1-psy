@@ -71,8 +71,8 @@ EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
                             int32_t mi_row, int32_t sb_row) {
     EbErrorType       status                   = EB_ErrorNone;
     EbDecHandle *     dec_handle_ptr           = (EbDecHandle *)(dec_mod_ctxt->dec_handle_ptr);
-    MasterFrameBuf *  master_frame_buf         = &dec_handle_ptr->master_frame_buf;
-    CurFrameBuf *     frame_buf                = &master_frame_buf->cur_frame_bufs[0];
+    MainFrameBuf *    main_frame_buf         = &dec_handle_ptr->main_frame_buf;
+    CurFrameBuf *     frame_buf                = &main_frame_buf->cur_frame_bufs[0];
     volatile int32_t *sb_completed_in_prev_row = NULL;
     uint32_t *        sb_completed_in_row;
     int32_t           tile_wd_in_sb;
@@ -106,7 +106,7 @@ EbErrorType decode_tile_row(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
     {
         int32_t sb_col = (mi_col << MI_SIZE_LOG2) >> dec_mod_ctxt->seq_header->sb_size_log2;
 
-        SBInfo *sb_info = frame_buf->sb_info + (sb_row * master_frame_buf->sb_cols) + sb_col;
+        SBInfo *sb_info = frame_buf->sb_info + (sb_row * main_frame_buf->sb_cols) + sb_col;
 
         dec_mod_ctxt->cur_coeff[AOM_PLANE_Y] = sb_info->sb_coeff[AOM_PLANE_Y];
         dec_mod_ctxt->cur_coeff[AOM_PLANE_U] = sb_info->sb_coeff[AOM_PLANE_U];
@@ -184,7 +184,7 @@ EbErrorType decode_tile(DecModCtxt *dec_mod_ctxt, TilesInfo *tile_info,
 EbErrorType start_decode_tile(EbDecHandle *dec_handle_ptr, DecModCtxt *dec_mod_ctxt,
                               TilesInfo *tiles_info, int32_t tile_num) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     DecMtParseReconTileInfo *parse_recon_tile_info_array;
 

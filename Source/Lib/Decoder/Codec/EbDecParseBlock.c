@@ -844,7 +844,7 @@ int motion_field_projection_row(EbDecHandle *dec_handle, MvReferenceFrame start_
     int       ref_offset[REF_FRAMES] = {0};
     const int mvs_cols               = (frame_info->mi_cols + 1) >> 1; //8x8 unit level
 
-    TemporalMvRef *tpl_mvs_base = dec_handle->master_frame_buf.tpl_mvs;
+    TemporalMvRef *tpl_mvs_base = dec_handle->main_frame_buf.tpl_mvs;
 
     for (MvReferenceFrame rf = LAST_FRAME; rf <= INTER_REFS_PER_FRAME; ++rf) {
         ref_offset[rf] = get_relative_dist(&dec_handle->seq_header.order_hint_info,
@@ -891,7 +891,7 @@ int motion_field_projection_row(EbDecHandle *dec_handle, MvReferenceFrame start_
 void motion_field_projections_row(EbDecHandle *dec_handle, int sb_row, const EbDecPicBuf **ref_buf,
                                   int *ref_order_hint) {
     OrderHintInfo *order_hint_info = &dec_handle->seq_header.order_hint_info;
-    TemporalMvRef *tpl_mvs_base    = dec_handle->master_frame_buf.tpl_mvs;
+    TemporalMvRef *tpl_mvs_base    = dec_handle->main_frame_buf.tpl_mvs;
 
     const int cur_order_hint = dec_handle->cur_pic_buf[0]->order_hint;
     const int mvs_rows       = (dec_handle->frame_header.mi_rows + 1) >> 1; //8x8 unit level
@@ -948,7 +948,7 @@ void motion_field_projections_row(EbDecHandle *dec_handle, int sb_row, const EbD
 
 void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     EbBool is_mt = dec_handle->dec_config.threads > 1;
     EbBool do_memset = EB_TRUE;
 
@@ -974,9 +974,9 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
     }
 
     if (do_memset) {
-        memset(dec_handle->master_frame_buf.ref_frame_side,
+        memset(dec_handle->main_frame_buf.ref_frame_side,
                0,
-               sizeof(dec_handle->master_frame_buf.ref_frame_side));
+               sizeof(dec_handle->main_frame_buf.ref_frame_side));
     }
 
     EbBool no_proj_flag = (dec_handle->frame_header.show_existing_frame ||
@@ -1002,15 +1002,15 @@ void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
         ref_order_hint[ref_idx] = order_hint;
 
         if (get_relative_dist(order_hint_info, order_hint, cur_order_hint) > 0)
-            dec_handle->master_frame_buf.ref_frame_side[ref_frame] = 1;
+            dec_handle->main_frame_buf.ref_frame_side[ref_frame] = 1;
         else if (order_hint == cur_order_hint)
-            dec_handle->master_frame_buf.ref_frame_side[ref_frame] = -1;
+            dec_handle->main_frame_buf.ref_frame_side[ref_frame] = -1;
     }
     if (!no_proj_flag) {
         //branch of point for MT
         if (is_mt) {
             DecMtMotionProjInfo *motion_proj_info =
-                &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.motion_proj_info;
+                &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.motion_proj_info;
 
             while (1) {
                 int32_t proj_row = -1;
@@ -1189,7 +1189,7 @@ void inter_copy_frame_mvs(EbDecHandle *dec_handle, BlockModeInfo *mi, int mi_row
     for (int idx = 0; idx < 2; ++idx) {
         MvReferenceFrame ref_frame = mi->ref_frame[idx];
         if (ref_frame > INTRA_FRAME) {
-            int8_t ref_idx = dec_handle->master_frame_buf.ref_frame_side[ref_frame];
+            int8_t ref_idx = dec_handle->main_frame_buf.ref_frame_side[ref_frame];
             if (ref_idx) continue;
             if ((abs(mi->mv[idx].as_mv.row) > REFMVS_LIMIT) ||
                 (abs(mi->mv[idx].as_mv.col) > REFMVS_LIMIT))

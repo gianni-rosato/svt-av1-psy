@@ -166,7 +166,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
 
     part_info.subsampling_x    = color_config->subsampling_x;
     part_info.subsampling_y    = color_config->subsampling_y;
-    part_info.ps_global_motion = dec_handle->master_frame_buf.cur_frame_bufs[0].global_motion_warp;
+    part_info.ps_global_motion = dec_handle->main_frame_buf.cur_frame_bufs[0].global_motion_warp;
 
     /* Wait until reference block's recon is complete for intrabc blocks */
     if (dec_handle->dec_config.threads > 1 && mode_info->use_intrabc) {
@@ -193,7 +193,7 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
                 int32_t ref_col = mi_col + (mv.col >>
                     (SUBPEL_BITS-1 + MI_SIZE_LOG2));
                 DecMtFrameData *dec_mt_frame_data = &dec_handle->
-                    master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+                    main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
                 int32_t ref_sb_tile_col = AOMMIN(ref_col, tile->mi_col_end) >>
                     (sb_size_log2 - MI_SIZE_LOG2);

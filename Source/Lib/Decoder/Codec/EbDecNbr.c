@@ -18,7 +18,7 @@
 
 void update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row, int mi_col,
                        BlockSize subsize) {
-    FrameMiMap *frame_mi_map = &dec_handle->master_frame_buf.frame_mi_map;
+    FrameMiMap *frame_mi_map = &dec_handle->main_frame_buf.frame_mi_map;
 
     int32_t offset = parse_ctx->cur_mode_info_cnt;
     // int32_t num_mis_in_sb_wd = frame_mi_map->num_mis_in_sb_wd;
@@ -38,7 +38,7 @@ void update_block_nbrs(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_row
 /* TODO : Should remove dec_mod_ctxt dependency */
 BlockModeInfo *get_cur_mode_info(void *pv_dec_handle, int mi_row, int mi_col, SBInfo *sb_info) {
     EbDecHandle *dec_handle   = (EbDecHandle *)pv_dec_handle;
-    FrameMiMap * frame_mi_map = &dec_handle->master_frame_buf.frame_mi_map;
+    FrameMiMap * frame_mi_map = &dec_handle->main_frame_buf.frame_mi_map;
     (void)sb_info;
     int32_t cur_sb_row = mi_row >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);
     int32_t cur_sb_col = mi_col >> (frame_mi_map->sb_size_log2 - MI_SIZE_LOG2);

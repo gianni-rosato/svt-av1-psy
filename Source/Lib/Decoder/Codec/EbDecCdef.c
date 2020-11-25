@@ -78,8 +78,8 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                     int32_t fbc, uint32_t *cdef_left, int32_t num_planes, uint16_t *src,
                     int32_t *curr_recon_stride, uint8_t **curr_blk_recon_buf,
                     uint16_t **linebuf_above, uint16_t **linebuf_curr, int32_t stride) {
-    MasterFrameBuf *     master_frame_buf  = &dec_handle->master_frame_buf;
-    CurFrameBuf *        frame_buf         = &master_frame_buf->cur_frame_bufs[0];
+    MainFrameBuf *       main_frame_buf    = &dec_handle->main_frame_buf;
+    CurFrameBuf *        frame_buf         = &main_frame_buf->cur_frame_bufs[0];
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
     int8_t use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
@@ -99,9 +99,9 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
     SbInfo points to every super block.*/
     SBInfo *sb_info = NULL;
     if (dec_handle->seq_header.sb_size == BLOCK_128X128) {
-        sb_info = frame_buf->sb_info + ((fbr >> 1) * master_frame_buf->sb_cols) + (fbc >> 1);
+        sb_info = frame_buf->sb_info + ((fbr >> 1) * main_frame_buf->sb_cols) + (fbc >> 1);
     } else {
-        sb_info = frame_buf->sb_info + ((fbr)*master_frame_buf->sb_cols) + (fbc);
+        sb_info = frame_buf->sb_info + ((fbr)*main_frame_buf->sb_cols) + (fbc);
     }
 
     /*Logic for consuming cdef values from super block,
@@ -489,7 +489,7 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
         }
     }
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile uint32_t *cdef_completed_in_prev_row = NULL;
     uint32_t *         cdef_completed_in_row, nsync = 1;
 

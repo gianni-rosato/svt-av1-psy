@@ -289,7 +289,7 @@ void dec_av1_loop_restoration_filter_row(EbDecHandle *dec_handle, int32_t sb_row
     int32_t index = lr_ctxt->is_thread_min ? thread_cnt : sb_row_idx;
 
     if (is_mt) {
-        DecMtFrameData *dec_mt_frame_data = &dec_handle->master_frame_buf.
+        DecMtFrameData *dec_mt_frame_data = &dec_handle->main_frame_buf.
             cur_frame_bufs[0].dec_mt_frame_data;
 
         if (sb_row) {

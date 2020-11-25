@@ -627,7 +627,7 @@ static int add_tpl_ref_mv(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, int mi_
     av1_set_ref_frame(rf, ref_frame);
 
     const TemporalMvRef *tpl_mvs =
-        dec_handle->master_frame_buf.tpl_mvs + y8 * (frm_header->mi_stride >> 1) + x8;
+        dec_handle->main_frame_buf.tpl_mvs + y8 * (frm_header->mi_stride >> 1) + x8;
     const IntMv prev_frame_mvs = tpl_mvs->mf_mv0;
     if (rf[1] == NONE_FRAME) {
         int                      cur_frame_index = dec_handle->cur_pic_buf[0]->order_hint;

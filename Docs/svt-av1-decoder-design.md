@@ -512,7 +512,7 @@ The following are the high-level data structures in the decoder. Major elements 
   * **EbHandle\* decode\_thread\_handle\_array**
   * **FrameHeader frame\_header**
   * **uint8\_t is\_lf\_enabled**
-  * **MasterFrameBuf master\_frame\_buf** Master Frame Buf containing all frame level bufs like ModeInfo for all the frames in parallel
+  * **MainFrameBuf master\_frame\_buf** Main Frame Buffer containing all frame level bufs like ModeInfo for all the frames in parallel
   * **int32\_t mem\_init\_done** Flag to signal decoder memory init is done
   * **EbMemoryMapEntry\* memory\_map**
   * **uint32\_t memory\_map\_index**

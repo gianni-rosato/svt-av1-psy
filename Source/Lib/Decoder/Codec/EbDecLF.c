@@ -757,18 +757,18 @@ void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
                          LfCtxt *lf_ctxt,
                          uint32_t y_sb_index,
                          int32_t plane_start, int32_t plane_end) {
-    MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
-    CurFrameBuf *   frame_buf        = &master_frame_buf->cur_frame_bufs[0];
-    FrameHeader *   frm_hdr          = &dec_handle_ptr->frame_header;
-    SeqHeader *     seq_header       = &dec_handle_ptr->seq_header;
-    uint8_t         sb_size_log2     = seq_header->sb_size_log2;
-    int32_t         sb_size_w        = block_size_wide[seq_header->sb_size];
-    int32_t         pic_width_in_sb  = (frm_hdr->frame_size.frame_width + sb_size_w - 1) / sb_size_w;
-    uint32_t        sb_origin_y      = y_sb_index << sb_size_log2;
+    MainFrameBuf *main_frame_buf  = &dec_handle_ptr->main_frame_buf;
+    CurFrameBuf * frame_buf       = &main_frame_buf->cur_frame_bufs[0];
+    FrameHeader * frm_hdr         = &dec_handle_ptr->frame_header;
+    SeqHeader *   seq_header      = &dec_handle_ptr->seq_header;
+    uint8_t       sb_size_log2    = seq_header->sb_size_log2;
+    int32_t       sb_size_w       = block_size_wide[seq_header->sb_size];
+    int32_t       pic_width_in_sb = (frm_hdr->frame_size.frame_width + sb_size_w - 1) / sb_size_w;
+    uint32_t      sb_origin_y     = y_sb_index << sb_size_log2;
 
     volatile int32_t *sb_lf_completed_in_prev_row = NULL;
     DecMtlfFrameInfo *lf_frame_info =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.lf_frame_info;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.lf_frame_info;
     if (y_sb_index) {
         sb_lf_completed_in_prev_row =
             (volatile int32_t *)&lf_frame_info->sb_lf_completed_in_row[y_sb_index - 1];
@@ -779,8 +779,8 @@ void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
         int32_t sb_origin_x     = x_sb_index << sb_size_log2;
         int32_t end_of_row_flag = (x_sb_index == pic_width_in_sb - 1) ? EB_TRUE : EB_FALSE;
 
-        SBInfo *sb_info =
-            frame_buf->sb_info + (((y_sb_index * master_frame_buf->sb_cols) + x_sb_index));
+        SBInfo *sb_info = frame_buf->sb_info +
+            (((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));
 
         /* Top-Right Sync*/
         if (y_sb_index) {
@@ -819,7 +819,7 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
     uint8_t      sb_size_log2 = seq_header->sb_size_log2;
 
     LoopFilterInfoN *lf_info = &lf_ctxt->lf_info;
-    lf_ctxt->delta_lf_stride = dec_handle_ptr->master_frame_buf.sb_cols * FRAME_LF_COUNT;
+    lf_ctxt->delta_lf_stride = dec_handle_ptr->main_frame_buf.sb_cols * FRAME_LF_COUNT;
 
     int32_t  sb_size_w            = block_size_wide[seq_header->sb_size];
     int32_t  sb_size_h            = block_size_high[seq_header->sb_size];
@@ -853,14 +853,14 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
                 uint32_t sb_origin_y     = y_sb_index << sb_size_log2;
                 EbBool end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
 
-                MasterFrameBuf *master_frame_buf = &dec_handle_ptr->master_frame_buf;
-                CurFrameBuf *   frame_buf        = &master_frame_buf->cur_frame_bufs[0];
+                MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
+                CurFrameBuf * frame_buf        = &main_frame_buf->cur_frame_bufs[0];
 
                 SBInfo *sb_info =
-                    frame_buf->sb_info + (((y_sb_index * master_frame_buf->sb_cols) + x_sb_index));
+                    frame_buf->sb_info + (((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));
 
                 /*sb_info->sb_delta_lf = frame_buf->delta_lf + (FRAME_LF_COUNT *
-                    ((y_sb_index * master_frame_buf->sb_cols) + x_sb_index));*/
+                    ((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));*/
 
                 /*LF function for a SB*/
                 dec_loop_filter_sb(dec_handle_ptr,

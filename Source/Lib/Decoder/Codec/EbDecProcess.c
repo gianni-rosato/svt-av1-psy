@@ -142,7 +142,7 @@ int32_t get_sb_row_to_process(DecMtRowInfo *sb_row_info) {
 EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info) {
     EbErrorType     return_error = EB_ErrorNone;
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     memory_map_start_address = svt_dec_memory_map;
     memset(&dec_mt_frame_data->prev_frame_info, 0, sizeof(PrevFrameMtCheck));
@@ -447,7 +447,7 @@ void svt_av1_scan_tiles(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info, ObuH
 
 void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
     uint32_t picture_height_in_sb =
@@ -482,7 +482,7 @@ EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
 
 void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_parse_frame = &dec_mt_frame_data->start_parse_frame;
 #if MT_WAIT_PROFILE
     FILE *            fp = dec_mt_frame_data->fp;
@@ -528,7 +528,7 @@ EbErrorType decode_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num,
 
 void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_decode_frame = &dec_mt_frame_data->start_decode_frame;
 #if MT_WAIT_PROFILE
     FILE *            fp = dec_mt_frame_data->fp;
@@ -621,14 +621,14 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
 
 void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr) {
     DecMtlfFrameInfo *lf_frame_info =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.lf_frame_info;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.lf_frame_info;
     int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
     /* ToDo : picture_height_in_sb used many places. Reuse! */
     uint32_t picture_height_in_sb =
         (dec_handle_ptr->frame_header.frame_size.frame_height + sb_size_h - 1) / sb_size_h;
 
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     EB_MEMSET(dec_mt_frame_data->lf_row_map, 0, picture_height_in_sb * sizeof(uint32_t));
 
@@ -719,7 +719,7 @@ static INLINE void dec_save_CDEF_boundary_lines_SB_row(
         dec_handle->is_16bit_pipeline);
     LrCtxt *        lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     for (int32_t p = 0; p < num_planes; ++p) {
         int32_t         ss_x          = p ? cm->subsampling_x : 0;
         int32_t         ss_y          = p ? cm->subsampling_y : 0;
@@ -765,7 +765,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
                                   int32_t plane_end,
                                   DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data1 =
-        &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     volatile EbBool *start_lf_frame = &dec_mt_frame_data1->start_lf_frame;
 #if MT_WAIT_PROFILE
@@ -783,7 +783,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
 
     FrameHeader *frm_hdr = &dec_handle->frame_header;
 
-    lf_ctxt->delta_lf_stride = dec_handle->master_frame_buf.sb_cols * FRAME_LF_COUNT;
+    lf_ctxt->delta_lf_stride = dec_handle->main_frame_buf.sb_cols * FRAME_LF_COUNT;
     frm_hdr->loop_filter_params.combine_vert_horz_lf = 1;
 
     DecMtlfFrameInfo *dec_mt_lf_frame_info = &dec_mt_frame_data1->lf_frame_info;
@@ -827,7 +827,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
     }
 
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     while (1) {
 #if MT_WAIT_PROFILE
@@ -904,7 +904,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
 
 void svt_av1_queue_cdef_jobs(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     int32_t  sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
     uint32_t picture_height_in_sb =
@@ -924,7 +924,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     uint8_t *       curr_blk_recon_buf[MAX_MB_PLANE];
     int32_t         curr_recon_stride[MAX_MB_PLANE];
     DecMtFrameData *dec_mt_frame_data1 =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_cdef_frame = &dec_mt_frame_data1->start_cdef_frame;
 #if MT_WAIT_PROFILE
     FILE *            fp = dec_mt_frame_data1->fp;
@@ -998,7 +998,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     }
 
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     while (1) {
 #if MT_WAIT_PROFILE
@@ -1081,7 +1081,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 
 void svt_av1_queue_lr_jobs(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
     int32_t  sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
     uint32_t picture_height_in_sb =
@@ -1173,7 +1173,7 @@ void dec_av1_loop_restoration_filter_frame_mt(
     Av1PixelRect *tile_rect_p[MAX_MB_PLANE];
 
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_lr_frame = &dec_mt_frame_data->start_lr_frame;
     while (*start_lr_frame != EB_TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
@@ -1330,7 +1330,7 @@ void *dec_all_stage_kernel(void *input_ptr) {
     DecThreadCtxt * thread_ctxt    = (DecThreadCtxt *)input_ptr;
     EbDecHandle *   dec_handle_ptr = thread_ctxt->dec_handle_ptr;
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     volatile EbBool *start_thread = (volatile EbBool *)&dec_handle_ptr->start_thread_process;
     while (*start_thread == EB_FALSE)
         ;
@@ -1376,7 +1376,7 @@ static void svt_av1_sleep(const int milliseconds) {
 
 void dec_sync_all_threads(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
-        &dec_handle_ptr->master_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
+        &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     dec_mt_frame_data->end_flag = EB_TRUE;
 
     /* To make all worker exit except main thread! */

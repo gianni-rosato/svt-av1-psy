@@ -27,16 +27,16 @@ EbErrorType check_add_tplmv_buf(EbDecHandle *dec_handle_ptr) {
     const int32_t tpl_size =
         ((ps_frm_hdr->mi_rows + MAX_MIB_SIZE) >> 1) * (ps_frm_hdr->mi_stride >> 1);
 
-    int32_t realloc = (dec_handle_ptr->master_frame_buf.tpl_mvs == NULL) ||
-                      (dec_handle_ptr->master_frame_buf.tpl_mvs_size < tpl_size);
+    int32_t realloc = (dec_handle_ptr->main_frame_buf.tpl_mvs == NULL) ||
+                      (dec_handle_ptr->main_frame_buf.tpl_mvs_size < tpl_size);
 
     if (realloc) {
         /*TODO: Add free now itself */
         EB_MALLOC_DEC(TemporalMvRef *,
-                      dec_handle_ptr->master_frame_buf.tpl_mvs,
-                      tpl_size * sizeof(*dec_handle_ptr->master_frame_buf.tpl_mvs),
+                      dec_handle_ptr->main_frame_buf.tpl_mvs,
+                      tpl_size * sizeof(*dec_handle_ptr->main_frame_buf.tpl_mvs),
                       EB_N_PTR);
-        dec_handle_ptr->master_frame_buf.tpl_mvs_size = tpl_size;
+        dec_handle_ptr->main_frame_buf.tpl_mvs_size = tpl_size;
     }
     return EB_ErrorNone;
 }
