@@ -146,12 +146,20 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
     }
+#if TUNE_NEW_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
     }
 #if TUNE_HME_ME_TUNING
+#if TUNE_NEW_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
@@ -178,7 +186,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
         }
     }
+#if TUNE_NEW_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
         }
@@ -204,7 +216,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level0_search_area_in_height_array[1] =
         me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
 #if TUNE_HME_ME_TUNING
+#if TUNE_NEW_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         me_context_ptr->hme_level1_search_area_in_width_array[0] =
             me_context_ptr->hme_level1_search_area_in_width_array[1] =
             me_context_ptr->hme_level1_search_area_in_height_array[0] =
@@ -223,7 +239,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
 #endif
 #if TUNE_HME_ME_TUNING
+#if TUNE_NEW_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         me_context_ptr->hme_level2_search_area_in_width_array[0] =
             me_context_ptr->hme_level2_search_area_in_width_array[1] =
             me_context_ptr->hme_level2_search_area_in_height_array[0] =
@@ -255,7 +275,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 me_context_ptr->hme_level2_search_area_in_height_array[1] = 16/2;
         }
     if (input_resolution <= INPUT_SIZE_720p_RANGE)
+#if TUNE_NEW_PRESETS
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_MR ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#else
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_M0 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+#endif
     else
         me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
 
@@ -362,12 +386,21 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->rotzoom_model_only = 0;
         gm_ctrls->bipred_only = 0;
         break;
+#if TUNE_NEW_PRESETS
+    case 3:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 0;
+        break;
+#else
     case 3:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
         gm_ctrls->rotzoom_model_only = 0;
         gm_ctrls->bipred_only = 1;
         break;
+#endif
     case 4:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
@@ -418,12 +451,21 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     uint8_t gm_level = 0;
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
+#if TUNE_NEW_PRESETS
+        if (enc_mode <= ENC_M1)
+            gm_level = 2;
+        else if (enc_mode <= ENC_M6)
+            gm_level = 3;
+        else
+            gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
+#else
         if (enc_mode <= ENC_M6)
             gm_level = 2;
         else if (enc_mode <= ENC_M7)
             gm_level = pcs_ptr->is_used_as_reference_flag ? 3 : 0;
         else
             gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
+#endif
     }
     set_gm_controls(pcs_ptr, gm_level);
 #else
@@ -452,7 +494,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     // Set hme/me based reference pruning level (0-4)
     if (enc_mode <= ENC_MR)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+#if TUNE_NEW_PRESETS
+    else if (enc_mode <= ENC_M2)
+#else
     else if (enc_mode <= ENC_M3)
+#endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
     else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);

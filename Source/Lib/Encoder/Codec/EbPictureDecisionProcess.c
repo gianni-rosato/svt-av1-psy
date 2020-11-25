@@ -1000,7 +1000,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if TUNE_NEW_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M3)
+#else
             if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
                     pcs_ptr->cdef_level = 1;
                 else
 #if TUNE_CDEF_FILTER
@@ -1060,7 +1064,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else {
     if (pcs_ptr->enc_mode <= ENC_M2)
             pcs_ptr->intra_pred_mode = 0;
+#if TUNE_NEW_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = 1;
             else
@@ -4036,18 +4044,24 @@ void mctf_frame(
                 context_ptr->tf_level = 0;
         }
 #if FEATURE_OPT_TF
+#if TUNE_NEW_PRESETS
+        else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 2;
             else
                 context_ptr->tf_level = 0;
         }
+#if !TUNE_NEW_PRESETS
         else if (pcs_ptr->enc_mode <= ENC_M7) {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 3;
             else
                 context_ptr->tf_level = 0;
         }
+#endif
         else {
 #if FEATURE_OPT_TF
             if (pcs_ptr->temporal_layer_index == 0)
@@ -5639,7 +5653,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
+#if TUNE_NEW_PRESETS
+                                    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
                                     if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }

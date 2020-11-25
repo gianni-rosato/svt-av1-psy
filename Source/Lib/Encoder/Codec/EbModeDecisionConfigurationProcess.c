@@ -857,12 +857,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
 #if TUNE_CDF
     uint8_t update_cdf_level = 0;
+#if TUNE_NEW_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M3)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         update_cdf_level = 1;
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
+#if !TUNE_NEW_PRESETS
     else if (pcs_ptr->enc_mode <= ENC_M7)
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
+#endif
     else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 
@@ -883,7 +889,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // 1                      | ON
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
+#if TUNE_NEW_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#else
             if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;
@@ -900,7 +910,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             ? 1
             : 0;
     EbBool enable_wm;
+#if TUNE_NEW_PRESETS
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
+#endif
         enable_wm = EB_TRUE;
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
@@ -932,7 +946,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
 #if FEATURE_NEW_OBMC_LEVELS
+#if TUNE_NEW_PRESETS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
+#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;

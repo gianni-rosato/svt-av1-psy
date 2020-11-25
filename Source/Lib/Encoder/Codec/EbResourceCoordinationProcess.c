@@ -831,7 +831,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 0                 OFF
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound =
+#if TUNE_NEW_PRESETS
+                (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
+#endif
 
             } else
                 scs_ptr->seq_header.enable_interintra_compound =
@@ -842,7 +846,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 1                             | Enable
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
                 scs_ptr->seq_header.filter_intra_level =
+#if TUNE_NEW_PRESETS
+                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
             else
                 scs_ptr->seq_header.filter_intra_level = (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;
             // Set compound mode      Settings
