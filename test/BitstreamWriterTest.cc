@@ -24,9 +24,20 @@
 #if defined(CHAR_BIT)
 #undef CHAR_BIT  // defined in clang/9.1.0/include/limits.h
 #endif
+#include "EbDefinitions.h"
+#include "EbPictureBufferDesc.h"
+#include "EbDecHandle.h"
 #include "EbDecBitReader.h"
+#include "EbDecParseFrame.h"
 #include "gtest/gtest.h"
 #include "random.h"
+
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif min
 /**
  * @brief Unit test for Bitstream writer functions:
  * - aom_write
@@ -97,7 +108,8 @@ class BitstreamWriterTest : public ::testing::Test {
 
                 // read out the bits and verify
                 SvtReader br;
-                svt_reader_init(&br, bw_buffer, bw.pos);
+                init_svt_reader(
+                    &br, bw_buffer, bw_buffer + buffer_size, bw.pos, 0);
                 for (int i = 0; i < total_bits; ++i) {
                     GTEST_ASSERT_EQ(svt_read(&br, probas[i], nullptr),
                                     test_bits[i])
@@ -194,7 +206,7 @@ TEST(Entropy_BitstreamWriter, write_literal_extreme_int) {
     aom_stop_encode(&bw);
 
     SvtReader br;
-    svt_reader_init(&br, stream_buffer, bw.pos);
+    init_svt_reader(&br, stream_buffer, stream_buffer + buffer_size, bw.pos, 0);
     EXPECT_EQ(svt_read_literal(&br, 32, nullptr), max_int)
         << "read max_int fail";
     EXPECT_EQ(svt_read_literal(&br, 32, nullptr), min_int)
@@ -231,7 +243,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
     gen.seed(deterministic_seeds);
 
     SvtReader br;
-    svt_reader_init(&br, stream_buffer, bw.pos);
+    init_svt_reader(&br, stream_buffer, stream_buffer + buffer_size, bw.pos, 0);
     for (int i = 0; i < 500; ++i) {
         ASSERT_EQ(svt_read_symbol(&br, fc.txb_skip_cdf[0][0], 2, nullptr),
                   rnd(gen));
@@ -272,8 +284,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
     gen.seed(deterministic_seeds);
 
     SvtReader br;
-    svt_reader_init(&br, stream_buffer, bw.pos);
-    br.allow_update_cdf = 1;
+    init_svt_reader(&br, stream_buffer, stream_buffer + buffer_size, bw.pos, 1);
     svt_av1_default_coef_probs(&fc, base_qindex);  // reset cdf
     for (int i = 0; i < 500; i++) {
         ASSERT_EQ(svt_read_symbol(&br, fc.txb_skip_cdf[0][0], 2, nullptr),

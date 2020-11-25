@@ -52,19 +52,6 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t t
     assert(cur_tile_info->mi_col_end > cur_tile_info->mi_col_start);
 }
 
-static int read_is_valid(const uint8_t *start, size_t len, const uint8_t *end) {
-    return len != 0 && len <= (size_t)(end - start);
-}
-
-EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data, const uint8_t *data_end,
-                            const size_t read_size, uint8_t allow_update_cdf) {
-    if (read_is_valid(data, read_size, data_end) && !svt_reader_init(r, data, read_size))
-        r->allow_update_cdf = allow_update_cdf;
-    else
-        return EB_Corrupt_Frame;
-    return EB_ErrorNone;
-}
-
 void clear_above_context(ParseCtxt *parse_ctxt, int mi_col_start, int mi_col_end, int num_threads) {
     SeqHeader *seq_params = parse_ctxt->seq_header;
     int        num_planes = av1_num_planes(&seq_params->color_config);
